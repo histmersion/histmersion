@@ -194,19 +194,19 @@ object Source:
 
     def markdown(d: Deletion, calibre: Option[CalibreEntryCheck] = None): com.histmersion.api.library.Source.Delete.MarkdownResult =
       val head =
-        if d.applied then s"# Deleted `${d.citekey}`"
-        else if d.refused then s"# Cannot delete `${d.citekey}`"
+        if ((d.applied) == _root_.com.histmersion.api.library.Source.Deletion.Applied(true)) then s"# Deleted `${d.citekey}`"
+        else if ((d.refused) == _root_.com.histmersion.api.library.Source.Deletion.RefusedResult(true)) then s"# Cannot delete `${d.citekey}`"
         else s"# Would delete `${d.citekey}` (dry run)"
       val blockers =
         if d.blockers.isEmpty then Nil
         else
           List("", "**Refused — fix these first (there is no override):**", "") ++
             d.blockers.map(b => s"- ${b.kind.label}: `${b.id}`${b.title.fold("")(t => s" — $t")}")
-      val verb = if d.applied then "removed" else "would go"
+      val verb = if ((d.applied) == _root_.com.histmersion.api.library.Source.Deletion.Applied(true)) then "removed" else "would go"
       val counts =
         if d.counts.isEmpty then List("", s"Nothing besides the record itself $verb.")
         else
-          List("", s"**${if d.applied then "Removed" else "Would remove"}** (with the record itself):", "") ++
+          List("", s"**${if ((d.applied) == _root_.com.histmersion.api.library.Source.Deletion.Applied(true)) then "Removed" else "Would remove"}** (with the record itself):", "") ++
             d.counts.map(c => s"- ${c.part.label}: ${c.rows}")
       val aliases = if d.aliases.isEmpty then Nil
       else List("", s"Old citekeys that stop resolving: ${d.aliases.map(a => s"`$a`").mkString(", ")}")
@@ -214,7 +214,7 @@ object Source:
       else
         List(
           "",
-          s"Edges of other sources to it (${if d.applied then "parked" else "parked, not lost"}: " +
+          s"Edges of other sources to it (${if ((d.applied) == _root_.com.histmersion.api.library.Source.Deletion.Applied(true)) then "parked" else "parked, not lost"}: " +
             "they come back if it is ingested again):",
           ""
         ) ++
@@ -224,7 +224,7 @@ object Source:
       val files =
         if d.files.isEmpty then List("", "Stored original: none on the server.")
         else
-          List("", s"Stored original (${if d.applied then "removed" else "removed after the commit"}):", "") ++
+          List("", s"Stored original (${if ((d.applied) == _root_.com.histmersion.api.library.Source.Deletion.Applied(true)) then "removed" else "removed after the commit"}):", "") ++
             d.files.map(f => s"- `$f`")
       val failed = if d.filesFailed.isEmpty then Nil
       else List("", "**Could not remove** (logged; remove by hand):", "") ++ d.filesFailed.map(f => s"- $f")
@@ -232,14 +232,14 @@ object Source:
       else List("", s"Queue items that mention it (left as they are): ${d.mentions.map(i => s"#$i").mkString(", ")}")
       val calibreLines = List("", calibreLine(d.calibreId, calibre))
       val tail =
-        if d.applied then
+        if ((d.applied) == _root_.com.histmersion.api.library.Source.Deletion.Applied(true)) then
           List(
             "",
             s"Logged as item #${d.logEntry.fold("?")(_.toString)} of the log queue. A tombstone keeps a " +
               s"bundle merge from bringing it back. The exported mirror's `sources/${d.citekey}.md` is not removed by " +
               "`histmersion export` — delete it there by hand."
           )
-        else if d.refused then Nil
+        else if ((d.refused) == _root_.com.histmersion.api.library.Source.Deletion.RefusedResult(true)) then Nil
         else List("", s"_Dry run. Re-run with `--apply` to delete._")
       _root_.com.histmersion.api.library.Source.Delete.MarkdownResult((List(head, "", s"**${d.title}**") ++ blockers ++ counts ++ aliases ++ edgesIn ++ coverage ++ files ++ failed ++
         mentions ++ calibreLines ++ tail).mkString("\n"))
@@ -403,7 +403,7 @@ object Source:
           case Some(chapter)        => if (chapter).value then _root_.com.histmersion.api.library.Source.Kinds.OfResult(Chapter) else _root_.com.histmersion.api.library.Source.Kinds.OfResult(Book)
           case None if id.isDefined => _root_.com.histmersion.api.library.Source.Kinds.OfResult(Paper)
           case None                 =>
-            if hasCover || provenance.map((_).value.trim.toLowerCase(java.util.Locale.ROOT)).exists(BookProvenance.contains)
+            if ((hasCover) == _root_.com.histmersion.api.library.Source.Kinds.OfHasCover(true)) || provenance.map((_).value.trim.toLowerCase(java.util.Locale.ROOT)).exists(BookProvenance.contains)
             then _root_.com.histmersion.api.library.Source.Kinds.OfResult(Book)
             else _root_.com.histmersion.api.library.Source.Kinds.OfResult(Unknown)
 

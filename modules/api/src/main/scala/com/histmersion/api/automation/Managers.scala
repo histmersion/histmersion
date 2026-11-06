@@ -362,7 +362,7 @@ object Managers:
       cancelled: ItemCounts.Cancelled = _root_.com.histmersion.api.automation.Managers.ItemCounts.Cancelled(0)
   ) derives KindlingsCodecAsObject,
         KindlingsSchema, com.histmersion.api.json.Schema:
-    def open: com.histmersion.api.automation.Managers.ItemCounts.OpenResult = (pending).value + (held).value + (active).value
+    def open: com.histmersion.api.automation.Managers.ItemCounts.OpenResult = _root_.com.histmersion.api.automation.Managers.ItemCounts.OpenResult((pending).value + (held).value + (active).value)
   object ItemCounts:
 
 

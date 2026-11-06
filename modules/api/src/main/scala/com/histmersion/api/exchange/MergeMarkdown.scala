@@ -100,14 +100,14 @@ object MergeMarkdown:
     def count(k: com.histmersion.api.exchange.Bundle.Kind)(f: Bundle.KindCounts => com.histmersion.api.exchange.MergeMarkdown.AppliedCountFResult): com.histmersion.api.exchange.MergeMarkdown.AppliedCountResult =
       r.counts.find(_.kind == k).fold(0)(f)
     val head =
-      if r.applied && r.mergeId.isEmpty then
+      if ((r.applied) == _root_.com.histmersion.api.exchange.MergeApplyResult.Applied(true)) && r.mergeId.isEmpty then
         s"**Nothing to merge** — the bundle of ${who(r.from)} is merged already (plan ${r.planHash})."
-      else if r.applied then
+      else if ((r.applied) == _root_.com.histmersion.api.exchange.MergeApplyResult.Applied(true)) then
         s"**Merged** the bundle of ${who(r.from)} as merge ${r.mergeId.fold("—")(_.toString)}" +
           r.backup.fold("")(b => s" (backup $b)")
       else s"**Not merged** (plan ${r.planHash}): nothing was written."
     val body = Option
-      .when(r.applied && r.mergeId.isDefined)(
+      .when(((r.applied) == _root_.com.histmersion.api.exchange.MergeApplyResult.Applied(true)) && r.mergeId.isDefined)(
         List(
           s"**sources** +${count(com.histmersion.api.exchange.Bundle.Kind.Source)(_.inserted)} new · ${t.sourcesMerged} merged (${t.sourcesByScore} by score) · " +
             s"${t.sourcesRenamed} renamed · aliases +${t.aliases}",

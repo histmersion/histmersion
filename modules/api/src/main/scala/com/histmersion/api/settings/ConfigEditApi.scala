@@ -12,9 +12,9 @@ object ConfigEditApi:
 
   private def errors =
     oneOf[Api.Error](
-      oneOfVariantValueMatcher(StatusCode.Conflict, jsonBody[Api.Error])(Api.Error.hasCode(_root_.com.histmersion.api.Api.Error.HasCodeCode(ConfigEdit.CodeChanged))),
+      oneOfVariantValueMatcher(StatusCode.Conflict, jsonBody[Api.Error])((Api.Error.hasCode(_root_.com.histmersion.api.Api.Error.HasCodeCode(ConfigEdit.CodeChanged))).andThen(refactorResult => ((refactorResult) == _root_.com.histmersion.api.Api.Error.HasCodeResultPart2(true)))),
       oneOfVariantValueMatcher(StatusCode.ServiceUnavailable, jsonBody[Api.Error])(
-        Api.Error.hasCode(_root_.com.histmersion.api.Api.Error.HasCodeCode(ConfigEdit.CodeUnavailable))
+        (Api.Error.hasCode(_root_.com.histmersion.api.Api.Error.HasCodeCode(ConfigEdit.CodeUnavailable))).andThen(refactorResult4 => ((refactorResult4) == _root_.com.histmersion.api.Api.Error.HasCodeResultPart2(true)))
       ),
       oneOfDefaultVariant(statusCode(StatusCode.BadRequest).and(jsonBody[Api.Error]))
     )

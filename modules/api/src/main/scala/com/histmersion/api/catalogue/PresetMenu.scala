@@ -23,7 +23,7 @@ object PresetMenu:
 
   def share(view: BBox, box: BBox): com.histmersion.api.catalogue.PresetMenu.ShareResult =
     val area = (view.maxLon - view.minLon) * (view.maxLat - view.minLat)
-    if view.crossesAntimeridian || area <= 0 then _root_.com.histmersion.api.catalogue.PresetMenu.ShareResult(0.0)
+    if ((view.crossesAntimeridian) == _root_.com.histmersion.api.BBox.CrossesAntimeridianResult(true)) || area <= 0 then _root_.com.histmersion.api.catalogue.PresetMenu.ShareResult(0.0)
     else
       val w = math.min(view.maxLon, box.maxLon) - math.max(view.minLon, box.minLon)
       val h = math.min(view.maxLat, box.maxLat) - math.max(view.minLat, box.minLat)
@@ -38,7 +38,7 @@ object PresetMenu:
           .get(r)
           .map(rows => Group(r, rows.sortBy(p => (p.period.start, p.period.end, p.label)), cover(r) >= MinShare))
       }
-      .sortBy(g => if g.inView then (0, -cover(g.region)) else (1, 0.0))
+      .sortBy(g => if ((g.inView) == _root_.com.histmersion.api.catalogue.PresetMenu.Group.InView(true)) then (0, -cover(g.region)) else (1, 0.0))
 
   def source(p: HistoricalPeriod): Option[com.histmersion.api.catalogue.PresetMenu.SourceResult] =
     p.authority.map(a =>

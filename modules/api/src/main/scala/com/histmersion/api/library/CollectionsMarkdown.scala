@@ -55,9 +55,9 @@ object CollectionsMarkdown:
     else _root_.com.histmersion.api.library.CollectionsMarkdown.CollectionsResult(cs.map(collection).mkString("\n\n"))
 
   def collection(c: CollectionInfo): com.histmersion.api.library.CollectionsMarkdown.CollectionResult =
-    s"### ${c.title} (`${c.name}`)\n\n${c.description}\n\n" +
+    _root_.com.histmersion.api.library.CollectionsMarkdown.CollectionResult(s"### ${c.title} (`${c.name}`)\n\n${c.description}\n\n" +
       s"- can: ${c.capabilities.mkString(", ")}\n" +
-      s"- reachable: ${if c.reachable then "yes" else s"no — ${c.problem.getOrElse("unknown")}"}"
+      s"- reachable: ${if ((c.reachable) == _root_.com.histmersion.api.library.CollectionInfo.Reachable(true)) then "yes" else s"no — ${c.problem.getOrElse("unknown")}"}")
 
   private def who(authors: List[com.histmersion.api.library.CollectionsMarkdown.WhoAuthors]): com.histmersion.api.library.CollectionsMarkdown.WhoResult =
     _root_.com.histmersion.api.library.CollectionsMarkdown.WhoResult(authors.take(3).mkString(", ") + (if authors.sizeIs > 3 then " et al." else ""))
@@ -103,7 +103,7 @@ object CollectionsMarkdown:
   /** The counted gaps as a table, then one line for the records with no fetched file. */
   def gaps(rows: List[CollectionGapRow]): com.histmersion.api.library.CollectionsMarkdown.GapsResult =
     def esc(s: com.histmersion.api.library.CollectionsMarkdown.GapsEscS) = (s).value.replace("|", "\\|").replace("\n", " ").trim
-    val counted = rows.filter(_.counted)
+    val counted = rows.filter((refactorCallback => ((refactorCallback.counted) == _root_.com.histmersion.api.library.CollectionGapRow.Counted(true))))
     val missing = rows.count(_.original == _root_.com.histmersion.api.library.CollectionGapRow.Original("none"))
     val head =
       if counted.isEmpty then "_Every source with a fetched file is in Calibre._"
@@ -128,11 +128,11 @@ object CollectionsMarkdown:
 
   /** A sync: the gaps pushed (or that would be), each push, and the summary line. */
   def sync(s: CollectionSync): com.histmersion.api.library.CollectionsMarkdown.SyncResult =
-    val ready = s.gaps.gaps.filter(_.counted)
+    val ready = s.gaps.gaps.filter((refactorCallback => ((refactorCallback.counted) == _root_.com.histmersion.api.library.CollectionGapRow.Counted(true))))
     val missing = s.gaps.gaps.count(_.original == _root_.com.histmersion.api.library.CollectionGapRow.Original("none"))
     val note = if missing == 0 then "" else " · " + uncountedLine(_root_.com.histmersion.api.library.CollectionsMarkdown.UncountedLineN(missing))
     val table = if ready.nonEmpty then (gaps(ready)).value + "\n\n" else ""
-    if !s.applied then
+    if !((s.applied) == _root_.com.histmersion.api.library.CollectionSync.Applied(true)) then
       _root_.com.histmersion.api.library.CollectionsMarkdown.SyncResult(table + s"Dry run: ${ready.size} source(s) would be pushed$note" +
         (if ready.nonEmpty then " Re-run with --apply." else ""))
     else

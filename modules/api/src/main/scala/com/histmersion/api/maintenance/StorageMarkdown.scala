@@ -13,7 +13,7 @@ object StorageMarkdown:
   object EntryDepth extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
   def render(r: Storage.Report): List[com.histmersion.api.maintenance.StorageMarkdown.RenderResult] =
-    if r.entries.isEmpty && !r.measuring && r.problems.isEmpty then Nil
+    if r.entries.isEmpty && !((r.measuring) == _root_.com.histmersion.api.maintenance.Storage.Report.Measuring(true)) && r.problems.isEmpty then Nil
     else
       val when = (r.ageSeconds.map(_.value.toLong).map(s => s"measured ${AboutMarkdown.age(s)} ago") ++
         r.tookMillis.map(_.value.toLong).map(ms => s"took $ms ms") ++ Option.when(r.measuring)("measuring…")).mkString(", ")
@@ -27,7 +27,7 @@ object StorageMarkdown:
       )
       val hints = r.hints.map(h => s"- $h")
       val problems = r.problems.map(p => s"- problem: $p")
-      List("", head, "") ++ (if r.entries.isEmpty && r.measuring then List("- measuring…") else entries) ++
+      List("", head, "") ++ (if r.entries.isEmpty && ((r.measuring) == _root_.com.histmersion.api.maintenance.Storage.Report.Measuring(true)) then List("- measuring…") else entries) ++
         vols ++ (if hints.isEmpty then Nil else "" :: hints) ++ problems
 
   private def entry(r: Storage.Report, e: Storage.Entry, depth: com.histmersion.api.maintenance.StorageMarkdown.EntryDepth): com.histmersion.api.maintenance.StorageMarkdown.EntryResult =

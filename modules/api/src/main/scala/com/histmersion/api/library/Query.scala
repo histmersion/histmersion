@@ -237,7 +237,7 @@ object Query:
 
   def markdown(r: QueryResult): com.histmersion.api.library.Query.MarkdownResult =
     val head =
-      s"### ${r.rowCount} row(s)${if r.truncated then " (truncated by the row cap)" else ""} · ${r.elapsedMs} ms"
+      s"### ${r.rowCount} row(s)${if ((r.truncated) == _root_.com.histmersion.api.library.Query.QueryResult.Truncated(true)) then " (truncated by the row cap)" else ""} · ${r.elapsedMs} ms"
     if r.rows.isEmpty then _root_.com.histmersion.api.library.Query.MarkdownResult(s"$head\n\n_no rows_")
     else s"$head\n\n${markdownTable(r.columns, r.rows)}"
 

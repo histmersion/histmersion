@@ -82,8 +82,8 @@ object RepairAcquire:
   val Keep = "keep"
 
   def markdown(r: RepairResult): com.histmersion.api.library.RepairAcquire.MarkdownResult =
-    val verb = if r.dryRun then "would " else ""
-    val head = s"# Repair of the acquisition list${if r.dryRun then " (dry run: nothing changed)" else ""}\n\n" +
+    val verb = if ((r.dryRun) == _root_.com.histmersion.api.library.RepairAcquire.RepairResult.DryRun(true)) then "would " else ""
+    val head = s"# Repair of the acquisition list${if ((r.dryRun) == _root_.com.histmersion.api.library.RepairAcquire.RepairResult.DryRun(true)) then " (dry run: nothing changed)" else ""}\n\n" +
       s"- ${verb}move ${Plural.count(r.moved, _root_.com.histmersion.api.Plural.CountSingular("legal open-access work"))} into the watchers' ingest backlogs\n" +
       s"- ${verb}remove ${Plural.count(r.removed, "item")} already in the corpus\n" +
       s"- keep ${Plural.count(r.kept, "sweep item")} on the list (no legal open-access copy known, or a watcher that does not ingest)\n" +

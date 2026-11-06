@@ -34,7 +34,7 @@ object OffsetPage:
     else _root_.com.histmersion.api.OffsetPage.HeaderResult(s"### ${p.shown.value} of ${p.total.value} $noun")
 
   def footer(p: OffsetPage): com.histmersion.api.OffsetPage.FooterResult =
-    if p.isAll || p.shown.value == 0 then _root_.com.histmersion.api.OffsetPage.FooterResult("")
+    if ((p.isAll) == _root_.com.histmersion.api.OffsetPage.IsAllResult(true)) || p.shown.value == 0 then _root_.com.histmersion.api.OffsetPage.FooterResult("")
     else
       val next = p.next.fold("")(n => s" — next: offset=$n")
       val full = if p.total.value <= FullSetMax then s" — full set: limit=${p.total.value}" else ""

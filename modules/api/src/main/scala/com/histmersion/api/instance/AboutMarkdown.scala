@@ -26,7 +26,7 @@ object AboutMarkdown:
 
   def render(a: About): com.histmersion.api.instance.AboutMarkdown.RenderResult =
     val b = a.build
-    val commit = b.gitCommit.fold("unknown")(c => if b.dirty then s"$c (with uncommitted changes)" else c)
+    val commit = b.gitCommit.fold("unknown")(c => if ((b.dirty) == _root_.com.histmersion.api.instance.BuildStamp.Dirty(true)) then s"$c (with uncommitted changes)" else c)
     val conv = a.health.converter
     val backup = a.lastBackup.fold("none")(bk =>
       s"${bk.file} · ${Backup.humanBytes(bk.bytes)}" + a.lastBackupAgeSeconds.fold("")(s => s" · ${age(s)} ago")

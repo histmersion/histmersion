@@ -328,10 +328,10 @@ object Queue:
           flush()
           val depth = if stack.lastOption.exists(_root_.com.histmersion.api.automation.Queue.IsBoldS(isBold)) then stack.length - 1 else stack.length
           push(_root_.com.histmersion.api.automation.Queue.ParsePushSegment(bold), _root_.com.histmersion.api.automation.Queue.ParsePushIndex(depth))
-        case CheckRe(box, body) if kind.checkboxes =>
+        case CheckRe(box, body) if ((kind.checkboxes) == _root_.com.histmersion.api.automation.Queue.Kind.Checkboxes(true)) =>
           flush()
           last = Some(QueueAdd(_root_.com.histmersion.api.automation.Queue.QueueItem.Text(body), topicOf(stack), status = Some(if box.trim.isEmpty then _root_.com.histmersion.api.automation.Queue.QueueItem.Status(Open) else _root_.com.histmersion.api.automation.Queue.QueueItem.Status(Done))))
-        case BulletRe(body) if !kind.checkboxes =>
+        case BulletRe(body) if !((kind.checkboxes) == _root_.com.histmersion.api.automation.Queue.Kind.Checkboxes(true)) =>
           flush()
           last = Some(QueueAdd(_root_.com.histmersion.api.automation.Queue.QueueItem.Text(body), topicOf(stack), status = Some(_root_.com.histmersion.api.automation.Queue.QueueItem.Status(Open)), createdAt = entryDate(stack)))
         case l =>
@@ -417,7 +417,7 @@ object Queue:
       }
 
   private def bullet(kind: Kind, i: QueueItem): com.histmersion.api.automation.Queue.BulletResult =
-    val marker = if !kind.checkboxes then "- " else if i.status == _root_.com.histmersion.api.automation.Queue.QueueItem.Status(Done) then "- [x] " else "- [ ] "
+    val marker = if !((kind.checkboxes) == _root_.com.histmersion.api.automation.Queue.Kind.Checkboxes(true)) then "- " else if i.status == _root_.com.histmersion.api.automation.Queue.QueueItem.Status(Done) then "- [x] " else "- [ ] "
     val lines = i.text.linesIterator.toList
     (marker + lines.headOption.getOrElse("")) + lines.drop(1).map("\n" + _).mkString
 
@@ -454,7 +454,7 @@ object Queue:
             .map(seg => if isBold(seg) then seg.drop(2).dropRight(2) else seg)
             .mkString(Sep)
         val lines = is.sortBy(_.id).map { i =>
-          val box = if !kind.checkboxes then "" else if i.status == _root_.com.histmersion.api.automation.Queue.QueueItem.Status(Done) then "[x] " else "[ ] "
+          val box = if !((kind.checkboxes) == _root_.com.histmersion.api.automation.Queue.Kind.Checkboxes(true)) then "" else if i.status == _root_.com.histmersion.api.automation.Queue.QueueItem.Status(Done) then "[x] " else "[ ] "
           val why = i.reason.map(r => s" — _${r}_").getOrElse("")
           s"- $box${i.text.linesIterator.mkString(" ")}$why  `#${i.id}`" +
             notes.get(i.id).fold("")(n => s"\n  - _${n}_")

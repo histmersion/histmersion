@@ -25,7 +25,7 @@ final class OnePasswordVault(
 
   private def classify(uri: com.histmersion.plugins.vaults.OnePasswordVault.ClassifyUri)(err: com.histmersion.plugins.vaults.OnePasswordVault.ClassifyErr): Option[com.histmersion.plugins.vaults.OnePasswordVault.ClassifyResult] =
     if (err).value.contains("not currently signed in") || (err).value.contains("sign in") || (err).value.contains("authorization") ||
-      (err).value.contains("session expired") || err.contains("locked")
+      (err).value.contains("session expired") || (err).value.contains("locked")
     then Some(_root_.com.histmersion.plugins.vaults.OnePasswordVault.ClassifyResult(s"$name: not signed in — unlock the 1Password app, or set service-account-token = \"env:<NAME>\""))
     else if (err).value.contains("isn't an item") || (err).value.contains("could not find") || (err).value.contains("not found") then
       Some(_root_.com.histmersion.plugins.vaults.OnePasswordVault.ClassifyResult(s"$name: no item at $uri"))

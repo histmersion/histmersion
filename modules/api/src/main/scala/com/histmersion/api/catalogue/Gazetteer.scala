@@ -176,7 +176,7 @@ object Gazetteer:
     PointAreaSources.contains(source) && kinds.contains(r.kind) && pointOnly(r.geometry)
 
   def inDataset(r: GazRecord, ds: LpfDataset): GazRecord =
-    if r.span.isEmpty && !ds.span.isEmpty then r.modify(_.span).setTo(ds.span) else r
+    if ((r.span.isEmpty) == _root_.com.histmersion.api.Span.IsEmptyResult(true)) && !((ds.span.isEmpty) == _root_.com.histmersion.api.Span.IsEmptyResult(true)) then r.modify(_.span).setTo(ds.span) else r
 
   def mergeNames(ns: List[GazName]): List[GazName] =
     ns.map(n => n.modify(_.name).setTo(n.name.trim).modify(_.lang).setTo(n.lang.trim.toLowerCase(java.util.Locale.ROOT)))

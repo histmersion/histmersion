@@ -712,13 +712,13 @@ object Api:
   private[api] def writeErrors =
     oneOf[com.histmersion.api.Api.Error](
       oneOfVariantValueMatcher(StatusCode.NotFound, jsonBody[com.histmersion.api.Api.Error])(
-        com.histmersion.api.Api.Error.hasCode(_root_.com.histmersion.api.Api.Error.HasCodeCode(Write.CodeNotFound))
+        (com.histmersion.api.Api.Error.hasCode(_root_.com.histmersion.api.Api.Error.HasCodeCode(Write.CodeNotFound))).andThen(refactorResult => ((refactorResult) == _root_.com.histmersion.api.Api.Error.HasCodeResultPart2(true)))
       ),
       oneOfVariantValueMatcher(StatusCode.ServiceUnavailable, jsonBody[com.histmersion.api.Api.Error])(
-        com.histmersion.api.Api.Error.hasCode(_root_.com.histmersion.api.Api.Error.HasCodeCode(Backup.CodeMaintenance))
+        (com.histmersion.api.Api.Error.hasCode(_root_.com.histmersion.api.Api.Error.HasCodeCode(Backup.CodeMaintenance))).andThen(refactorResult2 => ((refactorResult2) == _root_.com.histmersion.api.Api.Error.HasCodeResultPart2(true)))
       ),
       oneOfVariantValueMatcher(StatusCode.PreconditionFailed, jsonBody[com.histmersion.api.Api.Error])(
-        com.histmersion.api.Api.Error.hasCode(_root_.com.histmersion.api.Api.Error.HasCodeCode(Write.CodePrecondition))
+        (com.histmersion.api.Api.Error.hasCode(_root_.com.histmersion.api.Api.Error.HasCodeCode(Write.CodePrecondition))).andThen(refactorResult3 => ((refactorResult3) == _root_.com.histmersion.api.Api.Error.HasCodeResultPart2(true)))
       ),
       oneOfDefaultVariant(statusCode(StatusCode.BadRequest).and(jsonBody[com.histmersion.api.Api.Error]))
     )
@@ -1599,10 +1599,10 @@ object Api:
   private lazy val ingestErrors =
     oneOf[com.histmersion.api.Api.Error](
       oneOfVariantValueMatcher(StatusCode.Conflict, jsonBody[com.histmersion.api.Api.Error])(
-        com.histmersion.api.Api.Error.hasCode(_root_.com.histmersion.api.Api.Error.HasCodeCode(Ingest.CodeConflict))
+        (com.histmersion.api.Api.Error.hasCode(_root_.com.histmersion.api.Api.Error.HasCodeCode(Ingest.CodeConflict))).andThen(refactorResult4 => ((refactorResult4) == _root_.com.histmersion.api.Api.Error.HasCodeResultPart2(true)))
       ),
       oneOfVariantValueMatcher(StatusCode.NotFound, jsonBody[com.histmersion.api.Api.Error])(
-        com.histmersion.api.Api.Error.hasCode(_root_.com.histmersion.api.Api.Error.HasCodeCode(Write.CodeNotFound))
+        (com.histmersion.api.Api.Error.hasCode(_root_.com.histmersion.api.Api.Error.HasCodeCode(Write.CodeNotFound))).andThen(refactorResult5 => ((refactorResult5) == _root_.com.histmersion.api.Api.Error.HasCodeResultPart2(true)))
       ),
       oneOfDefaultVariant(statusCode(StatusCode.BadRequest).and(jsonBody[com.histmersion.api.Api.Error]))
     )

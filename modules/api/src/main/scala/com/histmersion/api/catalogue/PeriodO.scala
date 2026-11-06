@@ -245,7 +245,7 @@ object PeriodO:
         case curated @ Some(_) => curated
         case None              =>
           val own = d.broader.filter(ids.contains).orElse(Option.when((roots).value)(a.id))
-          if ds.curated then own else existing.getOrElse(d.id, own)
+          if ((ds.curated) == _root_.com.histmersion.api.PeriodODataset.CuratedResult(true)) then own else existing.getOrElse(d.id, own)
       HistoricalPeriod(
         d.id,
         d.label,

@@ -216,11 +216,11 @@ object Article:
       val src = Plural.noun(c.total, _root_.com.histmersion.api.Plural.NounSingular("source"))
       val citedN = c.cited.size
       val n = c.notUsed.size
-      val scope = if c.capped then s"; the first ${c.checked} (by citekey) were checked" else ""
+      val scope = if ((c.capped) == _root_.com.histmersion.api.research.Coverage.CappedResult(true)) then s"; the first ${c.checked} (by citekey) were checked" else ""
       val lead =
         if c.total == _root_.com.histmersion.api.research.Coverage.Total(0) then "_The filter returns no source._"
         else if n == 0 then
-          if c.capped then s"_The filter returns ${c.total} $src; all ${c.checked} checked are cited above._"
+          if ((c.capped) == _root_.com.histmersion.api.research.Coverage.CappedResult(true)) then s"_The filter returns ${c.total} $src; all ${c.checked} checked are cited above._"
           else
             s"_${if c.total == _root_.com.histmersion.api.research.Coverage.Total(1) then "The one source" else s"All ${c.total} sources"} the filter returns ${
                 if c.total == _root_.com.histmersion.api.research.Coverage.Total(1) then "is" else "are"
@@ -251,7 +251,7 @@ object Article:
           val have = c.statuses.map(s => s"${s.count} ${s.status.wire}").mkString(", ")
           val none = Disputed.filterNot(d => c.statuses.exists(_.status == d)).map(_.wire)
           val noneText = if none.isEmpty then "" else s"; none ${orList(none)}"
-          scala.List(s"statuses${if c.capped then s" of the ${c.checked} checked" else ""}: $have$noneText")
+          scala.List(s"statuses${if ((c.capped) == _root_.com.histmersion.api.research.Coverage.CappedResult(true)) then s" of the ${c.checked} checked" else ""}: $have$noneText")
       val searches = c.searches.map { s =>
         val cites =
           if s.cited.isEmpty then "none of them cited" else s"cited: ${s.cited.map(ck => s"[[$ck]]").mkString(", ")}"
@@ -320,7 +320,7 @@ object Article:
             .mkString("\n")
       val critiques = Critiques.markdown(c.critiques)
       s"## Coverage of [[${c.slug}]]\n\n`${c.filterLine}` → ${c.total} (${c.cited.size} cited, ${c.notUsed.size} not used" +
-        s"${if c.capped then s", ${c.total - c.checked} not checked" else ""})\n\n### Drift\n\n$drift" +
+        s"${if ((c.capped) == _root_.com.histmersion.api.research.Coverage.CappedResult(true)) then s", ${c.total - c.checked} not checked" else ""})\n\n### Drift\n\n$drift" +
         (if critiques.isEmpty then "" else s"\n\n$critiques") + s"\n\n### Generated sections\n\n${sections(c)}" +
         (if c.eventLeads.isEmpty then "" else "\n\n" + ArticleEventLead.markdown(c.eventLeads))
 
@@ -518,7 +518,7 @@ object Article:
 
     final case class Applied(body: com.histmersion.api.research.Article.Body, results: scala.List[EditResult]):
       def problems: scala.List[com.histmersion.api.research.Article.Edits.Applied.ProblemsResult] = results.flatMap(r => r.problem.map(p => _root_.com.histmersion.api.research.Article.Edits.Applied.ProblemsResult(s"${r.label}: $p")))
-      def appliedCount: com.histmersion.api.research.Article.Edits.Applied.AppliedCountResult = results.count(_.applied)
+      def appliedCount: com.histmersion.api.research.Article.Edits.Applied.AppliedCountResult = _root_.com.histmersion.api.research.Article.Edits.Applied.AppliedCountResult(results.count((refactorCallback => ((refactorCallback.applied) == _root_.com.histmersion.api.research.Article.Edits.EditResult.AppliedResult(true)))))
 
     object Applied:
       type ProblemsResult = ProblemsResult.T
@@ -668,10 +668,10 @@ object Article:
         if c.edits.isEmpty then ""
         else "\n\n### Edits\n\n" + c.edits.map(r => s"- ${r.label}: ${r.problem.getOrElse("applies")}").mkString("\n")
       val verdict =
-        if c.clean then "No problems: these are the checks code runs on the answer, and it would pass them."
-        else if c.fatal then s"${Plural.count(_root_.com.histmersion.api.Plural.CountN((c.problems.size).toLong), _root_.com.histmersion.api.Plural.CountSingular("problem"))}, at least one FATAL (never written):"
+        if ((c.clean) == _root_.com.histmersion.api.research.Article.Edits.ArticleCheck.CleanResult(true)) then "No problems: these are the checks code runs on the answer, and it would pass them."
+        else if ((c.fatal) == _root_.com.histmersion.api.research.Article.Edits.ArticleCheck.Fatal(true)) then s"${Plural.count(_root_.com.histmersion.api.Plural.CountN((c.problems.size).toLong), _root_.com.histmersion.api.Plural.CountSingular("problem"))}, at least one FATAL (never written):"
         else s"${Plural.count(_root_.com.histmersion.api.Plural.CountN((c.problems.size).toLong), _root_.com.histmersion.api.Plural.CountSingular("problem"))}:"
-      val problems = if c.clean then "" else "\n\n" + c.problems.map(p => s"- $p").mkString("\n")
+      val problems = if ((c.clean) == _root_.com.histmersion.api.research.Article.Edits.ArticleCheck.CleanResult(true)) then "" else "\n\n" + c.problems.map(p => s"- $p").mkString("\n")
       _root_.com.histmersion.api.research.Article.Edits.MarkdownResult(s"## Check of [[${c.slug}]] (${c.kind})\n\n${c.wordsBefore} → ${c.wordsAfter} words.$edits\n\n### Result\n\n$verdict$problems")
 
   final case class Filter(
@@ -1295,7 +1295,7 @@ object Article:
       val base = f.outcome match
         case "wont-fix"           => "won't fix"
         case "set-aside"          => "set aside"
-        case "open" if f.deferred => "open (left for the next run)"
+        case "open" if ((f.deferred) == _root_.com.histmersion.api.research.ReviewFinding.Deferred(true)) => "open (left for the next run)"
         case other                => other
       val when = f.closedRunNumber.zip(f.closedRound).fold("")((run, round) => s" in run $run, round $round")
       val by = f.closedBy.filter(_.nonEmpty).fold("")(b => s" by ${reviewerName(b)}")

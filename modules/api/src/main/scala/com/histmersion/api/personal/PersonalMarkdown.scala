@@ -34,11 +34,11 @@ object PersonalMarkdown:
   def targetLine(t: Target): com.histmersion.api.personal.PersonalMarkdown.TargetLineResult =
     val where = Target.where(t)
     (t.itemKey.map(k => s"${t.kind.label.toLowerCase} `$k`").toList ++
-      Option.when(!t.kind.isItem)(t.kind.label.toLowerCase).toList ++
+      Option.when(!((t.kind.isItem) == _root_.com.histmersion.api.ItemKind.IsItemResult(true)))(t.kind.label.toLowerCase).toList ++
       Option.when(where.nonEmpty)(where).toList).mkString(" · ")
 
   def bookmarkLine(b: Bookmark): com.histmersion.api.personal.PersonalMarkdown.BookmarkLineResult =
-    val label = b.label.map(_.value).filter(l => b.target.kind.isItem && l.trim.nonEmpty && l != b.title)
+    val label = b.label.map(_.value).filter(l => ((b.target.kind.isItem) == _root_.com.histmersion.api.ItemKind.IsItemResult(true)) && l.trim.nonEmpty && l != b.title)
     s"- **${b.name}**" + label.fold("")(_ =>
       s" (${b.title})"
     ) + s" — ${targetLine(b.target)} · ${minute(b.createdAt)} · id `${b.id.value}`"
@@ -69,7 +69,7 @@ object PersonalMarkdown:
     ).mkString("\n")
 
   def readLine(m: ReadMark): com.histmersion.api.personal.PersonalMarkdown.ReadLineResult =
-    val state = if m.read then s"read ${m.readAt.fold("")(minute)}" else "not read yet"
+    val state = if ((m.read) == _root_.com.histmersion.api.personal.ReadMark.Read(true)) then s"read ${m.readAt.fold("")(minute)}" else "not read yet"
     s"- **${m.title}** — ${m.kind.label.toLowerCase} `${m.id.value}` · $state" + m.openedAt.fold("")(o =>
       s" · opened ${minute(o)}"
     )

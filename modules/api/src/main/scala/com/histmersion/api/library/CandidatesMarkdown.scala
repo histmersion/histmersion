@@ -20,7 +20,7 @@ object CandidatesMarkdown:
     val rows = l.candidates.map { c =>
       val who = c.authors.headOption.fold("")(a => s"$a${if c.authors.size > 1 then " et al." else ""}, ")
       s"- **#${c.id}** `${c.doi}` — ${c.title} ($who${c.year.fold("n.d.")(_.toString)}${c.venue.fold("")(v => s", $v")})" +
-        (if c.isOa then " · open access" else "") + (if l.goal.isEmpty then s" · goal `${c.goal}`" else "") +
+        (if ((c.isOa) == _root_.com.histmersion.api.library.Source.Candidate.IsOa(true)) then " · open access" else "") + (if l.goal.isEmpty then s" · goal `${c.goal}`" else "") +
         s"\n  found by ${c.foundBy.mkString("; ")} · first seen ${c.firstSeen.take(10)}" +
         c.abstractText.fold("")(a => s"\n  ${a.take(400)}${if a.length > 400 then "…" else ""}")
     }

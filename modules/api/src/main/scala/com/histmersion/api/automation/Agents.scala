@@ -59,7 +59,7 @@ object Agents:
     def total: com.histmersion.api.automation.Agents.Usage.TotalResult = _root_.com.histmersion.api.automation.Agents.Usage.TotalResult((input).value + (output).value)
 
     def budgeted(cacheReadWeight: com.histmersion.api.automation.Agents.Usage.BudgetedCacheReadWeight): com.histmersion.api.automation.Agents.Usage.BudgetedResult =
-      math.max(0L, (input).value - (cacheRead).value) + (output).value + math.round(cacheRead.toDouble * math.max(0.0, cacheReadWeight))
+      math.max(0L, (input).value - (cacheRead).value) + (output).value + math.round((cacheRead).value.toDouble * math.max(0.0, cacheReadWeight))
 
   object Usage:
     type TotalResult = TotalResult.T
@@ -807,10 +807,10 @@ object Agents:
       * plan of articles), its rationale as the evidence; None for a kind that carries none.
       */
     def withArticleProposal(payload: Option[io.circe.Json]): Option[ApprovalInfo] =
-      if approvalKind.exists(_.proposesFilter) then
+      if approvalKind.exists((refactorCallback => ((refactorCallback.proposesFilter) == _root_.com.histmersion.api.automation.Approval.Kind.ProposesFilterResult(true)))) then
         val f = payload.flatMap(_.as[Article.Plans.FilterProposal].toOption)
         Some(this.modify(_.filter).setTo(f).modify(_.evidence).setTo(f.map(_.rationale).getOrElse("")))
-      else if approvalKind.exists(_.proposesArticles) then
+      else if approvalKind.exists((refactorCallback => ((refactorCallback.proposesArticles) == _root_.com.histmersion.api.automation.Approval.Kind.ProposesArticlesResult(true)))) then
         val p = payload.flatMap(_.as[Article.Plans.ArticlePlan].toOption)
         Some(this.modify(_.articles).setTo(p).modify(_.evidence).setTo(p.map(_.rationale).getOrElse("")))
       else None

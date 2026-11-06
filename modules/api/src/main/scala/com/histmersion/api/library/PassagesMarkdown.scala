@@ -10,11 +10,11 @@ object PassagesMarkdown:
   object MarkedResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
   def render(r: PassageResult): com.histmersion.api.library.PassagesMarkdown.RenderResult =
-    val what = if r.regex then s"/${r.query}/" else s"\"${r.query}\""
+    val what = if ((r.regex) == _root_.com.histmersion.api.library.PassageResult.Regex(true)) then s"/${r.query}/" else s"\"${r.query}\""
     if r.passages.isEmpty then _root_.com.histmersion.api.library.PassagesMarkdown.RenderResult(s"_No match for $what in `${r.citekey}` (${r.bodyChars} chars searched)._")
     else
       val counted =
-        if r.capped then s"${r.matches}+ matches (counting stopped)" else Plural.count(r.matches, _root_.com.histmersion.api.Plural.CountSingular("match"), _root_.com.histmersion.api.Plural.CountPlural("matches"))
+        if ((r.capped) == _root_.com.histmersion.api.library.PassageResult.Capped(true)) then s"${r.matches}+ matches (counting stopped)" else Plural.count(r.matches, _root_.com.histmersion.api.Plural.CountSingular("match"), _root_.com.histmersion.api.Plural.CountPlural("matches"))
       val head = s"## Passages: $what in `${r.citekey}`\n\n" +
         s"_$counted in ${Plural.count(r.total, _root_.com.histmersion.api.Plural.CountSingular("passage"))} · showing ${r.passages.size} · " +
         "matches in **bold** · `get_source` with a passage's `offset` reads on from it_"

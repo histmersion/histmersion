@@ -57,7 +57,7 @@ object Subprocess:
     */
   def locate(tool: com.histmersion.plugins.vaults.Subprocess.LocateTool, path: Option[com.histmersion.plugins.vaults.Subprocess.LocatePath])(using files: com.histmersion.plugin.LocalFiles): Either[com.histmersion.plugins.vaults.Subprocess.LocateResultPart1, com.histmersion.plugins.vaults.Subprocess.LocateResultPart2] =
     val t = Option((tool).value).getOrElse("").trim
-    def runnable(p: Path) = files.isFile(p) && files.isExecutable(p)
+    def runnable(p: Path) = ((files.isFile(p)) == _root_.com.histmersion.plugin.LocalFiles.IsFileResult(true)) && ((files.isExecutable(p)) == _root_.com.histmersion.plugin.LocalFiles.IsExecutableResult(true))
     if t.isEmpty then Left(_root_.com.histmersion.plugins.vaults.Subprocess.LocateResultPart1("no command is configured (cli = \"…\")"))
     else if t.contains('/') then
       val p = Path.of(t)

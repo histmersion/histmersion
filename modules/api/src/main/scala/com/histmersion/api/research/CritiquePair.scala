@@ -20,7 +20,7 @@ final case class CritiquePair(
 
   def critic: CritiqueSide = if Critiques.olderFirst(kinds) then dst else src
 
-  def bearing: com.histmersion.api.research.CritiquePair.BearingResult = open && criticised.cited
+  def bearing: com.histmersion.api.research.CritiquePair.BearingResult = ((open) == _root_.com.histmersion.api.research.CritiquePair.OpenResult(true)) && ((criticised.cited) == _root_.com.histmersion.api.research.CritiqueSide.Cited(true))
 
   def line: com.histmersion.api.research.CritiquePair.LineResult = _root_.com.histmersion.api.research.CritiquePair.LineResult(s"[[${src.citekey}]] ${kinds.mkString("/")} [[${dst.citekey}]]")
 

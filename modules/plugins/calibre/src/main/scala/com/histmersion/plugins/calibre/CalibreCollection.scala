@@ -220,7 +220,7 @@ object CalibreCollection:
   /** Whether the server can read the library at `dir`, and when it cannot, what it needs. */
   def reach(dir: Path)(using files: com.histmersion.plugin.LocalFiles): Either[com.histmersion.plugins.calibre.CalibreCollection.ReachResultPart1, Unit] =
     val db = dir.resolve("metadata.db")
-    if !files.isDirectory(dir) && !files.exists(db) then
+    if !((files.isDirectory(dir)) == _root_.com.histmersion.plugin.LocalFiles.IsDirectoryResult(true)) && !((files.exists(db)) == _root_.com.histmersion.plugin.LocalFiles.ExistsResult(true)) then
       Left(
         _root_.com.histmersion.plugins.calibre.CalibreCollection.ReachResultPart1(s"there is no Calibre library at $dir — set histmersion.plugins.calibre.library-path to the folder that " +
           "holds metadata.db (a server in a container needs that folder mounted)")

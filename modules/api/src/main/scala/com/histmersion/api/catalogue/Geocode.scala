@@ -365,10 +365,10 @@ object Geocode:
     case _ => if broad(kind) then _root_.com.histmersion.api.catalogue.Geocode.KindRankResult(0) else if kind == _root_.com.histmersion.api.catalogue.Geocode.KindRankKind(com.histmersion.api.catalogue.Place.Kind.Feature) then _root_.com.histmersion.api.catalogue.Geocode.KindRankResult(1) else _root_.com.histmersion.api.catalogue.Geocode.KindRankResult(2)
 
   private def timeRank(c: Candidate, at: Option[Period]): (com.histmersion.api.catalogue.Geocode.TimeRankResultPart1, com.histmersion.api.catalogue.Geocode.TimeRankResultPart2) = at match
-    case None    => if c.undated then (_root_.com.histmersion.api.catalogue.Geocode.TimeRankResultPart1(0), _root_.com.histmersion.api.catalogue.Geocode.TimeRankResultPart2(0L)) else (_root_.com.histmersion.api.catalogue.Geocode.TimeRankResultPart1(1), -c.span)
+    case None    => if ((c.undated) == _root_.com.histmersion.api.catalogue.Geocode.Candidate.UndatedResult(true)) then (_root_.com.histmersion.api.catalogue.Geocode.TimeRankResultPart1(0), _root_.com.histmersion.api.catalogue.Geocode.TimeRankResultPart2(0L)) else (_root_.com.histmersion.api.catalogue.Geocode.TimeRankResultPart1(1), -c.span)
     case Some(p) =>
-      if c.undated then (_root_.com.histmersion.api.catalogue.Geocode.TimeRankResultPart1(1), _root_.com.histmersion.api.catalogue.Geocode.TimeRankResultPart2(0L))
-      else if c.overlaps(p) then (_root_.com.histmersion.api.catalogue.Geocode.TimeRankResultPart1(0), _root_.com.histmersion.api.catalogue.Geocode.TimeRankResultPart2(0L))
+      if ((c.undated) == _root_.com.histmersion.api.catalogue.Geocode.Candidate.UndatedResult(true)) then (_root_.com.histmersion.api.catalogue.Geocode.TimeRankResultPart1(1), _root_.com.histmersion.api.catalogue.Geocode.TimeRankResultPart2(0L))
+      else if ((c.overlaps(p)) == _root_.com.histmersion.api.catalogue.Geocode.Candidate.OverlapsResult(true)) then (_root_.com.histmersion.api.catalogue.Geocode.TimeRankResultPart1(0), _root_.com.histmersion.api.catalogue.Geocode.TimeRankResultPart2(0L))
       else (_root_.com.histmersion.api.catalogue.Geocode.TimeRankResultPart1(2), c.gap(p))
 
   def rank(cs: List[Candidate], hint: KindHint, at: Option[Period], placeholderMin: com.histmersion.api.catalogue.Geocode.RankPlaceholderMin): List[Candidate] =
@@ -376,7 +376,7 @@ object Geocode:
       val (t, gap) = timeRank(c, at)
       (
         if isPlaceholder(c, placeholderMin) || c.gridCell then 1 else 0,
-        if c.byLabel then 0 else 1,
+        if ((c.byLabel) == _root_.com.histmersion.api.catalogue.Geocode.Candidate.ByLabel(true)) then 0 else 1,
         c.tier,
         kindRank(c.kind, hint),
         if broad(c.kind) && c.dimension == 0 then 1 else 0,
@@ -415,7 +415,7 @@ object Geocode:
   def choose(asked: com.histmersion.api.catalogue.Geocode.ChooseAsked, attempt: Attempt, ranked: List[Candidate], placeholderMin: com.histmersion.api.catalogue.Geocode.ChoosePlaceholderMin): Option[Resolution] =
     ranked.headOption.map { c =>
       val rough = Option.when(isPlaceholder(c, placeholderMin))(Approximation.Rough(c.shared))
-      val grid = Option.when(c.gridCell && rough.isEmpty)(Approximation.GridSquare)
+      val grid = Option.when(((c.gridCell) == _root_.com.histmersion.api.catalogue.Geocode.Candidate.GridCell(true)) && rough.isEmpty)(Approximation.GridSquare)
       Resolution(asked, c.id, c.label, c.lon, c.lat, attempt.approx.toList ++ rough.toList ++ grid.toList)
     }
 
@@ -452,7 +452,7 @@ object Geocode:
         to.lat,
         to.lon,
         km,
-        if to.isApproximate then s" (approximate: ${to.approximate.map(_.describe).mkString("; ")})" else ""
+        if ((to.isApproximate) == _root_.com.histmersion.api.catalogue.Geocode.Resolution.IsApproximateResult(true)) then s" (approximate: ${to.approximate.map(_.describe).mkString("; ")})" else ""
       )
 
   object Move:
@@ -482,7 +482,7 @@ object Geocode:
         to.label + " [" + to.placeId + "]",
         to.lat,
         to.lon,
-        if to.isApproximate then s" (approximate: ${to.approximate.map(_.describe).mkString("; ")})" else ""
+        if ((to.isApproximate) == _root_.com.histmersion.api.catalogue.Geocode.Resolution.IsApproximateResult(true)) then s" (approximate: ${to.approximate.map(_.describe).mkString("; ")})" else ""
       )
 
   object Placement:

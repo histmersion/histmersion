@@ -38,7 +38,7 @@ object AutopilotMarkdown:
     _root_.com.histmersion.api.automation.AutopilotMarkdown.PaceResult(s"${g.doneLast7} done in 7 days, ${g.open} open" + g.etaDays.fold("")(d => s", ~$d day(s) at that pace"))
 
   def focus(f: FocusInfo): com.histmersion.api.automation.AutopilotMarkdown.FocusResult =
-    val head = s"## Focus: ${if f.on then s"at most ${f.max} active goals" else "not in force"}" +
+    val head = s"## Focus: ${if ((f.on) == _root_.com.histmersion.api.automation.Autopilot.FocusInfo.On(true)) then s"at most ${f.max} active goals" else "not in force"}" +
       (if f.maxFrom == _root_.com.histmersion.api.automation.Autopilot.FocusInfo.MaxFrom("person") then " (set by a person)" else " (agents.autopilot.max-active-goals)")
     val lines = List(
       f.note.map(n => s"_${n}_"),
@@ -81,7 +81,7 @@ object AutopilotMarkdown:
       beforeBacklog: List[com.histmersion.api.automation.AutopilotMarkdown.StatusBeforeBacklog] = Nil,
       afterBacklog: List[com.histmersion.api.automation.AutopilotMarkdown.StatusAfterBacklog] = Nil
   ): com.histmersion.api.automation.AutopilotMarkdown.StatusResult =
-    val head = s"# Autopilot: ${if s.on then "ON" else "off"}" +
+    val head = s"# Autopilot: ${if ((s.on) == _root_.com.histmersion.api.automation.Autopilot.EngineStatus.On(true)) then "ON" else "off"}" +
       s.since.fold("")(t => s" (since $t${s.by.fold("")(b => s", by $b")})")
     val warn = List(
       s.drain.map(d =>
@@ -95,11 +95,11 @@ object AutopilotMarkdown:
           s"DRAINING since ${d.since}${if d.by.nonEmpty then s" by ${d.by}" else ""}: nothing new starts; " +
             s"${Plural.count(d.inFlight, "run")} in flight still finishing"
       ),
-      Option.when(!s.agentsEnabled)("agents are disabled on this server (agents.enabled = false): nothing runs"),
-      Option.when(s.agentsEnabled && !s.managersEnabled)(
+      Option.when(!((s.agentsEnabled) == _root_.com.histmersion.api.automation.Autopilot.EngineStatus.AgentsEnabled(true)))("agents are disabled on this server (agents.enabled = false): nothing runs"),
+      Option.when(((s.agentsEnabled) == _root_.com.histmersion.api.automation.Autopilot.EngineStatus.AgentsEnabled(true)) && !((s.managersEnabled) == _root_.com.histmersion.api.automation.Autopilot.EngineStatus.ManagersEnabled(true)))(
         "the managers are disabled (agents.managers.enabled = false): nothing runs"
       ),
-      Option.when(!s.cronsEnabled)(Autopilot.EngineStatus.CronsOff),
+      Option.when(!((s.cronsEnabled) == _root_.com.histmersion.api.automation.Autopilot.EngineStatus.CronsEnabled(true)))(Autopilot.EngineStatus.CronsOff),
       s.goalPlansWait.map(w => s"$w; a person may still approve a plan")
     ).flatten.map(w => s"- **$w**")
     val rules =

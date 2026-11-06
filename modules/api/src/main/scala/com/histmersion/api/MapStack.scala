@@ -33,8 +33,8 @@ object MapStack:
 
   val order: List[Pane] = Pane.values.toList
 
-  val domPanes: List[Pane] = order.filterNot(_.canvas)
+  val domPanes: List[Pane] = order.filterNot((refactorCallback => ((refactorCallback.canvas) == _root_.com.histmersion.api.MapStack.Pane.Canvas(true))))
 
   def pointsAboveAreas(order: List[Pane]): com.histmersion.api.MapStack.PointsAboveAreasResult =
-    val firstPoint = order.indexWhere(_.point)
-    firstPoint < 0 || order.drop(firstPoint).forall(_.point)
+    val firstPoint = order.indexWhere((refactorCallback => ((refactorCallback.point) == _root_.com.histmersion.api.MapStack.Pane.Point(true))))
+    _root_.com.histmersion.api.MapStack.PointsAboveAreasResult(firstPoint < 0 || order.drop(firstPoint).forall((refactorCallback => ((refactorCallback.point) == _root_.com.histmersion.api.MapStack.Pane.Point(true)))))

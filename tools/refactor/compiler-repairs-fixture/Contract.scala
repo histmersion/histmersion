@@ -2,6 +2,7 @@ package compilerfixture
 
 object Contract:
   @main def verifyCompilerRepairs(): Unit =
+    NativeConditions.check()
     val flagRows = List(Owned.FlagRecord(Owned.Flag(true)), Owned.FlagRecord(Owned.Flag(false)))
     assert(Owned.flags(flagRows).map(_.flag.value) == List(false))
     assert(Owned.brokenFlags(flagRows).map(_.flag.value) == List(false))

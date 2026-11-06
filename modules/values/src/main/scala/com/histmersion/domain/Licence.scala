@@ -45,7 +45,7 @@ object Licence:
       .toSet
 
   /** Whether a licence may be stored under an allowlist: never one of the never-stored families. */
-  def allowed(l: Licence, allow: Set[Licence.Family]): com.histmersion.domain.Licence.AllowedResult = !l.family.never && allow(l.family)
+  def allowed(l: Licence, allow: Set[Licence.Family]): com.histmersion.domain.Licence.AllowedResult = _root_.com.histmersion.domain.Licence.AllowedResult(!((l.family.never) == _root_.com.histmersion.domain.Licence.Family.NeverResult(true)) && allow(l.family))
 
   private val CcRe = """^cc-by(-nc)?(-sa|-nd)?(?:-([0-9](?:\.[0-9])?))?(?:-([a-z]{2,3}))?$""".r
 

@@ -921,7 +921,7 @@ object Place:
       val reason = in.reason.map(_.trim.replaceAll("\\s+", " ")).filter(_.nonEmpty)
       val period = Option.when(in.periodStart.isDefined || in.periodEnd.isDefined)((in.periodStart, in.periodEnd))
       val asked = in.pointLat.isDefined || in.pointLon.isDefined
-      if in.reset then
+      if ((in.reset) == _root_.com.histmersion.api.catalogue.Place.OverrideSet.Reset(true)) then
         if kind.isDefined || period.isDefined || asked then
           Left(invalid(_root_.com.histmersion.api.catalogue.Place.Overrides.InvalidMsg("`reset` drops the override — pass no kind, period or point with it")))
         else Right(OverrideEdit.Reset)
@@ -1231,10 +1231,10 @@ object Place:
     given Schema[TimeBasis] = WireEnum.schema
 
     def of(kind: com.histmersion.api.catalogue.Place.TimeBasis.OfKind, modern: com.histmersion.api.catalogue.Place.TimeBasis.OfModern, imported: com.histmersion.api.catalogue.Place.TimeBasis.OfImported, undated: com.histmersion.api.catalogue.Place.TimeBasis.OfUndated, hasGeometry: com.histmersion.api.catalogue.Place.TimeBasis.OfHasGeometry): TimeBasis =
-      if !(imported).value && (kind == _root_.com.histmersion.api.catalogue.Place.TimeBasis.OfKind(com.histmersion.api.catalogue.Place.Kind.Feature) || (modern && kind == _root_.com.histmersion.api.catalogue.Place.TimeBasis.OfKind(com.histmersion.api.catalogue.Place.Kind.Region)))
+      if !(imported).value && (kind == _root_.com.histmersion.api.catalogue.Place.TimeBasis.OfKind(com.histmersion.api.catalogue.Place.Kind.Feature) || (((modern) == _root_.com.histmersion.api.catalogue.Place.TimeBasis.OfModern(true)) && kind == _root_.com.histmersion.api.catalogue.Place.TimeBasis.OfKind(com.histmersion.api.catalogue.Place.Kind.Region)))
       then Timeless
       else if (modern).value then Modern
-      else if undated && !(hasGeometry).value then Grouping
+      else if ((undated) == _root_.com.histmersion.api.catalogue.Place.TimeBasis.OfUndated(true)) && !(hasGeometry).value then Grouping
       else if (undated).value then Findings
       else Dated
 

@@ -23,7 +23,7 @@ object ConfigEditMarkdown:
 
   def shown(f: Field): com.histmersion.api.settings.ConfigEditMarkdown.ShownResult =
     f.credential match
-      case Some(c) if !c.isSet => _root_.com.histmersion.api.settings.ConfigEditMarkdown.ShownResult("not set")
+      case Some(c) if !((c.isSet) == _root_.com.histmersion.api.settings.ConfigEdit.Credential.IsSetResult(true)) => _root_.com.histmersion.api.settings.ConfigEditMarkdown.ShownResult("not set")
       case Some(c)             => _root_.com.histmersion.api.settings.ConfigEditMarkdown.ShownResult("set" + c.shown.fold("")(s => s" (`$s`)"))
       case None                => _root_.com.histmersion.api.settings.ConfigEditMarkdown.ShownResult(f.effective.fold("(nothing)")(v => s"`$v`"))
 
@@ -46,7 +46,7 @@ object ConfigEditMarkdown:
     val head = List(
       s"# Settings",
       "",
-      s"File: ${p.file.fold("none")(f => s"`$f`" + (if p.exists then "" else " (not there yet)"))}"
+      s"File: ${p.file.fold("none")(f => s"`$f`" + (if ((p.exists) == _root_.com.histmersion.api.settings.ConfigEdit.Page.Exists(true)) then "" else " (not there yet)"))}"
     )
     val problems = if p.problems.isEmpty then Nil else "" :: "**Problems:**" :: p.problems.map(x => s"- $x")
     val body = p.sections.flatMap { s =>
@@ -70,4 +70,4 @@ object ConfigEditMarkdown:
       w.reload.toList.flatMap(r => List("", ReloadMarkdown.report(r).replaceFirst("^# ", "### ")))).mkString("\n")
 
   def restart(r: Restart): com.histmersion.api.settings.ConfigEditMarkdown.RestartResult =
-    if r.accepted then _root_.com.histmersion.api.settings.ConfigEditMarkdown.RestartResult(s"# Restarting\n\n${r.message}") else _root_.com.histmersion.api.settings.ConfigEditMarkdown.RestartResult(s"# Not restarted\n\n${r.message}")
+    if ((r.accepted) == _root_.com.histmersion.api.settings.ConfigEdit.Restart.Accepted(true)) then _root_.com.histmersion.api.settings.ConfigEditMarkdown.RestartResult(s"# Restarting\n\n${r.message}") else _root_.com.histmersion.api.settings.ConfigEditMarkdown.RestartResult(s"# Not restarted\n\n${r.message}")
