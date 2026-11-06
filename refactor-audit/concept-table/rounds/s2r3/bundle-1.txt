@@ -1,0 +1,11 @@
+## modules/upstreams/src/main/scala/com/histmersion/domain/library/acquisition/WorkLookup.scala
+43:17 [E007] 43 |        log.info(s"acquire: OpenAlex did not answer for $doi ($why) — falling back to Crossref") / |                 Found:    String / |                 Required: com.histmersion.plugin.Plugin.Log.InfoMessage
+71:45 [E007] 71 |      authors = work.map(_.authors).getOrElse(Nil), / |Found:    List[com.histmersion.domain.library.acquisition.WorkRef.Authors] / |Required: List[com.histmersion.plugin.WorkKey.Authors]
+72:43 [E007] 72 |      year = work.flatMap(_.year).map(Year(_)) / |                         Found:    (_$6 : com.histmersion.plugin.Year.T) / |                         Required: Int
+
+## modules/upstreams/src/main/scala/com/histmersion/upstreams/wikidata/WikidataEntities.scala
+57:15 [E172] 57 |        }.toMap) / |Cannot prove that (String, com.histmersion.upstreams.wikidata.WikidataItem) <:< (com.histmersion.upstreams.wikidata.WikidataItem.Id.T, V). / |where:    V is a type variable with constraint <: com.histmersion.upstreams.wikidata.WikidataItem / four errors found / (upstreams / Compile / compileIncremental) Compilation failed / elapsed time: 4 s, cache 96%, 26 disk cache hits, 1 onsite task
+
+## modules/config/src/main/scala/com/histmersion/config/CliPluginsConfig.scala
+11:141 [E006] 11 |  def repos: List[com.histmersion.config.CliPluginsConfig.MavenRepo] = mavenRepos.value.split(",").toList.map(_.trim).filter(_.nonEmpty).map(MavenRepo(_)) / |                         Not found: MavenRepo - did you mean mavenRepos?
+
