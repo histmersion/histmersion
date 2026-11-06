@@ -18,17 +18,9 @@ for f, ps in edits.items():
     ls = open(f).read().split('\n')
     for ln, col in sorted(ps, reverse=True):
         s = ls[ln - 1]
-        # the diagnostic starts at the receiver; the first `.value` closing that receiver at depth 0 is the leftover
-        depth = 0; i = col
-        while i < len(s):
-            ch = s[i]
-            if ch in '([{': depth += 1
-            elif ch in ')]}':
-                if depth == 0: break
-                depth -= 1
-            elif depth == 0 and s.startswith('.value', i) and not re.match(r'\w', s[i + 6:i + 7] or ' '):
-                ls[ln - 1] = s[:i] + s[i + 6:]; n += 1; break
-            i += 1
+        # the diagnostic's column points at the selected name
+        if s[col:col + 5] == 'value' and s[col - 1:col] == '.' and not re.match(r'\w', s[col + 5:col + 6] or ' '):
+            ls[ln - 1] = s[:col - 1] + s[col + 5:]; n += 1
     open(f, 'w').write('\n'.join(ls))
 print('leftover .value removed', n)
 files = [f for f in subprocess.check_output(['git', 'ls-files', 'modules']).decode().split() if f.endswith('.scala')]

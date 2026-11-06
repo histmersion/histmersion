@@ -102,7 +102,7 @@ object Issue:
 
     given WireEnumValues[Severity]:
       def all: Array[Severity] = Severity.values
-      def wire(e: Severity): _root_.com.histmersion.WireEnumValues.Wire = _root_.com.histmersion.WireEnumValues.Wire((Ascii.lower((e.toString))).value)
+      def wire(e: Severity): _root_.com.histmersion.WireEnumValues.Wire = _root_.com.histmersion.WireEnumValues.Wire((Ascii.lower((e.toString))))
       def fromWire(s: _root_.com.histmersion.WireEnumValues.Wire): _root_.scala.Option[Severity] = Severity.values.find(_.toString.equalsIgnoreCase((s).value.trim))
 
   /** Who decided an issue. */
@@ -127,5 +127,5 @@ object Issue:
 
     given WireEnumValues[DecidedBy]:
       def all: Array[DecidedBy] = DecidedBy.values
-      def wire(e: DecidedBy): _root_.com.histmersion.WireEnumValues.Wire = _root_.com.histmersion.WireEnumValues.Wire((Ascii.lower((e.toString))).value)
+      def wire(e: DecidedBy): _root_.com.histmersion.WireEnumValues.Wire = _root_.com.histmersion.WireEnumValues.Wire((Ascii.lower((e.toString))))
       def fromWire(s: _root_.com.histmersion.WireEnumValues.Wire): _root_.scala.Option[DecidedBy] = DecidedBy.values.find(_.toString.equalsIgnoreCase((s).value.trim))

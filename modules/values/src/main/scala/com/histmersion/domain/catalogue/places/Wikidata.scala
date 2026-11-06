@@ -14,7 +14,7 @@ object Wikidata:
 
   val CommonsCategory = "P373"
 
-  def isQid(s: String): Boolean = ((s).value.matches("Q[1-9][0-9]*"))
+  def isQid(s: String): Boolean = ((s).matches("Q[1-9][0-9]*"))
 
   /** Pure: the item a gazetteer place id names (`wikidata_q132564` → `Q132564`). */
   def qidOfPlaceId(id: com.histmersion.domain.catalogue.places.Wikidata.QidOfPlaceIdId): Option[com.histmersion.domain.catalogue.places.Wikidata.QidOfPlaceIdResult] =
