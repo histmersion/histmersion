@@ -47,3 +47,7 @@ Keep what is asserted exactly as it is: never change an expected value, drop a c
 (`md.value.contains("x")`) rather than changing what the code under test returns. If a test expects an API that no longer exists, or that disagrees
 with the code under test, do not guess: compare with the behaviour reference and report it. `assertEquals` between a newtype and a literal works through
 `import com.histmersion.testsupport.ComparedByValue.given`, which you may add.
+
+## Trusting a test run
+
+sbt 2 caches test results, even across `clean`: `test` may run a few suites or none and still exit 0. A pass counts only from `<project>/testOnly *`, and only if the total matches the expected number of tests.

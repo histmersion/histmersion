@@ -3,7 +3,7 @@
 import csv, json, re, subprocess, sys, collections
 csv.field_size_limit(10**8)
 R = 'refactor-audit/models/reviews/type-positions-after-native-scalars-2'
-OUT = 'refactor-audit/concept-table'
+OUT = sys.argv[2] if len(sys.argv) > 2 else 'refactor-audit/concept-table'
 mods = set(sys.argv[1].split(','))
 nt = [r for r in csv.DictReader(open(R + '/newtypes.tsv'), delimiter='\t') if r['scope'] == 'production']
 orig = {r['definition']: r for r in csv.DictReader(open(R + '/newtype-origins.tsv'), delimiter='\t')}
