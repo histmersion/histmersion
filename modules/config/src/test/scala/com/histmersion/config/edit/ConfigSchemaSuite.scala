@@ -1,8 +1,10 @@
 package com.histmersion.config.edit
 
+import com.histmersion.config.testsupport.ComparedByValue.given
+
 class ConfigSchemaSuite extends munit.FunSuite:
   private val schema = ConfigSchema.reference
-  private def key(s: String) = SettingKey.parse(s).toOption.get
+  private def key(s: String) = SettingKey.parse(SettingKey.ParseRaw(s)).toOption.get
   private def field(s: String) = schema.field(key(s)).getOrElse(fail(s"no field $s"))
 
   test("every leaf of reference.conf is a field, with its kind and default"):
@@ -16,8 +18,8 @@ class ConfigSchemaSuite extends munit.FunSuite:
 
   test("the documentation: the comment at the line's end, its environment line's, and the lines that continue them"):
     val keep = field("backups.keep").doc
-    assert(keep.startsWith("archives left after a dump"), keep)
-    assert(keep.contains("0 keeps every one"), keep)
+    assert(keep.value.startsWith("archives left after a dump"), keep)
+    assert(keep.value.contains("0 keeps every one"), keep)
     val narrow = field("ui.narrow-max-width-px").doc
     assertEquals(narrow, "at or below this viewport width the web UI switches to its phone layout (map first, drawers)")
     assertEquals(
@@ -26,7 +28,7 @@ class ConfigSchemaSuite extends munit.FunSuite:
     )
     assertEquals(field("ui.viewport-debounce-ms").doc, "\"only papers in view\": delay after moveend/zoomend")
     assert(
-      field("ui.base-map-source").doc.startsWith("which base maps the page offers"),
+      field("ui.base-map-source").doc.value.startsWith("which base maps the page offers"),
       field("ui.base-map-source").doc
     )
     assertEquals(field("ui.debounce.reload-ms").doc, "State change → /api/findings + /api/sources")
@@ -55,7 +57,7 @@ class ConfigSchemaSuite extends munit.FunSuite:
     assertEquals(schema.closest(key("backups.kep")).map(_.relative).headOption, Some("backups.keep"))
 
   test("the sections are reference.conf's top-level blocks, in its order"):
-    val names = schema.sections.map(_._1)
+    val names = schema.sections.map(_._1.value)
     assertEquals(names.take(3), List("server", "db", "converter"))
     assert(names.contains("setup") && names.contains("basemap"))
-    assert(schema.blockDoc(key("config")).startsWith("reloading this config in place"), schema.blockDoc(key("config")))
+    assert(schema.blockDoc(key("config")).value.startsWith("reloading this config in place"), schema.blockDoc(key("config")))

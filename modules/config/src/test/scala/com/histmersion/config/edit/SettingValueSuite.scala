@@ -23,7 +23,7 @@ class SettingValueSuite extends munit.FunSuite:
     )
     assertEquals(
       SettingValue.parse(com.histmersion.config.edit.SettingValue.Typed("a, b ,c"), SettingKind.Items),
-      Right(SettingValue.Items(List("a", "b", "c").map(SettingValue.Text(_))))
+      Right(SettingValue.Items(List("a", "b", "c").map(t => SettingValue.Text(SettingValue.Text.Value(t)))))
     )
     assertEquals(SettingValue.parse(com.histmersion.config.edit.SettingValue.Typed(""), SettingKind.Items), Right(SettingValue.Items(Nil)))
     assert(SettingValue.parse(com.histmersion.config.edit.SettingValue.Typed("[a, {b = 1}]"), SettingKind.Items).isLeft, "an object in a list is no plain value")

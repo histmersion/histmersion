@@ -4,6 +4,7 @@ import hearth.kindlings.optics.syntax.*
 
 import com.histmersion.api.GeoPoint
 import com.histmersion.api.given
+import com.histmersion.testsupport.ComparedByValue.given
 import com.histmersion.api.library.Confidence
 import com.histmersion.domain.library.sources.SourceNote
 import com.histmersion.api.catalogue.Period
@@ -14,10 +15,10 @@ import com.histmersion.api.library.{Edge, Finding, Source}
   */
 class SourceNoteSuite extends munit.FunSuite:
 
-  private val ck = "haak2015_massive"
+  private val ck = com.histmersion.api.library.Citekey("haak2015_massive")
 
   private val source = Source(
-    citekey = com.histmersion.api.library.Citekey(ck),
+    citekey = ck,
     title = com.histmersion.api.library.Title("Massive migration from the steppe"),
     authors = (List("Wolfgang Haak", "David Reich")).map(com.histmersion.api.library.AuthorName.apply),
     doi = (Some("10.1038/nature14317")).map(com.histmersion.api.library.Doi.apply),
@@ -36,20 +37,20 @@ class SourceNoteSuite extends munit.FunSuite:
     ocrMarkdown = Some(com.histmersion.api.library.Source.OcrMarkdown("MEGABYTES of converted paper that must NOT be exported")),
     findings = List(
       Finding(
-        s"$ck#0",
-        com.histmersion.api.library.Citekey(ck),
+        com.histmersion.api.library.Finding.Id(s"$ck#0"),
+        ck,
         com.histmersion.api.library.Finding.Claim("Corded Ware derived ~75% of ancestry from Yamnaya."),
         Some(com.histmersion.api.library.Finding.Region("Central Europe (Germany)")),
-        Some(GeoPoint(10.4, 51.2)),
+        Some(GeoPoint(com.histmersion.api.catalogue.Longitude(10.4), com.histmersion.api.catalogue.Latitude(51.2))),
         Some(Period(com.histmersion.api.catalogue.Year(-2500), com.histmersion.api.catalogue.Year(-2200))),
         Some(com.histmersion.api.library.Finding.PeriodName("Late Neolithic / Corded Ware")),
         List(com.histmersion.api.library.Finding.Tags("corded_ware"), com.histmersion.api.library.Finding.Tags("yamnaya_culture")),
         Some(Confidence.High)
       ),
-      Finding(s"$ck#1", com.histmersion.api.library.Citekey(ck), com.histmersion.api.library.Finding.Claim("An undated, unplaced claim."), None, None, None, None, Nil, None)
+      Finding(com.histmersion.api.library.Finding.Id(s"$ck#1"), ck, com.histmersion.api.library.Finding.Claim("An undated, unplaced claim."), None, None, None, None, Nil, None)
     ),
-    edges = List(Edge(com.histmersion.api.library.Citekey(ck), com.histmersion.api.library.Citekey("anthony2007_horse"), com.histmersion.api.library.Edge.Kind("references"))),
-    notes = Some("# Massive migration\n\nSynthesis citing [[anthony2007_horse]].\n\n## References\n\n- one"),
+    edges = List(Edge(ck, com.histmersion.api.library.Citekey("anthony2007_horse"), com.histmersion.api.library.Edge.Kind.References)),
+    notes = Some(com.histmersion.api.library.Source.Notes("# Massive migration\n\nSynthesis citing [[anthony2007_horse]].\n\n## References\n\n- one")),
     updatedAt = Some(com.histmersion.api.library.Source.UpdatedAt("2026-08-25T10:00:00.000000Z"))
   )
 
@@ -78,12 +79,12 @@ class SourceNoteSuite extends munit.FunSuite:
 
   test("the notes article is the BODY, and comes back as notes"):
     val text = SourceNote.note(source)
-    assert(text.contains("\n---\n"), text.take(200))
-    assert(text.endsWith("- one\n"), text.takeRight(80))
+    assert(text.value.contains("\n---\n"), text.value.take(200))
+    assert(text.value.endsWith("- one\n"), text.value.takeRight(80))
     assertEquals(SourceNote.parseNote(text, ck).get.notes, source.notes)
 
   test("ocrMarkdown is NOT exported — the paper body lives in md/<citekey>/paper.md"):
-    assert(!SourceNote.note(source).contains("MEGABYTES"))
+    assert(!SourceNote.note(source).value.contains("MEGABYTES"))
 
   test("export is stable: exporting a parsed export gives the identical text"):
     val once = SourceNote.note(source)
@@ -116,10 +117,10 @@ class SourceNoteSuite extends munit.FunSuite:
     assertEquals(back.period, None)
 
   test("superseded_by is exported from the edge and parsed back into it"):
-    val s = source.modify(_.edges).setTo(List(Edge(com.histmersion.api.library.Citekey(ck), com.histmersion.api.library.Citekey("reich2018_who"), "superseded_by")))
+    val s = source.modify(_.edges).setTo(List(Edge(ck, com.histmersion.api.library.Citekey("reich2018_who"), com.histmersion.api.library.Edge.Kind.SupersededBy)))
     val back = SourceNote.parseNote(SourceNote.note(s), ck).get
-    assert(back.edges.contains(Edge(com.histmersion.api.library.Citekey(ck), com.histmersion.api.library.Citekey("reich2018_who"), "superseded_by")), back.edges.toString)
+    assert(back.edges.contains(Edge(ck, com.histmersion.api.library.Citekey("reich2018_who"), com.histmersion.api.library.Edge.Kind.SupersededBy)), back.edges.toString)
 
   test("wikilinks in the notes body are re-derived as reference edges"):
     val back = SourceNote.parseNote(SourceNote.note(source), ck).get
-    assert(back.edges.contains(Edge(com.histmersion.api.library.Citekey(ck), com.histmersion.api.library.Citekey("anthony2007_horse"), "references")), back.edges.toString)
+    assert(back.edges.contains(Edge(ck, com.histmersion.api.library.Citekey("anthony2007_horse"), com.histmersion.api.library.Edge.Kind.References)), back.edges.toString)

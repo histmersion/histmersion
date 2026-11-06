@@ -4,6 +4,7 @@ import io.circe.parser.parse
 import com.histmersion.upstreams.archiveorg.ArchiveFile
 import com.histmersion.upstreams.parse.AcquireParse
 import com.histmersion.upstreams.unpaywall.OaAccess
+import com.histmersion.upstreams.testsupport.ComparedByValue.given
 
 /** The upstream JSON parsers, driven by REAL responses captured from OpenAlex, Crossref, Unpaywall, Semantic Scholar,
   * archive.org and Wikipedia (trimmed, in `src/test/resources/acquire`). Fixtures rather than mocks: when an upstream
@@ -19,13 +20,13 @@ class AcquireParseSuite extends munit.FunSuite:
     val w = AcquireParse.openalexWork(fixture("openalex_work.json"))
     assertEquals(w.doi, Some("10.1038/nature14317"))
     assertEquals(w.openalexId, Some("W2050876420"))
-    assertEquals(w.title.map(_.take(16)), Some("Massive migratio"))
+    assertEquals(w.title.map(_.value.take(16)), Some("Massive migratio"))
     assertEquals(w.year, Some(2015))
     assertEquals(w.authors.head, "Wolfgang Haak")
     assertEquals(w.venue, Some("Nature"))
-    assert(w.isOa)
+    assert(w.isOa.value)
     assertEquals(w.oaStatus, Some("green"))
-    assert(!w.isRetracted)
+    assert(!w.isRetracted.value)
     assertEquals(w.workType, Some("article"))
     assertEquals(w.referencedWorks.head, "W434762813")
     // the arXiv preprint is the OA location of this paywalled Nature paper
@@ -54,7 +55,7 @@ class AcquireParseSuite extends munit.FunSuite:
 
   test("OpenAlex inverted-index abstracts are put back in word order"):
     val w = AcquireParse.openalexWork(fixture("openalex_work.json"))
-    assert(w.abstractText.exists(_.startsWith("‘The collapse c. 1200 BC’")), w.abstractText)
+    assert(w.abstractText.exists(_.value.startsWith("‘The collapse c. 1200 BC’")), w.abstractText)
 
   test("OpenAlex search page → several works"):
     val ws = AcquireParse.openalexWorks(fixture("openalex_search.json"))
@@ -68,7 +69,7 @@ class AcquireParseSuite extends munit.FunSuite:
   test("OpenAlex citing works become follow-up rows with no intents (OpenAlex has none)"):
     val rows = AcquireParse.openalexCitations(fixture("openalex_search.json"))
     assertEquals(rows.size, 3)
-    assert(rows.forall(r => r.intents.isEmpty && r.contexts.isEmpty && !r.isInfluential))
+    assert(rows.forall(r => r.intents.isEmpty && r.contexts.isEmpty && !r.isInfluential.value))
 
   // ── Crossref ────────────────────────────────────────────────────────────────────────────────
   test("Crossref work → WorkRef (the metadata fallback)"):
@@ -77,14 +78,14 @@ class AcquireParseSuite extends munit.FunSuite:
     assertEquals(w.year, Some(2015))
     assertEquals(w.venue, Some("Nature"))
     assertEquals(w.authors.head, "Wolfgang Haak")
-    assert(w.citedByCount.exists(_ > 1000))
+    assert(w.citedByCount.exists(_.value > 1000))
 
   test("Crossref reference list keeps DOIs, years and the unstructured fallback"):
     val refs = AcquireParse.crossrefReferences(fixture("crossref_work.json"))
     assertEquals(refs.size, 6)
     assertEquals(refs.head.doi, Some("10.1038/nature13810"))
     assertEquals(refs.head.year, Some(2014))
-    assert(refs.head.raw.exists(_.contains("Fu, Q.")))
+    assert(refs.head.raw.exists(_.value.contains("Fu, Q.")))
 
   test("Crossref update-to notices are read (this DOI IS a retraction notice)"):
     val ups = AcquireParse.crossrefUpdates(fixture("crossref_retracted.json"))
@@ -113,10 +114,10 @@ class AcquireParseSuite extends munit.FunSuite:
   test("S2 citations carry intents, influence and contexts"):
     val rows = AcquireParse.s2Citations(fixture("s2_citations.json"))
     assertEquals(rows.size, 5)
-    assert(rows.exists(_.isInfluential))
+    assert(rows.exists(_.isInfluential.value))
     assert(rows.exists(_.contexts.nonEmpty))
     assert(rows.forall(_.title.isDefined))
-    assert(rows.head.doi.exists(_.startsWith("10.")))
+    assert(rows.head.doi.exists(_.value.startsWith("10.")))
     assertEquals(AcquireParse.s2Next(fixture("s2_citations.json")), Some(5))
 
   // ── archive.org ─────────────────────────────────────────────────────────────────────────────
@@ -124,23 +125,23 @@ class AcquireParseSuite extends munit.FunSuite:
     val i = AcquireParse.archiveItem(com.histmersion.upstreams.ArchiveId("racesofeurope031695mbp"), fixture("archive_metadata.json"))
     assertEquals(i.title, Some("The Races Of Europe"))
     assertEquals(i.year, Some(1939))
-    assert(!i.lendingOnly)
-    assertEquals(i.files.map(_.name).sorted, List("racesofeurope031695mbp.epub", "racesofeurope031695mbp.pdf"))
+    assert(!i.lendingOnly.value)
+    assertEquals(i.files.map(_.name.value).sorted, List("racesofeurope031695mbp.epub", "racesofeurope031695mbp.pdf"))
 
   test("a lending-only item is detected — it is NEVER downloaded"):
     val i = AcquireParse.archiveItem(com.histmersion.upstreams.ArchiveId("blackathenaafroa00bern"), fixture("archive_lending.json"))
-    assert(i.lendingOnly, "access-restricted-item=true must set lendingOnly")
+    assert(i.lendingOnly.value, "access-restricted-item=true must set lendingOnly")
 
   test("archive.org search docs → items"):
     val items = AcquireParse.archiveSearch(fixture("archive_search.json"))
     assert(items.size >= 3)
-    assert(items.forall(_.identifier.nonEmpty))
+    assert(items.forall(_.identifier.value.nonEmpty))
 
   test("file choice prefers clean text (epub / OCR _text.pdf) over the raw image scan"):
     val files = List(
-      ArchiveFile(com.histmersion.upstreams.archiveorg.ArchiveFile.Name("book.pdf"), Some(com.histmersion.upstreams.archiveorg.ArchiveFile.Format("Image Container PDF")), 400.0),
-      ArchiveFile(com.histmersion.upstreams.archiveorg.ArchiveFile.Name("book_text.pdf"), Some(com.histmersion.upstreams.archiveorg.ArchiveFile.Format("Text PDF")), 12.0),
-      ArchiveFile(com.histmersion.upstreams.archiveorg.ArchiveFile.Name("book.epub"), Some(com.histmersion.upstreams.archiveorg.ArchiveFile.Format("EPUB")), 3.0)
+      ArchiveFile(com.histmersion.upstreams.archiveorg.ArchiveFile.Name("book.pdf"), Some(com.histmersion.upstreams.archiveorg.ArchiveFile.Format("Image Container PDF")), com.histmersion.upstreams.archiveorg.ArchiveFile.Megabytes(400.0)),
+      ArchiveFile(com.histmersion.upstreams.archiveorg.ArchiveFile.Name("book_text.pdf"), Some(com.histmersion.upstreams.archiveorg.ArchiveFile.Format("Text PDF")), com.histmersion.upstreams.archiveorg.ArchiveFile.Megabytes(12.0)),
+      ArchiveFile(com.histmersion.upstreams.archiveorg.ArchiveFile.Name("book.epub"), Some(com.histmersion.upstreams.archiveorg.ArchiveFile.Format("EPUB")), com.histmersion.upstreams.archiveorg.ArchiveFile.Megabytes(3.0))
     )
     assertEquals(AcquireParse.pickArchiveFile(files, None).map(_.name), Some("book.epub"))
     assertEquals(AcquireParse.pickArchiveFile(files, Some(com.histmersion.upstreams.parse.AcquireParse.WantedFileKind("pdf"))).map(_.name), Some("book_text.pdf"))
@@ -152,7 +153,7 @@ class AcquireParseSuite extends munit.FunSuite:
     assertEquals(AcquireParse.wikiTitle(json), Some("Late Bronze Age collapse"))
     val (dois, _) = AcquireParse.wikiRefs(AcquireParse.wikiText(json).get)
     assert(dois.contains("10.15184/aqy.2023.187"), dois)
-    assert(dois.forall(d => d.startsWith("10.") && !d.endsWith(".") && !d.contains("}")), dois)
+    assert(dois.forall(d => d.value.startsWith("10.") && !d.value.endsWith(".") && !d.value.contains("}")), dois)
     assertEquals(dois.distinct, dois)
 
   test("inline markup in a title is dropped without splitting words"):
@@ -176,12 +177,12 @@ class AcquireParseSuite extends munit.FunSuite:
   test("a Crossref search page parses to works, without the page number some publishers glue on"):
     val ws = AcquireParse.crossrefWorks(fixture("crossref_search.json"))
     assertEquals(ws.size, 3)
-    assert(ws.forall(_.doi.exists(_.startsWith("10.1515/9783112213063"))), ws.map(_.doi))
+    assert(ws.forall(_.doi.exists(_.value.startsWith("10.1515/9783112213063"))), ws.map(_.doi))
     assert(
-      ws.flatMap(_.title).exists(_.startsWith("Writing and Religion in Minoan and Mycenaean Society")),
+      ws.flatMap(_.title).exists(_.value.startsWith("Writing and Religion in Minoan and Mycenaean Society")),
       ws.map(_.title)
     )
-    assert(ws.flatMap(_.title).forall(t => !t.head.isDigit), ws.map(_.title))
+    assert(ws.flatMap(_.title).forall(t => !t.value.head.isDigit), ws.map(_.title))
     assertEquals(
       AcquireParse.gluedPageNumber("1177 B.C.: The Year Civilization Collapsed"),
       "1177 B.C.: The Year Civilization Collapsed"

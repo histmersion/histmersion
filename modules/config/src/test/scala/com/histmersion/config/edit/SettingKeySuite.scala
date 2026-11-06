@@ -1,5 +1,7 @@
 package com.histmersion.config.edit
 
+import com.histmersion.config.testsupport.ComparedByValue.given
+
 class SettingKeySuite extends munit.FunSuite:
 
   test("a key with or without histmersion. is the same key"):

@@ -3,6 +3,7 @@ package com.histmersion.files
 import hearth.kindlings.optics.syntax.*
 
 import com.histmersion.api.given
+import com.histmersion.testsupport.ComparedByValue.given
 
 import java.io.{ByteArrayInputStream, ByteArrayOutputStream}
 import java.nio.charset.StandardCharsets.UTF_8
@@ -22,7 +23,11 @@ class BundleEntitiesSuite extends munit.FunSuite:
   private val U3 = UUID.fromString("01920000-0000-7000-8000-000000000003")
   private val I = UUID.fromString("01910000-0000-7000-8000-0000000000aa")
 
-  private def goal(slug: String, updated: String = "2026-10-03T09:00:00.000000Z", notes: Option[String] = None) =
+  private def goal(
+      slug: Bundle.Goal.Slug,
+      updated: Bundle.Goal.UpdatedAt = Bundle.Goal.UpdatedAt("2026-10-03T09:00:00.000000Z"),
+      notes: Option[Bundle.Goal.Notes] = None
+  ) =
     Bundle.Goal(
       U1,
       I,
@@ -43,14 +48,14 @@ class BundleEntitiesSuite extends munit.FunSuite:
   private def tar(entries: (String, Array[Byte])*): Array[Byte] =
     val out = ByteArrayOutputStream()
     val w = BundleTar.Writer(out)
-    entries.foreach((n, b) => w.bytes(n, b).fold(e => fail(e), identity))
+    entries.foreach((n, b) => w.bytes(BundleTar.Entry.Name(n), b).fold(e => fail(e.value), identity))
     w.finish()
     out.toByteArray
 
   private def untar(b: Array[Byte]): List[(String, String)] =
     val r = BundleTar.Reader(ByteArrayInputStream(b))
     Iterator
-      .continually(r.next().fold(e => fail(e), identity))
+      .continually(r.next().fold(e => fail(e.value), identity))
       .takeWhile(_.isDefined)
       .flatten
       .map(e => e.name -> String(r.readAll(), UTF_8))
@@ -77,8 +82,8 @@ class BundleEntitiesSuite extends munit.FunSuite:
       None,
       None,
       com.histmersion.api.exchange.Bundle.Source.AddedDate("2026-01-01"),
-      Some("b" * 64),
-      Some("c" * 64),
+      Some(Bundle.Source.BodySha256("b" * 64)),
+      Some(Bundle.Source.OriginalSha256("c" * 64)),
       Some(com.histmersion.api.exchange.Bundle.Source.OriginalExt("pdf")),
       com.histmersion.api.exchange.Bundle.Source.UpdatedAt("2026-10-02T00:00:00.000000Z")
     )
@@ -178,14 +183,14 @@ class BundleEntitiesSuite extends munit.FunSuite:
           None,
           None,
           Some(com.histmersion.api.exchange.Bundle.EventCatalogue.NotAfter(-1600)),
-          Some(36.4),
-          Some(25.4),
+          Some(com.histmersion.api.catalogue.Latitude(36.4)),
+          Some(com.histmersion.api.catalogue.Longitude(25.4)),
           Some(com.histmersion.api.exchange.Bundle.EventCatalogue.Vei(7)),
           None,
           None,
           com.histmersion.api.exchange.Bundle.EventCatalogue.Historicity("attested"),
           io.circe.Json.obj("VEI" -> io.circe.Json.fromInt(7)),
-          at
+          Bundle.EventCatalogue.RetrievedAt(at)
         )
       ),
       eventCandidates = List(
@@ -193,15 +198,15 @@ class BundleEntitiesSuite extends munit.FunSuite:
           U1,
           U2,
           com.histmersion.api.library.Citekey("ck2001_a"),
-          0.75,
+          Bundle.EventCandidate.Score(0.75),
           com.histmersion.api.exchange.Bundle.EventCandidate.Status("confirmed"),
           List(com.histmersion.api.exchange.Bundle.EventCandidate.Findings("ck2001_a#0")),
           io.circe.Json.arr(),
           List(com.histmersion.api.exchange.Bundle.EventCandidate.Reasons("near")),
-          at
+          Bundle.EventCandidate.ComputedAt(at)
         )
       ),
-      eventChecks = List(Bundle.EventCheck(U1, at)),
+      eventChecks = List(Bundle.EventCheck(U1, Bundle.EventCheck.CheckedAt(at))),
       corrections = List(
         Bundle.Correction(
           com.histmersion.api.exchange.Bundle.Correction.TargetKind("event"),
@@ -213,12 +218,12 @@ class BundleEntitiesSuite extends munit.FunSuite:
           com.histmersion.api.exchange.Bundle.Correction.UpstreamValue("\"Santorini\""),
           None,
           com.histmersion.api.exchange.Bundle.Correction.Status("active"),
-          at,
+          Bundle.Correction.CreatedAt(at),
           com.histmersion.api.exchange.Bundle.Correction.UpdatedAt("2026-10-06T00:00:00.000000Z"),
           None
         )
       ),
-      siteTypes = List(Bundle.SiteType(com.histmersion.api.exchange.Bundle.SiteType.PlaceId("pleiades:599928"), Some(com.histmersion.api.exchange.Bundle.SiteType.Value("settlement")), Some(at)))
+      siteTypes = List(Bundle.SiteType(com.histmersion.api.exchange.Bundle.SiteType.PlaceId("pleiades:599928"), Some(com.histmersion.api.exchange.Bundle.SiteType.Value("settlement")), Some(Bundle.SiteType.CheckedAt(at))))
     )
     val payloads = es.payloads.toMap
     List(
@@ -265,10 +270,10 @@ class BundleEntitiesSuite extends munit.FunSuite:
     assert(!newer(None, None))
 
   test("the reader reports every problem of a bundle, not just the first"):
-    val es = BundleEntities(goals = List(goal("g")))
+    val es = BundleEntities(goals = List(goal(Bundle.Goal.Slug("g"))))
     val ps = es.payloads
     val m = Bundle.Manifest(
-      Bundle.Format,
+      Bundle.Manifest.Format(Bundle.Format),
       com.histmersion.api.exchange.Bundle.Manifest.FormatVersion(1),
       com.histmersion.api.exchange.Bundle.Manifest.SchemaVersion("33"),
       U1,

@@ -2,6 +2,7 @@ package com.histmersion.upstreams
 
 import io.circe.parser.parse as json
 import com.histmersion.upstreams.wikidata.{WikidataEntities, WikidataStatement}
+import com.histmersion.upstreams.testsupport.ComparedByValue.given
 
 /** Wikidata's `wbgetentities` as the media collections and the host's label lookup read it: the URL of a batch of
   * items, their picture statements and Commons category, the best statements of a property. Pure.
@@ -39,13 +40,13 @@ class WikidataEntitiesSuite extends munit.FunSuite:
 
   test("an API error (maxlag) is a Left with its code"):
     val err = json("""{"error":{"code":"maxlag","info":"Waiting for wdqs1013: 11 seconds lagged."}}""").toOption.get
-    assertEquals(WikidataEntities.items(err, Set(com.histmersion.upstreams.wikidata.WikidataStatement.Property("P18"))).left.toOption.map(_.takeWhile(_ != ':')), Some("maxlag"))
+    assertEquals(WikidataEntities.items(err, Set(com.histmersion.upstreams.wikidata.WikidataStatement.Property("P18"))).left.toOption.map(_.value.takeWhile(_ != ':')), Some("maxlag"))
 
   test("the wbgetentities URL: ids joined and encoded, maxlag only when set"):
     val u = WikidataEntities.url(com.histmersion.upstreams.wikidata.WikidataEntities.Api("https://wd/w/api.php"), List(com.histmersion.upstreams.wikidata.WikidataItem.Id("Q1"), com.histmersion.upstreams.wikidata.WikidataItem.Id("Q2")), com.histmersion.upstreams.wikidata.WikidataEntities.Maxlag(5))
     assert(
-      u.startsWith("https://wd/w/api.php?action=wbgetentities&format=json&formatversion=2&props=claims&ids=Q1%7CQ2"),
+      u.value.startsWith("https://wd/w/api.php?action=wbgetentities&format=json&formatversion=2&props=claims&ids=Q1%7CQ2"),
       u
     )
-    assert(u.endsWith("&maxlag=5"), u)
-    assert(!WikidataEntities.url(com.histmersion.upstreams.wikidata.WikidataEntities.Api("https://wd/w/api.php"), List(com.histmersion.upstreams.wikidata.WikidataItem.Id("Q1")), com.histmersion.upstreams.wikidata.WikidataEntities.Maxlag(0)).contains("maxlag"))
+    assert(u.value.endsWith("&maxlag=5"), u)
+    assert(!WikidataEntities.url(com.histmersion.upstreams.wikidata.WikidataEntities.Api("https://wd/w/api.php"), List(com.histmersion.upstreams.wikidata.WikidataItem.Id("Q1")), com.histmersion.upstreams.wikidata.WikidataEntities.Maxlag(0)).value.contains("maxlag"))

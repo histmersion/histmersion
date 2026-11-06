@@ -3,6 +3,7 @@ package com.histmersion.util.data.exchange
 import hearth.kindlings.optics.syntax.*
 
 import com.histmersion.api.given
+import com.histmersion.testsupport.ComparedByValue.given
 
 import java.io.{ByteArrayInputStream, ByteArrayOutputStream}
 import java.nio.charset.StandardCharsets.UTF_8
@@ -20,7 +21,11 @@ class BundleFormatSuite extends munit.FunSuite:
   private val U3 = UUID.fromString("01920000-0000-7000-8000-000000000003")
   private val I = UUID.fromString("01910000-0000-7000-8000-0000000000aa")
 
-  private def goal(slug: String, updated: String = "2026-10-03T09:00:00.000000Z", notes: Option[String] = None) =
+  private def goal(
+      slug: Bundle.Goal.Slug,
+      updated: Bundle.Goal.UpdatedAt = Bundle.Goal.UpdatedAt("2026-10-03T09:00:00.000000Z"),
+      notes: Option[Bundle.Goal.Notes] = None
+  ) =
     Bundle.Goal(
       U1,
       I,
@@ -38,38 +43,41 @@ class BundleFormatSuite extends munit.FunSuite:
 
   // ── tar ──────────────────────────────────────────────────────────────────────────────────────
 
-  private def tar(entries: (String, Array[Byte])*): Array[Byte] =
+  private def tar(entries: (BundleTar.Entry.Name, Array[Byte])*): Array[Byte] =
     val out = ByteArrayOutputStream()
     val w = BundleTar.Writer(out)
-    entries.foreach((n, b) => w.bytes(n, b).fold(e => fail(e), identity))
+    entries.foreach((n, b) => w.bytes(n, b).fold(e => fail(e.value), identity))
     w.finish()
     out.toByteArray
 
   private def untar(b: Array[Byte]): List[(String, String)] =
     val r = BundleTar.Reader(ByteArrayInputStream(b))
     Iterator
-      .continually(r.next().fold(e => fail(e), identity))
+      .continually(r.next().fold(e => fail(e.value), identity))
       .takeWhile(_.isDefined)
       .flatten
-      .map(e => e.name -> String(r.readAll(), UTF_8))
+      .map(e => e.name.value -> String(r.readAll(), UTF_8))
       .toList
 
   test("tar: what is written is read back, in order, whatever the sizes (0, 1, 512, 513 bytes)"):
     val es = List("a" -> "", "b/c" -> "x", "d" -> ("y" * 512), "e" -> ("z" * 513))
-    assertEquals(untar(tar(es.map((n, s) => n -> s.getBytes(UTF_8))*)), es)
+    assertEquals(untar(tar(es.map((n, s) => BundleTar.Entry.Name(n) -> s.getBytes(UTF_8))*)), es)
 
   test("tar: the same entries give the same bytes (no timestamps, owners or modes vary)"):
-    val es = List("manifest.json" -> "{}".getBytes(UTF_8), Bundle.blobPath("ab" * 32) -> Array[Byte](1, 2, 3))
+    val es = List(
+      BundleTar.Entry.Name("manifest.json") -> "{}".getBytes(UTF_8),
+      BundleTar.Entry.Name(Bundle.blobPath(com.histmersion.api.Sha256("ab" * 32))) -> Array[Byte](1, 2, 3)
+    )
     assert(java.util.Arrays.equals(tar(es*), tar(es*)))
 
   test("tar: a header is ustar, 512 bytes, checksummed; a bad checksum or name is refused"):
-    val h = BundleTar.header(com.histmersion.util.data.exchange.BundleTar.Entry.Name("manifest.json"), com.histmersion.ByteCount(10)).fold(e => fail(e), identity)
+    val h = BundleTar.header(com.histmersion.util.data.exchange.BundleTar.Entry.Name("manifest.json"), com.histmersion.ByteCount(10)).fold(e => fail(e.value), identity)
     assertEquals(h.length, 512)
     assertEquals(String(h.slice(257, 262), UTF_8), "ustar")
     assertEquals(BundleTar.parseHeader(h), Right(Some(BundleTar.Entry(com.histmersion.util.data.exchange.BundleTar.Entry.Name("manifest.json"), com.histmersion.util.data.exchange.BundleTar.Entry.Size(10)))))
     assert(BundleTar.parseHeader(h.updated(0, 'M'.toByte)).isLeft)
     assertEquals(BundleTar.parseHeader(new Array[Byte](512)), Right(None))
-    assert(BundleTar.header("x" * 101, com.histmersion.ByteCount(1)).isLeft)
+    assert(BundleTar.header(BundleTar.Entry.Name("x" * 101), com.histmersion.ByteCount(1)).isLeft)
     assert(BundleTar.header(com.histmersion.util.data.exchange.BundleTar.Entry.Name("x"), com.histmersion.ByteCount(-1)).isLeft)
 
   test("tar: an entry that writes more or less than it declared is an error"):
@@ -77,13 +85,13 @@ class BundleFormatSuite extends munit.FunSuite:
     assert(w.entry(com.histmersion.util.data.exchange.BundleTar.Entry.Name("a"), com.histmersion.ByteCount(3))(_.write(Array[Byte](1, 2))).isLeft)
 
   test("tar: a truncated archive is an error, not a silent short read"):
-    val b = tar("a" -> ("q" * 4000).getBytes(UTF_8))
+    val b = tar(BundleTar.Entry.Name("a") -> ("q" * 4000).getBytes(UTF_8))
     val r = BundleTar.Reader(ByteArrayInputStream(b.take(b.length / 2)))
     val outcome = scala.util.Try(r.next().flatMap(_ => scala.util.Try(r.readAll()).toEither.left.map(_.getMessage)))
     assert(outcome.isFailure || outcome.get.isLeft || r.next().isLeft)
 
   test("blob paths: content-addressed and fanned out; anything else is not a blob"):
-    val sha = "0f" * 32
+    val sha = com.histmersion.api.Sha256("0f" * 32)
     assertEquals(Bundle.blobPath(sha), s"blobs/sha256/0f/$sha")
     assertEquals(Bundle.blobSha(Bundle.blobPath(sha)), Some(sha))
     assertEquals(Bundle.blobSha(s"blobs/sha256/aa/$sha"), None)
@@ -92,7 +100,7 @@ class BundleFormatSuite extends munit.FunSuite:
   // ── lines and revs ───────────────────────────────────────────────────────────────────────────
 
   test("a line is canonical: keys sorted, no whitespace, absent fields left out, the rev added"):
-    val s = BundleFormat.stamp(goal("g"))
+    val s = BundleFormat.stamp(goal(Bundle.Goal.Slug("g")))
     assert(s.line.startsWith("""{"createdAt":"""), s.line)
     assert(!s.line.contains("notes"), s.line) // None is absent, not null
     assert(!s.line.contains(" "), s.line)
@@ -101,18 +109,18 @@ class BundleFormatSuite extends munit.FunSuite:
 
   test("the rev covers the content, not the timestamp: same content → same rev"):
     assertEquals(
-      BundleFormat.stamp(goal("g")).rev,
-      BundleFormat.stamp(goal("g", updated = "2030-01-01T00:00:00.000000Z")).rev
+      BundleFormat.stamp(goal(Bundle.Goal.Slug("g"))).rev,
+      BundleFormat.stamp(goal(Bundle.Goal.Slug("g"), updated = Bundle.Goal.UpdatedAt("2030-01-01T00:00:00.000000Z"))).rev
     )
-    assertNotEquals(BundleFormat.stamp(goal("g")).rev, BundleFormat.stamp(goal("g", notes = Some("n"))).rev)
+    assertNotEquals(BundleFormat.stamp(goal(Bundle.Goal.Slug("g"))).rev, BundleFormat.stamp(goal(Bundle.Goal.Slug("g"), notes = Some(Bundle.Goal.Notes("n")))).rev)
     // a rev field already set is replaced, never trusted
-    assertEquals(BundleFormat.stamp(goal("g").modify(_.rev).setTo("bogus")).rev, BundleFormat.stamp(goal("g")).rev)
+    assertEquals(BundleFormat.stamp(goal(Bundle.Goal.Slug("g")).modify(_.rev).setTo("bogus")).rev, BundleFormat.stamp(goal(Bundle.Goal.Slug("g"))).rev)
 
   test("decoding a line checks its rev; a tampered line is reported"):
-    val line = BundleFormat.stamp(goal("g")).line
+    val line = BundleFormat.stamp(goal(Bundle.Goal.Slug("g"))).line
     assertEquals(BundleFormat.decodeLine[Bundle.Goal](line, stamped = true).map(_.slug), Right("g"))
     val tampered = line.replace("\"Title\"", "\"Other\"")
-    assert(BundleFormat.decodeLine[Bundle.Goal](tampered, stamped = true).left.exists(_.contains("does not match")))
+    assert(BundleFormat.decodeLine[Bundle.Goal](tampered, stamped = true).left.exists(_.value.contains("does not match")))
     assert(BundleFormat.decodeLine[Bundle.Goal]("{not json", stamped = true).isLeft)
 
   test("content uuids: deterministic, version 8, RFC variant"):
@@ -124,8 +132,8 @@ class BundleFormatSuite extends munit.FunSuite:
 
   test("compatibility: a newer format or schema is refused, an older one accepted, each reason given"):
     val m = Bundle.Manifest(
-      Bundle.Format,
-      Bundle.FormatVersion,
+      Bundle.Manifest.Format(Bundle.Format),
+      Bundle.Manifest.FormatVersion(Bundle.FormatVersion),
       com.histmersion.api.exchange.Bundle.Manifest.SchemaVersion("33"),
       U1,
       Bundle.Instance(I),
@@ -143,7 +151,7 @@ class BundleFormatSuite extends munit.FunSuite:
   test("file checks list every missing, unexpected and differing file"):
     val f = Bundle.FileInfo(com.histmersion.api.exchange.Bundle.FileInfo.Path("entities/goals.ndjson"), com.histmersion.api.exchange.Bundle.FileInfo.Lines(1), com.histmersion.api.ByteCount(10), com.histmersion.api.Sha256("a"))
     val m = Bundle.Manifest(
-      Bundle.Format,
+      Bundle.Manifest.Format(Bundle.Format),
       com.histmersion.api.exchange.Bundle.Manifest.FormatVersion(1),
       com.histmersion.api.exchange.Bundle.Manifest.SchemaVersion("33"),
       U1,
@@ -154,7 +162,7 @@ class BundleFormatSuite extends munit.FunSuite:
       Bundle.Blobs(com.histmersion.api.exchange.Bundle.Blobs.Count(0), com.histmersion.api.ByteCount(0)),
       Bundle.Reference(com.histmersion.api.exchange.Bundle.Reference.Places(0), com.histmersion.api.exchange.Bundle.Reference.PlacesDigest(""), com.histmersion.api.exchange.Bundle.Reference.Periods(0), com.histmersion.api.exchange.Bundle.Reference.PeriodsDigest(""))
     )
-    val ps = BundleFormat.checkFiles(m, Map(f.path -> f.modify(_.sha256).setTo("b"), "entities/x.ndjson" -> f))
+    val ps = BundleFormat.checkFiles(m, Map(f.path -> f.modify(_.sha256).setTo("b"), Bundle.FileInfo.Path("entities/x.ndjson") -> f))
     assertEquals(ps.size, 3, ps.mkString("\n"))
 
   // ── entities ─────────────────────────────────────────────────────────────────────────────────
