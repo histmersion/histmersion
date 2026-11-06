@@ -1,5 +1,7 @@
 package com.histmersion.config
 
+import com.histmersion.config.testsupport.ComparedByValue.given
+
 import scala.jdk.CollectionConverters.*
 
 class ConfigNewtypesSuite extends munit.FunSuite:

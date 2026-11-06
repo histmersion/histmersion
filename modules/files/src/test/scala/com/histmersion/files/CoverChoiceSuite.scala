@@ -1,12 +1,13 @@
 package com.histmersion.files
 
 import com.histmersion.domain.media.covers.{CoverChoice, OpenLibrary}
+import com.histmersion.testsupport.ComparedByValue.given
 
 /** Where a book's cover comes from ([[CoverChoice]], [[OpenLibrary]]). */
 class CoverChoiceSuite extends munit.FunSuite:
 
   test("a book's cover: Calibre's own file first, then Open Library by ISBN, then by OCLC"):
-    val exists = Set("/lib/A/cover.jpg")
+    val exists: CoverChoice.Pick.Calibre.Path => Boolean = p => Set("/lib/A/cover.jpg")(p.value)
     assertEquals(
       CoverChoice.choose(Some(com.histmersion.domain.media.covers.CoverChoice.Pick.Calibre.Path("/lib/A/cover.jpg")), exists, List(com.histmersion.domain.library.Isbn("978-0-691-16838-8")), Some(com.histmersion.domain.media.covers.OpenLibrary.Oclc("123"))),
       Some(CoverChoice.Pick.Calibre(com.histmersion.domain.media.covers.CoverChoice.Pick.Calibre.Path("/lib/A/cover.jpg")))

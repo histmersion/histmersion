@@ -1,5 +1,7 @@
 package com.histmersion.util.data.mirror
 
+import com.histmersion.testsupport.ComparedByValue.given
+
 /** The mirror's layout: `sources/<citekey>.md`, `<kind>/<slug>.md`, `meta/<FILE>`. */
 class MirrorPlacementSuite extends munit.FunSuite:
 

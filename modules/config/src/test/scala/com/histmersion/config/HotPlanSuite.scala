@@ -3,6 +3,8 @@ package com.histmersion.config
 import java.nio.file.{Files, Path}
 import scala.jdk.CollectionConverters.*
 
+import com.histmersion.config.testsupport.ComparedByValue.given
+
 /** The pure half of the hot component graph (docs/research-plugins.md §3.6) and of a config reload (§3.5): order,
   * cycles, what a set of changed keys rebuilds; which keys changed, which apply in place and which wait for a restart.
   */
@@ -35,12 +37,12 @@ class HotPlanSuite extends munit.FunSuite:
       HotNode(com.histmersion.config.HotNode.Name("free"), Nil, Nil)
     )
     val e = HotPlan.order(cyc).swap.getOrElse(fail("a cycle was ordered"))
-    assert(e.contains("cycle"), e)
-    assert(e.contains("a → c → b → a"), e)
+    assert(e.value.contains("cycle"), e)
+    assert(e.value.contains("a → c → b → a"), e)
     val self = HotPlan.order(List(HotNode(com.histmersion.config.HotNode.Name("a"), List(com.histmersion.config.HotNode.Deps("a")), Nil))).swap.getOrElse(fail("self-loop ordered"))
-    assert(self.contains("a → a"), self)
-    assert(HotPlan.order(List(HotNode(com.histmersion.config.HotNode.Name("a"), List(com.histmersion.config.HotNode.Deps("nope")), Nil))).swap.exists(_.contains("a → nope")))
-    assert(HotPlan.order(List(HotNode(com.histmersion.config.HotNode.Name("a"), Nil, Nil), HotNode(com.histmersion.config.HotNode.Name("a"), Nil, Nil))).swap.exists(_.contains("twice")))
+    assert(self.value.contains("a → a"), self)
+    assert(HotPlan.order(List(HotNode(com.histmersion.config.HotNode.Name("a"), List(com.histmersion.config.HotNode.Deps("nope")), Nil))).swap.exists(_.value.contains("a → nope")))
+    assert(HotPlan.order(List(HotNode(com.histmersion.config.HotNode.Name("a"), Nil, Nil), HotNode(com.histmersion.config.HotNode.Name("a"), Nil, Nil))).swap.exists(_.value.contains("twice")))
 
   test("keyMatches: the key, a key under it, a block above it — not a sibling sharing a prefix"):
     assert(HotPlan.keyMatches(com.histmersion.config.ConfigReload.ChangedKey("histmersion.db.url"), com.histmersion.config.ConfigReload.Key("histmersion.db")))
@@ -103,15 +105,15 @@ class HotPlanSuite extends munit.FunSuite:
     val f = d.resolve("histmersion.conf")
     val env = org.ekrich.config.ConfigFactory.parseMap(Map("HISTMERSION_DB_POOL_MAX" -> "3").asJava)
     Files.writeString(f, """histmersion { db.url = "jdbc:postgresql://h/a_test", limits.search = 7 }""")
-    val first = AppConfig.loadWithUserFile(env, Some(f)).fold(fail(_), identity)
+    val first = AppConfig.loadWithUserFile(env, Some(f)).fold(p => fail(p.value), identity)
     Files.writeString(
       f,
       """histmersion { db.url = "jdbc:postgresql://h/b_test", limits.search = 7, server.port = 9123 }"""
     )
-    val second = AppConfig.loadWithUserFile(env, Some(f)).fold(fail(_), identity)
+    val second = AppConfig.loadWithUserFile(env, Some(f)).fold(p => fail(p.value), identity)
     val changed = ConfigReload.changed(first.merged, second.merged)
     assertEquals(changed, List("histmersion.db.url", "histmersion.server.port"))
-    val cfg = AppConfig.fromMerged(ConfigReload.effective(first.merged, second.merged, changed)).fold(fail(_), identity)
+    val cfg = AppConfig.fromMerged(ConfigReload.effective(first.merged, second.merged, changed)).fold(p => fail(p.value), identity)
     assertEquals(cfg.db.url, "jdbc:postgresql://h/b_test")
     assertEquals(cfg.db.pool.max, 3) // the environment still wins
     assertEquals(cfg.server.port, first.config.server.port)

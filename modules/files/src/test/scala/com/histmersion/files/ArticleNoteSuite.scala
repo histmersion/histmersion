@@ -3,6 +3,7 @@ package com.histmersion.files
 import hearth.kindlings.optics.syntax.*
 
 import com.histmersion.api.given
+import com.histmersion.testsupport.ComparedByValue.given
 import com.histmersion.domain.research.articles.ArticleNote
 import com.histmersion.api.catalogue.Period
 import com.histmersion.api.research.{Article, Articles}
@@ -42,13 +43,13 @@ class ArticleNoteSuite extends munit.FunSuite:
     assertEquals(a.title, "The Sea Peoples")
     assertEquals(a.regions, List("Eastern Mediterranean", "Egypt", "Levant", "Cyprus", "Anatolia", "Aegean"))
     assertEquals(a.period, Some(Period(com.histmersion.api.catalogue.Year(-1220), com.histmersion.api.catalogue.Year(-1100))))
-    assert(a.body.startsWith("# The Sea Peoples"), a.body.take(40))
-    assert(a.body.contains("[[cline2014_year]]"), "the body keeps its wikilinks verbatim")
+    assert(a.body.value.startsWith("# The Sea Peoples"), a.body.value.take(40))
+    assert(a.body.value.contains("[[cline2014_year]]"), "the body keeps its wikilinks verbatim")
 
   test("the italic lede becomes the summary when the frontmatter has none"):
     val a = ArticleNote.parse(wikiNote, com.histmersion.api.research.Article.Slug("x"), com.histmersion.api.research.Article.KindValue("concept")).get
-    assert(a.summary.exists(_.startsWith("A loose label")), a.summary.toString)
-    assert(!a.summary.exists(_.contains("*")), a.summary.toString)
+    assert(a.summary.exists(_.value.startsWith("A loose label")), a.summary.toString)
+    assert(!a.summary.exists(_.value.contains("*")), a.summary.toString)
 
   test("a report's `question` is its summary; topics and cultures become tags"):
     val note =
@@ -123,7 +124,10 @@ class ArticleNoteSuite extends munit.FunSuite:
           extraQueries = List(com.histmersion.api.research.Article.Filter.ExtraQueries("synoikism"))
         )
       ),
-      reasons = Map("graves2017_greek" -> "retells the myths", "nilsson1927_minoan" -> "Attic origin only in passing")
+      reasons = Map(
+        com.histmersion.api.library.Citekey("graves2017_greek") -> Coverage.Entry.Reason("retells the myths"),
+        com.histmersion.api.library.Citekey("nilsson1927_minoan") -> Coverage.Entry.Reason("Attic origin only in passing")
+      )
     )
     val c = Article.Coverage.compute(
       a.slug,
@@ -136,7 +140,7 @@ class ArticleNoteSuite extends munit.FunSuite:
       Nil,
       Nil
     )
-    val text = ArticleNote.render(a, Some(Article.Coverage.exported(c)))
+    val text = ArticleNote.render(a, Some(Article.Coverage.exported(c).value))
     assert(
       text.contains(
         "filter:\n  query: Theseus\n  topics:\n  - greek_myth\n  from: -1500\n  to: -400\n  extra_queries:\n  - synoikism\n"
@@ -152,6 +156,6 @@ class ArticleNoteSuite extends munit.FunSuite:
     assertEquals(back.body, a.body, "the generated sections never reach the stored body")
     assertEquals((back.filter, back.reasons), (a.filter, a.reasons))
     // and the round trip stays byte-stable
-    assertEquals(ArticleNote.render(back, Some(Article.Coverage.exported(c))), text)
+    assertEquals(ArticleNote.render(back, Some(Article.Coverage.exported(c).value)), text)
     // an article with none exports exactly as before
     assert(!ArticleNote.render(a.modify(_.filter).setTo(None).modify(_.reasons).setTo(Map.empty)).contains("filter:"))

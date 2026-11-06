@@ -1,15 +1,15 @@
 package com.histmersion.config.edit
 
 class SecretFormSuite extends munit.FunSuite:
-  private def key(s: String) = SettingKey.parse(s).toOption.get
+  private def key(s: SettingKey.ParseRaw) = SettingKey.parse(s).toOption.get
 
   test("which keys are credentials, and how each may be written"):
-    assertEquals(SecretRule.of(key("auth.api-key")), SecretRule.FromEnvironment)
-    assertEquals(SecretRule.of(key("db.password")), SecretRule.FromEnvironment)
-    assertEquals(SecretRule.of(key("plugins.oa-core.api-key")), SecretRule.Reference)
-    assertEquals(SecretRule.of(key("plugins.bitwarden.session")), SecretRule.Reference)
-    assertEquals(SecretRule.of(key("agents.step.max-tokens")), SecretRule.NotSecret)
-    assertEquals(SecretRule.of(key("plugins.keepassxc.key-file")), SecretRule.NotSecret)
+    assertEquals(SecretRule.of(key(SettingKey.ParseRaw("auth.api-key"))), SecretRule.FromEnvironment)
+    assertEquals(SecretRule.of(key(SettingKey.ParseRaw("db.password"))), SecretRule.FromEnvironment)
+    assertEquals(SecretRule.of(key(SettingKey.ParseRaw("plugins.oa-core.api-key"))), SecretRule.Reference)
+    assertEquals(SecretRule.of(key(SettingKey.ParseRaw("plugins.bitwarden.session"))), SecretRule.Reference)
+    assertEquals(SecretRule.of(key(SettingKey.ParseRaw("agents.step.max-tokens"))), SecretRule.NotSecret)
+    assertEquals(SecretRule.of(key(SettingKey.ParseRaw("plugins.keepassxc.key-file"))), SecretRule.NotSecret)
 
   test("a reference's form, never the value"):
     val r = SecretRule.Reference

@@ -3,14 +3,15 @@ package com.histmersion.upstreams
 /** JATS → Markdown (#1523): the PMC full text an ingest falls back to when no PDF is published. */
 
 import com.histmersion.upstreams.jats.Jats
+import com.histmersion.upstreams.testsupport.ComparedByValue.given
 class JatsSuite extends munit.FunSuite:
 
   private val article = scala.io.Source.fromResource("jats/article.xml").mkString
-  private lazy val md = Jats.toMarkdown(article)
+  private lazy val md = Jats.toMarkdown(Jats.Xml(article)).value
 
   test("a JATS article is recognised through its prolog, comments and DOCTYPE"):
-    assert(Jats.isJats(article))
-    assert(Jats.isJats("\n<!DOCTYPE article PUBLIC \"x\" \"y\">\n<article dtd-version=\"1.4\"><front/></article>"))
+    assert(Jats.isJats(Jats.Xml(article)))
+    assert(Jats.isJats(Jats.Xml("\n<!DOCTYPE article PUBLIC \"x\" \"y\">\n<article dtd-version=\"1.4\"><front/></article>")))
     assert(Jats.isJats(com.histmersion.upstreams.jats.Jats.Xml("<article/>")))
 
   test("anything else is not JATS"):
@@ -63,26 +64,30 @@ class JatsSuite extends munit.FunSuite:
     assertEquals(Jats.entities("a &amp; b &lt;c&gt; &#8212; &#x2014; &local;"), "a & b <c> — — &local;")
 
   test("a truncated or malformed document still yields its text, never an exception"):
-    val out = Jats.toMarkdown(com.histmersion.upstreams.jats.Jats.Xml("<article><body><sec><title>Only</title><p>half a para"))
+    val out = Jats.toMarkdown(com.histmersion.upstreams.jats.Jats.Xml("<article><body><sec><title>Only</title><p>half a para")).value
     assert(out.contains("## Only"), out)
     assert(out.contains("half a para"), out)
-    assertEquals(Jats.toMarkdown(com.histmersion.upstreams.jats.Jats.Xml("")).trim, "")
-    assert(Jats.toMarkdown(com.histmersion.upstreams.jats.Jats.Xml("<article><body><p>a</q></p></body></article>")).contains("a"))
+    assertEquals(Jats.toMarkdown(com.histmersion.upstreams.jats.Jats.Xml("")).value.trim, "")
+    assert(Jats.toMarkdown(com.histmersion.upstreams.jats.Jats.Xml("<article><body><p>a</q></p></body></article>")).value.contains("a"))
 
   test("an attribute value may hold a '>'"):
-    val out = Jats.toMarkdown("""<article><body><p><ext-link href="a>b">link</ext-link> text</p></body></article>""")
-    assertEquals(out.trim, "link text")
+    val out = Jats.toMarkdown(Jats.Xml("""<article><body><p><ext-link href="a>b">link</ext-link> text</p></body></article>"""))
+    assertEquals(out.value.trim, "link text")
 
   test("a body that opens with running text is set off from the abstract"):
     val out = Jats.toMarkdown(
-      "<article><front><article-meta><abstract><p>Abs.</p></abstract></article-meta></front>" +
-        "<body><p>Intro.</p><sec><title>Results</title><p>R.</p></sec></body></article>"
+      Jats.Xml(
+        "<article><front><article-meta><abstract><p>Abs.</p></abstract></article-meta></front>" +
+          "<body><p>Intro.</p><sec><title>Results</title><p>R.</p></sec></body></article>"
+      )
     )
     assertEquals(out, "## Abstract\n\nAbs.\n\n---\n\nIntro.\n\n## Results\n\nR.\n")
 
   test("a nested reference list with its parent's title gets no second heading"):
     val out = Jats.toMarkdown(
-      "<article><back><ref-list><title>References</title><ref-list><title>References</title>" +
-        "<ref><mixed-citation>A. B.</mixed-citation></ref></ref-list></ref-list></back></article>"
+      Jats.Xml(
+        "<article><back><ref-list><title>References</title><ref-list><title>References</title>" +
+          "<ref><mixed-citation>A. B.</mixed-citation></ref></ref-list></ref-list></back></article>"
+      )
     )
     assertEquals(out, "## References\n\n- A. B.\n")

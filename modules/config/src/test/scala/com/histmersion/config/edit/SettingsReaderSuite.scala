@@ -1,6 +1,7 @@
 package com.histmersion.config.edit
 
 import com.histmersion.config.AppConfig
+import com.histmersion.config.testsupport.ComparedByValue.given
 import org.ekrich.config.ConfigFactory
 
 import java.nio.file.{Files, Path}
@@ -8,16 +9,16 @@ import scala.jdk.CollectionConverters.*
 
 class SettingsReaderSuite extends munit.FunSuite:
 
-  private def key(s: String) = SettingKey.parse(s).toOption.get
+  private def key(s: String) = SettingKey.parse(SettingKey.ParseRaw(s)).toOption.get
 
   private def readings(text: String, env: Map[String, String] = Map.empty, prefix: Option[String] = None) =
     val d = Files.createTempDirectory("histmersion-settings-read")
     val f = d.resolve("histmersion.conf")
     Files.writeString(f, text)
     val e = ConfigFactory.parseMap(env.asJava)
-    val parsed = AppConfig.parseUserFile(f).fold(m => fail(m), _.getOrElse(fail("no file")))
-    val state = ConfigFileState(Some(text), FileVersion.of(Some(text)), parsed, AppConfig.writtenIn(f))
-    val merged = AppConfig.loadWithUserFile(e, Some(f)).fold(m => fail(m), _.merged)
+    val parsed = AppConfig.parseUserFile(f).fold(m => fail(m.value), _.getOrElse(fail("no file")))
+    val state = ConfigFileState(Some(ConfigFileState.Text(text)), FileVersion.of(Some(ConfigFileState.Text(text))), parsed, AppConfig.writtenIn(f))
+    val merged = AppConfig.loadWithUserFile(e, Some(f)).fold(m => fail(m.value), _.merged)
     SettingsReader
       .read(ConfigSchema.reference, state, merged, e, prefix.map(key))
       .map(r => r.field.key.relative -> r)
@@ -53,12 +54,12 @@ class SettingsReaderSuite extends munit.FunSuite:
 
   test("only the settings under a prefix"):
     val r = readings("", prefix = Some("backups"))
-    assert(r.keySet.forall(_.startsWith("backups.")) && r.contains(com.histmersion.config.edit.SettingKey.Relative("backups.keep")), s"${r.keySet}")
+    assert(r.keySet.forall(_.value.startsWith("backups.")) && r.contains(com.histmersion.config.edit.SettingKey.Relative("backups.keep")), s"${r.keySet}")
 
   test("loading a config file's text says what loading the file says"):
     assert(AppConfig.loadWithUserText(ConfigFactory.empty, "histmersion.backups.keep = 3").isRight)
     val bad = AppConfig.loadWithUserText(ConfigFactory.empty, "histmersion.backups.keep = lots")
-    assert(bad.left.exists(_.contains("backups.keep")), s"$bad")
+    assert(bad.left.exists(_.value.contains("backups.keep")), s"$bad")
     assert(AppConfig.loadWithUserText(ConfigFactory.empty, "histmersion { ").isLeft)
 
   test("the user file as a load parses it: with its includes, its own values told from an included file's"):
@@ -66,7 +67,7 @@ class SettingsReaderSuite extends munit.FunSuite:
     Files.writeString(d.resolve("shared.conf"), "histmersion.backups.keep = 11\n")
     val f = d.resolve("histmersion.conf")
     Files.writeString(f, "include \"shared.conf\"\nhistmersion.ui.page-size = 30\n")
-    val c = AppConfig.parseUserFile(f).fold(m => fail(m), _.getOrElse(fail("no file")))
+    val c = AppConfig.parseUserFile(f).fold(m => fail(m.value), _.getOrElse(fail("no file")))
     assertEquals(c.getInt("histmersion.backups.keep"), 11)
     assert(AppConfig.writtenIn(f)(c.getValue("histmersion.ui.page-size").origin))
     assert(!AppConfig.writtenIn(f)(c.getValue("histmersion.backups.keep").origin))

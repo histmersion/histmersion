@@ -10,7 +10,7 @@ import com.histmersion.util.storage.SafePath
   */
 class SafePathSuite extends munit.FunSuite:
 
-  private val base = Some("/srv/corpus")
+  private val base = Some(com.histmersion.util.storage.SafePath.Base("/srv/corpus"))
 
   test("a path inside the corpus resolves"):
     assertEquals(SafePath.confine(base, com.histmersion.util.storage.SafePath.Candidate("/srv/corpus/sources")).map(_.toString), Right("/srv/corpus/sources"))
@@ -20,11 +20,11 @@ class SafePathSuite extends munit.FunSuite:
 
   test("escaping is refused, however it is spelled"):
     List("/etc/passwd", "../../etc/passwd", "/srv/corpus/../etc", "/srv/corpus/a/../../etc", "/srv/corpusevil")
-      .foreach(p => assert(SafePath.confine(base, p).isLeft, s"'$p' MUST be refused"))
+      .foreach(p => assert(SafePath.confine(base, com.histmersion.util.storage.SafePath.Candidate(p)).isLeft, s"'$p' MUST be refused"))
 
   test("the refusal names the configured directory, so it is actionable"):
     val e = SafePath.confine(base, com.histmersion.util.storage.SafePath.Candidate("/etc/passwd")).swap.toOption.get
-    assert(e.contains("/srv/corpus"), e)
+    assert(e.value.contains("/srv/corpus"), e)
 
   test("no corpus configured = the old behaviour, unchanged"):
     assert(SafePath.confine(None, com.histmersion.util.storage.SafePath.Candidate("/etc/passwd")).isRight)
