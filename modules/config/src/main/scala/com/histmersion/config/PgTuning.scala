@@ -1,5 +1,6 @@
 package com.histmersion.config
 
+import com.histmersion.config.NewtypeReaders.given
 import hearth.kindlings.sconfigderivation.ConfigReader
 
 /** Memory settings the bundled Postgres is started with (`-c`, so an existing cluster gets them on its next start;

@@ -1,5 +1,6 @@
 package com.histmersion.config
 
+import com.histmersion.config.NewtypeReaders.given
 import hearth.kindlings.sconfigderivation.ConfigReader
 
 /** `histmersion plugin …` (docs/research-plugins.md §7.2): the plugins of the Histmersion installed on THIS machine.
@@ -8,7 +9,7 @@ import hearth.kindlings.sconfigderivation.ConfigReader
   * `plugin add group:artifact:version`; `curl` downloads (`plugin add <url>`).
   */
 final case class CliPluginsConfig(installDir: CliPluginsConfig.InstallDir, mavenRepos: CliPluginsConfig.MavenRepos, curl: CliPluginsConfig.Curl) derives ConfigReader:
-  def repos: List[com.histmersion.config.CliPluginsConfig.MavenRepo] = mavenRepos.value.split(",").toList.map(_.trim).filter(_.nonEmpty).map(MavenRepo(_))
+  def repos: List[com.histmersion.config.CliPluginsConfig.MavenRepo] = mavenRepos.value.split(",").toList.map(_.trim).filter(_.nonEmpty).map(CliPluginsConfig.MavenRepo(_))
 
 object CliPluginsConfig:
   type MavenRepo = MavenRepo.T

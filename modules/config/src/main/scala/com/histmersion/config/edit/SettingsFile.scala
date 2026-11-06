@@ -22,15 +22,13 @@ trait SettingsFile:
     */
   def replace(text: com.histmersion.config.edit.ConfigFileState.Text, existed: com.histmersion.config.edit.SettingsFile.Existed)(
       check: SettingsFile.Staged => Either[SettingError, Unit]
-  ): Either[SettingError, Option[com.histmersion.config.edit.ConfigFileState.Text]]
+  ): Either[SettingError, Option[WriteOutcome.Backup]]
 
 object SettingsFile:
   type Existed = Existed.T
   object Existed extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type Path = Path.T
   object Path extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type Problem = Problem.T
-  object Problem extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type Shown = Shown.T
   object Shown extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
@@ -41,12 +39,6 @@ object SettingsFile:
 
   final case class Staged(
       parsed: Either[SettingError, Config],
-      own: ConfigOrigin => Staged.OwnResult,
-      load: Config => Either[Staged.LoadResultPart1, LoadedConfig]
+      own: ConfigOrigin => Boolean,
+      load: Config => Either[SettingError.Problem, LoadedConfig]
   )
-
-  object Staged:
-    type OwnResult = OwnResult.T
-    object OwnResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
-    type LoadResultPart1 = com.histmersion.config.edit.SettingsFile.Problem
-    val LoadResultPart1: _root_.com.histmersion.config.edit.SettingsFile.Problem.type = _root_.com.histmersion.config.edit.SettingsFile.Problem

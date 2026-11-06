@@ -1,5 +1,6 @@
 package com.histmersion.config
 
+import com.histmersion.config.NewtypeReaders.given
 import hearth.kindlings.sconfigderivation.ConfigReader
 
 /** The media collections PLUGINS register (`media.collections`, docs/research-plugins.md §6): the licence families
@@ -17,4 +18,13 @@ object MediaPluginCollectionsConfig:
   type Licences = Licences.T
   object Licences extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type PerCollectionKey = PerCollectionKey.T
-  object PerCollectionKey extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object PerCollectionKey extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]:
+    given ConfigReader[Map[PerCollectionKey, Licences]] =
+      ConfigReader.derived[Map[String, Licences]].emap { byName =>
+        byName.foldLeft[Either[String, Map[PerCollectionKey, Licences]]](Right(Map.empty)) { case (acc, (name, v)) =>
+          for
+            done <- acc
+            k <- PerCollectionKey.either(name)
+          yield done.updated(k, v)
+        }
+      }

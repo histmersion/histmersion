@@ -1,5 +1,6 @@
 package com.histmersion.config
 
+import com.histmersion.config.NewtypeReaders.given
 import hearth.kindlings.sconfigderivation.ConfigReader
 
 /** The review manager's defaults (a value saved in the manager's config wins). `staleAfterDays`: a converged article is

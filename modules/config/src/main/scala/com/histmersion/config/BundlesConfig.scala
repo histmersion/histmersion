@@ -1,5 +1,6 @@
 package com.histmersion.config
 
+import com.histmersion.config.NewtypeReaders.given
 import hearth.kindlings.sconfigderivation.ConfigReader
 
 /** `bundle export|verify|import` (docs/research-merge-import.md): where the server builds a bundle before it is

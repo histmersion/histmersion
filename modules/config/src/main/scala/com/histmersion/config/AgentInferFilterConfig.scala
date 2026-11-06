@@ -1,5 +1,6 @@
 package com.histmersion.config
 
+import com.histmersion.config.NewtypeReaders.given
 import hearth.kindlings.sconfigderivation.ConfigReader
 
 /** `infer-filter`: a proposed filter must return at least `minHits` and at most `maxHits` sources, and at least

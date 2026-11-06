@@ -47,7 +47,7 @@ object SettingsReader:
       else if inFile.isDefined || locked.isDefined then SettingSource.File
       else SettingSource.Default
     val effective = Try(merged.getValue(key.hoconPath.value)).toOption.flatMap(SettingValue.fromConfig)
-    val text = effective.collect { case SettingValue.Text(t) => t }.getOrElse("")
+    val text = effective.collect { case SettingValue.Text(t) => t.value }.getOrElse("")
     val credential = Option.when(field.secret != SecretRule.NotSecret)(SecretForm.of(text, field.secret))
     val shown = credential.flatMap(_ => SecretForm.shown(text, field.secret).map(SettingReading.Shown(_)))
     SettingReading(field, inFile, effective, source, credential, shown, locked)

@@ -20,53 +20,42 @@ import org.ekrich.config.Config
   *   what works but should be known: a `value:` credential, an environment variable that overrides the new value
   */
 final case class WriteOutcome(
-    file: WriteOutcome.File,
+    file: SettingsFile.Shown,
     changed: List[SettingKey],
     unchanged: List[SettingKey],
     backup: Option[WriteOutcome.Backup],
     version: FileVersion,
     created: WriteOutcome.Created,
     restart: List[(SettingKey, SettingField.Restart)],
-    warnings: List[WriteOutcome.Note]
+    warnings: List[SettingPolicy.Note]
 ):
   def wrote: Boolean = changed.nonEmpty
 
 object WriteOutcome:
-  type Note = Note.T
-  object Note extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   /** What `edited` did to `file`, now at `version`: the restart-only settings among the changed ones, and the warnings
     * — `notes`, and an environment variable of `env` that sets a changed setting too (and wins over the file).
     */
-  type OfFile = _root_.com.histmersion.config.edit.WriteOutcome.File
-  val OfFile: _root_.com.histmersion.config.edit.WriteOutcome.File.type = _root_.com.histmersion.config.edit.WriteOutcome.File
-  type OfBackup = _root_.com.histmersion.config.edit.WriteOutcome.Backup
-  val OfBackup: _root_.com.histmersion.config.edit.WriteOutcome.Backup.type = _root_.com.histmersion.config.edit.WriteOutcome.Backup
-  type OfCreated = _root_.com.histmersion.config.edit.WriteOutcome.Created
-  val OfCreated: _root_.com.histmersion.config.edit.WriteOutcome.Created.type = _root_.com.histmersion.config.edit.WriteOutcome.Created
-
-  type File = File.T
-  object File extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type Backup = Backup.T
   object Backup extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type Created = Created.T
   object Created extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
   def of(
-      file: com.histmersion.config.edit.WriteOutcome.OfFile,
+      file: SettingsFile.Shown,
       schema: ConfigSchema,
       env: Config,
       version: FileVersion,
       edited: EditedText,
-      backup: Option[com.histmersion.config.edit.WriteOutcome.OfBackup],
-      notes: List[com.histmersion.config.edit.WriteOutcome.Note],
-      created: com.histmersion.config.edit.WriteOutcome.OfCreated = WriteOutcome.OfCreated(false)
+      backup: Option[WriteOutcome.Backup],
+      notes: List[SettingPolicy.Note],
+      created: WriteOutcome.Created = WriteOutcome.Created(false)
   ): WriteOutcome =
     val fields = edited.changed.flatMap(schema.field)
     val shadowed = fields.flatMap(f =>
       f.envVar
         .filter(v => env.hasPath(v.value))
         .map(v =>
-          Note(s"The environment variable $v also sets ${f.key.relative}, and wins over the settings file while it is set.")
+          SettingPolicy.Note(s"The environment variable $v also sets ${f.key.relative}, and wins over the settings file while it is set.")
         )
     )
     WriteOutcome(

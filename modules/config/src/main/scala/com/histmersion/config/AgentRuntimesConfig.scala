@@ -1,5 +1,6 @@
 package com.histmersion.config
 
+import com.histmersion.config.NewtypeReaders.given
 import hearth.kindlings.sconfigderivation.ConfigReader
 
 /** The generated per-runtime trees (docs/research-agent-runtimes.md §2.2): written under `dir` ("" =

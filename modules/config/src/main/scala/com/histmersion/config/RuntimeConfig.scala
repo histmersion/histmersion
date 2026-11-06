@@ -1,5 +1,6 @@
 package com.histmersion.config
 
+import com.histmersion.config.NewtypeReaders.given
 import hearth.kindlings.sconfigderivation.ConfigReader
 
 /** The native bundle: when `enabled`, the server itself runs the bundled PostgreSQL and OCR converter as child

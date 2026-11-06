@@ -29,7 +29,7 @@ object SourceNote:
     Text(frontmatterOf(s).note(s.notes.map(n => Frontmatter.NoteBody(n.value.trim)).filter(_.value.nonEmpty)).value)
 
   /** The YAML block between the `---` fences (with a trailing newline). */
-  def frontmatter(s: Source): Frontmatter.YamlResult = frontmatterOf(s).yaml
+  def frontmatter(s: Source): Frontmatter.Block = frontmatterOf(s).yaml
 
   /** Frontmatter key order — matches the notes the research wiki already writes. */
   private def frontmatterOf(s: Source): Frontmatter =
@@ -58,7 +58,7 @@ object SourceNote:
       )
     )
 
-  private def field(key: String, value: Any): (Frontmatter.FieldsPart1, Any) = (Frontmatter.FieldsPart1(key), value)
+  private def field(key: String, value: Any): (Frontmatter.Key, Any) = (Frontmatter.Key(key), value)
 
   private def finding(f: Finding): java.util.Map[String, Any] =
     val m = new java.util.LinkedHashMap[String, Any]()

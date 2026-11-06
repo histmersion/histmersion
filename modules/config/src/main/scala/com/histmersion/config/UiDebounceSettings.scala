@@ -1,5 +1,6 @@
 package com.histmersion.config
 
+import com.histmersion.config.NewtypeReaders.given
 import hearth.kindlings.sconfigderivation.ConfigReader
 
 /** `ui.debounce`: the quiet periods before the page acts on typing and state changes; `previewMs` is the one before a

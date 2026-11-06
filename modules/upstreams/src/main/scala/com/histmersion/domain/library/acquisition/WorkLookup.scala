@@ -40,7 +40,7 @@ object WorkLookup:
       .left
       .flatMap { why =>
         // a miss (404) and a refusal (429/503) both land here; the reason says which
-        log.info(s"acquire: OpenAlex did not answer for $doi ($why) — falling back to Crossref")
+        log.info(Plugin.Log.InfoMessage(s"acquire: OpenAlex did not answer for $doi ($why) — falling back to Crossref"))
         json(crossrefUrl(cfg, doi)).map(AcquireParse.crossrefWork).map(withUnpaywall(cfg, json, doi, _))
       }
 
@@ -69,5 +69,5 @@ object WorkLookup:
       arxiv = arxiv.orElse(work.flatMap(_.arxivId)).map(a => WorkKey.Arxiv(a.value)),
       title = work.flatMap(_.title),
       authors = work.map(_.authors).getOrElse(Nil),
-      year = work.flatMap(_.year).map(Year(_))
+      year = work.flatMap(_.year)
     )

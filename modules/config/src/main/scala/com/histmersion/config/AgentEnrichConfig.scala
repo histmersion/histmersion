@@ -1,5 +1,6 @@
 package com.histmersion.config
 
+import com.histmersion.config.NewtypeReaders.given
 import hearth.kindlings.sconfigderivation.ConfigReader
 
 /** `enrich-source`: the body is sent as at most `maxWindows` windows of `windowChars` characters (by heading where the

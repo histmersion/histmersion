@@ -1,5 +1,6 @@
 package com.histmersion.config
 
+import com.histmersion.config.NewtypeReaders.given
 import hearth.kindlings.sconfigderivation.ConfigReader
 
 /** `propose-articles`: at most `maxArticles` per plan; each one's filter returns at least `minSources` sources and

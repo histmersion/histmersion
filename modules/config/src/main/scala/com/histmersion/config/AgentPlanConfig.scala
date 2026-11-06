@@ -1,5 +1,6 @@
 package com.histmersion.config
 
+import com.histmersion.config.NewtypeReaders.given
 import hearth.kindlings.sconfigderivation.ConfigReader
 
 /** `plan-goal`: at most this many sub-goals, queries and works in one plan (a longer answer is sent back), each query

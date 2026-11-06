@@ -43,7 +43,7 @@ final class ConfigFileWriter(val file: SettingsFile, env: Config, schema: Config
                 edited,
                 bak,
                 notes,
-                created = current.text.isEmpty
+                created = WriteOutcome.Created(current.text.isEmpty)
               )
             )
       yield outcome
@@ -54,8 +54,8 @@ final class ConfigFileWriter(val file: SettingsFile, env: Config, schema: Config
       current: ConfigFileState,
       edited: EditedText,
       intended: Map[SettingKey, Option[SettingValue]]
-  ): Either[SettingError, Option[ConfigFileState.Text]] =
-    file.replace(ConfigFileState.Text(edited.text.value), existed = SettingsFile.Existed(current.text.isDefined)) { staged =>
+  ): Either[SettingError, Option[WriteOutcome.Backup]] =
+    file.replace(edited.text, existed = SettingsFile.Existed(current.text.isDefined)) { staged =>
       for
         parsed <- staged.parsed.left.map(e => SettingError.Invalid(e.message))
         _ <- ConfigTextEdit.verify(parsed, staged.own, edited, intended)

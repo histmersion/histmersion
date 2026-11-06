@@ -1,5 +1,6 @@
 package com.histmersion.config
 
+import com.histmersion.config.NewtypeReaders.given
 import hearth.kindlings.sconfigderivation.ConfigReader
 
 /** Which certificate authorities an acquisition request trusts beyond the JDK's own (#1568). Both are opt-in and ADD

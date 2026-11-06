@@ -1,5 +1,6 @@
 package com.histmersion.config
 
+import com.histmersion.config.NewtypeReaders.given
 import hearth.kindlings.sconfigderivation.ConfigReader
 
 /** The `claude-code` provider: the person's own `claude` CLI, run headlessly (`claude -p`) on their own Claude login
@@ -58,6 +59,15 @@ object ClaudeCodeConfig:
   type DisableSlashCommands = DisableSlashCommands.T
   object DisableSlashCommands extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type EnvKey = EnvKey.T
-  object EnvKey extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object EnvKey extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]:
+    given ConfigReader[Map[EnvKey, Option[EnvValue]]] =
+      ConfigReader.derived[Map[String, Option[EnvValue]]].emap { byName =>
+        byName.foldLeft[Either[String, Map[EnvKey, Option[EnvValue]]]](Right(Map.empty)) { case (acc, (name, v)) =>
+          for
+            done <- acc
+            k <- EnvKey.either(name)
+          yield done.updated(k, v)
+        }
+      }
   type EnvValue = EnvValue.T
   object EnvValue extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
