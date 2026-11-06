@@ -1,0 +1,343 @@
+## CONCEPTS NEARBY
+com.histmersion.api.library.Title (String)
+com.histmersion.api.library.TocEntry.Chars (Int)
+com.histmersion.api.library.TocEntry.Heading (String)
+com.histmersion.api.library.TocEntry.Ord (Int)
+com.histmersion.api.library.Tree.MaxDepthValue (Int)
+com.histmersion.api.library.Tree.MaxSamplesValue (Int)
+com.histmersion.api.library.Tree.SplitRatioValue (Double)
+com.histmersion.api.library.Tree.TreeRow.End (Long)
+com.histmersion.api.library.Tree.TreeRow.Key (String)
+com.histmersion.api.library.Tree.TreeRow.PlaceIds (String)
+com.histmersion.api.library.Tree.TreeRow.Start (Long)
+com.histmersion.api.library.UpdateNotice.Kind (String)
+com.histmersion.api.library.UpdateNotice.Label (String)
+com.histmersion.api.library.UpstreamQuota.BlockedUntil (String)
+com.histmersion.api.library.UpstreamQuota.BlockedWhy (String)
+com.histmersion.api.library.UpstreamQuota.DailyTokens (Int)
+com.histmersion.api.library.UpstreamQuota.Day (String)
+com.histmersion.api.library.UpstreamQuota.LookupTokens (Int)
+com.histmersion.api.library.UpstreamQuota.ObservedAt (String)
+com.histmersion.api.library.UpstreamQuota.PerMinute (Int)
+com.histmersion.api.library.UpstreamQuota.RateLimit (Int)
+com.histmersion.api.library.UpstreamQuota.RateRemaining (Int)
+com.histmersion.api.library.UpstreamQuota.SearchDailyTokens (Int)
+com.histmersion.api.library.UpstreamQuota.SearchTokens (Int)
+com.histmersion.api.library.UpstreamQuota.Upstream (String)
+com.histmersion.api.library.Venue (String)
+com.histmersion.api.library.WikirefsResult.Article (String)
+com.histmersion.api.library.WikirefsResult.Arxiv (String)
+com.histmersion.api.library.WikirefsResult.DoiCount (Int)
+com.histmersion.api.library.WikirefsResult.Dois (String)
+com.histmersion.api.library.WikirefsResult.Known (String)
+com.histmersion.api.library.WikirefsResult.Url (String)
+com.histmersion.api.library.WorkRef.AbstractText (String)
+com.histmersion.api.library.WorkRef.ArxivId (String)
+com.histmersion.api.library.WorkRef.CitedByCount (Int)
+com.histmersion.api.library.WorkRef.InDb (Boolean)
+com.histmersion.api.library.WorkRef.IsOa (Boolean)
+com.histmersion.api.library.WorkRef.IsRetracted (Boolean)
+com.histmersion.api.library.WorkRef.OaLicence (String)
+com.histmersion.api.library.WorkRef.OaLocations (String)
+com.histmersion.api.library.WorkRef.OaStatus (String)
+com.histmersion.api.library.WorkRef.OaUrl (String)
+com.histmersion.api.library.WorkRef.OpenalexId (String)
+com.histmersion.api.library.WorkRef.ReferencedWorks (String)
+com.histmersion.api.library.WorkRef.WorkType (String)
+com.histmersion.api.maintenance.ReindexResult.Chunks (Int)
+com.histmersion.api.maintenance.ReindexResult.LastCitekey (String)
+com.histmersion.api.maintenance.ReindexResult.Remaining (Int)
+com.histmersion.api.maintenance.ReindexResult.Sources (Int)
+com.histmersion.api.maintenance.Storage.DefaultLowFreeBytesValue (Long)
+com.histmersion.api.maintenance.Storage.Entry.Detail (String)
+com.histmersion.api.maintenance.Storage.Entry.Exists (Boolean)
+com.histmersion.api.maintenance.Storage.Entry.Group (String)
+com.histmersion.api.maintenance.Storage.Entry.Host (String)
+com.histmersion.api.maintenance.Storage.Entry.Key (String)
+com.histmersion.api.maintenance.Storage.Entry.Label (String)
+com.histmersion.api.maintenance.Storage.Entry.Partial (Boolean)
+com.histmersion.api.maintenance.Storage.Entry.Path (String)
+com.histmersion.api.maintenance.Storage.Entry.Shrink (String)
+com.histmersion.api.maintenance.Storage.Entry.Volume (String)
+com.histmersion.api.maintenance.Storage.Entry.Within (String)
+com.histmersion.api.maintenance.Storage.FileCount (Long)
+com.histmersion.api.maintenance.Storage.Report.AgeSeconds (Long)
+com.histmersion.api.maintenance.Storage.Report.DurationMillis (Long)
+com.histmersion.api.maintenance.Storage.Report.Hints (String)
+com.histmersion.api.maintenance.Storage.Report.MeasuredAt (String)
+com.histmersion.api.maintenance.Storage.Report.Measuring (Boolean)
+com.histmersion.api.maintenance.Storage.Report.Problems (String)
+com.histmersion.api.maintenance.Storage.Volume.Id (String)
+com.histmersion.api.maintenance.Vacuum.Request.Analyze (Boolean)
+com.histmersion.api.maintenance.Vacuum.Request.Tables (String)
+com.histmersion.api.maintenance.VacuumPlan.Analyze (Boolean)
+com.histmersion.api.maintenance.VacuumPlan.Tables (String)
+com.histmersion.api.media.AssetInfo.Height (Int)
+com.histmersion.api.media.AssetInfo.Mime (String)
+com.histmersion.api.media.AssetInfo.Name (String)
+com.histmersion.api.media.AssetInfo.Width (Int)
+com.histmersion.api.media.AssetInput.Base64 (String)
+com.histmersion.api.media.AssetLink.Deleted.Value (Boolean)
+com.histmersion.api.media.AssetLink.Id (Long)
+com.histmersion.api.media.AssetLink.Notes (String)
+com.histmersion.api.media.AssetLink.Relation (String)
+com.histmersion.api.media.AssetLink.Xywh (String)
+com.histmersion.api.media.AssetsStored.Stored (Int)
+com.histmersion.api.media.DataCredit.Licence (String)
+com.histmersion.api.media.DataCredit.LicenceUrl (String)
+com.histmersion.api.media.DataCredit.Name (String)
+com.histmersion.api.media.DataCredit.OnMap (Boolean)
+com.histmersion.api.media.DataCredit.Url (String)
+com.histmersion.api.media.DataCredit.UsedFor (String)
+com.histmersion.api.media.FigureLicenceFill.Applied (Boolean)
+com.histmersion.api.media.FigureLicenceFill.Candidates (Int)
+com.histmersion.api.media.FigureLicenceFill.Updated (Int)
+com.histmersion.api.media.Iiif.Region.Pixels.H (Int)
+com.histmersion.api.media.Iiif.Region.Pixels.W (Int)
+com.histmersion.api.media.Iiif.Region.Pixels.X (Int)
+com.histmersion.api.media.Iiif.Region.Pixels.Y (Int)
+com.histmersion.api.media.Iiif.Size.BestFit.H (Int)
+com.histmersion.api.media.Iiif.Size.BestFit.W (Int)
+com.histmersion.api.media.Iiif.Size.Exact.H (Int)
+com.histmersion.api.media.Iiif.Size.Exact.W (Int)
+com.histmersion.api.media.Iiif.Size.Height.H (Int)
+com.histmersion.api.media.Iiif.Size.Width.W (Int)
+com.histmersion.api.media.ImportJobKinds.MediaValue (String)
+com.histmersion.api.media.MediaCount.Allowed (Boolean)
+com.histmersion.api.media.MediaCount.Key (String)
+com.histmersion.api.media.MediaCount.N (Int)
+com.histmersion.api.media.MediaCoversReport.Covers (Int)
+com.histmersion.api.media.MediaCoversReport.Failed (String)
+com.histmersion.api.media.MediaCoversReport.Illustrations (Int)
+com.histmersion.api.media.MediaCoversReport.Sources (Int)
+com.histmersion.api.media.MediaCoversRequest.Covers (Boolean)
+com.histmersion.api.media.MediaCoversRequest.Illustrations (Boolean)
+com.histmersion.api.media.MediaCoversRequest.Isbn (String)
+com.histmersion.api.media.MediaCoversRequest.Limit (Int)
+com.histmersion.api.media.MediaImportReport.Batches (Int)
+com.histmersion.api.media.MediaImportReport.Categories (Int)
+com.histmersion.api.media.MediaImportReport.Failed (String)
+com.histmersion.api.media.MediaImportReport.Files (Int)
+com.histmersion.api.media.MediaImportReport.Items (Int)
+com.histmersion.api.media.MediaImportReport.Linked (Int)
+com.histmersion.api.media.MediaImportReport.Pending (Int)
+com.histmersion.api.media.MediaImportReport.Revoked (String)
+com.histmersion.api.media.MediaImportReport.Statements (Int)
+com.histmersion.api.media.MediaImportReport.Stored (Int)
+com.histmersion.api.media.MediaImportReport.Targets (Int)
+com.histmersion.api.media.MediaImportReport.Updated (Int)
+com.histmersion.api.media.MediaImportRequest.DryRun (Boolean)
+com.histmersion.api.media.MediaImportRequest.Limit (Int)
+com.histmersion.api.media.MediaImportRequest.Refresh (Boolean)
+com.histmersion.api.media.MediaItem.Author (String)
+com.histmersion.api.media.MediaItem.Caption (String)
+com.histmersion.api.media.MediaItem.Credit (String)
+com.histmersion.api.media.MediaItem.FileUrl (String)
+com.histmersion.api.media.MediaItem.Kind (String)
+com.histmersion.api.media.MediaItem.License (String)
+com.histmersion.api.media.MediaItem.LicenseUrl (String)
+com.histmersion.api.media.MediaItem.OriginalUrl (String)
+com.histmersion.api.media.MediaItem.Provider (String)
+com.histmersion.api.media.MediaItem.ProviderKey (String)
+com.histmersion.api.media.MediaItem.RetrievedAt (String)
+com.histmersion.api.media.MediaItem.SourceUrl (String)
+com.histmersion.api.media.MediaItem.ThumbUrl (String)
+com.histmersion.api.media.MediaItem.Uid (String)
+
+## TYPES TO DECIDE
+com.histmersion.api.library.Title | base String | constructor-parameter,method-parameter
+com.histmersion.api.library.TocEntry.Chars | base Int | constructor-parameter
+    final case class TocEntry(heading: TocEntry.Heading, ord: TocEntry.Ord, chars: TocEntry.Chars) derives KindlingsCodecAsObject, KindlingsSchema, com.histmersion.api.json.S
+com.histmersion.api.library.TocEntry.Heading | base String | constructor-parameter
+    final case class TocEntry(heading: TocEntry.Heading, ord: TocEntry.Ord, chars: TocEntry.Chars) derives KindlingsCodecAsObject, KindlingsSchema, com.histmersion.api.json.S
+com.histmersion.api.library.TocEntry.Ord | base Int | constructor-parameter
+    final case class TocEntry(heading: TocEntry.Heading, ord: TocEntry.Ord, chars: TocEntry.Chars) derives KindlingsCodecAsObject, KindlingsSchema, com.histmersion.api.json.S
+com.histmersion.api.library.Tree.MaxDepthValue | base Int | alias
+    val MaxDepth: com.histmersion.api.library.Tree.MaxDepth = _root_.com.histmersion.api.library.Tree.MaxDepthValue(3)
+com.histmersion.api.library.Tree.MaxSamplesValue | base Int | alias
+    val MaxSamples: com.histmersion.api.library.Tree.MaxSamples = _root_.com.histmersion.api.library.Tree.MaxSamplesValue(5)
+com.histmersion.api.library.Tree.RegionsDepth | base Int | method-parameter
+    { val refactorTuple = regions(mine, nodes, relations, Some(_root_.com.histmersion.api.library.Tree.CoversAsOfAsOf((midpoint(_root_.com.histmersion.api.library.Tree.Midpoi
+com.histmersion.api.library.Tree.RegionsSamples | base Int | alias,method-parameter
+    val TimeTimeSamples: _root_.com.histmersion.api.library.Tree.RegionsSamples.type = _root_.com.histmersion.api.library.Tree.RegionsSamples
+    val TimeTreeSamples: _root_.com.histmersion.api.library.Tree.RegionsSamples.type = _root_.com.histmersion.api.library.Tree.RegionsSamples
+com.histmersion.api.library.Tree.SampleOfN | base Int | method-parameter
+    private def sampleOf(rows: List[TreeRow], n: com.histmersion.api.library.Tree.SampleOfN): List[Bucket.Sample] =
+com.histmersion.api.library.Tree.SplitRatioValue | base Double | alias
+    val SplitRatio: com.histmersion.api.library.Tree.SplitRatio = _root_.com.histmersion.api.library.Tree.SplitRatioValue(0.8)
+com.histmersion.api.library.Tree.TreeRow.End | base Long | constructor-parameter
+    val mine = rows.filter(overlaps(_, bStart, bEnd))
+    { val refactorTuple = regions(mine, nodes, relations, Some(_root_.com.histmersion.api.library.Tree.CoversAsOfAsOf((midpoint(_root_.com.histmersion.api.library.Tree.Midpoi
+com.histmersion.api.library.Tree.TreeRow.Key | base String | constructor-parameter
+com.histmersion.api.library.Tree.TreeRow.PlaceIds | base String | constructor-parameter
+com.histmersion.api.library.Tree.TreeRow.Start | base Long | constructor-parameter
+    val mine = rows.filter(overlaps(_, bStart, bEnd))
+    { val refactorTuple = regions(mine, nodes, relations, Some(_root_.com.histmersion.api.library.Tree.CoversAsOfAsOf((midpoint(_root_.com.histmersion.api.library.Tree.Midpoi
+com.histmersion.api.library.UpdateNotice.Kind | base String | constructor-parameter
+    final case class UpdateNotice(kind: Option[UpdateNotice.Kind], label: Option[UpdateNotice.Label], doi: Option[com.histmersion.api.library.Doi])
+com.histmersion.api.library.UpdateNotice.Label | base String | constructor-parameter
+    final case class UpdateNotice(kind: Option[UpdateNotice.Kind], label: Option[UpdateNotice.Label], doi: Option[com.histmersion.api.library.Doi])
+com.histmersion.api.library.UpstreamQuota.BlockedUntil | base String | constructor-parameter
+com.histmersion.api.library.UpstreamQuota.BlockedWhy | base String | constructor-parameter
+com.histmersion.api.library.UpstreamQuota.DailyTokens | base Int | constructor-parameter
+com.histmersion.api.library.UpstreamQuota.Day | base String | constructor-parameter
+com.histmersion.api.library.UpstreamQuota.LookupTokens | base Int | constructor-parameter
+com.histmersion.api.library.UpstreamQuota.ObservedAt | base String | constructor-parameter
+com.histmersion.api.library.UpstreamQuota.PerMinute | base Int | constructor-parameter
+com.histmersion.api.library.UpstreamQuota.RateLimit | base Int | constructor-parameter
+com.histmersion.api.library.UpstreamQuota.RateRemaining | base Int | constructor-parameter
+com.histmersion.api.library.UpstreamQuota.SearchDailyTokens | base Int | constructor-parameter
+com.histmersion.api.library.UpstreamQuota.SearchTokens | base Int | constructor-parameter
+com.histmersion.api.library.UpstreamQuota.Upstream | base String | alias,constructor-parameter
+com.histmersion.api.library.Venue | base String | constructor-parameter
+com.histmersion.api.library.WikirefsResult.Article | base String | constructor-parameter
+com.histmersion.api.library.WikirefsResult.Arxiv | base String | constructor-parameter
+com.histmersion.api.library.WikirefsResult.DoiCount | base Int | constructor-parameter
+com.histmersion.api.library.WikirefsResult.Dois | base String | constructor-parameter
+com.histmersion.api.library.WikirefsResult.Known | base String | constructor-parameter
+com.histmersion.api.library.WikirefsResult.Url | base String | constructor-parameter
+com.histmersion.api.library.WorkRef.AbstractText | base String | constructor-parameter
+com.histmersion.api.library.WorkRef.ArxivId | base String | constructor-parameter
+com.histmersion.api.library.WorkRef.CitedByCount | base Int | constructor-parameter
+com.histmersion.api.library.WorkRef.InDb | base Boolean | constructor-parameter
+com.histmersion.api.library.WorkRef.IsOa | base Boolean | constructor-parameter
+com.histmersion.api.library.WorkRef.IsRetracted | base Boolean | constructor-parameter
+com.histmersion.api.library.WorkRef.OaLicence | base String | constructor-parameter
+com.histmersion.api.library.WorkRef.OaLocations | base String | constructor-parameter
+com.histmersion.api.library.WorkRef.OaStatus | base String | constructor-parameter
+com.histmersion.api.library.WorkRef.OaUrl | base String | constructor-parameter
+com.histmersion.api.library.WorkRef.OpenalexId | base String | constructor-parameter
+com.histmersion.api.library.WorkRef.ReferencedWorks | base String | constructor-parameter
+com.histmersion.api.library.WorkRef.WorkType | base String | constructor-parameter
+com.histmersion.api.maintenance.ReindexResult.Chunks | base Int | constructor-parameter
+    final case class ReindexResult(sources: ReindexResult.Sources, chunks: ReindexResult.Chunks, lastCitekey: Option[ReindexResult.LastCitekey], remaining: ReindexResult.Rema
+com.histmersion.api.maintenance.ReindexResult.LastCitekey | base String | constructor-parameter
+    final case class ReindexResult(sources: ReindexResult.Sources, chunks: ReindexResult.Chunks, lastCitekey: Option[ReindexResult.LastCitekey], remaining: ReindexResult.Rema
+com.histmersion.api.maintenance.ReindexResult.Remaining | base Int | constructor-parameter
+    final case class ReindexResult(sources: ReindexResult.Sources, chunks: ReindexResult.Chunks, lastCitekey: Option[ReindexResult.LastCitekey], remaining: ReindexResult.Rema
+com.histmersion.api.maintenance.ReindexResult.Sources | base Int | constructor-parameter
+    final case class ReindexResult(sources: ReindexResult.Sources, chunks: ReindexResult.Chunks, lastCitekey: Option[ReindexResult.LastCitekey], remaining: ReindexResult.Rema
+com.histmersion.api.maintenance.Storage.DefaultLowFreeBytesValue | base Long | alias
+    val DefaultLowFreeBytes: com.histmersion.api.maintenance.Storage.DefaultLowFreeBytes = _root_.com.histmersion.api.maintenance.Storage.DefaultLowFreeBytesValue(10L * 1000 
+com.histmersion.api.maintenance.Storage.Entry.Detail | base String | constructor-parameter
+com.histmersion.api.maintenance.Storage.Entry.Exists | base Boolean | constructor-parameter
+    val present = entries.filter((refactorCallback => ((refactorCallback.exists) == _root_.com.histmersion.api.maintenance.Storage.Entry.Exists(true))))
+    case None                 => if ((e.exists) == _root_.com.histmersion.api.maintenance.Storage.Entry.Exists(true)) then _root_.com.histmersion.api.maintenance.Storage.Size
+com.histmersion.api.maintenance.Storage.Entry.Group | base String | constructor-parameter
+com.histmersion.api.maintenance.Storage.Entry.Host | base String | constructor-parameter
+com.histmersion.api.maintenance.Storage.Entry.Key | base String | constructor-parameter
+com.histmersion.api.maintenance.Storage.Entry.Label | base String | constructor-parameter
+com.histmersion.api.maintenance.Storage.Entry.Partial | base Boolean | constructor-parameter
+    case Some(b) if ((e.partial) == _root_.com.histmersion.api.maintenance.Storage.Entry.Partial(true)) => _root_.com.histmersion.api.maintenance.Storage.SizeResult(s"at leas
+com.histmersion.api.maintenance.Storage.Entry.Path | base String | constructor-parameter
+    val withPath = entries.zipWithIndex.collect { case (e, i) if e.path.isDefined => (e, i) }
+    val parents = withPath.filter { case (o, j) =>
+com.histmersion.api.maintenance.Storage.Entry.Shrink | base String | constructor-parameter
+com.histmersion.api.maintenance.Storage.Entry.Volume | base String | constructor-parameter
+    def onVolume(entries: List[Storage.Entry], volume: com.histmersion.api.maintenance.Storage.OnVolumeVolume): List[Storage.Entry] =
+    val big = onVolume(report.entries, v.id).filter(_.shrink.isDefined).take(3)
+com.histmersion.api.maintenance.Storage.Entry.Within | base String | constructor-parameter
+com.histmersion.api.maintenance.Storage.FileCount | base Long | constructor-parameter
+com.histmersion.api.maintenance.Storage.Report.AgeSeconds | base Long | constructor-parameter
+com.histmersion.api.maintenance.Storage.Report.DurationMillis | base Long | constructor-parameter
+com.histmersion.api.maintenance.Storage.Report.Hints | base String | constructor-parameter
+    def withHints(r: Storage.Report): Storage.Report = r.modify(_.hints).setTo(hints(r))
+com.histmersion.api.maintenance.Storage.Report.MeasuredAt | base String | constructor-parameter
+com.histmersion.api.maintenance.Storage.Report.Measuring | base Boolean | constructor-parameter
+com.histmersion.api.maintenance.Storage.Report.Problems | base String | constructor-parameter
+com.histmersion.api.maintenance.Storage.Volume.Id | base String | constructor-parameter
+    final case class Volume(id: Volume.Id, totalBytes: com.histmersion.api.ByteCount, freeBytes: com.histmersion.api.ByteCount)
+com.histmersion.api.maintenance.Vacuum.Request.Analyze | base Boolean | constructor-parameter
+    final case class Request(analyze: Request.Analyze = _root_.com.histmersion.api.maintenance.Vacuum.Request.Analyze(false), tables: List[Request.Tables] = Nil)
+com.histmersion.api.maintenance.Vacuum.Request.Tables | base String | constructor-parameter
+    final case class Request(analyze: Request.Analyze = _root_.com.histmersion.api.maintenance.Vacuum.Request.Analyze(false), tables: List[Request.Tables] = Nil)
+com.histmersion.api.maintenance.VacuumPlan.Analyze | base Boolean | constructor-parameter
+    final case class VacuumPlan(analyze: VacuumPlan.Analyze, tables: List[VacuumPlan.Tables]) derives KindlingsCodecAsObject, KindlingsSchema, com.histmersion.api.json.Schema
+com.histmersion.api.maintenance.VacuumPlan.Tables | base String | constructor-parameter
+    final case class VacuumPlan(analyze: VacuumPlan.Analyze, tables: List[VacuumPlan.Tables]) derives KindlingsCodecAsObject, KindlingsSchema, com.histmersion.api.json.Schema
+com.histmersion.api.media.AssetInfo.Height | base Int | constructor-parameter
+com.histmersion.api.media.AssetInfo.Mime | base String | constructor-parameter
+com.histmersion.api.media.AssetInfo.Name | base String | alias,constructor-parameter
+com.histmersion.api.media.AssetInfo.Width | base Int | constructor-parameter
+com.histmersion.api.media.AssetInput.Base64 | base String | constructor-parameter
+com.histmersion.api.media.AssetLink.Deleted.Value | base Boolean | constructor-parameter
+com.histmersion.api.media.AssetLink.Id | base Long | constructor-parameter
+com.histmersion.api.media.AssetLink.Notes | base String | constructor-parameter
+com.histmersion.api.media.AssetLink.Relation | base String | constructor-parameter
+com.histmersion.api.media.AssetLink.Xywh | base String | constructor-parameter
+com.histmersion.api.media.AssetsStored.Stored | base Int | constructor-parameter
+    final case class AssetsStored(citekey: com.histmersion.api.library.Citekey, stored: AssetsStored.Stored) derives KindlingsCodecAsObject, KindlingsSchema, com.histmersion.
+com.histmersion.api.media.DataCredit.Licence | base String | constructor-parameter
+com.histmersion.api.media.DataCredit.LicenceUrl | base String | constructor-parameter
+com.histmersion.api.media.DataCredit.Name | base String | constructor-parameter
+com.histmersion.api.media.DataCredit.OnMap | base Boolean | constructor-parameter
+com.histmersion.api.media.DataCredit.Url | base String | constructor-parameter
+com.histmersion.api.media.DataCredit.UsedFor | base String | constructor-parameter
+com.histmersion.api.media.FigureLicenceFill.Applied | base Boolean | constructor-parameter
+    final case class FigureLicenceFill(candidates: FigureLicenceFill.Candidates, updated: FigureLicenceFill.Updated, applied: FigureLicenceFill.Applied, bySource: List[MediaC
+com.histmersion.api.media.FigureLicenceFill.Candidates | base Int | constructor-parameter
+    final case class FigureLicenceFill(candidates: FigureLicenceFill.Candidates, updated: FigureLicenceFill.Updated, applied: FigureLicenceFill.Applied, bySource: List[MediaC
+com.histmersion.api.media.FigureLicenceFill.Updated | base Int | constructor-parameter
+    final case class FigureLicenceFill(candidates: FigureLicenceFill.Candidates, updated: FigureLicenceFill.Updated, applied: FigureLicenceFill.Applied, bySource: List[MediaC
+com.histmersion.api.media.Iiif.ParseFormatResultPart1 | base String | method-result
+    def parseFormat(s: com.histmersion.api.media.Iiif.ParseFormatS): Either[com.histmersion.api.media.Iiif.ParseFormatResultPart1, com.histmersion.api.media.Iiif.ParseFormatR
+    case other          => Left(_root_.com.histmersion.api.media.Iiif.ParseFormatResultPart1(s"unsupported format: '$other' (use jpg or png)"))
+com.histmersion.api.media.Iiif.Region.ParseResultPart1 | base String | method-result
+    def parse(s: com.histmersion.api.media.Iiif.Region.ParseS): Either[com.histmersion.api.media.Iiif.Region.ParseResultPart1, Region] = (s).value.trim.toLowerCase match
+    case _ => Left(_root_.com.histmersion.api.media.Iiif.Region.ParseResultPart1(s"invalid region: '$s' (expected 'full' or 'x,y,w,h')"))
+com.histmersion.api.media.Iiif.Region.Pixels.H | base Int | constructor-parameter
+com.histmersion.api.media.Iiif.Region.Pixels.W | base Int | constructor-parameter
+com.histmersion.api.media.Iiif.Region.Pixels.X | base Int | constructor-parameter
+com.histmersion.api.media.Iiif.Region.Pixels.Y | base Int | constructor-parameter
+com.histmersion.api.media.Iiif.Size.BestFit.H | base Int | constructor-parameter
+com.histmersion.api.media.Iiif.Size.BestFit.W | base Int | constructor-parameter
+com.histmersion.api.media.Iiif.Size.Exact.H | base Int | constructor-parameter
+com.histmersion.api.media.Iiif.Size.Exact.W | base Int | constructor-parameter
+com.histmersion.api.media.Iiif.Size.Height.H | base Int | constructor-parameter
+com.histmersion.api.media.Iiif.Size.ParseResultPart1 | base String | method-result
+    def parse(s: com.histmersion.api.media.Iiif.Region.ParseS): Either[com.histmersion.api.media.Iiif.Region.ParseResultPart1, Region] = (s).value.trim.toLowerCase match
+    case _ => Left(_root_.com.histmersion.api.media.Iiif.Region.ParseResultPart1(s"invalid region: '$s' (expected 'full' or 'x,y,w,h')"))
+com.histmersion.api.media.Iiif.Size.Width.W | base Int | constructor-parameter
+com.histmersion.api.media.ImportJobKinds.MediaValue | base String | alias
+com.histmersion.api.media.MediaCount.Allowed | base Boolean | constructor-parameter
+    final case class MediaCount(key: MediaCount.Key, n: MediaCount.N, allowed: MediaCount.Allowed = _root_.com.histmersion.api.media.MediaCount.Allowed(true))
+com.histmersion.api.media.MediaCount.Key | base String | constructor-parameter
+    final case class MediaCount(key: MediaCount.Key, n: MediaCount.N, allowed: MediaCount.Allowed = _root_.com.histmersion.api.media.MediaCount.Allowed(true))
+com.histmersion.api.media.MediaCount.N | base Int | constructor-parameter
+com.histmersion.api.media.MediaCoversReport.Covers | base Int | constructor-parameter
+com.histmersion.api.media.MediaCoversReport.Failed | base String | constructor-parameter
+com.histmersion.api.media.MediaCoversReport.Illustrations | base Int | constructor-parameter
+com.histmersion.api.media.MediaCoversReport.Sources | base Int | constructor-parameter
+com.histmersion.api.media.MediaCoversRequest.Covers | base Boolean | constructor-parameter
+com.histmersion.api.media.MediaCoversRequest.Illustrations | base Boolean | constructor-parameter
+com.histmersion.api.media.MediaCoversRequest.Isbn | base String | constructor-parameter
+com.histmersion.api.media.MediaCoversRequest.Limit | base Int | constructor-parameter
+com.histmersion.api.media.MediaImportReport.Batches | base Int | constructor-parameter
+com.histmersion.api.media.MediaImportReport.Categories | base Int | constructor-parameter
+com.histmersion.api.media.MediaImportReport.Failed | base String | constructor-parameter
+com.histmersion.api.media.MediaImportReport.Files | base Int | constructor-parameter
+com.histmersion.api.media.MediaImportReport.Items | base Int | constructor-parameter
+com.histmersion.api.media.MediaImportReport.Linked | base Int | constructor-parameter
+com.histmersion.api.media.MediaImportReport.Pending | base Int | constructor-parameter
+com.histmersion.api.media.MediaImportReport.Revoked | base String | constructor-parameter
+com.histmersion.api.media.MediaImportReport.Statements | base Int | constructor-parameter
+com.histmersion.api.media.MediaImportReport.Stored | base Int | constructor-parameter
+com.histmersion.api.media.MediaImportReport.Targets | base Int | constructor-parameter
+com.histmersion.api.media.MediaImportReport.Updated | base Int | constructor-parameter
+com.histmersion.api.media.MediaImportRequest.DryRun | base Boolean | alias,constructor-parameter
+com.histmersion.api.media.MediaImportRequest.Limit | base Int | constructor-parameter
+com.histmersion.api.media.MediaImportRequest.Refresh | base Boolean | constructor-parameter
+com.histmersion.api.media.MediaItem.Author | base String | constructor-parameter
+com.histmersion.api.media.MediaItem.Caption | base String | constructor-parameter
+com.histmersion.api.media.MediaItem.Credit | base String | constructor-parameter
+com.histmersion.api.media.MediaItem.FileUrl | base String | constructor-parameter
+com.histmersion.api.media.MediaItem.Kind | base String | constructor-parameter
+com.histmersion.api.media.MediaItem.License | base String | constructor-parameter
+com.histmersion.api.media.MediaItem.LicenseUrl | base String | constructor-parameter
+com.histmersion.api.media.MediaItem.OriginalUrl | base String | constructor-parameter
+com.histmersion.api.media.MediaItem.Provider | base String | constructor-parameter
+com.histmersion.api.media.MediaItem.ProviderKey | base String | constructor-parameter
+com.histmersion.api.media.MediaItem.RetrievedAt | base String | constructor-parameter
+com.histmersion.api.media.MediaItem.SourceUrl | base String | constructor-parameter
+com.histmersion.api.media.MediaItem.ThumbUrl | base String | constructor-parameter
+com.histmersion.api.media.MediaItem.Uid | base String | constructor-parameter

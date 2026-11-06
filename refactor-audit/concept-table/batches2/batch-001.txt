@@ -1,0 +1,230 @@
+## CONCEPTS NEARBY
+com.histmersion.api.automation.Activity.Counts.ProblemsWeek (Int)
+com.histmersion.api.automation.Activity.Counts.Running (Int)
+com.histmersion.api.automation.Activity.Entry.Approval (Long)
+com.histmersion.api.automation.Activity.Entry.Article (String)
+com.histmersion.api.automation.Activity.Entry.At (String)
+com.histmersion.api.automation.Activity.Entry.By (String)
+com.histmersion.api.automation.Activity.Entry.EndedAt (String)
+com.histmersion.api.automation.Activity.Entry.Error (String)
+com.histmersion.api.automation.Activity.Entry.Job (String)
+com.histmersion.api.automation.Activity.Entry.Key (String)
+com.histmersion.api.automation.Activity.Entry.Kind (String)
+com.histmersion.api.automation.Activity.Entry.QueueItem (Int)
+com.histmersion.api.automation.Activity.Entry.QueueList (String)
+com.histmersion.api.automation.Activity.Entry.State (String)
+com.histmersion.api.automation.Activity.Entry.Target (String)
+com.histmersion.api.automation.Activity.Entry.TargetKind (String)
+com.histmersion.api.automation.Activity.Entry.Text (String)
+com.histmersion.api.automation.Activity.Entry.What (String)
+com.histmersion.api.automation.Activity.EntryKind.Wire (String)
+com.histmersion.api.automation.Activity.Page.Next (String)
+com.histmersion.api.automation.Activity.Show.Label (String)
+com.histmersion.api.automation.Activity.Show.Wire (String)
+com.histmersion.api.automation.Activity.Writer.Wire (String)
+com.histmersion.api.automation.AgentLeaseInfo.Expired (Boolean)
+com.histmersion.api.automation.AgentLeaseInfo.Owner (String)
+com.histmersion.api.automation.AgentLeaseInfo.ThisServer (Boolean)
+com.histmersion.api.automation.AgentLeaseInfo.Until (String)
+com.histmersion.api.automation.AgentMode.ModeSet.By (String)
+com.histmersion.api.automation.AgentMode.ModeSet.Mode (String)
+com.histmersion.api.automation.AgentMode.Step.Autopilot.On (Boolean)
+com.histmersion.api.automation.AgentMode.Step.Drain.On (Boolean)
+com.histmersion.api.automation.AgentMode.Wire (String)
+com.histmersion.api.automation.AgentRole.Wire (String)
+com.histmersion.api.automation.AgentScheduler.PoolUse.Cap (Int)
+com.histmersion.api.automation.AgentScheduler.PoolUse.Pool (String)
+com.histmersion.api.automation.AgentScheduler.PoolUse.Used (Int)
+com.histmersion.api.automation.AgentScheduler.SchedulerSet.By (String)
+com.histmersion.api.automation.AgentScheduler.SchedulerSet.Strategy (String)
+com.histmersion.api.automation.AgentScheduler.SchedulerStatus.At (String)
+com.histmersion.api.automation.AgentScheduler.SchedulerStatus.Changes (String)
+com.histmersion.api.automation.AgentScheduler.SchedulerStatus.Dry (Boolean)
+com.histmersion.api.automation.AgentScheduler.SchedulerStatus.ForPerson (Int)
+com.histmersion.api.automation.AgentScheduler.SchedulerStatus.MaxRuns (Int)
+com.histmersion.api.automation.AgentScheduler.SchedulerStatus.Occupied (Int)
+com.histmersion.api.automation.AgentScheduler.SchedulerStatus.Settings (String)
+com.histmersion.api.automation.AgentScheduler.SchedulerStatus.Stop (String)
+com.histmersion.api.automation.AgentScheduler.SchedulerStatus.Strategy (String)
+com.histmersion.api.automation.AgentScheduler.SchedulerStatus.StrategyFrom (String)
+com.histmersion.api.automation.AgentScheduler.SchedulerStatus.WaitingTotal (Int)
+com.histmersion.api.automation.AgentScheduler.Started.Item (Long)
+com.histmersion.api.automation.AgentScheduler.Started.JobType (String)
+com.histmersion.api.automation.AgentScheduler.Started.Kind (String)
+com.histmersion.api.automation.AgentScheduler.Started.Manager (String)
+com.histmersion.api.automation.AgentScheduler.Started.Target (String)
+com.histmersion.api.automation.AgentScheduler.Started.Why (String)
+com.histmersion.api.automation.AgentScheduler.StrategyLine.Describe (String)
+com.histmersion.api.automation.AgentScheduler.StrategyLine.Name (String)
+com.histmersion.api.automation.AgentScheduler.TypeLine.JobType (String)
+com.histmersion.api.automation.AgentScheduler.TypeLine.Label (String)
+com.histmersion.api.automation.AgentScheduler.TypeLine.Priority (Int)
+com.histmersion.api.automation.AgentScheduler.TypeLine.Recent (Int)
+com.histmersion.api.automation.AgentScheduler.TypeLine.Waiting (Int)
+com.histmersion.api.automation.AgentScheduler.TypeLine.Weight (Int)
+com.histmersion.api.automation.AgentScheduler.Waiting.Behind (String)
+com.histmersion.api.automation.AgentScheduler.Waiting.Code (String)
+com.histmersion.api.automation.AgentScheduler.Waiting.Item (Long)
+com.histmersion.api.automation.AgentScheduler.Waiting.JobType (String)
+com.histmersion.api.automation.AgentScheduler.Waiting.Kind (String)
+com.histmersion.api.automation.AgentScheduler.Waiting.Manager (String)
+com.histmersion.api.automation.AgentScheduler.Waiting.Position (Int)
+com.histmersion.api.automation.AgentScheduler.Waiting.Priority (Int)
+com.histmersion.api.automation.AgentScheduler.Waiting.Target (String)
+com.histmersion.api.automation.AgentScheduler.Waiting.WaitedMinutes (Long)
+com.histmersion.api.automation.AgentScheduler.Waiting.Why (String)
+com.histmersion.api.automation.AgentScheduler.WhyInfo.Approval (Long)
+com.histmersion.api.automation.AgentScheduler.WhyInfo.Behind (String)
+com.histmersion.api.automation.AgentScheduler.WhyInfo.Code (String)
+com.histmersion.api.automation.AgentScheduler.WhyInfo.Item (Long)
+com.histmersion.api.automation.AgentScheduler.WhyInfo.Kind (String)
+com.histmersion.api.automation.AgentScheduler.WhyInfo.Manager (String)
+com.histmersion.api.automation.AgentScheduler.WhyInfo.Position (Int)
+com.histmersion.api.automation.AgentScheduler.WhyInfo.Run (String)
+com.histmersion.api.automation.AgentScheduler.WhyInfo.Status (String)
+com.histmersion.api.automation.AgentScheduler.WhyInfo.Target (String)
+com.histmersion.api.automation.AgentScheduler.WhyInfo.Why (String)
+com.histmersion.api.automation.AgentStateDeleted.Deleted (Boolean)
+com.histmersion.api.automation.AgentStateDeleted.Key (String)
+com.histmersion.api.automation.AgentStateEntry.Key (String)
+com.histmersion.api.automation.AgentStateEntry.UpdatedAt (String)
+com.histmersion.api.automation.AgentStateEntry.Value (String)
+com.histmersion.api.automation.AgentStatePut.Value (String)
+
+## TYPES TO DECIDE
+com.histmersion.api.automation.Activity.Counts.ProblemsWeek | base Int | constructor-parameter
+    final case class Counts(running: Counts.Running = _root_.com.histmersion.api.automation.Activity.Counts.Running(0), problemsWeek: Counts.ProblemsWeek = _root_.com.histmer
+com.histmersion.api.automation.Activity.Counts.Running | base Int | constructor-parameter
+    case Running extends Show(_root_.com.histmersion.api.automation.Activity.Show.Wire("running"), _root_.com.histmersion.api.automation.Activity.Show.Label("Running now"))
+    final case class Counts(running: Counts.Running = _root_.com.histmersion.api.automation.Activity.Counts.Running(0), problemsWeek: Counts.ProblemsWeek = _root_.com.histmer
+com.histmersion.api.automation.Activity.Entry.Approval | base Long | constructor-parameter
+com.histmersion.api.automation.Activity.Entry.Article | base String | constructor-parameter
+com.histmersion.api.automation.Activity.Entry.At | base String | alias,constructor-parameter
+com.histmersion.api.automation.Activity.Entry.By | base String | constructor-parameter
+com.histmersion.api.automation.Activity.Entry.EndedAt | base String | constructor-parameter
+com.histmersion.api.automation.Activity.Entry.Error | base String | constructor-parameter
+com.histmersion.api.automation.Activity.Entry.Job | base String | constructor-parameter
+    case Job extends EntryKind(_root_.com.histmersion.api.automation.Activity.EntryKind.Wire("job"))
+    case Job      => _root_.com.histmersion.api.automation.Activity.EntryKind.WordingResult("Background job")
+com.histmersion.api.automation.Activity.Entry.Key | base String | constructor-parameter
+com.histmersion.api.automation.Activity.Entry.Kind | base String | constructor-parameter
+    def entryKind: Option[EntryKind] = EntryKind.parse(kind)
+com.histmersion.api.automation.Activity.Entry.QueueItem | base Int | constructor-parameter
+com.histmersion.api.automation.Activity.Entry.QueueList | base String | constructor-parameter
+com.histmersion.api.automation.Activity.Entry.State | base String | constructor-parameter
+com.histmersion.api.automation.Activity.Entry.Target | base String | constructor-parameter
+com.histmersion.api.automation.Activity.Entry.TargetKind | base String | constructor-parameter
+com.histmersion.api.automation.Activity.Entry.Text | base String | constructor-parameter
+com.histmersion.api.automation.Activity.Entry.What | base String | constructor-parameter
+com.histmersion.api.automation.Activity.EntryKind.Wire | base String | constructor-parameter
+    enum EntryKind(val wire: EntryKind.Wire):
+    case Run extends EntryKind(_root_.com.histmersion.api.automation.Activity.EntryKind.Wire("run"))
+com.histmersion.api.automation.Activity.Page.Next | base String | constructor-parameter
+    final case class Page(entries: List[Entry], next: Option[Page.Next] = None, counts: Counts = Counts())
+com.histmersion.api.automation.Activity.Show.Label | base String | constructor-parameter
+    enum Show(val wire: Show.Wire, val label: Show.Label):
+    case Everything extends Show(_root_.com.histmersion.api.automation.Activity.Show.Wire("all"), _root_.com.histmersion.api.automation.Activity.Show.Label("Everything"))
+com.histmersion.api.automation.Activity.Show.Wire | base String | constructor-parameter
+    enum EntryKind(val wire: EntryKind.Wire):
+    case Run extends EntryKind(_root_.com.histmersion.api.automation.Activity.EntryKind.Wire("run"))
+com.histmersion.api.automation.Activity.Writer.Wire | base String | constructor-parameter
+    enum EntryKind(val wire: EntryKind.Wire):
+    case Run extends EntryKind(_root_.com.histmersion.api.automation.Activity.EntryKind.Wire("run"))
+com.histmersion.api.automation.AgentLeaseInfo.Expired | base Boolean | constructor-parameter
+    final case class AgentLeaseInfo(owner: AgentLeaseInfo.Owner, until: AgentLeaseInfo.Until, expired: AgentLeaseInfo.Expired, thisServer: AgentLeaseInfo.ThisServer)
+com.histmersion.api.automation.AgentLeaseInfo.Owner | base String | constructor-parameter
+    final case class AgentLeaseInfo(owner: AgentLeaseInfo.Owner, until: AgentLeaseInfo.Until, expired: AgentLeaseInfo.Expired, thisServer: AgentLeaseInfo.ThisServer)
+com.histmersion.api.automation.AgentLeaseInfo.ThisServer | base Boolean | constructor-parameter
+    final case class AgentLeaseInfo(owner: AgentLeaseInfo.Owner, until: AgentLeaseInfo.Until, expired: AgentLeaseInfo.Expired, thisServer: AgentLeaseInfo.ThisServer)
+com.histmersion.api.automation.AgentLeaseInfo.Until | base String | constructor-parameter
+    final case class AgentLeaseInfo(owner: AgentLeaseInfo.Owner, until: AgentLeaseInfo.Until, expired: AgentLeaseInfo.Expired, thisServer: AgentLeaseInfo.ThisServer)
+com.histmersion.api.automation.AgentMode.ModeSet.By | base String | constructor-parameter
+    final case class ModeSet(mode: ModeSet.Mode, by: Option[ModeSet.By] = None) derives KindlingsCodecAsObject, KindlingsSchema, com.histmersion.api.json.Schema
+com.histmersion.api.automation.AgentMode.ModeSet.Mode | base String | constructor-parameter
+    final case class ModeSet(mode: ModeSet.Mode, by: Option[ModeSet.By] = None) derives KindlingsCodecAsObject, KindlingsSchema, com.histmersion.api.json.Schema
+com.histmersion.api.automation.AgentMode.Step.Autopilot.On | base Boolean | constructor-parameter
+    def of(autopilotOn: com.histmersion.api.automation.AgentMode.OfAutopilotOn, draining: com.histmersion.api.automation.AgentMode.OfDraining): AgentMode =
+    case Autopilot(on: Step.Autopilot.On)
+com.histmersion.api.automation.AgentMode.Step.Drain.On | base Boolean | constructor-parameter
+    def of(autopilotOn: com.histmersion.api.automation.AgentMode.OfAutopilotOn, draining: com.histmersion.api.automation.AgentMode.OfDraining): AgentMode =
+    case Autopilot(on: Step.Autopilot.On)
+com.histmersion.api.automation.AgentMode.Wire | base String | constructor-parameter
+    enum AgentMode(val wire: AgentMode.Wire):
+    case Working extends AgentMode(_root_.com.histmersion.api.automation.AgentMode.Wire("working"))
+com.histmersion.api.automation.AgentRole.Wire | base String | constructor-parameter
+    enum AgentRole(val wire: AgentRole.Wire):
+    case Probe extends AgentRole(_root_.com.histmersion.api.automation.AgentRole.Wire("probe"))
+com.histmersion.api.automation.AgentScheduler.PoolUse.Cap | base Int | constructor-parameter
+    final case class PoolUse(pool: PoolUse.Pool, used: PoolUse.Used = _root_.com.histmersion.api.automation.AgentScheduler.PoolUse.Used(0), cap: PoolUse.Cap = _root_.com.hist
+com.histmersion.api.automation.AgentScheduler.PoolUse.Pool | base String | constructor-parameter
+    final case class PoolUse(pool: PoolUse.Pool, used: PoolUse.Used = _root_.com.histmersion.api.automation.AgentScheduler.PoolUse.Used(0), cap: PoolUse.Cap = _root_.com.hist
+com.histmersion.api.automation.AgentScheduler.PoolUse.Used | base Int | constructor-parameter
+    final case class PoolUse(pool: PoolUse.Pool, used: PoolUse.Used = _root_.com.histmersion.api.automation.AgentScheduler.PoolUse.Used(0), cap: PoolUse.Cap = _root_.com.hist
+com.histmersion.api.automation.AgentScheduler.SchedulerSet.By | base String | constructor-parameter
+    final case class SchedulerSet(strategy: SchedulerSet.Strategy, by: Option[SchedulerSet.By] = None)
+com.histmersion.api.automation.AgentScheduler.SchedulerSet.Strategy | base String | constructor-parameter
+    final case class SchedulerSet(strategy: SchedulerSet.Strategy, by: Option[SchedulerSet.By] = None)
+com.histmersion.api.automation.AgentScheduler.SchedulerStatus.At | base String | constructor-parameter
+com.histmersion.api.automation.AgentScheduler.SchedulerStatus.Changes | base String | constructor-parameter
+com.histmersion.api.automation.AgentScheduler.SchedulerStatus.Dry | base Boolean | constructor-parameter
+com.histmersion.api.automation.AgentScheduler.SchedulerStatus.ForPerson | base Int | constructor-parameter
+com.histmersion.api.automation.AgentScheduler.SchedulerStatus.MaxRuns | base Int | constructor-parameter
+com.histmersion.api.automation.AgentScheduler.SchedulerStatus.Occupied | base Int | constructor-parameter
+com.histmersion.api.automation.AgentScheduler.SchedulerStatus.Settings | base String | constructor-parameter
+com.histmersion.api.automation.AgentScheduler.SchedulerStatus.Stop | base String | constructor-parameter
+com.histmersion.api.automation.AgentScheduler.SchedulerStatus.Strategy | base String | constructor-parameter
+    final case class SchedulerSet(strategy: SchedulerSet.Strategy, by: Option[SchedulerSet.By] = None)
+com.histmersion.api.automation.AgentScheduler.SchedulerStatus.StrategyFrom | base String | constructor-parameter
+com.histmersion.api.automation.AgentScheduler.SchedulerStatus.WaitingTotal | base Int | constructor-parameter
+com.histmersion.api.automation.AgentScheduler.Started.Item | base Long | constructor-parameter
+com.histmersion.api.automation.AgentScheduler.Started.JobType | base String | constructor-parameter
+com.histmersion.api.automation.AgentScheduler.Started.Kind | base String | constructor-parameter
+com.histmersion.api.automation.AgentScheduler.Started.Manager | base String | constructor-parameter
+    { val refactorTuple3 = "manager-cap" -> "Manager is full"; (_root_.com.histmersion.api.automation.AgentScheduler.WaitCodesPart1(refactorTuple3._1), _root_.com.histmersion
+com.histmersion.api.automation.AgentScheduler.Started.Target | base String | constructor-parameter
+com.histmersion.api.automation.AgentScheduler.Started.Why | base String | constructor-parameter
+com.histmersion.api.automation.AgentScheduler.StrategyLine.Describe | base String | constructor-parameter
+    final case class StrategyLine(name: StrategyLine.Name, describe: StrategyLine.Describe = _root_.com.histmersion.api.automation.AgentScheduler.StrategyLine.Describe("")) d
+com.histmersion.api.automation.AgentScheduler.StrategyLine.Name | base String | constructor-parameter
+    final case class StrategyLine(name: StrategyLine.Name, describe: StrategyLine.Describe = _root_.com.histmersion.api.automation.AgentScheduler.StrategyLine.Describe("")) d
+com.histmersion.api.automation.AgentScheduler.TypeLine.JobType | base String | constructor-parameter
+com.histmersion.api.automation.AgentScheduler.TypeLine.Label | base String | constructor-parameter
+com.histmersion.api.automation.AgentScheduler.TypeLine.Priority | base Int | constructor-parameter
+com.histmersion.api.automation.AgentScheduler.TypeLine.Recent | base Int | constructor-parameter
+com.histmersion.api.automation.AgentScheduler.TypeLine.Waiting | base Int | constructor-parameter
+    final case class Waiting(
+com.histmersion.api.automation.AgentScheduler.TypeLine.Weight | base Int | constructor-parameter
+com.histmersion.api.automation.AgentScheduler.Waiting.Behind | base String | constructor-parameter
+com.histmersion.api.automation.AgentScheduler.Waiting.Code | base String | constructor-parameter
+    { val refactorTuple21 = Code.Person -> "Needs your decision"; (_root_.com.histmersion.api.automation.AgentScheduler.WaitCodesPart1(refactorTuple21._1), _root_.com.histmer
+    { val refactorTuple22 = Code.Held -> "Held by a person"; (_root_.com.histmersion.api.automation.AgentScheduler.WaitCodesPart1(refactorTuple22._1), _root_.com.histmersion.
+com.histmersion.api.automation.AgentScheduler.Waiting.Item | base Long | constructor-parameter
+com.histmersion.api.automation.AgentScheduler.Waiting.JobType | base String | constructor-parameter
+com.histmersion.api.automation.AgentScheduler.Waiting.Kind | base String | constructor-parameter
+com.histmersion.api.automation.AgentScheduler.Waiting.Manager | base String | constructor-parameter
+    { val refactorTuple3 = "manager-cap" -> "Manager is full"; (_root_.com.histmersion.api.automation.AgentScheduler.WaitCodesPart1(refactorTuple3._1), _root_.com.histmersion
+com.histmersion.api.automation.AgentScheduler.Waiting.Position | base Int | constructor-parameter
+com.histmersion.api.automation.AgentScheduler.Waiting.Priority | base Int | constructor-parameter
+com.histmersion.api.automation.AgentScheduler.Waiting.Target | base String | constructor-parameter
+com.histmersion.api.automation.AgentScheduler.Waiting.WaitedMinutes | base Long | constructor-parameter
+com.histmersion.api.automation.AgentScheduler.Waiting.Why | base String | constructor-parameter
+com.histmersion.api.automation.AgentScheduler.WhyInfo.Approval | base Long | constructor-parameter
+com.histmersion.api.automation.AgentScheduler.WhyInfo.Behind | base String | constructor-parameter
+com.histmersion.api.automation.AgentScheduler.WhyInfo.Code | base String | constructor-parameter
+    { val refactorTuple21 = Code.Person -> "Needs your decision"; (_root_.com.histmersion.api.automation.AgentScheduler.WaitCodesPart1(refactorTuple21._1), _root_.com.histmer
+    { val refactorTuple22 = Code.Held -> "Held by a person"; (_root_.com.histmersion.api.automation.AgentScheduler.WaitCodesPart1(refactorTuple22._1), _root_.com.histmersion.
+com.histmersion.api.automation.AgentScheduler.WhyInfo.Item | base Long | constructor-parameter
+com.histmersion.api.automation.AgentScheduler.WhyInfo.Kind | base String | constructor-parameter
+com.histmersion.api.automation.AgentScheduler.WhyInfo.Manager | base String | constructor-parameter
+    { val refactorTuple3 = "manager-cap" -> "Manager is full"; (_root_.com.histmersion.api.automation.AgentScheduler.WaitCodesPart1(refactorTuple3._1), _root_.com.histmersion
+com.histmersion.api.automation.AgentScheduler.WhyInfo.Position | base Int | constructor-parameter
+com.histmersion.api.automation.AgentScheduler.WhyInfo.Run | base String | constructor-parameter
+com.histmersion.api.automation.AgentScheduler.WhyInfo.Status | base String | constructor-parameter
+com.histmersion.api.automation.AgentScheduler.WhyInfo.Target | base String | constructor-parameter
+com.histmersion.api.automation.AgentScheduler.WhyInfo.Why | base String | constructor-parameter
+com.histmersion.api.automation.AgentStateDeleted.Deleted | base Boolean | constructor-parameter
+com.histmersion.api.automation.AgentStateDeleted.Key | base String | constructor-parameter
+com.histmersion.api.automation.AgentStateEntry.Key | base String | constructor-parameter
+com.histmersion.api.automation.AgentStateEntry.UpdatedAt | base String | constructor-parameter
+com.histmersion.api.automation.AgentStateEntry.Value | base String | constructor-parameter
+com.histmersion.api.automation.AgentStatePut.Value | base String | constructor-parameter

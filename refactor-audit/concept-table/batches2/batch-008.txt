@@ -1,0 +1,366 @@
+## CONCEPTS NEARBY
+com.histmersion.api.basemap.Basemap.DropRule.Drop (String)
+com.histmersion.api.basemap.Basemap.DropRule.Layer (String)
+com.histmersion.api.basemap.Basemap.DropRule.Spare (String)
+com.histmersion.api.basemap.Basemap.DropRule.Whole (Boolean)
+com.histmersion.api.basemap.Basemap.FetchQuery.Bbox (String)
+com.histmersion.api.basemap.Basemap.FetchQuery.DryRun (Boolean)
+com.histmersion.api.basemap.Basemap.FetchQuery.Focus (String)
+com.histmersion.api.basemap.Basemap.FetchQuery.KeepAll (Boolean)
+com.histmersion.api.basemap.Basemap.FetchQuery.Layer (String)
+com.histmersion.api.basemap.Basemap.FetchQuery.MaxZoom (Int)
+com.histmersion.api.basemap.Basemap.FetchQuery.TerrainMaxZoom (Int)
+com.histmersion.api.basemap.Basemap.Focus.Bbox (String)
+com.histmersion.api.basemap.Basemap.Focus.FetchedAt (String)
+com.histmersion.api.basemap.Basemap.Focus.File (String)
+com.histmersion.api.basemap.Basemap.Focus.MaxZoom (Int)
+com.histmersion.api.basemap.Basemap.Focus.MinZoom (Int)
+com.histmersion.api.basemap.Basemap.Focus.Name (String)
+com.histmersion.api.basemap.Basemap.Focus.Tiles (Long)
+com.histmersion.api.basemap.Basemap.Layer.Title (String)
+com.histmersion.api.basemap.Basemap.Layer.Wire (String)
+com.histmersion.api.basemap.Basemap.LayerInfo.Attribution (String)
+com.histmersion.api.basemap.Basemap.LayerInfo.Bbox (String)
+com.histmersion.api.basemap.Basemap.LayerInfo.Dropped (String)
+com.histmersion.api.basemap.Basemap.LayerInfo.Error (String)
+com.histmersion.api.basemap.Basemap.LayerInfo.FetchedAt (String)
+com.histmersion.api.basemap.Basemap.LayerInfo.File (String)
+com.histmersion.api.basemap.Basemap.LayerInfo.Kept (String)
+com.histmersion.api.basemap.Basemap.LayerInfo.Layer (String)
+com.histmersion.api.basemap.Basemap.LayerInfo.MaxZoom (Int)
+com.histmersion.api.basemap.Basemap.LayerInfo.MinZoom (Int)
+com.histmersion.api.basemap.Basemap.LayerInfo.Present (Boolean)
+com.histmersion.api.basemap.Basemap.LayerInfo.Source (String)
+com.histmersion.api.basemap.Basemap.LayerInfo.TileType (String)
+com.histmersion.api.basemap.Basemap.LayerInfo.Tiles (Long)
+com.histmersion.api.basemap.Basemap.LayerInfo.Version (String)
+com.histmersion.api.basemap.Basemap.LegacyLacksValue (String)
+com.histmersion.api.basemap.Basemap.OnDemand.Dir (String)
+com.histmersion.api.basemap.Basemap.OnDemand.Enabled (Boolean)
+com.histmersion.api.basemap.Basemap.OnDemand.MaxBytes (Long)
+com.histmersion.api.basemap.Basemap.OnDemand.MaxZoom (Int)
+com.histmersion.api.basemap.Basemap.OnDemand.OfflineUntil (String)
+com.histmersion.api.basemap.Basemap.OnDemand.Tiles (Long)
+com.histmersion.api.basemap.Basemap.Read.Geoms (Int)
+com.histmersion.api.basemap.Basemap.Read.Kinds (String)
+com.histmersion.api.basemap.Basemap.Region.Bbox (String)
+com.histmersion.api.basemap.Basemap.Region.Name (String)
+com.histmersion.api.basemap.Basemap.RemoveQuery.Cache (Boolean)
+com.histmersion.api.basemap.Basemap.RemoveQuery.Focus (String)
+com.histmersion.api.basemap.Basemap.RemoveQuery.Layer (String)
+com.histmersion.api.basemap.Basemap.Removed.Value (String)
+com.histmersion.api.basemap.Basemap.Status.Available (Boolean)
+com.histmersion.api.basemap.Basemap.Status.Bbox (String)
+com.histmersion.api.basemap.Basemap.Status.Dir (String)
+com.histmersion.api.basemap.Basemap.Status.FetchCommand (String)
+com.histmersion.api.basemap.Basemap.Status.FreeBytes (Long)
+com.histmersion.api.basemap.Basemap.Status.Hints (String)
+com.histmersion.api.basemap.Basemap.Status.MapMaxZoom (Int)
+com.histmersion.api.basemap.Basemap.Status.Running (String)
+com.histmersion.api.basemap.Basemap.StyleState.Id (String)
+com.histmersion.api.basemap.Basemap.StyleState.Missing (String)
+com.histmersion.api.basemap.Basemap.StyleState.Name (String)
+com.histmersion.api.catalogue.ArticleEventLead.FindingsNear (Int)
+com.histmersion.api.catalogue.ArticleEventLead.Kind (String)
+com.histmersion.api.catalogue.ArticleEventLead.Label (String)
+com.histmersion.api.catalogue.ArticleEventLead.Provider (String)
+com.histmersion.api.catalogue.ArticleEventLead.Size (String)
+com.histmersion.api.catalogue.ArticleEventLead.Years (String)
+com.histmersion.api.catalogue.Attestation.Canvas (String)
+com.histmersion.api.catalogue.Attestation.CharEnd (Int)
+com.histmersion.api.catalogue.Attestation.CharStart (Int)
+com.histmersion.api.catalogue.Attestation.ChunkOrd (Int)
+com.histmersion.api.catalogue.Attestation.CtsUrn (String)
+com.histmersion.api.catalogue.Attestation.Deleted.Value (Boolean)
+com.histmersion.api.catalogue.Attestation.Id (Long)
+com.histmersion.api.catalogue.Attestation.Note (String)
+com.histmersion.api.catalogue.Attestation.Page (String)
+com.histmersion.api.catalogue.Attestation.Prefix (String)
+com.histmersion.api.catalogue.Attestation.Quote (String)
+com.histmersion.api.catalogue.Attestation.Suffix (String)
+com.histmersion.api.catalogue.Attestation.TargetId (String)
+com.histmersion.api.catalogue.Attestation.TargetType (String)
+com.histmersion.api.catalogue.Attestation.Xywh (String)
+com.histmersion.api.catalogue.CatalogProviderInfo.Citation (String)
+com.histmersion.api.catalogue.CatalogProviderInfo.Home (String)
+com.histmersion.api.catalogue.CatalogProviderInfo.Id (String)
+com.histmersion.api.catalogue.CatalogProviderInfo.Licence (String)
+com.histmersion.api.catalogue.CatalogProviderInfo.Title (String)
+com.histmersion.api.catalogue.CatalogRecord.Central (Long)
+com.histmersion.api.catalogue.CatalogRecord.DatingMethod (String)
+com.histmersion.api.catalogue.CatalogRecord.Deaths (Long)
+com.histmersion.api.catalogue.CatalogRecord.Description (String)
+com.histmersion.api.catalogue.CatalogRecord.Group (String)
+com.histmersion.api.catalogue.CatalogRecord.Historicity (String)
+com.histmersion.api.catalogue.CatalogRecord.Kind (String)
+com.histmersion.api.catalogue.CatalogRecord.Label (String)
+com.histmersion.api.catalogue.CatalogRecord.Magnitude (Double)
+com.histmersion.api.catalogue.CatalogRecord.Names (String)
+com.histmersion.api.catalogue.CatalogRecord.PlusMinus (Long)
+com.histmersion.api.catalogue.CatalogRecord.Provider (String)
+com.histmersion.api.catalogue.CatalogRecord.ProviderId (String)
+com.histmersion.api.catalogue.CatalogRecord.Raw (String)
+com.histmersion.api.catalogue.CatalogRecord.Url (String)
+com.histmersion.api.catalogue.CatalogRecord.Vei (Int)
+com.histmersion.api.catalogue.CatalogRecord.Wikidata (String)
+com.histmersion.api.catalogue.Correction.CheckedAt (String)
+com.histmersion.api.catalogue.Correction.Counts.Conflicts (Int)
+com.histmersion.api.catalogue.Correction.Counts.Kept (Int)
+com.histmersion.api.catalogue.Correction.Counts.Retired (Int)
+com.histmersion.api.catalogue.Correction.CreatedAt (String)
+com.histmersion.api.catalogue.Correction.Field (String)
+com.histmersion.api.catalogue.Correction.Id (Long)
+com.histmersion.api.catalogue.Correction.Label (String)
+com.histmersion.api.catalogue.Correction.List.Total (Int)
+com.histmersion.api.catalogue.Correction.StatusValue (String)
+com.histmersion.api.catalogue.Correction.TargetId (String)
+com.histmersion.api.catalogue.Correction.TargetKind (String)
+com.histmersion.api.catalogue.Correction.Upstream (String)
+com.histmersion.api.catalogue.Correction.UpstreamNow (String)
+com.histmersion.api.catalogue.Correction.UpstreamValue (String)
+com.histmersion.api.catalogue.Correction.Value (String)
+com.histmersion.api.catalogue.Event.Id (String)
+com.histmersion.api.catalogue.EventCandidatesRequest.All (Boolean)
+com.histmersion.api.catalogue.EventCandidatesRequest.Limit (Int)
+com.histmersion.api.catalogue.EventCatalogueRef.Citation (String)
+com.histmersion.api.catalogue.EventCatalogueRef.Deaths (Long)
+com.histmersion.api.catalogue.EventCatalogueRef.Licence (String)
+com.histmersion.api.catalogue.EventCatalogueRef.Magnitude (Double)
+com.histmersion.api.catalogue.EventCatalogueRef.Provider (String)
+com.histmersion.api.catalogue.EventCatalogueRef.ProviderId (String)
+com.histmersion.api.catalogue.EventCatalogueRef.RetrievedAt (String)
+com.histmersion.api.catalogue.EventCatalogueRef.Title (String)
+com.histmersion.api.catalogue.EventCatalogueRef.Url (String)
+com.histmersion.api.catalogue.EventCatalogueRef.Vei (Int)
+com.histmersion.api.catalogue.EventCount.Key (String)
+com.histmersion.api.catalogue.EventCount.N (Int)
+com.histmersion.api.catalogue.EventDating.Method (String)
+com.histmersion.api.catalogue.EventDating.Note (String)
+com.histmersion.api.catalogue.EventDeleted.Deleted (Boolean)
+com.histmersion.api.catalogue.EventEdge.Kind (String)
+com.histmersion.api.catalogue.EventEdge.Note (String)
+com.histmersion.api.catalogue.EventEntry.Geometry (String)
+com.histmersion.api.catalogue.EventEntry.Names (String)
+com.histmersion.api.catalogue.EventEntry.Tier (String)
+com.histmersion.api.catalogue.EventEntry.Wikidata (String)
+
+## TYPES TO DECIDE
+com.histmersion.api.basemap.Basemap.DropRule.Drop | base String | constructor-parameter
+    def parseDrop(s: com.histmersion.api.basemap.Basemap.ParseDropS): Either[com.histmersion.api.basemap.Basemap.ParseDropResultPart1, List[DropRule]] =
+    case Some(d) => parseDrop(_root_.com.histmersion.api.basemap.Basemap.ParseDropS((d).value)).toOption.getOrElse(Nil).filter((refactorCallback2 => ((refactorCallback2.whole
+com.histmersion.api.basemap.Basemap.DropRule.Layer | base String | constructor-parameter
+    enum Layer(val wire: Layer.Wire, val title: Layer.Title):
+    case Vector extends Layer(_root_.com.histmersion.api.basemap.Basemap.Layer.Wire("vector"), _root_.com.histmersion.api.basemap.Basemap.Layer.Title("coast, water and land c
+com.histmersion.api.basemap.Basemap.DropRule.Spare | base String | constructor-parameter
+com.histmersion.api.basemap.Basemap.DropRule.Whole | base Boolean | constructor-parameter
+    case Some(d) => parseDrop(_root_.com.histmersion.api.basemap.Basemap.ParseDropS((d).value)).toOption.getOrElse(Nil).filter((refactorCallback2 => ((refactorCallback2.whole
+com.histmersion.api.basemap.Basemap.FetchQuery.Bbox | base String | constructor-parameter
+    final case class Region(name: Region.Name, bbox: Region.Bbox) derives KindlingsCodecAsObject, KindlingsSchema, com.histmersion.api.json.Schema
+com.histmersion.api.basemap.Basemap.FetchQuery.DryRun | base Boolean | constructor-parameter
+com.histmersion.api.basemap.Basemap.FetchQuery.Focus | base String | constructor-parameter
+    final case class Focus(
+    final case class RemoveQuery(layer: RemoveQuery.Layer = _root_.com.histmersion.api.basemap.Basemap.RemoveQuery.Layer("all"), focus: Option[RemoveQuery.Focus] = None, cach
+com.histmersion.api.basemap.Basemap.FetchQuery.KeepAll | base Boolean | constructor-parameter
+com.histmersion.api.basemap.Basemap.FetchQuery.Layer | base String | constructor-parameter
+    enum Layer(val wire: Layer.Wire, val title: Layer.Title):
+    case Vector extends Layer(_root_.com.histmersion.api.basemap.Basemap.Layer.Wire("vector"), _root_.com.histmersion.api.basemap.Basemap.Layer.Title("coast, water and land c
+com.histmersion.api.basemap.Basemap.FetchQuery.MaxZoom | base Int | constructor-parameter
+com.histmersion.api.basemap.Basemap.FetchQuery.TerrainMaxZoom | base Int | constructor-parameter
+com.histmersion.api.basemap.Basemap.Focus.Bbox | base String | constructor-parameter
+    final case class Region(name: Region.Name, bbox: Region.Bbox) derives KindlingsCodecAsObject, KindlingsSchema, com.histmersion.api.json.Schema
+com.histmersion.api.basemap.Basemap.Focus.FetchedAt | base String | constructor-parameter
+com.histmersion.api.basemap.Basemap.Focus.File | base String | constructor-parameter
+com.histmersion.api.basemap.Basemap.Focus.MaxZoom | base Int | constructor-parameter
+com.histmersion.api.basemap.Basemap.Focus.MinZoom | base Int | constructor-parameter
+com.histmersion.api.basemap.Basemap.Focus.Name | base String | constructor-parameter
+    final case class Region(name: Region.Name, bbox: Region.Bbox) derives KindlingsCodecAsObject, KindlingsSchema, com.histmersion.api.json.Schema
+    final case class StyleState(id: StyleState.Id, name: StyleState.Name, missing: List[StyleState.Missing] = Nil)
+com.histmersion.api.basemap.Basemap.Focus.Tiles | base Long | constructor-parameter
+com.histmersion.api.basemap.Basemap.Layer.Title | base String | constructor-parameter
+    enum Layer(val wire: Layer.Wire, val title: Layer.Title):
+    case Vector extends Layer(_root_.com.histmersion.api.basemap.Basemap.Layer.Wire("vector"), _root_.com.histmersion.api.basemap.Basemap.Layer.Title("coast, water and land c
+com.histmersion.api.basemap.Basemap.Layer.Wire | base String | constructor-parameter
+    enum Layer(val wire: Layer.Wire, val title: Layer.Title):
+    case Vector extends Layer(_root_.com.histmersion.api.basemap.Basemap.Layer.Wire("vector"), _root_.com.histmersion.api.basemap.Basemap.Layer.Title("coast, water and land c
+com.histmersion.api.basemap.Basemap.LayerInfo.Attribution | base String | constructor-parameter
+com.histmersion.api.basemap.Basemap.LayerInfo.Bbox | base String | constructor-parameter
+    final case class Region(name: Region.Name, bbox: Region.Bbox) derives KindlingsCodecAsObject, KindlingsSchema, com.histmersion.api.json.Schema
+com.histmersion.api.basemap.Basemap.LayerInfo.Dropped | base String | constructor-parameter
+com.histmersion.api.basemap.Basemap.LayerInfo.Error | base String | constructor-parameter
+    )).left.map(refactorError => _root_.com.histmersion.api.basemap.Basemap.ParseSubsetResultPart1(refactorError))).map(refactorValue6 => (refactorValue6).iterator.map { case
+com.histmersion.api.basemap.Basemap.LayerInfo.FetchedAt | base String | constructor-parameter
+com.histmersion.api.basemap.Basemap.LayerInfo.File | base String | constructor-parameter
+com.histmersion.api.basemap.Basemap.LayerInfo.Kept | base String | constructor-parameter
+com.histmersion.api.basemap.Basemap.LayerInfo.Layer | base String | constructor-parameter
+    enum Layer(val wire: Layer.Wire, val title: Layer.Title):
+    case Vector extends Layer(_root_.com.histmersion.api.basemap.Basemap.Layer.Wire("vector"), _root_.com.histmersion.api.basemap.Basemap.Layer.Title("coast, water and land c
+com.histmersion.api.basemap.Basemap.LayerInfo.MaxZoom | base Int | constructor-parameter
+com.histmersion.api.basemap.Basemap.LayerInfo.MinZoom | base Int | constructor-parameter
+com.histmersion.api.basemap.Basemap.LayerInfo.Present | base Boolean | constructor-parameter
+com.histmersion.api.basemap.Basemap.LayerInfo.Source | base String | constructor-parameter
+com.histmersion.api.basemap.Basemap.LayerInfo.TileType | base String | constructor-parameter
+com.histmersion.api.basemap.Basemap.LayerInfo.Tiles | base Long | constructor-parameter
+com.histmersion.api.basemap.Basemap.LayerInfo.Version | base String | constructor-parameter
+com.histmersion.api.basemap.Basemap.LegacyLacksValue | base String | alias
+    val LegacyLacks: List[com.histmersion.api.basemap.Basemap.LegacyLacks] = List(_root_.com.histmersion.api.basemap.Basemap.LegacyLacksValue("boundaries"), _root_.com.histme
+com.histmersion.api.basemap.Basemap.OnDemand.Dir | base String | constructor-parameter
+com.histmersion.api.basemap.Basemap.OnDemand.Enabled | base Boolean | constructor-parameter
+com.histmersion.api.basemap.Basemap.OnDemand.MaxBytes | base Long | constructor-parameter
+com.histmersion.api.basemap.Basemap.OnDemand.MaxZoom | base Int | constructor-parameter
+com.histmersion.api.basemap.Basemap.OnDemand.OfflineUntil | base String | constructor-parameter
+com.histmersion.api.basemap.Basemap.OnDemand.Tiles | base Long | constructor-parameter
+com.histmersion.api.basemap.Basemap.Read.Geoms | base Int | constructor-parameter
+    final case class Read(geoms: Set[Read.Geoms] = Set.empty, kinds: Set[Read.Kinds] = Set.empty):
+com.histmersion.api.basemap.Basemap.Read.Kinds | base String | constructor-parameter
+    final case class Read(geoms: Set[Read.Geoms] = Set.empty, kinds: Set[Read.Kinds] = Set.empty):
+    case l :: Nil if l.nonEmpty => Right(l -> Read(Set.empty, kinds.fold(Set.empty)((_.toSet).map(refactorValue11 => _root_.com.histmersion.api.basemap.Basemap.Read.Kinds(ref
+com.histmersion.api.basemap.Basemap.Region.Bbox | base String | constructor-parameter
+    final case class Region(name: Region.Name, bbox: Region.Bbox) derives KindlingsCodecAsObject, KindlingsSchema, com.histmersion.api.json.Schema
+com.histmersion.api.basemap.Basemap.Region.Name | base String | constructor-parameter
+    final case class Region(name: Region.Name, bbox: Region.Bbox) derives KindlingsCodecAsObject, KindlingsSchema, com.histmersion.api.json.Schema
+    final case class StyleState(id: StyleState.Id, name: StyleState.Name, missing: List[StyleState.Missing] = Nil)
+com.histmersion.api.basemap.Basemap.RemoveQuery.Cache | base Boolean | constructor-parameter
+    final case class RemoveQuery(layer: RemoveQuery.Layer = _root_.com.histmersion.api.basemap.Basemap.RemoveQuery.Layer("all"), focus: Option[RemoveQuery.Focus] = None, cach
+com.histmersion.api.basemap.Basemap.RemoveQuery.Focus | base String | constructor-parameter
+    final case class Focus(
+    final case class RemoveQuery(layer: RemoveQuery.Layer = _root_.com.histmersion.api.basemap.Basemap.RemoveQuery.Layer("all"), focus: Option[RemoveQuery.Focus] = None, cach
+com.histmersion.api.basemap.Basemap.RemoveQuery.Layer | base String | constructor-parameter
+    enum Layer(val wire: Layer.Wire, val title: Layer.Title):
+    case Vector extends Layer(_root_.com.histmersion.api.basemap.Basemap.Layer.Wire("vector"), _root_.com.histmersion.api.basemap.Basemap.Layer.Title("coast, water and land c
+com.histmersion.api.basemap.Basemap.Removed.Value | base String | constructor-parameter
+    final case class Removed(removed: List[Removed.Value], bytes: com.histmersion.api.ByteCount) derives KindlingsCodecAsObject, KindlingsSchema, com.histmersion.api.json.Sch
+com.histmersion.api.basemap.Basemap.Status.Available | base Boolean | constructor-parameter
+com.histmersion.api.basemap.Basemap.Status.Bbox | base String | constructor-parameter
+    final case class Region(name: Region.Name, bbox: Region.Bbox) derives KindlingsCodecAsObject, KindlingsSchema, com.histmersion.api.json.Schema
+com.histmersion.api.basemap.Basemap.Status.Dir | base String | constructor-parameter
+com.histmersion.api.basemap.Basemap.Status.FetchCommand | base String | constructor-parameter
+    val FetchCommand = "histmersion basemap fetch"
+    val KeepAllCommand = s"$FetchCommand --layer vector --keep-all"
+com.histmersion.api.basemap.Basemap.Status.FreeBytes | base Long | constructor-parameter
+com.histmersion.api.basemap.Basemap.Status.Hints | base String | constructor-parameter
+com.histmersion.api.basemap.Basemap.Status.MapMaxZoom | base Int | constructor-parameter
+com.histmersion.api.basemap.Basemap.Status.Running | base String | constructor-parameter
+com.histmersion.api.basemap.Basemap.StyleState.Id | base String | constructor-parameter
+    final case class StyleState(id: StyleState.Id, name: StyleState.Name, missing: List[StyleState.Missing] = Nil)
+com.histmersion.api.basemap.Basemap.StyleState.Missing | base String | constructor-parameter
+    final case class StyleState(id: StyleState.Id, name: StyleState.Name, missing: List[StyleState.Missing] = Nil)
+com.histmersion.api.basemap.Basemap.StyleState.Name | base String | constructor-parameter
+    final case class Region(name: Region.Name, bbox: Region.Bbox) derives KindlingsCodecAsObject, KindlingsSchema, com.histmersion.api.json.Schema
+    final case class StyleState(id: StyleState.Id, name: StyleState.Name, missing: List[StyleState.Missing] = Nil)
+com.histmersion.api.catalogue.ArticleEventLead.FindingsNear | base Int | constructor-parameter
+com.histmersion.api.catalogue.ArticleEventLead.Kind | base String | constructor-parameter
+com.histmersion.api.catalogue.ArticleEventLead.Label | base String | constructor-parameter
+com.histmersion.api.catalogue.ArticleEventLead.MarkdownResult | base String | method-result
+    def markdown(leads: List[ArticleEventLead]): com.histmersion.api.catalogue.ArticleEventLead.MarkdownResult =
+com.histmersion.api.catalogue.ArticleEventLead.Provider | base String | constructor-parameter
+com.histmersion.api.catalogue.ArticleEventLead.Size | base String | constructor-parameter
+com.histmersion.api.catalogue.ArticleEventLead.Years | base String | constructor-parameter
+com.histmersion.api.catalogue.Attestation.Canvas | base String | constructor-parameter
+com.histmersion.api.catalogue.Attestation.CharEnd | base Int | constructor-parameter
+com.histmersion.api.catalogue.Attestation.CharStart | base Int | constructor-parameter
+com.histmersion.api.catalogue.Attestation.ChunkOrd | base Int | constructor-parameter
+com.histmersion.api.catalogue.Attestation.CtsUrn | base String | constructor-parameter
+com.histmersion.api.catalogue.Attestation.Deleted.Value | base Boolean | constructor-parameter
+com.histmersion.api.catalogue.Attestation.Id | base Long | constructor-parameter
+com.histmersion.api.catalogue.Attestation.Note | base String | constructor-parameter
+com.histmersion.api.catalogue.Attestation.Page | base String | constructor-parameter
+com.histmersion.api.catalogue.Attestation.Prefix | base String | constructor-parameter
+com.histmersion.api.catalogue.Attestation.Quote | base String | constructor-parameter
+com.histmersion.api.catalogue.Attestation.Suffix | base String | constructor-parameter
+com.histmersion.api.catalogue.Attestation.TargetId | base String | constructor-parameter
+com.histmersion.api.catalogue.Attestation.TargetType | base String | constructor-parameter
+com.histmersion.api.catalogue.Attestation.Xywh | base String | constructor-parameter
+com.histmersion.api.catalogue.CatalogProviderInfo.Citation | base String | constructor-parameter
+    final case class CatalogProviderInfo(id: CatalogProviderInfo.Id, title: CatalogProviderInfo.Title, licence: CatalogProviderInfo.Licence, citation: CatalogProviderInfo.Cit
+com.histmersion.api.catalogue.CatalogProviderInfo.Home | base String | constructor-parameter
+    final case class CatalogProviderInfo(id: CatalogProviderInfo.Id, title: CatalogProviderInfo.Title, licence: CatalogProviderInfo.Licence, citation: CatalogProviderInfo.Cit
+com.histmersion.api.catalogue.CatalogProviderInfo.Id | base String | constructor-parameter
+    final case class CatalogProviderInfo(id: CatalogProviderInfo.Id, title: CatalogProviderInfo.Title, licence: CatalogProviderInfo.Licence, citation: CatalogProviderInfo.Cit
+com.histmersion.api.catalogue.CatalogProviderInfo.Licence | base String | constructor-parameter
+    final case class CatalogProviderInfo(id: CatalogProviderInfo.Id, title: CatalogProviderInfo.Title, licence: CatalogProviderInfo.Licence, citation: CatalogProviderInfo.Cit
+com.histmersion.api.catalogue.CatalogProviderInfo.Title | base String | constructor-parameter
+    final case class CatalogProviderInfo(id: CatalogProviderInfo.Id, title: CatalogProviderInfo.Title, licence: CatalogProviderInfo.Licence, citation: CatalogProviderInfo.Cit
+com.histmersion.api.catalogue.CatalogRecord.Central | base Long | constructor-parameter
+com.histmersion.api.catalogue.CatalogRecord.DatingMethod | base String | constructor-parameter
+com.histmersion.api.catalogue.CatalogRecord.Deaths | base Long | constructor-parameter
+com.histmersion.api.catalogue.CatalogRecord.Description | base String | constructor-parameter
+com.histmersion.api.catalogue.CatalogRecord.Group | base String | constructor-parameter
+com.histmersion.api.catalogue.CatalogRecord.Historicity | base String | constructor-parameter
+com.histmersion.api.catalogue.CatalogRecord.Kind | base String | constructor-parameter
+com.histmersion.api.catalogue.CatalogRecord.Label | base String | constructor-parameter
+com.histmersion.api.catalogue.CatalogRecord.Magnitude | base Double | constructor-parameter
+com.histmersion.api.catalogue.CatalogRecord.Names | base String | constructor-parameter
+com.histmersion.api.catalogue.CatalogRecord.PlusMinus | base Long | constructor-parameter
+com.histmersion.api.catalogue.CatalogRecord.Provider | base String | alias,constructor-parameter
+    val EventIdProvider: _root_.com.histmersion.api.catalogue.CatalogRecord.Provider.type = _root_.com.histmersion.api.catalogue.CatalogRecord.Provider
+    (own.find(k => CatalogRecord.eventId(_root_.com.histmersion.api.catalogue.CatalogRecord.Provider((k._1).value), _root_.com.histmersion.api.catalogue.CatalogRecord.Provide
+com.histmersion.api.catalogue.CatalogRecord.ProviderId | base String | alias,constructor-parameter
+    val EventIdProviderId: _root_.com.histmersion.api.catalogue.CatalogRecord.ProviderId.type = _root_.com.histmersion.api.catalogue.CatalogRecord.ProviderId
+    (own.find(k => CatalogRecord.eventId(_root_.com.histmersion.api.catalogue.CatalogRecord.Provider((k._1).value), _root_.com.histmersion.api.catalogue.CatalogRecord.Provide
+com.histmersion.api.catalogue.CatalogRecord.Raw | base String | constructor-parameter
+com.histmersion.api.catalogue.CatalogRecord.Url | base String | constructor-parameter
+com.histmersion.api.catalogue.CatalogRecord.Vei | base Int | constructor-parameter
+com.histmersion.api.catalogue.CatalogRecord.Wikidata | base String | constructor-parameter
+com.histmersion.api.catalogue.Correction.CheckedAt | base String | constructor-parameter
+com.histmersion.api.catalogue.Correction.Counts.Conflicts | base Int | constructor-parameter
+    final case class Counts(kept: Counts.Kept = _root_.com.histmersion.api.catalogue.Correction.Counts.Kept(0), retired: Counts.Retired = _root_.com.histmersion.api.catalogue
+    def isEmpty: com.histmersion.api.catalogue.Correction.Counts.IsEmptyResult = _root_.com.histmersion.api.catalogue.Correction.Counts.IsEmptyResult(kept == _root_.com.histm
+com.histmersion.api.catalogue.Correction.Counts.Kept | base Int | constructor-parameter
+    final case class Counts(kept: Counts.Kept = _root_.com.histmersion.api.catalogue.Correction.Counts.Kept(0), retired: Counts.Retired = _root_.com.histmersion.api.catalogue
+    def isEmpty: com.histmersion.api.catalogue.Correction.Counts.IsEmptyResult = _root_.com.histmersion.api.catalogue.Correction.Counts.IsEmptyResult(kept == _root_.com.histm
+com.histmersion.api.catalogue.Correction.Counts.Retired | base Int | constructor-parameter
+    final case class Counts(kept: Counts.Kept = _root_.com.histmersion.api.catalogue.Correction.Counts.Kept(0), retired: Counts.Retired = _root_.com.histmersion.api.catalogue
+    def isEmpty: com.histmersion.api.catalogue.Correction.Counts.IsEmptyResult = _root_.com.histmersion.api.catalogue.Correction.Counts.IsEmptyResult(kept == _root_.com.histm
+com.histmersion.api.catalogue.Correction.CreatedAt | base String | constructor-parameter
+com.histmersion.api.catalogue.Correction.Field | base String | constructor-parameter
+com.histmersion.api.catalogue.Correction.Id | base Long | constructor-parameter
+com.histmersion.api.catalogue.Correction.Label | base String | constructor-parameter
+com.histmersion.api.catalogue.Correction.List.Total | base Int | constructor-parameter
+    final case class List(total: List.Total, corrections: scala.List[Correction]) derives KindlingsCodecAsObject, KindlingsSchema, com.histmersion.api.json.Schema
+com.histmersion.api.catalogue.Correction.Status.All | base String | value
+    val all: scala.List[com.histmersion.api.catalogue.Correction.Status.All] = scala.List(_root_.com.histmersion.api.catalogue.Correction.Status.All(Active), _root_.com.histm
+    val all: scala.List[com.histmersion.api.catalogue.Correction.Target.All] = scala.List(_root_.com.histmersion.api.catalogue.Correction.Target.All(Event), _root_.com.histme
+com.histmersion.api.catalogue.Correction.Status.Applied | base String | value
+    val applied: Set[com.histmersion.api.catalogue.Correction.Status.Applied] = Set(_root_.com.histmersion.api.catalogue.Correction.Status.Applied(Active), _root_.com.histmer
+com.histmersion.api.catalogue.Correction.StatusValue | base String | constructor-parameter
+com.histmersion.api.catalogue.Correction.TargetId | base String | constructor-parameter
+com.histmersion.api.catalogue.Correction.TargetKind | base String | constructor-parameter
+com.histmersion.api.catalogue.Correction.Upstream | base String | constructor-parameter
+com.histmersion.api.catalogue.Correction.UpstreamNow | base String | constructor-parameter
+com.histmersion.api.catalogue.Correction.UpstreamValue | base String | constructor-parameter
+com.histmersion.api.catalogue.Correction.Value | base String | constructor-parameter
+com.histmersion.api.catalogue.Corrections.MarkdownResult | base String | method-result
+    def markdown(l: Correction.List): com.histmersion.api.catalogue.Corrections.MarkdownResult =
+com.histmersion.api.catalogue.Corrections.ShowJson | base String | method-parameter
+    def show(json: com.histmersion.api.catalogue.Corrections.ShowJson): com.histmersion.api.catalogue.Corrections.ShowResult =
+com.histmersion.api.catalogue.Corrections.StatusResult | base String | method-result
+    def status(o: Outcome): com.histmersion.api.catalogue.Corrections.StatusResult = o match
+    case Outcome.Keep     => _root_.com.histmersion.api.catalogue.Corrections.StatusResult(Correction.Status.Active)
+com.histmersion.api.catalogue.Event.Id | base String | constructor-parameter,method-parameter,variable
+com.histmersion.api.catalogue.EventCandidatesRequest.All | base Boolean | constructor-parameter
+    final case class EventCandidatesRequest(all: EventCandidatesRequest.All = _root_.com.histmersion.api.catalogue.EventCandidatesRequest.All(false), event: Option[com.histme
+com.histmersion.api.catalogue.EventCandidatesRequest.Limit | base Int | constructor-parameter
+    final case class EventCandidatesRequest(all: EventCandidatesRequest.All = _root_.com.histmersion.api.catalogue.EventCandidatesRequest.All(false), event: Option[com.histme
+com.histmersion.api.catalogue.EventCatalogueRef.Citation | base String | constructor-parameter
+com.histmersion.api.catalogue.EventCatalogueRef.Deaths | base Long | constructor-parameter
+com.histmersion.api.catalogue.EventCatalogueRef.Licence | base String | constructor-parameter
+com.histmersion.api.catalogue.EventCatalogueRef.Magnitude | base Double | constructor-parameter
+com.histmersion.api.catalogue.EventCatalogueRef.Provider | base String | constructor-parameter
+com.histmersion.api.catalogue.EventCatalogueRef.ProviderId | base String | constructor-parameter
+com.histmersion.api.catalogue.EventCatalogueRef.RetrievedAt | base String | constructor-parameter
+com.histmersion.api.catalogue.EventCatalogueRef.Title | base String | constructor-parameter
+com.histmersion.api.catalogue.EventCatalogueRef.Url | base String | constructor-parameter
+com.histmersion.api.catalogue.EventCatalogueRef.Vei | base Int | constructor-parameter
+com.histmersion.api.catalogue.EventCount.Key | base String | constructor-parameter
+    final case class EventCount(key: EventCount.Key, n: EventCount.N) derives KindlingsCodecAsObject, KindlingsSchema, com.histmersion.api.json.Schema
+com.histmersion.api.catalogue.EventCount.N | base Int | constructor-parameter
+com.histmersion.api.catalogue.EventDating.Method | base String | constructor-parameter
+com.histmersion.api.catalogue.EventDating.Note | base String | constructor-parameter
+com.histmersion.api.catalogue.EventDeleted.Deleted | base Boolean | constructor-parameter
+    final case class EventDeleted(id: com.histmersion.api.catalogue.Event.Id, deleted: EventDeleted.Deleted) derives KindlingsCodecAsObject, KindlingsSchema, com.histmersion.
+com.histmersion.api.catalogue.EventEdge.Kind | base String | constructor-parameter
+com.histmersion.api.catalogue.EventEdge.Note | base String | constructor-parameter
+com.histmersion.api.catalogue.EventEntry.Geometry | base String | constructor-parameter
+com.histmersion.api.catalogue.EventEntry.Names | base String | constructor-parameter
+com.histmersion.api.catalogue.EventEntry.Tier | base String | constructor-parameter
+com.histmersion.api.catalogue.EventEntry.Wikidata | base String | constructor-parameter

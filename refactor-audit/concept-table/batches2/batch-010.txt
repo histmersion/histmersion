@@ -1,0 +1,301 @@
+## CONCEPTS NEARBY
+com.histmersion.api.catalogue.Gazetteer.DefaultOpenStartWindowYearsValue (Int)
+com.histmersion.api.catalogue.Gazetteer.DefaultPointAreaKindsValue (String)
+com.histmersion.api.catalogue.Gazetteer.Extract.Attribution (String)
+com.histmersion.api.catalogue.Gazetteer.Extract.Built (String)
+com.histmersion.api.catalogue.Gazetteer.Extract.Bytes (Long)
+com.histmersion.api.catalogue.Gazetteer.Extract.Features (Long)
+com.histmersion.api.catalogue.Gazetteer.Extract.File (String)
+com.histmersion.api.catalogue.Gazetteer.Extract.Licence (String)
+com.histmersion.api.catalogue.Gazetteer.Extract.Name (String)
+com.histmersion.api.catalogue.Gazetteer.Extract.Sha256 (String)
+com.histmersion.api.catalogue.Gazetteer.Extract.Title (String)
+com.histmersion.api.catalogue.Gazetteer.Extract.Url (String)
+com.histmersion.api.catalogue.Gazetteer.Extract.Version (String)
+com.histmersion.api.catalogue.Gazetteer.ImportedSourcesValue (String)
+com.histmersion.api.catalogue.Gazetteer.LoadCounts.Created (Long)
+com.histmersion.api.catalogue.Gazetteer.LoadCounts.DescriptionsAdded (Long)
+com.histmersion.api.catalogue.Gazetteer.LoadCounts.DescriptionsChanged (Long)
+com.histmersion.api.catalogue.Gazetteer.LoadCounts.DescriptionsRemoved (Long)
+com.histmersion.api.catalogue.Gazetteer.LoadCounts.Joined (Long)
+com.histmersion.api.catalogue.Gazetteer.LoadCounts.LinksAdded (Long)
+com.histmersion.api.catalogue.Gazetteer.LoadCounts.LinksChanged (Long)
+com.histmersion.api.catalogue.Gazetteer.LoadCounts.LinksRemoved (Long)
+com.histmersion.api.catalogue.Gazetteer.LoadCounts.NamesAdded (Long)
+com.histmersion.api.catalogue.Gazetteer.LoadCounts.NamesChanged (Long)
+com.histmersion.api.catalogue.Gazetteer.LoadCounts.NamesRemoved (Long)
+com.histmersion.api.catalogue.Gazetteer.LoadCounts.PlacesChanged (Long)
+com.histmersion.api.catalogue.Gazetteer.LoadCounts.PlacesRemoved (Long)
+com.histmersion.api.catalogue.Gazetteer.LoadCounts.PointAreasSkipped (Long)
+com.histmersion.api.catalogue.Gazetteer.LoadCounts.Records (Long)
+com.histmersion.api.catalogue.Gazetteer.LoadCounts.Skipped (String)
+com.histmersion.api.catalogue.Gazetteer.LoadCounts.Source (String)
+com.histmersion.api.catalogue.Gazetteer.LoadCounts.Version (String)
+com.histmersion.api.catalogue.Gazetteer.PointAreaSourcesValue (String)
+com.histmersion.api.catalogue.Gazetteer.SourceInfo.Citation (String)
+com.histmersion.api.catalogue.Gazetteer.SourceInfo.File (String)
+com.histmersion.api.catalogue.Gazetteer.SourceInfo.ImportedAt (String)
+com.histmersion.api.catalogue.Gazetteer.SourceInfo.ImportedVersion (String)
+com.histmersion.api.catalogue.Gazetteer.SourceInfo.Key (String)
+com.histmersion.api.catalogue.Gazetteer.SourceInfo.Licence (String)
+com.histmersion.api.catalogue.Gazetteer.SourceInfo.Links (Int)
+com.histmersion.api.catalogue.Gazetteer.SourceInfo.Names (Int)
+com.histmersion.api.catalogue.Gazetteer.SourceInfo.PinnedVersion (String)
+com.histmersion.api.catalogue.Gazetteer.SourceInfo.Places (Int)
+com.histmersion.api.catalogue.Gazetteer.SourceInfo.Present (Boolean)
+com.histmersion.api.catalogue.Gazetteer.SourceInfo.Title (String)
+com.histmersion.api.catalogue.GeoTime.At.Year (Long)
+com.histmersion.api.catalogue.GeoTime.Within.From (Long)
+com.histmersion.api.catalogue.GeoTime.Within.Latest (Boolean)
+com.histmersion.api.catalogue.GeoTime.Within.To (Long)
+com.histmersion.api.catalogue.Geocode.ApostrophesValue (Char)
+com.histmersion.api.catalogue.Geocode.Approximation.OnlyWithin.Missing (String)
+com.histmersion.api.catalogue.Geocode.Approximation.Qualifier.Dropped (String)
+com.histmersion.api.catalogue.Geocode.Approximation.Rough.Places (Int)
+com.histmersion.api.catalogue.Geocode.Attempt.Name (String)
+com.histmersion.api.catalogue.Geocode.Attempt.Within (String)
+com.histmersion.api.catalogue.Geocode.Candidate.Area (Double)
+com.histmersion.api.catalogue.Geocode.Candidate.ByLabel (Boolean)
+com.histmersion.api.catalogue.Geocode.Candidate.Dimension (Int)
+com.histmersion.api.catalogue.Geocode.Candidate.From (Long)
+com.histmersion.api.catalogue.Geocode.Candidate.GridCell (Boolean)
+com.histmersion.api.catalogue.Geocode.Candidate.Id (String)
+com.histmersion.api.catalogue.Geocode.Candidate.Kind (String)
+com.histmersion.api.catalogue.Geocode.Candidate.Label (String)
+com.histmersion.api.catalogue.Geocode.Candidate.Shared (Int)
+com.histmersion.api.catalogue.Geocode.Candidate.Tier (Int)
+com.histmersion.api.catalogue.Geocode.Candidate.To (Long)
+com.histmersion.api.catalogue.Geocode.JoinersValue (String)
+com.histmersion.api.catalogue.Geocode.Move.Asked (String)
+com.histmersion.api.catalogue.Geocode.Move.FromLat (Double)
+com.histmersion.api.catalogue.Geocode.Move.FromLon (Double)
+com.histmersion.api.catalogue.Geocode.Move.Region (String)
+com.histmersion.api.catalogue.Geocode.Placement.Region (String)
+com.histmersion.api.catalogue.Geocode.QualifierWordsValue (String)
+com.histmersion.api.catalogue.Geocode.Resolution.Asked (String)
+com.histmersion.api.catalogue.Geocode.Resolution.Label (String)
+com.histmersion.api.catalogue.Geocode.SeparatorsValue (Char)
+com.histmersion.api.catalogue.HistoricalPeriod.Authority (String)
+com.histmersion.api.catalogue.HistoricalPeriod.Id (String)
+com.histmersion.api.catalogue.HistoricalPeriod.Label (String)
+com.histmersion.api.catalogue.HistoricalPeriod.ParentId (String)
+com.histmersion.api.catalogue.HistoricalPeriod.Region (String)
+com.histmersion.api.catalogue.Latitude (Double)
+com.histmersion.api.catalogue.LeadFacts.Attesting (Int)
+com.histmersion.api.catalogue.LeadFacts.FindingsNear (Int)
+com.histmersion.api.catalogue.LeadFacts.Kind (String)
+com.histmersion.api.catalogue.LeadFacts.Km (Double)
+com.histmersion.api.catalogue.LeadFacts.Label (String)
+com.histmersion.api.catalogue.LeadFacts.Magnitude (Double)
+com.histmersion.api.catalogue.LeadFacts.Proposed (Int)
+com.histmersion.api.catalogue.LeadFacts.Tier (String)
+com.histmersion.api.catalogue.LeadFacts.Vei (Int)
+com.histmersion.api.catalogue.LeadFacts.Years (Long)
+com.histmersion.api.catalogue.Longitude (Double)
+com.histmersion.api.catalogue.ManualPlaceName.Label (String)
+com.histmersion.api.catalogue.ManualPlaceName.Lang (String)
+com.histmersion.api.catalogue.ManualPlaceName.Name (String)
+com.histmersion.api.catalogue.MapArea.ApproxGb (Double)
+com.histmersion.api.catalogue.MapArea.Bbox (String)
+com.histmersion.api.catalogue.MapArea.Label (String)
+com.histmersion.api.catalogue.MapTilesUiConfig.MaxZoom (Int)
+com.histmersion.api.catalogue.MapTilesUiConfig.PlaybackBucketSeconds (Double)
+com.histmersion.api.catalogue.MatchSpan.End (Int)
+com.histmersion.api.catalogue.MatchSpan.Start (Int)
+com.histmersion.api.catalogue.Period.ImportResult.Periods (Int)
+com.histmersion.api.catalogue.Period.ImportResult.Presets (Int)
+com.histmersion.api.catalogue.Period.ImportResult.Removed (Int)
+com.histmersion.api.catalogue.Period.ImportResult.Roots (Int)
+com.histmersion.api.catalogue.Period.ImportResult.SkippedCount (Int)
+com.histmersion.api.catalogue.PeriodO.Authority.Id (String)
+com.histmersion.api.catalogue.PeriodO.Authority.Title (String)
+com.histmersion.api.catalogue.PeriodO.Authority.Year (Int)
+com.histmersion.api.catalogue.PeriodO.Definition.Broader (String)
+com.histmersion.api.catalogue.PeriodO.Definition.Id (String)
+com.histmersion.api.catalogue.PeriodO.Definition.Label (String)
+com.histmersion.api.catalogue.PeriodO.Definition.Region (String)
+com.histmersion.api.catalogue.PeriodO.MaxYearValue (Long)
+com.histmersion.api.catalogue.PeriodO.MinImplausibleSpanValue (Long)
+com.histmersion.api.catalogue.PeriodO.MinSiblingsValue (Int)
+com.histmersion.api.catalogue.PeriodO.MinYearValue (Long)
+com.histmersion.api.catalogue.PeriodO.SpanFactorValue (Long)
+
+## TYPES TO DECIDE
+com.histmersion.api.catalogue.Gazetteer.DefaultOpenStartWindowYearsValue | base Int | alias
+    val DefaultOpenStartWindowYears: com.histmersion.api.catalogue.Gazetteer.DefaultOpenStartWindowYears = _root_.com.histmersion.api.catalogue.Gazetteer.DefaultOpenStartWind
+com.histmersion.api.catalogue.Gazetteer.DefaultPointAreaKindsValue | base String | alias
+com.histmersion.api.catalogue.Gazetteer.Extract.Attribution | base String | constructor-parameter
+com.histmersion.api.catalogue.Gazetteer.Extract.Built | base String | constructor-parameter
+com.histmersion.api.catalogue.Gazetteer.Extract.Bytes | base Long | constructor-parameter
+com.histmersion.api.catalogue.Gazetteer.Extract.Features | base Long | constructor-parameter
+com.histmersion.api.catalogue.Gazetteer.Extract.File | base String | constructor-parameter
+com.histmersion.api.catalogue.Gazetteer.Extract.Licence | base String | constructor-parameter
+com.histmersion.api.catalogue.Gazetteer.Extract.Name | base String | constructor-parameter
+    def datasetSlug(fileName: com.histmersion.api.catalogue.Gazetteer.DatasetSlugFileName): com.histmersion.api.catalogue.Gazetteer.DatasetSlugResult =
+    val base = fileName
+com.histmersion.api.catalogue.Gazetteer.Extract.Sha256 | base String | constructor-parameter
+com.histmersion.api.catalogue.Gazetteer.Extract.Title | base String | constructor-parameter
+com.histmersion.api.catalogue.Gazetteer.Extract.Url | base String | constructor-parameter
+com.histmersion.api.catalogue.Gazetteer.Extract.Version | base String | constructor-parameter
+com.histmersion.api.catalogue.Gazetteer.ImportedSourcesValue | base String | alias
+com.histmersion.api.catalogue.Gazetteer.LoadCounts.Created | base Long | constructor-parameter
+com.histmersion.api.catalogue.Gazetteer.LoadCounts.DescriptionsAdded | base Long | constructor-parameter
+com.histmersion.api.catalogue.Gazetteer.LoadCounts.DescriptionsChanged | base Long | constructor-parameter
+com.histmersion.api.catalogue.Gazetteer.LoadCounts.DescriptionsRemoved | base Long | constructor-parameter
+com.histmersion.api.catalogue.Gazetteer.LoadCounts.Joined | base Long | constructor-parameter
+com.histmersion.api.catalogue.Gazetteer.LoadCounts.LinksAdded | base Long | constructor-parameter
+com.histmersion.api.catalogue.Gazetteer.LoadCounts.LinksChanged | base Long | constructor-parameter
+com.histmersion.api.catalogue.Gazetteer.LoadCounts.LinksRemoved | base Long | constructor-parameter
+com.histmersion.api.catalogue.Gazetteer.LoadCounts.NamesAdded | base Long | constructor-parameter
+com.histmersion.api.catalogue.Gazetteer.LoadCounts.NamesChanged | base Long | constructor-parameter
+com.histmersion.api.catalogue.Gazetteer.LoadCounts.NamesRemoved | base Long | constructor-parameter
+com.histmersion.api.catalogue.Gazetteer.LoadCounts.PlacesChanged | base Long | constructor-parameter
+com.histmersion.api.catalogue.Gazetteer.LoadCounts.PlacesRemoved | base Long | constructor-parameter
+com.histmersion.api.catalogue.Gazetteer.LoadCounts.PointAreasSkipped | base Long | constructor-parameter
+com.histmersion.api.catalogue.Gazetteer.LoadCounts.Records | base Long | constructor-parameter
+com.histmersion.api.catalogue.Gazetteer.LoadCounts.Skipped | base String | constructor-parameter
+com.histmersion.api.catalogue.Gazetteer.LoadCounts.Source | base String | constructor-parameter
+    def rank(m: Place.Match): com.histmersion.api.catalogue.Gazetteer.RankResult = m.importSource.flatMap(com.histmersion.api.catalogue.Gazetteer.Kind.ofKey) match
+    case None                                                        => if m.importSource.isEmpty then _root_.com.histmersion.api.catalogue.Gazetteer.RankResult(0) else _root
+com.histmersion.api.catalogue.Gazetteer.LoadCounts.Version | base String | constructor-parameter
+com.histmersion.api.catalogue.Gazetteer.PointAreaSourcesValue | base String | alias
+    val PointAreaSources: List[com.histmersion.api.catalogue.Gazetteer.PointAreaSources] = (ImportedSources).map(refactorValue16 => _root_.com.histmersion.api.catalogue.Gazet
+com.histmersion.api.catalogue.Gazetteer.SourceInfo.Citation | base String | constructor-parameter
+com.histmersion.api.catalogue.Gazetteer.SourceInfo.File | base String | constructor-parameter
+com.histmersion.api.catalogue.Gazetteer.SourceInfo.ImportedAt | base String | constructor-parameter
+com.histmersion.api.catalogue.Gazetteer.SourceInfo.ImportedVersion | base String | constructor-parameter
+com.histmersion.api.catalogue.Gazetteer.SourceInfo.Key | base String | constructor-parameter
+    def sourceKey(kind: com.histmersion.api.catalogue.Gazetteer.Kind, dataset: Option[com.histmersion.api.catalogue.Gazetteer.SourceKeyDataset] = None): com.histmersion.api.c
+    def rank(m: Place.Match): com.histmersion.api.catalogue.Gazetteer.RankResult = m.importSource.flatMap(com.histmersion.api.catalogue.Gazetteer.Kind.ofKey) match
+com.histmersion.api.catalogue.Gazetteer.SourceInfo.Licence | base String | constructor-parameter
+com.histmersion.api.catalogue.Gazetteer.SourceInfo.Links | base Int | constructor-parameter
+    def canonical(byOwn: List[Place.Match], byLinks: List[Place.Match] = Nil): Option[com.histmersion.api.catalogue.Gazetteer.CanonicalResult] =
+    private def readLinks(f: JsonObject): List[GazLink] =
+com.histmersion.api.catalogue.Gazetteer.SourceInfo.Names | base Int | constructor-parameter
+    def mergeNames(ns: List[GazName]): List[GazName] =
+    private def readNames(f: JsonObject): List[GazName] =
+com.histmersion.api.catalogue.Gazetteer.SourceInfo.PinnedVersion | base String | constructor-parameter
+com.histmersion.api.catalogue.Gazetteer.SourceInfo.Places | base Int | constructor-parameter
+com.histmersion.api.catalogue.Gazetteer.SourceInfo.Present | base Boolean | constructor-parameter
+com.histmersion.api.catalogue.Gazetteer.SourceInfo.Title | base String | constructor-parameter
+com.histmersion.api.catalogue.Gazetteer.ValidityWindowYears | base Int | method-parameter
+    def validity(sourceKey: com.histmersion.api.catalogue.Gazetteer.ValiditySourceKey, span: Span, windowYears: com.histmersion.api.catalogue.Gazetteer.ValidityWindowYears): 
+com.histmersion.api.catalogue.GeoTime.Within.From | base Long | constructor-parameter
+    case Within(from: GeoTime.Within.From, to: GeoTime.Within.To, latest: GeoTime.Within.Latest)
+com.histmersion.api.catalogue.GeoTime.Within.Latest | base Boolean | constructor-parameter
+    case Within(from: GeoTime.Within.From, to: GeoTime.Within.To, latest: GeoTime.Within.Latest)
+com.histmersion.api.catalogue.GeoTime.Within.To | base Long | constructor-parameter
+    case Within(from: GeoTime.Within.From, to: GeoTime.Within.To, latest: GeoTime.Within.Latest)
+com.histmersion.api.catalogue.Geocode.ApostrophesValue | base Char | alias
+    val Apostrophes: Set[com.histmersion.api.catalogue.Geocode.Apostrophes] = ("'`\u00b4\u2018\u2019\u02bc\u02b9".toSet).map(refactorValue2 => _root_.com.histmersion.api.cata
+com.histmersion.api.catalogue.Geocode.Approximation.OnlyWithin.Missing | base String | constructor-parameter
+    case OnlyWithin(missing: Approximation.OnlyWithin.Missing)
+com.histmersion.api.catalogue.Geocode.Approximation.Qualifier.Dropped | base String | constructor-parameter
+    case Qualifier(dropped: Approximation.Qualifier.Dropped)
+com.histmersion.api.catalogue.Geocode.Approximation.Rough.Places | base Int | constructor-parameter
+    case Rough(places: Approximation.Rough.Places)
+com.histmersion.api.catalogue.Geocode.Attempt.Name | base String | constructor-parameter
+    final case class Attempt(name: Attempt.Name, within: Option[Attempt.Within] = None, approx: Option[Approximation] = None):
+    val asides = Asides.findAllMatchIn(n).map(_.group(1).trim).filter(a => (key(_root_.com.histmersion.api.catalogue.Geocode.KeyS(a))).value.nonEmpty).map(Attempt(_root_.com.
+com.histmersion.api.catalogue.Geocode.Attempt.Within | base String | constructor-parameter
+    final case class Attempt(name: Attempt.Name, within: Option[Attempt.Within] = None, approx: Option[Approximation] = None):
+com.histmersion.api.catalogue.Geocode.Candidate.Area | base Double | constructor-parameter
+com.histmersion.api.catalogue.Geocode.Candidate.ByLabel | base Boolean | constructor-parameter
+com.histmersion.api.catalogue.Geocode.Candidate.Dimension | base Int | constructor-parameter
+    def isPlaceholder(c: Candidate, placeholderMin: com.histmersion.api.catalogue.Geocode.IsPlaceholderPlaceholderMin): com.histmersion.api.catalogue.Geocode.IsPlaceholderRes
+com.histmersion.api.catalogue.Geocode.Candidate.From | base Long | constructor-parameter
+com.histmersion.api.catalogue.Geocode.Candidate.GridCell | base Boolean | constructor-parameter
+    val grid = Option.when(((c.gridCell) == _root_.com.histmersion.api.catalogue.Geocode.Candidate.GridCell(true)) && rough.isEmpty)(Approximation.GridSquare)
+com.histmersion.api.catalogue.Geocode.Candidate.Id | base String | constructor-parameter
+    def tierOf(importSource: Option[com.histmersion.api.catalogue.Geocode.TierOfImportSource]): com.histmersion.api.catalogue.Geocode.TierOfResult = Gazetteer.rank(Place.Matc
+    final case class Placement(findingId: com.histmersion.api.library.Finding.Id, citekey: com.histmersion.api.library.Citekey, region: Placement.Region, to: Resolution):
+com.histmersion.api.catalogue.Geocode.Candidate.Kind | base String | alias,constructor-parameter
+    val BroadKind: _root_.com.histmersion.api.catalogue.Geocode.Candidate.Kind.type = _root_.com.histmersion.api.catalogue.Geocode.Candidate.Kind
+    case _ => if broad(kind) then _root_.com.histmersion.api.catalogue.Geocode.KindRankResult(0) else if kind == _root_.com.histmersion.api.catalogue.Geocode.KindRankKind(com
+com.histmersion.api.catalogue.Geocode.Candidate.Label | base String | constructor-parameter
+com.histmersion.api.catalogue.Geocode.Candidate.Shared | base Int | constructor-parameter
+com.histmersion.api.catalogue.Geocode.Candidate.Tier | base Int | constructor-parameter
+com.histmersion.api.catalogue.Geocode.Candidate.To | base Long | constructor-parameter
+com.histmersion.api.catalogue.Geocode.JoinersValue | base String | alias
+    private val Joiners: Set[com.histmersion.api.catalogue.Geocode.Joiners] = Set(_root_.com.histmersion.api.catalogue.Geocode.JoinersValue("and"), _root_.com.histmersion.api
+com.histmersion.api.catalogue.Geocode.Move.Asked | base String | constructor-parameter
+    val ChooseAsked: _root_.com.histmersion.api.catalogue.Geocode.Resolution.Asked.type = _root_.com.histmersion.api.catalogue.Geocode.Resolution.Asked
+com.histmersion.api.catalogue.Geocode.Move.FromLat | base Double | constructor-parameter
+com.histmersion.api.catalogue.Geocode.Move.FromLon | base Double | constructor-parameter
+com.histmersion.api.catalogue.Geocode.Move.Region | base String | constructor-parameter
+    case Site, Region, Polity, Water, Unknown
+    case "country" | "area" | "province" | "landscape" | "valley" | "plain" | "island"             => Region
+com.histmersion.api.catalogue.Geocode.Placement.Region | base String | constructor-parameter
+    case Site, Region, Polity, Water, Unknown
+    case "country" | "area" | "province" | "landscape" | "valley" | "plain" | "island"             => Region
+com.histmersion.api.catalogue.Geocode.QualifierWordsValue | base String | alias
+com.histmersion.api.catalogue.Geocode.Resolution.Asked | base String | alias,constructor-parameter
+    val ChooseAsked: _root_.com.histmersion.api.catalogue.Geocode.Resolution.Asked.type = _root_.com.histmersion.api.catalogue.Geocode.Resolution.Asked
+com.histmersion.api.catalogue.Geocode.Resolution.Label | base String | constructor-parameter
+com.histmersion.api.catalogue.Geocode.SeparatorsValue | base Char | alias
+com.histmersion.api.catalogue.HistoricalPeriod.Authority | base String | constructor-parameter
+com.histmersion.api.catalogue.HistoricalPeriod.Id | base String | constructor-parameter
+com.histmersion.api.catalogue.HistoricalPeriod.Label | base String | constructor-parameter
+com.histmersion.api.catalogue.HistoricalPeriod.ParentId | base String | constructor-parameter
+com.histmersion.api.catalogue.HistoricalPeriod.Region | base String | constructor-parameter
+com.histmersion.api.catalogue.Latitude | base Double | constructor-parameter
+com.histmersion.api.catalogue.LeadFacts.Attesting | base Int | constructor-parameter
+com.histmersion.api.catalogue.LeadFacts.FindingsNear | base Int | constructor-parameter
+com.histmersion.api.catalogue.LeadFacts.Kind | base String | constructor-parameter
+com.histmersion.api.catalogue.LeadFacts.Km | base Double | constructor-parameter
+com.histmersion.api.catalogue.LeadFacts.Label | base String | alias,constructor-parameter
+com.histmersion.api.catalogue.LeadFacts.Magnitude | base Double | alias,constructor-parameter
+com.histmersion.api.catalogue.LeadFacts.Proposed | base Int | alias,constructor-parameter
+com.histmersion.api.catalogue.LeadFacts.Tier | base String | constructor-parameter
+com.histmersion.api.catalogue.LeadFacts.Vei | base Int | alias,constructor-parameter
+com.histmersion.api.catalogue.LeadFacts.Years | base Long | constructor-parameter
+com.histmersion.api.catalogue.Longitude | base Double | constructor-parameter
+com.histmersion.api.catalogue.ManualPlaceName.Label | base String | constructor-parameter
+    final case class ManualPlaceName(placeId: com.histmersion.api.catalogue.Place.Id, label: ManualPlaceName.Label, name: ManualPlaceName.Name, lang: ManualPlaceName.Lang)
+com.histmersion.api.catalogue.ManualPlaceName.Lang | base String | constructor-parameter
+    final case class ManualPlaceName(placeId: com.histmersion.api.catalogue.Place.Id, label: ManualPlaceName.Label, name: ManualPlaceName.Name, lang: ManualPlaceName.Lang)
+com.histmersion.api.catalogue.ManualPlaceName.Name | base String | constructor-parameter
+    final case class ManualPlaceName(placeId: com.histmersion.api.catalogue.Place.Id, label: ManualPlaceName.Label, name: ManualPlaceName.Name, lang: ManualPlaceName.Lang)
+com.histmersion.api.catalogue.MapArea.ApproxGb | base Double | constructor-parameter
+    final case class MapArea(label: MapArea.Label, bbox: MapArea.Bbox, approxGb: MapArea.ApproxGb)
+    case List(label, box, gb) if label.nonEmpty && box.nonEmpty => gb.toDoubleOption.map(MapArea(_root_.com.histmersion.api.catalogue.MapArea.Label(label), _root_.com.histmer
+com.histmersion.api.catalogue.MapArea.Bbox | base String | constructor-parameter
+    final case class MapArea(label: MapArea.Label, bbox: MapArea.Bbox, approxGb: MapArea.ApproxGb)
+    case List(label, box, gb) if label.nonEmpty && box.nonEmpty => gb.toDoubleOption.map(MapArea(_root_.com.histmersion.api.catalogue.MapArea.Label(label), _root_.com.histmer
+com.histmersion.api.catalogue.MapArea.Label | base String | constructor-parameter
+    final case class MapArea(label: MapArea.Label, bbox: MapArea.Bbox, approxGb: MapArea.ApproxGb)
+    case List(label, box, gb) if label.nonEmpty && box.nonEmpty => gb.toDoubleOption.map(MapArea(_root_.com.histmersion.api.catalogue.MapArea.Label(label), _root_.com.histmer
+com.histmersion.api.catalogue.MapTilesUiConfig.MaxZoom | base Int | constructor-parameter
+    final case class MapTilesUiConfig(maxZoom: MapTilesUiConfig.MaxZoom = _root_.com.histmersion.api.catalogue.MapTilesUiConfig.MaxZoom(11), playbackBucketSeconds: MapTilesUi
+com.histmersion.api.catalogue.MapTilesUiConfig.PlaybackBucketSeconds | base Double | constructor-parameter
+    final case class MapTilesUiConfig(maxZoom: MapTilesUiConfig.MaxZoom = _root_.com.histmersion.api.catalogue.MapTilesUiConfig.MaxZoom(11), playbackBucketSeconds: MapTilesUi
+com.histmersion.api.catalogue.MatchSpan.End | base Int | constructor-parameter
+    final case class MatchSpan(start: MatchSpan.Start, end: MatchSpan.End) derives KindlingsCodecAsObject, KindlingsSchema, com.histmersion.api.json.Schema
+com.histmersion.api.catalogue.MatchSpan.Start | base Int | constructor-parameter
+    final case class MatchSpan(start: MatchSpan.Start, end: MatchSpan.End) derives KindlingsCodecAsObject, KindlingsSchema, com.histmersion.api.json.Schema
+com.histmersion.api.catalogue.Period.ImportResult.Periods | base Int | constructor-parameter
+com.histmersion.api.catalogue.Period.ImportResult.Presets | base Int | constructor-parameter
+com.histmersion.api.catalogue.Period.ImportResult.Removed | base Int | constructor-parameter
+com.histmersion.api.catalogue.Period.ImportResult.Roots | base Int | constructor-parameter
+com.histmersion.api.catalogue.Period.ImportResult.SkippedCount | base Int | constructor-parameter
+com.histmersion.api.catalogue.PeriodO.Authority.Id | base String | alias,constructor-parameter
+    val AuthorityId: _root_.com.histmersion.api.catalogue.PeriodO.Authority.Id.type = _root_.com.histmersion.api.catalogue.PeriodO.Authority.Id
+    val DefinitionId: _root_.com.histmersion.api.catalogue.PeriodO.Definition.Id.type = _root_.com.histmersion.api.catalogue.PeriodO.Definition.Id
+com.histmersion.api.catalogue.PeriodO.Authority.Title | base String | constructor-parameter
+    final case class Authority(id: Authority.Id, title: Authority.Title, year: Option[Authority.Year], periods: List[Definition]):
+com.histmersion.api.catalogue.PeriodO.Definition.Broader | base String | constructor-parameter
+com.histmersion.api.catalogue.PeriodO.Definition.Id | base String | alias,constructor-parameter
+    val AuthorityId: _root_.com.histmersion.api.catalogue.PeriodO.Authority.Id.type = _root_.com.histmersion.api.catalogue.PeriodO.Authority.Id
+    val DefinitionId: _root_.com.histmersion.api.catalogue.PeriodO.Definition.Id.type = _root_.com.histmersion.api.catalogue.PeriodO.Definition.Id
+com.histmersion.api.catalogue.PeriodO.Definition.Label | base String | constructor-parameter
+com.histmersion.api.catalogue.PeriodO.Definition.Region | base String | constructor-parameter
+com.histmersion.api.catalogue.PeriodO.MaxYearValue | base Long | alias
+    val MaxYear: com.histmersion.api.catalogue.PeriodO.MaxYear = _root_.com.histmersion.api.catalogue.PeriodO.MaxYearValue(2100L)
+com.histmersion.api.catalogue.PeriodO.MinImplausibleSpanValue | base Long | alias
+    val MinImplausibleSpan: com.histmersion.api.catalogue.PeriodO.MinImplausibleSpan = _root_.com.histmersion.api.catalogue.PeriodO.MinImplausibleSpanValue(1000L)
+com.histmersion.api.catalogue.PeriodO.MinSiblingsValue | base Int | alias
+    val MinSiblings: com.histmersion.api.catalogue.PeriodO.MinSiblings = _root_.com.histmersion.api.catalogue.PeriodO.MinSiblingsValue(3)
+com.histmersion.api.catalogue.PeriodO.MinYearValue | base Long | alias
+    val MinYear: com.histmersion.api.catalogue.PeriodO.MinYear = _root_.com.histmersion.api.catalogue.PeriodO.MinYearValue(-3000000L)
+com.histmersion.api.catalogue.PeriodO.SpanFactorValue | base Long | alias
+    val SpanFactor: com.histmersion.api.catalogue.PeriodO.SpanFactor = _root_.com.histmersion.api.catalogue.PeriodO.SpanFactorValue(3L)

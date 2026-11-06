@@ -1,0 +1,374 @@
+## CONCEPTS NEARBY
+com.histmersion.api.research.Article.Body (String)
+com.histmersion.api.research.Article.Coverage.DisagreementKindsValue (String)
+com.histmersion.api.research.Article.Deleted.Value (Boolean)
+com.histmersion.api.research.Article.Edits.ArticleCheck.Fatal (Boolean)
+com.histmersion.api.research.Article.Edits.ArticleCheck.Problems (String)
+com.histmersion.api.research.Article.Edits.ArticleCheck.WordsAfter (Int)
+com.histmersion.api.research.Article.Edits.ArticleCheck.WordsBefore (Int)
+com.histmersion.api.research.Article.Edits.Draft.Body.Text (String)
+com.histmersion.api.research.Article.Edits.Edit.Delete.Anchor (String)
+com.histmersion.api.research.Article.Edits.Edit.InsertAfter.Anchor (String)
+com.histmersion.api.research.Article.Edits.Edit.InsertAfter.Text (String)
+com.histmersion.api.research.Article.Edits.Edit.InsertBefore.Anchor (String)
+com.histmersion.api.research.Article.Edits.Edit.InsertBefore.Text (String)
+com.histmersion.api.research.Article.Edits.Edit.Replace.Anchor (String)
+com.histmersion.api.research.Article.Edits.Edit.Replace.Text (String)
+com.histmersion.api.research.Article.Edits.EditAnswer.Anchor (String)
+com.histmersion.api.research.Article.Edits.EditAnswer.Text (String)
+com.histmersion.api.research.Article.Edits.EditResult.Anchor (String)
+com.histmersion.api.research.Article.Edits.EditResult.Index (Int)
+com.histmersion.api.research.Article.Edits.EditResult.Problem (String)
+com.histmersion.api.research.Article.Edits.EditResult.Text (String)
+com.histmersion.api.research.Article.Edits.Op.Wire (String)
+com.histmersion.api.research.Article.Filter.Authors (String)
+com.histmersion.api.research.Article.Filter.ExtraQueries (String)
+com.histmersion.api.research.Article.Filter.From (Long)
+com.histmersion.api.research.Article.Filter.Places (String)
+com.histmersion.api.research.Article.Filter.Query (String)
+com.histmersion.api.research.Article.Filter.Status (String)
+com.histmersion.api.research.Article.Filter.Tags (String)
+com.histmersion.api.research.Article.Filter.To (Long)
+com.histmersion.api.research.Article.Filter.Topics (String)
+com.histmersion.api.research.Article.Import.Force (Boolean)
+com.histmersion.api.research.Article.Import.Mtime (Long)
+com.histmersion.api.research.Article.Import.Strict (Boolean)
+com.histmersion.api.research.Article.Import.Text (String)
+com.histmersion.api.research.Article.KindCount.Count (Int)
+com.histmersion.api.research.Article.KindValue (String)
+com.histmersion.api.research.Article.Link.Target (String)
+com.histmersion.api.research.Article.Link.TargetKind (String)
+com.histmersion.api.research.Article.Lint.FillerPhrasesValue (String)
+com.histmersion.api.research.Article.Patch.Append (String)
+com.histmersion.api.research.Article.Patch.IfUpdatedAt (String)
+com.histmersion.api.research.Article.Patch.Regions (String)
+com.histmersion.api.research.Article.Patch.Section (String)
+com.histmersion.api.research.Article.Plans.ArticlePlan.Dropped (String)
+com.histmersion.api.research.Article.Plans.ArticlePlan.Goal (String)
+com.histmersion.api.research.Article.Plans.ArticlePlan.Rationale (String)
+com.histmersion.api.research.Article.Plans.FilterProposal.Cited (Int)
+com.histmersion.api.research.Article.Plans.FilterProposal.CitedIn (Int)
+com.histmersion.api.research.Article.Plans.FilterProposal.Missed (String)
+com.histmersion.api.research.Article.Plans.FilterProposal.Rationale (String)
+com.histmersion.api.research.Article.Plans.FilterProposal.Sample (String)
+com.histmersion.api.research.Article.Plans.FilterProposal.Total (Int)
+com.histmersion.api.research.Article.Plans.ProposedArticle.Hits (Int)
+com.histmersion.api.research.Article.Plans.ProposedArticle.Overlap (Double)
+com.histmersion.api.research.Article.Plans.ProposedArticle.OverlapWith (String)
+com.histmersion.api.research.Article.Plans.ProposedArticle.Why (String)
+com.histmersion.api.research.Article.Put.PeriodEnd (Long)
+com.histmersion.api.research.Article.Put.PeriodStart (Long)
+com.histmersion.api.research.Article.Put.Regions (String)
+com.histmersion.api.research.Article.Put.Tags (String)
+com.histmersion.api.research.Article.ReasonsValue (String)
+com.histmersion.api.research.Article.Regions (String)
+com.histmersion.api.research.Article.ReviewView.Outcome (String)
+com.histmersion.api.research.Article.ReviewView.UpdatedAt (String)
+com.histmersion.api.research.Article.Row.PeriodEnd (Long)
+com.histmersion.api.research.Article.Row.PeriodStart (Long)
+com.histmersion.api.research.Article.Row.Regions (String)
+com.histmersion.api.research.Article.Row.Tags (String)
+com.histmersion.api.research.Article.Row.UpdatedAt (String)
+com.histmersion.api.research.Article.Slug (String)
+com.histmersion.api.research.Article.Summary.PeriodEnd (Long)
+com.histmersion.api.research.Article.Summary.PeriodStart (Long)
+com.histmersion.api.research.Article.Summary.Regions (String)
+com.histmersion.api.research.Article.Summary.Tags (String)
+com.histmersion.api.research.Article.Summary.UpdatedAt (String)
+com.histmersion.api.research.Article.SummaryText (String)
+com.histmersion.api.research.Article.Tags (String)
+com.histmersion.api.research.Article.Title (String)
+com.histmersion.api.research.Article.UpdatedAt (String)
+com.histmersion.api.research.Article.Version.CreatedAt (String)
+com.histmersion.api.research.Article.Version.Id (Long)
+com.histmersion.api.research.Article.Version.UpdatedAt (String)
+com.histmersion.api.research.Article.Version.WordCount (Int)
+com.histmersion.api.research.Article.VersionFull.CreatedAt (String)
+com.histmersion.api.research.Article.VersionFull.Id (Long)
+com.histmersion.api.research.Article.VersionFull.UpdatedAt (String)
+com.histmersion.api.research.Backlink.Id (String)
+com.histmersion.api.research.Backlink.Kind (String)
+com.histmersion.api.research.Backlink.Title (String)
+com.histmersion.api.research.Coverage.Checked (Int)
+com.histmersion.api.research.Coverage.Edge.Kind (String)
+com.histmersion.api.research.Coverage.Entry.Reason (String)
+com.histmersion.api.research.Coverage.FilterLine (String)
+com.histmersion.api.research.Coverage.Reason.Value (String)
+com.histmersion.api.research.Coverage.Total (Int)
+com.histmersion.api.research.CoverageSearch.Query (String)
+com.histmersion.api.research.CoverageSearch.Total (Int)
+com.histmersion.api.research.CritiquePair.Kinds (String)
+com.histmersion.api.research.CritiquePair.Reason (String)
+com.histmersion.api.research.CritiquePair.ReasonBy (String)
+com.histmersion.api.research.CritiquePairing.Hit.Edges (String)
+com.histmersion.api.research.CritiquePairing.Hit.From (Int)
+com.histmersion.api.research.CritiquePairing.Hit.Mechanical (Boolean)
+com.histmersion.api.research.CritiquePairing.Hit.Named (String)
+com.histmersion.api.research.CritiquePairing.Hit.To (Int)
+com.histmersion.api.research.CritiquePairing.Hit.Unit (Int)
+com.histmersion.api.research.CritiquePairing.Hit.Where (String)
+com.histmersion.api.research.CritiquePairing.Work.Names (String)
+com.histmersion.api.research.CritiqueReason.By (String)
+com.histmersion.api.research.CritiqueReason.Reason (String)
+com.histmersion.api.research.CritiqueSide.Cited (Boolean)
+com.histmersion.api.research.CritiqueSide.Mentions (Int)
+com.histmersion.api.research.CritiqueState.Wire (String)
+com.histmersion.api.research.Critiques.Block.From (Int)
+com.histmersion.api.research.Critiques.Block.Text (String)
+com.histmersion.api.research.Critiques.Block.To (Int)
+com.histmersion.api.research.Critiques.KindsValue (String)
+com.histmersion.api.research.DraftMode.Wire (String)
+com.histmersion.api.research.DriftKind.Wire (String)
+com.histmersion.api.research.LedgerRow.Decision (String)
+com.histmersion.api.research.LedgerRow.ForeignRev (String)
+com.histmersion.api.research.LedgerRow.Kind (String)
+com.histmersion.api.research.LedgerRow.Label (String)
+com.histmersion.api.research.LedgerRow.LocalRevAfter (String)
+com.histmersion.api.research.LedgerRow.RecordedAt (String)
+com.histmersion.api.research.ReviewApproval.Id (Long)
+com.histmersion.api.research.ReviewApproval.Kind (String)
+
+## TYPES TO DECIDE
+com.histmersion.api.research.Article.Body | base String | constructor-parameter
+    final case class Applied(body: com.histmersion.api.research.Article.Body, results: scala.List[EditResult]):
+    case Body(text: Draft.Body.Text)
+com.histmersion.api.research.Article.Coverage.ComputeReasonsPart2 | base String | method-parameter
+com.histmersion.api.research.Article.Coverage.DisagreementKindsValue | base String | alias
+    val DisagreementKinds: scala.List[com.histmersion.api.research.Article.Coverage.DisagreementKinds] = scala.List(_root_.com.histmersion.api.research.Article.Coverage.Disag
+com.histmersion.api.research.Article.Coverage.ExportedResult | base String | method-result
+    def exported(c: com.histmersion.api.research.Coverage): com.histmersion.api.research.Article.Coverage.ExportedResult =
+com.histmersion.api.research.Article.Coverage.MarkdownResult | base String | method-result
+    def markdown(c: com.histmersion.api.research.Coverage): com.histmersion.api.research.Article.Coverage.MarkdownResult =
+    def markdown(c: ArticleCheck): com.histmersion.api.research.Article.Edits.MarkdownResult =
+com.histmersion.api.research.Article.Coverage.MethodResult | base String | method-result
+    def method(c: com.histmersion.api.research.Coverage): com.histmersion.api.research.Article.Coverage.MethodResult =
+com.histmersion.api.research.Article.Coverage.NotUsedResult | base String | method-result
+    def notUsed(c: com.histmersion.api.research.Coverage): com.histmersion.api.research.Article.Coverage.NotUsedResult =
+com.histmersion.api.research.Article.Coverage.SectionsResult | base String | method-result
+    def sections(c: com.histmersion.api.research.Coverage): com.histmersion.api.research.Article.Coverage.SectionsResult = _root_.com.histmersion.api.research.Article.Coverag
+com.histmersion.api.research.Article.Coverage.UnplacedAfterReasonsPart2 | base String | method-parameter
+com.histmersion.api.research.Article.Deleted.Value | base Boolean | constructor-parameter
+    final case class Deleted(slug: com.histmersion.api.research.Article.Slug, deleted: Deleted.Value) derives KindlingsCodecAsObject, KindlingsSchema, com.histmersion.api.jso
+com.histmersion.api.research.Article.Edits.ArticleCheck.Fatal | base Boolean | constructor-parameter
+com.histmersion.api.research.Article.Edits.ArticleCheck.Problems | base String | constructor-parameter
+com.histmersion.api.research.Article.Edits.ArticleCheck.WordsAfter | base Int | constructor-parameter
+com.histmersion.api.research.Article.Edits.ArticleCheck.WordsBefore | base Int | constructor-parameter
+com.histmersion.api.research.Article.Edits.Draft.Body.Text | base String | constructor-parameter
+    val citedText = if citedN == 0 then "None of them is" else Plural.count(_root_.com.histmersion.api.Plural.CountN((citedN).toLong), _root_.com.histmersion.api.Plural.Count
+    val noneText = if none.isEmpty then "" else s"; none ${orList(none)}"
+com.histmersion.api.research.Article.Edits.Edit.Delete.Anchor | base String | constructor-parameter
+    final case class EditAnswer(op: Op, anchor: EditAnswer.Anchor, text: Option[EditAnswer.Text] = None) derives KindlingsCodecAsObject
+    case Replace(anchor: Edit.Replace.Anchor, text: Edit.Replace.Text)
+com.histmersion.api.research.Article.Edits.Edit.InsertAfter.Anchor | base String | constructor-parameter
+    final case class EditAnswer(op: Op, anchor: EditAnswer.Anchor, text: Option[EditAnswer.Text] = None) derives KindlingsCodecAsObject
+    case Replace(anchor: Edit.Replace.Anchor, text: Edit.Replace.Text)
+com.histmersion.api.research.Article.Edits.Edit.InsertAfter.Text | base String | constructor-parameter
+    val citedText = if citedN == 0 then "None of them is" else Plural.count(_root_.com.histmersion.api.Plural.CountN((citedN).toLong), _root_.com.histmersion.api.Plural.Count
+    val noneText = if none.isEmpty then "" else s"; none ${orList(none)}"
+com.histmersion.api.research.Article.Edits.Edit.InsertBefore.Anchor | base String | constructor-parameter
+    final case class EditAnswer(op: Op, anchor: EditAnswer.Anchor, text: Option[EditAnswer.Text] = None) derives KindlingsCodecAsObject
+    case Replace(anchor: Edit.Replace.Anchor, text: Edit.Replace.Text)
+com.histmersion.api.research.Article.Edits.Edit.InsertBefore.Text | base String | constructor-parameter
+    val citedText = if citedN == 0 then "None of them is" else Plural.count(_root_.com.histmersion.api.Plural.CountN((citedN).toLong), _root_.com.histmersion.api.Plural.Count
+    val noneText = if none.isEmpty then "" else s"; none ${orList(none)}"
+com.histmersion.api.research.Article.Edits.Edit.Replace.Anchor | base String | constructor-parameter
+    final case class EditAnswer(op: Op, anchor: EditAnswer.Anchor, text: Option[EditAnswer.Text] = None) derives KindlingsCodecAsObject
+    case Replace(anchor: Edit.Replace.Anchor, text: Edit.Replace.Text)
+com.histmersion.api.research.Article.Edits.Edit.Replace.Text | base String | constructor-parameter
+    val citedText = if citedN == 0 then "None of them is" else Plural.count(_root_.com.histmersion.api.Plural.CountN((citedN).toLong), _root_.com.histmersion.api.Plural.Count
+    val noneText = if none.isEmpty then "" else s"; none ${orList(none)}"
+com.histmersion.api.research.Article.Edits.EditAnswer.Anchor | base String | constructor-parameter
+    final case class EditAnswer(op: Op, anchor: EditAnswer.Anchor, text: Option[EditAnswer.Text] = None) derives KindlingsCodecAsObject
+    case Replace(anchor: Edit.Replace.Anchor, text: Edit.Replace.Text)
+com.histmersion.api.research.Article.Edits.EditAnswer.Text | base String | constructor-parameter
+    val citedText = if citedN == 0 then "None of them is" else Plural.count(_root_.com.histmersion.api.Plural.CountN((citedN).toLong), _root_.com.histmersion.api.Plural.Count
+    val noneText = if none.isEmpty then "" else s"; none ${orList(none)}"
+com.histmersion.api.research.Article.Edits.EditResult.Anchor | base String | constructor-parameter
+    final case class EditAnswer(op: Op, anchor: EditAnswer.Anchor, text: Option[EditAnswer.Text] = None) derives KindlingsCodecAsObject
+    case Replace(anchor: Edit.Replace.Anchor, text: Edit.Replace.Text)
+com.histmersion.api.research.Article.Edits.EditResult.Index | base Int | constructor-parameter
+    final case class EditResult(index: EditResult.Index, op: Op, anchor: EditResult.Anchor, text: EditResult.Text, problem: Option[EditResult.Problem] = None)
+    case Concept, Myth, Culture, Region, Timeline, Report, Index
+com.histmersion.api.research.Article.Edits.EditResult.Problem | base String | constructor-parameter
+    final case class EditResult(index: EditResult.Index, op: Op, anchor: EditResult.Anchor, text: EditResult.Text, problem: Option[EditResult.Problem] = None)
+com.histmersion.api.research.Article.Edits.EditResult.Text | base String | constructor-parameter
+    val citedText = if citedN == 0 then "None of them is" else Plural.count(_root_.com.histmersion.api.Plural.CountN((citedN).toLong), _root_.com.histmersion.api.Plural.Count
+    val noneText = if none.isEmpty then "" else s"; none ${orList(none)}"
+com.histmersion.api.research.Article.Edits.MarkdownResult | base String | method-result
+    def markdown(c: com.histmersion.api.research.Coverage): com.histmersion.api.research.Article.Coverage.MarkdownResult =
+    def markdown(c: ArticleCheck): com.histmersion.api.research.Article.Edits.MarkdownResult =
+com.histmersion.api.research.Article.Edits.Op.Wire | base String | constructor-parameter
+    enum Op(val wire: Op.Wire):
+    case Replace extends Op(_root_.com.histmersion.api.research.Article.Edits.Op.Wire("replace"))
+com.histmersion.api.research.Article.Filter.Authors | base String | constructor-parameter
+com.histmersion.api.research.Article.Filter.ExtraQueries | base String | constructor-parameter
+com.histmersion.api.research.Article.Filter.From | base Long | constructor-parameter
+com.histmersion.api.research.Article.Filter.Places | base String | constructor-parameter
+com.histmersion.api.research.Article.Filter.Query | base String | constructor-parameter
+com.histmersion.api.research.Article.Filter.Status | base String | constructor-parameter
+    private val Stated: Set[Source.Status] = Set(
+    private val Disputed: scala.List[Source.Status] =
+com.histmersion.api.research.Article.Filter.Tags | base String | constructor-parameter
+com.histmersion.api.research.Article.Filter.To | base Long | constructor-parameter
+com.histmersion.api.research.Article.Filter.Topics | base String | constructor-parameter
+com.histmersion.api.research.Article.Import.Force | base Boolean | constructor-parameter
+com.histmersion.api.research.Article.Import.Mtime | base Long | constructor-parameter
+com.histmersion.api.research.Article.Import.Strict | base Boolean | constructor-parameter
+com.histmersion.api.research.Article.Import.Text | base String | constructor-parameter
+    val citedText = if citedN == 0 then "None of them is" else Plural.count(_root_.com.histmersion.api.Plural.CountN((citedN).toLong), _root_.com.histmersion.api.Plural.Count
+    val noneText = if none.isEmpty then "" else s"; none ${orList(none)}"
+com.histmersion.api.research.Article.Kind.FromStringS | base String | method-parameter
+    def fromString(s: com.histmersion.api.research.Article.Kind.FromStringS): Option[Kind] =
+com.histmersion.api.research.Article.KindCount.Count | base Int | constructor-parameter
+    def appliedCount: com.histmersion.api.research.Article.Edits.Applied.AppliedCountResult = _root_.com.histmersion.api.research.Article.Edits.Applied.AppliedCountResult(res
+    final case class KindCount(kind: com.histmersion.api.research.Article.KindValue, count: KindCount.Count) derives KindlingsCodecAsObject, KindlingsSchema, com.histmersion.
+com.histmersion.api.research.Article.KindValue | base String | alias,constructor-parameter
+    final case class KindCount(kind: com.histmersion.api.research.Article.KindValue, count: KindCount.Count) derives KindlingsCodecAsObject, KindlingsSchema, com.histmersion.
+com.histmersion.api.research.Article.Link.Target | base String | constructor-parameter
+    final case class Link(targetKind: Link.TargetKind, target: Link.Target)
+com.histmersion.api.research.Article.Link.TargetKind | base String | constructor-parameter
+    final case class Link(targetKind: Link.TargetKind, target: Link.Target)
+com.histmersion.api.research.Article.Links.ResolveMarkdownResult | base String | method-result
+    def resolveMarkdown(md: com.histmersion.api.research.Article.Links.ResolveMarkdownMd, isSource: com.histmersion.api.research.Article.Links.ResolveMarkdownIsSourceArg1 => 
+com.histmersion.api.research.Article.Lint.FillerPhrasesValue | base String | alias
+com.histmersion.api.research.Article.Patch.Append | base String | constructor-parameter
+com.histmersion.api.research.Article.Patch.IfUpdatedAt | base String | constructor-parameter
+com.histmersion.api.research.Article.Patch.Regions | base String | constructor-parameter
+com.histmersion.api.research.Article.Patch.Section | base String | constructor-parameter
+com.histmersion.api.research.Article.Plans.ArticlePlan.Dropped | base String | constructor-parameter
+com.histmersion.api.research.Article.Plans.ArticlePlan.Goal | base String | constructor-parameter
+com.histmersion.api.research.Article.Plans.ArticlePlan.Rationale | base String | constructor-parameter
+com.histmersion.api.research.Article.Plans.FilterBlockResult | base String | method-result
+    def filterBlock(p: FilterProposal): com.histmersion.api.research.Article.Plans.FilterBlockResult =
+com.histmersion.api.research.Article.Plans.FilterProposal.Cited | base Int | constructor-parameter
+    def recall: com.histmersion.api.research.Article.Plans.FilterProposal.RecallResult = if cited == _root_.com.histmersion.api.research.Article.Plans.FilterProposal.Cited(0)
+com.histmersion.api.research.Article.Plans.FilterProposal.CitedIn | base Int | constructor-parameter
+com.histmersion.api.research.Article.Plans.FilterProposal.Missed | base String | constructor-parameter
+com.histmersion.api.research.Article.Plans.FilterProposal.Rationale | base String | constructor-parameter
+com.histmersion.api.research.Article.Plans.FilterProposal.Sample | base String | constructor-parameter
+com.histmersion.api.research.Article.Plans.FilterProposal.Total | base Int | constructor-parameter
+    val ComputeTotal: _root_.com.histmersion.api.research.Coverage.Total.type = _root_.com.histmersion.api.research.Coverage.Total
+com.histmersion.api.research.Article.Plans.PlanBlockResult | base String | method-result
+    def planBlock(p: ArticlePlan): com.histmersion.api.research.Article.Plans.PlanBlockResult =
+com.histmersion.api.research.Article.Plans.ProposedArticle.Hits | base Int | constructor-parameter
+com.histmersion.api.research.Article.Plans.ProposedArticle.Overlap | base Double | constructor-parameter
+com.histmersion.api.research.Article.Plans.ProposedArticle.OverlapWith | base String | constructor-parameter
+com.histmersion.api.research.Article.Plans.ProposedArticle.Why | base String | constructor-parameter
+com.histmersion.api.research.Article.Put.PeriodEnd | base Long | constructor-parameter
+com.histmersion.api.research.Article.Put.PeriodStart | base Long | constructor-parameter
+com.histmersion.api.research.Article.Put.Regions | base String | constructor-parameter
+com.histmersion.api.research.Article.Put.Tags | base String | constructor-parameter
+com.histmersion.api.research.Article.ReasonsValue | base String | constructor-parameter
+com.histmersion.api.research.Article.Regions | base String | constructor-parameter
+com.histmersion.api.research.Article.ReviewView.MarkdownResult | base String | method-result
+    def markdown(c: com.histmersion.api.research.Coverage): com.histmersion.api.research.Article.Coverage.MarkdownResult =
+    def markdown(c: ArticleCheck): com.histmersion.api.research.Article.Edits.MarkdownResult =
+com.histmersion.api.research.Article.ReviewView.Outcome | base String | constructor-parameter
+com.histmersion.api.research.Article.ReviewView.UpdatedAt | base String | constructor-parameter
+com.histmersion.api.research.Article.Row.PeriodEnd | base Long | constructor-parameter
+com.histmersion.api.research.Article.Row.PeriodStart | base Long | constructor-parameter
+com.histmersion.api.research.Article.Row.Regions | base String | alias,constructor-parameter
+com.histmersion.api.research.Article.Row.Tags | base String | alias,constructor-parameter
+com.histmersion.api.research.Article.Row.UpdatedAt | base String | constructor-parameter
+com.histmersion.api.research.Article.Slug | base String | alias,constructor-parameter
+    val ComputeSlug: _root_.com.histmersion.api.research.Article.Slug.type = _root_.com.histmersion.api.research.Article.Slug
+    final case class Deleted(slug: com.histmersion.api.research.Article.Slug, deleted: Deleted.Value) derives KindlingsCodecAsObject, KindlingsSchema, com.histmersion.api.jso
+com.histmersion.api.research.Article.Summary.PeriodEnd | base Long | constructor-parameter
+com.histmersion.api.research.Article.Summary.PeriodStart | base Long | constructor-parameter
+com.histmersion.api.research.Article.Summary.Regions | base String | constructor-parameter
+com.histmersion.api.research.Article.Summary.Tags | base String | constructor-parameter
+com.histmersion.api.research.Article.Summary.UpdatedAt | base String | constructor-parameter
+com.histmersion.api.research.Article.SummaryText | base String | constructor-parameter
+    final case class Ref(slug: com.histmersion.api.research.Article.Slug, title: com.histmersion.api.research.Article.Title, summary: Option[com.histmersion.api.research.Arti
+com.histmersion.api.research.Article.Tags | base String | constructor-parameter
+com.histmersion.api.research.Article.Title | base String | constructor-parameter
+    final case class Ref(slug: com.histmersion.api.research.Article.Slug, title: com.histmersion.api.research.Article.Title, summary: Option[com.histmersion.api.research.Arti
+com.histmersion.api.research.Article.UpdatedAt | base String | constructor-parameter
+com.histmersion.api.research.Article.Version.CreatedAt | base String | constructor-parameter
+com.histmersion.api.research.Article.Version.Id | base Long | constructor-parameter
+com.histmersion.api.research.Article.Version.UpdatedAt | base String | constructor-parameter
+com.histmersion.api.research.Article.Version.WordCount | base Int | constructor-parameter
+com.histmersion.api.research.Article.VersionFull.CreatedAt | base String | constructor-parameter
+com.histmersion.api.research.Article.VersionFull.Id | base Long | constructor-parameter
+com.histmersion.api.research.Article.VersionFull.UpdatedAt | base String | constructor-parameter
+com.histmersion.api.research.Backlink.Id | base String | constructor-parameter
+    final case class Backlink(kind: Backlink.Kind, id: Backlink.Id, title: Option[Backlink.Title])
+com.histmersion.api.research.Backlink.Kind | base String | constructor-parameter
+    final case class Backlink(kind: Backlink.Kind, id: Backlink.Id, title: Option[Backlink.Title])
+com.histmersion.api.research.Backlink.Title | base String | constructor-parameter
+    final case class Backlink(kind: Backlink.Kind, id: Backlink.Id, title: Option[Backlink.Title])
+com.histmersion.api.research.Coverage.Checked | base Int | constructor-parameter
+com.histmersion.api.research.Coverage.Edge.Kind | base String | constructor-parameter
+    final case class Edge(from: com.histmersion.api.library.Citekey, kind: Edge.Kind, to: com.histmersion.api.library.Citekey) derives KindlingsCodecAsObject, KindlingsSchema
+com.histmersion.api.research.Coverage.Entry.Reason | base String | constructor-parameter
+    final case class Entry(source: Source, reason: Option[Entry.Reason]) derives KindlingsCodecAsObject, KindlingsSchema, com.histmersion.api.json.Schema
+    final case class Reason(citekey: com.histmersion.api.library.Citekey, reason: Reason.Value) derives KindlingsCodecAsObject
+com.histmersion.api.research.Coverage.FilterLine | base String | constructor-parameter
+com.histmersion.api.research.Coverage.Reason.ListMPart2 | base String | method-parameter
+    def list(m: Map[com.histmersion.api.research.Coverage.Reason.ListMPart1, com.histmersion.api.research.Coverage.Reason.ListMPart2]): List[Reason] = m.toList.sortBy(_._1).m
+com.histmersion.api.research.Coverage.Reason.MergeCurrentPart2 | base String | method-parameter
+    def merge(current: Map[com.histmersion.api.research.Coverage.Reason.MergeCurrentPart1, com.histmersion.api.research.Coverage.Reason.MergeCurrentPart2], stated: List[Reaso
+com.histmersion.api.research.Coverage.Reason.MergeResultPart2Part1 | base String | method-result
+    def merge(current: Map[com.histmersion.api.research.Coverage.Reason.MergeCurrentPart1, com.histmersion.api.research.Coverage.Reason.MergeCurrentPart2], stated: List[Reaso
+com.histmersion.api.research.Coverage.Reason.Value | base String | constructor-parameter
+    final case class Reason(citekey: com.histmersion.api.library.Citekey, reason: Reason.Value) derives KindlingsCodecAsObject
+    def list(m: Map[com.histmersion.api.research.Coverage.Reason.ListMPart1, com.histmersion.api.research.Coverage.Reason.ListMPart2]): List[Reason] = m.toList.sortBy(_._1).m
+com.histmersion.api.research.Coverage.Total | base Int | alias,constructor-parameter
+com.histmersion.api.research.CoverageSearch.Query | base String | constructor-parameter
+    final case class CoverageSearch(query: CoverageSearch.Query, total: CoverageSearch.Total, cited: List[com.histmersion.api.library.Citekey])
+com.histmersion.api.research.CoverageSearch.Total | base Int | constructor-parameter
+    final case class CoverageSearch(query: CoverageSearch.Query, total: CoverageSearch.Total, cited: List[com.histmersion.api.library.Citekey])
+com.histmersion.api.research.CritiquePair.Kinds | base String | constructor-parameter
+com.histmersion.api.research.CritiquePair.Reason | base String | constructor-parameter
+com.histmersion.api.research.CritiquePair.ReasonBy | base String | constructor-parameter
+com.histmersion.api.research.CritiquePairing.Hit.Edges | base String | constructor-parameter
+com.histmersion.api.research.CritiquePairing.Hit.From | base Int | constructor-parameter
+com.histmersion.api.research.CritiquePairing.Hit.Mechanical | base Boolean | constructor-parameter
+    val todo = hs.filter((refactorCallback => ((refactorCallback.mechanical) == _root_.com.histmersion.api.research.CritiquePairing.Hit.Mechanical(true)))).groupBy(h => (h.fr
+com.histmersion.api.research.CritiquePairing.Hit.Named | base String | constructor-parameter
+com.histmersion.api.research.CritiquePairing.Hit.To | base Int | constructor-parameter
+com.histmersion.api.research.CritiquePairing.Hit.Unit | base Int | constructor-parameter
+com.histmersion.api.research.CritiquePairing.Hit.Where | base String | constructor-parameter
+com.histmersion.api.research.CritiquePairing.Work.Names | base String | constructor-parameter
+    final case class Work(citekey: com.histmersion.api.library.Citekey, names: List[Work.Names], year: Option[com.histmersion.api.catalogue.Year])
+    val citedNames = cited.flatMap(work).flatMap(_.names).toSet
+com.histmersion.api.research.CritiqueReason.By | base String | constructor-parameter
+    final case class CritiqueReason(src: com.histmersion.api.library.Citekey, dst: com.histmersion.api.library.Citekey, reason: CritiqueReason.Reason, by: Option[CritiqueReas
+com.histmersion.api.research.CritiqueReason.Reason | base String | constructor-parameter
+    final case class CritiqueReason(src: com.histmersion.api.library.Citekey, dst: com.histmersion.api.library.Citekey, reason: CritiqueReason.Reason, by: Option[CritiqueReas
+    val MaxChars: com.histmersion.api.research.CritiqueReason.MaxChars = _root_.com.histmersion.api.research.CritiqueReason.MaxCharsValue(Coverage.Reason.MaxChars)
+com.histmersion.api.research.CritiqueSide.Cited | base Boolean | constructor-parameter
+com.histmersion.api.research.CritiqueSide.Mentions | base Int | constructor-parameter
+com.histmersion.api.research.CritiqueState.Wire | base String | constructor-parameter
+    enum CritiqueState(val wire: CritiqueState.Wire):
+    case Addressed extends CritiqueState(_root_.com.histmersion.api.research.CritiqueState.Wire("addressed"))
+com.histmersion.api.research.Critiques.Block.From | base Int | constructor-parameter
+    final case class Block(from: Block.From, to: Block.To, text: Block.Text)
+com.histmersion.api.research.Critiques.Block.Text | base String | alias,constructor-parameter
+    val ParagraphsResult: _root_.com.histmersion.api.research.Critiques.Block.Text.type = _root_.com.histmersion.api.research.Critiques.Block.Text
+    final case class Block(from: Block.From, to: Block.To, text: Block.Text)
+com.histmersion.api.research.Critiques.Block.To | base Int | constructor-parameter
+    final case class Block(from: Block.From, to: Block.To, text: Block.Text)
+com.histmersion.api.research.Critiques.KindsValue | base String | alias
+com.histmersion.api.research.Critiques.MarkdownResult | base String | method-result
+    def markdown(pairs: List[CritiquePair]): com.histmersion.api.research.Critiques.MarkdownResult =
+com.histmersion.api.research.Critiques.MethodPartResult | base String | method-result
+    def methodPart(pairs: List[CritiquePair]): Option[com.histmersion.api.research.Critiques.MethodPartResult] =
+com.histmersion.api.research.Critiques.OlderFirstKinds | base String | method-parameter
+    def olderFirst(kinds: List[com.histmersion.api.research.Critiques.OlderFirstKinds]): com.histmersion.api.research.Critiques.OlderFirstResult = _root_.com.histmersion.api.
+com.histmersion.api.research.DraftMode.Wire | base String | constructor-parameter
+    enum DraftMode(val wire: DraftMode.Wire):
+    case Create extends DraftMode(_root_.com.histmersion.api.research.DraftMode.Wire("create"))
+com.histmersion.api.research.DriftKind.Wire | base String | constructor-parameter
+    enum DriftKind(val wire: DriftKind.Wire):
+    case Unplaced extends DriftKind(_root_.com.histmersion.api.research.DriftKind.Wire("unplaced"))
+com.histmersion.api.research.LedgerRow.Decision | base String | constructor-parameter
+com.histmersion.api.research.LedgerRow.ForeignRev | base String | constructor-parameter
+com.histmersion.api.research.LedgerRow.Kind | base String | constructor-parameter
+com.histmersion.api.research.LedgerRow.Label | base String | constructor-parameter
+com.histmersion.api.research.LedgerRow.LocalRevAfter | base String | constructor-parameter
+com.histmersion.api.research.LedgerRow.RecordedAt | base String | constructor-parameter
+com.histmersion.api.research.ReviewApproval.Id | base Long | constructor-parameter
+    final case class ReviewApproval(id: ReviewApproval.Id, kind: ReviewApproval.Kind) derives KindlingsCodecAsObject, KindlingsSchema, com.histmersion.api.json.Schema
+com.histmersion.api.research.ReviewApproval.Kind | base String | constructor-parameter
+    final case class ReviewApproval(id: ReviewApproval.Id, kind: ReviewApproval.Kind) derives KindlingsCodecAsObject, KindlingsSchema, com.histmersion.api.json.Schema

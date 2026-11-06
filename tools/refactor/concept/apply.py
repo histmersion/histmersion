@@ -17,13 +17,21 @@ for p in sorted(glob.glob(f'{OUT}/out/*.tsv')):
         a = l.rstrip('\n').split('\t')
         if len(a) == 2 and a[0] in need:
             raw[a[0]] = a[1].strip()
+second = {}
+for p in sorted(glob.glob(f'{OUT}/out2/*.tsv')):
+    for l in open(p):
+        a = l.rstrip('\n').split('\t')
+        if len(a) == 2 and a[0] in rows and rows[a[0]]['pure'] and a[1].strip() != 'keep':
+            second[a[0]] = a[1].strip()
+raw.update(second)
 for f, r in rows.items():
     if r['rule'] == 'native':
         raw[f] = 'native'
 RENDERER = re.compile(r'(Markdown|Export|Render)')
 POSITIONAL = re.compile(r'(Result|Part\d+|Arg\d+|Raw|Str|Value)$')
-PURE_KEPT = {f for f, r in rows.items() if r['pure'] and r['rule'] == 'keep'}
-why = collections.Counter(); redecide = []
+PURE_KEPT = {f for f, r in rows.items() if r['pure'] and r['rule'] == 'keep' and f not in second}
+why = collections.Counter(); redecide = []; chain = {}
+YEAR = 'com.histmersion.api.catalogue.Year'
 table, new = {}, collections.defaultdict(collections.Counter)
 for f, d in raw.items():
     r = rows[f]
@@ -35,10 +43,16 @@ for f, d in raw.items():
         t = 'com.histmersion.api.' + t[len('com.histmersion.domain.'):]
     elif not inApi and t.startswith('com.histmersion.api.'):
         why['domain type onto api'] += 1; continue
-    if t == 'com.histmersion.api.Markdown.Text' and not RENDERER.search(r['owner']):
+    if t == 'com.histmersion.api.Markdown.Text' and RENDERER.search(r['owner']):
+        table[f] = 'native'; continue
+    if t == 'com.histmersion.api.Markdown.Text':
         why['Markdown.Text outside a renderer'] += 1; redecide.append(f); continue
     if POSITIONAL.search(t):
         why['positional name'] += 1; redecide.append(f); continue
+    if inApi and t.rsplit('.', 1)[1] == 'Year' and r['base'] in ('Int', 'Long'):
+        table[f] = YEAR; continue
+    if t in rows and t in raw and t not in PURE_KEPT:
+        chain[f] = t; continue
     if t in rows:
         if t in PURE_KEPT and rows[t]['base'] == r['base']:
             table[f] = t
@@ -48,6 +62,21 @@ for f, d in raw.items():
             why['target constrained or other base'] += 1; redecide.append(f)
         continue
     new[t][r['base']] += 1; table[f] = t
+for f, t in chain.items():
+    seen = {f}
+    while t in chain and t not in seen:
+        seen.add(t); t = chain[t]
+    t = table.get(t, t) if t in raw else t
+    if t in table.values() or t in new or (t in rows and t in PURE_KEPT and rows[t]['base'] == rows[f]['base']):
+        table[f] = t
+    elif t == 'native':
+        table[f] = t
+    else:
+        why['chain ends nowhere'] += 1
+for f, r in rows.items():
+    if f.startswith('com.histmersion.api.') and r['name'] == 'Year' and r['pure'] and f != YEAR and r['base'] in ('Int', 'Long'):
+        table[f] = YEAR
+table.pop(YEAR, None)
 # classifiers work batch by batch, so a concept every batch needs was invented several times: one per base type
 SHARED = {'Year', 'Citekey', 'Slug', 'Doi', 'Isbn', 'Pmid', 'Pmcid', 'ArxivId', 'Offset', 'PageSize'}
 canon = {}
@@ -90,7 +119,7 @@ def index():
         if not pk: continue
         stack = []
         for n, l in enumerate(s.split('\n')):
-            m = re.match(r'(\s*)(?:private(?:\[\w+\])? |protected |final |case |sealed |abstract )*(object|class|enum|trait) (\w+)', l)
+            m = re.match(r'(\s*)(?:private(?:\[\w+\])? |protected |final |case |sealed |abstract )*(object|class|enum|trait|type) (\w+)', l)
             if not m: continue
             ind = len(m.group(1))
             while stack and stack[-1][0] >= ind: stack.pop()
@@ -123,6 +152,22 @@ for t in list(newbase):
             table[f] = t2
     newbase[t2] = newbase.pop(t); moved += 1
 print('new concepts moved onto their real owner', moved, 'owner exists only as a non-object', ambiguous)
+WORD = {'String': 'Text', 'Int': 'Count', 'Long': 'Number', 'Boolean': 'Flag', 'Double': 'Amount', 'Array[Byte]': 'Bytes'}
+reused = renamed = 0
+for t in list(newbase):
+    if t not in idx0:
+        continue
+    b = newbase.pop(t)
+    if t in rows and t in PURE_KEPT and rows[t]['base'] == b:
+        t2 = t; reused += 1
+    else:
+        t2 = t + WORD.get(b, 'Value'); renamed += 1
+        if t2 not in idx0:
+            newbase[t2] = b
+    for f, v in list(table.items()):
+        if v == t:
+            table[f] = t2
+print('new concepts that already existed: reused', reused, 'renamed', renamed)
 # one alternation over every name, longest first, so one pass does them all
 names = sorted(table, key=len, reverse=True)
 stat = collections.Counter()
@@ -216,6 +261,8 @@ for f, ins in inserts.items():
 for f, bs in append.items():
     src[f] = src[f].rstrip('\n') + '\n\n' + '\n'.join(l for b in bs for l in b) + '\n'
 print('new concepts placed', dict(place))
+Y = 'modules/api/src/main/scala/com/histmersion/api/catalogue/Year.scala'
+src[Y] = src[Y].replace('RefinedType[Int, Pure]', 'RefinedType[Long, Pure]')
 if WRITE:
     for f, s in src.items():
         open(f, 'w').write(s)
