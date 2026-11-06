@@ -229,7 +229,7 @@ class AutopilotPolicySuite extends munit.FunSuite:
     assertEquals(sharedIngestLeft(com.histmersion.domain.AutopilotPolicy.Cap(20), com.histmersion.domain.AutopilotPolicy.IngestedToday(25)), Some(0))
     assertEquals(sharedIngestLeft(com.histmersion.domain.AutopilotPolicy.Cap(0), com.histmersion.domain.AutopilotPolicy.IngestedToday(7)), None)
     assert(
-      due(None, com.histmersion.domain.AutopilotPolicy.EveryHours(24), now) && !due(Some(now.minusSeconds(3600)), 24, now) && due(Some(now.minusSeconds(86400)), 24, now)
+      due(None, com.histmersion.domain.AutopilotPolicy.EveryHours(24), now) && !due(Some(now.minusSeconds(3600)), com.histmersion.domain.AutopilotPolicy.EveryHours(24), now) && due(Some(now.minusSeconds(86400)), com.histmersion.domain.AutopilotPolicy.EveryHours(24), now)
     )
     assert(!due(None, com.histmersion.domain.AutopilotPolicy.EveryHours(0), now))
     assertEquals(etaDays(com.histmersion.domain.AutopilotPolicy.OpenCount(10), com.histmersion.domain.AutopilotPolicy.DoneLast7(7)), Some(10))

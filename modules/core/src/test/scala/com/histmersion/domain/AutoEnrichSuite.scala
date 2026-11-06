@@ -1,5 +1,7 @@
 package com.histmersion.domain
 
+import com.histmersion.testsupport.ComparedByValue.given
+
 import com.histmersion.config.*
 import com.histmersion.api.given
 import com.histmersion.config.given
@@ -16,9 +18,9 @@ class AutoEnrichSuite extends munit.FunSuite:
     assertEquals(note(Skip.Off), None, "nothing asked for, nothing said")
 
   test("findings or notes mean enriched; an abstract-as-summary or tags do not count"):
-    assert(decide(true, true, com.histmersion.domain.AutoEnrich.FindingCount(2), None, Nil).left.exists(_ == Skip.Enriched("it already has 2 findings")))
+    assert(decide(true, true, com.histmersion.domain.AutoEnrich.FindingCount(2), None, Nil).left.exists(_ == Skip.Enriched(com.histmersion.domain.AutoEnrich.Skip.Enriched.Why("it already has 2 findings"))))
     assert(
-      decide(true, true, com.histmersion.domain.AutoEnrich.FindingCount(0), Some(com.histmersion.domain.AutoEnrich.Notes("Tin by sea [[x]].")), Nil).left.exists(_ == Skip.Enriched("it already has notes"))
+      decide(true, true, com.histmersion.domain.AutoEnrich.FindingCount(0), Some(com.histmersion.domain.AutoEnrich.Notes("Tin by sea [[x]].")), Nil).left.exists(_ == Skip.Enriched(com.histmersion.domain.AutoEnrich.Skip.Enriched.Why("it already has notes")))
     )
     assertEquals(decide(true, true, com.histmersion.domain.AutoEnrich.FindingCount(0), Some(com.histmersion.domain.AutoEnrich.Notes("   ")), Nil), Right(()))
 

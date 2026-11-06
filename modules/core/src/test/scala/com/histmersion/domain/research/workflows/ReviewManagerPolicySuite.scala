@@ -80,7 +80,7 @@ class ReviewManagerPolicySuite extends munit.FunSuite:
   test("stop rules: omission churn — only missing-critique MAJORs AND the open critique pairs did not go down"):
     // two runs, 5 open pairs before the first, 5 after the second: stalled
     val stalled = ItemState(
-      history = List(RunMark(com.histmersion.api.automation.Agents.RunInfo.Id("r1"), Some(com.histmersion.api.automation.Managers.RunMark.Before(2)), com.histmersion.api.automation.Managers.RunMark.After(2), pairsBefore = Some(5), pairsAfter = Some(5))),
+      history = List(RunMark(com.histmersion.api.automation.Agents.RunInfo.Id("r1"), Some(com.histmersion.api.automation.Managers.RunMark.Before(2)), com.histmersion.api.automation.Managers.RunMark.After(2), pairsBefore = Some(com.histmersion.api.automation.Managers.RunMark.PairsBefore(5)), pairsAfter = Some(com.histmersion.api.automation.Managers.RunMark.PairsAfter(5)))),
       before = Some(com.histmersion.api.automation.Managers.ItemState.Before(2)),
       pairsBefore = Some(5)
     )
@@ -91,14 +91,14 @@ class ReviewManagerPolicySuite extends munit.FunSuite:
         assert(t.contains("review manager stopped: omission churn"), t)
         assertEquals(
           st.history.last,
-          RunMark(com.histmersion.api.automation.Agents.RunInfo.Id("run-1234567890"), Some(com.histmersion.api.automation.Managers.RunMark.Before(2)), com.histmersion.api.automation.Managers.RunMark.After(2), churn = true, pairsBefore = Some(5), pairsAfter = Some(5))
+          RunMark(com.histmersion.api.automation.Agents.RunInfo.Id("run-1234567890"), Some(com.histmersion.api.automation.Managers.RunMark.Before(2)), com.histmersion.api.automation.Managers.RunMark.After(2), churn = com.histmersion.api.automation.Managers.RunMark.Churn(true), pairsBefore = Some(com.histmersion.api.automation.Managers.RunMark.PairsBefore(5)), pairsAfter = Some(com.histmersion.api.automation.Managers.RunMark.PairsAfter(5)))
         )
       case other => fail(other.toString)
 
   test("omission churn no longer stops while the open critique pairs go down — not even on flat open MAJORs"):
     // the old rule stopped this run (every open MAJOR a fresh missing-critique); 9 → 6 → 3 pairs is progress
     val going = ItemState(
-      history = List(RunMark(com.histmersion.api.automation.Agents.RunInfo.Id("r1"), Some(com.histmersion.api.automation.Managers.RunMark.Before(2)), com.histmersion.api.automation.Managers.RunMark.After(2), pairsBefore = Some(9), pairsAfter = Some(6))),
+      history = List(RunMark(com.histmersion.api.automation.Agents.RunInfo.Id("r1"), Some(com.histmersion.api.automation.Managers.RunMark.Before(2)), com.histmersion.api.automation.Managers.RunMark.After(2), pairsBefore = Some(com.histmersion.api.automation.Managers.RunMark.PairsBefore(9)), pairsAfter = Some(com.histmersion.api.automation.Managers.RunMark.PairsAfter(6)))),
       before = Some(com.histmersion.api.automation.Managers.ItemState.Before(2)),
       pairsBefore = Some(6)
     )
@@ -109,14 +109,14 @@ class ReviewManagerPolicySuite extends munit.FunSuite:
       case other => fail(other.toString)
     // one run is no window: the first run's churn never stops it
     assert(
-      eval(st = ItemState(before = Some(com.histmersion.api.automation.Managers.ItemState.Before(2)), pairsBefore = Some(4)), fs = facts(2, onlyMissing = true, pairs = Some(4)))
+      eval(st = ItemState(before = Some(com.histmersion.api.automation.Managers.ItemState.Before(2)), pairsBefore = Some(com.histmersion.api.automation.Managers.ItemState.PairsBefore(4))), fs = facts(2, onlyMissing = true, pairs = Some(4)))
         .isInstanceOf[Next.Again]
     )
     // counts unknown (runs evaluated before the checklist): no evidence of a stall
     assert(!pairsStalled(List(RunMark(com.histmersion.api.automation.Agents.RunInfo.Id("r1")), RunMark(com.histmersion.api.automation.Agents.RunInfo.Id("r2"))), com.histmersion.domain.ManagerPolicy.ReviewSettings.NoProgressRuns(2)))
     // a rules MAJOR among them: the open-MAJOR rule applies as before
     val flat = ItemState(
-      history = List(RunMark(com.histmersion.api.automation.Agents.RunInfo.Id("r1"), Some(com.histmersion.api.automation.Managers.RunMark.Before(3)), com.histmersion.api.automation.Managers.RunMark.After(3), pairsBefore = Some(9), pairsAfter = Some(6))),
+      history = List(RunMark(com.histmersion.api.automation.Agents.RunInfo.Id("r1"), Some(com.histmersion.api.automation.Managers.RunMark.Before(3)), com.histmersion.api.automation.Managers.RunMark.After(3), pairsBefore = Some(com.histmersion.api.automation.Managers.RunMark.PairsBefore(9)), pairsAfter = Some(com.histmersion.api.automation.Managers.RunMark.PairsAfter(6)))),
       before = Some(com.histmersion.api.automation.Managers.ItemState.Before(3)),
       pairsBefore = Some(6)
     )

@@ -75,7 +75,7 @@ class CandidatesSuite extends munit.FunSuite:
         authors = (List("Doe J", "Roe K")).map(com.histmersion.api.library.AuthorName.apply),
         venue = (Some("J Arch")).map(com.histmersion.api.library.Source.Venue.apply),
         isOa = com.histmersion.api.library.WorkRef.IsOa(true),
-        abstractText = Some("Text")
+        abstractText = Some(com.histmersion.api.library.Source.Candidate.AbstractText("Text"))
       )
     )
     assertEquals(ws(1).doi, None)
@@ -114,7 +114,7 @@ class CandidatesSuite extends munit.FunSuite:
           year = (Some(2026)).map(com.histmersion.api.catalogue.Year.apply),
           authors = (List("Ann Lee", "Bo Ng")).map(com.histmersion.api.library.AuthorName.apply),
           venue = (Some("arXiv")).map(com.histmersion.api.library.Source.Venue.apply),
-          isOa = true,
+          isOa = com.histmersion.api.library.WorkRef.IsOa(true),
           abstractText = Some("About it.")
         )
       )
@@ -137,7 +137,7 @@ class CandidatesSuite extends munit.FunSuite:
       (Some("J")).map(com.histmersion.api.library.Source.Venue.apply),
       Some(com.histmersion.api.library.Source.Candidate.AbstractText("abs")),
       isOa = com.histmersion.api.library.Source.Candidate.IsOa(true),
-      foundBy = List("openalex query \"x\""),
+      foundBy = List(com.histmersion.api.library.Source.Candidate.FoundBy("openalex query \"x\"")),
       firstSeen = "2026-10-24T10:00:00Z"
     )
     val md = CandidatesMarkdown.list(
@@ -146,7 +146,7 @@ class CandidatesSuite extends munit.FunSuite:
         com.histmersion.api.library.CandidateList.State("new"),
         List(c),
         List(CandidateCount(com.histmersion.api.library.Source.Candidate.State("new"), com.histmersion.api.library.CandidateCount.Count(1)), CandidateCount(com.histmersion.api.library.Source.Candidate.State("seen"), com.histmersion.api.library.CandidateCount.Count(4))),
-        next = Some(25)
+        next = Some(com.histmersion.api.library.CandidateList.Next(25))
       )
     )
     assert(md.contains("**#7** `10.1234/a` — A title (Ann et al., 2026, J) · open access"), md)
@@ -155,8 +155,8 @@ class CandidatesSuite extends munit.FunSuite:
       CandidateSweep(
         com.histmersion.api.library.CandidateSweep.Goal("g"),
         List(
-          CandidateWatch(com.histmersion.api.library.CandidateWatch.Goal("g"), com.histmersion.api.library.CandidateWatch.Kind("query"), com.histmersion.api.library.CandidateWatch.Subject("x"), com.histmersion.api.library.CandidateWatch.Index("crossref"), Some(com.histmersion.api.library.CandidateWatch.Watermark("2026-10-24")), lastFound = 3),
-          CandidateWatch(com.histmersion.api.library.CandidateWatch.Goal("g"), com.histmersion.api.library.CandidateWatch.Kind("query"), com.histmersion.api.library.CandidateWatch.Subject("x"), com.histmersion.api.library.CandidateWatch.Index("arxiv"), lastError = Some("timeout"))
+          CandidateWatch(com.histmersion.api.library.CandidateWatch.Goal("g"), com.histmersion.api.library.CandidateWatch.Kind("query"), com.histmersion.api.library.CandidateWatch.Subject("x"), com.histmersion.api.library.CandidateWatch.Index("crossref"), Some(com.histmersion.api.library.CandidateWatch.Watermark("2026-10-24")), lastFound = com.histmersion.api.library.CandidateWatch.LastFound(3)),
+          CandidateWatch(com.histmersion.api.library.CandidateWatch.Goal("g"), com.histmersion.api.library.CandidateWatch.Kind("query"), com.histmersion.api.library.CandidateWatch.Subject("x"), com.histmersion.api.library.CandidateWatch.Index("arxiv"), lastError = Some(com.histmersion.api.library.CandidateWatch.LastError("timeout")))
         ),
         com.histmersion.api.library.CandidateSweep.Found(3),
         com.histmersion.api.library.CandidateSweep.Added(2),

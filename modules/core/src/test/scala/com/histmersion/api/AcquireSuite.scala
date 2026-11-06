@@ -188,9 +188,9 @@ class AcquireSuite extends munit.FunSuite:
   test("rankFollowups: influential first, then result/method intent, then recency"):
     val rows = List(
       FollowupRow(title = Some(com.histmersion.api.library.Title("old plain")), year = Some(com.histmersion.api.catalogue.Year(2016))),
-      FollowupRow(title = Some(com.histmersion.api.library.Title("influential")), year = Some(com.histmersion.api.catalogue.Year(2017)), isInfluential = true),
+      FollowupRow(title = Some(com.histmersion.api.library.Title("influential")), year = Some(com.histmersion.api.catalogue.Year(2017)), isInfluential = com.histmersion.api.library.FollowupRow.IsInfluential(true)),
       FollowupRow(title = Some(com.histmersion.api.library.Title("recent plain")), year = Some(com.histmersion.api.catalogue.Year(2024))),
-      FollowupRow(title = Some(com.histmersion.api.library.Title("method")), year = Some(com.histmersion.api.catalogue.Year(2018)), intents = List("methodology"))
+      FollowupRow(title = Some(com.histmersion.api.library.Title("method")), year = Some(com.histmersion.api.catalogue.Year(2018)), intents = List(com.histmersion.api.library.FollowupRow.Intents("methodology")))
     )
     assertEquals(
       Acquire.rankFollowups(rows).flatMap(_.title),

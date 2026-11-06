@@ -40,7 +40,7 @@ class MediaKeyedCollectionsSuite extends munit.FunSuite:
       "no latest year: the place's period alone"
     )
     assertEquals(MediaMatch.dated(com.histmersion.domain.media.imports.MediaMatch.Basis("x = Orkney"), rec(None), orkney, Some(com.histmersion.Year(1500))), Left("no dates on the record"))
-    val late = orkney.modify(_.period).setTo(DeepTime.span(1600L, 1900L))
+    val late = orkney.modify(_.period).setTo(DeepTime.span(com.histmersion.domain.DeepTime.SignedYear(1600L), com.histmersion.domain.DeepTime.SignedYear(1900L)))
     assertEquals(
       MediaMatch.dated(com.histmersion.domain.media.imports.MediaMatch.Basis("x = Orkney"), rec(DeepTime.span(com.histmersion.domain.DeepTime.SignedYear(1200L), com.histmersion.domain.DeepTime.SignedYear(1300L))), late, Some(com.histmersion.Year(1500))),
       Left("its dates do not overlap the place's"),

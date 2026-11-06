@@ -185,7 +185,7 @@ class AcquireRecheckSuite extends munit.FunSuite:
 
   test("the job's progress line counts what it found, with the last no-answer's reason, shortened"):
     val t = Tally(total = com.histmersion.domain.AcquireRecheck.Tally.Total(453))
-      .add(Outcome.Closed, "a2020_x")
+      .add(Outcome.Closed, com.histmersion.domain.AcquireRecheck.Detail("a2020_x"))
       .add(Outcome.Fetched, "unpaywall")
       .add(Outcome.NoCopy, "none")
       .add(

@@ -1,5 +1,7 @@
 package com.histmersion.util.text
 
+import com.histmersion.testsupport.ComparedByValue.given
+
 class FingerprintSuite extends munit.FunSuite:
 
   test("folding: lower case, diacritics and the letters NFD keeps removed, typographic quotes made ASCII"):

@@ -73,7 +73,7 @@ class ManagerPolicySuite extends munit.FunSuite:
       ManagerHint(com.histmersion.api.automation.Managers.ManagerHint.Id(2), com.histmersion.api.automation.Managers.ManagerInfo.Id("review"), None, com.histmersion.api.automation.Managers.ManagerHint.Text("b")),
       ManagerHint(com.histmersion.api.automation.Managers.ManagerHint.Id(1), com.histmersion.api.automation.Managers.ManagerInfo.Id("review"), Some(com.histmersion.api.automation.Managers.ManagerHint.ItemId(7)), com.histmersion.api.automation.Managers.ManagerHint.Text("a")),
       ManagerHint(com.histmersion.api.automation.Managers.ManagerHint.Id(3), com.histmersion.api.automation.Managers.ManagerInfo.Id("review"), Some(com.histmersion.api.automation.Managers.ManagerHint.ItemId(8)), com.histmersion.api.automation.Managers.ManagerHint.Text("other item")),
-      ManagerHint(com.histmersion.api.automation.Managers.ManagerHint.Id(4), com.histmersion.api.automation.Managers.ManagerInfo.Id("review"), None, com.histmersion.api.automation.Managers.ManagerHint.Text("gone"), retiredAt = Some("x"))
+      ManagerHint(com.histmersion.api.automation.Managers.ManagerHint.Id(4), com.histmersion.api.automation.Managers.ManagerInfo.Id("review"), None, com.histmersion.api.automation.Managers.ManagerHint.Text("gone"), retiredAt = Some(com.histmersion.api.automation.Managers.ManagerHint.RetiredAt("x")))
     )
     assertEquals(notesFor(hs, com.histmersion.domain.ManagerPolicy.ItemId(7)).map(_.text), List("a", "b"))
 
@@ -196,12 +196,12 @@ class ManagerPolicySuite extends munit.FunSuite:
     assert(ManagerConfig.parse(List(com.histmersion.api.automation.Managers.ManagerConfig.Spec("auto-ingest=perhaps"))).isLeft)
 
   test("auto-ingest is opt-in: off by default; on, what is left of the daily cap (the watcher's own cap wins)"):
-    assertEquals(watch.ingestAllowance(ManagerConfig(), 0), 0)
-    assertEquals(watch.ingestAllowance(ManagerConfig(autoIngest = Some(false)), 0), 0)
-    assertEquals(watch.ingestAllowance(ManagerConfig(autoIngest = Some(true)), 0), 5)
-    assertEquals(watch.ingestAllowance(ManagerConfig(autoIngest = Some(true)), 4), 1)
-    assertEquals(watch.ingestAllowance(ManagerConfig(autoIngest = Some(true)), 9), 0)
-    assertEquals(watch.ingestAllowance(ManagerConfig(autoIngest = Some(true), autoIngestPerDay = Some(2)), 1), 1)
+    assertEquals(watch.ingestAllowance(ManagerConfig(), com.histmersion.domain.WatchManagerDefaults.IngestedToday(0)), 0)
+    assertEquals(watch.ingestAllowance(ManagerConfig(autoIngest = Some(com.histmersion.api.automation.Managers.ManagerConfig.AutoIngest(false))), com.histmersion.domain.WatchManagerDefaults.IngestedToday(0)), 0)
+    assertEquals(watch.ingestAllowance(ManagerConfig(autoIngest = Some(com.histmersion.api.automation.Managers.ManagerConfig.AutoIngest(true))), com.histmersion.domain.WatchManagerDefaults.IngestedToday(0)), 5)
+    assertEquals(watch.ingestAllowance(ManagerConfig(autoIngest = Some(com.histmersion.api.automation.Managers.ManagerConfig.AutoIngest(true))), com.histmersion.domain.WatchManagerDefaults.IngestedToday(4)), 1)
+    assertEquals(watch.ingestAllowance(ManagerConfig(autoIngest = Some(com.histmersion.api.automation.Managers.ManagerConfig.AutoIngest(true))), com.histmersion.domain.WatchManagerDefaults.IngestedToday(9)), 0)
+    assertEquals(watch.ingestAllowance(ManagerConfig(autoIngest = Some(com.histmersion.api.automation.Managers.ManagerConfig.AutoIngest(true)), autoIngestPerDay = Some(com.histmersion.api.automation.Managers.ManagerConfig.AutoIngestPerDay(2))), com.histmersion.domain.WatchManagerDefaults.IngestedToday(1)), 1)
     assertEquals(dayStart(Instant.parse("2026-10-17T23:59:00Z")), Instant.parse("2026-10-17T00:00:00Z"))
 
   test("cron: not scheduled → its first firing recorded; due → fire once and move on; a missed firing fires once"):

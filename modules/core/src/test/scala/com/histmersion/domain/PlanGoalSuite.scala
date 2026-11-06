@@ -67,7 +67,7 @@ class PlanGoalSuite extends munit.FunSuite:
 
   test("on the last attempt what passed is kept, the problems become notes and warnings"):
     val a =
-      answer(List(SubGoalAnswer(com.histmersion.domain.PlanGoal.SubGoalAnswer.Slug("BAD SLUG"), com.histmersion.domain.PlanGoal.SubGoalAnswer.Title("x")), SubGoalAnswer(com.histmersion.domain.PlanGoal.SubGoalAnswer.Slug("good"), com.histmersion.domain.PlanGoal.SubGoalAnswer.Title("Good"))), works = List(WorkAnswer("nope", "")))
+      answer(List(SubGoalAnswer(com.histmersion.domain.PlanGoal.SubGoalAnswer.Slug("BAD SLUG"), com.histmersion.domain.PlanGoal.SubGoalAnswer.Title("x")), SubGoalAnswer(com.histmersion.domain.PlanGoal.SubGoalAnswer.Slug("good"), com.histmersion.domain.PlanGoal.SubGoalAnswer.Title("Good"))), works = List(WorkAnswer(com.histmersion.domain.PlanGoal.WorkAnswer.Doi("nope"), com.histmersion.domain.PlanGoal.WorkAnswer.Why(""))))
     val (p, warns) = check(a, com.histmersion.domain.automation.Goal.Slug("g"), taken, Set.empty, caps, last = com.histmersion.domain.PlanGoal.LastRound(true)).toOption.get
     assertEquals(p.subGoals.map(_.slug), List("good"))
     assertEquals(p.works, Nil)
@@ -90,14 +90,14 @@ class PlanGoalSuite extends munit.FunSuite:
     val plan = verify(p, com.histmersion.domain.automation.Goal.Slug("g"), lookup)
     assertEquals(
       plan.works,
-      List(PlannedWork(com.histmersion.api.library.Doi("10.1000/a"), Some(com.histmersion.api.library.Title("A")), Some(com.histmersion.api.catalogue.Year(2020)), Nil, Some(com.histmersion.api.library.Citekey("a2020_x")), inCorpus = com.histmersion.api.automation.Goal.Plans.PlannedWork.InCorpus(true), why = "a"))
+      List(PlannedWork(com.histmersion.api.library.Doi("10.1000/a"), Some(com.histmersion.api.library.Title("A")), Some(com.histmersion.api.catalogue.Year(2020)), Nil, Some(com.histmersion.api.library.Citekey("a2020_x")), inCorpus = com.histmersion.api.automation.Goal.Plans.PlannedWork.InCorpus(true), why = com.histmersion.api.automation.Goal.Plans.PlannedWork.Why("a")))
     )
     assertEquals(plan.dropped.size, 2)
     assert(plan.dropped.exists(_.contains("retracted")) && plan.dropped.exists(_.contains("404")))
 
   test("the acquisition item carries the DOI as a resolver URL (so the queue can be deduplicated)"):
     val w =
-      PlannedWork(com.histmersion.api.library.Doi("10.1000/xyz"), Some(com.histmersion.api.library.Title("Tin isotopes")), Some(com.histmersion.api.catalogue.Year(2024)), List(com.histmersion.api.library.AuthorName("Berger"), com.histmersion.api.library.AuthorName("Lockhoff")), why = "dates the tin")
+      PlannedWork(com.histmersion.api.library.Doi("10.1000/xyz"), Some(com.histmersion.api.library.Title("Tin isotopes")), Some(com.histmersion.api.catalogue.Year(2024)), List(com.histmersion.api.library.AuthorName("Berger"), com.histmersion.api.library.AuthorName("Lockhoff")), why = com.histmersion.api.automation.Goal.Plans.PlannedWork.Why("dates the tin"))
     val t = acquireText(w, com.histmersion.domain.automation.Goal.Slug("bronze-age"))
     assertEquals(
       t,

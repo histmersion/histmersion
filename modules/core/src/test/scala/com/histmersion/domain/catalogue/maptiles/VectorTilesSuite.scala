@@ -1,5 +1,7 @@
 package com.histmersion.domain.catalogue.maptiles
 
+import com.histmersion.testsupport.ComparedByValue.given
+
 /** The map's vector tiles, pure: the grid (which tiles exist, their bounds, where a point falls), the grouping rule,
   * and the writer read back as MapLibre reads it.
   */

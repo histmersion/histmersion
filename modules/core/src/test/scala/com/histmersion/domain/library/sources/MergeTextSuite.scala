@@ -1,5 +1,7 @@
 package com.histmersion.domain.library.sources
 
+import com.histmersion.testsupport.ComparedByValue.given
+
 import com.histmersion.config.*
 import com.histmersion.api.given
 import com.histmersion.config.given
@@ -68,11 +70,11 @@ class MergeTextSuite extends munit.FunSuite with Bounded:
     assert(!same("López-Ruiz, Carolina", "Carolina Ruiz"), "half a double surname is not the surname")
 
   test("surname blocking keys cover both halves of a double surname"):
-    assert(MergeText.surnameKeys(com.histmersion.domain.AuthorName("López-Ruiz, Carolina")).contains("lopezruiz"))
-    assert(MergeText.surnameKeys(com.histmersion.domain.AuthorName("Carolina Lopez Ruiz")).contains("ruiz"))
-    assert(MergeText.surnameKeys(com.histmersion.domain.AuthorName("López-Ruiz, Carolina")).contains("ruiz"))
+    assert(MergeText.surnameKeys(com.histmersion.domain.AuthorName("López-Ruiz, Carolina")).contains(com.histmersion.domain.library.sources.MergeText.SurnameKey("lopezruiz")))
+    assert(MergeText.surnameKeys(com.histmersion.domain.AuthorName("Carolina Lopez Ruiz")).contains(com.histmersion.domain.library.sources.MergeText.SurnameKey("ruiz")))
+    assert(MergeText.surnameKeys(com.histmersion.domain.AuthorName("López-Ruiz, Carolina")).contains(com.histmersion.domain.library.sources.MergeText.SurnameKey("ruiz")))
     assertEquals(
-      MergeText.surnameKeys(com.histmersion.domain.AuthorName("Güterbock, Hans G.")).intersect(MergeText.surnameKeys("H. G. Guterbock")),
+      MergeText.surnameKeys(com.histmersion.domain.AuthorName("Güterbock, Hans G.")).intersect(MergeText.surnameKeys(com.histmersion.domain.AuthorName("H. G. Guterbock"))),
       Set("guterbock")
     )
 
@@ -126,6 +128,6 @@ class MergeTextSuite extends munit.FunSuite with Bounded:
     assertEquals(
       com.histmersion.util.text.MinHash
         .of(com.histmersion.util.text.MinHash.Text("short text"))
-        .similarity(com.histmersion.util.text.MinHash.of("Short, text!")),
+        .similarity(com.histmersion.util.text.MinHash.of(com.histmersion.util.text.MinHash.Text("Short, text!"))),
       1.0
     )

@@ -1,5 +1,7 @@
 package com.histmersion.api
 
+import com.histmersion.testsupport.ComparedByValue.given
+
 import hearth.kindlings.optics.syntax.*
 
 import com.histmersion.config.*
@@ -141,7 +143,7 @@ class EnrichFindingGuardsSuite extends munit.FunSuite:
     // stated in the quote only, as "AD 79", with a century mentioned beside it
     assert(statesYear(com.histmersion.domain.EnrichSource.StatesYearText("buried in AD 79, rediscovered in the 18th century"), com.histmersion.api.catalogue.Year(79)))
     assert(statesYear(com.histmersion.domain.EnrichSource.StatesYearText("in 79 B.C. the town"), com.histmersion.api.catalogue.Year(-79)))
-    assert(!statesYear(com.histmersion.domain.EnrichSource.StatesYearText("in 179 CE"), com.histmersion.api.catalogue.Year(79)) && !statesYear("the 79th entry", 79))
+    assert(!statesYear(com.histmersion.domain.EnrichSource.StatesYearText("in 179 CE"), com.histmersion.api.catalogue.Year(79)) && !statesYear(com.histmersion.domain.EnrichSource.StatesYearText("the 79th entry"), com.histmersion.api.catalogue.Year(79)))
     val first = finding(
       "Copper came in the 1st century CE.",
       copper,

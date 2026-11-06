@@ -181,6 +181,6 @@ class BundleMergeSuite extends munit.FunSuite:
     assertEquals(
       c,
       com.histmersion.api.exchange.Bundle
-        .KindCounts(Bundle.Kind.Goal, inserted = com.histmersion.api.exchange.Bundle.KindCounts.Inserted(2), conflicts = 1, unchanged = 1, deleted = 1)
+        .KindCounts(Bundle.Kind.Goal, inserted = com.histmersion.api.exchange.Bundle.KindCounts.Inserted(2), conflicts = 1, unchanged = com.histmersion.api.exchange.Bundle.KindCounts.Unchanged(1), deleted = 1)
     )
     assertEquals(c.changed, 3)

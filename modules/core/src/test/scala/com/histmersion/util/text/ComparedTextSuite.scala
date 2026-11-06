@@ -1,5 +1,7 @@
 package com.histmersion.util.text
 
+import com.histmersion.testsupport.ComparedByValue.given
+
 /** The form two texts are compared in. */
 class ComparedTextSuite extends munit.FunSuite:
 

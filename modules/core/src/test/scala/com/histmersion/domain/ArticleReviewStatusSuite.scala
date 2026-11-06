@@ -154,7 +154,7 @@ class ArticleReviewStatusSuite extends munit.FunSuite:
         closed = Some(Closure(com.histmersion.domain.ReviewLedger.Closure.By("fixer"), com.histmersion.domain.ReviewLedger.Closure.Round(1), com.histmersion.domain.ReviewLedger.Closure.Run("run-b"), com.histmersion.domain.ReviewLedger.Closure.Note("the record says otherwise")))
       ),
       Entry(finding("C1", Reviewer.ColdReader, Severity.Minor), com.histmersion.domain.ReviewLedger.Entry.Run("run-a"), com.histmersion.domain.ReviewLedger.Entry.Round(2)),
-      Entry(finding("M1", Reviewer.Mechanical, Severity.Major), com.histmersion.domain.ReviewLedger.Entry.Run("run-b"), com.histmersion.domain.ReviewLedger.Entry.Round(1), deferred = Some("run-b"), reopened = 1)
+      Entry(finding("M1", Reviewer.Mechanical, Severity.Major), com.histmersion.domain.ReviewLedger.Entry.Run("run-b"), com.histmersion.domain.ReviewLedger.Entry.Round(1), deferred = Some("run-b"), reopened = com.histmersion.domain.ReviewLedger.Entry.Reopened(1))
     )
   )
 

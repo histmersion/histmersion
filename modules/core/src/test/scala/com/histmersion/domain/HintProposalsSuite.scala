@@ -27,38 +27,38 @@ class HintProposalsSuite extends munit.FunSuite:
     "hold: the targets as listed, a date that parses or a source; an unknown target is sent back, dropped on the last attempt"
   ):
     assertEquals(
-      chk(HintAnswer(com.histmersion.domain.HintProposals.HintAnswer.Action("Hold"), targets = List("tin"), until = Some("2026-12-01"))).map(_._1),
-      Right(Some(HintEffect(com.histmersion.api.automation.Managers.HintEffect.Action("hold"), List(com.histmersion.api.automation.Managers.HintEffect.Targets("tin")), until = Some("2026-12-01"))))
+      chk(HintAnswer(com.histmersion.domain.HintProposals.HintAnswer.Action("Hold"), targets = List(com.histmersion.domain.HintProposals.HintAnswer.Targets("tin")), until = Some("2026-12-01"))).map(_._1),
+      Right(Some(HintEffect(com.histmersion.api.automation.Managers.HintEffect.Action("hold"), List(com.histmersion.api.automation.Managers.HintEffect.Targets("tin")), until = Some(com.histmersion.api.automation.Managers.HintEffect.Until("2026-12-01")))))
     )
-    assert(chk(HintAnswer(com.histmersion.domain.HintProposals.HintAnswer.Action("hold"), targets = List("tin"))).left.exists(_.exists(_.contains("give `until`"))))
+    assert(chk(HintAnswer(com.histmersion.domain.HintProposals.HintAnswer.Action("hold"), targets = List(com.histmersion.domain.HintProposals.HintAnswer.Targets("tin")))).left.exists(_.exists(_.contains("give `until`"))))
     assert(
-      chk(HintAnswer(com.histmersion.domain.HintProposals.HintAnswer.Action("hold"), targets = List("tin"), until = Some("next week"))).left
+      chk(HintAnswer(com.histmersion.domain.HintProposals.HintAnswer.Action("hold"), targets = List(com.histmersion.domain.HintProposals.HintAnswer.Targets("tin")), until = Some("next week"))).left
         .exists(_.exists(_.contains("not a date")))
     )
     assert(
-      chk(HintAnswer(com.histmersion.domain.HintProposals.HintAnswer.Action("hold"), targets = List("tin", "lead"), until = Some("2026-12-01"))).left
+      chk(HintAnswer(com.histmersion.domain.HintProposals.HintAnswer.Action("hold"), targets = List(com.histmersion.domain.HintProposals.HintAnswer.Targets("tin"), com.histmersion.domain.HintProposals.HintAnswer.Targets("lead")), until = Some("2026-12-01"))).left
         .exists(_.exists(_.contains("not among the manager's items: lead")))
     )
     assertEquals(
-      chk(HintAnswer(com.histmersion.domain.HintProposals.HintAnswer.Action("hold"), targets = List("tin", "lead"), untilSource = Some("10.1/x")), last = true),
+      chk(HintAnswer(com.histmersion.domain.HintProposals.HintAnswer.Action("hold"), targets = List(com.histmersion.domain.HintProposals.HintAnswer.Targets("tin"), com.histmersion.domain.HintProposals.HintAnswer.Targets("lead")), untilSource = Some("10.1/x")), last = true),
       Right(
         (
-          Some(HintEffect(com.histmersion.api.automation.Managers.HintEffect.Action("hold"), List(com.histmersion.api.automation.Managers.HintEffect.Targets("tin")), untilSource = Some("10.1/x"))),
+          Some(HintEffect(com.histmersion.api.automation.Managers.HintEffect.Action("hold"), List(com.histmersion.api.automation.Managers.HintEffect.Targets("tin")), untilSource = Some(com.histmersion.api.automation.Managers.HintEffect.UntilSource("10.1/x")))),
           List("dropped, not among the manager's items: lead")
         )
       )
     )
     assert(
-      chk(HintAnswer(com.histmersion.domain.HintProposals.HintAnswer.Action("hold"), targets = List("lead"), until = Some("2026-12-01")), last = true).exists(_._1.isEmpty)
+      chk(HintAnswer(com.histmersion.domain.HintProposals.HintAnswer.Action("hold"), targets = List(com.histmersion.domain.HintProposals.HintAnswer.Targets("lead")), until = Some("2026-12-01")), last = true).exists(_._1.isEmpty)
     )
 
   test("prioritise and skip: targets, a tag, or the item the hint is about; the priority within bounds"):
     assertEquals(
-      chk(HintAnswer(com.histmersion.domain.HintProposals.HintAnswer.Action("prioritise"), tag = Some("hittite"), priority = Some(7))).map(_._1),
-      Right(Some(HintEffect(com.histmersion.api.automation.Managers.HintEffect.Action("prioritise"), Nil, Some(com.histmersion.api.automation.Managers.HintEffect.Tag("hittite")), priority = Some(7))))
+      chk(HintAnswer(com.histmersion.domain.HintProposals.HintAnswer.Action("prioritise"), tag = Some(com.histmersion.domain.HintProposals.HintAnswer.Tag("hittite")), priority = Some(7))).map(_._1),
+      Right(Some(HintEffect(com.histmersion.api.automation.Managers.HintEffect.Action("prioritise"), Nil, Some(com.histmersion.api.automation.Managers.HintEffect.Tag("hittite")), priority = Some(com.histmersion.api.automation.Managers.HintEffect.Priority(7)))))
     )
     assert(
-      chk(HintAnswer(com.histmersion.domain.HintProposals.HintAnswer.Action("prioritise"), targets = List("tin"), priority = Some(99))).left
+      chk(HintAnswer(com.histmersion.domain.HintProposals.HintAnswer.Action("prioritise"), targets = List(com.histmersion.domain.HintProposals.HintAnswer.Targets("tin")), priority = Some(99))).left
         .exists(_.exists(_.contains("outside")))
     )
     assertEquals(
@@ -67,17 +67,17 @@ class HintProposalsSuite extends munit.FunSuite:
     )
     assert(chk(HintAnswer(com.histmersion.domain.HintProposals.HintAnswer.Action("skip"))).left.exists(_.exists(_.contains("name the items"))))
     assertEquals(
-      chk(HintAnswer(com.histmersion.domain.HintProposals.HintAnswer.Action("skip"), targets = List("copper"), priority = Some(5))).map(_._1.flatMap(_.priority)),
+      chk(HintAnswer(com.histmersion.domain.HintProposals.HintAnswer.Action("skip"), targets = List(com.histmersion.domain.HintProposals.HintAnswer.Targets("copper")), priority = Some(5))).map(_._1.flatMap(_.priority)),
       Right(None),
       "a priority belongs to prioritise only"
     )
 
   test("config: settings as key=value that parse; none, or a typo, is sent back"):
     assertEquals(
-      chk(HintAnswer(com.histmersion.domain.HintProposals.HintAnswer.Action("config"), settings = List("max-runs=1", "cooldownMinutes=60"))).map(_._1.flatMap(_.config)),
-      Right(Some(Managers.ManagerConfig(maxRuns = Some(com.histmersion.api.automation.Managers.ManagerConfig.MaxRuns(1)), cooldownMinutes = Some(60))))
+      chk(HintAnswer(com.histmersion.domain.HintProposals.HintAnswer.Action("config"), settings = List(com.histmersion.domain.HintProposals.HintAnswer.Settings("max-runs=1"), com.histmersion.domain.HintProposals.HintAnswer.Settings("cooldownMinutes=60")))).map(_._1.flatMap(_.config)),
+      Right(Some(Managers.ManagerConfig(maxRuns = Some(com.histmersion.api.automation.Managers.ManagerConfig.MaxRuns(1)), cooldownMinutes = Some(com.histmersion.api.automation.Managers.ManagerConfig.CooldownMinutes(60)))))
     )
     assert(chk(HintAnswer(com.histmersion.domain.HintProposals.HintAnswer.Action("config"))).left.exists(_.head.contains("give the settings")))
     assert(
-      chk(HintAnswer(com.histmersion.domain.HintProposals.HintAnswer.Action("config"), settings = List("speed=fast"))).left.exists(_.head.contains("unknown manager setting"))
+      chk(HintAnswer(com.histmersion.domain.HintProposals.HintAnswer.Action("config"), settings = List(com.histmersion.domain.HintProposals.HintAnswer.Settings("speed=fast")))).left.exists(_.head.contains("unknown manager setting"))
     )

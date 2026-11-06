@@ -1,5 +1,7 @@
 package com.histmersion.api
 
+import com.histmersion.testsupport.ComparedByValue.given
+
 import hearth.kindlings.optics.syntax.*
 
 import com.histmersion.config.*
@@ -24,16 +26,16 @@ class EmptyAnswerFieldsSuite extends munit.FunSuite:
   test("probe: an empty title or citekey, and a null year for a record that has one, are problems"):
     val empty = ProbeAnswer(com.histmersion.api.library.Citekey("huxley1956_catalogue"), com.histmersion.api.library.Title(""), None)
     assertEquals(
-      empty.problems(Some(1956)),
+      empty.problems(Some(com.histmersion.api.automation.Agents.ProbeAnswer.RecordYear(1956))),
       List(
         "the title is empty — copy the source's exact title from get_source",
         "the year is missing — give the source's publication year from get_source"
       )
     )
-    assert(ProbeAnswer(com.histmersion.api.library.Citekey(" "), com.histmersion.api.library.Title("A Catalogue"), Some(com.histmersion.api.catalogue.Year(1956))).problems(Some(1956)).head.startsWith("the citekey is empty"))
+    assert(ProbeAnswer(com.histmersion.api.library.Citekey(" "), com.histmersion.api.library.Title("A Catalogue"), Some(com.histmersion.api.catalogue.Year(1956))).problems(Some(com.histmersion.api.automation.Agents.ProbeAnswer.RecordYear(1956))).head.startsWith("the citekey is empty"))
     // a record with no year is rightly answered with null
     assertEquals(ProbeAnswer(com.histmersion.api.library.Citekey("x1900_y"), com.histmersion.api.library.Title("A title"), None).problems(None), Nil)
-    assertEquals(ProbeAnswer(com.histmersion.api.library.Citekey("huxley1956_catalogue"), com.histmersion.api.library.Title("A Catalogue"), Some(com.histmersion.api.catalogue.Year(1956))).problems(Some(1956)), Nil)
+    assertEquals(ProbeAnswer(com.histmersion.api.library.Citekey("huxley1956_catalogue"), com.histmersion.api.library.Title("A Catalogue"), Some(com.histmersion.api.catalogue.Year(1956))).problems(Some(com.histmersion.api.automation.Agents.ProbeAnswer.RecordYear(1956))), Nil)
     // from the wire, as the live probe answered
     val wire = io.circe.parser
       .decode[ProbeAnswer]("""{"citekey":"huxley1956_catalogue","title":"","year":null}""")

@@ -63,7 +63,7 @@ class EventCatalogSuite extends munit.FunSuite:
     assert(hum.negate && hum.kinds == nat.kinds)
     assertEquals(EventTaxonomy.condition(Some(com.histmersion.api.catalogue.EventTaxonomy.KindCondition.Filter("revolt"))).get.kinds.toSet, Set("revolt", "rebellion", "uprising"))
     assertEquals(EventTaxonomy.condition(Some(com.histmersion.api.catalogue.EventTaxonomy.KindCondition.Filter(" "))), None)
-    assert(EventTaxonomy.matches(com.histmersion.api.catalogue.EventTaxonomy.KindCondition.Filter("natural"), com.histmersion.api.catalogue.EventSummary.Kind("tsunami")) && !EventTaxonomy.matches("human", "tsunami"))
+    assert(EventTaxonomy.matches(com.histmersion.api.catalogue.EventTaxonomy.KindCondition.Filter("natural"), com.histmersion.api.catalogue.EventSummary.Kind("tsunami")) && !EventTaxonomy.matches(com.histmersion.api.catalogue.EventTaxonomy.KindCondition.Filter("human"), com.histmersion.api.catalogue.EventSummary.Kind("tsunami")))
 
   test("thresholds: all inside the region, large ones outside, nothing without a position"):
     val region = BBox.parse(com.histmersion.api.BBox.Text("-25,20,90,70"))
@@ -217,7 +217,7 @@ class EventCatalogSuite extends munit.FunSuite:
       merged = com.histmersion.api.catalogue.EventImportReport.Merged(1),
       byKind = List(EventCount(com.histmersion.api.catalogue.EventCount.Key("eruption"), com.histmersion.api.catalogue.EventCount.N(4))),
       skipped = List(EventCount(com.histmersion.api.catalogue.EventCount.Key("no position"), com.histmersion.api.catalogue.EventCount.N(6))),
-      parts = 1
+      parts = com.histmersion.api.catalogue.EventImportReport.Parts(1)
     )
     val b =
       a.modify(_.records).setTo(5).modify(_.kept).setTo(5).modify(_.created).setTo(5).modify(_.merged).setTo(0).modify(_.byKind).setTo(List(EventCount("eruption", 5))).modify(_.skipped).setTo(Nil)

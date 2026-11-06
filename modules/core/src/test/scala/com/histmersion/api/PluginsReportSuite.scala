@@ -83,7 +83,7 @@ class PluginsReportSuite extends munit.FunSuite:
         None,
         None,
         None,
-        plugins = PluginsReport(1, List(vault, off, broken), List("histmersion.plugins.helo configures no plugin"))
+        plugins = PluginsReport(com.histmersion.api.plugins.PluginsReport.SpiVersion(1), List(vault, off, broken), List(com.histmersion.api.plugins.PluginsReport.Warnings("histmersion.plugins.helo configures no plugin")))
       )
     )
     assert(md.contains("- plugins: 3 plugins in this binary · 2 enabled · PROBLEMS"), md)
@@ -111,7 +111,7 @@ class PluginsReportSuite extends munit.FunSuite:
         None,
         None,
         None,
-        plugins = PluginsReport(1, set = Some(set))
+        plugins = PluginsReport(com.histmersion.api.plugins.PluginsReport.SpiVersion(1), set = Some(set))
       )
     )
     assert(linked.contains(s"  - plugin set: ${set.digest.take(12)}… · 1 jar (native): hello-0.1.0.jar"), linked)

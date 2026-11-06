@@ -99,7 +99,7 @@ class IngestBacklogSuite extends munit.FunSuite:
     assertEquals(daysToDrain(List(Lane(com.histmersion.domain.IngestBacklog.Lane.Backlog(10), com.histmersion.domain.IngestBacklog.Lane.PerDay(5), com.histmersion.domain.IngestBacklog.Lane.LeftToday(0))), None, None), Some(2), "nothing left today, 5 a day")
     assertEquals(daysToDrain(List(Lane(com.histmersion.domain.IngestBacklog.Lane.Backlog(10), com.histmersion.domain.IngestBacklog.Lane.PerDay(5), com.histmersion.domain.IngestBacklog.Lane.LeftToday(2))), None, None), Some(2), "2 today, 5, then 3")
     // 96 works over 35 watchers of 5 a day each, 20 a day in all, today's 20 spent: ~5 more days
-    val lanes = List.fill(26)(Lane(com.histmersion.domain.IngestBacklog.Lane.Backlog(3), com.histmersion.domain.IngestBacklog.Lane.PerDay(5), com.histmersion.domain.IngestBacklog.Lane.LeftToday(0))) ++ List.fill(9)(Lane(2, 5, 0))
+    val lanes = List.fill(26)(Lane(com.histmersion.domain.IngestBacklog.Lane.Backlog(3), com.histmersion.domain.IngestBacklog.Lane.PerDay(5), com.histmersion.domain.IngestBacklog.Lane.LeftToday(0))) ++ List.fill(9)(Lane(com.histmersion.domain.IngestBacklog.Lane.Backlog(2), com.histmersion.domain.IngestBacklog.Lane.PerDay(5), com.histmersion.domain.IngestBacklog.Lane.LeftToday(0)))
     assertEquals(lanes.map(_.backlog).sum, 96)
     assertEquals(daysToDrain(lanes, Some(com.histmersion.domain.IngestBacklog.Lane.PerDay(20)), Some(com.histmersion.domain.IngestBacklog.Lane.LeftToday(0))), Some(5))
     assertEquals(daysToDrain(lanes, None, None), Some(1), "no shared cap: every watcher drains its 2–3 tomorrow")
@@ -141,7 +141,7 @@ class IngestBacklogSuite extends munit.FunSuite:
       "1 legal open-access work in the ingest backlog (drained today at the current allowance)"
     )
     assert(ManagersMarkdown.backlog(com.histmersion.api.automation.Managers.ManagerInfo.Backlog(3), None).contains("not draining"))
-    val info = ManagerInfo(com.histmersion.api.automation.Managers.ManagerInfo.Id("watch:g"), com.histmersion.api.automation.Managers.ManagerInfo.Kind("watch"), backlog = 4, backlogDays = Some(1))
+    val info = ManagerInfo(com.histmersion.api.automation.Managers.ManagerInfo.Id("watch:g"), com.histmersion.api.automation.Managers.ManagerInfo.Kind("watch"), backlog = com.histmersion.api.automation.Managers.ManagerInfo.Backlog(4), backlogDays = Some(com.histmersion.api.automation.Managers.ManagerInfo.BacklogDays(1)))
     assert(
       ManagersMarkdown.line(info).contains("4 legal open-access works in the ingest backlog (~1 more day"),
       ManagersMarkdown.line(info)
@@ -150,14 +150,14 @@ class IngestBacklogSuite extends munit.FunSuite:
     val r = RepairAcquire.RepairResult(
       dryRun = com.histmersion.api.library.RepairAcquire.RepairResult.DryRun(true),
       moved = com.histmersion.api.library.RepairAcquire.RepairResult.Moved(1),
-      kept = 1,
-      untouched = 5,
+      kept = com.histmersion.api.library.RepairAcquire.RepairResult.Kept(1),
+      untouched = com.histmersion.api.library.RepairAcquire.RepairResult.Untouched(5),
       rows = List(
         RepairAcquire.RepairRow(com.histmersion.api.library.RepairAcquire.RepairRow.Item(7), com.histmersion.api.library.Doi("10.1/x"), List(com.histmersion.api.library.RepairAcquire.RepairRow.Goals("g")), com.histmersion.api.library.RepairAcquire.RepairRow.Watcher("watch:g"), RepairAcquire.Move, com.histmersion.api.library.RepairAcquire.RepairRow.Detail("legal open access")),
         RepairAcquire.RepairRow(com.histmersion.api.library.RepairAcquire.RepairRow.Item(8), com.histmersion.api.library.Doi("10.1/y"), List(com.histmersion.api.library.RepairAcquire.RepairRow.Goals("g")), com.histmersion.api.library.RepairAcquire.RepairRow.Watcher("watch:g"), RepairAcquire.Keep, com.histmersion.api.library.RepairAcquire.RepairRow.Detail("closed"))
       ),
-      backlog = 1,
-      backlogDays = Some(1)
+      backlog = com.histmersion.api.automation.Managers.ManagerInfo.Backlog(1),
+      backlogDays = Some(com.histmersion.api.automation.Managers.ManagerInfo.BacklogDays(1))
     )
     val md = RepairAcquire.markdown(r)
     assert(
