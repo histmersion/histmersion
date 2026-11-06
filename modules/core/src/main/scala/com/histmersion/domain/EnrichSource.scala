@@ -371,7 +371,7 @@ object EnrichSource:
   /** The `metadata` step: the record against OpenAlex/Crossref. `checked = false` with a `note` when it could not be
     * (no DOI, upstream off or down); the differences are run warnings, never writes.
     */
-  final case class MetaChecked(checked: MetaChecked.Checked, differences: List[MetaChecked.Differences], note: MetaChecked.Note = "")
+  final case class MetaChecked(checked: MetaChecked.Checked, differences: List[MetaChecked.Differences], note: MetaChecked.Note = com.histmersion.domain.EnrichSource.MetaChecked.Note(""))
       derives KindlingsCodecAsObject
 
   object MetaChecked:
@@ -383,7 +383,7 @@ object EnrichSource:
     object Note extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
   /** What `refs` / `assess` did (or why they were skipped). */
-  final case class Upstreamed(ran: Upstreamed.Ran, summary: Upstreamed.Summary, retracted: Upstreamed.Retracted = false) derives KindlingsCodecAsObject
+  final case class Upstreamed(ran: Upstreamed.Ran, summary: Upstreamed.Summary, retracted: Upstreamed.Retracted = com.histmersion.domain.EnrichSource.Upstreamed.Retracted(false)) derives KindlingsCodecAsObject
 
   object Upstreamed:
     type Ran = Ran.T
@@ -735,7 +735,7 @@ object EnrichSource:
   /** `notes`: non-empty, and every `[[link]]` names a citekey or an article. */
   def checkNotes(n: Notes, isCitekey: com.histmersion.domain.library.Citekey => Boolean, isSlug: com.histmersion.domain.research.Slug => Boolean): Either[List[com.histmersion.domain.EnrichSource.Problem], com.histmersion.domain.EnrichSource.Description] =
     val text = Option(n.notes).map(_.trim).getOrElse("")
-    if text.isEmpty then Left(List("the notes are empty"))
+    if text.isEmpty then Left(List(com.histmersion.domain.EnrichSource.Problem("the notes are empty")))
     else
       linkProblems(text, isCitekey, isSlug) match
         case Nil => Right(text)

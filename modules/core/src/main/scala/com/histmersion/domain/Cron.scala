@@ -54,7 +54,7 @@ final case class Cron(
   /** The shortest gap between the next `n` firings after `from`, in minutes (`None` if it fires less than twice) — how
     * a schedule that would run too often is refused.
     */
-  def shortestGapMinutes(from: Instant, n: com.histmersion.domain.Cron.SampleCount = 48): Option[com.histmersion.domain.Cron.GapMinutes] =
+  def shortestGapMinutes(from: Instant, n: com.histmersion.domain.Cron.SampleCount = com.histmersion.domain.Cron.SampleCount(48)): Option[com.histmersion.domain.Cron.GapMinutes] =
     val times = Iterator.iterate(next(from))(_.flatMap(next)).takeWhile(_.isDefined).map(_.get).take(n).toList
     times.zip(times.drop(1)).map((a, b) => ChronoUnit.MINUTES.between(a, b)).minOption
 
@@ -111,11 +111,11 @@ object Cron:
     type Max = Max.T
     object Max extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
   private val Fields = List(
-    Field("minute", 0, 59),
-    Field("hour", 0, 23),
-    Field("day of month", 1, 31),
-    Field("month", 1, 12),
-    Field("day of week", 0, 7)
+    Field(com.histmersion.domain.Cron.Field.Name("minute"), com.histmersion.domain.Cron.Field.Min(0), com.histmersion.domain.Cron.Field.Max(59)),
+    Field(com.histmersion.domain.Cron.Field.Name("hour"), com.histmersion.domain.Cron.Field.Min(0), com.histmersion.domain.Cron.Field.Max(23)),
+    Field(com.histmersion.domain.Cron.Field.Name("day of month"), com.histmersion.domain.Cron.Field.Min(1), com.histmersion.domain.Cron.Field.Max(31)),
+    Field(com.histmersion.domain.Cron.Field.Name("month"), com.histmersion.domain.Cron.Field.Min(1), com.histmersion.domain.Cron.Field.Max(12)),
+    Field(com.histmersion.domain.Cron.Field.Name("day of week"), com.histmersion.domain.Cron.Field.Min(0), com.histmersion.domain.Cron.Field.Max(7))
   )
 
   /** One field → its values, or why not. */

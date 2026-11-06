@@ -144,7 +144,7 @@ object IngestBacklog:
     if isNoLegalCopy(why) then Failure.ToAcquire(why)
     else
       val n = math.max(0, failures) + 1
-      if n >= math.max(1, maxFailures) then Failure.ToAcquire(s"$why (${Plural.count(n, "try", "tries")})")
+      if n >= math.max(1, maxFailures) then Failure.ToAcquire(s"$why (${Plural.count(n, com.histmersion.api.Plural.CountSingular("try"), com.histmersion.api.Plural.CountPlural("tries"))})")
       else Failure.Retry(now.plus(ManagerPolicy.backoff(backoffMinutes, maxBackoffMinutes, n)), n, why)
 
   /** One watcher's share of the drain: its backlog, its own daily cap, and what is left of it today. */
@@ -167,7 +167,7 @@ object IngestBacklog:
       lanes: List[Lane],
       sharedPerDay: Option[com.histmersion.domain.IngestBacklog.Lane.PerDay],
       sharedLeftToday: Option[com.histmersion.domain.IngestBacklog.Lane.LeftToday],
-      horizon: com.histmersion.domain.IngestBacklog.DrainHorizon = 3650
+      horizon: com.histmersion.domain.IngestBacklog.DrainHorizon = com.histmersion.domain.IngestBacklog.DrainHorizon(3650)
   ): Option[com.histmersion.domain.IngestBacklog.DaysToDrain] =
     @annotation.tailrec
     def go(bs: Vector[com.histmersion.domain.IngestBacklog.Lane.Backlog], day: Int): Option[com.histmersion.domain.IngestBacklog.DaysToDrain] =
@@ -188,7 +188,7 @@ object IngestBacklog:
         if day > 0 && next == bs then None // nothing drains on a full day: it never will
         else go(next, day + 1)
     val start = lanes.map(l => math.max(0, l.backlog)).toVector
-    if start.forall(_ == 0) then Some(0) else go(start, 0)
+    if start.forall(_ == 0) then Some(com.histmersion.domain.IngestBacklog.DaysToDrain(0)) else go(start, 0)
 
   // ── the one-shot repair (`agent autopilot repair-acquire`) ─────────────────────────────────────
 
@@ -236,7 +236,7 @@ object IngestBacklog:
       object Why extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
   def repairAction(f: RepairFacts): RepairAction =
-    if !f.isOa then RepairAction.Keep("no legal open-access copy known: it stays on the acquisition list")
+    if !f.isOa then RepairAction.Keep(com.histmersion.domain.IngestBacklog.RepairAction.Keep.Why("no legal open-access copy known: it stays on the acquisition list"))
     else
       f.inCorpus match
         case Some(ck)                     => RepairAction.Remove(ck)

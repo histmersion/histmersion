@@ -227,7 +227,7 @@ object MergePlanner:
       /** Decisions an earlier `merge apply` carried out, by issue id (`merge_decisions`). */
       remembered: Map[Input.RememberedKey, MergeDecision] = Map.empty,
       /** `limits.chunk-chars`: to place a re-anchored attestation in its FTS chunk (0 leaves it unplaced). */
-      chunkChars: Input.ChunkChars = 0,
+      chunkChars: Input.ChunkChars = com.histmersion.domain.MergePlanner.Input.ChunkChars(0),
       /** A bundle place (by uid) whose id is not here, but whose label and geometry name a place here (the database
         * compares the geometries): that place's id.
         */
@@ -434,23 +434,23 @@ object MergePlanner:
           dec.decodeJson(mapJson(m)(Json.fromJsonObject(relabelled))).getOrElse(a)
         }
       es.copy(
-        sources = go(es.sources, Some("citekey")),
-        findings = go(es.findings, Some("id")),
+        sources = go(es.sources, Some(com.histmersion.domain.MergePlanner.LabelField("citekey"))),
+        findings = go(es.findings, Some(com.histmersion.domain.MergePlanner.LabelField("id"))),
         edges = go(es.edges, None),
         unresolvedEdges = go(es.unresolvedEdges, None),
         assessments = go(es.assessments, None),
         aliases = go(es.aliases, None),
-        articles = go(es.articles, Some("slug")),
+        articles = go(es.articles, Some(com.histmersion.domain.MergePlanner.LabelField("slug"))),
         versions = go(es.versions, None),
-        assets = go(es.assets, Some("name")),
+        assets = go(es.assets, Some(com.histmersion.domain.MergePlanner.LabelField("name"))),
         assetLinks = go(es.assetLinks, None),
         attestations = go(es.attestations, None),
-        events = go(es.events, Some("id")),
-        goals = go(es.goals, Some("slug")),
+        events = go(es.events, Some(com.histmersion.domain.MergePlanner.LabelField("id"))),
+        goals = go(es.goals, Some(com.histmersion.domain.MergePlanner.LabelField("slug"))),
         queue = go(es.queue, None),
         tombstones = go(es.tombstones, None),
-        places = go(es.places, Some("id")),
-        periods = go(es.periods, Some("id")),
+        places = go(es.places, Some(com.histmersion.domain.MergePlanner.LabelField("id"))),
+        periods = go(es.periods, Some(com.histmersion.domain.MergePlanner.LabelField("id"))),
         articleAliases = go(es.articleAliases, None),
         eventAliases = go(es.eventAliases, None),
         goalAliases = go(es.goalAliases, None),
@@ -465,8 +465,8 @@ object MergePlanner:
 
   /** The letter of an issue id: the entity it is about (O for an OCR body, L for an alias). */
   def letter(kind: MergeIssue.Kind, entity: Bundle.Kind): com.histmersion.util.data.exchange.Bundle.Kind.IssueLetter = kind match
-    case MergeIssue.Kind.BodyDiffers   => "O"
-    case MergeIssue.Kind.AliasConflict => "L"
+    case MergeIssue.Kind.BodyDiffers   => com.histmersion.util.data.exchange.Bundle.Kind.IssueLetter("O")
+    case MergeIssue.Kind.AliasConflict => com.histmersion.util.data.exchange.Bundle.Kind.IssueLetter("L")
     case _                             => entity.issueLetter
 
   /** `<letter>-<8 hex>`: sha256 of the kind, the sorted bundle uids, the sorted local uids, the two revs and anything
@@ -480,7 +480,7 @@ object MergePlanner:
       left: List[UUID],
       rightRev: com.histmersion.domain.MergePlanner.Row.ForeignRev,
       leftRev: com.histmersion.domain.MergePlanner.Row.LocalRev,
-      extra: com.histmersion.domain.MergePlanner.IssueId = ""
+      extra: com.histmersion.domain.MergePlanner.IssueId = com.histmersion.domain.MergePlanner.IssueId("")
   ): com.histmersion.domain.MergePlanner.IssueId =
     val text = List(
       MergeIssue.Kind.wireOf(kind),
@@ -502,7 +502,7 @@ object MergePlanner:
           case Diff3.Hunk.Agreed(ls)        => IssueHunk(conflict = false, left = ls.toList)
           case Diff3.Hunk.Conflict(o, a, c) => IssueHunk(conflict = true, o.toList, a.toList, c.toList)
         }
-      case None => List(IssueHunk(conflict = true, Nil, left.split("\n", -1).toList, right.split("\n", -1).toList))
+      case None => List(IssueHunk(conflict = com.histmersion.api.exchange.IssueHunk.Conflict(true), Nil, left.split("\n", -1).toList, right.split("\n", -1).toList))
     IssueText(base, left, right, hunks)
 
   /** A goal's links name what they link by label; the label of a linked source or article is the one it has here once
@@ -720,7 +720,7 @@ object MergePlanner:
         val d =
           if heldBy(f, r.kind) && !localRevs.contains(l) then Decision.Held
           else BundlePlan.entity(r.rev, loc, localOf(f), own)
-        Row(r.kind, f, l, lab, r.rev, loc, localRevs.get(l).map(_.rev), d, tombstone = false)
+        Row(r.kind, f, l, lab, r.rev, loc, localRevs.get(l).map(_.rev), d, tombstone = com.histmersion.domain.MergePlanner.Row.Tombstone(false))
       } ++ fes.tombstones.map { t =>
         val l = toLocal(t.uid)
         Row(
@@ -732,7 +732,7 @@ object MergePlanner:
           BundlePlan.DeletedRev,
           localRevs.get(l).map(_.rev),
           BundlePlan.tombstone(localOf(t.uid), own),
-          tombstone = true
+          tombstone = com.histmersion.domain.MergePlanner.Row.Tombstone(true)
         )
       }
     val initialOf: Map[UUID, Row] = initialRows.filterNot(_.tombstone).map(r => r.foreignUid -> r).toMap
@@ -778,7 +778,7 @@ object MergePlanner:
         add(
           Draft(
             MergeIssue(
-              issueId(kind, r.kind, List(r.foreignUid), List(r.uid), r.foreignRev, r.localRev.getOrElse("")),
+              issueId(kind, r.kind, List(r.foreignUid), List(r.uid), r.foreignRev, r.localRev.getOrElse(com.histmersion.domain.MergePlanner.Row.LocalRev(""))),
               kind,
               MergeIssue.Severity.Blocking,
               r.kind,
@@ -794,7 +794,7 @@ object MergePlanner:
         )
       val article = List(km.KeepLeft, km.KeepRight, km.Both, km.File)
       if r.tombstone then
-        conflictIssue("deleted in the bundle, changed here since the last import", lr, Set(km.KeepLeft, km.KeepRight))
+        conflictIssue(com.histmersion.domain.Title("deleted in the bundle, changed here since the last import"), lr, Set(km.KeepLeft, km.KeepRight))
       else
         r.kind match
           case Bundle.Kind.Article =>
@@ -803,7 +803,7 @@ object MergePlanner:
               oc match
                 case ArticleOutcome.Conflict(n, sha) =>
                   conflictIssue(
-                    s"changed on both sides since a common version: ${Plural.count(n, "conflicting region")}",
+                    s"changed on both sides since a common version: ${Plural.count(n, com.histmersion.api.Plural.CountSingular("conflicting region"))}",
                     article,
                     Set(km.KeepLeft, km.KeepRight),
                     Some(
@@ -814,7 +814,7 @@ object MergePlanner:
                   )
                 case _ =>
                   conflictIssue(
-                    "changed on both sides since the last import (no common base kept)",
+                    com.histmersion.domain.Title("changed on both sides since the last import (no common base kept)"),
                     article,
                     Set(km.KeepLeft, km.KeepRight),
                     Some(
@@ -829,7 +829,7 @@ object MergePlanner:
             run.conflict(r, localized) match
               case Some(how) => merges(r.foreignUid) = r.uid -> Merges.Contributed(how)
               case None      =>
-                conflictIssue("changed on both sides since the last import", lr, Set(km.KeepLeft, km.KeepRight))
+                conflictIssue(com.histmersion.domain.Title("changed on both sides since the last import"), lr, Set(km.KeepLeft, km.KeepRight))
     }
 
     // labels a different record has here — for the lines that would be written
@@ -949,7 +949,7 @@ object MergePlanner:
       _.uid,
       _.slug,
       g => in.labels.goals.get(g.slug),
-      "goal slug",
+      com.histmersion.domain.MergePlanner.Subject("goal slug"),
       merge = (_, o) => localGoal.get(o).map(_ => Merges.GoalFold)
     )
     // an acquire/tasks item with the same text here is the same item
@@ -1110,7 +1110,7 @@ object MergePlanner:
         in.remembered.get(r.issue.trim).exists(d => MergeDecision.parse(r.decision).toOption.contains(d))
     )
     if carriedOut.nonEmpty then
-      info += s"${Plural.count(carriedOut.size, "resolution")} carried out by an earlier `merge apply` (the issues are gone)"
+      info += s"${Plural.count(carriedOut.size, com.histmersion.api.Plural.CountSingular("resolution"))} carried out by an earlier `merge apply` (the issues are gone)"
     val chosen: Map[com.histmersion.domain.MergePlanner.IssueId, MergeDecision] = resolutions.resolve
       .filterNot(carriedOut.contains)
       .flatMap { r =>
@@ -1325,10 +1325,10 @@ object MergePlanner:
           articleLine(o) = _ => localArticle(o)
           overrides(f) = Decision.Kept
         case Merges.ArticleTheirs =>
-          articleFold(f, o, None, theirsWins = true, review = false)
+          articleFold(f, o, None, theirsWins = com.histmersion.domain.MergePlanner.TheirsWins(true), review = com.histmersion.domain.MergePlanner.NeedsReview(false))
           tally = tally.modify(_.articlesFastForward).using(_ + 1)
         case Merges.ArticleMerged(b) =>
-          articleFold(f, o, Some(rewrite(b)), theirsWins = false, review = true)
+          articleFold(f, o, Some(rewrite(b)), theirsWins = com.histmersion.domain.MergePlanner.TheirsWins(false), review = com.histmersion.domain.MergePlanner.NeedsReview(true))
           tally = tally.modify(_.articlesThreeWay).using(_ + 1)
         case Merges.GoalFold =>
           if f != o then fold(f, o, Bundle.Kind.Goal)
@@ -1399,7 +1399,7 @@ object MergePlanner:
     val foldUids: Map[UUID, UUID] = foldMap.view.mapValues(_._1).toMap
     val es0 = localize(localized, foldUids, Map.empty)
     def replaced[A](as: List[A], uid: A => UUID, repl: scala.collection.Map[UUID, Line[A]]): List[A] =
-      MergePlanner.replaced(as, uid, repl, es0, (_: A) => true)
+      MergePlanner.replaced(as, uid, repl, es0, (_: A) => com.histmersion.domain.MergePlanner.ReplacedKeep(true))
     val foldedHere = foldedSources.values.toSet
     // a merged source's whole edge set: ours and the bundle's, re-pointed, without self-loops
     val edges0 = es0.edges ++ in.local.edges.filter(e => foldedHere(e.srcUid))
@@ -1461,7 +1461,7 @@ object MergePlanner:
         localGoal.get(g.uid).filter(_ => !goalLine.contains(g.uid)).fold(g) { l =>
           val k = MergeFold.keepLocalSchedules(l, g)
           if k.links == g.links && k.schedules == g.schedules then g
-          else g.copy(links = k.links, schedules = k.schedules, rev = "")
+          else g.copy(links = k.links, schedules = k.schedules, rev = com.histmersion.api.exchange.Bundle.Goal.Rev(""))
         }
       },
       queue = replaced(es0.queue, _.uid, queueLine),
@@ -1478,8 +1478,8 @@ object MergePlanner:
         _.eventUid,
         in.labels.events,
         in.labels.eventAliases,
-        "old event id",
-        "event"
+        com.histmersion.domain.MergePlanner.AliasNote("old event id"),
+        com.histmersion.domain.MergePlanner.AliasRecord("event")
       ),
       goalAliases = keptAliases(
         es0.goalAliases,
@@ -1487,8 +1487,8 @@ object MergePlanner:
         _.goalUid,
         in.labels.goals,
         in.labels.goalAliases,
-        "old goal slug",
-        "goal"
+        com.histmersion.domain.MergePlanner.AliasNote("old goal slug"),
+        com.histmersion.domain.MergePlanner.AliasRecord("goal")
       ),
       placeAliases = keptAliases(
         es0.placeAliases,
@@ -1496,8 +1496,8 @@ object MergePlanner:
         _.placeUid,
         in.labels.places,
         in.labels.placeAliases,
-        "old place id",
-        "place"
+        com.histmersion.domain.MergePlanner.AliasNote("old place id"),
+        com.histmersion.domain.MergePlanner.AliasRecord("place")
       )
     )
     val finalEs = relinkGoals(run.lines(finalEs0, es0), in)
@@ -1675,7 +1675,7 @@ object MergePlanner:
               countMatches(tail, byUid, byLedger, byStrongKey, byScore, undecided + 1, unmatched, deletedHere)
             case SourceFate.New =>
               countMatches(tail, byUid, byLedger, byStrongKey, byScore, undecided, unmatched + 1, deletedHere)
-    val counts = countMatches(fes.sources, 0, 0, 0, 0, 0, 0, 0)
+    val counts = countMatches(fes.sources, com.histmersion.domain.MergePlanner.UidMatchCount(0), com.histmersion.domain.MergePlanner.LedgerMatchCount(0), com.histmersion.domain.MergePlanner.StrongKeyMatchCount(0), com.histmersion.domain.MergePlanner.ScoreMatchCount(0), com.histmersion.domain.MergePlanner.UndecidedCount(0), com.histmersion.domain.MergePlanner.UnmatchedCount(0), com.histmersion.domain.MergePlanner.DeletedHereCount(0))
     // how each of the bundle's sources was matched, by citekey, as the plan's hash reads it
     val matched0: List[com.histmersion.domain.library.Citekey] = fes.sources.sortBy(_.citekey).flatMap { s =>
       def line(left: Option[UUID], o: MatchOutcome) = s"${s.uid}>${left.fold("")(_.toString)}:${MatchOutcome.wireOf(o)}"
@@ -1705,7 +1705,7 @@ object MergePlanner:
         case Merges.GoalFold =>
           info += s"goal $label: the same goal on both sides — the status further along, notes joined"
         case Merges.QueueFold =>
-          info += s"queue item «${MergeIssue.Detail.preview(label, 50)}»: the same item on both sides — one item, done if done anywhere"
+          info += s"queue item «${MergeIssue.Detail.preview(label, com.histmersion.api.exchange.MergeIssue.Detail.ClipLength(50))}»: the same item on both sides — one item, done if done anywhere"
         case Merges.Contributed(m) => info += m.info(label, rawRevs.get(f).fold("")(_.label))
     }
     val problems = (in.compat ++ in.readProblems ++ fatal.result()).distinct

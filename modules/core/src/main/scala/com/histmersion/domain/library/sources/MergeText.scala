@@ -179,32 +179,32 @@ object MergeText:
   /** Words that belong to a surname when they come before it (`van`, `de la`). */
   private val particles: Set[com.histmersion.domain.library.sources.MergeText.Particles] =
     Set(
-      "van",
-      "von",
-      "der",
-      "den",
-      "de",
-      "del",
-      "della",
-      "di",
-      "da",
-      "du",
-      "la",
-      "le",
-      "ter",
-      "ten",
-      "bin",
-      "ibn",
-      "al",
-      "el",
-      "dos",
-      "das",
-      "zu",
-      "vom",
-      "st"
+      com.histmersion.domain.library.sources.MergeText.Particles("van"),
+      com.histmersion.domain.library.sources.MergeText.Particles("von"),
+      com.histmersion.domain.library.sources.MergeText.Particles("der"),
+      com.histmersion.domain.library.sources.MergeText.Particles("den"),
+      com.histmersion.domain.library.sources.MergeText.Particles("de"),
+      com.histmersion.domain.library.sources.MergeText.Particles("del"),
+      com.histmersion.domain.library.sources.MergeText.Particles("della"),
+      com.histmersion.domain.library.sources.MergeText.Particles("di"),
+      com.histmersion.domain.library.sources.MergeText.Particles("da"),
+      com.histmersion.domain.library.sources.MergeText.Particles("du"),
+      com.histmersion.domain.library.sources.MergeText.Particles("la"),
+      com.histmersion.domain.library.sources.MergeText.Particles("le"),
+      com.histmersion.domain.library.sources.MergeText.Particles("ter"),
+      com.histmersion.domain.library.sources.MergeText.Particles("ten"),
+      com.histmersion.domain.library.sources.MergeText.Particles("bin"),
+      com.histmersion.domain.library.sources.MergeText.Particles("ibn"),
+      com.histmersion.domain.library.sources.MergeText.Particles("al"),
+      com.histmersion.domain.library.sources.MergeText.Particles("el"),
+      com.histmersion.domain.library.sources.MergeText.Particles("dos"),
+      com.histmersion.domain.library.sources.MergeText.Particles("das"),
+      com.histmersion.domain.library.sources.MergeText.Particles("zu"),
+      com.histmersion.domain.library.sources.MergeText.Particles("vom"),
+      com.histmersion.domain.library.sources.MergeText.Particles("st")
     )
 
-  private val suffixes: Set[com.histmersion.domain.library.sources.MergeText.Suffixes] = Set("jr", "sr", "ii", "iii", "iv")
+  private val suffixes: Set[com.histmersion.domain.library.sources.MergeText.Suffixes] = Set(com.histmersion.domain.library.sources.MergeText.Suffixes("jr"), com.histmersion.domain.library.sources.MergeText.Suffixes("sr"), com.histmersion.domain.library.sources.MergeText.Suffixes("ii"), com.histmersion.domain.library.sources.MergeText.Suffixes("iii"), com.histmersion.domain.library.sources.MergeText.Suffixes("iv"))
 
   private def nameTokens(s: com.histmersion.domain.library.sources.MergeText.NameTokensS): List[com.histmersion.domain.library.sources.MergeText.NameTokensResult] =
     tokens(s).filterNot(t => t.forall(_.isDigit)).filterNot(suffixes)
@@ -220,19 +220,19 @@ object MergeText:
       case first :: rest if rest.exists(p => nameTokens(p).nonEmpty) =>
         val surname = nameTokens(first)
         val forenames = rest.flatMap(nameTokens)
-        Option.when(surname.nonEmpty)(Person(surname, forenames, surnameKnown = true))
+        Option.when(surname.nonEmpty)(Person(surname, forenames, surnameKnown = com.histmersion.domain.library.sources.MergeText.Person.SurnameKnown(true)))
       case _ =>
         val ts = nameTokens(raw)
         ts match
           case Nil       => None
-          case List(one) => Some(Person(List(one), Nil, surnameKnown = true))
+          case List(one) => Some(Person(List(one), Nil, surnameKnown = com.histmersion.domain.library.sources.MergeText.Person.SurnameKnown(true)))
           case _         =>
             // the best guess: the last word, with any particles right before it — a guess still
             // (`Carolina Lopez Ruiz`), so `samePerson` tries every trailing run
             val (front, last) = (ts.init, ts.last)
             val parts = front.reverse.takeWhile(particles).reverse
             val forenames = front.dropRight(parts.length)
-            Some(Person(parts :+ last, forenames, surnameKnown = false))
+            Some(Person(parts :+ last, forenames, surnameKnown = com.histmersion.domain.library.sources.MergeText.Person.SurnameKnown(false)))
 
   /** Given names compatible: pairwise, the same initial, and where both are written out, the same name (or one a prefix
     * of the other). Missing forenames are compatible with anything.

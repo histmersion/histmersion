@@ -64,15 +64,15 @@ object ReviewLedger:
   val ArticleTaskSlug: _root_.com.histmersion.domain.research.Slug.type = _root_.com.histmersion.domain.research.Slug
 
   enum Status(val wire: Status.Wire):
-    case Open extends Status("open")
-    case Fixed extends Status("fixed")
-    case Rejected extends Status("rejected")
-    case WontFix extends Status("wont-fix")
+    case Open extends Status(com.histmersion.domain.ReviewLedger.Status.Wire("open"))
+    case Fixed extends Status(com.histmersion.domain.ReviewLedger.Status.Wire("fixed"))
+    case Rejected extends Status(com.histmersion.domain.ReviewLedger.Status.Wire("rejected"))
+    case WontFix extends Status(com.histmersion.domain.ReviewLedger.Status.Wire("wont-fix"))
 
     /** A missing-critique finding the fixer answered with a stored critique reason (§6.8): the critique exists, and
       * does not bear on what the article cites the source for.
       */
-    case SetAside extends Status("set-aside")
+    case SetAside extends Status(com.histmersion.domain.ReviewLedger.Status.Wire("set-aside"))
 
   object Status:
     type Wire = Wire.T
@@ -89,8 +89,8 @@ object ReviewLedger:
 
   /** Where a lesson came from: a rejection the fixer proved, or a reviewer's re-check. */
   enum LessonSource(val wire: LessonSource.Wire):
-    case Rejection extends LessonSource("rejection")
-    case Recheck extends LessonSource("recheck")
+    case Rejection extends LessonSource(com.histmersion.domain.ReviewLedger.LessonSource.Wire("rejection"))
+    case Recheck extends LessonSource(com.histmersion.domain.ReviewLedger.LessonSource.Wire("recheck"))
 
   object LessonSource:
     type Wire = Wire.T
@@ -113,8 +113,8 @@ object ReviewLedger:
       by: Closure.By,
       round: Closure.Round,
       run: Closure.Run,
-      note: Closure.Note = "",
-      quote: Closure.Quote = "",
+      note: Closure.Note = com.histmersion.domain.ReviewLedger.Closure.Note(""),
+      quote: Closure.Quote = com.histmersion.domain.ReviewLedger.Closure.Quote(""),
       citekey: Option[com.histmersion.domain.library.Citekey] = None
   ) derives KindlingsCodecAsObject
 
@@ -142,11 +142,11 @@ object ReviewLedger:
       run: Entry.Run,
       round: Entry.Round,
       status: Status = Status.Open,
-      claimed: Entry.Claimed = false,
+      claimed: Entry.Claimed = com.histmersion.domain.ReviewLedger.Entry.Claimed(false),
       notFixed: Option[Entry.NotFixed] = None,
-      reopened: Entry.Reopened = 0,
+      reopened: Entry.Reopened = com.histmersion.domain.ReviewLedger.Entry.Reopened(0),
       closed: Option[Closure] = None,
-      notFixedCount: Entry.NotFixedCount = 0,
+      notFixedCount: Entry.NotFixedCount = com.histmersion.domain.ReviewLedger.Entry.NotFixedCount(0),
       deferred: Option[Entry.Deferred] = None
   ) derives KindlingsCodecAsObject:
     def id: com.histmersion.domain.ReviewArticle.Finding.Id = finding.id
@@ -276,14 +276,14 @@ object ReviewLedger:
                   e.copy(
                     finding = f.copy(id = id),
                     status = Status.Open,
-                    claimed = false,
+                    claimed = com.histmersion.domain.ReviewLedger.Entry.Claimed(false),
                     notFixed = Some(s"fixed in pass ${e.closed.fold(0)(_.round)}, raised again in pass $round"),
                     reopened = e.reopened + 1,
                     closed = None
                   )
                 case Status.Rejected =>
                   e.copy(
-                    finding = f.copy(id = id, escalated = true),
+                    finding = f.copy(id = id, escalated = com.histmersion.domain.ReviewArticle.Finding.Escalated(true)),
                     status = Status.Open,
                     claimed = false,
                     notFixed = e.closed.map(c =>
@@ -295,7 +295,7 @@ object ReviewLedger:
                   e.copy(
                     finding = f.copy(id = id),
                     status = Status.Open,
-                    claimed = false,
+                    claimed = com.histmersion.domain.ReviewLedger.Entry.Claimed(false),
                     notFixed = e.closed
                       .filter(_ => e.status == Status.SetAside)
                       .map(c => s"set aside before: ${c.note}".take(300)),
@@ -343,9 +343,9 @@ object ReviewLedger:
       update(led, e.id)(
         _.copy(
           status = Status.Fixed,
-          claimed = false,
+          claimed = com.histmersion.domain.ReviewLedger.Entry.Claimed(false),
           notFixed = None,
-          closed = Some(Closure(Reviewer.Mechanical.wire, round, run, "no longer found by the checks"))
+          closed = Some(Closure(Reviewer.Mechanical.wire, round, run, com.histmersion.domain.ReviewLedger.Closure.Note("no longer found by the checks")))
         )
       )
     )
@@ -364,7 +364,7 @@ object ReviewLedger:
           update(led, e.id)(
             _.copy(
               status = Status.Fixed,
-              claimed = false,
+              claimed = com.histmersion.domain.ReviewLedger.Entry.Claimed(false),
               notFixed = None,
               closed = Some(
                 Closure(
@@ -519,7 +519,7 @@ object ReviewLedger:
           .map(e => s"- ${e.id} ${e.finding.severity.wire}: ${e.finding.problem.trim.take(160)}")
           .mkString("\n")
       case OpenStyle.Full =>
-        "Open findings:\n" + findingsText(merged(l.modify(_.entries).setTo(open), 0), notes(l)) +
+        "Open findings:\n" + findingsText(merged(l.modify(_.entries).setTo(open), com.histmersion.domain.ReviewLedger.Closure.Round(0)), notes(l)) +
           (if open.exists(_.claimed) then
              "\n(The fixer claims to have fixed: " + open.filter(_.claimed).map(_.id).mkString(", ") + ".)"
            else "")
@@ -568,7 +568,7 @@ object ReviewLedger:
     * whitespace-normalised paragraphs), each changed paragraph of `after` widened by `margin` paragraphs on each side,
     * adjacent ones joined; plus the paragraphs of `before` that are gone.
     */
-  def editedPassages(before: com.histmersion.domain.ReviewArticle.Fix.Body, after: com.histmersion.domain.ReviewArticle.Fix.Body, margin: com.histmersion.domain.ReviewLedger.PassageMargin = 1): Edited =
+  def editedPassages(before: com.histmersion.domain.ReviewArticle.Fix.Body, after: com.histmersion.domain.ReviewArticle.Fix.Body, margin: com.histmersion.domain.ReviewLedger.PassageMargin = com.histmersion.domain.ReviewLedger.PassageMargin(1)): Edited =
     val a = paragraphs(before)
     val b = paragraphs(after)
     def key(p: String) = p.replaceAll("\\s+", " ")
@@ -679,13 +679,13 @@ object ReviewLedger:
   /** Open missing-critique findings found not fixed at least `times` times whose pair is still open: the ones that get
     * code's pairing repair, else a precise instruction (§6.9).
     */
-  def stubborn(l: Ledger, times: com.histmersion.domain.ReviewLedger.StubbornLimit = 2): List[Entry] =
+  def stubborn(l: Ledger, times: com.histmersion.domain.ReviewLedger.StubbornLimit = com.histmersion.domain.ReviewLedger.StubbornLimit(2)): List[Entry] =
     l.open.filter(e => e.finding.pair.isDefined && e.notFixedCount >= times)
 
   // ── the backlog item (#934) ────────────────────────────────────────────────────────────────────
 
   /** The article's one backlog item while a MAJOR is open: how many, and each one's line. */
-  def taskText(l: Ledger, runId: com.histmersion.domain.automation.Run.Id, maxChars: com.histmersion.domain.ReviewLedger.TaskTextLimit = 1500): Option[com.histmersion.domain.ReviewLedger.TaskText] =
+  def taskText(l: Ledger, runId: com.histmersion.domain.automation.Run.Id, maxChars: com.histmersion.domain.ReviewLedger.TaskTextLimit = com.histmersion.domain.ReviewLedger.TaskTextLimit(1500)): Option[com.histmersion.domain.ReviewLedger.TaskText] =
     val majors = l.openMajors
     Option.when(majors.nonEmpty) {
       val lines = majors.map { e =>
@@ -694,7 +694,7 @@ object ReviewLedger:
         val at = Option(e.finding.where).map(_.trim).filter(_.nonEmpty).fold("")(w => s" (${w.take(60)})")
         s"${e.id}$at: ${e.finding.problem.trim.take(160)}$esc"
       }
-      val head = s"review-article [[${l.slug}]]: ${majors.size} open ${Plural.noun(majors.size, "MAJOR")} — "
+      val head = s"review-article [[${l.slug}]]: ${majors.size} open ${Plural.noun(majors.size, com.histmersion.api.Plural.Noun.Singular("MAJOR"))} — "
       val tail = s" (agent run ${runId.take(8)})"
       val body = lines.mkString("; ")
       val room = math.max(40, maxChars - head.length - tail.length)

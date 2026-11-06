@@ -60,7 +60,7 @@ object EnrichComparison extends OutputComparison:
   /** The claims a run's enrichment ended with: the geocoded findings, else what the findings steps kept. */
   private def claims(d: Run): List[com.histmersion.domain.library.workflows.EnrichComparison.ClaimsResult] =
     CompareRuns
-      .output[Geocoded](d, "geocode")
+      .output[Geocoded](d, com.histmersion.domain.CompareRuns.OutputName("geocode"))
       .map(_.findings.map(_.claim))
       .getOrElse(
         d.steps
@@ -74,8 +74,8 @@ object EnrichComparison extends OutputComparison:
     val all = runs.map(d => claims(d).map(c => AgentVerify.normalise(c) -> c))
     runs.zip(all).zipWithIndex.map { case ((d, mine), i) =>
       val others = all.patch(i, Nil, 1).flatten.map(_._1).toSet
-      val geo = CompareRuns.output[Geocoded](d, "geocode")
-      val cls = CompareRuns.output[Classified](d, "classify")
+      val geo = CompareRuns.output[Geocoded](d, com.histmersion.domain.CompareRuns.OutputName("geocode"))
+      val cls = CompareRuns.output[Classified](d, com.histmersion.domain.CompareRuns.OutputName("classify"))
       val (checked, passed) = quoteCheck(d.steps)
       EnrichSide(
         findings = mine.size,
@@ -87,7 +87,7 @@ object EnrichComparison extends OutputComparison:
         periodStart = cls.flatMap(_.period).map(_.start),
         periodEnd = cls.flatMap(_.period).map(_.end),
         summaryChars = cls.fold(0)(_.summary.trim.length),
-        notesChars = CompareRuns.output[String](d, "notes").fold(0)(_.trim.length),
+        notesChars = CompareRuns.output[String](d, com.histmersion.domain.CompareRuns.OutputName("notes")).fold(0)(_.trim.length),
         uniqueClaims = mine.filterNot((n, _) => others.contains(n)).map(_._2).distinct
       )
     }

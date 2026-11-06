@@ -33,7 +33,7 @@ object ArticleReviewStatus:
   type HistoryRunStartsPart2 = _root_.com.histmersion.domain.ArticleReviewStatus.RunStart
   val HistoryRunStartsPart2: _root_.com.histmersion.domain.ArticleReviewStatus.RunStart.type = _root_.com.histmersion.domain.ArticleReviewStatus.RunStart
 
-  final case class ItemFacts(status: ItemStatus, outcome: Option[ItemFacts.Outcome] = None, attempts: ItemFacts.Attempts = 0)
+  final case class ItemFacts(status: ItemStatus, outcome: Option[ItemFacts.Outcome] = None, attempts: ItemFacts.Attempts = com.histmersion.domain.ArticleReviewStatus.ItemFacts.Attempts(0))
 
   object ItemFacts:
     type Outcome = Outcome.T
@@ -77,7 +77,7 @@ object ArticleReviewStatus:
     */
   def badge(f: Facts): ReviewBadge =
     val item = f.item.filter(_.status != ItemStatus.Cancelled)
-    val counts = f.ledger.getOrElse(LedgerFacts(0, 0, 0, 0))
+    val counts = f.ledger.getOrElse(LedgerFacts(com.histmersion.domain.ArticleReviewStatus.LedgerFacts.OpenMajors(0), com.histmersion.domain.ArticleReviewStatus.LedgerFacts.OpenMinors(0), com.histmersion.domain.ArticleReviewStatus.LedgerFacts.Findings(0), com.histmersion.domain.ArticleReviewStatus.LedgerFacts.Runs(0)))
     val runNo = item.map(_.attempts).filter(_ > 0)
     val (state, label, detail) = item.map(_.status) match
       case Some(ItemStatus.Active) =>
@@ -98,7 +98,7 @@ object ArticleReviewStatus:
         (
           ReviewState.Stopped,
           s"review $how",
-          s"Review $how after ${Plural.count(math.max(runNo.getOrElse(0), counts.runs).toLong, "run")}" +
+          s"Review $how after ${Plural.count(math.max(runNo.getOrElse(0), counts.runs).toLong, com.histmersion.api.Plural.CountSingular("run"))}" +
             s"${outcomeSuffix(item.flatMap(_.outcome))} ${majorsLine(counts)} A person decides what happens next."
         )
       case _ if item.isEmpty && f.ledger.forall(_.findings == 0) =>
@@ -110,16 +110,16 @@ object ArticleReviewStatus:
       case _ if counts.openMajors > 0 =>
         (
           ReviewState.MajorsOpen,
-          s"${Plural.count(counts.openMajors.toLong, "major")} open",
-          s"Reviewed: ${majorsLine(counts)} Found over ${Plural.count(counts.runs.toLong, "run")}" +
+          s"${Plural.count(counts.openMajors.toLong, com.histmersion.api.Plural.CountSingular("major"))} open",
+          s"Reviewed: ${majorsLine(counts)} Found over ${Plural.count(counts.runs.toLong, com.histmersion.api.Plural.CountSingular("run"))}" +
             s"${outcomeSuffix(item.flatMap(_.outcome))}"
         )
       case _ =>
         val minors = if counts.openMinors > 0 then
-          s" ${Plural.count(counts.openMinors.toLong, "minor finding")} still open."
+          s" ${Plural.count(counts.openMinors.toLong, com.histmersion.api.Plural.CountSingular("minor finding"))} still open."
         else ""
         val total = if counts.findings > 0 then
-          s" ${Plural.count(counts.findings.toLong, "finding")} raised over ${Plural.count(counts.runs.toLong, "run")}."
+          s" ${Plural.count(counts.findings.toLong, com.histmersion.api.Plural.CountSingular("finding"))} raised over ${Plural.count(counts.runs.toLong, com.histmersion.api.Plural.CountSingular("run"))}."
         else ""
         (
           ReviewState.Passed,
@@ -140,10 +140,10 @@ object ArticleReviewStatus:
     )
 
   private def soFar(c: LedgerFacts): com.histmersion.domain.ArticleReviewStatus.Progress =
-    if c.findings == 0 then "" else s" Open so far: ${c.openMajors} MAJOR, ${c.openMinors} minor."
+    if c.findings == 0 then com.histmersion.domain.ArticleReviewStatus.Progress("") else s" Open so far: ${c.openMajors} MAJOR, ${c.openMinors} minor."
 
   private def majorsLine(c: LedgerFacts): com.histmersion.domain.ArticleReviewStatus.StatusLine =
-    s"${Plural.count(c.openMajors.toLong, "MAJOR finding")} ${if c.openMajors == 1 then "is" else "are"} still open."
+    s"${Plural.count(c.openMajors.toLong, com.histmersion.api.Plural.CountSingular("MAJOR finding"))} ${if c.openMajors == 1 then "is" else "are"} still open."
 
   /** `: <outcome>.` after a sentence still open, or ` <lead><outcome>.` after a finished one; `none` when the manager
     * recorded no outcome. The manager's own leading `stopped:`/`failed:` is dropped.

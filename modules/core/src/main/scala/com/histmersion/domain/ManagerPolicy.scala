@@ -87,8 +87,8 @@ object ManagerPolicy:
       maxFailures: ReviewSettings.MaxFailures,
       backoffMinutes: ReviewSettings.BackoffMinutes,
       maxBackoffMinutes: ReviewSettings.MaxBackoffMinutes,
-      staleAfterDays: ReviewSettings.StaleAfterDays = 0,
-      inferFilter: ReviewSettings.InferFilter = false
+      staleAfterDays: ReviewSettings.StaleAfterDays = com.histmersion.domain.ManagerPolicy.ReviewSettings.StaleAfterDays(0),
+      inferFilter: ReviewSettings.InferFilter = com.histmersion.domain.ManagerPolicy.ReviewSettings.InferFilter(false)
   )
 
   object ReviewSettings:
@@ -127,13 +127,13 @@ object ManagerPolicy:
       ReviewSettings(
         maxRuns,
         math.max(maxRuns, c.maxOpen.getOrElse(2 * maxRuns)),
-        1,
-        1,
-        1,
-        1,
+        com.histmersion.domain.ManagerPolicy.ReviewSettings.Rounds(1),
+        com.histmersion.domain.ManagerPolicy.ReviewSettings.MaxRunsPerArticle(1),
+        com.histmersion.domain.ManagerPolicy.ReviewSettings.NoProgressRuns(1),
+        com.histmersion.domain.ManagerPolicy.ReviewSettings.ReopenLimit(1),
         math.max(0, c.cooldownMinutes.getOrElse(0)),
-        0,
-        0,
+        com.histmersion.domain.ManagerPolicy.ReviewSettings.LowWater(0),
+        com.histmersion.domain.ManagerPolicy.ReviewSettings.RefillBatch(0),
         math.max(1, c.maxFailures.getOrElse(m.maxFailures)),
         math.max(1, m.backoffMinutes),
         math.max(1, m.maxBackoffMinutes)
@@ -320,9 +320,9 @@ object ManagerPolicy:
             val n = failures + 1
             if n >= s.maxFailures then
               Next.Stop(
-                s"stopped: $o (${Plural.count(n, "attempt")})",
+                s"stopped: $o (${Plural.count(n, com.histmersion.api.Plural.CountSingular("attempt"))})",
                 Some(
-                  s"$label manager item stopped [[$target]]: $o, ${Plural.count(n, "attempt")} (agent run ${run.take(8)})"
+                  s"$label manager item stopped [[$target]]: $o, ${Plural.count(n, com.histmersion.api.Plural.CountSingular("attempt"))} (agent run ${run.take(8)})"
                     .take(2000)
                 ),
                 state
@@ -333,15 +333,15 @@ object ManagerPolicy:
                 n,
                 s"$o ($n of ${s.maxFailures}); again"
               )
-      case Run.State.Cancelled => Next.Stop("stopped: its run was cancelled", None, state)
+      case Run.State.Cancelled => Next.Stop(com.histmersion.domain.ManagerPolicy.Next.Stop.Outcome("stopped: its run was cancelled"), None, state)
       case _                   =>
         val n = failures + 1
         val why = error.filter(_.nonEmpty).fold("")(e => s": ${e.take(300)}")
         if n >= s.maxFailures then
           Next.Stop(
-            s"stopped: ${Plural.count(n, "failed run")}$why",
+            s"stopped: ${Plural.count(n, com.histmersion.api.Plural.CountSingular("failed run"))}$why",
             Some(
-              s"$label manager item stopped [[$target]] after ${Plural.count(n, "failed run")}$why (agent run ${run.take(8)})"
+              s"$label manager item stopped [[$target]] after ${Plural.count(n, com.histmersion.api.Plural.CountSingular("failed run"))}$why (agent run ${run.take(8)})"
             ),
             state
           )
@@ -463,18 +463,18 @@ object ManagerPolicy:
       inFlight: com.histmersion.domain.ManagerPolicy.InFlightCount,
       budget: Option[com.histmersion.domain.ManagerPolicy.Budget]
   ): com.histmersion.domain.ManagerPolicy.StatusNote =
-    if state == Manager.State.Stopped then "stopped"
+    if state == Manager.State.Stopped then com.histmersion.domain.ManagerPolicy.StatusNote("stopped")
     else if state == Manager.State.Paused then
-      (if inFlight > 0 then s"paused (${Plural.count(inFlight, "run")} in flight)" else "paused"
+      (if inFlight > 0 then s"paused (${Plural.count(inFlight, com.histmersion.api.Plural.CountSingular("run"))} in flight)" else com.histmersion.domain.ManagerPolicy.StatusNote("paused")
     )
     else
       budget.orElse(starved.map(s => s"starved: $s")).getOrElse {
         if pending == 0 && inFlight == 0 then "idle"
         else if due > 0 && capacity == 0 then
-          s"at capacity (${Plural.count(inFlight, "run")} in flight, $pending pending)"
+          s"at capacity (${Plural.count(inFlight, com.histmersion.api.Plural.CountSingular("run"))} in flight, $pending pending)"
         else if pending > 0 then
-          s"$pending pending" + (if inFlight > 0 then s", ${Plural.count(inFlight, "run")} in flight" else "")
-        else s"${Plural.count(inFlight, "run")} in flight"
+          s"$pending pending" + (if inFlight > 0 then s", ${Plural.count(inFlight, com.histmersion.api.Plural.CountSingular("run"))} in flight" else "")
+        else s"${Plural.count(inFlight, com.histmersion.api.Plural.CountSingular("run"))} in flight"
       }
 
   // ── hints ──────────────────────────────────────────────────────────────────────────────────────

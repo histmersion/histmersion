@@ -66,8 +66,8 @@ object AutoEnrich:
   /** Why the source counts as already enriched, if it does. */
   def enrichedBy(findings: com.histmersion.domain.AutoEnrich.FindingCount, notes: Option[com.histmersion.domain.AutoEnrich.Notes], runs: List[PriorRun]): Option[com.histmersion.domain.AutoEnrich.Description] =
     val live = runs.find(r => r.state != Run.State.Failed && r.state != Run.State.Cancelled)
-    if findings > 0 then Some(s"it already has ${Plural.count(findings, "finding")}")
-    else if notes.exists(_.trim.nonEmpty) then Some("it already has notes")
+    if findings > 0 then Some(s"it already has ${Plural.count(findings, com.histmersion.api.Plural.CountSingular("finding"))}")
+    else if notes.exists(_.trim.nonEmpty) then Some(com.histmersion.domain.AutoEnrich.Description("it already has notes"))
     else live.map(r => s"enrich-source run ${r.id} is ${r.state.wire}")
 
   /** The job's progress note for what happened. */

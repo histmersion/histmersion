@@ -122,7 +122,7 @@ final class PlacePlan(in: MergePlanner.Input) extends PlanRun:
   override def lines(es: BundleEntities, es0: BundleEntities): BundleEntities =
     es.modify(_.places)
       .setTo(
-        MergePlanner.replaced(es0.places, _.uid, placeLine, es0, (_: com.histmersion.api.exchange.Bundle.Place) => true)
+        MergePlanner.replaced(es0.places, _.uid, placeLine, es0, (_: com.histmersion.api.exchange.Bundle.Place) => com.histmersion.domain.MergePlanner.ReplacedKeep(true))
       )
 
 object PlacePlan:

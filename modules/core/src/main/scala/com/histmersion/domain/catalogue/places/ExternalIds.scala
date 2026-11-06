@@ -42,7 +42,7 @@ object ExternalIds:
   def ofPlaceId(placeId: com.histmersion.domain.catalogue.Place.Id): Option[(com.histmersion.domain.catalogue.places.ExternalIds.OfPlaceIdResultPart1, com.histmersion.domain.catalogue.places.ExternalIds.OfPlaceIdResultPart2)] =
     val s = placeId.trim
     def num(prefix: com.histmersion.domain.catalogue.places.ExternalIds.OfPlaceIdNumPrefix) = Option.when(s.startsWith(prefix))(s.drop(prefix.length)).filter(_.matches("[0-9]+"))
-    num("pleiades_")
+    num(com.histmersion.domain.catalogue.places.ExternalIds.OfPlaceIdNumPrefix("pleiades_"))
       .map(Pleiades -> _)
       .orElse(num("geonames_").map(GeoNames -> _))
       .orElse(com.histmersion.domain.catalogue.places.Wikidata.qidOfPlaceId(s).map(Wikidata -> _))

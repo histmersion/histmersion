@@ -69,13 +69,13 @@ object HttpPolicy:
       object Why extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
   /** The answers that mean "try again later". */
-  val Throttled: Set[com.histmersion.domain.HttpPolicy.Throttled] = Set(429, 502, 503, 504)
+  val Throttled: Set[com.histmersion.domain.HttpPolicy.Throttled] = Set(com.histmersion.domain.HttpPolicy.ThrottledValue(429), com.histmersion.domain.HttpPolicy.ThrottledValue(502), com.histmersion.domain.HttpPolicy.ThrottledValue(503), com.histmersion.domain.HttpPolicy.ThrottledValue(504))
 
   /** The User-Agent of a configured product string, with anything that looks like an e-mail (and a `(mailto:…)`
     * comment) removed — so a setting that once carried a contact can never put it on the wire. A blank result falls
     * back to `fallback`.
     */
-  def userAgent(configured: com.histmersion.domain.HttpPolicy.UserAgent, fallback: com.histmersion.domain.HttpPolicy.UserAgent = "Histmersion"): com.histmersion.domain.HttpPolicy.UserAgent =
+  def userAgent(configured: com.histmersion.domain.HttpPolicy.UserAgent, fallback: com.histmersion.domain.HttpPolicy.UserAgent = com.histmersion.domain.HttpPolicy.UserAgent("Histmersion")): com.histmersion.domain.HttpPolicy.UserAgent =
     val cleaned = Option(configured)
       .getOrElse("")
       .replaceAll("""\(\s*mailto:[^)]*\)""", "")
@@ -153,11 +153,11 @@ object HttpPolicy:
 
   /** The macOS keychains that hold the system's roots: Apple's, and those an administrator added. */
   val MacKeychains: List[com.histmersion.domain.HttpPolicy.MacKeychains] =
-    List("/System/Library/Keychains/SystemRootCertificates.keychain", "/Library/Keychains/System.keychain")
+    List(com.histmersion.domain.HttpPolicy.MacKeychainsValue("/System/Library/Keychains/SystemRootCertificates.keychain"), com.histmersion.domain.HttpPolicy.MacKeychainsValue("/Library/Keychains/System.keychain"))
 
   /** Where Linux distributions keep their CA bundle (Debian/Ubuntu/Alpine, Fedora/RHEL, Arch/others). */
   val LinuxBundles: List[com.histmersion.domain.HttpPolicy.LinuxBundles] =
-    List("/etc/ssl/certs/ca-certificates.crt", "/etc/pki/tls/certs/ca-bundle.crt", "/etc/ssl/cert.pem")
+    List(com.histmersion.domain.HttpPolicy.LinuxBundlesValue("/etc/ssl/certs/ca-certificates.crt"), com.histmersion.domain.HttpPolicy.LinuxBundlesValue("/etc/pki/tls/certs/ca-bundle.crt"), com.histmersion.domain.HttpPolicy.LinuxBundlesValue("/etc/ssl/cert.pem"))
 
   /** The trust sources of a configuration on an OS (`os.name`): the JDK's always; the system's when `systemTrust`
     * (macOS keychains, else the Linux bundles); a PEM file when one is named.

@@ -4,9 +4,9 @@ package com.histmersion.util.jobs
   * on with the parts it had not done), or cancel it (it stops and is recorded as cancelled).
   */
 enum JobAction(val wire: JobAction.Wire):
-  case Pause extends JobAction("pause")
-  case Resume extends JobAction("resume")
-  case Cancel extends JobAction("cancel")
+  case Pause extends JobAction(com.histmersion.util.jobs.JobAction.Wire("pause"))
+  case Resume extends JobAction(com.histmersion.util.jobs.JobAction.Wire("resume"))
+  case Cancel extends JobAction(com.histmersion.util.jobs.JobAction.Wire("cancel"))
 
 object JobAction:
   type Wire = Wire.T

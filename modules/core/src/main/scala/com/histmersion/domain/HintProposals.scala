@@ -29,7 +29,7 @@ object HintProposals:
 
   final case class HintAnswer(
       action: HintAnswer.Action,
-      why: HintAnswer.Why = "",
+      why: HintAnswer.Why = com.histmersion.domain.HintProposals.HintAnswer.Why(""),
       targets: List[HintAnswer.Targets] = Nil,
       tag: Option[HintAnswer.Tag] = None,
       until: Option[HintAnswer.Until] = None,
@@ -97,7 +97,7 @@ object HintProposals:
       fail(List(s"'${a.action}' is not an action (one of: none, ${HintEffect.Proposable.mkString(", ")})"))
     else if action == HintEffect.Config then
       val kvs = a.settings.map(_.trim).filter(_.nonEmpty)
-      if kvs.isEmpty then fail(List("config: give the settings to change as key=value"))
+      if kvs.isEmpty then fail(List(com.histmersion.domain.HintProposals.Proposed.Problems("config: give the settings to change as key=value")))
       else
         ManagerConfig.parse(kvs) match
           case Left(e)  => fail(List(s"config: $e"))

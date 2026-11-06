@@ -82,7 +82,7 @@ object PassageFinder:
       timeoutMs: com.histmersion.domain.PassageFinder.TimeoutMs
   )(using timer: com.histmersion.util.time.Timer): Either[com.histmersion.domain.PassageFinder.Problem, PassageResult] =
     val q = Option(query).getOrElse("").trim
-    if q.isEmpty then Left("the query is empty — give the words to find")
+    if q.isEmpty then Left(com.histmersion.domain.PassageFinder.Problem("the query is empty — give the words to find"))
     else
       compile(q, regex).flatMap { pattern =>
         val text = body(segments)
@@ -151,7 +151,7 @@ object PassageFinder:
 
     /** The original end of a match ending (exclusive) at folded index `i`. */
     def end(i: com.histmersion.Offset, source: com.histmersion.domain.PassageFinder.SourceText): com.histmersion.Offset =
-      if i <= 0 then 0
+      if i <= 0 then com.histmersion.Offset(0)
       else
         // the combining marks of the last letter belong to the match too
         source.indexWhere(c => !isMark(c), back(i - 1) + 1) match

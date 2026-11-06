@@ -18,27 +18,27 @@ object CatalogProvider:
     // Use allow non-commercial, educational use with attribution, and the GVP asks to be cited as below.
     CatalogProviderInfo(
       Gvp,
-      "Smithsonian Global Volcanism Program",
-      "Smithsonian Terms of Use (non-commercial use with attribution)",
+      com.histmersion.api.catalogue.CatalogProviderInfo.Title("Smithsonian Global Volcanism Program"),
+      com.histmersion.api.catalogue.CatalogProviderInfo.Licence("Smithsonian Terms of Use (non-commercial use with attribution)"),
       "Global Volcanism Program, Volcanoes of the World (v. 5.x), Smithsonian Institution, compiled by Venzke, E. " +
         "https://doi.org/10.5479/si.GVP.VOTW5-2024.5.2",
-      "https://volcano.si.edu"
+      com.histmersion.api.catalogue.CatalogProviderInfo.Home("https://volcano.si.edu")
     ),
     // a U.S. federal work: public domain; NCEI asks to be cited
     CatalogProviderInfo(
       Noaa,
-      "NOAA NCEI Natural Hazards",
-      "public-domain",
+      com.histmersion.api.catalogue.CatalogProviderInfo.Title("NOAA NCEI Natural Hazards"),
+      com.histmersion.api.catalogue.CatalogProviderInfo.Licence("public-domain"),
       "National Geophysical Data Center / World Data Service: NCEI/WDS Global Significant Earthquake, Tsunami " +
         "and Volcano Databases. NOAA National Centers for Environmental Information. https://doi.org/10.7289/V5TD9V7K",
-      "https://www.ngdc.noaa.gov/hazard/"
+      com.histmersion.api.catalogue.CatalogProviderInfo.Home("https://www.ngdc.noaa.gov/hazard/")
     ),
     CatalogProviderInfo(
       Wikidata,
-      "Wikidata",
-      "CC0-1.0",
-      "Wikidata (CC0), https://www.wikidata.org",
-      "https://www.wikidata.org"
+      com.histmersion.api.catalogue.CatalogProviderInfo.Title("Wikidata"),
+      com.histmersion.api.catalogue.CatalogProviderInfo.Licence("CC0-1.0"),
+      com.histmersion.api.catalogue.CatalogProviderInfo.Citation("Wikidata (CC0), https://www.wikidata.org"),
+      com.histmersion.api.catalogue.CatalogProviderInfo.Home("https://www.wikidata.org")
     )
   )
 

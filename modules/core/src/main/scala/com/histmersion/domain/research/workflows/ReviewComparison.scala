@@ -29,11 +29,11 @@ object ReviewComparison extends OutputComparison:
     Option.when(name.startsWith(prefix))(name.stripPrefix(prefix).toIntOption).flatten
 
   private def reviewSide(d: Run): ReviewSide =
-    val merges = d.steps.map(_.name).distinct.flatMap(n => round(n, "merge-").map(_ -> n)).sortBy(_._1)
+    val merges = d.steps.map(_.name).distinct.flatMap(n => round(n, com.histmersion.domain.research.workflows.ReviewComparison.RoundPrefix("merge-")).map(_ -> n)).sortBy(_._1)
     val last = merges.lastOption.flatMap((_, n) => CompareRuns.output[Merged](d, n))
-    val first = CompareRuns.output[Merged](d, "merge-1")
+    val first = CompareRuns.output[Merged](d, com.histmersion.domain.CompareRuns.OutputName("merge-1"))
     val reports = List("rules-1", "cold-reader-1", "skeptic-1").flatMap(n => CompareRuns.output[Report](d, n))
-    val mech = CompareRuns.output[List[Finding]](d, "mechanical-1")
+    val mech = CompareRuns.output[List[Finding]](d, com.histmersion.domain.CompareRuns.OutputName("mechanical-1"))
     val reviewers = reports.map(r =>
       ReviewerSide(r.reviewer.wire, Some(r.verdict.wire), r.findings.count(_.major), r.findings.count(!_.major))
     ) ++ mech.toList.map(fs =>
@@ -81,7 +81,7 @@ object ReviewComparison extends OutputComparison:
     loop(a, Nil, b)
 
   override def overlaps(runs: List[Run]): List[MajorOverlap] =
-    val majors = runs.map(d => d.run.id -> CompareRuns.output[Merged](d, "merge-1").toList.flatMap(_.majors))
+    val majors = runs.map(d => d.run.id -> CompareRuns.output[Merged](d, com.histmersion.domain.CompareRuns.OutputName("merge-1")).toList.flatMap(_.majors))
     for
       (i, j) <- majors.indices.toList.combinations(2).toList.map(p => (p(0), p(1)))
       (ra, ma) = majors(i)

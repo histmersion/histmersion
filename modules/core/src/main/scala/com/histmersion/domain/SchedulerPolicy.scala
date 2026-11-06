@@ -47,15 +47,15 @@ object SchedulerPolicy:
 
   /** What kind of work an item is, for the priorities and the shares. */
   enum JobType(val wire: JobType.Wire, val label: JobType.Label):
-    case GoalPlan extends JobType("goal-plan", "goal plans")
-    case Propose extends JobType("propose", "article proposals")
-    case Sweep extends JobType("sweep", "candidate sweeps and their ranking")
-    case Currency extends JobType("currency", "currency checks")
-    case Enrich extends JobType("enrich", "source enrichment")
-    case Compile extends JobType("compile", "article compiles")
-    case Extend extends JobType("extend", "article extensions")
-    case Filter extends JobType("filter", "coverage filters")
-    case Review extends JobType("review", "reviews and their revisions")
+    case GoalPlan extends JobType(com.histmersion.domain.SchedulerPolicy.JobType.Wire("goal-plan"), com.histmersion.domain.SchedulerPolicy.JobType.Label("goal plans"))
+    case Propose extends JobType(com.histmersion.domain.SchedulerPolicy.JobType.Wire("propose"), com.histmersion.domain.SchedulerPolicy.JobType.Label("article proposals"))
+    case Sweep extends JobType(com.histmersion.domain.SchedulerPolicy.JobType.Wire("sweep"), com.histmersion.domain.SchedulerPolicy.JobType.Label("candidate sweeps and their ranking"))
+    case Currency extends JobType(com.histmersion.domain.SchedulerPolicy.JobType.Wire("currency"), com.histmersion.domain.SchedulerPolicy.JobType.Label("currency checks"))
+    case Enrich extends JobType(com.histmersion.domain.SchedulerPolicy.JobType.Wire("enrich"), com.histmersion.domain.SchedulerPolicy.JobType.Label("source enrichment"))
+    case Compile extends JobType(com.histmersion.domain.SchedulerPolicy.JobType.Wire("compile"), com.histmersion.domain.SchedulerPolicy.JobType.Label("article compiles"))
+    case Extend extends JobType(com.histmersion.domain.SchedulerPolicy.JobType.Wire("extend"), com.histmersion.domain.SchedulerPolicy.JobType.Label("article extensions"))
+    case Filter extends JobType(com.histmersion.domain.SchedulerPolicy.JobType.Wire("filter"), com.histmersion.domain.SchedulerPolicy.JobType.Label("coverage filters"))
+    case Review extends JobType(com.histmersion.domain.SchedulerPolicy.JobType.Wire("review"), com.histmersion.domain.SchedulerPolicy.JobType.Label("reviews and their revisions"))
 
   object JobType:
     type Wire = Wire.T
@@ -107,14 +107,14 @@ object SchedulerPolicy:
       kind: Candidate.Kind,
       target: Candidate.Target,
       goal: Option[Candidate.Goal] = None,
-      goalPriority: Candidate.GoalPriority = 0,
+      goalPriority: Candidate.GoalPriority = com.histmersion.domain.SchedulerPolicy.Candidate.GoalPriority(0),
       goalCreated: Option[Instant] = None,
-      gathering: Candidate.Gathering = false,
-      itemPriority: Candidate.ItemPriority = 0,
+      gathering: Candidate.Gathering = com.histmersion.domain.SchedulerPolicy.Candidate.Gathering(false),
+      itemPriority: Candidate.ItemPriority = com.histmersion.domain.SchedulerPolicy.Candidate.ItemPriority(0),
       waitingSince: Instant = Instant.EPOCH,
       pools: List[Candidate.Pools] = Nil,
       block: Option[Block] = None,
-      person: Candidate.Person = false
+      person: Candidate.Person = com.histmersion.domain.SchedulerPolicy.Candidate.Person(false)
   ):
     def jobType: JobType = JobType.of(kind)
     def label: String = s"#$id $kind $target"
@@ -178,7 +178,7 @@ object SchedulerPolicy:
       poolUsed: Map[Resources.PoolUsedKey, Resources.PoolUsedValue] = Map.empty,
       managerCap: Map[Resources.ManagerCapKey, Resources.ManagerCapValue] = Map.empty,
       managerUsed: Map[Resources.ManagerUsedKey, Resources.ManagerUsedValue] = Map.empty,
-      gatheringUsed: Resources.GatheringUsed = 0,
+      gatheringUsed: Resources.GatheringUsed = com.histmersion.domain.SchedulerPolicy.Resources.GatheringUsed(0),
       stop: Option[Block] = None,
       recent: List[JobType] = Nil
   ):
@@ -212,12 +212,12 @@ object SchedulerPolicy:
   /** The scheduler's settings ([[AgentSchedulerConfig]] parsed). */
   final case class Settings(
       strategy: Strategy,
-      agingHours: Settings.AgingHours = 24,
-      maxWaitHours: Settings.MaxWaitHours = 72,
+      agingHours: Settings.AgingHours = com.histmersion.domain.SchedulerPolicy.Settings.AgingHours(24),
+      maxWaitHours: Settings.MaxWaitHours = com.histmersion.domain.SchedulerPolicy.Settings.MaxWaitHours(72),
       minShare: Settings.MinShare = 0.05,
       weights: Map[JobType, Settings.WeightsValue] = Map.empty,
       typePriority: Map[JobType, Settings.TypePriorityValue] = Map.empty,
-      gatheringSlots: Settings.GatheringSlots = 1
+      gatheringSlots: Settings.GatheringSlots = com.histmersion.domain.SchedulerPolicy.Settings.GatheringSlots(1)
   ):
     def weight(t: JobType): com.histmersion.domain.SchedulerPolicy.Settings.WeightResult = math.max(0, weights.getOrElse(t, 1))
     def priorityOf(t: JobType): com.histmersion.domain.SchedulerPolicy.Settings.PriorityOfResult = typePriority.getOrElse(t, 0)
@@ -312,7 +312,7 @@ object SchedulerPolicy:
     */
   object GoalFirst extends Strategy:
 
-    val name = "goal-first"
+    val name = com.histmersion.domain.SchedulerPolicy.StrategyName("goal-first")
     val describe =
       "depth first: the highest-priority goals, oldest first, take the allowance; newer goals of the same " +
         "priority wait until the older ones have nothing to run (aging and max-wait bound the wait)"
@@ -327,7 +327,7 @@ object SchedulerPolicy:
     */
   object TypeBalanced extends Strategy:
 
-    val name = "type-balanced"
+    val name = com.histmersion.domain.SchedulerPolicy.StrategyName("type-balanced")
     val describe = "breadth: the allowance is spread over the job types by weight (agents.scheduler.type-weights); " +
       "inside each type the highest-priority goals first, oldest as tiebreak, so every goal advances"
 
@@ -368,7 +368,7 @@ object SchedulerPolicy:
   /** Why a candidate did not start: a code ([[Code]]), a sentence, the items it waits behind (labels), and its place in
     * the order (1 = next).
     */
-  final case class Wait(code: Wait.Code, why: Wait.Why, behind: List[Wait.Behind] = Nil, position: Wait.Position = 0)
+  final case class Wait(code: Wait.Code, why: Wait.Why, behind: List[Wait.Behind] = Nil, position: Wait.Position = com.histmersion.domain.SchedulerPolicy.Wait.Position(0))
 
   object Wait:
     type Code = Code.T

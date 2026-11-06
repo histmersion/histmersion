@@ -183,7 +183,7 @@ object ReviewManagerPolicy:
   ): Next =
     status match
       case Run.State.Done =>
-        val f = facts.getOrElse(ReviewFacts(0, 0, 0, onlyMissingCritiques = false))
+        val f = facts.getOrElse(ReviewFacts(com.histmersion.domain.research.workflows.ReviewManagerPolicy.ReviewFacts.(0), com.histmersion.domain.research.workflows.ReviewManagerPolicy.ReviewFacts.(0), com.histmersion.domain.research.workflows.ReviewManagerPolicy.ReviewFacts.(0), onlyMissingCritiques = com.histmersion.domain.research.workflows.ReviewManagerPolicy.ReviewFacts.(false)))
         val mark = RunMark(
           run,
           state.before,
@@ -202,39 +202,39 @@ object ReviewManagerPolicy:
             s"$t — review manager stopped: $why"
           )
           Next.Stop(s"stopped: $why", Some(task.take(2000)), st)
-        if f.openMajors == 0 then Next.Done(s"converged after ${Plural.count(attempts, "run")}", st)
+        if f.openMajors == 0 then Next.Done(s"converged after ${Plural.count(attempts, com.histmersion.api.Plural.CountSingular("run"))}", st)
         else if churn then
           stop(
             s"omission churn — every open MAJOR (${f.openMajors}) is a missing-critique finding and the open critique " +
-              s"pairs did not go down over ${Plural.count(s.noProgressRuns, "run")} (now ${f.openPairs.getOrElse(0)})"
+              s"pairs did not go down over ${Plural.count(s.noProgressRuns, com.histmersion.api.Plural.CountSingular("run"))} (now ${f.openPairs.getOrElse(0)})"
           )
         else if f.escalated > 0 then
-          stop(s"${Plural.count(f.escalated, "MAJOR")} raised again after the fixer rejected it (escalated)")
+          stop(s"${Plural.count(f.escalated, com.histmersion.api.Plural.CountSingular("MAJOR"))} raised again after the fixer rejected it (escalated)")
         else if f.maxReopened >= s.reopenLimit then
           stop(s"a finding was reopened ${f.maxReopened} times (reopen-limit ${s.reopenLimit})")
         else if attempts >= s.maxRunsPerArticle then
           stop(
-            s"${Plural.count(f.openMajors, "open MAJOR")} after ${Plural.count(attempts, "run")} (max-runs-per-article ${s.maxRunsPerArticle})"
+            s"${Plural.count(f.openMajors, com.histmersion.api.Plural.CountSingular("open MAJOR"))} after ${Plural.count(attempts, com.histmersion.api.Plural.CountSingular("run"))} (max-runs-per-article ${s.maxRunsPerArticle})"
           )
         else if !f.onlyMissingCritiques && noProgress(st.history, s.noProgressRuns) then
-          stop(s"the open MAJORs did not go down over ${Plural.count(s.noProgressRuns, "run")} (now ${f.openMajors})")
+          stop(s"the open MAJORs did not go down over ${Plural.count(s.noProgressRuns, com.histmersion.api.Plural.CountSingular("run"))} (now ${f.openMajors})")
         else
           Next.Again(
             Option.when(s.cooldownMinutes > 0)(now.plusSeconds(s.cooldownMinutes.toLong * 60L)),
             st,
-            s"${Plural.count(f.openMajors, "open MAJOR")}$pairs after run $attempts; again" +
+            s"${Plural.count(f.openMajors, com.histmersion.api.Plural.CountSingular("open MAJOR"))}$pairs after run $attempts; again" +
               (if s.cooldownMinutes > 0 then s" after a ${s.cooldownMinutes}-minute cooldown" else "")
           )
       case Run.State.Cancelled =>
-        Next.Stop("stopped: its run was cancelled", None, state.modify(_.before).setTo(None))
+        Next.Stop(com.histmersion.domain.ManagerPolicy.Next.Stop.Outcome("stopped: its run was cancelled"), None, state.modify(_.before).setTo(None))
       case _ => // failed (or anything else terminal)
         val n = failures + 1
         val why = error.filter(_.nonEmpty).fold("")(e => s": ${e.take(300)}")
         if n >= s.maxFailures then
           Next.Stop(
-            s"stopped: ${Plural.count(n, "failed run")}$why",
+            s"stopped: ${Plural.count(n, com.histmersion.api.Plural.CountSingular("failed run"))}$why",
             Some(
-              s"review manager stopped [[$slug]] after ${Plural.count(n, "failed run")}$why (agent run ${run.take(8)})"
+              s"review manager stopped [[$slug]] after ${Plural.count(n, com.histmersion.api.Plural.CountSingular("failed run"))}$why (agent run ${run.take(8)})"
             ),
             state.modify(_.before).setTo(None)
           )
@@ -282,8 +282,8 @@ object ReviewManagerPolicy:
       inferredBefore: com.histmersion.domain.research.workflows.ReviewManagerPolicy.SelectInferredBeforeArg1 => Boolean
   ): List[Pick] =
     val reviews =
-      (majors.map((slug, n) => Pick(ArticleReview, slug, MajorsPriority, s"${Plural.count(n, "open MAJOR")}")) ++
-        unreviewed.map(slug => Pick(ArticleReview, slug, UnreviewedPriority, "never reviewed")) ++
+      (majors.map((slug, n) => Pick(ArticleReview, slug, MajorsPriority, s"${Plural.count(n, com.histmersion.api.Plural.CountSingular("open MAJOR"))}")) ++
+        unreviewed.map(slug => Pick(ArticleReview, slug, UnreviewedPriority, com.histmersion.domain.research.workflows.ReviewManagerPolicy.Pick.Why("never reviewed"))) ++
         stale.map((slug, why) => Pick(ArticleReview, slug, StalePriority, s"stale: $why")))
         .foldLeft(Vector.empty[Pick])((acc, p) => if acc.exists(_.target == p.target) then acc else acc :+ p)
         .take(math.max(0, batch))
@@ -309,7 +309,7 @@ object ReviewManagerPolicy:
     else
       val gained = hitsThen.zip(hitsNow).collect { case (a, b) if b > a => b - a }
       gained
-        .map(n => s"its filter gained ${Plural.count(n, "source")}")
+        .map(n => s"its filter gained ${Plural.count(n, com.histmersion.api.Plural.CountSingular("source"))}")
         .orElse(
           Option
             .when(!convergedAt.plus(Duration.ofDays(days.toLong)).isAfter(now))(s"last converged over $days days ago")

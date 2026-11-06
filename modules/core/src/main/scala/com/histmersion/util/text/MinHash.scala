@@ -28,7 +28,7 @@ object MinHash:
   type Mins = Mins.T
   object Mins extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
-  def of(text: com.histmersion.util.text.MinHash.OfText, k: com.histmersion.util.text.MinHash.OfK = 64, shingle: com.histmersion.util.text.MinHash.OfShingle = 5): MinHash =
+  def of(text: com.histmersion.util.text.MinHash.OfText, k: com.histmersion.util.text.MinHash.OfK = com.histmersion.util.text.MinHash.OfK(64), shingle: com.histmersion.util.text.MinHash.OfShingle = com.histmersion.util.text.MinHash.OfShingle(5)): MinHash =
     val ws = Fingerprint.tokens(text)
     val shingles: Iterator[com.histmersion.util.text.MinHash.OfShingles] =
       if ws.length <= shingle then Iterator.single(ws.mkString(" ")) else ws.sliding(shingle).map(_.mkString(" "))

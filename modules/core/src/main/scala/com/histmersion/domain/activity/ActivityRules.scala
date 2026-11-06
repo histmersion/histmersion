@@ -21,10 +21,10 @@ object ActivityRules:
   type ProblemStatesValue = ProblemStatesValue.T
   object ProblemStatesValue extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
-  val RunningStates: Set[com.histmersion.domain.activity.ActivityRules.RunningStates] = Set("running")
+  val RunningStates: Set[com.histmersion.domain.activity.ActivityRules.RunningStates] = Set(com.histmersion.domain.activity.ActivityRules.RunningStatesValue("running"))
 
   /** The statuses of a run or job that went wrong. */
-  val ProblemStates: Set[com.histmersion.domain.activity.ActivityRules.ProblemStates] = Set("failed")
+  val ProblemStates: Set[com.histmersion.domain.activity.ActivityRules.ProblemStates] = Set(com.histmersion.domain.activity.ActivityRules.ProblemStatesValue("failed"))
 
   /** Does `e` belong to what `show` shows? */
   def shows(show: Show, e: Entry): Boolean =

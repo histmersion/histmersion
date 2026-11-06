@@ -46,7 +46,7 @@ object TextAnchor:
           val q = collapse(quote)._1.trim
           if q.isEmpty then Nil
           else occurrences(norm, q).map(i => Anchor(back(i), back(i + q.length - 1) + 1))
-      best(text, found, prefix.getOrElse(""), suffix.getOrElse(""), hint)
+      best(text, found, prefix.getOrElse(com.histmersion.domain.catalogue.evidence.TextAnchor.Prefix("")), suffix.getOrElse(com.histmersion.domain.catalogue.evidence.TextAnchor.Suffix("")), hint)
 
   private def best(
       text: com.histmersion.domain.catalogue.evidence.TextAnchor.Text,

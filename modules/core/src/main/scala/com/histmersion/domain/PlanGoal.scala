@@ -178,7 +178,7 @@ object PlanGoal:
         Doi.normalize(Option(w.doi).getOrElse("")) match
           case None                              => problems += s"'${w.doi}' is not a DOI (10.xxxx/…)"; acc
           case Some(d) if acc.exists(_.doi == d) => acc
-          case Some(d)                           => acc :+ ProposedWork(d, Option(w.why).map(_.trim).getOrElse(""))
+          case Some(d)                           => acc :+ ProposedWork(d, Option(w.why).map(_.trim).getOrElse(com.histmersion.domain.PlanGoal.ProposedWork.Why("")))
       }
       .toList
 
@@ -195,7 +195,7 @@ object PlanGoal:
     if ps.nonEmpty && !last then Left(ps)
     else
       val kept = Proposed(
-        Option(a.rationale).map(_.trim).getOrElse(""),
+        Option(a.rationale).map(_.trim).getOrElse(com.histmersion.domain.PlanGoal.Proposed.Rationale("")),
         goals.take(caps.subGoals),
         queries.take(caps.queries),
         works.take(caps.works),

@@ -90,7 +90,7 @@ object FilterInference:
     val raw = Article.Filter(query = a.query, topics = a.topics, tags = a.tags, extraQueries = a.extraQueries)
     Article.Filter.normalise(raw) match
       case Left(m)        => Left(List(m))
-      case Right(None)    => Left(List("the filter selects nothing: give a query, topics or tags"))
+      case Right(None)    => Left(List(com.histmersion.domain.FilterInference.Problem("the filter selects nothing: give a query, topics or tags")))
       case Right(Some(f)) =>
         val rationale = Option(a.rationale).forall(_.trim.isEmpty)
         if rationale then Left(List("the rationale is empty — say why these sources are the article's")) else Right(f)
@@ -114,7 +114,7 @@ object FilterInference:
     val share = if cited.isEmpty then 1.0 else (cited.size - missed.size).toDouble / cited.size
     val problems = List(
       Option.when(total < limits.minHits)(
-        s"${f.line} returns ${Plural.count(total, "source")}; it must return at least " +
+        s"${f.line} returns ${Plural.count(total, com.histmersion.api.Plural.CountSingular("source"))}; it must return at least " +
           s"${limits.minHits} — widen it (fewer topics or tags, a broader query)"
       ),
       Option.when(total > limits.maxHits)(

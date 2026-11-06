@@ -49,7 +49,7 @@ object Highlight:
 
   /** Wrap each occurrence of `terms` in the text of `html` in `<mark id="hl<n>">`. */
   def marks(html: com.histmersion.domain.Highlight.MarksHtml, terms: List[com.histmersion.domain.Highlight.MarksTerms]): (com.histmersion.domain.Highlight.Html, com.histmersion.domain.Highlight.MarkCount) =
-    if html.isEmpty || terms.isEmpty then (html, 0)
+    if html.isEmpty || terms.isEmpty then (html, com.histmersion.domain.Highlight.MarkCount(0))
     else
       val re = pattern(terms)
       // java.lang.StringBuilder: scala's has no append(CharSequence, from, to), and would

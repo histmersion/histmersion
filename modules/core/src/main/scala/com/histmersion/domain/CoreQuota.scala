@@ -47,10 +47,10 @@ object CoreQuota:
 
   enum Purpose(val wire: Purpose.Wire, val label: Purpose.Label):
     /** The acquisition chain's `core` step: a work's download URLs by its DOI. */
-    case Lookup extends Purpose("lookup", "PDF lookups")
+    case Lookup extends Purpose(com.histmersion.domain.CoreQuota.Purpose.Wire("lookup"), com.histmersion.domain.CoreQuota.Purpose.Label("PDF lookups"))
 
     /** The new-source search's `core` index: one saved query of a goal. */
-    case Search extends Purpose("search", "searches")
+    case Search extends Purpose(com.histmersion.domain.CoreQuota.Purpose.Wire("search"), com.histmersion.domain.CoreQuota.Purpose.Label("searches"))
 
   object Purpose:
     type Wire = Wire.T
@@ -129,7 +129,7 @@ object CoreQuota:
     type SearchTokens = SearchTokens.T
     object SearchTokens extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
-    def fresh(day: LocalDate): State = State(day, 0, 0, None, None)
+    def fresh(day: LocalDate): State = State(day, com.histmersion.domain.CoreQuota.State.LookupTokens(0), com.histmersion.domain.CoreQuota.State.SearchTokens(0), None, None)
 
   /** Why a call is not made. */
   enum Refusal:
@@ -217,8 +217,8 @@ object CoreQuota:
     */
   def observe(s: State, limits: Limits, code: com.histmersion.domain.CoreQuota.StatusCode, headers: Map[com.histmersion.domain.CoreQuota.HeaderName, com.histmersion.domain.CoreQuota.ObserveHeadersPart2], now: Instant): State =
     def int(name: com.histmersion.domain.CoreQuota.HeaderName) = headers.get(name).flatMap(_.trim.toIntOption)
-    val window = Window(int("x-ratelimit-limit"), int("x-ratelimit-remaining"), now)
-    val retry = retryAt(headers.get("x-ratelimit-retry-after"), now).orElse(retryAt(headers.get("retry-after"), now))
+    val window = Window(int(com.histmersion.domain.CoreQuota.HeaderName("x-ratelimit-limit")), int(com.histmersion.domain.CoreQuota.HeaderName("x-ratelimit-remaining")), now)
+    val retry = retryAt(headers.get(com.histmersion.domain.CoreQuota.HeaderName("x-ratelimit-retry-after")), now).orElse(retryAt(headers.get("retry-after"), now))
     val pause = now.plusSeconds(limits.exhaustedPauseSeconds.toLong.max(1L))
     val until = retry.filter(_.isAfter(now)).getOrElse(pause)
     val why =
@@ -250,7 +250,7 @@ object CoreQuota:
     val s = onDay(s0, now)
     val b = s.block.filter(_.until.isAfter(now))
     UpstreamQuota(
-      "core",
+      com.histmersion.api.library.UpstreamQuota.Upstream("core"),
       s.day.toString,
       s.lookupTokens,
       s.searchTokens,

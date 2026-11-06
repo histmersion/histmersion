@@ -98,12 +98,12 @@ final class AssetPlan(in: MergePlanner.Input) extends PlanRun:
   override def lines(es: BundleEntities, es0: BundleEntities): BundleEntities =
     es.modify(_.assets)
       .setTo(
-        MergePlanner.replaced(es0.assets, _.uid, assetLine, es0, (_: com.histmersion.api.exchange.Bundle.Asset) => true)
+        MergePlanner.replaced(es0.assets, _.uid, assetLine, es0, (_: com.histmersion.api.exchange.Bundle.Asset) => com.histmersion.domain.MergePlanner.ReplacedKeep(true))
       )
       .modify(_.assetLinks)
       .setTo(
         MergePlanner
-          .replaced(es0.assetLinks, _.uid, linkLine, es0, (_: com.histmersion.api.exchange.Bundle.AssetLink) => true)
+          .replaced(es0.assetLinks, _.uid, linkLine, es0, (_: com.histmersion.api.exchange.Bundle.AssetLink) => com.histmersion.domain.MergePlanner.ReplacedKeep(true))
       )
 
   override def bodyRenames: Map[UUID, List[(String, String)]] = renames.toMap

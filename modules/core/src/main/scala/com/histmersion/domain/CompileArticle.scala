@@ -269,7 +269,7 @@ object CompileArticle:
     } ++
       facts.collect {
         case f if f.status == Source.Status.Retracted && counts.getOrElse(f.citekey, 0) > 0 =>
-          NotUsed(f.citekey, "retracted: may be cited only to note the retraction")
+          NotUsed(f.citekey, com.histmersion.domain.CompileArticle.NotUsed.Reason("retracted: may be cited only to note the retraction"))
       }
     Evidence(filter, total, facts, counts, kept, disputed, notUsed.distinctBy(_.citekey))
 
@@ -443,10 +443,10 @@ object CompileArticle:
     val body = whole.getOrElse(text)
     val mech = ReviewArticle.mechanical(
       slug,
-      if mode == DraftMode.Create then kind else "index",
+      if mode == DraftMode.Create then kind else com.histmersion.domain.ReviewArticle.Finding.Kind("index"),
       body,
       corpus.isTarget,
-      generated = true
+      generated = com.histmersion.domain.ReviewArticle.MechanicalGenerated(true)
     )
     val citesHere = cited(text, corpus.isCitekey)
     val citesAll = cited(body, corpus.isCitekey).toSet
