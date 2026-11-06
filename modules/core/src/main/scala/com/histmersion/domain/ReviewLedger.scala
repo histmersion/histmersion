@@ -188,8 +188,8 @@ object ReviewLedger:
     def parse(s: com.histmersion.domain.ReviewLedger.Status.ParseS): Option[Status] = values.find(_.wire == s.trim.toLowerCase)
     given WireEnumValues[Status]:
       def all: Array[Status] = Status.values
-      def wire(e: Status): _root_.com.histmersion.api.WireEnumValues.Wire = e.wire
-      def fromWire(s: _root_.com.histmersion.api.WireEnumValues.Wire): _root_.scala.Option[Status] = parse(s)
+      def wire(e: Status): _root_.com.histmersion.api.WireEnumValues.WireResult = e.wire
+      def fromWire(s: _root_.com.histmersion.api.WireEnumValues.FromWireS): _root_.scala.Option[Status] = parse(s)
     given Encoder[Status] = WireEnum.encoder
     given Decoder[Status] = WireEnum.decoder
 
@@ -212,8 +212,8 @@ object ReviewLedger:
     def parse(s: com.histmersion.domain.ReviewLedger.LessonSource.ParseS): Option[LessonSource] = values.find(_.wire == s.trim.toLowerCase)
     given WireEnumValues[LessonSource]:
       def all: Array[LessonSource] = LessonSource.values
-      def wire(e: LessonSource): _root_.com.histmersion.api.WireEnumValues.Wire = e.wire
-      def fromWire(s: _root_.com.histmersion.api.WireEnumValues.Wire): _root_.scala.Option[LessonSource] = parse(s)
+      def wire(e: LessonSource): _root_.com.histmersion.api.WireEnumValues.WireResult = e.wire
+      def fromWire(s: _root_.com.histmersion.api.WireEnumValues.FromWireS): _root_.scala.Option[LessonSource] = parse(s)
     given Encoder[LessonSource] = WireEnum.encoder
     given Decoder[LessonSource] = WireEnum.decoder
 

@@ -24,9 +24,11 @@ final case class EventSummary(
     datingMethod: Option[EventSummary.DatingMethod] = None
 ) derives KindlingsCodecAsObject,
       KindlingsSchema, com.histmersion.api.json.Schema:
-  def datingNote: Option[String] = EventPrecision.note(central, plusMinus, datingMethod)
+  def datingNote: Option[com.histmersion.api.catalogue.EventSummary.DatingNoteResult] = EventPrecision.note(central, plusMinus, datingMethod)
 
 object EventSummary:
+  type DatingNoteResult = DatingNoteResult.T
+  object DatingNoteResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
   type Label = Label.T
   object Label extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]

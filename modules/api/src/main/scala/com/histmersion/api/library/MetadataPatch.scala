@@ -35,7 +35,7 @@ object MetadataPatch:
         case None    => derived(c)
         case Some(o) =>
           val nulls = o.toList.collect { case (k, v) if v.isNull => k }
-          val (refused, cleared) = nulls.partitionMap(k => MetadataField.fromWire(_root_.com.histmersion.api.library.MetadataField.Wire(k)).toRight(k))
+          val (refused, cleared) = nulls.partitionMap(k => MetadataField.fromWire(_root_.com.histmersion.api.library.MetadataField.FromWireS(k)).toRight(k))
           if refused.nonEmpty then
             Left(
               DecodingFailure(

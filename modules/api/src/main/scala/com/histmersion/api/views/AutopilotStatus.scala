@@ -70,8 +70,8 @@ final case class AutopilotStatus(
       ingestedBy = acquireRecheck
         .filter((_.fetchedToday).value > 0)
         .fold("")(r => s", ${r.fetchedToday} of them by the acquisition list's re-check"),
-      beforeBacklog = upstreams.map(q => _root_.com.histmersion.api.Markdown.Text(s"- ${UpstreamQuotaMarkdown.line(q)}")),
-      afterBacklog = (acquireRecheck.map(r => s"- ${AcquireChecksMarkdown.line(r)}").toList).map(refactorValue8 => _root_.com.histmersion.api.Markdown.Text(refactorValue8))
+      beforeBacklog = upstreams.map(q => _root_.com.histmersion.api.automation.AutopilotMarkdown.StatusBeforeBacklog(s"- ${UpstreamQuotaMarkdown.line(q)}")),
+      afterBacklog = (acquireRecheck.map(r => s"- ${AcquireChecksMarkdown.line(r)}").toList).map(refactorValue8 => _root_.com.histmersion.api.automation.AutopilotMarkdown.StatusAfterBacklog(refactorValue8))
     )
 
 object AutopilotStatus:

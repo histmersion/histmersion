@@ -11,9 +11,11 @@ final case class PluginsReport(
     set: Option[PluginSet] = None
 ) derives KindlingsCodecAsObject,
       KindlingsSchema, com.histmersion.api.json.Schema:
-  def ok: Boolean = (plugins.forall(p => p.state != PluginState.Failed.wire && p.state != PluginState.Refused.wire))
+  def ok: com.histmersion.api.plugins.PluginsReport.OkResult = _root_.com.histmersion.api.plugins.PluginsReport.OkResult(plugins.forall(p => p.state != PluginState.Failed.wire && p.state != PluginState.Refused.wire))
 
 object PluginsReport:
+  type OkResult = OkResult.T
+  object OkResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
   type SpiVersion = SpiVersion.T
   object SpiVersion extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]

@@ -3,18 +3,20 @@ package com.histmersion.api.library
 import com.histmersion.api.catalogue.LinkScheme
 import com.histmersion.api.given
 final case class ExternalId(scheme: LinkScheme, id: ExternalId.Id):
-  def key: com.histmersion.api.library.ExternalId.Key = _root_.com.histmersion.api.library.ExternalId.Key(s"${scheme.wire}:$id")
+  def key: com.histmersion.api.library.ExternalId.KeyResult = _root_.com.histmersion.api.library.ExternalId.KeyResult(s"${scheme.wire}:$id")
 
-  def placeId: com.histmersion.api.library.ExternalId.PlaceId = _root_.com.histmersion.api.library.ExternalId.PlaceId(s"${scheme.wire}_${(id).value.toLowerCase(java.util.Locale.ROOT)}")
+  def placeId: com.histmersion.api.library.ExternalId.PlaceIdResult = _root_.com.histmersion.api.library.ExternalId.PlaceIdResult(s"${scheme.wire}_${(id).value.toLowerCase(java.util.Locale.ROOT)}")
 
 object ExternalId:
-  type Key = Key.T
-  object Key extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type PlaceId = PlaceId.T
-  object PlaceId extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type Reference = Reference.T
-  object Reference extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type ParseMakeId = ParseMakeId.T
+  object ParseMakeId extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
+  type KeyResult = KeyResult.T
+  object KeyResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type PlaceIdResult = PlaceIdResult.T
+  object PlaceIdResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type ParseRaw = ParseRaw.T
+  object ParseRaw extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
   type Id = Id.T
   object Id extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
@@ -26,9 +28,9 @@ object ExternalId:
   private val TgnUri = """^https?://vocab\.getty\.edu/(?:page/)?tgn/(\d+)(?:[-/].*)?$""".r
   private val WhgUri = """^https?://(?:www\.)?whgazetteer\.org/(?:api/)?(?:places?|db)/(?:\?id=)?(\d+)/?.*$""".r
 
-  def parse(raw: com.histmersion.api.library.ExternalId.Reference): Option[ExternalId] =
+  def parse(raw: com.histmersion.api.library.ExternalId.ParseRaw): Option[ExternalId] =
     val s = (raw).value.trim
-    def make(scheme: LinkScheme, id: com.histmersion.api.library.ExternalId.Id): Option[ExternalId] =
+    def make(scheme: LinkScheme, id: com.histmersion.api.library.ExternalId.ParseMakeId): Option[ExternalId] =
       val v = (id).value.trim.stripSuffix("/")
       scheme match
         case LinkScheme.Wikidata =>
@@ -42,10 +44,10 @@ object ExternalId:
           case "pl" | "pleiades" => LinkScheme.Pleiades
           case "tgn"             => LinkScheme.Tgn
           case _                 => LinkScheme.Whg
-        make(scheme, _root_.com.histmersion.api.library.ExternalId.Id(id))
-      case WikidataUri(id) => make(LinkScheme.Wikidata, _root_.com.histmersion.api.library.ExternalId.Id(id))
-      case GeonamesUri(id) => make(LinkScheme.Geonames, _root_.com.histmersion.api.library.ExternalId.Id(id))
-      case PleiadesUri(id) => make(LinkScheme.Pleiades, _root_.com.histmersion.api.library.ExternalId.Id(id))
-      case TgnUri(id)      => make(LinkScheme.Tgn, _root_.com.histmersion.api.library.ExternalId.Id(id))
-      case WhgUri(id)      => make(LinkScheme.Whg, _root_.com.histmersion.api.library.ExternalId.Id(id))
+        make(scheme, _root_.com.histmersion.api.library.ExternalId.ParseMakeId(id))
+      case WikidataUri(id) => make(LinkScheme.Wikidata, _root_.com.histmersion.api.library.ExternalId.ParseMakeId(id))
+      case GeonamesUri(id) => make(LinkScheme.Geonames, _root_.com.histmersion.api.library.ExternalId.ParseMakeId(id))
+      case PleiadesUri(id) => make(LinkScheme.Pleiades, _root_.com.histmersion.api.library.ExternalId.ParseMakeId(id))
+      case TgnUri(id)      => make(LinkScheme.Tgn, _root_.com.histmersion.api.library.ExternalId.ParseMakeId(id))
+      case WhgUri(id)      => make(LinkScheme.Whg, _root_.com.histmersion.api.library.ExternalId.ParseMakeId(id))
       case _               => None

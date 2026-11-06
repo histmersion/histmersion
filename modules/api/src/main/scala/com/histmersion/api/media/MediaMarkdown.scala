@@ -6,10 +6,40 @@ import com.histmersion.api.Markdown.*
 
 object MediaMarkdown:
 
+  type AssetDetailResult = AssetDetailResult.T
+  object AssetDetailResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type AssetDetailCk = AssetDetailCk.T
+  object AssetDetailCk extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type CountsLineResult = CountsLineResult.T
+  object CountsLineResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type MediaProvidersResult = MediaProvidersResult.T
+  object MediaProvidersResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type MediaImportReportResult = MediaImportReportResult.T
+  object MediaImportReportResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type MediaSamplesResult = MediaSamplesResult.T
+  object MediaSamplesResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type MediaSamplesDryRun = _root_.com.histmersion.api.media.MediaImportRequest.DryRun
   val MediaSamplesDryRun: _root_.com.histmersion.api.media.MediaImportRequest.DryRun.type = _root_.com.histmersion.api.media.MediaImportRequest.DryRun
+  type MediaCoversReportResult = MediaCoversReportResult.T
+  object MediaCoversReportResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type MediaItemLineResult = MediaItemLineResult.T
+  object MediaItemLineResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type MediaListResult = MediaListResult.T
+  object MediaListResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type MediaItemResult = MediaItemResult.T
+  object MediaItemResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type MediaFacetsResult = MediaFacetsResult.T
+  object MediaFacetsResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type FigureLicenceFillResult = FigureLicenceFillResult.T
+  object FigureLicenceFillResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type AssetLinkLineResult = AssetLinkLineResult.T
+  object AssetLinkLineResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type AssetLinkListResult = AssetLinkListResult.T
+  object AssetLinkListResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type AssetLinkResult = AssetLinkResult.T
+  object AssetLinkResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
-  def assetDetail(ck: com.histmersion.api.library.Citekey, a: AssetDetail): com.histmersion.api.Markdown.Text =
+  def assetDetail(ck: com.histmersion.api.media.MediaMarkdown.AssetDetailCk, a: AssetDetail): com.histmersion.api.media.MediaMarkdown.AssetDetailResult =
     val loc = (a.lat, a.lon) match
       case (Some(lat), Some(lon)) => s"  \n**Location:** $lat, $lon"
       case _                      => ""
@@ -19,21 +49,21 @@ object MediaMarkdown:
     val meta = List(
       a.kind.map(k => s"**Kind:** $k"),
       a.license.map(l => s"**License:** $l"),
-      Some(s"**Size:** ${Plural.count(a.bytes, _root_.com.histmersion.api.Plural.Noun.Singular("byte"))}"),
+      Some(s"**Size:** ${Plural.count(a.bytes, _root_.com.histmersion.api.Plural.NounSingular("byte"))}"),
       (a.width, a.height) match {
         case (Some(w), Some(h)) => Some(s"**Dimensions:** $w×$h")
         case _                  => None
       }
     ).flatten.mkString("  \n")
     val cap = a.caption.map(c => s"\n\n> $c").getOrElse("")
-    _root_.com.histmersion.api.Markdown.Text(s"# `$ck` / `${a.name}`\n\n$meta$loc$per$cap")
+    _root_.com.histmersion.api.media.MediaMarkdown.AssetDetailResult(s"# `$ck` / `${a.name}`\n\n$meta$loc$per$cap")
 
-  private[api] def countsLine(cs: List[MediaCount]): com.histmersion.api.Markdown.Text =
-    if cs.isEmpty then _root_.com.histmersion.api.Markdown.Text("none")
-    else _root_.com.histmersion.api.Markdown.Text(cs.map(c => s"${c.key} ${c.n}${if ((c.allowed) == _root_.com.histmersion.api.media.MediaCount.Allowed(true)) then "" else " (not allowed)"}").mkString(" · "))
+  private[api] def countsLine(cs: List[MediaCount]): com.histmersion.api.media.MediaMarkdown.CountsLineResult =
+    if cs.isEmpty then _root_.com.histmersion.api.media.MediaMarkdown.CountsLineResult("none")
+    else _root_.com.histmersion.api.media.MediaMarkdown.CountsLineResult(cs.map(c => s"${c.key} ${c.n}${if ((c.allowed) == _root_.com.histmersion.api.media.MediaCount.Allowed(true)) then "" else " (not allowed)"}").mkString(" · "))
 
-  def mediaProviders(ps: List[MediaProvider.Info]): com.histmersion.api.Markdown.Text =
-    if ps.isEmpty then _root_.com.histmersion.api.Markdown.Text("No media provider is registered (every media plugin is switched off).")
+  def mediaProviders(ps: List[MediaProvider.Info]): com.histmersion.api.media.MediaMarkdown.MediaProvidersResult =
+    if ps.isEmpty then _root_.com.histmersion.api.media.MediaMarkdown.MediaProvidersResult("No media provider is registered (every media plugin is switched off).")
     else
       ps.map { p =>
         val origin = if ((p.builtin) == _root_.com.histmersion.api.media.MediaProvider.Info.Builtin(true)) then s"built in, plugin `${p.plugin}`" else s"plugin `${p.plugin}`"
@@ -42,7 +72,7 @@ object MediaMarkdown:
           (if p.description.trim.isEmpty then "" else s"\n  ${p.description.trim}")
       }.mkString("## Media providers\n\n", "\n", "\n\n`histmersion media import <name>` runs one.")
 
-  def mediaImportReport(r: MediaImportReport): com.histmersion.api.Markdown.Text =
+  def mediaImportReport(r: MediaImportReport): com.histmersion.api.media.MediaMarkdown.MediaImportReportResult =
     val mode = if ((r.dryRun) == _root_.com.histmersion.api.media.MediaImportRequest.DryRun(true)) then "dry run — nothing stored" else "stored"
     val licences = if r.byLicence.isEmpty then "_none_"
     else
@@ -53,7 +83,7 @@ object MediaMarkdown:
     else "\n\n**Not stored**\n" + r.rejected.map(c => s"- ${c.key}: ${c.n}").mkString("\n")
     val done = if ((r.dryRun) == _root_.com.histmersion.api.media.MediaImportRequest.DryRun(true)) then ""
     else
-      s"\n\n**Stored:** ${r.stored} new · ${r.updated} refreshed · ${r.linked} link(s) · ${r.categories} Commons ${Plural.noun(r.categories, _root_.com.histmersion.api.Plural.Noun.Singular("category"), _root_.com.histmersion.api.Plural.Noun.Plural("categories"))}"
+      s"\n\n**Stored:** ${r.stored} new · ${r.updated} refreshed · ${r.linked} link(s) · ${r.categories} Commons ${Plural.noun(r.categories, _root_.com.histmersion.api.Plural.NounSingular("category"), _root_.com.histmersion.api.Plural.NounPlural("categories"))}"
     val revoked = if r.revoked.isEmpty then ""
     else "\n\n**Licence no longer allowed (kept — review):**\n" + r.revoked.map(x => s"- $x").mkString("\n")
     val failed = if r.failed.isEmpty then "" else "\n\n**Failed**\n" + r.failed.map(x => s"- $x").mkString("\n")
@@ -64,13 +94,13 @@ object MediaMarkdown:
       s"# Media import · ${MediaProvider.title(r.provider)} ($mode)",
       "",
       (if MediaProvider.all.contains(r.provider) && r.provider != _root_.com.histmersion.api.media.MediaItem.Provider(MediaProvider.Commons) then
-         s"**Asked about:** ${Plural.count(r.targets, _root_.com.histmersion.api.Plural.Noun.Singular("place"))} · ${Plural.count(r.items, _root_.com.histmersion.api.Plural.Noun.Singular("record"))} read · " +
+         s"**Asked about:** ${Plural.count(r.targets, _root_.com.histmersion.api.Plural.NounSingular("place"))} · ${Plural.count(r.items, _root_.com.histmersion.api.Plural.NounSingular("record"))} read · " +
            s"${Plural.count(r.statements, "match", "matches")} · ${Plural.count(r.files, "picture")}  "
        else if r.provider == _root_.com.histmersion.api.media.MediaItem.Provider(MediaProvider.Pleiades) then
-         s"**Asked about:** ${Plural.count(r.targets, _root_.com.histmersion.api.Plural.Noun.Singular("place"))} · ${Plural.count(r.items, _root_.com.histmersion.api.Plural.Noun.Singular("Pleiades record"))} read · " +
+         s"**Asked about:** ${Plural.count(r.targets, _root_.com.histmersion.api.Plural.NounSingular("place"))} · ${Plural.count(r.items, _root_.com.histmersion.api.Plural.NounSingular("Pleiades record"))} read · " +
            s"${Plural.count(r.statements, "linked Commons file")} · ${Plural.count(r.files, "file")}  "
        else
-         s"**Asked about:** ${Plural.count(r.targets, _root_.com.histmersion.api.Plural.Noun.Singular("place/event"), _root_.com.histmersion.api.Plural.Noun.Plural("places/events"))} · ${Plural.count(r.items, _root_.com.histmersion.api.Plural.Noun.Singular("Wikidata item"))} · " +
+         s"**Asked about:** ${Plural.count(r.targets, _root_.com.histmersion.api.Plural.NounSingular("place/event"), _root_.com.histmersion.api.Plural.NounPlural("places/events"))} · ${Plural.count(r.items, _root_.com.histmersion.api.Plural.NounSingular("Wikidata item"))} · " +
            s"${Plural.count(r.statements, "picture statement")} · ${Plural.count(r.files, "file")}  "
       ) ,
       s"**By provider:** ${MediaProvider.title(r.provider)} ${r.files}  ",
@@ -79,15 +109,15 @@ object MediaMarkdown:
       licences + rejected + mediaSamples(r.samples, r.dryRun) + done + revoked + failed + pending
     ).mkString("\n")
 
-  private[api] def mediaSamples(xs: List[MediaSample], dryRun: com.histmersion.api.media.MediaMarkdown.MediaSamplesDryRun): com.histmersion.api.Markdown.Text =
-    if xs.isEmpty then _root_.com.histmersion.api.Markdown.Text("")
+  private[api] def mediaSamples(xs: List[MediaSample], dryRun: com.histmersion.api.media.MediaMarkdown.MediaSamplesDryRun): com.histmersion.api.media.MediaMarkdown.MediaSamplesResult =
+    if xs.isEmpty then _root_.com.histmersion.api.media.MediaMarkdown.MediaSamplesResult("")
     else
-      _root_.com.histmersion.api.Markdown.Text(s"\n\n**${if (dryRun).value then "Would link" else "Linked"} (sample of ${xs.size})**\n" +
+      _root_.com.histmersion.api.media.MediaMarkdown.MediaSamplesResult(s"\n\n**${if (dryRun).value then "Would link" else "Linked"} (sample of ${xs.size})**\n" +
         xs.map(x =>
           s"- ${x.targetType} `${x.targetId}` (${x.targetLabel}) ← ${x.title} [`${x.key}`](${x.url}) · `${x.license}` — ${x.basis}"
         ).mkString("\n"))
 
-  def mediaCoversReport(r: MediaCoversReport): com.histmersion.api.Markdown.Text =
+  def mediaCoversReport(r: MediaCoversReport): com.histmersion.api.media.MediaMarkdown.MediaCoversReportResult =
     val mode = if ((r.dryRun) == _root_.com.histmersion.api.media.MediaImportRequest.DryRun(true)) then "dry run — nothing stored" else "stored"
     val verb = if ((r.dryRun) == _root_.com.histmersion.api.media.MediaImportRequest.DryRun(true)) then "would link" else "linked"
     val lines = if r.lines.isEmpty then ""
@@ -102,7 +132,7 @@ object MediaMarkdown:
       s"${Plural.count(r.covers, "cover")} and ${Plural.count(r.illustrations, "illustration")}" +
       lines + skipped + failed
 
-  def mediaItemLine(m: MediaItem): com.histmersion.api.Markdown.Text =
+  def mediaItemLine(m: MediaItem): com.histmersion.api.media.MediaMarkdown.MediaItemLineResult =
     val origin = m.citekey
       .map(c => s"[[$c]] / `${m.name}`")
       .getOrElse(s"${m.provider.map(MediaProvider.title).getOrElse("?")} `${m.providerKey.getOrElse(m.name)}`")
@@ -110,12 +140,12 @@ object MediaMarkdown:
     else "**no licence**")(l => s"`$l`")
     val targets = if m.targets.isEmpty then ""
     else " → " + m.targets.map(t => s"${t.targetType}:${t.targetId} (${t.role})").mkString(", ")
-    _root_.com.histmersion.api.Markdown.Text(s"- `${m.uid}` $origin · $lic${m.credit.fold("")(c => s" · $c")}$targets")
+    _root_.com.histmersion.api.media.MediaMarkdown.MediaItemLineResult(s"- `${m.uid}` $origin · $lic${m.credit.fold("")(c => s" · $c")}$targets")
 
-  def mediaList(l: MediaList): com.histmersion.api.Markdown.Text =
-    OffsetPage.markdown(l.page, Plural.noun(l.total.value, _root_.com.histmersion.api.Plural.Noun.Singular("picture")), ("_No pictures._"), l.items)(mediaItemLine)
+  def mediaList(l: MediaList): com.histmersion.api.media.MediaMarkdown.MediaListResult =
+    OffsetPage.markdown(l.page, Plural.noun(l.total.value, _root_.com.histmersion.api.Plural.NounSingular("picture")), _root_.com.histmersion.api.OffsetPage.MarkdownEmpty("_No pictures._"), l.items)(mediaItemLine)
 
-  def mediaItem(m: MediaItem): com.histmersion.api.Markdown.Text =
+  def mediaItem(m: MediaItem): com.histmersion.api.media.MediaMarkdown.MediaItemResult =
     val origin = m.citekey
       .map(c => s"**Source:** [[$c]] / `${m.name}`")
       .getOrElse(
@@ -131,7 +161,7 @@ object MediaMarkdown:
       m.retrievedAt.map(t => s"**Retrieved:** $t"),
       Some(
         s"**File:** ${m.mime} · ${Plural
-            .count(m.bytes, _root_.com.histmersion.api.Plural.Noun.Singular("byte"))}${(m.width, m.height) match { case (Some(w), Some(h)) => s" · $w×$h"; case _ => "" }} · `${m.fileUrl}`"
+            .count(m.bytes, _root_.com.histmersion.api.Plural.NounSingular("byte"))}${(m.width, m.height) match { case (Some(w), Some(h)) => s" · $w×$h"; case _ => "" }} · `${m.fileUrl}`"
       ),
       m.thumbUrl.map(u => s"**Thumbnail:** `$u`"),
       m.kind.map(k => s"**Kind:** $k")
@@ -147,26 +177,26 @@ object MediaMarkdown:
         )
         .mkString("\n")
     val cap = m.caption.map(c => s"\n\n> $c").getOrElse("")
-    _root_.com.histmersion.api.Markdown.Text(s"# `${m.uid}`\n\n$rows$targets$cap")
+    _root_.com.histmersion.api.media.MediaMarkdown.MediaItemResult(s"# `${m.uid}`\n\n$rows$targets$cap")
 
-  def mediaFacets(f: MediaFacets): com.histmersion.api.Markdown.Text =
+  def mediaFacets(f: MediaFacets): com.histmersion.api.media.MediaMarkdown.MediaFacetsResult =
     s"**Providers:** ${countsLine(f.providers.map(c => c.modify(_.key).setTo(MediaProvider.title(c.key))))}  \n" +
       s"**Licences:** ${countsLine(f.licences)}"
 
-  def figureLicenceFill(f: FigureLicenceFill): com.histmersion.api.Markdown.Text =
+  def figureLicenceFill(f: FigureLicenceFill): com.histmersion.api.media.MediaMarkdown.FigureLicenceFillResult =
     val what = if ((f.applied) == _root_.com.histmersion.api.media.FigureLicenceFill.Applied(true)) then s"${Plural.count(f.updated, _root_.com.histmersion.api.Plural.CountSingular("figure"))} given their source's licence"
     else s"${Plural.count(f.candidates, _root_.com.histmersion.api.Plural.CountSingular("figure"))} would take their source's licence (dry run; `--apply` writes it)"
     val by = if f.bySource.isEmpty then "" else "\n\n" + f.bySource.map(c => s"- [[${c.key}]]: ${c.n}").mkString("\n")
-    _root_.com.histmersion.api.Markdown.Text(s"# Figure licences\n\n$what$by")
+    _root_.com.histmersion.api.media.MediaMarkdown.FigureLicenceFillResult(s"# Figure licences\n\n$what$by")
 
-  def assetLinkLine(l: AssetLink): com.histmersion.api.Markdown.Text =
+  def assetLinkLine(l: AssetLink): com.histmersion.api.media.MediaMarkdown.AssetLinkLineResult =
     val xywh = l.xywh.map(x => s" xywh=$x").getOrElse("")
-    _root_.com.histmersion.api.Markdown.Text(s"- **${l.relation}** ${l.targetType}:${l.targetId} ← ${l.citekey}/${l.assetName}$xywh")
+    _root_.com.histmersion.api.media.MediaMarkdown.AssetLinkLineResult(s"- **${l.relation}** ${l.targetType}:${l.targetId} ← ${l.citekey}/${l.assetName}$xywh")
 
-  def assetLinkList(ll: AssetLink.List): com.histmersion.api.Markdown.Text =
-    OffsetPage.markdown(ll.page, ("link(s)"), ("_No asset links._"), ll.links)(assetLinkLine)
+  def assetLinkList(ll: AssetLink.List): com.histmersion.api.media.MediaMarkdown.AssetLinkListResult =
+    OffsetPage.markdown(ll.page, _root_.com.histmersion.api.OffsetPage.MarkdownNoun("link(s)"), _root_.com.histmersion.api.OffsetPage.MarkdownEmpty("_No asset links._"), ll.links)(assetLinkLine)
 
-  def assetLink(l: AssetLink): com.histmersion.api.Markdown.Text =
+  def assetLink(l: AssetLink): com.histmersion.api.media.MediaMarkdown.AssetLinkResult =
     val xywh = l.xywh.map(x => s"  \n**Region:** $x").getOrElse("")
     val notes = l.notes.map(n => s"  \n$n").getOrElse("")
-    _root_.com.histmersion.api.Markdown.Text(s"# Link #${l.id}\n\n**Relation:** ${l.relation}  \n**Target:** ${l.targetType}:${l.targetId}  \n**Asset:** ${l.citekey}/${l.assetName}$xywh$notes")
+    _root_.com.histmersion.api.media.MediaMarkdown.AssetLinkResult(s"# Link #${l.id}\n\n**Relation:** ${l.relation}  \n**Target:** ${l.targetType}:${l.targetId}  \n**Asset:** ${l.citekey}/${l.assetName}$xywh$notes")

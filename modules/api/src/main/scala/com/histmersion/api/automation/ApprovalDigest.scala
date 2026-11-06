@@ -7,6 +7,10 @@ import com.histmersion.api.given
 
 object ApprovalDigest:
 
+  type GroupCheckedArg1 = GroupCheckedArg1.T
+  object GroupCheckedArg1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type GroupCheckedResult = GroupCheckedResult.T
+  object GroupCheckedResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type GroupWaiting = GroupWaiting.T
   object GroupWaiting extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type LineResult = LineResult.T
@@ -148,7 +152,7 @@ object ApprovalDigest:
     type CreatedAt = CreatedAt.T
     object CreatedAt extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
-  def group(open: List[Open], checked: com.histmersion.api.automation.Approval.Kind.Wire => Boolean, waiting: Set[com.histmersion.api.automation.ApprovalDigest.GroupWaiting] = Set.empty): List[KindGroup] =
+  def group(open: List[Open], checked: com.histmersion.api.automation.ApprovalDigest.GroupCheckedArg1 => com.histmersion.api.automation.ApprovalDigest.GroupCheckedResult, waiting: Set[com.histmersion.api.automation.ApprovalDigest.GroupWaiting] = Set.empty): List[KindGroup] =
     open
       .groupBy(_.kind)
       .toList

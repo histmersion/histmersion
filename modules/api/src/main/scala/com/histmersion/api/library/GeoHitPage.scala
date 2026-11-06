@@ -16,6 +16,10 @@ final case class GeoHitPage(
   def page: OffsetPage = OffsetPage(total, offset, com.histmersion.api.RowCount(hits.size))
 object GeoHitPage:
 
+  type OfTotal = OfTotal.T
+  object OfTotal extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type OfOffset = OfOffset.T
+  object OfOffset extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
-  def of(total: com.histmersion.api.library.SearchResult.Total, hits: List[GeoHit], offset: com.histmersion.api.personal.UnreadPage.Offset): GeoHitPage =
+  def of(total: com.histmersion.api.library.GeoHitPage.OfTotal, hits: List[GeoHit], offset: com.histmersion.api.library.GeoHitPage.OfOffset): GeoHitPage =
     GeoHitPage(com.histmersion.api.RowCount((total).value), hits, com.histmersion.api.Offset((offset).value), OffsetPage(com.histmersion.api.RowCount((total).value), com.histmersion.api.Offset((offset).value), com.histmersion.api.RowCount(hits.size)).next)

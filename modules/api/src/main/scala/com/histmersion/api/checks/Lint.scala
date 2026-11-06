@@ -5,44 +5,96 @@ import sttp.tapir.Schema
 import com.histmersion.api.given
 
 object Lint:
-  type DuplicateKey = DuplicateKey.T
-  object DuplicateKey extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type IssueCount = IssueCount.T
-  object IssueCount extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type ItemLimit = ItemLimit.T
-  object ItemLimit extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type LinkTarget = LinkTarget.T
-  object LinkTarget extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type Paragraph = Paragraph.T
-  object Paragraph extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type Problem = Problem.T
-  object Problem extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type ProseBody = ProseBody.T
-  object ProseBody extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type SentenceCount = SentenceCount.T
-  object SentenceCount extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type Suggestion = Suggestion.T
-  object Suggestion extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type Tag = Tag.T
-  object Tag extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
+  type SuggestCommonPrefixResult = SuggestCommonPrefixResult.T
+  object SuggestCommonPrefixResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type SuggestCommonPrefixA = SuggestCommonPrefixA.T
+  object SuggestCommonPrefixA extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type SuggestCommonPrefixB = SuggestCommonPrefixB.T
+  object SuggestCommonPrefixB extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type ExtractParagraphsLeadIn = ExtractParagraphsLeadIn.T
+  object ExtractParagraphsLeadIn extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type ExtractParagraphsSettleNextIsList = ExtractParagraphsSettleNextIsList.T
+  object ExtractParagraphsSettleNextIsList extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type ExtractParagraphsIsListT = ExtractParagraphsIsListT.T
+  object ExtractParagraphsIsListT extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type ExtractParagraphsBlockNextIsList = ExtractParagraphsBlockNextIsList.T
+  object ExtractParagraphsBlockNextIsList extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
   type Names = _root_.com.histmersion.api.checks.Lint.Rule.Name
   val Names: _root_.com.histmersion.api.checks.Lint.Rule.Name.type = _root_.com.histmersion.api.checks.Lint.Rule.Name
+  type RuleName = RuleName.T
+  object RuleName extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type SelectResultPart1 = SelectResultPart1.T
+  object SelectResultPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type SelectRequested = SelectRequested.T
+  object SelectRequested extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type BlankResult = BlankResult.T
+  object BlankResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type BlankS = BlankS.T
+  object BlankS extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type SuggestResult = SuggestResult.T
+  object SuggestResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type SuggestTarget = SuggestTarget.T
+  object SuggestTarget extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type SuggestCitekeys = SuggestCitekeys.T
   object SuggestCitekeys extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]:
     given _root_.scala.math.Ordering[T] = _root_.scala.math.Ordering.by[T, _root_.java.lang.String](_.value)
+  type SuggestMax = SuggestMax.T
+  object SuggestMax extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type LooksLikeCitekeyResult = LooksLikeCitekeyResult.T
+  object LooksLikeCitekeyResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type LooksLikeCitekeyTarget = LooksLikeCitekeyTarget.T
+  object LooksLikeCitekeyTarget extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type DuplicatesRowsPart1 = DuplicatesRowsPart1.T
   object DuplicatesRowsPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]:
     given _root_.scala.math.Ordering[T] = _root_.scala.math.Ordering.by[T, _root_.java.lang.String](_.value)
+  type DuplicatesRowsPart2 = DuplicatesRowsPart2.T
+  object DuplicatesRowsPart2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type DuplicatesLabel = DuplicatesLabel.T
+  object DuplicatesLabel extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type IsCanonicalTagResult = IsCanonicalTagResult.T
+  object IsCanonicalTagResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type IsCanonicalTagTag = IsCanonicalTagTag.T
+  object IsCanonicalTagTag extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type NormaliseTagResult = NormaliseTagResult.T
+  object NormaliseTagResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type NormaliseTagTag = NormaliseTagTag.T
+  object NormaliseTagTag extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type NonCanonicalTagsRowsPart1 = NonCanonicalTagsRowsPart1.T
+  object NonCanonicalTagsRowsPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type NonCanonicalTagsRowsPart2 = NonCanonicalTagsRowsPart2.T
+  object NonCanonicalTagsRowsPart2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type YearCitekeyMismatchRowsPart1 = YearCitekeyMismatchRowsPart1.T
+  object YearCitekeyMismatchRowsPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type YearCitekeyMismatchRowsPart2 = YearCitekeyMismatchRowsPart2.T
+  object YearCitekeyMismatchRowsPart2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type AuthorPipeRowsPart1 = AuthorPipeRowsPart1.T
+  object AuthorPipeRowsPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type AuthorPipeRowsPart2 = AuthorPipeRowsPart2.T
+  object AuthorPipeRowsPart2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type Abbreviations = AbbreviationsValue
   type AbbreviationsValue = AbbreviationsValue.T
   object AbbreviationsValue extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type SentenceCountResult = SentenceCountResult.T
+  object SentenceCountResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type SentenceCountText = SentenceCountText.T
+  object SentenceCountText extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type IsListLeadInResult = IsListLeadInResult.T
+  object IsListLeadInResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type IsListLeadInText = IsListLeadInText.T
+  object IsListLeadInText extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type ExtractParagraphsResult = ExtractParagraphsResult.T
+  object ExtractParagraphsResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type ExtractParagraphsBody = ExtractParagraphsBody.T
+  object ExtractParagraphsBody extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type FormatItemsRowsPart1 = FormatItemsRowsPart1.T
   object FormatItemsRowsPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]:
     given _root_.scala.math.Ordering[T] = _root_.scala.math.Ordering.by[T, _root_.java.lang.String](_.value)
   type FormatItemsRowsPart3 = FormatItemsRowsPart3.T
   object FormatItemsRowsPart3 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type ReportMaxItems = ReportMaxItems.T
+  object ReportMaxItems extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type MarkdownResult = MarkdownResult.T
   object MarkdownResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
@@ -69,9 +121,11 @@ object Lint:
   final case class LintReport(rules: List[LintRuleReport], fixed: List[LintReport.Fixed] = Nil)
       derives KindlingsCodecAsObject,
         KindlingsSchema, com.histmersion.api.json.Schema:
-    def total: com.histmersion.api.checks.Lint.IssueCount = rules.map(_.count).sum
+    def total: com.histmersion.api.checks.Lint.LintReport.TotalResult = rules.map(_.count).sum
 
   object LintReport:
+    type TotalResult = TotalResult.T
+    object TotalResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
     type Fixed = Fixed.T
     object Fixed extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
@@ -258,44 +312,44 @@ object Lint:
 
   val names: List[com.histmersion.api.checks.Lint.Names] = all.map(_.name)
 
-  def rule(name: com.histmersion.api.checks.Lint.Rule.Name): Option[Rule] = all.find(_.name == _root_.com.histmersion.api.checks.Lint.Rule.Name((name).value.trim.toLowerCase))
+  def rule(name: com.histmersion.api.checks.Lint.RuleName): Option[Rule] = all.find(_.name == _root_.com.histmersion.api.checks.Lint.Rule.Name((name).value.trim.toLowerCase))
 
-  def select(requested: List[com.histmersion.api.checks.Lint.Rule.Name]): Either[com.histmersion.api.checks.Lint.Problem, List[Rule]] =
+  def select(requested: List[com.histmersion.api.checks.Lint.SelectRequested]): Either[com.histmersion.api.checks.Lint.SelectResultPart1, List[Rule]] =
     val wanted = requested.map((_).value.trim).filter(_.nonEmpty)
     if wanted.isEmpty then Right(all)
     else
-      val unknown = wanted.filter(w => rule(_root_.com.histmersion.api.checks.Lint.Rule.Name(w)).isEmpty)
+      val unknown = wanted.filter(w => rule(_root_.com.histmersion.api.checks.Lint.RuleName(w)).isEmpty)
       if unknown.nonEmpty then
-        Left(_root_.com.histmersion.api.checks.Lint.Problem(s"unknown lint rule(s): ${unknown.mkString(", ")} — known rules: ${names.mkString(", ")}"))
-      else Right(wanted.flatMap({ val refactorFunction = rule; (refactorValue) => refactorFunction(_root_.com.histmersion.api.checks.Lint.Rule.Name(refactorValue)) }).distinct)
+        Left(_root_.com.histmersion.api.checks.Lint.SelectResultPart1(s"unknown lint rule(s): ${unknown.mkString(", ")} — known rules: ${names.mkString(", ")}"))
+      else Right(wanted.flatMap({ val refactorFunction = rule; (refactorValue) => refactorFunction(_root_.com.histmersion.api.checks.Lint.RuleName(refactorValue)) }).distinct)
 
-  def blank(s: Option[String]): Boolean = (s.forall((_).value.trim.isEmpty))
+  def blank(s: Option[com.histmersion.api.checks.Lint.BlankS]): com.histmersion.api.checks.Lint.BlankResult = _root_.com.histmersion.api.checks.Lint.BlankResult(s.forall((_).value.trim.isEmpty))
 
-  def suggest(target: com.histmersion.api.checks.Lint.LinkTarget, citekeys: Iterable[com.histmersion.api.library.Citekey], max: com.histmersion.api.checks.Lint.ItemLimit): List[com.histmersion.api.checks.Lint.Suggestion] =
+  def suggest(target: com.histmersion.api.checks.Lint.SuggestTarget, citekeys: Iterable[com.histmersion.api.checks.Lint.SuggestCitekeys], max: com.histmersion.api.checks.Lint.SuggestMax): List[com.histmersion.api.checks.Lint.SuggestResult] =
     val t = (target).value.trim.toLowerCase
     if t.isEmpty || max <= 0 then Nil
     else
-      def commonPrefix(a: com.histmersion.api.library.Citekey, b: com.histmersion.api.checks.Lint.LinkTarget): Int =
+      def commonPrefix(a: com.histmersion.api.checks.Lint.SuggestCommonPrefixA, b: com.histmersion.api.checks.Lint.SuggestCommonPrefixB): com.histmersion.api.checks.Lint.SuggestCommonPrefixResult =
         val n = math.min((a).value.length, (b).value.length)
         var i = 0
         while i < n && (a).value.charAt(i) == (b).value.charAt(i) do i += 1
-        (i)
+        _root_.com.histmersion.api.checks.Lint.SuggestCommonPrefixResult(i)
       val scored = citekeys.iterator
         .filter(_ != target)
         .flatMap { ck =>
           val c = (ck).value.toLowerCase
-          val p = commonPrefix(_root_.com.histmersion.api.library.Citekey(c), _root_.com.histmersion.api.checks.Lint.LinkTarget(t))
+          val p = commonPrefix(_root_.com.histmersion.api.checks.Lint.SuggestCommonPrefixA(c), _root_.com.histmersion.api.checks.Lint.SuggestCommonPrefixB(t))
           if c.startsWith(t + "_") then Some((0, c.length, ck))
           else if c.startsWith(t) || t.startsWith(c) then Some((1, -(p).value, ck))
           else if p >= 4 then Some((2, -(p).value, ck))
           else None
         }
         .toList
-      (scored.sortBy((rank, negLen, ck) => (rank, negLen, ck)).map(_._3).take((max).value)).map(refactorValue3 => _root_.com.histmersion.api.checks.Lint.Suggestion((refactorValue3).value))
+      (scored.sortBy((rank, negLen, ck) => (rank, negLen, ck)).map(_._3).take((max).value)).map(refactorValue3 => _root_.com.histmersion.api.checks.Lint.SuggestResult((refactorValue3).value))
 
-  def looksLikeCitekey(target: com.histmersion.api.checks.Lint.LinkTarget): Boolean = ("""\d{4}""".r.findFirstIn((target).value).isDefined)
+  def looksLikeCitekey(target: com.histmersion.api.checks.Lint.LooksLikeCitekeyTarget): com.histmersion.api.checks.Lint.LooksLikeCitekeyResult = _root_.com.histmersion.api.checks.Lint.LooksLikeCitekeyResult("""\d{4}""".r.findFirstIn((target).value).isDefined)
 
-  def duplicates(rows: List[(com.histmersion.api.checks.Lint.DuplicateKey, com.histmersion.api.library.Citekey)], label: String): List[LintItem] =
+  def duplicates(rows: List[(com.histmersion.api.checks.Lint.DuplicatesRowsPart1, com.histmersion.api.checks.Lint.DuplicatesRowsPart2)], label: com.histmersion.api.checks.Lint.DuplicatesLabel): List[LintItem] =
     rows
       .filter((_, key) => (key).value.trim.nonEmpty)
       .groupBy((_, key) => (key).value.trim.toLowerCase)
@@ -309,21 +363,21 @@ object Lint:
 
   private val CanonicalTag = """^[a-z0-9][a-z0-9_]*$""".r
 
-  def isCanonicalTag(tag: com.histmersion.api.checks.Lint.Tag): Boolean = (CanonicalTag.matches((tag).value))
+  def isCanonicalTag(tag: com.histmersion.api.checks.Lint.IsCanonicalTagTag): com.histmersion.api.checks.Lint.IsCanonicalTagResult = _root_.com.histmersion.api.checks.Lint.IsCanonicalTagResult(CanonicalTag.matches((tag).value))
 
-  def normaliseTag(tag: com.histmersion.api.checks.Lint.Tag): com.histmersion.api.checks.Lint.Tag =
-    _root_.com.histmersion.api.checks.Lint.Tag((tag).value.trim.toLowerCase.replaceAll("""[\s-]+""", "_").replaceAll("_+", "_").stripPrefix("_").stripSuffix("_"))
+  def normaliseTag(tag: com.histmersion.api.checks.Lint.NormaliseTagTag): com.histmersion.api.checks.Lint.NormaliseTagResult =
+    _root_.com.histmersion.api.checks.Lint.NormaliseTagResult((tag).value.trim.toLowerCase.replaceAll("""[\s-]+""", "_").replaceAll("_+", "_").stripPrefix("_").stripSuffix("_"))
 
-  def nonCanonicalTags(rows: List[(com.histmersion.api.library.Citekey, List[com.histmersion.api.checks.Lint.Tag])]): List[LintItem] =
+  def nonCanonicalTags(rows: List[(com.histmersion.api.checks.Lint.NonCanonicalTagsRowsPart1, List[com.histmersion.api.checks.Lint.NonCanonicalTagsRowsPart2])]): List[LintItem] =
     rows
       .flatMap { (ck, tags) =>
-        tags.filterNot(_root_.com.histmersion.api.checks.Lint.Tag((isCanonicalTag).value)).map(t => LintItem(ck, s"tag '$t' → '${normaliseTag(_root_.com.histmersion.api.checks.Lint.Tag((t).value))}'"))
+        tags.filterNot(_root_.com.histmersion.api.checks.Lint.IsCanonicalTagTag((isCanonicalTag).value)).map(t => LintItem(ck, s"tag '$t' → '${normaliseTag(_root_.com.histmersion.api.checks.Lint.NormaliseTagTag((t).value))}'"))
       }
       .sortBy(i => (i.citekey, i.detail))
 
   private val YearInCitekey = """(\d{4})""".r.unanchored
 
-  def yearCitekeyMismatch(rows: List[(com.histmersion.api.library.Citekey, Option[com.histmersion.api.catalogue.Year])]): List[LintItem] =
+  def yearCitekeyMismatch(rows: List[(com.histmersion.api.checks.Lint.YearCitekeyMismatchRowsPart1, Option[com.histmersion.api.checks.Lint.YearCitekeyMismatchRowsPart2])]): List[LintItem] =
     rows
       .flatMap { (ck, yr) =>
         yr.flatMap { y =>
@@ -336,7 +390,7 @@ object Lint:
       }
       .sortBy(_.citekey)
 
-  def authorPipe(rows: List[(com.histmersion.api.library.Citekey, List[com.histmersion.api.library.AuthorName])]): List[LintItem] =
+  def authorPipe(rows: List[(com.histmersion.api.checks.Lint.AuthorPipeRowsPart1, List[com.histmersion.api.checks.Lint.AuthorPipeRowsPart2])]): List[LintItem] =
     rows
       .flatMap { (ck, authors) =>
         authors.filter((_).value.contains("|")).map(a => LintItem(ck, _root_.com.histmersion.api.checks.Lint.LintItem.Detail(s"author '$a'")))
@@ -370,9 +424,9 @@ object Lint:
 
   private val SentenceEnd = "([^\\s]*)[.!?]+[\"”’)]*\\s+(?=(\\S))".r
 
-  def sentenceCount(text: String): com.histmersion.api.checks.Lint.SentenceCount =
+  def sentenceCount(text: com.histmersion.api.checks.Lint.SentenceCountText): com.histmersion.api.checks.Lint.SentenceCountResult =
     val t = (text).value.trim
-    if t.isEmpty then _root_.com.histmersion.api.checks.Lint.SentenceCount(0)
+    if t.isEmpty then _root_.com.histmersion.api.checks.Lint.SentenceCountResult(0)
     else
       // No `\p{Lu}` in the pattern: this code is also compiled to Scala.js, so the next char is tested instead.
       val ends = SentenceEnd.findAllMatchIn(t).count { m =>
@@ -380,53 +434,53 @@ object Lint:
         val word = m.group(1).replaceAll("^[(\"“]+", "").toLowerCase
         (next.isUpper || "[“\"(".contains(next)) && !(Abbreviations(_root_.com.histmersion.api.checks.Lint.AbbreviationsValue(word)) || (word.length == 1 && word.head.isLetter))
       }
-      _root_.com.histmersion.api.checks.Lint.SentenceCount(ends + 1)
+      _root_.com.histmersion.api.checks.Lint.SentenceCountResult(ends + 1)
 
-  def isListLeadIn(text: String): Boolean =
+  def isListLeadIn(text: com.histmersion.api.checks.Lint.IsListLeadInText): com.histmersion.api.checks.Lint.IsListLeadInResult =
     val t = (text).value.trim
-    (t.endsWith(":") && t.length <= MaxListLeadIn && sentenceCount((t)) == _root_.com.histmersion.api.checks.Lint.SentenceCount(1))
+    _root_.com.histmersion.api.checks.Lint.IsListLeadInResult(t.endsWith(":") && t.length <= MaxListLeadIn && sentenceCount(_root_.com.histmersion.api.checks.Lint.SentenceCountText(t)) == _root_.com.histmersion.api.checks.Lint.SentenceCountResult(1))
 
-  def extractParagraphs(body: com.histmersion.api.checks.Lint.ProseBody): List[com.histmersion.api.checks.Lint.Paragraph] =
+  def extractParagraphs(body: com.histmersion.api.checks.Lint.ExtractParagraphsBody): List[com.histmersion.api.checks.Lint.ExtractParagraphsResult] =
     val lines = (body).value.linesIterator.toList
     var inFence = false
     val paras = List.newBuilder[String]
     val current = new StringBuilder()
-    var leadIn: Option[String] = None
-    def settle(nextIsList: Boolean): Unit =
+    var leadIn: Option[com.histmersion.api.checks.Lint.ExtractParagraphsLeadIn] = None
+    def settle(nextIsList: com.histmersion.api.checks.Lint.ExtractParagraphsSettleNextIsList): Unit =
       leadIn.foreach(t => if !(nextIsList).value then paras += (t).value)
       leadIn = None
     def flush(): Unit =
       val text = current.toString.trim
-      if text.nonEmpty then if (isListLeadIn((text))).value then leadIn = Some((text)) else paras += text
+      if text.nonEmpty then if (isListLeadIn(_root_.com.histmersion.api.checks.Lint.IsListLeadInText(text))).value then leadIn = Some(_root_.com.histmersion.api.checks.Lint.ExtractParagraphsLeadIn(text)) else paras += text
       current.clear()
-    def isList(t: String) = (t).value.startsWith("- ") || (t).value.startsWith("* ") || "^\\d+[.)] ".r.findPrefixOf((t).value).isDefined
-    def block(nextIsList: Boolean): Unit = { flush(); settle(nextIsList) }
+    def isList(t: com.histmersion.api.checks.Lint.ExtractParagraphsIsListT) = (t).value.startsWith("- ") || (t).value.startsWith("* ") || "^\\d+[.)] ".r.findPrefixOf((t).value).isDefined
+    def block(nextIsList: com.histmersion.api.checks.Lint.ExtractParagraphsBlockNextIsList): Unit = { flush(); settle(nextIsList) }
     for line <- lines do
       val t = line.trim
       if t.startsWith("```") then
-        block(nextIsList = (false))
+        block(nextIsList = _root_.com.histmersion.api.checks.Lint.ExtractParagraphsBlockNextIsList(false))
         inFence = !inFence
       else if inFence then ()
       else if t.isEmpty then flush()
-      else if t.startsWith("#") then block(nextIsList = (false))
-      else if isList((t)) then block(nextIsList = (true))
-      else if t.startsWith("> ") then block(nextIsList = (false))
-      else if t.startsWith("_") && t.endsWith("_") then block(nextIsList = (false))
-      else if t.startsWith("|") then block(nextIsList = (false))
+      else if t.startsWith("#") then block(nextIsList = _root_.com.histmersion.api.checks.Lint.ExtractParagraphsBlockNextIsList(false))
+      else if isList(_root_.com.histmersion.api.checks.Lint.ExtractParagraphsIsListT(t)) then block(nextIsList = _root_.com.histmersion.api.checks.Lint.ExtractParagraphsBlockNextIsList(true))
+      else if t.startsWith("> ") then block(nextIsList = _root_.com.histmersion.api.checks.Lint.ExtractParagraphsBlockNextIsList(false))
+      else if t.startsWith("_") && t.endsWith("_") then block(nextIsList = _root_.com.histmersion.api.checks.Lint.ExtractParagraphsBlockNextIsList(false))
+      else if t.startsWith("|") then block(nextIsList = _root_.com.histmersion.api.checks.Lint.ExtractParagraphsBlockNextIsList(false))
       else
-        if current.isEmpty then settle(nextIsList = (false))
+        if current.isEmpty then settle(nextIsList = _root_.com.histmersion.api.checks.Lint.ExtractParagraphsSettleNextIsList(false))
         current.append(line).append(" ")
-    block(nextIsList = (false))
-    (paras.result()).map(refactorValue2 => _root_.com.histmersion.api.checks.Lint.Paragraph(refactorValue2))
+    block(nextIsList = _root_.com.histmersion.api.checks.Lint.ExtractParagraphsBlockNextIsList(false))
+    (paras.result()).map(refactorValue2 => _root_.com.histmersion.api.checks.Lint.ExtractParagraphsResult(refactorValue2))
 
   type FormatChecker = (String, FormatField, Boolean) => List[FormatIssue]
 
-  def formatItems(rows: List[(com.histmersion.api.library.Citekey, FormatField, com.histmersion.api.checks.Lint.FormatItemsRowsPart3)], check: FormatChecker): List[LintItem] =
+  def formatItems(rows: List[(com.histmersion.api.checks.Lint.FormatItemsRowsPart1, FormatField, com.histmersion.api.checks.Lint.FormatItemsRowsPart3)], check: FormatChecker): List[LintItem] =
     rows.filter((_._3).value.trim.nonEmpty).sortBy((id, f, _) => (id, f.ordinal)).flatMap { (id, field, text) =>
       check((text).value, field, field == FormatField.Body).map(i => LintItem(id, FormatMarkdown.line(i)))
     }
 
-  def report(r: Rule, items: List[LintItem], maxItems: com.histmersion.api.checks.Lint.ItemLimit): LintRuleReport =
+  def report(r: Rule, items: List[LintItem], maxItems: com.histmersion.api.checks.Lint.ReportMaxItems): LintRuleReport =
     LintRuleReport(r.name, r.description, _root_.com.histmersion.api.checks.Lint.LintRuleReport.Count(items.size), items.take(math.max(0, (maxItems).value)))
 
   def markdown(rep: LintReport): com.histmersion.api.checks.Lint.MarkdownResult =

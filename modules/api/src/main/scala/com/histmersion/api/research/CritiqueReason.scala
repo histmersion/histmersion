@@ -11,9 +11,15 @@ final case class CritiqueReason(src: com.histmersion.api.library.Citekey, dst: c
   def ref: CritiqueRef = CritiqueRef(src, dst)
 
 object CritiqueReason:
-  type Problem = Problem.T
-  object Problem extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type MaxChars = MaxCharsValue
+  type MaxCharsValue = MaxCharsValue.T
+  object MaxCharsValue extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type ParseResultPart1 = ParseResultPart1.T
+  object ParseResultPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type ParseS = ParseS.T
+  object ParseS extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type TidyResultPart1 = TidyResultPart1.T
+  object TidyResultPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
   type Reason = Reason.T
   object Reason extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
@@ -37,17 +43,17 @@ object CritiqueReason:
     )
     .modify(_.by)(_.description("Who set it (filled by the server when left out)"))
 
-  val MaxChars: com.histmersion.api.research.CritiqueReason.MaxChars = _root_.com.histmersion.api.research.Coverage.Reason.MaxChars(Coverage.Reason.MaxChars)
+  val MaxChars: com.histmersion.api.research.CritiqueReason.MaxChars = _root_.com.histmersion.api.research.CritiqueReason.MaxCharsValue(Coverage.Reason.MaxChars)
 
-  def parse(s: com.histmersion.api.research.CritiqueReason.Reason): Either[com.histmersion.api.research.CritiqueReason.Problem, CritiqueReason] =
+  def parse(s: com.histmersion.api.research.CritiqueReason.ParseS): Either[com.histmersion.api.research.CritiqueReason.ParseResultPart1, CritiqueReason] =
     val i = (s).value.indexOf('=')
-    if i < 0 then Left(_root_.com.histmersion.api.research.CritiqueReason.Problem(s"'$s': write it as <src>><dst>=<why> (an empty why removes the reason)"))
-    else CritiqueRef.parse(_root_.com.histmersion.api.research.CritiqueRef.Wire((s).value.take(i))).map(r => CritiqueReason(r.src, r.dst, _root_.com.histmersion.api.research.CritiqueReason.Reason((s).value.drop(i + 1).trim)))
+    if i < 0 then Left(_root_.com.histmersion.api.research.CritiqueReason.ParseResultPart1(s"'$s': write it as <src>><dst>=<why> (an empty why removes the reason)"))
+    else CritiqueRef.parse(_root_.com.histmersion.api.research.CritiqueRef.ParseS((s).value.take(i))).map(r => CritiqueReason(r.src, r.dst, _root_.com.histmersion.api.research.CritiqueReason.Reason((s).value.drop(i + 1).trim)))
 
-  def tidy(r: CritiqueReason): Either[com.histmersion.api.research.CritiqueReason.Problem, CritiqueReason] =
+  def tidy(r: CritiqueReason): Either[com.histmersion.api.research.CritiqueReason.TidyResultPart1, CritiqueReason] =
     val text = Option(r.reason).map((_).value.trim.replaceAll("\\s+", " ")).getOrElse("")
     if text.length > MaxChars then
-      Left(_root_.com.histmersion.api.research.CritiqueReason.Problem(s"reason for ${r.ref.wire}: ${text.length} characters (at most $MaxChars — one sentence)"))
+      Left(_root_.com.histmersion.api.research.CritiqueReason.TidyResultPart1(s"reason for ${r.ref.wire}: ${text.length} characters (at most $MaxChars — one sentence)"))
     else
       Right(
         r.modify(

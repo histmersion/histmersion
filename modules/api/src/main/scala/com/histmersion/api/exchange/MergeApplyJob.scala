@@ -25,6 +25,8 @@ object MergeApplyJob:
   type InterruptedText = InterruptedTextValue
   type InterruptedTextValue = InterruptedTextValue.T
   object InterruptedTextValue extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type OfId = OfId.T
+  object OfId extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type OfBundle = _root_.com.histmersion.api.exchange.MergeApplyJob.Bundle
   val OfBundle: _root_.com.histmersion.api.exchange.MergeApplyJob.Bundle.type = _root_.com.histmersion.api.exchange.MergeApplyJob.Bundle
   type OfPlanHash = _root_.com.histmersion.api.exchange.MergeApplyJob.PlanHash
@@ -53,7 +55,7 @@ object MergeApplyJob:
       "shows what is left")
 
   def of(
-      id: com.histmersion.api.jobs.Job.Id,
+      id: com.histmersion.api.exchange.MergeApplyJob.OfId,
       status: JobState,
       bundle: com.histmersion.api.exchange.MergeApplyJob.OfBundle,
       planHash: com.histmersion.api.exchange.MergeApplyJob.OfPlanHash,

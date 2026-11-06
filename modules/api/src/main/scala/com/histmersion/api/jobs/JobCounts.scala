@@ -14,19 +14,39 @@ final case class JobCounts(
     cancelled: JobCounts.Cancelled = _root_.com.histmersion.api.jobs.JobCounts.Cancelled(0)
 ) derives KindlingsCodecAsObject,
       KindlingsSchema, com.histmersion.api.json.Schema:
-  def of(s: JobState): com.histmersion.api.jobs.JobCounts.Count = s match
-    case JobState.Queued    => _root_.com.histmersion.api.jobs.JobCounts.Count((queued).value)
-    case JobState.Running   => _root_.com.histmersion.api.jobs.JobCounts.Count((running).value)
-    case JobState.Done      => _root_.com.histmersion.api.jobs.JobCounts.Count((done).value)
-    case JobState.Failed    => _root_.com.histmersion.api.jobs.JobCounts.Count((failed).value)
-    case JobState.Paused    => _root_.com.histmersion.api.jobs.JobCounts.Count((paused).value)
-    case JobState.Cancelled => _root_.com.histmersion.api.jobs.JobCounts.Count((cancelled).value)
+  def of(s: JobState): com.histmersion.api.jobs.JobCounts.OfResult = s match
+    case JobState.Queued    => _root_.com.histmersion.api.jobs.JobCounts.OfResult((queued).value)
+    case JobState.Running   => _root_.com.histmersion.api.jobs.JobCounts.OfResult((running).value)
+    case JobState.Done      => _root_.com.histmersion.api.jobs.JobCounts.OfResult((done).value)
+    case JobState.Failed    => _root_.com.histmersion.api.jobs.JobCounts.OfResult((failed).value)
+    case JobState.Paused    => _root_.com.histmersion.api.jobs.JobCounts.OfResult((paused).value)
+    case JobState.Cancelled => _root_.com.histmersion.api.jobs.JobCounts.OfResult((cancelled).value)
 object JobCounts:
-  type Count = Count.T
-  object Count extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
 
+  type OfLoopRestPart1 = OfLoopRestPart1.T
+  object OfLoopRestPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type OfLoopRestPart2 = OfLoopRestPart2.T
+  object OfLoopRestPart2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type OfLoopQueued = OfLoopQueued.T
+  object OfLoopQueued extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type OfLoopRunning = OfLoopRunning.T
+  object OfLoopRunning extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type OfLoopDone = OfLoopDone.T
+  object OfLoopDone extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type OfLoopFailed = OfLoopFailed.T
+  object OfLoopFailed extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type OfLoopPaused = OfLoopPaused.T
+  object OfLoopPaused extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type OfLoopCancelled = OfLoopCancelled.T
+  object OfLoopCancelled extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
+  type OfResult = OfResult.T
+  object OfResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type OfRowsPart1 = OfRowsPart1.T
+  object OfRowsPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type OfRowsPart2 = OfRowsPart2.T
+  object OfRowsPart2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
   type Queued = Queued.T
   object Queued extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
@@ -41,25 +61,25 @@ object JobCounts:
   type Cancelled = Cancelled.T
   object Cancelled extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
-  def of(rows: List[(com.histmersion.api.jobs.JobState.Wire, com.histmersion.api.jobs.JobCounts.Count)]): JobCounts =
+  def of(rows: List[(com.histmersion.api.jobs.JobCounts.OfRowsPart1, com.histmersion.api.jobs.JobCounts.OfRowsPart2)]): JobCounts =
     @tailrec def loop(
-        rest: List[(com.histmersion.api.jobs.JobState.Wire, com.histmersion.api.jobs.JobCounts.Count)],
-        queued: com.histmersion.api.jobs.JobCounts.Queued,
-        running: com.histmersion.api.jobs.JobCounts.Running,
-        done: com.histmersion.api.jobs.JobCounts.Done,
-        failed: com.histmersion.api.jobs.JobCounts.Failed,
-        paused: com.histmersion.api.jobs.JobCounts.Paused,
-        cancelled: com.histmersion.api.jobs.JobCounts.Cancelled
+        rest: List[(com.histmersion.api.jobs.JobCounts.OfLoopRestPart1, com.histmersion.api.jobs.JobCounts.OfLoopRestPart2)],
+        queued: com.histmersion.api.jobs.JobCounts.OfLoopQueued,
+        running: com.histmersion.api.jobs.JobCounts.OfLoopRunning,
+        done: com.histmersion.api.jobs.JobCounts.OfLoopDone,
+        failed: com.histmersion.api.jobs.JobCounts.OfLoopFailed,
+        paused: com.histmersion.api.jobs.JobCounts.OfLoopPaused,
+        cancelled: com.histmersion.api.jobs.JobCounts.OfLoopCancelled
     ): JobCounts =
       rest match
         case Nil            => JobCounts(queued, running, done, failed, paused, cancelled)
         case (s, n) :: tail =>
           JobState.parse(s) match
-            case Some(JobState.Queued)    => loop(tail, _root_.com.histmersion.api.jobs.JobCounts.Queued((queued).value + (n).value), running, done, failed, paused, cancelled)
-            case Some(JobState.Running)   => loop(tail, queued, _root_.com.histmersion.api.jobs.JobCounts.Running((running).value + (n).value), done, failed, paused, cancelled)
-            case Some(JobState.Done)      => loop(tail, queued, running, _root_.com.histmersion.api.jobs.JobCounts.Done((done).value + (n).value), failed, paused, cancelled)
-            case Some(JobState.Failed)    => loop(tail, queued, running, done, _root_.com.histmersion.api.jobs.JobCounts.Failed((failed).value + (n).value), paused, cancelled)
-            case Some(JobState.Paused)    => loop(tail, queued, running, done, failed, _root_.com.histmersion.api.jobs.JobCounts.Paused((paused).value + (n).value), cancelled)
-            case Some(JobState.Cancelled) => loop(tail, queued, running, done, failed, paused, _root_.com.histmersion.api.jobs.JobCounts.Cancelled((cancelled).value + (n).value))
+            case Some(JobState.Queued)    => loop(tail, _root_.com.histmersion.api.jobs.JobCounts.OfLoopQueued((queued).value + (n).value), running, done, failed, paused, cancelled)
+            case Some(JobState.Running)   => loop(tail, queued, _root_.com.histmersion.api.jobs.JobCounts.OfLoopRunning((running).value + (n).value), done, failed, paused, cancelled)
+            case Some(JobState.Done)      => loop(tail, queued, running, _root_.com.histmersion.api.jobs.JobCounts.OfLoopDone((done).value + (n).value), failed, paused, cancelled)
+            case Some(JobState.Failed)    => loop(tail, queued, running, done, _root_.com.histmersion.api.jobs.JobCounts.OfLoopFailed((failed).value + (n).value), paused, cancelled)
+            case Some(JobState.Paused)    => loop(tail, queued, running, done, failed, _root_.com.histmersion.api.jobs.JobCounts.OfLoopPaused((paused).value + (n).value), cancelled)
+            case Some(JobState.Cancelled) => loop(tail, queued, running, done, failed, paused, _root_.com.histmersion.api.jobs.JobCounts.OfLoopCancelled((cancelled).value + (n).value))
             case None                     => loop(tail, queued, running, done, failed, paused, cancelled)
-    loop(rows, _root_.com.histmersion.api.jobs.JobCounts.Queued(0), _root_.com.histmersion.api.jobs.JobCounts.Running(0), _root_.com.histmersion.api.jobs.JobCounts.Done(0), _root_.com.histmersion.api.jobs.JobCounts.Failed(0), _root_.com.histmersion.api.jobs.JobCounts.Paused(0), _root_.com.histmersion.api.jobs.JobCounts.Cancelled(0))
+    loop(rows, _root_.com.histmersion.api.jobs.JobCounts.OfLoopQueued(0), _root_.com.histmersion.api.jobs.JobCounts.OfLoopRunning(0), _root_.com.histmersion.api.jobs.JobCounts.OfLoopDone(0), _root_.com.histmersion.api.jobs.JobCounts.OfLoopFailed(0), _root_.com.histmersion.api.jobs.JobCounts.OfLoopPaused(0), _root_.com.histmersion.api.jobs.JobCounts.OfLoopCancelled(0))

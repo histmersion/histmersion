@@ -29,6 +29,8 @@ object EventImportReport:
 
 
   /** An events import job's report, in its detail. */
+  type SummaryResult = SummaryResult.T
+  object SummaryResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type MarkdownResult = MarkdownResult.T
   object MarkdownResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
@@ -88,9 +90,9 @@ object EventImportReport:
       a.corrections + b.corrections
     )
 
-  def summary(r: EventImportReport): String =
+  def summary(r: EventImportReport): com.histmersion.api.catalogue.EventImportReport.SummaryResult =
     val verb = if (r.dryRun).value then "would create" else "created"
-    (List(
+    _root_.com.histmersion.api.catalogue.EventImportReport.SummaryResult(List(
       Some(s"${r.provider}: ${r.records} record(s) read, ${r.kept} kept"),
       Some(
         s"$verb ${r.created} event(s), ${r.merged} merged with another record of the same thing, ${r.matched} matched to stored events"

@@ -25,46 +25,90 @@ final case class Filter(
 ) derives KindlingsCodecAsObject,
       KindlingsSchema, com.histmersion.api.json.Schema:
 
-  def isEmpty: Boolean =
-    (q.forall((_).value.trim.isEmpty) && tags.isEmpty && authors.isEmpty && places.isEmpty && topics.isEmpty &&
+  def isEmpty: com.histmersion.api.library.Filter.IsEmptyResult =
+    _root_.com.histmersion.api.library.Filter.IsEmptyResult(q.forall((_).value.trim.isEmpty) && tags.isEmpty && authors.isEmpty && places.isEmpty && topics.isEmpty &&
       status.isEmpty && years.isEmpty && period.isEmpty && bbox.isEmpty && title.forall((_).value.trim.isEmpty) &&
       goal.forall((_).value.trim.isEmpty))
 
   def sourceSet: Filter = Filter(q, tags, authors, places, topics, status, years, period, bbox, goal = goal)
 
-  def hasFindingCriteria: Boolean = (period.isDefined || bbox.isDefined || places.nonEmpty || tags.nonEmpty)
+  def hasFindingCriteria: com.histmersion.api.library.Filter.HasFindingCriteriaResult = _root_.com.histmersion.api.library.Filter.HasFindingCriteriaResult(period.isDefined || bbox.isDefined || places.nonEmpty || tags.nonEmpty)
 
 object Filter:
-  type Latitude = Latitude.T
-  object Latitude extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type Longitude = Longitude.T
-  object Longitude extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type YearFrom = YearFrom.T
-  object YearFrom extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type YearTo = YearTo.T
-  object YearTo extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
 
   /** Open-ended bounds, far enough inside bigint that `int8range(..,'[]')` cannot overflow. */
+  type OfCleanXs = OfCleanXs.T
+  object OfCleanXs extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
+  type IsEmptyResult = IsEmptyResult.T
+  object IsEmptyResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type HasFindingCriteriaResult = HasFindingCriteriaResult.T
+  object HasFindingCriteriaResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type Earliest = EarliestValue
   type EarliestValue = EarliestValue.T
   object EarliestValue extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type Latest = LatestValue
   type LatestValue = LatestValue.T
   object LatestValue extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type OfFrom = _root_.com.histmersion.api.library.Filter.YearFrom
-  val OfFrom: _root_.com.histmersion.api.library.Filter.YearFrom.type = _root_.com.histmersion.api.library.Filter.YearFrom
-  type OfTo = _root_.com.histmersion.api.library.Filter.YearTo
-  val OfTo: _root_.com.histmersion.api.library.Filter.YearTo.type = _root_.com.histmersion.api.library.Filter.YearTo
-  type OfMinLon = _root_.com.histmersion.api.library.Filter.Longitude
-  val OfMinLon: _root_.com.histmersion.api.library.Filter.Longitude.type = _root_.com.histmersion.api.library.Filter.Longitude
-  type OfMinLat = _root_.com.histmersion.api.library.Filter.Latitude
-  val OfMinLat: _root_.com.histmersion.api.library.Filter.Latitude.type = _root_.com.histmersion.api.library.Filter.Latitude
-  type OfMaxLon = _root_.com.histmersion.api.library.Filter.Longitude
-  val OfMaxLon: _root_.com.histmersion.api.library.Filter.Longitude.type = _root_.com.histmersion.api.library.Filter.Longitude
-  type OfMaxLat = _root_.com.histmersion.api.library.Filter.Latitude
-  val OfMaxLat: _root_.com.histmersion.api.library.Filter.Latitude.type = _root_.com.histmersion.api.library.Filter.Latitude
+  type ClampResult = ClampResult.T
+  object ClampResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type ClampV = ClampV.T
+  object ClampV extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type PeriodOfFrom = PeriodOfFrom.T
+  object PeriodOfFrom extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type PeriodOfTo = PeriodOfTo.T
+  object PeriodOfTo extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type LowerGivenResult = LowerGivenResult.T
+  object LowerGivenResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type UpperGivenResult = UpperGivenResult.T
+  object UpperGivenResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type BboxOfMinLon = BboxOfMinLon.T
+  object BboxOfMinLon extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type BboxOfMinLat = BboxOfMinLat.T
+  object BboxOfMinLat extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type BboxOfMaxLon = BboxOfMaxLon.T
+  object BboxOfMaxLon extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type BboxOfMaxLat = BboxOfMaxLat.T
+  object BboxOfMaxLat extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type OfQ = OfQ.T
+  object OfQ extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type OfTags = OfTags.T
+  object OfTags extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type OfAuthors = OfAuthors.T
+  object OfAuthors extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type OfPlaces = OfPlaces.T
+  object OfPlaces extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type OfTopics = OfTopics.T
+  object OfTopics extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type OfStatus = OfStatus.T
+  object OfStatus extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type OfYearFrom = OfYearFrom.T
+  object OfYearFrom extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type OfYearTo = OfYearTo.T
+  object OfYearTo extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type OfFrom = _root_.com.histmersion.api.library.Filter.PeriodOfFrom
+  val OfFrom: _root_.com.histmersion.api.library.Filter.PeriodOfFrom.type = _root_.com.histmersion.api.library.Filter.PeriodOfFrom
+  type OfTo = _root_.com.histmersion.api.library.Filter.PeriodOfTo
+  val OfTo: _root_.com.histmersion.api.library.Filter.PeriodOfTo.type = _root_.com.histmersion.api.library.Filter.PeriodOfTo
+  type OfMinLon = _root_.com.histmersion.api.library.Filter.BboxOfMinLon
+  val OfMinLon: _root_.com.histmersion.api.library.Filter.BboxOfMinLon.type = _root_.com.histmersion.api.library.Filter.BboxOfMinLon
+  type OfMinLat = _root_.com.histmersion.api.library.Filter.BboxOfMinLat
+  val OfMinLat: _root_.com.histmersion.api.library.Filter.BboxOfMinLat.type = _root_.com.histmersion.api.library.Filter.BboxOfMinLat
+  type OfMaxLon = _root_.com.histmersion.api.library.Filter.BboxOfMaxLon
+  val OfMaxLon: _root_.com.histmersion.api.library.Filter.BboxOfMaxLon.type = _root_.com.histmersion.api.library.Filter.BboxOfMaxLon
+  type OfMaxLat = _root_.com.histmersion.api.library.Filter.BboxOfMaxLat
+  val OfMaxLat: _root_.com.histmersion.api.library.Filter.BboxOfMaxLat.type = _root_.com.histmersion.api.library.Filter.BboxOfMaxLat
+  type OfSort = OfSort.T
+  object OfSort extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type OfLimit = OfLimit.T
+  object OfLimit extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type OfOffset = OfOffset.T
+  object OfOffset extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type OfTitle = OfTitle.T
+  object OfTitle extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type OfGoal = OfGoal.T
+  object OfGoal extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
   type Q = Q.T
   object Q extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
@@ -93,51 +137,51 @@ object Filter:
   /** Postgres rejects an inverted range (`range lower bound must be less than or equal to range upper bound`), so a
     * nonsense bound is clamped before it can build one.
     */
-  def clamp(v: com.histmersion.api.library.Tree.Year): com.histmersion.api.library.Tree.Year = math.max(Earliest, math.min(Latest, (v).value))
+  def clamp(v: com.histmersion.api.library.Filter.ClampV): com.histmersion.api.library.Filter.ClampResult = math.max(Earliest, math.min(Latest, (v).value))
 
-  def periodOf(from: Option[com.histmersion.api.library.Filter.YearFrom], to: Option[com.histmersion.api.library.Filter.YearTo]): Option[Period] =
-    (from.map({ val refactorFunction4 = clamp; (refactorValue36) => refactorFunction4(_root_.com.histmersion.api.library.Tree.Year((refactorValue36).value)) }), to.map({ val refactorFunction5 = clamp; (refactorValue37) => refactorFunction5(_root_.com.histmersion.api.library.Tree.Year((refactorValue37).value)) })) match
+  def periodOf(from: Option[com.histmersion.api.library.Filter.PeriodOfFrom], to: Option[com.histmersion.api.library.Filter.PeriodOfTo]): Option[Period] =
+    (from.map({ val refactorFunction4 = clamp; (refactorValue36) => refactorFunction4(_root_.com.histmersion.api.library.Filter.ClampV((refactorValue36).value)) }), to.map({ val refactorFunction5 = clamp; (refactorValue37) => refactorFunction5(_root_.com.histmersion.api.library.Filter.ClampV((refactorValue37).value)) })) match
       case (None, None)       => None
       case (Some(a), Some(b)) => Some(if a <= b then Period(a, b) else Period(b, a))
       case (Some(a), None)    => Some(Period(a, Latest))
       case (None, Some(b))    => Some(Period(Earliest, b))
 
-  def lowerGiven(p: Option[Period]): Option[com.histmersion.api.library.Filter.YearFrom] = p.map(_.start).filter(_ != Earliest)
+  def lowerGiven(p: Option[Period]): Option[com.histmersion.api.library.Filter.LowerGivenResult] = p.map(_.start).filter(_ != Earliest)
 
-  def upperGiven(p: Option[Period]): Option[com.histmersion.api.library.Filter.YearTo] = p.map(_.end).filter(_ != Latest)
+  def upperGiven(p: Option[Period]): Option[com.histmersion.api.library.Filter.UpperGivenResult] = p.map(_.end).filter(_ != Latest)
 
   def bboxOf(
-      minLon: Option[com.histmersion.api.library.Filter.Longitude],
-      minLat: Option[com.histmersion.api.library.Filter.Latitude],
-      maxLon: Option[com.histmersion.api.library.Filter.Longitude],
-      maxLat: Option[com.histmersion.api.library.Filter.Latitude]
+      minLon: Option[com.histmersion.api.library.Filter.BboxOfMinLon],
+      minLat: Option[com.histmersion.api.library.Filter.BboxOfMinLat],
+      maxLon: Option[com.histmersion.api.library.Filter.BboxOfMaxLon],
+      maxLat: Option[com.histmersion.api.library.Filter.BboxOfMaxLat]
   ): Option[BBox] =
     (minLon, minLat, maxLon, maxLat) match
       case (Some(a), Some(b), Some(c), Some(d)) => Some(BBox(a, b, c, d))
       case _                                    => None
 
   def of(
-      q: Option[com.histmersion.api.library.Filter.Q] = None,
-      tags: List[com.histmersion.api.library.Filter.Tags] = Nil,
-      authors: List[com.histmersion.api.library.Filter.Authors] = Nil,
-      places: List[com.histmersion.api.library.Filter.Places] = Nil,
-      topics: List[com.histmersion.api.library.Filter.Topics] = Nil,
-      status: List[com.histmersion.api.library.Filter.Status] = Nil,
-      yearFrom: Option[com.histmersion.api.library.Filter.YearFrom] = None,
-      yearTo: Option[com.histmersion.api.library.Filter.YearTo] = None,
+      q: Option[com.histmersion.api.library.Filter.OfQ] = None,
+      tags: List[com.histmersion.api.library.Filter.OfTags] = Nil,
+      authors: List[com.histmersion.api.library.Filter.OfAuthors] = Nil,
+      places: List[com.histmersion.api.library.Filter.OfPlaces] = Nil,
+      topics: List[com.histmersion.api.library.Filter.OfTopics] = Nil,
+      status: List[com.histmersion.api.library.Filter.OfStatus] = Nil,
+      yearFrom: Option[com.histmersion.api.library.Filter.OfYearFrom] = None,
+      yearTo: Option[com.histmersion.api.library.Filter.OfYearTo] = None,
       from: Option[com.histmersion.api.library.Filter.OfFrom] = None,
       to: Option[com.histmersion.api.library.Filter.OfTo] = None,
       minLon: Option[com.histmersion.api.library.Filter.OfMinLon] = None,
       minLat: Option[com.histmersion.api.library.Filter.OfMinLat] = None,
       maxLon: Option[com.histmersion.api.library.Filter.OfMaxLon] = None,
       maxLat: Option[com.histmersion.api.library.Filter.OfMaxLat] = None,
-      sort: Option[com.histmersion.api.library.Filter.Query.Sort] = None,
-      limit: Option[com.histmersion.api.library.Filter.Limit] = None,
-      offset: Option[com.histmersion.api.personal.UnreadPage.Offset] = None,
-      title: Option[com.histmersion.api.library.Filter.Title] = None,
-      goal: Option[com.histmersion.api.library.Filter.Goal] = None
+      sort: Option[com.histmersion.api.library.Filter.OfSort] = None,
+      limit: Option[com.histmersion.api.library.Filter.OfLimit] = None,
+      offset: Option[com.histmersion.api.library.Filter.OfOffset] = None,
+      title: Option[com.histmersion.api.library.Filter.OfTitle] = None,
+      goal: Option[com.histmersion.api.library.Filter.OfGoal] = None
   ): Filter =
-    def clean(xs: List[String]) = xs.flatMap((_).value.split(",")).map(_.trim).filter(_.nonEmpty)
+    def clean(xs: List[com.histmersion.api.library.Filter.OfCleanXs]) = xs.flatMap((_).value.split(",")).map(_.trim).filter(_.nonEmpty)
     Filter(
       q = q.map((_).value.trim).filter((_).value.nonEmpty),
       tags = clean(tags),
@@ -145,7 +189,7 @@ object Filter:
       places = clean(places),
       topics = clean(topics),
       status = clean(status),
-      years = periodOf((yearFrom).map(refactorValue10 => _root_.com.histmersion.api.library.Filter.YearFrom((refactorValue10).value)), (yearTo).map(refactorValue46 => _root_.com.histmersion.api.library.Filter.YearTo((refactorValue46).value))),
+      years = periodOf((yearFrom).map(refactorValue10 => _root_.com.histmersion.api.library.Filter.PeriodOfFrom((refactorValue10).value)), (yearTo).map(refactorValue46 => _root_.com.histmersion.api.library.Filter.PeriodOfTo((refactorValue46).value))),
       period = periodOf(from, to),
       bbox = bboxOf(minLon, minLat, maxLon, maxLat),
       sort = sort.flatMap(Sort.parse).getOrElse(Sort.Relevance),
@@ -157,9 +201,9 @@ object Filter:
 
   /** [[Param.brief]] is the agents' wording, a few words: every turn of an agent step re-sends a tool's schema. */
   object Docs:
-    type Description = Description.T
-    object Description extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
+    type DescribeWithTextResult = DescribeWithTextResult.T
+    object DescribeWithTextResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
     final case class Param(rest: Param.Rest, mcp: Param.Mcp, doc: Param.Doc, brief: Param.Brief)
 
@@ -263,7 +307,7 @@ object Filter:
 
     def describeBrief[T](schema: Schema[T]): Schema[T] = describeWith(schema)(_.brief)
 
-    private def describeWith[T](schema: Schema[T])(text: Param => com.histmersion.api.library.Filter.Docs.Description): Schema[T] =
+    private def describeWith[T](schema: Schema[T])(text: Param => com.histmersion.api.library.Filter.Docs.DescribeWithTextResult): Schema[T] =
       all.foldLeft(schema)((s, p) => s.modifyUnsafe[Any](p.mcp)(_.description(text(p))))
 
   /** One case class so Tapir can `mapInTo` it. The parameter names are fixed: callers send them as REST query

@@ -27,10 +27,6 @@ final case class Goal(
       KindlingsSchema, com.histmersion.api.json.Schema
 
 object Goal:
-  type LinkSectionKey = LinkSectionKey.T
-  object LinkSectionKey extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type Uid = Uid.T
-  object Uid extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
   /** The stages of a research goal, as the store and the wire spell them. */
   type Slug = Slug.T
@@ -74,14 +70,20 @@ object Goal:
     type Wire = Wire.T
     object Wire extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
+    type ParseS = ParseS.T
+    object ParseS extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type WireResult = WireResult.T
+    object WireResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type FromWireS = FromWireS.T
+    object FromWireS extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
     val SearchQuery: LinkKind = Query
 
-    def parse(s: com.histmersion.api.automation.Goal.LinkKind.Wire): Option[LinkKind] = values.find(_.wire == _root_.com.histmersion.api.automation.Goal.LinkKind.Wire((s).value.trim.toLowerCase))
+    def parse(s: com.histmersion.api.automation.Goal.LinkKind.ParseS): Option[LinkKind] = values.find(_.wire == _root_.com.histmersion.api.automation.Goal.LinkKind.Wire((s).value.trim.toLowerCase))
     given WireEnumValues[LinkKind]:
       def all: Array[LinkKind] = LinkKind.values
-      def wire(e: LinkKind): _root_.com.histmersion.api.WireEnumValues.Wire = _root_.com.histmersion.api.WireEnumValues.Wire((e.wire).value)
-      def fromWire(s: _root_.com.histmersion.api.WireEnumValues.Wire): _root_.scala.Option[LinkKind] = parse(_root_.com.histmersion.api.automation.Goal.LinkKind.Wire((s).value))
+      def wire(e: LinkKind): _root_.com.histmersion.api.WireEnumValues.WireResult = _root_.com.histmersion.api.WireEnumValues.WireResult((e.wire).value)
+      def fromWire(s: _root_.com.histmersion.api.WireEnumValues.FromWireS): _root_.scala.Option[LinkKind] = parse(_root_.com.histmersion.api.automation.Goal.LinkKind.ParseS((s).value))
 
 
   final case class Deleted(
@@ -107,8 +109,12 @@ object Goal:
 
   object List:
 
+    type OfTotal = OfTotal.T
+    object OfTotal extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type OfOffset = OfOffset.T
+    object OfOffset extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
-    def of(total: com.histmersion.api.RowCount, rows: scala.List[Goal], offset: com.histmersion.api.personal.UnreadPage.Offset): List =
+    def of(total: com.histmersion.api.automation.Goal.List.OfTotal, rows: scala.List[Goal], offset: com.histmersion.api.automation.Goal.List.OfOffset): List =
       List(com.histmersion.api.RowCount((total).value), rows, com.histmersion.api.Offset((offset).value), OffsetPage(com.histmersion.api.RowCount((total).value), com.histmersion.api.Offset((offset).value), com.histmersion.api.RowCount(rows.size)).next)
 
   final case class Patch(
@@ -172,9 +178,11 @@ object Goal:
         dropped: scala.List[Plan.Dropped] = Nil
     ) derives KindlingsCodecAsObject,
           KindlingsSchema, com.histmersion.api.json.Schema:
-      def isEmpty: Boolean = (subGoals.isEmpty && queries.isEmpty && works.isEmpty)
+      def isEmpty: com.histmersion.api.automation.Goal.Plans.Plan.IsEmptyResult = _root_.com.histmersion.api.automation.Goal.Plans.Plan.IsEmptyResult(subGoals.isEmpty && queries.isEmpty && works.isEmpty)
 
     object Plan:
+      type IsEmptyResult = IsEmptyResult.T
+      object IsEmptyResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
       type Rationale = Rationale.T
       object Rationale extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
@@ -226,8 +234,6 @@ object Goal:
           KindlingsSchema, com.histmersion.api.json.Schema
 
     object GoalLink:
-      type QueueNumber = QueueNumber.T
-      object QueueNumber extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
       type Ref = Ref.T
       object Ref extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
       type Note = Note.T

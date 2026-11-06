@@ -5,8 +5,12 @@ package com.histmersion.api
   */
 object Csv:
 
+  type ParseResult = ParseResult.T
+  object ParseResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type ParseText = ParseText.T
+  object ParseText extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
-  def parse(text: String): List[List[String]] =
+  def parse(text: com.histmersion.api.Csv.ParseText): List[List[com.histmersion.api.Csv.ParseResult]] =
     val rows = List.newBuilder[List[String]]
     var row = List.newBuilder[String]
     val field = new StringBuilder
@@ -22,7 +26,7 @@ object Csv:
       row = List.newBuilder[String]
       any = false
 
-    val s = (text).replace("\r\n", "\n").replace('\r', '\n')
+    val s = (text).value.replace("\r\n", "\n").replace('\r', '\n')
     while i < s.length do
       val c = s.charAt(i)
       if quoted then
@@ -39,4 +43,4 @@ object Csv:
           case _    => field += c; if !c.isWhitespace then any = true
       i += 1
     endRow()
-    (rows.result()).map(refactorValue => (refactorValue).map(refactorValue2 => (refactorValue2)))
+    (rows.result()).map(refactorValue => (refactorValue).map(refactorValue2 => _root_.com.histmersion.api.Csv.ParseResult(refactorValue2)))

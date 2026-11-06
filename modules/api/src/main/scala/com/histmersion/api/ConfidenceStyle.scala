@@ -3,35 +3,43 @@ package com.histmersion.api
 import com.histmersion.api.library.Confidence
 
 object ConfidenceStyle:
-  type Rank = Rank.T
-  object Rank extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type Rgb = Rgb.T
-  object Rgb extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type Saturation = Saturation.T
-  object Saturation extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
+  type DesaturateMixV = DesaturateMixV.T
+  object DesaturateMixV extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
+  type SaturationResult = SaturationResult.T
+  object SaturationResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type RankResult = RankResult.T
+  object RankResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type DesaturateResult = DesaturateResult.T
+  object DesaturateResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type DesaturateRgb = DesaturateRgb.T
+  object DesaturateRgb extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type IconResult = IconResult.T
+  object IconResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type LabelResult = LabelResult.T
+  object LabelResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
-  def saturation(c: Confidence): com.histmersion.api.ConfidenceStyle.Saturation = c match
-    case Confidence.High      => _root_.com.histmersion.api.ConfidenceStyle.Saturation(1.0)
-    case Confidence.Medium    => _root_.com.histmersion.api.ConfidenceStyle.Saturation(0.7)
-    case Confidence.Low       => _root_.com.histmersion.api.ConfidenceStyle.Saturation(0.4)
-    case Confidence.Contested => _root_.com.histmersion.api.ConfidenceStyle.Saturation(0.3)
+  def saturation(c: Confidence): com.histmersion.api.ConfidenceStyle.SaturationResult = c match
+    case Confidence.High      => _root_.com.histmersion.api.ConfidenceStyle.SaturationResult(1.0)
+    case Confidence.Medium    => _root_.com.histmersion.api.ConfidenceStyle.SaturationResult(0.7)
+    case Confidence.Low       => _root_.com.histmersion.api.ConfidenceStyle.SaturationResult(0.4)
+    case Confidence.Contested => _root_.com.histmersion.api.ConfidenceStyle.SaturationResult(0.3)
 
-  def rank(c: Confidence): com.histmersion.api.ConfidenceStyle.Rank = c match
-    case Confidence.Contested => _root_.com.histmersion.api.ConfidenceStyle.Rank(0)
-    case Confidence.Low       => _root_.com.histmersion.api.ConfidenceStyle.Rank(1)
-    case Confidence.Medium    => _root_.com.histmersion.api.ConfidenceStyle.Rank(2)
-    case Confidence.High      => _root_.com.histmersion.api.ConfidenceStyle.Rank(3)
+  def rank(c: Confidence): com.histmersion.api.ConfidenceStyle.RankResult = c match
+    case Confidence.Contested => _root_.com.histmersion.api.ConfidenceStyle.RankResult(0)
+    case Confidence.Low       => _root_.com.histmersion.api.ConfidenceStyle.RankResult(1)
+    case Confidence.Medium    => _root_.com.histmersion.api.ConfidenceStyle.RankResult(2)
+    case Confidence.High      => _root_.com.histmersion.api.ConfidenceStyle.RankResult(3)
 
-  def desaturate(rgb: com.histmersion.api.ConfidenceStyle.Rgb, c: Confidence): com.histmersion.api.ConfidenceStyle.Rgb =
+  def desaturate(rgb: com.histmersion.api.ConfidenceStyle.DesaturateRgb, c: Confidence): com.histmersion.api.ConfidenceStyle.DesaturateResult =
     val s = saturation(c)
     "\\d+".r.findAllIn((rgb).value).take(3).map(_.toInt).toList match
       case r :: g :: b :: Nil if (s).value < 1.0 =>
         val grey = (0.299 * r + 0.587 * g + 0.114 * b).round.toInt
-        def mix(v: Int) = (grey + ((v) - grey) * s).round.toInt
-        s"rgb(${mix((r))},${mix((g))},${mix((b))})"
-      case _ => _root_.com.histmersion.api.ConfidenceStyle.Rgb((rgb).value)
+        def mix(v: com.histmersion.api.ConfidenceStyle.DesaturateMixV) = (grey + ((v).value - grey) * s).round.toInt
+        s"rgb(${mix(_root_.com.histmersion.api.ConfidenceStyle.DesaturateMixV(r))},${mix(_root_.com.histmersion.api.ConfidenceStyle.DesaturateMixV(g))},${mix(_root_.com.histmersion.api.ConfidenceStyle.DesaturateMixV(b))})"
+      case _ => _root_.com.histmersion.api.ConfidenceStyle.DesaturateResult((rgb).value)
 
   final case class IconPart(d: IconPart.D, filled: IconPart.Filled)
 
@@ -51,13 +59,13 @@ object ConfidenceStyle:
 
   val IconViewBox = "0 0 10 10"
 
-  def icon(c: Confidence): String =
+  def icon(c: Confidence): com.histmersion.api.ConfidenceStyle.IconResult =
     val parts = iconParts(c)
       .map(p =>
         if ((p.filled) == _root_.com.histmersion.api.ConfidenceStyle.IconPart.Filled(true)) then s"""<path d="${p.d}" fill="currentColor"/>"""
         else s"""<path d="${p.d}" fill="none" stroke="currentColor"/>"""
       )
       .mkString
-    (s"""<svg class="conf-icon" width="10" height="10" viewBox="$IconViewBox" aria-hidden="true">$parts</svg>""")
+    _root_.com.histmersion.api.ConfidenceStyle.IconResult(s"""<svg class="conf-icon" width="10" height="10" viewBox="$IconViewBox" aria-hidden="true">$parts</svg>""")
 
-  def label(c: Confidence): String = (s"${c.toString.toLowerCase} confidence")
+  def label(c: Confidence): com.histmersion.api.ConfidenceStyle.LabelResult = _root_.com.histmersion.api.ConfidenceStyle.LabelResult(s"${c.toString.toLowerCase} confidence")

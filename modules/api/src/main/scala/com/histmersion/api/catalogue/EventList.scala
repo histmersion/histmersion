@@ -15,11 +15,11 @@ final case class EventList(
       KindlingsSchema, com.histmersion.api.json.Schema:
   def page: OffsetPage = OffsetPage(total, offset, com.histmersion.api.RowCount(events.size))
 object EventList:
-  type Limit = Limit.T
-  object Limit extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type Total = Total.T
-  object Total extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
+  type OfTotal = OfTotal.T
+  object OfTotal extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type OfOffset = OfOffset.T
+  object OfOffset extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
-  def of(total: com.histmersion.api.catalogue.EventList.Total, rows: List[EventSummary], offset: com.histmersion.api.personal.UnreadPage.Offset): EventList =
+  def of(total: com.histmersion.api.catalogue.EventList.OfTotal, rows: List[EventSummary], offset: com.histmersion.api.catalogue.EventList.OfOffset): EventList =
     EventList(com.histmersion.api.RowCount((total).value), rows, com.histmersion.api.Offset((offset).value), OffsetPage(com.histmersion.api.RowCount((total).value), com.histmersion.api.Offset((offset).value), com.histmersion.api.RowCount(rows.size)).next)

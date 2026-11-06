@@ -10,12 +10,24 @@ import com.histmersion.api.given
   */
 
 object PeriodO:
-  type Problem = Problem.T
-  object Problem extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type Wire = Wire.T
-  object Wire extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
+  type ParseStringsResultPart1 = ParseStringsResultPart1.T
+  object ParseStringsResultPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type ParseStringsResultPart2 = ParseStringsResultPart2.T
+  object ParseStringsResultPart2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type ParseStringsKey = ParseStringsKey.T
+  object ParseStringsKey extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type DefinitionSkipDetail = DefinitionSkipDetail.T
+  object DefinitionSkipDetail extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type DefinitionOutsideY = DefinitionOutsideY.T
+  object DefinitionOutsideY extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type ParentsFirstVisitPath = ParentsFirstVisitPath.T
+  object ParentsFirstVisitPath extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
+  type IsoYearResult = IsoYearResult.T
+  object IsoYearResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type IsoYearRaw = IsoYearRaw.T
+  object IsoYearRaw extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type MinYear = MinYearValue
   type MinYearValue = MinYearValue.T
   object MinYearValue extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
@@ -31,12 +43,38 @@ object PeriodO:
   type MinSiblings = MinSiblingsValue
   type MinSiblingsValue = MinSiblingsValue.T
   object MinSiblingsValue extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type ParseResultPart1 = ParseResultPart1.T
+  object ParseResultPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type ParseJson = ParseJson.T
+  object ParseJson extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type AuthorityId = _root_.com.histmersion.api.catalogue.PeriodO.Authority.Id
   val AuthorityId: _root_.com.histmersion.api.catalogue.PeriodO.Authority.Id.type = _root_.com.histmersion.api.catalogue.PeriodO.Authority.Id
   type DefinitionId = _root_.com.histmersion.api.catalogue.PeriodO.Definition.Id
   val DefinitionId: _root_.com.histmersion.api.catalogue.PeriodO.Definition.Id.type = _root_.com.histmersion.api.catalogue.PeriodO.Definition.Id
+  type BoundResult = BoundResult.T
+  object BoundResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type BoundOuter = BoundOuter.T
+  object BoundOuter extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type YearAtResult = YearAtResult.T
+  object YearAtResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type YearAtKey = YearAtKey.T
+  object YearAtKey extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type StrResult = StrResult.T
+  object StrResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type StrKey = StrKey.T
+  object StrKey extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type IntResult = IntResult.T
+  object IntResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type IntKey = IntKey.T
+  object IntKey extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type ToPeriodsExistingPart1 = ToPeriodsExistingPart1.T
+  object ToPeriodsExistingPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type ToPeriodsExistingPart2 = ToPeriodsExistingPart2.T
+  object ToPeriodsExistingPart2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type ToPeriodsRoots = ToPeriodsRoots.T
+  object ToPeriodsRoots extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
-  def isoYear(raw: String): Option[com.histmersion.api.catalogue.Period.IsoYear] =
+  def isoYear(raw: com.histmersion.api.catalogue.PeriodO.IsoYearRaw): Option[com.histmersion.api.catalogue.PeriodO.IsoYearResult] =
     Years.parseIso(raw)
 
   /** The Lower Palaeolithic starts around 3.3 million years ago, and no period ends after 2100. */
@@ -52,17 +90,17 @@ object PeriodO:
 
   val MinSiblings: com.histmersion.api.catalogue.PeriodO.MinSiblings = _root_.com.histmersion.api.catalogue.PeriodO.MinSiblingsValue(3)
 
-  def parse(json: String): Either[com.histmersion.api.catalogue.PeriodO.Problem, PeriodODataset] =
+  def parse(json: com.histmersion.api.catalogue.PeriodO.ParseJson): Either[com.histmersion.api.catalogue.PeriodO.ParseResultPart1, PeriodODataset] =
     io.circe.parser.parse((json).value).left.map(e => s"not JSON: ${e.getMessage}").flatMap { doc =>
       val c = doc.hcursor
       val overlay = c.downField("histmersion")
-      def strings(key: com.histmersion.api.catalogue.PeriodO.Wire): List[(com.histmersion.api.catalogue.PeriodO.Definition.Id, String)] = (overlay
+      def strings(key: com.histmersion.api.catalogue.PeriodO.ParseStringsKey): List[(com.histmersion.api.catalogue.PeriodO.ParseStringsResultPart1, com.histmersion.api.catalogue.PeriodO.ParseStringsResultPart2)] = (overlay
         .downField((key).value)
         .focus
         .flatMap(_.asObject)
         .map(_.toList.flatMap((k, v) => v.asString.map(k -> _)))
-        .getOrElse(Nil)).map(refactorValue2 => { val refactorTuple = refactorValue2; (_root_.com.histmersion.api.catalogue.PeriodO.Definition.Id(refactorTuple._1), (refactorTuple._2)) })
-      val presets = strings(_root_.com.histmersion.api.catalogue.PeriodO.Wire("presets")).map((id, r) =>
+        .getOrElse(Nil)).map(refactorValue2 => { val refactorTuple = refactorValue2; (_root_.com.histmersion.api.catalogue.PeriodO.ParseStringsResultPart1(refactorTuple._1), _root_.com.histmersion.api.catalogue.PeriodO.ParseStringsResultPart2(refactorTuple._2)) })
+      val presets = strings(_root_.com.histmersion.api.catalogue.PeriodO.ParseStringsKey("presets")).map((id, r) =>
         PresetRegion
           .fromWire(r)
           .map(id -> _)
@@ -82,7 +120,7 @@ object PeriodO:
         val read = auths.toList.map((id, a) => authority(_root_.com.histmersion.api.catalogue.PeriodO.Authority.Id(id), a.hcursor))
         PeriodODataset(
           read.map(_._1),
-          strings(_root_.com.histmersion.api.catalogue.PeriodO.Wire("parents")).toMap,
+          strings(_root_.com.histmersion.api.catalogue.PeriodO.ParseStringsKey("parents")).toMap,
           read.flatMap(_._2),
           ps,
           overlay.downField("version").focus.flatMap(_.asNumber).flatMap((refactorCallback2 => (refactorCallback2.toInt).map(refactorValue3 => _root_.com.histmersion.api.PeriodODataset.Version(refactorValue3))))
@@ -94,8 +132,8 @@ object PeriodO:
       c: ACursor
   ): (com.histmersion.api.catalogue.PeriodO.Authority, List[SkippedPeriod]) =
     val src = c.downField("source")
-    val title = str(src, _root_.com.histmersion.api.catalogue.PeriodO.Wire("title")).orElse(str(src.downField("partOf"), _root_.com.histmersion.api.catalogue.PeriodO.Wire("title"))).getOrElse(id)
-    val year = int(src, _root_.com.histmersion.api.catalogue.PeriodO.Wire("yearPublished")).orElse(int(src.downField("partOf"), _root_.com.histmersion.api.catalogue.PeriodO.Wire("yearPublished")))
+    val title = str(src, _root_.com.histmersion.api.catalogue.PeriodO.StrKey("title")).orElse(str(src.downField("partOf"), _root_.com.histmersion.api.catalogue.PeriodO.StrKey("title"))).getOrElse(id)
+    val year = int(src, _root_.com.histmersion.api.catalogue.PeriodO.IntKey("yearPublished")).orElse(int(src.downField("partOf"), _root_.com.histmersion.api.catalogue.PeriodO.IntKey("yearPublished")))
     val defs = c
       .downField("periods")
       .focus
@@ -140,8 +178,8 @@ object PeriodO:
       c: ACursor
   ): Either[SkippedPeriod, com.histmersion.api.catalogue.PeriodO.Definition] =
     // FASTI labels its Ukrainian periods in Ukrainian, with the English label as an alternative
-    val own = str(c, _root_.com.histmersion.api.catalogue.PeriodO.Wire("label")).map((_).value.trim).filter(_.nonEmpty)
-    val english = str(c, _root_.com.histmersion.api.catalogue.PeriodO.Wire("languageTag")).exists((_).value.toLowerCase.startsWith("en"))
+    val own = str(c, _root_.com.histmersion.api.catalogue.PeriodO.StrKey("label")).map((_).value.trim).filter(_.nonEmpty)
+    val english = str(c, _root_.com.histmersion.api.catalogue.PeriodO.StrKey("languageTag")).exists((_).value.toLowerCase.startsWith("en"))
     val label = (if english then own else None)
       .orElse(
         c.downField("localizedLabels")
@@ -154,9 +192,9 @@ object PeriodO:
       )
       .orElse(own)
       .getOrElse(id)
-    val start = bound(c.downField("start").downField("in"), _root_.com.histmersion.api.catalogue.PeriodO.Wire("earliestYear"))
-    val stop = bound(c.downField("stop").downField("in"), _root_.com.histmersion.api.catalogue.PeriodO.Wire("latestYear"))
-    val region = str(c, _root_.com.histmersion.api.catalogue.PeriodO.Wire("spatialCoverageDescription")).map((_).value.trim).filter(_.nonEmpty).orElse {
+    val start = bound(c.downField("start").downField("in"), _root_.com.histmersion.api.catalogue.PeriodO.BoundOuter("earliestYear"))
+    val stop = bound(c.downField("stop").downField("in"), _root_.com.histmersion.api.catalogue.PeriodO.BoundOuter("latestYear"))
+    val region = str(c, _root_.com.histmersion.api.catalogue.PeriodO.StrKey("spatialCoverageDescription")).map((_).value.trim).filter(_.nonEmpty).orElse {
       val labels = c
         .downField("spatialCoverage")
         .focus
@@ -168,30 +206,30 @@ object PeriodO:
         .filter(_.nonEmpty)
       Option.when(labels.nonEmpty)(labels.mkString(", "))
     }
-    def skip(reason: Period.Skip, detail: com.histmersion.api.catalogue.PeriodO.Problem) = Left(SkippedPeriod(id, label, reason, detail))
-    def outside(y: com.histmersion.api.library.Tree.Year) = (y).value < (MinYear).value || (y).value > MaxYear
+    def skip(reason: Period.Skip, detail: com.histmersion.api.catalogue.PeriodO.DefinitionSkipDetail) = Left(SkippedPeriod(id, label, reason, detail))
+    def outside(y: com.histmersion.api.catalogue.PeriodO.DefinitionOutsideY) = (y).value < (MinYear).value || (y).value > MaxYear
     (start, stop) match
       case (Some(s), Some(e)) if outside(s) || outside(e) =>
-        skip(Period.Skip.OutOfRange, _root_.com.histmersion.api.catalogue.PeriodO.Problem(s"$s → $e lies outside $MinYear..$MaxYear"))
+        skip(Period.Skip.OutOfRange, _root_.com.histmersion.api.catalogue.PeriodO.DefinitionSkipDetail(s"$s → $e lies outside $MinYear..$MaxYear"))
       case (Some(s), Some(e)) if s <= e =>
-        Right(com.histmersion.api.catalogue.PeriodO.Definition(id, label, Period(s, e), (region).map(refactorValue => _root_.com.histmersion.api.catalogue.PeriodO.Definition.Region(refactorValue)), str(c, _root_.com.histmersion.api.catalogue.PeriodO.Wire("broader"))))
-      case (Some(s), Some(e)) => skip(Period.Skip.EndsBeforeStart, _root_.com.histmersion.api.catalogue.PeriodO.Problem(s"starts after it ends ($s > $e)"))
-      case _                  => skip(Period.Skip.NoSpan, _root_.com.histmersion.api.catalogue.PeriodO.Problem("no readable start or stop year"))
+        Right(com.histmersion.api.catalogue.PeriodO.Definition(id, label, Period(s, e), (region).map(refactorValue => _root_.com.histmersion.api.catalogue.PeriodO.Definition.Region(refactorValue)), str(c, _root_.com.histmersion.api.catalogue.PeriodO.StrKey("broader"))))
+      case (Some(s), Some(e)) => skip(Period.Skip.EndsBeforeStart, _root_.com.histmersion.api.catalogue.PeriodO.DefinitionSkipDetail(s"starts after it ends ($s > $e)"))
+      case _                  => skip(Period.Skip.NoSpan, _root_.com.histmersion.api.catalogue.PeriodO.DefinitionSkipDetail("no readable start or stop year"))
 
-  private def bound(in: ACursor, outer: com.histmersion.api.catalogue.PeriodO.Wire): Option[com.histmersion.api.library.Tree.Year] =
-    (yearAt(in, _root_.com.histmersion.api.catalogue.PeriodO.Wire("year")).orElse(yearAt(in, _root_.com.histmersion.api.catalogue.PeriodO.Wire((outer).value)))).map(refactorValue7 => _root_.com.histmersion.api.library.Tree.Year((refactorValue7).value))
+  private def bound(in: ACursor, outer: com.histmersion.api.catalogue.PeriodO.BoundOuter): Option[com.histmersion.api.catalogue.PeriodO.BoundResult] =
+    (yearAt(in, _root_.com.histmersion.api.catalogue.PeriodO.YearAtKey("year")).orElse(yearAt(in, _root_.com.histmersion.api.catalogue.PeriodO.YearAtKey((outer).value)))).map(refactorValue7 => _root_.com.histmersion.api.catalogue.PeriodO.BoundResult((refactorValue7).value))
 
-  private def yearAt(c: ACursor, key: com.histmersion.api.catalogue.PeriodO.Wire): Option[com.histmersion.api.library.Tree.Year] =
-    c.downField((key).value).focus.flatMap(j => j.asString.orElse(j.asNumber.map(_.toString))).flatMap((isoYear).map(refactorValue10 => _root_.com.histmersion.api.library.Tree.Year((refactorValue10).value)))
+  private def yearAt(c: ACursor, key: com.histmersion.api.catalogue.PeriodO.YearAtKey): Option[com.histmersion.api.catalogue.PeriodO.YearAtResult] =
+    c.downField((key).value).focus.flatMap(j => j.asString.orElse(j.asNumber.map(_.toString))).flatMap((isoYear).map(refactorValue10 => _root_.com.histmersion.api.catalogue.PeriodO.YearAtResult((refactorValue10).value)))
 
-  private def str(c: ACursor, key: com.histmersion.api.catalogue.PeriodO.Wire): Option[String] = c.downField((key).value).focus.flatMap((refactorCallback => (refactorCallback.asString).map(refactorValue4 => (refactorValue4))))
-  private def int(c: ACursor, key: com.histmersion.api.catalogue.PeriodO.Wire): Option[com.histmersion.api.catalogue.Year] =
-    c.downField((key).value).focus.flatMap(j => (j.asNumber.flatMap(_.toInt).orElse(j.asString.flatMap(_.toIntOption))).map(refactorValue12 => _root_.com.histmersion.api.catalogue.Year(refactorValue12)))
+  private def str(c: ACursor, key: com.histmersion.api.catalogue.PeriodO.StrKey): Option[com.histmersion.api.catalogue.PeriodO.StrResult] = c.downField((key).value).focus.flatMap((refactorCallback => (refactorCallback.asString).map(refactorValue4 => _root_.com.histmersion.api.catalogue.PeriodO.StrResult(refactorValue4))))
+  private def int(c: ACursor, key: com.histmersion.api.catalogue.PeriodO.IntKey): Option[com.histmersion.api.catalogue.PeriodO.IntResult] =
+    c.downField((key).value).focus.flatMap(j => (j.asNumber.flatMap(_.toInt).orElse(j.asString.flatMap(_.toIntOption))).map(refactorValue12 => _root_.com.histmersion.api.catalogue.PeriodO.IntResult(refactorValue12)))
 
   def toPeriods(
       ds: PeriodODataset,
-      existing: Map[com.histmersion.api.catalogue.PeriodO.Definition.Id, Option[com.histmersion.api.catalogue.PeriodO.Definition.Id]] = Map.empty,
-      roots: Boolean = (false)
+      existing: Map[com.histmersion.api.catalogue.PeriodO.ToPeriodsExistingPart1, Option[com.histmersion.api.catalogue.PeriodO.ToPeriodsExistingPart2]] = Map.empty,
+      roots: com.histmersion.api.catalogue.PeriodO.ToPeriodsRoots = _root_.com.histmersion.api.catalogue.PeriodO.ToPeriodsRoots(false)
   ): List[HistoricalPeriod] =
     val defs = ds.authorities.flatMap(a => a.periods.map(a -> _))
     val ids = defs.map(_._2.id).toSet
@@ -212,7 +250,7 @@ object PeriodO:
         case curated @ Some(_) => curated
         case None              =>
           val own = d.broader.filter(ids.contains).orElse(Option.when((roots).value)(a.id))
-          if ((ds.curated) == (true)) then own else existing.getOrElse(d.id, own)
+          if ((ds.curated) == _root_.com.histmersion.api.PeriodODataset.CuratedResult(true)) then own else existing.getOrElse(d.id, own)
       HistoricalPeriod(
         d.id,
         d.label,
@@ -228,7 +266,7 @@ object PeriodO:
   private[api] def parentsFirst(rows: List[HistoricalPeriod]): List[HistoricalPeriod] =
     val byId = rows.map(r => r.id -> r).toMap
     val out = scala.collection.mutable.LinkedHashMap.empty[String, HistoricalPeriod]
-    def visit(r: HistoricalPeriod, path: Set[com.histmersion.api.catalogue.PeriodO.Definition.Id]): Unit =
+    def visit(r: HistoricalPeriod, path: Set[com.histmersion.api.catalogue.PeriodO.ParentsFirstVisitPath]): Unit =
       if !out.contains(r.id) then
         val parent = r.parentId.flatMap(byId.get)
         parent match
@@ -242,12 +280,14 @@ object PeriodO:
 
   final case class Authority(id: Authority.Id, title: Authority.Title, year: Option[Authority.Year], periods: List[Definition]):
     /** A PeriodO id resolves as `http://n2t.net/ark:/99152/<id>`. */
-    def cite(periodId: com.histmersion.api.catalogue.PeriodO.Definition.Id): com.histmersion.api.catalogue.PeriodO.Authority.Citation =
-      _root_.com.histmersion.api.catalogue.PeriodO.Authority.Citation(s"PeriodO $periodId · $title${year.fold("")(y => s" ($y)")}")
+    def cite(periodId: com.histmersion.api.catalogue.PeriodO.Authority.CitePeriodId): com.histmersion.api.catalogue.PeriodO.Authority.CiteResult =
+      _root_.com.histmersion.api.catalogue.PeriodO.Authority.CiteResult(s"PeriodO $periodId · $title${year.fold("")(y => s" ($y)")}")
 
   object Authority:
-    type Citation = Citation.T
-    object Citation extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type CiteResult = CiteResult.T
+    object CiteResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type CitePeriodId = CitePeriodId.T
+    object CitePeriodId extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
     type Id = Id.T
     object Id extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]

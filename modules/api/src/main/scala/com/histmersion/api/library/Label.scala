@@ -1,7 +1,9 @@
 package com.histmersion.api.library
 import com.histmersion.api.given
 object Label:
-  type Text = Text.T
-  object Text extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type DisplayResult = DisplayResult.T
+  object DisplayResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type DisplayS = DisplayS.T
+  object DisplayS extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
-  def display(s: com.histmersion.api.library.Label.Text): com.histmersion.api.library.Label.Text = _root_.com.histmersion.api.library.Label.Text((s).value.replace("_", " "))
+  def display(s: com.histmersion.api.library.Label.DisplayS): com.histmersion.api.library.Label.DisplayResult = _root_.com.histmersion.api.library.Label.DisplayResult((s).value.replace("_", " "))

@@ -16,6 +16,12 @@ object RegionNode:
   type RootKinds = RootKindsValue
   type RootKindsValue = RootKindsValue.T
   object RootKindsValue extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type UncertainLabelResult = UncertainLabelResult.T
+  object UncertainLabelResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type UncertainLabelLabel = UncertainLabelLabel.T
+  object UncertainLabelLabel extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type RootEligibleResult = RootEligibleResult.T
+  object RootEligibleResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
   type Id = Id.T
   object Id extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
@@ -37,9 +43,9 @@ object RegionNode:
   /** Pleiades writes an uncertain identification into the label: a trailing `?` on the name or a part of it ("Theren?
     * (river)", "Kisamon? Pr."), and a leading `*` for a reconstructed name ("*Granouas (river)").
     */
-  def uncertainLabel(label: com.histmersion.api.catalogue.RegionNode.Label): Boolean =
+  def uncertainLabel(label: com.histmersion.api.catalogue.RegionNode.UncertainLabelLabel): com.histmersion.api.catalogue.RegionNode.UncertainLabelResult =
     val l = (label).value.trim
-    (l.startsWith("*") || l.contains("?") || l.toLowerCase.startsWith("withdrawn"))
+    _root_.com.histmersion.api.catalogue.RegionNode.UncertainLabelResult(l.startsWith("*") || l.contains("?") || l.toLowerCase.startsWith("withdrawn"))
 
-  def rootEligible(n: RegionNode): Boolean =
-    RootKinds.contains(_root_.com.histmersion.api.catalogue.RegionNode.RootKindsValue((n.kind).value)) && !((n.withdrawn) == _root_.com.histmersion.api.catalogue.RegionNode.Withdrawn(true)) && !((uncertainLabel(_root_.com.histmersion.api.catalogue.RegionNode.Label((n.label).value))) == (true))
+  def rootEligible(n: RegionNode): com.histmersion.api.catalogue.RegionNode.RootEligibleResult =
+    RootKinds.contains(_root_.com.histmersion.api.catalogue.RegionNode.RootKindsValue((n.kind).value)) && !((n.withdrawn) == _root_.com.histmersion.api.catalogue.RegionNode.Withdrawn(true)) && !((uncertainLabel(_root_.com.histmersion.api.catalogue.RegionNode.UncertainLabelLabel((n.label).value))) == _root_.com.histmersion.api.catalogue.RegionNode.UncertainLabelResult(true))

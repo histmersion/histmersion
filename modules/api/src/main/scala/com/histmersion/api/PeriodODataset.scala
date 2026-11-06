@@ -11,12 +11,12 @@ final case class PeriodODataset(
     presets: Map[PeriodODataset.PresetsKey, PresetRegion] = Map.empty,
     version: Option[PeriodODataset.Version] = None
 ):
-  def size: com.histmersion.api.PeriodODataset.PeriodCount = _root_.com.histmersion.api.PeriodODataset.PeriodCount(authorities.map(_.periods.size).sum)
+  def size: com.histmersion.api.PeriodODataset.SizeResult = _root_.com.histmersion.api.PeriodODataset.SizeResult(authorities.map(_.periods.size).sum)
 
-  def curated: Boolean = (parents.nonEmpty || presets.nonEmpty)
+  def curated: com.histmersion.api.PeriodODataset.CuratedResult = _root_.com.histmersion.api.PeriodODataset.CuratedResult(parents.nonEmpty || presets.nonEmpty)
 
   /** A PeriodO period id begins with its authority's id. */
-  def only(ids: Set[com.histmersion.api.PeriodODataset.Id]): PeriodODataset =
+  def only(ids: Set[com.histmersion.api.PeriodODataset.OnlyIds]): PeriodODataset =
     if ids.isEmpty then this
     else
       this.modify(
@@ -24,10 +24,12 @@ final case class PeriodODataset(
       )
 
 object PeriodODataset:
-  type Id = Id.T
-  object Id extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type PeriodCount = PeriodCount.T
-  object PeriodCount extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type SizeResult = SizeResult.T
+  object SizeResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type CuratedResult = CuratedResult.T
+  object CuratedResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type OnlyIds = OnlyIds.T
+  object OnlyIds extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
   type ParentsKey = ParentsKey.T
   object ParentsKey extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
