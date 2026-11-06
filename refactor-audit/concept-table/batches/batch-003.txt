@@ -1,0 +1,375 @@
+## CONCEPTS NEARBY
+com.histmersion.api.Years.NoYearZeroValue (String)
+com.histmersion.api.aliases.Aliases.RuleValue (String)
+com.histmersion.api.automation.Activity.Counts.ProblemsWeek (Int)
+com.histmersion.api.automation.Activity.Counts.Running (Int)
+com.histmersion.api.automation.Activity.Entry.Approval (Long)
+com.histmersion.api.automation.Activity.Entry.Article (String)
+com.histmersion.api.automation.Activity.Entry.At (String)
+com.histmersion.api.automation.Activity.Entry.By (String)
+com.histmersion.api.automation.Activity.Entry.EndedAt (String)
+com.histmersion.api.automation.Activity.Entry.Error (String)
+com.histmersion.api.automation.Activity.Entry.Job (String)
+com.histmersion.api.automation.Activity.Entry.Key (String)
+com.histmersion.api.automation.Activity.Entry.Kind (String)
+com.histmersion.api.automation.Activity.Entry.QueueItem (Int)
+com.histmersion.api.automation.Activity.Entry.QueueList (String)
+com.histmersion.api.automation.Activity.Entry.State (String)
+com.histmersion.api.automation.Activity.Entry.Target (String)
+com.histmersion.api.automation.Activity.Entry.TargetKind (String)
+com.histmersion.api.automation.Activity.Entry.Text (String)
+com.histmersion.api.automation.Activity.Entry.What (String)
+com.histmersion.api.automation.Activity.EntryKind.Wire (String)
+com.histmersion.api.automation.Activity.Page.Next (String)
+com.histmersion.api.automation.Activity.Show.Label (String)
+com.histmersion.api.automation.Activity.Show.Wire (String)
+com.histmersion.api.automation.Activity.Writer.Wire (String)
+com.histmersion.api.automation.AgentLeaseInfo.Expired (Boolean)
+com.histmersion.api.automation.AgentLeaseInfo.Owner (String)
+com.histmersion.api.automation.AgentLeaseInfo.ThisServer (Boolean)
+com.histmersion.api.automation.AgentLeaseInfo.Until (String)
+com.histmersion.api.automation.AgentMode.ModeSet.By (String)
+com.histmersion.api.automation.AgentMode.ModeSet.Mode (String)
+com.histmersion.api.automation.AgentMode.Step.Autopilot.On (Boolean)
+com.histmersion.api.automation.AgentMode.Step.Drain.On (Boolean)
+com.histmersion.api.automation.AgentMode.Wire (String)
+com.histmersion.api.automation.AgentRole.Wire (String)
+com.histmersion.api.automation.AgentScheduler.PoolUse.Cap (Int)
+com.histmersion.api.automation.AgentScheduler.PoolUse.Pool (String)
+com.histmersion.api.automation.AgentScheduler.PoolUse.Used (Int)
+com.histmersion.api.automation.AgentScheduler.SchedulerSet.By (String)
+com.histmersion.api.automation.AgentScheduler.SchedulerSet.Strategy (String)
+com.histmersion.api.automation.AgentScheduler.SchedulerStatus.At (String)
+com.histmersion.api.automation.AgentScheduler.SchedulerStatus.Changes (String)
+com.histmersion.api.automation.AgentScheduler.SchedulerStatus.Dry (Boolean)
+com.histmersion.api.automation.AgentScheduler.SchedulerStatus.ForPerson (Int)
+com.histmersion.api.automation.AgentScheduler.SchedulerStatus.MaxRuns (Int)
+com.histmersion.api.automation.AgentScheduler.SchedulerStatus.Occupied (Int)
+com.histmersion.api.automation.AgentScheduler.SchedulerStatus.Settings (String)
+com.histmersion.api.automation.AgentScheduler.SchedulerStatus.Stop (String)
+com.histmersion.api.automation.AgentScheduler.SchedulerStatus.Strategy (String)
+com.histmersion.api.automation.AgentScheduler.SchedulerStatus.StrategyFrom (String)
+com.histmersion.api.automation.AgentScheduler.SchedulerStatus.WaitingTotal (Int)
+com.histmersion.api.automation.AgentScheduler.Started.Item (Long)
+com.histmersion.api.automation.AgentScheduler.Started.JobType (String)
+com.histmersion.api.automation.AgentScheduler.Started.Kind (String)
+com.histmersion.api.automation.AgentScheduler.Started.Manager (String)
+com.histmersion.api.automation.AgentScheduler.Started.Target (String)
+com.histmersion.api.automation.AgentScheduler.Started.Why (String)
+com.histmersion.api.automation.AgentScheduler.StrategyLine.Describe (String)
+com.histmersion.api.automation.AgentScheduler.StrategyLine.Name (String)
+com.histmersion.api.automation.AgentScheduler.TypeLine.JobType (String)
+com.histmersion.api.automation.AgentScheduler.TypeLine.Label (String)
+com.histmersion.api.automation.AgentScheduler.TypeLine.Priority (Int)
+com.histmersion.api.automation.AgentScheduler.TypeLine.Recent (Int)
+com.histmersion.api.automation.AgentScheduler.TypeLine.Waiting (Int)
+com.histmersion.api.automation.AgentScheduler.TypeLine.Weight (Int)
+com.histmersion.api.automation.AgentScheduler.Waiting.Behind (String)
+com.histmersion.api.automation.AgentScheduler.Waiting.Code (String)
+com.histmersion.api.automation.AgentScheduler.Waiting.Item (Long)
+com.histmersion.api.automation.AgentScheduler.Waiting.JobType (String)
+com.histmersion.api.automation.AgentScheduler.Waiting.Kind (String)
+com.histmersion.api.automation.AgentScheduler.Waiting.Manager (String)
+com.histmersion.api.automation.AgentScheduler.Waiting.Position (Int)
+com.histmersion.api.automation.AgentScheduler.Waiting.Priority (Int)
+com.histmersion.api.automation.AgentScheduler.Waiting.Target (String)
+com.histmersion.api.automation.AgentScheduler.Waiting.WaitedMinutes (Long)
+com.histmersion.api.automation.AgentScheduler.Waiting.Why (String)
+com.histmersion.api.automation.AgentScheduler.WhyInfo.Approval (Long)
+com.histmersion.api.automation.AgentScheduler.WhyInfo.Behind (String)
+com.histmersion.api.automation.AgentScheduler.WhyInfo.Code (String)
+com.histmersion.api.automation.AgentScheduler.WhyInfo.Item (Long)
+com.histmersion.api.automation.AgentScheduler.WhyInfo.Kind (String)
+com.histmersion.api.automation.AgentScheduler.WhyInfo.Manager (String)
+com.histmersion.api.automation.AgentScheduler.WhyInfo.Position (Int)
+com.histmersion.api.automation.AgentScheduler.WhyInfo.Run (String)
+com.histmersion.api.automation.AgentScheduler.WhyInfo.Status (String)
+com.histmersion.api.automation.AgentScheduler.WhyInfo.Target (String)
+com.histmersion.api.automation.AgentScheduler.WhyInfo.Why (String)
+
+## TYPES TO DECIDE
+com.histmersion.api.Wording.AgentsStateAutopilotOn | base Boolean | method-parameter
+    def agentsState(autopilotOn: com.histmersion.api.Wording.AgentsStateAutopilotOn, draining: com.histmersion.api.Wording.AgentsStateDraining): com.histmersion.api.Wording.A
+com.histmersion.api.Wording.AgentsStateDraining | base Boolean | method-parameter
+    def agentsState(autopilotOn: com.histmersion.api.Wording.AgentsStateAutopilotOn, draining: com.histmersion.api.Wording.AgentsStateDraining): com.histmersion.api.Wording.A
+com.histmersion.api.Wording.AgentsStateResult | base String | method-result
+    def agentsState(autopilotOn: com.histmersion.api.Wording.AgentsStateAutopilotOn, draining: com.histmersion.api.Wording.AgentsStateDraining): com.histmersion.api.Wording.A
+com.histmersion.api.Wording.AllowanceWindowKind | base String | method-parameter
+    def allowanceWindow(kind: com.histmersion.api.Wording.AllowanceWindowKind): com.histmersion.api.Wording.AllowanceWindowResult =
+com.histmersion.api.Wording.AllowanceWindowResult | base String | method-result
+    def allowanceWindow(kind: com.histmersion.api.Wording.AllowanceWindowKind): com.histmersion.api.Wording.AllowanceWindowResult =
+    case "five_hour"                     => _root_.com.histmersion.api.Wording.AllowanceWindowResult("5-hour limit")
+com.histmersion.api.Wording.AllowanceWindowSpanMinutes | base Long | method-parameter
+    def span(minutes: com.histmersion.api.Wording.AllowanceWindowSpanMinutes): com.histmersion.api.Wording.AllowanceWindowSpanResult = minutes match
+    case minutes(n)                      => span(_root_.com.histmersion.api.Wording.AllowanceWindowSpanMinutes(n.toLong))
+com.histmersion.api.Wording.AllowanceWindowSpanResult | base String | method-result
+    def span(minutes: com.histmersion.api.Wording.AllowanceWindowSpanMinutes): com.histmersion.api.Wording.AllowanceWindowSpanResult = minutes match
+    case 10080              => _root_.com.histmersion.api.Wording.AllowanceWindowSpanResult("This week's limit")
+com.histmersion.api.Wording.ApprovalKindResult | base String | method-result
+    def approvalKind(k: Approval.Kind): com.histmersion.api.Wording.ApprovalKindResult = k match
+    case Approval.Kind.StatusChange   => _root_.com.histmersion.api.Wording.ApprovalKindResult("Change a source's status")
+com.histmersion.api.Wording.ApprovalStateResult | base String | method-result
+    def approvalState(s: Approval.State): com.histmersion.api.Wording.ApprovalStateResult = s match
+    case Approval.State.Open     => _root_.com.histmersion.api.Wording.ApprovalStateResult("Needs a decision")
+com.histmersion.api.Wording.CapitalizeResult | base String | method-result
+    def capitalize(s: com.histmersion.api.Wording.CapitalizeS): com.histmersion.api.Wording.CapitalizeResult = if (s).value.isEmpty then _root_.com.histmersion.api.Wording.Ca
+com.histmersion.api.Wording.CapitalizeS | base String | method-parameter
+    def capitalize(s: com.histmersion.api.Wording.CapitalizeS): com.histmersion.api.Wording.CapitalizeResult = if (s).value.isEmpty then _root_.com.histmersion.api.Wording.Ca
+com.histmersion.api.Wording.DecisionsOpen | base Int | method-parameter
+    def decisions(open: com.histmersion.api.Wording.DecisionsOpen): Option[com.histmersion.api.Wording.DecisionsResult] =
+com.histmersion.api.Wording.DecisionsResult | base String | method-result
+    def decisions(open: com.histmersion.api.Wording.DecisionsOpen): Option[com.histmersion.api.Wording.DecisionsResult] =
+com.histmersion.api.Wording.DecisionsShortOpen | base Int | method-parameter
+    def decisionsShort(open: com.histmersion.api.Wording.DecisionsShortOpen): com.histmersion.api.Wording.DecisionsShortResult = if open == _root_.com.histmersion.api.Wording
+com.histmersion.api.Wording.DecisionsShortResult | base String | method-result
+    def decisionsShort(open: com.histmersion.api.Wording.DecisionsShortOpen): com.histmersion.api.Wording.DecisionsShortResult = if open == _root_.com.histmersion.api.Wording
+com.histmersion.api.Wording.HeadingResult | base String | method-result
+    def heading(s: com.histmersion.api.Wording.HeadingS): com.histmersion.api.Wording.HeadingResult =
+com.histmersion.api.Wording.HeadingS | base String | method-parameter
+    def heading(s: com.histmersion.api.Wording.HeadingS): com.histmersion.api.Wording.HeadingResult =
+com.histmersion.api.Wording.HumanizeId | base String | alias,method-parameter
+    val ManagerId: _root_.com.histmersion.api.Wording.HumanizeId.type = _root_.com.histmersion.api.Wording.HumanizeId
+    val PluginId: _root_.com.histmersion.api.Wording.HumanizeId.type = _root_.com.histmersion.api.Wording.HumanizeId
+com.histmersion.api.Wording.HumanizeResult | base String | method-result
+    def humanize(id: com.histmersion.api.Wording.HumanizeId): com.histmersion.api.Wording.HumanizeResult =
+com.histmersion.api.Wording.JobKindOfResult | base String | method-result
+    def jobKindOf(wire: com.histmersion.api.Wording.JobKindOfWire): com.histmersion.api.Wording.JobKindOfResult = RegisteredJobKinds.all.parse(wire).fold(humanize(wire))(_.na
+com.histmersion.api.Wording.JobKindOfWire | base String | method-parameter
+    def jobKindOf(wire: com.histmersion.api.Wording.JobKindOfWire): com.histmersion.api.Wording.JobKindOfResult = RegisteredJobKinds.all.parse(wire).fold(humanize(wire))(_.na
+com.histmersion.api.Wording.JobKindResult | base String | method-result
+    def jobKind(k: JobInfo.Kind): com.histmersion.api.Wording.JobKindResult = RegisteredJobKinds.all.get(k).fold(humanize(k.value))(_.name.value)
+com.histmersion.api.Wording.JobStateResult | base String | method-result
+    def jobState(s: JobState): com.histmersion.api.Wording.JobStateResult = s match
+    case JobState.Queued    => _root_.com.histmersion.api.Wording.JobStateResult("Queued")
+com.histmersion.api.Wording.ManagerKindResult | base String | method-result
+    def managerKind(k: Manager.Kind): com.histmersion.api.Wording.ManagerKindResult = k match
+    case Manager.Kind.Review => _root_.com.histmersion.api.Wording.ManagerKindResult("Review manager")
+com.histmersion.api.Wording.ManagerResult | base String | method-result
+    def manager(id: com.histmersion.api.Wording.ManagerId): com.histmersion.api.Wording.ManagerResult =
+com.histmersion.api.Wording.PipelineResult | base String | method-result
+    def pipeline(p: Pipeline): com.histmersion.api.Wording.PipelineResult = p match
+    case Pipeline.EnrichSource     => _root_.com.histmersion.api.Wording.PipelineResult("Enrich a source")
+com.histmersion.api.Wording.PluginNamesPart1 | base String | value
+    private val pluginNames: Map[com.histmersion.api.Wording.PluginNamesPart1, com.histmersion.api.Wording.PluginNamesPart2] = Map(
+    { val refactorTuple35 = "archive-org" -> "Internet Archive"; (_root_.com.histmersion.api.Wording.PluginNamesPart1(refactorTuple35._1), _root_.com.histmersion.api.Wording.
+com.histmersion.api.Wording.PluginNamesPart2 | base String | value
+    private val pluginNames: Map[com.histmersion.api.Wording.PluginNamesPart1, com.histmersion.api.Wording.PluginNamesPart2] = Map(
+    { val refactorTuple35 = "archive-org" -> "Internet Archive"; (_root_.com.histmersion.api.Wording.PluginNamesPart1(refactorTuple35._1), _root_.com.histmersion.api.Wording.
+com.histmersion.api.Wording.PluginResult | base String | method-result
+    def plugin(id: com.histmersion.api.Wording.PluginId): com.histmersion.api.Wording.PluginResult =
+com.histmersion.api.Wording.PoolId | base String | method-parameter
+    def pool(id: com.histmersion.api.Wording.PoolId): com.histmersion.api.Wording.PoolResult = (id).value.trim.toLowerCase match
+com.histmersion.api.Wording.PoolResult | base String | method-result
+    def pool(id: com.histmersion.api.Wording.PoolId): com.histmersion.api.Wording.PoolResult = (id).value.trim.toLowerCase match
+    case "claude-plan"  => _root_.com.histmersion.api.Wording.PoolResult("Claude plan")
+com.histmersion.api.Wording.RunStateResult | base String | method-result
+    def runState(s: Run.State): com.histmersion.api.Wording.RunStateResult = s match
+    case Run.State.Queued          => _root_.com.histmersion.api.Wording.RunStateResult("Queued")
+com.histmersion.api.Wording.SchedulerJobTypesPart1 | base String | value
+    val schedulerJobTypes: Map[com.histmersion.api.Wording.SchedulerJobTypesPart1, com.histmersion.api.Wording.SchedulerJobTypesPart2] = Map(
+    { val refactorTuple23 = "goal-plan" -> "Plan a goal"; (_root_.com.histmersion.api.Wording.SchedulerJobTypesPart1(refactorTuple23._1), _root_.com.histmersion.api.Wording.S
+com.histmersion.api.Wording.SchedulerJobTypesPart2 | base String | value
+    val schedulerJobTypes: Map[com.histmersion.api.Wording.SchedulerJobTypesPart1, com.histmersion.api.Wording.SchedulerJobTypesPart2] = Map(
+    { val refactorTuple23 = "goal-plan" -> "Plan a goal"; (_root_.com.histmersion.api.Wording.SchedulerJobTypesPart1(refactorTuple23._1), _root_.com.histmersion.api.Wording.S
+com.histmersion.api.Wording.StatusOfResult | base String | method-result
+    def statusOf(wire: com.histmersion.api.Wording.StatusOfWire): com.histmersion.api.Wording.StatusOfResult =
+com.histmersion.api.Wording.StatusOfWire | base String | method-parameter
+    def statusOf(wire: com.histmersion.api.Wording.StatusOfWire): com.histmersion.api.Wording.StatusOfResult =
+com.histmersion.api.Wording.StatusResult | base String | method-result
+    def status(s: Source.Status): com.histmersion.api.Wording.StatusResult = s match
+    case Source.Status.Foundational => _root_.com.histmersion.api.Wording.StatusResult("Foundational")
+com.histmersion.api.Wording.StrategiesPart1 | base String | value
+    val strategies: Map[com.histmersion.api.Wording.StrategiesPart1, com.histmersion.api.Wording.StrategiesPart2] = Map(
+    { val refactorTuple10 = "type-balanced" -> "Balance the kinds of work"; (_root_.com.histmersion.api.Wording.StrategiesPart1(refactorTuple10._1), _root_.com.histmersion.ap
+com.histmersion.api.Wording.StrategiesPart2 | base String | value
+    val strategies: Map[com.histmersion.api.Wording.StrategiesPart1, com.histmersion.api.Wording.StrategiesPart2] = Map(
+    { val refactorTuple10 = "type-balanced" -> "Balance the kinds of work"; (_root_.com.histmersion.api.Wording.StrategiesPart1(refactorTuple10._1), _root_.com.histmersion.ap
+com.histmersion.api.Wording.ValueResult | base String | method-result
+    def value(s: com.histmersion.api.Wording.ValueS): com.histmersion.api.Wording.ValueResult = Label.display(s)
+com.histmersion.api.Wording.ValueS | base String | method-parameter
+    def value(s: com.histmersion.api.Wording.ValueS): com.histmersion.api.Wording.ValueResult = Label.display(s)
+com.histmersion.api.Write.ApplyListCurrent | base String | method-parameter
+    def applyList(current: List[com.histmersion.api.Write.ApplyListCurrent], p: ListPatch): List[com.histmersion.api.Write.ApplyListResult] =
+com.histmersion.api.Write.ApplyListResult | base String | method-result
+    def applyList(current: List[com.histmersion.api.Write.ApplyListCurrent], p: ListPatch): List[com.histmersion.api.Write.ApplyListResult] =
+com.histmersion.api.Write.BlankToNoneResult | base String | method-result
+    private[api] def blankToNone(v: Option[com.histmersion.api.Write.BlankToNoneV]): Option[com.histmersion.api.Write.BlankToNoneResult] = (v.map((_).value.trim).filter(_.non
+com.histmersion.api.Write.BlankToNoneV | base String | method-parameter
+    private[api] def blankToNone(v: Option[com.histmersion.api.Write.BlankToNoneV]): Option[com.histmersion.api.Write.BlankToNoneResult] = (v.map((_).value.trim).filter(_.non
+com.histmersion.api.Write.NotFoundCitekey | base String | method-parameter
+    def notFound(citekey: com.histmersion.api.Write.NotFoundCitekey): Api.Error = Api.Error(_root_.com.histmersion.api.Api.Error.Message(s"No source '$citekey'"), Some(_root_
+com.histmersion.api.YearFmt.ApplyResult | base String | method-result
+    def apply(v: com.histmersion.api.YearFmt.ApplyV): com.histmersion.api.YearFmt.ApplyResult =
+    def apply(v: Option[com.histmersion.api.YearFmt.ApplyV]): com.histmersion.api.YearFmt.ApplyResult = v.fold("?")(apply)
+com.histmersion.api.YearFmt.ApplyV | base Long | method-parameter
+    def apply(v: com.histmersion.api.YearFmt.ApplyV): com.histmersion.api.YearFmt.ApplyResult =
+    def apply(v: Option[com.histmersion.api.YearFmt.ApplyV]): com.histmersion.api.YearFmt.ApplyResult = v.fold("?")(apply)
+com.histmersion.api.YearFmt.OpenPeriodNone | base String | method-parameter
+    def openPeriod(start: Option[com.histmersion.api.YearFmt.OpenPeriodStart], end: Option[com.histmersion.api.YearFmt.OpenPeriodEnd], none: com.histmersion.api.YearFmt.OpenP
+com.histmersion.api.YearFmt.OpenPeriodResult | base String | method-result
+    def openPeriod(start: Option[com.histmersion.api.YearFmt.OpenPeriodStart], end: Option[com.histmersion.api.YearFmt.OpenPeriodEnd], none: com.histmersion.api.YearFmt.OpenP
+    case (Some(_), Some(_)) => _root_.com.histmersion.api.YearFmt.OpenPeriodResult((period(start, end)).value)
+com.histmersion.api.YearFmt.PeriodEnd | base Long | alias,method-parameter
+    val OpenPeriodEnd: _root_.com.histmersion.api.YearFmt.PeriodEnd.type = _root_.com.histmersion.api.YearFmt.PeriodEnd
+    def period(start: Option[com.histmersion.api.YearFmt.PeriodStart], end: Option[com.histmersion.api.YearFmt.PeriodEnd]): com.histmersion.api.YearFmt.PeriodResult =
+com.histmersion.api.YearFmt.PeriodResult | base String | method-result
+    def period(start: Option[com.histmersion.api.YearFmt.PeriodStart], end: Option[com.histmersion.api.YearFmt.PeriodEnd]): com.histmersion.api.YearFmt.PeriodResult =
+    case _                  => _root_.com.histmersion.api.YearFmt.PeriodResult("")
+com.histmersion.api.YearFmt.PeriodStart | base Long | alias,method-parameter
+    val OpenPeriodStart: _root_.com.histmersion.api.YearFmt.PeriodStart.type = _root_.com.histmersion.api.YearFmt.PeriodStart
+    def period(start: Option[com.histmersion.api.YearFmt.PeriodStart], end: Option[com.histmersion.api.YearFmt.PeriodEnd]): com.histmersion.api.YearFmt.PeriodResult =
+com.histmersion.api.YearFmt.SpanLongResult | base String | method-result
+    def spanLong(ts: TimeSpan): com.histmersion.api.YearFmt.SpanLongResult =
+com.histmersion.api.YearFmt.SpanResult | base String | method-result
+    def span(ts: TimeSpan): com.histmersion.api.YearFmt.SpanResult =
+com.histmersion.api.Years.FromAstronomicalA | base Long | method-parameter
+    def fromAstronomical(a: com.histmersion.api.Years.FromAstronomicalA): com.histmersion.api.Years.FromAstronomicalResult = if a <= 0 then _root_.com.histmersion.api.Years.F
+com.histmersion.api.Years.FromAstronomicalResult | base Long | method-result
+    def fromAstronomical(a: com.histmersion.api.Years.FromAstronomicalA): com.histmersion.api.Years.FromAstronomicalResult = if a <= 0 then _root_.com.histmersion.api.Years.F
+com.histmersion.api.Years.FromJsonResult | base Long | method-result
+    def fromJson(j: Json, text: com.histmersion.api.Years.FromJsonTextArg1 => Option[com.histmersion.api.Years.FromJsonTextResult]): Option[com.histmersion.api.Years.FromJson
+    (j.asNumber.flatMap(_.toLong).orElse(j.asString.flatMap({ val refactorFunction = text; (refactorValue) => (refactorFunction(_root_.com.histmersion.api.Years.FromJsonTextA
+com.histmersion.api.Years.FromJsonTextArg1 | base String | method-parameter
+    def fromJson(j: Json, text: com.histmersion.api.Years.FromJsonTextArg1 => Option[com.histmersion.api.Years.FromJsonTextResult]): Option[com.histmersion.api.Years.FromJson
+    (j.asNumber.flatMap(_.toLong).orElse(j.asString.flatMap({ val refactorFunction = text; (refactorValue) => (refactorFunction(_root_.com.histmersion.api.Years.FromJsonTextA
+com.histmersion.api.Years.FromJsonTextResult | base Long | method-parameter
+    def fromJson(j: Json, text: com.histmersion.api.Years.FromJsonTextArg1 => Option[com.histmersion.api.Years.FromJsonTextResult]): Option[com.histmersion.api.Years.FromJson
+com.histmersion.api.Years.IsoAstronomicalResult | base Long | method-result
+    def isoAstronomical(xsd: com.histmersion.api.Years.IsoAstronomicalXsd): Option[com.histmersion.api.Years.IsoAstronomicalResult] =
+com.histmersion.api.Years.IsoAstronomicalXsd | base String | method-parameter
+    def isoAstronomical(xsd: com.histmersion.api.Years.IsoAstronomicalXsd): Option[com.histmersion.api.Years.IsoAstronomicalResult] =
+com.histmersion.api.Years.ParseIsBceEra | base String | method-parameter
+    def isBce(era: com.histmersion.api.Years.ParseIsBceEra) = (era).value.matches(EraBce)
+com.histmersion.api.Years.ParseIsoRaw | base String | method-parameter
+    def parseIso(raw: com.histmersion.api.Years.ParseIsoRaw): Option[com.histmersion.api.Years.ParseIsoResult] =
+com.histmersion.api.Years.ParseIsoResult | base Long | method-result
+    def parseIso(raw: com.histmersion.api.Years.ParseIsoRaw): Option[com.histmersion.api.Years.ParseIsoResult] =
+com.histmersion.api.Years.ParseRaw | base String | method-parameter
+    def parse(raw: com.histmersion.api.Years.ParseRaw): Either[com.histmersion.api.Years.ParseResultPart1, com.histmersion.api.Years.ParseResultPart2] =
+com.histmersion.api.Years.ParseResultPart1 | base String | method-result
+    def parse(raw: com.histmersion.api.Years.ParseRaw): Either[com.histmersion.api.Years.ParseResultPart1, com.histmersion.api.Years.ParseResultPart2] =
+com.histmersion.api.Years.ParseResultPart2 | base Long | method-result
+    def parse(raw: com.histmersion.api.Years.ParseRaw): Either[com.histmersion.api.Years.ParseResultPart1, com.histmersion.api.Years.ParseResultPart2] =
+com.histmersion.api.Years.ParseSignedEra | base String | method-parameter
+    def signed(num: com.histmersion.api.Years.ParseSignedNum, era: Option[com.histmersion.api.Years.ParseSignedEra]): Either[com.histmersion.api.Years.ParseSignedResultPart1,
+    case Typed(num, era)    => signed(_root_.com.histmersion.api.Years.ParseSignedNum(num), Option(_root_.com.histmersion.api.Years.ParseSignedEra(era)))
+com.histmersion.api.Years.ParseSignedNum | base String | method-parameter
+    def signed(num: com.histmersion.api.Years.ParseSignedNum, era: Option[com.histmersion.api.Years.ParseSignedEra]): Either[com.histmersion.api.Years.ParseSignedResultPart1,
+    case Typed(num, era)    => signed(_root_.com.histmersion.api.Years.ParseSignedNum(num), Option(_root_.com.histmersion.api.Years.ParseSignedEra(era)))
+com.histmersion.api.Years.ParseSignedResultPart1 | base String | method-result
+    def signed(num: com.histmersion.api.Years.ParseSignedNum, era: Option[com.histmersion.api.Years.ParseSignedEra]): Either[com.histmersion.api.Years.ParseSignedResultPart1,
+com.histmersion.api.Years.ParseSignedResultPart2 | base Long | method-result
+    def signed(num: com.histmersion.api.Years.ParseSignedNum, era: Option[com.histmersion.api.Years.ParseSignedEra]): Either[com.histmersion.api.Years.ParseSignedResultPart1,
+com.histmersion.api.Years.ShiftD | base Long | method-parameter
+    def shift(h: com.histmersion.api.Years.ShiftH, d: com.histmersion.api.Years.ShiftD): com.histmersion.api.Years.ShiftResult = fromAstronomical((toAstronomical(h)).value + 
+com.histmersion.api.Years.ShiftResult | base Long | method-result
+    def shift(h: com.histmersion.api.Years.ShiftH, d: com.histmersion.api.Years.ShiftD): com.histmersion.api.Years.ShiftResult = fromAstronomical((toAstronomical(h)).value + 
+com.histmersion.api.Years.ToAstronomicalH | base Long | alias,method-parameter
+    val ShiftH: _root_.com.histmersion.api.Years.ToAstronomicalH.type = _root_.com.histmersion.api.Years.ToAstronomicalH
+    def toAstronomical(h: com.histmersion.api.Years.ToAstronomicalH): com.histmersion.api.Years.ToAstronomicalResult = if (h).value < 0 then _root_.com.histmersion.api.Years.
+com.histmersion.api.Years.ToAstronomicalResult | base Long | method-result
+    def toAstronomical(h: com.histmersion.api.Years.ToAstronomicalH): com.histmersion.api.Years.ToAstronomicalResult = if (h).value < 0 then _root_.com.histmersion.api.Years.
+com.histmersion.api.aliases.AliasKinds.KindIdWord | base String | method-parameter
+    private def kind(noun: com.histmersion.api.aliases.AliasKinds.KindNoun, idWord: com.histmersion.api.aliases.AliasKinds.KindIdWord): AliasKind = AliasKind(RecordNoun((noun
+    val SourceRecords: AliasKind = kind(_root_.com.histmersion.api.aliases.AliasKinds.KindNoun("source"), _root_.com.histmersion.api.aliases.AliasKinds.KindIdWord("citekey"))
+com.histmersion.api.aliases.AliasKinds.KindNoun | base String | method-parameter
+    private def kind(noun: com.histmersion.api.aliases.AliasKinds.KindNoun, idWord: com.histmersion.api.aliases.AliasKinds.KindIdWord): AliasKind = AliasKind(RecordNoun((noun
+    val SourceRecords: AliasKind = kind(_root_.com.histmersion.api.aliases.AliasKinds.KindNoun("source"), _root_.com.histmersion.api.aliases.AliasKinds.KindIdWord("citekey"))
+com.histmersion.api.aliases.AliasKinds.OfTargetTargetType | base String | method-parameter
+    def ofTarget(targetType: com.histmersion.api.aliases.AliasKinds.OfTargetTargetType): Option[AliasKind] =
+com.histmersion.api.aliases.Aliases.FollowedAsked | base String | method-parameter
+    def followed(k: AliasKind, asked: com.histmersion.api.aliases.Aliases.FollowedAsked, now: com.histmersion.api.aliases.Aliases.FollowedNow): Option[com.histmersion.api.ali
+com.histmersion.api.aliases.Aliases.FollowedNow | base String | method-parameter
+    def followed(k: AliasKind, asked: com.histmersion.api.aliases.Aliases.FollowedAsked, now: com.histmersion.api.aliases.Aliases.FollowedNow): Option[com.histmersion.api.ali
+com.histmersion.api.aliases.Aliases.FollowedResult | base String | method-result
+    def followed(k: AliasKind, asked: com.histmersion.api.aliases.Aliases.FollowedAsked, now: com.histmersion.api.aliases.Aliases.FollowedNow): Option[com.histmersion.api.ali
+com.histmersion.api.aliases.Aliases.NoteAsked | base String | method-parameter
+    def note(k: AliasKind, asked: com.histmersion.api.aliases.Aliases.NoteAsked, now: com.histmersion.api.aliases.Aliases.NoteNow)(md: com.histmersion.api.aliases.Aliases.Not
+com.histmersion.api.aliases.Aliases.NoteMd | base String | method-parameter
+    def note(k: AliasKind, asked: com.histmersion.api.aliases.Aliases.NoteAsked, now: com.histmersion.api.aliases.Aliases.NoteNow)(md: com.histmersion.api.aliases.Aliases.Not
+com.histmersion.api.aliases.Aliases.NoteNow | base String | method-parameter
+    def note(k: AliasKind, asked: com.histmersion.api.aliases.Aliases.NoteAsked, now: com.histmersion.api.aliases.Aliases.NoteNow)(md: com.histmersion.api.aliases.Aliases.Not
+com.histmersion.api.aliases.Aliases.NoteResult | base String | method-result
+    def note(k: AliasKind, asked: com.histmersion.api.aliases.Aliases.NoteAsked, now: com.histmersion.api.aliases.Aliases.NoteNow)(md: com.histmersion.api.aliases.Aliases.Not
+com.histmersion.api.aliases.Aliases.RuleResult | base String | method-result
+    def rule(k: AliasKind): com.histmersion.api.aliases.Aliases.RuleResult =
+com.histmersion.api.aliases.LabelRenames.ValidateFrom | base String | method-parameter
+    def validate(kind: Bundle.Kind, from: com.histmersion.api.aliases.LabelRenames.ValidateFrom, raw: com.histmersion.api.aliases.LabelRenames.ValidateRaw): Either[Api.Error,
+com.histmersion.api.aliases.LabelRenames.ValidateRaw | base String | method-parameter
+    def validate(kind: Bundle.Kind, from: com.histmersion.api.aliases.LabelRenames.ValidateFrom, raw: com.histmersion.api.aliases.LabelRenames.ValidateRaw): Either[Api.Error,
+com.histmersion.api.aliases.LabelRenames.ValidateResultPart2 | base String | method-result
+    def validate(kind: Bundle.Kind, from: com.histmersion.api.aliases.LabelRenames.ValidateFrom, raw: com.histmersion.api.aliases.LabelRenames.ValidateRaw): Either[Api.Error,
+com.histmersion.api.automation.Activity.EntryKind.ParseS | base String | method-parameter
+    def parse(s: com.histmersion.api.automation.Activity.EntryKind.ParseS): Option[EntryKind] = values.find(_.wire == _root_.com.histmersion.api.automation.Activity.EntryKind
+    def parse(s: com.histmersion.api.automation.Activity.Show.ParseS): Option[Show] =
+com.histmersion.api.automation.Activity.EntryKind.WordingResult | base String | method-result
+    def wording: com.histmersion.api.automation.Activity.EntryKind.WordingResult = this match
+    case Run      => _root_.com.histmersion.api.automation.Activity.EntryKind.WordingResult("Agent work")
+com.histmersion.api.automation.Activity.KeyOfId | base String | method-parameter
+    def keyOf(kind: EntryKind, id: com.histmersion.api.automation.Activity.KeyOfId): com.histmersion.api.automation.Activity.KeyOfResult = _root_.com.histmersion.api.automati
+com.histmersion.api.automation.Activity.KeyOfResult | base String | method-result
+    def keyOf(kind: EntryKind, id: com.histmersion.api.automation.Activity.KeyOfId): com.histmersion.api.automation.Activity.KeyOfResult = _root_.com.histmersion.api.automati
+com.histmersion.api.automation.Activity.Show.ParseS | base String | method-parameter
+    def parse(s: com.histmersion.api.automation.Activity.EntryKind.ParseS): Option[EntryKind] = values.find(_.wire == _root_.com.histmersion.api.automation.Activity.EntryKind
+    def parse(s: com.histmersion.api.automation.Activity.Show.ParseS): Option[Show] =
+com.histmersion.api.automation.ActivityMarkdown.HeadlineResult | base String | method-result
+    def headline(e: Entry): com.histmersion.api.automation.ActivityMarkdown.HeadlineResult = e.entryKind match
+com.histmersion.api.automation.ActivityMarkdown.LineResult | base String | method-result
+    def line(e: Entry): com.histmersion.api.automation.ActivityMarkdown.LineResult =
+com.histmersion.api.automation.ActivityMarkdown.MinuteResult | base String | method-result
+    def minute(at: com.histmersion.api.automation.ActivityMarkdown.MinuteAt): com.histmersion.api.automation.ActivityMarkdown.MinuteResult = _root_.com.histmersion.api.automa
+com.histmersion.api.automation.ActivityMarkdown.PageOlderHintArg1 | base String | method-parameter
+    def page(p: Page, olderHint: com.histmersion.api.automation.ActivityMarkdown.PageOlderHintArg1 => com.histmersion.api.automation.ActivityMarkdown.PageOlderHintResult): co
+com.histmersion.api.automation.ActivityMarkdown.PageOlderHintResult | base String | method-parameter
+    def page(p: Page, olderHint: com.histmersion.api.automation.ActivityMarkdown.PageOlderHintArg1 => com.histmersion.api.automation.ActivityMarkdown.PageOlderHintResult): co
+com.histmersion.api.automation.ActivityMarkdown.PageResult | base String | method-result
+    def page(p: Page, olderHint: com.histmersion.api.automation.ActivityMarkdown.PageOlderHintArg1 => com.histmersion.api.automation.ActivityMarkdown.PageOlderHintResult): co
+com.histmersion.api.automation.ActivityMarkdown.RefsResult | base String | method-result
+    def refs(e: Entry): List[com.histmersion.api.automation.ActivityMarkdown.RefsResult] =
+com.histmersion.api.automation.ActivityMarkdown.StateOfResult | base String | method-result
+    def stateOf(e: Entry): com.histmersion.api.automation.ActivityMarkdown.StateOfResult = e.entryKind match
+    case _                   => _root_.com.histmersion.api.automation.ActivityMarkdown.StateOfResult("")
+com.histmersion.api.automation.AgentLeaseInfo.DescribeResult | base String | method-result
+    def describe: com.histmersion.api.automation.AgentLeaseInfo.DescribeResult =
+com.histmersion.api.automation.AgentMode.HeadingResult | base String | method-result
+    def heading: com.histmersion.api.automation.AgentMode.HeadingResult = this match
+    case Working   => _root_.com.histmersion.api.automation.AgentMode.HeadingResult("Research agents are working")
+com.histmersion.api.automation.AgentMode.OfAutopilotOn | base Boolean | method-parameter
+    def of(autopilotOn: com.histmersion.api.automation.AgentMode.OfAutopilotOn, draining: com.histmersion.api.automation.AgentMode.OfDraining): AgentMode =
+com.histmersion.api.automation.AgentMode.OfDraining | base Boolean | method-parameter
+    def of(autopilotOn: com.histmersion.api.automation.AgentMode.OfAutopilotOn, draining: com.histmersion.api.automation.AgentMode.OfDraining): AgentMode =
+com.histmersion.api.automation.AgentMode.ParseS | base String | method-parameter
+    def parse(s: com.histmersion.api.automation.AgentMode.ParseS): Option[AgentMode] =
+com.histmersion.api.automation.AgentMode.StepsAutopilotOn | base Boolean | method-parameter
+    def steps(autopilotOn: com.histmersion.api.automation.AgentMode.StepsAutopilotOn, draining: com.histmersion.api.automation.AgentMode.StepsDraining, to: AgentMode): List[S
+    case Working   => Option.when(((draining) == _root_.com.histmersion.api.automation.AgentMode.StepsDraining(true)))(Step.Drain(_root_.com.histmersion.api.automation.AgentM
+com.histmersion.api.automation.AgentMode.StepsDraining | base Boolean | method-parameter
+    def steps(autopilotOn: com.histmersion.api.automation.AgentMode.StepsAutopilotOn, draining: com.histmersion.api.automation.AgentMode.StepsDraining, to: AgentMode): List[S
+    case Working   => Option.when(((draining) == _root_.com.histmersion.api.automation.AgentMode.StepsDraining(true)))(Step.Drain(_root_.com.histmersion.api.automation.AgentM
+com.histmersion.api.automation.AgentMode.WordingResult | base String | method-result
+    def wording: com.histmersion.api.automation.AgentMode.WordingResult = this match
+    case Working   => _root_.com.histmersion.api.automation.AgentMode.WordingResult("Working")
+com.histmersion.api.automation.AgentRole.ParseS | base String | method-parameter
+    def parse(s: com.histmersion.api.automation.AgentRole.ParseS): Option[AgentRole] = values.find(_.wire == _root_.com.histmersion.api.automation.AgentRole.Wire((s).value.tr
+com.histmersion.api.automation.AgentScheduler.WaitCodesPart1 | base String | value
+    val waitCodes: Map[com.histmersion.api.automation.AgentScheduler.WaitCodesPart1, com.histmersion.api.automation.AgentScheduler.WaitCodesPart2] = Map(
+    { val refactorTuple14 = "capacity" -> "No free place"; (_root_.com.histmersion.api.automation.AgentScheduler.WaitCodesPart1(refactorTuple14._1), _root_.com.histmersion.ap
+com.histmersion.api.automation.AgentScheduler.WaitCodesPart2 | base String | value
+    val waitCodes: Map[com.histmersion.api.automation.AgentScheduler.WaitCodesPart1, com.histmersion.api.automation.AgentScheduler.WaitCodesPart2] = Map(
+    { val refactorTuple14 = "capacity" -> "No free place"; (_root_.com.histmersion.api.automation.AgentScheduler.WaitCodesPart1(refactorTuple14._1), _root_.com.histmersion.ap
+com.histmersion.api.automation.AgentSchedulerMarkdown.GoalG | base String | method-parameter
+    private def goal(g: Option[com.histmersion.api.automation.AgentSchedulerMarkdown.GoalG]) = g.fold("library work")(x => s"goal $x")
+com.histmersion.api.automation.AgentSchedulerMarkdown.MinutesM | base Long | method-parameter
+    def minutes(m: com.histmersion.api.automation.AgentSchedulerMarkdown.MinutesM): com.histmersion.api.automation.AgentSchedulerMarkdown.MinutesResult =
+com.histmersion.api.automation.AgentSchedulerMarkdown.MinutesResult | base String | method-result
+    def minutes(m: com.histmersion.api.automation.AgentSchedulerMarkdown.MinutesM): com.histmersion.api.automation.AgentSchedulerMarkdown.MinutesResult =
+com.histmersion.api.automation.AgentSchedulerMarkdown.StatusResult | base String | method-result
+    def status(s: SchedulerStatus): com.histmersion.api.automation.AgentSchedulerMarkdown.StatusResult =
+com.histmersion.api.automation.AgentSchedulerMarkdown.WaitingResult | base String | method-result
+    def waiting(w: Waiting): com.histmersion.api.automation.AgentSchedulerMarkdown.WaitingResult =
+com.histmersion.api.automation.AgentSchedulerMarkdown.WhyResult | base String | method-result
+    def why(w: WhyInfo): com.histmersion.api.automation.AgentSchedulerMarkdown.WhyResult =
+com.histmersion.api.automation.AgentStateMarkdown.AgentStateListResult | base String | method-result
+    def agentStateList(entries: List[AgentStateEntry]): com.histmersion.api.automation.AgentStateMarkdown.AgentStateListResult =
+com.histmersion.api.automation.AgentStateMarkdown.AgentStateResult | base String | method-result
+    def agentState(e: AgentStateEntry): com.histmersion.api.automation.AgentStateMarkdown.AgentStateResult =
