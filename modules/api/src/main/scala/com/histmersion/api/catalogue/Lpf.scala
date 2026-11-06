@@ -22,9 +22,6 @@ import com.histmersion.api.given
   * `kind` the caller passed in.
   */
 object Lpf:
-  object Kind:
-    type Wire = Wire.T
-    object Wire extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   object Feature:
     type Id = Id.T
     object Id extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
@@ -42,8 +39,8 @@ object Lpf:
     * numbering has a year zero (1 BCE = 0, 2 BCE = -1). These convert between the two for LPF interop.
     */
 
-  type ParseDefaultKind = _root_.com.histmersion.api.catalogue.Lpf.Kind.Wire
-  val ParseDefaultKind: _root_.com.histmersion.api.catalogue.Lpf.Kind.Wire.type = _root_.com.histmersion.api.catalogue.Lpf.Kind.Wire
+  type ParseDefaultKind = _root_.com.histmersion.api.Api.ArticleQuery.Kind.Wire
+  val ParseDefaultKind: _root_.com.histmersion.api.Api.ArticleQuery.Kind.Wire.type = _root_.com.histmersion.api.Api.ArticleQuery.Kind.Wire
 
   def toIso(historicalYear: com.histmersion.api.library.Tree.Year): com.histmersion.api.catalogue.Period.IsoYear = Years.toAstronomical(historicalYear)
   def fromIso(isoYear: com.histmersion.api.catalogue.Period.IsoYear): com.histmersion.api.library.Tree.Year = Years.fromAstronomical(isoYear)
@@ -232,7 +229,7 @@ object Lpf:
       .distinctBy(r => (r.parentId, r.kind))
       .sortBy(r => (r.parentId, r.kind))
 
-  def readFeature(j: Json, defaultKind: com.histmersion.api.catalogue.Lpf.Kind.Wire, ordinal: Int): Either[com.histmersion.api.catalogue.Lpf.Problem, Place.Input] =
+  def readFeature(j: Json, defaultKind: com.histmersion.api.Api.ArticleQuery.Kind.Wire, ordinal: Int): Either[com.histmersion.api.catalogue.Lpf.Problem, Place.Input] =
     j.asObject.toRight(s"feature #$ordinal is not a JSON object").flatMap { f =>
       val props = f("properties").flatMap(_.asObject).getOrElse(JsonObject.empty)
       val label = str(props, "title", "name", "NAME", "label", "ADMIN", "NAME_LONG", "toponym")

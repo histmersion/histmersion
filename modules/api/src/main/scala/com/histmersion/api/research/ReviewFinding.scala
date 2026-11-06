@@ -24,6 +24,9 @@ final case class ReviewFinding(
       KindlingsSchema, com.histmersion.api.json.Schema
 
 object ReviewFinding:
+  object Reviewer:
+    type Wire = Wire.T
+    object Wire extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type Id = Id.T
   object Id extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type Reviewer = Reviewer.T

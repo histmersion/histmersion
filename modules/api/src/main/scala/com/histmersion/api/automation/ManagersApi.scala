@@ -105,12 +105,12 @@ object ManagersApi:
       .in(jsonBody[ApprovalDigest.BulkDecide])
       .out(jsonBody[ApprovalDigest.BulkResult])
 
-  lazy val stalls: PublicEndpoint[Option[com.histmersion.api.automation.Managers.Stalls.Limit], Api.Error, Stalls.StallReport, Any] =
+  lazy val stalls: PublicEndpoint[Option[com.histmersion.api.automation.Stalls.Limit], Api.Error, Stalls.StallReport, Any] =
     (endpoint.get
       .in("api" / "agents" / "stalls")
       .errorOut(errors)
       .in(query[Option[Int]]("days"))
-      .out(jsonBody[Stalls.StallReport])).mapIn[_root_.scala.Option[_root_.com.histmersion.api.automation.Managers.Stalls.Limit]]((refactorDecoded28: _root_.scala.Option[_root_.scala.Int]) => (refactorDecoded28).map(refactorElement35 => _root_.com.histmersion.api.automation.Managers.Stalls.Limit(refactorElement35)))((refactorEncoded28: _root_.scala.Option[_root_.com.histmersion.api.automation.Managers.Stalls.Limit]) => (refactorEncoded28).map(refactorElement36 => (refactorElement36).value))
+      .out(jsonBody[Stalls.StallReport])).mapIn[_root_.scala.Option[_root_.com.histmersion.api.automation.Stalls.Limit]]((refactorDecoded28: _root_.scala.Option[_root_.scala.Int]) => (refactorDecoded28).map(refactorElement35 => _root_.com.histmersion.api.automation.Stalls.Limit(refactorElement35)))((refactorEncoded28: _root_.scala.Option[_root_.com.histmersion.api.automation.Stalls.Limit]) => (refactorEncoded28).map(refactorElement36 => (refactorElement36).value))
 
   /** The fixed-path endpoints come before `action`, whose last segment is a parameter. */
   /** The managers themselves, their items, hints and events (first of the agents' endpoints in `Api.all`). */

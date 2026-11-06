@@ -7,7 +7,7 @@ object PlacesMarkdown:
   type KindOfKind = _root_.com.histmersion.api.catalogue.Place.Summary.Kind
   val KindOfKind: _root_.com.histmersion.api.catalogue.Place.Summary.Kind.type = _root_.com.histmersion.api.catalogue.Place.Summary.Kind
 
-  private[api] def kindOf(kind: com.histmersion.api.catalogue.PlacesMarkdown.KindOfKind, ps: Option[com.histmersion.api.catalogue.Place.Period.Start], pe: Option[com.histmersion.api.catalogue.Place.Period.End]): com.histmersion.api.Markdown.Text =
+  private[api] def kindOf(kind: com.histmersion.api.catalogue.PlacesMarkdown.KindOfKind, ps: Option[com.histmersion.api.catalogue.Period.Start], pe: Option[com.histmersion.api.catalogue.Period.End]): com.histmersion.api.Markdown.Text =
     val p = period(ps, pe)
     if p.isEmpty then kind else _root_.com.histmersion.api.Markdown.Text(s"$kind · $p")
 

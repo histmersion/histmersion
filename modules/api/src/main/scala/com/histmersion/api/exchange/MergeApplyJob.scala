@@ -53,7 +53,7 @@ object MergeApplyJob:
       "shows what is left")
 
   def of(
-      id: com.histmersion.api.jobs.Job.Id,
+      id: com.histmersion.api.SpatialHierarchyResult.Job.Id,
       status: JobState,
       bundle: com.histmersion.api.exchange.MergeApplyJob.OfBundle,
       planHash: com.histmersion.api.exchange.MergeApplyJob.OfPlanHash,

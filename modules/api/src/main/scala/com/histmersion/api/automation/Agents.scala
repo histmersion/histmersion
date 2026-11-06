@@ -25,6 +25,11 @@ object Agents:
     def wire: com.histmersion.api.automation.Agents.ModelRef.Wire = _root_.com.histmersion.api.automation.Agents.ModelRef.Wire(s"${provider.wire}:$model")
 
   object ModelRef:
+    object Model:
+      type Problem = Problem.T
+      object Problem extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+      type Spec = Spec.T
+      object Spec extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
     type Problem = Problem.T
     object Problem extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
     type Wire = Wire.T

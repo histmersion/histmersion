@@ -19,6 +19,8 @@ final case class AssetLink(
       KindlingsSchema, com.histmersion.api.json.Schema
 
 object AssetLink:
+  type Id = Id.T
+  object Id extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
 
   type Id = Id.T

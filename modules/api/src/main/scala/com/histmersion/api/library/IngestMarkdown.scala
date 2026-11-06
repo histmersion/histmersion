@@ -55,7 +55,7 @@ object IngestMarkdown:
         s"| ${j.id} | ${j.kind} | ${JobDetail.subject(j).getOrElse("")} | ${j.status} | " +
           s"${j.progress.getOrElse("")}${j.error.map(e => s" — $e").getOrElse("")} |"
       )
-      val kinds = ListFilters.facetLine(_root_.com.histmersion.api.automation.ListFilters.FacetName("By kind"), page.facet(_root_.com.histmersion.api.Paging.Page.Facet.Name("kind")))
+      val kinds = ListFilters.facetLine(_root_.com.histmersion.api.automation.ListFilters.FacetName("By kind"), page.facet(_root_.com.histmersion.api.library.Facet.Name("kind")))
       (List(s"### ${Paging.heading(_root_.com.histmersion.api.Paging.ShownCount(js.size), page.total, _root_.com.histmersion.api.Plural.Noun.Singular("job"), qualifier = status)}", "") ++
         Option.when(kinds.nonEmpty)(List(kinds, "")).toList.flatten ++
         List("| id | kind | subject | status | detail |", "|---|---|---|---|---|") ++ rows ++ older.toList.flatMap(o =>

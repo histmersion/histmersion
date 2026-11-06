@@ -10,15 +10,6 @@ object Paging:
     object Key extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
     type Text = Text.T
     object Text extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  object Heading:
-    type Text = Text.T
-    object Text extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  object Group:
-    type Label = Label.T
-    object Label extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  object Counts:
-    type Wire = Wire.T
-    object Wire extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type Cursor = Cursor.T
   object Cursor extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type GroupSize = GroupSize.T
@@ -56,17 +47,9 @@ object Paging:
 
     def all: com.histmersion.api.Paging.Page.Total = counts.map(_._2).sum
 
-    def facet(name: com.histmersion.api.Paging.Page.Facet.Name): List[(com.histmersion.api.Paging.Page.FacetResultPart1, com.histmersion.api.Paging.Page.Facet.Count)] = (facets.collectFirst { case (`name`, vs) => vs }.getOrElse(Nil)).map(refactorValue10 => { val refactorTuple7 = refactorValue10; (_root_.com.histmersion.api.Paging.Page.FacetResultPart1((refactorTuple7._1).value), _root_.com.histmersion.api.Paging.Page.Facet.Count((refactorTuple7._2).value)) })
+    def facet(name: com.histmersion.api.library.Facet.Name): List[(com.histmersion.api.Paging.Page.FacetResultPart1, com.histmersion.api.library.Facet.Count)] = (facets.collectFirst { case (`name`, vs) => vs }.getOrElse(Nil)).map(refactorValue10 => { val refactorTuple7 = refactorValue10; (_root_.com.histmersion.api.Paging.Page.FacetResultPart1((refactorTuple7._1).value), _root_.com.histmersion.api.library.Facet.Count((refactorTuple7._2).value)) })
 
   object Page:
-    object Filter:
-      type Last = Last.T
-      object Last extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-    object Facet:
-      type Count = Count.T
-      object Count extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
-      type Name = Name.T
-      object Name extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
     type CountResult = CountResult.T
     object CountResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
     type CountState = CountState.T
@@ -79,8 +62,8 @@ object Paging:
     object OfCountsPart2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
     type OfState = OfState.T
     object OfState extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-    type OfLast = _root_.com.histmersion.api.Paging.Page.Filter.Last
-    val OfLast: _root_.com.histmersion.api.Paging.Page.Filter.Last.type = _root_.com.histmersion.api.Paging.Page.Filter.Last
+    type OfLast = _root_.com.histmersion.api.library.Filter.Last
+    val OfLast: _root_.com.histmersion.api.library.Filter.Last.type = _root_.com.histmersion.api.library.Filter.Last
     type FilteredCountsPart1 = _root_.com.histmersion.api.Paging.Page.CountsPart1
     val FilteredCountsPart1: _root_.com.histmersion.api.Paging.Page.CountsPart1.type = _root_.com.histmersion.api.Paging.Page.CountsPart1
     type FilteredCountsPart2 = _root_.com.histmersion.api.Paging.Page.CountsPart2
@@ -113,17 +96,17 @@ object Paging:
     def filtered(
         counts: List[(com.histmersion.api.Paging.Page.FilteredCountsPart1, com.histmersion.api.Paging.Page.FilteredCountsPart2)],
         states: List[com.histmersion.api.Paging.Page.FilteredStates],
-        last: Option[com.histmersion.api.Paging.Page.Filter.Last],
-        facets: List[(com.histmersion.api.Paging.Page.Facet.Name, List[(com.histmersion.api.Paging.Page.FilteredFacetsPart2Part1, com.histmersion.api.Paging.Page.Facet.Count)])] = Nil
+        last: Option[com.histmersion.api.library.Filter.Last],
+        facets: List[(com.histmersion.api.library.Facet.Name, List[(com.histmersion.api.Paging.Page.FilteredFacetsPart2Part1, com.histmersion.api.library.Facet.Count)])] = Nil
     ): Page =
       val total =
         if states.isEmpty then counts.map(_._2).sum else counts.collect { case (k, n) if states.contains(k) => n }.sum
       Page(total, (last).map(refactorValue4 => _root_.com.histmersion.api.Paging.Page.Next((refactorValue4).value)), counts, (facets.filter(_._2.nonEmpty)).map(refactorValue14 => { val refactorTuple9 = refactorValue14; (_root_.com.histmersion.api.Paging.Page.FacetsPart1((refactorTuple9._1).value), (refactorTuple9._2).map(refactorValue15 => { val refactorTuple10 = refactorValue15; (_root_.com.histmersion.api.Paging.Page.FacetsPart2Part1((refactorTuple10._1).value), _root_.com.histmersion.api.Paging.Page.FacetsPart2Part2((refactorTuple10._2).value)) })) }))
 
-  def encodeCounts(counts: List[(com.histmersion.api.Paging.EncodeCountsCountsPart1, com.histmersion.api.Paging.EncodeCountsCountsPart2)]): com.histmersion.api.Paging.Counts.Wire =
-    _root_.com.histmersion.api.Paging.Counts.Wire(counts.map((s, n) => s"$s=$n").mkString(","))
+  def encodeCounts(counts: List[(com.histmersion.api.Paging.EncodeCountsCountsPart1, com.histmersion.api.Paging.EncodeCountsCountsPart2)]): com.histmersion.api.automation.Activity.Counts.Wire =
+    _root_.com.histmersion.api.automation.Activity.Counts.Wire(counts.map((s, n) => s"$s=$n").mkString(","))
 
-  def decodeCounts(s: com.histmersion.api.Paging.Counts.Wire): List[(com.histmersion.api.Paging.DecodeCountsResultPart1, com.histmersion.api.Paging.DecodeCountsResultPart2)] =
+  def decodeCounts(s: com.histmersion.api.automation.Activity.Counts.Wire): List[(com.histmersion.api.Paging.DecodeCountsResultPart1, com.histmersion.api.Paging.DecodeCountsResultPart2)] =
     (s).value.split(',').toList.map(_.trim).filter(_.nonEmpty).flatMap { pair =>
       pair.split('=') match
         case Array(k, v) => v.trim.toIntOption.map({ val refactorTuple12 = k.trim -> _; (_root_.com.histmersion.api.Paging.DecodeCountsResultPart1(refactorTuple12._1), _root_.com.histmersion.api.Paging.DecodeCountsResultPart2(refactorTuple12._2)) })
@@ -153,15 +136,15 @@ object Paging:
       )
 
   /** Grouped by hand, never through a locale: JDK 25's `en_PL` groups with a space. */
-  def grouped(n: com.histmersion.api.Paging.GroupSize): com.histmersion.api.Paging.Group.Label =
+  def grouped(n: com.histmersion.api.Paging.GroupSize): com.histmersion.api.catalogue.CatalogRecord.Group.Label =
     val s = math.abs((n).value).toString
     val g = s.reverse.grouped(3).mkString(",").reverse
-    if (n).value < 0 then _root_.com.histmersion.api.Paging.Group.Label(s"-$g") else _root_.com.histmersion.api.Paging.Group.Label(g)
+    if (n).value < 0 then _root_.com.histmersion.api.catalogue.CatalogRecord.Group.Label(s"-$g") else _root_.com.histmersion.api.catalogue.CatalogRecord.Group.Label(g)
 
-  def heading(shown: com.histmersion.api.Paging.ShownCount, total: com.histmersion.api.Paging.HeadingTotal, singular: com.histmersion.api.Plural.Noun.Singular, plural: com.histmersion.api.Plural.Noun.Plural = _root_.com.histmersion.api.Plural.Noun.Plural(""), qualifier: Option[String] = None): com.histmersion.api.Paging.Heading.Text =
+  def heading(shown: com.histmersion.api.Paging.ShownCount, total: com.histmersion.api.Paging.HeadingTotal, singular: com.histmersion.api.Plural.Noun.Singular, plural: com.histmersion.api.Plural.Noun.Plural = _root_.com.histmersion.api.Plural.Noun.Plural(""), qualifier: Option[String] = None): com.histmersion.api.Api.SourceViewQuery.Heading.Text =
     val all = math.max((shown).value, (total).value)
     val noun = qualifier.fold("")(q => s"$q ") + Plural.noun(_root_.com.histmersion.api.Plural.Count((all).toLong), singular, plural)
-    if shown >= all then _root_.com.histmersion.api.Paging.Heading.Text(s"${grouped(_root_.com.histmersion.api.Paging.GroupSize((all).toLong))} $noun")
+    if shown >= all then _root_.com.histmersion.api.Api.SourceViewQuery.Heading.Text(s"${grouped(_root_.com.histmersion.api.Paging.GroupSize((all).toLong))} $noun")
     else s"Latest ${grouped(shown)} of ${grouped(_root_.com.histmersion.api.Paging.GroupSize((all).toLong))} $noun"
 
   def olderLine(page: Page, ask: com.histmersion.api.Paging.OlderLine.Key => com.histmersion.api.Paging.OlderLine.Text): Option[com.histmersion.api.Paging.OlderLine.Text] =

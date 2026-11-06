@@ -5,6 +5,16 @@ import sttp.tapir.Schema
 import com.histmersion.api.given
 
 object Activity:
+  type Actor = Actor.T
+  object Actor extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type Cursor = Cursor.T
+  object Cursor extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type Kind = Kind.T
+  object Kind extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type Limit = Limit.T
+  object Limit extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type Subject = Subject.T
+  object Subject extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
 
   enum EntryKind(val wire: EntryKind.Wire):
@@ -44,6 +54,8 @@ object Activity:
     case Problems extends Show(_root_.com.histmersion.api.automation.Activity.Show.Wire("problems"), _root_.com.histmersion.api.automation.Activity.Show.Label("Problems"))
 
   object Show:
+    type Wire = Wire.T
+    object Wire extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
     type Wire = Wire.T
     object Wire extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
     type Label = Label.T
@@ -117,6 +129,8 @@ object Activity:
   final case class Counts(running: Counts.Running = _root_.com.histmersion.api.automation.Activity.Counts.Running(0), problemsWeek: Counts.ProblemsWeek = _root_.com.histmersion.api.automation.Activity.Counts.ProblemsWeek(0)) derives KindlingsCodecAsObject, KindlingsSchema, com.histmersion.api.json.Schema
 
   object Counts:
+    type Wire = Wire.T
+    object Wire extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
     type Running = Running.T
     object Running extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
     type ProblemsWeek = ProblemsWeek.T

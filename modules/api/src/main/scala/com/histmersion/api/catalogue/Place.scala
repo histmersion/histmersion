@@ -27,14 +27,15 @@ final case class Place(
     properties: Option[Place.Properties] = None,
     open: Option[OpenSide] = None
 ):
-  def bounds: (Option[com.histmersion.api.catalogue.Place.Period.Start], Option[com.histmersion.api.catalogue.Place.Period.End]) = OpenSide.bounds(period, open)
+  def bounds: (Option[com.histmersion.api.catalogue.Period.Start], Option[com.histmersion.api.catalogue.Period.End]) = OpenSide.bounds(period, open)
 
 object Place:
-  object Period:
-    type End = End.T
-    object End extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
-    type Start = Start.T
-    object Start extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type Depth = Depth.T
+  object Depth extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type Detail = Detail.T
+  object Detail extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type Region = Region.T
+  object Region extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
   /** The five `kind`s the store recognises. Free text in the column (an importer may carry its own vocabulary), but
     * these are what the CLI/UI offer and what api's `Lpf` maps foreign type labels onto. `people` (2026-10-09) is a
@@ -263,7 +264,7 @@ object Place:
     given io.circe.Decoder[Dating] = WireEnum.decoder
     given Schema[Dating] = WireEnum.schema
 
-    def describe(dating: Dating, start: Option[com.histmersion.api.catalogue.Place.Period.Start], end: Option[com.histmersion.api.catalogue.Place.Period.End]): com.histmersion.api.catalogue.Place.Dating.DescribeResult = dating match
+    def describe(dating: Dating, start: Option[com.histmersion.api.catalogue.Period.Start], end: Option[com.histmersion.api.catalogue.Period.End]): com.histmersion.api.catalogue.Place.Dating.DescribeResult = dating match
       case Unknown => _root_.com.histmersion.api.catalogue.Place.Dating.DescribeResult("date unknown")
       case EndOnly => end.fold("date unknown")(e => s"end ${YearFmt(e)}, start unknown")
       case Stated  => YearFmt.openPeriod(start, end, none = (""))
@@ -638,7 +639,7 @@ object Place:
       period: Option[Period] = None,
       open: Option[OpenSide] = None
   ):
-    def bounds: (Option[com.histmersion.api.catalogue.Place.Period.Start], Option[com.histmersion.api.catalogue.Place.Period.End]) = OpenSide.bounds(period, open)
+    def bounds: (Option[com.histmersion.api.catalogue.Period.Start], Option[com.histmersion.api.catalogue.Period.End]) = OpenSide.bounds(period, open)
 
   object Name:
 
@@ -928,7 +929,7 @@ object Place:
         if (lon).value < 0 then "W" else "E"
       ))
 
-    def periodText(start: Option[com.histmersion.api.catalogue.Place.Period.Start], end: Option[com.histmersion.api.catalogue.Place.Period.End]): com.histmersion.api.catalogue.Place.Overrides.PeriodTextResult = YearFmt.openPeriod(start, end)
+    def periodText(start: Option[com.histmersion.api.catalogue.Period.Start], end: Option[com.histmersion.api.catalogue.Period.End]): com.histmersion.api.catalogue.Place.Overrides.PeriodTextResult = YearFmt.openPeriod(start, end)
 
   final case class RebuildResult(
       links: RebuildResult.Links,
@@ -1010,7 +1011,7 @@ object Place:
       period: Option[Period] = None,
       open: Option[OpenSide] = None
   ):
-    def bounds: (Option[com.histmersion.api.catalogue.Place.Period.Start], Option[com.histmersion.api.catalogue.Place.Period.End]) = OpenSide.bounds(period, open)
+    def bounds: (Option[com.histmersion.api.catalogue.Period.Start], Option[com.histmersion.api.catalogue.Period.End]) = OpenSide.bounds(period, open)
 
   object Relation:
 

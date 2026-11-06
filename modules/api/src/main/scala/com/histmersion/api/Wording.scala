@@ -43,7 +43,7 @@ object Wording:
     case Source.Status.Retracted    => ("Retracted")
     case Source.Status.Unassessed   => ("Not assessed")
 
-  def statusOf(wire: com.histmersion.api.Source.Status.Wire): String =
+  def statusOf(wire: com.histmersion.api.Api.GoalQuery.Status.Wire): String =
     Source.Status.values.find(_.wire == _root_.com.histmersion.api.library.Source.Status.Wire((wire).value.trim.toLowerCase)).fold(humanize(_root_.com.histmersion.api.Wording.Id((wire).value)))(status)
 
   def pipeline(p: Pipeline): String = p match
@@ -118,7 +118,7 @@ object Wording:
     case "chatgpt-plan" => ("ChatGPT plan")
     case other          => ((humanize(_root_.com.histmersion.api.Wording.Id(other.stripSuffix("-plan")))).value + (if other.endsWith("-plan") then " plan" else ""))
 
-  def allowanceWindow(kind: com.histmersion.api.AllowanceWindow.Kind.Wire): String =
+  def allowanceWindow(kind: com.histmersion.api.Api.ArticleQuery.Kind.Wire): String =
     val k = (kind).value.trim.toLowerCase.split('/').last
     def span(minutes: com.histmersion.api.AllowanceWindow.Minutes): String = minutes match
       case 10080              => ("This week's limit")
@@ -164,21 +164,21 @@ object Wording:
   def plugin(id: com.histmersion.api.Wording.PluginId): String =
     val families = List("ai-" -> "AI provider", "oa-" -> "Open access", "media-" -> "Pictures", "events-" -> "Events")
     pluginNames
-      .get(_root_.com.histmersion.api.Plugin.Id((id).value))
+      .get(_root_.com.histmersion.api.automation.ProviderKind.Plugin.Id((id).value))
       .orElse(families.collectFirst {
         case (prefix, family) if (id).value.startsWith(prefix) => s"$family: ${humanize(_root_.com.histmersion.api.Wording.Id((id).value.stripPrefix(prefix)))}"
       })
       .getOrElse(humanize(id))
 
-  private val pluginNames: Map[com.histmersion.api.Plugin.Id, String] = Map(
-    { val refactorTuple35 = "archive-org" -> "Internet Archive"; (_root_.com.histmersion.api.Plugin.Id(refactorTuple35._1), (refactorTuple35._2)) },
-    { val refactorTuple14 = "oa-unpaywall" -> "Open access: Unpaywall"; (_root_.com.histmersion.api.Plugin.Id(refactorTuple14._1), (refactorTuple14._2)) },
-    { val refactorTuple15 = "oa-core" -> "Open access: CORE"; (_root_.com.histmersion.api.Plugin.Id(refactorTuple15._1), (refactorTuple15._2)) },
-    { val refactorTuple38 = "oa-openalex" -> "Open access: OpenAlex"; (_root_.com.histmersion.api.Plugin.Id(refactorTuple38._1), (refactorTuple38._2)) },
-    { val refactorTuple17 = "oa-landing" -> "Open access: publishers' own pages"; (_root_.com.histmersion.api.Plugin.Id(refactorTuple17._1), (refactorTuple17._2)) },
-    { val refactorTuple18 = "pmc" -> "PubMed Central"; (_root_.com.histmersion.api.Plugin.Id(refactorTuple18._1), (refactorTuple18._2)) },
-    { val refactorTuple41 = "arxiv" -> "arXiv"; (_root_.com.histmersion.api.Plugin.Id(refactorTuple41._1), (refactorTuple41._2)) },
-    { val refactorTuple42 = "keepassxc" -> "KeePassXC"; (_root_.com.histmersion.api.Plugin.Id(refactorTuple42._1), (refactorTuple42._2)) },
-    { val refactorTuple43 = "1password" -> "1Password"; (_root_.com.histmersion.api.Plugin.Id(refactorTuple43._1), (refactorTuple43._2)) },
-    { val refactorTuple44 = "bitwarden" -> "Bitwarden"; (_root_.com.histmersion.api.Plugin.Id(refactorTuple44._1), (refactorTuple44._2)) }
+  private val pluginNames: Map[com.histmersion.api.automation.ProviderKind.Plugin.Id, String] = Map(
+    { val refactorTuple35 = "archive-org" -> "Internet Archive"; (_root_.com.histmersion.api.automation.ProviderKind.Plugin.Id(refactorTuple35._1), (refactorTuple35._2)) },
+    { val refactorTuple14 = "oa-unpaywall" -> "Open access: Unpaywall"; (_root_.com.histmersion.api.automation.ProviderKind.Plugin.Id(refactorTuple14._1), (refactorTuple14._2)) },
+    { val refactorTuple15 = "oa-core" -> "Open access: CORE"; (_root_.com.histmersion.api.automation.ProviderKind.Plugin.Id(refactorTuple15._1), (refactorTuple15._2)) },
+    { val refactorTuple38 = "oa-openalex" -> "Open access: OpenAlex"; (_root_.com.histmersion.api.automation.ProviderKind.Plugin.Id(refactorTuple38._1), (refactorTuple38._2)) },
+    { val refactorTuple17 = "oa-landing" -> "Open access: publishers' own pages"; (_root_.com.histmersion.api.automation.ProviderKind.Plugin.Id(refactorTuple17._1), (refactorTuple17._2)) },
+    { val refactorTuple18 = "pmc" -> "PubMed Central"; (_root_.com.histmersion.api.automation.ProviderKind.Plugin.Id(refactorTuple18._1), (refactorTuple18._2)) },
+    { val refactorTuple41 = "arxiv" -> "arXiv"; (_root_.com.histmersion.api.automation.ProviderKind.Plugin.Id(refactorTuple41._1), (refactorTuple41._2)) },
+    { val refactorTuple42 = "keepassxc" -> "KeePassXC"; (_root_.com.histmersion.api.automation.ProviderKind.Plugin.Id(refactorTuple42._1), (refactorTuple42._2)) },
+    { val refactorTuple43 = "1password" -> "1Password"; (_root_.com.histmersion.api.automation.ProviderKind.Plugin.Id(refactorTuple43._1), (refactorTuple43._2)) },
+    { val refactorTuple44 = "bitwarden" -> "Bitwarden"; (_root_.com.histmersion.api.automation.ProviderKind.Plugin.Id(refactorTuple44._1), (refactorTuple44._2)) }
   )

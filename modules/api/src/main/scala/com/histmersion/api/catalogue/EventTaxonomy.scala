@@ -1,9 +1,6 @@
 package com.histmersion.api.catalogue
 import com.histmersion.api.given
 object EventTaxonomy:
-  object Label:
-    type Pattern = Pattern.T
-    object Pattern extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
   type ByKindPart1 = _root_.com.histmersion.api.catalogue.EventTaxonomy.Kind.Value
   val ByKindPart1: _root_.com.histmersion.api.catalogue.EventTaxonomy.Kind.Value.type = _root_.com.histmersion.api.catalogue.EventTaxonomy.Kind.Value
@@ -124,15 +121,15 @@ object EventTaxonomy:
     val k = EventScale.normKind(kind)
     aliases.get(k).orElse(Option.when(k.endsWith("_era"))(Era)).getOrElse(k)
 
-  val labelRules: List[(com.histmersion.api.catalogue.EventTaxonomy.Label.Pattern, com.histmersion.api.catalogue.EventTaxonomy.LabelRulesPart2)] = List(
-    { val refactorTuple35 = "erupt|volcan" -> Eruption; (_root_.com.histmersion.api.catalogue.EventTaxonomy.Label.Pattern(refactorTuple35._1), _root_.com.histmersion.api.catalogue.EventTaxonomy.LabelRulesPart2(refactorTuple35._2)) },
-    { val refactorTuple15 = "earthquake|seism|quake" -> Earthquake; (_root_.com.histmersion.api.catalogue.EventTaxonomy.Label.Pattern(refactorTuple15._1), _root_.com.histmersion.api.catalogue.EventTaxonomy.LabelRulesPart2(refactorTuple15._2)) },
-    { val refactorTuple16 = "tsunami" -> Tsunami; (_root_.com.histmersion.api.catalogue.EventTaxonomy.Label.Pattern(refactorTuple16._1), _root_.com.histmersion.api.catalogue.EventTaxonomy.LabelRulesPart2(refactorTuple16._2)) },
-    { val refactorTuple17 = "flood|deluge" -> Flood; (_root_.com.histmersion.api.catalogue.EventTaxonomy.Label.Pattern(refactorTuple17._1), _root_.com.histmersion.api.catalogue.EventTaxonomy.LabelRulesPart2(refactorTuple17._2)) },
-    { val refactorTuple18 = "drought|aridi" -> Drought; (_root_.com.histmersion.api.catalogue.EventTaxonomy.Label.Pattern(refactorTuple18._1), _root_.com.histmersion.api.catalogue.EventTaxonomy.LabelRulesPart2(refactorTuple18._2)) },
-    { val refactorTuple19 = "kiloyear|climat|cooling|warming" -> ClimateEvent; (_root_.com.histmersion.api.catalogue.EventTaxonomy.Label.Pattern(refactorTuple19._1), _root_.com.histmersion.api.catalogue.EventTaxonomy.LabelRulesPart2(refactorTuple19._2)) },
-    { val refactorTuple20 = "plague|epidemic|pandemic|pestilence" -> Epidemic; (_root_.com.histmersion.api.catalogue.EventTaxonomy.Label.Pattern(refactorTuple20._1), _root_.com.histmersion.api.catalogue.EventTaxonomy.LabelRulesPart2(refactorTuple20._2)) },
-    { val refactorTuple42 = "famine" -> Famine; (_root_.com.histmersion.api.catalogue.EventTaxonomy.Label.Pattern(refactorTuple42._1), _root_.com.histmersion.api.catalogue.EventTaxonomy.LabelRulesPart2(refactorTuple42._2)) }
+  val labelRules: List[(com.histmersion.api.ItemKind.Label.Pattern, com.histmersion.api.catalogue.EventTaxonomy.LabelRulesPart2)] = List(
+    { val refactorTuple35 = "erupt|volcan" -> Eruption; (_root_.com.histmersion.api.ItemKind.Label.Pattern(refactorTuple35._1), _root_.com.histmersion.api.catalogue.EventTaxonomy.LabelRulesPart2(refactorTuple35._2)) },
+    { val refactorTuple15 = "earthquake|seism|quake" -> Earthquake; (_root_.com.histmersion.api.ItemKind.Label.Pattern(refactorTuple15._1), _root_.com.histmersion.api.catalogue.EventTaxonomy.LabelRulesPart2(refactorTuple15._2)) },
+    { val refactorTuple16 = "tsunami" -> Tsunami; (_root_.com.histmersion.api.ItemKind.Label.Pattern(refactorTuple16._1), _root_.com.histmersion.api.catalogue.EventTaxonomy.LabelRulesPart2(refactorTuple16._2)) },
+    { val refactorTuple17 = "flood|deluge" -> Flood; (_root_.com.histmersion.api.ItemKind.Label.Pattern(refactorTuple17._1), _root_.com.histmersion.api.catalogue.EventTaxonomy.LabelRulesPart2(refactorTuple17._2)) },
+    { val refactorTuple18 = "drought|aridi" -> Drought; (_root_.com.histmersion.api.ItemKind.Label.Pattern(refactorTuple18._1), _root_.com.histmersion.api.catalogue.EventTaxonomy.LabelRulesPart2(refactorTuple18._2)) },
+    { val refactorTuple19 = "kiloyear|climat|cooling|warming" -> ClimateEvent; (_root_.com.histmersion.api.ItemKind.Label.Pattern(refactorTuple19._1), _root_.com.histmersion.api.catalogue.EventTaxonomy.LabelRulesPart2(refactorTuple19._2)) },
+    { val refactorTuple20 = "plague|epidemic|pandemic|pestilence" -> Epidemic; (_root_.com.histmersion.api.ItemKind.Label.Pattern(refactorTuple20._1), _root_.com.histmersion.api.catalogue.EventTaxonomy.LabelRulesPart2(refactorTuple20._2)) },
+    { val refactorTuple42 = "famine" -> Famine; (_root_.com.histmersion.api.ItemKind.Label.Pattern(refactorTuple42._1), _root_.com.histmersion.api.catalogue.EventTaxonomy.LabelRulesPart2(refactorTuple42._2)) }
   )
 
   def refine(kind: com.histmersion.api.catalogue.EventTaxonomy.RefineKind, label: com.histmersion.api.catalogue.EventSummary.Label): com.histmersion.api.catalogue.EventSummary.Kind =

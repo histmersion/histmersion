@@ -38,5 +38,5 @@ object MediaThumb:
   type Url = Url.T
   object Url extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
-  def thumbPath(uid: com.histmersion.api.media.Asset.Uid): com.histmersion.api.media.MediaThumb.ThumbPath = _root_.com.histmersion.api.media.MediaThumb.ThumbPath(s"/media/$uid/thumb")
-  def filePath(uid: com.histmersion.api.media.Asset.Uid): com.histmersion.api.media.MediaThumb.FilePath = _root_.com.histmersion.api.media.MediaThumb.FilePath(s"/media/$uid/file")
+  def thumbPath(uid: com.histmersion.api.exchange.Bundle.Asset.Uid): com.histmersion.api.media.MediaThumb.ThumbPath = _root_.com.histmersion.api.media.MediaThumb.ThumbPath(s"/media/$uid/thumb")
+  def filePath(uid: com.histmersion.api.exchange.Bundle.Asset.Uid): com.histmersion.api.media.MediaThumb.FilePath = _root_.com.histmersion.api.media.MediaThumb.FilePath(s"/media/$uid/file")
