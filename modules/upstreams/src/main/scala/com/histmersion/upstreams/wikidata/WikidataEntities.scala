@@ -25,7 +25,7 @@ object WikidataEntities:
 
   val CommonsCategory = "P373"
 
-  private def enc(s: String): String = (URLEncoder.encode((s).value, UTF_8))
+  private def enc(s: String): String = (URLEncoder.encode((s), UTF_8))
 
   /** Pure: the `wbgetentities` URL for up to the API's batch of ids. `maxlag` 0 = not sent. */
   def url(api: com.histmersion.upstreams.wikidata.WikidataEntities.Api, ids: List[com.histmersion.upstreams.wikidata.WikidataItem.Id], maxlag: com.histmersion.upstreams.wikidata.WikidataEntities.Maxlag): com.histmersion.upstreams.landing.RepositoryLanding.Candidate.Url =
