@@ -59,8 +59,8 @@ object GeoPick:
   given Schema[GeoPick] = WireEnum.schema
 
   def yearOf(pick: GeoPick, lo: com.histmersion.api.GeoPick.YearOfLo, hi: com.histmersion.api.GeoPick.YearOfHi): com.histmersion.api.GeoPick.YearOfResult = pick match
-    case Start => lo
-    case End   => hi
+    case Start => _root_.com.histmersion.api.GeoPick.YearOfResult((lo).value)
+    case End   => _root_.com.histmersion.api.GeoPick.YearOfResult((hi).value)
     case _     => _root_.com.histmersion.api.GeoPick.YearOfResult(((lo).value + (hi).value) / 2)
 
   def resolve(asOf: Option[com.histmersion.api.GeoPick.ResolveAsOf], from: Option[com.histmersion.api.GeoPick.ResolveFrom], to: Option[com.histmersion.api.GeoPick.ResolveTo], pick: GeoPick): GeoTime =

@@ -191,8 +191,8 @@ object Tree:
   def midpoint(start: com.histmersion.api.library.Tree.MidpointStart, end: com.histmersion.api.library.Tree.MidpointEnd): com.histmersion.api.library.Tree.MidpointResult = _root_.com.histmersion.api.library.Tree.MidpointResult((start).value + Math.floorDiv((end).value - (start).value, 2L))
 
   def timeTime(rows: List[TreeRow], from: com.histmersion.api.library.Tree.TimeTimeFrom, to: com.histmersion.api.library.Tree.TimeTimeTo, depth: com.histmersion.api.library.Tree.TimeTimeDepth, samples: com.histmersion.api.library.Tree.TimeTimeSamples = _root_.com.histmersion.api.library.Tree.TimeTimeSamples(0)): List[Bucket] =
-    val (lo, hi) = order(from, to)
-    timeLevel(rows, lo, hi, Aggregate.bucketSize(hi - lo), clamp(depth), samples, (_, _, _) => (Nil, _root_.com.histmersion.api.library.Tree.TimeLevelNestResultPart2(0)))
+    val (lo, hi) = order(_root_.com.histmersion.api.library.Tree.OrderA((from).value), _root_.com.histmersion.api.library.Tree.OrderB((to).value))
+    timeLevel(rows, lo, hi, Aggregate.bucketSize(hi - lo), _root_.com.histmersion.api.library.Tree.TimeLevelDepth((clamp(depth)).value), samples, (_, _, _) => (Nil, _root_.com.histmersion.api.library.Tree.TimeLevelNestResultPart2(0)))
 
   def timeTree(rows: List[TreeRow], from: com.histmersion.api.library.Tree.TimeTreeFrom, to: com.histmersion.api.library.Tree.TimeTreeTo, depth: com.histmersion.api.library.Tree.TimeTreeDepth, samples: com.histmersion.api.library.Tree.TimeTreeSamples = _root_.com.histmersion.api.library.Tree.TimeTreeSamples(0)): List[Bucket] =
     timeTime(rows, from, to, depth, samples)
@@ -249,7 +249,7 @@ object Tree:
       samples: com.histmersion.api.library.Tree.RegionTreeSamples = _root_.com.histmersion.api.library.Tree.RegionTreeSamples(0),
       root: Option[com.histmersion.api.library.Tree.RegionTreeRoot] = None
   ): List[Bucket] =
-    regions(rows, nodes, relations, asOf, clamp(depth), samples, (_, _) => Nil, root)._1
+    regions(rows, nodes, relations, asOf, _root_.com.histmersion.api.library.Tree.RegionsDepth((clamp(depth)).value), samples, (_, _) => Nil, root)._1
 
   def timeRegionTree(
       rows: List[TreeRow],
@@ -260,7 +260,7 @@ object Tree:
       depth: com.histmersion.api.library.Tree.TimeRegionTreeDepth,
       samples: com.histmersion.api.library.Tree.TimeRegionTreeSamples = _root_.com.histmersion.api.library.Tree.TimeRegionTreeSamples(0)
   ): List[Bucket] =
-    val (lo, hi) = order(from, to)
+    val (lo, hi) = order(_root_.com.histmersion.api.library.Tree.OrderA((from).value), _root_.com.histmersion.api.library.Tree.OrderB((to).value))
     timeLevel(
       rows,
       lo,
@@ -269,7 +269,7 @@ object Tree:
       _root_.com.histmersion.api.library.Tree.TimeLevelDepth(2),
       samples,
       (mine, bStart, bEnd) =>
-        regions(mine, nodes, relations, Some(midpoint(bStart, bEnd)), clamp(depth), samples, (_, _) => Nil)
+        regions(mine, nodes, relations, Some(midpoint(_root_.com.histmersion.api.library.Tree.MidpointStart((bStart).value), _root_.com.histmersion.api.library.Tree.MidpointEnd((bEnd).value))), _root_.com.histmersion.api.library.Tree.RegionsDepth((clamp(depth)).value), samples, (_, _) => Nil)
     )
 
   def regionTimeTree(
@@ -283,13 +283,13 @@ object Tree:
       samples: com.histmersion.api.library.Tree.RegionTimeTreeSamples = _root_.com.histmersion.api.library.Tree.RegionTimeTreeSamples(0),
       root: Option[com.histmersion.api.library.Tree.RegionTimeTreeRoot] = None
   ): List[Bucket] =
-    val (lo, hi) = order(from, to)
+    val (lo, hi) = order(_root_.com.histmersion.api.library.Tree.OrderA((from).value), _root_.com.histmersion.api.library.Tree.OrderB((to).value))
     regions(
       rows,
       nodes,
       relations,
       asOf,
-      clamp(depth),
+      _root_.com.histmersion.api.library.Tree.RegionsDepth((clamp(depth)).value),
       samples,
       (mine, _) => timeTime(mine, lo, hi, _root_.com.histmersion.api.library.Tree.ClampDepth(1), samples),
       root
@@ -406,7 +406,7 @@ object Tree:
     else rows.iterator.map(r => Bucket.Sample(r.citekey, r.title)).distinctBy(_.citekey).take((n).value).toList
 
   private def clamp(depth: com.histmersion.api.library.Tree.ClampDepth): com.histmersion.api.library.Tree.ClampResult = (depth).value.max(1).min(MaxDepth)
-  private def order(a: com.histmersion.api.library.Tree.OrderA, b: com.histmersion.api.library.Tree.OrderB): (com.histmersion.api.library.Tree.OrderResultPart1, com.histmersion.api.library.Tree.OrderResultPart2) = if a <= b then (a, b) else (b, a)
+  private def order(a: com.histmersion.api.library.Tree.OrderA, b: com.histmersion.api.library.Tree.OrderB): (com.histmersion.api.library.Tree.OrderResultPart1, com.histmersion.api.library.Tree.OrderResultPart2) = if a <= b then (_root_.com.histmersion.api.library.Tree.OrderResultPart1((a).value), _root_.com.histmersion.api.library.Tree.OrderResultPart2((b).value)) else (_root_.com.histmersion.api.library.Tree.OrderResultPart1((b).value), _root_.com.histmersion.api.library.Tree.OrderResultPart2((a).value))
 
   def parseBy(s: com.histmersion.api.library.Tree.ParseByS): Option[List[com.histmersion.api.library.Tree.ParseByResult]] =
     val parts = (s).value.split(",").map(_.trim.toLowerCase).filter(_.nonEmpty).toList

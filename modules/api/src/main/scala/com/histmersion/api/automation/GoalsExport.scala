@@ -79,7 +79,7 @@ object GoalsExport:
     val head = List(Header, Notice, summary(goals), "---")
     val known = goals.map(_.slug).toSet
     val body =
-      if views.isEmpty then List("_No goals._") else tree(views).map((v, depth) => block(v, depth, known, itemStatus))
+      if views.isEmpty then List("_No goals._") else tree(views).map((v, depth) => block(v, _root_.com.histmersion.api.automation.GoalsExport.BlockDepth((depth).value), known, itemStatus))
     _root_.com.histmersion.api.automation.GoalsExport.RenderResult((head ++ body).mkString("\n\n") + "\n")
 
   private[api] def summary(goals: List[Goal]): com.histmersion.api.automation.GoalsExport.SummaryResult =

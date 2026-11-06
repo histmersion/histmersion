@@ -154,14 +154,14 @@ object EventTaxonomy:
 
   def refine(kind: com.histmersion.api.catalogue.EventTaxonomy.RefineKind, label: com.histmersion.api.catalogue.EventTaxonomy.RefineLabel): com.histmersion.api.catalogue.EventTaxonomy.RefineResult =
     val k = canonical(kind)
-    if k != NaturalGeneric then k
+    if k != NaturalGeneric then _root_.com.histmersion.api.catalogue.EventTaxonomy.RefineResult((k).value)
     else
       val l = (label).value.toLowerCase(java.util.Locale.ROOT)
       labelRules.collectFirst { case (re, sub) if (re).value.r.findFirstIn(l).isDefined => sub }.getOrElse(k)
 
   def of(kind: com.histmersion.api.catalogue.EventTaxonomy.OfKind): Kind =
     val k = canonical(kind)
-    byKind.getOrElse(k, byKind(_root_.com.histmersion.api.catalogue.EventTaxonomy.ByKindPart1(HumanGeneric)).copy(kind = k, label = k.replace('_', ' ')))
+    byKind.getOrElse(_root_.com.histmersion.api.catalogue.EventTaxonomy.ByKindPart1((k).value), byKind(_root_.com.histmersion.api.catalogue.EventTaxonomy.ByKindPart1(HumanGeneric)).copy(kind = k, label = (k).value.replace('_', ' ')))
 
   def group(kind: com.histmersion.api.catalogue.EventTaxonomy.GroupKind): com.histmersion.api.catalogue.EventTaxonomy.GroupResult = of(kind).group
   def icon(kind: com.histmersion.api.catalogue.EventTaxonomy.IconKind): com.histmersion.api.catalogue.EventTaxonomy.IconResult = of(kind).icon
@@ -182,7 +182,7 @@ object EventTaxonomy:
   def condition(filter: Option[com.histmersion.api.catalogue.EventTaxonomy.ConditionFilter]): Option[KindCondition] =
     filter.map((_).value.trim.toLowerCase(java.util.Locale.ROOT)).filter(_.nonEmpty).map { f =>
       val natural = (kinds.filter(_.group == _root_.com.histmersion.api.catalogue.EventTaxonomy.Kind.Group(Natural)).map(_.kind) ++
-        aliases.collect { case (a, v) if byKind.get(v).exists(_.group == Natural) => a }).distinct.sorted
+        aliases.collect { case (a, v) if byKind.get(_root_.com.histmersion.api.catalogue.EventTaxonomy.ByKindPart1((v).value)).exists(_.group == Natural) => a }).distinct.sorted
       if f == Natural then KindCondition(natural, negate = _root_.com.histmersion.api.catalogue.EventTaxonomy.KindCondition.Negate(false))
       else if f == Human then KindCondition(natural, negate = _root_.com.histmersion.api.catalogue.EventTaxonomy.KindCondition.Negate(true))
       else

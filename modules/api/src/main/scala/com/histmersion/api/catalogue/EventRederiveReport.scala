@@ -49,7 +49,7 @@ object EventRederiveReport:
 
   def summary(r: EventRederiveReport): com.histmersion.api.catalogue.EventRederiveReport.SummaryResult =
     def counts(cs: List[EventCount]) = cs.map(c => s"${c.key} ${c.n}").mkString(", ")
-    List(
+    _root_.com.histmersion.api.catalogue.EventRederiveReport.SummaryResult(List(
       Some(
         s"${r.providers.mkString(", ")}: ${r.records} record(s) re-derived (${r.fromRaw} from the catalogue's own record)"
       ),
@@ -59,7 +59,7 @@ object EventRederiveReport:
       Option.when(r.after.nonEmpty)(s"precision ${counts(r.before)} → ${counts(r.after)}"),
       Option.when((r.offMap).value > 0)(s"${r.offMap} imprecise (off the map, on the list)"),
       r.corrections.summary
-    ).flatten.mkString(" · ")
+    ).flatten.mkString(" · "))
 
   def markdown(r: EventRederiveReport): com.histmersion.api.catalogue.EventRederiveReport.MarkdownResult =
     val head =

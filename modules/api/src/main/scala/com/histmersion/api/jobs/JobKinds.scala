@@ -15,10 +15,10 @@ final class JobKinds(val entries: List[JobKindEntry], val details: List[JobDetai
   def parse(wire: com.histmersion.api.jobs.JobKinds.ParseWire): Option[JobKindEntry] = byWire.get(_root_.com.histmersion.api.jobs.JobKinds.ByWirePart1((wire).value.trim.toLowerCase))
 
   /** May a person pause and cancel a job of the kind `wire` names? */
-  def stoppable(wire: com.histmersion.api.jobs.JobKinds.StoppableWire): com.histmersion.api.jobs.JobKinds.StoppableResult = byWire.get(wire).exists(_.stoppable)
+  def stoppable(wire: com.histmersion.api.jobs.JobKinds.StoppableWire): com.histmersion.api.jobs.JobKinds.StoppableResult = byWire.get(_root_.com.histmersion.api.jobs.JobKinds.ByWirePart1((wire).value)).exists(_.stoppable)
 
   /** Do the pause, resume and cancel of a job of the kind `wire` names go to the kind's own runner? */
-  def ownControl(wire: com.histmersion.api.jobs.JobKinds.OwnControlWire): com.histmersion.api.jobs.JobKinds.OwnControlResult = byWire.get(wire).exists(_.ownControl)
+  def ownControl(wire: com.histmersion.api.jobs.JobKinds.OwnControlWire): com.histmersion.api.jobs.JobKinds.OwnControlResult = byWire.get(_root_.com.histmersion.api.jobs.JobKinds.ByWirePart1((wire).value)).exists(_.ownControl)
 
   /** The identifiers of the kinds a person may pause and cancel. */
   def stoppableKinds: Set[com.histmersion.api.jobs.JobKinds.StoppableKindsResult] = entries.filter((refactorCallback => ((refactorCallback.stoppable) == _root_.com.histmersion.api.jobs.JobKindEntry.Stoppable(true)))).map(_.kind.value).toSet

@@ -216,7 +216,7 @@ object Place:
     def shapeNote: Option[com.histmersion.api.catalogue.Place.Card.ShapeNoteResult] =
       Option
         .when(((pointOnlyArea) == _root_.com.histmersion.api.catalogue.Place.Card.PointOnlyAreaResult(true)))(Shape.NoBoundaryNote)
-        .orElse(Option.when(geometry.isDefined && Shape.isPeople(place.kind))(Shape.PeopleNote))
+        .orElse(Option.when(geometry.isDefined && ((Shape.isPeople(place.kind)) == _root_.com.histmersion.api.catalogue.Place.Shape.IsPeopleResult(true)))(Shape.PeopleNote))
 
     def locationNote: Option[com.histmersion.api.catalogue.Place.Card.LocationNoteResult] =
       Option.when(locationPrecision == com.histmersion.api.catalogue.Place.Precision.GridCell)(
@@ -1048,7 +1048,7 @@ object Place:
       case other                              => _root_.com.histmersion.api.catalogue.Place.Record.DateSourceTextResult(other)
 
   final case class Register(property: Register.Property, id: Register.Id) derives KindlingsCodecAsObject, KindlingsSchema:
-    def name: com.histmersion.api.catalogue.Place.Register.NameResult = Register.names.getOrElse(property, property)
+    def name: com.histmersion.api.catalogue.Place.Register.NameResult = Register.names.getOrElse(_root_.com.histmersion.api.catalogue.Place.Register.NamesPart1((property).value), property)
 
   object Register:
     type NameResult = NameResult.T
@@ -1143,7 +1143,7 @@ object Place:
     def isArea(kind: com.histmersion.api.catalogue.Place.Shape.IsAreaKind): com.histmersion.api.catalogue.Place.Shape.IsAreaResult =
       _root_.com.histmersion.api.catalogue.Place.Shape.IsAreaResult(kind == _root_.com.histmersion.api.catalogue.Place.Shape.IsAreaKind(com.histmersion.api.catalogue.Place.Kind.Region) || kind == _root_.com.histmersion.api.catalogue.Place.Shape.IsAreaKind(com.histmersion.api.catalogue.Place.Kind.Polity))
 
-    def pointOnlyArea(kind: com.histmersion.api.catalogue.Place.Shape.PointOnlyAreaKind, hasBoundary: com.histmersion.api.catalogue.Place.Shape.PointOnlyAreaHasBoundary): com.histmersion.api.catalogue.Place.Shape.PointOnlyAreaResult = ((isArea(kind)) == _root_.com.histmersion.api.catalogue.Place.Shape.IsAreaResult(true)) && !((hasBoundary) == _root_.com.histmersion.api.catalogue.Place.Shape.PointOnlyAreaHasBoundary(true))
+    def pointOnlyArea(kind: com.histmersion.api.catalogue.Place.Shape.PointOnlyAreaKind, hasBoundary: com.histmersion.api.catalogue.Place.Shape.PointOnlyAreaHasBoundary): com.histmersion.api.catalogue.Place.Shape.PointOnlyAreaResult = _root_.com.histmersion.api.catalogue.Place.Shape.PointOnlyAreaResult(((isArea(kind)) == _root_.com.histmersion.api.catalogue.Place.Shape.IsAreaResult(true)) && !((hasBoundary) == _root_.com.histmersion.api.catalogue.Place.Shape.PointOnlyAreaHasBoundary(true)))
 
     val NoBoundaryNote: com.histmersion.api.catalogue.Place.Shape.NoBoundaryNote = "point only — boundary not yet available"
 

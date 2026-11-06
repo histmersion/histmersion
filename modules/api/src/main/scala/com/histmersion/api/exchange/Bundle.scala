@@ -31,7 +31,7 @@ object Bundle:
       */
     case Place, Period
 
-    def wire: com.histmersion.api.exchange.Bundle.Kind.WireResult = Kind.wireOf(this)
+    def wire: com.histmersion.api.exchange.Bundle.Kind.WireResult = _root_.com.histmersion.api.exchange.Bundle.Kind.WireResult((Kind.wireOf(this)).value)
 
     /** The NDJSON file holding this kind's lines. */
     def file: com.histmersion.api.exchange.Bundle.Kind.FileResult = _root_.com.histmersion.api.exchange.Bundle.Kind.FileResult(s"entities/${Kind.fileStem(this)}.ndjson")
@@ -627,7 +627,7 @@ object Bundle:
     object NewerThere extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
     def candidateStatus(here: com.histmersion.api.exchange.Bundle.EventSets.CandidateStatusHere, there: com.histmersion.api.exchange.Bundle.EventSets.CandidateStatusThere): com.histmersion.api.exchange.Bundle.EventSets.CandidateStatusResult =
-      if here == _root_.com.histmersion.api.exchange.Bundle.EventSets.CandidateStatusHere("proposed") then there else here
+      if here == _root_.com.histmersion.api.exchange.Bundle.EventSets.CandidateStatusHere("proposed") then _root_.com.histmersion.api.exchange.Bundle.EventSets.CandidateStatusResult((there).value) else _root_.com.histmersion.api.exchange.Bundle.EventSets.CandidateStatusResult((here).value)
 
     /** Timestamps share one fixed-width UTC format, so text order is time order. */
     def newer(here: Option[com.histmersion.api.exchange.Bundle.EventSets.NewerHere], there: Option[com.histmersion.api.exchange.Bundle.EventSets.NewerThere]): com.histmersion.api.exchange.Bundle.EventSets.NewerResult = (here, there) match

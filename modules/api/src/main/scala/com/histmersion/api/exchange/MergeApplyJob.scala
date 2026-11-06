@@ -63,11 +63,11 @@ object MergeApplyJob:
       result: Option[MergeApplyResult]
   ): MergeApplyJob =
     status match
-      case JobState.Queued | JobState.Running => MergeApplyJob(id, MergeJobState.Running, bundle, planHash, elapsedMs)
+      case JobState.Queued | JobState.Running => MergeApplyJob(_root_.com.histmersion.api.exchange.MergeApplyJob.Job((id).value), MergeJobState.Running, bundle, planHash, elapsedMs)
       case JobState.Done                      =>
         result.fold(
           MergeApplyJob(
-            id,
+            _root_.com.histmersion.api.exchange.MergeApplyJob.Job((id).value),
             MergeJobState.Failed,
             bundle,
             planHash,
@@ -78,6 +78,6 @@ object MergeApplyJob:
           )
         )(r => MergeApplyJob(id, MergeJobState.Done, bundle, planHash, elapsedMs, result = Some(r)))
       case JobState.Failed if error.contains(JobState.Interrupted) =>
-        MergeApplyJob(id, MergeJobState.Interrupted, bundle, planHash, elapsedMs, error = Some(InterruptedText))
+        MergeApplyJob(_root_.com.histmersion.api.exchange.MergeApplyJob.Job((id).value), MergeJobState.Interrupted, bundle, planHash, elapsedMs, error = Some(InterruptedText))
       case JobState.Failed | JobState.Paused | JobState.Cancelled =>
-        MergeApplyJob(id, MergeJobState.Failed, bundle, planHash, elapsedMs, error = error)
+        MergeApplyJob(_root_.com.histmersion.api.exchange.MergeApplyJob.Job((id).value), MergeJobState.Failed, bundle, planHash, elapsedMs, error = error)

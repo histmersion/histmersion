@@ -39,8 +39,8 @@ object Corrections:
   def show(json: com.histmersion.api.catalogue.Corrections.ShowJson): com.histmersion.api.catalogue.Corrections.ShowResult =
     io.circe.parser.parse((json).value).toOption match
       case Some(j) if j.isNull => _root_.com.histmersion.api.catalogue.Corrections.ShowResult("none")
-      case Some(j)             => j.asString.getOrElse(j.noSpaces)
-      case None                => json
+      case Some(j)             => _root_.com.histmersion.api.catalogue.Corrections.ShowResult(j.asString.getOrElse(j.noSpaces))
+      case None                => _root_.com.histmersion.api.catalogue.Corrections.ShowResult((json).value)
 
   def describe(c: Correction): com.histmersion.api.catalogue.Corrections.DescribeResult =
     val base = s"${c.field}: “${Fmt.clip(show(c.value))}” (was “${Fmt.clip(show(c.upstreamValue))}”" +
@@ -57,7 +57,7 @@ object Corrections:
     type ClipS = ClipS.T
     object ClipS extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
-    def clip(s: com.histmersion.api.catalogue.Corrections.Fmt.ClipS): com.histmersion.api.catalogue.Corrections.Fmt.ClipResult = if (s).value.length > 80 then _root_.com.histmersion.api.catalogue.Corrections.Fmt.ClipResult((s).value.take(79) + "…") else s
+    def clip(s: com.histmersion.api.catalogue.Corrections.Fmt.ClipS): com.histmersion.api.catalogue.Corrections.Fmt.ClipResult = if (s).value.length > 80 then _root_.com.histmersion.api.catalogue.Corrections.Fmt.ClipResult((s).value.take(79) + "…") else _root_.com.histmersion.api.catalogue.Corrections.Fmt.ClipResult((s).value)
 
   def markdown(l: Correction.List): com.histmersion.api.catalogue.Corrections.MarkdownResult =
     if l.corrections.isEmpty then _root_.com.histmersion.api.catalogue.Corrections.MarkdownResult("_No corrections by hand._")

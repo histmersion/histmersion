@@ -118,7 +118,7 @@ object Lpf:
         else 0
       Digits.findFirstIn(t).flatMap(_.toLongOption).map { n =>
         val y = if n < 0 then n else if era < 0 then -n else n
-        if isIso then fromIso(_root_.com.histmersion.api.catalogue.Lpf.FromIsoIsoYear(y)) else _root_.com.histmersion.api.catalogue.Lpf.ParseYearResult(y)
+        if isIso then _root_.com.histmersion.api.catalogue.Lpf.ParseYearResult((fromIso(_root_.com.histmersion.api.catalogue.Lpf.FromIsoIsoYear(y))).value) else _root_.com.histmersion.api.catalogue.Lpf.ParseYearResult(y)
       }
 
   /** LPF mixes `"-1400"` and `-1400`. */
@@ -128,12 +128,12 @@ object Lpf:
   /** LPF puts the certain value in `in` and the fuzzy bounds in `earliest`/`latest`. */
   private def bound(j: Json, wide: com.histmersion.api.catalogue.Lpf.BoundWide, narrow: com.histmersion.api.catalogue.Lpf.BoundNarrow): Option[com.histmersion.api.catalogue.Lpf.BoundResult] =
     j.asObject match
-      case None      => yearOf(j)
+      case None      => (yearOf(j)).map(refactorValue22 => _root_.com.histmersion.api.catalogue.Lpf.BoundResult((refactorValue22).value))
       case Some(obj) =>
         obj("in")
           .flatMap(yearOf)
           .orElse(obj((wide).value).flatMap(yearOf))
-          .orElse(obj(narrow).flatMap(yearOf))
+          .orElse(obj((narrow).value).flatMap(yearOf))
 
   def parseWhen(j: Json): Option[Span] =
     def span(o: JsonObject): Option[Span] =
@@ -339,9 +339,9 @@ object Lpf:
               .map(o => List(Json.fromJsonObject(o)))
           )
       val features: Either[com.histmersion.api.catalogue.Lpf.ParseFeaturesPart1, List[Json]] =
-        found.toRight("not a FeatureCollection: no `features` array and not a feature")
+        found.toRight(_root_.com.histmersion.api.catalogue.Lpf.ParseFeaturesPart1("not a FeatureCollection: no `features` array and not a feature"))
       features.flatMap { fs =>
-        val parsed = fs.zipWithIndex.map((f, i) => readFeature(f, defaultKind, i))
+        val parsed = fs.zipWithIndex.map((f, i) => readFeature(f, defaultKind, _root_.com.histmersion.api.catalogue.Lpf.ReadFeatureOrdinal(i)))
         parsed.collectFirst { case Left(e) => e } match
           case Some(e) => Left(e)
           case None    => Right(parsed.collect { case Right(p) => p })

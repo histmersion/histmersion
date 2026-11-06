@@ -61,7 +61,7 @@ object Aggregate:
 
   def buckets(from: com.histmersion.api.library.Aggregate.BucketsFrom, to: com.histmersion.api.library.Aggregate.BucketsTo, size: com.histmersion.api.library.Aggregate.BucketsSize): List[(com.histmersion.api.library.Aggregate.BucketsResultPart1, com.histmersion.api.library.Aggregate.BucketsResultPart2)] =
     require((size).value > 0, s"bucket size must be positive, got $size")
-    val (lo, hi) = order(from, to)
+    val (lo, hi) = order(_root_.com.histmersion.api.library.Aggregate.OrderA((from).value), _root_.com.histmersion.api.library.Aggregate.OrderB((to).value))
     val first = Math.floorDiv(lo, size) * size
     // Not `Iterator.iterate(_ + size)`: near Long.MaxValue the addition wraps negative and the iterator never ends.
     val out = List.newBuilder[(Long, Long)]
@@ -80,7 +80,7 @@ object Aggregate:
   def bucketCount(from: com.histmersion.api.library.Aggregate.BucketCountFrom, to: com.histmersion.api.library.Aggregate.BucketCountTo, size: com.histmersion.api.library.Aggregate.BucketCountSize): BigInt =
     if size <= 0 then BigInt(0)
     else
-      val (lo, hi) = order(from, to)
+      val (lo, hi) = order(_root_.com.histmersion.api.library.Aggregate.OrderA((from).value), _root_.com.histmersion.api.library.Aggregate.OrderB((to).value))
       val first = BigInt(Math.floorDiv(lo, size)) * size
       ((BigInt(hi) - first) / size) + 1
 
@@ -99,7 +99,7 @@ object Aggregate:
   val UnitStarts = "starts"
 
   def histogram(rows: List[Period.Row], from: com.histmersion.api.library.Aggregate.HistogramFrom, to: com.histmersion.api.library.Aggregate.HistogramTo): List[TimeBucket] =
-    val (lo, hi) = order(from, to)
+    val (lo, hi) = order(_root_.com.histmersion.api.library.Aggregate.OrderA((from).value), _root_.com.histmersion.api.library.Aggregate.OrderB((to).value))
     histogram(rows, lo, hi, bucketSize(hi - lo))
 
   def histogram(
@@ -116,7 +116,7 @@ object Aggregate:
           TimeBucket(bStart, bEnd, spans.count((s, e) => s <= bEnd && e >= bStart))
         }
       case Counting.Starts =>
-        val (lo, hi) = order(from, to)
+        val (lo, hi) = order(_root_.com.histmersion.api.library.Aggregate.OrderA((from).value), _root_.com.histmersion.api.library.Aggregate.OrderB((to).value))
         val byBucket = spans.iterator
           .map(_._1)
           .filter(y => y >= lo && y <= hi)
@@ -136,4 +136,4 @@ object Aggregate:
     case (None, Some(b))    => Some((b, b))
     case (None, None)       => None
 
-  private def order(a: com.histmersion.api.library.Aggregate.OrderA, b: com.histmersion.api.library.Aggregate.OrderB): (com.histmersion.api.library.Aggregate.OrderResultPart1, com.histmersion.api.library.Aggregate.OrderResultPart2) = if a <= b then (a, b) else (b, a)
+  private def order(a: com.histmersion.api.library.Aggregate.OrderA, b: com.histmersion.api.library.Aggregate.OrderB): (com.histmersion.api.library.Aggregate.OrderResultPart1, com.histmersion.api.library.Aggregate.OrderResultPart2) = if a <= b then (_root_.com.histmersion.api.library.Aggregate.OrderResultPart1((a).value), _root_.com.histmersion.api.library.Aggregate.OrderResultPart2((b).value)) else (_root_.com.histmersion.api.library.Aggregate.OrderResultPart1((b).value), _root_.com.histmersion.api.library.Aggregate.OrderResultPart2((a).value))

@@ -57,7 +57,7 @@ object MediaText:
       case Array(base, query) =>
         val kept = query.split("&").filterNot(p => p.toLowerCase(Locale.ROOT).startsWith("utm_") || p.isEmpty)
         if kept.isEmpty then _root_.com.histmersion.upstreams.media.MediaText.StripTrackingResult(base) else _root_.com.histmersion.upstreams.media.MediaText.StripTrackingResult(base + "?" + kept.mkString("&"))
-      case _ => url
+      case _ => _root_.com.histmersion.upstreams.media.MediaText.StripTrackingResult((url).value)
 
   /** Pure: a link-safe file name for a provider's file title (`File:Lions Gate.jpg` → `Lions_Gate.jpg`). */
   def safeName(title: com.histmersion.upstreams.media.MediaText.SafeNameTitle): com.histmersion.upstreams.media.MediaText.SafeNameResult =

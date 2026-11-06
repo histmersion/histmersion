@@ -15,12 +15,12 @@ final case class JobCounts(
 ) derives KindlingsCodecAsObject,
       KindlingsSchema, com.histmersion.api.json.Schema:
   def of(s: JobState): com.histmersion.api.jobs.JobCounts.OfResult = s match
-    case JobState.Queued    => queued
-    case JobState.Running   => running
-    case JobState.Done      => done
-    case JobState.Failed    => failed
-    case JobState.Paused    => paused
-    case JobState.Cancelled => cancelled
+    case JobState.Queued    => _root_.com.histmersion.api.jobs.JobCounts.OfResult((queued).value)
+    case JobState.Running   => _root_.com.histmersion.api.jobs.JobCounts.OfResult((running).value)
+    case JobState.Done      => _root_.com.histmersion.api.jobs.JobCounts.OfResult((done).value)
+    case JobState.Failed    => _root_.com.histmersion.api.jobs.JobCounts.OfResult((failed).value)
+    case JobState.Paused    => _root_.com.histmersion.api.jobs.JobCounts.OfResult((paused).value)
+    case JobState.Cancelled => _root_.com.histmersion.api.jobs.JobCounts.OfResult((cancelled).value)
 object JobCounts:
 
 

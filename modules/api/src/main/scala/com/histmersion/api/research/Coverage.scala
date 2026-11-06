@@ -106,7 +106,7 @@ object Coverage:
         }
       }
 
-    def list(m: Map[com.histmersion.api.research.Coverage.Reason.ListMPart1, com.histmersion.api.research.Coverage.Reason.ListMPart2]): List[Reason] = m.toList.sortBy(_._1).map(Reason(_, _))
+    def list(m: Map[com.histmersion.api.research.Coverage.Reason.ListMPart1, com.histmersion.api.research.Coverage.Reason.ListMPart2]): List[Reason] = m.toList.sortBy(_._1).map(Reason(_, _root_.com.histmersion.api.research.Coverage.Reason.Value((_).value)))
 
   final case class Source(
       citekey: com.histmersion.api.library.Citekey,

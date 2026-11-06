@@ -36,13 +36,13 @@ object EventGeometry:
   def point(lat: com.histmersion.api.catalogue.EventGeometry.PointLat, lon: com.histmersion.api.catalogue.EventGeometry.PointLon): Either[com.histmersion.api.catalogue.EventGeometry.PointResultPart1, com.histmersion.api.catalogue.EventGeometry.PointResultPart2] =
     if lat.isNaN || lat < -90 || lat > 90 then Left(_root_.com.histmersion.api.catalogue.EventGeometry.PointResultPart1(s"lat $lat is not between -90 and 90"))
     else if lon.isNaN || lon < -180 || lon > 180 then Left(_root_.com.histmersion.api.catalogue.EventGeometry.PointResultPart1(s"lon $lon is not between -180 and 180"))
-    else Right(s"""{"type":"Point","coordinates":[${fmt(lon)},${fmt(lat)}]}""")
+    else Right(s"""{"type":"Point","coordinates":[${fmt(_root_.com.histmersion.api.catalogue.EventGeometry.FmtD((lon).value))},${fmt(_root_.com.histmersion.api.catalogue.EventGeometry.FmtD((lat).value))}]}""")
 
   def of(geometry: Option[com.histmersion.api.catalogue.EventGeometry.OfGeometry], lat: Option[com.histmersion.api.catalogue.EventGeometry.OfLat], lon: Option[com.histmersion.api.catalogue.EventGeometry.OfLon]): Either[com.histmersion.api.catalogue.EventGeometry.OfResultPart1, Option[com.histmersion.api.catalogue.EventGeometry.OfResultPart2]] =
     (geometry.map((_).value.trim).filter(_.nonEmpty), lat, lon) match
       case (Some(_), Some(_), _) | (Some(_), _, Some(_)) => Left(_root_.com.histmersion.api.catalogue.EventGeometry.OfResultPart1("give geometry or lat/lon, not both"))
       case (g @ Some(_), None, None)                     => Right((g).map(refactorValue => _root_.com.histmersion.api.catalogue.EventGeometry.OfResultPart2(refactorValue)))
-      case (None, Some(a), Some(o))                      => point(a, o).map(Some(_))
+      case (None, Some(a), Some(o))                      => point(_root_.com.histmersion.api.catalogue.EventGeometry.PointLat((a).value), _root_.com.histmersion.api.catalogue.EventGeometry.PointLon((o).value)).map(Some(_))
       case (None, None, None)                            => Right(None)
       case _                                             => Left(_root_.com.histmersion.api.catalogue.EventGeometry.OfResultPart1("lat and lon go together"))
 

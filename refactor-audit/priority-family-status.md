@@ -1,6 +1,81 @@
 # Priority-family status
 
-## Current checkpoint: property-flow helpers share model types, compilation incomplete
+## Current checkpoint: generated helper adapters applied, compilation incomplete
+
+project-helper-adapters-1 applies 513 compiler AST patches across 110 production
+files, with zero application test edits: 471 E007 adapters and 42 E008 native-member
+repairs. This includes newly exposed cases supported by existing construction,
+native Boolean and owner-operation rules; the total is not a count of distinct
+new helper concepts or verified policy violations. All model definitions remain
+typed. The existing frozen-preview pipeline is used without individual application
+expression/type mappings or another runner/verifier/report framework.
+
+generatedHelperAdapters adds exact same-base Pure conversions only inside both
+types' immediate implementation owner. Both types need unique indexed definitions,
+compatible module/source set/platform, and either known constructor-property use
+or owner-match generated-member provenance. At least one must be a generated
+non-property helper. Constructors must be behaviorless (given aliases may remain).
+Unknown provenance, custom methods/constructors, constrained types, differing bases,
+cross-owner calls and two model-property identities are excluded. Existing
+structural adapters handle supported collections, tuples and functions. This
+keeps distinct definitions rather than asserting semantic identity. E134 remains
+disabled: the mode requires native-Boolean owner mode and excludes configured
+nominal boundaries, error/comparison adapters and callback history.
+
+The five positive fixture expressions match the independent golden exactly, and
+actual rewritten Scala 3.10 future-source/fatal-E165 compile/runtime checks pass.
+They cover scalar/property values, populated/empty lists, tuple producer evaluation
+once and function producer evaluation once with repeated callbacks. Six actual
+E007 negative inputs stay outside the plan: absent provenance, two properties,
+foreign owner, custom behavior, a constraint and differing bases. Fixture origins
+are synthetic test data. The initial unqualified-base fixture selected nothing;
+the corrected fixture uses the existing qualified-native safety shape. Existing
+five ordinary/two owner goldens remain exact, preserving their earlier executed
+runtime assertions. Disabling nativeBooleans is explicitly tested to reject this
+mode before writing a report, protecting the known E134 limitation.
+
+All 110 application files match the frozen preview. The full census retains all
+3169 Scala files, now136773 positions; its hashes match frontier23 (which also
+snapshots build.sbt). Stable raw and newtype ID deltas are both zero: raw candidates
+production886/test6009; opaque shapes production26894/test19; 2981 overlap groups
+and 16228 unresolved references. Import/alias/inferred/inherited/external resolution
+remains partial. No new detector refinement, exception, global inventory acceptance
+or overall automatic-repair percentage is claimed.
+
+| Module | Frontier22/latest | Actual frontier23 |
+|---|---:|---:|
+| api JVM and JS, each | 2478 | 2297 |
+| values | latest31, cached | 25 |
+| upstreams | 346 | 282 |
+| plugin-vaults | 94 | 98 |
+| plugins/calibre | 194 | 193 |
+| plugins/ai-http | 89 | 77 |
+| plugin-fixtures/hello | 1 | cached failure |
+| plugin-fixtures/hello-ai | 7 | cached failure |
+| chimney-iron | cached failure | cached failure |
+
+All ten previously failing tasks still fail. The vault increase is retained.
+Inspection of its changed expressions shows newly typed callback arguments after
+request(ref)'s repair, and outer result mismatches after inner inputs compile:
+KeePassXcSession.command's raw String result, KeePassXcVault.session's combined map,
+withYubiKey's error result and readAll's result. Those witnesses do not establish
+complete attribution of every added/removed diagnostic or zero regressions.
+The adapters preserve the existing raw values; they do not resolve those remaining
+result contracts. Compilation uses the same stack16m, maxErrors10000, serial and
+compiler settings with all3170 source/build hashes stable. Dependent application
+tests remain blocked. Plugin API/resolver/console sources are unchanged in this
+second batch; the preceding actual plugin API result remains45/48 passing with
+the same3 client-validation conflicts, not a new test pass. No full-project
+test/native pass is claimed. Other policy families retain their prior evidence.
+
+Next is the remaining compiler frontier, applying supported transformations across
+all eligible findings and retaining excluded evidence. Incorrect/incompatible base
+choices and unions require definition/flow review rather than forced conversion.
+Remaining raw candidates, semantic type sharing, smart construction and application
+tests stay in scope. The original migration scope and90% automatic-repair target
+remain unchanged and unproven.
+
+## Previous checkpoint: property-flow helpers share model types, compilation incomplete
 
 project-property-flows-4 applies 110 alias/companion AST patches for 55 generated
 helper types across 30 production files, with zero application test edits. Helpers

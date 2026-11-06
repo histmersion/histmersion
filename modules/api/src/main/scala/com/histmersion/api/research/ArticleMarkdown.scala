@@ -63,8 +63,8 @@ object ArticleMarkdown:
   val AllParts = List("body", "summary", "coverage", "cited", "backlinks")
 
   def article(v: Article.View, parts: List[com.histmersion.api.research.ArticleMarkdown.ArticleParts] = Nil): com.histmersion.api.research.ArticleMarkdown.ArticleResult =
-    if parts.isEmpty then articleFull(v)
-    else articleParts(v, parts.filter(AllParts.contains))
+    if parts.isEmpty then _root_.com.histmersion.api.research.ArticleMarkdown.ArticleResult((articleFull(v)).value)
+    else articleParts(v, (parts.filter(AllParts.contains)).map(refactorValue => _root_.com.histmersion.api.research.ArticleMarkdown.ArticlePartsShow((refactorValue).value)))
 
   private def articleFull(v: Article.View): com.histmersion.api.research.ArticleMarkdown.ArticleFullResult =
     val a = v.article
@@ -98,12 +98,12 @@ object ArticleMarkdown:
     val heading = """^#{1,6}\s*(sources\b.*|references|bibliography|works cited)\s*$""".r
     val lines = (body).value.linesIterator.toList
     lines.lastIndexWhere(l => heading.matches(l.trim.toLowerCase)) match
-      case -1 => body
+      case -1 => _root_.com.histmersion.api.research.ArticleMarkdown.StripSourcesSectionResult((body).value)
       case i  =>
         val rest = lines.drop(i + 1).map(_.trim).filter(_.nonEmpty)
         if rest.forall(l => l.startsWith("-") || l.startsWith("*") || l.startsWith("[[") || l.startsWith("1."))
         then _root_.com.histmersion.api.research.ArticleMarkdown.StripSourcesSectionResult(lines.take(i).mkString("\n").stripTrailing)
-        else body
+        else _root_.com.histmersion.api.research.ArticleMarkdown.StripSourcesSectionResult((body).value)
 
   private def articleParts(v: Article.View, show: List[com.histmersion.api.research.ArticleMarkdown.ArticlePartsShow]): com.histmersion.api.research.ArticleMarkdown.ArticlePartsResult =
     val a = v.article

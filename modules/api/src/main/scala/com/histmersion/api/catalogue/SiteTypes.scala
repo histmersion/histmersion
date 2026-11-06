@@ -236,9 +236,9 @@ object SiteTypes:
   )
 
   private def best(types: Iterable[com.histmersion.api.catalogue.SiteTypes.BestTypes]): Option[com.histmersion.api.catalogue.SiteTypes.BestResult] =
-    types.toList.distinct
+    (types.toList.distinct
       .sortBy(t => preference.indexOf(t) match { case -1 => preference.size; case i => i })
-      .headOption
+      .headOption).map(refactorValue6 => _root_.com.histmersion.api.catalogue.SiteTypes.BestResult((refactorValue6).value))
 
   def pleiades(featureTypes: com.histmersion.api.catalogue.SiteTypes.PleiadesFeatureTypes): Option[com.histmersion.api.catalogue.SiteTypes.PleiadesResult] =
     best(
@@ -386,8 +386,8 @@ object SiteTypes:
 
   def wikidata(p31: List[com.histmersion.api.catalogue.SiteTypes.WikidataP31], superclasses: List[com.histmersion.api.catalogue.SiteTypes.WikidataSuperclasses], importClass: Option[com.histmersion.api.catalogue.SiteTypes.WikidataImportClass]): Option[com.histmersion.api.catalogue.SiteTypes.WikidataResult] =
     wikidataOwn(p31)
-      .orElse(superclasses.flatMap(wikidataClasses.get).headOption)
-      .orElse(importClass.flatMap(wikidataClasses.get))
+      .orElse(superclasses.flatMap({ val refactorFunction4 = wikidataClasses.get; (refactorValue8) => refactorFunction4(_root_.com.histmersion.api.catalogue.SiteTypes.WikidataClassesPart1((refactorValue8).value)) }).headOption)
+      .orElse(importClass.flatMap({ val refactorFunction5 = wikidataClasses.get; (refactorValue9) => refactorFunction5(_root_.com.histmersion.api.catalogue.SiteTypes.WikidataClassesPart1((refactorValue9).value)) }))
 
   def wikidataOwn(p31: List[com.histmersion.api.catalogue.SiteTypes.WikidataOwnP31]): Option[com.histmersion.api.catalogue.SiteTypes.WikidataOwnResult] = best(p31.map((_).value.trim).flatMap(wikidataClasses.get))
 
@@ -407,8 +407,8 @@ object SiteTypes:
     then None
     else
       stored
-        .filter(byId.contains)
-        .orElse(featureTypes.flatMap(pleiades))
+        .filter(_root_.com.histmersion.api.catalogue.SiteTypes.ByIdPart1((byId).value).contains)
+        .orElse(featureTypes.flatMap({ val refactorFunction3 = pleiades; (refactorValue5) => refactorFunction3(_root_.com.histmersion.api.catalogue.SiteTypes.PleiadesFeatureTypes((refactorValue5).value)) }))
         .orElse(fcode.flatMap(geonames))
         .orElse(wikidataOwn(p31))
         .orElse(wikidataClass.flatMap(c => wikidataClasses.get(c.trim)))

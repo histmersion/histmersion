@@ -41,7 +41,7 @@ object Licence:
       .flatMap((_).value.split(",").toList)
       .map(_.trim.toLowerCase(Locale.ROOT))
       .flatMap({ val refactorFunction = Licence.Family.fromWire; (refactorValue) => refactorFunction(_root_.com.histmersion.domain.Licence.Family.FromWireS(refactorValue)) })
-      .filterNot(_.never)
+      .filterNot((refactorCallback2 => ((refactorCallback2.never) == _root_.com.histmersion.domain.Licence.Family.NeverResult(true))))
       .toSet
 
   /** Whether a licence may be stored under an allowlist: never one of the never-stored families. */
@@ -93,7 +93,7 @@ object Licence:
 
   /** Pure: a statement as a licence — a Creative Commons URL read as one, anything else classified. */
   def ofStatement(stated: com.histmersion.domain.Licence.OfStatementStated): Licence =
-    if (stated).value.toLowerCase(Locale.ROOT).matches("^https?://.*") then ofUrl(stated) else classify(stated)
+    if (stated).value.toLowerCase(Locale.ROOT).matches("^https?://.*") then ofUrl(_root_.com.histmersion.domain.Licence.OfUrlUrl((stated).value)) else classify(_root_.com.histmersion.domain.Licence.ClassifyRaw((stated).value))
 
   /** Pure: the first of the candidates that reads as a known licence (the machine id first, then the short name);
     * [[LicenceFamily.Unknown]] with the first non-empty one when none does.
@@ -163,4 +163,4 @@ object Licence:
 
     private val byWire: Map[com.histmersion.domain.Licence.Family.ByWirePart1, Family] = values.map(f => f.wire -> f).toMap
 
-    def fromWire(s: com.histmersion.domain.Licence.Family.FromWireS): Option[Family] = byWire.get(s)
+    def fromWire(s: com.histmersion.domain.Licence.Family.FromWireS): Option[Family] = byWire.get(_root_.com.histmersion.domain.Licence.Family.ByWirePart1((s).value))

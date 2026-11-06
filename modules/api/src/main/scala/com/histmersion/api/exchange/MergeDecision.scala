@@ -93,7 +93,7 @@ object MergeDecision:
       def wire(e: Kind): _root_.com.histmersion.api.WireEnumValues.WireResult = _root_.com.histmersion.api.WireEnumValues.WireResult((wireOf(e)).value)
       def fromWire(s: _root_.com.histmersion.api.WireEnumValues.FromWireS): _root_.scala.Option[Kind] = Kind.values.find(k => wireOf(k) == _root_.com.histmersion.api.exchange.MergeDecision.Kind.WireOfResult((s).value.trim))
   def of(kind: MergeDecision.Kind): MergeDecision = MergeDecision(kind, None)
-  def withArg(kind: MergeDecision.Kind, arg: com.histmersion.api.exchange.MergeDecision.WithArgArg): MergeDecision = MergeDecision(kind, Some(arg))
+  def withArg(kind: MergeDecision.Kind, arg: com.histmersion.api.exchange.MergeDecision.WithArgArg): MergeDecision = MergeDecision(kind, Some(_root_.com.histmersion.api.exchange.MergeDecision.Argument((arg).value)))
 
   def parse(raw: com.histmersion.api.exchange.MergeDecision.ParseRaw): Either[com.histmersion.api.exchange.MergeDecision.ParseResultPart1, MergeDecision] =
     val s = (raw).value.trim

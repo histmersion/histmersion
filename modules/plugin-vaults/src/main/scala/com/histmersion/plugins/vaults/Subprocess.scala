@@ -121,4 +121,4 @@ object Subprocess:
   def plain(what: com.histmersion.plugins.vaults.Subprocess.PlainWhat, s: com.histmersion.plugins.vaults.Subprocess.PlainS): Either[com.histmersion.plugins.vaults.Subprocess.PlainResultPart1, com.histmersion.plugins.vaults.Subprocess.PlainResultPart2] =
     if (s).value.isEmpty then Left(_root_.com.histmersion.plugins.vaults.Subprocess.PlainResultPart1(s"$what is empty"))
     else if (s).value.startsWith("-") then Left(_root_.com.histmersion.plugins.vaults.Subprocess.PlainResultPart1(s"$what may not start with '-'"))
-    else Right(s)
+    else Right(_root_.com.histmersion.plugins.vaults.Subprocess.PlainResultPart2((s).value))

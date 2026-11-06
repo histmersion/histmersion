@@ -322,38 +322,38 @@ object Gazetteer:
   ): Either[com.histmersion.api.catalogue.Gazetteer.FromTsvRowResultPart1, GazRecord] =
     val row =
       header.map((_).value.trim.toLowerCase(java.util.Locale.ROOT)).zip(cells.map((_).value.trim) ++ List.fill(header.size)("")).toMap
-    def get(k: com.histmersion.api.catalogue.Gazetteer.FromTsvRowGetK): Option[com.histmersion.api.catalogue.Gazetteer.FromTsvRowGetResult] = row.get((k).value).filter(_.nonEmpty)
+    def get(k: com.histmersion.api.catalogue.Gazetteer.FromTsvRowGetK): Option[com.histmersion.api.catalogue.Gazetteer.FromTsvRowGetResult] = (row.get((k).value).filter(_.nonEmpty)).map(refactorValue19 => _root_.com.histmersion.api.catalogue.Gazetteer.FromTsvRowGetResult(refactorValue19))
     (get(_root_.com.histmersion.api.catalogue.Gazetteer.FromTsvRowGetK("id")), get(_root_.com.histmersion.api.catalogue.Gazetteer.FromTsvRowGetK("title"))) match
       case (None, _)                => Left(_root_.com.histmersion.api.catalogue.Gazetteer.FromTsvRowResultPart1(s"line $line: no id"))
       case (_, None)                => Left(_root_.com.histmersion.api.catalogue.Gazetteer.FromTsvRowResultPart1(s"line $line: no title"))
       case (Some(ref), Some(title)) =>
         val own = ExternalId.parse(ref)
-        val variants = get(_root_.com.histmersion.api.catalogue.Gazetteer.FromTsvRowGetK("variants")).toList.flatMap(_.split(";").toList).map(_.trim).filter(_.nonEmpty).map { v =>
+        val variants = get(_root_.com.histmersion.api.catalogue.Gazetteer.FromTsvRowGetK("variants")).toList.flatMap((_).value.split(";").toList).map(_.trim).filter(_.nonEmpty).map { v =>
           val at = v.lastIndexOf('@')
           if at > 0 && v.drop(at + 1).matches("[A-Za-z]{2,3}(-[A-Za-z0-9]+)?") then
             GazName(v.take(at).trim, v.drop(at + 1))
           else GazName(v)
         }
         val links = get(_root_.com.histmersion.api.catalogue.Gazetteer.FromTsvRowGetK("matches")).toList
-          .flatMap(_.split(";").toList)
+          .flatMap((_).value.split(";").toList)
           .flatMap(ExternalId.parse)
           .filterNot(own.contains)
           .distinct
           .map(GazLink(_, LinkMatch.Close))
         val point = for
-          lon <- get(_root_.com.histmersion.api.catalogue.Gazetteer.FromTsvRowGetK("lon")).flatMap(_.toDoubleOption)
-          lat <- get("lat").flatMap(_.toDoubleOption)
+          lon <- get(_root_.com.histmersion.api.catalogue.Gazetteer.FromTsvRowGetK("lon")).flatMap((_).value.toDoubleOption)
+          lat <- get(_root_.com.histmersion.api.catalogue.Gazetteer.FromTsvRowGetK("lat")).flatMap(_.toDoubleOption)
         yield GazGeometry.GeoJson(s"""{"type":"Point","coordinates":[$lon,$lat]}""")
         val kind =
           get(_root_.com.histmersion.api.catalogue.Gazetteer.FromTsvRowGetK("types"))
-            .flatMap(t => t.split(";").toList.flatMap(com.histmersion.api.catalogue.Place.Kind.parse).headOption)
+            .flatMap(t => (t).value.split(";").toList.flatMap(com.histmersion.api.catalogue.Place.Kind.parse).headOption)
             .getOrElse(com.histmersion.api.catalogue.Place.Kind.Site)
         val sp = Span(get(_root_.com.histmersion.api.catalogue.Gazetteer.FromTsvRowGetK("start")).flatMap(Lpf.parseYear), get(_root_.com.histmersion.api.catalogue.Gazetteer.FromTsvRowGetK("end")).flatMap(Lpf.parseYear))
         val props = JsonObject.fromIterable(
           get(_root_.com.histmersion.api.catalogue.Gazetteer.FromTsvRowGetK("ccodes"))
-            .map(c => "ccodes" -> Json.arr(c.split("[;,]").toList.map(_.trim).filter(_.nonEmpty).map(Json.fromString)*))
+            .map(c => "ccodes" -> Json.arr((c).value.split("[;,]").toList.map(_.trim).filter(_.nonEmpty).map(Json.fromString)*))
             .toList ++
-            get("types").map(t => "types" -> Json.fromString(t)).toList
+            get(_root_.com.histmersion.api.catalogue.Gazetteer.FromTsvRowGetK("types")).map(t => "types" -> Json.fromString(t)).toList
         )
         Right(
           GazRecord(
@@ -361,8 +361,8 @@ object Gazetteer:
             own = own,
             placeId = com.histmersion.api.catalogue.Place.Id(placeIdFor(own, ref, dataset)),
             label = title,
-            kind = kind,
-            geometry = point.orElse(get("geowkt").map(GazGeometry.Wkt(_))),
+            kind = _root_.com.histmersion.api.catalogue.GazRecord.Kind(kind),
+            geometry = point.orElse(get(_root_.com.histmersion.api.catalogue.Gazetteer.FromTsvRowGetK("geowkt")).map(GazGeometry.Wkt(_))),
             span = sp,
             names = mergeNames(GazName(title) :: variants),
             links = links,

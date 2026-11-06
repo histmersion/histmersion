@@ -1,0 +1,6 @@
+path	line	before-ast	after-ast
+tools/refactor/compiler-repairs-fixture/helper-adapters/src/main/scala/Helpers.scala	1	helperfixture.Helpers#take.value	Input
+tools/refactor/compiler-repairs-fixture/helper-adapters/src/main/scala/Helpers.scala	1	helperfixture.Helpers#output.value	Output
+tools/refactor/compiler-repairs-fixture/helper-adapters/src/main/scala/Excluded.scala	1	helperfixture.Excluded#take.value	Input
+tools/refactor/compiler-repairs-fixture/helper-adapters/src/main/scala/Excluded.scala	1	helperfixture.Excluded#custom.value	Custom
+tools/refactor/compiler-repairs-fixture/helper-adapters/src/main/scala/Excluded.scala	1	helperfixture.Excluded#count.value	Count

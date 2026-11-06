@@ -87,12 +87,12 @@ object WikiLinks:
       .map { m =>
         val raw = m.group(2)
         Occurrence(
-          m.start,
-          m.end,
-          raw,
-          m.group(1).nonEmpty,
-          m.matched.contains('\\'),
-          normalize(raw.takeWhile(_ != '|'))
+          _root_.com.histmersion.api.text.WikiLinks.Occurrence.Start(m.start),
+          _root_.com.histmersion.api.text.WikiLinks.Occurrence.End(m.end),
+          _root_.com.histmersion.api.text.WikiLinks.Occurrence.Raw(raw),
+          _root_.com.histmersion.api.text.WikiLinks.Occurrence.Embed(m.group(1).nonEmpty),
+          _root_.com.histmersion.api.text.WikiLinks.Occurrence.Escaped(m.matched.contains('\\')),
+          normalize(_root_.com.histmersion.api.text.WikiLinks.NormalizeRaw(raw.takeWhile(_ != '|')))
         )
       }
       .toList
@@ -109,7 +109,7 @@ object WikiLinks:
     Link
       .findAllMatchIn((body).value)
       .filter(_.group(1).isEmpty)
-      .flatMap(m => normalize(m.group(2)))
+      .flatMap(m => normalize(_root_.com.histmersion.api.text.WikiLinks.NormalizeRaw(m.group(2))))
       .toList
       .distinct
 
@@ -125,7 +125,7 @@ object WikiLinks:
           case -1 => (raw, None)
           case i  => (raw.take(i), Some(raw.drop(i + 1).trim))
         java.util.regex.Matcher.quoteReplacement(normalize(_root_.com.histmersion.api.text.WikiLinks.NormalizeRaw(targetPart)) match
-          case Some(t) if m.group(1).isEmpty => render(t, (explicit).map(refactorValue => _root_.com.histmersion.api.text.WikiLinks.RewriteLinksRenderArg2(refactorValue)), _root_.com.histmersion.api.text.WikiLinks.RewriteLinksRenderArg3(targetPart.takeWhile(_ != '#').trim))
+          case Some(t) if m.group(1).isEmpty => render(_root_.com.histmersion.api.text.WikiLinks.RewriteLinksRenderArg1((t).value), (explicit).map(refactorValue => _root_.com.histmersion.api.text.WikiLinks.RewriteLinksRenderArg2(refactorValue)), _root_.com.histmersion.api.text.WikiLinks.RewriteLinksRenderArg3(targetPart.takeWhile(_ != '#').trim))
           case _                             => m.matched)
     )
 
@@ -135,7 +135,7 @@ object WikiLinks:
       if m.group(1).nonEmpty then None
       else normalize(_root_.com.histmersion.api.text.WikiLinks.NormalizeRaw(m.group(2).takeWhile(_ != '|'))).flatMap(to)
     val count = Link.findAllMatchIn((md).value).count(moved(_).isDefined)
-    if count == 0 then (md, _root_.com.histmersion.api.text.WikiLinks.RetargetResultPart2(0))
+    if count == 0 then (_root_.com.histmersion.api.text.WikiLinks.RetargetResultPart1((md).value), _root_.com.histmersion.api.text.WikiLinks.RetargetResultPart2(0))
     else
       val out = Link.replaceAllIn(
         (md).value,
@@ -151,7 +151,7 @@ object WikiLinks:
               val (s, e) = (m.start(2) - m.start, m.end(2) - m.start)
               m.matched.take(s) + newRaw + m.matched.drop(e))
       )
-      (_root_.com.histmersion.api.text.WikiLinks.RetargetResultPart1(out), count)
+      (_root_.com.histmersion.api.text.WikiLinks.RetargetResultPart1(out), _root_.com.histmersion.api.text.WikiLinks.RetargetResultPart2(count))
 
   /** Whether a text links `ck` (any case). */
   def links(text: com.histmersion.api.text.WikiLinks.LinksText, ck: com.histmersion.api.text.WikiLinks.LinksCk): com.histmersion.api.text.WikiLinks.LinksResult = targets(text).exists(_.equalsIgnoreCase(ck))

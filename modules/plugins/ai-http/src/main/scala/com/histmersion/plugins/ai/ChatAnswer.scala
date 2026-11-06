@@ -15,8 +15,8 @@ final case class ChatAnswer(status: ChatAnswer.Status, body: ChatAnswer.Body):
 
   /** The turn the answer says, or the failure's description. */
   def turn: Either[com.histmersion.plugins.ai.ChatAnswer.TurnResultPart1, AiTurn] =
-    if (status).value / 100 != 2 then Left(ChatAnswer.errorMessage(status, body))
-    else decode((body).value)(using ChatAnswer.response).left.map(_.getMessage)
+    if (status).value / 100 != 2 then Left(ChatAnswer.errorMessage(_root_.com.histmersion.plugins.ai.ChatAnswer.ErrorMessageStatus((status).value), _root_.com.histmersion.plugins.ai.ChatAnswer.ErrorMessageBody((body).value)))
+    else decode((body).value)(using ChatAnswer.response).left.map((refactorCallback => _root_.com.histmersion.plugins.ai.ChatAnswer.TurnResultPart1(refactorCallback.getMessage)))
 
 object ChatAnswer:
 
@@ -63,7 +63,7 @@ object ChatAnswer:
     parse((body).value).toOption.flatMap(_.asObject).flatMap(_("error")) match
       case Some(node) =>
         node.as(using error) match
-          case Right(Some(message)) => message
+          case Right(Some(message)) => _root_.com.histmersion.plugins.ai.ChatAnswer.ErrorMessageResult((message).value)
           case Right(None)          => _root_.com.histmersion.plugins.ai.ChatAnswer.ErrorMessageResult(s"statusCode: $status, response: $body")
           case Left(_)              => _root_.com.histmersion.plugins.ai.ChatAnswer.ErrorMessageResult(fallback)
       case None => _root_.com.histmersion.plugins.ai.ChatAnswer.ErrorMessageResult(fallback)
@@ -127,7 +127,7 @@ object ChatAnswer:
     for
       id <- c.downField("id").as[Option[String]]
       f <- c.downField("function").as(using function)
-    yield ((id).map(refactorValue3 => _root_.com.histmersion.plugins.ai.ChatAnswer.ToolCallPart1(refactorValue3)), f)
+    yield ((id).map(refactorValue3 => _root_.com.histmersion.plugins.ai.ChatAnswer.ToolCallPart1(refactorValue3)), { val refactorTuple = f; (_root_.com.histmersion.plugins.ai.ChatAnswer.ToolCallPart2Part1((refactorTuple._1).value), (refactorTuple._2).map(refactorValue4 => _root_.com.histmersion.plugins.ai.ChatAnswer.ToolCallPart2Part2((refactorValue4).value))) })
   }
 
   private val audio: Decoder[Unit] = product { c =>
@@ -162,7 +162,7 @@ object ChatAnswer:
       finish <- c.downField("finish_reason").as[String]
       _ <- c.downField("index").as[Int]
       _ <- c.downField("logprobs").as(using Decoder.decodeOption(using logprobs))
-    yield (m._1, m._2, _root_.com.histmersion.plugins.ai.ChatAnswer.ChoicePart3(finish))
+    yield (_root_.com.histmersion.plugins.ai.ChatAnswer.ChoicePart1((m._1).value), m._2, _root_.com.histmersion.plugins.ai.ChatAnswer.ChoicePart3(finish))
   }
 
   private val usage: Decoder[AiUsage] = product { c =>

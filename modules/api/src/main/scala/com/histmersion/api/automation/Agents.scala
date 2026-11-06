@@ -167,7 +167,7 @@ object Agents:
       * never trip a cost budget.
       */
     def cost(prices: Map[com.histmersion.api.automation.Agents.Prices.CostPricesPart1, Price], model: com.histmersion.api.automation.Agents.Prices.CostModel, u: Usage): Either[com.histmersion.api.automation.Agents.Prices.CostResultPart1, BigDecimal] =
-      prices.get(model).toRight(unpriced(model)).map(_.cost(u))
+      prices.get(_root_.com.histmersion.api.automation.Agents.Prices.CostPricesPart1((model).value)).toRight(unpriced(model)).map(_.cost(u))
 
     def billing(prices: Map[com.histmersion.api.automation.Agents.Prices.BillingPricesPart1, Price], m: ModelRef, pool: Option[PlanQuota.PoolId]): Either[com.histmersion.api.automation.Agents.Prices.BillingResultPart1, Billing] =
       pool match
@@ -537,8 +537,8 @@ object Agents:
         KindlingsSchema, com.histmersion.api.json.Schema:
     def modelText: com.histmersion.api.automation.Agents.StepInfo.ModelTextResult = (model, actualModel) match
       case (Some(m), Some(a)) if _root_.com.histmersion.api.automation.Agents.StepInfo.ActualModel((m).value.drop((m).value.indexOf(':') + 1)) != a => _root_.com.histmersion.api.automation.Agents.StepInfo.ModelTextResult(s"$m → $a")
-      case (Some(m), _)                                          => m
-      case (None, Some(a))                                       => a
+      case (Some(m), _)                                          => _root_.com.histmersion.api.automation.Agents.StepInfo.ModelTextResult((m).value)
+      case (None, Some(a))                                       => _root_.com.histmersion.api.automation.Agents.StepInfo.ModelTextResult((a).value)
       case (None, None)                                          => _root_.com.histmersion.api.automation.Agents.StepInfo.ModelTextResult("")
 
   object StepInfo:

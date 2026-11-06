@@ -96,7 +96,7 @@ object Managers:
   def itemKindOf(k: Kind, word: com.histmersion.api.automation.Managers.ItemKindOfWord): Option[com.histmersion.api.automation.Managers.ItemKindOfResult] =
     val w = (word).value.trim.toLowerCase
     val kinds = itemKinds(k)
-    if w.isEmpty then kinds.headOption
+    if w.isEmpty then (kinds.headOption).map(refactorValue => _root_.com.histmersion.api.automation.Managers.ItemKindOfResult((refactorValue).value))
     else
       val alias = w match
         case "review" | "article"        => ArticleReview
@@ -309,9 +309,9 @@ object Managers:
                 case "minSources" | "min-sources"                 => int.map(n => c.copy(minSources = Some(_root_.com.histmersion.api.automation.Managers.ManagerConfig.MinSources(n))))
                 case "maxArticles" | "max-articles"               => int.map(n => c.copy(maxArticles = Some(_root_.com.histmersion.api.automation.Managers.ManagerConfig.MaxArticles(n))))
                 case "autoIngestPerDay" | "auto-ingest-per-day"   => int.map(n => c.copy(autoIngestPerDay = Some(_root_.com.histmersion.api.automation.Managers.ManagerConfig.AutoIngestPerDay(n))))
-                case "inferFilter" | "infer-filter"               => bool(_root_.com.histmersion.api.automation.Managers.ManagerConfig.BoolK(k), _root_.com.histmersion.api.automation.Managers.ManagerConfig.BoolV(v)).map(b => c.copy(inferFilter = Some(b)))
-                case "autoIngest" | "auto-ingest"                 => bool(_root_.com.histmersion.api.automation.Managers.ManagerConfig.BoolK(k), _root_.com.histmersion.api.automation.Managers.ManagerConfig.BoolV(v)).map(b => c.copy(autoIngest = Some(b)))
-                case "autoApprove" | "auto-approve"               => bool(_root_.com.histmersion.api.automation.Managers.ManagerConfig.BoolK(k), _root_.com.histmersion.api.automation.Managers.ManagerConfig.BoolV(v)).map(b => c.copy(autoApprove = Some(b)))
+                case "inferFilter" | "infer-filter"               => bool(_root_.com.histmersion.api.automation.Managers.ManagerConfig.BoolK(k), _root_.com.histmersion.api.automation.Managers.ManagerConfig.BoolV(v)).map(b => c.copy(inferFilter = Some(_root_.com.histmersion.api.automation.Managers.ManagerConfig.InferFilter((b).value))))
+                case "autoIngest" | "auto-ingest"                 => bool(_root_.com.histmersion.api.automation.Managers.ManagerConfig.BoolK(k), _root_.com.histmersion.api.automation.Managers.ManagerConfig.BoolV(v)).map(b => c.copy(autoIngest = Some(_root_.com.histmersion.api.automation.Managers.ManagerConfig.AutoIngest((b).value))))
+                case "autoApprove" | "auto-approve"               => bool(_root_.com.histmersion.api.automation.Managers.ManagerConfig.BoolK(k), _root_.com.histmersion.api.automation.Managers.ManagerConfig.BoolV(v)).map(b => c.copy(autoApprove = Some(_root_.com.histmersion.api.automation.Managers.ManagerConfig.AutoApprove((b).value))))
                 case "extendMinNew" | "extend-min-new"            => int.map(n => c.copy(extendMinNew = Some(_root_.com.histmersion.api.automation.Managers.ManagerConfig.ExtendMinNew(n))))
                 case "sweeps"                                     =>
                   val ws = v.split(",").toList.map(_.trim).filter(_.nonEmpty)

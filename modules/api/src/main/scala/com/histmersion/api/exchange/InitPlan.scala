@@ -45,4 +45,4 @@ object InitPlan:
       Option.when(p.fetch.nonEmpty)(s"${if (p.check).value then "dry run of" else "fetch"} ${p.fetch.mkString(", ")}")
     (bundled ++ fetched) match
       case Nil   => _root_.com.histmersion.api.exchange.InitPlan.DescribeResult("nothing to import")
-      case parts => parts.mkString(", ")
+      case parts => _root_.com.histmersion.api.exchange.InitPlan.DescribeResult(parts.mkString(", "))

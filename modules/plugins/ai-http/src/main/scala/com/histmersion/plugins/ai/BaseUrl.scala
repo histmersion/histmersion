@@ -21,4 +21,4 @@ object BaseUrl:
   object ParseSetting extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
   def parse(text: com.histmersion.plugins.ai.BaseUrl.ParseText, setting: com.histmersion.plugins.ai.BaseUrl.ParseSetting): Either[com.histmersion.plugins.ai.BaseUrl.ParseResultPart1, BaseUrl] =
-    Uri.parse((text).value).left.map(e => s"$setting: $e").map(BaseUrl(_))
+    (Uri.parse((text).value).left.map(e => s"$setting: $e").map(BaseUrl(_))).left.map(refactorError => _root_.com.histmersion.plugins.ai.BaseUrl.ParseResultPart1(refactorError))

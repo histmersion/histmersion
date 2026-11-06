@@ -19,6 +19,22 @@ are in compiler-repairs-fixture/property-flows; their synthetic provenance is
 documented in property-origins/README.md. The mode uses the existing preview,
 ApplyFrozenPreview, CompileBatch and stable-ID measurement pipeline.
 
+`AstRecipe.generatedHelperAdapters` extends native-Boolean owner mode with
+same-base Pure helper-to-helper/property conversions, retaining both type
+definitions. Both types must belong to the immediate implementation owner, with
+unique compatible module/source-set/platform definitions. Each must be a known
+constructor property or have owner-match generated-member provenance, and at least
+one must be a generated non-property helper. Empty constructor companions may
+retain given aliases; custom methods/constructors and constrained types are
+excluded. Unknown types, two model properties and cross-owner conversions remain
+unresolved. The existing structural converter handles supported collections,
+tuples and functions; producer expressions are evaluated once. This mode requires
+nativeBooleans so the known unsafe E134 overload adapter remains disabled and
+cannot be combined with configured nominal boundaries, error/comparison adapters
+or callback history. helper-adapters and helper-origins contain the positive,
+negative and synthetic-provenance fixtures;
+compiler-repairs-helper-reject-overloads.conf must fail.
+
 ## Project-wide measurement and bulk rewrite gates
 
 The bounded migration goal uses `refactor-audit/migration-rounds.tsv` to retain every original goal while limiting further detector refinement to two rounds per family. Existing fixtures and source regressions are not independent holdouts. Confirmed violations, unresolved candidates, and evidence relationships remain separate; no overall completion percentage is available until the baseline is established. Historical fixes are not added to the new baseline's numerator. Production and test findings remain visible; a production-first batch does not exempt tests.

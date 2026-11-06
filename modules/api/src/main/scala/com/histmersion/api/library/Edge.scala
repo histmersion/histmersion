@@ -52,7 +52,7 @@ object Edge:
     def fromWire(s: com.histmersion.api.library.Edge.Kind.FromWireS): Option[Kind] = wireMap.get(_root_.com.histmersion.api.library.Edge.Kind.WireMapPart1((s).value.toLowerCase))
 
     /** All wire strings, for validators and legends. */
-    val allWire: List[com.histmersion.api.library.Edge.Kind.AllWire] = values.map(wireOf).toList
+    val allWire: List[com.histmersion.api.library.Edge.Kind.AllWire] = (values.map(wireOf).toList).map(refactorValue => _root_.com.histmersion.api.library.Edge.Kind.AllWire((refactorValue).value))
 
     given WireEnumValues[Kind]:
       def all: Array[Kind] = Kind.values

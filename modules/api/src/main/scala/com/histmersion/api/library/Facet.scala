@@ -46,4 +46,4 @@ object Facet:
     def parse(s: com.histmersion.api.library.Facet.Field.ParseS): Option[Field] =
       values.find(f => label(f) == _root_.com.histmersion.api.library.Facet.Field.LabelResult((s).value.trim.toLowerCase) || f.toString.equalsIgnoreCase((s).value.trim))
 
-    val all: List[com.histmersion.api.library.Facet.Field.All] = values.toList.map(label)
+    val all: List[com.histmersion.api.library.Facet.Field.All] = values.toList.map(_root_.com.histmersion.api.library.Facet.Field.All((label).value))

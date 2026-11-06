@@ -60,7 +60,7 @@ object Paging:
 
     def all: com.histmersion.api.Paging.Page.AllResult = counts.map(_._2).sum
 
-    def facet(name: com.histmersion.api.Paging.Page.FacetName): List[(com.histmersion.api.Paging.Page.FacetResultPart1, com.histmersion.api.Paging.Page.FacetResultPart2)] = facets.collectFirst { case (`name`, vs) => vs }.getOrElse(Nil)
+    def facet(name: com.histmersion.api.Paging.Page.FacetName): List[(com.histmersion.api.Paging.Page.FacetResultPart1, com.histmersion.api.Paging.Page.FacetResultPart2)] = (facets.collectFirst { case (`name`, vs) => vs }.getOrElse(Nil)).map(refactorValue10 => { val refactorTuple7 = refactorValue10; (_root_.com.histmersion.api.Paging.Page.FacetResultPart1((refactorTuple7._1).value), _root_.com.histmersion.api.Paging.Page.FacetResultPart2((refactorTuple7._2).value)) })
 
   object Page:
     type HasMoreResult = HasMoreResult.T
@@ -118,7 +118,7 @@ object Paging:
     val empty: Page = Page(_root_.com.histmersion.api.Paging.Page.Total(0), None, Nil)
 
     def of(counts: List[(com.histmersion.api.Paging.Page.OfCountsPart1, com.histmersion.api.Paging.Page.OfCountsPart2)], state: Option[com.histmersion.api.Paging.Page.OfState], last: Option[com.histmersion.api.Paging.Page.OfLast]): Page =
-      filtered(counts, state.toList, last)
+      filtered((counts).map(refactorValue2 => { val refactorTuple2 = refactorValue2; (_root_.com.histmersion.api.Paging.Page.CountsPart1((refactorTuple2._1).value), _root_.com.histmersion.api.Paging.Page.CountsPart2((refactorTuple2._2).value)) }), (state.toList).map(refactorValue12 => _root_.com.histmersion.api.Paging.Page.FilteredStates((refactorValue12).value)), last)
 
     def filtered(
         counts: List[(com.histmersion.api.Paging.Page.FilteredCountsPart1, com.histmersion.api.Paging.Page.FilteredCountsPart2)],
@@ -128,7 +128,7 @@ object Paging:
     ): Page =
       val total =
         if states.isEmpty then counts.map(_._2).sum else counts.collect { case (k, n) if states.contains(k) => n }.sum
-      Page(total, last, counts, facets.filter(_._2.nonEmpty))
+      Page(total, (last).map(refactorValue4 => _root_.com.histmersion.api.Paging.Page.Next((refactorValue4).value)), counts, (facets.filter(_._2.nonEmpty)).map(refactorValue14 => { val refactorTuple9 = refactorValue14; (_root_.com.histmersion.api.Paging.Page.FacetsPart1((refactorTuple9._1).value), (refactorTuple9._2).map(refactorValue15 => { val refactorTuple10 = refactorValue15; (_root_.com.histmersion.api.Paging.Page.FacetsPart2Part1((refactorTuple10._1).value), _root_.com.histmersion.api.Paging.Page.FacetsPart2Part2((refactorTuple10._2).value)) })) }))
 
   def encodeCounts(counts: List[(com.histmersion.api.Paging.EncodeCountsCountsPart1, com.histmersion.api.Paging.EncodeCountsCountsPart2)]): com.histmersion.api.Paging.EncodeCountsResult =
     _root_.com.histmersion.api.Paging.EncodeCountsResult(counts.map((s, n) => s"$s=$n").mkString(","))
@@ -157,7 +157,7 @@ object Paging:
         (
           Some(p.total),
           p.next,
-          Some(encodeCounts(p.counts)).filter(_.nonEmpty),
+          Some(encodeCounts(p.counts)).filter((_).value.nonEmpty),
           Some(ListFilters.encodeFacets(p.facets)).filter(_.nonEmpty)
         )
       )

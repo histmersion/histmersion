@@ -194,7 +194,7 @@ object SearchMarkdown:
       val head = s"### $unit by ${h.by} · $span" + asOfNote(h.asOf)
       val note = s"_Counts are non-additive: each $one is counted in every bucket it overlaps, so " +
         "children never sum to their parent — \"N in more than one …\" is how many are double-counted._"
-      (List(head, "", treeLines(h.tree, unit, _root_.com.histmersion.api.library.SearchMarkdown.TreeLinesDepth(0)).mkString("\n"), "", note)).mkString("\n")
+      _root_.com.histmersion.api.library.SearchMarkdown.TreeResult((List(head, "", treeLines(h.tree, unit, _root_.com.histmersion.api.library.SearchMarkdown.TreeLinesDepth(0)).mkString("\n"), "", note)).mkString("\n"))
 
   private[api] def treeLines(buckets: List[Bucket], unit: com.histmersion.api.library.SearchMarkdown.TreeLinesUnit, depth: com.histmersion.api.library.SearchMarkdown.TreeLinesDepth): List[com.histmersion.api.library.SearchMarkdown.TreeLinesResult] =
     val pad = "  " * (depth).value

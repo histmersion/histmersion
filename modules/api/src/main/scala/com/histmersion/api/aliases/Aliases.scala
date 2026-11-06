@@ -36,4 +36,4 @@ object Aliases:
     )
 
   def note(k: AliasKind, asked: com.histmersion.api.aliases.Aliases.NoteAsked, now: com.histmersion.api.aliases.Aliases.NoteNow)(md: com.histmersion.api.aliases.Aliases.NoteMd): com.histmersion.api.aliases.Aliases.NoteResult =
-    followed(k, asked, now).fold(md)(n => s"$n\n\n$md")
+    followed(k, _root_.com.histmersion.api.aliases.Aliases.FollowedAsked((asked).value), _root_.com.histmersion.api.aliases.Aliases.FollowedNow((now).value)).fold(md)(n => s"$n\n\n$md")

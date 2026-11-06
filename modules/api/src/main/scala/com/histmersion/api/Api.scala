@@ -653,7 +653,7 @@ object Api:
         asOf: Option[com.histmersion.api.Api.AggregateQuery.TreeAsOf] = None,
         samples: Option[com.histmersion.api.Api.AggregateQuery.TreeSamples] = None
     ): AggregateQuery =
-      AggregateQuery(Some(by), unit, filter, depth.orElse(Some(0)), asOf, samples)
+      AggregateQuery(Some(_root_.com.histmersion.api.Api.AggregateQuery.By((by).value)), unit, filter, depth.orElse(Some(0)), asOf, samples)
 
   lazy val aggregate: PublicEndpoint[AggregateQuery, com.histmersion.api.Api.Error, TimeHistogram, Any] =
     base.get
@@ -1662,10 +1662,10 @@ object Api:
       .errorOut(
         oneOf[com.histmersion.api.Api.Error](
           oneOfVariantValueMatcher(StatusCode.NotFound, jsonBody[com.histmersion.api.Api.Error])(
-            com.histmersion.api.Api.Error.hasCode(_root_.com.histmersion.api.Api.Error.HasCodeCode(Write.CodeNotFound))
+            (com.histmersion.api.Api.Error.hasCode(_root_.com.histmersion.api.Api.Error.HasCodeCode(Write.CodeNotFound))).andThen(refactorResult6 => ((refactorResult6) == _root_.com.histmersion.api.Api.Error.HasCodeResultPart2(true)))
           ),
           oneOfVariantValueMatcher(StatusCode.Conflict, jsonBody[com.histmersion.api.Api.Error])(
-            com.histmersion.api.Api.Error.hasCode(_root_.com.histmersion.api.Api.Error.HasCodeCode(JobActions.CodeConflict))
+            (com.histmersion.api.Api.Error.hasCode(_root_.com.histmersion.api.Api.Error.HasCodeCode(JobActions.CodeConflict))).andThen(refactorResult9 => ((refactorResult9) == _root_.com.histmersion.api.Api.Error.HasCodeResultPart2(true)))
           ),
           oneOfDefaultVariant(statusCode(StatusCode.BadRequest).and(jsonBody[com.histmersion.api.Api.Error]))
         )
@@ -1988,8 +1988,8 @@ object Api:
       val order = List("GET", "POST", "PUT", "PATCH", "DELETE")
       val byPath = endpoints.groupBy(path).view.mapValues(_.map(method).distinct.sortBy(m => order.indexOf(m))).toMap
       val rows = byPath.keys.toList.sorted.map(p => s"| ${byPath(p).map(m => s"`$m`").mkString(" · ")} | `$p` |")
-      (s"${Plural.count(_root_.com.histmersion.api.Plural.NounN((endpoints.size).toLong), _root_.com.histmersion.api.Plural.NounSingular("endpoint"))} on ${Plural.count(_root_.com.histmersion.api.Plural.NounN((byPath.size).toLong), _root_.com.histmersion.api.Plural.NounSingular("path"))}:" ::
-        "" :: "| methods | path |" :: "|---|---|" :: rows).mkString("\n")
+      _root_.com.histmersion.api.Api.Index.MarkdownResult((s"${Plural.count(_root_.com.histmersion.api.Plural.NounN((endpoints.size).toLong), _root_.com.histmersion.api.Plural.NounSingular("endpoint"))} on ${Plural.count(_root_.com.histmersion.api.Plural.NounN((byPath.size).toLong), _root_.com.histmersion.api.Plural.NounSingular("path"))}:" ::
+        "" :: "| methods | path |" :: "|---|---|" :: rows).mkString("\n"))
 
     val Page = "docs/user-guide/reference/rest-api.md"
 

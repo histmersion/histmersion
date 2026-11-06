@@ -60,7 +60,7 @@ object MediaMarkdown:
 
   private[api] def countsLine(cs: List[MediaCount]): com.histmersion.api.media.MediaMarkdown.CountsLineResult =
     if cs.isEmpty then _root_.com.histmersion.api.media.MediaMarkdown.CountsLineResult("none")
-    else cs.map(c => s"${c.key} ${c.n}${if ((c.allowed) == _root_.com.histmersion.api.media.MediaCount.Allowed(true)) then "" else " (not allowed)"}").mkString(" · ")
+    else _root_.com.histmersion.api.media.MediaMarkdown.CountsLineResult(cs.map(c => s"${c.key} ${c.n}${if ((c.allowed) == _root_.com.histmersion.api.media.MediaCount.Allowed(true)) then "" else " (not allowed)"}").mkString(" · "))
 
   def mediaProviders(ps: List[MediaProvider.Info]): com.histmersion.api.media.MediaMarkdown.MediaProvidersResult =
     if ps.isEmpty then _root_.com.histmersion.api.media.MediaMarkdown.MediaProvidersResult("No media provider is registered (every media plugin is switched off).")

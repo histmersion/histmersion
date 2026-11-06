@@ -298,7 +298,7 @@ object ListFilters:
   def known(what: com.histmersion.api.automation.ListFilters.KnownWhat, vs: List[com.histmersion.api.automation.ListFilters.KnownVs], known: Seq[com.histmersion.api.automation.ListFilters.KnownKnown]): Either[com.histmersion.api.automation.ListFilters.KnownResultPart1, List[com.histmersion.api.automation.ListFilters.KnownResultPart2]] =
     vs.find(v => !known.contains(v)) match
       case Some(v) => Left(_root_.com.histmersion.api.automation.ListFilters.KnownResultPart1(s"unknown $what '$v' (one of: ${known.mkString(", ")})"))
-      case None    => Right(vs)
+      case None    => Right((vs).map(refactorValue34 => _root_.com.histmersion.api.automation.ListFilters.KnownResultPart2((refactorValue34).value)))
 
   private val Relative = """(\d{1,6})\s*([dhm])""".r
   private val DateOnly = """(\d{4}-\d{2}-\d{2})""".r
@@ -328,8 +328,8 @@ object ListFilters:
       now: Instant
   ): Either[com.histmersion.api.automation.ListFilters.RangeResultPart1, (Option[Instant], Option[Instant])] =
     for
-      s <- since.fold(Right(None))(timeBound(_, end = _root_.com.histmersion.api.automation.ListFilters.TimeBoundEnd(false), now).map(Some(_)).left.map(m => s"since: $m"))
-      u <- until.fold(Right(None))(timeBound(_, end = _root_.com.histmersion.api.automation.ListFilters.TimeBoundEnd(true), now).map(Some(_)).left.map(m => s"until: $m"))
+      s <- since.fold(Right(None))(timeBound(_root_.com.histmersion.api.automation.ListFilters.TimeBoundS((_).value), end = _root_.com.histmersion.api.automation.ListFilters.TimeBoundEnd(false), now).map(Some(_)).left.map(m => s"since: $m"))
+      u <- until.fold(Right(None))(timeBound(_root_.com.histmersion.api.automation.ListFilters.TimeBoundS((_).value), end = _root_.com.histmersion.api.automation.ListFilters.TimeBoundEnd(true), now).map(Some(_)).left.map(m => s"until: $m"))
       _ <- Either.cond(s.zip(u).forall((a, b) => a.isBefore(b)), (), "since must lie before until")
     yield (s, u)
 
@@ -345,7 +345,7 @@ object ListFilters:
     _root_.com.histmersion.api.automation.ListFilters.EscapeResult(b.toString)
 
   def unescape(s: com.histmersion.api.automation.ListFilters.UnescapeS): com.histmersion.api.automation.ListFilters.UnescapeResult =
-    if !(s).value.contains('%') then s
+    if !(s).value.contains('%') then _root_.com.histmersion.api.automation.ListFilters.UnescapeResult((s).value)
     else
       val out = new java.io.ByteArrayOutputStream
       def hex(at: com.histmersion.api.automation.ListFilters.UnescapeHexAt): Option[com.histmersion.api.automation.ListFilters.UnescapeHexResult] =
@@ -361,7 +361,7 @@ object ListFilters:
       _root_.com.histmersion.api.automation.ListFilters.UnescapeResult(new String(out.toByteArray, "UTF-8"))
 
   def encodeFacets(fs: List[(com.histmersion.api.automation.ListFilters.EncodeFacetsFsPart1, List[(com.histmersion.api.automation.ListFilters.EncodeFacetsFsPart2Part1, com.histmersion.api.automation.ListFilters.EncodeFacetsFsPart2Part2)])]): com.histmersion.api.automation.ListFilters.EncodeFacetsResult =
-    fs.flatMap((f, vs) => vs.map((v, n) => s"$f=${escape(v)}=$n")).mkString(",")
+    fs.flatMap((f, vs) => vs.map((v, n) => s"$f=${escape(_root_.com.histmersion.api.automation.ListFilters.EscapeS((v).value))}=$n")).mkString(",")
 
   def decodeFacets(s: com.histmersion.api.automation.ListFilters.DecodeFacetsS): List[(com.histmersion.api.automation.ListFilters.DecodeFacetsResultPart1, List[(com.histmersion.api.automation.ListFilters.DecodeFacetsResultPart2Part1, com.histmersion.api.automation.ListFilters.DecodeFacetsResultPart2Part2)])] =
     val triples = (s).value.split(',').toList.map(_.trim).filter(_.nonEmpty).flatMap { t =>
@@ -369,7 +369,7 @@ object ListFilters:
         case Array(f, v, n) if f.nonEmpty => n.trim.toIntOption.map(c => (f.trim, unescape(_root_.com.histmersion.api.automation.ListFilters.UnescapeS(v)), c))
         case _                            => None
     }
-    triples.map(_._1).distinct.map(f => f -> triples.collect { case (`f`, v, n) => v -> n })
+    triples.map(_._1).distinct.map(f => { val refactorTuple9 = f -> triples.collect { case (`f`, v, n) => v -> n }; (_root_.com.histmersion.api.automation.ListFilters.DecodeFacetsResultPart1(refactorTuple9._1), (refactorTuple9._2).map(refactorValue62 => { val refactorTuple10 = refactorValue62; (_root_.com.histmersion.api.automation.ListFilters.DecodeFacetsResultPart2Part1((refactorTuple10._1).value), _root_.com.histmersion.api.automation.ListFilters.DecodeFacetsResultPart2Part2(refactorTuple10._2)) })) })
 
   def facetLine(label: com.histmersion.api.automation.ListFilters.FacetLineLabel, counts: List[(com.histmersion.api.automation.ListFilters.FacetLineCountsPart1, com.histmersion.api.automation.ListFilters.FacetLineCountsPart2)]): com.histmersion.api.automation.ListFilters.FacetLineResult =
     if counts.isEmpty then _root_.com.histmersion.api.automation.ListFilters.FacetLineResult("")

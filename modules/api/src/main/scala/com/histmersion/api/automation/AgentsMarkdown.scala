@@ -210,7 +210,7 @@ object AgentsMarkdown:
   private def amount(v: com.histmersion.api.automation.AgentsMarkdown.AmountV, m: ModelChains.Measure): com.histmersion.api.automation.AgentsMarkdown.AmountResult = m match
     case ModelChains.Measure.Tokens =>
       ModelChains.Limit.compact(BigDecimal((v).value).setScale(0, BigDecimal.RoundingMode.HALF_UP))
-    case ModelChains.Measure.Usd => usd(v)
+    case ModelChains.Measure.Usd => usd(_root_.com.histmersion.api.automation.AgentsMarkdown.UsdD((v).value))
 
   private def allowanceBlock(a: ModelChains.AllowanceStatus): com.histmersion.api.automation.AgentsMarkdown.AllowanceBlockResult =
     val state = if ((a.usable) == _root_.com.histmersion.api.automation.ModelChains.AllowanceStatus.Usable(true)) then "has headroom"
@@ -223,7 +223,7 @@ object AgentsMarkdown:
     (s"- `${a.target}` (${a.source}${if a.reservePct > 0 then s", reserve ${a.reservePct}%" else ""}) — $state" +
       a.note.fold("")(n => s" · $n") :: limits).mkString("\n")
 
-  def allowance(a: ModelChains.AllowanceStatus): com.histmersion.api.automation.AgentsMarkdown.AllowanceResult = allowanceBlock(a)
+  def allowance(a: ModelChains.AllowanceStatus): com.histmersion.api.automation.AgentsMarkdown.AllowanceResult = _root_.com.histmersion.api.automation.AgentsMarkdown.AllowanceResult((allowanceBlock(a)).value)
 
   private def pct(d: com.histmersion.api.automation.AgentsMarkdown.PctD): com.histmersion.api.automation.AgentsMarkdown.PctResult =
     _root_.com.histmersion.api.automation.AgentsMarkdown.PctResult(java.math.BigDecimal((d).value).setScale(1, java.math.RoundingMode.HALF_UP).stripTrailingZeros.toPlainString)
@@ -266,12 +266,12 @@ object AgentsMarkdown:
     _root_.com.histmersion.api.automation.AgentsMarkdown.RefreshLineResult(s"\n\nLogin: ${p.login.getOrElse("—")} · $how · refreshed $times today$last")
 
   def refreshed(q: PlanQuota.QuotaRefreshed): com.histmersion.api.automation.AgentsMarkdown.RefreshedResult =
-    q.pools
+    _root_.com.histmersion.api.automation.AgentsMarkdown.RefreshedResult(q.pools
       .map(r => s"**${r.pool}**: ${if ((r.refreshed) == _root_.com.histmersion.api.automation.PlanQuota.PoolRefreshed.Refreshed(true)) then "read" else "no reading"} — ${r.detail}\n\n${pool(r.status)}")
       .mkString("\n\n") +
       (if q.lifted.isEmpty then ""
        else
-         s"\n\nBack in use (the fresh reading lifted the cool-down after a reported limit): ${q.lifted.map(m => s"`$m`").mkString(", ")}")
+         s"\n\nBack in use (the fresh reading lifted the cool-down after a reported limit): ${q.lifted.map(m => s"`$m`").mkString(", ")}"))
 
   def quota(q: PlanQuota.QuotaInfo): com.histmersion.api.automation.AgentsMarkdown.QuotaResult =
     val metered =
@@ -358,7 +358,7 @@ object AgentsMarkdown:
   ): com.histmersion.api.automation.AgentsMarkdown.RunsResult =
     if rs.isEmpty then _root_.com.histmersion.api.automation.AgentsMarkdown.RunsResult(status.fold("_No agent runs._")(s => s"_No $s agent runs._"))
     else
-      "# Agent runs\n\n" + pageLine(_root_.com.histmersion.api.automation.AgentsMarkdown.PageLineShown(rs.size), page, _root_.com.histmersion.api.automation.AgentsMarkdown.PageLineSingular("run"), status) + facetLines(page, RunFacets) +
+      "# Agent runs\n\n" + pageLine(_root_.com.histmersion.api.automation.AgentsMarkdown.PageLineShown(rs.size), page, _root_.com.histmersion.api.automation.AgentsMarkdown.PageLineSingular("run"), (status).map(refactorValue15 => _root_.com.histmersion.api.automation.AgentsMarkdown.PageLineQualifier((refactorValue15).value))) + facetLines(page, RunFacets) +
         rs.map(r => s"- ${runLine(r)}").mkString("\n") + older.fold("")(o => s"\n\n$o")
 
   private def pageLine(shown: com.histmersion.api.automation.AgentsMarkdown.PageLineShown, page: Paging.Page, singular: com.histmersion.api.automation.AgentsMarkdown.PageLineSingular, qualifier: Option[com.histmersion.api.automation.AgentsMarkdown.PageLineQualifier]): com.histmersion.api.automation.AgentsMarkdown.PageLineResult =
@@ -399,7 +399,7 @@ object AgentsMarkdown:
               .mkString("; ")
             val shape = callShape(s.firstCallTokens, s.turns)
             s"| ${s.seq} | ${s.name} | ${s.kind} | ${s.attempt} | ${s.status} | ${s.modelText} | " +
-              s"${s.usage.input}/${s.usage.output}${if shape.isEmpty then "" else s" · $shape"} | ${usd(s.costUsd)} | $note |"
+              s"${s.usage.input}/${s.usage.output}${if (shape).value.isEmpty then "" else s" · $shape"} | ${usd(s.costUsd)} | $note |"
           }
           .mkString("\n")
     val skipped = d.steps.filter(_.wouldWrite.nonEmpty)
@@ -467,7 +467,7 @@ object AgentsMarkdown:
   ): com.histmersion.api.automation.AgentsMarkdown.ApprovalsResult =
     if as.isEmpty then _root_.com.histmersion.api.automation.AgentsMarkdown.ApprovalsResult("_No approvals._")
     else
-      "# Approvals\n\n" + pageLine(_root_.com.histmersion.api.automation.AgentsMarkdown.PageLineShown(as.size), page, _root_.com.histmersion.api.automation.AgentsMarkdown.PageLineSingular("approval"), state) + facetLines(page, ApprovalFacets) + as
+      "# Approvals\n\n" + pageLine(_root_.com.histmersion.api.automation.AgentsMarkdown.PageLineShown(as.size), page, _root_.com.histmersion.api.automation.AgentsMarkdown.PageLineSingular("approval"), (state).map(refactorValue16 => _root_.com.histmersion.api.automation.AgentsMarkdown.PageLineQualifier((refactorValue16).value))) + facetLines(page, ApprovalFacets) + as
         .map { a =>
           val quote = a.quote.filter(_.nonEmpty).fold("")(q => s"\n  > ${q.replace("\n", " ").take(400)}")
           val note = a.note.filter(_.nonEmpty).fold("")(n => s"\n  note: $n")
