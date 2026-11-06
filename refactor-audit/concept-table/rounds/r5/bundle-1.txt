@@ -1,0 +1,26 @@
+## modules/api/src/main/scala/com/histmersion/api/library/SourcesMarkdown.scala
+17:26 [E007] 17 |        val loc = place(f.regionName, f.lat, f.lon) / |Found:    (f.regionName : Option[com.histmersion.api.library.Finding.Row.RegionName]) / |Required: Option[com.histmersion.api.catalogue.Place.Region]
+49:28 [E007] 49 |          val loc = place(f.regionName, f.lat, f.lon) / |Found:    (f.regionName : Option[com.histmersion.api.library.Finding.Row.RegionName]) / |Required: Option[com.histmersion.api.catalogue.Place.Region]
+102:33 [E008] 102 |          val depth = if n.depth > 0 then s" d=${n.depth}" else " **root**" / |value > is not a member of com.histmersion.api.library.GraphNode.Depth, but could be made available as an extension method. / |One of the following imports might make progress towards fixing the problem: / |  import cats.implicits.catsSyntaxPartialOrder / |  import cats.syntax.all.catsSyntaxPartialOrder / |  import scala.math.Ordered.orderingToOrdered
+125:27 [E172] 125 |            val arrow = if dir == "out" then "→" else "←" / |Values of types com.histmersion.api.library.ContradictionRow.Direction.Wire.T and String cannot be compared with == or !=
+
+## modules/api/src/main/scala/com/histmersion/api/checks/FormatMarkdown.scala
+16:26 [E008] 16 |    val ex = if i.excerpt.isEmpty then "" else s" · `${i.excerpt.replace("`", "'")}`" / |value isEmpty is not a member of com.histmersion.api.checks.FormatIssue.Excerpt, but could be made available as an extension method. / |One of the following imports might make progress towards fixing the problem: / |  import cats.implicits.catsSyntaxMonoid / |  import cats.syntax.all.catsSyntaxMonoid / |  import cats.syntax.monoid.catsSyntaxMonoid
+16:65 [E008] 16 |    val ex = if i.excerpt.isEmpty then "" else s" · `${i.excerpt.replace("`", "'")}`" / |value replace is not a member of com.histmersion.api.checks.FormatIssue.Excerpt, but could be made available as an extension method. / |The following import might make progress towards fixing the problem:
+
+## modules/api/src/main/scala/com/histmersion/api/library/RepairAcquire.scala
+91:39 [E007] 91 |      s"- ${ManagersMarkdown.backlog(r.backlog, r.backlogDays)}" / |Found:    (r.backlog : com.histmersion.api.library.RepairAcquire.RepairResult.Backlog) / |Required: com.histmersion.api.automation.Managers.ManagerInfo.Backlog
+91:50 [E007] 91 |      s"- ${ManagersMarkdown.backlog(r.backlog, r.backlogDays)}" / |Found:    (r.backlogDays : / |  Option[com.histmersion.api.library.RepairAcquire.RepairResult.BacklogDays]) / |Required: Option[com.histmersion.api.automation.Managers.ManagerInfo.BacklogDays]
+
+## modules/api/src/main/scala/com/histmersion/api/Years.scala
+63:18 [E007] 63 |    parsed.flatMap(y => if y.value == 0 then Left(Problem(s"'${(raw).value.trim}': $NoYearZero")) else Right(y)) / |Found:    Either[com.histmersion.api.Years.Problem | String, / |  com.histmersion.api.catalogue.Year.T] / |Required: Either[com.histmersion.api.Years.Problem, com.histmersion.api.catalogue.Year]
+
+## modules/api/src/main/scala/com/histmersion/api/catalogue/SkippedPeriod.scala
+23:194 [E172] 23 |    com.histmersion.api.jobs.JobDetail.Field(_root_.com.histmersion.api.jobs.JobDetail.Field.Name("skippedPeriodCount"), _root_.com.histmersion.api.catalogue.Period.I / |No given instance of type io.circe.Encoder[ / |  com.histmersion.api.catalogue.Period.ImportResult.SkippedCount.T] was found for parameter encoder of constructor Field in class Field. / |I found: / |    io.circe.Encoder.importedEncoder[ / |      com.histmersion.api.catalogue.Period.ImportResult.SkippedCount.T](
+
+## modules/api/src/main/scala/com/histmersion/api/library/IngestMarkdown.scala
+60:26 [E008] 60 |        Option.when(kinds.nonEmpty)(List(kinds, "")).toList.flatten ++ / |value nonEmpty is not a member of com.histmersion.api.automation.ListFilters.FacetLine, but could be made available as an extension method. / |The following import might make progress towards fixing the problem:
+
+## modules/api/src/main/scala/com/histmersion/api/media/ImportJobKinds.scala
+10:166 [E172] 10 |  val Media: JobDetail.Field[Option[com.histmersion.api.jobs.JobKinds.Subject]] = JobDetail.Field(_root_.com.histmersion.api.jobs.JobDetail.Field.Name("media"), None) / |No given instance of type io.circe.Encoder[Option[com.histmersion.api.jobs.JobKinds.Subject]] was found for parameter encoder of constructor Field in class Field. / |I found: / |    io.circe.Encoder.encodeIterable[com.histmersion.api.jobs.JobKinds.Subject.T, / |      Option]( / |      io.circe.Encoder.importedEncoder[com.histmersion.api.jobs.JobKinds.Subject.T](
+

@@ -1,0 +1,28 @@
+## modules/api/src/main/scala/com/histmersion/api/library/SearchMarkdown.scala
+172:62 [E007] 172 |      val head = s"### $unit by ${h.by} · $span" + asOfNote(h.asOf) / |Found:    (h.asOf : Option[com.histmersion.api.library.TimeHistogram.AsOf]) / |Required: Option[com.histmersion.api.catalogue.Place.Entry.AsOf]
+182:32 [E007] 182 |      else Option(periodLabel(b.start, b.end)).filter(_.nonEmpty).map(p => s" · $p").getOrElse("") / |Found:    (b.start : Option[com.histmersion.api.library.Bucket.Start]) / |Required: Option[com.histmersion.api.catalogue.Year]
+182:41 [E007] 182 |      else Option(periodLabel(b.start, b.end)).filter(_.nonEmpty).map(p => s" · $p").getOrElse("") / |    Found:    (b.end : Option[com.histmersion.api.library.Bucket.End]) / |    Required: Option[com.histmersion.api.catalogue.Year]
+
+## modules/api/src/main/scala/com/histmersion/api/catalogue/EventLinksMarkdown.scala
+38:19 [E172] 38 |            s"${if f.yearGap == 0 then "overlapping in time" else s"${f.yearGap} years apart"}: ${f.claim.take(140)}" / |Values of types com.histmersion.api.catalogue.EventFindingRef.YearGap and Int cannot be compared with == or !=
+38:106 [E008] 38 |            s"${if f.yearGap == 0 then "overlapping in time" else s"${f.yearGap} years apart"}: ${f.claim.take(140)}" / |value take is not a member of com.histmersion.api.catalogue.EventFindingRef.Claim, but could be made available as an extension method. / |The following import might make progress towards fixing the problem:
+
+## modules/api/src/main/scala/com/histmersion/api/library/AcquireChecksMarkdown.scala
+32:70 [E172] 32 |           s"- ${verb}close ${Plural.count(Plural.CountN(r.rows.count(_.action == WouldClose).toLong), Plural.CountSingular("item"))} the corpus holds with its text\n / |Values of types com.histmersion.api.library.Acquire.Checks.RecheckRow.Action and String cannot be compared with == or !=
+33:70 [E172] 33 |             s"- ${verb}try ${Plural.count(Plural.CountN(r.rows.count(_.action == WouldTry).toLong), Plural.CountSingular("item"))} through the legal chain" / |Values of types com.histmersion.api.library.Acquire.Checks.RecheckRow.Action and String cannot be compared with == or !=
+
+## modules/api/src/main/scala/com/histmersion/api/Api.scala
+1737:2 [E172] 1737 |  @main def generateApiIndex(repo: com.histmersion.api.Api.Index.RepoPath): Unit = / |No given instance of type scala.util.CommandLineParser.FromString[com.histmersion.api.Api.Index.RepoPath] was found for parameter fs of method parseArgument in object Co
+
+## modules/api/src/main/scala/com/histmersion/api/catalogue/ArticleEventLead.scala
+52:19 [E007] 48 |      ("### Catalogue events in this article's period and region that it never names" :: "" :: / 49 |        leads.map { l => / 50 |          s"- ${l.label} (`${l.eventId}`, ${l.kind}${l.size.fold("")(s => s", $s")}, ${l.years}) — " + / 51 |            s"${Plural.count(_root_.com.histmersion.api.Plural.CountN(l.findingsNear.value.toLong), _root_.com.histmersion.api.Plural.Noun.Singular("finding"))} of th / 52 |        }).mkString("\n") / |      Found:    String
+
+## modules/api/src/main/scala/com/histmersion/api/exchange/ExchangeJobKinds.scala
+30:185 [E172] 30 |  val PlanHash: JobDetail.Field[Option[com.histmersion.api.exchange.ExchangeJobKinds.PlanHash]] = JobDetail.Field(_root_.com.histmersion.api.jobs.JobDetail.Field.Name / |No given instance of type io.circe.Encoder[Option[com.histmersion.api.exchange.ExchangeJobKinds.PlanHash]] was found for parameter encoder of constructor Field in class  / |I found: / |    io.circe.Encoder.encodeIterable[ / |      com.histmersion.api.exchange.MergePlan.PlanHash.T, Option]( / |      io.circe.Encoder.importedEncoder[
+
+## modules/api/src/main/scala/com/histmersion/api/maintenance/StorageMarkdown.scala
+12:141 [E008] 12 |      val when = (r.ageSeconds.map(_.value.toLong).map(s => s"measured ${AboutMarkdown.age(_root_.com.histmersion.api.instance.AboutMarkdown.Age(s))} ago") ++ / |value Age is not a member of object com.histmersion.api.instance.AboutMarkdown - did you mean AboutMarkdown.age?
+
+## modules/api/src/main/scala/com/histmersion/api/settings/ReloadMarkdown.scala
+19:24 [E007] 19 |      list("Applied", r.applied) ++ / |Found:    (r.applied : List[com.histmersion.api.settings.ReloadReport.Applied]) / |Required: List[String]
+
