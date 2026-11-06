@@ -55,7 +55,7 @@ object PeriodsMarkdown:
       s" — ${Plural.count(r.presets, "timeline preset")} in the store" +
       (if r.removed > 0 then s"; removed ${Plural.count(r.removed, "earlier seed period")} the seed no longer has"
        else "")
-    if r.skippedCount == 0 then head
+    if r.skippedCount == _root_.com.histmersion.api.catalogue.Period.ImportResult.SkippedCount(0) then head
     else
       val more = r.skippedCount - r.skipped.size
       s"$head\n\nskipped ${Plural.count(r.skippedCount, _root_.com.histmersion.api.Plural.CountSingular("definition"))} (not imported):\n" +

@@ -93,7 +93,7 @@ object MergeResolutions:
       val withText = current.resolve.flatMap(r => r.text.map(r.issue -> _)).sortBy(_._1)
       if withText.isEmpty then Nil
       else
-        "texts:" :: withText.flatMap { (id, t) =>
+        _root_.com.histmersion.api.exchange.MergeResolutions.Text.TextsResult("texts:") :: withText.flatMap { (id, t) =>
           val chomp = if !t.endsWith("\n") then "-" else if t.endsWith("\n\n") then "+" else ""
           val lines = t.stripSuffix("\n").split("\n", -1).toList
           // with `|+` the empty last lines are the text's own trailing breaks

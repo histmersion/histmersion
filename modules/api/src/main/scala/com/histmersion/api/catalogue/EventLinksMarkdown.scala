@@ -18,7 +18,7 @@ object EventLinksMarkdown:
   private def km(d: com.histmersion.api.catalogue.EventLinksMarkdown.KmD): com.histmersion.api.catalogue.EventLinksMarkdown.KmResult = _root_.com.histmersion.api.catalogue.EventLinksMarkdown.KmResult(s"${math.round((d).value)} km")
 
   def context(d: com.histmersion.api.catalogue.EventCard): com.histmersion.api.catalogue.EventLinksMarkdown.ContextResult =
-    val tier = s"\n\n**Tier:** ${d.tier}" + (if d.tier == EventTier.Catalogue then
+    val tier = s"\n\n**Tier:** ${d.tier}" + (if d.tier == _root_.com.histmersion.api.catalogue.EventCard.TierResult(EventTier.Catalogue) then
                                                " — known from a catalogue only: a research lead, not evidence"
                                              else "")
     val names = if d.names.isEmpty then "" else s"  \n**Also called:** ${d.names.take(12).mkString(", ")}"

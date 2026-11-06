@@ -38,7 +38,8 @@ object Lint:
   type SuggestTarget = SuggestTarget.T
   object SuggestTarget extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type SuggestCitekeys = SuggestCitekeys.T
-  object SuggestCitekeys extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object SuggestCitekeys extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]:
+    given _root_.scala.math.Ordering[T] = _root_.scala.math.Ordering.by[T, _root_.java.lang.String](_.value)
   type SuggestMax = SuggestMax.T
   object SuggestMax extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type LooksLikeCitekeyResult = LooksLikeCitekeyResult.T
@@ -46,7 +47,8 @@ object Lint:
   type LooksLikeCitekeyTarget = LooksLikeCitekeyTarget.T
   object LooksLikeCitekeyTarget extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type DuplicatesRowsPart1 = DuplicatesRowsPart1.T
-  object DuplicatesRowsPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object DuplicatesRowsPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]:
+    given _root_.scala.math.Ordering[T] = _root_.scala.math.Ordering.by[T, _root_.java.lang.String](_.value)
   type DuplicatesRowsPart2 = DuplicatesRowsPart2.T
   object DuplicatesRowsPart2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type DuplicatesLabel = DuplicatesLabel.T
@@ -86,7 +88,8 @@ object Lint:
   type ExtractParagraphsBody = ExtractParagraphsBody.T
   object ExtractParagraphsBody extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type FormatItemsRowsPart1 = FormatItemsRowsPart1.T
-  object FormatItemsRowsPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object FormatItemsRowsPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]:
+    given _root_.scala.math.Ordering[T] = _root_.scala.math.Ordering.by[T, _root_.java.lang.String](_.value)
   type FormatItemsRowsPart3 = FormatItemsRowsPart3.T
   object FormatItemsRowsPart3 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type ReportMaxItems = ReportMaxItems.T
@@ -308,7 +311,7 @@ object Lint:
 
   val names: List[com.histmersion.api.checks.Lint.Names] = all.map(_.name)
 
-  def rule(name: com.histmersion.api.checks.Lint.RuleName): Option[Rule] = all.find(_.name == (name).value.trim.toLowerCase)
+  def rule(name: com.histmersion.api.checks.Lint.RuleName): Option[Rule] = all.find(_.name == _root_.com.histmersion.api.checks.Lint.Rule.Name((name).value.trim.toLowerCase))
 
   def select(requested: List[com.histmersion.api.checks.Lint.SelectRequested]): Either[com.histmersion.api.checks.Lint.SelectResultPart1, List[Rule]] =
     val wanted = requested.map((_).value.trim).filter(_.nonEmpty)
@@ -354,7 +357,7 @@ object Lint:
       .sortBy((key, _) => key)
       .flatMap { (key, group) =>
         val cks = group.map(_._1).distinct.sorted
-        cks.map(ck => LintItem(ck, s"$label $key — also on ${cks.filterNot(_ == ck).mkString(", ")}"))
+        cks.map(ck => LintItem(ck, _root_.com.histmersion.api.checks.Lint.LintItem.Detail(s"$label $key — also on ${cks.filterNot(_ == ck).mkString(", ")}")))
       }
 
   private val CanonicalTag = """^[a-z0-9][a-z0-9_]*$""".r
@@ -434,7 +437,7 @@ object Lint:
 
   def isListLeadIn(text: com.histmersion.api.checks.Lint.IsListLeadInText): com.histmersion.api.checks.Lint.IsListLeadInResult =
     val t = (text).value.trim
-    t.endsWith(":") && t.length <= MaxListLeadIn && sentenceCount(_root_.com.histmersion.api.checks.Lint.SentenceCountText(t)) == 1
+    t.endsWith(":") && t.length <= MaxListLeadIn && sentenceCount(_root_.com.histmersion.api.checks.Lint.SentenceCountText(t)) == _root_.com.histmersion.api.checks.Lint.SentenceCountResult(1)
 
   def extractParagraphs(body: com.histmersion.api.checks.Lint.ExtractParagraphsBody): List[com.histmersion.api.checks.Lint.ExtractParagraphsResult] =
     val lines = (body).value.linesIterator.toList
@@ -481,7 +484,7 @@ object Lint:
 
   def markdown(rep: LintReport): com.histmersion.api.checks.Lint.MarkdownResult =
     val fixed = if rep.fixed.isEmpty then "" else rep.fixed.map(f => s"- fixed: $f").mkString("", "\n", "\n\n")
-    val (clean, dirty) = rep.rules.partition(_.count == 0)
+    val (clean, dirty) = rep.rules.partition(_.count == _root_.com.histmersion.api.checks.Lint.LintRuleReport.Count(0))
     val head =
       if dirty.isEmpty then s"### Lint: clean (${rep.rules.size} rule(s) checked)"
       else s"### Lint: ${rep.total} finding(s) across ${dirty.size} of ${rep.rules.size} rule(s)"

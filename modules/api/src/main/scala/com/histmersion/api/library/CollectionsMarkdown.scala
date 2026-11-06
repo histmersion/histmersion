@@ -104,7 +104,7 @@ object CollectionsMarkdown:
   def gaps(rows: List[CollectionGapRow]): com.histmersion.api.library.CollectionsMarkdown.GapsResult =
     def esc(s: com.histmersion.api.library.CollectionsMarkdown.GapsEscS) = (s).value.replace("|", "\\|").replace("\n", " ").trim
     val counted = rows.filter(_.counted)
-    val missing = rows.count(_.original == "none")
+    val missing = rows.count(_.original == _root_.com.histmersion.api.library.CollectionGapRow.Original("none"))
     val head =
       if counted.isEmpty then "_Every source with a fetched file is in Calibre._"
       else
@@ -129,7 +129,7 @@ object CollectionsMarkdown:
   /** A sync: the gaps pushed (or that would be), each push, and the summary line. */
   def sync(s: CollectionSync): com.histmersion.api.library.CollectionsMarkdown.SyncResult =
     val ready = s.gaps.gaps.filter(_.counted)
-    val missing = s.gaps.gaps.count(_.original == "none")
+    val missing = s.gaps.gaps.count(_.original == _root_.com.histmersion.api.library.CollectionGapRow.Original("none"))
     val note = if missing == 0 then "" else " · " + uncountedLine(_root_.com.histmersion.api.library.CollectionsMarkdown.UncountedLineN(missing))
     val table = if ready.nonEmpty then (gaps(ready)).value + "\n\n" else ""
     if !s.applied then
@@ -146,9 +146,9 @@ object CollectionsMarkdown:
   def updateAll(rows: List[CollectionUpdateRow], applied: com.histmersion.api.library.CollectionsMarkdown.UpdateAllApplied): com.histmersion.api.library.CollectionsMarkdown.UpdateAllResult =
     def cell(s: com.histmersion.api.library.CollectionsMarkdown.UpdateAllCellS) = (s).value.replace("|", "\\|").replace("\n", " ").take(80)
     val changing = rows.collect {
-      case r if r.state == "would-change" => (r, "")
-      case r if r.state == "updated"      => (r, "written")
-      case r if r.state == "failed"       => (r, s"FAILED: ${r.reason.getOrElse("")}")
+      case r if r.state == _root_.com.histmersion.api.library.CollectionUpdateRow.State("would-change") => (r, "")
+      case r if r.state == _root_.com.histmersion.api.library.CollectionUpdateRow.State("updated")      => (r, "written")
+      case r if r.state == _root_.com.histmersion.api.library.CollectionUpdateRow.State("failed")       => (r, s"FAILED: ${r.reason.getOrElse("")}")
     }
     val table = changing.flatMap { (r, note) =>
       r.changes.map(c =>
@@ -156,13 +156,13 @@ object CollectionsMarkdown:
       )
     }
     val left = rows.collect {
-      case r if r.state == "shared" =>
+      case r if r.state == _root_.com.histmersion.api.library.CollectionUpdateRow.State("shared") =>
         s"- ${r.id}: linked from ${r.citekeys.mkString(", ")} — update one by hand (`histmersion calibre update <citekey>`)"
-      case r if r.state == "missing" =>
+      case r if r.state == _root_.com.histmersion.api.library.CollectionUpdateRow.State("missing") =>
         s"- ${r.id}: no such Calibre entry (${r.citekeys.mkString(", ")}) — re-push, or clear the source's calibre id"
-      case r if r.state == "refused" => s"- ${r.id} (${r.citekeys.mkString(", ")}): ${r.reason.getOrElse("")}"
+      case r if r.state == _root_.com.histmersion.api.library.CollectionUpdateRow.State("refused") => s"- ${r.id} (${r.citekeys.mkString(", ")}): ${r.reason.getOrElse("")}"
     }
-    val upToDate = rows.count(_.state == "up-to-date")
+    val upToDate = rows.count(_.state == _root_.com.histmersion.api.library.CollectionUpdateRow.State("up-to-date"))
     val head =
       if changing.isEmpty then s"_No linked Calibre entry needs updating ($upToDate up to date)._"
       else

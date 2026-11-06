@@ -73,7 +73,8 @@ object CritiquePairing:
   type ResolverResultResult = ResolverResultResult.T
   object ResolverResultResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type ResolverCitekeys = ResolverCitekeys.T
-  object ResolverCitekeys extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object ResolverCitekeys extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]:
+    given _root_.scala.math.Ordering[T] = _root_.scala.math.Ordering.by[T, _root_.java.lang.String](_.value)
   type ResolverAliasesPart1 = ResolverAliasesPart1.T
   object ResolverAliasesPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type ResolverAliasesPart2 = ResolverAliasesPart2.T
@@ -111,9 +112,11 @@ object CritiquePairing:
     type Unit = Unit.T
     object Unit extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
     type From = From.T
-    object From extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    object From extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]:
+      given _root_.scala.math.Ordering[T] = _root_.scala.math.Ordering.by[T, _root_.scala.Int](_.value)
     type To = To.T
-    object To extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    object To extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]:
+      given _root_.scala.math.Ordering[T] = _root_.scala.math.Ordering.by[T, _root_.scala.Int](_.value)
     type Where = Where.T
     object Where extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
     type Edges = Edges.T
@@ -133,7 +136,7 @@ object CritiquePairing:
       .flatMap((_).value.split("[\\s,]+").toList)
       .map(_.trim.stripSuffix("."))
       .filter(w => w.length >= 3 && w.head.isUpper)
-    val byKey = words.filter(w => lead.nonEmpty && (letters(_root_.com.histmersion.api.research.CritiquePairing.LettersS(w)) == lead || ascii(_root_.com.histmersion.api.research.CritiquePairing.AsciiS(w)) == lead))
+    val byKey = words.filter(w => lead.nonEmpty && (letters(_root_.com.histmersion.api.research.CritiquePairing.LettersS(w)) == _root_.com.histmersion.api.research.CritiquePairing.LettersResult(lead) || ascii(_root_.com.histmersion.api.research.CritiquePairing.AsciiS(w)) == _root_.com.histmersion.api.research.CritiquePairing.AsciiResult(lead)))
     val first = authors.headOption
       .map((_).value.trim)
       .filter(_.nonEmpty)

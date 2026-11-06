@@ -144,7 +144,7 @@ object SearchMarkdown:
         val suffix = if b.merged > 1 then s" _(${b.merged} buckets)_" else ""
         s"| $periodLabel | ${b.count} | ${bar(b.count)} |$suffix"
       }
-      val starts = unit == Aggregate.UnitStarts
+      val starts = unit == _root_.com.histmersion.api.library.SearchMarkdown.HistogramUnit(Aggregate.UnitStarts)
       val head = if starts then s"### sources starting per ${h.bucket} yrs · $span"
       else s"### $unit per ${h.bucket} yrs · $span"
       val one = if (unit).value.endsWith("s") then (unit).value.dropRight(1) else unit
@@ -167,7 +167,8 @@ object SearchMarkdown:
     type End = End.T
     object End extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
     type Count = Count.T
-    object Count extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    object Count extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]:
+      given _root_.scala.math.Ordering[T] = _root_.scala.math.Ordering.by[T, _root_.scala.Int](_.value)
     type Merged = Merged.T
     object Merged extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
@@ -199,7 +200,7 @@ object SearchMarkdown:
     val pad = "  " * (depth).value
     buckets.flatMap { b =>
       val over = if b.overlap > 0 then s" · ${b.overlap} in more than one ${childNoun(b)}" else ""
-      val when = if b.kind == Tree.KindTime then ""
+      val when = if b.kind == _root_.com.histmersion.api.library.Bucket.Kind(Tree.KindTime) then ""
       else Option(periodLabel(b.start, b.end)).filter(_.nonEmpty).map(p => s" · $p").getOrElse("")
       val id = b.placeId.map(i => s" `$i`").getOrElse("")
       val line = s"$pad- **${b.label}**${contestedMark(b.contested, b.label)}$id — " +
@@ -210,4 +211,4 @@ object SearchMarkdown:
     }
 
   private[api] def childNoun(b: Bucket): com.histmersion.api.library.SearchMarkdown.ChildNounResult =
-    if b.children.exists(_.kind == Tree.KindTime) then _root_.com.histmersion.api.library.SearchMarkdown.ChildNounResult("period") else _root_.com.histmersion.api.library.SearchMarkdown.ChildNounResult("subregion")
+    if b.children.exists(_.kind == _root_.com.histmersion.api.library.Bucket.Kind(Tree.KindTime)) then _root_.com.histmersion.api.library.SearchMarkdown.ChildNounResult("period") else _root_.com.histmersion.api.library.SearchMarkdown.ChildNounResult("subregion")

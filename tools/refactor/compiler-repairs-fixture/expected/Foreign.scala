@@ -8,6 +8,7 @@ object Foreign:
   def sum(left: Int, right: Owned.Count): Int = left + right
   def path(value: Owned.Text): java.nio.file.Path = java.nio.file.Path.of(value)
   def same(value: Owned.Text): Boolean = "one" == value
+  def output(stream: java.io.PrintStream, value: Owned.Text): Unit = stream.println(value)
 
 object Outer:
   type Text = Text.T

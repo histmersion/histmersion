@@ -52,8 +52,8 @@ object Correction:
       derives KindlingsCodecAsObject,
         KindlingsSchema, com.histmersion.api.json.Schema:
     def +(o: Counts): Counts =
-      Counts((kept).value + (o.kept).value, (retired).value + (o.retired).value, (conflicts).value + (o.conflicts).value)
-    def isEmpty: com.histmersion.api.catalogue.Correction.Counts.IsEmptyResult = kept == 0 && retired == 0 && conflicts == 0
+      Counts(_root_.com.histmersion.api.catalogue.Correction.Counts.Kept((kept).value + (o.kept).value), _root_.com.histmersion.api.catalogue.Correction.Counts.Retired((retired).value + (o.retired).value), _root_.com.histmersion.api.catalogue.Correction.Counts.Conflicts((conflicts).value + (o.conflicts).value))
+    def isEmpty: com.histmersion.api.catalogue.Correction.Counts.IsEmptyResult = kept == _root_.com.histmersion.api.catalogue.Correction.Counts.Kept(0) && retired == _root_.com.histmersion.api.catalogue.Correction.Counts.Retired(0) && conflicts == _root_.com.histmersion.api.catalogue.Correction.Counts.Conflicts(0)
 
     def summary: Option[com.histmersion.api.catalogue.Correction.Counts.SummaryResult] =
       Option.when(!(isEmpty).value)(

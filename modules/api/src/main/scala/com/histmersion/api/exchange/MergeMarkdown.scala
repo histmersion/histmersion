@@ -89,7 +89,7 @@ object MergeMarkdown:
       if p.problems.nonEmpty then "_Next: fix the problems, export the bundle again._"
       else if open.nonEmpty || p.resolutionErrors.nonEmpty then
         "_Next: `histmersion merge plan <bundle> --write-template resolutions.yaml`, decide, then plan again with `--resolutions resolutions.yaml`._"
-      else if p.changes == 0 then "_Nothing is open, and nothing to change: the bundle is merged already._"
+      else if p.changes == _root_.com.histmersion.api.exchange.MergePlan.Changes(0) then "_Nothing is open, and nothing to change: the bundle is merged already._"
       else
         s"_Nothing is open: `histmersion merge apply <bundle> --resolutions … --plan ${p.planHash}` carries it out " +
           s"(${Plural.count(p.changes, _root_.com.histmersion.api.Plural.CountSingular("change"))}; a backup is taken first)._"
@@ -124,7 +124,7 @@ object MergeMarkdown:
             (if r.reviews.nonEmpty then r.reviews.map(s => s"`$s`").mkString(" (", ", ", ")") else "") +
             r.logEntry.fold("")(id => s" · log entry #$id"),
           r.replanChanges.fold("")(n =>
-            if n == 0 then "**re-run** `histmersion merge plan` on this bundle → 0 changes (idempotent)"
+            if n == _root_.com.histmersion.api.exchange.MergeApplyResult.ReplanChanges(0) then "**re-run** `histmersion merge plan` on this bundle → 0 changes (idempotent)"
             else
               s"**re-run** `histmersion merge plan` on this bundle → ${Plural.count(n, "change")} left (not idempotent — report it)"
           )

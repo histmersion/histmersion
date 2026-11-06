@@ -35,4 +35,4 @@ object MatchOutcome:
   given WireEnumValues[MatchOutcome]:
     def all: Array[MatchOutcome] = MatchOutcome.values
     def wire(e: MatchOutcome): com.histmersion.api.library.MatchOutcome.WireResult = wireOf(e)
-    def fromWire(s: com.histmersion.api.library.MatchOutcome.FromWireS): Option[MatchOutcome] = MatchOutcome.values.find(o => wireOf(o) == (s).value.trim)
+    def fromWire(s: com.histmersion.api.library.MatchOutcome.FromWireS): Option[MatchOutcome] = MatchOutcome.values.find(o => wireOf(o) == _root_.com.histmersion.api.library.MatchOutcome.WireOfResult((s).value.trim))

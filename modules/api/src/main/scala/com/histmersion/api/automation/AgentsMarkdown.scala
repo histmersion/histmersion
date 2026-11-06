@@ -246,7 +246,7 @@ object AgentsMarkdown:
         "\n\n| window | used | left | floor | resets | read | from |\n|---|---|---|---|---|---|---|\n" +
           p.windows
             .map { w =>
-              val name = if w.limit == "claude" || w.limit == "codex" then w.kind else s"${w.limit}/${w.kind}"
+              val name = if w.limit == _root_.com.histmersion.api.automation.PlanQuota.WindowStatus.Limit("claude") || w.limit == _root_.com.histmersion.api.automation.PlanQuota.WindowStatus.Limit("codex") then w.kind else s"${w.limit}/${w.kind}"
               val left = if w.usable then s"${pct(w.leftPct)}%" else s"**${pct(w.leftPct)}%**"
               s"| $name | ${pct(w.usedPct)}% | $left | ${w.floor}% | ${w.resetsAt.getOrElse("—")} | " +
                 s"${age(w.ageSeconds)} ago${if w.stale then " (stale)" else ""} | ${w.source} |"
@@ -259,7 +259,7 @@ object AgentsMarkdown:
 
   private def refreshLine(p: PlanQuota.PoolStatus): com.histmersion.api.automation.AgentsMarkdown.RefreshLineResult =
     val how = p.refresh.fold("no fresh reading is taken (refresh off)")(m => s"fresh reading by $m")
-    val times = if p.refreshesToday == 1 then "once" else s"${p.refreshesToday} times"
+    val times = if p.refreshesToday == _root_.com.histmersion.api.automation.PlanQuota.PoolStatus.RefreshesToday(1) then "once" else s"${p.refreshesToday} times"
     val last = p.lastRefresh.fold("")(r =>
       s"; last ${r.at} (${r.trigger}, ${r.mode}): ${if r.ok then "" else "failed — "}${r.detail}"
     )
@@ -552,7 +552,7 @@ object AgentsMarkdown:
 
   private def models(configured: List[com.histmersion.api.automation.AgentsMarkdown.ModelsConfigured], actual: List[com.histmersion.api.automation.AgentsMarkdown.ModelsActual]): com.histmersion.api.automation.AgentsMarkdown.ModelsResult =
     val conf = configured.mkString(", ")
-    val shown = actual.filterNot(a => configured.exists(c => (c).value.drop((c).value.indexOf(':') + 1) == a))
+    val shown = actual.filterNot(a => configured.exists(c => _root_.com.histmersion.api.automation.AgentsMarkdown.ModelsActual((c).value.drop((c).value.indexOf(':') + 1)) == a))
     if conf.isEmpty && actual.isEmpty then _root_.com.histmersion.api.automation.AgentsMarkdown.ModelsResult("—")
     else if shown.isEmpty then _root_.com.histmersion.api.automation.AgentsMarkdown.ModelsResult(conf)
     else _root_.com.histmersion.api.automation.AgentsMarkdown.ModelsResult(s"$conf → ${shown.mkString(", ")}")
@@ -564,7 +564,7 @@ object AgentsMarkdown:
     else _root_.com.histmersion.api.automation.AgentsMarkdown.PaidResult(plan.mkString(", "))
 
   private def ratio(n: com.histmersion.api.automation.AgentsMarkdown.RatioN, of: com.histmersion.api.automation.AgentsMarkdown.RatioOf): com.histmersion.api.automation.AgentsMarkdown.RatioResult =
-    if of == 0 then _root_.com.histmersion.api.automation.AgentsMarkdown.RatioResult("—") else s"$n/$of (${BigDecimal(((100.0 * (n).value / of).value).value).setScale(0, BigDecimal.RoundingMode.HALF_UP)}%)"
+    if of == _root_.com.histmersion.api.automation.AgentsMarkdown.RatioOf(0) then _root_.com.histmersion.api.automation.AgentsMarkdown.RatioResult("—") else s"$n/$of (${BigDecimal(((100.0 * (n).value / of).value).value).setScale(0, BigDecimal.RoundingMode.HALF_UP)}%)"
 
   def compare(c: RunCompare.Comparison): com.histmersion.api.automation.AgentsMarkdown.CompareResult =
     import RunCompare.*

@@ -431,7 +431,7 @@ object Gazetteer:
     type FromWireS = FromWireS.T
     object FromWireS extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
-    def parse(s: com.histmersion.api.catalogue.Gazetteer.Kind.ParseS): Option[Kind] = values.find(_.wire == (s).value.trim.toLowerCase(java.util.Locale.ROOT))
+    def parse(s: com.histmersion.api.catalogue.Gazetteer.Kind.ParseS): Option[Kind] = values.find(_.wire == _root_.com.histmersion.api.catalogue.Gazetteer.Kind.WireResult((s).value.trim.toLowerCase(java.util.Locale.ROOT)))
 
     def ofKey(key: com.histmersion.api.catalogue.Gazetteer.Kind.OfKeyKey): Option[Kind] = parse(_root_.com.histmersion.api.catalogue.Gazetteer.Kind.ParseS((key).value.takeWhile(_ != ':')))
 

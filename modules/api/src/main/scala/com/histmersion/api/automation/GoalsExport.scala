@@ -16,9 +16,11 @@ object GoalsExport:
   type LinkSectionsSectionLineResult = LinkSectionsSectionLineResult.T
   object LinkSectionsSectionLineResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type LinkSectionsSectionKeyResultPart1 = LinkSectionsSectionKeyResultPart1.T
-  object LinkSectionsSectionKeyResultPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object LinkSectionsSectionKeyResultPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]:
+    given _root_.scala.math.Ordering[T] = _root_.scala.math.Ordering.by[T, _root_.scala.Long](_.value)
   type LinkSectionsSectionKeyResultPart2 = LinkSectionsSectionKeyResultPart2.T
-  object LinkSectionsSectionKeyResultPart2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object LinkSectionsSectionKeyResultPart2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]:
+    given _root_.scala.math.Ordering[T] = _root_.scala.math.Ordering.by[T, _root_.java.lang.String](_.value)
 
   type RenderResult = RenderResult.T
   object RenderResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
@@ -99,7 +101,7 @@ object GoalsExport:
         .getOrElse(Some(v.goal.slug), Nil)
         .filterNot(c => seen.contains(c.goal.slug))
         .flatMap(c => walk(c, _root_.com.histmersion.api.automation.GoalsExport.TreeWalkDepth((depth).value + 1), seen + c.goal.slug))
-    val placed = roots.flatMap(r => walk(r, 0, Set(r.goal.slug)))
+    val placed = roots.flatMap(r => walk(r, _root_.com.histmersion.api.automation.GoalsExport.TreeWalkDepth(0), Set(r.goal.slug)))
     val shown = placed.map(_._1.goal.slug).toSet
     val strays = views.filterNot(v => shown.contains(v.goal.slug)).sortBy(_.goal.slug).map(_ -> 0)
     placed ++ strays
@@ -112,7 +114,7 @@ object GoalsExport:
       Option(YearFmt.openPeriod(g.periodStart, g.periodEnd, "")).filter(_.nonEmpty).map(p => s"**Period:** $p"),
       Option.when(g.regions.nonEmpty)(s"**Regions:** ${g.regions.mkString(", ")}"),
       Option.when(g.tags.nonEmpty)(s"**Tags:** ${g.tags.mkString(", ")}"),
-      g.parentSlug.filter(_ => depth == 0).map(p => s"**Parent:** `$p`" + (if known(p) then "" else " (not found)")),
+      g.parentSlug.filter(_ => depth == _root_.com.histmersion.api.automation.GoalsExport.BlockDepth(0)).map(p => s"**Parent:** `$p`" + (if known(p) then "" else " (not found)")),
       v.budgetUsd.map(b => s"**Run cap:** ${AgentsMarkdown.usd(b)} USD")
     ).flatten.mkString("  \n")
     val notes = g.notes.map(_.trim).filter(_.nonEmpty).toList

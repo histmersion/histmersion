@@ -22,12 +22,12 @@ object ConfigEdit:
     type ParseS = ParseS.T
     object ParseS extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
-    def parse(s: com.histmersion.api.settings.ConfigEdit.Source.ParseS): Option[Source] = values.find(_.wire == (s).value.trim.toLowerCase)
+    def parse(s: com.histmersion.api.settings.ConfigEdit.Source.ParseS): Option[Source] = values.find(_.wire == _root_.com.histmersion.api.settings.ConfigEdit.Source.Wire((s).value.trim.toLowerCase))
 
   final case class Credential(rule: Credential.Rule, form: Credential.Form, shown: Option[Credential.Shown] = None)
       derives KindlingsCodecAsObject,
         KindlingsSchema:
-    def isSet: com.histmersion.api.settings.ConfigEdit.Credential.IsSetResult = form != "unset"
+    def isSet: com.histmersion.api.settings.ConfigEdit.Credential.IsSetResult = form != _root_.com.histmersion.api.settings.ConfigEdit.Credential.Form("unset")
 
   object Credential:
     type IsSetResult = IsSetResult.T

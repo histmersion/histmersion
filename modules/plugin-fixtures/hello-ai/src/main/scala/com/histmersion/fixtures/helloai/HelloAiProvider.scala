@@ -21,7 +21,7 @@ final class HelloAiProvider(replies: List[Reply], hasToken: HelloAiProvider.HasT
 
   def turn(request: AiTurn.Request, http: AiHttp): Either[AiFailure, AiTurn] =
     val usage = Some(AiUsage(input = _root_.com.histmersion.plugin.AiUsage.Input((100).toLong), output = _root_.com.histmersion.plugin.AiUsage.Output((20).toLong)))
-    if request.model == "limited" then Left(AiFailure.LimitReached(_root_.com.histmersion.plugin.AiFailure.LimitReached.Message("hello-ai: usage limit reached")))
+    if request.model == _root_.com.histmersion.plugin.AiTurn.Request.Model("limited") then Left(AiFailure.LimitReached(_root_.com.histmersion.plugin.AiFailure.LimitReached.Message("hello-ai: usage limit reached")))
     else
       val schema = request.answerSchema.getOrElse("")
       replies.find(r => schema.contains(r.when)) match

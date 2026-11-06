@@ -121,7 +121,7 @@ object Wording:
     case Source.Status.Unassessed   => _root_.com.histmersion.api.Wording.StatusResult("Not assessed")
 
   def statusOf(wire: com.histmersion.api.Wording.StatusOfWire): com.histmersion.api.Wording.StatusOfResult =
-    Source.Status.values.find(_.wire == (wire).value.trim.toLowerCase).fold(humanize(wire))(status)
+    Source.Status.values.find(_.wire == _root_.com.histmersion.api.library.Source.Status.WireResult((wire).value.trim.toLowerCase)).fold(humanize(wire))(status)
 
   def pipeline(p: Pipeline): com.histmersion.api.Wording.PipelineResult = p match
     case Pipeline.EnrichSource     => _root_.com.histmersion.api.Wording.PipelineResult("Enrich a source")
@@ -193,7 +193,7 @@ object Wording:
   def pool(id: com.histmersion.api.Wording.PoolId): com.histmersion.api.Wording.PoolResult = (id).value.trim.toLowerCase match
     case "claude-plan"  => _root_.com.histmersion.api.Wording.PoolResult("Claude plan")
     case "chatgpt-plan" => _root_.com.histmersion.api.Wording.PoolResult("ChatGPT plan")
-    case other          => (humanize(_root_.com.histmersion.api.Wording.HumanizeId(other.stripSuffix("-plan")))).value + (if other.endsWith("-plan") then " plan" else "")
+    case other          => _root_.com.histmersion.api.Wording.PoolResult((humanize(_root_.com.histmersion.api.Wording.HumanizeId(other.stripSuffix("-plan")))).value + (if other.endsWith("-plan") then " plan" else ""))
 
   def allowanceWindow(kind: com.histmersion.api.Wording.AllowanceWindowKind): com.histmersion.api.Wording.AllowanceWindowResult =
     val k = (kind).value.trim.toLowerCase.split('/').last
@@ -219,9 +219,9 @@ object Wording:
     else _root_.com.histmersion.api.Wording.AgentsStateResult("Agents: paused")
 
   def decisions(open: com.histmersion.api.Wording.DecisionsOpen): Option[com.histmersion.api.Wording.DecisionsResult] =
-    Option.when((open).value > 0)(if open == 1 then _root_.com.histmersion.api.Wording.DecisionsResult("1 needs your decision") else _root_.com.histmersion.api.Wording.DecisionsResult(s"$open need your decision"))
+    Option.when((open).value > 0)(if open == _root_.com.histmersion.api.Wording.DecisionsOpen(1) then _root_.com.histmersion.api.Wording.DecisionsResult("1 needs your decision") else _root_.com.histmersion.api.Wording.DecisionsResult(s"$open need your decision"))
 
-  def decisionsShort(open: com.histmersion.api.Wording.DecisionsShortOpen): com.histmersion.api.Wording.DecisionsShortResult = if open == 1 then _root_.com.histmersion.api.Wording.DecisionsShortResult("1 needs you") else _root_.com.histmersion.api.Wording.DecisionsShortResult(s"$open need you")
+  def decisionsShort(open: com.histmersion.api.Wording.DecisionsShortOpen): com.histmersion.api.Wording.DecisionsShortResult = if open == _root_.com.histmersion.api.Wording.DecisionsShortOpen(1) then _root_.com.histmersion.api.Wording.DecisionsShortResult("1 needs you") else _root_.com.histmersion.api.Wording.DecisionsShortResult(s"$open need you")
 
   val Drain = "Finish current work, then pause"
   val Undrain = "Resume"

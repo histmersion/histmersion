@@ -68,7 +68,7 @@ object Vaults:
 
   /** Pure: `~/x` against HOME. */
   private[vaults] def expand(p: com.histmersion.plugins.vaults.Vaults.ExpandP, home: Option[com.histmersion.plugins.vaults.Vaults.ExpandHome]): com.histmersion.plugins.vaults.Vaults.ExpandResult =
-    home.filter(_ => p == "~" || (p).value.startsWith("~/")).fold(p)(h => (h).value + (p).value.drop(1))
+    home.filter(_ => p == _root_.com.histmersion.plugins.vaults.Vaults.ExpandP("~") || (p).value.startsWith("~/")).fold(p)(h => (h).value + (p).value.drop(1))
 
   /** Run the tool and turn its answer into the value or an error naming the reference — never the value. */
   private[vaults] def answer(
@@ -78,7 +78,7 @@ object Vaults:
       classify: com.histmersion.plugins.vaults.Vaults.AnswerClassifyArg1 => Option[com.histmersion.plugins.vaults.Vaults.AnswerClassifyResult]
   ): Either[com.histmersion.plugins.vaults.Vaults.AnswerResultPart1, com.histmersion.plugins.vaults.Vaults.AnswerResultPart2] =
     r.flatMap { res =>
-      if res.exit == 0 then
+      if res.exit == _root_.com.histmersion.plugin.Processes.Result.Exit(0) then
         val v = Subprocess.value(res.out)
         if v.isEmpty then Left(s"$vault: '$ref' has an empty value") else Right(v)
       else

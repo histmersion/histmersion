@@ -119,7 +119,8 @@ object Queue:
 
   object QueueItem:
     type Id = Id.T
-    object Id extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    object Id extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]:
+      given _root_.scala.math.Ordering[T] = _root_.scala.math.Ordering.by[T, _root_.scala.Int](_.value)
     type List = List.T
     object List extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
     type Text = Text.T
@@ -131,7 +132,8 @@ object Queue:
     type Reason = Reason.T
     object Reason extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
     type CreatedAt = CreatedAt.T
-    object CreatedAt extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    object CreatedAt extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]:
+      given _root_.scala.math.Ordering[T] = _root_.scala.math.Ordering.by[T, _root_.java.lang.String](_.value)
     type DoneAt = DoneAt.T
     object DoneAt extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
     type CreatedBy = CreatedBy.T
@@ -220,7 +222,7 @@ object Queue:
     object ParseS extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
     val all: List[com.histmersion.api.automation.Queue.Kind.All] = values.toList.map(_.label)
-    def parse(s: com.histmersion.api.automation.Queue.Kind.ParseS): Option[Kind] = values.find(_.label == (s).value.trim.toLowerCase)
+    def parse(s: com.histmersion.api.automation.Queue.Kind.ParseS): Option[Kind] = values.find(_.label == _root_.com.histmersion.api.automation.Queue.Kind.Label((s).value.trim.toLowerCase))
 
   val Open = "open"
   val Done = "done"
@@ -254,8 +256,8 @@ object Queue:
       case None                                    => Left(_root_.com.histmersion.api.automation.Queue.FulfillableResultPart1(s"no acquisition item $id"))
       case Some(i) if i.list != Kind.Acquire.label =>
         Left(_root_.com.histmersion.api.automation.Queue.FulfillableResultPart1(s"item $id is on the ${i.list} list, not the acquisition list"))
-      case Some(i) if i.status == Done => Left(_root_.com.histmersion.api.automation.Queue.FulfillableResultPart1(s"acquisition item $id is already done"))
-      case Some(i) if i.status != Open => Left(_root_.com.histmersion.api.automation.Queue.FulfillableResultPart1(s"item $id is not an open acquisition item"))
+      case Some(i) if i.status == _root_.com.histmersion.api.automation.Queue.QueueItem.Status(Done) => Left(_root_.com.histmersion.api.automation.Queue.FulfillableResultPart1(s"acquisition item $id is already done"))
+      case Some(i) if i.status != _root_.com.histmersion.api.automation.Queue.QueueItem.Status(Open) => Left(_root_.com.histmersion.api.automation.Queue.FulfillableResultPart1(s"item $id is not an open acquisition item"))
       case Some(i)                     => Right(i)
 
   def itemGoals(own: List[(com.histmersion.api.automation.Queue.ItemGoalsOwnPart1, GoalRef)], linked: List[(com.histmersion.api.automation.Queue.ItemGoalsLinkedPart1, GoalRef)]): List[ItemGoals] =
@@ -265,8 +267,8 @@ object Queue:
     def clearable(v: Option[com.histmersion.api.automation.Queue.ApplyPatchClearableV], old: Option[com.histmersion.api.automation.Queue.ApplyPatchClearableOld]) = v.fold(old)(x => Some((x).value.trim).filter(_.nonEmpty))
     val status = p.status.map(_.trim.toLowerCase).filter(_.nonEmpty).getOrElse(cur.status)
     val closedBy =
-      if status != Done then None
-      else p.closedBy.map(_.trim).filter(_.nonEmpty).orElse(Option.when(cur.status == Done)(cur.closedBy).flatten)
+      if status != _root_.com.histmersion.api.automation.Queue.QueueItem.Status(Done) then None
+      else p.closedBy.map(_.trim).filter(_.nonEmpty).orElse(Option.when(cur.status == _root_.com.histmersion.api.automation.Queue.QueueItem.Status(Done))(cur.closedBy).flatten)
     cur.modify(
       _.status).setTo(status).modify(_.text).setTo(p.text.getOrElse(cur.text)).modify(_.topic).setTo(clearable(p.topic, cur.topic)).modify(_.reason).setTo(clearable(p.reason, cur.reason)).modify(_.goal).setTo(clearable(p.goal, cur.goal)).modify(_.closedBy).setTo(closedBy
     )
@@ -415,7 +417,7 @@ object Queue:
       }
 
   private def bullet(kind: Kind, i: QueueItem): com.histmersion.api.automation.Queue.BulletResult =
-    val marker = if !kind.checkboxes then "- " else if i.status == Done then "- [x] " else "- [ ] "
+    val marker = if !kind.checkboxes then "- " else if i.status == _root_.com.histmersion.api.automation.Queue.QueueItem.Status(Done) then "- [x] " else "- [ ] "
     val lines = i.text.linesIterator.toList
     (marker + lines.headOption.getOrElse("")) + lines.drop(1).map("\n" + _).mkString
 
@@ -441,7 +443,7 @@ object Queue:
 
   /** A list's open items by topic; `notes` is a line under an item, by its id (an ACQUIRE item's last check). */
   def markdown(kind: Kind, items: List[QueueItem], notes: Map[com.histmersion.api.automation.Queue.MarkdownNotesPart1, com.histmersion.api.automation.Queue.MarkdownNotesPart2] = Map.empty): com.histmersion.api.automation.Queue.MarkdownResult =
-    val shown = items.filterNot(_.status == Note)
+    val shown = items.filterNot(_.status == _root_.com.histmersion.api.automation.Queue.QueueItem.Status(Note))
     if shown.isEmpty then _root_.com.histmersion.api.automation.Queue.MarkdownResult(s"_${kind.label}: nothing queued._")
     else
       val groups = shown.groupBy(_.topic).toList.sortBy((_, is) => is.map(_.id).min)
@@ -452,7 +454,7 @@ object Queue:
             .map(seg => if isBold(seg) then seg.drop(2).dropRight(2) else seg)
             .mkString(Sep)
         val lines = is.sortBy(_.id).map { i =>
-          val box = if !kind.checkboxes then "" else if i.status == Done then "[x] " else "[ ] "
+          val box = if !kind.checkboxes then "" else if i.status == _root_.com.histmersion.api.automation.Queue.QueueItem.Status(Done) then "[x] " else "[ ] "
           val why = i.reason.map(r => s" — _${r}_").getOrElse("")
           s"- $box${i.text.linesIterator.mkString(" ")}$why  `#${i.id}`" +
             notes.get(i.id).fold("")(n => s"\n  - _${n}_")

@@ -73,7 +73,7 @@ object PlanQuota:
     type ParseS = ParseS.T
     object ParseS extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
-    def parse(s: com.histmersion.api.automation.PlanQuota.PoolId.ParseS): Option[PoolId] = values.find(_.wire == (s).value.trim.toLowerCase(java.util.Locale.ROOT))
+    def parse(s: com.histmersion.api.automation.PlanQuota.PoolId.ParseS): Option[PoolId] = values.find(_.wire == _root_.com.histmersion.api.automation.PlanQuota.PoolId.Wire((s).value.trim.toLowerCase(java.util.Locale.ROOT)))
 
   /** A CLI configured to keep an API key in its environment (`use-api-key`) bills the key, not the plan. */
   final case class Logins(
@@ -119,7 +119,7 @@ object PlanQuota:
     type ParseS = ParseS.T
     object ParseS extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
-    def parse(s: com.histmersion.api.automation.PlanQuota.Source.ParseS): Option[Source] = values.find(_.wire == (s).value.trim.toLowerCase(java.util.Locale.ROOT))
+    def parse(s: com.histmersion.api.automation.PlanQuota.Source.ParseS): Option[Source] = values.find(_.wire == _root_.com.histmersion.api.automation.PlanQuota.Source.Wire((s).value.trim.toLowerCase(java.util.Locale.ROOT)))
 
   /** Codex names its windows by length (`300m`/`10080m`): its `primary` is not always the 5-hour window. */
   final case class Reading(
@@ -135,9 +135,11 @@ object PlanQuota:
 
   object Reading:
     type Limit = Limit.T
-    object Limit extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    object Limit extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]:
+      given _root_.scala.math.Ordering[T] = _root_.scala.math.Ordering.by[T, _root_.java.lang.String](_.value)
     type Kind = Kind.T
-    object Kind extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    object Kind extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]:
+      given _root_.scala.math.Ordering[T] = _root_.scala.math.Ordering.by[T, _root_.java.lang.String](_.value)
     type UsedPct = UsedPct.T
     object UsedPct extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
     type ResetsAt = ResetsAt.T
@@ -145,12 +147,13 @@ object PlanQuota:
     type Rejected = Rejected.T
     object Rejected extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
     type ObservedAt = ObservedAt.T
-    object ObservedAt extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    object ObservedAt extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]:
+      given _root_.scala.math.Ordering[T] = _root_.scala.math.Ordering.by[T, _root_.scala.Long](_.value)
     type Model = Model.T
     object Model extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
   final case class Floors(byKind: Map[Floors.ByKindKey, Floors.ByKindValue]):
-    def text: com.histmersion.api.automation.PlanQuota.Floors.TextResult = byKind.toList.sortBy(_._1).map((k, v) => s"$k=$v").mkString(", ")
+    def text: com.histmersion.api.automation.PlanQuota.Floors.TextResult = _root_.com.histmersion.api.automation.PlanQuota.Floors.TextResult(byKind.toList.sortBy(_._1).map((k, v) => s"$k=$v").mkString(", "))
     def of(limit: com.histmersion.api.automation.PlanQuota.Floors.OfLimit, kind: com.histmersion.api.automation.PlanQuota.Floors.OfKind, default: com.histmersion.api.automation.PlanQuota.Floors.OfDefault): com.histmersion.api.automation.PlanQuota.Floors.OfResult =
       byKind.get(s"$limit/$kind").orElse(byKind.get(kind)).getOrElse(default)
 
@@ -171,7 +174,8 @@ object PlanQuota:
     object ParseS extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
     type ByKindKey = ByKindKey.T
-    object ByKindKey extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    object ByKindKey extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]:
+      given _root_.scala.math.Ordering[T] = _root_.scala.math.Ordering.by[T, _root_.java.lang.String](_.value)
     type ByKindValue = ByKindValue.T
     object ByKindValue extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
@@ -304,7 +308,7 @@ object PlanQuota:
     type ParseS = ParseS.T
     object ParseS extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
-    def parse(s: com.histmersion.api.automation.PlanQuota.RefreshMode.ParseS): Option[RefreshMode] = values.find(_.wire == (s).value.trim.toLowerCase(java.util.Locale.ROOT))
+    def parse(s: com.histmersion.api.automation.PlanQuota.RefreshMode.ParseS): Option[RefreshMode] = values.find(_.wire == _root_.com.histmersion.api.automation.PlanQuota.RefreshMode.Wire((s).value.trim.toLowerCase(java.util.Locale.ROOT)))
 
   enum Login:
     case Present(detail: Login.Present.Detail)

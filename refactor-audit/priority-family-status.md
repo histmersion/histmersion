@@ -1,6 +1,81 @@
 # Priority-family status
 
-## Current checkpoint: owner operations applied, compilation incomplete
+## Current checkpoint: ordering and typed comparisons applied, compilation incomplete
+
+Two reusable transformations have changed 119 distinct production files: 45
+native Ordering instances in 30 files, then 261 expression patches in 106 files
+(201 typed comparisons and 60 other supported constructions). These are applied
+patches, not 306 verified policy repairs. Test sources and model declarations
+were not manually edited. The existing AstRecipe → ApplyFrozenPreview →
+CompileBatch pipeline remains in use, with batch configuration only.
+
+Ordering-only mode accepts compiler-reported scalar/tuple Ordering requirements
+over indexed Pure newtypes. An exact reported lower bound can resolve a type
+variable; other inference remains unresolved. It derives Scala's native base
+ordering in a bodyless, stable newtype companion. Existing bodies/comparators,
+instance-owned types, unsupported bases/containers and definitions outside the
+configured roots are excluded. It does not rewrite sort call sites or merge types.
+
+Construction-only mode now handles compiler-reported primitive/newtype == and !=
+comparisons when the primitive base matches. It constructs the primitive operand
+as that Pure newtype, retaining operand order, evaluation count, grouping and
+source text. It does not unwrap the model value. Different nominal meanings,
+different bases, constrained types, patterns and unsupported diagnostics remain
+unchanged. Numeric widening in comparisons is not supported yet. There are no
+per-expression comparison recipes.
+
+| Source module | Before this checkpoint | After ordering | After constructions/comparisons |
+|---|---:|---:|---:|
+| api JVM and JS, each | 3316 | 3326 | 3118 |
+| values | 73 | 73 | 53 |
+| upstreams | 359 | 359 | 344 |
+| plugin-vaults | 102 | 101 | 100 |
+| plugins/calibre | 179 (earlier positioned observation) | 189 | 188 |
+| plugin-fixtures/hello-ai | 8 (earlier positioned observation) | cached failure | 7 |
+
+project-compile-frontier-10/-11 retain both full builds. All ten previously
+failing tasks still fail; hello, chimney-iron and ai-http retain cached failures
+in -11. No diagnostics point at the generated Ordering instances. Sorting now
+exposes further caller type mismatches, including ApprovalDigest's SubjectCount
+factory; the increase in aggregate errors is retained. This is not a complete
+individual compiler-regression classification or evidence of production behavior.
+Dependent module compilation and production tests remain blocked. Stack16m,
+maxErrors10000 and serial compilation are unchanged; no assertion was weakened.
+
+The five normal fixture outputs, owner outputs, ordering output and all three
+construction outputs match exactly. Rewritten sources compile/run under Scala
+3.10, -source:future and fatal E165. Runtime assertions cover ordering of integer
+extremes, strings, booleans, tuples, NaN/signed zero and an existing reverse
+comparator, plus reversed comparisons, fields, aliases, nested expressions and
+single evaluation. Five ordering exclusions remain unchanged. The old literal
+comparison exclusion is intentionally supported now; four prior construction
+exclusions remain unresolved. Three additional comparison exclusions remain
+unresolved and a distinct-nominal look-alike remains unchanged. The eight earlier
+negative compiler cases and owner-consumer exclusions remain in place.
+
+An unguarded JDK-overload scan was found in the older rule. It emitted no patches
+in project-constructions-2 or owner-operations-3/-4/-5. It is now disabled in
+construction-only and owner-only modes; a PrintStream consumer fixture remains
+unchanged. No application rollback was needed.
+
+type-positions-after-orderings-comparisons-1 covers all 3169 Scala files. It
+retains production594/test6009 raw candidates, production27632/test19 newtype
+shapes, zero introduced/removed primitive or newtype IDs, exactly the prior
+declaration origins and 3014 overlap groups, with 16108 unresolved references.
+The final 106 application files match their frozen preview, and the census checks
+all accumulated source hashes, including the prior ordering changes. The census
+does not credit expression/type-class patches as eliminated model violations.
+Inventory acceptance, confirmed outstanding totals and overall automation coverage
+remain unestablished; other policy families remain frozen partial.
+
+Applied previews are project-orderings-2 and project-constructions-4. Their -1/-3
+previews were not applied: the first ordering preview lacked exact lower-bound
+support, and the first comparison preview failed the parenthesized-operand fixture.
+The earlier formatting failure and three client-validation test conflicts remain
+open. Next target reusable nominal/signature relationships and native API/library
+boundaries, including Tapir input contracts, without reverting typed models.
+
+## Previous checkpoint: owner operations applied, compilation incomplete
 
 The current batch adds 17 construction patches in 17 production files and 1619
 owner-operation/construction patches across three previews (1016, 489 and 114).

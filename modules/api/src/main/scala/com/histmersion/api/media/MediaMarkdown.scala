@@ -93,10 +93,10 @@ object MediaMarkdown:
     List(
       s"# Media import · ${MediaProvider.title(r.provider)} ($mode)",
       "",
-      (if MediaProvider.all.contains(r.provider) && r.provider != MediaProvider.Commons then
+      (if MediaProvider.all.contains(r.provider) && r.provider != _root_.com.histmersion.api.media.MediaItem.Provider(MediaProvider.Commons) then
          s"**Asked about:** ${Plural.count(r.targets, "place")} · ${Plural.count(r.items, "record")} read · " +
            s"${Plural.count(r.statements, "match", "matches")} · ${Plural.count(r.files, "picture")}  "
-       else if r.provider == MediaProvider.Pleiades then
+       else if r.provider == _root_.com.histmersion.api.media.MediaItem.Provider(MediaProvider.Pleiades) then
          s"**Asked about:** ${Plural.count(r.targets, "place")} · ${Plural.count(r.items, "Pleiades record")} read · " +
            s"${Plural.count(r.statements, "linked Commons file")} · ${Plural.count(r.files, "file")}  "
        else

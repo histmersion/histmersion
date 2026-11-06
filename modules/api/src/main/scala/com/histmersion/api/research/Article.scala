@@ -73,7 +73,8 @@ object Article:
     type ComputeCited = ComputeCited.T
     object ComputeCited extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
     type ComputeReasonsPart1 = ComputeReasonsPart1.T
-    object ComputeReasonsPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    object ComputeReasonsPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]:
+      given _root_.scala.math.Ordering[T] = _root_.scala.math.Ordering.by[T, _root_.java.lang.String](_.value)
     type ComputeReasonsPart2 = ComputeReasonsPart2.T
     object ComputeReasonsPart2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
     type UnplacedAfterResult = UnplacedAfterResult.T
@@ -217,12 +218,12 @@ object Article:
       val n = c.notUsed.size
       val scope = if c.capped then s"; the first ${c.checked} (by citekey) were checked" else ""
       val lead =
-        if c.total == 0 then "_The filter returns no source._"
+        if c.total == _root_.com.histmersion.api.research.Coverage.Total(0) then "_The filter returns no source._"
         else if n == 0 then
           if c.capped then s"_The filter returns ${c.total} $src; all ${c.checked} checked are cited above._"
           else
-            s"_${if c.total == 1 then "The one source" else s"All ${c.total} sources"} the filter returns ${
-                if c.total == 1 then "is" else "are"
+            s"_${if c.total == _root_.com.histmersion.api.research.Coverage.Total(1) then "The one source" else s"All ${c.total} sources"} the filter returns ${
+                if c.total == _root_.com.histmersion.api.research.Coverage.Total(1) then "is" else "are"
               } cited above._"
         else
           val citedText = if citedN == 0 then "None of them is" else Plural.count(_root_.com.histmersion.api.Plural.CountN((citedN).toLong), _root_.com.histmersion.api.Plural.CountSingular("of them is"), _root_.com.histmersion.api.Plural.CountPlural("of them are"))
@@ -1130,7 +1131,7 @@ object Article:
         sample: scala.List[FilterProposal.Sample] = Nil
     ) derives KindlingsCodecAsObject,
           KindlingsSchema, com.histmersion.api.json.Schema:
-      def recall: com.histmersion.api.research.Article.Plans.FilterProposal.RecallResult = if cited == 0 then _root_.com.histmersion.api.research.Article.Plans.FilterProposal.RecallResult(1.0) else (citedIn).value.toDouble / (cited).value
+      def recall: com.histmersion.api.research.Article.Plans.FilterProposal.RecallResult = if cited == _root_.com.histmersion.api.research.Article.Plans.FilterProposal.Cited(0) then _root_.com.histmersion.api.research.Article.Plans.FilterProposal.RecallResult(1.0) else _root_.com.histmersion.api.research.Article.Plans.FilterProposal.RecallResult((citedIn).value.toDouble / (cited).value)
 
     object FilterProposal:
       type RecallResult = RecallResult.T

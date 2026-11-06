@@ -75,11 +75,11 @@ object JobCounts:
         case Nil            => JobCounts(queued, running, done, failed, paused, cancelled)
         case (s, n) :: tail =>
           JobState.parse(s) match
-            case Some(JobState.Queued)    => loop(tail, (queued).value + (n).value, running, done, failed, paused, cancelled)
-            case Some(JobState.Running)   => loop(tail, queued, (running).value + (n).value, done, failed, paused, cancelled)
-            case Some(JobState.Done)      => loop(tail, queued, running, (done).value + (n).value, failed, paused, cancelled)
-            case Some(JobState.Failed)    => loop(tail, queued, running, done, (failed).value + (n).value, paused, cancelled)
-            case Some(JobState.Paused)    => loop(tail, queued, running, done, failed, (paused).value + (n).value, cancelled)
-            case Some(JobState.Cancelled) => loop(tail, queued, running, done, failed, paused, (cancelled).value + (n).value)
+            case Some(JobState.Queued)    => loop(tail, _root_.com.histmersion.api.jobs.JobCounts.OfLoopQueued((queued).value + (n).value), running, done, failed, paused, cancelled)
+            case Some(JobState.Running)   => loop(tail, queued, _root_.com.histmersion.api.jobs.JobCounts.OfLoopRunning((running).value + (n).value), done, failed, paused, cancelled)
+            case Some(JobState.Done)      => loop(tail, queued, running, _root_.com.histmersion.api.jobs.JobCounts.OfLoopDone((done).value + (n).value), failed, paused, cancelled)
+            case Some(JobState.Failed)    => loop(tail, queued, running, done, _root_.com.histmersion.api.jobs.JobCounts.OfLoopFailed((failed).value + (n).value), paused, cancelled)
+            case Some(JobState.Paused)    => loop(tail, queued, running, done, failed, _root_.com.histmersion.api.jobs.JobCounts.OfLoopPaused((paused).value + (n).value), cancelled)
+            case Some(JobState.Cancelled) => loop(tail, queued, running, done, failed, paused, _root_.com.histmersion.api.jobs.JobCounts.OfLoopCancelled((cancelled).value + (n).value))
             case None                     => loop(tail, queued, running, done, failed, paused, cancelled)
     loop(rows, _root_.com.histmersion.api.jobs.JobCounts.OfLoopQueued(0), _root_.com.histmersion.api.jobs.JobCounts.OfLoopRunning(0), _root_.com.histmersion.api.jobs.JobCounts.OfLoopDone(0), _root_.com.histmersion.api.jobs.JobCounts.OfLoopFailed(0), _root_.com.histmersion.api.jobs.JobCounts.OfLoopPaused(0), _root_.com.histmersion.api.jobs.JobCounts.OfLoopCancelled(0))

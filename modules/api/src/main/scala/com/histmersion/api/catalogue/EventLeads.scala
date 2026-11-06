@@ -59,7 +59,7 @@ object EventLeads:
         .toList
 
   def of(f: LeadFacts): Option[EventLead] =
-    if f.tier != EventTier.Catalogue || f.attesting > 0 then None
+    if f.tier != _root_.com.histmersion.api.catalogue.LeadFacts.Tier(EventTier.Catalogue) || f.attesting > 0 then None
     else
       val k = EventTaxonomy.of(f.kind).label
       val yrs = years(f.timeSpan)

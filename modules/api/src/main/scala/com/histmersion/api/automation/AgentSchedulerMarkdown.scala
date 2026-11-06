@@ -30,7 +30,7 @@ object AgentSchedulerMarkdown:
     if (m).value < 60 then _root_.com.histmersion.api.automation.AgentSchedulerMarkdown.MinutesResult(s"$m min") else _root_.com.histmersion.api.automation.AgentSchedulerMarkdown.MinutesResult(s"${(m).value / 60} h" + (if (m).value % 60 != 0 then s" ${(m).value % 60} min" else ""))
 
   def status(s: SchedulerStatus): com.histmersion.api.automation.AgentSchedulerMarkdown.StatusResult =
-    val head = s"# Scheduler: ${s.strategy}" + (if s.strategyFrom == "person" then " (set by a person)"
+    val head = s"# Scheduler: ${s.strategy}" + (if s.strategyFrom == _root_.com.histmersion.api.automation.AgentScheduler.SchedulerStatus.StrategyFrom("person") then " (set by a person)"
                                                 else " (agents.scheduler.strategy)")
     val facts = List(
       Some(

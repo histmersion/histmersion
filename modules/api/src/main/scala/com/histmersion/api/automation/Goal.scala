@@ -30,11 +30,13 @@ object Goal:
 
   /** The stages of a research goal, as the store and the wire spell them. */
   type Slug = Slug.T
-  object Slug extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object Slug extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]:
+    given _root_.scala.math.Ordering[T] = _root_.scala.math.Ordering.by[T, _root_.java.lang.String](_.value)
   type Title = Title.T
   object Title extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type StatusValue = StatusValue.T
-  object StatusValue extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object StatusValue extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]:
+    given _root_.scala.math.Ordering[T] = _root_.scala.math.Ordering.by[T, _root_.java.lang.String](_.value)
   type Notes = Notes.T
   object Notes extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type Tags = Tags.T
@@ -77,7 +79,7 @@ object Goal:
 
     val SearchQuery: LinkKind = Query
 
-    def parse(s: com.histmersion.api.automation.Goal.LinkKind.ParseS): Option[LinkKind] = values.find(_.wire == (s).value.trim.toLowerCase)
+    def parse(s: com.histmersion.api.automation.Goal.LinkKind.ParseS): Option[LinkKind] = values.find(_.wire == _root_.com.histmersion.api.automation.Goal.LinkKind.Wire((s).value.trim.toLowerCase))
     given WireEnumValues[LinkKind]:
       def all: Array[LinkKind] = LinkKind.values
       def wire(e: LinkKind): com.histmersion.api.automation.Goal.LinkKind.WireResult = e.wire

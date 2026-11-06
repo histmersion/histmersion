@@ -69,7 +69,8 @@ object Basemap:
   type SubsetParamResult = SubsetParamResult.T
   object SubsetParamResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type SubsetParamMPart1 = SubsetParamMPart1.T
-  object SubsetParamMPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object SubsetParamMPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]:
+    given _root_.scala.math.Ordering[T] = _root_.scala.math.Ordering.by[T, _root_.java.lang.String](_.value)
   type SubsetParamFromZoomPart1 = SubsetParamFromZoomPart1.T
   object SubsetParamFromZoomPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type SubsetParamFromZoomPart2 = SubsetParamFromZoomPart2.T
@@ -91,7 +92,8 @@ object Basemap:
   type MissingForResult = MissingForResult.T
   object MissingForResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type MissingForNeeds = MissingForNeeds.T
-  object MissingForNeeds extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object MissingForNeeds extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]:
+    given _root_.scala.math.Ordering[T] = _root_.scala.math.Ordering.by[T, _root_.java.lang.String](_.value)
   type MissingForDropped = MissingForDropped.T
   object MissingForDropped extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type KeptLineResult = KeptLineResult.T
@@ -130,13 +132,13 @@ object Basemap:
 
   def tileX(lon: com.histmersion.api.basemap.Basemap.TileXLon, z: com.histmersion.api.basemap.Basemap.TileXZ): com.histmersion.api.basemap.Basemap.TileXResult =
     val n = 1L << (z).value
-    math.floor(((lon).value + 180.0) / 360.0 * n).toLong.max(0L).min(n - 1)
+    _root_.com.histmersion.api.basemap.Basemap.TileXResult(math.floor(((lon).value + 180.0) / 360.0 * n).toLong.max(0L).min(n - 1))
 
   def tileY(lat: com.histmersion.api.basemap.Basemap.TileYLat, z: com.histmersion.api.basemap.Basemap.TileYZ): com.histmersion.api.basemap.Basemap.TileYResult =
     val n = 1L << (z).value
     val r = math.toRadians((lat).value.max(-MaxLat).min(MaxLat))
     val y = (1.0 - math.log(math.tan(r) + 1.0 / math.cos(r)) / math.Pi) / 2.0 * n
-    math.floor(y).toLong.max(0L).min(n - 1)
+    _root_.com.histmersion.api.basemap.Basemap.TileYResult(math.floor(y).toLong.max(0L).min(n - 1))
 
   def tileRange(b: BBox, z: com.histmersion.api.basemap.Basemap.TileRangeZ): ((com.histmersion.api.basemap.Basemap.TileRangeResultPart1Part1, com.histmersion.api.basemap.Basemap.TileRangeResultPart1Part2), (com.histmersion.api.basemap.Basemap.TileRangeResultPart2Part1, com.histmersion.api.basemap.Basemap.TileRangeResultPart2Part2)) =
     ((tileX(b.minLon, z), tileX(b.maxLon, z)), (tileY(b.maxLat, z), tileY(b.minLat, z)))
@@ -367,7 +369,7 @@ object Basemap:
     type ParseManyS = ParseManyS.T
     object ParseManyS extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
-    def parse(s: com.histmersion.api.basemap.Basemap.Layer.ParseS): Option[Layer] = values.find(_.wire == (s).value.trim.toLowerCase(java.util.Locale.ROOT))
+    def parse(s: com.histmersion.api.basemap.Basemap.Layer.ParseS): Option[Layer] = values.find(_.wire == _root_.com.histmersion.api.basemap.Basemap.Layer.Wire((s).value.trim.toLowerCase(java.util.Locale.ROOT)))
 
     def parseMany(s: com.histmersion.api.basemap.Basemap.Layer.ParseManyS): Either[com.histmersion.api.basemap.Basemap.Layer.ParseManyResultPart1, List[Layer]] =
       (s).value.trim.toLowerCase(java.util.Locale.ROOT) match

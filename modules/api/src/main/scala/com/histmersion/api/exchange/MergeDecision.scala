@@ -91,7 +91,7 @@ object MergeDecision:
     given WireEnumValues[Kind]:
       def all: Array[Kind] = Kind.values
       def wire(e: Kind): com.histmersion.api.exchange.MergeDecision.Kind.WireResult = wireOf(e)
-      def fromWire(s: com.histmersion.api.exchange.MergeDecision.Kind.FromWireS): Option[Kind] = Kind.values.find(k => wireOf(k) == (s).value.trim)
+      def fromWire(s: com.histmersion.api.exchange.MergeDecision.Kind.FromWireS): Option[Kind] = Kind.values.find(k => wireOf(k) == _root_.com.histmersion.api.exchange.MergeDecision.Kind.WireOfResult((s).value.trim))
   def of(kind: MergeDecision.Kind): MergeDecision = MergeDecision(kind, None)
   def withArg(kind: MergeDecision.Kind, arg: com.histmersion.api.exchange.MergeDecision.WithArgArg): MergeDecision = MergeDecision(kind, Some(arg))
 
@@ -100,7 +100,7 @@ object MergeDecision:
     val (k, arg) = s.indexOf(':') match
       case -1 => (s, None)
       case i  => (s.take(i), Some(s.drop(i + 1).trim))
-    MergeDecision.Kind.values.find(d => MergeDecision.Kind.wireOf(d) == k) match
+    MergeDecision.Kind.values.find(d => MergeDecision.Kind.wireOf(d) == _root_.com.histmersion.api.exchange.MergeDecision.Kind.WireOfResult(k)) match
       case None =>
         Left(_root_.com.histmersion.api.exchange.MergeDecision.ParseResultPart1(s"'$s' is not a decision (${MergeDecision.Kind.values.map(MergeDecision.Kind.wireOf).mkString(", ")})"))
       case Some(d) if d.takesArgument && arg.forall(_.isEmpty) =>

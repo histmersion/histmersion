@@ -15,4 +15,4 @@ object MapStartMode:
   type ParseS = ParseS.T
   object ParseS extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
-  def parse(s: com.histmersion.api.instance.MapStartMode.ParseS): MapStartMode = values.find(_.wire == Option(s).fold("")((_).value.trim.toLowerCase)).getOrElse(Last)
+  def parse(s: com.histmersion.api.instance.MapStartMode.ParseS): MapStartMode = values.find(_.wire == _root_.com.histmersion.api.instance.MapStartMode.Wire(Option(s).fold("")((_).value.trim.toLowerCase))).getOrElse(Last)

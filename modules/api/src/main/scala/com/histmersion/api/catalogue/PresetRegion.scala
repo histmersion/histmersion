@@ -35,7 +35,7 @@ object PresetRegion:
   type WireResult = WireResult.T
   object WireResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
-  def fromWire(s: com.histmersion.api.catalogue.PresetRegion.FromWireS): Option[PresetRegion] = values.find(_.wire == (s).value.trim)
+  def fromWire(s: com.histmersion.api.catalogue.PresetRegion.FromWireS): Option[PresetRegion] = values.find(_.wire == _root_.com.histmersion.api.catalogue.PresetRegion.Wire((s).value.trim))
 
   given WireEnumValues[PresetRegion]:
     def all: Array[PresetRegion] = PresetRegion.values
