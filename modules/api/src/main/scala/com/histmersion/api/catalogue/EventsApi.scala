@@ -51,14 +51,14 @@ object EventsApi:
 
   lazy val corrections
       : PublicEndpoint[(Option[com.histmersion.api.catalogue.EventsApi.CorrectionsPart1Part1], Option[com.histmersion.api.catalogue.EventsApi.CorrectionsPart1Part2], Option[com.histmersion.api.catalogue.EventsApi.CorrectionsPart1Part3], Option[com.histmersion.api.catalogue.EventsApi.CorrectionsPart1Part4]), Api.Error, Correction.List, Any] =
-    endpoint.get
+    (endpoint.get
       .in("api" / "events" / "corrections")
       .in(query[Option[String]]("status"))
       .in(query[Option[String]]("event"))
       .in(query[Option[Int]]("limit"))
       .in(query[Option[Int]]("offset"))
       .errorOut(Api.writeErrors)
-      .out(jsonBody[Correction.List])
+      .out(jsonBody[Correction.List])).mapIn[(_root_.scala.Option[_root_.com.histmersion.api.catalogue.EventsApi.CorrectionsPart1Part1], _root_.scala.Option[_root_.com.histmersion.api.catalogue.EventsApi.CorrectionsPart1Part2], _root_.scala.Option[_root_.com.histmersion.api.catalogue.EventsApi.CorrectionsPart1Part3], _root_.scala.Option[_root_.com.histmersion.api.catalogue.EventsApi.CorrectionsPart1Part4])]((refactorDecoded4: (_root_.scala.Option[_root_.java.lang.String], _root_.scala.Option[_root_.java.lang.String], _root_.scala.Option[_root_.scala.Int], _root_.scala.Option[_root_.scala.Int])) => (((refactorDecoded4)._1).map(refactorElement9 => _root_.com.histmersion.api.catalogue.EventsApi.CorrectionsPart1Part1(refactorElement9)), ((refactorDecoded4)._2).map(refactorElement10 => _root_.com.histmersion.api.catalogue.EventsApi.CorrectionsPart1Part2(refactorElement10)), ((refactorDecoded4)._3).map(refactorElement11 => _root_.com.histmersion.api.catalogue.EventsApi.CorrectionsPart1Part3(refactorElement11)), ((refactorDecoded4)._4).map(refactorElement12 => _root_.com.histmersion.api.catalogue.EventsApi.CorrectionsPart1Part4(refactorElement12))))((refactorEncoded4: (_root_.scala.Option[_root_.com.histmersion.api.catalogue.EventsApi.CorrectionsPart1Part1], _root_.scala.Option[_root_.com.histmersion.api.catalogue.EventsApi.CorrectionsPart1Part2], _root_.scala.Option[_root_.com.histmersion.api.catalogue.EventsApi.CorrectionsPart1Part3], _root_.scala.Option[_root_.com.histmersion.api.catalogue.EventsApi.CorrectionsPart1Part4])) => (((refactorEncoded4)._1).map(refactorElement13 => (refactorElement13).value), ((refactorEncoded4)._2).map(refactorElement14 => (refactorElement14).value), ((refactorEncoded4)._3).map(refactorElement15 => (refactorElement15).value), ((refactorEncoded4)._4).map(refactorElement16 => (refactorElement16).value)))
 
   lazy val catalogues: PublicEndpoint[Unit, Api.Error, List[CatalogProviderInfo], Any] =
     endpoint.get
@@ -82,17 +82,17 @@ object EventsApi:
       .out(jsonBody[JobInfo])
 
   lazy val links: PublicEndpoint[com.histmersion.api.catalogue.EventsApi.LinksPart1, Api.Error, EventLinkList, Any] =
-    endpoint.get
+    (endpoint.get
       .in("api" / "events" / path[String]("id") / "links")
       .errorOut(Api.writeErrors)
-      .out(jsonBody[EventLinkList])
+      .out(jsonBody[EventLinkList])).mapIn[_root_.com.histmersion.api.catalogue.EventsApi.LinksPart1]((refactorDecoded2: _root_.java.lang.String) => _root_.com.histmersion.api.catalogue.EventsApi.LinksPart1(refactorDecoded2))((refactorEncoded2: _root_.com.histmersion.api.catalogue.EventsApi.LinksPart1) => (refactorEncoded2).value)
 
   lazy val applyLinks: PublicEndpoint[(com.histmersion.api.catalogue.EventsApi.ApplyLinksPart1Part1, EventLinksRequest), Api.Error, EventLinksResult, Any] =
-    endpoint.post
+    (endpoint.post
       .in("api" / "events" / path[String]("id") / "links")
       .in(jsonBody[EventLinksRequest])
       .errorOut(Api.writeErrors)
-      .out(jsonBody[EventLinksResult])
+      .out(jsonBody[EventLinksResult])).mapIn[(_root_.com.histmersion.api.catalogue.EventsApi.ApplyLinksPart1Part1, _root_.com.histmersion.api.catalogue.EventLinksRequest)]((refactorDecoded3: (_root_.java.lang.String, _root_.com.histmersion.api.catalogue.EventLinksRequest)) => (_root_.com.histmersion.api.catalogue.EventsApi.ApplyLinksPart1Part1((refactorDecoded3)._1), (refactorDecoded3)._2))((refactorEncoded3: (_root_.com.histmersion.api.catalogue.EventsApi.ApplyLinksPart1Part1, _root_.com.histmersion.api.catalogue.EventLinksRequest)) => (((refactorEncoded3)._1).value, (refactorEncoded3)._2))
 
   lazy val refineSiteTypes: PublicEndpoint[SiteTypes.Request, Api.Error, JobInfo, Any] =
     endpoint.post

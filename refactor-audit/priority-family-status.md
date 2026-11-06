@@ -1,6 +1,74 @@
 # Priority-family status
 
-## Current checkpoint: forwarded helper parameters consolidated, compilation incomplete
+## Current checkpoint: typed Tapir endpoint mappings applied, compilation incomplete
+
+The existing frozen-preview pipeline applies 166 endpoint declaration rewrites in
+11 production API files, with zero application test changes. It adds reversible
+mapIn/mapOut/mapErrorOut mappings between the codecs' native values and the declared
+Pure newtypes, keeping the typed endpoint signatures. No model type declaration is
+reverted to a primitive. Configuration contains one mode and project-wide roots,
+not individual endpoint/type/source-expression mappings. This is an applied repair
+batch, not 166 independently verified policy repairs or a global automation rate.
+
+tapirEndpointsOnly consumes E007 diagnostics naming exactly sttp.tapir.Endpoint or
+sttp.tapir.PublicEndpoint and a complete typed val/def right-hand side. Snapshot and
+display checks must match. Security input must stay Unit and capabilities must be
+unchanged. A changed leaf must be a reversible native/Pure pair with an indexed,
+stable, empty qualified Iron companion over the same base. Same-shaped tuple,
+Option/List/Vector/Set positions recurse; unchanged positions pass through. Distinct
+nominal types, custom constructors/behavior, numeric widening, security adaptation,
+ambiguous bindings, nested mismatches and unsupported shapes are excluded. The mode
+cannot enable ordinary adapters, generic nominal unwrapping, E134 or the JDK scan.
+
+Tapir's installed 1.14.0 interfaces and official mapping contract were checked:
+https://tapir.softwaremill.com/en/latest/endpoint/basics.html . The new golden fixture
+compiles under Scala 3.10, -source:future and fatal E165 against that exact dependency.
+Actual rewritten runtime assertions pass for input, success-output and error-output
+decode/encode, tuple/optional/list values, empty values, both Boolean states, integer
+extremes and single endpoint-factory evaluation. All prior runtime assertions pass.
+The five ordinary, two owner and new endpoint expected outputs match exactly. The
+final fixture preview is byte-identical to the code used in the successful runtime
+run. No behavioral expectation was weakened. The seven negative cases produce E007
+diagnostics and stay outside the plan: custom behavior, distinct nominal identities,
+widening, security input, a nested endpoint argument, ordinary scalar code and a
+lookalike endpoint. Explicit raw ascriptions ensure those tests exercise E007 rather
+than merely stopping at unrelated inference errors.
+
+project-compile-frontier-19 records the actual full build. API errors decrease
+2860 -> 2694 on each JVM/JS platform. All ten previously failing tasks still fail;
+the other eight retain cached failures, including values (latest33), upstreams
+(latest343), plugin-vaults (latest96) and calibre (latest187). Dependent modules and
+application tests remain blocked. Stack16m, maxErrors10000, serial compilation and
+compiler checks are unchanged, with all source hashes stable. Aggregate reductions
+do not establish individual regression classification or whole-policy completion.
+
+All eleven production files match project-tapir-endpoints-1's frozen preview. The
+complete Scala-source hash list in type-positions-after-tapir-endpoints-1 matches
+frontier19 (which also snapshots build.sbt). All 3169 Scala files remain measured,
+with 136530 declaration positions (previous135980). Opaque shapes, identities and
+declaration origins are unchanged: production26949/test19, 2983 overlap candidate
+groups. Unresolved candidate references rise16197 ->16205; reference resolution is
+still partial and this is not evidence of caller completion.
+
+MEASUREMENT LIMIT CORRECTION: the existing raw detector recognizes unqualified,
+scala-qualified and java.lang-qualified primitives, but records _root_-qualified
+native types as unresolved. The new wire adapters explicitly annotate such native
+types; for example Api.refactorDecoded108:lambda-parameter retains an unresolved
+_root_.java.lang.String row. The unchanged recognized raw counts (production594/
+test6009, zero recognized raw-ID delta) therefore do NOT prove no primitive syntax
+was added, complete raw coverage, compliance, or zero policy regressions. The
+unresolved rows and prior denominators/history remain intact. This limit also
+applies to earlier censuses; prior zero-delta claims must be read within that scope.
+No unresolved case is relabeled compliant or an accepted exception. A bounded
+qualified-type measurement correction remains required; no detector expansion was
+used as repair credit in this batch.
+
+Next compilation work is the remaining native-library contracts, including Tapir
+E172 concatenation/codec failures outside this E007-only mode, plus type sharing,
+smart construction, remaining primitive candidates and application tests. Inventory
+acceptance and the overall 90% automatic-repair target remain unproven.
+
+## Previous checkpoint: forwarded helper parameters consolidated, compilation incomplete
 
 The existing consolidation pipeline applies 1110 alias/companion AST patches for
 555 helper opaque shapes in 175 production files, with no application test changes.

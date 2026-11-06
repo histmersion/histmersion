@@ -22,7 +22,7 @@ object AstRecipe {
     expectedNewtypes: List[String] = Nil, expectedOverlap: Map[String,Int] = Map.empty,
     consolidationIndex: String = "", consolidations: List[Consolidation] = Nil, additionalManifest: String = "",
     ironProjects: List[String] = Nil, interfaceContracts: List[String] = Nil,
-    compilerObservation: String = "", boundaryRoots: List[String] = Nil, rawInputTargets: List[String] = Nil, rawInputSources: List[String] = Nil, nominalBoundaryContracts: List[String] = Nil, compilerRepairHistory: List[String] = Nil, errorType: String = "", testComparisons: Boolean = false, triviaFiles: List[String] = Nil, constructionOnly: Boolean = false, ownerOperationsOnly: Boolean = false, orderingsOnly: Boolean = false, nativeBooleans: Boolean = false)
+    compilerObservation: String = "", boundaryRoots: List[String] = Nil, rawInputTargets: List[String] = Nil, rawInputSources: List[String] = Nil, nominalBoundaryContracts: List[String] = Nil, compilerRepairHistory: List[String] = Nil, errorType: String = "", testComparisons: Boolean = false, triviaFiles: List[String] = Nil, constructionOnly: Boolean = false, ownerOperationsOnly: Boolean = false, orderingsOnly: Boolean = false, nativeBooleans: Boolean = false, tapirEndpointsOnly: Boolean = false)
   object Policy {
     implicit val surface: generic.Surface[Policy] = generic.deriveSurface[Policy]
     implicit val decoder: ConfDecoder[Policy] = generic.deriveDecoder(Policy()).noTypos
@@ -62,7 +62,7 @@ class AstRecipe(val policy: AstRecipe.Policy) extends SyntacticRule("AstRecipe")
     val evidence = scala.collection.mutable.ListBuffer.empty[List[String]]
     val consolidated = TypeConsolidation.patches(frozen,policy.consolidationIndex,policy.consolidations,evidence,policy.creates)
     val aligned = InterfaceSignatures.patches(frozen,policy.consolidationIndex,policy.interfaceContracts,evidence,policy.boundaryRoots)
-    val repaired = CompilerRepairs.patches(frozen,policy.consolidationIndex,policy.compilerObservation,policy.boundaryRoots,evidence,policy.rawInputTargets,policy.errorType,policy.testComparisons,policy.constructionOnly,policy.ownerOperationsOnly,policy.orderingsOnly,policy.rawInputSources,policy.nominalBoundaryContracts,policy.compilerRepairHistory,policy.nativeBooleans)
+    val repaired = CompilerRepairs.patches(frozen,policy.consolidationIndex,policy.compilerObservation,policy.boundaryRoots,evidence,policy.rawInputTargets,policy.errorType,policy.testComparisons,policy.constructionOnly,policy.ownerOperationsOnly,policy.orderingsOnly,policy.rawInputSources,policy.nominalBoundaryContracts,policy.compilerRepairHistory,policy.nativeBooleans,policy.tapirEndpointsOnly)
     val definitionPaths = frozen.keys.filter(p => policy.definitionRoots.exists(p.startsWith) && p.contains("/src/main/")).toSet
     val selected = policy.edits.groupBy(_.path) ++ (definitionPaths ++ consolidated.keySet ++ aligned.keySet ++ repaired.keySet ++ policy.triviaFiles.toSet ++ (if(policy.ironProjects.nonEmpty) Set("build.sbt") else Set.empty[String])).filterNot(policy.edits.map(_.path).contains).map(_ -> List.empty[AstRecipe.Edit])
     def parseSource(s: String,path: String): Source = {
@@ -347,7 +347,7 @@ object InterfaceSignatures {
 }
 
 object CompilerRepairs {
-  def patches(frozen: Map[String,String], index: String, observation: String, roots: List[String], evidence: scala.collection.mutable.ListBuffer[List[String]], rawInputs: List[String] = Nil, errorType: String = "", testComparisons: Boolean = false, constructionOnly: Boolean = false, ownerOperationsOnly: Boolean = false, orderingsOnly: Boolean = false, rawInputSources: List[String] = Nil, nominalBoundaryContracts: List[String] = Nil, repairHistory: List[String] = Nil, nativeBooleans: Boolean = false): Map[String,List[(Int,Int,String)]] = {
+  def patches(frozen: Map[String,String], index: String, observation: String, roots: List[String], evidence: scala.collection.mutable.ListBuffer[List[String]], rawInputs: List[String] = Nil, errorType: String = "", testComparisons: Boolean = false, constructionOnly: Boolean = false, ownerOperationsOnly: Boolean = false, orderingsOnly: Boolean = false, rawInputSources: List[String] = Nil, nominalBoundaryContracts: List[String] = Nil, repairHistory: List[String] = Nil, nativeBooleans: Boolean = false, tapirEndpointsOnly: Boolean = false): Map[String,List[(Int,Int,String)]] = {
     if(observation.isEmpty) return Map.empty
     implicit val dialect: Dialect = dialects.Scala3
     require(roots.nonEmpty,"Compiler repairs need explicit boundary roots")
@@ -357,13 +357,15 @@ object CompilerRepairs {
     require(nominalBoundaryContracts.isEmpty || (!constructionOnly && !ownerOperationsOnly && !orderingsOnly && errorType.isEmpty && !testComparisons),"Interface boundaries require ordinary, non-error/comparison adapters")
     require(repairHistory.isEmpty || (!constructionOnly && !orderingsOnly),"Callback repair history cannot enable construction/ordering-only adapters")
     require(!nativeBooleans || ownerOperationsOnly,"Native Boolean comparison requires owner-only mode")
+    require(!tapirEndpointsOnly || (!constructionOnly && !ownerOperationsOnly && !orderingsOnly && !nativeBooleans && rawInputs.isEmpty && rawInputSources.isEmpty && errorType.isEmpty && !testComparisons && nominalBoundaryContracts.isEmpty && repairHistory.isEmpty),"Tapir endpoint mode excludes ordinary expression adapters")
     val snapshot = Files.readAllLines(Paths.get(observation,"sources.tsv")).asScala.drop(1).map(_.split("\t",-1)).map(r => r(0) -> r(1)).toMap
     require(snapshot == frozen,"Compiler diagnostics do not describe the current frozen snapshot")
     val text = Files.readString(Paths.get(observation,"build.log")).replaceAll("\u001b\\[[;\\d]*m","")
     val header = "(?m)^.*-- \\[(E[0-9]+)\\].*?: (.+\\.scala):([0-9]+):([0-9]+).*$".r
-    val diagnostics = header.findAllMatchIn(text).toList
+    val allDiagnostics = header.findAllMatchIn(text).toList
+    val diagnostics = allDiagnostics.filter(d => !tapirEndpointsOnly || d.group(1) == "E007")
     val unclassifiedHeaders = "(?m)^.*-- (?:Error|Warning): (.+\\.scala):([0-9]+):([0-9]+).*$".r.findAllMatchIn(text).toList
-    val boundaries = (diagnostics.map(_.start) ++ unclassifiedHeaders.map(_.start)).sorted
+    val boundaries = (allDiagnostics.map(_.start) ++ unclassifiedHeaders.map(_.start)).sorted
     require(diagnostics.nonEmpty,"No positioned compiler diagnostics parsed; do not infer a clean build")
     val types = new RepairTypes(frozen,index)
     val booleanDefinitions = scala.collection.mutable.Map.empty[String,Boolean]
@@ -737,7 +739,23 @@ object CompilerRepairs {
         if(d.group(1) == "E007") {
           for(found <- fullDetail("Found").flatMap(s => diagnosticType(s)); required <- fullDetail("Required").flatMap(s => diagnosticType(s,nullable = true))) {
             val body = tree.collect { case m: Defn.Def if displays.nonEmpty && m.body.pos.startLine + 1 == displays.head.group(1).toInt && m.body.pos.endLine + 1 == displays.last.group(1).toInt && m.decltpe.exists(t => contextual(t) == contextual(required)) => m.body }.headOption
-            val target = if(sourceDisplayMatches) mismatch else if(displays.nonEmpty && displays.forall(m => m.group(1).toInt <= starts.size && (m.group(2).trim == "..." || m.group(2).trim == source.linesIterator.drop(m.group(1).toInt - 1).next().trim))) {
+            def endpoint(t: Type): Option[List[Type]] = t match {
+              case a: Type.Apply if a.tpe.syntax.stripPrefix("_root_.") == "sttp.tapir.Endpoint" && a.argClause.values.size == 5 => Some(a.argClause.values)
+              case a: Type.Apply if a.tpe.syntax.stripPrefix("_root_.") == "sttp.tapir.PublicEndpoint" && a.argClause.values.size == 4 => Some("Unit".parse[Type].get :: a.argClause.values)
+              case _ => None
+            }
+            def endpointBinding(rhs: Term, declared: Type): Boolean = declared.is[Type.Apply] &&
+              Set("Endpoint","PublicEndpoint","sttp.tapir.Endpoint","sttp.tapir.PublicEndpoint")(declared.asInstanceOf[Type.Apply].tpe.syntax.stripPrefix("_root_.")) &&
+              rhs.pos.start <= offset && offset < rhs.pos.end && displays.nonEmpty &&
+              displays.forall(m => m.group(1).toInt <= starts.size && (m.group(2).trim == "..." || m.group(2).trim == source.linesIterator.drop(m.group(1).toInt - 1).next().trim)) &&
+              rhs.pos.startLine + 1 == displays.head.group(1).toInt && rhs.pos.endLine + 1 == displays.last.group(1).toInt &&
+              (!sourceDisplayMatches || mismatch.exists(t => t.pos.start == rhs.pos.start && t.pos.end == rhs.pos.end))
+            val endpointBodies = if(tapirEndpointsOnly && endpoint(found).nonEmpty && endpoint(required).nonEmpty) tree.collect {
+              case v: Defn.Val if v.decltpe.exists(t => endpointBinding(v.rhs,t)) => v.rhs
+              case m: Defn.Def if m.decltpe.exists(t => endpointBinding(m.body,t)) => m.body
+            }.distinct else Nil
+            val target = if(tapirEndpointsOnly) endpointBodies match { case List(rhs) => Some(rhs); case _ => None }
+              else if(sourceDisplayMatches) mismatch else if(displays.nonEmpty && displays.forall(m => m.group(1).toInt <= starts.size && (m.group(2).trim == "..." || m.group(2).trim == source.linesIterator.drop(m.group(1).toInt - 1).next().trim))) {
               body.orElse(tree.collect { case t: Term if displays.head.group(1).toInt < displays.last.group(1).toInt && t.pos.startLine + 1 == displays.head.group(1).toInt && t.pos.endLine + 1 == displays.last.group(1).toInt => t }.sortBy(t => -(t.pos.end - t.pos.start)).headOption)
             } else None
             target.filterNot(t => types.parents(t).exists(_.is[Pat]) || t.parent.exists {
@@ -749,7 +767,51 @@ object CompilerRepairs {
               case _ => false
             }).foreach { t =>
             val original = source.substring(t.pos.start,t.pos.end)
-            val converted = t match {
+            def wireType(t: Type): String = t match {
+              case a: Type.Tuple => a.args.map(wireType).mkString("(",", ",")")
+              case a: Type.Apply => wireType(a.tpe) + a.argClause.values.map(wireType).mkString("[",", ","]")
+              case _ if types.pure(t.syntax,tree).nonEmpty => "_root_." + types.pure(t.syntax,tree).get.name
+              case _ if types.clean(t.syntax) == "String" => "_root_.java.lang.String"
+              case _ if Set("Unit","Any","Nothing","Boolean","Byte","Short","Int","Long","Float","Double","Char","Option","List","Vector","Set","Array","Map","Either")(types.clean(t.syntax)) => "_root_.scala." + types.clean(t.syntax)
+              case _: Type.Select => "_root_." + t.syntax.stripPrefix("_root_.")
+              case _ => t.syntax
+            }
+            def emptyPure(n: types.Pure): Boolean = types.definition(n).exists { case(_,o) =>
+              o.mods.isEmpty && o.templ.stats.isEmpty && o.templ.inits.size == 1 && o.templ.inits.head.argClauses.isEmpty &&
+                !o.parent.toList.flatMap(_.children).exists { case v: Defn.Val => v.pats.exists { case Pat.Var(name) => name.value == o.name.value; case _ => false }; case _ => false }
+            }
+            def wire(from: Type, to: Type, value: String): Option[String] = {
+              if(contextual(from) == contextual(to)) Some(value) else {
+                val a = types.pure(from.syntax,tree); val b = types.pure(to.syntax,tree)
+                if(a.isEmpty && b.exists(n => emptyPure(n) && n.base == types.base(from))) b.map(n => "_root_." + n.name + "(" + value + ")")
+                else if(b.isEmpty && a.exists(n => emptyPure(n) && n.base == types.base(to))) Some("(" + value + ").value")
+                else (from,to) match {
+                  case (f: Type.Apply,r: Type.Apply) if Set("Option","List","Vector","Set")(types.clean(f.tpe.syntax)) && types.clean(f.tpe.syntax) == types.clean(r.tpe.syntax) && f.argClause.values.size == 1 && r.argClause.values.size == 1 =>
+                    val name = fresh("refactorElement",tree)
+                    wire(f.argClause.values.head,r.argClause.values.head,name).map(body => "(" + value + ").map(" + name + " => " + body + ")")
+                  case (f: Type.Tuple,r: Type.Tuple) if f.args.size == r.args.size =>
+                    val parts = f.args.zip(r.args).zipWithIndex.map { case((a,b),i) => wire(a,b,"(" + value + ")._" + (i + 1)) }
+                    if(parts.forall(_.nonEmpty)) Some(parts.flatten.mkString("(",", ",")")) else None
+                  case _ => None
+                }
+              }
+            }
+            def adaptEndpoint(): Option[String] = for {
+              f <- endpoint(found); r <- endpoint(required)
+              if types.base(f.head) == "Unit" && types.base(r.head) == "Unit" && contextual(f.last) == contextual(r.last)
+              input <- {
+                val next = f.slice(1,4).zip(r.slice(1,4)).zip(List("mapIn","mapErrorOut","mapOut")).foldLeft(Option("(" + original + ")")) { case(current,((a,b),method)) =>
+                  current.flatMap { value =>
+                    if(contextual(a) == contextual(b)) Some(value) else {
+                      val decoded = fresh("refactorDecoded",tree); val encoded = fresh("refactorEncoded",tree)
+                      for(forward <- wire(a,b,decoded); backward <- wire(b,a,encoded)) yield value + "." + method + "[" + wireType(b) + "]((" + decoded + ": " + wireType(a) + ") => " + forward + ")((" + encoded + ": " + wireType(b) + ") => " + backward + ")"
+                    }
+                  }
+                }
+                next.filter(_ != "(" + original + ")")
+              }
+            } yield input
+            val converted = if(tapirEndpointsOnly) adaptEndpoint() else t match {
               case f: Term.AnonymousFunction if !found.is[Type.Function] && !required.is[Type.Function] => callback(f)(body => convert(found,required,body))
               case _ => convert(found,required,original)
             }
@@ -1005,7 +1067,7 @@ object CompilerRepairs {
         payload.filter(rawString).foreach { value => proposed += ((path,value,"_root_." + error.name + "(" + Files.readString(Paths.get(path)).substring(value.pos.start,value.pos.end) + ")","ERROR_ROLE primitive failure payload")) }
       }
     }
-    if(!constructionOnly && !ownerOperationsOnly && nominalBoundaryContracts.isEmpty) frozen.keys.filter(p => p.endsWith(".scala") && roots.exists(p.startsWith)).foreach { path => types.tree(path).collect {
+    if(!constructionOnly && !ownerOperationsOnly && !tapirEndpointsOnly && nominalBoundaryContracts.isEmpty) frozen.keys.filter(p => p.endsWith(".scala") && roots.exists(p.startsWith)).foreach { path => types.tree(path).collect {
       case app: Term.Apply if app.argClause.values.size == 1 => app.fun match {
         case Term.Select(receiver: Term.Name,method) => app.argClause.values.head match {
           case arg: Term.Name => for {
