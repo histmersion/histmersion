@@ -55,3 +55,5 @@ sbt 2 caches test results, even across `clean`: `test` may run a few suites or n
 ## Public signatures keep their concepts
 
 Do not delete a type from a public signature and use `String`, `Int`, `Boolean` or `Array[Byte]` instead, even when that makes the error go away. If a name is positional, replace it with the real concept: name one, defining it on the owner if none exists. Plain types are fine only in private helpers and for predicate results. Do not change behaviour to suit a type: if a value the old code accepted no longer fits, report it.
+
+A test must not take over behaviour from the code under test. If a test expected the code to normalise, parse or check something and the code no longer does, that is a regression in src/main: report it, and do not normalise inside the test.
