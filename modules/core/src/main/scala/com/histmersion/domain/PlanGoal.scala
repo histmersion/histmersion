@@ -144,28 +144,30 @@ object PlanGoal:
 
     val goals = a.subGoals
       .foldLeft(Vector.empty[PlannedGoal]) { (acc, g) =>
-        Slug.parse(Option(g.slug).getOrElse("")).map(_.value) match
-          case Left(m)                                            => problems += s"sub-goal: $m"; acc
-          case Right(s) if Option(g.title).forall(_.trim.isEmpty) => problems += s"sub-goal '$s' has no title"; acc
-          case Right(s) if s == goal                              => dropped += s"sub-goal '$s' is the goal itself"; acc
-          case Right(s) if acc.exists(_.slug == s)                => dropped += s"sub-goal '$s' proposed twice"; acc
-          case Right(s) if goalExists(s)                          => dropped += s"sub-goal '$s' is already a goal"; acc
-          case Right(s)                                           =>
+        Slug
+          .parse(Option(g.slug).fold("")(_.value))
+          .flatMap(s => com.histmersion.domain.automation.Goal.Slug.either(s.value).left.map(Slug.Problem(_))) match
+          case Left(m)                                                  => problems += s"sub-goal: $m"; acc
+          case Right(s) if Option(g.title).forall(_.value.trim.isEmpty) => problems += s"sub-goal '$s' has no title"; acc
+          case Right(s) if s == goal                                    => dropped += s"sub-goal '$s' is the goal itself"; acc
+          case Right(s) if acc.exists(_.slug.value == s.value)          => dropped += s"sub-goal '$s' proposed twice"; acc
+          case Right(s) if goalExists(s)                                => dropped += s"sub-goal '$s' is already a goal"; acc
+          case Right(s)                                                 =>
             acc :+ PlannedGoal(
-              s,
-              g.title.trim,
-              g.notes.map(_.trim).filter(_.nonEmpty),
-              g.tags.map(_.trim).filter(_.nonEmpty).distinct
+              com.histmersion.api.automation.Goal.Slug(s.value),
+              com.histmersion.api.automation.Goal.Title(g.title.value.trim),
+              g.notes.map(_.value.trim).filter(_.nonEmpty).map(com.histmersion.api.automation.Goal.Notes(_)),
+              g.tags.map(_.value.trim).filter(_.nonEmpty).distinct.map(com.histmersion.api.automation.Goal.Tags(_))
             )
       }
       .toList
 
-    val known = knownQueries.map(_.trim.toLowerCase)
+    val known = knownQueries.map(_.value.trim.toLowerCase)
     val queries = a.queries
-      .map(q => Option(q).map(_.trim.replaceAll("\\s+", " ")).getOrElse(""))
+      .map(q => Option(q).fold("")(_.value.trim.replaceAll("\\s+", " ")))
       .foldLeft(Vector.empty[String]) { (acc, q) =>
         if q.isEmpty then { problems += "an empty query"; acc }
-        else if q.length > caps.queryChars then {
+        else if q.length > caps.queryChars.value then {
           problems += s"query '${q.take(40)}…' is longer than ${caps.queryChars} characters"; acc
         } else if acc.exists(_.equalsIgnoreCase(q)) then acc
         else if known.contains(q.toLowerCase) then { dropped += s"query '$q' is already linked to the goal"; acc }
@@ -175,33 +177,33 @@ object PlanGoal:
 
     val works = a.works
       .foldLeft(Vector.empty[ProposedWork]) { (acc, w) =>
-        Doi.normalize(Option(w.doi).getOrElse("")) match
+        Doi.normalize(Option(w.doi).fold("")(_.value)) match
           case None                              => problems += s"'${w.doi}' is not a DOI (10.xxxx/…)"; acc
           case Some(d) if acc.exists(_.doi == d) => acc
-          case Some(d)                           => acc :+ ProposedWork(d, Option(w.why).map(_.trim).getOrElse(com.histmersion.domain.PlanGoal.ProposedWork.Why("")))
+          case Some(d)                           => acc :+ ProposedWork(d, com.histmersion.domain.PlanGoal.ProposedWork.Why(Option(w.why).fold("")(_.value.trim)))
       }
       .toList
 
-    if goals.size > caps.subGoals then problems += s"at most ${caps.subGoals} sub-goals (you gave ${goals.size})"
-    if queries.size > caps.queries then problems += s"at most ${caps.queries} queries (you gave ${queries.size})"
-    if works.size > caps.works then problems += s"at most ${caps.works} works (you gave ${works.size})"
+    if goals.size > caps.subGoals.value then problems += s"at most ${caps.subGoals} sub-goals (you gave ${goals.size})"
+    if queries.size > caps.queries.value then problems += s"at most ${caps.queries} queries (you gave ${queries.size})"
+    if works.size > caps.works.value then problems += s"at most ${caps.works} works (you gave ${works.size})"
     if goals.isEmpty && queries.isEmpty && works.isEmpty && a.subGoals.isEmpty && a.queries.isEmpty && a.works.isEmpty
     then problems += "the plan proposes nothing: give sub-goals, queries or works"
 
-    if Option(a.rationale).forall(_.trim.isEmpty) then
+    if Option(a.rationale).forall(_.value.trim.isEmpty) then
       problems += "the rationale is empty — say how the plan covers the goal"
 
     val ps = problems.result()
-    if ps.nonEmpty && !last then Left(ps)
+    if ps.nonEmpty && !last.value then Left(ps.map(Problem(_)))
     else
       val kept = Proposed(
-        Option(a.rationale).map(_.trim).getOrElse(com.histmersion.domain.PlanGoal.Proposed.Rationale("")),
-        goals.take(caps.subGoals),
-        queries.take(caps.queries),
-        works.take(caps.works),
-        dropped.result() ++ ps
+        com.histmersion.domain.PlanGoal.Proposed.Rationale(Option(a.rationale).fold("")(_.value.trim)),
+        goals.take(caps.subGoals.value),
+        queries.take(caps.queries.value).map(Proposed.Queries(_)),
+        works.take(caps.works.value),
+        (dropped.result() ++ ps).map(Proposed.Dropped(_))
       )
-      Right((kept, ps.map(p => s"plan: dropped — $p")))
+      Right((kept, ps.map(p => Problem(s"plan: dropped — $p"))))
 
   // ── the upstream check (§14: DOIs are verified before a person sees them) ───────────────────────
 
@@ -234,19 +236,35 @@ object PlanGoal:
     object IsRetracted extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
   /** A work looked up by its DOI (the library's metadata, lent by the composition). */
-  type Lookup = String => Either[String, Work]
+  type Lookup = Doi => Either[Problem, Work]
 
   def verify(p: Proposed, goal: com.histmersion.domain.automation.Goal.Slug, lookup: Lookup): Plan =
     val looked = p.works.map(w => (w, lookup(w.doi)))
     val works = looked.collect {
-      case (w, Right(r)) if !r.isRetracted =>
-        PlannedWork(w.doi, r.title, r.year, r.authors.take(6), r.citekey, r.inDb, r.isOa, w.why)
+      case (w, Right(r)) if !r.isRetracted.value =>
+        PlannedWork(
+          com.histmersion.api.library.Doi(w.doi.value),
+          r.title.map(t => com.histmersion.api.library.Title(t.value)),
+          r.year.map(y => com.histmersion.api.catalogue.Year(y.value.toLong)),
+          r.authors.take(6).map(a => com.histmersion.api.library.AuthorName(a.value)),
+          r.citekey.map(c => com.histmersion.api.library.Citekey(c.value)),
+          PlannedWork.InCorpus(r.inDb.value),
+          PlannedWork.IsOa(r.isOa.value),
+          PlannedWork.Why(w.why.value)
+        )
     }
     val dropped = looked.collect {
-      case (w, Left(m))                   => s"${w.doi}: not verified upstream — $m"
-      case (w, Right(r)) if r.isRetracted => s"${w.doi}: retracted upstream"
+      case (w, Left(m))                         => Plan.Dropped(s"${w.doi}: not verified upstream — $m")
+      case (w, Right(r)) if r.isRetracted.value => Plan.Dropped(s"${w.doi}: retracted upstream")
     }
-    Plan(goal, p.rationale, p.subGoals, p.queries, works, p.dropped ++ dropped)
+    Plan(
+      com.histmersion.api.automation.Goal.Slug(goal.value),
+      Plan.Rationale(p.rationale.value),
+      p.subGoals,
+      p.queries.map(q => Plan.Queries(q.value)),
+      works,
+      p.dropped.map(d => Plan.Dropped(d.value)) ++ dropped
+    )
 
   // ── applying an approved plan ───────────────────────────────────────────────────────────────────
 
@@ -254,11 +272,11 @@ object PlanGoal:
     * [[Scheduling.dois]] (and a person) find it again.
     */
   def acquireText(w: PlannedWork, goal: com.histmersion.domain.automation.Goal.Slug): com.histmersion.domain.PlanGoal.AcquireText =
-    val who = w.authors.headOption.map(a => if w.authors.size > 1 then s"$a et al." else a)
+    val who = w.authors.headOption.map(a => if w.authors.size > 1 then s"$a et al." else a.value)
     val head = List(who, w.year.map(y => s"($y)")).flatten.mkString(" ")
-    val title = w.title.getOrElse(w.doi)
-    val why = Option(w.why).map(_.trim).filter(_.nonEmpty).fold("")(r => s": $r")
-    s"${if head.isEmpty then "" else s"$head. "}$title. https://doi.org/${w.doi} — for goal $goal$why"
+    val title = w.title.fold(w.doi.value)(_.value)
+    val why = Option(w.why).map(_.value.trim).filter(_.nonEmpty).fold("")(r => s": $r")
+    com.histmersion.domain.PlanGoal.AcquireText(s"${if head.isEmpty then "" else s"$head. "}$title. https://doi.org/${w.doi} — for goal $goal$why")
 
   /** The log line of an applied (or rejected) plan. */
   def logLine(
@@ -270,7 +288,9 @@ object PlanGoal:
       queued: com.histmersion.domain.PlanGoal.QueuedCount,
       runId: com.histmersion.domain.automation.Run.Id
   ): com.histmersion.domain.PlanGoal.LogLine =
-    if !approved then s"plan-goal $goal: the plan was rejected; nothing was created (agent run ${runId.take(8)})"
+    if !approved.value then com.histmersion.domain.PlanGoal.LogLine(s"plan-goal $goal: the plan was rejected; nothing was created (agent run ${runId.value.take(8)})")
     else
-      s"plan-goal $goal: approved — $created sub-goal(s), ${plan.queries.size} query link(s), " +
-        s"$linked work(s) in the corpus linked, $queued queued for acquisition (agent run ${runId.take(8)})"
+      com.histmersion.domain.PlanGoal.LogLine(
+        s"plan-goal $goal: approved — $created sub-goal(s), ${plan.queries.size} query link(s), " +
+          s"$linked work(s) in the corpus linked, $queued queued for acquisition (agent run ${runId.value.take(8)})"
+      )

@@ -31,8 +31,6 @@ object AcquireRecheck:
   object Reason extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type ReplyText = ReplyText.T
   object ReplyText extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type Status = Status.T
-  object Status extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
   /** `acquire.recheck.*` as the rules read them: on or off, how many days an item's check holds, at most how many items
     * a day and a pass, the minutes between passes, the share (percent) of the shared daily legal ingest allowance the
@@ -95,8 +93,8 @@ object AcquireRecheck:
     last
       .filter(_.generation == generation)
       .map(l =>
-        if l.failed then l.at.plusSeconds(math.max(1, retryHours).toLong * 3600L)
-        else l.at.plusSeconds(math.max(1, everyDays).toLong * 86400L)
+        if l.failed.value then l.at.plusSeconds(math.max(1, retryHours.value).toLong * 3600L)
+        else l.at.plusSeconds(math.max(1, everyDays.value).toLong * 86400L)
       )
 
   def isDue(last: Option[LastCheck], generation: com.histmersion.domain.AcquireRecheck.IsDueGeneration, everyDays: com.histmersion.domain.AcquireRecheck.IsDueEveryDays, retryHours: com.histmersion.domain.AcquireRecheck.IsDueRetryHours, now: Instant): Boolean =
@@ -120,20 +118,15 @@ object AcquireRecheck:
     case Close(citekey: com.histmersion.domain.library.Citekey)
 
     /** Try the legal chain — into the metadata-only source `into` when there is one (its enrichment stays). */
-    case Fetch(doi: com.histmersion.domain.library.Doi, into: Option[Action.Fetch.Into])
-
-  object Action:
-    object Fetch:
-      type Into = Into.T
-      object Into extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    case Fetch(doi: com.histmersion.domain.library.Doi, into: Option[com.histmersion.domain.library.Citekey])
 
   /** The first DOI an item names decides (an item is one work). */
-  def action(dois: List[com.histmersion.domain.library.Doi], held: com.histmersion.domain.library.Citekey => Option[Held]): Action =
+  def action(dois: List[com.histmersion.domain.library.Doi], held: com.histmersion.domain.library.Doi => Option[Held]): Action =
     dois.headOption match
       case None      => Action.NoDoi
       case Some(doi) =>
         held(doi) match
-          case Some(h) if h.hasOriginal => Action.Close(h.citekey)
+          case Some(h) if h.hasOriginal.value => Action.Close(h.citekey)
           case other                    => Action.Fetch(doi, other.map(_.citekey))
 
   /** What a check found, as stored (`acquire_checks.outcome`). */
@@ -155,39 +148,40 @@ object AcquireRecheck:
     object Wire extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
 
-    def parse(s: com.histmersion.domain.AcquireRecheck.Outcome.Wire): Option[Outcome] = values.find(_.wire == s.trim)
+    def parse(s: com.histmersion.domain.AcquireRecheck.Outcome.Wire): Option[Outcome] = values.find(_.wire.value == s.value.trim)
 
   /** A failed legal ingest: no legal copy, or something else in the way. */
-  def failure(message: com.histmersion.domain.AcquireRecheck.Problem): Outcome =
+  def failure(message: com.histmersion.domain.IngestBacklog.Problem): Outcome =
     if IngestBacklog.isNoLegalCopy(message) then Outcome.NoCopy else Outcome.Failed
 
   /** What each fetcher answered, from the legal ingest's refusal (`no legal open-access copy of <doi>: <the chain's
     * message> — <fetcher>: <answer>; …`): the answers when there are any, else the message.
     */
-  def answers(message: com.histmersion.domain.AcquireRecheck.ReplyText): com.histmersion.domain.AcquireRecheck.ReplyText =
-    val m = Option(message).map(_.trim).getOrElse("")
+  def answers(message: com.histmersion.domain.IngestBacklog.Problem): com.histmersion.domain.AcquireRecheck.ReplyText =
+    val m = Option(message).fold("")(_.value.trim)
     val rest =
-      if !IngestBacklog.isNoLegalCopy(m) then m
+      if !IngestBacklog.isNoLegalCopy(message) then m
       else
         m.indexOf(": ") match
           case -1 => ""
           case i  => m.drop(i + 2).trim
-    rest.indexOf(" — ") match
+    val replies = rest.indexOf(" — ") match
       case -1 => rest
       case i  => rest.drop(i + 3).trim
+    com.histmersion.domain.AcquireRecheck.ReplyText(replies)
 
   /** The short reason an item carries: `checked 2026-10-27: no legal copy (unpaywall: no copy — none; …)`. */
   def reason(at: Instant, outcome: Outcome, detail: com.histmersion.domain.AcquireRecheck.Detail): com.histmersion.domain.AcquireRecheck.Reason =
     val day = LocalDate.ofInstant(at, ZoneOffset.UTC)
-    val d = Option(detail).map(_.trim).getOrElse("")
+    val d = Option(detail).fold("")(_.value.trim)
     val text = outcome match
       case Outcome.Closed  => s"checked $day: in the corpus with its original as [[$d]] — closed"
       case Outcome.Fetched => s"checked $day: a legal copy found ($d) — converting; the item closes once it is stored"
       case Outcome.NoCopy  =>
-        val a = answers(d)
-        s"checked $day: no legal copy" + (if a.isEmpty then "" else s" ($a)")
+        val a = answers(com.histmersion.domain.IngestBacklog.Problem(d))
+        s"checked $day: no legal copy" + (if a.value.isEmpty then "" else s" ($a)")
       case Outcome.Failed => s"checked $day: no answer (${if d.isEmpty then "the ingest failed" else d})"
-    text.take(500)
+    com.histmersion.domain.AcquireRecheck.Reason(text.take(500))
 
   /** What the shared daily legal ingest allowance leaves the re-check (the autopilot's: absent when it is off or has no
     * cap): what is `left` of the `cap` today, the watchers' backlog waiting for it, and what the re-check fetched
@@ -210,23 +204,23 @@ object AcquireRecheck:
     * within the re-check's share of the cap — each try may fetch one work.
     */
   def allowance(s: Settings, checkedToday: com.histmersion.domain.AcquireRecheck.CheckedToday, shared: Option[Shared]): com.histmersion.domain.AcquireRecheck.Allowance =
-    val own = math.min(math.max(0, s.perDay) - math.max(0, checkedToday), math.max(0, s.perPass))
+    val own = math.min(math.max(0, s.perDay.value) - math.max(0, checkedToday.value), math.max(0, s.perPass.value))
     val room = shared.fold(Int.MaxValue) { sh =>
-      val share = math.max(0, sh.cap) * math.max(0, math.min(100, s.sharePercent)) / 100
-      math.min(sh.left - math.max(0, sh.backlogPending), share - math.max(0, sh.fetchedToday))
+      val share = math.max(0, sh.cap.value) * math.max(0, math.min(100, s.sharePercent.value)) / 100
+      math.min(sh.left.value - math.max(0, sh.backlogPending.value), share - math.max(0, sh.fetchedToday.value))
     }
-    math.max(0, math.min(own, room))
+    com.histmersion.domain.AcquireRecheck.Allowance(math.max(0, math.min(own, room)))
 
   /** Is a pass due: never run (since the start), or `passMinutes` passed since the last. */
   def passDue(last: Option[Instant], passMinutes: com.histmersion.domain.AcquireRecheck.Settings.PassMinutes, now: Instant): Boolean =
-    last.forall(l => !l.plusSeconds(math.max(1, passMinutes).toLong * 60L).isAfter(now))
+    last.forall(l => !l.plusSeconds(math.max(1, passMinutes.value).toLong * 60L).isAfter(now))
 
   /** The fetcher generation: one short digest of what the legal chain is — its fetchers in order, and each one's plugin
     * and settings (secrets as references) — so a fetcher or a key added changes it.
     */
   def generation(parts: List[com.histmersion.domain.AcquireRecheck.GenerationPart]): com.histmersion.domain.AcquireRecheck.LastCheck.Generation =
     val md = java.security.MessageDigest.getInstance("SHA-256")
-    md.digest(parts.mkString("\n").getBytes(StandardCharsets.UTF_8)).take(8).map(b => f"${b & 0xff}%02x").mkString
+    com.histmersion.domain.AcquireRecheck.LastCheck.Generation(md.digest(parts.mkString("\n").getBytes(StandardCharsets.UTF_8)).take(8).map(b => f"${b & 0xff}%02x").mkString)
 
   /** The earliest time one of the checked items falls due again (None: none waits). */
   def nextDue(checks: List[LastCheck], generation: com.histmersion.domain.AcquireRecheck.NextDueGeneration, everyDays: com.histmersion.domain.AcquireRecheck.NextDueEveryDays, retryHours: com.histmersion.domain.AcquireRecheck.NextDueRetryHours): Option[Instant] =
@@ -239,7 +233,8 @@ object AcquireRecheck:
 
   object Candidate:
     type Item = Item.T
-    object Item extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    object Item extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]:
+      given _root_.scala.math.Ordering[T] = _root_.scala.math.Ordering.by[T, _root_.scala.Int](_.value)
 
   /** The order items are tried in: the never-checked first, then the oldest check, then the item id. */
   def order(candidates: List[Candidate]): List[Candidate] =
@@ -271,7 +266,7 @@ object AcquireRecheck:
       due: Candidate => Boolean
   ): List[Candidate] =
     val left = order(candidates.filterNot(c => checkedSince(c.last, plan.since)))
-    if plan.all then left else left.filter(due).take(math.max(0, plan.upTo - math.max(0, triedByJob)))
+    if plan.all.value then left else left.filter(due).take(math.max(0, plan.upTo.value - math.max(0, triedByJob.value)))
 
   /** The end of a job stopped while the autopilot drains: a later managers' tick resumes it. */
   val StoppedDraining = "stopped while the autopilot drains: it resumes once the drain is lifted"
@@ -279,9 +274,9 @@ object AcquireRecheck:
   /** Does a later job take up where this one stopped? Only one a restart (`interrupted`) or the drain stopped; one that
     * finished, or failed for another reason, is over.
     */
-  def resumable(status: com.histmersion.domain.AcquireRecheck.Status, error: Option[com.histmersion.domain.AcquireRecheck.Problem]): Boolean =
+  def resumable(status: JobState.Wire, error: Option[com.histmersion.domain.AcquireRecheck.Problem]): Boolean =
     status == JobState.Failed.wire &&
-      error.exists(e => e == JobState.Interrupted || e == StoppedDraining)
+      error.exists(e => e.value == JobState.Interrupted || e.value == StoppedDraining)
 
   /** What a job did so far: of the `total` items it tries, how many it `tried`, and what they found; the last item that
     * got no answer, why (the job goes on with the next).
@@ -293,13 +288,13 @@ object AcquireRecheck:
       fetched: Tally.Fetched = com.histmersion.domain.AcquireRecheck.Tally.Fetched(0),
       noCopy: Tally.NoCopy = com.histmersion.domain.AcquireRecheck.Tally.NoCopy(0),
       failed: Tally.Failed = com.histmersion.domain.AcquireRecheck.Tally.Failed(0),
-      lastFailure: Option[Tally.LastFailure] = None
+      lastFailure: Option[Detail] = None
   ):
     def add(outcome: Outcome, detail: com.histmersion.domain.AcquireRecheck.Detail): Tally = outcome match
-      case Outcome.Closed  => this.modify(_.closed).setTo(closed + 1)
-      case Outcome.Fetched => this.modify(_.tried).setTo(tried + 1).modify(_.fetched).setTo(fetched + 1)
-      case Outcome.NoCopy  => this.modify(_.tried).setTo(tried + 1).modify(_.noCopy).setTo(noCopy + 1)
-      case Outcome.Failed  => this.modify(_.tried).setTo(tried + 1).modify(_.failed).setTo(failed + 1).modify(_.lastFailure).setTo(Some(detail))
+      case Outcome.Closed  => this.modify(_.closed).setTo(Tally.Closed(closed.value + 1))
+      case Outcome.Fetched => this.modify(_.tried).setTo(Tally.Tried(tried.value + 1)).modify(_.fetched).setTo(Tally.Fetched(fetched.value + 1))
+      case Outcome.NoCopy  => this.modify(_.tried).setTo(Tally.Tried(tried.value + 1)).modify(_.noCopy).setTo(Tally.NoCopy(noCopy.value + 1))
+      case Outcome.Failed  => this.modify(_.tried).setTo(Tally.Tried(tried.value + 1)).modify(_.failed).setTo(Tally.Failed(failed.value + 1)).modify(_.lastFailure).setTo(Some(detail))
 
   object Tally:
 
@@ -315,11 +310,11 @@ object AcquireRecheck:
     object NoCopy extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
     type Failed = Failed.T
     object Failed extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
-    type LastFailure = LastFailure.T
-    object LastFailure extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
   /** The job's progress: `120/453 items · 3 closed · 9 fetched · 98 no legal copy · 10 failed (HTTP 429 …)`. */
   def progressLine(t: Tally): com.histmersion.domain.AcquireRecheck.ProgressLine =
-    val why = t.lastFailure.map(_.trim).filter(_.nonEmpty).map(w => if w.length > 60 then w.take(60).trim + " …" else w)
-    s"${t.tried}/${t.total} items · ${t.closed} closed · ${t.fetched} fetched · ${t.noCopy} no legal copy · " +
-      s"${t.failed} failed" + why.fold("")(w => s" ($w)")
+    val why = t.lastFailure.map(_.value.trim).filter(_.nonEmpty).map(w => if w.length > 60 then w.take(60).trim + " …" else w)
+    com.histmersion.domain.AcquireRecheck.ProgressLine(
+      s"${t.tried}/${t.total} items · ${t.closed} closed · ${t.fetched} fetched · ${t.noCopy} no legal copy · " +
+        s"${t.failed} failed" + why.fold("")(w => s" ($w)")
+    )

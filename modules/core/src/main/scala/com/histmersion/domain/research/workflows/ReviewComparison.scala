@@ -16,41 +16,44 @@ object ReviewComparison extends OutputComparison:
   /** Two major findings are the same one when they sit at the same `where` and their problems share at least this much
     * of their words (Jaccard over the normalised words), or quote the same passage.
     */
-  type RoundResult = RoundResult.T
-  object RoundResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type RoundName = RoundName.T
-  object RoundName extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type RoundPrefix = RoundPrefix.T
-  object RoundPrefix extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-
   val ProblemSimilarity = 0.5
 
-  private def round(name: com.histmersion.domain.research.workflows.ReviewComparison.RoundName, prefix: com.histmersion.domain.research.workflows.ReviewComparison.RoundPrefix): Option[com.histmersion.domain.research.workflows.ReviewComparison.RoundResult] =
-    Option.when(name.startsWith(prefix))(name.stripPrefix(prefix).toIntOption).flatten
+  private def round(name: CompareRuns.OutputName, prefix: String): Option[Int] =
+    Option.when(name.value.startsWith(prefix))(name.value.stripPrefix(prefix).toIntOption).flatten
 
   private def reviewSide(d: Run): ReviewSide =
-    val merges = d.steps.map(_.name).distinct.flatMap(n => round(n, com.histmersion.domain.research.workflows.ReviewComparison.RoundPrefix("merge-")).map(_ -> n)).sortBy(_._1)
+    val merges = d.steps.map(_.name).distinct.flatMap(n => round(n, "merge-").map(_ -> n)).sortBy(_._1)
     val last = merges.lastOption.flatMap((_, n) => CompareRuns.output[Merged](d, n))
     val first = CompareRuns.output[Merged](d, com.histmersion.domain.CompareRuns.OutputName("merge-1"))
-    val reports = List("rules-1", "cold-reader-1", "skeptic-1").flatMap(n => CompareRuns.output[Report](d, n))
+    val reports = List("rules-1", "cold-reader-1", "skeptic-1").flatMap(n => CompareRuns.output[Report](d, CompareRuns.OutputName(n)))
     val mech = CompareRuns.output[List[Finding]](d, com.histmersion.domain.CompareRuns.OutputName("mechanical-1"))
     val reviewers = reports.map(r =>
-      ReviewerSide(r.reviewer.wire, Some(r.verdict.wire), r.findings.count(_.major), r.findings.count(!_.major))
+      ReviewerSide(
+        ReviewerSide.Reviewer(r.reviewer.wire.value),
+        Some(ReviewerSide.Verdict(r.verdict.wire.value)),
+        ReviewerSide.Majors(r.findings.count(_.major)),
+        ReviewerSide.Minors(r.findings.count(!_.major))
+      )
     ) ++ mech.toList.map(fs =>
-      ReviewerSide(ReviewArticle.Reviewer.Mechanical.wire, None, fs.count(_.major), fs.count(!_.major))
+      ReviewerSide(
+        ReviewerSide.Reviewer(ReviewArticle.Reviewer.Mechanical.wire.value),
+        None,
+        ReviewerSide.Majors(fs.count(_.major)),
+        ReviewerSide.Minors(fs.count(!_.major))
+      )
     )
     val kinds = first.toList
       .flatMap(_.findings)
-      .groupMapReduce(f => Option(f.kind).map(_.trim).filter(_.nonEmpty).getOrElse("other"))(_ => 1)(_ + _)
+      .groupMapReduce(f => Option(f.kind).map(_.value.trim).filter(_.nonEmpty).getOrElse("other"))(_ => 1)(_ + _)
       .toList
       .sortBy((k, n) => (-n, k))
-      .map(KindCount(_, _))
+      .map((k, n) => KindCount(KindCount.Kind(k), KindCount.Count(n)))
     ReviewSide(
-      last.map(_.verdict.wire),
-      merges.lastOption.fold(0)(_._1),
+      last.map(m => ReviewSide.Verdict(m.verdict.wire.value)),
+      ReviewSide.Rounds(merges.lastOption.fold(0)(_._1)),
       reviewers,
       kinds,
-      first.toList.flatMap(_.majors.map(_.line))
+      first.toList.flatMap(_.majors.map(m => ReviewSide.Majors(m.line)))
     )
 
   override def review(runs: List[Run]): List[ReviewSide] = runs.map(reviewSide)
@@ -60,10 +63,15 @@ object ReviewComparison extends OutputComparison:
     */
   def sameMajor(a: Finding, b: Finding): Boolean =
     val (qa, qb) =
-      (ComparedText.normalise(Option(a.quote).getOrElse("")), ComparedText.normalise(Option(b.quote).getOrElse("")))
+      (
+        ComparedText.normalise(ComparedText.NormaliseS(Option(a.quote).fold("")(_.value))),
+        ComparedText.normalise(ComparedText.NormaliseS(Option(b.quote).fold("")(_.value)))
+      )
     val sameWhere =
-      ComparedText.normalise(Option(a.where).getOrElse("")) == ComparedText.normalise(Option(b.where).getOrElse(""))
-    (qa.nonEmpty && qa == qb) || (sameWhere && CompareRuns.similarity(a.problem, b.problem) >= ProblemSimilarity)
+      ComparedText.normalise(ComparedText.NormaliseS(Option(a.where).fold("")(_.value))) ==
+        ComparedText.normalise(ComparedText.NormaliseS(Option(b.where).fold("")(_.value)))
+    (qa.value.nonEmpty && qa == qb) ||
+    (sameWhere && CompareRuns.similarity(CompareRuns.Text(a.problem.value), CompareRuns.Text(b.problem.value)).value >= ProblemSimilarity)
 
   /** Each pair of runs: how many of round 1's majors match one-to-one (greedily, in order). */
   def overlap(a: List[Finding], b: List[Finding]): List[(Finding, Finding)] =
@@ -88,4 +96,11 @@ object ReviewComparison extends OutputComparison:
       (rb, mb) = majors(j)
     yield
       val pairs = overlap(ma, mb)
-      MajorOverlap(ra, rb, ma.size, mb.size, pairs.size, pairs.map((x, y) => s"${x.id} ↔ ${y.id}"))
+      MajorOverlap(
+        MajorOverlap.A(ra.value),
+        MajorOverlap.B(rb.value),
+        MajorOverlap.AMajors(ma.size),
+        MajorOverlap.BMajors(mb.size),
+        MajorOverlap.Shared(pairs.size),
+        pairs.map((x, y) => MajorOverlap.Pairs(s"${x.id} ↔ ${y.id}"))
+      )

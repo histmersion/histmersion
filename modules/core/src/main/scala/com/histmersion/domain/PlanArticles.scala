@@ -1,6 +1,6 @@
 package com.histmersion.domain
 
-import com.histmersion.domain.research.Slug
+import com.histmersion.domain.library.Citekey
 
 import scala.annotation.tailrec
 import com.histmersion.api.Plural
@@ -21,26 +21,14 @@ import com.histmersion.api.research.Article
   * the area (and with every proposal kept before it). A person ALWAYS approves the plan before anything is compiled.
   */
 object PlanArticles:
-  type Dropped = Dropped.T
-  object Dropped extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type HitCount = HitCount.T
-  object HitCount extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type HitNote = HitNote.T
-  object HitNote extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type LastRound = LastRound.T
   object LastRound extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type LogLine = LogLine.T
   object LogLine extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type Note = Note.T
-  object Note extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type Outcome = Outcome.T
   object Outcome extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type Overlap = Overlap.T
-  object Overlap extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type Problem = Problem.T
   object Problem extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type Term = Term.T
-  object Term extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
 
 
@@ -107,54 +95,62 @@ object PlanArticles:
     object MaxArticles extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
   /** One proposal whose shape passed: what [[verify]] measures. */
-  final case class Candidate(slug: Candidate.Slug, title: Candidate.Title, kind: Candidate.Kind, filter: Article.Filter, why: Candidate.Why)
-
-  object Candidate:
-    type Slug = Slug.T
-    object Slug extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-    type Title = Title.T
-    object Title extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-    type Kind = Kind.T
-    object Kind extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-    type Why = Why.T
-    object Why extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  final case class Candidate(
+      slug: Article.Slug,
+      title: Article.Title,
+      kind: Article.Kind.Wire,
+      filter: Article.Filter,
+      why: ProposedArticle.Why
+  )
 
   /** The share of `mine` that `theirs` holds already (0 when `mine` is empty). */
-  def overlap(mine: Set[com.histmersion.domain.PlanArticles.Term], theirs: Set[com.histmersion.domain.PlanArticles.Term]): com.histmersion.domain.PlanArticles.Overlap =
-    if mine.isEmpty then 0.0 else mine.count(theirs).toDouble / mine.size
+  def overlap(mine: Set[Citekey], theirs: Set[Citekey]): ProposedArticle.Overlap =
+    ProposedArticle.Overlap(if mine.isEmpty then 0.0 else mine.count(theirs).toDouble / mine.size)
 
   /** The shape of each proposed article: a valid slug (not the goal's, not twice), a title, a kind, a filter that
     * selects something. Left = the problems a retry should fix (nothing usable, an empty rationale); the ones it cannot
     * fix are dropped with why.
     */
-  def check(a: ArticlesAnswer, maxArticles: com.histmersion.domain.PlanArticles.Limits.MaxArticles, last: com.histmersion.domain.PlanArticles.LastRound): Either[List[com.histmersion.domain.PlanArticles.Problem], (List[Candidate], List[com.histmersion.domain.PlanArticles.Problem])] =
-    val problems = List.newBuilder[String]
-    val dropped = List.newBuilder[String]
+  def check(a: ArticlesAnswer, maxArticles: Limits.MaxArticles, last: LastRound): Either[List[Problem], (List[Candidate], List[ArticlePlan.Dropped])] =
+    val problems = List.newBuilder[Problem]
+    val dropped = List.newBuilder[ArticlePlan.Dropped]
     val kept = a.articles
       .foldLeft(Vector.empty[Candidate]) { (acc, x) =>
-        Slug.parse(Option(x.slug).getOrElse("")).map(_.value) match
-          case Left(m)                                            => problems += s"article '${x.slug}': $m"; acc
-          case Right(s) if Option(x.title).forall(_.trim.isEmpty) => problems += s"article '$s' has no title"; acc
-          case Right(s) if acc.exists(_.slug == s)                => dropped += s"'$s' proposed twice"; acc
-          case Right(s)                                           =>
-            val kind = x.kind.map(_.trim).filter(_.nonEmpty).getOrElse("concept")
-            Articles.kindOf(kind) match
-              case Left(m)  => problems += s"article '$s': $m"; acc
+        Articles.slugOf(Article.Slug(Option(x.slug).fold("")(_.value))) match
+          case Left(m)                                                  => problems += Problem(s"article '${x.slug}': $m"); acc
+          case Right(s) if Option(x.title).forall(_.value.trim.isEmpty) => problems += Problem(s"article '$s' has no title"); acc
+          case Right(s) if acc.exists(_.slug == s)                      => dropped += ArticlePlan.Dropped(s"'$s' proposed twice"); acc
+          case Right(s)                                                 =>
+            val kind = x.kind.map(_.value.trim).filter(_.nonEmpty).getOrElse("concept")
+            Articles.kindOf(Article.Kind.Wire(kind)) match
+              case Left(m)  => problems += Problem(s"article '$s': $m"); acc
               case Right(k) =>
-                Article.Filter.normalise(Article.Filter(query = x.query, topics = x.topics, tags = x.tags)) match
-                  case Left(m)        => problems += s"article '$s': $m"; acc
-                  case Right(None)    => problems += s"article '$s' has no filter: give a query, topics or tags"; acc
+                Article.Filter.normalise(
+                  Article.Filter(
+                    query = x.query.map(q => Article.Filter.Query(q.value)),
+                    topics = x.topics.map(t => Article.Filter.Topics(t.value)),
+                    tags = x.tags.map(t => Article.Filter.Tags(t.value))
+                  )
+                ) match
+                  case Left(m)        => problems += Problem(s"article '$s': $m"); acc
+                  case Right(None)    => problems += Problem(s"article '$s' has no filter: give a query, topics or tags"); acc
                   case Right(Some(f)) =>
-                    acc :+ Candidate(s, x.title.trim, k, f, Option(x.why).map(_.trim).getOrElse(com.histmersion.domain.PlanArticles.Candidate.Why("")))
+                    acc :+ Candidate(
+                      s,
+                      Article.Title(x.title.value.trim),
+                      k,
+                      f,
+                      ProposedArticle.Why(Option(x.why).map(_.value.trim).getOrElse(""))
+                    )
       }
       .toList
-    if kept.size > maxArticles then problems += s"at most $maxArticles articles (you gave ${kept.size})"
-    if a.articles.isEmpty then problems += "the plan proposes no article"
-    if Option(a.rationale).forall(_.trim.isEmpty) then
-      problems += "the rationale is empty — say how the articles cover the area"
+    if kept.size > maxArticles.value then problems += Problem(s"at most $maxArticles articles (you gave ${kept.size})")
+    if a.articles.isEmpty then problems += Problem("the plan proposes no article")
+    if Option(a.rationale).forall(_.value.trim.isEmpty) then
+      problems += Problem("the rationale is empty — say how the articles cover the area")
     val ps = problems.result()
-    if ps.nonEmpty && !last then Left(ps)
-    else Right((kept.take(maxArticles), dropped.result() ++ ps.map(p => s"not proposed: $p")))
+    if ps.nonEmpty && !last.value then Left(ps)
+    else Right((kept.take(maxArticles.value), dropped.result() ++ ps.map(p => ArticlePlan.Dropped(s"not proposed: $p"))))
 
   /** Verify the candidates against the corpus: `slugFree` (no article and no old slug of one), `hits` (a filter's
     * source count and its sources), `existing` (each article of the area with its sources). Every candidate that passes
@@ -162,40 +158,51 @@ object PlanArticles:
     */
   def verify(
       goal: com.histmersion.domain.automation.Goal.Slug,
-      rationale: com.histmersion.domain.PlanArticles.ArticlesAnswer.Rationale,
+      rationale: ArticlesAnswer.Rationale,
       cs: List[Candidate],
-      dropped: List[com.histmersion.domain.PlanArticles.Dropped],
-      slugFree: com.histmersion.domain.PlanArticles.Candidate.Slug => Boolean,
-      hits: Article.Filter => (com.histmersion.domain.PlanArticles.HitCount, Set[com.histmersion.domain.PlanArticles.HitNote]),
-      existing: List[(com.histmersion.domain.PlanArticles.Candidate.Slug, Set[com.histmersion.domain.PlanArticles.Candidate.Title])],
+      dropped: List[ArticlePlan.Dropped],
+      slugFree: Article.Slug => Boolean,
+      hits: Article.Filter => (ProposedArticle.Hits, Set[Citekey]),
+      existing: List[(Article.Slug, Set[Citekey])],
       limits: Limits
   ): ArticlePlan =
     @tailrec def loop(
         rest: List[Candidate],
-        acc: Vector[(ProposedArticle, Set[com.histmersion.domain.PlanArticles.Note])],
-        drop: Vector[com.histmersion.domain.PlanArticles.Dropped]
+        acc: Vector[(ProposedArticle, Set[Citekey])],
+        drop: Vector[ArticlePlan.Dropped]
     ): ArticlePlan =
       rest match
-        case Nil       => ArticlePlan(goal, rationale.trim, acc.map(_._1).toList, dropped ++ drop)
+        case Nil =>
+          ArticlePlan(
+            ArticlePlan.Goal(goal.value),
+            ArticlePlan.Rationale(rationale.value.trim),
+            acc.map(_._1).toList,
+            dropped ++ drop
+          )
         case c :: tail =>
-          if !slugFree(c.slug) then loop(tail, acc, drop :+ s"'${c.slug}': an article with this slug exists (or did)")
+          if !slugFree(c.slug) then
+            loop(tail, acc, drop :+ ArticlePlan.Dropped(s"'${c.slug}': an article with this slug exists (or did)"))
           else
             val (n, set) = hits(c.filter)
             val against = existing ++ acc.map((p, s) => (p.slug, s))
-            val worst = against.map((slug, theirs) => (slug, overlap(set, theirs))).maxByOption(_._2)
-            if n < limits.minSources then
+            val worst = against.map((slug, theirs) => (slug, overlap(set, theirs))).maxByOption(_._2.value: Double)
+            if n.value < limits.minSources.value then
               loop(
                 tail,
                 acc,
-                drop :+ s"'${c.slug}': ${c.filter.line} returns ${Plural.count(n, com.histmersion.api.Plural.CountSingular("source"))}; at least ${limits.minSources}"
+                drop :+ ArticlePlan.Dropped(
+                  s"'${c.slug}': ${c.filter.line} returns ${Plural.count(Plural.CountN(n.value.toLong), Plural.CountSingular("source"))}; at least ${limits.minSources}"
+                )
               )
             else
               worst match
-                case Some((o, share)) if share >= limits.maxOverlap =>
+                case Some((o, share)) if share.value >= limits.maxOverlap.value =>
                   loop(
                     tail,
                     acc,
-                    drop :+ f"'${c.slug}': ${share * 100}%.0f%% of its sources are [[$o]]'s already (less than ${limits.maxOverlap * 100}%.0f%%)"
+                    drop :+ ArticlePlan.Dropped(
+                      f"'${c.slug}': ${share.value * 100}%.0f%% of its sources are [[$o]]'s already (less than ${limits.maxOverlap.value * 100}%.0f%%)"
+                    )
                   )
                 case w =>
                   loop(
@@ -208,8 +215,8 @@ object PlanArticles:
                         c.filter,
                         c.why,
                         n,
-                        w.fold(0.0)(_._2),
-                        w.filter(_._2 > 0).map(_._1)
+                        w.fold(ProposedArticle.Overlap(0.0))(_._2),
+                        w.filter(_._2.value > 0).map(x => ProposedArticle.OverlapWith(x._1.value))
                       ),
                       set
                     ),
@@ -218,6 +225,8 @@ object PlanArticles:
     loop(cs, Vector.empty, Vector.empty)
 
   /** The worklog line of a run. */
-  def logLine(goal: com.histmersion.domain.automation.Goal.Slug, plan: ArticlePlan, outcome: com.histmersion.domain.PlanArticles.Outcome, runId: com.histmersion.domain.automation.Run.Id): com.histmersion.domain.PlanArticles.LogLine =
-    s"propose-articles $goal: ${Plural.count(plan.articles.size, com.histmersion.api.Plural.CountSingular("article"))} proposed, ${plan.dropped.size} dropped — $outcome " +
-      s"(agent run ${runId.take(8)})"
+  def logLine(goal: com.histmersion.domain.automation.Goal.Slug, plan: ArticlePlan, outcome: Outcome, runId: com.histmersion.domain.automation.Run.Id): LogLine =
+    LogLine(
+      s"propose-articles $goal: ${Plural.count(Plural.CountN(plan.articles.size.toLong), Plural.CountSingular("article"))} proposed, ${plan.dropped.size} dropped — $outcome " +
+        s"(agent run ${runId.value.take(8)})"
+    )

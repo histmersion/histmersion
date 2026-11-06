@@ -32,12 +32,8 @@ import java.util.regex.{Matcher, Pattern, PatternSyntaxException}
 object PassageFinder:
   type ContextChars = ContextChars.T
   object ContextChars extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type Heading = Heading.T
-  object Heading extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type Limit = Limit.T
   object Limit extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type MatchCount = MatchCount.T
-  object MatchCount extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type MaxMatches = MaxMatches.T
   object MaxMatches extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type Passage = Passage.T
@@ -48,26 +44,11 @@ object PassageFinder:
   object Query extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type Regex = Regex.T
   object Regex extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type SourceText = SourceText.T
-  object SourceText extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type TimeoutMs = TimeoutMs.T
   object TimeoutMs extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
   /** The body `get_source` reads — chunks in order, joined by a blank line (`SourceRepo.bodyText`). */
-  type MergeSpansPart1 = MergeSpansPart1.T
-  object MergeSpansPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type MergeSpansPart2 = MergeSpansPart2.T
-  object MergeSpansPart2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type MergeText = _root_.com.histmersion.domain.PassageFinder.Folded.Text
-  val MergeText: _root_.com.histmersion.domain.PassageFinder.Folded.Text.type = _root_.com.histmersion.domain.PassageFinder.Folded.Text
-  type StartOfText = _root_.com.histmersion.domain.PassageFinder.Folded.Text
-  val StartOfText: _root_.com.histmersion.domain.PassageFinder.Folded.Text.type = _root_.com.histmersion.domain.PassageFinder.Folded.Text
-  type SkipBlanksText = _root_.com.histmersion.domain.PassageFinder.Folded.Text
-  val SkipBlanksText: _root_.com.histmersion.domain.PassageFinder.Folded.Text.type = _root_.com.histmersion.domain.PassageFinder.Folded.Text
-  type EndOfText = _root_.com.histmersion.domain.PassageFinder.Folded.Text
-  val EndOfText: _root_.com.histmersion.domain.PassageFinder.Folded.Text.type = _root_.com.histmersion.domain.PassageFinder.Folded.Text
-
-  def body(segments: Seq[Chunk]): com.histmersion.domain.PassageFinder.Passage = segments.map(_.body).mkString(Separator)
+  def body(segments: Seq[Chunk]): com.histmersion.domain.PassageFinder.Passage = Passage(segments.map(_.body.value).mkString(Separator))
 
   private val Separator = "\n\n"
 
@@ -81,47 +62,62 @@ object PassageFinder:
       maxMatches: com.histmersion.domain.PassageFinder.MaxMatches,
       timeoutMs: com.histmersion.domain.PassageFinder.TimeoutMs
   )(using timer: com.histmersion.util.time.Timer): Either[com.histmersion.domain.PassageFinder.Problem, PassageResult] =
-    val q = Option(query).getOrElse("").trim
-    if q.isEmpty then Left(com.histmersion.domain.PassageFinder.Problem("the query is empty — give the words to find"))
+    val q = Option(query.value).getOrElse("").trim
+    if q.isEmpty then Left(Problem("the query is empty — give the words to find"))
     else
-      compile(q, regex).flatMap { pattern =>
-        val text = body(segments)
+      compile(Query(q), regex).flatMap { pattern =>
+        val text = body(segments).value
         val folded = Folded(text)
-        val until = timer.after(scala.concurrent.duration.FiniteDuration(timeoutMs.max(1L), scala.concurrent.duration.MILLISECONDS))
+        val until = timer.after(scala.concurrent.duration.FiniteDuration(timeoutMs.value.max(1L), scala.concurrent.duration.MILLISECONDS))
         try
-          val (spans, capped) = matches(pattern, folded, text, maxMatches.max(1), until)
-          val ranges = merge(spans, text, context.max(0))
+          val (spans, capped) = matches(pattern, folded, text, maxMatches.value.max(1), until)
+          val ranges = merge(spans, text, context.value.max(0))
           val headings = Headings(segments, text)
-          val shown = ranges.take(limit.max(1)).map { r =>
+          val shown = ranges.take(limit.value.max(1)).map { r =>
             PassageHit(
-              r.start,
-              headings.at(r.firstMatch),
-              text.substring(r.start, r.end),
-              r.spans.reverse.map((s, e) => MatchSpan(s - r.start, e - r.start))
+              PassageHit.Offset(r.start),
+              headings.at(r.firstMatch).map(PassageHit.Heading(_)),
+              PassageHit.Text(text.substring(r.start, r.end)),
+              r.spans.reverse.map((s, e) => MatchSpan(MatchSpan.Start(s - r.start), MatchSpan.End(e - r.start)))
             )
           }
-          Right(PassageResult(citekey, q, regex, spans.size, capped, ranges.size, shown.toList, text.length))
+          Right(
+            PassageResult(
+              com.histmersion.api.library.Citekey(citekey.value),
+              PassageResult.Query(q),
+              PassageResult.Regex(regex.value),
+              PassageResult.Matches(spans.size),
+              PassageResult.Capped(capped),
+              PassageResult.Total(ranges.size),
+              shown.toList,
+              PassageResult.BodyChars(text.length)
+            )
+          )
         catch
           case _: TimedOut =>
             Left(
-              s"the regex ran longer than $timeoutMs ms over this body — make it more specific " +
-                "(anchor it, avoid nested repetition like (a+)+)"
+              Problem(
+                s"the regex ran longer than $timeoutMs ms over this body — make it more specific " +
+                  "(anchor it, avoid nested repetition like (a+)+)"
+              )
             )
       }
 
   /** The query as a pattern over the FOLDED body. */
   private[domain] def compile(q: com.histmersion.domain.PassageFinder.Query, regex: com.histmersion.domain.PassageFinder.Regex): Either[com.histmersion.domain.PassageFinder.Problem, Pattern] =
     val flags = Pattern.CASE_INSENSITIVE | Pattern.UNICODE_CASE | Pattern.MULTILINE
-    if regex then
-      try Right(Pattern.compile(fold(q), flags))
+    if regex.value then
+      try Right(Pattern.compile(fold(q.value), flags))
       catch
         case e: PatternSyntaxException =>
           val at = if e.getIndex >= 0 then s" at position ${e.getIndex}" else ""
           Left(
-            s"not a valid regex: ${e.getDescription}$at in `${e.getPattern}` (leave regex off to match the text literally)"
+            Problem(
+              s"not a valid regex: ${e.getDescription}$at in `${e.getPattern}` (leave regex off to match the text literally)"
+            )
           )
     else
-      val words = fold(q).split("\\s+").toList.filter(_.nonEmpty)
+      val words = fold(q.value).split("\\s+").toList.filter(_.nonEmpty)
       Right(Pattern.compile(words.map(Pattern.quote).mkString("\\s+"), flags))
 
   /** One character as the matcher sees it: [[LatinFold]] plus the OCR typography. */
@@ -141,17 +137,17 @@ object PassageFinder:
         case 'ﬄ'                                     => "ffl"
         case _                                       => LatinFold.foldChar(c)
 
-  private[domain] def fold(s: com.histmersion.domain.PassageFinder.SourceText): com.histmersion.domain.PassageFinder.Folded.Text = Folded(s).text
+  private[domain] def fold(s: String): String = Folded(s).text
 
   /** `source` folded, with the index of the source character every folded character came from (`back(folded.length) ==
     * source.length`), so a match maps back to the original offsets.
     */
-  final private[domain] class Folded(val text: Folded.Text, back: Array[Int]):
-    def start(i: com.histmersion.Offset): com.histmersion.Offset = back(i)
+  final private[domain] class Folded(val text: String, back: Array[Int]):
+    def start(i: Int): Int = back(i)
 
     /** The original end of a match ending (exclusive) at folded index `i`. */
-    def end(i: com.histmersion.Offset, source: com.histmersion.domain.PassageFinder.SourceText): com.histmersion.Offset =
-      if i <= 0 then com.histmersion.Offset(0)
+    def end(i: Int, source: String): Int =
+      if i <= 0 then 0
       else
         // the combining marks of the last letter belong to the match too
         source.indexWhere(c => !isMark(c), back(i - 1) + 1) match
@@ -159,11 +155,7 @@ object PassageFinder:
           case k  => k
 
   private[domain] object Folded:
-    type Text = Text.T
-    object Text extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-
-
-    def apply(source: com.histmersion.domain.PassageFinder.SourceText): Folded =
+    def apply(source: String): Folded =
       val sb = new java.lang.StringBuilder(source.length) // local accumulators
       val back = new scala.collection.mutable.ArrayBuilder.ofInt
       back.sizeHint(source.length + 1)
@@ -189,16 +181,16 @@ object PassageFinder:
     // a counter, so the clock is read once per 64 Ki characters rather than on every one
     private var reads = 0
     def length: Int = s.length
-    def charAt(i: com.histmersion.Offset): Char =
+    def charAt(i: Int): Char =
       reads += 1
       if (reads & 0xffff) == 0 && until.exceeded then throw new TimedOut
       s.charAt(i)
-    def subSequence(a: com.histmersion.Offset, b: com.histmersion.Offset): CharSequence = new Bounded(s.subSequence(a, b), until)
+    def subSequence(a: Int, b: Int): CharSequence = new Bounded(s.subSequence(a, b), until)
     override def toString: String = s.toString
 
 
   /** Every non-empty match as `[start, end)` in the ORIGINAL body, in order, up to `max`. */
-  private def matches(p: Pattern, f: Folded, source: com.histmersion.domain.PassageFinder.SourceText, max: com.histmersion.domain.PassageFinder.MaxMatches, until: com.histmersion.util.time.Timer.Deadline): (Vector[(com.histmersion.domain.PassageFinder.MatchCount, com.histmersion.Offset)], Boolean) =
+  private def matches(p: Pattern, f: Folded, source: String, max: Int, until: com.histmersion.util.time.Timer.Deadline): (Vector[(Int, Int)], Boolean) =
     val m: Matcher = p.matcher(new Bounded(f.text, until))
     val out = Vector.newBuilder[(Int, Int)]
     // the Matcher is itself a cursor, so the loop around it counts with two local vars
@@ -214,25 +206,13 @@ object PassageFinder:
     (out.result(), capped)
 
   /** A passage being built: `spans` in reverse order of discovery. */
-  final private case class Range(start: Range.Start, end: Range.End, firstMatch: Range.FirstMatch, spans: List[(Range.SpansPart1, Range.SpansPart2)])
-
-  object Range:
-    type Start = Start.T
-    object Start extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
-    type End = End.T
-    object End extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
-    type FirstMatch = FirstMatch.T
-    object FirstMatch extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
-    type SpansPart1 = SpansPart1.T
-    object SpansPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
-    type SpansPart2 = SpansPart2.T
-    object SpansPart2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  final private case class Range(start: Int, end: Int, firstMatch: Int, spans: List[(Int, Int)])
 
   /** Matches → passages. A match that starts inside the previous passage joins it (the passage then ends no earlier
     * than the match does); any other starts a passage of its own, which begins no earlier than where the previous one
     * ended — so no text is shown twice, and dense matches do not snowball into one enormous passage.
     */
-  private def merge(spans: Vector[(com.histmersion.domain.PassageFinder.MergeSpansPart1, com.histmersion.domain.PassageFinder.MergeSpansPart2)], text: com.histmersion.domain.PassageFinder.MergeText, context: com.histmersion.domain.PassageFinder.ContextChars): Vector[Range] =
+  private def merge(spans: Vector[(Int, Int)], text: String, context: Int): Vector[Range] =
     val half = context / 2
     spans.foldLeft(Vector.empty[Range]) { case (acc, (s, e)) =>
       acc.lastOption match
@@ -246,7 +226,7 @@ object PassageFinder:
   /** Where a passage around a match starting at `s` begins: the first line start within `half` characters before it,
     * else the first word start, else exactly `half` before; leading blanks dropped.
     */
-  private[domain] def startOf(text: com.histmersion.domain.PassageFinder.StartOfText, s: com.histmersion.Offset, half: com.histmersion.Offset): com.histmersion.Offset =
+  private[domain] def startOf(text: String, s: Int, half: Int): Int =
     val lo = (s - half).max(0)
     val begin =
       if lo == 0 then 0
@@ -259,13 +239,13 @@ object PassageFinder:
     skipBlanks(text, begin, s)
 
   @annotation.tailrec
-  private def skipBlanks(text: com.histmersion.domain.PassageFinder.SkipBlanksText, from: com.histmersion.Offset, upTo: com.histmersion.Offset): com.histmersion.Offset =
+  private def skipBlanks(text: String, from: Int, upTo: Int): Int =
     if from < upTo && text.charAt(from).isWhitespace then skipBlanks(text, from + 1, upTo) else from
 
   /** Where a passage around a match ending at `e` ends: the last line end within `half` characters after it, else the
     * last word end, else exactly `half` after; trailing blanks dropped.
     */
-  private[domain] def endOf(text: com.histmersion.domain.PassageFinder.EndOfText, e: com.histmersion.Offset, half: com.histmersion.Offset): com.histmersion.Offset =
+  private[domain] def endOf(text: String, e: Int, half: Int): Int =
     val hi = (e + half).min(text.length)
     val finish =
       if hi == text.length then hi
@@ -278,28 +258,23 @@ object PassageFinder:
     dropBlanks(text, finish, e)
 
   @annotation.tailrec
-  private def dropBlanks(text: com.histmersion.domain.PassageFinder.Folded.Text, to: com.histmersion.Offset, downTo: com.histmersion.Offset): com.histmersion.Offset =
+  private def dropBlanks(text: String, to: Int, downTo: Int): Int =
     if to > downTo && text.charAt(to - 1).isWhitespace then dropBlanks(text, to - 1, downTo) else to
 
   /** The heading a body offset sits under: its chunk's breadcrumb, or — for a body stored without chunks, whose heading
     * lines are still in the text — the nearest Markdown heading above it.
     */
-  final private class Headings(segments: Seq[Chunk], text: Headings.Text):
-    private val starts: Array[com.histmersion.Offset] =
-      segments.iterator.scanLeft(0)((at, c) => at + c.body.length + Separator.length).take(segments.size).toArray
+  final private class Headings(segments: Seq[Chunk], text: String):
+    private val starts: Array[Int] =
+      segments.iterator.scanLeft(0)((at, c) => at + c.body.value.length + Separator.length).take(segments.size).toArray
 
-    private lazy val inline: Vector[(com.histmersion.Offset, com.histmersion.domain.PassageFinder.Heading)] =
+    private lazy val inline: Vector[(Int, String)] =
       val Heading = """(?m)^#{1,6}[ \t]+(.*?)[ \t]*#*[ \t]*$""".r
       Heading.findAllMatchIn(text).map(m => (m.start, m.group(1))).filter(_._2.nonEmpty).toVector
 
-    def at(offset: com.histmersion.Offset): Option[com.histmersion.domain.PassageFinder.Heading] =
+    def at(offset: Int): Option[String] =
       val i = java.util.Arrays.binarySearch(starts, offset) match
         case k if k >= 0 => k
         case k           => -k - 2
-      val own = if i >= 0 && i < segments.size then segments(i).heading else None
+      val own = if i >= 0 && i < segments.size then segments(i).heading.map(_.value) else None
       own.orElse(inline.takeWhile(_._1 <= offset).lastOption.map(_._2))
-
-  object Headings:
-    type Text = Text.T
-    object Text extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-
