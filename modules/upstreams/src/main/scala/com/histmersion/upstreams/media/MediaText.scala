@@ -27,7 +27,7 @@ object MediaText:
   )
 
   def plain(html: com.histmersion.upstreams.media.MediaText.Html, max: com.histmersion.upstreams.media.MediaText.PlainMax = _root_.com.histmersion.upstreams.media.MediaText.PlainMax(300)): com.histmersion.upstreams.media.MediaText.PlainText =
-    val noTags = Tag.replaceAllIn(Option(html).getOrElse(""), " ")
+    val noTags = Tag.replaceAllIn(Option(html).map(_.value).getOrElse(""), " ")
     val named = Named.foldLeft(noTags) { case (acc, (k, v)) => acc.replace(k, v) }
     val dec = Dec.replaceAllIn(
       named,

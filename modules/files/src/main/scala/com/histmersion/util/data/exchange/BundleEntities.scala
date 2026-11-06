@@ -1,6 +1,7 @@
 package com.histmersion.util.data.exchange
 
 import com.histmersion.api.exchange.Bundle
+import com.histmersion.api.Sha256
 import com.histmersion.api.given
 
 import io.circe.{Decoder, Encoder}
@@ -46,7 +47,7 @@ final case class BundleEntities(
   /** Every file's NDJSON payload, in [[BundleFiles.all]] order — empty files included, so a bundle always has the same
     * set of entries.
     */
-  def payloads: List[(com.histmersion.util.data.exchange.BundleEntities.BlobPath, com.histmersion.util.data.exchange.BundleEntities.Payload)] =
+  def payloads: List[(String, Array[Byte])] =
     def stamped[A: Encoder.AsObject](as: List[A]) = BundleFormat.ndjson(as.map(BundleFormat.stamp(_).line))
     def plain[A: Encoder.AsObject](as: List[A]) = BundleFormat.ndjson(as.map(BundleFormat.line(_)))
     List(
@@ -80,47 +81,48 @@ final case class BundleEntities(
 
   /** uid → (kind, rev, label) of every stamped entity. */
   def revs: Map[UUID, Rev] =
-    def of[A: Encoder.AsObject](k: Bundle.Kind, as: List[A])(uid: A => UUID, label: A => com.histmersion.util.data.exchange.BundleEntities.Rev.Label) =
+    def of[A: Encoder.AsObject](k: Bundle.Kind, as: List[A])(uid: A => UUID, label: A => String) =
       as.map(a => uid(a) -> Rev(k, BundleFormat.stamp(a).rev, label(a)))
-    (of(Bundle.Kind.Source, sources)(_.uid, _.citekey) ++
-      of(Bundle.Kind.Finding, findings)(_.uid, _.id) ++
-      of(Bundle.Kind.Article, articles)(_.uid, _.slug) ++
+    (of(Bundle.Kind.Source, sources)(_.uid, _.citekey.value) ++
+      of(Bundle.Kind.Finding, findings)(_.uid, _.id.value) ++
+      of(Bundle.Kind.Article, articles)(_.uid, _.slug.value) ++
       of(Bundle.Kind.ArticleVersion, versions)(_.uid, v => v.articleUid.toString) ++
-      of(Bundle.Kind.Asset, assets)(_.uid, _.name) ++
+      of(Bundle.Kind.Asset, assets)(_.uid, _.name.value) ++
       of(Bundle.Kind.AssetLink, assetLinks)(_.uid, l => s"${l.relation} ${l.targetType} ${l.targetId}") ++
       of(Bundle.Kind.Attestation, attestations)(_.uid, t => s"${t.targetType} ${t.targetId}") ++
-      of(Bundle.Kind.Event, events)(_.uid, _.id) ++
-      of(Bundle.Kind.Goal, goals)(_.uid, _.slug) ++
-      of(Bundle.Kind.QueueItem, queue)(_.uid, _.text.take(60)) ++
-      of(Bundle.Kind.Place, places)(_.uid, _.id) ++
-      of(Bundle.Kind.Period, periods)(_.uid, _.id)).toMap
+      of(Bundle.Kind.Event, events)(_.uid, _.id.value) ++
+      of(Bundle.Kind.Goal, goals)(_.uid, _.slug.value) ++
+      of(Bundle.Kind.QueueItem, queue)(_.uid, _.text.value.take(60)) ++
+      of(Bundle.Kind.Place, places)(_.uid, _.id.value) ++
+      of(Bundle.Kind.Period, periods)(_.uid, _.id.value)).toMap
 
   /** Every uid an entity line of this bundle names as its own. */
   def uids: Set[UUID] = revs.keySet
 
   /** sha256 → what it is, for every blob these lines reference. */
-  def blobRefs: Map[com.histmersion.util.data.exchange.BundleEntities.BlobPath, List[BlobUse]] =
+  def blobRefs: Map[com.histmersion.api.Sha256, List[BlobUse]] =
     (sources.flatMap(s =>
-      s.bodySha256.map(_ -> BlobUse.Body(s.uid)).toList ++
-        s.originalSha256.zip(s.originalExt).map((sha, ext) => sha -> BlobUse.Original(s.uid, ext)).toList
+      s.bodySha256.map(sha => Sha256(sha.value) -> BlobUse.Body(s.uid)).toList ++
+        s.originalSha256.zip(s.originalExt).map((sha, ext) => Sha256(sha.value) -> BlobUse.Original(s.uid, ext)).toList
     ) ++
-      versions.map(v => v.bodySha256 -> BlobUse.VersionBody(v.uid)) ++
+      versions.map(v => Sha256(v.bodySha256.value) -> BlobUse.VersionBody(v.uid)) ++
       assets.map(a => a.sha256 -> BlobUse.AssetBytes(a.uid)))
       .groupMap(_._1)(_._2)
 
   /** The newest change these lines carry — the manifest's `asOf`. Timestamps share one fixed-width UTC format, so text
     * order is time order.
     */
-  def asOf: Option[com.histmersion.util.data.exchange.BundleEntities.AsOf] =
-    (sources.map(_.updatedAt) ++ findings.map(_.updatedAt) ++ assessments.map(_.checkedAt) ++
-      aliases.map(_.createdAt) ++ articles.map(_.updatedAt) ++ versions.map(_.updatedAt) ++
-      assets.map(_.updatedAt) ++ assetLinks.map(_.updatedAt) ++ attestations.map(_.updatedAt) ++
-      events.map(_.updatedAt) ++ goals.map(_.updatedAt) ++ queue.map(_.updatedAt) ++
-      places.map(_.updatedAt) ++ periods.map(_.updatedAt) ++ articleAliases.map(_.createdAt) ++
-      eventAliases.map(_.createdAt) ++ goalAliases.map(_.createdAt) ++ placeAliases.map(_.createdAt) ++
-      eventCatalogue.map(_.retrievedAt) ++ eventCandidates.map(_.computedAt) ++ eventChecks.map(_.checkedAt) ++
-      corrections.map(_.updatedAt) ++ siteTypes.flatMap(_.checkedAt) ++
-      tombstones.map(_.deletedAt)).maxOption
+  def asOf: Option[Bundle.Manifest.AsOf] =
+    (sources.map(_.updatedAt.value) ++ findings.map(_.updatedAt.value) ++ assessments.map(_.checkedAt.value) ++
+      aliases.map(_.createdAt.value) ++ articles.map(_.updatedAt.value) ++ versions.map(_.updatedAt.value) ++
+      assets.map(_.updatedAt.value) ++ assetLinks.map(_.updatedAt.value) ++ attestations.map(_.updatedAt.value) ++
+      events.map(_.updatedAt.value) ++ goals.map(_.updatedAt.value) ++ queue.map(_.updatedAt.value) ++
+      places.map(_.updatedAt.value) ++ periods.map(_.updatedAt.value) ++ articleAliases.map(_.createdAt.value) ++
+      eventAliases.map(_.createdAt.value) ++ goalAliases.map(_.createdAt.value) ++ placeAliases.map(_.createdAt.value) ++
+      eventCatalogue.map(_.retrievedAt.value) ++ eventCandidates.map(_.computedAt.value) ++
+      eventChecks.map(_.checkedAt.value) ++ corrections.map(_.updatedAt.value) ++
+      siteTypes.flatMap(_.checkedAt.map(_.value)) ++
+      tombstones.map(_.deletedAt.value)).maxOption.map(Bundle.Manifest.AsOf(_))
 
   /** Every uid these lines REFER to (as opposed to own): what must exist in the bundle or locally. `owner` is the uid
     * whose import writes the referring line (a source's edges, aliases and assessment are written with the source). An
@@ -128,9 +130,9 @@ final case class BundleEntities(
     * here; a required one makes the line impossible to write.
     */
   def references: List[Reference] =
-    def req(kind: Bundle.Kind, uid: UUID, owner: UUID, from: com.histmersion.util.data.exchange.BundleEntities.Reference.From) =
+    def req(kind: Bundle.Kind, uid: UUID, owner: UUID, from: String) =
       Reference(kind, uid, owner, from, required = true)
-    def opt(kind: Bundle.Kind, uid: UUID, owner: UUID, from: com.histmersion.util.data.exchange.BundleEntities.Reference.From) =
+    def opt(kind: Bundle.Kind, uid: UUID, owner: UUID, from: String) =
       Reference(kind, uid, owner, from, required = false)
     findings.map(f => req(Bundle.Kind.Source, f.sourceUid, f.uid, s"finding ${f.id}")) ++
       edges.map(e => opt(Bundle.Kind.Source, e.dstUid, e.srcUid, s"edge ${e.kind}")) ++
@@ -163,42 +165,17 @@ final case class BundleEntities(
     references.filterNot(r => own(r.uid))
 
 object BundleEntities:
-  type AsOf = AsOf.T
-  object AsOf extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type BlobPath = BlobPath.T
-  object BlobPath extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type Payload = Payload.T
-  object Payload extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Array[_root_.scala.Byte], _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type Problem = Problem.T
-  object Problem extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type Stamped = Stamped.T
-  object Stamped extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
-
-
-
-  final case class Rev(kind: Bundle.Kind, rev: Rev.Value, label: Rev.Label)
-
-  object Rev:
-    type Value = Value.T
-    object Value extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-    type Label = Label.T
-    object Label extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  final case class Rev(kind: Bundle.Kind, rev: String, label: String)
 
   /** One uid a line refers to, the uid the referring line is written under, and which line (for the message).
     */
-  final case class Reference(kind: Bundle.Kind, uid: UUID, owner: UUID, from: Reference.From, required: Reference.Required)
-
-  object Reference:
-    type From = From.T
-    object From extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-    type Required = Required.T
-    object Required extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  final case class Reference(kind: Bundle.Kind, uid: UUID, owner: UUID, from: String, required: Boolean)
 
   /** What a blob is for. */
   enum BlobUse:
     case Body(sourceUid: UUID)
-    case Original(sourceUid: UUID, ext: BlobUse.Original.Ext)
+    case Original(sourceUid: UUID, ext: Bundle.Source.OriginalExt)
     case VersionBody(versionUid: UUID)
     case AssetBytes(assetUid: UUID)
 
@@ -209,17 +186,12 @@ object BundleEntities:
       case VersionBody(u) => u
       case AssetBytes(u)  => u
 
-  object BlobUse:
-    object Original:
-      type Ext = Ext.T
-      object Ext extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-
   /** Decode the payloads read from a bundle; every bad line is reported (`<file>:<line>: why`), the good ones kept. A
     * missing file is an empty one.
     */
-  def decode(payloads: Map[com.histmersion.util.data.exchange.BundleEntities.BlobPath, com.histmersion.util.data.exchange.BundleEntities.Payload]): (BundleEntities, List[com.histmersion.util.data.exchange.BundleEntities.Problem]) =
+  def decode(payloads: Map[String, Array[Byte]]): (BundleEntities, List[String]) =
     val problems = List.newBuilder[String]
-    def read[A: Decoder](path: com.histmersion.util.data.exchange.Bundle.Kind.EntryPath, stamped: com.histmersion.util.data.exchange.BundleEntities.Stamped): List[A] =
+    def read[A: Decoder](path: String, stamped: Boolean): List[A] =
       payloads.get(path).toList.flatMap(BundleFormat.splitLines).zipWithIndex.flatMap { (l, i) =>
         BundleFormat.decodeLine[A](l, stamped) match
           case Right(a) => Some(a)
