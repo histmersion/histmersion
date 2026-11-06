@@ -38,7 +38,7 @@ object ImageSize:
   private def be16(b: com.histmersion.api.media.ImageSize.Be16B, i: com.histmersion.api.media.ImageSize.Be16I): Int = ((u8(b, i)) << 8) | u8(b, ((i) + 1))
   private def le16(b: com.histmersion.api.media.ImageSize.Le16B, i: com.histmersion.api.media.ImageSize.Le16I): Int = ((u8(b, ((i) + 1))) << 8) | u8(b, i)
   private def be32(b: com.histmersion.api.media.ImageSize.Be32B, i: com.histmersion.api.media.ImageSize.Be32I): Int =
-    ((u8(b, i)) << 24) | ((u8(b, ((i) + 1))).value << 16) | ((u8(b, ((i).value + 2))).value << 8) | u8(b, i + 3)
+    ((u8(b, i)) << 24) | ((u8(b, ((i) + 1))) << 16) | ((u8(b, ((i).value + 2))).value << 8) | u8(b, i + 3)
 
   private def png(b: com.histmersion.api.media.ImageSize.PngB): Boolean =
     (b).value.length >= 24 && u8(b, (0)) == 0x89 && b(1) == 'P' && b(2) == 'N' && b(3) == 'G'
