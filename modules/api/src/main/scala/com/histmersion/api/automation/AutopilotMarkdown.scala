@@ -6,15 +6,18 @@ object AutopilotMarkdown:
 
   import Autopilot.*
 
+  private def counted(n: Long, singular: String): Plural.Phrase =
+    Plural.count(Plural.CountN(n), Plural.CountSingular(singular))
+
   private def brief(m: ManagerBrief): String =
-    s"${m.id} ${m.state}" + m.note.filter(n => n.nonEmpty && n != m.state).fold("")(n => s" ($n)")
+    s"${m.id} ${m.state}" + m.note.filter(n => (n).value.nonEmpty && (n).value != (m.state).value).fold("")(n => s" ($n)")
 
   def goal(g: GoalProgress): String =
     val mgrs = if g.managers.isEmpty then "no managers" else g.managers.map(brief).mkString("; ")
     val pace = s"${g.doneLast7} done in 7 days, ${g.open} open" + g.etaDays.fold("")(d => s", ~$d day(s) at that pace")
-    s"**${g.slug}** _(${g.status})_${g.parent.fold("")(p => s" ⊂ $p")} · ${Plural.count(g.sources, _root_.com.histmersion.api.Plural.CountSingular("source"))}, " +
-      s"${Plural.count(g.articles, "article")}" + (if g.openApprovals > 0 then
-                                                     s", ${Plural.count(g.openApprovals, "open approval")}"
+    s"**${g.slug}** _(${g.status})_${g.parent.fold("")(p => s" ⊂ $p")} · ${counted((g.sources).value.toLong, "source")}, " +
+      s"${counted((g.articles).value.toLong, "article")}" + (if (g.openApprovals).value > 0 then
+                                                     s", ${counted((g.openApprovals).value.toLong, "open approval")}"
                                                    else "") +
       s" · $mgrs · $pace" + g.lastActivity.fold("")(t => s" · last activity $t")
 
@@ -27,7 +30,7 @@ object AutopilotMarkdown:
     val lines = List(
       f.note.map(n => s"_${n}_"),
       Option.when((f.held).value > 0)(
-        s"${Plural.count(f.held, _root_.com.histmersion.api.Plural.Noun.Singular("model-using item"))} held for the focus (nothing cancelled; runs in flight finish)"
+        s"${counted((f.held).value.toLong, "model-using item")} held for the focus (nothing cancelled; runs in flight finish)"
       ),
       Option.when(f.changes.nonEmpty)(s"Just now: ${f.changes.mkString("; ")}")
     ).flatten
@@ -50,7 +53,7 @@ object AutopilotMarkdown:
         .take(5)
         .map(w => s"${w.slug}${if ((w.pinned) == _root_.com.histmersion.api.automation.Autopilot.FocusWaiting.Pinned(true)) then " (pinned)" else ""}")
         .mkString(", ") +
-        (if ws.size > 5 then ", …" else "") + ws.headOption.fold("")(w => s" — e.g. ${w.why.take(200)}")
+        (if ws.size > 5 then ", …" else "") + ws.headOption.fold("")(w => s" — e.g. ${(w.why).value.take(200)}")
     }
     (List(head, "") ++ lines
       .flatMap(l => List(l, "")) ++ List("### Active", "", active, "", s"### Queue (${f.queued})", "", queue) ++
@@ -72,12 +75,12 @@ object AutopilotMarkdown:
         if ((d.drained) == _root_.com.histmersion.api.automation.Autopilot.DrainInfo.Drained(true)) then
           s"DRAINED since ${d.drainedAt.getOrElse(d.since)} (draining since ${d.since}" +
             s"${
-                if d.by.nonEmpty then s" by ${d.by}" else ""
+                if (d.by).value.nonEmpty then s" by ${d.by}" else ""
               }): nothing runs and nothing new starts — safe to stop the server; " +
             "`histmersion agent autopilot undrain` lifts it"
         else
-          s"DRAINING since ${d.since}${if d.by.nonEmpty then s" by ${d.by}" else ""}: nothing new starts; " +
-            s"${Plural.count(d.inFlight, _root_.com.histmersion.api.Plural.Noun.Singular("run"))} in flight still finishing"
+          s"DRAINING since ${d.since}${if (d.by).value.nonEmpty then s" by ${d.by}" else ""}: nothing new starts; " +
+            s"${counted((d.inFlight).value.toLong, "run")} in flight still finishing"
       ),
       Option.when(!((s.agentsEnabled) == _root_.com.histmersion.api.automation.Autopilot.EngineStatus.AgentsEnabled(true)))("agents are disabled on this server (agents.enabled = false): nothing runs"),
       Option.when(((s.agentsEnabled) == _root_.com.histmersion.api.automation.Autopilot.EngineStatus.AgentsEnabled(true)) && !((s.managersEnabled) == _root_.com.histmersion.api.automation.Autopilot.EngineStatus.ManagersEnabled(true)))(
@@ -87,7 +90,7 @@ object AutopilotMarkdown:
       s.goalPlansWait.map(w => s"$w; a person may still approve a plan")
     ).flatten.map(w => s"- **$w**")
     val rules =
-      s.approvals.map(r => s"${r.kind} ${r.mode}${if r.cap.nonEmpty then s" (${r.cap})" else ""}").mkString(", ")
+      s.approvals.map(r => s"${r.kind} ${r.mode}${if (r.cap).value.nonEmpty then s" (${r.cap})" else ""}").mkString(", ")
     val facts = List(
       s"- approvals: ${if rules.isEmpty then "a person's" else rules}",
       s"- legal open-access ingests today: ${s.ingestedToday}${

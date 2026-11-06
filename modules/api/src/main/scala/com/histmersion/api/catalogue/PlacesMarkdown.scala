@@ -28,7 +28,7 @@ object PlacesMarkdown:
       rows
         .map { r =>
           s"${"  " * r.depth.value}- **${r.label}**${contestedMark(r.contested.value, r.label.value)} `${r.id}`" +
-            s" _(${r.kind}${if r.findings > 0 then s", ${r.findings} finding(s)" else ""})_"
+            s" _(${r.kind}${if r.findings.value > 0 then s", ${r.findings} finding(s)" else ""})_"
         }
         .mkString("\n")
 
@@ -132,7 +132,7 @@ object PlacesMarkdown:
       s" · ${d.findings} finding(s)${asOfNote(d.asOf)}_"
     val what = d.descriptions.headOption.map(x => s"\n\n${x.text}").getOrElse("")
     val src = p.source.map(s => s"  \n**Source:** $s").getOrElse("") +
-      d.siteType.flatMap(SiteTypes.get).map(t => s"  \n**Site type:** ${t.label}").getOrElse("")
+      d.siteType.flatMap(t => SiteTypes.get(SiteTypes.SiteType.Id(t.value))).map(t => s"  \n**Site type:** ${t.label}").getOrElse("")
     val shape = d.shapeNote.map(n => s"  \n**Shape:** $n").getOrElse("") +
       d.locationNote.map(n => s"  \n**Location:** $n").getOrElse("")
     val dating = if ((d.datedByFindings) == (true)) then s"  \n**Dating:** ${Place.TimeBasis.FindingsNote}" else ""

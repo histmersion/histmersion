@@ -10,13 +10,6 @@ object Aggregate:
   type Width = Width.T
   object Width extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
-  type HistogramFrom = _root_.com.histmersion.api.catalogue.Year
-  val HistogramFrom: _root_.com.histmersion.api.catalogue.Year.type = _root_.com.histmersion.api.catalogue.Year
-  type HistogramTo = _root_.com.histmersion.api.catalogue.Year
-  val HistogramTo: _root_.com.histmersion.api.catalogue.Year.type = _root_.com.histmersion.api.catalogue.Year
-  type HistogramSize = _root_.com.histmersion.api.library.Aggregate.Width
-  val HistogramSize: _root_.com.histmersion.api.library.Aggregate.Width.type = _root_.com.histmersion.api.library.Aggregate.Width
-
   def bucketSize(spanYears: com.histmersion.api.library.Aggregate.Span): com.histmersion.api.library.Aggregate.Width =
     val span = math.abs((spanYears).value)
     if span >= 20000 then _root_.com.histmersion.api.library.Aggregate.Width((5000).toLong)
@@ -29,14 +22,14 @@ object Aggregate:
     case s if (s).value > 100  => _root_.com.histmersion.api.library.Aggregate.Width((100).toLong)
     case _             => _root_.com.histmersion.api.library.Aggregate.Width((10).toLong)
 
-  def buckets(from: com.histmersion.api.catalogue.Year, to: com.histmersion.api.catalogue.Year, size: com.histmersion.api.library.Aggregate.Width): List[(com.histmersion.api.catalogue.Year, com.histmersion.api.library.Aggregate.Count)] =
+  def buckets(from: com.histmersion.api.catalogue.Year, to: com.histmersion.api.catalogue.Year, size: com.histmersion.api.library.Aggregate.Width): List[(com.histmersion.api.catalogue.Year, com.histmersion.api.catalogue.Year)] =
     require((size).value > 0, s"bucket size must be positive, got $size")
-    val (lo, hi) = order(_root_.com.histmersion.api.catalogue.Year((from).value), _root_.com.histmersion.api.catalogue.Year((to).value))
-    val first = Math.floorDiv(lo, size) * size
+    val (lo, hi) = order(from, to)
+    val first = Math.floorDiv(lo.value, size.value) * size.value
     // Not `Iterator.iterate(_ + size)`: near Long.MaxValue the addition wraps negative and the iterator never ends.
     val out = List.newBuilder[(Long, Long)]
     var s = first
-    var go = s <= hi
+    var go = s <= hi.value
     while go do
       val e = try Math.addExact(s, (size).value - 1)
       catch case _: ArithmeticException => Long.MaxValue
@@ -44,15 +37,15 @@ object Aggregate:
       if e == Long.MaxValue then go = false
       else
         s = e + 1
-        go = s <= hi
-    (out.result()).map(refactorValue => { val refactorTuple = refactorValue; (_root_.com.histmersion.api.catalogue.Year(refactorTuple._1), _root_.com.histmersion.api.library.Aggregate.Count(refactorTuple._2)) })
+        go = s <= hi.value
+    out.result().map((a, b) => (_root_.com.histmersion.api.catalogue.Year(a), _root_.com.histmersion.api.catalogue.Year(b)))
 
   def bucketCount(from: com.histmersion.api.catalogue.Year, to: com.histmersion.api.catalogue.Year, size: com.histmersion.api.library.Aggregate.Width): BigInt =
-    if size <= 0 then BigInt(0)
+    if size.value <= 0 then BigInt(0)
     else
-      val (lo, hi) = order(_root_.com.histmersion.api.catalogue.Year((from).value), _root_.com.histmersion.api.catalogue.Year((to).value))
-      val first = BigInt(Math.floorDiv(lo, size)) * size
-      ((BigInt(hi) - first) / size) + 1
+      val (lo, hi) = order(from, to)
+      val first = BigInt(Math.floorDiv(lo.value, size.value)) * size.value
+      ((BigInt(hi.value) - first) / size.value) + 1
 
   enum Counting:
     case Overlap, Starts
@@ -68,36 +61,36 @@ object Aggregate:
 
   val UnitStarts = "starts"
 
-  def histogram(rows: List[Period.Row], from: com.histmersion.api.library.Aggregate.HistogramFrom, to: com.histmersion.api.library.Aggregate.HistogramTo): List[TimeBucket] =
-    val (lo, hi) = order(_root_.com.histmersion.api.catalogue.Year((from).value), _root_.com.histmersion.api.catalogue.Year((to).value))
-    histogram(rows, _root_.com.histmersion.api.catalogue.Year((lo).value), _root_.com.histmersion.api.catalogue.Year((hi).value), bucketSize((hi).value - lo))
+  def histogram(rows: List[Period.Row], from: com.histmersion.api.catalogue.Year, to: com.histmersion.api.catalogue.Year): List[TimeBucket] =
+    val (lo, hi) = order(from, to)
+    histogram(rows, lo, hi, bucketSize(_root_.com.histmersion.api.library.Aggregate.Span(hi.value - lo.value)))
 
   def histogram(
       rows: List[Period.Row],
-      from: com.histmersion.api.library.Aggregate.HistogramFrom,
-      to: com.histmersion.api.library.Aggregate.HistogramTo,
-      size: com.histmersion.api.library.Aggregate.HistogramSize,
+      from: com.histmersion.api.catalogue.Year,
+      to: com.histmersion.api.catalogue.Year,
+      size: com.histmersion.api.library.Aggregate.Width,
       counting: Counting = Counting.Overlap
   ): List[TimeBucket] =
     val spans = rows.flatMap(span)
     counting match
       case Counting.Overlap =>
         buckets(from, to, size).map { (bStart, bEnd) =>
-          TimeBucket(bStart, bEnd, spans.count((s, e) => s <= bEnd && e >= bStart))
+          TimeBucket(TimeBucket.Start(bStart.value), TimeBucket.End(bEnd.value), TimeBucket.Count(spans.count((s, e) => s.value <= bEnd.value && e.value >= bStart.value)))
         }
       case Counting.Starts =>
-        val (lo, hi) = order(_root_.com.histmersion.api.catalogue.Year((from).value), _root_.com.histmersion.api.catalogue.Year((to).value))
+        val (lo, hi) = order(from, to)
         val byBucket = spans.iterator
           .map(_._1)
-          .filter(y => y >= lo && y <= hi)
-          .map((y => Math.floorDiv((y).value, (size).value) * (size).value).value)
+          .filter(y => y.value >= lo.value && y.value <= hi.value)
+          .map(y => Math.floorDiv(y.value, size.value) * size.value)
           .toList
           .groupBy(identity)
           .view
           .mapValues(_.size)
           .toMap
         buckets(from, to, size).map { (bStart, bEnd) =>
-          TimeBucket(bStart, bEnd, byBucket.getOrElse(bStart, 0))
+          TimeBucket(TimeBucket.Start(bStart.value), TimeBucket.End(bEnd.value), TimeBucket.Count(byBucket.getOrElse(bStart.value, 0)))
         }
 
   def span(row: Period.Row): Option[(com.histmersion.api.catalogue.Year, com.histmersion.api.catalogue.Year)] = (row.periodStart, row.periodEnd) match
@@ -106,4 +99,4 @@ object Aggregate:
     case (None, Some(b))    => Some((b, b))
     case (None, None)       => None
 
-  private def order(a: com.histmersion.api.catalogue.Year, b: com.histmersion.api.catalogue.Year): (com.histmersion.api.catalogue.Year, com.histmersion.api.catalogue.Year) = if a <= b then (_root_.com.histmersion.api.catalogue.Year((a).value), _root_.com.histmersion.api.catalogue.Year((b).value)) else (_root_.com.histmersion.api.catalogue.Year((b).value), _root_.com.histmersion.api.catalogue.Year((a).value))
+  private def order(a: com.histmersion.api.catalogue.Year, b: com.histmersion.api.catalogue.Year): (com.histmersion.api.catalogue.Year, com.histmersion.api.catalogue.Year) = if a.value <= b.value then (a, b) else (b, a)

@@ -140,11 +140,11 @@ object Article:
       val notUsed = read
         .filterNot(s => citedSet(s.citekey))
         .map(s => com.histmersion.api.research.Coverage.Entry(s, reasons.get(s.citekey)))
-      val capped = read.size < total
+      val capped = read.size < total.value
       val outside = cited.distinct.filterNot(ck => citedInFilter(_root_.com.histmersion.api.library.Citekey((ck).value)) || readSet(ck))
       val statuses =
         Source.Status.values.toList.flatMap(st =>
-          Option(read.count(_.status == st)).filter(_ > 0).map(StatusCount(st, _))
+          Option(read.count(_.status == st)).filter(_ > 0).map(n => StatusCount(st, StatusCount.Count(n)))
         )
       val keptEdges = edges
         .filter(e => DisagreementKinds.contains(e.kind) && (citedSet(e.from) || citedSet(e.to)))
@@ -167,7 +167,7 @@ object Article:
         filter,
         com.histmersion.api.research.Coverage.FilterLine(filter.line),
         total,
-        read.size,
+        com.histmersion.api.research.Coverage.Checked(read.size),
         read.filter(s => citedSet(s.citekey)),
         notUsed,
         outside,
@@ -221,7 +221,7 @@ object Article:
           es.sortBy(_.source.citekey.value).map(e => s"[[${e.source.citekey}]]${statusNote(e.source.status)}").mkString(", ")
         s"- $who — ${reason.fold("not yet assessed")(endSentence)}"
       }
-      s"## $NotUsedHeading\n\n$lead" + (if lines.isEmpty then "" else "\n\n" + lines.mkString("\n"))
+      _root_.com.histmersion.api.research.Article.Coverage.NotUsed(s"## $NotUsedHeading\n\n$lead" + (if lines.isEmpty then "" else "\n\n" + lines.mkString("\n")))
 
     private def statusNote(s: Source.Status): String = if Stated(s) then (s" (${s.wire})") else ("")
 
@@ -254,7 +254,7 @@ object Article:
           s"disagreement edges touching the cited sources: ${c.edges.map(e => s"[[${e.from}]] ${e.kind} [[${e.to}]]").mkString("; ")}"
       val parts = s"${escape(c.filterLine.value)} → ${c.total}" :: statuses ++ searches ++ outside ++ scala.List(edges) ++
         Critiques.methodPart(c.critiques).toList
-      s"_Method: ${parts.mkString("; ")}._"
+      _root_.com.histmersion.api.research.Article.Coverage.Method(s"_Method: ${parts.mkString("; ")}._")
 
     private def orList(xs: scala.List[String]): String = xs match
       case Nil        => ("")
@@ -304,10 +304,10 @@ object Article:
             }
             .mkString("\n")
       val critiques = Critiques.markdown(c.critiques)
-      s"## Coverage of [[${c.slug}]]\n\n`${c.filterLine}` → ${c.total} (${c.cited.size} cited, ${c.notUsed.size} not used" +
+      _root_.com.histmersion.api.research.Article.Coverage.Markdown(s"## Coverage of [[${c.slug}]]\n\n`${c.filterLine}` → ${c.total} (${c.cited.size} cited, ${c.notUsed.size} not used" +
         s"${if ((c.capped) == (true)) then s", ${(c.total).value - (c.checked).value} not checked" else ""})\n\n### Drift\n\n$drift" +
-        (if critiques.isEmpty then "" else s"\n\n$critiques") + s"\n\n### Generated sections\n\n${sections(c)}" +
-        (if c.eventLeads.isEmpty then "" else "\n\n" + ArticleEventLead.markdown(c.eventLeads))
+        (if critiques.value.isEmpty then "" else s"\n\n$critiques") + s"\n\n### Generated sections\n\n${sections(c)}" +
+        (if c.eventLeads.isEmpty then "" else "\n\n" + ArticleEventLead.markdown(c.eventLeads)))
 
   final case class Deleted(slug: com.histmersion.api.research.Article.Slug, deleted: Deleted.Value) derives KindlingsCodecAsObject, KindlingsSchema, com.histmersion.api.json.Schema
 
@@ -663,10 +663,10 @@ object Article:
     val Places: _root_.com.histmersion.api.library.Filter.Places.type = _root_.com.histmersion.api.library.Filter.Places
     type Authors = com.histmersion.api.library.Filter.Authors
     val Authors: _root_.com.histmersion.api.library.Filter.Authors.type = _root_.com.histmersion.api.library.Filter.Authors
-    type From = com.histmersion.api.library.Filter.YearFrom
-    val From: _root_.com.histmersion.api.library.Filter.YearFrom.type = _root_.com.histmersion.api.library.Filter.YearFrom
-    type To = com.histmersion.api.library.Filter.YearTo
-    val To: _root_.com.histmersion.api.library.Filter.YearTo.type = _root_.com.histmersion.api.library.Filter.YearTo
+    type From = com.histmersion.api.catalogue.Year
+    val From: _root_.com.histmersion.api.catalogue.Year.type = _root_.com.histmersion.api.catalogue.Year
+    type To = com.histmersion.api.catalogue.Year
+    val To: _root_.com.histmersion.api.catalogue.Year.type = _root_.com.histmersion.api.catalogue.Year
     type ExtraQueries = ExtraQueries.T
     object ExtraQueries extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 

@@ -15,36 +15,17 @@ object Critiques:
   object Prompt extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type ReasonedLimit = ReasonedLimit.T
   object ReasonedLimit extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type RefCount = RefCount.T
-  object RefCount extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type Refs = Refs.T
-  object Refs extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type Summary = Summary.T
   object Summary extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
 
-  type Kinds = KindsValue
-  type KindsValue = com.histmersion.api.research.CritiquePair.Kinds
-  val KindsValue: _root_.com.histmersion.api.research.CritiquePair.Kinds.type = _root_.com.histmersion.api.research.CritiquePair.Kinds
-  type OlderFirstKinds = com.histmersion.api.research.CritiquePair.Kinds
-  val OlderFirstKinds: _root_.com.histmersion.api.research.CritiquePair.Kinds.type = _root_.com.histmersion.api.research.CritiquePair.Kinds
-  type ParagraphsResult = _root_.com.histmersion.api.research.Critiques.Block.Text
-  val ParagraphsResult: _root_.com.histmersion.api.research.Critiques.Block.Text.type = _root_.com.histmersion.api.research.Critiques.Block.Text
-  type ParagraphsBody = String
-  type BuildBody = String
-  type TogetherBody = String
-  type MethodPartResult = com.histmersion.api.research.Critiques.Method
-  val MethodPartResult: _root_.com.histmersion.api.research.Critiques.Method.type = _root_.com.histmersion.api.research.Critiques.Method
-  type MarkdownResult = com.histmersion.api.research.Critiques.Markdown
-  val MarkdownResult: _root_.com.histmersion.api.research.Critiques.Markdown.type = _root_.com.histmersion.api.research.Critiques.Markdown
+  val Kinds: List[com.histmersion.api.library.Edge.Kind.Wire] = List(_root_.com.histmersion.api.library.Edge.Kind.Challenges, _root_.com.histmersion.api.library.Edge.Kind.Refutes, _root_.com.histmersion.api.library.Edge.Kind.Updates, _root_.com.histmersion.api.library.Edge.Kind.SupersededBy).map(_root_.com.histmersion.api.library.Edge.Kind.wireOf)
 
-  val Kinds: List[com.histmersion.api.research.Critiques.Kinds] = Article.Coverage.DisagreementKinds
-
-  def olderFirst(kinds: List[com.histmersion.api.research.CritiquePair.Kinds]): Boolean = (kinds.nonEmpty && kinds.forall(_ == _root_.com.histmersion.api.research.CritiquePair.Kinds("superseded_by")))
+  def olderFirst(kinds: List[com.histmersion.api.research.CritiquePair.Kinds]): Boolean = (kinds.nonEmpty && kinds.forall(k => (k).value == "superseded_by"))
 
   private val ListItem = "^([-*+]|\\d+[.)])\\s+.*".r
 
-  def paragraphs(body: com.histmersion.api.research.Critiques.ParagraphsBody): List[com.histmersion.api.research.Critiques.ParagraphsResult] = units(body).map(_.text)
+  def paragraphs(body: com.histmersion.api.research.Article.Body): List[com.histmersion.api.research.Critiques.Block.Text] = units(body).map(_.text)
 
   final case class Block(from: Block.From, to: Block.To, text: Block.Text)
 
@@ -53,11 +34,11 @@ object Critiques:
     object From extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
     type To = To.T
     object To extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
-    type Text = Text.T
-    object Text extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Text = com.histmersion.api.text.WikiLinks.Body
+    val Text: _root_.com.histmersion.api.text.WikiLinks.Body.type = _root_.com.histmersion.api.text.WikiLinks.Body
 
-  def units(body: String): List[Block] =
-    val lines = (body).replace("\r\n", "\n").split("\n", -1).toVector
+  def units(body: com.histmersion.api.research.Article.Body): List[Block] =
+    val lines = (body).value.replace("\r\n", "\n").split("\n", -1).toVector
     val skip = notUsedLines(lines)
     val out = List.newBuilder[Block]
     val cur = new StringBuilder()
@@ -98,27 +79,27 @@ object Critiques:
         ((i until (if end < 0 then lines.size else end)).toSet).map(refactorValue => (refactorValue))
 
   def build(
-      body: com.histmersion.api.research.Critiques.BuildBody,
-      resolve: com.histmersion.api.library.Citekey => Option[com.histmersion.api.library.Citekey],
+      body: com.histmersion.api.research.Article.Body,
+      resolve: com.histmersion.api.research.Article.Link.Target => Option[com.histmersion.api.library.Citekey],
       edges: List[Coverage.Edge],
       reasons: List[CritiqueReason],
-      refs: com.histmersion.api.research.Critiques.Block.Text => Option[(com.histmersion.api.research.Critiques.Refs, Option[com.histmersion.api.research.Critiques.RefCount])] = _ => None
+      refs: com.histmersion.api.library.Citekey => Option[(com.histmersion.api.library.Title, Option[com.histmersion.api.catalogue.Year])] = _ => None
   ): List[CritiquePair] =
     val units = paragraphs(body).map(p => Article.Links.targets(p).flatMap(resolve).toSet)
     val cited = units.flatten.toSet
     val mentions = units.flatMap(_.toList).groupBy(identity).view.mapValues(_.size).toMap
     def side(ck: com.histmersion.api.library.Citekey) =
       val r = refs(ck)
-      CritiqueSide(ck, r.map(_._1), r.flatMap(_._2), cited(ck), mentions.getOrElse(ck, 0))
+      CritiqueSide(ck, r.map(_._1), r.flatMap(_._2), _root_.com.histmersion.api.research.CritiqueSide.Cited(cited(ck)), _root_.com.histmersion.api.research.CritiqueSide.Mentions(mentions.getOrElse(ck, 0)))
     edges
       .filter(e => Kinds.contains(e.kind) && e.from != e.to && (cited(e.from) || cited(e.to)))
       .groupBy(e => (e.from, e.to))
       .toList
-      .sortBy(_._1)
+      .sortBy(k => ((k._1._1).value, (k._1._2).value))
       .map { case ((src, dst), es) =>
         val ref = CritiqueRef(src, dst)
         val together = units.exists(u => u(src) && u(dst))
-        val stored = reasons.find(r => r.ref.same(ref) && r.reason.trim.nonEmpty)
+        val stored = reasons.find(r => r.ref.same(ref) && (r.reason).value.trim.nonEmpty)
         val state =
           if together then CritiqueState.Addressed
           else if stored.isDefined then CritiqueState.Reasoned
@@ -137,7 +118,7 @@ object Critiques:
 
   def count(pairs: List[CritiquePair], s: CritiqueState): com.histmersion.api.research.Critiques.Count = _root_.com.histmersion.api.research.Critiques.Count(pairs.count(_.state == s))
 
-  def together(body: com.histmersion.api.research.Critiques.TogetherBody, r: CritiqueRef, resolve: com.histmersion.api.library.Citekey => Option[com.histmersion.api.library.Citekey]): Boolean =
+  def together(body: com.histmersion.api.research.Article.Body, r: CritiqueRef, resolve: com.histmersion.api.research.Article.Link.Target => Option[com.histmersion.api.library.Citekey]): Boolean =
     units(body).exists { u =>
       val cks = Article.Links.targets(u.text).flatMap(resolve).toSet
       cks(r.src) && cks(r.dst)
@@ -145,18 +126,19 @@ object Critiques:
 
   def ranked(pairs: List[CritiquePair]): List[CritiquePair] =
     def tier(p: CritiquePair) =
-      if !((p.critic.cited) == _root_.com.histmersion.api.research.CritiqueSide.Cited(true)) && ((p.criticised.cited) == _root_.com.histmersion.api.research.CritiqueSide.Cited(true)) then 0 else if ((p.critic.cited) == _root_.com.histmersion.api.research.CritiqueSide.Cited(true)) && ((p.criticised.cited) == _root_.com.histmersion.api.research.CritiqueSide.Cited(true)) then 1 else 2
+      if !(p.critic.cited).value && (p.criticised.cited).value then 0 else if (p.critic.cited).value && (p.criticised.cited).value then 1 else 2
     def kind(p: CritiquePair) = p.kinds
-      .map {
-        case "refutes" | "superseded_by" => 0
-        case "challenges"                => 1
-        case _                           => 2
+      .map { k =>
+        (k).value match
+          case "refutes" | "superseded_by" => 0
+          case "challenges"                => 1
+          case _                           => 2
       }
       .minOption
       .getOrElse(3)
     pairs
       .filter((refactorCallback2 => ((refactorCallback2.open) == (true))))
-      .sortBy(p => (tier(p), kind(p), -((p.src.mentions).value + p.dst.mentions), p.src.citekey, p.dst.citekey))
+      .sortBy(p => (tier(p), kind(p), -((p.src.mentions).value + (p.dst.mentions).value), (p.src.citekey).value, (p.dst.citekey).value))
 
   def summary(pairs: List[CritiquePair]): com.histmersion.api.research.Critiques.Summary =
     _root_.com.histmersion.api.research.Critiques.Summary(s"${Plural.count(_root_.com.histmersion.api.Plural.CountN((pairs.size).toLong), _root_.com.histmersion.api.Plural.CountSingular("pair"))} — ${count(pairs, CritiqueState.Addressed)} addressed, " +
@@ -167,9 +149,10 @@ object Critiques:
 
   private def sideText(s: CritiqueSide): String =
     val meta = (s.year.map(_.toString).toList ++ s.title
+      .map(_.value)
       .map(t => "\"" + (if t.length > 90 then t.take(89).trim + "…" else t) + "\"")
       .toList)
-    val cited = if ((s.cited) == _root_.com.histmersion.api.research.CritiqueSide.Cited(true)) then "cited" else "not cited"
+    val cited = if (s.cited).value then "cited" else "not cited"
     (s"[[${s.citekey}]] (${(meta :+ cited).mkString(", ")})")
 
   def pairText(p: CritiquePair): String =
@@ -188,7 +171,7 @@ object Critiques:
       else
         "\n\nSet aside with a reason:\n\n" +
           reasoned
-            .map(p => s"- ${p.line} — ${p.reason.getOrElse("")}${p.reasonBy.fold("")(b => s" _(by $b)_")}")
+            .map(p => s"- ${p.line} — ${p.reason.fold("")(r => (r).value)}${p.reasonBy.fold("")(b => s" _(by $b)_")}")
             .mkString("\n")
       _root_.com.histmersion.api.research.Critiques.Markdown(s"### Disagreements checked\n\n${summary(pairs)} (a pair is addressed when both sources are cited in one paragraph)." +
         openPart + reasonPart)
@@ -229,7 +212,7 @@ object Critiques:
           "\n\nSet aside with a stored reason (not open; challenge a wrong reason as a finding, with the record's sentence):\n" +
             reasoned
               .take(math.max(0, (maxReasoned).value))
-              .map(p => s"- ${p.ref.wire}: ${p.reason.getOrElse("").take(200)}")
+              .map(p => s"- ${p.ref.wire}: ${p.reason.fold("")(r => (r).value).take(200)}")
               .mkString("\n") +
             (if reasoned.size > (maxReasoned).value then s"\n(+${reasoned.size - (maxReasoned).value} more)" else "")
       (_root_.com.histmersion.api.research.Critiques.Prompt(s"${summary(pairs)}.\n\n$openPart$reasonPart"), shown)

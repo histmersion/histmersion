@@ -29,23 +29,6 @@ object Acquire:
   object YearGap extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
 
-  type CitekeyYear = _root_.com.histmersion.api.catalogue.Year
-  val CitekeyYear: _root_.com.histmersion.api.catalogue.Year.type = _root_.com.histmersion.api.catalogue.Year
-  type LegacyCitekeyAuthors = _root_.com.histmersion.api.library.AuthorName
-  val LegacyCitekeyAuthors: _root_.com.histmersion.api.library.AuthorName.type = _root_.com.histmersion.api.library.AuthorName
-  type LegacyCitekeyTitle = _root_.com.histmersion.api.library.Title
-  val LegacyCitekeyTitle: _root_.com.histmersion.api.library.Title.type = _root_.com.histmersion.api.library.Title
-  type CitekeyCandidatesAuthors = _root_.com.histmersion.api.library.AuthorName
-  val CitekeyCandidatesAuthors: _root_.com.histmersion.api.library.AuthorName.type = _root_.com.histmersion.api.library.AuthorName
-  type CitekeyCandidatesYear = _root_.com.histmersion.api.catalogue.Year
-  val CitekeyCandidatesYear: _root_.com.histmersion.api.catalogue.Year.type = _root_.com.histmersion.api.catalogue.Year
-  type CitekeyCandidatesTitle = _root_.com.histmersion.api.library.Title
-  val CitekeyCandidatesTitle: _root_.com.histmersion.api.library.Title.type = _root_.com.histmersion.api.library.Title
-  type StatusForVerdict = _root_.com.histmersion.api.library.Assessment.Verdict
-  val StatusForVerdict: _root_.com.histmersion.api.library.Assessment.Verdict.type = _root_.com.histmersion.api.library.Assessment.Verdict
-  type StatusDecisionVerdict = _root_.com.histmersion.api.library.Acquire.StatusForVerdict
-  val StatusDecisionVerdict: _root_.com.histmersion.api.library.Acquire.StatusForVerdict.type = _root_.com.histmersion.api.library.Acquire.StatusForVerdict
-
   private val Stop = Set("the", "a", "an", "of", "on", "and", "in", "to", "for", "study", "new")
 
   val MinCitekeyYear = 1000
@@ -53,13 +36,13 @@ object Acquire:
   /** Follows the convention every existing key uses (`drews1993_collapse`, `haak2015_massive`), so a re-ingest of a
     * stored paper lands on its existing citekey instead of a duplicate.
     */
-  def citekey(authors: List[com.histmersion.api.library.AuthorName], year: Option[com.histmersion.api.library.Acquire.CitekeyYear], title: Option[com.histmersion.api.library.Title]): com.histmersion.api.library.Citekey =
-    legacyCitekey(authors.map(LatinFold.fold), year, title.map(LatinFold.fold))
+  def citekey(authors: List[com.histmersion.api.library.AuthorName], year: Option[com.histmersion.api.catalogue.Year], title: Option[com.histmersion.api.library.Title]): com.histmersion.api.library.Citekey =
+    legacyCitekey(authors.map(a => _root_.com.histmersion.api.library.AuthorName(LatinFold.fold((a).value))), year, title.map(t => _root_.com.histmersion.api.library.Title(LatinFold.fold((t).value))))
 
   /** Records created before accented letters were folded keep keys that dropped them (`gterbock1938`), so a lookup by
     * generated key tries this form too.
     */
-  def legacyCitekey(authors: List[com.histmersion.api.library.Acquire.LegacyCitekeyAuthors], year: Option[com.histmersion.api.catalogue.Year], title: Option[com.histmersion.api.library.Acquire.LegacyCitekeyTitle]): com.histmersion.api.library.Citekey =
+  def legacyCitekey(authors: List[com.histmersion.api.library.AuthorName], year: Option[com.histmersion.api.catalogue.Year], title: Option[com.histmersion.api.library.Title]): com.histmersion.api.library.Citekey =
     val first = authors.map((_).value.trim).find(_.nonEmpty)
     val surname = first
       .map { a =>
@@ -70,26 +53,26 @@ object Acquire:
       .filter(_.nonEmpty)
       .getOrElse("anon")
     // Calibre's "no date" is 0101-01-01: a year below 1000 is a placeholder, not a publication year
-    val yr = year.filter(_ >= MinCitekeyYear).map(_.toString).getOrElse("nd")
+    val yr = year.filter(y => (y).value >= MinCitekeyYear).map(y => (y).value.toString).getOrElse("nd")
     val word = """[A-Za-z]+""".r
-      .findAllIn(title.getOrElse(""))
+      .findAllIn(title.fold("")(t => (t).value))
       .map(_.toLowerCase)
       .find(w => w.length > 3 && !Stop.contains(w))
-    s"$surname$yr" + word.fold("")("_" + _)
+    _root_.com.histmersion.api.library.Citekey(s"$surname$yr" + word.fold("")("_" + _))
 
-  def citekeyCandidates(authors: List[com.histmersion.api.library.Acquire.CitekeyCandidatesAuthors], year: Option[com.histmersion.api.library.Acquire.CitekeyCandidatesYear], title: Option[com.histmersion.api.library.Acquire.CitekeyCandidatesTitle]): List[com.histmersion.api.library.Citekey] =
+  def citekeyCandidates(authors: List[com.histmersion.api.library.AuthorName], year: Option[com.histmersion.api.catalogue.Year], title: Option[com.histmersion.api.library.Title]): List[com.histmersion.api.library.Citekey] =
     List(citekey(authors, year, title), legacyCitekey(authors, year, title)).distinct
 
   object Verdicts:
-    type Wire = Wire.T
-    object Wire extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Wire = com.histmersion.api.library.Assessment.Verdict
+    val Wire: _root_.com.histmersion.api.library.Assessment.Verdict.type = _root_.com.histmersion.api.library.Assessment.Verdict
 
-    val Retracted = "retracted"
-    val Corrected = "corrected"
-    val Current = "current"
-    val LowImpact = "low-impact"
-    val Unassessed = "unassessed"
-    val all: List[com.histmersion.api.library.Acquire.Verdicts.Wire] = List(_root_.com.histmersion.api.library.Acquire.Verdicts.Wire(Retracted), _root_.com.histmersion.api.library.Acquire.Verdicts.Wire(Corrected), _root_.com.histmersion.api.library.Acquire.Verdicts.Wire(Current), _root_.com.histmersion.api.library.Acquire.Verdicts.Wire(LowImpact), _root_.com.histmersion.api.library.Acquire.Verdicts.Wire(Unassessed))
+    val Retracted: Wire = Wire("retracted")
+    val Corrected: Wire = Wire("corrected")
+    val Current: Wire = Wire("current")
+    val LowImpact: Wire = Wire("low-impact")
+    val Unassessed: Wire = Wire("unassessed")
+    val all: List[Wire] = List(Retracted, Corrected, Current, LowImpact, Unassessed)
 
   private val RetractingUpdate = Set("retraction", "withdrawal", "removal")
   private val CorrectingUpdate =
@@ -104,7 +87,7 @@ object Acquire:
       "partial retraction"
     )
 
-  private def isRetractingNature(n: com.histmersion.api.library.Acquire.RetractionRow.Nature): Boolean =
+  private def isRetractingNature(n: com.histmersion.api.library.RetractionNotice.Nature): Boolean =
     val s = (n).value.toLowerCase
     (s.contains("retraction") && !s.contains("reinstatement") || s.contains("withdrawal"))
 
@@ -118,17 +101,17 @@ object Acquire:
       lowCitedAt: com.histmersion.api.library.Acquire.CitationThreshold,
       staleBefore: com.histmersion.api.catalogue.Year
   ): com.histmersion.api.library.Acquire.Verdicts.Wire =
-    val kinds = updates.flatMap(_.kind).map(_.trim.toLowerCase)
-    if ((openalexRetracted) == (true)) || retractions.exists(r => r.nature.exists(isRetractingNature)) ||
+    val kinds = updates.flatMap(_.kind).map(_.value.trim.toLowerCase)
+    if openalexRetracted || retractions.exists(r => r.nature.exists(isRetractingNature)) ||
       kinds.exists(RetractingUpdate.contains)
-    then _root_.com.histmersion.api.library.Acquire.Verdicts.Wire(Verdicts.Retracted)
-    else if retractions.nonEmpty || kinds.exists(CorrectingUpdate.contains) then _root_.com.histmersion.api.library.Acquire.Verdicts.Wire(Verdicts.Corrected)
+    then Verdicts.Retracted
+    else if retractions.nonEmpty || kinds.exists(CorrectingUpdate.contains) then Verdicts.Corrected
     else
       citedByCount match
-        case None                                                      => _root_.com.histmersion.api.library.Acquire.Verdicts.Wire(Verdicts.Unassessed)
-        case Some(c) if c >= wellCitedAt                               => _root_.com.histmersion.api.library.Acquire.Verdicts.Wire(Verdicts.Current)
-        case Some(c) if (c).value < (lowCitedAt).value && year.exists((_).value < staleBefore) => _root_.com.histmersion.api.library.Acquire.Verdicts.Wire(Verdicts.LowImpact)
-        case Some(_)                                                   => _root_.com.histmersion.api.library.Acquire.Verdicts.Wire(Verdicts.Current)
+        case None                                                      => Verdicts.Unassessed
+        case Some(c) if (c).value >= (wellCitedAt).value               => Verdicts.Current
+        case Some(c) if (c).value < (lowCitedAt).value && year.exists(y => (y).value < (staleBefore).value) => Verdicts.LowImpact
+        case Some(_)                                                   => Verdicts.Current
 
   /** Some publishers answer scripts with a 403, an empty file or a challenge, so an open-access work they host is
     * downloaded in the browser, under its licence.
@@ -139,11 +122,11 @@ object Acquire:
     Option.when(((work.isOa) == _root_.com.histmersion.api.library.Source.Candidate.IsOa(true))) {
       val who = work.authors.map(_.value).headOption.map(a => if work.authors.map(_.value).size > 1 then s"$a et al." else a)
       val head = List(who, work.year.map(_.value.toInt).map(y => s"($y)")).flatten.mkString(" ")
-      val title = work.title.map(_.value).map(_.trim).filter(_.nonEmpty).getOrElse(doi)
-      val oa = work.oaStatus.map(_.trim.toLowerCase).filter(_.nonEmpty).fold("open access")(s => s"$s open access")
+      val title = work.title.map(_.value).map(_.trim).filter(_.nonEmpty).getOrElse((doi).value)
+      val oa = work.oaStatus.map(_.value.trim.toLowerCase).filter(_.nonEmpty).fold("open access")(s => s"$s open access")
       val at = work.oaUrl
-        .map(_.trim)
-        .filter(u => u.nonEmpty && !u.toLowerCase.contains(doi.toLowerCase))
+        .map(_.value.trim)
+        .filter(u => u.nonEmpty && !u.toLowerCase.contains((doi).value.toLowerCase))
         .fold("")(u => s" at $u")
       val said = refusals.map((_).value.trim).filter(_.nonEmpty).distinct.mkString("; ")
       _root_.com.histmersion.api.library.Acquire.Outcome(s"${if head.isEmpty then "" else s"$head. "}$title. https://doi.org/$doi — $oa$at, but no script may download " +
@@ -152,7 +135,7 @@ object Acquire:
           }, then histmersion ingest <file> --citekey $citekey")
     }
 
-  def flagged(verdict: com.histmersion.api.library.Acquire.Verdicts.Wire): Boolean = (verdict == _root_.com.histmersion.api.library.Acquire.Verdicts.Wire(Verdicts.Retracted) || verdict == _root_.com.histmersion.api.library.Acquire.Verdicts.Wire(Verdicts.Corrected))
+  def flagged(verdict: com.histmersion.api.library.Acquire.Verdicts.Wire): Boolean = (verdict == Verdicts.Retracted || verdict == Verdicts.Corrected)
 
   def recommendation(verdict: com.histmersion.api.library.Acquire.Verdicts.Wire, citedByCount: Option[com.histmersion.api.library.Acquire.CitedByCount]): com.histmersion.api.library.Acquire.Recommendation =
     val cited = citedByCount.fold("no citation data")(c => s"$c citation(s)")
@@ -165,19 +148,19 @@ object Acquire:
       case Verdicts.LowImpact => _root_.com.histmersion.api.library.Acquire.Recommendation(s"REVIEW — old and rarely cited ($cited); keep only if it is directly on topic")
       case _                  => _root_.com.histmersion.api.library.Acquire.Recommendation(s"UNASSESSED — $cited; judge relevance to the topic by hand")
 
-  def statusFor(verdict: com.histmersion.api.library.Acquire.StatusForVerdict): Option[com.histmersion.api.library.Source.Status] = verdict match
+  def statusFor(verdict: com.histmersion.api.library.Acquire.Verdicts.Wire): Option[com.histmersion.api.library.Source.Status] = verdict match
     case Verdicts.Retracted => Some(com.histmersion.api.library.Source.Status.Retracted)
     case Verdicts.Corrected => Some(com.histmersion.api.library.Source.Status.Contested)
     case Verdicts.Current   => Some(com.histmersion.api.library.Source.Status.Current)
     case _                  => None
 
   def statusDecision(
-      verdict: com.histmersion.api.library.Acquire.StatusDecisionVerdict,
+      verdict: com.histmersion.api.library.Acquire.Verdicts.Wire,
       current: com.histmersion.api.library.Source.Status,
       force: Boolean
   ): Option[Either[com.histmersion.api.library.Source.Status, com.histmersion.api.library.Source.Status]] =
     statusFor(verdict).map { target =>
-      if target == com.histmersion.api.library.Source.Status.Retracted || ((force) == (true)) || current == com.histmersion.api.library.Source.Status.Unassessed || current == target
+      if target == com.histmersion.api.library.Source.Status.Retracted || force || current == com.histmersion.api.library.Source.Status.Unassessed || current == target
       then Right(target)
       else Left(current)
     }
@@ -261,19 +244,19 @@ object Acquire:
 
   def rankFollowups(rows: List[FollowupRow]): List[FollowupRow] =
     rows.sortBy { r =>
-      val strong = r.intents.map(_.toLowerCase).exists(i => i == "result" || i == "methodology")
-      (if ((r.isInfluential) == _root_.com.histmersion.api.library.FollowupRow.IsInfluential(true)) then 0 else 1, if strong then 0 else 1, -r.year.getOrElse(0))
+      val strong = r.intents.map(_.value.toLowerCase).exists(i => i == "result" || i == "methodology")
+      (if (r.isInfluential).value then 0 else 1, if strong then 0 else 1, -r.year.fold(0L)(y => (y).value))
     }
 
   final case class RetractionRow(doi: com.histmersion.api.library.Doi, reason: Option[RetractionRow.Reason], date: Option[RetractionRow.Date], nature: Option[RetractionRow.Nature])
 
   object RetractionRow:
-    type Reason = Reason.T
-    object Reason extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-    type Date = Date.T
-    object Date extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-    type Nature = Nature.T
-    object Nature extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Reason = com.histmersion.api.library.RetractionNotice.Reason
+    val Reason: _root_.com.histmersion.api.library.RetractionNotice.Reason.type = _root_.com.histmersion.api.library.RetractionNotice.Reason
+    type Date = com.histmersion.api.library.RetractionNotice.Date
+    val Date: _root_.com.histmersion.api.library.RetractionNotice.Date.type = _root_.com.histmersion.api.library.RetractionNotice.Date
+    type Nature = com.histmersion.api.library.RetractionNotice.Nature
+    val Nature: _root_.com.histmersion.api.library.RetractionNotice.Nature.type = _root_.com.histmersion.api.library.RetractionNotice.Nature
 
   /** The export's `Reason` column is full of quoted commas and embedded newlines, so it needs a real CSV reader.
     * Columns are located by header name because their order has changed between exports, and the last row for a DOI
@@ -289,7 +272,7 @@ object Acquire:
           idx.get(name).flatMap(r.lift).map(_.trim).filter(_.nonEmpty)
         rows.flatMap { r =>
           col(r, "OriginalPaperDOI").map { doi =>
-            RetractionRow(doi, col(r, "Reason"), col(r, "RetractionDate"), col(r, "RetractionNature"))
+            RetractionRow(_root_.com.histmersion.api.library.Doi(doi), col(r, "Reason").map(x => RetractionRow.Reason(x)), col(r, "RetractionDate").map(x => RetractionRow.Date(x)), col(r, "RetractionNature").map(x => RetractionRow.Nature(x)))
           }
         }
 
@@ -417,8 +400,8 @@ object Acquire:
 
       type All = All.T
       object All extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
-      type UpTo = UpTo.T
-      object UpTo extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+      type UpTo = com.histmersion.api.Plural.Count
+      val UpTo: _root_.com.histmersion.api.Plural.Count.type = _root_.com.histmersion.api.Plural.Count
       type Since = Since.T
       object Since extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
       type By = By.T

@@ -6,70 +6,63 @@ object EventLeads:
   type LeadList = LeadList.T
   object LeadList extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
-  type SizeVei = _root_.com.histmersion.api.catalogue.LeadFacts.Vei
-  val SizeVei: _root_.com.histmersion.api.catalogue.LeadFacts.Vei.type = _root_.com.histmersion.api.catalogue.LeadFacts.Vei
-  type SizeMagnitude = _root_.com.histmersion.api.catalogue.LeadFacts.Magnitude
-  val SizeMagnitude: _root_.com.histmersion.api.catalogue.LeadFacts.Magnitude.type = _root_.com.histmersion.api.catalogue.LeadFacts.Magnitude
-  type ActionsLabel = _root_.com.histmersion.api.catalogue.LeadFacts.Label
-  val ActionsLabel: _root_.com.histmersion.api.catalogue.LeadFacts.Label.type = _root_.com.histmersion.api.catalogue.LeadFacts.Label
-  type ActionsProposed = _root_.com.histmersion.api.catalogue.LeadFacts.Proposed
-  val ActionsProposed: _root_.com.histmersion.api.catalogue.LeadFacts.Proposed.type = _root_.com.histmersion.api.catalogue.LeadFacts.Proposed
+  def years(ts: TimeSpan): EventLead.Years =
+    EventLead.Years(YearFmt.span(ts))
 
-  def years(ts: TimeSpan): String =
-    YearFmt.span(ts)
-
-  def size(vei: Option[com.histmersion.api.catalogue.EventLeads.SizeVei], magnitude: Option[com.histmersion.api.catalogue.EventLeads.SizeMagnitude]): Option[String] =
+  def size(vei: Option[com.histmersion.api.catalogue.LeadFacts.Vei], magnitude: Option[com.histmersion.api.catalogue.LeadFacts.Magnitude]): Option[String] =
     (vei
       .map(v => s"VEI $v")
       .orElse(magnitude.map(m => s"M ${BigDecimal((m).value).setScale(1, BigDecimal.RoundingMode.HALF_UP)}"))).map(refactorValue2 => (refactorValue2))
 
   private def q(s: String): String = ("\"" + (s).replace("\"", "'") + "\"")
 
-  def actions(eventId: com.histmersion.api.catalogue.Event.Id, label: com.histmersion.api.catalogue.EventLeads.ActionsLabel, yrs: String, proposed: com.histmersion.api.catalogue.EventLeads.ActionsProposed): List[EventLead.Action] =
+  def actions(eventId: com.histmersion.api.catalogue.Event.Id, label: EventLead.Label, yrs: EventLead.Years, proposed: com.histmersion.api.catalogue.LeadFacts.Proposed): List[EventLead.Action] =
     List(
       EventLead.Action(
         _root_.com.histmersion.api.catalogue.EventLead.Action.Kind("discover"),
         _root_.com.histmersion.api.catalogue.EventLead.Action.Label("search the literature"),
-        s"histmersion discover search ${q(label)} --not-in-db",
-        Some(label)
+        _root_.com.histmersion.api.catalogue.EventLead.Action.Command(s"histmersion discover search ${q(label.value)} --not-in-db"),
+        Some(_root_.com.histmersion.api.catalogue.EventLead.Action.Query(label.value))
       ),
       EventLead.Action(
         _root_.com.histmersion.api.catalogue.EventLead.Action.Kind("acquire"),
         _root_.com.histmersion.api.catalogue.EventLead.Action.Label("add to the acquire queue"),
-        _root_.com.histmersion.api.catalogue.EventLead.Action.Command(s"histmersion queue acquire add ${q((s"literature on $label ($yrs)"))} --topic events")
+        _root_.com.histmersion.api.catalogue.EventLead.Action.Command(s"histmersion queue acquire add ${q((s"literature on ${label.value} ($yrs)"))} --topic events")
       ),
-      EventLead.Action(_root_.com.histmersion.api.catalogue.EventLead.Action.Kind("goal"), _root_.com.histmersion.api.catalogue.EventLead.Action.Label("link to a goal"), s"histmersion goals link <goal> --query ${q(label)}", Some(label))
+      EventLead.Action(_root_.com.histmersion.api.catalogue.EventLead.Action.Kind("goal"), _root_.com.histmersion.api.catalogue.EventLead.Action.Label("link to a goal"), _root_.com.histmersion.api.catalogue.EventLead.Action.Command(s"histmersion goals link <goal> --query ${q(label.value)}"), Some(_root_.com.histmersion.api.catalogue.EventLead.Action.Query(label.value)))
     ) ++
       Option
-        .when(proposed > 0)(
-          EventLead.Action("confirm", "review the proposed sources", s"histmersion events links $eventId")
+        .when(proposed.value > 0)(
+          EventLead.Action(_root_.com.histmersion.api.catalogue.EventLead.Action.Kind("confirm"), _root_.com.histmersion.api.catalogue.EventLead.Action.Label("review the proposed sources"), _root_.com.histmersion.api.catalogue.EventLead.Action.Command(s"histmersion events links $eventId"))
         )
         .toList
 
   def of(f: LeadFacts): Option[EventLead] =
     if f.tier != _root_.com.histmersion.api.catalogue.LeadFacts.Tier(EventTier.Catalogue) || (f.attesting).value > 0 then None
     else
-      val k = EventTaxonomy.of(f.kind).label
+      val kind = _root_.com.histmersion.api.catalogue.EventSummary.Kind(f.kind.value)
+      val label = EventLead.Label(f.label.value)
+      val k = EventTaxonomy.of(kind).label.value
       val yrs = years(f.timeSpan)
       val sized = size(f.vei, f.magnitude).fold(k)(s => s"$s $k")
       val around =
-        s"${Plural.count(f.findingsNear, _root_.com.histmersion.api.Plural.CountSingular("finding"))} in the corpus within ${math.round(f.km)} km and ±${f.years} years"
+        s"${Plural.count(_root_.com.histmersion.api.Plural.CountN(f.findingsNear.value.toLong), _root_.com.histmersion.api.Plural.CountSingular("finding"))} in the corpus within ${math.round(f.km.value)} km and ±${f.years} years"
       val text =
         if (f.proposed).value > 0 then
-          s"No source in the corpus is confirmed to discuss this $sized ($yrs) — ${Plural.count(f.proposed, _root_.com.histmersion.api.Plural.CountSingular("source"))} " +
+          s"No source in the corpus is confirmed to discuss this $sized ($yrs) — ${Plural.count(_root_.com.histmersion.api.Plural.CountN(f.proposed.value.toLong), _root_.com.histmersion.api.Plural.CountSingular("source"))} " +
             s"possibly discuss it (unconfirmed); $around"
         else s"No source in the corpus discusses this $sized ($yrs) — $around"
       Some(
         EventLead(
           f.eventId,
-          f.label,
-          EventTaxonomy.canonical(f.kind),
-          f.tier,
+          label,
+          EventLead.Kind(EventTaxonomy.canonical(kind).value),
+          EventLead.Tier(f.tier.value),
           yrs,
-          text,
-          actions(f.eventId, f.label, ((yrs)), f.proposed),
-          f.findingsNear,
-          f.proposed
+          EventLead.Text(text),
+          actions(f.eventId, label, yrs, f.proposed),
+          EventLead.FindingsNear(f.findingsNear.value),
+          EventLead.Candidates(f.proposed.value)
         )
       )
 

@@ -6,8 +6,6 @@ import com.histmersion.api.Plural
 import com.histmersion.api.given
 
 object Stalls:
-  type IdleThreshold = IdleThreshold.T
-  object IdleThreshold extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type Limit = Limit.T
   object Limit extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
@@ -30,9 +28,8 @@ object Stalls:
         KindlingsSchema, com.histmersion.api.json.Schema
 
   object Stall:
-    type Slug = Slug.T
-    object Slug extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]:
-      given _root_.scala.math.Ordering[T] = _root_.scala.math.Ordering.by[T, _root_.java.lang.String](_.value)
+    type Slug = com.histmersion.api.automation.Stalls.Facts.Slug
+    val Slug: _root_.com.histmersion.api.automation.Stalls.Facts.Slug.type = _root_.com.histmersion.api.automation.Stalls.Facts.Slug
     type Title = com.histmersion.api.automation.Stalls.Facts.Title
     val Title: _root_.com.histmersion.api.automation.Stalls.Facts.Title.type = _root_.com.histmersion.api.automation.Stalls.Facts.Title
     type Status = com.histmersion.api.automation.Stalls.Facts.Status
@@ -106,7 +103,7 @@ object Stalls:
       status: Facts.Status = _root_.com.histmersion.api.automation.Stalls.Facts.Status(""),
       lastProgress: Option[Facts.LastProgress] = None,
       idleDays: Option[Facts.IdleDays] = None,
-      approvals: List[(Facts.ApprovalsPart1, Facts.ApprovalsPart2)] = Nil,
+      approvals: List[(Facts.ApprovalId, Facts.ApprovalKind)] = Nil,
       personHeld: Facts.PersonHeld = _root_.com.histmersion.api.automation.Stalls.Facts.PersonHeld(0),
       paused: List[Facts.Paused] = Nil,
       draining: Facts.Draining = _root_.com.histmersion.api.automation.Stalls.Facts.Draining(false),
@@ -119,10 +116,6 @@ object Stalls:
   )
 
   object Facts:
-    type ApprovalsAt = ApprovalsAt.T
-    object ApprovalsAt extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
-    type ApprovalsNote = ApprovalsNote.T
-    object ApprovalsNote extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
     type Slug = com.histmersion.api.research.ReviewGoal.Slug
     val Slug: _root_.com.histmersion.api.research.ReviewGoal.Slug.type = _root_.com.histmersion.api.research.ReviewGoal.Slug
     type Title = Title.T
@@ -133,11 +126,11 @@ object Stalls:
     object LastProgress extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
     type IdleDays = IdleDays.T
     object IdleDays extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
-    type ApprovalsPart1 = ApprovalsPart1.T
-    object ApprovalsPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]:
+    type ApprovalId = ApprovalId.T
+    object ApprovalId extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]:
       given _root_.scala.math.Ordering[T] = _root_.scala.math.Ordering.by[T, _root_.scala.Long](_.value)
-    type ApprovalsPart2 = com.histmersion.api.automation.Stalls.Facts.ApprovalsNote
-    val ApprovalsPart2: _root_.com.histmersion.api.automation.Stalls.Facts.ApprovalsNote.type = _root_.com.histmersion.api.automation.Stalls.Facts.ApprovalsNote
+    type ApprovalKind = ApprovalKind.T
+    object ApprovalKind extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
     type PersonHeld = PersonHeld.T
     object PersonHeld extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
     type Paused = Paused.T
@@ -155,56 +148,56 @@ object Stalls:
     type Running = Running.T
     object Running extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
-  def stalled(f: Facts, days: com.histmersion.api.automation.Stalls.IdleThreshold): Boolean = f.idleDays.forall(_ >= math.max(0, (days).value))
+  def stalled(f: Facts, days: com.histmersion.api.automation.Stalls.ReportDays): Boolean = f.idleDays.forall(_.value >= math.max(0, days.value))
 
-  def classify(f: Facts): (com.histmersion.api.automation.Stalls.Stall.Code, com.histmersion.api.automation.Stalls.Stall.Action, com.histmersion.api.automation.Stalls.Stall.Why) =
+  def classify(f: Facts): (com.histmersion.api.automation.Stalls.Stall.Code, com.histmersion.api.automation.Stalls.Stall.Why, com.histmersion.api.automation.Stalls.Stall.Action) =
     val g = f.slug
-    def waitOf(p: SchedWait => Boolean) = f.waits.find({ val refactorFunction2 = p; (refactorValue2) => (refactorFunction2(refactorValue2)) })
+    def waitOf(p: SchedWait => Boolean) = f.waits.find(p)
     if ((f.draining) == _root_.com.histmersion.api.automation.Stalls.Facts.Draining(true)) then
-      (_root_.com.histmersion.api.automation.Stalls.Stall.Code(Code.Drain), _root_.com.histmersion.api.automation.Stalls.Stall.Action("the agents are draining: nothing new starts"), _root_.com.histmersion.api.automation.Stalls.Stall.Why("histmersion agent autopilot undrain"))
+      (_root_.com.histmersion.api.automation.Stalls.Stall.Code(Code.Drain), _root_.com.histmersion.api.automation.Stalls.Stall.Why("the agents are draining: nothing new starts"), _root_.com.histmersion.api.automation.Stalls.Stall.Action("histmersion agent autopilot undrain"))
     else if f.approvals.nonEmpty then
       val kinds =
         f.approvals.groupMapReduce(_._2)(_ => 1)(_ + _).toList.sortBy(-_._2).map((k, n) => s"$k $n").mkString(", ")
       (
         _root_.com.histmersion.api.automation.Stalls.Stall.Code(Code.Person),
-        _root_.com.histmersion.api.automation.Stalls.Stall.Action(s"waits for a person: ${Plural.count(_root_.com.histmersion.api.Plural.CountN((f.approvals.size).toLong), _root_.com.histmersion.api.Plural.CountSingular("open approval"))} ($kinds; oldest #${f.approvals.map(_._1).min})"),
-        _root_.com.histmersion.api.automation.Stalls.Stall.Why(s"histmersion agent decide-all approve --subject $g (or decide them one by one: histmersion agent approvals --subject $g)")
+        _root_.com.histmersion.api.automation.Stalls.Stall.Why(s"waits for a person: ${Plural.count(_root_.com.histmersion.api.Plural.CountN((f.approvals.size).toLong), _root_.com.histmersion.api.Plural.CountSingular("open approval"))} ($kinds; oldest #${f.approvals.map(_._1).min})"),
+        _root_.com.histmersion.api.automation.Stalls.Stall.Action(s"histmersion agent decide-all approve --subject $g (or decide them one by one: histmersion agent approvals --subject $g)")
       )
     else if (f.personHeld).value > 0 then
       (
         _root_.com.histmersion.api.automation.Stalls.Stall.Code(Code.Held),
-        s"${Plural.count(f.personHeld, _root_.com.histmersion.api.Plural.CountSingular("item"))} held by a person",
-        _root_.com.histmersion.api.automation.Stalls.Stall.Why(s"histmersion agent manager seed:$g items --status held, then release")
+        _root_.com.histmersion.api.automation.Stalls.Stall.Why(s"${Plural.count(_root_.com.histmersion.api.Plural.CountN(f.personHeld.value.toLong), _root_.com.histmersion.api.Plural.CountSingular("item"))} held by a person"),
+        _root_.com.histmersion.api.automation.Stalls.Stall.Action(s"histmersion agent manager seed:$g items --status held, then release")
       )
     else if f.paused.nonEmpty then
       (
         _root_.com.histmersion.api.automation.Stalls.Stall.Code(Code.Paused),
-        _root_.com.histmersion.api.automation.Stalls.Stall.Action(s"its managers are paused: ${f.paused.mkString(", ")}"),
-        _root_.com.histmersion.api.automation.Stalls.Stall.Why(s"histmersion agent manager ${f.paused.head} resume")
+        _root_.com.histmersion.api.automation.Stalls.Stall.Why(s"its managers are paused: ${f.paused.mkString(", ")}"),
+        _root_.com.histmersion.api.automation.Stalls.Stall.Action(s"histmersion agent manager ${f.paused.head} resume")
       )
     else
-      waitOf(w => w.code == _root_.com.histmersion.api.automation.Stalls.Stall.Code("blocked") && w.why.startsWith("budget")).orElse(waitOf((refactorCallback => (refactorCallback.code == _root_.com.histmersion.api.automation.Stalls.Stall.Code("budget"))))) match
+      waitOf(w => w.code == _root_.com.histmersion.api.automation.Stalls.Stall.Code("blocked") && w.why.value.startsWith("budget")).orElse(waitOf((refactorCallback => (refactorCallback.code == _root_.com.histmersion.api.automation.Stalls.Stall.Code("budget"))))) match
         case Some(w) =>
           (
             _root_.com.histmersion.api.automation.Stalls.Stall.Code(Code.Budget),
             w.why,
-            _root_.com.histmersion.api.automation.Stalls.Stall.Why("raise agents.budgets.daily-usd (or the manager's daily-usd), or wait for the next UTC day")
+            _root_.com.histmersion.api.automation.Stalls.Stall.Action("raise agents.budgets.daily-usd (or the manager's daily-usd), or wait for the next UTC day")
           )
         case None =>
-          waitOf(w => w.code == _root_.com.histmersion.api.automation.Stalls.Stall.Code("blocked") && w.why.startsWith("starved")).orElse(waitOf((refactorCallback => (refactorCallback.code == _root_.com.histmersion.api.automation.Stalls.Stall.Code("pool"))))) match
+          waitOf(w => w.code == _root_.com.histmersion.api.automation.Stalls.Stall.Code("blocked") && w.why.value.startsWith("starved")).orElse(waitOf((refactorCallback => (refactorCallback.code == _root_.com.histmersion.api.automation.Stalls.Stall.Code("pool"))))) match
             case Some(w) =>
               (
                 _root_.com.histmersion.api.automation.Stalls.Stall.Code(Code.Quota),
                 w.why,
-                _root_.com.histmersion.api.automation.Stalls.Stall.Why("histmersion agent quota (a plan below its floor frees at its reset); histmersion agent models")
+                _root_.com.histmersion.api.automation.Stalls.Stall.Action("histmersion agent quota (a plan below its floor frees at its reset); histmersion agent models")
               )
             case None =>
               waitOf(w => (w.code == _root_.com.histmersion.api.automation.Stalls.Stall.Code("capacity"))) match
                 case Some(w) =>
                   (
                     _root_.com.histmersion.api.automation.Stalls.Stall.Code(Code.Queue),
-                    _root_.com.histmersion.api.automation.Stalls.Stall.Action(s"waits in the scheduler's queue (#${w.position}): ${w.why}"),
-                    _root_.com.histmersion.api.automation.Stalls.Stall.Why(s"histmersion agent autopilot focus priority $g <n> (or pin it), or raise agents.max-concurrent-runs")
+                    _root_.com.histmersion.api.automation.Stalls.Stall.Why(s"waits in the scheduler's queue (#${w.position}): ${w.why}"),
+                    _root_.com.histmersion.api.automation.Stalls.Stall.Action(s"histmersion agent autopilot focus priority $g <n> (or pin it), or raise agents.max-concurrent-runs")
                   )
                 case None =>
                   waitOf((refactorCallback => (refactorCallback.code == _root_.com.histmersion.api.automation.Stalls.Stall.Code("blocked")))) match
@@ -212,35 +205,35 @@ object Stalls:
                       (
                         _root_.com.histmersion.api.automation.Stalls.Stall.Code(Code.Blocked),
                         w.why,
-                        _root_.com.histmersion.api.automation.Stalls.Stall.Why(s"histmersion agent scheduler why <item> (histmersion agent scheduler queue)")
+                        _root_.com.histmersion.api.automation.Stalls.Stall.Action(s"histmersion agent scheduler why <item> (histmersion agent scheduler queue)")
                       )
                     case None if (f.running).value > 0 =>
-                      (_root_.com.histmersion.api.automation.Stalls.Stall.Code(Code.Running), s"${Plural.count(f.running, _root_.com.histmersion.api.Plural.CountSingular("run"))} in flight", _root_.com.histmersion.api.automation.Stalls.Stall.Why("nothing: wait for it"))
+                      (_root_.com.histmersion.api.automation.Stalls.Stall.Code(Code.Running), _root_.com.histmersion.api.automation.Stalls.Stall.Why(s"${Plural.count(_root_.com.histmersion.api.Plural.CountN(f.running.value.toLong), _root_.com.histmersion.api.Plural.CountSingular("run"))} in flight"), _root_.com.histmersion.api.automation.Stalls.Stall.Action("nothing: wait for it"))
                     case None =>
                       f.lastStop match
                         case Some(o) =>
                           (
                             _root_.com.histmersion.api.automation.Stalls.Stall.Code(Code.Failed),
-                            s"its last item stopped: ${o.take(300)}",
-                            _root_.com.histmersion.api.automation.Stalls.Stall.Why(s"histmersion agent manager seed:$g items --status stopped; reopen it")
+                            _root_.com.histmersion.api.automation.Stalls.Stall.Why(s"its last item stopped: ${o.value.take(300)}"),
+                            _root_.com.histmersion.api.automation.Stalls.Stall.Action(s"histmersion agent manager seed:$g items --status stopped; reopen it")
                           )
                         case None if ((f.noCandidates) == _root_.com.histmersion.api.automation.Stalls.Facts.NoCandidates(true)) && f.sources == _root_.com.histmersion.api.automation.Stalls.Facts.Sources(0) =>
                           (
                             _root_.com.histmersion.api.automation.Stalls.Stall.Code(Code.NoCandidates),
-                            _root_.com.histmersion.api.automation.Stalls.Stall.Action("its candidate sweep found nothing new and it has no source"),
-                            _root_.com.histmersion.api.automation.Stalls.Stall.Why(s"give it a better query: histmersion goals link $g query \"<words>\" (or add a source)")
+                            _root_.com.histmersion.api.automation.Stalls.Stall.Why("its candidate sweep found nothing new and it has no source"),
+                            _root_.com.histmersion.api.automation.Stalls.Stall.Action(s"give it a better query: histmersion goals link $g query \"<words>\" (or add a source)")
                           )
                         case None if f.open == _root_.com.histmersion.api.automation.Stalls.Facts.Open(0) =>
                           (
                             _root_.com.histmersion.api.automation.Stalls.Stall.Code(Code.Idle),
-                            _root_.com.histmersion.api.automation.Stalls.Stall.Action("nothing open: it waits for its cron or new sources"),
-                            _root_.com.histmersion.api.automation.Stalls.Stall.Why(s"histmersion agent enqueue seed $g (propose its next articles)")
+                            _root_.com.histmersion.api.automation.Stalls.Stall.Why("nothing open: it waits for its cron or new sources"),
+                            _root_.com.histmersion.api.automation.Stalls.Stall.Action(s"histmersion agent enqueue seed $g (propose its next articles)")
                           )
                         case None =>
                           (
                             _root_.com.histmersion.api.automation.Stalls.Stall.Code(Code.Idle),
-                            s"${Plural.count(f.open, _root_.com.histmersion.api.Plural.CountSingular("item"))} open, none due yet (a cooldown or a backoff)",
-                            _root_.com.histmersion.api.automation.Stalls.Stall.Why(s"histmersion agent scheduler why <item>")
+                            _root_.com.histmersion.api.automation.Stalls.Stall.Why(s"${Plural.count(_root_.com.histmersion.api.Plural.CountN(f.open.value.toLong), _root_.com.histmersion.api.Plural.CountSingular("item"))} open, none due yet (a cooldown or a backoff)"),
+                            _root_.com.histmersion.api.automation.Stalls.Stall.Action(s"histmersion agent scheduler why <item>")
                           )
 
   def report(facts: List[Facts], days: com.histmersion.api.automation.Stalls.ReportDays, at: com.histmersion.api.automation.Stalls.ReportAt): StallReport =
@@ -256,5 +249,5 @@ object Stalls:
       at,
       _root_.com.histmersion.api.automation.Stalls.StallReport.Goals(facts.size),
       stalls,
-      stalls.groupMapReduce(_.code)(_ => 1)(_ + _).toList.sortBy((c, n) => (-n, c)).map(ReasonCount.apply)
+      stalls.groupMapReduce(_.code)(_ => 1)(_ + _).toList.sortBy((c, n) => (-n, c.value)).map((c, n) => ReasonCount(c, ReasonCount.Count(n)))
     )

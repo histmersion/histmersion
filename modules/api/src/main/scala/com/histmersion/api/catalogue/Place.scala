@@ -789,7 +789,7 @@ object Place:
 
     case Put(
         kind: Option[OverrideEdit.Put.Kind],
-        period: Option[(Option[OverrideEdit.Put.PeriodPart1], Option[OverrideEdit.Put.PeriodPart2])],
+        period: Option[(Option[com.histmersion.api.catalogue.Year], Option[com.histmersion.api.catalogue.Year])],
         reason: Option[OverrideEdit.Put.Reason],
         point: Option[GeoPoint] = None
     )
@@ -798,10 +798,6 @@ object Place:
     object Put:
       type Kind = Kind.T
       object Kind extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-      type PeriodPart1 = com.histmersion.api.catalogue.Place.Override.SourcePeriodStart
-      val PeriodPart1: _root_.com.histmersion.api.catalogue.Place.Override.SourcePeriodStart.type = _root_.com.histmersion.api.catalogue.Place.Override.SourcePeriodStart
-      type PeriodPart2 = com.histmersion.api.catalogue.Place.Override.SourcePeriodEnd
-      val PeriodPart2: _root_.com.histmersion.api.catalogue.Place.Override.SourcePeriodEnd.type = _root_.com.histmersion.api.catalogue.Place.Override.SourcePeriodEnd
       type Reason = Reason.T
       object Reason extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
@@ -811,8 +807,8 @@ object Place:
       periodEnd: Option[com.histmersion.api.catalogue.Year] = None,
       reason: Option[OverrideSet.Reason] = None,
       reset: OverrideSet.Reset = _root_.com.histmersion.api.catalogue.Place.OverrideSet.Reset(false),
-      pointLat: Option[OverrideSet.PointLat] = None,
-      pointLon: Option[OverrideSet.PointLon] = None
+      pointLat: Option[com.histmersion.api.catalogue.Latitude] = None,
+      pointLon: Option[com.histmersion.api.catalogue.Longitude] = None
   )
   object OverrideSet:
     type Kind = Kind.T
@@ -821,10 +817,6 @@ object Place:
     object Reason extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
     type Reset = Reset.T
     object Reset extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
-    type PointLat = PointLat.T
-    object PointLat extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
-    type PointLon = PointLon.T
-    object PointLon extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
     given Schema[OverrideSet] = KindlingsSchema
       .derived[OverrideSet]
@@ -870,11 +862,11 @@ object Place:
             invalid("say what to set: a kind, a period (periodStart/periodEnd), a point (pointLat/pointLon), or reset")
           )
           point <-
-            if !asked then Right(None)
+            (if !asked then Right(None)
             else
               (in.pointLat, in.pointLon) match
                 case (Some(lat), Some(lon)) =>
-                  if lat.isNaN || lon.isNaN || lat < -90 || lat > 90 || lon < -180 || lon > 180 then
+                  if lat.value.isNaN || lon.value.isNaN || lat.value < -90 || lat.value > 90 || lon.value < -180 || lon.value > 180 then
                     Left(invalid(s"($lat, $lon) is not a latitude/longitude"))
                   else if reason.isEmpty then
                     Left(
@@ -884,7 +876,7 @@ object Place:
                       )
                     )
                   else Right(Some(GeoPoint(lon, lat)))
-                case _ => Left(invalid("a point needs both pointLat and pointLon"))
+                case _ => Left(invalid("a point needs both pointLat and pointLon"))): Either[Api.Error, Option[GeoPoint]]
           _ <- kind.fold(Right(()))(k =>
             Either.cond(
               com.histmersion.api.catalogue.Place.Kind.all.contains(k),
@@ -893,32 +885,32 @@ object Place:
             )
           )
           _ <- period match
-            case Some((Some(a), Some(b))) if a > b => Left(invalid(s"the period starts ($a) after it ends ($b)"))
+            case Some((Some(a), Some(b))) if a.value > b.value => Left(invalid(s"the period starts ($a) after it ends ($b)"))
             case _                                 => Right(())
           _ <- Either.cond(
             reason.forall(_.length <= MaxReason),
             (),
             invalid(s"a reason is at most $MaxReason characters")
           )
-        yield OverrideEdit.Put(kind, period, reason, point)
+        yield OverrideEdit.Put(kind.map(OverrideEdit.Put.Kind(_)), period, reason.map(OverrideEdit.Put.Reason(_)), point)
 
     def reason(raw: Option[com.histmersion.api.catalogue.Place.Override.Reason]): Either[Api.Error, Option[com.histmersion.api.catalogue.Place.Override.Reason]] =
       val r = raw.map((_).value.trim.replaceAll("\\s+", " ")).filter(_.nonEmpty)
       Either.cond(r.forall(_.length <= MaxReason), (r).map(refactorValue10 => _root_.com.histmersion.api.catalogue.Place.Override.Reason(refactorValue10)), invalid(s"a reason is at most $MaxReason characters"))
 
-    def parsePoint(raw: com.histmersion.api.catalogue.Place.Overrides.PointText): Either[com.histmersion.api.catalogue.Place.Overrides.Problem, (com.histmersion.api.catalogue.Place.OverrideSet.PointLat, com.histmersion.api.catalogue.Place.OverrideSet.PointLon)] =
+    def parsePoint(raw: com.histmersion.api.catalogue.Place.Overrides.PointText): Either[com.histmersion.api.catalogue.Place.Overrides.Problem, (com.histmersion.api.catalogue.Latitude, com.histmersion.api.catalogue.Longitude)] =
       (raw).value.split(",", -1).map(_.trim).toList match
         case List(a, b) =>
           (a.toDoubleOption, b.toDoubleOption) match
             case (Some(lat), Some(lon))
                 if !lat.isNaN && !lon.isNaN && lat >= -90 && lat <= 90 && lon >= -180 && lon <= 180 =>
-              Right((_root_.com.histmersion.api.catalogue.Place.OverrideSet.PointLat(lat), _root_.com.histmersion.api.catalogue.Place.OverrideSet.PointLon(lon)))
+              Right((_root_.com.histmersion.api.catalogue.Latitude(lat), _root_.com.histmersion.api.catalogue.Longitude(lon)))
             case (Some(_), Some(_)) =>
               Left(_root_.com.histmersion.api.catalogue.Place.Overrides.Problem(s"'$raw' is not a latitude,longitude (latitude −90..90, longitude −180..180)"))
             case _ => Left(_root_.com.histmersion.api.catalogue.Place.Overrides.Problem(s"'$raw' is not a latitude,longitude pair of numbers, e.g. 37.95,58.21"))
         case _ => Left(_root_.com.histmersion.api.catalogue.Place.Overrides.Problem(s"'$raw' is not latitude,longitude, e.g. 37.95,58.21"))
 
-    def pointText(lat: com.histmersion.api.catalogue.Place.OverrideSet.PointLat, lon: com.histmersion.api.catalogue.Place.OverrideSet.PointLon): com.histmersion.api.catalogue.Place.Overrides.PointText =
+    def pointText(lat: com.histmersion.api.catalogue.Latitude, lon: com.histmersion.api.catalogue.Longitude): com.histmersion.api.catalogue.Place.Overrides.PointText =
       _root_.com.histmersion.api.catalogue.Place.Overrides.PointText(String.format(
         java.util.Locale.ROOT,
         "%.4f %s %.4f %s",

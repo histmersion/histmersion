@@ -9,11 +9,11 @@ import sttp.tapir.Schema
 final case class BBox(minLon: com.histmersion.api.catalogue.Longitude, minLat: com.histmersion.api.catalogue.Latitude, maxLon: com.histmersion.api.catalogue.Longitude, maxLat: com.histmersion.api.catalogue.Latitude)
     derives KindlingsCodecAsObject,
       KindlingsSchema, com.histmersion.api.json.Schema:
-  def crossesAntimeridian: Boolean = (minLon).value > maxLon
+  def crossesAntimeridian: Boolean = (minLon).value > (maxLon).value
 
-  def contains(lon: com.histmersion.api.Geo.Longitude, lat: com.histmersion.api.Geo.Latitude): Boolean =
-    val latOk = (lat).value >= (minLat).value && (lat).value <= maxLat
-    val lonOk = if (crossesAntimeridian) then (lon).value >= (minLon).value || (lon).value <= maxLon else (lon).value >= (minLon).value && (lon).value <= maxLon
+  def contains(lon: com.histmersion.api.catalogue.Longitude, lat: com.histmersion.api.catalogue.Latitude): Boolean =
+    val latOk = (lat).value >= (minLat).value && (lat).value <= (maxLat).value
+    val lonOk = if (crossesAntimeridian) then (lon).value >= (minLon).value || (lon).value <= (maxLon).value else (lon).value >= (minLon).value && (lon).value <= (maxLon).value
     latOk && lonOk
 
 object BBox:

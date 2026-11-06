@@ -50,7 +50,7 @@ object MediaProvider:
   /** Covers carry the publisher's rights, no reuse licence: shown in the local UI only, never carried in a bundle. */
   val covers: Set[com.histmersion.api.media.MediaProvider.Id] = Set(_root_.com.histmersion.api.media.MediaProvider.Id(Calibre), _root_.com.histmersion.api.media.MediaProvider.Id(OpenLibrary))
 
-  def title(p: com.histmersion.api.media.MediaProvider.Id): com.histmersion.api.media.MediaProvider.Info.Title = p match
+  def title(p: com.histmersion.api.media.MediaProvider.Id): com.histmersion.api.media.MediaProvider.Info.Title = p.value match
     case Source            => _root_.com.histmersion.api.media.MediaProvider.Info.Title("source figures")
     case Commons           => _root_.com.histmersion.api.media.MediaProvider.Info.Title("Wikimedia Commons")
     case Calibre           => _root_.com.histmersion.api.media.MediaProvider.Info.Title("Calibre library")
@@ -64,7 +64,7 @@ object MediaProvider:
     case Pleiades          => _root_.com.histmersion.api.media.MediaProvider.Info.Title("Pleiades (linked Commons files)")
     case Smithsonian       => _root_.com.histmersion.api.media.MediaProvider.Info.Title("Smithsonian Institution")
     case Europeana         => _root_.com.histmersion.api.media.MediaProvider.Info.Title("Europeana")
-    case other             => _root_.com.histmersion.api.media.MediaProvider.Info.Title((other).value)
+    case other             => _root_.com.histmersion.api.media.MediaProvider.Info.Title(other)
 
   final case class Info(
       name: com.histmersion.api.media.MediaItem.Provider,
