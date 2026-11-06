@@ -70,10 +70,17 @@ object Articles:
 
   def dirOfKind(kind: com.histmersion.api.research.Article.Kind.Wire): String = ((kind).value.trim.toLowerCase)
 
-  /** The article a put makes, or why it is refused; `slug` is the server's, already checked. */
+  private val SlugPattern = """^[a-z0-9][a-z0-9_.-]{0,120}$""".r
+
+  def slugOf(raw: com.histmersion.api.research.Article.Slug): Either[com.histmersion.api.research.Articles.Problem, com.histmersion.api.research.Article.Slug] =
+    val s = (raw).value.trim.toLowerCase
+    if SlugPattern.matches(s) then Right(_root_.com.histmersion.api.research.Article.Slug(s))
+    else Left(_root_.com.histmersion.api.research.Articles.Problem(s"invalid slug '${raw.value}' — use lower-case letters, digits, '_', '-' or '.' (e.g. sea_peoples)"))
+
+  /** The article a put makes, or why it is refused. */
   def applyPut(slug: com.histmersion.api.research.Article.Slug, p: Article.Put): Either[com.histmersion.api.research.Articles.Problem, Article] =
-    val s = slug
     for
+      s <- slugOf(slug)
       k <- kindOf(p.kind)
       _ <- if p.title.value.trim.nonEmpty then Right(()) else Left(Problem("title must not be empty"))
       period <- periodOf(p.periodStart, p.periodEnd)

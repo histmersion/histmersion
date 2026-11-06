@@ -16,4 +16,4 @@ object VacuumPlan:
   val Tables: _root_.com.histmersion.api.maintenance.Vacuum.Request.Tables.type = _root_.com.histmersion.api.maintenance.Vacuum.Request.Tables
 
   val Detail: com.histmersion.api.jobs.JobDetail.Field[Option[VacuumPlan]] =
-    com.histmersion.api.jobs.JobDetail.Field(_root_.com.histmersion.api.jobs.JobDetail.Field.Name("vacuum"), None)
+    new com.histmersion.api.jobs.JobDetail.Field(_root_.com.histmersion.api.jobs.JobDetail.Field.Name("vacuum"), None)

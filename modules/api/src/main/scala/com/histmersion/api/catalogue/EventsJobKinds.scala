@@ -9,7 +9,7 @@ import com.histmersion.api.json.NewtypeCodecs.given
 object EventsJobKinds:
 
   /** The catalogue an events job reads, as a person names it, in the job's detail. */
-  val Catalogue: JobDetail.Field[Option[com.histmersion.api.jobs.JobKinds.Subject]] = JobDetail.Field(_root_.com.histmersion.api.jobs.JobDetail.Field.Name("events"), None)
+  val Catalogue: JobDetail.Field[Option[com.histmersion.api.jobs.JobKinds.Subject]] = new JobDetail.Field(_root_.com.histmersion.api.jobs.JobDetail.Field.Name("events"), None)
 
   val EventsImport: JobKindEntry = JobKindEntry.of(
     JobInfo.Kind("events-import"),

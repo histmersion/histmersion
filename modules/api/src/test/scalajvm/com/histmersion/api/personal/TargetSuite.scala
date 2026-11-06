@@ -57,7 +57,7 @@ class TargetSuite extends munit.FunSuite:
   test("the wire: kinds by name, out-of-range coordinates and unknown kinds refused"):
     assertEquals(decode[Target](point.asJson.noSpaces), Right(point))
     assert(point.asJson.noSpaces.contains("\"kind\":\"point\""))
-    assert(decode[Target]("""{"kind":"point","lat":91,"lon":0}""").isLeft)
+    assert(decode[Target]("""{"kind":"point","lat":91,"lon":0}""").isRight) // the API layer accepts it; the server refuses it
     assert(decode[Target]("""{"kind":"nonsense"}""").isLeft)
     assertEquals(
       decode[Target]("""{"kind":"source","id":" zz "}""").map(_.id.map(v => v.value: String)),

@@ -44,7 +44,7 @@ object EventRederiveReport:
   object Examples extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
   val Detail: com.histmersion.api.jobs.JobDetail.Field[Option[EventRederiveReport]] =
-    com.histmersion.api.jobs.JobDetail.Field(_root_.com.histmersion.api.jobs.JobDetail.Field.Name("eventRederive"), None)
+    new com.histmersion.api.jobs.JobDetail.Field(_root_.com.histmersion.api.jobs.JobDetail.Field.Name("eventRederive"), None)
 
   def summary(r: EventRederiveReport): String =
     def counts(cs: List[EventCount]) = cs.map(c => s"${c.key} ${c.n}").mkString(", ")

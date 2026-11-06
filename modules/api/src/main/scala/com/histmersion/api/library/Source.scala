@@ -228,7 +228,7 @@ object Source:
             "they come back if it is ingested again):",
           ""
         ) ++
-          d.edgesIn.map(e => s"- `${e.src}` ${e.kind} → `${e.dst}`")
+          d.edgesIn.map(e => s"- `${e.src}` ${com.histmersion.api.library.Edge.Kind.wireOf(e.kind)} → `${e.dst}`")
       val coverage = if d.coverage.isEmpty then Nil
       else List("", s"Coverage reasons dropped from: ${d.coverage.map(s => s"`$s`").mkString(", ")}")
       val files =
@@ -429,7 +429,7 @@ object Source:
     object Issue extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
     val Matches: com.histmersion.api.exchange.PlanMatchKind[Match] =
-      com.histmersion.api.exchange.PlanMatchKind(m => _root_.com.histmersion.api.exchange.PlanMatchKind.ListedResult(m.outcome != MatchOutcome.New), line)
+      new com.histmersion.api.exchange.PlanMatchKind(m => _root_.com.histmersion.api.exchange.PlanMatchKind.ListedResult(m.outcome != MatchOutcome.New), line)
 
     /** A source's match as the plan's Markdown lists it. */
     def line(s: Match): com.histmersion.api.library.Source.Match.Line =
@@ -597,7 +597,7 @@ object Source:
         _ <- edges
           .find(e => e.dst == citekey || aliases.contains(e.dst))
           .fold(Right(()))(e =>
-            Left(Problem(s"edges: '${e.dst}' --${e.kind}--> itself is a self-edge; dst must be another source"))
+            Left(Problem(s"edges: '${e.dst}' --${com.histmersion.api.library.Edge.Kind.wireOf(e.kind)}--> itself is a self-edge; dst must be another source"))
           )
       yield Source(
         citekey = citekey,
@@ -692,7 +692,7 @@ object Source:
         _ <- added
           .find(_.dst == citekey)
           .fold(Right(()))(e =>
-            Left(Problem(s"edges.add: '${e.dst}' --${e.kind}--> itself is a self-edge; dst must be another source"))
+            Left(Problem(s"edges.add: '${e.dst}' --${com.histmersion.api.library.Edge.Kind.wireOf(e.kind)}--> itself is a self-edge; dst must be another source"))
           )
       yield
         val gone = removed.toSet

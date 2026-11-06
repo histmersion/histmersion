@@ -67,7 +67,7 @@ object EventImportReport:
   object Citation extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
   val Detail: com.histmersion.api.jobs.JobDetail.Field[Option[EventImportReport]] =
-    com.histmersion.api.jobs.JobDetail.Field(_root_.com.histmersion.api.jobs.JobDetail.Field.Name("eventImport"), None)
+    new com.histmersion.api.jobs.JobDetail.Field(_root_.com.histmersion.api.jobs.JobDetail.Field.Name("eventImport"), None)
 
   def combine(a: EventImportReport, b: EventImportReport): EventImportReport =
     EventImportReport(
