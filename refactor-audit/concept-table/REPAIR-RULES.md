@@ -17,3 +17,25 @@ The tree was moved from primitives to newtypes. Fix errors so that the code is r
   delete a test or an assertion, and never change behaviour to get a pass: the output of each expression stays the same.
 - No comments explaining the change. Do not reformat lines you are not changing. Do not touch files outside your list.
 - Work only in this worktree. Never touch the live server, config, database or user data, and run no real network calls.
+
+## Behaviour reference
+
+Earlier automated rewrites mangled some expressions, so a line that looks wrong may really be wrong even when a small fix would
+compile. Commit 7e197c2b is the behaviour before all of this: read a file there with `git show 7e197c2b:<path>` (it may have
+lived under another path; `git log --all --format= --name-only -- '*/<File>.scala' | sort -u` helps). Whatever you write must
+compute what that version computed. Known case: `Years.parseIso` turns an astronomical year into a historical one, so it
+returns `Option[catalogue.Year]` as `.map(v => fromAstronomical(Astronomical(v)))`. Report any such mangled line you fix.
+
+## Hints
+
+`type X = _root_.a.b.X` aliases that refer to themselves are leftovers: delete the alias and use the real type. In `*Markdown`,
+`*Export` and `*Render` objects text is plain String. `Year` in the API layer is one type, `com.histmersion.api.catalogue.Year`,
+base Long. A newtype that needs sorting gets `given Ordering[X] = Ordering.by(_.value)` in its own companion if that is in your
+files, otherwise `.sortBy(_.value)` at the use site. Read each file's relevant parts rather than patching lines blindly.
+If two types in different files are one concept, list it in your reply rather than bridging silently, and bridge only if unavoidable.
+
+## Do not undo earlier progress
+
+The master version is the reference for what code computes, not for how it is written. Keep lens updates (`.modify`): never turn
+them back into `.copy`. Keep newtypes on public signatures: never revert a concept to a primitive because the old file had one.
+Predicate results are the only signatures that go back to Boolean. Plain Boolean fields of a record keep their types.
