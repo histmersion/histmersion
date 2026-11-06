@@ -54,6 +54,6 @@ object MediaText:
       case _ => _root_.com.histmersion.upstreams.landing.RepositoryLanding.Candidate.Url((url).value)
 
   /** Pure: a link-safe file name for a provider's file title (`File:Lions Gate.jpg` → `Lions_Gate.jpg`). */
-  def safeName(title: com.histmersion.domain.Title): com.histmersion.upstreams.media.MediaText.FileName =
+  def safeName(title: com.histmersion.plugin.WorkKey.Title): com.histmersion.upstreams.media.MediaText.FileName =
     val n = (title).value.stripPrefix("File:").trim.replaceAll("[^A-Za-z0-9._-]+", "_").replaceAll("_+", "_")
     if n.isEmpty then _root_.com.histmersion.upstreams.media.MediaText.FileName("file") else _root_.com.histmersion.upstreams.media.MediaText.FileName(n.take(180))

@@ -32,15 +32,15 @@ object WorkLookup:
       "locations,cited_by_count,is_retracted,type,abstract_inverted_index,referenced_works")
 
   /** OpenAlex resolves a DOI as a path segment: `/works/https://doi.org/10.1234/x`. */
-  def workUrl(cfg: UpstreamSettings, doi: com.histmersion.domain.library.Doi): com.histmersion.domain.library.acquisition.WorkLookup.WorkUrlResult =
+  def workUrl(cfg: UpstreamSettings, doi: com.histmersion.plugin.Doi): com.histmersion.domain.library.acquisition.WorkLookup.WorkUrlResult =
     _root_.com.histmersion.domain.library.acquisition.WorkLookup.WorkUrlResult(s"${cfg.openalex.url}/works/https://doi.org/$doi")
 
   /** Crossref's record of a DOI. */
-  def crossrefUrl(cfg: UpstreamSettings, doi: com.histmersion.domain.library.Doi): com.histmersion.domain.library.acquisition.WorkLookup.CrossrefUrlResult =
+  def crossrefUrl(cfg: UpstreamSettings, doi: com.histmersion.plugin.Doi): com.histmersion.domain.library.acquisition.WorkLookup.CrossrefUrlResult =
     Url(cfg.crossref.url, _root_.com.histmersion.upstreams.http.Url.UrlPath(s"/works/$doi"), "mailto" -> cfg.mailto)
 
   def meta(cfg: UpstreamSettings, json: com.histmersion.domain.library.acquisition.WorkLookup.MetaJsonArg1 => Either[com.histmersion.domain.library.acquisition.WorkLookup.Problem, Json], log: Plugin.Log)(
-      doi: com.histmersion.domain.library.Doi
+      doi: com.histmersion.plugin.Doi
   ): Either[com.histmersion.domain.library.acquisition.WorkLookup.Problem, WorkRef] =
     json(Url(workUrl(cfg, doi), _root_.com.histmersion.upstreams.http.Url.UrlPath(""), "select" -> (WorkFields).value, "mailto" -> cfg.mailto))
       .map(AcquireParse.openalexWork)
@@ -59,7 +59,7 @@ object WorkLookup:
   private def withUnpaywall(
       cfg: UpstreamSettings,
       json: com.histmersion.domain.library.acquisition.WorkLookup.WithUnpaywallJsonArg1 => Either[com.histmersion.domain.library.acquisition.WorkLookup.Problem, Json],
-      doi: com.histmersion.domain.library.Doi,
+      doi: com.histmersion.plugin.Doi,
       w: WorkRef
   ): WorkRef =
     cfg.contact
@@ -70,7 +70,7 @@ object WorkLookup:
   /** Pure: what the acquisition chain is asked for one work — its identifiers and what its metadata record says of it.
     * A DOI that is none is not passed on.
     */
-  def key(doi: Option[com.histmersion.domain.library.Doi], arxiv: Option[com.histmersion.domain.library.ArxivId], work: Option[WorkRef]): WorkKey =
+  def key(doi: Option[com.histmersion.plugin.Doi], arxiv: Option[com.histmersion.upstreams.ArxivId], work: Option[WorkRef]): WorkKey =
     WorkKey(
       doi = doi.flatMap(d => Doi.option(d.trim)),
       arxiv = arxiv.orElse(work.flatMap(_.arxivId)),

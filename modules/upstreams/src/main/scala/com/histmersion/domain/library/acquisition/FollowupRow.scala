@@ -1,8 +1,8 @@
 package com.histmersion.domain.library.acquisition
 final case class FollowupRow(
     title: Option[FollowupRow.Title] = None,
-    year: Option[com.histmersion.Year] = None,
-    doi: Option[com.histmersion.domain.library.Doi] = None,
+    year: Option[com.histmersion.plugin.Year] = None,
+    doi: Option[com.histmersion.plugin.Doi] = None,
     arxiv: Option[FollowupRow.Arxiv] = None,
     citedBy: Option[FollowupRow.CitedBy] = None,
     isInfluential: FollowupRow.IsInfluential = _root_.com.histmersion.domain.library.acquisition.FollowupRow.IsInfluential(false),
@@ -11,10 +11,10 @@ final case class FollowupRow(
 )
 
 object FollowupRow:
-  type Title = com.histmersion.domain.Title
-  val Title: _root_.com.histmersion.domain.Title.type = _root_.com.histmersion.domain.Title
-  type Arxiv = com.histmersion.domain.library.ArxivId
-  val Arxiv: _root_.com.histmersion.domain.library.ArxivId.type = _root_.com.histmersion.domain.library.ArxivId
+  type Title = com.histmersion.plugin.WorkKey.Title
+  val Title: _root_.com.histmersion.plugin.WorkKey.Title.type = _root_.com.histmersion.plugin.WorkKey.Title
+  type Arxiv = com.histmersion.upstreams.ArxivId
+  val Arxiv: _root_.com.histmersion.upstreams.ArxivId.type = _root_.com.histmersion.upstreams.ArxivId
   type CitedBy = CitedBy.T
   object CitedBy extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type IsInfluential = IsInfluential.T
