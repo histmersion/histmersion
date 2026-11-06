@@ -12,8 +12,8 @@ final case class EventLead(
     years: EventLead.Years,
     text: EventLead.Text,
     actions: scala.List[EventLead.Action] = Nil,
-    findingsNear: EventLead.FindingsNear = 0,
-    candidates: EventLead.Candidates = 0
+    findingsNear: EventLead.FindingsNear = _root_.com.histmersion.api.catalogue.EventLead.FindingsNear(0),
+    candidates: EventLead.Candidates = _root_.com.histmersion.api.catalogue.EventLead.Candidates(0)
 ) derives KindlingsCodecAsObject,
       KindlingsSchema, com.histmersion.api.json.Schema
 object EventLead:

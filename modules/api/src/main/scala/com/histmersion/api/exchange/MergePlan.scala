@@ -21,7 +21,7 @@ final case class MergePlan(
     problems: List[MergePlan.Problems],
     resolutionErrors: List[MergePlan.ResolutionErrors],
     resolved: MergePlan.Resolved,
-    changes: MergePlan.Changes = 0
+    changes: MergePlan.Changes = _root_.com.histmersion.api.exchange.MergePlan.Changes(0)
 ) derives KindlingsCodecAsObject,
       KindlingsSchema, com.histmersion.api.json.Schema:
   def open: List[MergeIssue] = issues.filter(_.open)

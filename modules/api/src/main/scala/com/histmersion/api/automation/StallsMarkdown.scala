@@ -18,4 +18,4 @@ object StallsMarkdown:
             s"  - unblock: `${s.action}`"
         }
         .mkString("\n")
-    head + reasons + rows
+    _root_.com.histmersion.api.automation.StallsMarkdown.ReportResult(head + reasons + rows)

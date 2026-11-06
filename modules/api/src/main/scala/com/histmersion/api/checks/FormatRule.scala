@@ -8,220 +8,220 @@ import com.histmersion.api.given
 enum FormatRule(val wire: FormatRule.Wire, val severity: FormatSeverity, val fixable: FormatRule.Fixable, val description: FormatRule.Description):
   case Frontmatter
       extends FormatRule(
-        "frontmatter",
+        _root_.com.histmersion.api.checks.FormatRule.Wire("frontmatter"),
         FormatSeverity.Error,
-        true,
-        "a YAML `---` block or `key: value` header pasted into the text — it renders as a rule and a heading"
+        _root_.com.histmersion.api.checks.FormatRule.Fixable(true),
+        _root_.com.histmersion.api.checks.FormatRule.Description("a YAML `---` block or `key: value` header pasted into the text — it renders as a rule and a heading")
       )
   case WrappedInFence
       extends FormatRule(
-        "wrapped-in-fence",
+        _root_.com.histmersion.api.checks.FormatRule.Wire("wrapped-in-fence"),
         FormatSeverity.Error,
-        true,
-        "the whole text wrapped in a ```markdown fence — it renders as one grey code block"
+        _root_.com.histmersion.api.checks.FormatRule.Fixable(true),
+        _root_.com.histmersion.api.checks.FormatRule.Description("the whole text wrapped in a ```markdown fence — it renders as one grey code block")
       )
   case UnclosedFence
       extends FormatRule(
-        "unclosed-fence",
+        _root_.com.histmersion.api.checks.FormatRule.Wire("unclosed-fence"),
         FormatSeverity.Error,
-        false,
-        "a code fence that is never closed (or closed with a shorter/different fence) — everything after it is code"
+        _root_.com.histmersion.api.checks.FormatRule.Fixable(false),
+        _root_.com.histmersion.api.checks.FormatRule.Description("a code fence that is never closed (or closed with a shorter/different fence) — everything after it is code")
       )
   case IndentedCode
       extends FormatRule(
-        "indented-code",
+        _root_.com.histmersion.api.checks.FormatRule.Wire("indented-code"),
         FormatSeverity.Error,
-        true,
-        "a paragraph indented by four spaces — it renders as a code block"
+        _root_.com.histmersion.api.checks.FormatRule.Fixable(true),
+        _root_.com.histmersion.api.checks.FormatRule.Description("a paragraph indented by four spaces — it renders as a code block")
       )
   case LiteralEscape
       extends FormatRule(
-        "literal-escape",
+        _root_.com.histmersion.api.checks.FormatRule.Wire("literal-escape"),
         FormatSeverity.Error,
-        true,
-        "a literal \\n or \\t (an escaped newline) — it shows as backslash-n"
+        _root_.com.histmersion.api.checks.FormatRule.Fixable(true),
+        _root_.com.histmersion.api.checks.FormatRule.Description("a literal \\n or \\t (an escaped newline) — it shows as backslash-n")
       )
   case AgentChatter
       extends FormatRule(
-        "agent-chatter",
+        _root_.com.histmersion.api.checks.FormatRule.Wire("agent-chatter"),
         FormatSeverity.Warning,
-        false,
-        "a line addressed to the person who asked (\"Here is the article\", \"Sure!\", \"As an AI\") left in the text"
+        _root_.com.histmersion.api.checks.FormatRule.Fixable(false),
+        _root_.com.histmersion.api.checks.FormatRule.Description("a line addressed to the person who asked (\"Here is the article\", \"Sure!\", \"As an AI\") left in the text")
       )
   case Placeholder
       extends FormatRule(
-        "placeholder",
+        _root_.com.histmersion.api.checks.FormatRule.Wire("placeholder"),
         FormatSeverity.Warning,
-        false,
-        "a placeholder left in the text (TODO, XXX, [citation needed], <insert …>)"
+        _root_.com.histmersion.api.checks.FormatRule.Fixable(false),
+        _root_.com.histmersion.api.checks.FormatRule.Description("a placeholder left in the text (TODO, XXX, [citation needed], <insert …>)")
       )
   case TableNotRendered
       extends FormatRule(
-        "table-not-rendered",
+        _root_.com.histmersion.api.checks.FormatRule.Wire("table-not-rendered"),
         FormatSeverity.Error,
-        true,
-        "rows of pipes that the renderer does not read as a table (no blank line before it, or no `|---|` row) — they show as text"
+        _root_.com.histmersion.api.checks.FormatRule.Fixable(true),
+        _root_.com.histmersion.api.checks.FormatRule.Description("rows of pipes that the renderer does not read as a table (no blank line before it, or no `|---|` row) — they show as text")
       )
   case TableColumns
       extends FormatRule(
-        "table-columns",
+        _root_.com.histmersion.api.checks.FormatRule.Wire("table-columns"),
         FormatSeverity.Warning,
-        false,
-        "a table row with more or fewer cells than the header — extra cells are dropped, missing ones are blank"
+        _root_.com.histmersion.api.checks.FormatRule.Fixable(false),
+        _root_.com.histmersion.api.checks.FormatRule.Description("a table row with more or fewer cells than the header — extra cells are dropped, missing ones are blank")
       )
   case Emphasis
       extends FormatRule(
-        "emphasis",
+        _root_.com.histmersion.api.checks.FormatRule.Wire("emphasis"),
         FormatSeverity.Error,
-        true,
-        "`**`, `__` or a stray `*`/`_` the renderer could not pair (unbalanced, or with a space inside) — it shows literally"
+        _root_.com.histmersion.api.checks.FormatRule.Fixable(true),
+        _root_.com.histmersion.api.checks.FormatRule.Description("`**`, `__` or a stray `*`/`_` the renderer could not pair (unbalanced, or with a space inside) — it shows literally")
       )
   case CodeSpan
       extends FormatRule(
-        "code-span",
+        _root_.com.histmersion.api.checks.FormatRule.Wire("code-span"),
         FormatSeverity.Error,
-        false,
-        "an unpaired backtick (or a code span closed with a curly quote) — it shows literally"
+        _root_.com.histmersion.api.checks.FormatRule.Fixable(false),
+        _root_.com.histmersion.api.checks.FormatRule.Description("an unpaired backtick (or a code span closed with a curly quote) — it shows literally")
       )
   case Strikethrough
       extends FormatRule(
-        "strikethrough",
+        _root_.com.histmersion.api.checks.FormatRule.Wire("strikethrough"),
         FormatSeverity.Warning,
-        false,
-        "`~~struck~~` text — the renderer has no strikethrough; the tildes show literally"
+        _root_.com.histmersion.api.checks.FormatRule.Fixable(false),
+        _root_.com.histmersion.api.checks.FormatRule.Description("`~~struck~~` text — the renderer has no strikethrough; the tildes show literally")
       )
   case Math
       extends FormatRule(
-        "math",
+        _root_.com.histmersion.api.checks.FormatRule.Wire("math"),
         FormatSeverity.Warning,
-        false,
-        "`$$…$$` or `\\(…\\)` math — the renderer does not typeset it"
+        _root_.com.histmersion.api.checks.FormatRule.Fixable(false),
+        _root_.com.histmersion.api.checks.FormatRule.Description("`$$…$$` or `\\(…\\)` math — the renderer does not typeset it")
       )
   case HtmlEntity
       extends FormatRule(
-        "html-entity",
+        _root_.com.histmersion.api.checks.FormatRule.Wire("html-entity"),
         FormatSeverity.Error,
-        true,
-        "a double-escaped entity (`&amp;amp;`, `&amp;lt;`) — it shows as `&amp;`"
+        _root_.com.histmersion.api.checks.FormatRule.Fixable(true),
+        _root_.com.histmersion.api.checks.FormatRule.Description("a double-escaped entity (`&amp;amp;`, `&amp;lt;`) — it shows as `&amp;`")
       )
   case HtmlTag
       extends FormatRule(
-        "html-tag",
+        _root_.com.histmersion.api.checks.FormatRule.Wire("html-tag"),
         FormatSeverity.Warning,
-        false,
-        "raw HTML: an unclosed or unknown tag (an unclosed one swallows what follows)"
+        _root_.com.histmersion.api.checks.FormatRule.Fixable(false),
+        _root_.com.histmersion.api.checks.FormatRule.Description("raw HTML: an unclosed or unknown tag (an unclosed one swallows what follows)")
       )
   case LinkSyntax
       extends FormatRule(
-        "link-syntax",
+        _root_.com.histmersion.api.checks.FormatRule.Wire("link-syntax"),
         FormatSeverity.Error,
-        true,
-        "a Markdown link the renderer could not read: `[text] (url)`, `[text](url` unclosed, `<url` unclosed"
+        _root_.com.histmersion.api.checks.FormatRule.Fixable(true),
+        _root_.com.histmersion.api.checks.FormatRule.Description("a Markdown link the renderer could not read: `[text] (url)`, `[text](url` unclosed, `<url` unclosed")
       )
   case LinkEmpty
       extends FormatRule(
-        "link-empty",
+        _root_.com.histmersion.api.checks.FormatRule.Wire("link-empty"),
         FormatSeverity.Error,
-        false,
-        "a link with no text (invisible) or no target (goes nowhere)"
+        _root_.com.histmersion.api.checks.FormatRule.Fixable(false),
+        _root_.com.histmersion.api.checks.FormatRule.Description("a link with no text (invisible) or no target (goes nowhere)")
       )
   case BareUrl
       extends FormatRule(
-        "bare-url",
+        _root_.com.histmersion.api.checks.FormatRule.Wire("bare-url"),
         FormatSeverity.Warning,
-        true,
-        "a bare http(s) URL — the renderer does not make it clickable; wrap it in <…>"
+        _root_.com.histmersion.api.checks.FormatRule.Fixable(true),
+        _root_.com.histmersion.api.checks.FormatRule.Description("a bare http(s) URL — the renderer does not make it clickable; wrap it in <…>")
       )
   case WikiPathLink
       extends FormatRule(
-        "wiki-path-link",
+        _root_.com.histmersion.api.checks.FormatRule.Wire("wiki-path-link"),
         FormatSeverity.Warning,
-        true,
-        "a Markdown link to a wiki file or page (`(x.md)`, `(/article/x)`) — write [[x]] so the link graph sees it"
+        _root_.com.histmersion.api.checks.FormatRule.Fixable(true),
+        _root_.com.histmersion.api.checks.FormatRule.Description("a Markdown link to a wiki file or page (`(x.md)`, `(/article/x)`) — write [[x]] so the link graph sees it")
       )
   case Wikilink
       extends FormatRule(
-        "wikilink",
+        _root_.com.histmersion.api.checks.FormatRule.Wire("wikilink"),
         FormatSeverity.Error,
-        true,
-        "a malformed [[wikilink]]: one bracket short (`[[x]`, `[x]]`), escaped (`\\[\\[x\\]\\]`), padded (`[[ x ]]`), not a slug (`[[Two Words]]`) or an embed (`![[x]]`)"
+        _root_.com.histmersion.api.checks.FormatRule.Fixable(true),
+        _root_.com.histmersion.api.checks.FormatRule.Description("a malformed [[wikilink]]: one bracket short (`[[x]`, `[x]]`), escaped (`\\[\\[x\\]\\]`), padded (`[[ x ]]`), not a slug (`[[Two Words]]`) or an embed (`![[x]]`)")
       )
   case WikilinkUnresolved
       extends FormatRule(
-        "wikilink-unresolved",
+        _root_.com.histmersion.api.checks.FormatRule.Wire("wikilink-unresolved"),
         FormatSeverity.Warning,
-        false,
-        "a [[wikilink]] that names no source and no article — it renders as plain text"
+        _root_.com.histmersion.api.checks.FormatRule.Fixable(false),
+        _root_.com.histmersion.api.checks.FormatRule.Description("a [[wikilink]] that names no source and no article — it renders as plain text")
       )
   case BareCitekey
       extends FormatRule(
-        "bare-citekey",
+        _root_.com.histmersion.api.checks.FormatRule.Wire("bare-citekey"),
         FormatSeverity.Warning,
-        false,
-        "a citekey written without [[…]] — it is plain text, not a citation"
+        _root_.com.histmersion.api.checks.FormatRule.Fixable(false),
+        _root_.com.histmersion.api.checks.FormatRule.Description("a citekey written without [[…]] — it is plain text, not a citation")
       )
   case Image
       extends FormatRule(
-        "image",
+        _root_.com.histmersion.api.checks.FormatRule.Wire("image"),
         FormatSeverity.Error,
-        false,
-        "an image with no source, or pointing at a local file path the server cannot serve"
+        _root_.com.histmersion.api.checks.FormatRule.Fixable(false),
+        _root_.com.histmersion.api.checks.FormatRule.Description("an image with no source, or pointing at a local file path the server cannot serve")
       )
   case Footnote
       extends FormatRule(
-        "footnote",
+        _root_.com.histmersion.api.checks.FormatRule.Wire("footnote"),
         FormatSeverity.Error,
-        false,
-        "a footnote (`[^1]`) — the renderer has no footnotes, so the marker and the note show literally"
+        _root_.com.histmersion.api.checks.FormatRule.Fixable(false),
+        _root_.com.histmersion.api.checks.FormatRule.Description("a footnote (`[^1]`) — the renderer has no footnotes, so the marker and the note show literally")
       )
   case HeadingSyntax
       extends FormatRule(
-        "heading-syntax",
+        _root_.com.histmersion.api.checks.FormatRule.Wire("heading-syntax"),
         FormatSeverity.Error,
-        true,
-        "a heading the renderer does not read as one (`##Heading`), or one with a stray trailing `#`"
+        _root_.com.histmersion.api.checks.FormatRule.Fixable(true),
+        _root_.com.histmersion.api.checks.FormatRule.Description("a heading the renderer does not read as one (`##Heading`), or one with a stray trailing `#`")
       )
   case SetextHeading
       extends FormatRule(
-        "setext-heading",
+        _root_.com.histmersion.api.checks.FormatRule.Wire("setext-heading"),
         FormatSeverity.Error,
-        true,
-        "a `---` line right under a paragraph — the paragraph becomes a heading instead of getting a rule under it"
+        _root_.com.histmersion.api.checks.FormatRule.Fixable(true),
+        _root_.com.histmersion.api.checks.FormatRule.Description("a `---` line right under a paragraph — the paragraph becomes a heading instead of getting a rule under it")
       )
   case HeadingLevel
       extends FormatRule(
-        "heading-level",
+        _root_.com.histmersion.api.checks.FormatRule.Wire("heading-level"),
         FormatSeverity.Warning,
-        false,
-        "a skipped heading level (## then ####), a second # title, or a heading inside a list item"
+        _root_.com.histmersion.api.checks.FormatRule.Fixable(false),
+        _root_.com.histmersion.api.checks.FormatRule.Description("a skipped heading level (## then ####), a second # title, or a heading inside a list item")
       )
   case DuplicateHeading
       extends FormatRule(
-        "duplicate-heading",
+        _root_.com.histmersion.api.checks.FormatRule.Wire("duplicate-heading"),
         FormatSeverity.Warning,
-        false,
-        "the same heading twice at the same level — a section written twice"
+        _root_.com.histmersion.api.checks.FormatRule.Fixable(false),
+        _root_.com.histmersion.api.checks.FormatRule.Description("the same heading twice at the same level — a section written twice")
       )
   case SourcesCitedSection
       extends FormatRule(
-        "sources-cited-section",
+        _root_.com.histmersion.api.checks.FormatRule.Wire("sources-cited-section"),
         FormatSeverity.Warning,
-        false,
-        "a `## Sources cited` section in the body — the page generates that list from the [[citekey]] links"
+        _root_.com.histmersion.api.checks.FormatRule.Fixable(false),
+        _root_.com.histmersion.api.checks.FormatRule.Description("a `## Sources cited` section in the body — the page generates that list from the [[citekey]] links")
       )
   case ListGlued
       extends FormatRule(
-        "list-glued",
+        _root_.com.histmersion.api.checks.FormatRule.Wire("list-glued"),
         FormatSeverity.Error,
-        true,
-        "list items glued to the paragraph above (no blank line) — they render as one run-on paragraph"
+        _root_.com.histmersion.api.checks.FormatRule.Fixable(true),
+        _root_.com.histmersion.api.checks.FormatRule.Description("list items glued to the paragraph above (no blank line) — they render as one run-on paragraph")
       )
   case ListMarkers
       extends FormatRule(
-        "list-markers",
+        _root_.com.histmersion.api.checks.FormatRule.Wire("list-markers"),
         FormatSeverity.Warning,
-        false,
-        "a list whose bullet changes (`-` then `*`) or whose numbers jump — it splits into separate lists or renumbers"
+        _root_.com.histmersion.api.checks.FormatRule.Fixable(false),
+        _root_.com.histmersion.api.checks.FormatRule.Description("a list whose bullet changes (`-` then `*`) or whose numbers jump — it splits into separate lists or renumbers")
       )
 
 object FormatRule:

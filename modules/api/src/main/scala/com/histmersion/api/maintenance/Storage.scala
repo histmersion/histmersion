@@ -76,8 +76,8 @@ object Storage:
     report.volumes.filter(_.freeBytes.value.toLong < report.lowFreeBytes.value.toLong).sortBy(_.freeBytes.value.toLong).map { v =>
       val big = onVolume(report.entries, v.id).filter(_.shrink.isDefined).take(3)
       val head =
-        s"Low disk space on ${v.id}: ${Backup.humanBytes(v.freeBytes.value.toLong)} free of ${Backup.humanBytes(v.totalBytes.value.toLong)}"
-      if big.isEmpty then s"$head."
+        s"Low disk space on ${v.id}: ${Backup.humanBytes(_root_.com.histmersion.api.backup.Backup.HumanBytesN(v.freeBytes.value.toLong))} free of ${Backup.humanBytes(_root_.com.histmersion.api.backup.Backup.HumanBytesN(v.totalBytes.value.toLong))}"
+      if big.isEmpty then _root_.com.histmersion.api.maintenance.Storage.HintsResult(s"$head.")
       else
         s"$head. Biggest here: " + big
           .map(e => s"${e.label} ${Backup.humanBytes(e.bytes.map(_.value.toLong).getOrElse(0L))} (${e.shrink.getOrElse("")})")
@@ -123,13 +123,13 @@ object Storage:
       (e, depth) :: present
         .filter(c => c.within.contains(e.key) && !seen.contains(c.key))
         .flatMap(c => walk(c, depth + 1, seen + e.key))
-    present.filter(e => e.within.forall(w => !keys.contains(w))).flatMap(walk(_, 0, Set.empty))
+    present.filter(e => e.within.forall(w => !keys.contains(w))).flatMap(walk(_, _root_.com.histmersion.api.maintenance.Storage.ShownWalkDepth(0), Set.empty))
 
   def size(e: Storage.Entry): com.histmersion.api.maintenance.Storage.SizeResult =
     e.bytes.map(_.value.toLong) match
-      case None                 => if e.exists then "—" else "not there"
-      case Some(b) if e.partial => s"at least ${Backup.humanBytes(b)}"
-      case Some(b)              => Backup.humanBytes(b)
+      case None                 => if e.exists then _root_.com.histmersion.api.maintenance.Storage.SizeResult("—") else _root_.com.histmersion.api.maintenance.Storage.SizeResult("not there")
+      case Some(b) if e.partial => s"at least ${Backup.humanBytes(_root_.com.histmersion.api.backup.Backup.HumanBytesN(b))}"
+      case Some(b)              => Backup.humanBytes(_root_.com.histmersion.api.backup.Backup.HumanBytesN(b))
 
   object Advice:
 
@@ -142,22 +142,22 @@ object Storage:
 
     def shrink(key: com.histmersion.api.maintenance.Storage.Advice.ShrinkKey, keep: com.histmersion.api.maintenance.Storage.Advice.ShrinkKeep): Option[com.histmersion.api.maintenance.Storage.Advice.ShrinkResult] = key match
       case "backups" =>
-        Some(if keep > 0 then s"lower backups.keep (now $keep) — the next backup deletes the older archives"
-        else "set backups.keep (now 0 = keep every archive), or delete old archives")
-      case "basemap"   => Some("histmersion basemap rm (one layer: histmersion basemap rm --layer <name>)")
-      case "gazetteer" => Some("delete the cached extracts — histmersion places load fetches them again")
+        Some(if keep > 0 then _root_.com.histmersion.api.maintenance.Storage.Advice.ShrinkResult(s"lower backups.keep (now $keep) — the next backup deletes the older archives")
+        else _root_.com.histmersion.api.maintenance.Storage.Advice.ShrinkResult("set backups.keep (now 0 = keep every archive), or delete old archives"))
+      case "basemap"   => Some(_root_.com.histmersion.api.maintenance.Storage.Advice.ShrinkResult("histmersion basemap rm (one layer: histmersion basemap rm --layer <name>)"))
+      case "gazetteer" => Some(_root_.com.histmersion.api.maintenance.Storage.Advice.ShrinkResult("delete the cached extracts — histmersion places load fetches them again"))
       case "database"  =>
-        Some("histmersion maintenance vacuum; agents.keep-messages-days trims the agents' message traces")
-      case "toolchain"     => Some("histmersion-toolchain remove (needed again only to relink plugins)")
-      case "logs"          => Some("delete old log files (the server reopens them)")
-      case "bundles"       => Some("scratch: safe to empty while no bundle export or import is running")
-      case "acquire-spool" => Some("scratch: safe to empty while no acquisition is running")
+        Some(_root_.com.histmersion.api.maintenance.Storage.Advice.ShrinkResult("histmersion maintenance vacuum; agents.keep-messages-days trims the agents' message traces"))
+      case "toolchain"     => Some(_root_.com.histmersion.api.maintenance.Storage.Advice.ShrinkResult("histmersion-toolchain remove (needed again only to relink plugins)"))
+      case "logs"          => Some(_root_.com.histmersion.api.maintenance.Storage.Advice.ShrinkResult("delete old log files (the server reopens them)"))
+      case "bundles"       => Some(_root_.com.histmersion.api.maintenance.Storage.Advice.ShrinkResult("scratch: safe to empty while no bundle export or import is running"))
+      case "acquire-spool" => Some(_root_.com.histmersion.api.maintenance.Storage.Advice.ShrinkResult("scratch: safe to empty while no acquisition is running"))
       case "codex-home"    =>
         Some(
-          "lower agents.providers.codex.keep-sessions-days — older run transcripts are deleted and its SQLite " +
-            "files vacuumed while no Codex run uses it (every retention-every-hours); never delete auth.json, its login"
+          _root_.com.histmersion.api.maintenance.Storage.Advice.ShrinkResult("lower agents.providers.codex.keep-sessions-days — older run transcripts are deleted and its SQLite " +
+            "files vacuumed while no Codex run uses it (every retention-every-hours); never delete auth.json, its login")
         )
-      case k if k.startsWith("cache:") => Some("a cache: safe to delete, it is fetched or rebuilt again")
+      case k if k.startsWith("cache:") => Some(_root_.com.histmersion.api.maintenance.Storage.Advice.ShrinkResult("a cache: safe to delete, it is fetched or rebuilt again"))
       case _                           => None
 
   final case class Entry(
@@ -167,13 +167,13 @@ object Storage:
       path: Option[Entry.Path] = None,
       bytes: Option[com.histmersion.api.ByteCount] = None,
       files: Option[com.histmersion.api.maintenance.Storage.FileCount] = None,
-      exists: Entry.Exists = true,
-      partial: Entry.Partial = false,
+      exists: Entry.Exists = _root_.com.histmersion.api.maintenance.Storage.Entry.Exists(true),
+      partial: Entry.Partial = _root_.com.histmersion.api.maintenance.Storage.Entry.Partial(false),
       within: Option[Entry.Within] = None,
       detail: Option[Entry.Detail] = None,
       shrink: Option[Entry.Shrink] = None,
       volume: Option[Entry.Volume] = None,
-      host: Entry.Host = "server"
+      host: Entry.Host = _root_.com.histmersion.api.maintenance.Storage.Entry.Host("server")
   ) derives KindlingsCodecAsObject,
         KindlingsSchema,
         com.histmersion.api.json.Schema
@@ -203,7 +203,7 @@ object Storage:
     object Host extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
   final case class Report(
-      measuring: Report.Measuring = false,
+      measuring: Report.Measuring = _root_.com.histmersion.api.maintenance.Storage.Report.Measuring(false),
       measuredAt: Option[Report.MeasuredAt] = None,
       tookMillis: Option[com.histmersion.api.maintenance.Storage.Report.DurationMillis] = None,
       ageSeconds: Option[com.histmersion.api.maintenance.Storage.Report.AgeSeconds] = None,

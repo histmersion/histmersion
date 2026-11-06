@@ -33,16 +33,16 @@ object WorkLookup:
   object KeyArxiv extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
   val WorkFields: com.histmersion.domain.library.acquisition.WorkLookup.WorkFields =
-    "id,doi,display_name,publication_year,authorships,open_access,primary_location,best_oa_location," +
-      "locations,cited_by_count,is_retracted,type,abstract_inverted_index,referenced_works"
+    _root_.com.histmersion.domain.library.acquisition.WorkLookup.WorkFields("id,doi,display_name,publication_year,authorships,open_access,primary_location,best_oa_location," +
+      "locations,cited_by_count,is_retracted,type,abstract_inverted_index,referenced_works")
 
   /** OpenAlex resolves a DOI as a path segment: `/works/https://doi.org/10.1234/x`. */
   def workUrl(cfg: UpstreamSettings, doi: com.histmersion.domain.library.Doi): com.histmersion.domain.library.acquisition.WorkLookup.WorkUrlResult =
-    s"${cfg.openalex.url}/works/https://doi.org/$doi"
+    _root_.com.histmersion.domain.library.acquisition.WorkLookup.WorkUrlResult(s"${cfg.openalex.url}/works/https://doi.org/$doi")
 
   /** Crossref's record of a DOI. */
   def crossrefUrl(cfg: UpstreamSettings, doi: com.histmersion.domain.library.Doi): com.histmersion.domain.library.acquisition.WorkLookup.CrossrefUrlResult =
-    Url(cfg.crossref.url, s"/works/$doi", "mailto" -> cfg.mailto)
+    Url(cfg.crossref.url, _root_.com.histmersion.upstreams.http.Url.ApplyPath(s"/works/$doi"), "mailto" -> cfg.mailto)
 
   def meta(cfg: UpstreamSettings, json: com.histmersion.domain.library.acquisition.WorkLookup.MetaJsonArg1 => Either[com.histmersion.domain.library.acquisition.WorkLookup.MetaJsonResultPart1, Json], log: Plugin.Log)(
       doi: com.histmersion.domain.library.Doi

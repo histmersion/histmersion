@@ -22,7 +22,7 @@ object AstRecipe {
     expectedNewtypes: List[String] = Nil, expectedOverlap: Map[String,Int] = Map.empty,
     consolidationIndex: String = "", consolidations: List[Consolidation] = Nil, additionalManifest: String = "",
     ironProjects: List[String] = Nil, interfaceContracts: List[String] = Nil,
-    compilerObservation: String = "", boundaryRoots: List[String] = Nil, rawInputTargets: List[String] = Nil, errorType: String = "", testComparisons: Boolean = false, triviaFiles: List[String] = Nil)
+    compilerObservation: String = "", boundaryRoots: List[String] = Nil, rawInputTargets: List[String] = Nil, errorType: String = "", testComparisons: Boolean = false, triviaFiles: List[String] = Nil, constructionOnly: Boolean = false)
   object Policy {
     implicit val surface: generic.Surface[Policy] = generic.deriveSurface[Policy]
     implicit val decoder: ConfDecoder[Policy] = generic.deriveDecoder(Policy()).noTypos
@@ -62,7 +62,7 @@ class AstRecipe(val policy: AstRecipe.Policy) extends SyntacticRule("AstRecipe")
     val evidence = scala.collection.mutable.ListBuffer.empty[List[String]]
     val consolidated = TypeConsolidation.patches(frozen,policy.consolidationIndex,policy.consolidations,evidence,policy.creates)
     val aligned = InterfaceSignatures.patches(frozen,policy.consolidationIndex,policy.interfaceContracts,evidence,policy.boundaryRoots)
-    val repaired = CompilerRepairs.patches(frozen,policy.consolidationIndex,policy.compilerObservation,policy.boundaryRoots,evidence,policy.rawInputTargets,policy.errorType,policy.testComparisons)
+    val repaired = CompilerRepairs.patches(frozen,policy.consolidationIndex,policy.compilerObservation,policy.boundaryRoots,evidence,policy.rawInputTargets,policy.errorType,policy.testComparisons,policy.constructionOnly)
     val definitionPaths = frozen.keys.filter(p => policy.definitionRoots.exists(p.startsWith) && p.contains("/src/main/")).toSet
     val selected = policy.edits.groupBy(_.path) ++ (definitionPaths ++ consolidated.keySet ++ aligned.keySet ++ repaired.keySet ++ policy.triviaFiles.toSet ++ (if(policy.ironProjects.nonEmpty) Set("build.sbt") else Set.empty[String])).filterNot(policy.edits.map(_.path).contains).map(_ -> List.empty[AstRecipe.Edit])
     def parseSource(s: String,path: String): Source = {
@@ -172,6 +172,8 @@ object IronDependencies {
 class RepairTypes(frozen: Map[String,String], index: String) {
   implicit val dialect: Dialect = dialects.Scala3
   private val indexed = Files.readAllLines(Paths.get(index,"newtypes.tsv")).asScala.drop(1).map(_.split("\t",-1).toList).toList
+  private val indexedNames = indexed.groupBy(_(5))
+  private val indexedOwners = indexed.groupBy(d => d(5).stripSuffix("." + d(6)))
   private val loaded = scala.collection.mutable.Map.empty[String,Source]
   def tree(path: String): Source = loaded.getOrElseUpdate(path, { require(frozen.contains(path)); Files.readString(Paths.get(path)).parse[Source].get })
   def parents(t: Tree): List[Tree] = t.parent.toList.flatMap(p => p :: parents(p))
@@ -188,6 +190,7 @@ class RepairTypes(frozen: Map[String,String], index: String) {
     case s => s
   }
   case class Pure(name: String, base: String)
+  private val pureCache = scala.collection.mutable.Map.empty[String,Option[Pure]]
   def base(t: Type): String = t match {
     case a: Type.Apply => clean(a.tpe.syntax) + a.argClause.values.map(base).mkString("[",",","]")
     case a: Type.Tuple => a.args.map(base).mkString("(",",",")")
@@ -207,17 +210,16 @@ class RepairTypes(frozen: Map[String,String], index: String) {
   }
   private def exact(name: String, seen: Set[String]): Option[Pure] = {
     if(seen(name)) return None
-    val direct = indexed.filter(_(5) == name)
-    val prefixMatches = indexed.filter(d => name.startsWith(d(5).stripSuffix("." + d(6)) + "."))
-    val longest = prefixMatches.map(d => d(5).stripSuffix("." + d(6)).length).foldLeft(0)(math.max)
-    val paths = (if(direct.nonEmpty) direct else prefixMatches.filter(d => d(5).stripSuffix("." + d(6)).length == longest)).map(_(1)).distinct
+    val direct = indexedNames.getOrElse(name,Nil)
+    val enclosing = name.split('.').toList.inits.drop(1).map(_.mkString(".")).find(indexedOwners.contains).toList.flatMap(indexedOwners)
+    val paths = (if(direct.nonEmpty) direct else enclosing).map(_(1)).distinct
     val suffixes = name.split('.').toList.inits.filter(_.nonEmpty).map(_.mkString("/" ) + ".scala").toList
-    (paths ++ frozen.keys.filter(p => suffixes.exists(s => p.endsWith("/" + s)))).distinct.foreach(tree)
-    val aliases = loaded.values.toList.flatMap(_.collect {
+    val candidates = (paths ++ frozen.keys.filter(p => suffixes.exists(s => p.endsWith("/" + s)))).distinct.map(tree)
+    val aliases = candidates.flatMap(_.collect {
       case d: Defn.Type if owner(d) + "." + d.name.value == name && !d.body.syntax.endsWith(".T") => d.body.syntax.stripPrefix("_root_.")
     }).distinct
     if(aliases.size == 1) return exact(aliases.head,seen + name)
-    val objects = loaded.values.toList.flatMap(_.collect { case o: Defn.Object if owner(o) + "." + o.name.value == name => o })
+    val objects = candidates.flatMap(_.collect { case o: Defn.Object if owner(o) + "." + o.name.value == name => o })
     if(objects.size != 1) None else {
       val o = objects.head
       if(parents(o).exists(t => t.is[Defn.Def] || t.is[Defn.Class] || t.is[Defn.Trait])) None else o.templ.inits.collectFirst {
@@ -230,7 +232,7 @@ class RepairTypes(frozen: Map[String,String], index: String) {
   def pure(s: String, at: Tree): Option[Pure] = {
     val raw = s.stripPrefix("_root_.").stripSuffix(".T")
     val prefixes = owner(at).split('.').toList.inits.map(_.mkString(".")).filter(_.nonEmpty).toList
-    (raw :: prefixes.map(_ + "." + raw)).distinct.iterator.map(n => exact(n,Set.empty)).find(_.nonEmpty).flatten
+    (raw :: prefixes.map(_ + "." + raw)).distinct.iterator.map(n => pureCache.getOrElseUpdate(n,exact(n,Set.empty))).find(_.nonEmpty).flatten
   }
   def shape(t: Type, at: Tree): String = t match {
     case a: Type.Apply => clean(a.tpe.syntax) + a.argClause.values.map(shape(_,at)).mkString("[",",","]")
@@ -306,18 +308,28 @@ object InterfaceSignatures {
 }
 
 object CompilerRepairs {
-  def patches(frozen: Map[String,String], index: String, observation: String, roots: List[String], evidence: scala.collection.mutable.ListBuffer[List[String]], rawInputs: List[String] = Nil, errorType: String = "", testComparisons: Boolean = false): Map[String,List[(Int,Int,String)]] = {
+  def patches(frozen: Map[String,String], index: String, observation: String, roots: List[String], evidence: scala.collection.mutable.ListBuffer[List[String]], rawInputs: List[String] = Nil, errorType: String = "", testComparisons: Boolean = false, constructionOnly: Boolean = false): Map[String,List[(Int,Int,String)]] = {
     if(observation.isEmpty) return Map.empty
     implicit val dialect: Dialect = dialects.Scala3
     require(roots.nonEmpty,"Compiler repairs need explicit boundary roots")
+    require(!constructionOnly || (rawInputs.isEmpty && errorType.isEmpty && !testComparisons),"Construction-only mode excludes nominal, error-payload and comparison adapters")
     val snapshot = Files.readAllLines(Paths.get(observation,"sources.tsv")).asScala.drop(1).map(_.split("\t",-1)).map(r => r(0) -> r(1)).toMap
     require(snapshot == frozen,"Compiler diagnostics do not describe the current frozen snapshot")
     val text = Files.readString(Paths.get(observation,"build.log")).replaceAll("\u001b\\[[;\\d]*m","")
     val header = "(?m)^.*-- \\[(E[0-9]+)\\].*?: (.+\\.scala):([0-9]+):([0-9]+).*$".r
     val diagnostics = header.findAllMatchIn(text).toList
+    val unclassifiedHeaders = "(?m)^.*-- (?:Error|Warning): (.+\\.scala):([0-9]+):([0-9]+).*$".r.findAllMatchIn(text).toList
+    val boundaries = (diagnostics.map(_.start) ++ unclassifiedHeaders.map(_.start)).sorted
     require(diagnostics.nonEmpty,"No positioned compiler diagnostics parsed; do not infer a clean build")
     val types = new RepairTypes(frozen,index)
     val root = Paths.get("").toAbsolutePath.normalize
+    unclassifiedHeaders.foreach { d =>
+      val absolute = Paths.get(d.group(1)).toAbsolutePath.normalize
+      if(absolute.startsWith(root)) {
+        val path = root.relativize(absolute).toString
+        if(frozen.contains(path) && roots.exists(path.startsWith)) evidence += List(path,d.group(2),"UNRESOLVED compiler unclassified","Diagnostic has no numeric code; not automatically rewritten; see " + observation)
+      }
+    }
     val proposed = scala.collection.mutable.ListBuffer.empty[(String,Tree,String,String)]
     val patternGuards = scala.collection.mutable.LinkedHashMap.empty[(String,Case),List[String]]
     val freshNames = scala.collection.mutable.Map.empty[Tree,Set[String]]
@@ -345,7 +357,7 @@ object CompilerRepairs {
         val starts = 0 :: source.indices.filter(j => source.charAt(j) == '\n').map(_ + 1).toList
         require(line < starts.size)
         val offset = starts(line) + column
-        val block = text.substring(d.end,diagnostics.lift(i + 1).map(_.start).getOrElse(text.length))
+        val block = text.substring(d.end,boundaries.find(_ >= d.end).getOrElse(text.length))
         val displays = "(?m)^.*?\\b([0-9]+)\\s*\\|(.*)$".r.findAllMatchIn(block).toList
         val sourceDisplayMatches = displays.size == 1 && displays.head.group(1).toInt == line + 1 &&
           displays.head.group(2).trim == source.linesIterator.drop(line).next().trim
@@ -418,8 +430,8 @@ object CompilerRepairs {
             if(a.isEmpty && b.exists(_.base == types.base(from))) b.map(n => "_root_." + n.name + "(" + value + ")")
             else if(a.isEmpty && types.clean(from.syntax) == "Null" && b.exists(_.base == "String")) b.map(n => "_root_." + n.name + "(" + value + ")")
             else if(a.isEmpty && types.clean(from.syntax) == "Int" && b.exists(_.base == "Long")) b.map(n => "_root_." + n.name + "((" + value + ").toLong)")
-            else if(b.isEmpty && a.exists(n => n.base == types.clean(to.syntax) || (n.base == "String" && Set("CharSequence","java.lang.CharSequence")(to.syntax)))) Some("(" + value + ").value")
-            else if(a.nonEmpty && b.exists(n => n.base == a.get.base && rawInputs.contains(n.name))) b.map(n => "_root_." + n.name + "((" + value + ").value)")
+            else if(!constructionOnly && b.isEmpty && a.exists(n => n.base == types.clean(to.syntax) || (n.base == "String" && Set("CharSequence","java.lang.CharSequence")(to.syntax)))) Some("(" + value + ").value")
+            else if(!constructionOnly && a.nonEmpty && b.exists(n => n.base == a.get.base && rawInputs.contains(n.name))) b.map(n => "_root_." + n.name + "((" + value + ").value)")
             else (from,to) match {
               case (_,t: Type.Apply) if types.clean(t.tpe.syntax) == "Option" && from.syntax == "None.type" => Some(value)
               case (_,t: Type.Apply) if types.clean(t.tpe.syntax) == "List" && Set("Nil.type","scala.collection.immutable.Nil.type","scala.collection.immutable.Nil².type")(from.syntax) => Some(value)
@@ -500,15 +512,22 @@ object CompilerRepairs {
           for(found <- fullDetail("Found").flatMap(s => diagnosticType(s)); required <- fullDetail("Required").flatMap(s => diagnosticType(s,nullable = true))) {
             val body = tree.collect { case m: Defn.Def if displays.nonEmpty && m.body.pos.startLine + 1 == displays.head.group(1).toInt && m.body.pos.endLine + 1 == displays.last.group(1).toInt && m.decltpe.exists(t => contextual(t) == contextual(required)) => m.body }.headOption
             val target = if(sourceDisplayMatches) mismatch else if(displays.nonEmpty && displays.forall(m => m.group(1).toInt <= starts.size && (m.group(2).trim == "..." || m.group(2).trim == source.linesIterator.drop(m.group(1).toInt - 1).next().trim))) {
-              body.orElse(tree.collect { case t: Term if displays.size > 1 && t.pos.startLine + 1 == displays.head.group(1).toInt && t.pos.endLine + 1 == displays.last.group(1).toInt => t }.sortBy(t => -(t.pos.end - t.pos.start)).headOption)
+              body.orElse(tree.collect { case t: Term if displays.head.group(1).toInt < displays.last.group(1).toInt && t.pos.startLine + 1 == displays.head.group(1).toInt && t.pos.endLine + 1 == displays.last.group(1).toInt => t }.sortBy(t => -(t.pos.end - t.pos.start)).headOption)
             } else None
-            target.foreach { t =>
+            target.filterNot(t => types.parents(t).exists(_.is[Pat]) || t.parent.exists {
+              case d: Defn.Def => d.name eq t
+              case d: Decl.Def => d.name eq t
+              case o: Defn.Object => o.name eq t
+              case e: Defn.EnumCase => e.name eq t
+              case p: Term.Param => p.name eq t
+              case _ => false
+            }).foreach { t =>
             val original = source.substring(t.pos.start,t.pos.end)
             convert(found,required,original).filter(_ != original).foreach { n => proposed += ((path,t,n,"E007 " + found.syntax + " -> " + required.syntax)); supported = true }
             }
           }
         }
-        if(sourceDisplayMatches && d.group(1) == "E008") {
+        if(!constructionOnly && sourceDisplayMatches && d.group(1) == "E008") {
           val member = "value ([^ ]+) is not a member of ([^\\r\\n]+)".r.findFirstMatchIn(block)
           def reported(m: scala.util.matching.Regex.Match): String = m.group(2).split(", but",2).head.trim.stripSuffix(".")
           member.foreach { m =>
@@ -544,7 +563,7 @@ object CompilerRepairs {
             receiver.foreach { r => proposed += ((path,r,"(" + source.substring(r.pos.start,r.pos.end) + ").value","E008 primitive member " + method)); supported = true }
           }}
         }
-        if(sourceDisplayMatches && d.group(1) == "E049") {
+        if(!constructionOnly && sourceDisplayMatches && d.group(1) == "E049") {
           tree.collect { case p: Pat.Extract if p.fun.is[Term.Name] && p.fun.pos.start <= offset && offset < p.fun.pos.end => p }.foreach { p =>
             types.parents(p).collectFirst { case e: Defn.Enum => e }.foreach { e =>
               if(e.templ.stats.collect { case c: Defn.EnumCase if c.name.value == p.fun.syntax => c }.size == 1 && block.contains("Reference to " + p.fun.syntax + " is ambiguous")) {
@@ -556,7 +575,7 @@ object CompilerRepairs {
         if(sourceDisplayMatches && d.group(1) == "E134") {
           terms.collectFirst { case a: Term.Apply => a }.foreach { app =>
             app.argClause.values match {
-              case List(f: Term.AnonymousFunction) if f.body.structure == Term.Select(Term.Placeholder(),Term.Name("value")).structure =>
+              case List(f: Term.AnonymousFunction) if !constructionOnly && f.body.structure == Term.Select(Term.Placeholder(),Term.Name("value")).structure =>
                 val name = fresh("refactorValue",tree)
                 val call = source.substring(app.pos.start,app.pos.end).patch(f.pos.start - app.pos.start,name + ".value",f.pos.end - f.pos.start)
                 proposed += ((path,app,"(" + name + " => " + call + ")","E134 lift placeholder boundary callback")); supported = true
@@ -623,7 +642,7 @@ object CompilerRepairs {
                 }
               }
             }
-            if(!supported && actuals.size == app.argClause.values.size) actuals.zip(app.argClause.values).foreach { case(actual,arg) =>
+            if(!constructionOnly && !supported && actuals.size == app.argClause.values.size) actuals.zip(app.argClause.values).foreach { case(actual,arg) =>
               diagnosticType(actual).flatMap(t => types.pure(t.syntax,tree)).foreach { n =>
                 val signatures = if(at < 0) "" else block.take(at)
                 val base = if(n.base == "String") "(?:String|java.lang.String|CharSequence|java.lang.CharSequence)" else java.util.regex.Pattern.quote(n.base)
@@ -640,7 +659,7 @@ object CompilerRepairs {
             }
           }
         }
-        if(sourceDisplayMatches && d.group(1) == "E172") {
+        if(!constructionOnly && sourceDisplayMatches && d.group(1) == "E172") {
           if(testComparisons) {
             val pair = "Values of types ([_A-Za-z][_A-Za-z0-9.]*) and ([_A-Za-z][_A-Za-z0-9.]*) cannot be compared".r.findFirstMatchIn(block)
             for {
@@ -679,7 +698,7 @@ object CompilerRepairs {
             }
           }
         }
-        if(sourceDisplayMatches && d.group(1) == "E165") {
+        if(!constructionOnly && sourceDisplayMatches && d.group(1) == "E165") {
           val reported = "unmatchable type ([_A-Za-z][_A-Za-z0-9.]*)".r.findFirstMatchIn(block).map(_.group(1))
           tree.collect { case p: Pat.Extract if p.pos.start <= offset && offset < p.pos.end => p }.sortBy(p => p.pos.end - p.pos.start).headOption.foreach { p =>
             p.argClause.values match {

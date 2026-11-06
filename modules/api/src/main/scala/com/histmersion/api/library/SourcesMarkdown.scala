@@ -38,7 +38,7 @@ object SourcesMarkdown:
   object SourceRenamedResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
   def sourceFindingsOnly(findings: Vector[Finding.Row]): com.histmersion.api.library.SourcesMarkdown.SourceFindingsOnlyResult =
-    if findings.isEmpty then "_(no findings)_"
+    if findings.isEmpty then _root_.com.histmersion.api.library.SourcesMarkdown.SourceFindingsOnlyResult("_(no findings)_")
     else
       val items = findings.map { f =>
         val loc = place(f.regionName, f.lat, f.lon)
@@ -54,7 +54,7 @@ object SourcesMarkdown:
           .mkString(" · ")
         s"- ${f.claim}${if tail.nonEmpty then s"  \n  _${tail}_" else ""}"
       }
-      s"## Findings (${findings.size})\n${items.mkString("\n")}"
+      _root_.com.histmersion.api.library.SourcesMarkdown.SourceFindingsOnlyResult(s"## Findings (${findings.size})\n${items.mkString("\n")}")
 
   def source(s: Source.Detail, findings: Vector[Finding.Row], fullText: com.histmersion.api.library.SourcesMarkdown.SourceFullText): com.histmersion.api.library.SourcesMarkdown.SourceResult =
     val authorLinks = if s.authors.map(_.value).nonEmpty then chipLinks(s.authors.map(_.value), "author") else ""
@@ -95,21 +95,21 @@ object SourcesMarkdown:
         s.ocrMarkdown
           .map(t => s"\n\n---\n\n${AssetLinks.normalizeBody(t, s.title.value)}")
           .getOrElse("\n\n_(no full text stored)_")
-    header + topics + regions + tags + doi + prov + uid + summary + notes + findingsMd + body
+    _root_.com.histmersion.api.library.SourcesMarkdown.SourceResult(header + topics + regions + tags + doi + prov + uid + summary + notes + findingsMd + body)
 
   def neighbors(citekey: com.histmersion.api.library.SourcesMarkdown.NeighborsCitekey, rows: Vector[NeighborRow]): com.histmersion.api.library.SourcesMarkdown.NeighborsResult =
     if rows.isEmpty then
-      s"_No references recorded for **$citekey**._ An empty result is not evidence of agreement — " +
-        "disagreement edges are sparse (the corpus has only a handful); use `contradictions` for a focused view."
+      _root_.com.histmersion.api.library.SourcesMarkdown.NeighborsResult(s"_No references recorded for **$citekey**._ An empty result is not evidence of agreement — " +
+        "disagreement edges are sparse (the corpus has only a handful); use `contradictions` for a focused view.")
     else
       def block(title: com.histmersion.api.library.SourcesMarkdown.NeighborsBlockTitle, rs: Vector[NeighborRow])(item: NeighborRow => com.histmersion.api.library.SourcesMarkdown.NeighborsBlockItemResult): com.histmersion.api.library.SourcesMarkdown.NeighborsBlockResult =
-        if rs.isEmpty then "" else s"\n\n**$title**\n${rs.map(r => s"- _${r.kind}_ → ${item(r)}").mkString("\n")}"
+        if rs.isEmpty then _root_.com.histmersion.api.library.SourcesMarkdown.NeighborsBlockResult("") else _root_.com.histmersion.api.library.SourcesMarkdown.NeighborsBlockResult(s"\n\n**$title**\n${rs.map(r => s"- _${r.kind}_ → ${item(r)}").mkString("\n")}")
       def sources(dir: com.histmersion.api.library.SourcesMarkdown.NeighborsSourcesDir) = rows.filter(r => r.target == NeighborTarget.Source && r.direction == dir)
       val sourceItem: NeighborRow => com.histmersion.api.library.SourcesMarkdown.NeighborsSourceItemResult = r =>
         val st = r.status.map(s => s" _(${s.wire})_").getOrElse("")
-        s"[[${r.citekey}]]${r.title.map(t => s" — $t").getOrElse("")}$st"
+        _root_.com.histmersion.api.library.SourcesMarkdown.NeighborsSourceItemResult(s"[[${r.citekey}]]${r.title.map(t => s" — $t").getOrElse("")}$st")
       s"### Sources · $citekey" +
-        block("Outgoing (this → other)", sources("out"))(sourceItem) +
+        block(_root_.com.histmersion.api.library.SourcesMarkdown.NeighborsBlockTitle("Outgoing (this → other)"), sources(_root_.com.histmersion.api.library.SourcesMarkdown.NeighborsSourcesDir("out")))(sourceItem) +
         block("Incoming (other → this)", sources("in"))(sourceItem) +
         block("Articles", rows.filter(_.target == NeighborTarget.Article))(r =>
           s"[${r.title.getOrElse(Label.display(r.citekey))}](/article/${r.citekey})"
@@ -117,10 +117,10 @@ object SourcesMarkdown:
         block("Not in the corpus yet", rows.filter(_.target == NeighborTarget.Unresolved))(r => s"**${r.citekey}**")
 
   def graph(g: Source.Graph): com.histmersion.api.library.SourcesMarkdown.GraphResult =
-    if g.nodes.isEmpty then s"_No graph data for **${g.root}**._"
+    if g.nodes.isEmpty then _root_.com.histmersion.api.library.SourcesMarkdown.GraphResult(s"_No graph data for **${g.root}**._")
     else
       val header =
-        s"### Source graph · ${g.root} (depth ${g.depth}, ${Plural.count(g.nodes.size, "node")}, ${Plural.count(g.links.size, "link")})"
+        s"### Source graph · ${g.root} (depth ${g.depth}, ${Plural.count(_root_.com.histmersion.api.Plural.CountN((g.nodes.size).toLong), _root_.com.histmersion.api.Plural.CountSingular("node"))}, ${Plural.count(_root_.com.histmersion.api.Plural.CountN((g.links.size).toLong), _root_.com.histmersion.api.Plural.CountSingular("link"))})"
       val nodeLines = g.nodes
         .sortBy(n => (n.depth, n.id))
         .map { n =>
@@ -135,16 +135,16 @@ object SourcesMarkdown:
           s"- `${l.source}` →_${l.kind}_ `${l.target}`"
         }
         .mkString("\n")
-      s"$header\n\n**Nodes**\n$nodeLines\n\n**Links**\n$linkLines"
+      _root_.com.histmersion.api.library.SourcesMarkdown.GraphResult(s"$header\n\n**Nodes**\n$nodeLines\n\n**Links**\n$linkLines")
 
   def contradictions(result: ContradictionsResult, citekey: Option[com.histmersion.api.library.SourcesMarkdown.ContradictionsCitekey]): com.histmersion.api.library.SourcesMarkdown.ContradictionsResult =
     if result.rows.isEmpty then
       citekey match
         case Some(ck) =>
-          s"_No disagreement edges or contested status for **$ck**._ An empty result is not evidence " +
-            "of agreement — disagreement edges are extremely sparse in the corpus."
+          _root_.com.histmersion.api.library.SourcesMarkdown.ContradictionsResult(s"_No disagreement edges or contested status for **$ck**._ An empty result is not evidence " +
+            "of agreement — disagreement edges are extremely sparse in the corpus.")
         case None =>
-          "_No contradictions found in the corpus._"
+          _root_.com.histmersion.api.library.SourcesMarkdown.ContradictionsResult("_No contradictions found in the corpus._")
     else
       val items = result.rows.map { r =>
         val edge = (r.direction, r.kind, r.otherCitekey) match

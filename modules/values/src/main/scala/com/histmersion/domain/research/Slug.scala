@@ -16,5 +16,5 @@ object Slug extends RefinedType[String, Match["[a-z0-9][a-z0-9_.-]{0,120}"]]:
 
   def parse(raw: com.histmersion.domain.research.Slug.ParseRaw): Either[com.histmersion.domain.research.Slug.ParseResultPart1, Slug] =
     either(raw.trim.toLowerCase).left.map(_ =>
-      s"invalid slug '$raw' — use lower-case letters, digits, '_', '-' or '.' (e.g. sea_peoples)"
+      _root_.com.histmersion.domain.research.Slug.ParseResultPart1(s"invalid slug '$raw' — use lower-case letters, digits, '_', '-' or '.' (e.g. sea_peoples)")
     )

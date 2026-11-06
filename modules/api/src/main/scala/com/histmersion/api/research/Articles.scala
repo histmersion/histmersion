@@ -106,8 +106,8 @@ object Articles:
         val norm = s.toLowerCase.replaceAll("[^a-z]+", " ").trim
         if StandIns.contains(norm) || norm.startsWith("lorem ipsum") then
           Left(
-            s"summary '$s' is a stand-in, not a summary — write the one-paragraph lede, or omit it " +
-              "and the article's opening paragraph (or its `## Summary` section) is used"
+            _root_.com.histmersion.api.research.Articles.SummaryOfResultPart1(s"summary '$s' is a stand-in, not a summary — write the one-paragraph lede, or omit it " +
+              "and the article's opening paragraph (or its `## Summary` section) is used")
           )
         else Right(Some(s))
 
@@ -115,12 +115,12 @@ object Articles:
 
   private val Kind = """^[a-z][a-z0-9_-]*$""".r
 
-  def notFound(slug: com.histmersion.api.research.Articles.NotFoundSlug): Api.Error = Api.Error(s"No article '$slug'", Some(Write.CodeNotFound))
+  def notFound(slug: com.histmersion.api.research.Articles.NotFoundSlug): Api.Error = Api.Error(_root_.com.histmersion.api.Api.Error.Message(s"No article '$slug'"), Some(_root_.com.histmersion.api.Api.Error.Code(Write.CodeNotFound)))
 
   def kindOf(raw: com.histmersion.api.research.Articles.KindOfRaw): Either[com.histmersion.api.research.Articles.KindOfResultPart1, com.histmersion.api.research.Articles.KindOfResultPart2] =
     val k = raw.trim.toLowerCase
     if Kind.matches(k) then Right(k)
-    else Left(s"invalid kind '$raw' — one of ${Kinds.mkString(", ")} (or another lower-case word)")
+    else Left(_root_.com.histmersion.api.research.Articles.KindOfResultPart1(s"invalid kind '$raw' — one of ${Kinds.mkString(", ")} (or another lower-case word)"))
 
   def kindOfDir(dirName: com.histmersion.api.research.Articles.KindOfDirDirName): com.histmersion.api.research.Articles.KindOfDirResult =
     val d = dirName.trim.toLowerCase
@@ -159,8 +159,8 @@ object Articles:
         if want == actual then Right(())
         else
           Left(
-            s"'${existing.slug}' has moved on: you sent ifUpdatedAt='$want' but the stored " +
-              s"updatedAt is '$actual'. Re-read the article and re-apply your patch."
+            _root_.com.histmersion.api.research.Articles.PreconditionResultPart1(s"'${existing.slug}' has moved on: you sent ifUpdatedAt='$want' but the stored " +
+              s"updatedAt is '$actual'. Re-read the article and re-apply your patch.")
           )
 
   def applyPatch(existing: Article, patch: Article.Patch): Either[com.histmersion.api.research.Articles.ApplyPatchResultPart1, Article] =
@@ -196,7 +196,7 @@ object Articles:
       val t = line.trim
       t.startsWith("#") && t.replaceAll("^#+\\s*", "").trim.toLowerCase == sNorm
     }
-    if idx < 0 then Left(s"no heading matching '$section' in the article body")
+    if idx < 0 then Left(_root_.com.histmersion.api.research.Articles.AppendUnderSectionResultPart1(s"no heading matching '$section' in the article body"))
     else
       val level = lines(idx).trim.takeWhile(_ == '#').length
       val rest = lines.drop(idx + 1)
@@ -214,6 +214,6 @@ object Articles:
   private def periodOf(start: Option[com.histmersion.api.research.Articles.PeriodOfStart], end: Option[com.histmersion.api.research.Articles.PeriodOfEnd]): Either[com.histmersion.api.research.Articles.PeriodOfResultPart1, Option[Period]] =
     (start, end) match
       case (Some(a), Some(b)) if a <= b => Right(Some(Period(a, b)))
-      case (Some(a), Some(b))           => Left(s"period_start ($a) must not be after period_end ($b)")
+      case (Some(a), Some(b))           => Left(_root_.com.histmersion.api.research.Articles.PeriodOfResultPart1(s"period_start ($a) must not be after period_end ($b)"))
       case (None, None)                 => Right(None)
-      case _                            => Left("give both periodStart and periodEnd, or neither")
+      case _                            => Left(_root_.com.histmersion.api.research.Articles.PeriodOfResultPart1("give both periodStart and periodEnd, or neither"))

@@ -26,11 +26,11 @@ object MatchOutcome:
   object FromWireS extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
   def wireOf(o: MatchOutcome): com.histmersion.domain.library.MatchOutcome.WireOfResult = o match
-    case Same          => "same"
-    case AutoMerge     => "auto-merge"
-    case NeedsDecision => "needs-decision"
-    case New           => "new"
-    case DeletedHere   => "deleted-here"
+    case Same          => _root_.com.histmersion.domain.library.MatchOutcome.WireOfResult("same")
+    case AutoMerge     => _root_.com.histmersion.domain.library.MatchOutcome.WireOfResult("auto-merge")
+    case NeedsDecision => _root_.com.histmersion.domain.library.MatchOutcome.WireOfResult("needs-decision")
+    case New           => _root_.com.histmersion.domain.library.MatchOutcome.WireOfResult("new")
+    case DeletedHere   => _root_.com.histmersion.domain.library.MatchOutcome.WireOfResult("deleted-here")
   given WireEnumValues[MatchOutcome]:
     def all: Array[MatchOutcome] = MatchOutcome.values
     def wire(e: MatchOutcome): com.histmersion.domain.library.MatchOutcome.WireResult = wireOf(e)

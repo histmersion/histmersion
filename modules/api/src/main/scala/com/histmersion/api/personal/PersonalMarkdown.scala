@@ -44,10 +44,10 @@ object PersonalMarkdown:
     ) + s" — ${targetLine(b.target)} · ${minute(b.createdAt)} · id `${b.id.value}`"
 
   def bookmarks(bs: List[Bookmark]): com.histmersion.api.personal.PersonalMarkdown.BookmarksResult =
-    if bs.isEmpty then "_No bookmarks._"
-    else (s"**Bookmarks** — ${bs.size}" :: "" :: bs.map(bookmarkLine)).mkString("\n")
+    if bs.isEmpty then _root_.com.histmersion.api.personal.PersonalMarkdown.BookmarksResult("_No bookmarks._")
+    else _root_.com.histmersion.api.personal.PersonalMarkdown.BookmarksResult((s"**Bookmarks** — ${bs.size}" :: "" :: bs.map(bookmarkLine)).mkString("\n"))
 
-  def excerpt(text: com.histmersion.api.personal.PersonalMarkdown.ExcerptText, chars: com.histmersion.api.personal.PersonalMarkdown.ExcerptChars = 120): com.histmersion.api.personal.PersonalMarkdown.ExcerptResult =
+  def excerpt(text: com.histmersion.api.personal.PersonalMarkdown.ExcerptText, chars: com.histmersion.api.personal.PersonalMarkdown.ExcerptChars = _root_.com.histmersion.api.personal.PersonalMarkdown.ExcerptChars(120)): com.histmersion.api.personal.PersonalMarkdown.ExcerptResult =
     val first = text.linesIterator.map(_.trim).find(_.nonEmpty).getOrElse("")
     if first.length <= chars then first else first.take(chars - 1).trim + "…"
 
@@ -55,8 +55,8 @@ object PersonalMarkdown:
     s"- **${n.title}** — ${targetLine(n.target)} · ${minute(n.updatedAt)} · id `${n.id.value}`\n  ${excerpt(n.text.value)}"
 
   def notes(ns: List[Note]): com.histmersion.api.personal.PersonalMarkdown.NotesResult =
-    if ns.isEmpty then "_No notes._"
-    else (s"**Notes** — ${ns.size}" :: "" :: ns.map(noteLine)).mkString("\n")
+    if ns.isEmpty then _root_.com.histmersion.api.personal.PersonalMarkdown.NotesResult("_No notes._")
+    else _root_.com.histmersion.api.personal.PersonalMarkdown.NotesResult((s"**Notes** — ${ns.size}" :: "" :: ns.map(noteLine)).mkString("\n"))
 
   def note(n: Note): com.histmersion.api.personal.PersonalMarkdown.NoteResult =
     List(
@@ -75,4 +75,4 @@ object PersonalMarkdown:
     )
 
   def reading(ms: List[ReadMark]): com.histmersion.api.personal.PersonalMarkdown.ReadingResult =
-    if ms.isEmpty then "_Nothing marked._" else ms.map(readLine).mkString("\n")
+    if ms.isEmpty then _root_.com.histmersion.api.personal.PersonalMarkdown.ReadingResult("_Nothing marked._") else _root_.com.histmersion.api.personal.PersonalMarkdown.ReadingResult(ms.map(readLine).mkString("\n"))

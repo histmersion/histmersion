@@ -14,8 +14,8 @@ final case class Bookmark(
     target: Target,
     title: com.histmersion.api.personal.ReadMark.Title,
     label: Option[com.histmersion.api.personal.Bookmark.Label] = None,
-    createdAt: Bookmark.CreatedAt = "",
-    updatedAt: Bookmark.UpdatedAt = ""
+    createdAt: Bookmark.CreatedAt = _root_.com.histmersion.api.personal.Bookmark.CreatedAt(""),
+    updatedAt: Bookmark.UpdatedAt = _root_.com.histmersion.api.personal.Bookmark.UpdatedAt("")
 ) derives KindlingsCodecAsObject,
       KindlingsSchema, com.histmersion.api.json.Schema:
   def name: com.histmersion.api.personal.Bookmark.NameResult = label.map(_.value).filter(_.trim.nonEmpty).getOrElse(title)
@@ -53,7 +53,7 @@ object Bookmark:
     /** A name as given, tidied (spaces collapsed): none when empty, refused when too long. */
     def tidy(raw: Option[Label]): Either[com.histmersion.api.personal.Bookmark.Label.TidyResultPart1, Option[Label]] =
       raw.map(_.value.trim.replaceAll("\\s+", " ")).filter(_.nonEmpty) match
-        case Some(l) if l.length > MaxChars => Left(s"a bookmark's name is at most $MaxChars characters")
+        case Some(l) if l.length > MaxChars => Left(_root_.com.histmersion.api.personal.Bookmark.Label.TidyResultPart1(s"a bookmark's name is at most $MaxChars characters"))
         case other                          => Right(other.map(Label(_)))
     given Encoder[Label] = Encoder.encodeString.contramap(_.value)
     given Decoder[Label] = Decoder.decodeString.map(Label(_))

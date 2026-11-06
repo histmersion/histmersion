@@ -3,7 +3,7 @@ package com.histmersion.api.library
 import com.histmersion.api.catalogue.LinkScheme
 import com.histmersion.api.given
 final case class ExternalId(scheme: LinkScheme, id: ExternalId.Id):
-  def key: com.histmersion.api.library.ExternalId.KeyResult = s"${scheme.wire}:$id"
+  def key: com.histmersion.api.library.ExternalId.KeyResult = _root_.com.histmersion.api.library.ExternalId.KeyResult(s"${scheme.wire}:$id")
 
   def placeId: com.histmersion.api.library.ExternalId.PlaceIdResult = s"${scheme.wire}_${id.toLowerCase(java.util.Locale.ROOT)}"
 

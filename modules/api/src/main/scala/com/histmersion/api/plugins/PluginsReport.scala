@@ -5,13 +5,13 @@ import sttp.tapir.Schema
 import com.histmersion.api.given
 
 final case class PluginsReport(
-    spiVersion: PluginsReport.SpiVersion = 0,
+    spiVersion: PluginsReport.SpiVersion = _root_.com.histmersion.api.plugins.PluginsReport.SpiVersion(0),
     plugins: List[PluginStatus] = Nil,
     warnings: List[PluginsReport.Warnings] = Nil,
     set: Option[PluginSet] = None
 ) derives KindlingsCodecAsObject,
       KindlingsSchema, com.histmersion.api.json.Schema:
-  def ok: com.histmersion.api.plugins.PluginsReport.OkResult = plugins.forall(p => p.state != PluginState.Failed.wire && p.state != PluginState.Refused.wire)
+  def ok: com.histmersion.api.plugins.PluginsReport.OkResult = _root_.com.histmersion.api.plugins.PluginsReport.OkResult(plugins.forall(p => p.state != PluginState.Failed.wire && p.state != PluginState.Refused.wire))
 
 object PluginsReport:
   type OkResult = OkResult.T

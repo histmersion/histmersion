@@ -8,4 +8,4 @@ object AssetRelation:
   val TakenAt = "taken_at"
   val Illustrates = "illustrates"
   val PageOf = "page_of"
-  val all: List[com.histmersion.api.media.AssetRelation.All] = List(Depicts, TakenAt, Illustrates, PageOf)
+  val all: List[com.histmersion.api.media.AssetRelation.All] = List(_root_.com.histmersion.api.media.AssetRelation.All(Depicts), _root_.com.histmersion.api.media.AssetRelation.All(TakenAt), _root_.com.histmersion.api.media.AssetRelation.All(Illustrates), _root_.com.histmersion.api.media.AssetRelation.All(PageOf))

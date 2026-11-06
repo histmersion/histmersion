@@ -74,9 +74,9 @@ object Backup:
   private val Stamp: DateTimeFormatter =
     DateTimeFormatter.ofPattern("uuuuMMdd'T'HHmmss'Z'").withZone(ZoneOffset.UTC)
 
-  def timestamp(at: Instant): com.histmersion.api.backup.Backup.TimestampResult = Stamp.format(at.truncatedTo(ChronoUnit.SECONDS))
+  def timestamp(at: Instant): com.histmersion.api.backup.Backup.TimestampResult = _root_.com.histmersion.api.backup.Backup.TimestampResult(Stamp.format(at.truncatedTo(ChronoUnit.SECONDS)))
 
-  def fileName(at: Instant): com.histmersion.api.backup.Backup.FileNameResult = s"$Prefix${timestamp(at)}$Extension"
+  def fileName(at: Instant): com.histmersion.api.backup.Backup.FileNameResult = _root_.com.histmersion.api.backup.Backup.FileNameResult(s"$Prefix${timestamp(at)}$Extension")
 
   def uniqueName(name: com.histmersion.api.backup.Backup.UniqueNameName, taken: com.histmersion.api.backup.Backup.UniqueNameTakenArg1 => com.histmersion.api.backup.Backup.UniqueNameTakenResult): com.histmersion.api.backup.Backup.UniqueNameResult =
     if !taken(name) then name
@@ -117,13 +117,13 @@ object Backup:
 
   def safeName(raw: com.histmersion.api.backup.Backup.SafeNameRaw): Either[com.histmersion.api.backup.Backup.SafeNameResultPart1, com.histmersion.api.backup.Backup.SafeNameResultPart2] =
     val n = Option(raw).map(_.trim).getOrElse("")
-    if n.isEmpty then Left("no backup file given")
-    else if n.length > 128 then Left(s"backup file name is too long (${n.length} chars)")
-    else if !n.endsWith(Extension) then Left(s"'$n' is not a $Extension file")
-    else if n.length == Extension.length then Left(s"'$n' has no name before $Extension")
+    if n.isEmpty then Left(_root_.com.histmersion.api.backup.Backup.SafeNameResultPart1("no backup file given"))
+    else if n.length > 128 then Left(_root_.com.histmersion.api.backup.Backup.SafeNameResultPart1(s"backup file name is too long (${n.length} chars)"))
+    else if !n.endsWith(Extension) then Left(_root_.com.histmersion.api.backup.Backup.SafeNameResultPart1(s"'$n' is not a $Extension file"))
+    else if n.length == Extension.length then Left(_root_.com.histmersion.api.backup.Backup.SafeNameResultPart1(s"'$n' has no name before $Extension"))
     else if !Safe.matches(n) then
-      Left(s"'$n' is not a plain backup file name — no directories, no '..', letters/digits/._- only")
-    else Right(n)
+      Left(_root_.com.histmersion.api.backup.Backup.SafeNameResultPart1(s"'$n' is not a plain backup file name — no directories, no '..', letters/digits/._- only"))
+    else Right(_root_.com.histmersion.api.backup.Backup.SafeNameResultPart2(n))
 
   /** Absent `host`/`port` let libpq decide (its own defaults, `PGHOST`, `PGPORT`). */
   final case class PgTarget(host: Option[PgTarget.Host], port: Option[PgTarget.Port], database: PgTarget.Database):
@@ -148,7 +148,7 @@ object Backup:
 
   def parseJdbc(url: com.histmersion.api.backup.Backup.ParseJdbcUrl): Either[com.histmersion.api.backup.Backup.ParseJdbcResultPart1, PgTarget] =
     val u = Option(url).map(_.trim).getOrElse("")
-    if !u.startsWith(JdbcScheme) then Left(s"not a PostgreSQL JDBC URL: '$u'")
+    if !u.startsWith(JdbcScheme) then Left(_root_.com.histmersion.api.backup.Backup.ParseJdbcResultPart1(s"not a PostgreSQL JDBC URL: '$u'"))
     else
       val rest = u.drop(JdbcScheme.length).takeWhile(_ != '?')
       val (authority, db) =
@@ -166,11 +166,11 @@ object Backup:
         else (authority, None)
       val port: Either[com.histmersion.api.backup.Backup.ParseJdbcPortPart1, Option[com.histmersion.api.backup.Backup.ParseJdbcPortPart2]] = portText match
         case None    => Right(None)
-        case Some(p) => p.toIntOption.map(Some(_)).toRight(s"'$p' is not a port number in '$u'")
+        case Some(p) => ((p.toIntOption.map(Some(_)).toRight(s"'$p' is not a port number in '$u'")).left.map(refactorError => _root_.com.histmersion.api.backup.Backup.ParseJdbcPortPart1(refactorError))).map(refactorValue2 => (refactorValue2).map(refactorValue3 => _root_.com.histmersion.api.backup.Backup.ParseJdbcPortPart2(refactorValue3)))
       for
         name <- Some(db.trim).filter(_.nonEmpty).toRight(s"JDBC URL has no database name: '$u'")
         p <- port
-      yield PgTarget(Some(host).filter(_.nonEmpty), p, name)
+      yield PgTarget((Some(host).filter(_.nonEmpty)).map(refactorValue10 => _root_.com.histmersion.api.backup.Backup.PgTarget.Host(refactorValue10)), p, _root_.com.histmersion.api.backup.Backup.PgTarget.Database(name))
 
   private val IgnoredErrors = """errors ignored on restore:\s*(\d+)""".r
 
@@ -186,22 +186,22 @@ object Backup:
       .filter(l => l.toLowerCase.contains("error") || l.toLowerCase.contains("warning"))
     val completed = output.exists(l => IgnoredErrors.findFirstMatchIn(l).isDefined)
     if exit == 0 || completed then Right(notable)
-    else Left(s"pg_restore failed (exit $exit): ${notable.takeRight(5).mkString("; ")}")
+    else Left(_root_.com.histmersion.api.backup.Backup.RestoreOutcomeResultPart1(s"pg_restore failed (exit $exit): ${notable.takeRight(5).mkString("; ")}"))
 
   val CodeMaintenance = "maintenance"
 
   def maintenance(op: com.histmersion.api.backup.Backup.MaintenanceOp): Api.Error =
-    Api.Error(s"$op is unavailable: a restore is in progress on this server", Some(CodeMaintenance))
+    Api.Error(_root_.com.histmersion.api.Api.Error.Message(s"$op is unavailable: a restore is in progress on this server"), Some(_root_.com.histmersion.api.Api.Error.Code(CodeMaintenance)))
 
   def missing(file: com.histmersion.api.backup.Backup.MissingFile): Api.Error =
-    Api.Error(s"no backup named '$file' in the backups directory", Some(Write.CodeNotFound))
+    Api.Error(_root_.com.histmersion.api.Api.Error.Message(s"no backup named '$file' in the backups directory"), Some(_root_.com.histmersion.api.Api.Error.Code(Write.CodeNotFound)))
 
   /** Formatted against `Locale.ROOT`: the string goes onto the wire, and JDK 25's CLDR renders `%.1f` as `2,5` under
     * locales such as `en_PL`.
     */
   def humanBytes(n: com.histmersion.api.backup.Backup.HumanBytesN): com.histmersion.api.backup.Backup.HumanBytesResult =
     val units = Vector("kB", "MB", "GB", "TB")
-    if n < 1000 then s"$n B"
+    if n < 1000 then _root_.com.histmersion.api.backup.Backup.HumanBytesResult(s"$n B")
     else
       val exp = math.min(units.size, (math.log(n.toDouble) / math.log(1000)).toInt)
       val v = n.toDouble / math.pow(1000, exp.toDouble)
@@ -236,7 +236,7 @@ object Backup:
 
   enum State:
     case Running, Done, Failed
-    def wire: com.histmersion.api.backup.Backup.State.WireResult = toString.toLowerCase(java.util.Locale.ROOT)
+    def wire: com.histmersion.api.backup.Backup.State.WireResult = _root_.com.histmersion.api.backup.Backup.State.WireResult(toString.toLowerCase(java.util.Locale.ROOT))
 
   object State:
     type WireResult = WireResult.T

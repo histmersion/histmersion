@@ -7,7 +7,7 @@ import sttp.tapir.Schema
 /** What became of an imported book's cover: one line for a person, a `warning` when it could not be stored. */
 final case class CollectionCover(
     line: CollectionCover.Line,
-    warning: CollectionCover.Warning = false
+    warning: CollectionCover.Warning = _root_.com.histmersion.api.library.CollectionCover.Warning(false)
 ) derives KindlingsCodecAsObject,
       KindlingsSchema, com.histmersion.api.json.Schema
 

@@ -91,15 +91,15 @@ object AcquireParse:
   object WikiPageTitleUrl extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
   private def str(c: ACursor, keys: String*): Option[com.histmersion.upstreams.parse.AcquireParse.StrResult] =
-    keys.foldLeft(c)(_.downField(_)).as[String].toOption.map(_.trim).filter(_.nonEmpty)
+    (keys.foldLeft(c)(_.downField(_)).as[String].toOption.map(_.trim).filter(_.nonEmpty)).map(refactorValue => _root_.com.histmersion.upstreams.parse.AcquireParse.StrResult(refactorValue))
   private def int(c: ACursor, keys: String*): Option[com.histmersion.upstreams.parse.AcquireParse.IntResult] =
-    keys.foldLeft(c)(_.downField(_)).as[Int].toOption
+    (keys.foldLeft(c)(_.downField(_)).as[Int].toOption).map(refactorValue2 => _root_.com.histmersion.upstreams.parse.AcquireParse.IntResult(refactorValue2))
   private def bool(c: ACursor, keys: String*): com.histmersion.upstreams.parse.AcquireParse.BoolResult =
-    keys.foldLeft(c)(_.downField(_)).as[Boolean].toOption.getOrElse(false)
+    _root_.com.histmersion.upstreams.parse.AcquireParse.BoolResult(keys.foldLeft(c)(_.downField(_)).as[Boolean].toOption.getOrElse(false))
   private def arr(c: ACursor, keys: String*): List[Json] =
     keys.foldLeft(c)(_.downField(_)).values.map(_.toList).getOrElse(Nil)
   private def strings(c: ACursor, keys: String*): List[com.histmersion.upstreams.parse.AcquireParse.StringsResult] =
-    arr(c, keys*).flatMap(_.asString).map(_.trim).filter(_.nonEmpty)
+    (arr(c, keys*).flatMap(_.asString).map(_.trim).filter(_.nonEmpty)).map(refactorValue3 => _root_.com.histmersion.upstreams.parse.AcquireParse.StringsResult(refactorValue3))
 
   /** The trailing path segment of an OpenAlex URI (`https://openalex.org/W123` → `W123`). */
   private def tail(uri: com.histmersion.upstreams.parse.AcquireParse.TailUri): com.histmersion.upstreams.parse.AcquireParse.TailResult = uri.split("/").lastOption.getOrElse(uri)
@@ -110,7 +110,7 @@ object AcquireParse:
     * running text. Re-ordering the positions restores it — the same trick `discover.py::_abstract` used.
     */
   def openalexAbstract(json: Json): Option[com.histmersion.upstreams.parse.AcquireParse.OpenalexAbstractResult] =
-    json.asObject
+    (json.asObject
       .map { o =>
         val words = o.toList.flatMap { (w, positions) =>
           positions.asArray.toList.flatten.flatMap(_.asNumber).flatMap(_.toInt).map(_ -> w)
@@ -118,7 +118,7 @@ object AcquireParse:
         words.sortBy(_._1).map(_._2).mkString(" ")
       }
       .map(_.trim)
-      .filter(_.nonEmpty)
+      .filter(_.nonEmpty)).map(refactorValue4 => _root_.com.histmersion.upstreams.parse.AcquireParse.OpenalexAbstractResult(refactorValue4))
 
   /** One OpenAlex `work` → the normalised [[WorkRef]] (the port of `discover.py::normalize_work`). */
   def openalexWork(json: Json): WorkRef =
@@ -190,7 +190,7 @@ object AcquireParse:
         doi = w.doi,
         arxiv = w.arxivId,
         citedBy = w.citedByCount,
-        isInfluential = false,
+        isInfluential = _root_.com.histmersion.domain.library.acquisition.FollowupRow.IsInfluential(false),
         intents = Nil,
         contexts = Nil
       )
@@ -294,7 +294,7 @@ object AcquireParse:
   // ── Europe PMC / PMC Article Datasets ───────────────────────────────────────────────────────
 
   /** Europe PMC availability codes that mean a reader may download the copy without an account. */
-  val EuropePmcFree: Set[com.histmersion.upstreams.parse.AcquireParse.EuropePmcFree] = Set("OA", "F")
+  val EuropePmcFree: Set[com.histmersion.upstreams.parse.AcquireParse.EuropePmcFree] = Set(_root_.com.histmersion.upstreams.parse.AcquireParse.EuropePmcFree("OA"), _root_.com.histmersion.upstreams.parse.AcquireParse.EuropePmcFree("F"))
 
   /** The `search?query=DOI:"…"&resultType=core` hit whose DOI IS the one asked for (a DOI query can match a correction
     * or a comment that cites it).
@@ -313,7 +313,7 @@ object AcquireParse:
         }.distinct
         EuropePmcHit(
           str(c, "pmcid").map(_.toUpperCase).filter(PmcId.matches),
-          str(c, "isOpenAccess").contains("Y"),
+          _root_.com.histmersion.upstreams.europepmc.EuropePmcHit.IsOpenAccess(str(c, "isOpenAccess").contains("Y")),
           pdfs
         )
       }
@@ -398,7 +398,7 @@ object AcquireParse:
       val ext = name.toLowerCase.split("\\.").lastOption.getOrElse("")
       Option.when(ext == "pdf" || ext == "epub") {
         val size = str(h, "size").flatMap(_.toLongOption).getOrElse(0L)
-        ArchiveFile(name, str(h, "format"), math.round(size / 1e5) / 10.0)
+        ArchiveFile(name, str(h, "format"), _root_.com.histmersion.upstreams.archiveorg.ArchiveFile.Megabytes(math.round(size / 1e5) / 10.0))
       }
     }
     ArchiveItem(
@@ -450,7 +450,7 @@ object AcquireParse:
   def wikiTitle(json: Json): Option[com.histmersion.upstreams.parse.AcquireParse.WikiTitleResult] = str(json.hcursor.downField("parse"), "title")
 
   def wikiText(json: Json): Option[com.histmersion.upstreams.parse.AcquireParse.WikiTextResult] =
-    json.hcursor.downField("parse").downField("wikitext").downField("*").as[String].toOption
+    (json.hcursor.downField("parse").downField("wikitext").downField("*").as[String].toOption).map(refactorValue48 => _root_.com.histmersion.upstreams.parse.AcquireParse.WikiTextResult(refactorValue48))
 
   /** Harvest every DOI and arXiv id cited by a Wikipedia article's wikitext. Citations trail punctuation (`|`, `}}`,
     * `.`) into the match, so each hit goes through [[Identifiers.doi]].

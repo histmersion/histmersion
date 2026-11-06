@@ -39,7 +39,7 @@ object WikidataEntities:
   /** Pure: the `wbgetentities` URL for up to the API's batch of ids. `maxlag` 0 = not sent. */
   def url(api: com.histmersion.upstreams.wikidata.WikidataEntities.UrlApi, ids: List[com.histmersion.upstreams.wikidata.WikidataEntities.UrlIds], maxlag: com.histmersion.upstreams.wikidata.WikidataEntities.UrlMaxlag): com.histmersion.upstreams.wikidata.WikidataEntities.UrlResult =
     val lag = if maxlag > 0 then s"&maxlag=$maxlag" else ""
-    s"$api?action=wbgetentities&format=json&formatversion=2&props=claims&ids=${enc(ids.mkString("|"))}$lag"
+    s"$api?action=wbgetentities&format=json&formatversion=2&props=claims&ids=${enc(_root_.com.histmersion.upstreams.wikidata.WikidataEntities.EncS(ids.mkString("|")))}$lag"
 
   /** Pure: the items of a `wbgetentities` answer, keyed by the id ASKED for (a redirected item answers under the id
     * that was asked, with the statements of its target). `props` are the picture properties to keep; P373 is always
@@ -50,7 +50,7 @@ object WikidataEntities:
     c.downField("error").focus match
       case Some(err) =>
         val code = err.hcursor.get[String]("code").getOrElse("error")
-        Left(s"$code: ${err.hcursor.get[String]("info").getOrElse("")}".trim)
+        Left(_root_.com.histmersion.upstreams.wikidata.WikidataEntities.ItemsResultPart1(s"$code: ${err.hcursor.get[String]("info").getOrElse("")}".trim))
       case None =>
         val ents = c.downField("entities").focus.flatMap(_.asObject).map(_.toList).getOrElse(Nil)
         Right(ents.flatMap { (key, ent) =>

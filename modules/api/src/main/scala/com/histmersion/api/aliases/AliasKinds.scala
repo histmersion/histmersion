@@ -16,11 +16,11 @@ object AliasKinds:
 
   private def kind(noun: com.histmersion.api.aliases.AliasKinds.KindNoun, idWord: com.histmersion.api.aliases.AliasKinds.KindIdWord): AliasKind = AliasKind(RecordNoun(noun), KeyWord(idWord))
 
-  val SourceRecords: AliasKind = kind("source", "citekey")
-  val ArticleRecords: AliasKind = kind("article", "slug")
-  val EventRecords: AliasKind = kind("event", "id")
-  val GoalRecords: AliasKind = kind("goal", "slug")
-  val PlaceRecords: AliasKind = kind("place", "id")
+  val SourceRecords: AliasKind = kind(_root_.com.histmersion.api.aliases.AliasKinds.KindNoun("source"), _root_.com.histmersion.api.aliases.AliasKinds.KindIdWord("citekey"))
+  val ArticleRecords: AliasKind = kind(_root_.com.histmersion.api.aliases.AliasKinds.KindNoun("article"), _root_.com.histmersion.api.aliases.AliasKinds.KindIdWord("slug"))
+  val EventRecords: AliasKind = kind(_root_.com.histmersion.api.aliases.AliasKinds.KindNoun("event"), _root_.com.histmersion.api.aliases.AliasKinds.KindIdWord("id"))
+  val GoalRecords: AliasKind = kind(_root_.com.histmersion.api.aliases.AliasKinds.KindNoun("goal"), _root_.com.histmersion.api.aliases.AliasKinds.KindIdWord("slug"))
+  val PlaceRecords: AliasKind = kind(_root_.com.histmersion.api.aliases.AliasKinds.KindNoun("place"), _root_.com.histmersion.api.aliases.AliasKinds.KindIdWord("id"))
 
   /** Every kind, in the order the alias tables are listed. */
   val all: List[AliasKind] = List(SourceRecords, ArticleRecords, EventRecords, GoalRecords, PlaceRecords)

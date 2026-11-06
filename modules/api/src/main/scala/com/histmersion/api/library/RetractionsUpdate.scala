@@ -10,7 +10,7 @@ import com.histmersion.api.given
 final case class RetractionsUpdate(
     rows: RetractionsUpdate.Rows,
     source: RetractionsUpdate.Source,
-    running: RetractionsUpdate.Running = false,
+    running: RetractionsUpdate.Running = _root_.com.histmersion.api.library.RetractionsUpdate.Running(false),
     error: Option[RetractionsUpdate.Error] = None
 ) derives KindlingsCodecAsObject,
       KindlingsSchema, com.histmersion.api.json.Schema

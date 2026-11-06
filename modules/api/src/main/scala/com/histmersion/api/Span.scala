@@ -1,7 +1,7 @@
 package com.histmersion.api
 
 final case class Span(from: Option[com.histmersion.api.catalogue.Year], to: Option[com.histmersion.api.catalogue.Year]):
-  def isEmpty: com.histmersion.api.Span.IsEmptyResult = from.isEmpty && to.isEmpty
+  def isEmpty: com.histmersion.api.Span.IsEmptyResult = _root_.com.histmersion.api.Span.IsEmptyResult(from.isEmpty && to.isEmpty)
 
 object Span:
   type IsEmptyResult = IsEmptyResult.T

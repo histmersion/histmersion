@@ -9,9 +9,9 @@ import com.histmersion.api.given
 object ConfigEdit:
 
   enum Source(val wire: Source.Wire, val label: Source.Label):
-    case Default extends Source("default", "the default")
-    case File extends Source("file", "the settings file")
-    case Environment extends Source("environment", "an environment variable")
+    case Default extends Source(_root_.com.histmersion.api.settings.ConfigEdit.Source.Wire("default"), _root_.com.histmersion.api.settings.ConfigEdit.Source.Label("the default"))
+    case File extends Source(_root_.com.histmersion.api.settings.ConfigEdit.Source.Wire("file"), _root_.com.histmersion.api.settings.ConfigEdit.Source.Label("the settings file"))
+    case Environment extends Source(_root_.com.histmersion.api.settings.ConfigEdit.Source.Wire("environment"), _root_.com.histmersion.api.settings.ConfigEdit.Source.Label("an environment variable"))
 
   object Source:
     type Wire = Wire.T
@@ -44,7 +44,7 @@ object ConfigEdit:
       key: Field.Key,
       section: Field.Section,
       kind: Field.Kind,
-      doc: Field.Doc = "",
+      doc: Field.Doc = _root_.com.histmersion.api.settings.ConfigEdit.Field.Doc(""),
       default: Option[Field.Default] = None,
       value: Option[Field.Value] = None,
       effective: Option[Field.Effective] = None,
@@ -84,7 +84,7 @@ object ConfigEdit:
     type Locked = Locked.T
     object Locked extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
-  final case class Section(id: Section.Id, doc: Section.Doc = "", fields: List[Field] = Nil)
+  final case class Section(id: Section.Id, doc: Section.Doc = _root_.com.histmersion.api.settings.ConfigEdit.Section.Doc(""), fields: List[Field] = Nil)
       derives KindlingsCodecAsObject,
         KindlingsSchema
 
@@ -96,12 +96,12 @@ object ConfigEdit:
 
   final case class Page(
       file: Option[Page.File] = None,
-      exists: Page.Exists = false,
-      version: Page.Version = "none",
+      exists: Page.Exists = _root_.com.histmersion.api.settings.ConfigEdit.Page.Exists(false),
+      version: Page.Version = _root_.com.histmersion.api.settings.ConfigEdit.Page.Version("none"),
       sections: List[Section] = Nil,
       problems: List[Page.Problems] = Nil,
-      restartable: Page.Restartable = false,
-      setupDue: Page.SetupDue = false
+      restartable: Page.Restartable = _root_.com.histmersion.api.settings.ConfigEdit.Page.Restartable(false),
+      setupDue: Page.SetupDue = _root_.com.histmersion.api.settings.ConfigEdit.Page.SetupDue(false)
   ) derives KindlingsCodecAsObject,
         KindlingsSchema, com.histmersion.api.json.Schema:
     def fields: List[Field] = sections.flatMap(_.fields)
@@ -139,8 +139,8 @@ object ConfigEdit:
   final case class Write(
       changes: List[Change],
       version: Option[Write.Version] = None,
-      literalConsent: Write.LiteralConsent = false,
-      reload: Write.Reload = true
+      literalConsent: Write.LiteralConsent = _root_.com.histmersion.api.settings.ConfigEdit.Write.LiteralConsent(false),
+      reload: Write.Reload = _root_.com.histmersion.api.settings.ConfigEdit.Write.Reload(true)
   ) derives KindlingsCodecAsObject,
         KindlingsSchema, com.histmersion.api.json.Schema
 
@@ -167,12 +167,12 @@ object ConfigEdit:
       changed: List[Written.Changed] = Nil,
       unchanged: List[Written.Unchanged] = Nil,
       backup: Option[Written.Backup] = None,
-      version: Written.Version = "none",
-      created: Written.Created = false,
+      version: Written.Version = _root_.com.histmersion.api.settings.ConfigEdit.Written.Version("none"),
+      created: Written.Created = _root_.com.histmersion.api.settings.ConfigEdit.Written.Created(false),
       restart: List[RestartNote] = Nil,
       warnings: List[Written.Warnings] = Nil,
       reload: Option[ReloadReport] = None,
-      restartable: Written.Restartable = false
+      restartable: Written.Restartable = _root_.com.histmersion.api.settings.ConfigEdit.Written.Restartable(false)
   ) derives KindlingsCodecAsObject,
         KindlingsSchema, com.histmersion.api.json.Schema
 

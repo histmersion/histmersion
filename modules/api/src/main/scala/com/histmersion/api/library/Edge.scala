@@ -36,18 +36,18 @@ object Edge:
       * `FoundationalFor` → `"foundational_for"`.
       */
     def wireOf(e: Kind): com.histmersion.api.library.Edge.Kind.WireOfResult = e match
-      case References      => "references"
-      case Challenges      => "challenges"
-      case Refutes         => "refutes"
-      case Updates         => "updates"
-      case SupersededBy    => "superseded_by"
-      case Supersedes      => "supersedes"
-      case Confirms        => "confirms"
-      case Cites           => "cites"
-      case FoundationalFor => "foundational_for"
-      case CompilationOf   => "compilation_of"
-      case ReviewOf        => "review_of"
-      case Verifies        => "verifies"
+      case References      => _root_.com.histmersion.api.library.Edge.Kind.WireOfResult("references")
+      case Challenges      => _root_.com.histmersion.api.library.Edge.Kind.WireOfResult("challenges")
+      case Refutes         => _root_.com.histmersion.api.library.Edge.Kind.WireOfResult("refutes")
+      case Updates         => _root_.com.histmersion.api.library.Edge.Kind.WireOfResult("updates")
+      case SupersededBy    => _root_.com.histmersion.api.library.Edge.Kind.WireOfResult("superseded_by")
+      case Supersedes      => _root_.com.histmersion.api.library.Edge.Kind.WireOfResult("supersedes")
+      case Confirms        => _root_.com.histmersion.api.library.Edge.Kind.WireOfResult("confirms")
+      case Cites           => _root_.com.histmersion.api.library.Edge.Kind.WireOfResult("cites")
+      case FoundationalFor => _root_.com.histmersion.api.library.Edge.Kind.WireOfResult("foundational_for")
+      case CompilationOf   => _root_.com.histmersion.api.library.Edge.Kind.WireOfResult("compilation_of")
+      case ReviewOf        => _root_.com.histmersion.api.library.Edge.Kind.WireOfResult("review_of")
+      case Verifies        => _root_.com.histmersion.api.library.Edge.Kind.WireOfResult("verifies")
 
     def fromWire(s: com.histmersion.api.library.Edge.Kind.FromWireS): Option[Kind] = wireMap.get(s.toLowerCase)
 

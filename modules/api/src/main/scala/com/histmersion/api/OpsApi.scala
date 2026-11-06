@@ -46,7 +46,7 @@ object OpsApi:
 
   private lazy val opsErrors =
     oneOf[Api.Error](
-      oneOfVariantValueMatcher(StatusCode.NotFound, jsonBody[Api.Error])(Api.Error.hasCode(Write.CodeNotFound)),
+      oneOfVariantValueMatcher(StatusCode.NotFound, jsonBody[Api.Error])(Api.Error.hasCode(_root_.com.histmersion.api.Api.Error.HasCodeCode(Write.CodeNotFound))),
       oneOfDefaultVariant(statusCode(StatusCode.BadRequest).and(jsonBody[Api.Error]))
     )
 

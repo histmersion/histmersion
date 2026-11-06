@@ -22,7 +22,7 @@ object Agents:
     * provider.
     */
   final case class ModelRef(provider: ProviderKind, model: ModelRef.Model):
-    def wire: com.histmersion.api.automation.Agents.ModelRef.WireResult = s"${provider.wire}:$model"
+    def wire: com.histmersion.api.automation.Agents.ModelRef.WireResult = _root_.com.histmersion.api.automation.Agents.ModelRef.WireResult(s"${provider.wire}:$model")
 
   object ModelRef:
     type WireResult = WireResult.T
@@ -45,13 +45,13 @@ object Agents:
           val (p, m) = (t.substring(0, i), t.substring(i + 1).trim)
           ProviderKind.parse(p, known) match
             case None                 => Left(s"unknown provider '$p' in '$t' (one of: ${ProviderKind.names(known)})")
-            case Some(_) if m.isEmpty => Left(s"'$t' names no model")
+            case Some(_) if m.isEmpty => Left(_root_.com.histmersion.api.automation.Agents.ModelRef.ParseResultPart1(s"'$t' names no model"))
             case Some(k)              => Right(ModelRef(k, m))
 
   /** `input` counts all prompt tokens, cached ones included (the provider-normalised convention sttp-ai uses);
     * `cacheRead`/`cacheWrite` are subsets of it.
     */
-  final case class Usage(input: Usage.Input = 0, output: Usage.Output = 0, cacheRead: Usage.CacheRead = 0, cacheWrite: Usage.CacheWrite = 0)
+  final case class Usage(input: Usage.Input = _root_.com.histmersion.api.automation.Agents.Usage.Input((0).toLong), output: Usage.Output = _root_.com.histmersion.api.automation.Agents.Usage.Output((0).toLong), cacheRead: Usage.CacheRead = _root_.com.histmersion.api.automation.Agents.Usage.CacheRead((0).toLong), cacheWrite: Usage.CacheWrite = _root_.com.histmersion.api.automation.Agents.Usage.CacheWrite((0).toLong))
       derives KindlingsCodecAsObject,
         KindlingsSchema, com.histmersion.api.json.Schema:
     def +(o: Usage): Usage =
@@ -94,7 +94,7 @@ object Agents:
 
     def text: com.histmersion.api.automation.Agents.Price.TextResult =
       val n = (d: BigDecimal) => d.bigDecimal.stripTrailingZeros.toPlainString
-      (List(input, output) ++ cacheRead.zip(cacheWrite).toList.flatMap((r, w) => List(r, w))).map(n).mkString("/")
+      _root_.com.histmersion.api.automation.Agents.Price.TextResult((List(input, output) ++ cacheRead.zip(cacheWrite).toList.flatMap((r, w) => List(r, w))).map(n).mkString("/"))
 
   object Price:
     type TextResult = TextResult.T
@@ -109,8 +109,8 @@ object Agents:
       case Metered(p) => p.cost(u)
 
     def describe: com.histmersion.api.automation.Agents.Billing.DescribeResult = this match
-      case Plan(p)    => s"plan pool: ${p.wire}"
-      case Metered(p) => s"price: ${p.text} USD per million tokens"
+      case Plan(p)    => _root_.com.histmersion.api.automation.Agents.Billing.DescribeResult(s"plan pool: ${p.wire}")
+      case Metered(p) => _root_.com.histmersion.api.automation.Agents.Billing.DescribeResult(s"price: ${p.text} USD per million tokens")
 
   object Billing:
     type DescribeResult = DescribeResult.T
@@ -175,35 +175,35 @@ object Agents:
         case None    => prices.get(m.model).map(Billing.Metered(_)).toRight(unpriced(m.model) + metered(m))
 
     private def unpriced(model: com.histmersion.api.automation.Agents.Prices.UnpricedModel): com.histmersion.api.automation.Agents.Prices.UnpricedResult =
-      s"model '$model' has no price — add it to agents.prices (HISTMERSION_AGENTS_PRICES), e.g. \"$model=0/0\" for a free local model"
+      _root_.com.histmersion.api.automation.Agents.Prices.UnpricedResult(s"model '$model' has no price — add it to agents.prices (HISTMERSION_AGENTS_PRICES), e.g. \"$model=0/0\" for a free local model")
 
     private def metered(m: ModelRef): com.histmersion.api.automation.Agents.Prices.MeteredResult = m.provider match
-      case ProviderKind.ClaudeCode => " (claude-code is set to use an API key, so it bills the API, not the plan)"
-      case ProviderKind.Codex      => " (codex is set to use an API key, so it bills the API, not the plan)"
-      case ProviderKind.Opencode   => " (an opencode model is metered unless it is openai/… on a ChatGPT login)"
-      case _                       => ""
+      case ProviderKind.ClaudeCode => _root_.com.histmersion.api.automation.Agents.Prices.MeteredResult(" (claude-code is set to use an API key, so it bills the API, not the plan)")
+      case ProviderKind.Codex      => _root_.com.histmersion.api.automation.Agents.Prices.MeteredResult(" (codex is set to use an API key, so it bills the API, not the plan)")
+      case ProviderKind.Opencode   => _root_.com.histmersion.api.automation.Agents.Prices.MeteredResult(" (an opencode model is metered unless it is openai/… on a ChatGPT login)")
+      case _                       => _root_.com.histmersion.api.automation.Agents.Prices.MeteredResult("")
 
   val JobKind = com.histmersion.api.automation.AgentJobKinds.Agent.kind.value
 
   enum PauseReason(val wire: PauseReason.Wire):
-    case Budget extends PauseReason("budget")
-    case Interrupted extends PauseReason("interrupted")
-    case Requested extends PauseReason("requested")
-    case Provider extends PauseReason("provider")
+    case Budget extends PauseReason(_root_.com.histmersion.api.automation.Agents.PauseReason.Wire("budget"))
+    case Interrupted extends PauseReason(_root_.com.histmersion.api.automation.Agents.PauseReason.Wire("interrupted"))
+    case Requested extends PauseReason(_root_.com.histmersion.api.automation.Agents.PauseReason.Wire("requested"))
+    case Provider extends PauseReason(_root_.com.histmersion.api.automation.Agents.PauseReason.Wire("provider"))
 
-    case Allowance extends PauseReason("allowance")
+    case Allowance extends PauseReason(_root_.com.histmersion.api.automation.Agents.PauseReason.Wire("allowance"))
 
-    case PlanQuota extends PauseReason("plan-quota")
+    case PlanQuota extends PauseReason(_root_.com.histmersion.api.automation.Agents.PauseReason.Wire("plan-quota"))
 
-    case Stalled extends PauseReason("stalled")
+    case Stalled extends PauseReason(_root_.com.histmersion.api.automation.Agents.PauseReason.Wire("stalled"))
 
   object PauseReason:
     type Wire = Wire.T
     object Wire extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
   enum StepKind(val wire: StepKind.Wire):
-    case Code extends StepKind("code")
-    case Llm extends StepKind("llm")
+    case Code extends StepKind(_root_.com.histmersion.api.automation.Agents.StepKind.Wire("code"))
+    case Llm extends StepKind(_root_.com.histmersion.api.automation.Agents.StepKind.Wire("llm"))
 
   object StepKind:
     type Wire = Wire.T
@@ -215,16 +215,16 @@ object Agents:
     def parse(s: com.histmersion.api.automation.Agents.StepKind.ParseS): Option[StepKind] = values.find(_.wire == s)
 
   enum Origin(val wire: Origin.Wire):
-    case Person extends Origin("person")
-    case Scheduler extends Origin("scheduler")
-    case Run extends Origin("run")
+    case Person extends Origin(_root_.com.histmersion.api.automation.Agents.Origin.Wire("person"))
+    case Scheduler extends Origin(_root_.com.histmersion.api.automation.Agents.Origin.Wire("scheduler"))
+    case Run extends Origin(_root_.com.histmersion.api.automation.Agents.Origin.Wire("run"))
 
     /** A run an ingest started, by a name no other type takes. */
-    case FromIngest extends Origin("ingest")
+    case FromIngest extends Origin(_root_.com.histmersion.api.automation.Agents.Origin.Wire("ingest"))
 
-    case Manager extends Origin("manager")
+    case Manager extends Origin(_root_.com.histmersion.api.automation.Agents.Origin.Wire("manager"))
 
-    def unattended: com.histmersion.api.automation.Agents.Origin.UnattendedResult = this != Person
+    def unattended: com.histmersion.api.automation.Agents.Origin.UnattendedResult = _root_.com.histmersion.api.automation.Agents.Origin.UnattendedResult(this != Person)
 
   object Origin:
     type Wire = Wire.T
@@ -279,7 +279,7 @@ object Agents:
       costUsd: Option[ProbeResult.CostUsd],
       millis: ProbeResult.Millis,
       problems: List[ProbeResult.Problems] = Nil,
-      attempts: ProbeResult.Attempts = 1
+      attempts: ProbeResult.Attempts = _root_.com.histmersion.api.automation.Agents.ProbeResult.Attempts(1)
   ) derives KindlingsCodecAsObject,
         KindlingsSchema, com.histmersion.api.json.Schema
 
@@ -357,7 +357,7 @@ object Agents:
 
 
   final case class ModelOverride(role: ModelOverride.Role, model: ModelOverride.Model) derives KindlingsCodecAsObject, KindlingsSchema, com.histmersion.api.json.Schema:
-    def text: com.histmersion.api.automation.Agents.ModelOverride.TextResult = s"$role=$model"
+    def text: com.histmersion.api.automation.Agents.ModelOverride.TextResult = _root_.com.histmersion.api.automation.Agents.ModelOverride.TextResult(s"$role=$model")
   object ModelOverride:
 
 
@@ -401,7 +401,7 @@ object Agents:
       oaBacklog: Option[RunParams.OaBacklog] = None
   ) derives KindlingsCodecAsObject,
         KindlingsSchema, com.histmersion.api.json.Schema:
-    def fixes: com.histmersion.api.automation.Agents.RunParams.FixesResult = fix.contains(true)
+    def fixes: com.histmersion.api.automation.Agents.RunParams.FixesResult = _root_.com.histmersion.api.automation.Agents.RunParams.FixesResult(fix.contains(true))
     def noteList: List[com.histmersion.api.automation.Agents.RunParams.NoteListResult] = notes.getOrElse(Nil).map(_.trim).filter(_.nonEmpty)
     def overrides: List[ModelOverride] = modelFor.getOrElse(Nil)
 
@@ -440,24 +440,24 @@ object Agents:
       usage: Usage = Usage.Zero,
       costUsd: RunInfo.CostUsd = 0,
       budgetUsd: RunInfo.BudgetUsd = 0,
-      budgetTokens: RunInfo.BudgetTokens = 0,
+      budgetTokens: RunInfo.BudgetTokens = _root_.com.histmersion.api.automation.Agents.RunInfo.BudgetTokens((0).toLong),
       warnings: List[RunInfo.Warnings] = Nil,
-      createdAt: RunInfo.CreatedAt = "",
-      updatedAt: RunInfo.UpdatedAt = "",
-      targetKind: RunInfo.TargetKind = "",
+      createdAt: RunInfo.CreatedAt = _root_.com.histmersion.api.automation.Agents.RunInfo.CreatedAt(""),
+      updatedAt: RunInfo.UpdatedAt = _root_.com.histmersion.api.automation.Agents.RunInfo.UpdatedAt(""),
+      targetKind: RunInfo.TargetKind = _root_.com.histmersion.api.automation.Agents.RunInfo.TargetKind(""),
       params: RunParams = RunParams(),
       acquireItem: Option[com.histmersion.api.automation.Queue.QueueItem.Id] = None,
       goal: Option[com.histmersion.api.automation.Goal.Slug] = None,
       parent: Option[com.histmersion.api.automation.Agents.RunInfo.Id] = None,
       origin: Option[RunInfo.Origin] = None,
       resumeAt: Option[RunInfo.ResumeAt] = None,
-      dryRun: RunInfo.DryRun = false,
+      dryRun: RunInfo.DryRun = _root_.com.histmersion.api.automation.Agents.RunInfo.DryRun(false),
       managerId: Option[com.histmersion.api.automation.Managers.ManagerInfo.Id] = None,
       managerItem: Option[com.histmersion.api.automation.Managers.ManagerItem.Id] = None,
       heartbeatAt: Option[RunInfo.HeartbeatAt] = None
   ) derives KindlingsCodecAsObject,
         KindlingsSchema, com.histmersion.api.json.Schema:
-    def isWaiting: com.histmersion.api.automation.Agents.RunInfo.IsWaitingResult = status == com.histmersion.api.automation.Run.State.WaitingApproval.wire
+    def isWaiting: com.histmersion.api.automation.Agents.RunInfo.IsWaitingResult = _root_.com.histmersion.api.automation.Agents.RunInfo.IsWaitingResult(status == com.histmersion.api.automation.Run.State.WaitingApproval.wire)
 
     def modelFor(role: Role): Option[com.histmersion.api.automation.Agents.RunInfo.ModelForResult] =
       params.overrides.find(o => Role.parse(o.role).contains(role)).map(_.model).orElse(model)
@@ -527,8 +527,8 @@ object Agents:
       costUsd: StepInfo.CostUsd = 0,
       error: Option[StepInfo.Error] = None,
       output: Option[StepInfo.Output] = None,
-      startedAt: StepInfo.StartedAt = "",
-      finishedAt: StepInfo.FinishedAt = "",
+      startedAt: StepInfo.StartedAt = _root_.com.histmersion.api.automation.Agents.StepInfo.StartedAt(""),
+      finishedAt: StepInfo.FinishedAt = _root_.com.histmersion.api.automation.Agents.StepInfo.FinishedAt(""),
       actualModel: Option[StepInfo.ActualModel] = None,
       wouldWrite: List[WouldWrite] = Nil,
       firstCallTokens: Option[StepInfo.FirstCallTokens] = None,
@@ -536,10 +536,10 @@ object Agents:
   ) derives KindlingsCodecAsObject,
         KindlingsSchema, com.histmersion.api.json.Schema:
     def modelText: com.histmersion.api.automation.Agents.StepInfo.ModelTextResult = (model, actualModel) match
-      case (Some(m), Some(a)) if m.drop(m.indexOf(':') + 1) != a => s"$m → $a"
+      case (Some(m), Some(a)) if m.drop(m.indexOf(':') + 1) != a => _root_.com.histmersion.api.automation.Agents.StepInfo.ModelTextResult(s"$m → $a")
       case (Some(m), _)                                          => m
       case (None, Some(a))                                       => a
-      case (None, None)                                          => ""
+      case (None, None)                                          => _root_.com.histmersion.api.automation.Agents.StepInfo.ModelTextResult("")
 
   object StepInfo:
     type ModelTextResult = ModelTextResult.T
@@ -636,7 +636,7 @@ object Agents:
       problems: List[ModelsInfo.Problems],
       chains: List[ModelChains.RoleChain] = Nil,
       allowances: List[ModelChains.AllowanceStatus] = Nil,
-      now: ModelsInfo.Now = ""
+      now: ModelsInfo.Now = _root_.com.histmersion.api.automation.Agents.ModelsInfo.Now("")
   ) derives KindlingsCodecAsObject,
         KindlingsSchema, com.histmersion.api.json.Schema
 
@@ -654,9 +654,9 @@ object Agents:
 
 
   enum CheckLevel(val wire: CheckLevel.Wire):
-    case Ok extends CheckLevel("ok")
-    case Warn extends CheckLevel("warn")
-    case Fail extends CheckLevel("fail")
+    case Ok extends CheckLevel(_root_.com.histmersion.api.automation.Agents.CheckLevel.Wire("ok"))
+    case Warn extends CheckLevel(_root_.com.histmersion.api.automation.Agents.CheckLevel.Wire("warn"))
+    case Fail extends CheckLevel(_root_.com.histmersion.api.automation.Agents.CheckLevel.Wire("fail"))
 
   object CheckLevel:
     type Wire = Wire.T
@@ -765,8 +765,8 @@ object Agents:
 
 
   enum Decision(val wire: Decision.Wire):
-    case Approve extends Decision("approve")
-    case Reject extends Decision("reject")
+    case Approve extends Decision(_root_.com.histmersion.api.automation.Agents.Decision.Wire("approve"))
+    case Reject extends Decision(_root_.com.histmersion.api.automation.Agents.Decision.Wire("reject"))
 
   object Decision:
     type Wire = Wire.T
@@ -786,12 +786,12 @@ object Agents:
       current: Option[ApprovalInfo.Current] = None,
       edgeKind: Option[ApprovalInfo.EdgeKind] = None,
       target: Option[ApprovalInfo.Target] = None,
-      evidence: ApprovalInfo.Evidence = "",
+      evidence: ApprovalInfo.Evidence = _root_.com.histmersion.api.automation.Agents.ApprovalInfo.Evidence(""),
       quote: Option[ApprovalInfo.Quote] = None,
       state: ApprovalInfo.State = Approval.State.Open.wire,
       note: Option[ApprovalInfo.Note] = None,
       result: Option[ApprovalInfo.Result] = None,
-      createdAt: ApprovalInfo.CreatedAt = "",
+      createdAt: ApprovalInfo.CreatedAt = _root_.com.histmersion.api.automation.Agents.ApprovalInfo.CreatedAt(""),
       decidedAt: Option[ApprovalInfo.DecidedAt] = None,
       subject: Option[ApprovalInfo.Subject] = None,
       plan: Option[Goal.Plans.Plan] = None,

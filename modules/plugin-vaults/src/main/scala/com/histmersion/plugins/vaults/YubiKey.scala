@@ -35,7 +35,7 @@ object YubiKey:
 
   final case class Slot(slot: Slot.Value, serial: Option[Slot.Serial]):
     /** The form `keepassxc-cli -y` takes, and the one the settings and the errors show. */
-    def shown: com.histmersion.plugins.vaults.YubiKey.Slot.ShownResult = serial.fold(slot.toString)(s => s"$slot:$s")
+    def shown: com.histmersion.plugins.vaults.YubiKey.Slot.ShownResult = _root_.com.histmersion.plugins.vaults.YubiKey.Slot.ShownResult(serial.fold(slot.toString)(s => s"$slot:$s"))
 
   object Slot:
     type ShownResult = ShownResult.T
@@ -58,7 +58,7 @@ object YubiKey:
           slot <- s.toIntOption.filter(Set(1, 2)).toRight(bad)
           serial <- Option.when(n.nonEmpty && n.forall(_.isDigit))(n).flatMap(_.toLongOption).toRight(bad)
         yield Slot(slot, Some(serial))
-      case _ => Left(bad)
+      case _ => Left(_root_.com.histmersion.plugins.vaults.YubiKey.ParseResultPart1(bad))
 
   /** Pure: every entry of the setting, in order, without repeats; the first malformed one fails it all. */
   def parseAll(entries: List[com.histmersion.plugins.vaults.YubiKey.ParseAllEntries]): Either[com.histmersion.plugins.vaults.YubiKey.ParseAllResultPart1, List[Slot]] =
@@ -104,9 +104,9 @@ object YubiKey:
   def failure(err: com.histmersion.plugins.vaults.YubiKey.FailureErr, entry: com.histmersion.plugins.vaults.YubiKey.FailureEntry): Failure =
     def has(s: String*) = s.exists(err.contains)
     if has("invalid credentials", "wrong key", "unable to unlock") then
-      Failure.Stop("invalid credentials (the password, key file or YubiKey is wrong)")
-    else if has("could not find entry") then Failure.Stop(s"no entry '$entry'")
-    else if has("timed out waiting", "user interaction") then Failure.Stop("the YubiKey was not touched in time")
+      Failure.Stop(_root_.com.histmersion.plugins.vaults.YubiKey.Failure.Stop.Why("invalid credentials (the password, key file or YubiKey is wrong)"))
+    else if has("could not find entry") then Failure.Stop(_root_.com.histmersion.plugins.vaults.YubiKey.Failure.Stop.Why(s"no entry '$entry'"))
+    else if has("timed out waiting", "user interaction") then Failure.Stop(_root_.com.histmersion.plugins.vaults.YubiKey.Failure.Stop.Why("the YubiKey was not touched in time"))
     else if has(
         "could not find hardware key",
         "could not find interface",
@@ -117,7 +117,7 @@ object YubiKey:
         "no hardware key",
         "no challenge-response key"
       )
-    then Failure.Next("not connected")
+    then Failure.Next(_root_.com.histmersion.plugins.vaults.YubiKey.Failure.Next.Why("not connected"))
     else if has(
         "challenge-response",
         "challenge response",
@@ -126,8 +126,8 @@ object YubiKey:
         "locked or timed out",
         "hardware key"
       )
-    then Failure.Next("challenge-response failed")
-    else Failure.Stop("an error KeePassXC gave")
+    then Failure.Next(_root_.com.histmersion.plugins.vaults.YubiKey.Failure.Next.Why("challenge-response failed"))
+    else Failure.Stop(_root_.com.histmersion.plugins.vaults.YubiKey.Failure.Stop.Why("an error KeePassXC gave"))
 
   /** Pure: KeePassXC's own message for an error text — the first stderr line that is not its prompt ("Please present or
     * touch your YubiKey", "Enter password to unlock").
@@ -153,5 +153,5 @@ object YubiKey:
 
     given ConfigReader[Setting] = new ConfigReader[Setting]:
       def from(v: ConfigValue) =
-        if v.valueType == ConfigValueType.LIST then summon[ConfigReader[List[String]]].from(v).map(Setting(_))
-        else ConfigReader.stringReader.from(v).map(s => Setting(s.split("[,\\s]+").toList.filter(_.nonEmpty)))
+        if v.valueType == ConfigValueType.LIST then summon[ConfigReader[List[String]]].from(v).map(Setting((_).map(refactorValue3 => _root_.com.histmersion.plugins.vaults.YubiKey.Setting.Entries(refactorValue3))))
+        else ConfigReader.stringReader.from(v).map(s => Setting((s.split("[,\\s]+").toList.filter(_.nonEmpty)).map(refactorValue4 => _root_.com.histmersion.plugins.vaults.YubiKey.Setting.Entries(refactorValue4))))

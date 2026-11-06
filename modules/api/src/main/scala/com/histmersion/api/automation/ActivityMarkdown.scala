@@ -42,7 +42,7 @@ object ActivityMarkdown:
   def stateOf(e: Entry): com.histmersion.api.automation.ActivityMarkdown.StateOfResult = e.entryKind match
     case Some(EntryKind.Run) => Agents.RunState.parse(e.state).fold(e.state)(Wording.runState)
     case Some(EntryKind.Job) => JobState.parse(e.state).fold(e.state)(Wording.jobState)
-    case _                   => ""
+    case _                   => _root_.com.histmersion.api.automation.ActivityMarkdown.StateOfResult("")
 
   def refs(e: Entry): List[com.histmersion.api.automation.ActivityMarkdown.RefsResult] =
     e.goal.map(g => s"goal $g").toList ++

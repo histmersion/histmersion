@@ -49,42 +49,42 @@ object EventScale:
   val Regional = "regional"
 
   val Auto = "auto"
-  val all: List[com.histmersion.api.catalogue.EventScale.All] = List(Local, Regional)
+  val all: List[com.histmersion.api.catalogue.EventScale.All] = List(_root_.com.histmersion.api.catalogue.EventScale.All(Local), _root_.com.histmersion.api.catalogue.EventScale.All(Regional))
 
   val localKinds: Set[com.histmersion.api.catalogue.EventScale.LocalKinds] = Set(
-    "battle",
-    "naval_battle",
-    "siege",
-    "destruction",
-    "construction",
-    "founding",
-    "eruption",
-    "earthquake",
-    "tsunami",
-    "flood"
+    _root_.com.histmersion.api.catalogue.EventScale.LocalKinds("battle"),
+    _root_.com.histmersion.api.catalogue.EventScale.LocalKinds("naval_battle"),
+    _root_.com.histmersion.api.catalogue.EventScale.LocalKinds("siege"),
+    _root_.com.histmersion.api.catalogue.EventScale.LocalKinds("destruction"),
+    _root_.com.histmersion.api.catalogue.EventScale.LocalKinds("construction"),
+    _root_.com.histmersion.api.catalogue.EventScale.LocalKinds("founding"),
+    _root_.com.histmersion.api.catalogue.EventScale.LocalKinds("eruption"),
+    _root_.com.histmersion.api.catalogue.EventScale.LocalKinds("earthquake"),
+    _root_.com.histmersion.api.catalogue.EventScale.LocalKinds("tsunami"),
+    _root_.com.histmersion.api.catalogue.EventScale.LocalKinds("flood")
   )
 
   val regionalKinds: Set[com.histmersion.api.catalogue.EventScale.RegionalKinds] = Set(
-    "migration",
-    "technological_change",
-    "cultural_shift",
-    "era",
-    "period",
-    "reign",
-    "war",
-    "invasion",
-    "collapse",
-    "polity_formation",
-    "drought",
-    "climate_event",
-    "epidemic",
-    "famine"
+    _root_.com.histmersion.api.catalogue.EventScale.RegionalKinds("migration"),
+    _root_.com.histmersion.api.catalogue.EventScale.RegionalKinds("technological_change"),
+    _root_.com.histmersion.api.catalogue.EventScale.RegionalKinds("cultural_shift"),
+    _root_.com.histmersion.api.catalogue.EventScale.RegionalKinds("era"),
+    _root_.com.histmersion.api.catalogue.EventScale.RegionalKinds("period"),
+    _root_.com.histmersion.api.catalogue.EventScale.RegionalKinds("reign"),
+    _root_.com.histmersion.api.catalogue.EventScale.RegionalKinds("war"),
+    _root_.com.histmersion.api.catalogue.EventScale.RegionalKinds("invasion"),
+    _root_.com.histmersion.api.catalogue.EventScale.RegionalKinds("collapse"),
+    _root_.com.histmersion.api.catalogue.EventScale.RegionalKinds("polity_formation"),
+    _root_.com.histmersion.api.catalogue.EventScale.RegionalKinds("drought"),
+    _root_.com.histmersion.api.catalogue.EventScale.RegionalKinds("climate_event"),
+    _root_.com.histmersion.api.catalogue.EventScale.RegionalKinds("epidemic"),
+    _root_.com.histmersion.api.catalogue.EventScale.RegionalKinds("famine")
   )
 
   def parse(s: com.histmersion.api.catalogue.EventScale.ParseS): Option[Option[com.histmersion.api.catalogue.EventScale.ParseResult]] =
     s.trim.toLowerCase match
-      case Local    => Some(Some(Local))
-      case Regional => Some(Some(Regional))
+      case Local    => Some(Some(_root_.com.histmersion.api.catalogue.EventScale.ParseResult(Local)))
+      case Regional => Some(Some(_root_.com.histmersion.api.catalogue.EventScale.ParseResult(Regional)))
       case Auto     => Some(None)
       case _        => None
 
@@ -92,23 +92,23 @@ object EventScale:
 
   def ofKind(kind: com.histmersion.api.catalogue.EventScale.OfKindKind): Option[com.histmersion.api.catalogue.EventScale.OfKindResult] =
     val k = normKind(kind)
-    if localKinds(k) then Some(Local)
-    else if regionalKinds(k) || k.endsWith("_era") then Some(Regional)
+    if localKinds(k) then Some(_root_.com.histmersion.api.catalogue.EventScale.OfKindResult(Local))
+    else if regionalKinds(k) || k.endsWith("_era") then Some(_root_.com.histmersion.api.catalogue.EventScale.OfKindResult(Regional))
     else None
 
   def ofPlaceKind(placeKind: com.histmersion.api.catalogue.EventScale.OfPlaceKindPlaceKind): Option[com.histmersion.api.catalogue.EventScale.OfPlaceKindResult] =
     placeKind.trim.toLowerCase match
       case com.histmersion.api.catalogue.Place.Kind.Site | com.histmersion.api.catalogue.Place.Kind.Feature =>
-        Some(Local)
+        Some(_root_.com.histmersion.api.catalogue.EventScale.OfPlaceKindResult(Local))
       case com.histmersion.api.catalogue.Place.Kind.Region | com.histmersion.api.catalogue.Place.Kind.Polity |
           com.histmersion.api.catalogue.Place.Kind.People =>
-        Some(Regional)
+        Some(_root_.com.histmersion.api.catalogue.EventScale.OfPlaceKindResult(Regional))
       case _ => None
 
   def ofGeometry(geometryType: com.histmersion.api.catalogue.EventScale.OfGeometryGeometryType): Option[com.histmersion.api.catalogue.EventScale.OfGeometryResult] =
     geometryType.trim.toLowerCase.replace("st_", "") match
-      case "point"                    => Some(Local)
-      case "polygon" | "multipolygon" => Some(Regional)
+      case "point"                    => Some(_root_.com.histmersion.api.catalogue.EventScale.OfGeometryResult(Local))
+      case "polygon" | "multipolygon" => Some(_root_.com.histmersion.api.catalogue.EventScale.OfGeometryResult(Regional))
       case _                          => None
 
   def effective(

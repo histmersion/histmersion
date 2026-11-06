@@ -40,8 +40,8 @@ enum DecisionKind:
 
   /** `true` when the decision needs an argument (`map:<citekey>`). */
   def takesArgument: com.histmersion.util.data.exchange.DecisionKind.TakesArgumentResult = this match
-    case Map | RenameRight | RenameLeft | File => true
-    case _                                     => false
+    case Map | RenameRight | RenameLeft | File => _root_.com.histmersion.util.data.exchange.DecisionKind.TakesArgumentResult(true)
+    case _                                     => _root_.com.histmersion.util.data.exchange.DecisionKind.TakesArgumentResult(false)
 
 object DecisionKind:
   type TakesArgumentResult = TakesArgumentResult.T
@@ -54,18 +54,18 @@ object DecisionKind:
   object FromWireS extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
   def wireOf(k: DecisionKind): com.histmersion.util.data.exchange.DecisionKind.WireOfResult = k match
-    case KeepLeft       => "keep-left"
-    case KeepRight      => "keep-right"
-    case Both           => "both"
-    case Concat         => "concat"
-    case Hull           => "hull"
-    case Map            => "map"
-    case RenameRight    => "rename-right"
-    case RenameLeft     => "rename-left"
-    case File           => "file"
-    case Merge          => "merge"
-    case Drop           => "drop"
-    case KeepUnanchored => "keep-unanchored"
+    case KeepLeft       => _root_.com.histmersion.util.data.exchange.DecisionKind.WireOfResult("keep-left")
+    case KeepRight      => _root_.com.histmersion.util.data.exchange.DecisionKind.WireOfResult("keep-right")
+    case Both           => _root_.com.histmersion.util.data.exchange.DecisionKind.WireOfResult("both")
+    case Concat         => _root_.com.histmersion.util.data.exchange.DecisionKind.WireOfResult("concat")
+    case Hull           => _root_.com.histmersion.util.data.exchange.DecisionKind.WireOfResult("hull")
+    case Map            => _root_.com.histmersion.util.data.exchange.DecisionKind.WireOfResult("map")
+    case RenameRight    => _root_.com.histmersion.util.data.exchange.DecisionKind.WireOfResult("rename-right")
+    case RenameLeft     => _root_.com.histmersion.util.data.exchange.DecisionKind.WireOfResult("rename-left")
+    case File           => _root_.com.histmersion.util.data.exchange.DecisionKind.WireOfResult("file")
+    case Merge          => _root_.com.histmersion.util.data.exchange.DecisionKind.WireOfResult("merge")
+    case Drop           => _root_.com.histmersion.util.data.exchange.DecisionKind.WireOfResult("drop")
+    case KeepUnanchored => _root_.com.histmersion.util.data.exchange.DecisionKind.WireOfResult("keep-unanchored")
 
   given WireEnumValues[DecisionKind]:
     def all: Array[DecisionKind] = DecisionKind.values

@@ -1,15 +1,15 @@
 package com.histmersion.domain.automation
 enum ProviderKind(val wire: ProviderKind.Wire):
-  case Anthropic extends ProviderKind("anthropic")
-  case OpenAI extends ProviderKind("openai")
-  case Local extends ProviderKind("local")
-  case ClaudeCode extends ProviderKind("claude-code")
+  case Anthropic extends ProviderKind(_root_.com.histmersion.domain.automation.ProviderKind.Wire("anthropic"))
+  case OpenAI extends ProviderKind(_root_.com.histmersion.domain.automation.ProviderKind.Wire("openai"))
+  case Local extends ProviderKind(_root_.com.histmersion.domain.automation.ProviderKind.Wire("local"))
+  case ClaudeCode extends ProviderKind(_root_.com.histmersion.domain.automation.ProviderKind.Wire("claude-code"))
 
   /** The person's own `codex` CLI (`codex exec`) on its ChatGPT plan login. */
-  case Codex extends ProviderKind("codex")
+  case Codex extends ProviderKind(_root_.com.histmersion.domain.automation.ProviderKind.Wire("codex"))
 
   /** `opencode run`; the model is `<provider>/<model>` as opencode names it (`openai/gpt-…`). */
-  case Opencode extends ProviderKind("opencode")
+  case Opencode extends ProviderKind(_root_.com.histmersion.domain.automation.ProviderKind.Wire("opencode"))
 
   /** A provider a PLUGIN registered under this name (docs/research-plugins.md §22): metered, served through the host's
     * tool loop. Parsed only while such a provider is registered (`known`).
@@ -17,7 +17,7 @@ enum ProviderKind(val wire: ProviderKind.Wire):
   case Plugin(name: ProviderKind.Plugin.Name) extends ProviderKind(name)
 
   /** Runs a local command-line agent (one process per step attempt) rather than an HTTP API. */
-  def isCli: com.histmersion.domain.automation.ProviderKind.IsCliResult = this == ClaudeCode || this == Codex || this == Opencode
+  def isCli: com.histmersion.domain.automation.ProviderKind.IsCliResult = _root_.com.histmersion.domain.automation.ProviderKind.IsCliResult(this == ClaudeCode || this == Codex || this == Opencode)
 
 object ProviderKind:
   /** The host's own providers, in their order. */

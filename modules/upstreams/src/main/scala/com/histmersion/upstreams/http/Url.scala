@@ -12,6 +12,6 @@ object Url:
   type ApplyPath = ApplyPath.T
   object ApplyPath extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
-  def apply(base: com.histmersion.upstreams.http.Url.ApplyBase, path: com.histmersion.upstreams.http.Url.ApplyPath = "", params: (String, String)*): com.histmersion.upstreams.http.Url.ApplyResult =
+  def apply(base: com.histmersion.upstreams.http.Url.ApplyBase, path: com.histmersion.upstreams.http.Url.ApplyPath = _root_.com.histmersion.upstreams.http.Url.ApplyPath(""), params: (String, String)*): com.histmersion.upstreams.http.Url.ApplyResult =
     val u = Uri.unsafeParse(base + path)
     u.addParams(params.filter(_._2.nonEmpty)*).toString

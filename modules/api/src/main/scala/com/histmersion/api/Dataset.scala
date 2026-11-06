@@ -2,7 +2,7 @@ package com.histmersion.api
 
 enum Dataset:
   case Seed, Local
-  def wire: com.histmersion.api.Dataset.WireResult = this.toString.toLowerCase(java.util.Locale.ROOT)
+  def wire: com.histmersion.api.Dataset.WireResult = _root_.com.histmersion.api.Dataset.WireResult(this.toString.toLowerCase(java.util.Locale.ROOT))
 
 object Dataset:
   type WireResult = WireResult.T
@@ -17,4 +17,4 @@ object Dataset:
   def ofParam(raw: Option[com.histmersion.api.Dataset.OfParamRaw]): Either[Api.Error, Dataset] =
     raw.map(_.trim).filter(_.nonEmpty) match
       case None    => Right(Local)
-      case Some(s) => parse(s).toRight(Api.Error(s"dataset '$s' is not seed or local", Some(Write.CodeInvalid)))
+      case Some(s) => parse(s).toRight(Api.Error(_root_.com.histmersion.api.Api.Error.Message(s"dataset '$s' is not seed or local"), Some(_root_.com.histmersion.api.Api.Error.Code(Write.CodeInvalid))))

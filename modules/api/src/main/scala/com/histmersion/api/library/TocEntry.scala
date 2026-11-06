@@ -20,7 +20,7 @@ object TocEntry:
   object Chars extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
   def markdown(entries: List[TocEntry]): com.histmersion.api.library.TocEntry.MarkdownResult =
-    if entries.isEmpty then "_(no headings in body)_"
+    if entries.isEmpty then _root_.com.histmersion.api.library.TocEntry.MarkdownResult("_(no headings in body)_")
     else
       val items = entries.map(e => s"- **${e.heading}** — ord ${e.ord}, ${e.chars} chars")
-      s"### Table of Contents (${entries.size} heading(s))\n\n${items.mkString("\n")}"
+      _root_.com.histmersion.api.library.TocEntry.MarkdownResult(s"### Table of Contents (${entries.size} heading(s))\n\n${items.mkString("\n")}")

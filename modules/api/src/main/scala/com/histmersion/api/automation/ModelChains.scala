@@ -70,14 +70,14 @@ object ModelChains:
       case Nil =>
         val ms = parsed.collect { case Right(m) => m }
         val dup = ms.diff(ms.distinct).map(_.wire).distinct
-        if dup.nonEmpty then Left(s"a chain names a model twice: ${dup.mkString(", ")}") else Right(ms)
-      case errs => Left(errs.mkString("; "))
+        if dup.nonEmpty then Left(_root_.com.histmersion.api.automation.ModelChains.ParseModelsResultPart1(s"a chain names a model twice: ${dup.mkString(", ")}")) else Right(ms)
+      case errs => Left(_root_.com.histmersion.api.automation.ModelChains.ParseModelsResultPart1(errs.mkString("; ")))
 
-  def chainText(ms: List[ModelRef]): com.histmersion.api.automation.ModelChains.ChainTextResult = ms.map(_.wire).mkString(" > ")
+  def chainText(ms: List[ModelRef]): com.histmersion.api.automation.ModelChains.ChainTextResult = _root_.com.histmersion.api.automation.ModelChains.ChainTextResult(ms.map(_.wire).mkString(" > "))
 
   enum Measure(val wire: Measure.Wire):
-    case Tokens extends Measure("tokens")
-    case Usd extends Measure("usd")
+    case Tokens extends Measure(_root_.com.histmersion.api.automation.ModelChains.Measure.Wire("tokens"))
+    case Usd extends Measure(_root_.com.histmersion.api.automation.ModelChains.Measure.Wire("usd"))
 
   object Measure:
     type Wire = Wire.T
@@ -121,7 +121,7 @@ object ModelChains:
     private val Unit = Map('m' -> 60L, 'h' -> 3600L, 'd' -> 86400L, 'w' -> 604800L)
     private val Names = Map("hour" -> 3600L, "day" -> 86400L, "week" -> 604800L, "month" -> 30L * 86400L)
 
-    val MaxSeconds: com.histmersion.api.automation.ModelChains.Window.MaxSeconds = 90L * 86400L
+    val MaxSeconds: com.histmersion.api.automation.ModelChains.Window.MaxSeconds = _root_.com.histmersion.api.automation.ModelChains.Window.MaxSeconds(90L * 86400L)
 
     def parse(s: com.histmersion.api.automation.ModelChains.Window.ParseS): Either[com.histmersion.api.automation.ModelChains.Window.ParseResultPart1, Window] =
       val t = s.trim.toLowerCase(java.util.Locale.ROOT)
@@ -129,15 +129,15 @@ object ModelChains:
         Option.when(t.length >= 2)(t.last).flatMap(Unit.get).flatMap(u => t.init.toLongOption.filter(_ > 0).map(_ * u))
       }
       secs match
-        case None => Left(s"'$s' is not a window (hour, day, week, month, or <n>m|h|d|w such as 5h or 7d)")
-        case Some(x) if x < 60 || x > MaxSeconds => Left(s"window '$s' must be between 1 minute and 90 days")
+        case None => Left(_root_.com.histmersion.api.automation.ModelChains.Window.ParseResultPart1(s"'$s' is not a window (hour, day, week, month, or <n>m|h|d|w such as 5h or 7d)"))
+        case Some(x) if x < 60 || x > MaxSeconds => Left(_root_.com.histmersion.api.automation.ModelChains.Window.ParseResultPart1(s"window '$s' must be between 1 minute and 90 days"))
         case Some(x)                             => Right(Window(x))
 
   final case class Limit(amount: BigDecimal, measure: Measure, window: Window):
     def text: com.histmersion.api.automation.ModelChains.Limit.TextResult = measure match
-      case Measure.Tokens => s"${Limit.compact(amount)} tokens/${window.text}"
-      case Measure.Usd    => s"${amount.bigDecimal.stripTrailingZeros.toPlainString} usd/${window.text}"
-    def spec: LimitSpec = LimitSpec(amount.toDouble, measure, window.text)
+      case Measure.Tokens => _root_.com.histmersion.api.automation.ModelChains.Limit.TextResult(s"${Limit.compact(amount)} tokens/${window.text}")
+      case Measure.Usd    => _root_.com.histmersion.api.automation.ModelChains.Limit.TextResult(s"${amount.bigDecimal.stripTrailingZeros.toPlainString} usd/${window.text}")
+    def spec: LimitSpec = LimitSpec(_root_.com.histmersion.api.automation.ModelChains.LimitSpec.Amount(amount.toDouble), measure, window.text)
 
   object Limit:
     type ParseParsedPart1 = ParseParsedPart1.T
@@ -160,9 +160,9 @@ object ModelChains:
 
     def compact(a: BigDecimal): com.histmersion.api.automation.ModelChains.Limit.CompactResult =
       val units = List(BigDecimal(1000000000) -> "G", BigDecimal(1000000) -> "M", BigDecimal(1000) -> "k")
-      units
+      _root_.com.histmersion.api.automation.ModelChains.Limit.CompactResult(units
         .collectFirst { case (u, s) if a >= u && (a / u).isWhole => s"${(a / u).toBigInt}$s" }
-        .getOrElse(a.bigDecimal.stripTrailingZeros.toPlainString)
+        .getOrElse(a.bigDecimal.stripTrailingZeros.toPlainString))
 
     private def amount(raw: com.histmersion.api.automation.ModelChains.Limit.AmountRaw): Either[com.histmersion.api.automation.ModelChains.Limit.AmountResultPart1, BigDecimal] =
       val t = raw.trim.stripPrefix("$")
@@ -181,7 +181,7 @@ object ModelChains:
     def parse(s: com.histmersion.api.automation.ModelChains.Limit.ParseS): Either[com.histmersion.api.automation.ModelChains.Limit.ParseResultPart1, Limit] =
       val t = s.trim
       t.lastIndexOf('/') match
-        case -1 => Left(s"'$t' is not <amount> tokens|usd/<window> (e.g. 500k tokens/5h, 5 usd/day)")
+        case -1 => Left(_root_.com.histmersion.api.automation.ModelChains.Limit.ParseResultPart1(s"'$t' is not <amount> tokens|usd/<window> (e.g. 500k tokens/5h, 5 usd/day)"))
         case i  =>
           val (lhs, win) = (t.substring(0, i).trim, t.substring(i + 1))
           val words = lhs.split("\\s+").toList.filter(_.nonEmpty)
@@ -189,7 +189,7 @@ object ModelChains:
             case List(a) if a.startsWith("$") => amount(a).map(_ -> Measure.Usd)
             case List(a, m)                   =>
               Measure.parse(m).toRight(s"'$m' is neither tokens nor usd").flatMap(me => amount(a).map(_ -> me))
-            case _ => Left(s"'$t' is not <amount> tokens|usd/<window> (e.g. 500k tokens/5h, 5 usd/day)")
+            case _ => Left(_root_.com.histmersion.api.automation.ModelChains.Limit.ParseParsedPart1(s"'$t' is not <amount> tokens|usd/<window> (e.g. 500k tokens/5h, 5 usd/day)"))
           for
             am <- parsed
             w <- Window.parse(win)
@@ -214,11 +214,11 @@ object ModelChains:
 
     def wire: com.histmersion.api.automation.ModelChains.Target.WireResult = this match
       case Model(r)    => r.wire
-      case Provider(k) => s"${k.wire}:*"
+      case Provider(k) => _root_.com.histmersion.api.automation.ModelChains.Target.WireResult(s"${k.wire}:*")
 
     def covers(m: ModelRef): com.histmersion.api.automation.ModelChains.Target.CoversResult = this match
-      case Model(r)    => r == m
-      case Provider(k) => m.provider == k
+      case Model(r)    => _root_.com.histmersion.api.automation.ModelChains.Target.CoversResult(r == m)
+      case Provider(k) => _root_.com.histmersion.api.automation.ModelChains.Target.CoversResult(m.provider == k)
 
   object Target:
     type WireResult = WireResult.T
@@ -258,12 +258,12 @@ object ModelChains:
     object ReservePct extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
     def of(target: Target, limits: List[Limit], reservePct: com.histmersion.api.automation.ModelChains.Allowance.OfReservePct): Either[com.histmersion.api.automation.ModelChains.Allowance.OfResultPart1, Allowance] =
-      if reservePct < 0 || reservePct > 99 then Left(s"a reserve is 0 to 99 %, not $reservePct")
+      if reservePct < 0 || reservePct > 99 then Left(_root_.com.histmersion.api.automation.ModelChains.Allowance.OfResultPart1(s"a reserve is 0 to 99 %, not $reservePct"))
       else
         val windows =
           limits.groupBy(l => (l.measure, l.window.seconds)).collect { case (k, ls) if ls.size > 1 => ls.head }
         if windows.nonEmpty then
-          Left(s"${target.wire}: two limits on the same measure and window (${windows.map(_.text).mkString(", ")})")
+          Left(_root_.com.histmersion.api.automation.ModelChains.Allowance.OfResultPart1(s"${target.wire}: two limits on the same measure and window (${windows.map(_.text).mkString(", ")})"))
         else Right(Allowance(target, limits, reservePct))
 
   def parseAllowances(s: com.histmersion.api.automation.ModelChains.ParseAllowancesS, known: Set[com.histmersion.api.automation.ModelChains.ParseAllowancesKnown] = Set.empty): Either[com.histmersion.api.automation.ModelChains.ParseAllowancesResultPart1, List[Allowance]] =
@@ -348,13 +348,13 @@ object ModelChains:
 
   def verdict(ss: List[LimitState]): (com.histmersion.api.automation.ModelChains.VerdictResultPart1, Option[com.histmersion.api.automation.ModelChains.VerdictResultPart2]) =
     val blocked = ss.filterNot(_.usable)
-    if blocked.isEmpty then (true, None)
-    else (false, if blocked.exists(_.freesAt.isEmpty) then None else Some(blocked.flatMap(_.freesAt).max))
+    if blocked.isEmpty then (_root_.com.histmersion.api.automation.ModelChains.VerdictResultPart1(true), None)
+    else (_root_.com.histmersion.api.automation.ModelChains.VerdictResultPart1(false), if blocked.exists(_.freesAt.isEmpty) then None else Some(blocked.flatMap(_.freesAt).max))
 
   def headroom(ss: List[LimitState]): (Option[com.histmersion.api.automation.ModelChains.HeadroomResultPart1], Option[BigDecimal]) =
     val tok = ss.filter(_.limit.measure == Measure.Tokens).map(_.headroom).minOption.map(_.toLong)
     val usd = ss.filter(_.limit.measure == Measure.Usd).map(_.headroom).minOption
-    (tok, usd)
+    ((tok).map(refactorValue5 => _root_.com.histmersion.api.automation.ModelChains.HeadroomResultPart1(refactorValue5)), usd)
 
   final case class LimitSpec(amount: LimitSpec.Amount, measure: Measure, window: LimitSpec.Window)
       derives KindlingsCodecAsObject,
@@ -374,7 +374,7 @@ object ModelChains:
     object Models extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
 
-  final case class AllowanceSet(target: AllowanceSet.Target, limits: List[LimitSpec] = Nil, reservePct: AllowanceSet.ReservePct = 0)
+  final case class AllowanceSet(target: AllowanceSet.Target, limits: List[LimitSpec] = Nil, reservePct: AllowanceSet.ReservePct = _root_.com.histmersion.api.automation.ModelChains.AllowanceSet.ReservePct(0))
       derives KindlingsCodecAsObject,
         KindlingsSchema, com.histmersion.api.json.Schema
 
@@ -386,8 +386,8 @@ object ModelChains:
 
 
   enum SettingSource(val wire: SettingSource.Wire):
-    case Config extends SettingSource("config")
-    case Saved extends SettingSource("saved")
+    case Config extends SettingSource(_root_.com.histmersion.api.automation.ModelChains.SettingSource.Wire("config"))
+    case Saved extends SettingSource(_root_.com.histmersion.api.automation.ModelChains.SettingSource.Wire("saved"))
 
   object SettingSource:
     type Wire = Wire.T
@@ -458,7 +458,7 @@ object ModelChains:
       problem: Option[ChainEntry.Problem] = None,
       freesAt: Option[ChainEntry.FreesAt] = None,
       billing: Option[ChainEntry.Billing] = None,
-      cooling: ChainEntry.Cooling = false
+      cooling: ChainEntry.Cooling = _root_.com.histmersion.api.automation.ModelChains.ChainEntry.Cooling(false)
   ) derives KindlingsCodecAsObject,
         KindlingsSchema, com.histmersion.api.json.Schema
 

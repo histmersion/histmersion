@@ -55,7 +55,7 @@ object Paging:
       counts: List[(Page.CountsPart1, Page.CountsPart2)],
       facets: List[(Page.FacetsPart1, List[(Page.FacetsPart2Part1, Page.FacetsPart2Part2)])] = Nil
   ):
-    def hasMore: com.histmersion.api.Paging.Page.HasMoreResult = next.isDefined
+    def hasMore: com.histmersion.api.Paging.Page.HasMoreResult = _root_.com.histmersion.api.Paging.Page.HasMoreResult(next.isDefined)
     def count(state: com.histmersion.api.Paging.Page.CountState): com.histmersion.api.Paging.Page.CountResult = counts.collectFirst { case (s, n) if s == state => n }.getOrElse(0)
 
     def all: com.histmersion.api.Paging.Page.AllResult = counts.map(_._2).sum
@@ -115,7 +115,7 @@ object Paging:
     type FacetsPart2Part2 = FacetsPart2Part2.T
     object FacetsPart2Part2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
-    val empty: Page = Page(0, None, Nil)
+    val empty: Page = Page(_root_.com.histmersion.api.Paging.Page.Total(0), None, Nil)
 
     def of(counts: List[(com.histmersion.api.Paging.Page.OfCountsPart1, com.histmersion.api.Paging.Page.OfCountsPart2)], state: Option[com.histmersion.api.Paging.Page.OfState], last: Option[com.histmersion.api.Paging.Page.OfLast]): Page =
       filtered(counts, state.toList, last)
@@ -131,7 +131,7 @@ object Paging:
       Page(total, last, counts, facets.filter(_._2.nonEmpty))
 
   def encodeCounts(counts: List[(com.histmersion.api.Paging.EncodeCountsCountsPart1, com.histmersion.api.Paging.EncodeCountsCountsPart2)]): com.histmersion.api.Paging.EncodeCountsResult =
-    counts.map((s, n) => s"$s=$n").mkString(",")
+    _root_.com.histmersion.api.Paging.EncodeCountsResult(counts.map((s, n) => s"$s=$n").mkString(","))
 
   def decodeCounts(s: com.histmersion.api.Paging.DecodeCountsS): List[(com.histmersion.api.Paging.DecodeCountsResultPart1, com.histmersion.api.Paging.DecodeCountsResultPart2)] =
     s.split(',').toList.map(_.trim).filter(_.nonEmpty).flatMap { pair =>
@@ -148,8 +148,8 @@ object Paging:
       .and(header[Option[String]](ListFilters.FacetsHeader))
       .map((t, n, c, f) =>
         Page(
-          t.getOrElse(0),
-          n.map(_.trim).filter(_.nonEmpty),
+          _root_.com.histmersion.api.Paging.Page.Total(t.getOrElse(0)),
+          (n.map(_.trim).filter(_.nonEmpty)).map(refactorValue19 => _root_.com.histmersion.api.Paging.Page.Next(refactorValue19)),
           c.fold(Nil)(decodeCounts),
           f.fold(Nil)(ListFilters.decodeFacets)
         )
@@ -166,16 +166,16 @@ object Paging:
   def grouped(n: com.histmersion.api.Paging.GroupedN): com.histmersion.api.Paging.GroupedResult =
     val s = math.abs(n).toString
     val g = s.reverse.grouped(3).mkString(",").reverse
-    if n < 0 then s"-$g" else g
+    if n < 0 then _root_.com.histmersion.api.Paging.GroupedResult(s"-$g") else g
 
-  def heading(shown: com.histmersion.api.Paging.HeadingShown, total: com.histmersion.api.Paging.HeadingTotal, singular: com.histmersion.api.Paging.HeadingSingular, plural: com.histmersion.api.Paging.HeadingPlural = "", qualifier: Option[com.histmersion.api.Paging.HeadingQualifier] = None): com.histmersion.api.Paging.HeadingResult =
+  def heading(shown: com.histmersion.api.Paging.HeadingShown, total: com.histmersion.api.Paging.HeadingTotal, singular: com.histmersion.api.Paging.HeadingSingular, plural: com.histmersion.api.Paging.HeadingPlural = _root_.com.histmersion.api.Paging.HeadingPlural(""), qualifier: Option[com.histmersion.api.Paging.HeadingQualifier] = None): com.histmersion.api.Paging.HeadingResult =
     val all = math.max(shown, total)
     val noun = qualifier.fold("")(q => s"$q ") + Plural.noun(all, singular, plural)
-    if shown >= all then s"${grouped(all)} $noun"
+    if shown >= all then _root_.com.histmersion.api.Paging.HeadingResult(s"${grouped(all)} $noun")
     else s"Latest ${grouped(shown)} of ${grouped(all)} $noun"
 
   def olderLine(page: Page, ask: com.histmersion.api.Paging.OlderLineAskArg1 => com.histmersion.api.Paging.OlderLineAskResult): Option[com.histmersion.api.Paging.OlderLineResult] =
     page.next.map(c => s"Older: ${ask(c)}")
 
   def cut[A](rows: Vector[A], limit: com.histmersion.api.Paging.CutLimit): (Vector[A], com.histmersion.api.Paging.CutResultPart2) =
-    if rows.size > limit then (rows.take(limit), true) else (rows, false)
+    if rows.size > limit then (rows.take(limit), _root_.com.histmersion.api.Paging.CutResultPart2(true)) else (rows, _root_.com.histmersion.api.Paging.CutResultPart2(false))

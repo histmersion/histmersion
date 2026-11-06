@@ -124,7 +124,7 @@ object Jats:
   def parse(xml: com.histmersion.upstreams.jats.Jats.ParseXml): Elem =
     final case class Frame(name: com.histmersion.upstreams.jats.Jats.Elem.Name, attrs: Map[com.histmersion.upstreams.jats.Jats.Elem.AttrsKey, com.histmersion.upstreams.jats.Jats.Elem.AttrsValue], kids: Vector[Node])
     // a hand-rolled reader walks the text once; the open elements are the one mutable state
-    var stack = List(Frame("#document", Map.empty, Vector.empty))
+    var stack = List(Frame(_root_.com.histmersion.upstreams.jats.Jats.Elem.Name("#document"), Map.empty, Vector.empty))
     def add(n: Node): Unit = stack = stack.head.copy(kids = stack.head.kids :+ n) :: stack.tail
     def close(): Unit =
       val f = stack.head
@@ -133,14 +133,14 @@ object Jats:
     val n = xml.length
     var i = 0 // the read position: a scanning loop, local to this call
     while i < n do
-      if xml.startsWith("<!--", i) then i = after(xml, "-->", i + 4)
+      if xml.startsWith("<!--", i) then i = after(xml, _root_.com.histmersion.upstreams.jats.Jats.AfterToken("-->"), _root_.com.histmersion.upstreams.jats.Jats.AfterFrom(i + 4))
       else if xml.startsWith("<![CDATA[", i) then
         val end = xml.indexOf("]]>", i + 9)
         val stop = if end < 0 then n else end
         add(Text(xml.substring(i + 9, stop)))
         i = if end < 0 then n else end + 3
-      else if xml.startsWith("<!", i) then i = doctypeEnd(xml, i)
-      else if xml.startsWith("<?", i) then i = after(xml, "?>", i + 2)
+      else if xml.startsWith("<!", i) then i = doctypeEnd(xml, _root_.com.histmersion.upstreams.jats.Jats.DoctypeEndFrom(i))
+      else if xml.startsWith("<?", i) then i = after(xml, _root_.com.histmersion.upstreams.jats.Jats.AfterToken("?>"), _root_.com.histmersion.upstreams.jats.Jats.AfterFrom(i + 2))
       else if xml.startsWith("</", i) then
         val end = xml.indexOf('>', i)
         val name = xml.substring(i + 2, if end < 0 then n else end).trim
@@ -150,7 +150,7 @@ object Jats:
           close()
         i = if end < 0 then n else end + 1
       else if xml.charAt(i) == '<' then
-        val end = tagEnd(xml, i + 1)
+        val end = tagEnd(xml, _root_.com.histmersion.upstreams.jats.Jats.TagEndFrom(i + 1))
         val raw = xml.substring(i + 1, end)
         val selfClosing = raw.endsWith("/")
         val body = if selfClosing then raw.dropRight(1) else raw
@@ -373,7 +373,7 @@ object Jats:
       val width = all.map(_.size).max
       val pad = all.map(r => r ++ Vector.fill(width - r.size)(""))
       val line = (r: Vector[String]) => r.mkString("| ", " | ", " |")
-      Vector((line(pad.head) +: line(Vector.fill(width)("---")) +: pad.tail.map(line)).mkString("\n"))
+      Vector(_root_.com.histmersion.upstreams.jats.Jats.TableResult((line(pad.head) +: line(Vector.fill(width)("---")) +: pad.tail.map(line)).mkString("\n")))
 
   private def formula(e: Elem): Option[com.histmersion.upstreams.jats.Jats.FormulaResult] =
     def find(x: Elem): Option[Elem] =
@@ -407,7 +407,7 @@ object Jats:
               case n                     => Some(runText(n))
             }
             .filter(_.nonEmpty)
-          Option.when(names.nonEmpty)("person-group" -> names.mkString(", "))
+          Option.when(names.nonEmpty)({ val refactorTuple = "person-group" -> names.mkString(", "); (_root_.com.histmersion.upstreams.jats.Jats.CitationFieldsPart1(refactorTuple._1), _root_.com.histmersion.upstreams.jats.Jats.CitationFieldsPart2(refactorTuple._2)) })
         case p if p.name == "pub-id" =>
           Option.when(p.attr("pub-id-type").contains("doi"))("doi" -> ("doi:" + runText(p)))
         case x => Some(x.name -> runText(x))
@@ -420,8 +420,8 @@ object Jats:
           case _                                   => acc :+ f
       }
       merged.map(_._2.trim.stripSuffix(".")).filter(_.nonEmpty) match
-        case Vector() => ""
-        case parts    => parts.mkString("", ". ", ".")
+        case Vector() => _root_.com.histmersion.upstreams.jats.Jats.CitationResult("")
+        case parts    => _root_.com.histmersion.upstreams.jats.Jats.CitationResult(parts.mkString("", ". ", "."))
 
   /** `Given Surname`, for the byline. */
   private def byName(n: Elem): com.histmersion.upstreams.jats.Jats.ByNameResult =
@@ -460,9 +460,9 @@ object Jats:
       (if s.headOption.exists(_.isWhitespace) then " " else "") + mark + t + mark +
         (if s.lastOption.exists(_.isWhitespace) then " " else "")
 
-  private def text(e: Elem): com.histmersion.upstreams.jats.Jats.TextResult = e.children.map {
+  private def text(e: Elem): com.histmersion.upstreams.jats.Jats.TextResult = _root_.com.histmersion.upstreams.jats.Jats.TextResult(e.children.map {
     case Text(s) => s
     case c: Elem => text(c)
-  }.mkString
+  }.mkString)
 
   private def collapse(s: com.histmersion.upstreams.jats.Jats.CollapseS): com.histmersion.upstreams.jats.Jats.CollapseResult = s.replaceAll("[\\s ]+", " ").trim

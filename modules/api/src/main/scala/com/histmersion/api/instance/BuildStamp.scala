@@ -10,7 +10,7 @@ final case class BuildStamp(
     version: BuildStamp.Version,
     gitCommit: Option[BuildStamp.GitCommit] = None,
     commitDate: Option[BuildStamp.CommitDate] = None,
-    dirty: BuildStamp.Dirty = false,
+    dirty: BuildStamp.Dirty = _root_.com.histmersion.api.instance.BuildStamp.Dirty(false),
     licence: Option[BuildStamp.Licence] = None,
     sourceUrl: Option[BuildStamp.SourceUrl] = None
 ) derives KindlingsCodecAsObject,

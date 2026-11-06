@@ -19,7 +19,7 @@ object AboutMarkdown:
 
   def age(seconds: com.histmersion.api.instance.AboutMarkdown.AgeSeconds): com.histmersion.api.instance.AboutMarkdown.AgeResult =
     val s = math.max(0L, seconds)
-    if s < 60 then s"$s s"
+    if s < 60 then _root_.com.histmersion.api.instance.AboutMarkdown.AgeResult(s"$s s")
     else if s < 3600 then s"${s / 60} min"
     else if s < 86400 then s"${s / 3600} h"
     else s"${s / 86400} d"
@@ -54,10 +54,10 @@ object AboutMarkdown:
         a.plugins
       ) ++ a.counts.toList.flatMap(c =>
         List(
-          s"- corpus: ${Plural.count(c.sources, "source")} · ${Plural.count(c.findings, "finding")} · " +
+          s"- corpus: ${Plural.count(c.sources, _root_.com.histmersion.api.Plural.CountSingular("source"))} · ${Plural.count(c.findings, _root_.com.histmersion.api.Plural.CountSingular("finding"))} · " +
             s"${Plural.count(c.articles, "article")} · ${Plural.count(c.events, "event")}",
-          s"- reference data: ${Plural.count(c.places, "place")} · ${Plural.count(c.periods, "period")} · ${Plural.count(c.presets, "preset")}"
+          s"- reference data: ${Plural.count(c.places, _root_.com.histmersion.api.Plural.CountSingular("place"))} · ${Plural.count(c.periods, _root_.com.histmersion.api.Plural.CountSingular("period"))} · ${Plural.count(c.presets, _root_.com.histmersion.api.Plural.CountSingular("preset"))}"
         )
       ) ++ StorageMarkdown.render(a.storage) ++
       (if a.problems.isEmpty then Nil else "" :: "Problems:" :: a.problems.map(p => s"- $p"))
-    lines.mkString("\n")
+    _root_.com.histmersion.api.instance.AboutMarkdown.RenderResult(lines.mkString("\n"))

@@ -135,7 +135,7 @@ object CatalogDating:
     digits.toLongOption.map(v => if neg then -v else v)
 
   /** Pure: a historical year as an astronomical one (−1, 1 BCE, is 0). */
-  def toAstronomical(h: com.histmersion.upstreams.dating.CatalogDating.ToAstronomicalH): com.histmersion.upstreams.dating.CatalogDating.ToAstronomicalResult = if h < 0 then h + 1 else if h == 0 then 0 else h
+  def toAstronomical(h: com.histmersion.upstreams.dating.CatalogDating.ToAstronomicalH): com.histmersion.upstreams.dating.CatalogDating.ToAstronomicalResult = if h < 0 then h + 1 else if h == 0 then _root_.com.histmersion.upstreams.dating.CatalogDating.ToAstronomicalResult((0).toLong) else h
 
   /** Pure: an astronomical year as a historical one (0 is −1, 1 BCE). */
   def fromAstronomical(a: com.histmersion.upstreams.dating.CatalogDating.FromAstronomicalA): com.histmersion.upstreams.dating.CatalogDating.FromAstronomicalResult = if a <= 0 then a - 1 else a

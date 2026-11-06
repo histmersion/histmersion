@@ -57,11 +57,11 @@ object Years:
 
   def fromAstronomical(a: com.histmersion.api.Years.FromAstronomicalA): com.histmersion.api.Years.FromAstronomicalResult = if a <= 0 then a - 1 else a
 
-  def toAstronomical(h: com.histmersion.api.Years.ToAstronomicalH): com.histmersion.api.Years.ToAstronomicalResult = if h < 0 then h + 1 else if h == 0 then 0 else h
+  def toAstronomical(h: com.histmersion.api.Years.ToAstronomicalH): com.histmersion.api.Years.ToAstronomicalResult = if h < 0 then h + 1 else if h == 0 then _root_.com.histmersion.api.Years.ToAstronomicalResult((0).toLong) else h
 
   def shift(h: com.histmersion.api.Years.ShiftH, d: com.histmersion.api.Years.ShiftD): com.histmersion.api.Years.ShiftResult = fromAstronomical(toAstronomical(h) + d)
 
-  val NoYearZero: com.histmersion.api.Years.NoYearZero = "there is no year 0 (1 BCE is -1, 1 CE is 1)"
+  val NoYearZero: com.histmersion.api.Years.NoYearZero = _root_.com.histmersion.api.Years.NoYearZero("there is no year 0 (1 BCE is -1, 1 CE is 1)")
 
   private val Circa = "^(?:c|ca|circa)\\.?\\s+".r
   private val EraBce = "(?:bce|bc|b\\.c\\.e\\.|b\\.c\\.)"

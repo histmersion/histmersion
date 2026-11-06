@@ -71,14 +71,14 @@ object BasemapMarkdown:
     (head :: "" :: table :: "" :: notes).mkString("\n")
 
   def onDemand(o: Basemap.OnDemand): com.histmersion.api.basemap.BasemapMarkdown.OnDemandResult =
-    if !o.enabled then "Relief deeper than the extract: off (basemap.terrain.on-demand.enabled)."
+    if !o.enabled then _root_.com.histmersion.api.basemap.BasemapMarkdown.OnDemandResult("Relief deeper than the extract: off (basemap.terrain.on-demand.enabled).")
     else
       s"Relief deeper than the extract: read when a page shows an area, to zoom ${o.maxZoom}; cached " +
         s"${o.tiles} tiles, ${Backup.humanBytes(o.bytes)} of ${Backup.humanBytes(o.maxBytes)} at `${o.dir}`" +
         o.offlineUntil.fold(".")(t => s" — the provider was unreachable; asked again after $t.")
 
   def outside(what: com.histmersion.api.basemap.BasemapMarkdown.OutsideWhat, key: com.histmersion.api.basemap.BasemapMarkdown.OutsideKey, o: Basemap.OnDemand): com.histmersion.api.basemap.BasemapMarkdown.OutsideResult =
-    if !o.enabled then s"$what outside the downloaded region: off (basemap.$key.on-demand.enabled)."
+    if !o.enabled then _root_.com.histmersion.api.basemap.BasemapMarkdown.OutsideResult(s"$what outside the downloaded region: off (basemap.$key.on-demand.enabled).")
     else
       s"$what outside the downloaded region (and deeper than it): read when a page shows it, to zoom ${o.maxZoom}; cached " +
         s"${o.tiles} tiles, ${Backup.humanBytes(o.bytes)} of ${Backup.humanBytes(o.maxBytes)} at `${o.dir}`" +
@@ -87,5 +87,5 @@ object BasemapMarkdown:
   def plain(html: com.histmersion.api.basemap.BasemapMarkdown.PlainHtml): com.histmersion.api.basemap.BasemapMarkdown.PlainResult = html.replaceAll("<[^>]+>", "")
 
   def removed(r: Basemap.Removed): com.histmersion.api.basemap.BasemapMarkdown.RemovedResult =
-    if r.removed.isEmpty then "Nothing to remove: no base-map file is downloaded."
+    if r.removed.isEmpty then _root_.com.histmersion.api.basemap.BasemapMarkdown.RemovedResult("Nothing to remove: no base-map file is downloaded.")
     else s"Removed ${Backup.humanBytes(r.bytes)}:\n" + r.removed.map(f => s"- `$f`").mkString("\n")

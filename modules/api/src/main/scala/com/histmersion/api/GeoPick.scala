@@ -7,22 +7,22 @@ enum GeoPick:
   case Mid, Start, End, Earliest, Latest
 
   def wire: com.histmersion.api.GeoPick.WireResult = this match
-    case Mid      => "mid"
-    case Start    => "start"
-    case End      => "end"
-    case Earliest => "earliest"
-    case Latest   => "latest"
+    case Mid      => _root_.com.histmersion.api.GeoPick.WireResult("mid")
+    case Start    => _root_.com.histmersion.api.GeoPick.WireResult("start")
+    case End      => _root_.com.histmersion.api.GeoPick.WireResult("end")
+    case Earliest => _root_.com.histmersion.api.GeoPick.WireResult("earliest")
+    case Latest   => _root_.com.histmersion.api.GeoPick.WireResult("latest")
 
   def label: com.histmersion.api.GeoPick.LabelResult = this match
-    case Mid      => "States at midpoint"
-    case Start    => "States at start"
-    case End      => "States at end"
-    case Earliest => "All states in period (earliest shape)"
-    case Latest   => "All states in period (latest shape)"
+    case Mid      => _root_.com.histmersion.api.GeoPick.LabelResult("States at midpoint")
+    case Start    => _root_.com.histmersion.api.GeoPick.LabelResult("States at start")
+    case End      => _root_.com.histmersion.api.GeoPick.LabelResult("States at end")
+    case Earliest => _root_.com.histmersion.api.GeoPick.LabelResult("All states in period (earliest shape)")
+    case Latest   => _root_.com.histmersion.api.GeoPick.LabelResult("All states in period (latest shape)")
 
   def snapshot: com.histmersion.api.GeoPick.SnapshotResult = this match
-    case Mid | Start | End => true
-    case _                 => false
+    case Mid | Start | End => _root_.com.histmersion.api.GeoPick.SnapshotResult(true)
+    case _                 => _root_.com.histmersion.api.GeoPick.SnapshotResult(false)
 
 object GeoPick:
   type WireResult = WireResult.T
@@ -72,4 +72,4 @@ object GeoPick:
     span match
       case None                                        => asOf.fold(GeoTime.Always)(GeoTime.At(_))
       case Some((lo, hi)) if pick.snapshot || lo == hi => GeoTime.At(yearOf(pick, lo, hi))
-      case Some((lo, hi))                              => GeoTime.Within(lo, hi, latest = pick == Latest)
+      case Some((lo, hi))                              => GeoTime.Within(lo, hi, latest = _root_.com.histmersion.api.catalogue.GeoTime.Within.Latest(pick == Latest))

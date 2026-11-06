@@ -43,4 +43,4 @@ object Csv:
           case _    => field += c; if !c.isWhitespace then any = true
       i += 1
     endRow()
-    rows.result()
+    (rows.result()).map(refactorValue => (refactorValue).map(refactorValue2 => _root_.com.histmersion.api.Csv.ParseResult(refactorValue2)))

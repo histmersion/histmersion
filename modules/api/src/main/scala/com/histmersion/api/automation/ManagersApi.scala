@@ -61,8 +61,8 @@ object ManagersApi:
   /** The managers' errors: 404 for a missing one, 409 for a run in the way, 400 otherwise. */
   lazy val errors =
     oneOf[Api.Error](
-      oneOfVariantValueMatcher(StatusCode.NotFound, jsonBody[Api.Error])(Api.Error.hasCode(Write.CodeNotFound)),
-      oneOfVariantValueMatcher(StatusCode.Conflict, jsonBody[Api.Error])(Api.Error.hasCode(AgentsApi.CodeConflict)),
+      oneOfVariantValueMatcher(StatusCode.NotFound, jsonBody[Api.Error])(Api.Error.hasCode(_root_.com.histmersion.api.Api.Error.HasCodeCode(Write.CodeNotFound))),
+      oneOfVariantValueMatcher(StatusCode.Conflict, jsonBody[Api.Error])(Api.Error.hasCode(_root_.com.histmersion.api.Api.Error.HasCodeCode(AgentsApi.CodeConflict))),
       oneOfDefaultVariant(statusCode(StatusCode.BadRequest).and(jsonBody[Api.Error]))
     )
 

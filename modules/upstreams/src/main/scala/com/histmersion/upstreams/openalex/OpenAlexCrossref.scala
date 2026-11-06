@@ -80,7 +80,7 @@ final class OpenAlexCrossref(cfg: UpstreamSettings, http: Plugin.Http, log: Plug
     */
   def references(doi: com.histmersion.upstreams.openalex.OpenAlexCrossref.ReferencesDoi): Either[com.histmersion.upstreams.openalex.OpenAlexCrossref.ReferencesResultPart1, (com.histmersion.upstreams.openalex.OpenAlexCrossref.ReferencesResultPart2Part1, List[RefRow])] =
     crossrefWork(doi).map(AcquireParse.crossrefReferences) match
-      case Right(refs) if refs.nonEmpty => Right(("crossref", refs))
+      case Right(refs) if refs.nonEmpty => Right((_root_.com.histmersion.upstreams.openalex.OpenAlexCrossref.ReferencesResultPart2Part1("crossref"), refs))
       case _                            => openalexReferences(doi).map(("openalex", _))
 
   /** Fallback: resolve OpenAlex `referenced_works` ids to titles, 50 at a time. */
@@ -113,7 +113,7 @@ final class OpenAlexCrossref(cfg: UpstreamSettings, http: Plugin.Http, log: Plug
 
   /** The raw OpenAlex record, for the citation counts an assessment reports and the open locations a fetcher reads. */
   def raw(doi: com.histmersion.upstreams.openalex.OpenAlexCrossref.RawDoi): Either[com.histmersion.upstreams.openalex.OpenAlexCrossref.RawResultPart1, Json] =
-    http.json(Url(WorkLookup.workUrl(cfg, doi), "", "select" -> WorkLookup.WorkFields, mailto))
+    http.json(Url(WorkLookup.workUrl(cfg, doi), _root_.com.histmersion.upstreams.http.Url.ApplyPath(""), "select" -> WorkLookup.WorkFields, mailto))
 
 object OpenAlexCrossref:
   type SearchResultPart1 = SearchResultPart1.T

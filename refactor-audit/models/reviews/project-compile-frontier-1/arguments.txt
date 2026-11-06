@@ -1,0 +1,7 @@
+sbt
+--server
+-batch
+set every scalafmtOnCompile := false
+set ThisBuild / scalacOptions += "-Xsemanticdb"
+set every maxErrors := 1000
+compile

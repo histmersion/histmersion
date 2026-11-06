@@ -64,7 +64,7 @@ object ChatAnswer:
       case Some(node) =>
         node.as(using error) match
           case Right(Some(message)) => message
-          case Right(None)          => s"statusCode: $status, response: $body"
+          case Right(None)          => _root_.com.histmersion.plugins.ai.ChatAnswer.ErrorMessageResult(s"statusCode: $status, response: $body")
           case Left(_)              => fallback
       case None => fallback
 
@@ -75,7 +75,7 @@ object ChatAnswer:
       _ <- c.downField("type").as[Option[String]]
       _ <- c.downField("param").as[Option[String]]
       _ <- c.downField("code").as[Option[String]]
-    yield m
+    yield (m).map(refactorValue => _root_.com.histmersion.plugins.ai.ChatAnswer.Error(refactorValue))
   }
 
   private def objectAt(c: HCursor): Either[DecodingFailure, Unit] =
@@ -120,14 +120,14 @@ object ChatAnswer:
     for
       args <- c.downField("arguments").as[String]
       name <- c.downField("name").as[Option[String]]
-    yield (args, name)
+    yield (_root_.com.histmersion.plugins.ai.ChatAnswer.FunctionPart1(args), (name).map(refactorValue2 => _root_.com.histmersion.plugins.ai.ChatAnswer.FunctionPart2(refactorValue2)))
   }
 
   private val toolCall: Decoder[(Option[com.histmersion.plugins.ai.ChatAnswer.ToolCallPart1], (com.histmersion.plugins.ai.ChatAnswer.ToolCallPart2Part1, Option[com.histmersion.plugins.ai.ChatAnswer.ToolCallPart2Part2]))] = Decoder.instance { c =>
     for
       id <- c.downField("id").as[Option[String]]
       f <- c.downField("function").as(using function)
-    yield (id, f)
+    yield ((id).map(refactorValue3 => _root_.com.histmersion.plugins.ai.ChatAnswer.ToolCallPart1(refactorValue3)), f)
   }
 
   private val audio: Decoder[Unit] = product { c =>
@@ -149,9 +149,9 @@ object ChatAnswer:
       _ <- c.downField("function_call").as(using Decoder.decodeOption(using function))
       _ <- c.downField("audio").as(using Decoder.decodeOption(using audio))
     yield (
-      content,
+      _root_.com.histmersion.plugins.ai.ChatAnswer.MessagePart1(content),
       calls.toList.zipWithIndex.map { case ((id, (args, name)), i) =>
-        AiTool.Call(id.getOrElse(s"call_$i"), name.getOrElse("unknown"), args)
+        AiTool.Call(_root_.com.histmersion.plugin.AiTool.Call.Id(id.getOrElse(s"call_$i")), _root_.com.histmersion.plugin.AiTool.Call.Tool(name.getOrElse("unknown")), _root_.com.histmersion.plugin.AiTool.Call.Input(args))
       }
     )
   }
@@ -162,7 +162,7 @@ object ChatAnswer:
       finish <- c.downField("finish_reason").as[String]
       _ <- c.downField("index").as[Int]
       _ <- c.downField("logprobs").as(using Decoder.decodeOption(using logprobs))
-    yield (m._1, m._2, finish)
+    yield (m._1, m._2, _root_.com.histmersion.plugins.ai.ChatAnswer.ChoicePart3(finish))
   }
 
   private val usage: Decoder[AiUsage] = product { c =>
@@ -187,11 +187,11 @@ object ChatAnswer:
       reasoning <- c.downField("completion_tokens_details").as(using Decoder.decodeOption(using completion))
       cached <- c.downField("prompt_tokens_details").as(using Decoder.decodeOption(using prompt))
     yield AiUsage(
-      in.toLong,
-      out.toLong,
-      cached.flatten.getOrElse(0).toLong,
-      0L,
-      reasoning.flatten.getOrElse(0).toLong
+      _root_.com.histmersion.plugin.AiUsage.Input(in.toLong),
+      _root_.com.histmersion.plugin.AiUsage.Output(out.toLong),
+      _root_.com.histmersion.plugin.AiUsage.CacheRead(cached.flatten.getOrElse(0).toLong),
+      _root_.com.histmersion.plugin.AiUsage.CacheWrite(0L),
+      _root_.com.histmersion.plugin.AiUsage.Reasoning(reasoning.flatten.getOrElse(0).toLong)
     )
   }
 
@@ -218,6 +218,6 @@ object ChatAnswer:
           case Some(_)                               => AiStop.Other
         ,
         Some(u),
-        Some(model)
+        Some(_root_.com.histmersion.plugin.AiTurn.ServedBy(model))
       )
   }

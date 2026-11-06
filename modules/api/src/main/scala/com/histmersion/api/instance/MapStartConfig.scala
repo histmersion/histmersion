@@ -8,7 +8,7 @@ final case class MapStartConfig(
     lat: com.histmersion.api.catalogue.Latitude = 37.0,
     lon: com.histmersion.api.catalogue.Longitude = 30.0,
     zoom: MapStartConfig.Zoom = 5,
-    label: MapStartConfig.Label = ""
+    label: MapStartConfig.Label = _root_.com.histmersion.api.instance.MapStartConfig.Label("")
 ) derives KindlingsCodecAsObject,
       KindlingsSchema
 

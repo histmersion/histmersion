@@ -4,7 +4,7 @@ import hearth.kindlings.tapirschemaderivation.KindlingsSchema
 import sttp.tapir.Schema
 import com.histmersion.api.given
 
-final case class MediaCount(key: MediaCount.Key, n: MediaCount.N, allowed: MediaCount.Allowed = true)
+final case class MediaCount(key: MediaCount.Key, n: MediaCount.N, allowed: MediaCount.Allowed = _root_.com.histmersion.api.media.MediaCount.Allowed(true))
     derives KindlingsCodecAsObject,
       KindlingsSchema, com.histmersion.api.json.Schema
 object MediaCount:
@@ -24,7 +24,7 @@ object MediaCount:
   type Allowed = Allowed.T
   object Allowed extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
-  def of(keys: List[com.histmersion.api.media.MediaCount.OfKeys], allowed: com.histmersion.api.media.MediaCount.OfAllowedArg1 => com.histmersion.api.media.MediaCount.OfAllowedResult = _ => true): List[MediaCount] =
+  def of(keys: List[com.histmersion.api.media.MediaCount.OfKeys], allowed: com.histmersion.api.media.MediaCount.OfAllowedArg1 => com.histmersion.api.media.MediaCount.OfAllowedResult = _ => _root_.com.histmersion.api.media.MediaCount.OfAllowedResult(true)): List[MediaCount] =
     keys
       .groupBy(identity)
       .toList

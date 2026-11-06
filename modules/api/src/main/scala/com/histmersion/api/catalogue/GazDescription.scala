@@ -1,6 +1,6 @@
 package com.histmersion.api.catalogue
 import com.histmersion.api.given
-final case class GazDescription(text: GazDescription.Text, lang: GazDescription.Lang = "")
+final case class GazDescription(text: GazDescription.Text, lang: GazDescription.Lang = _root_.com.histmersion.api.catalogue.GazDescription.Lang(""))
 
 object GazDescription:
   type Text = Text.T

@@ -74,8 +74,8 @@ object AgentsApi:
 
   private lazy val agentErrors =
     oneOf[Api.Error](
-      oneOfVariantValueMatcher(StatusCode.NotFound, jsonBody[Api.Error])(Api.Error.hasCode(Write.CodeNotFound)),
-      oneOfVariantValueMatcher(StatusCode.Conflict, jsonBody[Api.Error])(Api.Error.hasCode(AgentsApi.CodeConflict)),
+      oneOfVariantValueMatcher(StatusCode.NotFound, jsonBody[Api.Error])(Api.Error.hasCode(_root_.com.histmersion.api.Api.Error.HasCodeCode(Write.CodeNotFound))),
+      oneOfVariantValueMatcher(StatusCode.Conflict, jsonBody[Api.Error])(Api.Error.hasCode(_root_.com.histmersion.api.Api.Error.HasCodeCode(AgentsApi.CodeConflict))),
       oneOfDefaultVariant(statusCode(StatusCode.BadRequest).and(jsonBody[Api.Error]))
     )
 
@@ -142,7 +142,7 @@ object AgentsApi:
       .in(query[Option[Long]]("budgetTokens"))
       .out(jsonBody[RunInfo])
 
-  val Actions: List[com.histmersion.api.automation.AgentsApi.Actions] = List("pause", "resume", "cancel")
+  val Actions: List[com.histmersion.api.automation.AgentsApi.Actions] = List(_root_.com.histmersion.api.automation.AgentsApi.Actions("pause"), _root_.com.histmersion.api.automation.AgentsApi.Actions("resume"), _root_.com.histmersion.api.automation.AgentsApi.Actions("cancel"))
 
   lazy val approvals: PublicEndpoint[
     (ListFilters.ApprovalFilter, Option[com.histmersion.api.automation.AgentsApi.ApprovalsPart1Part2], Option[com.histmersion.api.automation.AgentsApi.ApprovalsPart1Part3], Option[com.histmersion.api.automation.AgentsApi.ApprovalsPart1Part4]),

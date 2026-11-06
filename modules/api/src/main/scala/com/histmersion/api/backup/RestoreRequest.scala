@@ -5,7 +5,7 @@ import sttp.tapir.Schema
 import com.histmersion.api.given
 
 /** `force` is required while the database holds sources: `pg_restore --clean` drops what is there. */
-final case class RestoreRequest(file: RestoreRequest.File, force: RestoreRequest.Force = false) derives KindlingsCodecAsObject, KindlingsSchema, com.histmersion.api.json.Schema
+final case class RestoreRequest(file: RestoreRequest.File, force: RestoreRequest.Force = _root_.com.histmersion.api.backup.RestoreRequest.Force(false)) derives KindlingsCodecAsObject, KindlingsSchema, com.histmersion.api.json.Schema
 
 object RestoreRequest:
   type File = File.T

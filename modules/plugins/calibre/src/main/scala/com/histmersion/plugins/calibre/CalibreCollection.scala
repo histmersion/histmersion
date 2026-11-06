@@ -11,7 +11,7 @@ import scala.util.Try
 final class CalibreCollection(library: Calibre.Library, writeBack: CalibreCollection.WriteBack, shell: Shell)(using files: com.histmersion.plugin.LocalFiles) extends SourceCollection:
   private val calibre = Calibre(library, shell)
 
-  val title: com.histmersion.plugins.calibre.CalibreCollection.Title = "Calibre"
+  val title: com.histmersion.plugins.calibre.CalibreCollection.Title = _root_.com.histmersion.plugins.calibre.CalibreCollection.Title("Calibre")
   override val description: com.histmersion.plugins.calibre.CalibreCollection.Description =
     s"The Calibre library at ${library.library}: read with calibredb (sqlite3 while the GUI holds it)" +
       (if writeBack then ", written back with calibredb" else ", read-only")
@@ -59,7 +59,7 @@ final class CalibreCollection(library: Calibre.Library, writeBack: CalibreCollec
       case Some(path) =>
         CalibreCollection
           .read(path)
-          .map(b => Some(FetchedFile("calibre", Some(path), b, CalibreCollection.extension(path))))
+          .map(b => Some(FetchedFile(_root_.com.histmersion.plugin.FetchedFile.Source("calibre"), Some(path), b, CalibreCollection.extension(path))))
 
   override def add(metadata: CollectionMetadata, file: FetchedFile): Either[String, CollectionId] =
     CalibreCollection
@@ -67,7 +67,7 @@ final class CalibreCollection(library: Calibre.Library, writeBack: CalibreCollec
       .map(id => CollectionId(id.toString))
 
   override def replace(id: CollectionId, key: String, file: FetchedFile): Either[String, String] =
-    CalibreCollection.number(id).flatMap(n => CalibreCollection.staged(key, file)(p => calibre.replaceFormat(n, p)))
+    CalibreCollection.number(id).flatMap(n => CalibreCollection.staged(_root_.com.histmersion.plugins.calibre.CalibreCollection.StagedName(key), file)(p => calibre.replaceFormat(n, p)))
 
   override def update(id: CollectionId, metadata: CollectionMetadata): Either[String, List[CollectionChange]] =
     CalibreCollection
@@ -77,16 +77,16 @@ final class CalibreCollection(library: Calibre.Library, writeBack: CalibreCollec
 
   override def updateAll(links: List[CollectionLink], apply: Boolean): Either[String, List[CollectionUpdateEntry]] =
     val linked = links.flatMap(l =>
-      l.id.value.trim.toIntOption.map(LinkedRecord(l.metadata.key, _, CalibreCollection.push(l.metadata)))
+      l.id.value.trim.toIntOption.map(LinkedRecord(l.metadata.key, _root_.com.histmersion.plugins.calibre.LinkedRecord.CalibreId(_), CalibreCollection.push(l.metadata)))
     )
     calibre.updateAll(linked, apply).map(_.map(CalibreCollection.entry))
 
   override def set(id: CollectionId, fields: List[(String, String)]): Either[String, Unit] =
-    CalibreCollection.number(id).flatMap(calibre.set(_, fields))
+    CalibreCollection.number(id).flatMap(calibre.set(_, (fields).map(refactorValue => { val refactorTuple = refactorValue; (_root_.com.histmersion.plugins.calibre.Calibre.SetFieldsPart1(refactorTuple._1), _root_.com.histmersion.plugins.calibre.Calibre.SetFieldsPart2(refactorTuple._2)) })))
 
   override def audit(records: List[CollectionRecord]): Either[String, List[CollectionFinding]] =
     val recs = records.flatMap(r =>
-      r.id.value.trim.toIntOption.map(AuditRecord(r.key, _, r.title, r.authors, r.year.map(_.value)))
+      r.id.value.trim.toIntOption.map(AuditRecord(r.key, _root_.com.histmersion.plugins.calibre.AuditRecord.CalibreId(_), r.title, r.authors, r.year.map(_.value)))
     )
     calibre.all().map { books =>
       Calibre.Audit.audit(recs, books.map(b => b.id -> b).toMap).map(CalibreCollection.finding)
@@ -158,7 +158,7 @@ object CalibreCollection:
   /** An item back as the book it was read from. */
   def book(i: CollectionItem): Calibre.Book =
     Calibre.Book(
-      id = i.id.value.trim.toIntOption.getOrElse(0),
+      id = _root_.com.histmersion.plugins.calibre.Calibre.Book.Id(i.id.value.trim.toIntOption.getOrElse(0)),
       title = i.title.getOrElse(""),
       authors = i.authors,
       pubdate = i.published,
@@ -191,7 +191,7 @@ object CalibreCollection:
     CollectionFinding(
       CollectionId(f.calibreId.toString),
       f.citekeys,
-      f.issues.map(i => CollectionIssue(i.toString, i.label)),
+      f.issues.map(i => CollectionIssue(_root_.com.histmersion.plugin.CollectionIssue.Code(i.toString), i.label)),
       f.calibre.map(item),
       CollectionRecord(
         f.record.citekey,
@@ -204,7 +204,7 @@ object CalibreCollection:
     )
 
   def number(id: CollectionId): Either[com.histmersion.plugins.calibre.CalibreCollection.NumberResultPart1, com.histmersion.plugins.calibre.CalibreCollection.NumberResultPart2] =
-    id.value.trim.toIntOption.toRight(s"'${id.value}' is not a Calibre id")
+    ((id.value.trim.toIntOption.toRight(s"'${id.value}' is not a Calibre id")).left.map(refactorError => _root_.com.histmersion.plugins.calibre.CalibreCollection.NumberResultPart1(refactorError))).map(refactorValue24 => _root_.com.histmersion.plugins.calibre.CalibreCollection.NumberResultPart2(refactorValue24))
 
   def extension(name: com.histmersion.plugins.calibre.CalibreCollection.ExtensionName): com.histmersion.plugins.calibre.CalibreCollection.ExtensionResult = name.reverse.takeWhile(_ != '.').reverse.toLowerCase(java.util.Locale.ROOT)
 
@@ -215,15 +215,15 @@ object CalibreCollection:
     * `f` run on it, and the directory deleted whatever happens.
     */
   def staged[A](name: com.histmersion.plugins.calibre.CalibreCollection.StagedName, file: FetchedFile)(f: Path => Either[com.histmersion.plugins.calibre.CalibreCollection.StagedFResultPart1, A])(using files: com.histmersion.plugin.LocalFiles): Either[com.histmersion.plugins.calibre.CalibreCollection.StagedResultPart1, A] =
-    files.staged(s"$name.${file.extension}", file.bytes)(f)
+    files.staged(_root_.com.histmersion.plugin.LocalFiles.StagedName(s"$name.${file.extension}"), file.bytes)(f)
 
   /** Whether the server can read the library at `dir`, and when it cannot, what it needs. */
   def reach(dir: Path)(using files: com.histmersion.plugin.LocalFiles): Either[com.histmersion.plugins.calibre.CalibreCollection.ReachResultPart1, Unit] =
     val db = dir.resolve("metadata.db")
     if !files.isDirectory(dir) && !files.exists(db) then
       Left(
-        s"there is no Calibre library at $dir — set histmersion.plugins.calibre.library-path to the folder that " +
-          "holds metadata.db (a server in a container needs that folder mounted)"
+        _root_.com.histmersion.plugins.calibre.CalibreCollection.ReachResultPart1(s"there is no Calibre library at $dir — set histmersion.plugins.calibre.library-path to the folder that " +
+          "holds metadata.db (a server in a container needs that folder mounted)")
       )
     else
       Try { files.readPrefix(db, 16); () }.toEither.left

@@ -27,17 +27,17 @@ object YearFmt:
 
   def apply(v: com.histmersion.api.YearFmt.ApplyV): com.histmersion.api.YearFmt.ApplyResult =
     if v < 0 then s"${-v} BCE"
-    else if v == 0 then "1 BCE" // no year zero in historical reckoning
-    else s"$v CE"
+    else if v == 0 then _root_.com.histmersion.api.YearFmt.ApplyResult("1 BCE") // no year zero in historical reckoning
+    else _root_.com.histmersion.api.YearFmt.ApplyResult(s"$v CE")
 
   def apply(v: Option[com.histmersion.api.YearFmt.ApplyV]): com.histmersion.api.YearFmt.ApplyResult = v.fold("?")(apply)
 
   def period(start: Option[com.histmersion.api.YearFmt.PeriodStart], end: Option[com.histmersion.api.YearFmt.PeriodEnd]): com.histmersion.api.YearFmt.PeriodResult =
     (start, end) match
       case (Some(a), Some(b)) => if a == b then apply(a) else s"${apply(a)}–${apply(b)}"
-      case _                  => ""
+      case _                  => _root_.com.histmersion.api.YearFmt.PeriodResult("")
 
-  def openPeriod(start: Option[com.histmersion.api.YearFmt.OpenPeriodStart], end: Option[com.histmersion.api.YearFmt.OpenPeriodEnd], none: com.histmersion.api.YearFmt.OpenPeriodNone = "undated"): com.histmersion.api.YearFmt.OpenPeriodResult =
+  def openPeriod(start: Option[com.histmersion.api.YearFmt.OpenPeriodStart], end: Option[com.histmersion.api.YearFmt.OpenPeriodEnd], none: com.histmersion.api.YearFmt.OpenPeriodNone = _root_.com.histmersion.api.YearFmt.OpenPeriodNone("undated")): com.histmersion.api.YearFmt.OpenPeriodResult =
     (start, end) match
       case (Some(_), Some(_)) => period(start, end)
       case (Some(a), None)    => s"from ${apply(a)}"
@@ -54,4 +54,4 @@ object YearFmt:
       ts.endFrom.map(y => s"until ${apply(y)}"),
       ts.notAfter.map(y => s"not after ${apply(y)}")
     ).flatten
-    if parts.isEmpty then "undated" else parts.mkString(", ")
+    if parts.isEmpty then _root_.com.histmersion.api.YearFmt.SpanLongResult("undated") else _root_.com.histmersion.api.YearFmt.SpanLongResult(parts.mkString(", "))

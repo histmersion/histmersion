@@ -12,17 +12,17 @@ object Activity:
   object KeyOfId extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
   enum EntryKind(val wire: EntryKind.Wire):
-    case Run extends EntryKind("run")
-    case Job extends EntryKind("job")
-    case Log extends EntryKind("log")
-    case Decision extends EntryKind("decision")
+    case Run extends EntryKind(_root_.com.histmersion.api.automation.Activity.EntryKind.Wire("run"))
+    case Job extends EntryKind(_root_.com.histmersion.api.automation.Activity.EntryKind.Wire("job"))
+    case Log extends EntryKind(_root_.com.histmersion.api.automation.Activity.EntryKind.Wire("log"))
+    case Decision extends EntryKind(_root_.com.histmersion.api.automation.Activity.EntryKind.Wire("decision"))
 
     /** The entry's kind as the activity list names it. */
     def wording: com.histmersion.api.automation.Activity.EntryKind.WordingResult = this match
-      case Run      => "Agent work"
-      case Job      => "Background job"
-      case Log      => "Note"
-      case Decision => "You decided"
+      case Run      => _root_.com.histmersion.api.automation.Activity.EntryKind.WordingResult("Agent work")
+      case Job      => _root_.com.histmersion.api.automation.Activity.EntryKind.WordingResult("Background job")
+      case Log      => _root_.com.histmersion.api.automation.Activity.EntryKind.WordingResult("Note")
+      case Decision => _root_.com.histmersion.api.automation.Activity.EntryKind.WordingResult("You decided")
 
   object EntryKind:
     type Wire = Wire.T
@@ -36,20 +36,20 @@ object Activity:
     def parse(s: com.histmersion.api.automation.Activity.EntryKind.ParseS): Option[EntryKind] = values.find(_.wire == s.trim.toLowerCase)
 
   enum Writer(val wire: Writer.Wire):
-    case Agent extends Writer("agent")
-    case Job extends Writer("job")
+    case Agent extends Writer(_root_.com.histmersion.api.automation.Activity.Writer.Wire("agent"))
+    case Job extends Writer(_root_.com.histmersion.api.automation.Activity.Writer.Wire("job"))
 
   object Writer:
     type Wire = Wire.T
     object Wire extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
   enum Show(val wire: Show.Wire, val label: Show.Label):
-    case Everything extends Show("all", "Everything")
-    case Running extends Show("running", "Running now")
-    case Agents extends Show("agents", "Agent work")
-    case Jobs extends Show("jobs", "Background jobs")
-    case Yours extends Show("yours", "Your actions")
-    case Problems extends Show("problems", "Problems")
+    case Everything extends Show(_root_.com.histmersion.api.automation.Activity.Show.Wire("all"), _root_.com.histmersion.api.automation.Activity.Show.Label("Everything"))
+    case Running extends Show(_root_.com.histmersion.api.automation.Activity.Show.Wire("running"), _root_.com.histmersion.api.automation.Activity.Show.Label("Running now"))
+    case Agents extends Show(_root_.com.histmersion.api.automation.Activity.Show.Wire("agents"), _root_.com.histmersion.api.automation.Activity.Show.Label("Agent work"))
+    case Jobs extends Show(_root_.com.histmersion.api.automation.Activity.Show.Wire("jobs"), _root_.com.histmersion.api.automation.Activity.Show.Label("Background jobs"))
+    case Yours extends Show(_root_.com.histmersion.api.automation.Activity.Show.Wire("yours"), _root_.com.histmersion.api.automation.Activity.Show.Label("Your actions"))
+    case Problems extends Show(_root_.com.histmersion.api.automation.Activity.Show.Wire("problems"), _root_.com.histmersion.api.automation.Activity.Show.Label("Problems"))
 
   object Show:
     type Wire = Wire.T
@@ -68,9 +68,9 @@ object Activity:
       key: Entry.Key,
       kind: Entry.Kind,
       at: Entry.At,
-      state: Entry.State = "",
-      what: Entry.What = "",
-      text: Entry.Text = "",
+      state: Entry.State = _root_.com.histmersion.api.automation.Activity.Entry.State(""),
+      what: Entry.What = _root_.com.histmersion.api.automation.Activity.Entry.What(""),
+      text: Entry.Text = _root_.com.histmersion.api.automation.Activity.Entry.Text(""),
       error: Option[Entry.Error] = None,
       endedAt: Option[Entry.EndedAt] = None,
       goal: Option[com.histmersion.api.automation.Goal.Slug] = None,
@@ -122,7 +122,7 @@ object Activity:
     object TargetKind extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
 
-  final case class Counts(running: Counts.Running = 0, problemsWeek: Counts.ProblemsWeek = 0) derives KindlingsCodecAsObject, KindlingsSchema, com.histmersion.api.json.Schema
+  final case class Counts(running: Counts.Running = _root_.com.histmersion.api.automation.Activity.Counts.Running(0), problemsWeek: Counts.ProblemsWeek = _root_.com.histmersion.api.automation.Activity.Counts.ProblemsWeek(0)) derives KindlingsCodecAsObject, KindlingsSchema, com.histmersion.api.json.Schema
 
   object Counts:
     type Running = Running.T
@@ -143,4 +143,4 @@ object Activity:
   val MaxLimit = 200
   val DefaultLimit = 30
 
-  def keyOf(kind: EntryKind, id: com.histmersion.api.automation.Activity.KeyOfId): com.histmersion.api.automation.Activity.KeyOfResult = s"${kind.wire}:$id"
+  def keyOf(kind: EntryKind, id: com.histmersion.api.automation.Activity.KeyOfId): com.histmersion.api.automation.Activity.KeyOfResult = _root_.com.histmersion.api.automation.Activity.KeyOfResult(s"${kind.wire}:$id")

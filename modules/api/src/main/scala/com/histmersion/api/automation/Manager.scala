@@ -7,10 +7,10 @@ object Manager:
     * research area: an acquisition sweep and a currency check on its cron).
     */
   enum Kind(val wire: Kind.Wire):
-    case Review extends Kind("review")
-    case Seed extends Kind("seed")
-    case Watch extends Kind("watch")
-    case Enrich extends Kind("enrich")
+    case Review extends Kind(_root_.com.histmersion.api.automation.Manager.Kind.Wire("review"))
+    case Seed extends Kind(_root_.com.histmersion.api.automation.Manager.Kind.Wire("seed"))
+    case Watch extends Kind(_root_.com.histmersion.api.automation.Manager.Kind.Wire("watch"))
+    case Enrich extends Kind(_root_.com.histmersion.api.automation.Manager.Kind.Wire("enrich"))
 
   object Kind:
     type Wire = Wire.T
@@ -25,9 +25,9 @@ object Manager:
     * cancelled its in-flight runs and items.
     */
   enum State(val wire: State.Wire):
-    case Active extends State("active")
-    case Paused extends State("paused")
-    case Stopped extends State("stopped")
+    case Active extends State(_root_.com.histmersion.api.automation.Manager.State.Wire("active"))
+    case Paused extends State(_root_.com.histmersion.api.automation.Manager.State.Wire("paused"))
+    case Stopped extends State(_root_.com.histmersion.api.automation.Manager.State.Wire("stopped"))
 
   object State:
     type Wire = Wire.T

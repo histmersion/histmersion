@@ -51,5 +51,5 @@ object HtmlAtoms:
 
   def confidenceBadge(c: Confidence): com.histmersion.api.HtmlAtoms.ConfidenceBadgeResult =
     val wire = c.toString.toLowerCase
-    s"""<span class="conf-badge conf-$wire" title="${ConfidenceStyle.label(c)}">""" +
-      s"""${ConfidenceStyle.icon(c)}<span class="conf-text">$wire</span></span>"""
+    _root_.com.histmersion.api.HtmlAtoms.ConfidenceBadgeResult(s"""<span class="conf-badge conf-$wire" title="${ConfidenceStyle.label(c)}">""" +
+      s"""${ConfidenceStyle.icon(c)}<span class="conf-text">$wire</span></span>""")

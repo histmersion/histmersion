@@ -34,7 +34,7 @@ object Bundle:
     def wire: com.histmersion.api.exchange.Bundle.Kind.WireResult = Kind.wireOf(this)
 
     /** The NDJSON file holding this kind's lines. */
-    def file: com.histmersion.api.exchange.Bundle.Kind.FileResult = s"entities/${Kind.fileStem(this)}.ndjson"
+    def file: com.histmersion.api.exchange.Bundle.Kind.FileResult = _root_.com.histmersion.api.exchange.Bundle.Kind.FileResult(s"entities/${Kind.fileStem(this)}.ndjson")
 
     /** The letter a merge issue about this kind of record starts its id with (`P-1a2b3c4d`). */
     def issueLetter: com.histmersion.api.exchange.Bundle.Kind.IssueLetterResult = Kind.letterOf(this)
@@ -56,46 +56,46 @@ object Bundle:
     object FromWireS extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
     def wireOf(k: Kind): com.histmersion.api.exchange.Bundle.Kind.WireOfResult = k match
-      case Source         => "source"
-      case Finding        => "finding"
-      case Article        => "article"
-      case ArticleVersion => "article-version"
-      case Asset          => "asset"
-      case AssetLink      => "asset-link"
-      case Attestation    => "attestation"
-      case Event          => "event"
-      case Goal           => "goal"
-      case QueueItem      => "queue-item"
-      case Place          => "place"
-      case Period         => "period"
+      case Source         => _root_.com.histmersion.api.exchange.Bundle.Kind.WireOfResult("source")
+      case Finding        => _root_.com.histmersion.api.exchange.Bundle.Kind.WireOfResult("finding")
+      case Article        => _root_.com.histmersion.api.exchange.Bundle.Kind.WireOfResult("article")
+      case ArticleVersion => _root_.com.histmersion.api.exchange.Bundle.Kind.WireOfResult("article-version")
+      case Asset          => _root_.com.histmersion.api.exchange.Bundle.Kind.WireOfResult("asset")
+      case AssetLink      => _root_.com.histmersion.api.exchange.Bundle.Kind.WireOfResult("asset-link")
+      case Attestation    => _root_.com.histmersion.api.exchange.Bundle.Kind.WireOfResult("attestation")
+      case Event          => _root_.com.histmersion.api.exchange.Bundle.Kind.WireOfResult("event")
+      case Goal           => _root_.com.histmersion.api.exchange.Bundle.Kind.WireOfResult("goal")
+      case QueueItem      => _root_.com.histmersion.api.exchange.Bundle.Kind.WireOfResult("queue-item")
+      case Place          => _root_.com.histmersion.api.exchange.Bundle.Kind.WireOfResult("place")
+      case Period         => _root_.com.histmersion.api.exchange.Bundle.Kind.WireOfResult("period")
 
     private def fileStem(k: Kind): com.histmersion.api.exchange.Bundle.Kind.FileStemResult = k match
-      case Source         => "sources"
-      case Finding        => "findings"
-      case Article        => "articles"
-      case ArticleVersion => "article-versions"
-      case Asset          => "assets"
-      case AssetLink      => "asset-links"
-      case Attestation    => "attestations"
-      case Event          => "events"
-      case Goal           => "goals"
-      case QueueItem      => "queue"
-      case Place          => "places"
-      case Period         => "periods"
+      case Source         => _root_.com.histmersion.api.exchange.Bundle.Kind.FileStemResult("sources")
+      case Finding        => _root_.com.histmersion.api.exchange.Bundle.Kind.FileStemResult("findings")
+      case Article        => _root_.com.histmersion.api.exchange.Bundle.Kind.FileStemResult("articles")
+      case ArticleVersion => _root_.com.histmersion.api.exchange.Bundle.Kind.FileStemResult("article-versions")
+      case Asset          => _root_.com.histmersion.api.exchange.Bundle.Kind.FileStemResult("assets")
+      case AssetLink      => _root_.com.histmersion.api.exchange.Bundle.Kind.FileStemResult("asset-links")
+      case Attestation    => _root_.com.histmersion.api.exchange.Bundle.Kind.FileStemResult("attestations")
+      case Event          => _root_.com.histmersion.api.exchange.Bundle.Kind.FileStemResult("events")
+      case Goal           => _root_.com.histmersion.api.exchange.Bundle.Kind.FileStemResult("goals")
+      case QueueItem      => _root_.com.histmersion.api.exchange.Bundle.Kind.FileStemResult("queue")
+      case Place          => _root_.com.histmersion.api.exchange.Bundle.Kind.FileStemResult("places")
+      case Period         => _root_.com.histmersion.api.exchange.Bundle.Kind.FileStemResult("periods")
 
     private def letterOf(k: Kind): com.histmersion.api.exchange.Bundle.Kind.LetterOfResult = k match
-      case Source         => "S"
-      case Finding        => "F"
-      case Article        => "A"
-      case ArticleVersion => "V"
-      case Asset          => "X"
-      case AssetLink      => "K"
-      case Attestation    => "T"
-      case Event          => "E"
-      case Goal           => "G"
-      case QueueItem      => "Q"
-      case Place          => "P"
-      case Period         => "N"
+      case Source         => _root_.com.histmersion.api.exchange.Bundle.Kind.LetterOfResult("S")
+      case Finding        => _root_.com.histmersion.api.exchange.Bundle.Kind.LetterOfResult("F")
+      case Article        => _root_.com.histmersion.api.exchange.Bundle.Kind.LetterOfResult("A")
+      case ArticleVersion => _root_.com.histmersion.api.exchange.Bundle.Kind.LetterOfResult("V")
+      case Asset          => _root_.com.histmersion.api.exchange.Bundle.Kind.LetterOfResult("X")
+      case AssetLink      => _root_.com.histmersion.api.exchange.Bundle.Kind.LetterOfResult("K")
+      case Attestation    => _root_.com.histmersion.api.exchange.Bundle.Kind.LetterOfResult("T")
+      case Event          => _root_.com.histmersion.api.exchange.Bundle.Kind.LetterOfResult("E")
+      case Goal           => _root_.com.histmersion.api.exchange.Bundle.Kind.LetterOfResult("G")
+      case QueueItem      => _root_.com.histmersion.api.exchange.Bundle.Kind.LetterOfResult("Q")
+      case Place          => _root_.com.histmersion.api.exchange.Bundle.Kind.LetterOfResult("P")
+      case Period         => _root_.com.histmersion.api.exchange.Bundle.Kind.LetterOfResult("N")
 
     def fromWire(s: com.histmersion.api.exchange.Bundle.Kind.FromWireS): Option[Kind] = values.find(_.wire == s.trim.toLowerCase)
 
@@ -142,7 +142,7 @@ object Bundle:
       regions: List[Article.Regions],
       period: Option[Range],
       updatedAt: Article.UpdatedAt,
-      rev: Article.Rev = ""
+      rev: Article.Rev = _root_.com.histmersion.api.exchange.Bundle.Article.Rev("")
   ) derives KindlingsCodecAsObject
 
   object Article:
@@ -181,7 +181,7 @@ object Bundle:
       summary: Option[ArticleVersion.Summary],
       versionOf: ArticleVersion.VersionOf,
       updatedAt: ArticleVersion.UpdatedAt,
-      rev: ArticleVersion.Rev = ""
+      rev: ArticleVersion.Rev = _root_.com.histmersion.api.exchange.Bundle.ArticleVersion.Rev("")
   ) derives KindlingsCodecAsObject
 
   object ArticleVersion:
@@ -234,7 +234,7 @@ object Bundle:
       geom: Option[Asset.Geom],
       period: Option[Range],
       updatedAt: Asset.UpdatedAt,
-      rev: Asset.Rev = ""
+      rev: Asset.Rev = _root_.com.histmersion.api.exchange.Bundle.Asset.Rev("")
   ) derives KindlingsCodecAsObject
 
   object Asset:
@@ -270,7 +270,7 @@ object Bundle:
       xywh: Option[AssetLink.Xywh],
       notes: Option[AssetLink.Notes],
       updatedAt: AssetLink.UpdatedAt,
-      rev: AssetLink.Rev = ""
+      rev: AssetLink.Rev = _root_.com.histmersion.api.exchange.Bundle.AssetLink.Rev("")
   ) derives KindlingsCodecAsObject
 
   object AssetLink:
@@ -309,7 +309,7 @@ object Bundle:
       note: Option[Attestation.Note],
       createdAt: Attestation.CreatedAt,
       updatedAt: Attestation.UpdatedAt,
-      rev: Attestation.Rev = ""
+      rev: Attestation.Rev = _root_.com.histmersion.api.exchange.Bundle.Attestation.Rev("")
   ) derives KindlingsCodecAsObject
 
   object Attestation:
@@ -419,7 +419,7 @@ object Bundle:
       edges: List[EventEdge],
       participants: List[EventParticipant],
       updatedAt: Event.UpdatedAt,
-      rev: Event.Rev = "",
+      rev: Event.Rev = _root_.com.histmersion.api.exchange.Bundle.Event.Rev(""),
       /** Absent from the JSON when empty, so the rev of an event that states none stays what older bundles computed. */
       scale: Option[Event.Scale] = None,
       /** Each absent from the JSON when empty, so the rev of an event compiled from sources stays what older bundles
@@ -631,9 +631,9 @@ object Bundle:
 
     /** Timestamps share one fixed-width UTC format, so text order is time order. */
     def newer(here: Option[com.histmersion.api.exchange.Bundle.EventSets.NewerHere], there: Option[com.histmersion.api.exchange.Bundle.EventSets.NewerThere]): com.histmersion.api.exchange.Bundle.EventSets.NewerResult = (here, there) match
-      case (None, Some(_))    => true
+      case (None, Some(_))    => _root_.com.histmersion.api.exchange.Bundle.EventSets.NewerResult(true)
       case (Some(h), Some(t)) => t > h
-      case _                  => false
+      case _                  => _root_.com.histmersion.api.exchange.Bundle.EventSets.NewerResult(false)
 
   final case class FileInfo(path: FileInfo.Path, lines: FileInfo.Lines, bytes: com.histmersion.api.ByteCount, sha256: com.histmersion.api.Sha256)
       derives KindlingsCodecAsObject,
@@ -703,7 +703,7 @@ object Bundle:
       confidence: Option[Confidence],
       significance: Option[Finding.Significance],
       updatedAt: Finding.UpdatedAt,
-      rev: Finding.Rev = ""
+      rev: Finding.Rev = _root_.com.histmersion.api.exchange.Bundle.Finding.Rev("")
   ) derives KindlingsCodecAsObject
 
   object Finding:
@@ -737,7 +737,7 @@ object Bundle:
       parentUid: Option[UUID],
       createdAt: Goal.CreatedAt,
       updatedAt: Goal.UpdatedAt,
-      rev: Goal.Rev = "",
+      rev: Goal.Rev = _root_.com.histmersion.api.exchange.Bundle.Goal.Rev(""),
       /** The four fields below are absent when empty, so a line written before they existed keeps its `rev`. */
       plan: Option[Json] = None,
       planApprovedAt: Option[Goal.PlanApprovedAt] = None,
@@ -855,14 +855,14 @@ object Bundle:
 
   final case class KindCounts(
       kind: com.histmersion.api.exchange.Bundle.Kind,
-      inserted: KindCounts.Inserted = 0,
-      updated: KindCounts.Updated = 0,
-      unchanged: KindCounts.Unchanged = 0,
-      keptLocal: KindCounts.KeptLocal = 0,
-      conflicts: KindCounts.Conflicts = 0,
-      deleted: KindCounts.Deleted = 0,
-      skippedDeleted: KindCounts.SkippedDeleted = 0,
-      held: KindCounts.Held = 0
+      inserted: KindCounts.Inserted = _root_.com.histmersion.api.exchange.Bundle.KindCounts.Inserted(0),
+      updated: KindCounts.Updated = _root_.com.histmersion.api.exchange.Bundle.KindCounts.Updated(0),
+      unchanged: KindCounts.Unchanged = _root_.com.histmersion.api.exchange.Bundle.KindCounts.Unchanged(0),
+      keptLocal: KindCounts.KeptLocal = _root_.com.histmersion.api.exchange.Bundle.KindCounts.KeptLocal(0),
+      conflicts: KindCounts.Conflicts = _root_.com.histmersion.api.exchange.Bundle.KindCounts.Conflicts(0),
+      deleted: KindCounts.Deleted = _root_.com.histmersion.api.exchange.Bundle.KindCounts.Deleted(0),
+      skippedDeleted: KindCounts.SkippedDeleted = _root_.com.histmersion.api.exchange.Bundle.KindCounts.SkippedDeleted(0),
+      held: KindCounts.Held = _root_.com.histmersion.api.exchange.Bundle.KindCounts.Held(0)
   ) derives KindlingsCodecAsObject,
         KindlingsSchema, com.histmersion.api.json.Schema:
     def changed: com.histmersion.api.exchange.Bundle.KindCounts.ChangedResult = inserted + updated + deleted
@@ -926,7 +926,7 @@ object Bundle:
       region: Option[Period.Region],
       parentId: Option[Period.ParentId],
       updatedAt: Period.UpdatedAt,
-      rev: Period.Rev = ""
+      rev: Period.Rev = _root_.com.histmersion.api.exchange.Bundle.Period.Rev("")
   ) derives KindlingsCodecAsObject
 
   object Period:
@@ -960,7 +960,7 @@ object Bundle:
       links: List[PlaceLink],
       types: List[PlaceType],
       updatedAt: Place.UpdatedAt,
-      rev: Place.Rev = ""
+      rev: Place.Rev = _root_.com.histmersion.api.exchange.Bundle.Place.Rev("")
   ) derives KindlingsCodecAsObject
 
   object Place:
@@ -1031,7 +1031,7 @@ object Bundle:
       createdAt: QueueItem.CreatedAt,
       doneAt: Option[QueueItem.DoneAt],
       updatedAt: QueueItem.UpdatedAt,
-      rev: QueueItem.Rev = ""
+      rev: QueueItem.Rev = _root_.com.histmersion.api.exchange.Bundle.QueueItem.Rev("")
   ) derives KindlingsCodecAsObject
 
   object QueueItem:
@@ -1109,7 +1109,7 @@ object Bundle:
       originalSha256: Option[Source.OriginalSha256],
       originalExt: Option[Source.OriginalExt],
       updatedAt: Source.UpdatedAt,
-      rev: Source.Rev = "",
+      rev: Source.Rev = _root_.com.histmersion.api.exchange.Bundle.Source.Rev(""),
       /** Absent when there are none, so a line written before the field existed keeps its rev. */
       isbns: Option[List[Source.Isbns]] = None
   ) derives KindlingsCodecAsObject

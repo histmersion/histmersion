@@ -26,9 +26,9 @@ final class IronNewtypePairs(using val quotes: Quotes):
 
   final case class IronNewtype(companion: Symbol, base: TypeRepr, constraint: TypeRepr):
     def name: io.scalaland.chimney.histmersion.IronNewtypePairs.IronNewtype.NameResult = companion.name
-    def fullName: io.scalaland.chimney.histmersion.IronNewtypePairs.IronNewtype.FullNameResult = withoutPackageObjects(companion.fullName)
+    def fullName: io.scalaland.chimney.histmersion.IronNewtypePairs.IronNewtype.FullNameResult = withoutPackageObjects(_root_.io.scalaland.chimney.histmersion.IronNewtypePairs.WithoutPackageObjectsName(companion.fullName))
     def refinedTypeShown: io.scalaland.chimney.histmersion.IronNewtypePairs.IronNewtype.RefinedTypeShownResult =
-      s"${withoutPackageObjects(base.show)} :| ${withoutPackageObjects(constraint.show)}"
+      s"${withoutPackageObjects(_root_.io.scalaland.chimney.histmersion.IronNewtypePairs.WithoutPackageObjectsName(base.show))} :| ${withoutPackageObjects(_root_.io.scalaland.chimney.histmersion.IronNewtypePairs.WithoutPackageObjectsName(constraint.show))}"
 
   object IronNewtype:
     type NameResult = NameResult.T
@@ -79,7 +79,7 @@ final class IronNewtypePairs(using val quotes: Quotes):
       case _: ImplicitSearchFailure => None
 
   /** A newtype that judges nothing (`Pure`): what a client layer's copy is. */
-  def judgesNothing(n: IronNewtype): io.scalaland.chimney.histmersion.IronNewtypePairs.JudgesNothingResult = n.constraint =:= TypeRepr.of[Pure]
+  def judgesNothing(n: IronNewtype): io.scalaland.chimney.histmersion.IronNewtypePairs.JudgesNothingResult = _root_.io.scalaland.chimney.histmersion.IronNewtypePairs.JudgesNothingResult(n.constraint =:= TypeRepr.of[Pure])
 
   private def baseValue(from: IronNewtype, source: Expr[?]): Term =
     Select.unique(Ref(from.companion), "value").appliedTo(source.asTerm)

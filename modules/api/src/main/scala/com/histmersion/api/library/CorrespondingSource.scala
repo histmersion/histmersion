@@ -16,4 +16,4 @@ object CorrespondingSource:
 
   def url(repository: com.histmersion.api.library.CorrespondingSource.UrlRepository, commit: Option[com.histmersion.api.library.CorrespondingSource.UrlCommit]): com.histmersion.api.library.CorrespondingSource.UrlResult =
     val repo = repository.trim.stripSuffix("/").stripSuffix(".git")
-    commit.map(_.trim).filter(_.nonEmpty).fold(repo)(c => s"$repo/tree/$c")
+    commit.map(_.trim).filter(_.nonEmpty).fold(repo)(c => _root_.com.histmersion.api.library.CorrespondingSource.UrlResult(s"$repo/tree/$c"))

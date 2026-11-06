@@ -49,9 +49,9 @@ object MergeApplyJob:
   val JobKind = com.histmersion.api.exchange.ExchangeJobKinds.MergeApply.kind.value
 
   val InterruptedText: com.histmersion.api.exchange.MergeApplyJob.InterruptedText =
-    "the server stopped while this merge apply ran — its transaction was committed or rolled back as a whole, " +
+    _root_.com.histmersion.api.exchange.MergeApplyJob.InterruptedText("the server stopped while this merge apply ran — its transaction was committed or rolled back as a whole, " +
       "never half applied; `histmersion merge list` shows whether it was applied, and planning the bundle again " +
-      "shows what is left"
+      "shows what is left")
 
   def of(
       id: com.histmersion.api.exchange.MergeApplyJob.OfId,

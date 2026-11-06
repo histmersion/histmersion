@@ -98,7 +98,7 @@ object Gazetteer:
   object TsvCellsLine extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
   def sourceKey(kind: com.histmersion.api.catalogue.Gazetteer.Kind, dataset: Option[com.histmersion.api.catalogue.Gazetteer.SourceKeyDataset] = None): com.histmersion.api.catalogue.Gazetteer.SourceKeyResult = kind match
-    case com.histmersion.api.catalogue.Gazetteer.Kind.Lpf => s"lpf:${dataset.getOrElse("")}"
+    case com.histmersion.api.catalogue.Gazetteer.Kind.Lpf => _root_.com.histmersion.api.catalogue.Gazetteer.SourceKeyResult(s"lpf:${dataset.getOrElse("")}")
     case k                                                => k.wire
 
   def datasetSlug(fileName: com.histmersion.api.catalogue.Gazetteer.DatasetSlugFileName): com.histmersion.api.catalogue.Gazetteer.DatasetSlugResult =
@@ -111,11 +111,11 @@ object Gazetteer:
     s.trim.toLowerCase(java.util.Locale.ROOT).replaceAll("[^a-z0-9]+", "_").replaceAll("^_+|_+$", "")
 
   def rank(m: Place.Match): com.histmersion.api.catalogue.Gazetteer.RankResult = m.importSource.flatMap(com.histmersion.api.catalogue.Gazetteer.Kind.ofKey) match
-    case None                                                        => if m.importSource.isEmpty then 0 else 5
-    case Some(com.histmersion.api.catalogue.Gazetteer.Kind.Lpf)      => 1
-    case Some(com.histmersion.api.catalogue.Gazetteer.Kind.Wikidata) => 2
-    case Some(com.histmersion.api.catalogue.Gazetteer.Kind.Tgn)      => 3
-    case Some(com.histmersion.api.catalogue.Gazetteer.Kind.Geonames) => 4
+    case None                                                        => if m.importSource.isEmpty then _root_.com.histmersion.api.catalogue.Gazetteer.RankResult(0) else _root_.com.histmersion.api.catalogue.Gazetteer.RankResult(5)
+    case Some(com.histmersion.api.catalogue.Gazetteer.Kind.Lpf)      => _root_.com.histmersion.api.catalogue.Gazetteer.RankResult(1)
+    case Some(com.histmersion.api.catalogue.Gazetteer.Kind.Wikidata) => _root_.com.histmersion.api.catalogue.Gazetteer.RankResult(2)
+    case Some(com.histmersion.api.catalogue.Gazetteer.Kind.Tgn)      => _root_.com.histmersion.api.catalogue.Gazetteer.RankResult(3)
+    case Some(com.histmersion.api.catalogue.Gazetteer.Kind.Geonames) => _root_.com.histmersion.api.catalogue.Gazetteer.RankResult(4)
 
   val ImportedSources: List[com.histmersion.api.catalogue.Gazetteer.ImportedSources] =
     List(
@@ -134,7 +134,7 @@ object Gazetteer:
       .headOption
       .map(_._1.placeId)
 
-  val DefaultOpenStartWindowYears: com.histmersion.api.catalogue.Gazetteer.DefaultOpenStartWindowYears = 300
+  val DefaultOpenStartWindowYears: com.histmersion.api.catalogue.Gazetteer.DefaultOpenStartWindowYears = _root_.com.histmersion.api.catalogue.Gazetteer.DefaultOpenStartWindowYears(300)
 
   /** GeoNames, Wikidata and TGN leave most items undated, and their silence means unknown: an item with no inception
     * was not there since forever.
@@ -146,20 +146,20 @@ object Gazetteer:
 
   def validity(sourceKey: com.histmersion.api.catalogue.Gazetteer.ValiditySourceKey, span: Span, windowYears: com.histmersion.api.catalogue.Gazetteer.ValidityWindowYears): Validity = span match
     case Span(None, Some(end)) if unknownWhenSilent(sourceKey) =>
-      Validity(Some(end - math.max(0, windowYears)), Some(end), startUnknown = true)
-    case Span(from, to) => Validity(from, to, startUnknown = false)
+      Validity(Some(end - math.max(0, windowYears)), Some(end), startUnknown = _root_.com.histmersion.api.Validity.StartUnknown(true))
+    case Span(from, to) => Validity(from, to, startUnknown = _root_.com.histmersion.api.Validity.StartUnknown(false))
 
   val DefaultPointAreaKinds: List[com.histmersion.api.catalogue.Gazetteer.DefaultPointAreaKinds] = List(
-    com.histmersion.api.catalogue.Place.Kind.Region,
-    com.histmersion.api.catalogue.Place.Kind.Polity,
-    com.histmersion.api.catalogue.Place.Kind.People
+    _root_.com.histmersion.api.catalogue.Gazetteer.DefaultPointAreaKinds(com.histmersion.api.catalogue.Place.Kind.Region),
+    _root_.com.histmersion.api.catalogue.Gazetteer.DefaultPointAreaKinds(com.histmersion.api.catalogue.Place.Kind.Polity),
+    _root_.com.histmersion.api.catalogue.Gazetteer.DefaultPointAreaKinds(com.histmersion.api.catalogue.Place.Kind.People)
   )
 
   /** GeoNames, Wikidata and TGN give every item a coordinate and no boundary. */
   val PointAreaSources: List[com.histmersion.api.catalogue.Gazetteer.PointAreaSources] = ImportedSources
 
   def pointOnly(g: Option[GazGeometry]): com.histmersion.api.catalogue.Gazetteer.PointOnlyResult = g match
-    case None                     => true
+    case None                     => _root_.com.histmersion.api.catalogue.Gazetteer.PointOnlyResult(true)
     case Some(GazGeometry.Wkt(t)) =>
       val u = t.trim.toUpperCase(java.util.Locale.ROOT).replaceFirst("^SRID=\\d+;", "")
       u.startsWith("POINT") || u.startsWith("MULTIPOINT")
@@ -201,7 +201,7 @@ object Gazetteer:
   def span(j: Json): Span = Lpf.parseWhen(j).getOrElse(Span.always)
 
   private def str(o: JsonObject, keys: String*): Option[com.histmersion.api.catalogue.Gazetteer.StrResult] =
-    keys.iterator.flatMap(k => o(k).flatMap(_.asString)).map(_.trim).find(_.nonEmpty)
+    (keys.iterator.flatMap(k => o(k).flatMap(_.asString)).map(_.trim).find(_.nonEmpty)).map(refactorValue9 => _root_.com.histmersion.api.catalogue.Gazetteer.StrResult(refactorValue9))
 
   private def citationOf(n: JsonObject): Option[com.histmersion.api.catalogue.Gazetteer.CitationOfResult] =
     val cites = n("citations").flatMap(_.asArray).map(_.toList).getOrElse(Nil).flatMap { c =>
@@ -215,7 +215,7 @@ object Gazetteer:
         )
       )
     }
-    Option.when(cites.nonEmpty)(cites.distinct.mkString("; "))
+    Option.when(cites.nonEmpty)(_root_.com.histmersion.api.catalogue.Gazetteer.CitationOfResult(cites.distinct.mkString("; ")))
 
   private def readNames(f: JsonObject): List[GazName] =
     f("names").flatMap(_.asArray).map(_.toList).getOrElse(Nil).flatMap { j =>
@@ -323,9 +323,9 @@ object Gazetteer:
     val row =
       header.map(_.trim.toLowerCase(java.util.Locale.ROOT)).zip(cells.map(_.trim) ++ List.fill(header.size)("")).toMap
     def get(k: com.histmersion.api.catalogue.Gazetteer.FromTsvRowGetK): Option[com.histmersion.api.catalogue.Gazetteer.FromTsvRowGetResult] = row.get(k).filter(_.nonEmpty)
-    (get("id"), get("title")) match
-      case (None, _)                => Left(s"line $line: no id")
-      case (_, None)                => Left(s"line $line: no title")
+    (get(_root_.com.histmersion.api.catalogue.Gazetteer.FromTsvRowGetK("id")), get(_root_.com.histmersion.api.catalogue.Gazetteer.FromTsvRowGetK("title"))) match
+      case (None, _)                => Left(_root_.com.histmersion.api.catalogue.Gazetteer.FromTsvRowResultPart1(s"line $line: no id"))
+      case (_, None)                => Left(_root_.com.histmersion.api.catalogue.Gazetteer.FromTsvRowResultPart1(s"line $line: no title"))
       case (Some(ref), Some(title)) =>
         val own = ExternalId.parse(ref)
         val variants = get("variants").toList.flatMap(_.split(";").toList).map(_.trim).filter(_.nonEmpty).map { v =>
@@ -367,7 +367,7 @@ object Gazetteer:
             names = mergeNames(GazName(title) :: variants),
             links = links,
             source = get("title_source").orElse(defaultSource),
-            properties = Option.when(props.nonEmpty)(Json.fromJsonObject(props).noSpaces),
+            properties = Option.when(props.nonEmpty)(_root_.com.histmersion.api.catalogue.GazRecord.Properties(Json.fromJsonObject(props).noSpaces)),
             descriptions = get("description").map(GazDescription(_)).toList
           )
         )
@@ -419,7 +419,7 @@ object Gazetteer:
   enum Kind:
     case Geonames, Wikidata, Lpf, Tgn
 
-    def wire: com.histmersion.api.catalogue.Gazetteer.Kind.WireResult = toString.toLowerCase(java.util.Locale.ROOT)
+    def wire: com.histmersion.api.catalogue.Gazetteer.Kind.WireResult = _root_.com.histmersion.api.catalogue.Gazetteer.Kind.WireResult(toString.toLowerCase(java.util.Locale.ROOT))
 
   object Kind:
     type WireResult = WireResult.T
@@ -446,22 +446,22 @@ object Gazetteer:
   final case class LoadCounts(
       source: LoadCounts.Source,
       version: LoadCounts.Version,
-      records: LoadCounts.Records = 0,
-      created: LoadCounts.Created = 0,
-      joined: LoadCounts.Joined = 0,
-      placesChanged: LoadCounts.PlacesChanged = 0,
-      namesAdded: LoadCounts.NamesAdded = 0,
-      namesRemoved: LoadCounts.NamesRemoved = 0,
-      namesChanged: LoadCounts.NamesChanged = 0,
-      linksAdded: LoadCounts.LinksAdded = 0,
-      linksRemoved: LoadCounts.LinksRemoved = 0,
-      placesRemoved: LoadCounts.PlacesRemoved = 0,
+      records: LoadCounts.Records = _root_.com.histmersion.api.catalogue.Gazetteer.LoadCounts.Records((0).toLong),
+      created: LoadCounts.Created = _root_.com.histmersion.api.catalogue.Gazetteer.LoadCounts.Created((0).toLong),
+      joined: LoadCounts.Joined = _root_.com.histmersion.api.catalogue.Gazetteer.LoadCounts.Joined((0).toLong),
+      placesChanged: LoadCounts.PlacesChanged = _root_.com.histmersion.api.catalogue.Gazetteer.LoadCounts.PlacesChanged((0).toLong),
+      namesAdded: LoadCounts.NamesAdded = _root_.com.histmersion.api.catalogue.Gazetteer.LoadCounts.NamesAdded((0).toLong),
+      namesRemoved: LoadCounts.NamesRemoved = _root_.com.histmersion.api.catalogue.Gazetteer.LoadCounts.NamesRemoved((0).toLong),
+      namesChanged: LoadCounts.NamesChanged = _root_.com.histmersion.api.catalogue.Gazetteer.LoadCounts.NamesChanged((0).toLong),
+      linksAdded: LoadCounts.LinksAdded = _root_.com.histmersion.api.catalogue.Gazetteer.LoadCounts.LinksAdded((0).toLong),
+      linksRemoved: LoadCounts.LinksRemoved = _root_.com.histmersion.api.catalogue.Gazetteer.LoadCounts.LinksRemoved((0).toLong),
+      placesRemoved: LoadCounts.PlacesRemoved = _root_.com.histmersion.api.catalogue.Gazetteer.LoadCounts.PlacesRemoved((0).toLong),
       skipped: List[LoadCounts.Skipped] = Nil,
-      descriptionsAdded: LoadCounts.DescriptionsAdded = 0,
-      descriptionsRemoved: LoadCounts.DescriptionsRemoved = 0,
-      descriptionsChanged: LoadCounts.DescriptionsChanged = 0,
-      linksChanged: LoadCounts.LinksChanged = 0,
-      pointAreasSkipped: LoadCounts.PointAreasSkipped = 0
+      descriptionsAdded: LoadCounts.DescriptionsAdded = _root_.com.histmersion.api.catalogue.Gazetteer.LoadCounts.DescriptionsAdded((0).toLong),
+      descriptionsRemoved: LoadCounts.DescriptionsRemoved = _root_.com.histmersion.api.catalogue.Gazetteer.LoadCounts.DescriptionsRemoved((0).toLong),
+      descriptionsChanged: LoadCounts.DescriptionsChanged = _root_.com.histmersion.api.catalogue.Gazetteer.LoadCounts.DescriptionsChanged((0).toLong),
+      linksChanged: LoadCounts.LinksChanged = _root_.com.histmersion.api.catalogue.Gazetteer.LoadCounts.LinksChanged((0).toLong),
+      pointAreasSkipped: LoadCounts.PointAreasSkipped = _root_.com.histmersion.api.catalogue.Gazetteer.LoadCounts.PointAreasSkipped((0).toLong)
   ) derives KindlingsCodecAsObject,
         KindlingsSchema,
         com.histmersion.api.json.Schema:
@@ -476,7 +476,7 @@ object Gazetteer:
         descriptionsAdded == 0 && descriptionsRemoved == 0 && descriptionsChanged == 0
 
     def describe: com.histmersion.api.catalogue.Gazetteer.LoadCounts.DescribeResult =
-      s"$source $version: ${Plural.count(records, "record")}, $created new place(s), $joined joined an existing place, " +
+      s"$source $version: ${Plural.count(records, _root_.com.histmersion.api.Plural.CountSingular("record"))}, $created new place(s), $joined joined an existing place, " +
         s"$placesChanged place(s) changed, names +$namesAdded −$namesRemoved ~$namesChanged, links +$linksAdded −$linksRemoved" +
         (if linksChanged > 0 then s" ~$linksChanged" else "") +
         (if descriptionsAdded + descriptionsRemoved + descriptionsChanged > 0 then

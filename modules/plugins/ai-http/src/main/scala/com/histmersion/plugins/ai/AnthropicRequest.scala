@@ -11,7 +11,7 @@ import com.histmersion.plugin.AiTurn
   * schema as `output_config`. Unset fields are left out; the tools' schemas are sent exactly as given.
   */
 final case class AnthropicRequest(json: Json):
-  def body: com.histmersion.plugins.ai.AnthropicRequest.BodyResult = json.noSpaces
+  def body: com.histmersion.plugins.ai.AnthropicRequest.BodyResult = _root_.com.histmersion.plugins.ai.AnthropicRequest.BodyResult(json.noSpaces)
 
 object AnthropicRequest:
 
@@ -81,19 +81,19 @@ object AnthropicRequest:
     @annotation.tailrec
     def go(rest: List[AiMessage], acc: List[Json]): Either[com.histmersion.plugins.ai.AnthropicRequest.MessagesGoResultPart1, List[Json]] = rest match
       case Nil                                      => Right(acc.reverse)
-      case AiMessage.User(t) :: tail                => go(tail, message("user", List(text(t))) :: acc)
+      case AiMessage.User(t) :: tail                => go(tail, message(_root_.com.histmersion.plugins.ai.AnthropicRequest.MessageRole("user"), List(text(t))) :: acc)
       case AiMessage.ToolResult(id, _, out) :: tail =>
         val block = Json.obj(
           "tool_use_id" -> Json.fromString(id),
           "content" -> Json.fromString(out),
           "type" -> Json.fromString("tool_result")
         )
-        go(tail, message("user", List(block)) :: acc)
+        go(tail, message(_root_.com.histmersion.plugins.ai.AnthropicRequest.MessageRole("user"), List(block)) :: acc)
       case AiMessage.Assistant(t, calls) :: tail =>
         toolUses(calls.map(c => (c.id, c.tool, c.input)), Nil) match
           case Left(why)   => Left(why)
           case Right(uses) =>
-            go(tail, message("assistant", (if t.nonEmpty then List(text(t)) else Nil) ++ uses) :: acc)
+            go(tail, message(_root_.com.histmersion.plugins.ai.AnthropicRequest.MessageRole("assistant"), (if t.nonEmpty then List(text(t)) else Nil) ++ uses) :: acc)
     go(ms, Nil).map(dropNulls)
 
   @annotation.tailrec

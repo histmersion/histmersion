@@ -14,7 +14,7 @@ final case class CritiquePair(
 ) derives KindlingsCodecAsObject,
       KindlingsSchema, com.histmersion.api.json.Schema:
   def ref: CritiqueRef = CritiqueRef(src.citekey, dst.citekey)
-  def open: com.histmersion.api.research.CritiquePair.OpenResult = state == CritiqueState.Open
+  def open: com.histmersion.api.research.CritiquePair.OpenResult = _root_.com.histmersion.api.research.CritiquePair.OpenResult(state == CritiqueState.Open)
 
   def criticised: CritiqueSide = if Critiques.olderFirst(kinds) then src else dst
 
@@ -22,7 +22,7 @@ final case class CritiquePair(
 
   def bearing: com.histmersion.api.research.CritiquePair.BearingResult = open && criticised.cited
 
-  def line: com.histmersion.api.research.CritiquePair.LineResult = s"[[${src.citekey}]] ${kinds.mkString("/")} [[${dst.citekey}]]"
+  def line: com.histmersion.api.research.CritiquePair.LineResult = _root_.com.histmersion.api.research.CritiquePair.LineResult(s"[[${src.citekey}]] ${kinds.mkString("/")} [[${dst.citekey}]]")
 
 object CritiquePair:
   type OpenResult = OpenResult.T

@@ -5,7 +5,7 @@ final case class FollowupRow(
     doi: Option[com.histmersion.domain.library.Doi] = None,
     arxiv: Option[FollowupRow.Arxiv] = None,
     citedBy: Option[FollowupRow.CitedBy] = None,
-    isInfluential: FollowupRow.IsInfluential = false,
+    isInfluential: FollowupRow.IsInfluential = _root_.com.histmersion.domain.library.acquisition.FollowupRow.IsInfluential(false),
     intents: List[FollowupRow.Intents] = Nil,
     contexts: List[FollowupRow.Contexts] = Nil
 )

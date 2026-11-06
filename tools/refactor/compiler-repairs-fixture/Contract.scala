@@ -2,6 +2,12 @@ package compilerfixture
 
 object Contract:
   @main def verifyCompilerRepairs(): Unit =
+    assert(ConstructOnly.text("one").value == "one")
+    assert(ConstructMode.Finishing.wire.value == "finish")
+    assert(ConstructOnly.large.value == 7L)
+    assert(ConstructOnly.texts(List("one", "two")).map(_.value) == List("one", "two"))
+    val constructed = ConstructOnly.record("one", 7)
+    assert(constructed.text.value == "one" && constructed.count.value == 7 && !constructed.flag)
     Comparisons.check()
     Comparisons.texts(Set(Values.Text("one"), Values.Text("two")))
     assert(scala.util.Try(Comparisons.texts(Set(Values.Text("one")))).isFailure)

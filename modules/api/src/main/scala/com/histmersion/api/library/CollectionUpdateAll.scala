@@ -19,7 +19,7 @@ object CollectionUpdateAll:
   object Applied extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
   final case class Request(
-      apply: Request.Apply = false
+      apply: Request.Apply = _root_.com.histmersion.api.library.CollectionUpdateAll.Request.Apply(false)
   ) derives KindlingsCodecAsObject,
         KindlingsSchema, com.histmersion.api.json.Schema
 

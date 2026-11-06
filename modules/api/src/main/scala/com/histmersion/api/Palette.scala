@@ -51,38 +51,38 @@ object Palette:
   object MapLabelTokens extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
   val edgeKinds: List[com.histmersion.api.Palette.EdgeKinds] = List(
-    "references",
-    "challenges",
-    "refutes",
-    "updates",
-    "superseded_by",
-    "supersedes",
-    "confirms",
-    "cites",
-    "foundational_for",
-    "compilation_of",
-    "review_of",
-    "verifies"
+    _root_.com.histmersion.api.Palette.EdgeKinds("references"),
+    _root_.com.histmersion.api.Palette.EdgeKinds("challenges"),
+    _root_.com.histmersion.api.Palette.EdgeKinds("refutes"),
+    _root_.com.histmersion.api.Palette.EdgeKinds("updates"),
+    _root_.com.histmersion.api.Palette.EdgeKinds("superseded_by"),
+    _root_.com.histmersion.api.Palette.EdgeKinds("supersedes"),
+    _root_.com.histmersion.api.Palette.EdgeKinds("confirms"),
+    _root_.com.histmersion.api.Palette.EdgeKinds("cites"),
+    _root_.com.histmersion.api.Palette.EdgeKinds("foundational_for"),
+    _root_.com.histmersion.api.Palette.EdgeKinds("compilation_of"),
+    _root_.com.histmersion.api.Palette.EdgeKinds("review_of"),
+    _root_.com.histmersion.api.Palette.EdgeKinds("verifies")
   )
   val statuses: List[com.histmersion.api.Palette.Statuses] =
-    List("foundational", "current", "contested", "superseded", "debunked", "retracted", "unassessed")
-  val mediaKinds: List[com.histmersion.api.Palette.MediaKinds] = List("figure", "photo", "map", "plan", "scan")
-  val confidences: List[com.histmersion.api.Palette.Confidences] = List("high", "medium", "low", "contested")
+    List(_root_.com.histmersion.api.Palette.Statuses("foundational"), _root_.com.histmersion.api.Palette.Statuses("current"), _root_.com.histmersion.api.Palette.Statuses("contested"), _root_.com.histmersion.api.Palette.Statuses("superseded"), _root_.com.histmersion.api.Palette.Statuses("debunked"), _root_.com.histmersion.api.Palette.Statuses("retracted"), _root_.com.histmersion.api.Palette.Statuses("unassessed"))
+  val mediaKinds: List[com.histmersion.api.Palette.MediaKinds] = List(_root_.com.histmersion.api.Palette.MediaKinds("figure"), _root_.com.histmersion.api.Palette.MediaKinds("photo"), _root_.com.histmersion.api.Palette.MediaKinds("map"), _root_.com.histmersion.api.Palette.MediaKinds("plan"), _root_.com.histmersion.api.Palette.MediaKinds("scan"))
+  val confidences: List[com.histmersion.api.Palette.Confidences] = List(_root_.com.histmersion.api.Palette.Confidences("high"), _root_.com.histmersion.api.Palette.Confidences("medium"), _root_.com.histmersion.api.Palette.Confidences("low"), _root_.com.histmersion.api.Palette.Confidences("contested"))
 
   val goalStages: List[com.histmersion.api.Palette.GoalStages] = com.histmersion.api.automation.Goal.Status.all
 
-  val rampStops: com.histmersion.api.Palette.RampStops = 5
+  val rampStops: com.histmersion.api.Palette.RampStops = _root_.com.histmersion.api.Palette.RampStops(5)
 
   private def token(family: com.histmersion.api.Palette.TokenFamily, known: List[com.histmersion.api.Palette.TokenKnown], name: com.histmersion.api.Palette.TokenName): com.histmersion.api.Palette.TokenResult =
-    if known.contains(name) then s"--$family-$name" else s"--$family-default"
+    if known.contains(name) then _root_.com.histmersion.api.Palette.TokenResult(s"--$family-$name") else _root_.com.histmersion.api.Palette.TokenResult(s"--$family-default")
 
-  def edge(kind: com.histmersion.api.Palette.EdgeKind): com.histmersion.api.Palette.EdgeResult = token("edge", edgeKinds, kind)
-  def status(status: com.histmersion.api.Palette.StatusStatus): com.histmersion.api.Palette.StatusResult = token("status", statuses, status)
+  def edge(kind: com.histmersion.api.Palette.EdgeKind): com.histmersion.api.Palette.EdgeResult = token(_root_.com.histmersion.api.Palette.TokenFamily("edge"), edgeKinds, kind)
+  def status(status: com.histmersion.api.Palette.StatusStatus): com.histmersion.api.Palette.StatusResult = token(_root_.com.histmersion.api.Palette.TokenFamily("status"), statuses, status)
 
   def goalStage(stage: com.histmersion.api.Palette.GoalStageStage): com.histmersion.api.Palette.GoalStageResult = s"--stage-${stage.trim.toLowerCase}"
   def goalStageSoft(stage: com.histmersion.api.Palette.GoalStageSoftStage): com.histmersion.api.Palette.GoalStageSoftResult = s"${goalStage(stage)}-soft"
-  def media(kind: com.histmersion.api.Palette.MediaKind): com.histmersion.api.Palette.MediaResult = token("media", mediaKinds, kind)
-  def confidence(level: com.histmersion.api.Palette.ConfidenceLevel): com.histmersion.api.Palette.ConfidenceResult = s"--conf-$level"
+  def media(kind: com.histmersion.api.Palette.MediaKind): com.histmersion.api.Palette.MediaResult = token(_root_.com.histmersion.api.Palette.TokenFamily("media"), mediaKinds, kind)
+  def confidence(level: com.histmersion.api.Palette.ConfidenceLevel): com.histmersion.api.Palette.ConfidenceResult = _root_.com.histmersion.api.Palette.ConfidenceResult(s"--conf-$level")
 
   def allTokens: List[com.histmersion.api.Palette.AllTokensResult] =
     (edgeKinds.map(edge) :+ "--edge-default") ++ (statuses.map(status) :+ "--status-default") ++
@@ -92,4 +92,4 @@ object Palette:
       mapLabelTokens
 
   val mapLabelTokens: List[com.histmersion.api.Palette.MapLabelTokens] =
-    for tone <- List("light", "dark"); part <- List("ink", "halo", "note") yield s"--map-label-$part-$tone"
+    for tone <- List("light", "dark"); part <- List("ink", "halo", "note") yield _root_.com.histmersion.api.Palette.MapLabelTokens(s"--map-label-$part-$tone")

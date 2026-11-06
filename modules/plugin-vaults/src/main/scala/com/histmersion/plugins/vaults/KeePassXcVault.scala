@@ -44,19 +44,19 @@ final class KeePassXcVault(
     */
   override def resolveAll(refs: List[String]): Map[String, Either[String, String]] =
     val asked = refs.distinct
-    val requests = asked.map(r => r -> request(r))
+    val requests = asked.map(r => r -> request(_root_.com.histmersion.plugins.vaults.KeePassXcVault.RequestRef(r)))
     val batched = requests.collect {
       case (r, Right((e, a))) if KeePassXcSession.sendable(e) && KeePassXcSession.sendable(a) => r -> (e, a)
     }
     val single = asked.filterNot(r => batched.exists(_._1 == r)).map(r => r -> resolve(r)).toMap
-    if batched.size <= 1 then single ++ batched.map((r, _) => r -> resolve(r))
+    if batched.size <= 1 then single ++ batched.map((r, _) => r -> resolve(_root_.com.histmersion.plugins.vaults.KeePassXcVault.ResolveRef(r)))
     else single ++ session(batched)
 
   /** `<entry>#<attribute>` as two arguments that cannot read as options. */
   private def request(ref: com.histmersion.plugins.vaults.KeePassXcVault.RequestRef): Either[com.histmersion.plugins.vaults.KeePassXcVault.RequestResultPart1, (com.histmersion.plugins.vaults.KeePassXcVault.RequestResultPart2Part1, com.histmersion.plugins.vaults.KeePassXcVault.RequestResultPart2Part2)] =
     val (entry, attr) = Vaults.entryAndField(ref, attribute)
     for
-      e <- Subprocess.plain("the entry", entry)
+      e <- Subprocess.plain(_root_.com.histmersion.plugins.vaults.Subprocess.PlainWhat("the entry"), entry)
       a <- Subprocess.plain("the attribute", attr)
     yield (e, a)
 
@@ -96,12 +96,12 @@ final class KeePassXcVault(
     val what = s"open $file for ${batched.size} references"
     val opened: Either[com.histmersion.plugins.vaults.KeePassXcVault.SessionOpenedPart1, Opened] =
       if yubikeys.nonEmpty then
-        withYubiKey(what, s"for ${batched.size} references (${batched.map(_._1).mkString(", ")})", "")(yk =>
+        withYubiKey(_root_.com.histmersion.plugins.vaults.KeePassXcVault.WithYubiKeyWhat(what), _root_.com.histmersion.plugins.vaults.KeePassXcVault.WithYubiKeyPurpose(s"for ${batched.size} references (${batched.map(_._1).mkString(", ")})"), _root_.com.histmersion.plugins.vaults.KeePassXcVault.WithYubiKeyEntry(""))(yk =>
           open(Some(yk), yubikeyTimeout)
         )
       else
         open(None, timeout) match
-          case Left(why)      => Left(s"$name: could not $what ($why)")
+          case Left(why)      => Left(_root_.com.histmersion.plugins.vaults.KeePassXcVault.SessionOpenedPart1(s"$name: could not $what ($why)"))
           case Right(Left(r)) =>
             Left(
               classify("")(r.err.toLowerCase(java.util.Locale.ROOT))
@@ -113,7 +113,7 @@ final class KeePassXcVault(
       case Right(o) =>
         try readAll(o, batched)
         finally
-          val _ = o.session.send("exit")
+          val _ = o.session.send(_root_.com.histmersion.plugin.Processes.Session.SendLine("exit"))
           val _ = o.session.close(timeout)
 
   /** One request after another, each answered before the next is sent; a session that stops answering fails the rest.
@@ -129,7 +129,7 @@ final class KeePassXcVault(
       (rest, broken) match
         case (Nil, _)                    => acc
         case ((ref, _) :: tail, Some(b)) =>
-          read(tail, acc.updated(ref, Left(s"$name: could not read '$ref' ($b)")), 0, broken)
+          read(tail, acc.updated(ref, Left(_root_.com.histmersion.plugins.vaults.KeePassXcVault.ReadAllReadAccPart2Part1(s"$name: could not read '$ref' ($b)"))), _root_.com.histmersion.plugins.vaults.KeePassXcVault.ReadAllReadMark(0), broken)
         case ((ref, (entry, attr)) :: tail, None) =>
           val cmd = KeePassXcSession.command(attr, entry)
           val errMark = s.err.length
@@ -144,7 +144,7 @@ final class KeePassXcVault(
           }
           answered match
             case Left(broken) =>
-              read(tail, acc.updated(ref, Left(s"$name: could not read '$ref' ($broken)")), mark, Some(broken))
+              read(tail, acc.updated(ref, Left(_root_.com.histmersion.plugins.vaults.KeePassXcVault.ReadAllReadAccPart2Part1(s"$name: could not read '$ref' ($broken)"))), mark, Some(broken))
             case Right((seg, next)) =>
               val v = KeePassXcSession.answer(seg, cmd)
               val result =
@@ -164,7 +164,7 @@ final class KeePassXcVault(
   /** The connected serials, when `ykman` can tell; `None` = unknown (then every entry is tried). */
   private def connected(): Option[Set[com.histmersion.plugins.vaults.KeePassXcVault.ConnectedResult]] =
     ykman.flatMap { y =>
-      Subprocess.run(List(y, "list", "--serials"), Map.empty, None, timeout) match
+      Subprocess.run(List(y, _root_.com.histmersion.plugins.vaults.Subprocess.RunArgv("list"), _root_.com.histmersion.plugins.vaults.Subprocess.RunArgv("--serials")), Map.empty, None, timeout) match
         case Right(r) if r.exit == 0 => Some(YubiKey.serials(r.out))
         case Right(r)                =>
           log.info(s"ykman list failed (exit ${r.exit}: ${Subprocess.problem(r.err)}): trying the YubiKeys in order");
@@ -191,21 +191,21 @@ final class KeePassXcVault(
         if s.isEmpty then " (ykman sees no YubiKey)" else s" (ykman sees ${s.toList.sorted.mkString(", ")})"
       )
       Left(
-        s"$name: none of the configured YubiKeys is connected$seen — ${yubikeys.map(_.shown).mkString(", ")}; plug one in"
+        _root_.com.histmersion.plugins.vaults.KeePassXcVault.WithYubiKeyResultPart1(s"$name: none of the configured YubiKeys is connected$seen — ${yubikeys.map(_.shown).mkString(", ")}; plug one in")
       )
     else
       @annotation.tailrec
       def go(rest: List[YubiKey.Slot], tried: List[com.histmersion.plugins.vaults.KeePassXcVault.WithYubiKeyGoTried]): Either[com.histmersion.plugins.vaults.KeePassXcVault.WithYubiKeyGoResultPart1, A] = rest match
-        case Nil        => report(tried, " — plug in (or touch) one of them")
+        case Nil        => report(tried, _root_.com.histmersion.plugins.vaults.KeePassXcVault.WithYubiKeyReportTail(" — plug in (or touch) one of them"))
         case yk :: more =>
           log.info(
-            s"opening $file with YubiKey ${yk.shown} $purpose — touch your YubiKey if it blinks " +
-              s"(waiting up to ${yubikeyTimeout.toSeconds} s)"
+            _root_.com.histmersion.plugin.Plugin.Log.InfoMessage(s"opening $file with YubiKey ${yk.shown} $purpose — touch your YubiKey if it blinks " +
+              s"(waiting up to ${yubikeyTimeout.toSeconds} s)")
           )
           attempt(yk) match
             case Left(why) =>
               val what = if why.contains("did not answer") then s"not touched in time ($why)" else why
-              report(tried :+ s"${yk.shown}: $what", "; not trying further keys")
+              report(tried :+ s"${yk.shown}: $what", _root_.com.histmersion.plugins.vaults.KeePassXcVault.WithYubiKeyReportTail("; not trying further keys"))
             case Right(Right(a)) =>
               lastOpened.set(Some(yk))
               Right(a)
@@ -215,14 +215,14 @@ final class KeePassXcVault(
                 case YubiKey.Failure.Next(why) => go(more, tried :+ s"${yk.shown}: $why ($msg)")
                 case YubiKey.Failure.Stop(why) =>
                   if why.startsWith("no entry") then Left(s"$name: $why")
-                  else report(tried :+ s"${yk.shown}: $why ($msg)", "; not trying further keys")
+                  else report(tried :+ s"${yk.shown}: $why ($msg)", _root_.com.histmersion.plugins.vaults.KeePassXcVault.WithYubiKeyReportTail("; not trying further keys"))
       go(planned, Nil)
 
   private def classify(entry: com.histmersion.plugins.vaults.KeePassXcVault.ClassifyEntry)(err: com.histmersion.plugins.vaults.KeePassXcVault.ClassifyErr): Option[com.histmersion.plugins.vaults.KeePassXcVault.ClassifyResult] =
     if err.contains("invalid credentials") || err.contains("wrong key") || err.contains("unable to unlock") ||
       err.contains("enter password")
-    then Some(s"$name: the database is locked — set password = \"env:<NAME>\" (or a key-file) for this vault")
-    else if err.contains("could not find entry") || err.contains("not found") then Some(s"$name: no entry '$entry'")
+    then Some(_root_.com.histmersion.plugins.vaults.KeePassXcVault.ClassifyResult(s"$name: the database is locked — set password = \"env:<NAME>\" (or a key-file) for this vault"))
+    else if err.contains("could not find entry") || err.contains("not found") then Some(_root_.com.histmersion.plugins.vaults.KeePassXcVault.ClassifyResult(s"$name: no entry '$entry'"))
     else None
 
 object KeePassXcVault:

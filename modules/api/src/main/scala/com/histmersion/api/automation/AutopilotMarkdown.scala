@@ -28,14 +28,14 @@ object AutopilotMarkdown:
   def goal(g: GoalProgress): com.histmersion.api.automation.AutopilotMarkdown.GoalResult =
     val mgrs = if g.managers.isEmpty then "no managers" else g.managers.map(brief).mkString("; ")
     val pace = s"${g.doneLast7} done in 7 days, ${g.open} open" + g.etaDays.fold("")(d => s", ~$d day(s) at that pace")
-    s"**${g.slug}** _(${g.status})_${g.parent.fold("")(p => s" ⊂ $p")} · ${Plural.count(g.sources, "source")}, " +
+    s"**${g.slug}** _(${g.status})_${g.parent.fold("")(p => s" ⊂ $p")} · ${Plural.count(g.sources, _root_.com.histmersion.api.Plural.CountSingular("source"))}, " +
       s"${Plural.count(g.articles, "article")}" + (if g.openApprovals > 0 then
                                                      s", ${Plural.count(g.openApprovals, "open approval")}"
                                                    else "") +
       s" · $mgrs · $pace" + g.lastActivity.fold("")(t => s" · last activity $t")
 
   private def pace(g: FocusGoal): com.histmersion.api.automation.AutopilotMarkdown.PaceResult =
-    s"${g.doneLast7} done in 7 days, ${g.open} open" + g.etaDays.fold("")(d => s", ~$d day(s) at that pace")
+    _root_.com.histmersion.api.automation.AutopilotMarkdown.PaceResult(s"${g.doneLast7} done in 7 days, ${g.open} open" + g.etaDays.fold("")(d => s", ~$d day(s) at that pace"))
 
   def focus(f: FocusInfo): com.histmersion.api.automation.AutopilotMarkdown.FocusResult =
     val head = s"## Focus: ${if f.on then s"at most ${f.max} active goals" else "not in force"}" +
@@ -62,7 +62,7 @@ object AutopilotMarkdown:
         f.queue.zipWithIndex.map((g, i) => s"${i + 1}. ${g.slug} _(${g.stage})_ — ${g.why}").mkString("\n") +
           (if f.queued > f.queue.size then s"\n\n…and ${f.queued - f.queue.size} more" else "")
     val waits = f.waiting.groupBy(_.code).toList.sortBy(-_._2.size).map { (c, ws) =>
-      s"- ${Plural.count(ws.size, "goal")} $c: " + ws
+      s"- ${Plural.count(_root_.com.histmersion.api.Plural.CountN((ws.size).toLong), _root_.com.histmersion.api.Plural.CountSingular("goal"))} $c: " + ws
         .take(5)
         .map(w => s"${w.slug}${if w.pinned then " (pinned)" else ""}")
         .mkString(", ") +
@@ -77,7 +77,7 @@ object AutopilotMarkdown:
     */
   def status(
       s: Autopilot.EngineStatus,
-      ingestedBy: com.histmersion.api.automation.AutopilotMarkdown.StatusIngestedBy = "",
+      ingestedBy: com.histmersion.api.automation.AutopilotMarkdown.StatusIngestedBy = _root_.com.histmersion.api.automation.AutopilotMarkdown.StatusIngestedBy(""),
       beforeBacklog: List[com.histmersion.api.automation.AutopilotMarkdown.StatusBeforeBacklog] = Nil,
       afterBacklog: List[com.histmersion.api.automation.AutopilotMarkdown.StatusAfterBacklog] = Nil
   ): com.histmersion.api.automation.AutopilotMarkdown.StatusResult =
@@ -122,5 +122,5 @@ object AutopilotMarkdown:
       )
     val changes = if s.changes.isEmpty then "" else "\n\n## Just now\n\n" + s.changes.map(c => s"- $c").mkString("\n")
     val goals = if s.goals.isEmpty then "_No research goals._" else s.goals.map(g => s"- ${goal(g)}").mkString("\n")
-    (List(head, "") ++ warn ++ facts).mkString("\n") + changes + s.focus.fold("")(f => "\n\n" + focus(f)) +
-      s"\n\n## Goals (${s.goals.size})\n\n" + goals
+    _root_.com.histmersion.api.automation.AutopilotMarkdown.StatusResult((List(head, "") ++ warn ++ facts).mkString("\n") + changes + s.focus.fold("")(f => "\n\n" + focus(f)) +
+      s"\n\n## Goals (${s.goals.size})\n\n" + goals)

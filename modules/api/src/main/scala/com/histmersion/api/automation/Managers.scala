@@ -30,15 +30,15 @@ object Managers:
   export com.histmersion.api.automation.ItemStatus
 
   enum ItemOrigin(val wire: ItemOrigin.Wire):
-    case Selection extends ItemOrigin("selection")
-    case Person extends ItemOrigin("person")
-    case Chain extends ItemOrigin("chain")
-    case Hint extends ItemOrigin("hint")
+    case Selection extends ItemOrigin(_root_.com.histmersion.api.automation.Managers.ItemOrigin.Wire("selection"))
+    case Person extends ItemOrigin(_root_.com.histmersion.api.automation.Managers.ItemOrigin.Wire("person"))
+    case Chain extends ItemOrigin(_root_.com.histmersion.api.automation.Managers.ItemOrigin.Wire("chain"))
+    case Hint extends ItemOrigin(_root_.com.histmersion.api.automation.Managers.ItemOrigin.Wire("hint"))
 
     /** An item an ingest added, by a name no other type takes. */
-    case FromIngest extends ItemOrigin("ingest")
+    case FromIngest extends ItemOrigin(_root_.com.histmersion.api.automation.Managers.ItemOrigin.Wire("ingest"))
 
-    case Cron extends ItemOrigin("cron")
+    case Cron extends ItemOrigin(_root_.com.histmersion.api.automation.Managers.ItemOrigin.Wire("cron"))
 
   object ItemOrigin:
     type Wire = Wire.T
@@ -88,10 +88,10 @@ object Managers:
   val OaIngest = "oa-ingest"
 
   def itemKinds(k: Kind): List[com.histmersion.api.automation.Managers.ItemKindsResult] = k match
-    case Kind.Review => List(ArticleReview, InferFilter, ArticleExtend)
-    case Kind.Enrich => List(SourceEnrich)
-    case Kind.Seed   => List(ProposeArticles, ArticleCompile, PlanGoalItem)
-    case Kind.Watch  => List(AcquisitionSweep, CurrencyCheck, OaIngest)
+    case Kind.Review => List(_root_.com.histmersion.api.automation.Managers.ItemKindsResult(ArticleReview), _root_.com.histmersion.api.automation.Managers.ItemKindsResult(InferFilter), _root_.com.histmersion.api.automation.Managers.ItemKindsResult(ArticleExtend))
+    case Kind.Enrich => List(_root_.com.histmersion.api.automation.Managers.ItemKindsResult(SourceEnrich))
+    case Kind.Seed   => List(_root_.com.histmersion.api.automation.Managers.ItemKindsResult(ProposeArticles), _root_.com.histmersion.api.automation.Managers.ItemKindsResult(ArticleCompile), _root_.com.histmersion.api.automation.Managers.ItemKindsResult(PlanGoalItem))
+    case Kind.Watch  => List(_root_.com.histmersion.api.automation.Managers.ItemKindsResult(AcquisitionSweep), _root_.com.histmersion.api.automation.Managers.ItemKindsResult(CurrencyCheck), _root_.com.histmersion.api.automation.Managers.ItemKindsResult(OaIngest))
 
   def itemKindOf(k: Kind, word: com.histmersion.api.automation.Managers.ItemKindOfWord): Option[com.histmersion.api.automation.Managers.ItemKindOfResult] =
     val w = word.trim.toLowerCase
@@ -110,7 +110,7 @@ object Managers:
         case "plan-goal" | "goal-plan"   => PlanGoalItem
         case "ingest" | "backlog"        => OaIngest
         case other                       => other
-      Option(alias).filter(kinds.contains)
+      (Option(alias).filter(kinds.contains)).map(refactorValue2 => _root_.com.histmersion.api.automation.Managers.ItemKindOfResult(refactorValue2))
 
   val ReviewId = "review"
 
@@ -121,8 +121,8 @@ object Managers:
   def watchId(goal: com.histmersion.api.automation.Managers.WatchIdGoal): com.histmersion.api.automation.Managers.WatchIdResult = s"watch:${goal.trim}"
 
   enum Sweep(val wire: Sweep.Wire, val itemKind: Sweep.ItemKind):
-    case Acquisition extends Sweep("acquisition", AcquisitionSweep)
-    case Currency extends Sweep("currency", CurrencyCheck)
+    case Acquisition extends Sweep(_root_.com.histmersion.api.automation.Managers.Sweep.Wire("acquisition"), _root_.com.histmersion.api.automation.Managers.Sweep.ItemKind(AcquisitionSweep))
+    case Currency extends Sweep(_root_.com.histmersion.api.automation.Managers.Sweep.Wire("currency"), _root_.com.histmersion.api.automation.Managers.Sweep.ItemKind(CurrencyCheck))
 
   object Sweep:
     type Wire = Wire.T
@@ -143,10 +143,10 @@ object Managers:
       c.sweeps.fold(values.toList)(ws => values.toList.filter(s => ws.exists(w => parse(w).contains(s))))
 
   enum EnqueueKind(val wire: EnqueueKind.Wire):
-    case Review extends EnqueueKind("review")
-    case Extend extends EnqueueKind("extend")
-    case Enrich extends EnqueueKind("enrich")
-    case Seed extends EnqueueKind("seed")
+    case Review extends EnqueueKind(_root_.com.histmersion.api.automation.Managers.EnqueueKind.Wire("review"))
+    case Extend extends EnqueueKind(_root_.com.histmersion.api.automation.Managers.EnqueueKind.Wire("extend"))
+    case Enrich extends EnqueueKind(_root_.com.histmersion.api.automation.Managers.EnqueueKind.Wire("enrich"))
+    case Seed extends EnqueueKind(_root_.com.histmersion.api.automation.Managers.EnqueueKind.Wire("seed"))
 
   object EnqueueKind:
     type Wire = Wire.T
@@ -162,7 +162,7 @@ object Managers:
       case ProposeArticles | "propose" | "plan" => Some(Seed)
       case other                                => values.find(_.wire == other)
 
-  final case class ArticleSpec(title: com.histmersion.api.research.Article.Title, kind: com.histmersion.api.research.Article.KindValue, filter: Article.Filter, why: ArticleSpec.Why = "")
+  final case class ArticleSpec(title: com.histmersion.api.research.Article.Title, kind: com.histmersion.api.research.Article.KindValue, filter: Article.Filter, why: ArticleSpec.Why = _root_.com.histmersion.api.automation.Managers.ArticleSpec.Why(""))
       derives KindlingsCodecAsObject,
         KindlingsSchema, com.histmersion.api.json.Schema
 
@@ -348,18 +348,18 @@ object Managers:
       }
 
     private def bool(k: com.histmersion.api.automation.Managers.ManagerConfig.BoolK, v: com.histmersion.api.automation.Managers.ManagerConfig.BoolV): Either[com.histmersion.api.automation.Managers.ManagerConfig.BoolResultPart1, com.histmersion.api.automation.Managers.ManagerConfig.BoolResultPart2] = v.toLowerCase match
-      case "true" | "on" | "yes"  => Right(true)
-      case "false" | "off" | "no" => Right(false)
-      case _                      => Left(s"$k: '$v' is not true or false")
+      case "true" | "on" | "yes"  => Right(_root_.com.histmersion.api.automation.Managers.ManagerConfig.BoolResultPart2(true))
+      case "false" | "off" | "no" => Right(_root_.com.histmersion.api.automation.Managers.ManagerConfig.BoolResultPart2(false))
+      case _                      => Left(_root_.com.histmersion.api.automation.Managers.ManagerConfig.BoolResultPart1(s"$k: '$v' is not true or false"))
 
   final case class ItemCounts(
-      pending: ItemCounts.Pending = 0,
-      held: ItemCounts.Held = 0,
-      active: ItemCounts.Active = 0,
-      done: ItemCounts.Done = 0,
-      stopped: ItemCounts.Stopped = 0,
-      failed: ItemCounts.Failed = 0,
-      cancelled: ItemCounts.Cancelled = 0
+      pending: ItemCounts.Pending = _root_.com.histmersion.api.automation.Managers.ItemCounts.Pending(0),
+      held: ItemCounts.Held = _root_.com.histmersion.api.automation.Managers.ItemCounts.Held(0),
+      active: ItemCounts.Active = _root_.com.histmersion.api.automation.Managers.ItemCounts.Active(0),
+      done: ItemCounts.Done = _root_.com.histmersion.api.automation.Managers.ItemCounts.Done(0),
+      stopped: ItemCounts.Stopped = _root_.com.histmersion.api.automation.Managers.ItemCounts.Stopped(0),
+      failed: ItemCounts.Failed = _root_.com.histmersion.api.automation.Managers.ItemCounts.Failed(0),
+      cancelled: ItemCounts.Cancelled = _root_.com.histmersion.api.automation.Managers.ItemCounts.Cancelled(0)
   ) derives KindlingsCodecAsObject,
         KindlingsSchema, com.histmersion.api.json.Schema:
     def open: com.histmersion.api.automation.Managers.ItemCounts.OpenResult = pending + held + active
@@ -431,16 +431,16 @@ object Managers:
               case Some(ItemStatus.Cancelled) =>
                 loop(tail, pending, held, active, done, stopped, failed, cancelled + n)
               case None => loop(tail, pending, held, active, done, stopped, failed, cancelled)
-      loop(rows, 0, 0, 0, 0, 0, 0, 0)
+      loop(rows, _root_.com.histmersion.api.automation.Managers.ItemCounts.OfLoopPending(0), _root_.com.histmersion.api.automation.Managers.ItemCounts.OfLoopHeld(0), _root_.com.histmersion.api.automation.Managers.ItemCounts.OfLoopActive(0), _root_.com.histmersion.api.automation.Managers.ItemCounts.OfLoopDone(0), _root_.com.histmersion.api.automation.Managers.ItemCounts.OfLoopStopped(0), _root_.com.histmersion.api.automation.Managers.ItemCounts.OfLoopFailed(0), _root_.com.histmersion.api.automation.Managers.ItemCounts.OfLoopCancelled(0))
 
   final case class ManagerEvent(
       id: ManagerEvent.Id,
       managerId: com.histmersion.api.automation.Managers.ManagerInfo.Id,
       itemId: Option[ManagerEvent.ItemId] = None,
       runId: Option[com.histmersion.api.automation.Agents.RunInfo.Id] = None,
-      at: ManagerEvent.At = "",
-      kind: ManagerEvent.Kind = "",
-      text: ManagerEvent.Text = ""
+      at: ManagerEvent.At = _root_.com.histmersion.api.automation.Managers.ManagerEvent.At(""),
+      kind: ManagerEvent.Kind = _root_.com.histmersion.api.automation.Managers.ManagerEvent.Kind(""),
+      text: ManagerEvent.Text = _root_.com.histmersion.api.automation.Managers.ManagerEvent.Text("")
   ) derives KindlingsCodecAsObject,
         KindlingsSchema, com.histmersion.api.json.Schema
 
@@ -462,20 +462,20 @@ object Managers:
       kind: ManagerInfo.Kind,
       goal: Option[com.histmersion.api.automation.Goal.Slug] = None,
       state: ManagerInfo.State = State.Active.wire,
-      pauseRuns: ManagerInfo.PauseRuns = false,
+      pauseRuns: ManagerInfo.PauseRuns = _root_.com.histmersion.api.automation.Managers.ManagerInfo.PauseRuns(false),
       config: ManagerConfig = ManagerConfig(),
       effective: ManagerConfig = ManagerConfig(),
       statusNote: Option[ManagerInfo.StatusNote] = None,
       cron: Option[ManagerInfo.Cron] = None,
       nextTickAt: Option[ManagerInfo.NextTickAt] = None,
-      createdAt: ManagerInfo.CreatedAt = "",
-      updatedAt: ManagerInfo.UpdatedAt = "",
+      createdAt: ManagerInfo.CreatedAt = _root_.com.histmersion.api.automation.Managers.ManagerInfo.CreatedAt(""),
+      updatedAt: ManagerInfo.UpdatedAt = _root_.com.histmersion.api.automation.Managers.ManagerInfo.UpdatedAt(""),
       counts: ItemCounts = ItemCounts(),
-      inFlight: ManagerInfo.InFlight = 0,
+      inFlight: ManagerInfo.InFlight = _root_.com.histmersion.api.automation.Managers.ManagerInfo.InFlight(0),
       lastEvent: Option[ManagerEvent] = None,
       spentTodayUsd: ManagerInfo.SpentTodayUsd = 0,
-      tokensToday: ManagerInfo.TokensToday = 0,
-      backlog: ManagerInfo.Backlog = 0,
+      tokensToday: ManagerInfo.TokensToday = _root_.com.histmersion.api.automation.Managers.ManagerInfo.TokensToday((0).toLong),
+      backlog: ManagerInfo.Backlog = _root_.com.histmersion.api.automation.Managers.ManagerInfo.Backlog(0),
       backlogDays: Option[ManagerInfo.BacklogDays] = None
   ) derives KindlingsCodecAsObject,
         KindlingsSchema, com.histmersion.api.json.Schema
@@ -514,7 +514,7 @@ object Managers:
   final case class Hold(
       until: Option[Hold.Until] = None,
       untilSource: Option[Hold.UntilSource] = None,
-      reason: Hold.Reason = "",
+      reason: Hold.Reason = _root_.com.histmersion.api.automation.Managers.Hold.Reason(""),
       hint: Option[Hold.Hint] = None,
       untilApproval: Option[Hold.UntilApproval] = None,
       focus: Option[Hold.Focus] = None
@@ -539,10 +539,10 @@ object Managers:
   final case class RunMark(
       run: com.histmersion.api.automation.Agents.RunInfo.Id,
       before: Option[RunMark.Before] = None,
-      after: RunMark.After = 0,
-      maxReopened: RunMark.MaxReopened = 0,
-      escalated: RunMark.Escalated = 0,
-      churn: RunMark.Churn = false,
+      after: RunMark.After = _root_.com.histmersion.api.automation.Managers.RunMark.After(0),
+      maxReopened: RunMark.MaxReopened = _root_.com.histmersion.api.automation.Managers.RunMark.MaxReopened(0),
+      escalated: RunMark.Escalated = _root_.com.histmersion.api.automation.Managers.RunMark.Escalated(0),
+      churn: RunMark.Churn = _root_.com.histmersion.api.automation.Managers.RunMark.Churn(false),
       pairsBefore: Option[RunMark.PairsBefore] = None,
       pairsAfter: Option[RunMark.PairsAfter] = None
   ) derives KindlingsCodecAsObject,
@@ -568,7 +568,7 @@ object Managers:
   final case class ItemState(
       history: List[RunMark] = Nil,
       before: Option[ItemState.Before] = None,
-      reopened: ItemState.Reopened = 0,
+      reopened: ItemState.Reopened = _root_.com.histmersion.api.automation.Managers.ItemState.Reopened(0),
       pairsBefore: Option[ItemState.PairsBefore] = None,
       spec: Option[ArticleSpec] = None,
       filterHits: Option[ItemState.FilterHits] = None,
@@ -594,7 +594,7 @@ object Managers:
       authors: List[com.histmersion.api.library.AuthorName] = Nil,
       venue: Option[com.histmersion.api.library.Venue] = None,
       goals: List[com.histmersion.api.automation.Goal.Slug] = Nil,
-      why: OaWork.Why = "",
+      why: OaWork.Why = _root_.com.histmersion.api.automation.Managers.OaWork.Why(""),
       foundBy: Option[OaWork.FoundBy] = None,
       acquireText: Option[OaWork.AcquireText] = None
   ) derives KindlingsCodecAsObject,
@@ -615,9 +615,9 @@ object Managers:
       kind: ManagerItem.Kind,
       target: ManagerItem.Target,
       status: ManagerItem.Status,
-      priority: ManagerItem.Priority = 0,
-      attempts: ManagerItem.Attempts = 0,
-      failures: ManagerItem.Failures = 0,
+      priority: ManagerItem.Priority = _root_.com.histmersion.api.automation.Managers.ManagerItem.Priority(0),
+      attempts: ManagerItem.Attempts = _root_.com.histmersion.api.automation.Managers.ManagerItem.Attempts(0),
+      failures: ManagerItem.Failures = _root_.com.histmersion.api.automation.Managers.ManagerItem.Failures(0),
       runId: Option[com.histmersion.api.automation.Agents.RunInfo.Id] = None,
       evaluatedRun: Option[com.histmersion.api.automation.Agents.RunInfo.Id] = None,
       notBefore: Option[ManagerItem.NotBefore] = None,
@@ -625,8 +625,8 @@ object Managers:
       state: ItemState = ItemState(),
       outcome: Option[ManagerItem.Outcome] = None,
       origin: ManagerItem.Origin = ItemOrigin.Selection.wire,
-      createdAt: ManagerItem.CreatedAt = "",
-      updatedAt: ManagerItem.UpdatedAt = "",
+      createdAt: ManagerItem.CreatedAt = _root_.com.histmersion.api.automation.Managers.ManagerItem.CreatedAt(""),
+      updatedAt: ManagerItem.UpdatedAt = _root_.com.histmersion.api.automation.Managers.ManagerItem.UpdatedAt(""),
       run: Option[Agents.RunInfo] = None
   ) derives KindlingsCodecAsObject,
         KindlingsSchema, com.histmersion.api.json.Schema
@@ -701,8 +701,8 @@ object Managers:
       hint: HintProposal.Hint,
       text: HintProposal.Text,
       effect: HintEffect,
-      by: HintProposal.By = "",
-      why: HintProposal.Why = ""
+      by: HintProposal.By = _root_.com.histmersion.api.automation.Managers.HintProposal.By(""),
+      why: HintProposal.Why = _root_.com.histmersion.api.automation.Managers.HintProposal.Why("")
   ) derives KindlingsCodecAsObject,
         KindlingsSchema, com.histmersion.api.json.Schema
 
@@ -721,13 +721,13 @@ object Managers:
       id: ManagerHint.Id,
       managerId: com.histmersion.api.automation.Managers.ManagerInfo.Id,
       itemId: Option[ManagerHint.ItemId] = None,
-      text: ManagerHint.Text = "",
+      text: ManagerHint.Text = _root_.com.histmersion.api.automation.Managers.ManagerHint.Text(""),
       effect: Option[HintEffect] = None,
-      author: ManagerHint.Author = "",
-      standing: ManagerHint.Standing = true,
-      createdAt: ManagerHint.CreatedAt = "",
+      author: ManagerHint.Author = _root_.com.histmersion.api.automation.Managers.ManagerHint.Author(""),
+      standing: ManagerHint.Standing = _root_.com.histmersion.api.automation.Managers.ManagerHint.Standing(true),
+      createdAt: ManagerHint.CreatedAt = _root_.com.histmersion.api.automation.Managers.ManagerHint.CreatedAt(""),
       retiredAt: Option[ManagerHint.RetiredAt] = None,
-      uses: ManagerHint.Uses = 0,
+      uses: ManagerHint.Uses = _root_.com.histmersion.api.automation.Managers.ManagerHint.Uses(0),
       proposal: Option[ManagerHint.Proposal] = None,
       proposed: Option[HintEffect] = None
   ) derives KindlingsCodecAsObject,
@@ -883,4 +883,4 @@ object Managers:
     object Suggest extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
 
-  val Actions: List[com.histmersion.api.automation.Managers.Actions] = List("pause", "resume", "stop")
+  val Actions: List[com.histmersion.api.automation.Managers.Actions] = List(_root_.com.histmersion.api.automation.Managers.Actions("pause"), _root_.com.histmersion.api.automation.Managers.Actions("resume"), _root_.com.histmersion.api.automation.Managers.Actions("stop"))

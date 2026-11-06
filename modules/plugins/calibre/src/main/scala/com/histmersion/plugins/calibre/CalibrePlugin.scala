@@ -8,13 +8,13 @@ import com.histmersion.plugin.{Plugin, Spi}
   */
 final class CalibrePlugin extends Plugin:
   type Config = Calibre.Settings
-  val info: Plugin.Info = Plugin.Info("calibre", CalibrePlugin.Version, Spi.Version)
+  val info: Plugin.Info = Plugin.Info(_root_.com.histmersion.plugin.Plugin.Info.Id("calibre"), _root_.com.histmersion.plugin.Plugin.Info.Version(CalibrePlugin.Version), _root_.com.histmersion.plugin.Plugin.Info.SpiVersion(Spi.Version))
   def register(c: Calibre.Settings, ctx: Plugin.Context): Either[com.histmersion.plugins.calibre.CalibrePlugin.RegisterResultPart1, Unit] =
     given files: com.histmersion.plugin.LocalFiles = ctx.files
     given processes: com.histmersion.plugin.Processes = ctx.processes
     ctx.sourceCollections.add(
-      "calibre",
-      CalibreCollection(c.library(ctx.env("HOME"), ctx.env("PATH")), c.writeBack, Shell.system)
+      _root_.com.histmersion.plugin.Registry.AddId("calibre"),
+      CalibreCollection(c.library(ctx.env(_root_.com.histmersion.plugin.Plugin.Context.EnvName("HOME")), ctx.env(_root_.com.histmersion.plugin.Plugin.Context.EnvName("PATH"))), c.writeBack, Shell.system)
     )
 
 object CalibrePlugin:

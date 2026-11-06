@@ -1,15 +1,15 @@
 package com.histmersion.api.automation
 enum ItemStatus(val wire: ItemStatus.Wire):
-  case Pending extends ItemStatus("pending")
-  case Held extends ItemStatus("held")
-  case Active extends ItemStatus("active")
-  case Done extends ItemStatus("done")
-  case Stopped extends ItemStatus("stopped")
-  case Failed extends ItemStatus("failed")
-  case Cancelled extends ItemStatus("cancelled")
+  case Pending extends ItemStatus(_root_.com.histmersion.api.automation.ItemStatus.Wire("pending"))
+  case Held extends ItemStatus(_root_.com.histmersion.api.automation.ItemStatus.Wire("held"))
+  case Active extends ItemStatus(_root_.com.histmersion.api.automation.ItemStatus.Wire("active"))
+  case Done extends ItemStatus(_root_.com.histmersion.api.automation.ItemStatus.Wire("done"))
+  case Stopped extends ItemStatus(_root_.com.histmersion.api.automation.ItemStatus.Wire("stopped"))
+  case Failed extends ItemStatus(_root_.com.histmersion.api.automation.ItemStatus.Wire("failed"))
+  case Cancelled extends ItemStatus(_root_.com.histmersion.api.automation.ItemStatus.Wire("cancelled"))
 
   /** Settled: only a person (re-open, enqueue) brings it back. */
-  def isFinal: com.histmersion.api.automation.ItemStatus.IsFinalResult = this == Done || this == Stopped || this == Failed || this == Cancelled
+  def isFinal: com.histmersion.api.automation.ItemStatus.IsFinalResult = _root_.com.histmersion.api.automation.ItemStatus.IsFinalResult(this == Done || this == Stopped || this == Failed || this == Cancelled)
 
 object ItemStatus:
   type Wire = Wire.T

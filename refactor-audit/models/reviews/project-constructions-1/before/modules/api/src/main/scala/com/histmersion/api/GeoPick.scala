@@ -1,0 +1,75 @@
+package com.histmersion.api
+
+import sttp.tapir.Schema
+import com.histmersion.api.catalogue.GeoTime
+
+enum GeoPick:
+  case Mid, Start, End, Earliest, Latest
+
+  def wire: com.histmersion.api.GeoPick.WireResult = this match
+    case Mid      => "mid"
+    case Start    => "start"
+    case End      => "end"
+    case Earliest => "earliest"
+    case Latest   => "latest"
+
+  def label: com.histmersion.api.GeoPick.LabelResult = this match
+    case Mid      => "States at midpoint"
+    case Start    => "States at start"
+    case End      => "States at end"
+    case Earliest => "All states in period (earliest shape)"
+    case Latest   => "All states in period (latest shape)"
+
+  def snapshot: com.histmersion.api.GeoPick.SnapshotResult = this match
+    case Mid | Start | End => true
+    case _                 => false
+
+object GeoPick:
+  type WireResult = WireResult.T
+  object WireResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type LabelResult = LabelResult.T
+  object LabelResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type SnapshotResult = SnapshotResult.T
+  object SnapshotResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type ParseS = ParseS.T
+  object ParseS extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type FromWireS = FromWireS.T
+  object FromWireS extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type YearOfResult = YearOfResult.T
+  object YearOfResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type YearOfLo = YearOfLo.T
+  object YearOfLo extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type YearOfHi = YearOfHi.T
+  object YearOfHi extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type ResolveAsOf = ResolveAsOf.T
+  object ResolveAsOf extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type ResolveFrom = ResolveFrom.T
+  object ResolveFrom extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type ResolveTo = ResolveTo.T
+  object ResolveTo extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
+  def parse(s: com.histmersion.api.GeoPick.ParseS): Option[GeoPick] = values.find(_.wire == s.trim.toLowerCase(java.util.Locale.ROOT))
+
+  given WireEnumValues[GeoPick]:
+    def all: Array[GeoPick] = GeoPick.values
+    def wire(e: GeoPick): com.histmersion.api.GeoPick.WireResult = e.wire
+    def fromWire(s: com.histmersion.api.GeoPick.FromWireS): Option[GeoPick] = parse(s)
+  given io.circe.Encoder[GeoPick] = WireEnum.encoder
+  given io.circe.Decoder[GeoPick] = WireEnum.decoder
+  given Schema[GeoPick] = WireEnum.schema
+
+  def yearOf(pick: GeoPick, lo: com.histmersion.api.GeoPick.YearOfLo, hi: com.histmersion.api.GeoPick.YearOfHi): com.histmersion.api.GeoPick.YearOfResult = pick match
+    case Start => lo
+    case End   => hi
+    case _     => (lo + hi) / 2
+
+  def resolve(asOf: Option[com.histmersion.api.GeoPick.ResolveAsOf], from: Option[com.histmersion.api.GeoPick.ResolveFrom], to: Option[com.histmersion.api.GeoPick.ResolveTo], pick: GeoPick): GeoTime =
+    val span = (from, to) match
+      case (Some(a), Some(b)) => Some((a.min(b), a.max(b)))
+      case (Some(a), None)    => Some((a, a))
+      case (None, Some(b))    => Some((b, b))
+      case (None, None)       => None
+    span match
+      case None                                        => asOf.fold(GeoTime.Always)(GeoTime.At(_))
+      case Some((lo, hi)) if pick.snapshot || lo == hi => GeoTime.At(yearOf(pick, lo, hi))
+      case Some((lo, hi))                              => GeoTime.Within(lo, hi, latest = pick == Latest)

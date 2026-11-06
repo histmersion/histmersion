@@ -9,7 +9,7 @@ enum PluginState:
 
   case Refused
 
-  def wire: com.histmersion.api.plugins.PluginState.WireResult = toString.toLowerCase(java.util.Locale.ROOT)
+  def wire: com.histmersion.api.plugins.PluginState.WireResult = _root_.com.histmersion.api.plugins.PluginState.WireResult(toString.toLowerCase(java.util.Locale.ROOT))
 
 object PluginState:
   type WireResult = WireResult.T

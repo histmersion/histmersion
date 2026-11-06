@@ -69,7 +69,7 @@ object Finding:
       periodEnd = f.period.map(_.end),
       periodName = f.periodName,
       tags = f.tags,
-      confidence = f.confidence.map(_.toString.toLowerCase),
+      confidence = f.confidence.map(_root_.com.histmersion.api.library.Finding.Input.Confidence(_.toString.toLowerCase)),
       significance = f.significance
     )
 

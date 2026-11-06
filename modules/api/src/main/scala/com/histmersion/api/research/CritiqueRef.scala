@@ -5,9 +5,9 @@ import sttp.tapir.Schema
 import com.histmersion.api.given
 
 final case class CritiqueRef(src: com.histmersion.api.library.Citekey, dst: com.histmersion.api.library.Citekey) derives KindlingsCodecAsObject, KindlingsSchema, com.histmersion.api.json.Schema:
-  def wire: com.histmersion.api.research.CritiqueRef.WireResult = s"$src>$dst"
+  def wire: com.histmersion.api.research.CritiqueRef.WireResult = _root_.com.histmersion.api.research.CritiqueRef.WireResult(s"$src>$dst")
 
-  def same(o: CritiqueRef): com.histmersion.api.research.CritiqueRef.SameResult = (src == o.src && dst == o.dst) || (src == o.dst && dst == o.src)
+  def same(o: CritiqueRef): com.histmersion.api.research.CritiqueRef.SameResult = _root_.com.histmersion.api.research.CritiqueRef.SameResult((src == o.src && dst == o.dst) || (src == o.dst && dst == o.src))
 
 object CritiqueRef:
 
@@ -33,4 +33,4 @@ object CritiqueRef:
     t.split(">", -1).toList match
       case a :: b :: Nil if key(a).nonEmpty && key(b).nonEmpty && key(a) != key(b) => Right(CritiqueRef(key(a), key(b)))
       case _                                                                       =>
-        Left(s"'$s' is not a pair — write it as <src>><dst>, the critic first (e.g. smith1987_dying>frazer1922_golden)")
+        Left(_root_.com.histmersion.api.research.CritiqueRef.ParseResultPart1(s"'$s' is not a pair — write it as <src>><dst>, the critic first (e.g. smith1987_dying>frazer1922_golden)"))

@@ -12,8 +12,8 @@ final case class CollectionImportRequest(
     id: CollectionImportRequest.Id,
     citekey: Option[com.histmersion.api.library.Citekey] = None,
     format: Option[CollectionImportRequest.Format] = None,
-    convert: CollectionImportRequest.Convert = true,
-    cover: CollectionImportRequest.Cover = true,
+    convert: CollectionImportRequest.Convert = _root_.com.histmersion.api.library.CollectionImportRequest.Convert(true),
+    cover: CollectionImportRequest.Cover = _root_.com.histmersion.api.library.CollectionImportRequest.Cover(true),
     acquireItem: Option[CollectionImportRequest.AcquireItem] = None
 ) derives KindlingsCodecAsObject,
       KindlingsSchema, com.histmersion.api.json.Schema

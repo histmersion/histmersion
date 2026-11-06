@@ -14,8 +14,8 @@ final case class MergeInfo(
     appliedAt: MergeInfo.AppliedAt,
     planHash: Option[MergeInfo.PlanHash] = None,
     backup: Option[MergeInfo.Backup] = None,
-    ledgerRows: MergeInfo.LedgerRows = 0,
-    redirects: MergeInfo.Redirects = 0
+    ledgerRows: MergeInfo.LedgerRows = _root_.com.histmersion.api.exchange.MergeInfo.LedgerRows(0),
+    redirects: MergeInfo.Redirects = _root_.com.histmersion.api.exchange.MergeInfo.Redirects(0)
 ) derives KindlingsCodecAsObject,
       KindlingsSchema, com.histmersion.api.json.Schema
 

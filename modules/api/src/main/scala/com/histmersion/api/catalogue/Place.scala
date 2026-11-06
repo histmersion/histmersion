@@ -65,7 +65,7 @@ object Place:
     val Site = "site"
     val Feature = "feature"
     val People = "people"
-    val all: List[com.histmersion.api.catalogue.Place.Kind.All] = List(Region, Polity, Site, Feature, People)
+    val all: List[com.histmersion.api.catalogue.Place.Kind.All] = List(_root_.com.histmersion.api.catalogue.Place.Kind.All(Region), _root_.com.histmersion.api.catalogue.Place.Kind.All(Polity), _root_.com.histmersion.api.catalogue.Place.Kind.All(Site), _root_.com.histmersion.api.catalogue.Place.Kind.All(Feature), _root_.com.histmersion.api.catalogue.Place.Kind.All(People))
 
     /** Map a foreign type label (LPF `types[].label`, an AAT id, a Natural Earth class) onto a kind; `None` when
       * nothing recognisable is there, so the caller's default wins.
@@ -74,19 +74,19 @@ object Place:
       val t = s.trim.toLowerCase
       if t.isEmpty then None
       else if all.contains(t) then Some(t)
-      else if t.contains("people") || t.contains("tribe") then Some(People)
+      else if t.contains("people") || t.contains("tribe") then Some(_root_.com.histmersion.api.catalogue.Place.Kind.ParseResult(People))
       else if t.contains("settlement") || t.contains("site") || t.contains("city") || t.contains("town")
         || t.contains("village") || t.contains("fort") || t.contains("temple") || t.contains("sanctuary")
-      then Some(Site)
+      then Some(_root_.com.histmersion.api.catalogue.Place.Kind.ParseResult(Site))
       else if t.contains("kingdom") || t.contains("empire") || t.contains("polity") || t.contains("state")
         || t.contains("dynasty") || t.contains("country") || t.contains("nation")
-      then Some(Polity)
+      then Some(_root_.com.histmersion.api.catalogue.Place.Kind.ParseResult(Polity))
       else if t.contains("region") || t.contains("continent") || t.contains("province")
         || t.contains("territory") || t.contains("area")
-      then Some(Region)
+      then Some(_root_.com.histmersion.api.catalogue.Place.Kind.ParseResult(Region))
       else if t.contains("river") || t.contains("mountain") || t.contains("island") || t.contains("lake")
         || t.contains("feature") || t.contains("pass") || t.contains("valley")
-      then Some(Feature)
+      then Some(_root_.com.histmersion.api.catalogue.Place.Kind.ParseResult(Feature))
       else None
 
   /** How exact a place's POINT is (V077). Pleiades gives a place whose only location is a square of the Barrington
@@ -105,8 +105,8 @@ object Place:
     case Stated, GridCell
 
     def wire: com.histmersion.api.catalogue.Place.Precision.WireResult = this match
-      case Stated   => "stated"
-      case GridCell => "grid-cell"
+      case Stated   => _root_.com.histmersion.api.catalogue.Place.Precision.WireResult("stated")
+      case GridCell => _root_.com.histmersion.api.catalogue.Place.Precision.WireResult("grid-cell")
 
   object Precision:
     /** The atlas grids, as cell sizes in micro-degrees: 5°, 1° and ½°. */
@@ -133,7 +133,7 @@ object Place:
     type FromWireS = FromWireS.T
     object FromWireS extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
-    val CellsMicro: List[com.histmersion.api.catalogue.Place.Precision.CellsMicro] = List(5000000L, 1000000L, 500000L)
+    val CellsMicro: List[com.histmersion.api.catalogue.Place.Precision.CellsMicro] = List(_root_.com.histmersion.api.catalogue.Place.Precision.CellsMicro(5000000L), _root_.com.histmersion.api.catalogue.Place.Precision.CellsMicro(1000000L), _root_.com.histmersion.api.catalogue.Place.Precision.CellsMicro(500000L))
 
     /** Is (`lon`, `lat`) — rounded to a micro-degree — the centre of a cell of one of the grids, in both coordinates?
       * Pure.
@@ -141,14 +141,14 @@ object Place:
     def gridCentre(lon: com.histmersion.api.catalogue.Place.Precision.GridCentreLon, lat: com.histmersion.api.catalogue.Place.Precision.GridCentreLat): com.histmersion.api.catalogue.Place.Precision.GridCentreResult =
       val x = math.round(lon * 1e6)
       val y = math.round(lat * 1e6)
-      CellsMicro.exists(c => Math.floorMod(x, c) == c / 2 && Math.floorMod(y, c) == c / 2)
+      _root_.com.histmersion.api.catalogue.Place.Precision.GridCentreResult(CellsMicro.exists(c => Math.floorMod(x, c) == c / 2 && Math.floorMod(y, c) == c / 2))
 
     /** The precision of the point of place `placeId`. */
     def of(placeId: com.histmersion.api.catalogue.Place.Precision.OfPlaceId, lon: com.histmersion.api.catalogue.Place.Precision.OfLon, lat: com.histmersion.api.catalogue.Place.Precision.OfLat): Precision =
       if placeId.startsWith("pleiades_") && gridCentre(lon, lat) then GridCell else Stated
 
     /** What a place says about a grid-cell point ("location: approximate (atlas grid square)" on a card). */
-    val Approximate: com.histmersion.api.catalogue.Place.Precision.Approximate = "approximate (atlas grid square)"
+    val Approximate: com.histmersion.api.catalogue.Place.Precision.Approximate = _root_.com.histmersion.api.catalogue.Place.Precision.Approximate("approximate (atlas grid square)")
 
     def parse(s: com.histmersion.api.catalogue.Place.Precision.ParseS): Option[Precision] = values.find(_.wire == Ascii.lower(s.trim))
 
@@ -225,7 +225,7 @@ object Place:
 
     def shapeNotes: List[com.histmersion.api.catalogue.Place.Card.ShapeNotesResult] = shapeNote.toList ++ locationNote.map(n => s"location: $n").toList
 
-    def datedByFindings: com.histmersion.api.catalogue.Place.Card.DatedByFindingsResult = asOf.isDefined && timeBasis == TimeBasis.Findings
+    def datedByFindings: com.histmersion.api.catalogue.Place.Card.DatedByFindingsResult = _root_.com.histmersion.api.catalogue.Place.Card.DatedByFindingsResult(asOf.isDefined && timeBasis == TimeBasis.Findings)
 
   object Card:
     type GeometryResult = GeometryResult.T
@@ -270,9 +270,9 @@ object Place:
     case Stated, EndOnly, Unknown
 
     def wire: com.histmersion.api.catalogue.Place.Dating.WireResult = this match
-      case Stated  => "stated"
-      case EndOnly => "end-only"
-      case Unknown => "unknown"
+      case Stated  => _root_.com.histmersion.api.catalogue.Place.Dating.WireResult("stated")
+      case EndOnly => _root_.com.histmersion.api.catalogue.Place.Dating.WireResult("end-only")
+      case Unknown => _root_.com.histmersion.api.catalogue.Place.Dating.WireResult("unknown")
 
   object Dating:
     type WireResult = WireResult.T
@@ -299,11 +299,11 @@ object Place:
     given Schema[Dating] = WireEnum.schema
 
     def describe(dating: Dating, start: Option[com.histmersion.api.catalogue.Place.Dating.DescribeStart], end: Option[com.histmersion.api.catalogue.Place.Dating.DescribeEnd]): com.histmersion.api.catalogue.Place.Dating.DescribeResult = dating match
-      case Unknown => "date unknown"
+      case Unknown => _root_.com.histmersion.api.catalogue.Place.Dating.DescribeResult("date unknown")
       case EndOnly => end.fold("date unknown")(e => s"end ${YearFmt(e)}, start unknown")
-      case Stated  => YearFmt.openPeriod(start, end, none = "")
+      case Stated  => YearFmt.openPeriod(start, end, none = _root_.com.histmersion.api.YearFmt.OpenPeriodNone(""))
 
-  final case class Description(text: Description.Text, lang: Description.Lang = "", source: Description.Source = "")
+  final case class Description(text: Description.Text, lang: Description.Lang = _root_.com.histmersion.api.catalogue.Place.Description.Lang(""), source: Description.Source = _root_.com.histmersion.api.catalogue.Place.Description.Source(""))
       derives KindlingsCodecAsObject,
         KindlingsSchema, com.histmersion.api.json.Schema
 
@@ -361,21 +361,21 @@ object Place:
     private val LangShape = "^[a-z]{2,3}(-[a-z0-9]{2,8})*$".r
     private val IdShape = "^[a-z0-9][a-z0-9_.-]*$".r
 
-    private def invalid(msg: com.histmersion.api.catalogue.Place.Edits.InvalidMsg) = Api.Error(msg, Some(Write.CodeInvalid))
+    private def invalid(msg: com.histmersion.api.catalogue.Place.Edits.InvalidMsg) = Api.Error(msg, Some(_root_.com.histmersion.api.Api.Error.Code(Write.CodeInvalid)))
 
     def name(raw: com.histmersion.api.catalogue.Place.Edits.NameRaw): Either[Api.Error, com.histmersion.api.catalogue.Place.Edits.NameResultPart2] =
       val n = raw.trim.replaceAll("\\s+", " ")
-      if n.isEmpty then Left(invalid("the name is empty"))
-      else if n.length > MaxName then Left(invalid(s"a place name is at most $MaxName characters"))
+      if n.isEmpty then Left(invalid(_root_.com.histmersion.api.catalogue.Place.Edits.InvalidMsg("the name is empty")))
+      else if n.length > MaxName then Left(invalid(_root_.com.histmersion.api.catalogue.Place.Edits.InvalidMsg(s"a place name is at most $MaxName characters")))
       else Right(n)
 
     val MaxName = 200
 
     def lang(raw: Option[com.histmersion.api.catalogue.Place.Edits.LangRaw]): Either[Api.Error, com.histmersion.api.catalogue.Place.Edits.LangResultPart2] =
       raw.map(_.trim.toLowerCase(java.util.Locale.ROOT)).filter(_.nonEmpty) match
-        case None                            => Right("")
+        case None                            => Right(_root_.com.histmersion.api.catalogue.Place.Edits.LangResultPart2(""))
         case Some(l) if LangShape.matches(l) => Right(l)
-        case Some(l)                         => Left(invalid(s"'$l' is not a language tag (e.g. en, grc, pl, sr-latn)"))
+        case Some(l)                         => Left(invalid(_root_.com.histmersion.api.catalogue.Place.Edits.InvalidMsg(s"'$l' is not a language tag (e.g. en, grc, pl, sr-latn)")))
 
     def defaultId(label: com.histmersion.api.catalogue.Place.Edits.DefaultIdLabel): com.histmersion.api.catalogue.Place.Edits.DefaultIdResult =
       LocalPrefix + Geocode.key(label).replaceAll("[^a-z0-9]+", "_").replaceAll("^_+|_+$", "").take(64)
@@ -385,7 +385,7 @@ object Place:
       val kind = in.kind.trim.toLowerCase(java.util.Locale.ROOT)
       val id = in.id.map(_.value).map(_.trim).filter(_.nonEmpty).getOrElse(defaultId(label))
       for
-        _ <- Either.cond(label.nonEmpty, (), invalid("the label is empty"))
+        _ <- Either.cond(label.nonEmpty, (), invalid(_root_.com.histmersion.api.catalogue.Place.Edits.InvalidMsg("the label is empty")))
         _ <- Either.cond(
           com.histmersion.api.catalogue.Place.Kind.all.contains(kind),
           (),
@@ -458,12 +458,12 @@ object Place:
       children: List[Summary],
       findings: Entry.Findings,
       asOf: Option[Entry.AsOf],
-      contested: Entry.Contested = false,
+      contested: Entry.Contested = _root_.com.histmersion.api.catalogue.Place.Entry.Contested(false),
       footprints: List[Footprint] = Nil,
       links: List[Link] = Nil,
       types: List[Type] = Nil,
       counts: Option[Counts] = None,
-      hasBoundary: Entry.HasBoundary = false,
+      hasBoundary: Entry.HasBoundary = _root_.com.histmersion.api.catalogue.Place.Entry.HasBoundary(false),
       descriptions: List[Description] = Nil,
       timeBasis: TimeBasis = TimeBasis.Dated,
       /** `grid-cell` for a Pleiades point that is only the centre of an atlas grid square. */
@@ -491,7 +491,7 @@ object Place:
   final case class Footprint(
       id: Footprint.Id,
       placeId: com.histmersion.api.catalogue.Place.Id,
-      role: Footprint.Role = "extent",
+      role: Footprint.Role = _root_.com.histmersion.api.catalogue.Place.Footprint.Role("extent"),
       period: Option[Period] = None,
       certainty: Option[Footprint.Certainty] = None,
       accuracyM: Option[Footprint.AccuracyM] = None,
@@ -514,8 +514,8 @@ object Place:
     type AccuracyM = AccuracyM.T
     object AccuracyM extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Float, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
-    val Roles: List[com.histmersion.api.catalogue.Place.Footprint.Roles] = List("extent", "core", "maximal", "frontier", "seat", "snapshot")
-    val Certainties: List[com.histmersion.api.catalogue.Place.Footprint.Certainties] = List("definite", "approximate", "uncertain")
+    val Roles: List[com.histmersion.api.catalogue.Place.Footprint.Roles] = List(_root_.com.histmersion.api.catalogue.Place.Footprint.Roles("extent"), _root_.com.histmersion.api.catalogue.Place.Footprint.Roles("core"), _root_.com.histmersion.api.catalogue.Place.Footprint.Roles("maximal"), _root_.com.histmersion.api.catalogue.Place.Footprint.Roles("frontier"), _root_.com.histmersion.api.catalogue.Place.Footprint.Roles("seat"), _root_.com.histmersion.api.catalogue.Place.Footprint.Roles("snapshot"))
+    val Certainties: List[com.histmersion.api.catalogue.Place.Footprint.Certainties] = List(_root_.com.histmersion.api.catalogue.Place.Footprint.Certainties("definite"), _root_.com.histmersion.api.catalogue.Place.Footprint.Certainties("approximate"), _root_.com.histmersion.api.catalogue.Place.Footprint.Certainties("uncertain"))
 
   final case class Gone(
       placeId: com.histmersion.api.catalogue.Place.Id,
@@ -553,7 +553,7 @@ object Place:
       names: Hit.Names,
       matchedName: Option[Hit.MatchedName],
       findings: Hit.Findings,
-      contested: Hit.Contested = false,
+      contested: Hit.Contested = _root_.com.histmersion.api.catalogue.Place.Hit.Contested(false),
       dating: Dating = Dating.Stated,
       importSource: Option[Hit.ImportSource] = None
   ) derives KindlingsCodecAsObject,
@@ -604,7 +604,7 @@ object Place:
 
   final case class Input(place: Place, names: List[Name] = Nil, relations: List[Relation] = Nil)
 
-  final case class Link(placeId: com.histmersion.api.catalogue.Place.Id, scheme: Link.Scheme, externalId: Link.ExternalId, relation: Link.Relation = "close_match")
+  final case class Link(placeId: com.histmersion.api.catalogue.Place.Id, scheme: Link.Scheme, externalId: Link.ExternalId, relation: Link.Relation = _root_.com.histmersion.api.catalogue.Place.Link.Relation("close_match"))
       derives KindlingsCodecAsObject,
         KindlingsSchema, com.histmersion.api.json.Schema
   object Link:
@@ -631,32 +631,32 @@ object Place:
     type Relation = Relation.T
     object Relation extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
-    val Schemes: List[com.histmersion.api.catalogue.Place.Link.Schemes] = List("pleiades", "wikidata", "tgn", "geonames", "whg")
-    val Relations: List[com.histmersion.api.catalogue.Place.Link.Relations] = List("close_match", "exact_match", "broad_match", "see_also")
+    val Schemes: List[com.histmersion.api.catalogue.Place.Link.Schemes] = List(_root_.com.histmersion.api.catalogue.Place.Link.Schemes("pleiades"), _root_.com.histmersion.api.catalogue.Place.Link.Schemes("wikidata"), _root_.com.histmersion.api.catalogue.Place.Link.Schemes("tgn"), _root_.com.histmersion.api.catalogue.Place.Link.Schemes("geonames"), _root_.com.histmersion.api.catalogue.Place.Link.Schemes("whg"))
+    val Relations: List[com.histmersion.api.catalogue.Place.Link.Relations] = List(_root_.com.histmersion.api.catalogue.Place.Link.Relations("close_match"), _root_.com.histmersion.api.catalogue.Place.Link.Relations("exact_match"), _root_.com.histmersion.api.catalogue.Place.Link.Relations("broad_match"), _root_.com.histmersion.api.catalogue.Place.Link.Relations("see_also"))
 
     def url(scheme: com.histmersion.api.catalogue.Place.Link.UrlScheme, externalId: com.histmersion.api.catalogue.Place.Link.UrlExternalId): Option[com.histmersion.api.catalogue.Place.Link.UrlResult] =
       val id = externalId.trim
       if id.isEmpty then None
       else
         scheme.trim.toLowerCase(java.util.Locale.ROOT) match
-          case "wikidata" => Some(s"https://www.wikidata.org/wiki/$id")
-          case "geonames" => Some(s"https://www.geonames.org/$id")
-          case "pleiades" => Some(s"https://pleiades.stoa.org/places/$id")
-          case "tgn"      => Some(s"http://vocab.getty.edu/page/tgn/$id")
-          case "whg"      => Some(s"https://whgazetteer.org/places/$id/portal")
+          case "wikidata" => Some(_root_.com.histmersion.api.catalogue.Place.Link.UrlResult(s"https://www.wikidata.org/wiki/$id"))
+          case "geonames" => Some(_root_.com.histmersion.api.catalogue.Place.Link.UrlResult(s"https://www.geonames.org/$id"))
+          case "pleiades" => Some(_root_.com.histmersion.api.catalogue.Place.Link.UrlResult(s"https://pleiades.stoa.org/places/$id"))
+          case "tgn"      => Some(_root_.com.histmersion.api.catalogue.Place.Link.UrlResult(s"http://vocab.getty.edu/page/tgn/$id"))
+          case "whg"      => Some(_root_.com.histmersion.api.catalogue.Place.Link.UrlResult(s"https://whgazetteer.org/places/$id/portal"))
           case "commons"  => Some(s"https://commons.wikimedia.org/wiki/Category:${id.replace(' ', '_')}")
           case _          => None
 
     def schemeTitle(scheme: com.histmersion.api.catalogue.Place.Link.SchemeTitleScheme): com.histmersion.api.catalogue.Place.Link.SchemeTitleResult = scheme.trim.toLowerCase(java.util.Locale.ROOT) match
-      case "wikidata" => "Wikidata"
-      case "geonames" => "GeoNames"
-      case "pleiades" => "Pleiades"
-      case "tgn"      => "Getty TGN"
-      case "whg"      => "World Historical Gazetteer"
-      case "commons"  => "Commons category"
+      case "wikidata" => _root_.com.histmersion.api.catalogue.Place.Link.SchemeTitleResult("Wikidata")
+      case "geonames" => _root_.com.histmersion.api.catalogue.Place.Link.SchemeTitleResult("GeoNames")
+      case "pleiades" => _root_.com.histmersion.api.catalogue.Place.Link.SchemeTitleResult("Pleiades")
+      case "tgn"      => _root_.com.histmersion.api.catalogue.Place.Link.SchemeTitleResult("Getty TGN")
+      case "whg"      => _root_.com.histmersion.api.catalogue.Place.Link.SchemeTitleResult("World Historical Gazetteer")
+      case "commons"  => _root_.com.histmersion.api.catalogue.Place.Link.SchemeTitleResult("Commons category")
       case other      => other
 
-  final case class Match(placeId: com.histmersion.api.catalogue.Place.Id, importSource: Option[Match.ImportSource], native: Match.Native = true)
+  final case class Match(placeId: com.histmersion.api.catalogue.Place.Id, importSource: Option[Match.ImportSource], native: Match.Native = _root_.com.histmersion.api.catalogue.Place.Match.Native(true))
 
   object Match:
     type ImportSource = ImportSource.T
@@ -677,7 +677,7 @@ object Place:
 
   final case class Name(
       name: Name.Value,
-      lang: Name.Lang = "",
+      lang: Name.Lang = _root_.com.histmersion.api.catalogue.Place.Name.Lang(""),
       period: Option[Period] = None,
       open: Option[OpenSide] = None
   ):
@@ -711,7 +711,7 @@ object Place:
       lang: NameChanged.Lang,
       added: NameChanged.Added,
       changed: NameChanged.Changed,
-      wasImported: NameChanged.WasImported = false
+      wasImported: NameChanged.WasImported = _root_.com.histmersion.api.catalogue.Place.NameChanged.WasImported(false)
   ) derives KindlingsCodecAsObject,
         KindlingsSchema, com.histmersion.api.json.Schema
 
@@ -855,7 +855,7 @@ object Place:
       periodStart: Option[com.histmersion.api.catalogue.Year] = None,
       periodEnd: Option[com.histmersion.api.catalogue.Year] = None,
       reason: Option[OverrideSet.Reason] = None,
-      reset: OverrideSet.Reset = false,
+      reset: OverrideSet.Reset = _root_.com.histmersion.api.catalogue.Place.OverrideSet.Reset(false),
       pointLat: Option[OverrideSet.PointLat] = None,
       pointLon: Option[OverrideSet.PointLon] = None
   )
@@ -914,7 +914,7 @@ object Place:
 
     val MaxReason = 500
 
-    private def invalid(msg: com.histmersion.api.catalogue.Place.Overrides.InvalidMsg) = Api.Error(msg, Some(Write.CodeInvalid))
+    private def invalid(msg: com.histmersion.api.catalogue.Place.Overrides.InvalidMsg) = Api.Error(msg, Some(_root_.com.histmersion.api.Api.Error.Code(Write.CodeInvalid)))
 
     def edit(in: OverrideSet): Either[Api.Error, OverrideEdit] =
       val kind = in.kind.map(_.trim.toLowerCase(java.util.Locale.ROOT)).filter(_.nonEmpty)
@@ -923,14 +923,14 @@ object Place:
       val asked = in.pointLat.isDefined || in.pointLon.isDefined
       if in.reset then
         if kind.isDefined || period.isDefined || asked then
-          Left(invalid("`reset` drops the override — pass no kind, period or point with it"))
+          Left(invalid(_root_.com.histmersion.api.catalogue.Place.Overrides.InvalidMsg("`reset` drops the override — pass no kind, period or point with it")))
         else Right(OverrideEdit.Reset)
       else
         for
           _ <- Either.cond(
             kind.isDefined || period.isDefined || asked,
             (),
-            invalid("say what to set: a kind, a period (periodStart/periodEnd), a point (pointLat/pointLon), or reset")
+            invalid(_root_.com.histmersion.api.catalogue.Place.Overrides.InvalidMsg("say what to set: a kind, a period (periodStart/periodEnd), a point (pointLat/pointLon), or reset"))
           )
           point <-
             if !asked then Right(None)
@@ -967,7 +967,7 @@ object Place:
 
     def reason(raw: Option[com.histmersion.api.catalogue.Place.Overrides.ReasonRaw]): Either[Api.Error, Option[com.histmersion.api.catalogue.Place.Overrides.ReasonResultPart2]] =
       val r = raw.map(_.trim.replaceAll("\\s+", " ")).filter(_.nonEmpty)
-      Either.cond(r.forall(_.length <= MaxReason), r, invalid(s"a reason is at most $MaxReason characters"))
+      Either.cond(r.forall(_.length <= MaxReason), r, invalid(_root_.com.histmersion.api.catalogue.Place.Overrides.InvalidMsg(s"a reason is at most $MaxReason characters")))
 
     def parsePoint(raw: com.histmersion.api.catalogue.Place.Overrides.ParsePointRaw): Either[com.histmersion.api.catalogue.Place.Overrides.ParsePointResultPart1, (com.histmersion.api.catalogue.Place.Overrides.ParsePointResultPart2Part1, com.histmersion.api.catalogue.Place.Overrides.ParsePointResultPart2Part2)] =
       raw.split(",", -1).map(_.trim).toList match
@@ -977,9 +977,9 @@ object Place:
                 if !lat.isNaN && !lon.isNaN && lat >= -90 && lat <= 90 && lon >= -180 && lon <= 180 =>
               Right((lat, lon))
             case (Some(_), Some(_)) =>
-              Left(s"'$raw' is not a latitude,longitude (latitude −90..90, longitude −180..180)")
-            case _ => Left(s"'$raw' is not a latitude,longitude pair of numbers, e.g. 37.95,58.21")
-        case _ => Left(s"'$raw' is not latitude,longitude, e.g. 37.95,58.21")
+              Left(_root_.com.histmersion.api.catalogue.Place.Overrides.ParsePointResultPart1(s"'$raw' is not a latitude,longitude (latitude −90..90, longitude −180..180)"))
+            case _ => Left(_root_.com.histmersion.api.catalogue.Place.Overrides.ParsePointResultPart1(s"'$raw' is not a latitude,longitude pair of numbers, e.g. 37.95,58.21"))
+        case _ => Left(_root_.com.histmersion.api.catalogue.Place.Overrides.ParsePointResultPart1(s"'$raw' is not latitude,longitude, e.g. 37.95,58.21"))
 
     def pointText(lat: com.histmersion.api.catalogue.Place.Overrides.PointTextLat, lon: com.histmersion.api.catalogue.Place.Overrides.PointTextLon): com.histmersion.api.catalogue.Place.Overrides.PointTextResult =
       String.format(
@@ -1025,7 +1025,7 @@ object Place:
       registers: List[Register] = Nil
   ) derives KindlingsCodecAsObject,
         KindlingsSchema:
-    def isEmpty: com.histmersion.api.catalogue.Place.Record.IsEmptyResult = dateSource.isEmpty && periods.isEmpty && designations.isEmpty && registers.isEmpty
+    def isEmpty: com.histmersion.api.catalogue.Place.Record.IsEmptyResult = _root_.com.histmersion.api.catalogue.Place.Record.IsEmptyResult(dateSource.isEmpty && periods.isEmpty && designations.isEmpty && registers.isEmpty)
 
   object Record:
     type IsEmptyResult = IsEmptyResult.T
@@ -1041,10 +1041,10 @@ object Place:
     object Periods extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
     def dateSourceText(s: com.histmersion.api.catalogue.Place.Record.DateSourceTextS): com.histmersion.api.catalogue.Place.Record.DateSourceTextResult = s.trim.toLowerCase match
-      case "wikidata-p580"                    => "Wikidata: its start and end time"
-      case "wikidata-p571"                    => "Wikidata: its inception"
-      case "wikidata-p576"                    => "Wikidata: when it was dissolved or destroyed"
-      case p if p.startsWith("p2348-periodo") => "Wikidata: its time period, dated by PeriodO"
+      case "wikidata-p580"                    => _root_.com.histmersion.api.catalogue.Place.Record.DateSourceTextResult("Wikidata: its start and end time")
+      case "wikidata-p571"                    => _root_.com.histmersion.api.catalogue.Place.Record.DateSourceTextResult("Wikidata: its inception")
+      case "wikidata-p576"                    => _root_.com.histmersion.api.catalogue.Place.Record.DateSourceTextResult("Wikidata: when it was dissolved or destroyed")
+      case p if p.startsWith("p2348-periodo") => _root_.com.histmersion.api.catalogue.Place.Record.DateSourceTextResult("Wikidata: its time period, dated by PeriodO")
       case other                              => other
 
   final case class Register(property: Register.Property, id: Register.Id) derives KindlingsCodecAsObject, KindlingsSchema:
@@ -1064,18 +1064,18 @@ object Place:
     object Id extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
     val names: Map[com.histmersion.api.catalogue.Place.Register.NamesPart1, com.histmersion.api.catalogue.Place.Register.NamesPart2] = Map(
-      "P13741" -> "Archaeological Cadastre (Greece)",
-      "P2186" -> "Wiki Loves Monuments",
-      "P9951" -> "Greek Castles",
-      "P8218" -> "Archaeology in Greece Online",
-      "P8068" -> "ToposText",
-      "P1936" -> "DARE (Digital Atlas of the Roman Empire)"
+      { val refactorTuple12 = "P13741" -> "Archaeological Cadastre (Greece)"; (_root_.com.histmersion.api.catalogue.Place.Register.NamesPart1(refactorTuple12._1), _root_.com.histmersion.api.catalogue.Place.Register.NamesPart2(refactorTuple12._2)) },
+      { val refactorTuple13 = "P2186" -> "Wiki Loves Monuments"; (_root_.com.histmersion.api.catalogue.Place.Register.NamesPart1(refactorTuple13._1), _root_.com.histmersion.api.catalogue.Place.Register.NamesPart2(refactorTuple13._2)) },
+      { val refactorTuple14 = "P9951" -> "Greek Castles"; (_root_.com.histmersion.api.catalogue.Place.Register.NamesPart1(refactorTuple14._1), _root_.com.histmersion.api.catalogue.Place.Register.NamesPart2(refactorTuple14._2)) },
+      { val refactorTuple6 = "P8218" -> "Archaeology in Greece Online"; (_root_.com.histmersion.api.catalogue.Place.Register.NamesPart1(refactorTuple6._1), _root_.com.histmersion.api.catalogue.Place.Register.NamesPart2(refactorTuple6._2)) },
+      { val refactorTuple7 = "P8068" -> "ToposText"; (_root_.com.histmersion.api.catalogue.Place.Register.NamesPart1(refactorTuple7._1), _root_.com.histmersion.api.catalogue.Place.Register.NamesPart2(refactorTuple7._2)) },
+      { val refactorTuple8 = "P1936" -> "DARE (Digital Atlas of the Roman Empire)"; (_root_.com.histmersion.api.catalogue.Place.Register.NamesPart1(refactorTuple8._1), _root_.com.histmersion.api.catalogue.Place.Register.NamesPart2(refactorTuple8._2)) }
     )
 
   final case class Relation(
       childId: Relation.ChildId,
       parentId: Relation.ParentId,
-      kind: Relation.Kind = Relation.PartOf,
+      kind: Relation.Kind = _root_.com.histmersion.api.catalogue.Place.Relation.Kind(Relation.PartOf),
       period: Option[Period] = None,
       open: Option[OpenSide] = None
   ):
@@ -1107,8 +1107,8 @@ object Place:
     val VersionOf = "version_of"
     val CapitalOf = "capital_of"
     val all: List[com.histmersion.api.catalogue.Place.Relation.All] =
-      List(PartOf, PartOfAdmin, PartOfRegional, PartOfPhysical, Succeeds, SameAs, VersionOf, CapitalOf)
-    val partOfKinds: Set[com.histmersion.api.catalogue.Place.Relation.PartOfKinds] = Set(PartOf, PartOfAdmin, PartOfRegional, PartOfPhysical)
+      List(_root_.com.histmersion.api.catalogue.Place.Relation.All(PartOf), _root_.com.histmersion.api.catalogue.Place.Relation.All(PartOfAdmin), _root_.com.histmersion.api.catalogue.Place.Relation.All(PartOfRegional), _root_.com.histmersion.api.catalogue.Place.Relation.All(PartOfPhysical), _root_.com.histmersion.api.catalogue.Place.Relation.All(Succeeds), _root_.com.histmersion.api.catalogue.Place.Relation.All(SameAs), _root_.com.histmersion.api.catalogue.Place.Relation.All(VersionOf), _root_.com.histmersion.api.catalogue.Place.Relation.All(CapitalOf))
+    val partOfKinds: Set[com.histmersion.api.catalogue.Place.Relation.PartOfKinds] = Set(_root_.com.histmersion.api.catalogue.Place.Relation.PartOfKinds(PartOf), _root_.com.histmersion.api.catalogue.Place.Relation.PartOfKinds(PartOfAdmin), _root_.com.histmersion.api.catalogue.Place.Relation.PartOfKinds(PartOfRegional), _root_.com.histmersion.api.catalogue.Place.Relation.PartOfKinds(PartOfPhysical))
 
   final case class RemoveIn(reason: Option[RemoveIn.Reason] = None) derives KindlingsSchema, com.histmersion.api.json.Schema
   object RemoveIn:
@@ -1147,7 +1147,7 @@ object Place:
 
     def isPeople(kind: com.histmersion.api.catalogue.Place.Shape.IsPeopleKind): com.histmersion.api.catalogue.Place.Shape.IsPeopleResult = kind == com.histmersion.api.catalogue.Place.Kind.People
 
-    val PeopleNote: com.histmersion.api.catalogue.Place.Shape.PeopleNote = "a people or tribe — placed at a representative point, not an area"
+    val PeopleNote: com.histmersion.api.catalogue.Place.Shape.PeopleNote = _root_.com.histmersion.api.catalogue.Place.Shape.PeopleNote("a people or tribe — placed at a representative point, not an area")
 
   final case class Summary(
       id: com.histmersion.api.catalogue.Place.Id,
@@ -1157,7 +1157,7 @@ object Place:
       periodEnd: Option[com.histmersion.api.catalogue.Year],
       source: Option[Summary.Source],
       names: Summary.Names,
-      contested: Summary.Contested = false,
+      contested: Summary.Contested = _root_.com.histmersion.api.catalogue.Place.Summary.Contested(false),
       dating: Dating = Dating.Stated,
       importSource: Option[Summary.ImportSource] = None
   ) derives KindlingsCodecAsObject,
@@ -1186,11 +1186,11 @@ object Place:
     case Dated, Timeless, Modern, Grouping, Findings
 
     def wire: com.histmersion.api.catalogue.Place.TimeBasis.WireResult = this match
-      case Dated    => "dated"
-      case Timeless => "timeless"
-      case Modern   => "modern"
-      case Grouping => "grouping"
-      case Findings => "findings"
+      case Dated    => _root_.com.histmersion.api.catalogue.Place.TimeBasis.WireResult("dated")
+      case Timeless => _root_.com.histmersion.api.catalogue.Place.TimeBasis.WireResult("timeless")
+      case Modern   => _root_.com.histmersion.api.catalogue.Place.TimeBasis.WireResult("modern")
+      case Grouping => _root_.com.histmersion.api.catalogue.Place.TimeBasis.WireResult("grouping")
+      case Findings => _root_.com.histmersion.api.catalogue.Place.TimeBasis.WireResult("findings")
 
   object TimeBasis:
     type WireResult = WireResult.T
@@ -1238,12 +1238,12 @@ object Place:
 
     def visible(basis: TimeBasis, hi: com.histmersion.api.catalogue.Place.TimeBasis.VisibleHi, modernFrom: com.histmersion.api.catalogue.Place.TimeBasis.VisibleModernFrom, overlaps: => Boolean, evidence: => Boolean): com.histmersion.api.catalogue.Place.TimeBasis.VisibleResult =
       basis match
-        case Timeless | Grouping => true
+        case Timeless | Grouping => _root_.com.histmersion.api.catalogue.Place.TimeBasis.VisibleResult(true)
         case Modern              => hi >= modernFrom
-        case Dated               => overlaps
-        case Findings            => evidence
+        case Dated               => _root_.com.histmersion.api.catalogue.Place.TimeBasis.VisibleResult(overlaps)
+        case Findings            => _root_.com.histmersion.api.catalogue.Place.TimeBasis.VisibleResult(evidence)
 
-    val FindingsNote: com.histmersion.api.catalogue.Place.TimeBasis.FindingsNote = "dated by its findings — the place has no date of its own"
+    val FindingsNote: com.histmersion.api.catalogue.Place.TimeBasis.FindingsNote = _root_.com.histmersion.api.catalogue.Place.TimeBasis.FindingsNote("dated by its findings — the place has no date of its own")
 
   final case class TreeRow(
       id: com.histmersion.api.catalogue.Place.Id,
@@ -1251,7 +1251,7 @@ object Place:
       kind: TreeRow.Kind,
       depth: TreeRow.Depth,
       findings: TreeRow.Findings,
-      contested: TreeRow.Contested = false
+      contested: TreeRow.Contested = _root_.com.histmersion.api.catalogue.Place.TreeRow.Contested(false)
   ) derives KindlingsCodecAsObject,
         KindlingsSchema, com.histmersion.api.json.Schema
 

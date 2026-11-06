@@ -37,22 +37,22 @@ object Event:
     val Triggers = "triggers"
     val RespondsTo = "responds_to"
     val FallsWithin = "falls_within"
-    val allen: Set[com.histmersion.domain.catalogue.Event.EdgeKind.Allen] = Set(Before, Meets, Overlaps, During, Starts, Finishes, Equals)
-    val causal: Set[com.histmersion.domain.catalogue.Event.EdgeKind.Causal] = Set(Causes, Enables, Triggers, RespondsTo, FallsWithin)
+    val allen: Set[com.histmersion.domain.catalogue.Event.EdgeKind.Allen] = Set(_root_.com.histmersion.domain.catalogue.Event.EdgeKind.Allen(Before), _root_.com.histmersion.domain.catalogue.Event.EdgeKind.Allen(Meets), _root_.com.histmersion.domain.catalogue.Event.EdgeKind.Allen(Overlaps), _root_.com.histmersion.domain.catalogue.Event.EdgeKind.Allen(During), _root_.com.histmersion.domain.catalogue.Event.EdgeKind.Allen(Starts), _root_.com.histmersion.domain.catalogue.Event.EdgeKind.Allen(Finishes), _root_.com.histmersion.domain.catalogue.Event.EdgeKind.Allen(Equals))
+    val causal: Set[com.histmersion.domain.catalogue.Event.EdgeKind.Causal] = Set(_root_.com.histmersion.domain.catalogue.Event.EdgeKind.Causal(Causes), _root_.com.histmersion.domain.catalogue.Event.EdgeKind.Causal(Enables), _root_.com.histmersion.domain.catalogue.Event.EdgeKind.Causal(Triggers), _root_.com.histmersion.domain.catalogue.Event.EdgeKind.Causal(RespondsTo), _root_.com.histmersion.domain.catalogue.Event.EdgeKind.Causal(FallsWithin))
     val all: List[com.histmersion.domain.catalogue.Event.EdgeKind.All] =
       List(
-        Before,
-        Meets,
-        Overlaps,
-        During,
-        Starts,
-        Finishes,
-        Equals,
-        Causes,
-        Enables,
-        Triggers,
-        RespondsTo,
-        FallsWithin
+        _root_.com.histmersion.domain.catalogue.Event.EdgeKind.All(Before),
+        _root_.com.histmersion.domain.catalogue.Event.EdgeKind.All(Meets),
+        _root_.com.histmersion.domain.catalogue.Event.EdgeKind.All(Overlaps),
+        _root_.com.histmersion.domain.catalogue.Event.EdgeKind.All(During),
+        _root_.com.histmersion.domain.catalogue.Event.EdgeKind.All(Starts),
+        _root_.com.histmersion.domain.catalogue.Event.EdgeKind.All(Finishes),
+        _root_.com.histmersion.domain.catalogue.Event.EdgeKind.All(Equals),
+        _root_.com.histmersion.domain.catalogue.Event.EdgeKind.All(Causes),
+        _root_.com.histmersion.domain.catalogue.Event.EdgeKind.All(Enables),
+        _root_.com.histmersion.domain.catalogue.Event.EdgeKind.All(Triggers),
+        _root_.com.histmersion.domain.catalogue.Event.EdgeKind.All(RespondsTo),
+        _root_.com.histmersion.domain.catalogue.Event.EdgeKind.All(FallsWithin)
       )
 
   /** Where a candidate link between an event and a source stands. */
@@ -63,4 +63,4 @@ object Event:
     val Proposed = "proposed"
     val Confirmed = "confirmed"
     val Rejected = "rejected"
-    val all: List[com.histmersion.domain.catalogue.Event.LinkStatus.All] = List(Proposed, Confirmed, Rejected)
+    val all: List[com.histmersion.domain.catalogue.Event.LinkStatus.All] = List(_root_.com.histmersion.domain.catalogue.Event.LinkStatus.All(Proposed), _root_.com.histmersion.domain.catalogue.Event.LinkStatus.All(Confirmed), _root_.com.histmersion.domain.catalogue.Event.LinkStatus.All(Rejected))

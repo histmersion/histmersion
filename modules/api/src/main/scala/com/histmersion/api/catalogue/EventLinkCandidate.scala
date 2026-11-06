@@ -9,7 +9,7 @@ final case class EventLinkCandidate(
     eventId: com.histmersion.api.catalogue.Event.Id,
     citekey: com.histmersion.api.library.Citekey,
     score: EventLinkCandidate.Score,
-    status: EventLinkCandidate.StatusValue = EventLinkCandidate.Status.Proposed,
+    status: EventLinkCandidate.StatusValue = _root_.com.histmersion.api.catalogue.EventLinkCandidate.StatusValue(EventLinkCandidate.Status.Proposed),
     title: Option[com.histmersion.api.library.Title] = None,
     findings: List[com.histmersion.api.library.Finding.Id] = Nil,
     passages: List[EventPassage] = Nil,
@@ -33,4 +33,4 @@ object EventLinkCandidate:
     val Proposed = "proposed"
     val Confirmed = "confirmed"
     val Rejected = "rejected"
-    val all: List[com.histmersion.api.catalogue.EventLinkCandidate.Status.All] = List(Proposed, Confirmed, Rejected)
+    val all: List[com.histmersion.api.catalogue.EventLinkCandidate.Status.All] = List(_root_.com.histmersion.api.catalogue.EventLinkCandidate.Status.All(Proposed), _root_.com.histmersion.api.catalogue.EventLinkCandidate.Status.All(Confirmed), _root_.com.histmersion.api.catalogue.EventLinkCandidate.Status.All(Rejected))

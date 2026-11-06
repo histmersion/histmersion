@@ -13,7 +13,7 @@ object ReloadMarkdown:
 
   def report(r: ReloadReport): com.histmersion.api.settings.ReloadMarkdown.ReportResult =
     def list(title: com.histmersion.api.settings.ReloadMarkdown.ReportListTitle, xs: List[com.histmersion.api.settings.ReloadMarkdown.ReportListXs]): List[com.histmersion.api.settings.ReloadMarkdown.ReportListResult] =
-      if xs.isEmpty then Nil else s"**$title:**" :: xs.map(x => s"- $x")
+      if xs.isEmpty then Nil else (s"**$title:**" :: xs.map(x => s"- $x")).map(refactorValue => _root_.com.histmersion.api.settings.ReloadMarkdown.ReportListResult(refactorValue))
     val head =
       if r.errors.nonEmpty then s"# Config reload failed — generation ${r.generation} stays"
       else if r.published then s"# Config reloaded — generation ${r.generation}"

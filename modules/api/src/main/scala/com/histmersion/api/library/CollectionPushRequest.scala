@@ -9,7 +9,7 @@ import sttp.tapir.Schema
   */
 final case class CollectionPushRequest(
     citekey: com.histmersion.api.library.Citekey,
-    replace: CollectionPushRequest.Replace = false
+    replace: CollectionPushRequest.Replace = _root_.com.histmersion.api.library.CollectionPushRequest.Replace(false)
 ) derives KindlingsCodecAsObject,
       KindlingsSchema, com.histmersion.api.json.Schema
 

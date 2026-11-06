@@ -7,13 +7,13 @@ import com.histmersion.plugin.*
   * asks for verbatim failures and for the loop's iteration notes, which the API is sent as user messages.
   */
 final class AnthropicProvider(settings: ProviderSettings) extends AiProvider:
-  def title: com.histmersion.plugins.ai.AnthropicProvider.TitleResult = "Anthropic API"
+  def title: com.histmersion.plugins.ai.AnthropicProvider.TitleResult = _root_.com.histmersion.plugins.ai.AnthropicProvider.TitleResult("Anthropic API")
 
   override def capabilities: AiCapabilities =
-    AiCapabilities(tools = true, structuredOutput = true, iterationMarkers = true, verbatimFailures = true)
+    AiCapabilities(tools = _root_.com.histmersion.plugin.AiCapabilities.Tools(true), structuredOutput = _root_.com.histmersion.plugin.AiCapabilities.StructuredOutput(true), iterationMarkers = _root_.com.histmersion.plugin.AiCapabilities.IterationMarkers(true), verbatimFailures = _root_.com.histmersion.plugin.AiCapabilities.VerbatimFailures(true))
 
   private def base: Either[com.histmersion.plugins.ai.AnthropicProvider.BaseResultPart1, BaseUrl] =
-    BaseUrl.parse(settings.baseUrl, "agents.providers.anthropic.base-url")
+    BaseUrl.parse(settings.baseUrl, _root_.com.histmersion.plugins.ai.BaseUrl.ParseSetting("agents.providers.anthropic.base-url"))
 
   override def check(model: String): Either[String, Unit] =
     base.flatMap(_ =>
@@ -70,23 +70,23 @@ object AnthropicProvider:
   val Version = "2023-06-01"
 
   def headers(key: com.histmersion.plugins.ai.AnthropicProvider.HeadersKey): Map[com.histmersion.plugins.ai.AnthropicProvider.HeadersResultPart1, com.histmersion.plugins.ai.AnthropicProvider.HeadersResultPart2] =
-    Map("x-api-key" -> key, "anthropic-version" -> Version, "content-type" -> "application/json")
+    Map("x-api-key" -> key, { val refactorTuple2 = "anthropic-version" -> Version; (_root_.com.histmersion.plugins.ai.AnthropicProvider.HeadersResultPart1(refactorTuple2._1), _root_.com.histmersion.plugins.ai.AnthropicProvider.HeadersResultPart2(refactorTuple2._2)) }, { val refactorTuple3 = "content-type" -> "application/json"; (_root_.com.histmersion.plugins.ai.AnthropicProvider.HeadersResultPart1(refactorTuple3._1), _root_.com.histmersion.plugins.ai.AnthropicProvider.HeadersResultPart2(refactorTuple3._2)) })
 
   /** The models known NOT to give structured output (older than Claude 4.1); any other model is taken to. */
   val WithoutStructuredOutput: Set[com.histmersion.plugins.ai.AnthropicProvider.WithoutStructuredOutput] = Set(
-    "claude-3-5-sonnet-20241022",
-    "claude-3-5-sonnet-latest",
-    "claude-3-5-haiku-20241022",
-    "claude-3-5-haiku-latest",
-    "claude-3-opus-20240229",
-    "claude-3-sonnet-20240229",
-    "claude-3-haiku-20240307",
-    "claude-sonnet-4-20250514",
-    "claude-opus-4-20250514"
+    _root_.com.histmersion.plugins.ai.AnthropicProvider.WithoutStructuredOutput("claude-3-5-sonnet-20241022"),
+    _root_.com.histmersion.plugins.ai.AnthropicProvider.WithoutStructuredOutput("claude-3-5-sonnet-latest"),
+    _root_.com.histmersion.plugins.ai.AnthropicProvider.WithoutStructuredOutput("claude-3-5-haiku-20241022"),
+    _root_.com.histmersion.plugins.ai.AnthropicProvider.WithoutStructuredOutput("claude-3-5-haiku-latest"),
+    _root_.com.histmersion.plugins.ai.AnthropicProvider.WithoutStructuredOutput("claude-3-opus-20240229"),
+    _root_.com.histmersion.plugins.ai.AnthropicProvider.WithoutStructuredOutput("claude-3-sonnet-20240229"),
+    _root_.com.histmersion.plugins.ai.AnthropicProvider.WithoutStructuredOutput("claude-3-haiku-20240307"),
+    _root_.com.histmersion.plugins.ai.AnthropicProvider.WithoutStructuredOutput("claude-sonnet-4-20250514"),
+    _root_.com.histmersion.plugins.ai.AnthropicProvider.WithoutStructuredOutput("claude-opus-4-20250514")
   )
 
   def structuredOutput(model: com.histmersion.plugins.ai.AnthropicProvider.StructuredOutputModel): com.histmersion.plugins.ai.AnthropicProvider.StructuredOutputResult = !WithoutStructuredOutput(model)
 
   def noStructuredOutput(model: com.histmersion.plugins.ai.AnthropicProvider.NoStructuredOutputModel): com.histmersion.plugins.ai.AnthropicProvider.NoStructuredOutputResult =
-    s"UnsupportedModelForStructuredOutputException: Model '$model' does not support structured output. " +
-      "Structured output is only supported by Claude 4.1+ models (e.g., claude-sonnet-4-5, claude-opus-4-1-20250805)."
+    _root_.com.histmersion.plugins.ai.AnthropicProvider.NoStructuredOutputResult(s"UnsupportedModelForStructuredOutputException: Model '$model' does not support structured output. " +
+      "Structured output is only supported by Claude 4.1+ models (e.g., claude-sonnet-4-5, claude-opus-4-1-20250805).")

@@ -6,9 +6,9 @@ import com.histmersion.api.given
 
 final case class MediaCoversReport(
     dryRun: com.histmersion.api.media.MediaImportRequest.DryRun,
-    sources: MediaCoversReport.Sources = 0,
-    covers: MediaCoversReport.Covers = 0,
-    illustrations: MediaCoversReport.Illustrations = 0,
+    sources: MediaCoversReport.Sources = _root_.com.histmersion.api.media.MediaCoversReport.Sources(0),
+    covers: MediaCoversReport.Covers = _root_.com.histmersion.api.media.MediaCoversReport.Covers(0),
+    illustrations: MediaCoversReport.Illustrations = _root_.com.histmersion.api.media.MediaCoversReport.Illustrations(0),
     lines: List[MediaSourceLine] = Nil,
     skipped: List[MediaCount] = Nil,
     failed: List[MediaCoversReport.Failed] = Nil

@@ -118,7 +118,7 @@ object Lpf:
         else 0
       Digits.findFirstIn(t).flatMap(_.toLongOption).map { n =>
         val y = if n < 0 then n else if era < 0 then -n else n
-        if isIso then fromIso(y) else y
+        if isIso then fromIso(_root_.com.histmersion.api.catalogue.Lpf.FromIsoIsoYear(y)) else _root_.com.histmersion.api.catalogue.Lpf.ParseYearResult(y)
       }
 
   /** LPF mixes `"-1400"` and `-1400`. */
@@ -137,8 +137,8 @@ object Lpf:
 
   def parseWhen(j: Json): Option[Span] =
     def span(o: JsonObject): Option[Span] =
-      val s = o("start").flatMap(bound(_, "earliest", "latest"))
-      val e = o("end").flatMap(bound(_, "latest", "earliest"))
+      val s = o("start").flatMap(bound(_, _root_.com.histmersion.api.catalogue.Lpf.BoundWide("earliest"), _root_.com.histmersion.api.catalogue.Lpf.BoundNarrow("latest")))
+      val e = o("end").flatMap(bound(_, _root_.com.histmersion.api.catalogue.Lpf.BoundWide("latest"), _root_.com.histmersion.api.catalogue.Lpf.BoundNarrow("earliest")))
       (s, e) match
         case (Some(a), Some(b)) => Some(if a <= b then Span(s, e) else Span(e, s))
         case (None, None)       => None
@@ -175,7 +175,7 @@ object Lpf:
     )
 
   private def str(o: JsonObject, keys: String*): Option[com.histmersion.api.catalogue.Lpf.StrResult] =
-    keys.iterator.flatMap(k => o(k).flatMap(_.asString)).map(_.trim).find(_.nonEmpty)
+    (keys.iterator.flatMap(k => o(k).flatMap(_.asString)).map(_.trim).find(_.nonEmpty)).map(refactorValue25 => _root_.com.histmersion.api.catalogue.Lpf.StrResult(refactorValue25))
 
   private def slug(s: com.histmersion.api.catalogue.Lpf.SlugS): com.histmersion.api.catalogue.Lpf.SlugResult =
     s.trim.toLowerCase.replaceAll("[^a-z0-9]+", "_").replaceAll("^_+|_+$", "").take(64)
@@ -259,7 +259,7 @@ object Lpf:
         })
     }
     val flat = str(props, "parent", "part_of", "partOf", "parentId")
-      .map(p => Place.Relation(id, p, Place.Relation.PartOf, None))
+      .map(p => Place.Relation(id, p, _root_.com.histmersion.api.catalogue.Place.Relation.Kind(Place.Relation.PartOf), None))
     (declared ++ flat)
       .filter(_.parentId.nonEmpty)
       .distinctBy(r => (r.parentId, r.kind))
@@ -312,10 +312,10 @@ object Lpf:
               id = com.histmersion.api.catalogue.Place.Id(id),
               label = if label.nonEmpty then label else id,
               kind = kind,
-              geometry = f("geometry").filterNot(_.isNull).map(_.noSpaces),
+              geometry = f("geometry").filterNot(_.isNull).map(_root_.com.histmersion.api.catalogue.Place.Geometry(_.noSpaces)),
               period = period,
               source = str(props, "source", "citation").orElse(str(f, "source")),
-              properties = Some(leftover).filter(_.nonEmpty).map(Json.fromJsonObject(_).noSpaces),
+              properties = Some(leftover).filter(_.nonEmpty).map(_root_.com.histmersion.api.catalogue.Place.Properties(Json.fromJsonObject(_).noSpaces)),
               open = open
             ),
             readNames(f, props, if label.nonEmpty then label else id),
@@ -326,7 +326,7 @@ object Lpf:
 
   def parse(
       json: com.histmersion.api.catalogue.Lpf.ParseJson,
-      defaultKind: com.histmersion.api.catalogue.Lpf.ParseDefaultKind = com.histmersion.api.catalogue.Place.Kind.Region
+      defaultKind: com.histmersion.api.catalogue.Lpf.ParseDefaultKind = _root_.com.histmersion.api.catalogue.Lpf.ParseDefaultKind(com.histmersion.api.catalogue.Place.Kind.Region)
   ): Either[com.histmersion.api.catalogue.Lpf.ParseResultPart1, List[Place.Input]] =
     io.circe.parser.parse(json).left.map(e => s"invalid JSON: ${e.getMessage}").flatMap { doc =>
       val found: Option[List[Json]] =
@@ -389,10 +389,10 @@ object Lpf:
     Json.fromFields(fields.result())
 
   def render(items: List[Place.Input]): com.histmersion.api.catalogue.Lpf.RenderResult =
-    Json
+    _root_.com.histmersion.api.catalogue.Lpf.RenderResult(Json
       .obj(
         "type" -> Json.fromString("FeatureCollection"),
         "@context" -> Json.fromString(Context),
         "features" -> Json.arr(items.map(renderFeature)*)
       )
-      .spaces2
+      .spaces2)

@@ -7,7 +7,7 @@ import com.histmersion.api.given
 final case class MergeImportRequest(
     bundle: MergeImportRequest.Bundle,
     resolutions: MergeResolutions = MergeResolutions(),
-    dryRun: MergeImportRequest.DryRun = false
+    dryRun: MergeImportRequest.DryRun = _root_.com.histmersion.api.exchange.MergeImportRequest.DryRun(false)
 ) derives KindlingsCodecAsObject,
       KindlingsSchema, com.histmersion.api.json.Schema
 

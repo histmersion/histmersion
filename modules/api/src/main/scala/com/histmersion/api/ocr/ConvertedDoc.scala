@@ -6,7 +6,7 @@ import com.histmersion.api.given
 
 final case class ConvertedDoc(
     markdown: ConvertedDoc.Markdown,
-    pages: ConvertedDoc.Pages = 0,
+    pages: ConvertedDoc.Pages = _root_.com.histmersion.api.ocr.ConvertedDoc.Pages(0),
     images: List[ConvertedImage] = Nil,
     filename: Option[ConvertedDoc.Filename] = None
 ) derives KindlingsCodecAsObject,

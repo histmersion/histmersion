@@ -45,7 +45,7 @@ object Vacuum:
   /** A table name as Postgres stores an unquoted identifier: lower case letters, digits, `_`. */
   private val TableShape = "^[a-z_][a-z0-9_]{0,62}$".r
 
-  private def invalid(msg: com.histmersion.api.maintenance.Vacuum.InvalidMsg) = Api.Error(msg, Some(Write.CodeInvalid))
+  private def invalid(msg: com.histmersion.api.maintenance.Vacuum.InvalidMsg) = Api.Error(msg, Some(_root_.com.histmersion.api.Api.Error.Code(Write.CodeInvalid)))
 
   def plan(in: Vacuum.Request, defaults: List[com.histmersion.api.maintenance.Vacuum.PlanDefaults], existing: Set[com.histmersion.api.maintenance.Vacuum.PlanExisting]): Either[Api.Error, VacuumPlan] =
     val asked = in.tables.flatMap(_.split(",").toList).map(_.trim.toLowerCase(java.util.Locale.ROOT)).filter(_.nonEmpty)
@@ -53,14 +53,14 @@ object Vacuum:
                   else asked).distinct
     val shape = tables.filterNot(TableShape.matches)
     val absent = tables.filterNot(existing.contains)
-    if tables.isEmpty then Left(invalid("no table to vacuum: name one, or set maintenance.vacuum-tables"))
-    else if shape.nonEmpty then Left(invalid(s"not a table name: ${shape.mkString(", ")}"))
-    else if absent.nonEmpty then Left(invalid(s"no such table: ${absent.mkString(", ")}"))
+    if tables.isEmpty then Left(invalid(_root_.com.histmersion.api.maintenance.Vacuum.InvalidMsg("no table to vacuum: name one, or set maintenance.vacuum-tables")))
+    else if shape.nonEmpty then Left(invalid(_root_.com.histmersion.api.maintenance.Vacuum.InvalidMsg(s"not a table name: ${shape.mkString(", ")}")))
+    else if absent.nonEmpty then Left(invalid(_root_.com.histmersion.api.maintenance.Vacuum.InvalidMsg(s"no such table: ${absent.mkString(", ")}")))
     else Right(VacuumPlan(in.analyze, tables))
 
   def statement(table: com.histmersion.api.maintenance.Vacuum.StatementTable, analyze: com.histmersion.api.maintenance.Vacuum.StatementAnalyze): com.histmersion.api.maintenance.Vacuum.StatementResult =
     val q = "\"" + table.replace("\"", "\"\"") + "\""
-    if analyze then s"VACUUM (ANALYZE) $q" else s"VACUUM $q"
+    if analyze then _root_.com.histmersion.api.maintenance.Vacuum.StatementResult(s"VACUUM (ANALYZE) $q") else _root_.com.histmersion.api.maintenance.Vacuum.StatementResult(s"VACUUM $q")
 
   def describe(p: VacuumPlan): com.histmersion.api.maintenance.Vacuum.DescribeResult =
     s"${if p.analyze then "VACUUM (ANALYZE)" else "VACUUM"} of ${p.tables.mkString(", ")}"
@@ -79,7 +79,7 @@ object Vacuum:
   /** A re-seed or a gazetteer load leaves the old row versions behind as dead tuples, which autovacuum reaches only
     * slowly on tables that size.
     */
-  final case class Request(analyze: Request.Analyze = false, tables: List[Request.Tables] = Nil)
+  final case class Request(analyze: Request.Analyze = _root_.com.histmersion.api.maintenance.Vacuum.Request.Analyze(false), tables: List[Request.Tables] = Nil)
   object Request:
     type Analyze = Analyze.T
     object Analyze extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]

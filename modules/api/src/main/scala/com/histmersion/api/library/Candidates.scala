@@ -31,9 +31,9 @@ object Candidates:
   object OpenalexAuthorIdsResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
   enum WatchKind(val wire: WatchKind.Wire):
-    case Query extends WatchKind("query")
-    case Citing extends WatchKind("citing")
-    case Author extends WatchKind("author")
+    case Query extends WatchKind(_root_.com.histmersion.api.library.Candidates.WatchKind.Wire("query"))
+    case Citing extends WatchKind(_root_.com.histmersion.api.library.Candidates.WatchKind.Wire("citing"))
+    case Author extends WatchKind(_root_.com.histmersion.api.library.Candidates.WatchKind.Wire("author"))
   object WatchKind:
     type Wire = Wire.T
     object Wire extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
@@ -44,10 +44,10 @@ object Candidates:
     def parse(s: com.histmersion.api.library.Candidates.WatchKind.ParseS): Option[WatchKind] = values.find(_.wire == s.trim.toLowerCase)
 
   enum State(val wire: State.Wire):
-    case New extends State("new")
-    case Seen extends State("seen")
-    case Queued extends State("queued")
-    case Dismissed extends State("dismissed")
+    case New extends State(_root_.com.histmersion.api.library.Candidates.State.Wire("new"))
+    case Seen extends State(_root_.com.histmersion.api.library.Candidates.State.Wire("seen"))
+    case Queued extends State(_root_.com.histmersion.api.library.Candidates.State.Wire("queued"))
+    case Dismissed extends State(_root_.com.histmersion.api.library.Candidates.State.Wire("dismissed"))
   object State:
     type Wire = Wire.T
     object Wire extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
@@ -57,7 +57,7 @@ object Candidates:
 
     def parse(s: com.histmersion.api.library.Candidates.State.ParseS): Option[State] = values.find(_.wire == s.trim.toLowerCase)
 
-  val Indexes: List[com.histmersion.api.library.Candidates.Indexes] = List("openalex", "crossref", "europepmc", "arxiv", "core")
+  val Indexes: List[com.histmersion.api.library.Candidates.Indexes] = List(_root_.com.histmersion.api.library.Candidates.Indexes("openalex"), _root_.com.histmersion.api.library.Candidates.Indexes("crossref"), _root_.com.histmersion.api.library.Candidates.Indexes("europepmc"), _root_.com.histmersion.api.library.Candidates.Indexes("arxiv"), _root_.com.histmersion.api.library.Candidates.Indexes("core"))
 
   def since(watermark: Option[com.histmersion.api.library.Candidates.SinceWatermark], today: java.time.LocalDate, lookbackDays: com.histmersion.api.library.Candidates.SinceLookbackDays): java.time.LocalDate =
     watermark
@@ -130,11 +130,11 @@ object Candidates:
     }
 
   def openalexAuthorIds(json: Json): List[com.histmersion.api.library.Candidates.OpenalexAuthorIdsResult] =
-    json.hcursor
+    (json.hcursor
       .downField("authorships")
       .values
       .toList
       .flatten
       .flatMap(a => a.hcursor.downField("author").get[String]("id").toOption)
       .map(_.split("/").last)
-      .filter(_.startsWith("A"))
+      .filter(_.startsWith("A"))).map(refactorValue2 => _root_.com.histmersion.api.library.Candidates.OpenalexAuthorIdsResult(refactorValue2))

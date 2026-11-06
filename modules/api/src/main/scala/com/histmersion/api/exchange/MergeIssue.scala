@@ -26,7 +26,7 @@ final case class MergeIssue(
     detail: Option[IssueDetail] = None
 ) derives KindlingsCodecAsObject,
       KindlingsSchema, com.histmersion.api.json.Schema:
-  def open: com.histmersion.api.exchange.MergeIssue.OpenResult = severity == MergeIssue.Severity.Blocking && condition.isEmpty && decision.isEmpty
+  def open: com.histmersion.api.exchange.MergeIssue.OpenResult = _root_.com.histmersion.api.exchange.MergeIssue.OpenResult(severity == MergeIssue.Severity.Blocking && condition.isEmpty && decision.isEmpty)
 object MergeIssue:
 
   /** What an issue is about. The wire name is part of the issue id, so it never changes. */
@@ -96,27 +96,27 @@ object MergeIssue:
     object FromWireS extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
     def wireOf(k: Kind): com.histmersion.api.exchange.MergeIssue.Kind.WireOfResult = k match
-      case SameWork                => "same-work"
-      case CitekeyCollision        => "citekey-collision"
-      case DoiDiffers              => "doi-differs"
-      case YearDiffers             => "year-differs"
-      case StatusDiffers           => "status-differs"
-      case TitleDiffers            => "title-differs"
-      case AuthorsDiffers          => "authors-differs"
-      case SummaryDiffers          => "summary-differs"
-      case NotesDiffers            => "notes-differs"
-      case PeriodDiffers           => "period-differs"
-      case BodyDiffers             => "body-differs"
-      case ChangedBothSides        => "changed-both-sides"
-      case DeletedThereChangedHere => "deleted-there-changed-here"
-      case ArticleDiverged         => "article-diverged"
-      case LabelTaken              => "label-taken"
-      case AliasConflict           => "alias-conflict"
-      case FindingNearDuplicate    => "finding-near-duplicate"
-      case AttestationUnanchored   => "attestation-unanchored"
-      case PlaceDiffers            => "place-differs"
-      case NamedPeriodDiffers      => "named-period-differs"
-      case GoalPlanDiffers         => "goal-plan-differs"
+      case SameWork                => _root_.com.histmersion.api.exchange.MergeIssue.Kind.WireOfResult("same-work")
+      case CitekeyCollision        => _root_.com.histmersion.api.exchange.MergeIssue.Kind.WireOfResult("citekey-collision")
+      case DoiDiffers              => _root_.com.histmersion.api.exchange.MergeIssue.Kind.WireOfResult("doi-differs")
+      case YearDiffers             => _root_.com.histmersion.api.exchange.MergeIssue.Kind.WireOfResult("year-differs")
+      case StatusDiffers           => _root_.com.histmersion.api.exchange.MergeIssue.Kind.WireOfResult("status-differs")
+      case TitleDiffers            => _root_.com.histmersion.api.exchange.MergeIssue.Kind.WireOfResult("title-differs")
+      case AuthorsDiffers          => _root_.com.histmersion.api.exchange.MergeIssue.Kind.WireOfResult("authors-differs")
+      case SummaryDiffers          => _root_.com.histmersion.api.exchange.MergeIssue.Kind.WireOfResult("summary-differs")
+      case NotesDiffers            => _root_.com.histmersion.api.exchange.MergeIssue.Kind.WireOfResult("notes-differs")
+      case PeriodDiffers           => _root_.com.histmersion.api.exchange.MergeIssue.Kind.WireOfResult("period-differs")
+      case BodyDiffers             => _root_.com.histmersion.api.exchange.MergeIssue.Kind.WireOfResult("body-differs")
+      case ChangedBothSides        => _root_.com.histmersion.api.exchange.MergeIssue.Kind.WireOfResult("changed-both-sides")
+      case DeletedThereChangedHere => _root_.com.histmersion.api.exchange.MergeIssue.Kind.WireOfResult("deleted-there-changed-here")
+      case ArticleDiverged         => _root_.com.histmersion.api.exchange.MergeIssue.Kind.WireOfResult("article-diverged")
+      case LabelTaken              => _root_.com.histmersion.api.exchange.MergeIssue.Kind.WireOfResult("label-taken")
+      case AliasConflict           => _root_.com.histmersion.api.exchange.MergeIssue.Kind.WireOfResult("alias-conflict")
+      case FindingNearDuplicate    => _root_.com.histmersion.api.exchange.MergeIssue.Kind.WireOfResult("finding-near-duplicate")
+      case AttestationUnanchored   => _root_.com.histmersion.api.exchange.MergeIssue.Kind.WireOfResult("attestation-unanchored")
+      case PlaceDiffers            => _root_.com.histmersion.api.exchange.MergeIssue.Kind.WireOfResult("place-differs")
+      case NamedPeriodDiffers      => _root_.com.histmersion.api.exchange.MergeIssue.Kind.WireOfResult("named-period-differs")
+      case GoalPlanDiffers         => _root_.com.histmersion.api.exchange.MergeIssue.Kind.WireOfResult("goal-plan-differs")
 
     given WireEnumValues[Kind]:
       def all: Array[Kind] = Kind.values
@@ -142,7 +142,7 @@ object MergeIssue:
 
     given WireEnumValues[Severity]:
       def all: Array[Severity] = Severity.values
-      def wire(e: Severity): com.histmersion.api.exchange.MergeIssue.Severity.WireResult = Ascii.lower(e.toString)
+      def wire(e: Severity): com.histmersion.api.exchange.MergeIssue.Severity.WireResult = Ascii.lower(_root_.com.histmersion.api.Ascii.LowerS(e.toString))
       def fromWire(s: com.histmersion.api.exchange.MergeIssue.Severity.FromWireS): Option[Severity] = Severity.values.find(_.toString.equalsIgnoreCase(s.trim))
 
   /** Who decided an issue. */
@@ -169,7 +169,7 @@ object MergeIssue:
 
     given WireEnumValues[DecidedBy]:
       def all: Array[DecidedBy] = DecidedBy.values
-      def wire(e: DecidedBy): com.histmersion.api.exchange.MergeIssue.DecidedBy.WireResult = Ascii.lower(e.toString)
+      def wire(e: DecidedBy): com.histmersion.api.exchange.MergeIssue.DecidedBy.WireResult = Ascii.lower(_root_.com.histmersion.api.Ascii.LowerS(e.toString))
       def fromWire(s: com.histmersion.api.exchange.MergeIssue.DecidedBy.FromWireS): Option[DecidedBy] = DecidedBy.values.find(_.toString.equalsIgnoreCase(s.trim))
 
 
@@ -200,23 +200,23 @@ object MergeIssue:
     def describe(s: Bundle.Source): List[com.histmersion.api.exchange.MergeIssue.Detail.DescribeResult] =
       val who = s.authors.take(2).mkString("; ") + (if s.authors.length > 2 then " et al." else "")
       List(
-        s"\"${s.title}\"",
-        List(
+        _root_.com.histmersion.api.exchange.MergeIssue.Detail.DescribeResult(s"\"${s.title}\""),
+        _root_.com.histmersion.api.exchange.MergeIssue.Detail.DescribeResult(List(
           Some(who).filter(_.nonEmpty),
           s.year.map(_.toString),
           Some(s.doi.fold("no DOI")(d => s"DOI $d")),
           Some(s.status.wire)
-        ).flatten.mkString(" · ")
+        ).flatten.mkString(" · "))
       )
 
     def side(s: Bundle.Source): IssueSide = IssueSide(s.citekey, s.uid, describe(s))
 
     def rangeText(r: Option[Bundle.Range]): com.histmersion.api.exchange.MergeIssue.Detail.RangeTextResult = r match
-      case None                           => "none"
-      case Some(Bundle.Range(None, None)) => "always"
-      case Some(b)                        => s"${b.start.fold("…")(_.toString)}..${b.end.fold("…")(_.toString)}"
+      case None                           => _root_.com.histmersion.api.exchange.MergeIssue.Detail.RangeTextResult("none")
+      case Some(Bundle.Range(None, None)) => _root_.com.histmersion.api.exchange.MergeIssue.Detail.RangeTextResult("always")
+      case Some(b)                        => _root_.com.histmersion.api.exchange.MergeIssue.Detail.RangeTextResult(s"${b.start.fold("…")(_.toString)}..${b.end.fold("…")(_.toString)}")
 
-    def preview(s: com.histmersion.api.exchange.MergeIssue.Detail.PreviewS, n: com.histmersion.api.exchange.MergeIssue.Detail.PreviewN = 80): com.histmersion.api.exchange.MergeIssue.Detail.PreviewResult =
+    def preview(s: com.histmersion.api.exchange.MergeIssue.Detail.PreviewS, n: com.histmersion.api.exchange.MergeIssue.Detail.PreviewN = _root_.com.histmersion.api.exchange.MergeIssue.Detail.PreviewN(80)): com.histmersion.api.exchange.MergeIssue.Detail.PreviewResult =
       val one = s.replaceAll("\\s+", " ").trim
       if one.length <= n then one else one.take(n - 1) + "…"
 
@@ -226,26 +226,26 @@ object MergeIssue:
       val (a, b) = (e.notBefore.orElse(e.beginBy), e.notAfter.orElse(e.endFrom))
       Option.when(a.isDefined || b.isDefined)(IssueSpan(a, b))
 
-    def clip(s: Option[com.histmersion.api.exchange.MergeIssue.Detail.ClipS], n: com.histmersion.api.exchange.MergeIssue.Detail.ClipN = 600): Option[com.histmersion.api.exchange.MergeIssue.Detail.ClipResult] =
+    def clip(s: Option[com.histmersion.api.exchange.MergeIssue.Detail.ClipS], n: com.histmersion.api.exchange.MergeIssue.Detail.ClipN = _root_.com.histmersion.api.exchange.MergeIssue.Detail.ClipN(600)): Option[com.histmersion.api.exchange.MergeIssue.Detail.ClipResult] =
       s.map(_.trim).filter(_.nonEmpty).map(t => if t.length <= n then t else t.take(n - 1) + "…")
 
     def sourceFields(l: Bundle.Source, r: Bundle.Source): List[IssueField] =
       def range(p: Option[Bundle.Range]) = p.map(x => rangeText(Some(x)))
       def list(xs: List[com.histmersion.api.exchange.MergeIssue.Detail.SourceFieldsListXs]) = Option(xs.mkString("; ")).filter(_.nonEmpty)
       List(
-        IssueField("citekey", Some(l.citekey), Some(r.citekey)),
-        IssueField("title", Some(l.title), Some(r.title)),
-        IssueField("authors", list(l.authors), list(r.authors)),
-        IssueField("year", l.year.map(_.toString), r.year.map(_.toString)),
-        IssueField("DOI", l.doi, r.doi),
-        IssueField("venue", l.venue, r.venue),
-        IssueField("status", Some(l.status.wire), Some(r.status.wire)),
-        IssueField("period", range(l.period), range(r.period)),
-        IssueField("tags", list(l.tags), list(r.tags)),
-        IssueField("summary", clip(l.summary), clip(r.summary)),
-        IssueField("notes", clip(l.notes), clip(r.notes)),
+        IssueField(_root_.com.histmersion.api.exchange.IssueField.Field("citekey"), Some(l.citekey), Some(r.citekey)),
+        IssueField(_root_.com.histmersion.api.exchange.IssueField.Field("title"), Some(l.title), Some(r.title)),
+        IssueField(_root_.com.histmersion.api.exchange.IssueField.Field("authors"), list(l.authors), list(r.authors)),
+        IssueField(_root_.com.histmersion.api.exchange.IssueField.Field("year"), l.year.map(_root_.com.histmersion.api.exchange.IssueField.Left(_.toString)), r.year.map(_root_.com.histmersion.api.exchange.IssueField.Right(_.toString))),
+        IssueField(_root_.com.histmersion.api.exchange.IssueField.Field("DOI"), l.doi, r.doi),
+        IssueField(_root_.com.histmersion.api.exchange.IssueField.Field("venue"), l.venue, r.venue),
+        IssueField(_root_.com.histmersion.api.exchange.IssueField.Field("status"), Some(l.status.wire), Some(r.status.wire)),
+        IssueField(_root_.com.histmersion.api.exchange.IssueField.Field("period"), range(l.period), range(r.period)),
+        IssueField(_root_.com.histmersion.api.exchange.IssueField.Field("tags"), list(l.tags), list(r.tags)),
+        IssueField(_root_.com.histmersion.api.exchange.IssueField.Field("summary"), clip(l.summary), clip(r.summary)),
+        IssueField(_root_.com.histmersion.api.exchange.IssueField.Field("notes"), clip(l.notes), clip(r.notes)),
         IssueField(
-          "OCR body",
+          _root_.com.histmersion.api.exchange.IssueField.Field("OCR body"),
           l.bodySha256.map(h => s"sha256 ${h.take(12)}…"),
           r.bodySha256.map(h => s"sha256 ${h.take(12)}…")
         )
@@ -257,13 +257,13 @@ object MergeIssue:
       )
       IssueDetail(
         fields = List(
-          IssueField("id", Some(l.id), Some(r.id)),
-          IssueField("label", Some(l.label), Some(r.label)),
-          IssueField("kind", Some(l.kind), Some(r.kind)),
-          IssueField("dates (not before · begin by · end from · not after)", dates(l), dates(r)),
-          IssueField("place", l.placeId, r.placeId),
-          IssueField("historicity", Some(l.historicity), Some(r.historicity)),
-          IssueField("description", clip(l.description), clip(r.description))
+          IssueField(_root_.com.histmersion.api.exchange.IssueField.Field("id"), Some(l.id), Some(r.id)),
+          IssueField(_root_.com.histmersion.api.exchange.IssueField.Field("label"), Some(l.label), Some(r.label)),
+          IssueField(_root_.com.histmersion.api.exchange.IssueField.Field("kind"), Some(l.kind), Some(r.kind)),
+          IssueField(_root_.com.histmersion.api.exchange.IssueField.Field("dates (not before · begin by · end from · not after)"), (dates(l)).map(refactorValue43 => _root_.com.histmersion.api.exchange.IssueField.Left(refactorValue43)), (dates(r)).map(refactorValue44 => _root_.com.histmersion.api.exchange.IssueField.Right(refactorValue44))),
+          IssueField(_root_.com.histmersion.api.exchange.IssueField.Field("place"), l.placeId, r.placeId),
+          IssueField(_root_.com.histmersion.api.exchange.IssueField.Field("historicity"), Some(l.historicity), Some(r.historicity)),
+          IssueField(_root_.com.histmersion.api.exchange.IssueField.Field("description"), clip(l.description), clip(r.description))
         ),
         place = Some(IssuePlace(l.geom, r.geom, eventSpan(l), eventSpan(r)))
       )
@@ -271,20 +271,20 @@ object MergeIssue:
     def placeDetail(l: Bundle.Place, r: Bundle.Place): IssueDetail =
       IssueDetail(
         fields = List(
-          IssueField("label", Some(l.label), Some(r.label)),
-          IssueField("kind", Some(l.kind), Some(r.kind)),
-          IssueField("span", Some(rangeText(l.period)), Some(rangeText(r.period))),
+          IssueField(_root_.com.histmersion.api.exchange.IssueField.Field("label"), Some(l.label), Some(r.label)),
+          IssueField(_root_.com.histmersion.api.exchange.IssueField.Field("kind"), Some(l.kind), Some(r.kind)),
+          IssueField(_root_.com.histmersion.api.exchange.IssueField.Field("span"), Some(rangeText(l.period)), Some(rangeText(r.period))),
           IssueField(
-            "names",
-            Option(l.names.map(_.name).mkString("; ")).filter(_.nonEmpty),
-            Option(r.names.map(_.name).mkString("; ")).filter(_.nonEmpty)
+            _root_.com.histmersion.api.exchange.IssueField.Field("names"),
+            (Option(l.names.map(_.name).mkString("; ")).filter(_.nonEmpty)).map(refactorValue49 => _root_.com.histmersion.api.exchange.IssueField.Left(refactorValue49)),
+            (Option(r.names.map(_.name).mkString("; ")).filter(_.nonEmpty)).map(refactorValue50 => _root_.com.histmersion.api.exchange.IssueField.Right(refactorValue50))
           )
         ),
         place = Some(IssuePlace(l.geom, r.geom, l.period.map(span), r.period.map(span)))
       )
 
     def planText(j: Json): com.histmersion.api.exchange.MergeIssue.Detail.PlanTextResult =
-      j.as[Goal.Plans.Plan].toOption.fold(preview(j.noSpaces, 300)) { p =>
+      j.as[Goal.Plans.Plan].toOption.fold(preview(_root_.com.histmersion.api.exchange.MergeIssue.Detail.PreviewS(j.noSpaces), _root_.com.histmersion.api.exchange.MergeIssue.Detail.PreviewN(300))) { p =>
         List(
           Option(p.rationale).filter(_.nonEmpty).map(r => preview(r, 160)),
           Option.when(p.subGoals.nonEmpty)(s"sub-goals: ${p.subGoals.map(_.slug).mkString(", ")}"),

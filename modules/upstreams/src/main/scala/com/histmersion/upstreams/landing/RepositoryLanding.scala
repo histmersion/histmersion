@@ -125,7 +125,7 @@ object RepositoryLanding:
   type LooksLikeHtmlResult = LooksLikeHtmlResult.T
   object LooksLikeHtmlResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
-  final case class Candidate(url: Candidate.Url, repository: Candidate.Repository, publisher: Candidate.Publisher = false, open: Candidate.Open = false)
+  final case class Candidate(url: Candidate.Url, repository: Candidate.Repository, publisher: Candidate.Publisher = _root_.com.histmersion.upstreams.landing.RepositoryLanding.Candidate.Publisher(false), open: Candidate.Open = _root_.com.histmersion.upstreams.landing.RepositoryLanding.Candidate.Open(false))
 
   object Candidate:
     type Url = Url.T
@@ -138,7 +138,7 @@ object RepositoryLanding:
     object Open extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
   /** OpenAlex `source.type`s that are a publisher's, not a repository's. */
-  val PublisherSourceTypes: Set[com.histmersion.upstreams.landing.RepositoryLanding.PublisherSourceTypes] = Set("journal", "conference", "ebook platform", "book series")
+  val PublisherSourceTypes: Set[com.histmersion.upstreams.landing.RepositoryLanding.PublisherSourceTypes] = Set(_root_.com.histmersion.upstreams.landing.RepositoryLanding.PublisherSourceTypes("journal"), _root_.com.histmersion.upstreams.landing.RepositoryLanding.PublisherSourceTypes("conference"), _root_.com.histmersion.upstreams.landing.RepositoryLanding.PublisherSourceTypes("ebook platform"), _root_.com.histmersion.upstreams.landing.RepositoryLanding.PublisherSourceTypes("book series"))
 
   /** One file of a Zenodo record: where to download it and its MD5, when the record states one. */
   final case class ZenodoFile(url: ZenodoFile.Url, md5: Option[ZenodoFile.Md5])
@@ -255,7 +255,7 @@ object RepositoryLanding:
   // ── which pages ────────────────────────────────────────────────────────────────────────────
 
   private def str(c: ACursor, keys: String*): Option[com.histmersion.upstreams.landing.RepositoryLanding.StrResult] =
-    keys.foldLeft(c)(_.downField(_)).as[String].toOption.map(_.trim).filter(_.nonEmpty)
+    (keys.foldLeft(c)(_.downField(_)).as[String].toOption.map(_.trim).filter(_.nonEmpty)).map(refactorValue => _root_.com.histmersion.upstreams.landing.RepositoryLanding.StrResult(refactorValue))
   private def arr(c: ACursor, keys: String*): List[Json] =
     keys.foldLeft(c)(_.downField(_)).values.map(_.toList).getOrElse(Nil)
 
@@ -274,7 +274,7 @@ object RepositoryLanding:
       val pub = kind.exists(PublisherSourceTypes)
       val open = h.downField("is_oa").as[Boolean].contains(true)
       (str(h, "pdf_url").filter(notPdfPath).toList ++ str(h, "landing_page_url").toList)
-        .map(Candidate(_, repo, pub, open))
+        .map(Candidate(_, _root_.com.histmersion.upstreams.landing.RepositoryLanding.Candidate.Repository(repo), _root_.com.histmersion.upstreams.landing.RepositoryLanding.Candidate.Publisher(pub), _root_.com.histmersion.upstreams.landing.RepositoryLanding.Candidate.Open(open)))
     })
 
   /** Pure: the landing pages of Unpaywall's OA locations (`host_type: repository` marked). */
@@ -286,7 +286,7 @@ object RepositoryLanding:
       val repo = str(h, "host_type").contains("repository")
       val pub = str(h, "host_type").contains("publisher")
       (str(h, "url_for_pdf").filter(notPdfPath).toList ++ str(h, "url_for_landing_page").toList)
-        .map(Candidate(_, repo, pub, open = true))
+        .map(Candidate(_, _root_.com.histmersion.upstreams.landing.RepositoryLanding.Candidate.Repository(repo), _root_.com.histmersion.upstreams.landing.RepositoryLanding.Candidate.Publisher(pub), open = _root_.com.histmersion.upstreams.landing.RepositoryLanding.Candidate.Open(true)))
     })
 
   /** Pure: where a DataCite DOI resolves (`data.attributes.url` of `api.datacite.org/dois/<doi>`). */
@@ -331,7 +331,7 @@ object RepositoryLanding:
     */
   def zenodoRecordId(urlOrDoi: com.histmersion.upstreams.landing.RepositoryLanding.ZenodoRecordIdUrlOrDoi): Option[com.histmersion.upstreams.landing.RepositoryLanding.ZenodoRecordIdResult] =
     val t = urlOrDoi.trim
-    ZenodoRecord.findFirstMatchIn(t).orElse(ZenodoDoi.findFirstMatchIn(t)).map(_.group(1))
+    ZenodoRecord.findFirstMatchIn(t).orElse(ZenodoDoi.findFirstMatchIn(t)).map(_root_.com.histmersion.upstreams.landing.RepositoryLanding.ZenodoRecordIdResult(_.group(1)))
 
   /** Pure: the PDF files of a Zenodo record, when its files are open (`metadata.access_right: open`, or the newer
     * `access.files: public`); restricted, embargoed or closed records give none.
@@ -431,7 +431,7 @@ object RepositoryLanding:
       indexSaysRepository: com.histmersion.upstreams.landing.RepositoryLanding.PdfsOfIndexSaysRepository,
       html: com.histmersion.upstreams.landing.RepositoryLanding.PdfsOfHtml,
       rules: Rules,
-      oaPublisher: com.histmersion.upstreams.landing.RepositoryLanding.PdfsOfOaPublisher = false
+      oaPublisher: com.histmersion.upstreams.landing.RepositoryLanding.PdfsOfOaPublisher = _root_.com.histmersion.upstreams.landing.RepositoryLanding.PdfsOfOaPublisher(false)
   ): List[com.histmersion.upstreams.landing.RepositoryLanding.PdfsOfResult] =
     if oaPublisher then
       val own = host(pageUrl)

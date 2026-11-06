@@ -11,18 +11,18 @@ object ExchangeJobKinds:
 
   val Init: JobKindEntry = JobKindEntry.of(
     JobInfo.Kind("init"),
-    "Import reference data",
-    "The first-run import of reference data: the bundled gazetteer and period presets, and the sources it fetches.",
-    stoppable = true,
+    _root_.com.histmersion.api.jobs.JobKindEntry.OfName("Import reference data"),
+    _root_.com.histmersion.api.jobs.JobKindEntry.OfMeaning("The first-run import of reference data: the bundled gazetteer and period presets, and the sources it fetches."),
+    stoppable = _root_.com.histmersion.api.jobs.JobKindEntry.OfStoppable(true),
     subject = InitPlan.Detail.of(_).map(InitPlan.describe)
   )
 
   val MergeApply: JobKindEntry = JobKindEntry.of(
     JobInfo.Kind("merge-apply"),
-    "Merge another collection",
-    "Merges another collection's bundle into this one, after taking a backup.",
+    _root_.com.histmersion.api.jobs.JobKindEntry.OfName("Merge another collection"),
+    _root_.com.histmersion.api.jobs.JobKindEntry.OfMeaning("Merges another collection's bundle into this one, after taking a backup."),
     subject = PlanHash.of(_).map(h => s"merge plan $h")
   )
 
   /** The plan a merge apply carries out, by its hash, in the job's detail. */
-  val PlanHash: JobDetail.Field[Option[com.histmersion.api.exchange.ExchangeJobKinds.PlanHash]] = JobDetail.Field("planHash", None)
+  val PlanHash: JobDetail.Field[Option[com.histmersion.api.exchange.ExchangeJobKinds.PlanHash]] = JobDetail.Field(_root_.com.histmersion.api.jobs.JobDetail.Field.Name("planHash"), None)

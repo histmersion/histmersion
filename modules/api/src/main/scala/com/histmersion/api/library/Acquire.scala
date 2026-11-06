@@ -148,7 +148,7 @@ object Acquire:
     val Current = "current"
     val LowImpact = "low-impact"
     val Unassessed = "unassessed"
-    val all: List[com.histmersion.api.library.Acquire.Verdicts.All] = List(Retracted, Corrected, Current, LowImpact, Unassessed)
+    val all: List[com.histmersion.api.library.Acquire.Verdicts.All] = List(_root_.com.histmersion.api.library.Acquire.Verdicts.All(Retracted), _root_.com.histmersion.api.library.Acquire.Verdicts.All(Corrected), _root_.com.histmersion.api.library.Acquire.Verdicts.All(Current), _root_.com.histmersion.api.library.Acquire.Verdicts.All(LowImpact), _root_.com.histmersion.api.library.Acquire.Verdicts.All(Unassessed))
 
   private val RetractingUpdate = Set("retraction", "withdrawal", "removal")
   private val CorrectingUpdate =
@@ -180,14 +180,14 @@ object Acquire:
     val kinds = updates.flatMap(_.kind).map(_.trim.toLowerCase)
     if openalexRetracted || retractions.exists(r => r.nature.exists(isRetractingNature)) ||
       kinds.exists(RetractingUpdate.contains)
-    then Verdicts.Retracted
-    else if retractions.nonEmpty || kinds.exists(CorrectingUpdate.contains) then Verdicts.Corrected
+    then _root_.com.histmersion.api.library.Acquire.VerdictResult(Verdicts.Retracted)
+    else if retractions.nonEmpty || kinds.exists(CorrectingUpdate.contains) then _root_.com.histmersion.api.library.Acquire.VerdictResult(Verdicts.Corrected)
     else
       citedByCount match
-        case None                                                      => Verdicts.Unassessed
-        case Some(c) if c >= wellCitedAt                               => Verdicts.Current
-        case Some(c) if c < lowCitedAt && year.exists(_ < staleBefore) => Verdicts.LowImpact
-        case Some(_)                                                   => Verdicts.Current
+        case None                                                      => _root_.com.histmersion.api.library.Acquire.VerdictResult(Verdicts.Unassessed)
+        case Some(c) if c >= wellCitedAt                               => _root_.com.histmersion.api.library.Acquire.VerdictResult(Verdicts.Current)
+        case Some(c) if c < lowCitedAt && year.exists(_ < staleBefore) => _root_.com.histmersion.api.library.Acquire.VerdictResult(Verdicts.LowImpact)
+        case Some(_)                                                   => _root_.com.histmersion.api.library.Acquire.VerdictResult(Verdicts.Current)
 
   /** Some publishers answer scripts with a 403, an empty file or a challenge, so an open-access work they host is
     * downloaded in the browser, under its licence.
@@ -217,12 +217,12 @@ object Acquire:
     val cited = citedByCount.fold("no citation data")(c => s"$c citation(s)")
     verdict match
       case Verdicts.Retracted =>
-        "EXCLUDE — a retraction, withdrawal or removal notice exists; set status=retracted and stop citing it"
+        _root_.com.histmersion.api.library.Acquire.RecommendationResult("EXCLUDE — a retraction, withdrawal or removal notice exists; set status=retracted and stop citing it")
       case Verdicts.Corrected =>
-        "CHECK — an amendment (correction / erratum / expression of concern) exists; read it before relying on the paper"
-      case Verdicts.Current   => s"KEEP — $cited, no amendment on record"
-      case Verdicts.LowImpact => s"REVIEW — old and rarely cited ($cited); keep only if it is directly on topic"
-      case _                  => s"UNASSESSED — $cited; judge relevance to the topic by hand"
+        _root_.com.histmersion.api.library.Acquire.RecommendationResult("CHECK — an amendment (correction / erratum / expression of concern) exists; read it before relying on the paper")
+      case Verdicts.Current   => _root_.com.histmersion.api.library.Acquire.RecommendationResult(s"KEEP — $cited, no amendment on record")
+      case Verdicts.LowImpact => _root_.com.histmersion.api.library.Acquire.RecommendationResult(s"REVIEW — old and rarely cited ($cited); keep only if it is directly on topic")
+      case _                  => _root_.com.histmersion.api.library.Acquire.RecommendationResult(s"UNASSESSED — $cited; judge relevance to the topic by hand")
 
   def statusFor(verdict: com.histmersion.api.library.Acquire.StatusForVerdict): Option[com.histmersion.api.library.Source.Status] = verdict match
     case Verdicts.Retracted => Some(com.histmersion.api.library.Source.Status.Retracted)
@@ -250,7 +250,7 @@ object Acquire:
     val Refutes = "refutes"
     val Supersedes = "supersedes"
     val Cites = "cites"
-    val all: List[com.histmersion.api.library.Acquire.EdgeKinds.All] = List(Confirms, Challenges, Refutes, Supersedes, Cites)
+    val all: List[com.histmersion.api.library.Acquire.EdgeKinds.All] = List(_root_.com.histmersion.api.library.Acquire.EdgeKinds.All(Confirms), _root_.com.histmersion.api.library.Acquire.EdgeKinds.All(Challenges), _root_.com.histmersion.api.library.Acquire.EdgeKinds.All(Refutes), _root_.com.histmersion.api.library.Acquire.EdgeKinds.All(Supersedes), _root_.com.histmersion.api.library.Acquire.EdgeKinds.All(Cites))
 
   private val RefutesCues = List(
     "refut",
@@ -302,7 +302,7 @@ object Acquire:
       isInfluential: com.histmersion.api.library.Acquire.ClassifyIsInfluential,
       citingYear: Option[com.histmersion.api.library.Acquire.ClassifyCitingYear],
       targetYear: Option[com.histmersion.api.library.Acquire.ClassifyTargetYear],
-      gapYears: com.histmersion.api.library.Acquire.ClassifyGapYears = 5
+      gapYears: com.histmersion.api.library.Acquire.ClassifyGapYears = _root_.com.histmersion.api.library.Acquire.ClassifyGapYears(5)
   ): com.histmersion.api.library.Acquire.ClassifyResult =
     val text = contexts.mkString(" ").toLowerCase
     val strong = intents.map(_.toLowerCase).exists(i => i == "result" || i == "methodology")
@@ -311,12 +311,12 @@ object Acquire:
       case _                  => false
     def has(cues: List[com.histmersion.api.library.Acquire.ClassifyHasCues]) = cues.exists(text.contains)
 
-    if has(RefutesCues) then EdgeKinds.Refutes
-    else if has(SupersedeCues) then EdgeKinds.Supersedes
-    else if isInfluential && strong && newer && has(ReviseCues) then EdgeKinds.Supersedes
-    else if has(ChallengeCues) then EdgeKinds.Challenges
-    else if has(ConfirmCues) then EdgeKinds.Confirms
-    else EdgeKinds.Cites
+    if has((RefutesCues).map(refactorValue7 => _root_.com.histmersion.api.library.Acquire.ClassifyHasCues(refactorValue7))) then _root_.com.histmersion.api.library.Acquire.ClassifyResult(EdgeKinds.Refutes)
+    else if has((SupersedeCues).map(refactorValue8 => _root_.com.histmersion.api.library.Acquire.ClassifyHasCues(refactorValue8))) then _root_.com.histmersion.api.library.Acquire.ClassifyResult(EdgeKinds.Supersedes)
+    else if isInfluential && strong && newer && has(ReviseCues) then _root_.com.histmersion.api.library.Acquire.ClassifyResult(EdgeKinds.Supersedes)
+    else if has((ChallengeCues).map(refactorValue4 => _root_.com.histmersion.api.library.Acquire.ClassifyHasCues(refactorValue4))) then _root_.com.histmersion.api.library.Acquire.ClassifyResult(EdgeKinds.Challenges)
+    else if has((ConfirmCues).map(refactorValue5 => _root_.com.histmersion.api.library.Acquire.ClassifyHasCues(refactorValue5))) then _root_.com.histmersion.api.library.Acquire.ClassifyResult(EdgeKinds.Confirms)
+    else _root_.com.histmersion.api.library.Acquire.ClassifyResult(EdgeKinds.Cites)
 
   def rankFollowups(rows: List[FollowupRow]): List[FollowupRow] =
     rows.sortBy { r =>
@@ -365,7 +365,7 @@ object Acquire:
 
   object Checks:
 
-    final case class AcquireCheck(item: AcquireCheck.Item, checkedAt: AcquireCheck.CheckedAt, outcome: AcquireCheck.Outcome, reason: AcquireCheck.Reason, checks: AcquireCheck.Checks = 1)
+    final case class AcquireCheck(item: AcquireCheck.Item, checkedAt: AcquireCheck.CheckedAt, outcome: AcquireCheck.Outcome, reason: AcquireCheck.Reason, checks: AcquireCheck.Checks = _root_.com.histmersion.api.library.Acquire.Checks.AcquireCheck.Checks(1))
         derives KindlingsCodecAsObject,
           KindlingsSchema, com.histmersion.api.json.Schema
 
@@ -383,11 +383,11 @@ object Acquire:
 
 
     final case class RecheckRequest(
-        dryRun: RecheckRequest.DryRun = false,
+        dryRun: RecheckRequest.DryRun = _root_.com.histmersion.api.library.Acquire.Checks.RecheckRequest.DryRun(false),
         limit: Option[RecheckRequest.Limit] = None,
         id: Option[RecheckRequest.Id] = None,
         by: Option[RecheckRequest.By] = None,
-        all: RecheckRequest.All = false
+        all: RecheckRequest.All = _root_.com.histmersion.api.library.Acquire.Checks.RecheckRequest.All(false)
     ) derives KindlingsCodecAsObject,
           KindlingsSchema, com.histmersion.api.json.Schema
 
@@ -407,8 +407,8 @@ object Acquire:
     final case class RecheckRow(
         item: RecheckRow.Item,
         doi: Option[com.histmersion.api.library.Doi] = None,
-        action: RecheckRow.Action = "",
-        detail: RecheckRow.Detail = "",
+        action: RecheckRow.Action = _root_.com.histmersion.api.library.Acquire.Checks.RecheckRow.Action(""),
+        detail: RecheckRow.Detail = _root_.com.histmersion.api.library.Acquire.Checks.RecheckRow.Detail(""),
         citekey: Option[com.histmersion.api.library.Citekey] = None
     ) derives KindlingsCodecAsObject,
           KindlingsSchema, com.histmersion.api.json.Schema
@@ -424,14 +424,14 @@ object Acquire:
 
     final case class RecheckResult(
         dryRun: RecheckResult.DryRun,
-        open: RecheckResult.Open = 0,
-        withDoi: RecheckResult.WithDoi = 0,
-        due: RecheckResult.Due = 0,
-        allowance: RecheckResult.Allowance = 0,
-        closed: RecheckResult.Closed = 0,
-        fetched: RecheckResult.Fetched = 0,
-        noCopy: RecheckResult.NoCopy = 0,
-        failed: RecheckResult.Failed = 0,
+        open: RecheckResult.Open = _root_.com.histmersion.api.library.Acquire.Checks.RecheckResult.Open(0),
+        withDoi: RecheckResult.WithDoi = _root_.com.histmersion.api.library.Acquire.Checks.RecheckResult.WithDoi(0),
+        due: RecheckResult.Due = _root_.com.histmersion.api.library.Acquire.Checks.RecheckResult.Due(0),
+        allowance: RecheckResult.Allowance = _root_.com.histmersion.api.library.Acquire.Checks.RecheckResult.Allowance(0),
+        closed: RecheckResult.Closed = _root_.com.histmersion.api.library.Acquire.Checks.RecheckResult.Closed(0),
+        fetched: RecheckResult.Fetched = _root_.com.histmersion.api.library.Acquire.Checks.RecheckResult.Fetched(0),
+        noCopy: RecheckResult.NoCopy = _root_.com.histmersion.api.library.Acquire.Checks.RecheckResult.NoCopy(0),
+        failed: RecheckResult.Failed = _root_.com.histmersion.api.library.Acquire.Checks.RecheckResult.Failed(0),
         rows: List[RecheckRow] = Nil,
         note: Option[RecheckResult.Note] = None,
         job: Option[JobInfo] = None
@@ -463,9 +463,9 @@ object Acquire:
 
     final case class RecheckJob(
         all: RecheckJob.All,
-        upTo: RecheckJob.UpTo = 0,
-        since: RecheckJob.Since = "",
-        by: RecheckJob.By = "",
+        upTo: RecheckJob.UpTo = _root_.com.histmersion.api.library.Acquire.Checks.RecheckJob.UpTo(0),
+        since: RecheckJob.Since = _root_.com.histmersion.api.library.Acquire.Checks.RecheckJob.Since(""),
+        by: RecheckJob.By = _root_.com.histmersion.api.library.Acquire.Checks.RecheckJob.By(""),
         resumes: Option[RecheckJob.Resumes] = None
     ) derives KindlingsCodecAsObject,
           KindlingsSchema, com.histmersion.api.json.Schema
@@ -488,25 +488,25 @@ object Acquire:
       object Resumes extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
       val Detail: com.histmersion.api.jobs.JobDetail.Field[Option[RecheckJob]] =
-        com.histmersion.api.jobs.JobDetail.Field("recheck", None)
+        com.histmersion.api.jobs.JobDetail.Field(_root_.com.histmersion.api.jobs.JobDetail.Field.Name("recheck"), None)
 
       val JobKind = com.histmersion.api.library.AcquisitionJobKinds.AcquireRecheck.kind.value
 
       def describe(j: RecheckJob): com.histmersion.api.library.Acquire.Checks.RecheckJob.DescribeResult =
         "the acquisition list's legal re-check of " +
-          (if j.all then "every open item with a DOI" else s"up to ${Plural.count(j.upTo, "due item")}") +
+          (if j.all then "every open item with a DOI" else s"up to ${Plural.count(j.upTo, _root_.com.histmersion.api.Plural.CountSingular("due item"))}") +
           j.resumes.fold("")(id => s" (resuming job $id)")
 
     final case class RecheckStatus(
         enabled: RecheckStatus.Enabled,
-        withDoi: RecheckStatus.WithDoi = 0,
-        due: RecheckStatus.Due = 0,
-        triedToday: RecheckStatus.TriedToday = 0,
-        perDay: RecheckStatus.PerDay = 0,
-        fetchedToday: RecheckStatus.FetchedToday = 0,
-        closedWeek: RecheckStatus.ClosedWeek = 0,
-        fetchedWeek: RecheckStatus.FetchedWeek = 0,
-        everyDays: RecheckStatus.EveryDays = 0,
+        withDoi: RecheckStatus.WithDoi = _root_.com.histmersion.api.library.Acquire.Checks.RecheckStatus.WithDoi(0),
+        due: RecheckStatus.Due = _root_.com.histmersion.api.library.Acquire.Checks.RecheckStatus.Due(0),
+        triedToday: RecheckStatus.TriedToday = _root_.com.histmersion.api.library.Acquire.Checks.RecheckStatus.TriedToday(0),
+        perDay: RecheckStatus.PerDay = _root_.com.histmersion.api.library.Acquire.Checks.RecheckStatus.PerDay(0),
+        fetchedToday: RecheckStatus.FetchedToday = _root_.com.histmersion.api.library.Acquire.Checks.RecheckStatus.FetchedToday(0),
+        closedWeek: RecheckStatus.ClosedWeek = _root_.com.histmersion.api.library.Acquire.Checks.RecheckStatus.ClosedWeek(0),
+        fetchedWeek: RecheckStatus.FetchedWeek = _root_.com.histmersion.api.library.Acquire.Checks.RecheckStatus.FetchedWeek(0),
+        everyDays: RecheckStatus.EveryDays = _root_.com.histmersion.api.library.Acquire.Checks.RecheckStatus.EveryDays(0),
         nextPass: Option[RecheckStatus.NextPass] = None,
         note: Option[RecheckStatus.Note] = None,
         job: Option[RecheckStatus.Job] = None

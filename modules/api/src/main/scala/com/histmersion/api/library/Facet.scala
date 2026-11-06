@@ -9,7 +9,7 @@ final case class Facet(
     value: Facet.Value,
     count: Facet.Count,
     id: Option[Facet.Id] = None,
-    contested: Facet.Contested = false
+    contested: Facet.Contested = _root_.com.histmersion.api.library.Facet.Contested(false)
 ) derives KindlingsCodecAsObject,
       KindlingsSchema, com.histmersion.api.json.Schema
 object Facet:
@@ -36,12 +36,12 @@ object Facet:
     object All extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
     def label(f: Field): com.histmersion.api.library.Facet.Field.LabelResult = f match
-      case Tags       => "tags";
-      case Authors    => "authors";
-      case Places     => "places"
-      case Topics     => "topics";
-      case Status     => "status";
-      case Provenance => "provenance"
+      case Tags       => _root_.com.histmersion.api.library.Facet.Field.LabelResult("tags");
+      case Authors    => _root_.com.histmersion.api.library.Facet.Field.LabelResult("authors");
+      case Places     => _root_.com.histmersion.api.library.Facet.Field.LabelResult("places")
+      case Topics     => _root_.com.histmersion.api.library.Facet.Field.LabelResult("topics");
+      case Status     => _root_.com.histmersion.api.library.Facet.Field.LabelResult("status");
+      case Provenance => _root_.com.histmersion.api.library.Facet.Field.LabelResult("provenance")
 
     def parse(s: com.histmersion.api.library.Facet.Field.ParseS): Option[Field] =
       values.find(f => label(f) == s.trim.toLowerCase || f.toString.equalsIgnoreCase(s.trim))

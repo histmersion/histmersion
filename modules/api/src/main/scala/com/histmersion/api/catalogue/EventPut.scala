@@ -8,9 +8,9 @@ import com.histmersion.api.given
 
 final case class EventPut(
     label: com.histmersion.api.catalogue.EventSummary.Label,
-    kind: com.histmersion.api.catalogue.EventSummary.Kind = "event",
+    kind: com.histmersion.api.catalogue.EventSummary.Kind = _root_.com.histmersion.api.catalogue.EventSummary.Kind("event"),
     timeSpan: TimeSpan = TimeSpan(),
-    historicity: com.histmersion.api.catalogue.EventSummary.Historicity = "attested",
+    historicity: com.histmersion.api.catalogue.EventSummary.Historicity = _root_.com.histmersion.api.catalogue.EventSummary.Historicity("attested"),
     geometry: Option[EventPut.Geometry] = None,
     placeId: Option[com.histmersion.api.catalogue.Place.Id] = None,
     parentId: Option[com.histmersion.api.catalogue.Event.Id] = None,

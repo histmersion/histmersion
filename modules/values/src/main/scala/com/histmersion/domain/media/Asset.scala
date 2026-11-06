@@ -20,4 +20,4 @@ object Asset:
     val Place = "place"
     val Source = "source"
     val Article = "article"
-    val all: List[com.histmersion.domain.media.Asset.LinkTarget.All] = List(Event, Finding, Place, Source, Article)
+    val all: List[com.histmersion.domain.media.Asset.LinkTarget.All] = List(_root_.com.histmersion.domain.media.Asset.LinkTarget.All(Event), _root_.com.histmersion.domain.media.Asset.LinkTarget.All(Finding), _root_.com.histmersion.domain.media.Asset.LinkTarget.All(Place), _root_.com.histmersion.domain.media.Asset.LinkTarget.All(Source), _root_.com.histmersion.domain.media.Asset.LinkTarget.All(Article))

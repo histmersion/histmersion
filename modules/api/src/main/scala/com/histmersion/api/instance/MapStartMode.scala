@@ -3,8 +3,8 @@ package com.histmersion.api.instance
 import com.histmersion.api.catalogue.Place
 import com.histmersion.api.given
 enum MapStartMode(val wire: MapStartMode.Wire, val label: MapStartMode.Label):
-  case Last extends MapStartMode("last", "Where I last left it")
-  case Place extends MapStartMode("place", "At a place I choose")
+  case Last extends MapStartMode(_root_.com.histmersion.api.instance.MapStartMode.Wire("last"), _root_.com.histmersion.api.instance.MapStartMode.Label("Where I last left it"))
+  case Place extends MapStartMode(_root_.com.histmersion.api.instance.MapStartMode.Wire("place"), _root_.com.histmersion.api.instance.MapStartMode.Label("At a place I choose"))
 
 object MapStartMode:
   type Wire = Wire.T

@@ -7,7 +7,7 @@ import sttp.model.Uri
   */
 final case class BaseUrl(uri: Uri):
   /** The endpoint under this URL: `v1/messages`, `chat/completions`. */
-  def endpoint(segments: String*): com.histmersion.plugins.ai.BaseUrl.EndpointResult = uri.addPath(segments.toList).toString
+  def endpoint(segments: String*): com.histmersion.plugins.ai.BaseUrl.EndpointResult = _root_.com.histmersion.plugins.ai.BaseUrl.EndpointResult(uri.addPath(segments.toList).toString)
 
 object BaseUrl:
   /** `text` as a base URL, or why not, naming the `setting` it came from. */

@@ -53,14 +53,14 @@ object Goal:
     val Compiled = "compiled"
     val Reviewed = "reviewed"
     val Done = "done"
-    val all: scala.List[com.histmersion.api.automation.Goal.Status.All] = scala.List(Planned, Seeding, Compiled, Reviewed, Done)
+    val all: scala.List[com.histmersion.api.automation.Goal.Status.All] = scala.List(_root_.com.histmersion.api.automation.Goal.Status.All(Planned), _root_.com.histmersion.api.automation.Goal.Status.All(Seeding), _root_.com.histmersion.api.automation.Goal.Status.All(Compiled), _root_.com.histmersion.api.automation.Goal.Status.All(Reviewed), _root_.com.histmersion.api.automation.Goal.Status.All(Done))
 
   /** What a goal is linked to. */
   enum LinkKind(val wire: LinkKind.Wire):
-    case Source extends LinkKind("source")
-    case Article extends LinkKind("article")
-    case Query extends LinkKind("query")
-    case QueueItem extends LinkKind("queue-item")
+    case Source extends LinkKind(_root_.com.histmersion.api.automation.Goal.LinkKind.Wire("source"))
+    case Article extends LinkKind(_root_.com.histmersion.api.automation.Goal.LinkKind.Wire("article"))
+    case Query extends LinkKind(_root_.com.histmersion.api.automation.Goal.LinkKind.Wire("query"))
+    case QueueItem extends LinkKind(_root_.com.histmersion.api.automation.Goal.LinkKind.Wire("queue-item"))
 
   object LinkKind:
 
@@ -152,9 +152,9 @@ object Goal:
         year: Option[com.histmersion.api.catalogue.Year] = None,
         authors: scala.List[com.histmersion.api.library.AuthorName] = Nil,
         citekey: Option[com.histmersion.api.library.Citekey] = None,
-        inCorpus: PlannedWork.InCorpus = false,
-        isOa: PlannedWork.IsOa = false,
-        why: PlannedWork.Why = ""
+        inCorpus: PlannedWork.InCorpus = _root_.com.histmersion.api.automation.Goal.Plans.PlannedWork.InCorpus(false),
+        isOa: PlannedWork.IsOa = _root_.com.histmersion.api.automation.Goal.Plans.PlannedWork.IsOa(false),
+        why: PlannedWork.Why = _root_.com.histmersion.api.automation.Goal.Plans.PlannedWork.Why("")
     ) derives KindlingsCodecAsObject,
           KindlingsSchema, com.histmersion.api.json.Schema
 
@@ -169,14 +169,14 @@ object Goal:
 
     final case class Plan(
         goal: com.histmersion.api.automation.Goal.Slug,
-        rationale: Plan.Rationale = "",
+        rationale: Plan.Rationale = _root_.com.histmersion.api.automation.Goal.Plans.Plan.Rationale(""),
         subGoals: scala.List[PlannedGoal] = Nil,
         queries: scala.List[Plan.Queries] = Nil,
         works: scala.List[PlannedWork] = Nil,
         dropped: scala.List[Plan.Dropped] = Nil
     ) derives KindlingsCodecAsObject,
           KindlingsSchema, com.histmersion.api.json.Schema:
-      def isEmpty: com.histmersion.api.automation.Goal.Plans.Plan.IsEmptyResult = subGoals.isEmpty && queries.isEmpty && works.isEmpty
+      def isEmpty: com.histmersion.api.automation.Goal.Plans.Plan.IsEmptyResult = _root_.com.histmersion.api.automation.Goal.Plans.Plan.IsEmptyResult(subGoals.isEmpty && queries.isEmpty && works.isEmpty)
 
     object Plan:
       type IsEmptyResult = IsEmptyResult.T
@@ -205,7 +205,7 @@ object Goal:
         cited: scala.List[com.histmersion.api.library.Citekey] = Nil,
         notUsed: scala.List[com.histmersion.api.library.Citekey] = Nil,
         problems: scala.List[ArticleDraft.Problems] = Nil,
-        filter: ArticleDraft.Filter = "",
+        filter: ArticleDraft.Filter = _root_.com.histmersion.api.automation.Goal.Plans.ArticleDraft.Filter(""),
         reasons: scala.List[Coverage.Reason] = Nil
     ) derives KindlingsCodecAsObject,
           KindlingsSchema, com.histmersion.api.json.Schema
@@ -226,7 +226,7 @@ object Goal:
         ref: GoalLink.Ref,
         note: Option[GoalLink.Note] = None,
         title: Option[GoalLink.Title] = None,
-        createdAt: GoalLink.CreatedAt = "",
+        createdAt: GoalLink.CreatedAt = _root_.com.histmersion.api.automation.Goal.Plans.GoalLink.CreatedAt(""),
         queue: Option[GoalLink.Queue] = None
     ) derives KindlingsCodecAsObject,
           KindlingsSchema, com.histmersion.api.json.Schema
@@ -286,7 +286,7 @@ object Goal:
       object LastNote extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
 
-    final case class ScheduleSet(cron: ScheduleSet.Cron, enabled: ScheduleSet.Enabled = true, budgetUsd: Option[ScheduleSet.BudgetUsd] = None)
+    final case class ScheduleSet(cron: ScheduleSet.Cron, enabled: ScheduleSet.Enabled = _root_.com.histmersion.api.automation.Goal.Plans.ScheduleSet.Enabled(true), budgetUsd: Option[ScheduleSet.BudgetUsd] = None)
         derives KindlingsSchema, com.histmersion.api.json.Schema
     object ScheduleSet:
 
@@ -324,7 +324,7 @@ object Goal:
 
   final case class Put(
       title: com.histmersion.api.automation.Goal.Title,
-      status: com.histmersion.api.automation.Goal.StatusValue = "planned",
+      status: com.histmersion.api.automation.Goal.StatusValue = _root_.com.histmersion.api.automation.Goal.StatusValue("planned"),
       notes: Option[com.histmersion.api.automation.Goal.Notes] = None,
       tags: scala.List[com.histmersion.api.automation.Goal.Tags] = Nil,
       regions: scala.List[com.histmersion.api.automation.Goal.Regions] = Nil,
@@ -349,11 +349,11 @@ object Goal:
     object MeaningStatus extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
     val all: scala.List[(com.histmersion.api.automation.Goal.Stages.AllPart1, com.histmersion.api.automation.Goal.Stages.AllPart2)] = scala.List(
-      com.histmersion.api.automation.Goal.Status.Planned -> "created; nothing works on it yet",
-      com.histmersion.api.automation.Goal.Status.Seeding -> "finding and reading sources, writing its articles",
-      com.histmersion.api.automation.Goal.Status.Compiled -> "its articles are written; not all have passed review yet",
-      com.histmersion.api.automation.Goal.Status.Reviewed -> "every article (and sub-goal) passed the review panel",
-      com.histmersion.api.automation.Goal.Status.Done -> "finished: only you set this, the autopilot never does"
+      { val refactorTuple6 = com.histmersion.api.automation.Goal.Status.Planned -> "created; nothing works on it yet"; (_root_.com.histmersion.api.automation.Goal.Stages.AllPart1(refactorTuple6._1), _root_.com.histmersion.api.automation.Goal.Stages.AllPart2(refactorTuple6._2)) },
+      { val refactorTuple7 = com.histmersion.api.automation.Goal.Status.Seeding -> "finding and reading sources, writing its articles"; (_root_.com.histmersion.api.automation.Goal.Stages.AllPart1(refactorTuple7._1), _root_.com.histmersion.api.automation.Goal.Stages.AllPart2(refactorTuple7._2)) },
+      { val refactorTuple3 = com.histmersion.api.automation.Goal.Status.Compiled -> "its articles are written; not all have passed review yet"; (_root_.com.histmersion.api.automation.Goal.Stages.AllPart1(refactorTuple3._1), _root_.com.histmersion.api.automation.Goal.Stages.AllPart2(refactorTuple3._2)) },
+      { val refactorTuple9 = com.histmersion.api.automation.Goal.Status.Reviewed -> "every article (and sub-goal) passed the review panel"; (_root_.com.histmersion.api.automation.Goal.Stages.AllPart1(refactorTuple9._1), _root_.com.histmersion.api.automation.Goal.Stages.AllPart2(refactorTuple9._2)) },
+      { val refactorTuple10 = com.histmersion.api.automation.Goal.Status.Done -> "finished: only you set this, the autopilot never does"; (_root_.com.histmersion.api.automation.Goal.Stages.AllPart1(refactorTuple10._1), _root_.com.histmersion.api.automation.Goal.Stages.AllPart2(refactorTuple10._2)) }
     )
 
     def meaning(status: com.histmersion.api.automation.Goal.Stages.MeaningStatus): Option[com.histmersion.api.automation.Goal.Stages.MeaningResult] = all.collectFirst { case (s, m) if s == status => m }

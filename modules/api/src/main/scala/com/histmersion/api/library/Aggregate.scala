@@ -49,15 +49,15 @@ object Aggregate:
 
   def bucketSize(spanYears: com.histmersion.api.library.Aggregate.BucketSizeSpanYears): com.histmersion.api.library.Aggregate.BucketSizeResult =
     val span = math.abs(spanYears)
-    if span >= 20000 then 5000
-    else if span >= 5000 then 1000
-    else if span >= 1000 then 100
-    else 10
+    if span >= 20000 then _root_.com.histmersion.api.library.Aggregate.BucketSizeResult((5000).toLong)
+    else if span >= 5000 then _root_.com.histmersion.api.library.Aggregate.BucketSizeResult((1000).toLong)
+    else if span >= 1000 then _root_.com.histmersion.api.library.Aggregate.BucketSizeResult((100).toLong)
+    else _root_.com.histmersion.api.library.Aggregate.BucketSizeResult((10).toLong)
 
   def finer(size: com.histmersion.api.library.Aggregate.FinerSize): com.histmersion.api.library.Aggregate.FinerResult = size match
-    case s if s > 1000 => 1000
-    case s if s > 100  => 100
-    case _             => 10
+    case s if s > 1000 => _root_.com.histmersion.api.library.Aggregate.FinerResult((1000).toLong)
+    case s if s > 100  => _root_.com.histmersion.api.library.Aggregate.FinerResult((100).toLong)
+    case _             => _root_.com.histmersion.api.library.Aggregate.FinerResult((10).toLong)
 
   def buckets(from: com.histmersion.api.library.Aggregate.BucketsFrom, to: com.histmersion.api.library.Aggregate.BucketsTo, size: com.histmersion.api.library.Aggregate.BucketsSize): List[(com.histmersion.api.library.Aggregate.BucketsResultPart1, com.histmersion.api.library.Aggregate.BucketsResultPart2)] =
     require(size > 0, s"bucket size must be positive, got $size")
@@ -75,7 +75,7 @@ object Aggregate:
       else
         s = e + 1
         go = s <= hi
-    out.result()
+    (out.result()).map(refactorValue => { val refactorTuple = refactorValue; (_root_.com.histmersion.api.library.Aggregate.BucketsResultPart1(refactorTuple._1), _root_.com.histmersion.api.library.Aggregate.BucketsResultPart2(refactorTuple._2)) })
 
   def bucketCount(from: com.histmersion.api.library.Aggregate.BucketCountFrom, to: com.histmersion.api.library.Aggregate.BucketCountTo, size: com.histmersion.api.library.Aggregate.BucketCountSize): BigInt =
     if size <= 0 then BigInt(0)

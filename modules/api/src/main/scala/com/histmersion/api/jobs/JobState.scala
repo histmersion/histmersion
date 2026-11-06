@@ -3,8 +3,8 @@ import com.histmersion.api.given
 enum JobState:
   case Queued, Running, Done, Failed, Paused, Cancelled
 
-  def wire: com.histmersion.api.jobs.JobState.WireResult = toString.toLowerCase
-  def isTerminal: com.histmersion.api.jobs.JobState.IsTerminalResult = this == Done || this == Failed || this == Cancelled
+  def wire: com.histmersion.api.jobs.JobState.WireResult = _root_.com.histmersion.api.jobs.JobState.WireResult(toString.toLowerCase)
+  def isTerminal: com.histmersion.api.jobs.JobState.IsTerminalResult = _root_.com.histmersion.api.jobs.JobState.IsTerminalResult(this == Done || this == Failed || this == Cancelled)
 
 object JobState:
   type WireResult = WireResult.T

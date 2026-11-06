@@ -22,7 +22,7 @@ final case class Target(
       KindlingsSchema, com.histmersion.api.json.Schema:
   def itemKey: Option[com.histmersion.api.personal.Target.ItemKeyResult] = Option.when(kind.isItem)(id.map(_.value)).flatten
 
-  def identity: Option[com.histmersion.api.personal.Target.IdentityResult] = itemKey.map(k => s"${kind.wire}:$k")
+  def identity: Option[com.histmersion.api.personal.Target.IdentityResult] = itemKey.map(k => _root_.com.histmersion.api.personal.Target.IdentityResult(s"${kind.wire}:$k"))
 
 object Target:
 
@@ -97,14 +97,14 @@ object Target:
       }
 
   def where(t: Target): com.histmersion.api.personal.Target.WhereResult =
-    val span = YearFmt.period(t.from.map(_.value.toLong), t.to.map(_.value.toLong))
-    val at = t.lat.zip(t.lon).fold("")((la, lo) => s"${degrees(la.value, "N", "S")}, ${degrees(lo.value, "E", "W")}")
+    val span = YearFmt.period(t.from.map(_root_.com.histmersion.api.YearFmt.PeriodStart(_.value.toLong)), t.to.map(_root_.com.histmersion.api.YearFmt.PeriodEnd(_.value.toLong)))
+    val at = t.lat.zip(t.lon).fold("")((la, lo) => s"${degrees(la.value, _root_.com.histmersion.api.personal.Target.DegreesPlus("N"), _root_.com.histmersion.api.personal.Target.DegreesMinus("S"))}, ${degrees(lo.value, _root_.com.histmersion.api.personal.Target.DegreesPlus("E"), _root_.com.histmersion.api.personal.Target.DegreesMinus("W"))}")
     t.kind match
       case ItemKind.Point => List(at, span).filter(_.nonEmpty).mkString(" · ")
       case ItemKind.View  =>
         List(at, t.zoom.fold("")(z => s"zoom ${round1(z.value)}"), span).filter(_.nonEmpty).mkString(" · ")
       case ItemKind.Period => span
-      case _               => ""
+      case _               => _root_.com.histmersion.api.personal.Target.WhereResult("")
 
   private def round1(v: com.histmersion.api.personal.Target.Round1V): com.histmersion.api.personal.Target.Round1Result =
     BigDecimal(v).setScale(1, BigDecimal.RoundingMode.HALF_UP).bigDecimal.stripTrailingZeros.toPlainString

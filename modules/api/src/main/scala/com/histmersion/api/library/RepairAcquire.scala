@@ -11,7 +11,7 @@ object RepairAcquire:
   type MarkdownResult = MarkdownResult.T
   object MarkdownResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
-  final case class RepairRequest(dryRun: RepairRequest.DryRun = false, by: Option[RepairRequest.By] = None)
+  final case class RepairRequest(dryRun: RepairRequest.DryRun = _root_.com.histmersion.api.library.RepairAcquire.RepairRequest.DryRun(false), by: Option[RepairRequest.By] = None)
       derives KindlingsCodecAsObject,
         KindlingsSchema, com.histmersion.api.json.Schema
 
@@ -26,9 +26,9 @@ object RepairAcquire:
       item: RepairRow.Item,
       doi: com.histmersion.api.library.Doi,
       goals: List[RepairRow.Goals] = Nil,
-      watcher: RepairRow.Watcher = "",
-      action: RepairRow.Action = "",
-      detail: RepairRow.Detail = "",
+      watcher: RepairRow.Watcher = _root_.com.histmersion.api.library.RepairAcquire.RepairRow.Watcher(""),
+      action: RepairRow.Action = _root_.com.histmersion.api.library.RepairAcquire.RepairRow.Action(""),
+      detail: RepairRow.Detail = _root_.com.histmersion.api.library.RepairAcquire.RepairRow.Detail(""),
       backlogItem: Option[RepairRow.BacklogItem] = None
   ) derives KindlingsCodecAsObject,
         KindlingsSchema, com.histmersion.api.json.Schema
@@ -50,12 +50,12 @@ object RepairAcquire:
 
   final case class RepairResult(
       dryRun: RepairResult.DryRun,
-      moved: RepairResult.Moved = 0,
-      removed: RepairResult.Removed = 0,
-      kept: RepairResult.Kept = 0,
-      untouched: RepairResult.Untouched = 0,
+      moved: RepairResult.Moved = _root_.com.histmersion.api.library.RepairAcquire.RepairResult.Moved(0),
+      removed: RepairResult.Removed = _root_.com.histmersion.api.library.RepairAcquire.RepairResult.Removed(0),
+      kept: RepairResult.Kept = _root_.com.histmersion.api.library.RepairAcquire.RepairResult.Kept(0),
+      untouched: RepairResult.Untouched = _root_.com.histmersion.api.library.RepairAcquire.RepairResult.Untouched(0),
       rows: List[RepairRow] = Nil,
-      backlog: RepairResult.Backlog = 0,
+      backlog: RepairResult.Backlog = _root_.com.histmersion.api.library.RepairAcquire.RepairResult.Backlog(0),
       backlogDays: Option[RepairResult.BacklogDays] = None
   ) derives KindlingsCodecAsObject,
         KindlingsSchema, com.histmersion.api.json.Schema
@@ -84,7 +84,7 @@ object RepairAcquire:
   def markdown(r: RepairResult): com.histmersion.api.library.RepairAcquire.MarkdownResult =
     val verb = if r.dryRun then "would " else ""
     val head = s"# Repair of the acquisition list${if r.dryRun then " (dry run: nothing changed)" else ""}\n\n" +
-      s"- ${verb}move ${Plural.count(r.moved, "legal open-access work")} into the watchers' ingest backlogs\n" +
+      s"- ${verb}move ${Plural.count(r.moved, _root_.com.histmersion.api.Plural.CountSingular("legal open-access work"))} into the watchers' ingest backlogs\n" +
       s"- ${verb}remove ${Plural.count(r.removed, "item")} already in the corpus\n" +
       s"- keep ${Plural.count(r.kept, "sweep item")} on the list (no legal open-access copy known, or a watcher that does not ingest)\n" +
       s"- ${Plural.count(r.untouched, "open acquisition item")} not created by a watcher's sweep: untouched\n" +

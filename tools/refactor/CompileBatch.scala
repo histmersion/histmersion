@@ -4,7 +4,7 @@ import java.nio.file.{Files, Paths}
 import scala.jdk.CollectionConverters._
 
 object CompileBatch {
-  case class Policy(report: String = "", commands: List[String] = List("compile", "Test/compile"), sourceOverlay: Option[String] = None)
+  case class Policy(report: String = "", commands: List[String] = List("compile", "Test/compile"), sourceOverlay: Option[String] = None, sbtJvmOptions: List[String] = Nil)
   object Policy {
     implicit val surface: generic.Surface[Policy] = generic.deriveSurface[Policy]
     implicit val decoder: ConfDecoder[Policy] = generic.deriveDecoder(Policy()).noTypos
@@ -52,7 +52,8 @@ class CompileBatch(val policy: CompileBatch.Policy) extends SyntacticRule("Compi
     if(policy.sourceOverlay.nonEmpty) Files.write(report.resolve("overlay-sources.tsv"),("path\tsha256" :: overlayBefore.toList.sorted.map { case(p,h) => p + "\t" + h }).asJava)
     Files.write(report.resolve("sources.tsv"),("path\tsha256" :: before.toList.sorted.map { case(p,h) => p + "\t" + h }).asJava)
     Files.writeString(report.resolve("status.txt"),"RUNNING\n")
-    val args = List("sbt","--server","-batch","set every scalafmtOnCompile := false","set ThisBuild / scalacOptions += \"-Xsemanticdb\"") ++ overlaySettings ++ policy.commands
+    require(policy.sbtJvmOptions.forall(_.matches("-Xss[0-9]+[kKmM]")),"Build JVM overrides are limited to stack size")
+    val args = List("sbt") ++ policy.sbtJvmOptions.map("-J" + _) ++ List("--server","-batch","set every scalafmtOnCompile := false","set ThisBuild / scalacOptions += \"-Xsemanticdb\"") ++ overlaySettings ++ policy.commands
     Files.write(report.resolve("arguments.txt"),args.asJava)
     println("Running actual build: " + policy.commands.mkString(", "))
     val code = new ProcessBuilder(args.asJava).redirectErrorStream(true).redirectOutput(report.resolve("build.log").toFile).start().waitFor()

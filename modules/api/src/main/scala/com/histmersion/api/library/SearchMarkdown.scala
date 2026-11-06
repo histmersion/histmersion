@@ -38,13 +38,13 @@ object SearchMarkdown:
 
   private[api] def snippet(h: SearchHit): com.histmersion.api.library.SearchMarkdown.SnippetResult =
     h.snippet.map(_.replaceAll("\\s+", " ").trim).filter(_.nonEmpty) match
-      case None    => ""
+      case None    => _root_.com.histmersion.api.library.SearchMarkdown.SnippetResult("")
       case Some(s) =>
         val head = h.matchedHeading.map(_.trim).filter(_.nonEmpty).map(x => s"_${x}_ — ").getOrElse("")
-        s"\n  > $head$s"
+        _root_.com.histmersion.api.library.SearchMarkdown.SnippetResult(s"\n  > $head$s")
 
   def searchResults(hits: Vector[SearchHit]): com.histmersion.api.library.SearchMarkdown.SearchResultsResult =
-    if hits.isEmpty then "_No matching sources._"
+    if hits.isEmpty then _root_.com.histmersion.api.library.SearchMarkdown.SearchResultsResult("_No matching sources._")
     else
       val body = hits.map { h =>
         val reg = h.regions.map(Label.display).mkString(", ")
@@ -54,10 +54,10 @@ object SearchMarkdown:
         val summary = h.summary.map(s => s"\n  ${s.trim.take(240)}").getOrElse("")
         s"- **${h.citekey}** — ${h.title}\n  _${metaLine}_${snippet(h)}$summary"
       }
-      s"### ${hits.size} result(s)\n\n${body.mkString("\n")}"
+      _root_.com.histmersion.api.library.SearchMarkdown.SearchResultsResult(s"### ${hits.size} result(s)\n\n${body.mkString("\n")}")
 
   def searchResults(result: SearchResult): com.histmersion.api.library.SearchMarkdown.SearchResultsResult =
-    if result.hits.isEmpty then "_No matching sources._"
+    if result.hits.isEmpty then _root_.com.histmersion.api.library.SearchMarkdown.SearchResultsResult("_No matching sources._")
     else
       val body = result.hits.map { hit =>
         val h = hit.source
@@ -79,12 +79,12 @@ object SearchMarkdown:
             s"\n  matches:${items.mkString}"
         s"- **${h.citekey}** — ${h.title}\n  _${metaLine}_$why${snippet(h)}$summary$matched"
       }
-      val header = OffsetPage.header(result.page, "source(s)")
+      val header = OffsetPage.header(result.page, _root_.com.histmersion.api.OffsetPage.HeaderNoun("source(s)"))
       val footer = OffsetPage.footer(result.page)
-      s"$header\n\n${body.mkString("\n")}$footer"
+      _root_.com.histmersion.api.library.SearchMarkdown.SearchResultsResult(s"$header\n\n${body.mkString("\n")}$footer")
 
   def briefResults(result: SearchResult): com.histmersion.api.library.SearchMarkdown.BriefResultsResult =
-    if result.hits.isEmpty then "_No matching sources._"
+    if result.hits.isEmpty then _root_.com.histmersion.api.library.SearchMarkdown.BriefResultsResult("_No matching sources._")
     else
       val body = result.hits.map { hit =>
         val h = hit.source
@@ -93,28 +93,28 @@ object SearchMarkdown:
         val why = hit.why.headOption.map(w => s" — $w").getOrElse("")
         s"- **${h.citekey}** — ${h.title}  \n  _${meta}_$why"
       }
-      val header = OffsetPage.header(result.page, "source(s)")
+      val header = OffsetPage.header(result.page, _root_.com.histmersion.api.OffsetPage.HeaderNoun("source(s)"))
       val footer = OffsetPage.footer(result.page)
-      s"$header\n\n${body.mkString("\n")}$footer"
+      _root_.com.histmersion.api.library.SearchMarkdown.BriefResultsResult(s"$header\n\n${body.mkString("\n")}$footer")
 
   def facets(field: com.histmersion.api.library.SearchMarkdown.FacetsField, rows: Vector[Facet]): com.histmersion.api.library.SearchMarkdown.FacetsResult =
-    if rows.isEmpty then s"_No $field in the current filter._"
+    if rows.isEmpty then _root_.com.histmersion.api.library.SearchMarkdown.FacetsResult(s"_No $field in the current filter._")
     else
       val items = rows.map(f =>
         s"- ${f.value}${contestedMark(f.contested, f.value)} (${f.count})" +
           f.id.map(i => s" · `$i`").getOrElse("")
       )
-      s"### $field (${rows.size})\n\n${items.mkString("\n")}"
+      _root_.com.histmersion.api.library.SearchMarkdown.FacetsResult(s"### $field (${rows.size})\n\n${items.mkString("\n")}")
 
   def geoPage(p: GeoHitPage): com.histmersion.api.library.SearchMarkdown.GeoPageResult =
     if p.hits.isEmpty then
-      OffsetPage.markdown(p.page, "finding(s)", "_No findings match that place/time._", Nil)(_ => "")
+      OffsetPage.markdown(p.page, _root_.com.histmersion.api.OffsetPage.MarkdownNoun("finding(s)"), _root_.com.histmersion.api.OffsetPage.MarkdownEmpty("_No findings match that place/time._"), Nil)(_ => "")
     else
       val body = geoResults(p.hits.toVector)
-      OffsetPage.header(p.page, "finding(s)") + body.dropWhile(_ != '\n') + OffsetPage.footer(p.page)
+      OffsetPage.header(p.page, _root_.com.histmersion.api.OffsetPage.HeaderNoun("finding(s)")) + body.dropWhile(_ != '\n') + OffsetPage.footer(p.page)
 
   def geoResults(hits: Vector[GeoHit]): com.histmersion.api.library.SearchMarkdown.GeoResultsResult =
-    if hits.isEmpty then "_No findings match that place/time._"
+    if hits.isEmpty then _root_.com.histmersion.api.library.SearchMarkdown.GeoResultsResult("_No findings match that place/time._")
     else
       val blocks = hits
         .groupBy(h => (h.citekey, h.title))
@@ -134,7 +134,7 @@ object SearchMarkdown:
 
   def histogram(h: TimeHistogram, unit: com.histmersion.api.library.SearchMarkdown.HistogramUnit): com.histmersion.api.library.SearchMarkdown.HistogramResult =
     val span = s"${fmtYear(h.from)} → ${fmtYear(h.to)}"
-    if h.buckets.isEmpty then s"_No time buckets for $span._"
+    if h.buckets.isEmpty then _root_.com.histmersion.api.library.SearchMarkdown.HistogramResult(s"_No time buckets for $span._")
     else
       val collapsed = collapseHistogram(h.buckets)
       val max = collapsed.map(_.count).max
@@ -157,7 +157,7 @@ object SearchMarkdown:
             "every bucket its period overlaps, so the bars do not sum to a total._"
       // NB: no stripMargin here — every table row starts with '|', which stripMargin would eat.
       val col = if starts then "sources" else unit
-      (List(head, "", s"| period | $col | |", "|---|---:|---|") ++ rows ++ List("", note)).mkString("\n")
+      _root_.com.histmersion.api.library.SearchMarkdown.HistogramResult((List(head, "", s"| period | $col | |", "|---|---:|---|") ++ rows ++ List("", note)).mkString("\n"))
 
   final case class CollapsedBucket(start: CollapsedBucket.Start, end: CollapsedBucket.End, count: CollapsedBucket.Count, merged: CollapsedBucket.Merged)
 
@@ -172,7 +172,7 @@ object SearchMarkdown:
     object Merged extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
   def collapseHistogram(buckets: List[TimeBucket]): List[CollapsedBucket] =
-    if buckets.sizeIs <= 12 then buckets.map(b => CollapsedBucket(b.start, b.end, b.count, 1))
+    if buckets.sizeIs <= 12 then buckets.map(b => CollapsedBucket(b.start, b.end, b.count, _root_.com.histmersion.api.library.SearchMarkdown.CollapsedBucket.Merged(1)))
     else
       val runs = buckets
         .foldLeft(List.empty[CollapsedBucket]) { (acc, b) =>
@@ -187,7 +187,7 @@ object SearchMarkdown:
 
   def tree(h: TimeHistogram, unit: com.histmersion.api.library.SearchMarkdown.TreeUnit): com.histmersion.api.library.SearchMarkdown.TreeResult =
     val span = s"${fmtYear(h.from)} → ${fmtYear(h.to)}"
-    if h.tree.isEmpty then s"_No $unit to group for $span._"
+    if h.tree.isEmpty then _root_.com.histmersion.api.library.SearchMarkdown.TreeResult(s"_No $unit to group for $span._")
     else
       val one = if unit.endsWith("s") then unit.dropRight(1) else unit
       val head = s"### $unit by ${h.by} · $span" + asOfNote(h.asOf)
@@ -210,4 +210,4 @@ object SearchMarkdown:
     }
 
   private[api] def childNoun(b: Bucket): com.histmersion.api.library.SearchMarkdown.ChildNounResult =
-    if b.children.exists(_.kind == Tree.KindTime) then "period" else "subregion"
+    if b.children.exists(_.kind == Tree.KindTime) then _root_.com.histmersion.api.library.SearchMarkdown.ChildNounResult("period") else _root_.com.histmersion.api.library.SearchMarkdown.ChildNounResult("subregion")

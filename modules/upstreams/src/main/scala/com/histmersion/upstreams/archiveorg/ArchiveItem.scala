@@ -6,7 +6,7 @@ final case class ArchiveItem(
     year: Option[ArchiveItem.Year] = None,
     publisher: Option[ArchiveItem.Publisher] = None,
     description: Option[ArchiveItem.Description] = None,
-    lendingOnly: ArchiveItem.LendingOnly = false,
+    lendingOnly: ArchiveItem.LendingOnly = _root_.com.histmersion.upstreams.archiveorg.ArchiveItem.LendingOnly(false),
     files: List[ArchiveFile] = Nil
 )
 

@@ -5,10 +5,10 @@ import sttp.tapir.Schema
 import com.histmersion.api.given
 
 final case class InitPlan(
-    gazetteer: InitPlan.Gazetteer = false,
-    periodPresets: InitPlan.PeriodPresets = false,
+    gazetteer: InitPlan.Gazetteer = _root_.com.histmersion.api.exchange.InitPlan.Gazetteer(false),
+    periodPresets: InitPlan.PeriodPresets = _root_.com.histmersion.api.exchange.InitPlan.PeriodPresets(false),
     fetch: List[InitPlan.Fetch] = Nil,
-    check: InitPlan.Check = false
+    check: InitPlan.Check = _root_.com.histmersion.api.exchange.InitPlan.Check(false)
 ) derives KindlingsCodecAsObject,
       KindlingsSchema, com.histmersion.api.json.Schema:
   def isEmpty: com.histmersion.api.exchange.InitPlan.IsEmptyResult = !gazetteer && !periodPresets && fetch.isEmpty
@@ -32,7 +32,7 @@ object InitPlan:
   object Check extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
   val Detail: com.histmersion.api.jobs.JobDetail.Field[Option[InitPlan]] =
-    com.histmersion.api.jobs.JobDetail.Field("init", None)
+    com.histmersion.api.jobs.JobDetail.Field(_root_.com.histmersion.api.jobs.JobDetail.Field.Name("init"), None)
 
   val JobKind = com.histmersion.api.exchange.ExchangeJobKinds.Init.kind.value
 
@@ -44,5 +44,5 @@ object InitPlan:
     val fetched =
       Option.when(p.fetch.nonEmpty)(s"${if p.check then "dry run of" else "fetch"} ${p.fetch.mkString(", ")}")
     (bundled ++ fetched) match
-      case Nil   => "nothing to import"
+      case Nil   => _root_.com.histmersion.api.exchange.InitPlan.DescribeResult("nothing to import")
       case parts => parts.mkString(", ")

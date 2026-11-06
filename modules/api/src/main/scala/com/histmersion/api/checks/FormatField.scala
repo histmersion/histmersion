@@ -16,7 +16,7 @@ object FormatField:
 
   given WireEnumValues[FormatField]:
     def all: Array[FormatField] = FormatField.values
-    def wire(e: FormatField): com.histmersion.api.checks.FormatField.WireResult = e.toString.toLowerCase(java.util.Locale.ROOT)
+    def wire(e: FormatField): com.histmersion.api.checks.FormatField.WireResult = _root_.com.histmersion.api.checks.FormatField.WireResult(e.toString.toLowerCase(java.util.Locale.ROOT))
     def fromWire(s: com.histmersion.api.checks.FormatField.FromWireS): Option[FormatField] = FormatField.values.find(_.toString.equalsIgnoreCase(s))
   given Encoder[FormatField] = WireEnum.encoder
   given Decoder[FormatField] = WireEnum.decoder

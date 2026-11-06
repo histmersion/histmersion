@@ -4,7 +4,7 @@ import hearth.kindlings.tapirschemaderivation.KindlingsSchema
 import sttp.tapir.Schema
 import com.histmersion.api.given
 
-final case class EventRederiveRequest(provider: Option[EventRederiveRequest.Provider] = None, dryRun: EventRederiveRequest.DryRun = false)
+final case class EventRederiveRequest(provider: Option[EventRederiveRequest.Provider] = None, dryRun: EventRederiveRequest.DryRun = _root_.com.histmersion.api.catalogue.EventRederiveRequest.DryRun(false))
     derives KindlingsCodecAsObject,
       KindlingsSchema, com.histmersion.api.json.Schema
 

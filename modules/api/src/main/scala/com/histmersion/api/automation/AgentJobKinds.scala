@@ -7,7 +7,7 @@ object AgentJobKinds:
   val Agent: JobKindEntry =
     JobKindEntry.of(
       JobInfo.Kind("agent"),
-      "Agent run",
-      "An agent run; the agent runs window shows its steps.",
+      _root_.com.histmersion.api.jobs.JobKindEntry.OfName("Agent run"),
+      _root_.com.histmersion.api.jobs.JobKindEntry.OfMeaning("An agent run; the agent runs window shows its steps."),
       ownControl = true
     )

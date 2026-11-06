@@ -22,10 +22,10 @@ object AttestationsMarkdown:
     val locStr = if loc.isEmpty then "" else s" (${loc.mkString("; ")})"
     val q = a.quote.map(t => s""" "${if t.length > 80 then t.take(77) + "…" else t}"""").getOrElse("")
     val n = a.note.map(n => s" — $n").getOrElse("")
-    s"- `#${a.id}` [[${a.citekey}]] → ${a.targetType}:`${a.targetId}`$locStr$q$n"
+    _root_.com.histmersion.api.catalogue.AttestationsMarkdown.AttestationLineResult(s"- `#${a.id}` [[${a.citekey}]] → ${a.targetType}:`${a.targetId}`$locStr$q$n")
 
   def attestationList(result: Attestation.List): com.histmersion.api.catalogue.AttestationsMarkdown.AttestationListResult =
-    OffsetPage.markdown(result.page, "attestation(s)", "_No matching attestations._", result.attestations)(
+    OffsetPage.markdown(result.page, _root_.com.histmersion.api.OffsetPage.MarkdownNoun("attestation(s)"), _root_.com.histmersion.api.OffsetPage.MarkdownEmpty("_No matching attestations._"), result.attestations)(
       attestationLine
     )
 
@@ -51,4 +51,4 @@ object AttestationsMarkdown:
       }
       .getOrElse("")
     val n = a.note.map(n => s"\n\n$n").getOrElse("")
-    header + locBlock + q + n
+    _root_.com.histmersion.api.catalogue.AttestationsMarkdown.AttestationResult(header + locBlock + q + n)

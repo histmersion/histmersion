@@ -32,7 +32,7 @@ object MediaText:
     "&nbsp;" -> " "
   )
 
-  def plain(html: com.histmersion.upstreams.media.MediaText.PlainHtml, max: com.histmersion.upstreams.media.MediaText.PlainMax = 300): com.histmersion.upstreams.media.MediaText.PlainResult =
+  def plain(html: com.histmersion.upstreams.media.MediaText.PlainHtml, max: com.histmersion.upstreams.media.MediaText.PlainMax = _root_.com.histmersion.upstreams.media.MediaText.PlainMax(300)): com.histmersion.upstreams.media.MediaText.PlainResult =
     val noTags = Tag.replaceAllIn(Option(html).getOrElse(""), " ")
     val named = Named.foldLeft(noTags) { case (acc, (k, v)) => acc.replace(k, v) }
     val dec = Dec.replaceAllIn(
@@ -49,7 +49,7 @@ object MediaText:
         )
     )
     val text = hex.replaceAll("\\s+", " ").trim
-    if text.length > max then text.take(max - 1).trim + "…" else text
+    if text.length > max then text.take(max - 1).trim + "…" else _root_.com.histmersion.upstreams.media.MediaText.PlainResult(text)
 
   /** Pure: a URL without its `utm_*` tracking parameters (Commons adds them to every file URL). */
   def stripTracking(url: com.histmersion.upstreams.media.MediaText.StripTrackingUrl): com.histmersion.upstreams.media.MediaText.StripTrackingResult =
@@ -62,4 +62,4 @@ object MediaText:
   /** Pure: a link-safe file name for a provider's file title (`File:Lions Gate.jpg` → `Lions_Gate.jpg`). */
   def safeName(title: com.histmersion.upstreams.media.MediaText.SafeNameTitle): com.histmersion.upstreams.media.MediaText.SafeNameResult =
     val n = title.stripPrefix("File:").trim.replaceAll("[^A-Za-z0-9._-]+", "_").replaceAll("_+", "_")
-    if n.isEmpty then "file" else n.take(180)
+    if n.isEmpty then _root_.com.histmersion.upstreams.media.MediaText.SafeNameResult("file") else n.take(180)

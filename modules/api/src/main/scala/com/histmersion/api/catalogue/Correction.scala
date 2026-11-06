@@ -16,7 +16,7 @@ final case class Correction(
     upstream: Option[Correction.Upstream] = None,
     upstreamNow: Option[Correction.UpstreamNow] = None,
     label: Option[Correction.Label] = None,
-    createdAt: Correction.CreatedAt = "",
+    createdAt: Correction.CreatedAt = _root_.com.histmersion.api.catalogue.Correction.CreatedAt(""),
     checkedAt: Option[Correction.CheckedAt] = None
 ) derives KindlingsCodecAsObject,
       KindlingsSchema, com.histmersion.api.json.Schema
@@ -48,7 +48,7 @@ object Correction:
   type CheckedAt = CheckedAt.T
   object CheckedAt extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
-  final case class Counts(kept: Counts.Kept = 0, retired: Counts.Retired = 0, conflicts: Counts.Conflicts = 0)
+  final case class Counts(kept: Counts.Kept = _root_.com.histmersion.api.catalogue.Correction.Counts.Kept(0), retired: Counts.Retired = _root_.com.histmersion.api.catalogue.Correction.Counts.Retired(0), conflicts: Counts.Conflicts = _root_.com.histmersion.api.catalogue.Correction.Counts.Conflicts(0))
       derives KindlingsCodecAsObject,
         KindlingsSchema, com.histmersion.api.json.Schema:
     def +(o: Counts): Counts =
@@ -90,9 +90,9 @@ object Correction:
     val Active = "active"
     val Agreed = "agreed"
     val Conflict = "conflict"
-    val all: scala.List[com.histmersion.api.catalogue.Correction.Status.All] = scala.List(Active, Agreed, Conflict)
+    val all: scala.List[com.histmersion.api.catalogue.Correction.Status.All] = scala.List(_root_.com.histmersion.api.catalogue.Correction.Status.All(Active), _root_.com.histmersion.api.catalogue.Correction.Status.All(Agreed), _root_.com.histmersion.api.catalogue.Correction.Status.All(Conflict))
 
-    val applied: Set[com.histmersion.api.catalogue.Correction.Status.Applied] = Set(Active, Conflict)
+    val applied: Set[com.histmersion.api.catalogue.Correction.Status.Applied] = Set(_root_.com.histmersion.api.catalogue.Correction.Status.Applied(Active), _root_.com.histmersion.api.catalogue.Correction.Status.Applied(Conflict))
 
   object Target:
     type All = All.T
@@ -100,4 +100,4 @@ object Correction:
 
     val Event = "event"
     val Place = "place"
-    val all: scala.List[com.histmersion.api.catalogue.Correction.Target.All] = scala.List(Event, Place)
+    val all: scala.List[com.histmersion.api.catalogue.Correction.Target.All] = scala.List(_root_.com.histmersion.api.catalogue.Correction.Target.All(Event), _root_.com.histmersion.api.catalogue.Correction.Target.All(Place))

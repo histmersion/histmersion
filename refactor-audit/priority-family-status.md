@@ -1,6 +1,88 @@
 # Priority-family status
 
-## Current checkpoint: resolver integration passes
+## Current checkpoint: project-wide constructor batch applied, compilation incomplete
+
+The construction-only compiler transformation has applied 4047 expression patches
+in 361 production files across all nine source modules with supported observed
+matches. These are caller/initializer patches, not 4047 verified policy repairs.
+No model type was reverted and no production/test source was edited by hand.
+AstRecipe, ApplyFrozenPreview and CompileBatch remain the single pipeline.
+
+| Source module | Files patched | Compiler errors before → after |
+|---|---:|---:|
+| api | 284 | 7411 → 3929 on each of JVM and JS |
+| values | 32 | 476 → 102 |
+| upstreams | 16 | 522 → 470 |
+| plugins/ai-http | 10 | 170 → 113 |
+| plugin-vaults | 8 | 182 → 139 |
+| plugins/calibre | 5 | 250 → 208 |
+| plugin-fixtures/hello | 3 | 12 → 3 |
+| plugin-fixtures/hello-ai | 2 | 32 → 9 |
+| chimney-iron | 1 | 9 → 5 |
+
+The first aggregate observation interleaves messages (project-compile-frontier-1).
+The serial retry (-2) replays the cached diagnostics coherently and is the rewrite
+input. All ten failing module tasks still fail after the batch; dependent modules
+that cannot compile yet have no clean verdict. Shared API sources are compiled on
+two platforms, so the table is not a distinct-finding denominator. Before/after
+aggregate counts do not identify fixes or new regressions individually.
+
+The first post-application build (-3) hits compiler stack overflows in both API
+tasks. A JVM-stack-only retry (-4, -Xss16m) restores ordinary diagnostics with the
+same source snapshot and compiler checks. CompileBatch records this resource
+override in its arguments; no fuel limit, assertion or source policy was relaxed.
+The API retry prints 1000 positioned diagnostics per platform while reporting 3929
+errors each. Cases beyond that print limit remain unobserved, not compliant. The
+remaining errors include different nominal meanings, unwrapping/member operations,
+overrides, inference and unsupported diagnostic shapes. Production behavioral
+verification remains blocked by compilation. No whole-project test/native claim is
+made, and existing API validation conflicts remain unresolved.
+The read-only scalafmtCheckAll observation fails across production and test scopes
+(project-constructions-format-1); scalafmtSbtCheck does not run after that failure.
+There is no before-batch formatting baseline or new-formatting-regression count.
+
+Construction-only mode accepts compiler-evidenced raw-to-Pure construction,
+including containers, exact widening and agreeing case-class factories. It rejects
+nominal/error/comparison adapter configuration and does not unwrap newtypes, rewrite
+primitive member access, or merge meanings. Unsupported shapes stay detected.
+The preview retains 9323 unresolved evidence rows, including duplicate platform
+diagnostics, overlaps and 643 uncoded diagnostics; this is not 9323 unique policy
+violations. There are no per-expression recipes in this batch configuration.
+
+The first preview was stopped before application because repeated type lookup was
+too slow. Lookup now caches indexed names and uses indexed/filename candidate
+sources, rather than rescanning every loaded AST. Unlocatable/imported aliases and
+semantic inference remain explicit limits. A subsequent preview exposed an enum
+diagnostic parsing defect: uncoded compiler errors were being joined to the prior
+diagnostic. The parser now separates and records those diagnostics, rejects
+declaration/pattern identifiers as expressions, and requires a genuine multiline
+span for multiline fallback. The invalid preview never reached application.
+
+All five compiler fixture outputs match exactly. The construction-only fixture
+adds enum superclass arguments and leaves five excluded boundary cases unresolved;
+the prior eight negative compiler cases remain unchanged. The actual rewritten
+fixture sources compile/run with Scala 3.10, -source:future and fatal E165. Their
+runtime assertions cover construction, defaults, array identity and deliberate
+comparison failures. Canonical, interface and consolidation fixture outputs also
+match exactly after the lookup change. All 361 application files match their
+frozen preview. These tests validate supported transformations, not all affected
+production behavior.
+
+type-positions-after-project-constructions-1 retains all 3169 Scala files and every
+prior primitive/newtype declaration identity: zero removed/introduced IDs. Raw
+candidates remain production594/test6009 (6603); definitions production27632/test19;
+3014 overlap candidate groups and 16108 unresolved references. Model declarations
+did not change, so this census is not credited as model-violation repair progress.
+Inventory acceptance, confirmed outstanding counts and automation coverage remain
+unestablished globally; the other policy families stay frozen partial.
+
+Next run the same construction transformation against the fresh bounded compiler
+observation and apply every eligible case together. Keep nominal consolidation,
+boundary unwrapping and signature design as separately reviewed transformations.
+The three client-validation conflicts and the prior formatting failure are not
+silently accepted. Earlier checkpoints below remain historical evidence.
+
+## Previous checkpoint: resolver integration passes
 
 The hello-deps fixture compiles and all 24 resolver tests pass, including all nine
 offline dependency-resolution tests that previously could not execute. The same

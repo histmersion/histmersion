@@ -3,7 +3,7 @@ import com.histmersion.api.given
 enum LinkScheme:
   case Pleiades, Wikidata, Geonames, Tgn, Whg
 
-  def wire: com.histmersion.api.catalogue.LinkScheme.WireResult = toString.toLowerCase(java.util.Locale.ROOT)
+  def wire: com.histmersion.api.catalogue.LinkScheme.WireResult = _root_.com.histmersion.api.catalogue.LinkScheme.WireResult(toString.toLowerCase(java.util.Locale.ROOT))
 
 object LinkScheme:
   type WireResult = WireResult.T

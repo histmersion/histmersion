@@ -46,7 +46,7 @@ final class ArchiveOrg(archive: Endpoint, http: Plugin.Http):
     )
     http.get(url).flatMap { b =>
       if b.length < 10240 then Left(s"archive.org returned only ${b.length} bytes for $file")
-      else Right(FetchedFile("archive_org", Some(url), b, file.toLowerCase.split("\\.").lastOption.getOrElse("pdf")))
+      else Right(FetchedFile(_root_.com.histmersion.plugin.FetchedFile.Source("archive_org"), Some(url), b, file.toLowerCase.split("\\.").lastOption.getOrElse("pdf")))
     }
 
 object ArchiveOrg:

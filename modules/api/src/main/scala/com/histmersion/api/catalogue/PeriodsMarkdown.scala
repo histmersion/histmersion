@@ -18,18 +18,18 @@ object PeriodsMarkdown:
   private def years(p: Period): com.histmersion.api.catalogue.PeriodsMarkdown.YearsResult = YearFmt.period(Some(p.start), Some(p.end))
 
   def list(ps: Vector[HistoricalPeriod]): com.histmersion.api.catalogue.PeriodsMarkdown.ListResult =
-    if ps.isEmpty then "_No periods._"
+    if ps.isEmpty then _root_.com.histmersion.api.catalogue.PeriodsMarkdown.ListResult("_No periods._")
     else
       val rows = ps.map(p =>
         s"| `${p.id}` | ${p.label} | ${years(p.period)} | ${p.region.getOrElse("")} | " +
           s"${p.parentId.fold("")(x => s"`$x`")} | ${p.preset.fold("")(_.label)} |"
       )
-      (List(
+      _root_.com.histmersion.api.catalogue.PeriodsMarkdown.ListResult((List(
         s"### ${ps.size} period(s)",
         "",
         "| id | label | years | region | part of | timeline preset |",
         "|---|---|---|---|---|---|"
-      ) ++ rows).mkString("\n")
+      ) ++ rows).mkString("\n"))
 
   def detail(d: Period.Detail): com.histmersion.api.catalogue.PeriodsMarkdown.DetailResult =
     val p = d.period
@@ -47,10 +47,10 @@ object PeriodsMarkdown:
       else
         "" :: "**Divided into:**" :: "" ::
           d.children.map(c => s"- ${c.label} `${c.id}` — ${years(c.period)}${c.region.fold("")(r => s" · $r")}")
-    (head ++ kids).mkString("\n")
+    _root_.com.histmersion.api.catalogue.PeriodsMarkdown.DetailResult((head ++ kids).mkString("\n"))
 
   def imported(r: Period.ImportResult): com.histmersion.api.catalogue.PeriodsMarkdown.ImportedResult =
-    val head = s"imported ${Plural.count(r.periods, "period")}" +
+    val head = s"imported ${Plural.count(r.periods, _root_.com.histmersion.api.Plural.CountSingular("period"))}" +
       (if r.roots > 0 then s", ${r.roots} of them ${Plural.noun(r.roots, "authority node")}" else "") +
       s" — ${Plural.count(r.presets, "timeline preset")} in the store" +
       (if r.removed > 0 then s"; removed ${Plural.count(r.removed, "earlier seed period")} the seed no longer has"
@@ -58,8 +58,8 @@ object PeriodsMarkdown:
     if r.skippedCount == 0 then head
     else
       val more = r.skippedCount - r.skipped.size
-      s"$head\n\nskipped ${Plural.count(r.skippedCount, "definition")} (not imported):\n" +
+      s"$head\n\nskipped ${Plural.count(r.skippedCount, _root_.com.histmersion.api.Plural.CountSingular("definition"))} (not imported):\n" +
         skippedList(r.skipped) + (if more > 0 then s"\n- …and $more more" else "")
 
   def skippedList(ss: List[SkippedPeriod]): com.histmersion.api.catalogue.PeriodsMarkdown.SkippedListResult =
-    ss.map(s => s"- `${s.id}` ${s.label}: ${s.detail}").mkString("\n")
+    _root_.com.histmersion.api.catalogue.PeriodsMarkdown.SkippedListResult(ss.map(s => s"- `${s.id}` ${s.label}: ${s.detail}").mkString("\n"))

@@ -4,7 +4,7 @@ import hearth.kindlings.tapirschemaderivation.KindlingsSchema
 import sttp.tapir.Schema
 import com.histmersion.api.given
 
-final case class EventCandidatesRequest(all: EventCandidatesRequest.All = false, event: Option[com.histmersion.api.catalogue.Event.Id] = None, limit: Option[EventCandidatesRequest.Limit] = None)
+final case class EventCandidatesRequest(all: EventCandidatesRequest.All = _root_.com.histmersion.api.catalogue.EventCandidatesRequest.All(false), event: Option[com.histmersion.api.catalogue.Event.Id] = None, limit: Option[EventCandidatesRequest.Limit] = None)
     derives KindlingsCodecAsObject,
       KindlingsSchema, com.histmersion.api.json.Schema
 

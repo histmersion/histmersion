@@ -1,17 +1,17 @@
 package com.histmersion.api.automation
 enum AgentRole(val wire: AgentRole.Wire):
-  case Probe extends AgentRole("probe")
-  case Extractor extends AgentRole("extractor")
-  case Reviewer extends AgentRole("reviewer")
-  case ColdReader extends AgentRole("cold-reader")
-  case Skeptic extends AgentRole("skeptic")
-  case Fixer extends AgentRole("fixer")
+  case Probe extends AgentRole(_root_.com.histmersion.api.automation.AgentRole.Wire("probe"))
+  case Extractor extends AgentRole(_root_.com.histmersion.api.automation.AgentRole.Wire("extractor"))
+  case Reviewer extends AgentRole(_root_.com.histmersion.api.automation.AgentRole.Wire("reviewer"))
+  case ColdReader extends AgentRole(_root_.com.histmersion.api.automation.AgentRole.Wire("cold-reader"))
+  case Skeptic extends AgentRole(_root_.com.histmersion.api.automation.AgentRole.Wire("skeptic"))
+  case Fixer extends AgentRole(_root_.com.histmersion.api.automation.AgentRole.Wire("fixer"))
 
   /** plan-goal: sub-goals, queries and candidate works for a goal; acquisition-sweep: ranks them. */
-  case Planner extends AgentRole("planner")
+  case Planner extends AgentRole(_root_.com.histmersion.api.automation.AgentRole.Wire("planner"))
 
   /** compile-article: drafts the article (or the section to append) from the verified claims. */
-  case Writer extends AgentRole("writer")
+  case Writer extends AgentRole(_root_.com.histmersion.api.automation.AgentRole.Wire("writer"))
 
 object AgentRole:
   type Wire = Wire.T

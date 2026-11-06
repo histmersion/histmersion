@@ -25,13 +25,13 @@ object Identifiers:
     DoiCore
       .findFirstIn(s)
       .map(
-        _.stripSuffix(".")
+        _root_.com.histmersion.upstreams.identifiers.Identifiers.DoiResult(_.stripSuffix(".")
           .stripSuffix(",")
           .stripSuffix(";")
           .stripSuffix(")")
           .stripSuffix("}")
           .stripSuffix("|")
-          .toLowerCase
+          .toLowerCase)
       )
 
   def arxiv(raw: com.histmersion.upstreams.identifiers.Identifiers.ArxivRaw): Option[com.histmersion.upstreams.identifiers.Identifiers.ArxivResult] =

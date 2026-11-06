@@ -6,9 +6,9 @@ final case class RegionNode(
     label: RegionNode.Label,
     kind: RegionNode.Kind,
     period: Option[Period] = None,
-    contested: RegionNode.Contested = false,
+    contested: RegionNode.Contested = _root_.com.histmersion.api.catalogue.RegionNode.Contested(false),
     /** Pleiades marks superseded records `withdrawn`; they must never head a level. */
-    withdrawn: RegionNode.Withdrawn = false
+    withdrawn: RegionNode.Withdrawn = _root_.com.histmersion.api.catalogue.RegionNode.Withdrawn(false)
 )
 
 object RegionNode:
@@ -34,9 +34,9 @@ object RegionNode:
   object Withdrawn extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
   val RootKinds: Set[com.histmersion.api.catalogue.RegionNode.RootKinds] = Set(
-    com.histmersion.api.catalogue.Place.Kind.Region,
-    com.histmersion.api.catalogue.Place.Kind.Polity,
-    "continent"
+    _root_.com.histmersion.api.catalogue.RegionNode.RootKinds(com.histmersion.api.catalogue.Place.Kind.Region),
+    _root_.com.histmersion.api.catalogue.RegionNode.RootKinds(com.histmersion.api.catalogue.Place.Kind.Polity),
+    _root_.com.histmersion.api.catalogue.RegionNode.RootKinds("continent")
   )
 
   /** Pleiades writes an uncertain identification into the label: a trailing `?` on the name or a part of it ("Theren?

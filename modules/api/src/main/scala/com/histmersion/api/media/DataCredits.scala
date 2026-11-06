@@ -8,135 +8,135 @@ object DataCredits:
 
   val all: List[DataCredit] = List(
     DataCredit(
-      "OpenStreetMap",
-      "the base map (online tiles, and the Readable and Physical styles through Protomaps)",
-      "ODbL 1.0",
-      odbl,
-      "© OpenStreetMap contributors",
-      "https://www.openstreetmap.org/copyright"
+      _root_.com.histmersion.api.media.DataCredit.Name("OpenStreetMap"),
+      _root_.com.histmersion.api.media.DataCredit.UsedFor("the base map (online tiles, and the Readable and Physical styles through Protomaps)"),
+      _root_.com.histmersion.api.media.DataCredit.Licence("ODbL 1.0"),
+      (odbl).map(refactorValue11 => _root_.com.histmersion.api.media.DataCredit.LicenceUrl(refactorValue11)),
+      _root_.com.histmersion.api.media.MediaItem.Credit("© OpenStreetMap contributors"),
+      _root_.com.histmersion.api.media.DataCredit.Url("https://www.openstreetmap.org/copyright")
     ),
     DataCredit(
-      "Protomaps basemap",
-      "the Readable and Physical styles; the extract kept here is an ODbL derivative of " +
-        "OpenStreetMap, filtered by basemap.vector.drop",
-      "BSD (code), ODbL (data)",
-      odbl,
-      "Protomaps",
-      "https://protomaps.com"
+      _root_.com.histmersion.api.media.DataCredit.Name("Protomaps basemap"),
+      _root_.com.histmersion.api.media.DataCredit.UsedFor("the Readable and Physical styles; the extract kept here is an ODbL derivative of " +
+        "OpenStreetMap, filtered by basemap.vector.drop"),
+      _root_.com.histmersion.api.media.DataCredit.Licence("BSD (code), ODbL (data)"),
+      (odbl).map(refactorValue2 => _root_.com.histmersion.api.media.DataCredit.LicenceUrl(refactorValue2)),
+      _root_.com.histmersion.api.media.MediaItem.Credit("Protomaps"),
+      _root_.com.histmersion.api.media.DataCredit.Url("https://protomaps.com")
     ),
     DataCredit(
-      "ESA WorldCover (via Daylight landcover)",
-      "the land cover drawn at low zoom",
-      "CC BY 4.0",
-      ccBy4,
-      "© ESA WorldCover project 2020 / Contains modified Copernicus Sentinel data (2020) processed by ESA WorldCover consortium",
-      "https://esa-worldcover.org/en/data-access"
+      _root_.com.histmersion.api.media.DataCredit.Name("ESA WorldCover (via Daylight landcover)"),
+      _root_.com.histmersion.api.media.DataCredit.UsedFor("the land cover drawn at low zoom"),
+      _root_.com.histmersion.api.media.DataCredit.Licence("CC BY 4.0"),
+      (ccBy4).map(refactorValue3 => _root_.com.histmersion.api.media.DataCredit.LicenceUrl(refactorValue3)),
+      _root_.com.histmersion.api.media.MediaItem.Credit("© ESA WorldCover project 2020 / Contains modified Copernicus Sentinel data (2020) processed by ESA WorldCover consortium"),
+      _root_.com.histmersion.api.media.DataCredit.Url("https://esa-worldcover.org/en/data-access")
     ),
     DataCredit(
-      "Mapterhorn terrain (Copernicus GLO-30 and national elevation models)",
-      "relief and contours",
-      "per source (Copernicus; CC BY 4.0 and others)",
+      _root_.com.histmersion.api.media.DataCredit.Name("Mapterhorn terrain (Copernicus GLO-30 and national elevation models)"),
+      _root_.com.histmersion.api.media.DataCredit.UsedFor("relief and contours"),
+      _root_.com.histmersion.api.media.DataCredit.Licence("per source (Copernicus; CC BY 4.0 and others)"),
       None,
-      "Copernicus DEM © DLR e.V. 2010-2014, Airbus Defence and Space GmbH 2014-2018, provided under COPERNICUS by the European Union and ESA",
-      "https://mapterhorn.com/attribution"
+      _root_.com.histmersion.api.media.MediaItem.Credit("Copernicus DEM © DLR e.V. 2010-2014, Airbus Defence and Space GmbH 2014-2018, provided under COPERNICUS by the European Union and ESA"),
+      _root_.com.histmersion.api.media.DataCredit.Url("https://mapterhorn.com/attribution")
     ),
     DataCredit(
-      "ETOPO1 via Mapzen Terrain Tiles",
-      "the sea floor",
-      "public domain (NOAA)",
+      _root_.com.histmersion.api.media.DataCredit.Name("ETOPO1 via Mapzen Terrain Tiles"),
+      _root_.com.histmersion.api.media.DataCredit.UsedFor("the sea floor"),
+      _root_.com.histmersion.api.media.DataCredit.Licence("public domain (NOAA)"),
       None,
-      "ETOPO1, U.S. National Oceanic and Atmospheric Administration",
-      "https://github.com/tilezen/joerd/blob/master/docs/attribution.md"
+      _root_.com.histmersion.api.media.MediaItem.Credit("ETOPO1, U.S. National Oceanic and Atmospheric Administration"),
+      _root_.com.histmersion.api.media.DataCredit.Url("https://github.com/tilezen/joerd/blob/master/docs/attribution.md")
     ),
     DataCredit(
-      "GEBCO_2026 Grid",
-      "the sea floor, when chosen",
-      "public domain (GEBCO terms of use)",
+      _root_.com.histmersion.api.media.DataCredit.Name("GEBCO_2026 Grid"),
+      _root_.com.histmersion.api.media.DataCredit.UsedFor("the sea floor, when chosen"),
+      _root_.com.histmersion.api.media.DataCredit.Licence("public domain (GEBCO terms of use)"),
       None,
-      "GEBCO Compilation Group (2026) GEBCO_2026 Grid",
-      "https://www.gebco.net/data-products/gridded-bathymetry-data"
+      _root_.com.histmersion.api.media.MediaItem.Credit("GEBCO Compilation Group (2026) GEBCO_2026 Grid"),
+      _root_.com.histmersion.api.media.DataCredit.Url("https://www.gebco.net/data-products/gridded-bathymetry-data")
     ),
     DataCredit(
-      "Natural Earth",
-      "physical names, bundled places, the land outline",
-      "public domain",
+      _root_.com.histmersion.api.media.DataCredit.Name("Natural Earth"),
+      _root_.com.histmersion.api.media.DataCredit.UsedFor("physical names, bundled places, the land outline"),
+      _root_.com.histmersion.api.media.DataCredit.Licence("public domain"),
       None,
-      "Natural Earth",
-      "https://www.naturalearthdata.com"
+      _root_.com.histmersion.api.media.MediaItem.Credit("Natural Earth"),
+      _root_.com.histmersion.api.media.DataCredit.Url("https://www.naturalearthdata.com")
     ),
     DataCredit(
-      "Pleiades",
-      "ancient places: names, points and place cards",
-      "CC BY 3.0",
-      ccBy3,
-      "Pleiades: A Gazetteer of Past Places (pleiades.stoa.org)",
-      "https://pleiades.stoa.org/credits"
+      _root_.com.histmersion.api.media.DataCredit.Name("Pleiades"),
+      _root_.com.histmersion.api.media.DataCredit.UsedFor("ancient places: names, points and place cards"),
+      _root_.com.histmersion.api.media.DataCredit.Licence("CC BY 3.0"),
+      (ccBy3).map(refactorValue14 => _root_.com.histmersion.api.media.DataCredit.LicenceUrl(refactorValue14)),
+      _root_.com.histmersion.api.media.MediaItem.Credit("Pleiades: A Gazetteer of Past Places (pleiades.stoa.org)"),
+      _root_.com.histmersion.api.media.DataCredit.Url("https://pleiades.stoa.org/credits")
     ),
     DataCredit(
-      "GeoNames",
-      "places (an extract built on this machine)",
-      "CC BY 4.0",
-      ccBy4,
-      "GeoNames (geonames.org)",
-      "https://www.geonames.org/about.html"
+      _root_.com.histmersion.api.media.DataCredit.Name("GeoNames"),
+      _root_.com.histmersion.api.media.DataCredit.UsedFor("places (an extract built on this machine)"),
+      _root_.com.histmersion.api.media.DataCredit.Licence("CC BY 4.0"),
+      (ccBy4).map(refactorValue15 => _root_.com.histmersion.api.media.DataCredit.LicenceUrl(refactorValue15)),
+      _root_.com.histmersion.api.media.MediaItem.Credit("GeoNames (geonames.org)"),
+      _root_.com.histmersion.api.media.DataCredit.Url("https://www.geonames.org/about.html")
     ),
     DataCredit(
-      "Getty Thesaurus of Geographic Names (TGN)",
-      "places (an extract built on this machine)",
-      "ODC-By 1.0",
-      Some("https://opendatacommons.org/licenses/by/1-0/"),
-      "Contains information from the J. Paul Getty Trust, Getty Research Institute, the Getty Thesaurus of Geographic Names, " +
-        "which is made available under the ODC Attribution License",
-      "https://www.getty.edu/research/tools/vocabularies/tgn/"
+      _root_.com.histmersion.api.media.DataCredit.Name("Getty Thesaurus of Geographic Names (TGN)"),
+      _root_.com.histmersion.api.media.DataCredit.UsedFor("places (an extract built on this machine)"),
+      _root_.com.histmersion.api.media.DataCredit.Licence("ODC-By 1.0"),
+      Some(_root_.com.histmersion.api.media.DataCredit.LicenceUrl("https://opendatacommons.org/licenses/by/1-0/")),
+      _root_.com.histmersion.api.media.MediaItem.Credit("Contains information from the J. Paul Getty Trust, Getty Research Institute, the Getty Thesaurus of Geographic Names, " +
+        "which is made available under the ODC Attribution License"),
+      _root_.com.histmersion.api.media.DataCredit.Url("https://www.getty.edu/research/tools/vocabularies/tgn/")
     ),
     DataCredit(
-      "Seshat Cliopatria",
-      "polity boundaries by period",
-      "CC BY 4.0",
-      ccBy4,
-      "Cliopatria (Seshat Global History Databank), doi:10.1038/s41597-025-04516-9",
-      "https://github.com/Seshat-Global-History-Databank/cliopatria"
+      _root_.com.histmersion.api.media.DataCredit.Name("Seshat Cliopatria"),
+      _root_.com.histmersion.api.media.DataCredit.UsedFor("polity boundaries by period"),
+      _root_.com.histmersion.api.media.DataCredit.Licence("CC BY 4.0"),
+      (ccBy4).map(refactorValue6 => _root_.com.histmersion.api.media.DataCredit.LicenceUrl(refactorValue6)),
+      _root_.com.histmersion.api.media.MediaItem.Credit("Cliopatria (Seshat Global History Databank), doi:10.1038/s41597-025-04516-9"),
+      _root_.com.histmersion.api.media.DataCredit.Url("https://github.com/Seshat-Global-History-Databank/cliopatria")
     ),
     DataCredit(
-      "Ancient World Mapping Center",
-      "classical-world region names",
-      "ODbL 1.0",
-      odbl,
-      "Ancient World Mapping Center, University of North Carolina at Chapel Hill",
-      "https://github.com/AWMC/geodata"
+      _root_.com.histmersion.api.media.DataCredit.Name("Ancient World Mapping Center"),
+      _root_.com.histmersion.api.media.DataCredit.UsedFor("classical-world region names"),
+      _root_.com.histmersion.api.media.DataCredit.Licence("ODbL 1.0"),
+      (odbl).map(refactorValue7 => _root_.com.histmersion.api.media.DataCredit.LicenceUrl(refactorValue7)),
+      _root_.com.histmersion.api.media.MediaItem.Credit("Ancient World Mapping Center, University of North Carolina at Chapel Hill"),
+      _root_.com.histmersion.api.media.DataCredit.Url("https://github.com/AWMC/geodata")
     ),
     DataCredit(
-      "OpenHistoricalMap",
-      "a few polity outlines",
-      "CC0 unless a feature says otherwise",
-      cc0,
-      "Map data courtesy of the OpenHistoricalMap project, in the public domain unless otherwise noted",
-      "https://www.openhistoricalmap.org/copyright"
+      _root_.com.histmersion.api.media.DataCredit.Name("OpenHistoricalMap"),
+      _root_.com.histmersion.api.media.DataCredit.UsedFor("a few polity outlines"),
+      _root_.com.histmersion.api.media.DataCredit.Licence("CC0 unless a feature says otherwise"),
+      (cc0).map(refactorValue18 => _root_.com.histmersion.api.media.DataCredit.LicenceUrl(refactorValue18)),
+      _root_.com.histmersion.api.media.MediaItem.Credit("Map data courtesy of the OpenHistoricalMap project, in the public domain unless otherwise noted"),
+      _root_.com.histmersion.api.media.DataCredit.Url("https://www.openhistoricalmap.org/copyright")
     ),
     DataCredit(
-      "Wikidata",
-      "places, heritage designations, events, picture lookups",
-      "CC0",
-      cc0,
-      "Wikidata",
-      "https://www.wikidata.org/wiki/Wikidata:Licensing"
+      _root_.com.histmersion.api.media.DataCredit.Name("Wikidata"),
+      _root_.com.histmersion.api.media.DataCredit.UsedFor("places, heritage designations, events, picture lookups"),
+      _root_.com.histmersion.api.media.DataCredit.Licence("CC0"),
+      (cc0).map(refactorValue19 => _root_.com.histmersion.api.media.DataCredit.LicenceUrl(refactorValue19)),
+      _root_.com.histmersion.api.media.MediaItem.Credit("Wikidata"),
+      _root_.com.histmersion.api.media.DataCredit.Url("https://www.wikidata.org/wiki/Wikidata:Licensing")
     ),
     DataCredit(
-      "NOAA NCEI natural hazards",
-      "earthquakes, tsunamis and eruptions as events",
-      "public domain (U.S. Government work)",
+      _root_.com.histmersion.api.media.DataCredit.Name("NOAA NCEI natural hazards"),
+      _root_.com.histmersion.api.media.DataCredit.UsedFor("earthquakes, tsunamis and eruptions as events"),
+      _root_.com.histmersion.api.media.DataCredit.Licence("public domain (U.S. Government work)"),
       None,
-      "NOAA National Centers for Environmental Information, doi:10.7289/V5TD9V7K",
-      "https://www.ncei.noaa.gov/products/natural-hazards/tsunamis-earthquakes-volcanoes"
+      _root_.com.histmersion.api.media.MediaItem.Credit("NOAA National Centers for Environmental Information, doi:10.7289/V5TD9V7K"),
+      _root_.com.histmersion.api.media.DataCredit.Url("https://www.ncei.noaa.gov/products/natural-hazards/tsunamis-earthquakes-volcanoes")
     ),
     DataCredit(
-      "Smithsonian Global Volcanism Program",
-      "eruptions as events",
-      "Smithsonian terms of use",
+      _root_.com.histmersion.api.media.DataCredit.Name("Smithsonian Global Volcanism Program"),
+      _root_.com.histmersion.api.media.DataCredit.UsedFor("eruptions as events"),
+      _root_.com.histmersion.api.media.DataCredit.Licence("Smithsonian terms of use"),
       None,
-      "Global Volcanism Program, Smithsonian Institution",
-      "https://volcano.si.edu",
-      onMap = true
+      _root_.com.histmersion.api.media.MediaItem.Credit("Global Volcanism Program, Smithsonian Institution"),
+      _root_.com.histmersion.api.media.DataCredit.Url("https://volcano.si.edu"),
+      onMap = _root_.com.histmersion.api.media.DataCredit.OnMap(true)
     ),
-    DataCredit("PeriodO", "period presets", "CC0", cc0, "PeriodO", "https://perio.do", onMap = false)
+    DataCredit(_root_.com.histmersion.api.media.DataCredit.Name("PeriodO"), _root_.com.histmersion.api.media.DataCredit.UsedFor("period presets"), _root_.com.histmersion.api.media.DataCredit.Licence("CC0"), (cc0).map(refactorValue10 => _root_.com.histmersion.api.media.DataCredit.LicenceUrl(refactorValue10)), _root_.com.histmersion.api.media.MediaItem.Credit("PeriodO"), _root_.com.histmersion.api.media.DataCredit.Url("https://perio.do"), onMap = _root_.com.histmersion.api.media.DataCredit.OnMap(false))
   )

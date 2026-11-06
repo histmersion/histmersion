@@ -13,7 +13,7 @@ final case class MediaGeoHit(
     periodStart: Option[com.histmersion.api.catalogue.Year],
     periodEnd: Option[com.histmersion.api.catalogue.Year],
     caption: Option[com.histmersion.api.media.MediaItem.Caption],
-    uid: com.histmersion.api.media.MediaItem.Uid = "",
+    uid: com.histmersion.api.media.MediaItem.Uid = _root_.com.histmersion.api.media.MediaItem.Uid(""),
     provider: Option[com.histmersion.api.media.MediaItem.Provider] = None,
     license: Option[com.histmersion.api.media.MediaItem.License] = None,
     credit: Option[com.histmersion.api.media.MediaItem.Credit] = None,

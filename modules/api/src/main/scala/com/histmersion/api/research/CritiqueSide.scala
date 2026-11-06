@@ -8,8 +8,8 @@ final case class CritiqueSide(
     citekey: com.histmersion.api.library.Citekey,
     title: Option[com.histmersion.api.library.Title] = None,
     year: Option[com.histmersion.api.catalogue.Year] = None,
-    cited: CritiqueSide.Cited = false,
-    mentions: CritiqueSide.Mentions = 0
+    cited: CritiqueSide.Cited = _root_.com.histmersion.api.research.CritiqueSide.Cited(false),
+    mentions: CritiqueSide.Mentions = _root_.com.histmersion.api.research.CritiqueSide.Mentions(0)
 ) derives KindlingsCodecAsObject,
       KindlingsSchema, com.histmersion.api.json.Schema
 

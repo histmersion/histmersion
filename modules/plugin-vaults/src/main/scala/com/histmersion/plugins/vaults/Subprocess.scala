@@ -58,10 +58,10 @@ object Subprocess:
   def locate(tool: com.histmersion.plugins.vaults.Subprocess.LocateTool, path: Option[com.histmersion.plugins.vaults.Subprocess.LocatePath])(using files: com.histmersion.plugin.LocalFiles): Either[com.histmersion.plugins.vaults.Subprocess.LocateResultPart1, com.histmersion.plugins.vaults.Subprocess.LocateResultPart2] =
     val t = Option(tool).getOrElse("").trim
     def runnable(p: Path) = files.isFile(p) && files.isExecutable(p)
-    if t.isEmpty then Left("no command is configured (cli = \"…\")")
+    if t.isEmpty then Left(_root_.com.histmersion.plugins.vaults.Subprocess.LocateResultPart1("no command is configured (cli = \"…\")"))
     else if t.contains('/') then
       val p = Path.of(t)
-      if runnable(p) then Right(p.toString) else Left(s"$t is not an executable file")
+      if runnable(p) then Right(p.toString) else Left(_root_.com.histmersion.plugins.vaults.Subprocess.LocateResultPart1(s"$t is not an executable file"))
     else
       path.toList
         .flatMap(_.split(java.io.File.pathSeparatorChar).toList)
@@ -119,6 +119,6 @@ object Subprocess:
 
   /** Pure: an argument that would read as an option of the tool is refused rather than passed on. */
   def plain(what: com.histmersion.plugins.vaults.Subprocess.PlainWhat, s: com.histmersion.plugins.vaults.Subprocess.PlainS): Either[com.histmersion.plugins.vaults.Subprocess.PlainResultPart1, com.histmersion.plugins.vaults.Subprocess.PlainResultPart2] =
-    if s.isEmpty then Left(s"$what is empty")
-    else if s.startsWith("-") then Left(s"$what may not start with '-'")
+    if s.isEmpty then Left(_root_.com.histmersion.plugins.vaults.Subprocess.PlainResultPart1(s"$what is empty"))
+    else if s.startsWith("-") then Left(_root_.com.histmersion.plugins.vaults.Subprocess.PlainResultPart1(s"$what may not start with '-'"))
     else Right(s)

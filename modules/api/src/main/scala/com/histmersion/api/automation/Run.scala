@@ -8,15 +8,15 @@ object Run:
     * it waits on; `Cancelled` and the other terminal states are final.
     */
   enum State(val wire: State.Wire):
-    case Queued extends State("queued")
-    case Running extends State("running")
-    case Paused extends State("paused")
-    case WaitingApproval extends State("waiting")
-    case Done extends State("done")
-    case Failed extends State("failed")
-    case Cancelled extends State("cancelled")
+    case Queued extends State(_root_.com.histmersion.api.automation.Run.State.Wire("queued"))
+    case Running extends State(_root_.com.histmersion.api.automation.Run.State.Wire("running"))
+    case Paused extends State(_root_.com.histmersion.api.automation.Run.State.Wire("paused"))
+    case WaitingApproval extends State(_root_.com.histmersion.api.automation.Run.State.Wire("waiting"))
+    case Done extends State(_root_.com.histmersion.api.automation.Run.State.Wire("done"))
+    case Failed extends State(_root_.com.histmersion.api.automation.Run.State.Wire("failed"))
+    case Cancelled extends State(_root_.com.histmersion.api.automation.Run.State.Wire("cancelled"))
 
-    def isTerminal: com.histmersion.api.automation.Run.State.IsTerminalResult = this == Done || this == Failed || this == Cancelled
+    def isTerminal: com.histmersion.api.automation.Run.State.IsTerminalResult = _root_.com.histmersion.api.automation.Run.State.IsTerminalResult(this == Done || this == Failed || this == Cancelled)
 
   object State:
     type Wire = Wire.T

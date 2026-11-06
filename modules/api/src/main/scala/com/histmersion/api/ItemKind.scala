@@ -3,17 +3,17 @@ import io.circe.{Decoder, Encoder}
 import sttp.tapir.Schema
 
 enum ItemKind(val wire: ItemKind.Wire, val label: ItemKind.Label):
-  case Source extends ItemKind("source", "Source")
-  case Article extends ItemKind("article", "Article")
-  case Event extends ItemKind("event", "Event")
-  case Place extends ItemKind("place", "Place")
-  case Picture extends ItemKind("picture", "Picture")
-  case Goal extends ItemKind("goal", "Research goal")
-  case View extends ItemKind("view", "Saved view")
-  case Point extends ItemKind("point", "Place on the map")
-  case Period extends ItemKind("period", "Period")
+  case Source extends ItemKind(_root_.com.histmersion.api.ItemKind.Wire("source"), _root_.com.histmersion.api.ItemKind.Label("Source"))
+  case Article extends ItemKind(_root_.com.histmersion.api.ItemKind.Wire("article"), _root_.com.histmersion.api.ItemKind.Label("Article"))
+  case Event extends ItemKind(_root_.com.histmersion.api.ItemKind.Wire("event"), _root_.com.histmersion.api.ItemKind.Label("Event"))
+  case Place extends ItemKind(_root_.com.histmersion.api.ItemKind.Wire("place"), _root_.com.histmersion.api.ItemKind.Label("Place"))
+  case Picture extends ItemKind(_root_.com.histmersion.api.ItemKind.Wire("picture"), _root_.com.histmersion.api.ItemKind.Label("Picture"))
+  case Goal extends ItemKind(_root_.com.histmersion.api.ItemKind.Wire("goal"), _root_.com.histmersion.api.ItemKind.Label("Research goal"))
+  case View extends ItemKind(_root_.com.histmersion.api.ItemKind.Wire("view"), _root_.com.histmersion.api.ItemKind.Label("Saved view"))
+  case Point extends ItemKind(_root_.com.histmersion.api.ItemKind.Wire("point"), _root_.com.histmersion.api.ItemKind.Label("Place on the map"))
+  case Period extends ItemKind(_root_.com.histmersion.api.ItemKind.Wire("period"), _root_.com.histmersion.api.ItemKind.Label("Period"))
 
-  def isItem: com.histmersion.api.ItemKind.IsItemResult = ItemKind.Items.contains(this)
+  def isItem: com.histmersion.api.ItemKind.IsItemResult = _root_.com.histmersion.api.ItemKind.IsItemResult(ItemKind.Items.contains(this))
 
 object ItemKind:
   type Wire = Wire.T

@@ -11,8 +11,8 @@ final case class FormatReport(
     text: Option[FormatReport.Text] = None
 ) derives KindlingsCodecAsObject,
       KindlingsSchema, com.histmersion.api.json.Schema:
-  def errors: com.histmersion.api.checks.FormatReport.ErrorsResult = issues.count(_.severity == FormatSeverity.Error)
-  def warnings: com.histmersion.api.checks.FormatReport.WarningsResult = issues.count(_.severity == FormatSeverity.Warning)
+  def errors: com.histmersion.api.checks.FormatReport.ErrorsResult = _root_.com.histmersion.api.checks.FormatReport.ErrorsResult(issues.count(_.severity == FormatSeverity.Error))
+  def warnings: com.histmersion.api.checks.FormatReport.WarningsResult = _root_.com.histmersion.api.checks.FormatReport.WarningsResult(issues.count(_.severity == FormatSeverity.Warning))
 
 object FormatReport:
   type ErrorsResult = ErrorsResult.T

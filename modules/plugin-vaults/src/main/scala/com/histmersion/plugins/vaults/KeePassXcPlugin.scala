@@ -9,12 +9,12 @@ import scala.concurrent.duration.*
 
 final class KeePassXcPlugin extends Plugin:
   type Config = KeePassXcConfig
-  val info = Plugin.Info("keepassxc", Vaults.Version, Spi.Version)
+  val info = Plugin.Info(_root_.com.histmersion.plugin.Plugin.Info.Id("keepassxc"), _root_.com.histmersion.plugin.Plugin.Info.Version(Vaults.Version), _root_.com.histmersion.plugin.Plugin.Info.SpiVersion(Spi.Version))
 
   def register(c: KeePassXcConfig, ctx: Plugin.Context): Either[com.histmersion.plugins.vaults.KeePassXcPlugin.RegisterResultPart1, Unit] =
     given files: com.histmersion.plugin.LocalFiles = ctx.files
     given processes: com.histmersion.plugin.Processes = ctx.processes
-    val home = ctx.env("HOME")
+    val home = ctx.env(_root_.com.histmersion.plugin.Plugin.Context.EnvName("HOME"))
     for
       db <- Option(c.database)
         .map(_.trim)
@@ -53,15 +53,15 @@ final class KeePassXcPlugin extends Plugin:
     given files: com.histmersion.plugin.LocalFiles = ctx.files
     val t = Option(ykman).map(_.trim).getOrElse("")
     if t.isEmpty then
-      ctx.log.info("YubiKey detection is off (ykman = \"\"): the configured YubiKeys are tried in order")
+      ctx.log.info(_root_.com.histmersion.plugin.Plugin.Log.InfoMessage("YubiKey detection is off (ykman = \"\"): the configured YubiKeys are tried in order"))
       Right(None)
     else
-      Subprocess.locate(t, ctx.env("PATH")) match
+      Subprocess.locate(_root_.com.histmersion.plugins.vaults.Subprocess.LocateTool(t), ctx.env(_root_.com.histmersion.plugin.Plugin.Context.EnvName("PATH"))) match
         case Right(p)                    => Right(Some(p))
         case Left(_) if !t.contains('/') =>
           ctx.log.info(
-            "the configured YubiKeys are tried in order, the one that opened the database last first " +
-              "(optional: with ykman on the PATH, only the connected ones are tried)"
+            _root_.com.histmersion.plugin.Plugin.Log.InfoMessage("the configured YubiKeys are tried in order, the one that opened the database last first " +
+              "(optional: with ykman on the PATH, only the connected ones are tried)")
           )
           Right(None)
         case Left(e) => Left(s"ykman: $e")

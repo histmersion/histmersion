@@ -9,10 +9,10 @@ enum ServiceState:
   case Ok, Busy, Down, Unknown
 
   def label: com.histmersion.api.ServiceState.LabelResult = this match
-    case Ok      => "ok"
-    case Busy    => "busy"
-    case Down    => "down"
-    case Unknown => "unknown"
+    case Ok      => _root_.com.histmersion.api.ServiceState.LabelResult("ok")
+    case Busy    => _root_.com.histmersion.api.ServiceState.LabelResult("busy")
+    case Down    => _root_.com.histmersion.api.ServiceState.LabelResult("down")
+    case Unknown => _root_.com.histmersion.api.ServiceState.LabelResult("unknown")
 
 object ServiceState:
   type LabelResult = LabelResult.T

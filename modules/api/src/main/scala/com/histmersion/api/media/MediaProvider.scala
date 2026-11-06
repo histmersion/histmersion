@@ -40,38 +40,38 @@ object MediaProvider:
 
   val Europeana = "europeana"
   val all: List[com.histmersion.api.media.MediaProvider.All] = List(
-    Source,
-    Commons,
-    Calibre,
-    OpenLibrary,
-    Met,
-    Cleveland,
-    ArtInstitute,
-    LibraryOfCongress,
-    OpenContext,
-    Smithsonian,
-    Europeana
+    _root_.com.histmersion.api.media.MediaProvider.All(Source),
+    _root_.com.histmersion.api.media.MediaProvider.All(Commons),
+    _root_.com.histmersion.api.media.MediaProvider.All(Calibre),
+    _root_.com.histmersion.api.media.MediaProvider.All(OpenLibrary),
+    _root_.com.histmersion.api.media.MediaProvider.All(Met),
+    _root_.com.histmersion.api.media.MediaProvider.All(Cleveland),
+    _root_.com.histmersion.api.media.MediaProvider.All(ArtInstitute),
+    _root_.com.histmersion.api.media.MediaProvider.All(LibraryOfCongress),
+    _root_.com.histmersion.api.media.MediaProvider.All(OpenContext),
+    _root_.com.histmersion.api.media.MediaProvider.All(Smithsonian),
+    _root_.com.histmersion.api.media.MediaProvider.All(Europeana)
   )
 
-  val museums: Set[com.histmersion.api.media.MediaProvider.Museums] = Set(Met, Cleveland, ArtInstitute)
+  val museums: Set[com.histmersion.api.media.MediaProvider.Museums] = Set(_root_.com.histmersion.api.media.MediaProvider.Museums(Met), _root_.com.histmersion.api.media.MediaProvider.Museums(Cleveland), _root_.com.histmersion.api.media.MediaProvider.Museums(ArtInstitute))
 
   /** Covers carry the publisher's rights, no reuse licence: shown in the local UI only, never carried in a bundle. */
-  val covers: Set[com.histmersion.api.media.MediaProvider.Covers] = Set(Calibre, OpenLibrary)
+  val covers: Set[com.histmersion.api.media.MediaProvider.Covers] = Set(_root_.com.histmersion.api.media.MediaProvider.Covers(Calibre), _root_.com.histmersion.api.media.MediaProvider.Covers(OpenLibrary))
 
   def title(p: com.histmersion.api.media.MediaProvider.TitleP): com.histmersion.api.media.MediaProvider.TitleResult = p match
-    case Source            => "source figures"
-    case Commons           => "Wikimedia Commons"
-    case Calibre           => "Calibre library"
-    case OpenLibrary       => "Open Library"
-    case Met               => "The Metropolitan Museum of Art"
-    case Cleveland         => "The Cleveland Museum of Art"
-    case ArtInstitute      => "The Art Institute of Chicago"
-    case LibraryOfCongress => "Library of Congress"
-    case CommonsDepicts    => "Wikimedia Commons (depictions)"
-    case OpenContext       => "Open Context"
-    case Pleiades          => "Pleiades (linked Commons files)"
-    case Smithsonian       => "Smithsonian Institution"
-    case Europeana         => "Europeana"
+    case Source            => _root_.com.histmersion.api.media.MediaProvider.TitleResult("source figures")
+    case Commons           => _root_.com.histmersion.api.media.MediaProvider.TitleResult("Wikimedia Commons")
+    case Calibre           => _root_.com.histmersion.api.media.MediaProvider.TitleResult("Calibre library")
+    case OpenLibrary       => _root_.com.histmersion.api.media.MediaProvider.TitleResult("Open Library")
+    case Met               => _root_.com.histmersion.api.media.MediaProvider.TitleResult("The Metropolitan Museum of Art")
+    case Cleveland         => _root_.com.histmersion.api.media.MediaProvider.TitleResult("The Cleveland Museum of Art")
+    case ArtInstitute      => _root_.com.histmersion.api.media.MediaProvider.TitleResult("The Art Institute of Chicago")
+    case LibraryOfCongress => _root_.com.histmersion.api.media.MediaProvider.TitleResult("Library of Congress")
+    case CommonsDepicts    => _root_.com.histmersion.api.media.MediaProvider.TitleResult("Wikimedia Commons (depictions)")
+    case OpenContext       => _root_.com.histmersion.api.media.MediaProvider.TitleResult("Open Context")
+    case Pleiades          => _root_.com.histmersion.api.media.MediaProvider.TitleResult("Pleiades (linked Commons files)")
+    case Smithsonian       => _root_.com.histmersion.api.media.MediaProvider.TitleResult("Smithsonian Institution")
+    case Europeana         => _root_.com.histmersion.api.media.MediaProvider.TitleResult("Europeana")
     case other             => other
 
   final case class Info(
