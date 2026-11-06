@@ -87,8 +87,10 @@ object Pipeline:
   type Describe = Describe.T
   object Describe extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
+  type ParseS = ParseS.T
+  object ParseS extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
-  def parse(s: com.histmersion.api.automation.Pipeline.Wire): Option[Pipeline] = values.find(_.wire == _root_.com.histmersion.api.automation.Pipeline.Wire((s).value.trim.toLowerCase))
+  def parse(s: com.histmersion.api.automation.Pipeline.ParseS): Option[Pipeline] = values.find(_.wire == _root_.com.histmersion.api.automation.Pipeline.Wire((s).value.trim.toLowerCase))
 
   /** The pipeline a manager's item that starts no agent run of its own is counted under (the review's, as the managers
     * have always counted them).

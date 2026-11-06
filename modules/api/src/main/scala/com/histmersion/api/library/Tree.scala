@@ -5,17 +5,23 @@ import com.histmersion.api.catalogue.Period
 import com.histmersion.api.catalogue.Place
 
 object Tree:
-  type Count = Count.T
-  object Count extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type Depth = Depth.T
-  object Depth extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type NodeId = NodeId.T
-  object NodeId extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type Span = Span.T
-  object Span extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type Year = Year.T
-  object Year extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
+  type RegionsLiveId = RegionsLiveId.T
+  object RegionsLiveId extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type RegionsAtId = RegionsAtId.T
+  object RegionsAtId extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type RegionsLevelIds = RegionsLevelIds.T
+  object RegionsLevelIds extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type RegionsLevelSeen = RegionsLevelSeen.T
+  object RegionsLevelSeen extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type RegionsLevelLeft = RegionsLevelLeft.T
+  object RegionsLevelLeft extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type AncestorsGoResult = AncestorsGoResult.T
+  object AncestorsGoResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type AncestorsGoFrontier = AncestorsGoFrontier.T
+  object AncestorsGoFrontier extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type AncestorsGoSeen = AncestorsGoSeen.T
+  object AncestorsGoSeen extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
   type MaxDepth = MaxDepthValue
   type MaxDepthValue = MaxDepthValue.T
@@ -23,51 +29,131 @@ object Tree:
   type MaxSamples = MaxSamplesValue
   type MaxSamplesValue = MaxSamplesValue.T
   object MaxSamplesValue extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type TimeTimeDepth = _root_.com.histmersion.api.library.Tree.Depth
-  val TimeTimeDepth: _root_.com.histmersion.api.library.Tree.Depth.type = _root_.com.histmersion.api.library.Tree.Depth
+  type CoversAsOfResult = CoversAsOfResult.T
+  object CoversAsOfResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type CoversAsOfAsOf = CoversAsOfAsOf.T
+  object CoversAsOfAsOf extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type OverlapsResult = OverlapsResult.T
+  object OverlapsResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type OverlapsFrom = OverlapsFrom.T
+  object OverlapsFrom extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type OverlapsTo = OverlapsTo.T
+  object OverlapsTo extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type MidpointResult = MidpointResult.T
+  object MidpointResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type MidpointStart = MidpointStart.T
+  object MidpointStart extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type MidpointEnd = MidpointEnd.T
+  object MidpointEnd extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type TimeTimeFrom = TimeTimeFrom.T
+  object TimeTimeFrom extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type TimeTimeTo = TimeTimeTo.T
+  object TimeTimeTo extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type TimeTimeDepth = _root_.com.histmersion.api.library.Tree.ClampDepth
+  val TimeTimeDepth: _root_.com.histmersion.api.library.Tree.ClampDepth.type = _root_.com.histmersion.api.library.Tree.ClampDepth
   type TimeTimeSamples = _root_.com.histmersion.api.library.Tree.RegionsSamples
   val TimeTimeSamples: _root_.com.histmersion.api.library.Tree.RegionsSamples.type = _root_.com.histmersion.api.library.Tree.RegionsSamples
-  type TimeTreeFrom = _root_.com.histmersion.api.library.Tree.Year
-  val TimeTreeFrom: _root_.com.histmersion.api.library.Tree.Year.type = _root_.com.histmersion.api.library.Tree.Year
-  type TimeTreeTo = _root_.com.histmersion.api.library.Tree.Year
-  val TimeTreeTo: _root_.com.histmersion.api.library.Tree.Year.type = _root_.com.histmersion.api.library.Tree.Year
-  type TimeTreeDepth = _root_.com.histmersion.api.library.Tree.Depth
-  val TimeTreeDepth: _root_.com.histmersion.api.library.Tree.Depth.type = _root_.com.histmersion.api.library.Tree.Depth
+  type TimeTreeFrom = _root_.com.histmersion.api.library.Tree.TimeTimeFrom
+  val TimeTreeFrom: _root_.com.histmersion.api.library.Tree.TimeTimeFrom.type = _root_.com.histmersion.api.library.Tree.TimeTimeFrom
+  type TimeTreeTo = _root_.com.histmersion.api.library.Tree.TimeTimeTo
+  val TimeTreeTo: _root_.com.histmersion.api.library.Tree.TimeTimeTo.type = _root_.com.histmersion.api.library.Tree.TimeTimeTo
+  type TimeTreeDepth = _root_.com.histmersion.api.library.Tree.ClampDepth
+  val TimeTreeDepth: _root_.com.histmersion.api.library.Tree.ClampDepth.type = _root_.com.histmersion.api.library.Tree.ClampDepth
   type TimeTreeSamples = _root_.com.histmersion.api.library.Tree.RegionsSamples
   val TimeTreeSamples: _root_.com.histmersion.api.library.Tree.RegionsSamples.type = _root_.com.histmersion.api.library.Tree.RegionsSamples
+  type TimeLevelFrom = TimeLevelFrom.T
+  object TimeLevelFrom extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type TimeLevelTo = TimeLevelTo.T
+  object TimeLevelTo extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type TimeLevelSize = TimeLevelSize.T
+  object TimeLevelSize extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type TimeLevelDepth = TimeLevelDepth.T
+  object TimeLevelDepth extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type TimeLevelSamples = _root_.com.histmersion.api.library.Tree.RegionsSamples
   val TimeLevelSamples: _root_.com.histmersion.api.library.Tree.RegionsSamples.type = _root_.com.histmersion.api.library.Tree.RegionsSamples
+  type TimeLevelNestArg2 = TimeLevelNestArg2.T
+  object TimeLevelNestArg2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type TimeLevelNestArg3 = TimeLevelNestArg3.T
+  object TimeLevelNestArg3 extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type TimeLevelNestResultPart2 = TimeLevelNestResultPart2.T
+  object TimeLevelNestResultPart2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type SplitRatio = SplitRatioValue
   type SplitRatioValue = SplitRatioValue.T
   object SplitRatioValue extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type RegionTreeAsOf = _root_.com.histmersion.api.library.Tree.Year
-  val RegionTreeAsOf: _root_.com.histmersion.api.library.Tree.Year.type = _root_.com.histmersion.api.library.Tree.Year
-  type RegionTreeDepth = _root_.com.histmersion.api.library.Tree.Depth
-  val RegionTreeDepth: _root_.com.histmersion.api.library.Tree.Depth.type = _root_.com.histmersion.api.library.Tree.Depth
+  type SplitWorthShowingParent = SplitWorthShowingParent.T
+  object SplitWorthShowingParent extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type RegionTreeAsOf = _root_.com.histmersion.api.library.Tree.CoversAsOfAsOf
+  val RegionTreeAsOf: _root_.com.histmersion.api.library.Tree.CoversAsOfAsOf.type = _root_.com.histmersion.api.library.Tree.CoversAsOfAsOf
+  type RegionTreeDepth = _root_.com.histmersion.api.library.Tree.ClampDepth
+  val RegionTreeDepth: _root_.com.histmersion.api.library.Tree.ClampDepth.type = _root_.com.histmersion.api.library.Tree.ClampDepth
   type RegionTreeSamples = _root_.com.histmersion.api.library.Tree.RegionsSamples
   val RegionTreeSamples: _root_.com.histmersion.api.library.Tree.RegionsSamples.type = _root_.com.histmersion.api.library.Tree.RegionsSamples
-  type RegionTreeRoot = _root_.com.histmersion.api.library.Tree.NodeId
-  val RegionTreeRoot: _root_.com.histmersion.api.library.Tree.NodeId.type = _root_.com.histmersion.api.library.Tree.NodeId
-  type TimeRegionTreeDepth = _root_.com.histmersion.api.library.Tree.Depth
-  val TimeRegionTreeDepth: _root_.com.histmersion.api.library.Tree.Depth.type = _root_.com.histmersion.api.library.Tree.Depth
+  type RegionTreeRoot = _root_.com.histmersion.api.library.Tree.RegionsRoot
+  val RegionTreeRoot: _root_.com.histmersion.api.library.Tree.RegionsRoot.type = _root_.com.histmersion.api.library.Tree.RegionsRoot
+  type TimeRegionTreeFrom = TimeRegionTreeFrom.T
+  object TimeRegionTreeFrom extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type TimeRegionTreeTo = TimeRegionTreeTo.T
+  object TimeRegionTreeTo extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type TimeRegionTreeDepth = _root_.com.histmersion.api.library.Tree.ClampDepth
+  val TimeRegionTreeDepth: _root_.com.histmersion.api.library.Tree.ClampDepth.type = _root_.com.histmersion.api.library.Tree.ClampDepth
   type TimeRegionTreeSamples = _root_.com.histmersion.api.library.Tree.RegionsSamples
   val TimeRegionTreeSamples: _root_.com.histmersion.api.library.Tree.RegionsSamples.type = _root_.com.histmersion.api.library.Tree.RegionsSamples
-  type RegionTimeTreeAsOf = _root_.com.histmersion.api.library.Tree.Year
-  val RegionTimeTreeAsOf: _root_.com.histmersion.api.library.Tree.Year.type = _root_.com.histmersion.api.library.Tree.Year
-  type RegionTimeTreeDepth = _root_.com.histmersion.api.library.Tree.Depth
-  val RegionTimeTreeDepth: _root_.com.histmersion.api.library.Tree.Depth.type = _root_.com.histmersion.api.library.Tree.Depth
+  type RegionTimeTreeFrom = RegionTimeTreeFrom.T
+  object RegionTimeTreeFrom extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type RegionTimeTreeTo = RegionTimeTreeTo.T
+  object RegionTimeTreeTo extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type RegionTimeTreeAsOf = _root_.com.histmersion.api.library.Tree.CoversAsOfAsOf
+  val RegionTimeTreeAsOf: _root_.com.histmersion.api.library.Tree.CoversAsOfAsOf.type = _root_.com.histmersion.api.library.Tree.CoversAsOfAsOf
+  type RegionTimeTreeDepth = _root_.com.histmersion.api.library.Tree.ClampDepth
+  val RegionTimeTreeDepth: _root_.com.histmersion.api.library.Tree.ClampDepth.type = _root_.com.histmersion.api.library.Tree.ClampDepth
   type RegionTimeTreeSamples = _root_.com.histmersion.api.library.Tree.RegionsSamples
   val RegionTimeTreeSamples: _root_.com.histmersion.api.library.Tree.RegionsSamples.type = _root_.com.histmersion.api.library.Tree.RegionsSamples
-  type RegionTimeTreeRoot = _root_.com.histmersion.api.library.Tree.NodeId
-  val RegionTimeTreeRoot: _root_.com.histmersion.api.library.Tree.NodeId.type = _root_.com.histmersion.api.library.Tree.NodeId
-  type RegionsAsOf = _root_.com.histmersion.api.library.Tree.Year
-  val RegionsAsOf: _root_.com.histmersion.api.library.Tree.Year.type = _root_.com.histmersion.api.library.Tree.Year
+  type RegionTimeTreeRoot = _root_.com.histmersion.api.library.Tree.RegionsRoot
+  val RegionTimeTreeRoot: _root_.com.histmersion.api.library.Tree.RegionsRoot.type = _root_.com.histmersion.api.library.Tree.RegionsRoot
+  type RegionsResultPart2 = RegionsResultPart2.T
+  object RegionsResultPart2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type RegionsAsOf = _root_.com.histmersion.api.library.Tree.CoversAsOfAsOf
+  val RegionsAsOf: _root_.com.histmersion.api.library.Tree.CoversAsOfAsOf.type = _root_.com.histmersion.api.library.Tree.CoversAsOfAsOf
   type RegionsDepth = RegionsDepth.T
   object RegionsDepth extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type RegionsSamples = RegionsSamples.T
   object RegionsSamples extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type RegionsLeafArg2 = RegionsLeafArg2.T
+  object RegionsLeafArg2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type RegionsRoot = RegionsRoot.T
+  object RegionsRoot extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type RenderedResult = RenderedResult.T
+  object RenderedResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type AncestorsResult = AncestorsResult.T
+  object AncestorsResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type AncestorsStart = AncestorsStart.T
+  object AncestorsStart extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type AncestorsParentsPart1 = AncestorsParentsPart1.T
+  object AncestorsParentsPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type AncestorsParentsPart2 = AncestorsParentsPart2.T
+  object AncestorsParentsPart2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type DistinctResult = DistinctResult.T
+  object DistinctResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type OverlapOfResult = OverlapOfResult.T
+  object OverlapOfResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type SampleOfN = SampleOfN.T
   object SampleOfN extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type ClampResult = ClampResult.T
+  object ClampResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type ClampDepth = ClampDepth.T
+  object ClampDepth extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type OrderResultPart1 = OrderResultPart1.T
+  object OrderResultPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type OrderResultPart2 = OrderResultPart2.T
+  object OrderResultPart2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type OrderA = OrderA.T
+  object OrderA extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type OrderB = OrderB.T
+  object OrderB extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type ParseByResult = ParseByResult.T
+  object ParseByResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type ParseByS = ParseByS.T
+  object ParseByS extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
   val MaxDepth: com.histmersion.api.library.Tree.MaxDepth = _root_.com.histmersion.api.library.Tree.MaxDepthValue(3)
 
@@ -97,31 +183,31 @@ object Tree:
     type PlaceIds = PlaceIds.T
     object PlaceIds extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
-  def coversAsOf(p: Option[Period], asOf: Option[com.histmersion.api.library.Tree.Year]): Boolean = (p, asOf) match
-    case (None, _)                     => (true)
-    case (_, None)                     => (true)
+  def coversAsOf(p: Option[Period], asOf: Option[com.histmersion.api.library.Tree.CoversAsOfAsOf]): com.histmersion.api.library.Tree.CoversAsOfResult = (p, asOf) match
+    case (None, _)                     => _root_.com.histmersion.api.library.Tree.CoversAsOfResult(true)
+    case (_, None)                     => _root_.com.histmersion.api.library.Tree.CoversAsOfResult(true)
     case (Some(Period(a, b)), Some(y)) => y >= a && y <= b
 
-  private def overlaps(row: TreeRow, from: com.histmersion.api.library.Tree.Year, to: com.histmersion.api.library.Tree.Year): Boolean =
+  private def overlaps(row: TreeRow, from: com.histmersion.api.library.Tree.OverlapsFrom, to: com.histmersion.api.library.Tree.OverlapsTo): com.histmersion.api.library.Tree.OverlapsResult =
     Aggregate.span(row.toPeriodRow).exists((a, b) => a <= to && b >= from)
 
-  def midpoint(start: com.histmersion.api.library.Tree.Year, end: com.histmersion.api.library.Tree.Year): com.histmersion.api.library.Tree.Year = _root_.com.histmersion.api.library.Tree.Year((start).value + Math.floorDiv((end).value - (start).value, 2L))
+  def midpoint(start: com.histmersion.api.library.Tree.MidpointStart, end: com.histmersion.api.library.Tree.MidpointEnd): com.histmersion.api.library.Tree.MidpointResult = _root_.com.histmersion.api.library.Tree.MidpointResult((start).value + Math.floorDiv((end).value - (start).value, 2L))
 
-  def timeTime(rows: List[TreeRow], from: com.histmersion.api.library.Tree.Year, to: com.histmersion.api.library.Tree.Year, depth: com.histmersion.api.library.Tree.TimeTimeDepth, samples: com.histmersion.api.library.Tree.TimeTimeSamples = _root_.com.histmersion.api.library.Tree.TimeTimeSamples(0)): List[Bucket] =
-    val (lo, hi) = order(_root_.com.histmersion.api.library.Tree.Year((from).value), _root_.com.histmersion.api.library.Tree.Year((to).value))
-    timeLevel(rows, _root_.com.histmersion.api.library.Tree.Year((lo).value), _root_.com.histmersion.api.library.Tree.Year((hi).value), Aggregate.bucketSize((hi).value - lo), _root_.com.histmersion.api.library.Tree.Depth((clamp(depth)).value), samples, (_, _, _) => (Nil, _root_.com.histmersion.api.library.Tree.Count(0)))
+  def timeTime(rows: List[TreeRow], from: com.histmersion.api.library.Tree.TimeTimeFrom, to: com.histmersion.api.library.Tree.TimeTimeTo, depth: com.histmersion.api.library.Tree.TimeTimeDepth, samples: com.histmersion.api.library.Tree.TimeTimeSamples = _root_.com.histmersion.api.library.Tree.TimeTimeSamples(0)): List[Bucket] =
+    val (lo, hi) = order(_root_.com.histmersion.api.library.Tree.OrderA((from).value), _root_.com.histmersion.api.library.Tree.OrderB((to).value))
+    timeLevel(rows, _root_.com.histmersion.api.library.Tree.TimeLevelFrom((lo).value), _root_.com.histmersion.api.library.Tree.TimeLevelTo((hi).value), Aggregate.bucketSize((hi).value - lo), _root_.com.histmersion.api.library.Tree.TimeLevelDepth((clamp(depth)).value), samples, (_, _, _) => (Nil, _root_.com.histmersion.api.library.Tree.TimeLevelNestResultPart2(0)))
 
   def timeTree(rows: List[TreeRow], from: com.histmersion.api.library.Tree.TimeTreeFrom, to: com.histmersion.api.library.Tree.TimeTreeTo, depth: com.histmersion.api.library.Tree.TimeTreeDepth, samples: com.histmersion.api.library.Tree.TimeTreeSamples = _root_.com.histmersion.api.library.Tree.TimeTreeSamples(0)): List[Bucket] =
     timeTime(rows, from, to, depth, samples)
 
   private def timeLevel(
       rows: List[TreeRow],
-      from: com.histmersion.api.library.Tree.Year,
-      to: com.histmersion.api.library.Tree.Year,
-      size: com.histmersion.api.library.Tree.Span,
-      depth: com.histmersion.api.library.Tree.Depth,
+      from: com.histmersion.api.library.Tree.TimeLevelFrom,
+      to: com.histmersion.api.library.Tree.TimeLevelTo,
+      size: com.histmersion.api.library.Tree.TimeLevelSize,
+      depth: com.histmersion.api.library.Tree.TimeLevelDepth,
       samples: com.histmersion.api.library.Tree.TimeLevelSamples,
-      nest: (List[TreeRow], com.histmersion.api.library.Tree.Year, com.histmersion.api.library.Tree.Year) => (List[Bucket], com.histmersion.api.library.Tree.Count)
+      nest: (List[TreeRow], com.histmersion.api.library.Tree.TimeLevelNestArg2, com.histmersion.api.library.Tree.TimeLevelNestArg3) => (List[Bucket], com.histmersion.api.library.Tree.TimeLevelNestResultPart2)
   ): List[Bucket] =
     val finer = Aggregate.finer(size)
     Aggregate.buckets(from, to, size).flatMap { (bStart, bEnd) =>
@@ -154,7 +240,7 @@ object Tree:
 
   val SplitRatio: com.histmersion.api.library.Tree.SplitRatio = _root_.com.histmersion.api.library.Tree.SplitRatioValue(0.8)
 
-  def splitWorthShowing(parent: com.histmersion.api.library.Tree.Count, kids: List[Bucket]): List[Bucket] =
+  def splitWorthShowing(parent: com.histmersion.api.library.Tree.SplitWorthShowingParent, kids: List[Bucket]): List[Bucket] =
     if kids.sizeIs > 1 && kids.exists((_.count).value < (parent).value * (SplitRatio).value) then kids else Nil
 
   def regionTree(
@@ -170,29 +256,29 @@ object Tree:
 
   def timeRegionTree(
       rows: List[TreeRow],
-      from: com.histmersion.api.library.Tree.Year,
-      to: com.histmersion.api.library.Tree.Year,
+      from: com.histmersion.api.library.Tree.TimeRegionTreeFrom,
+      to: com.histmersion.api.library.Tree.TimeRegionTreeTo,
       nodes: List[RegionNode],
       relations: List[Place.Relation],
       depth: com.histmersion.api.library.Tree.TimeRegionTreeDepth,
       samples: com.histmersion.api.library.Tree.TimeRegionTreeSamples = _root_.com.histmersion.api.library.Tree.TimeRegionTreeSamples(0)
   ): List[Bucket] =
-    val (lo, hi) = order(_root_.com.histmersion.api.library.Tree.Year((from).value), _root_.com.histmersion.api.library.Tree.Year((to).value))
+    val (lo, hi) = order(_root_.com.histmersion.api.library.Tree.OrderA((from).value), _root_.com.histmersion.api.library.Tree.OrderB((to).value))
     timeLevel(
       rows,
-      _root_.com.histmersion.api.library.Tree.Year((lo).value),
-      _root_.com.histmersion.api.library.Tree.Year((hi).value),
+      _root_.com.histmersion.api.library.Tree.TimeLevelFrom((lo).value),
+      _root_.com.histmersion.api.library.Tree.TimeLevelTo((hi).value),
       Aggregate.bucketSize((hi).value - lo),
-      _root_.com.histmersion.api.library.Tree.Depth(2),
+      _root_.com.histmersion.api.library.Tree.TimeLevelDepth(2),
       samples,
       (mine, bStart, bEnd) =>
-        { val refactorTuple = regions(mine, nodes, relations, Some(_root_.com.histmersion.api.library.Tree.Year((midpoint(_root_.com.histmersion.api.library.Tree.Year((bStart).value), _root_.com.histmersion.api.library.Tree.Year((bEnd).value))).value)), _root_.com.histmersion.api.library.Tree.RegionsDepth((clamp(depth)).value), samples, (_, _) => Nil); (refactorTuple._1, _root_.com.histmersion.api.library.Tree.Count((refactorTuple._2).value)) }
+        { val refactorTuple = regions(mine, nodes, relations, Some(_root_.com.histmersion.api.library.Tree.CoversAsOfAsOf((midpoint(_root_.com.histmersion.api.library.Tree.MidpointStart((bStart).value), _root_.com.histmersion.api.library.Tree.MidpointEnd((bEnd).value))).value)), _root_.com.histmersion.api.library.Tree.RegionsDepth((clamp(depth)).value), samples, (_, _) => Nil); (refactorTuple._1, _root_.com.histmersion.api.library.Tree.TimeLevelNestResultPart2((refactorTuple._2).value)) }
     )
 
   def regionTimeTree(
       rows: List[TreeRow],
-      from: com.histmersion.api.library.Tree.Year,
-      to: com.histmersion.api.library.Tree.Year,
+      from: com.histmersion.api.library.Tree.RegionTimeTreeFrom,
+      to: com.histmersion.api.library.Tree.RegionTimeTreeTo,
       nodes: List[RegionNode],
       relations: List[Place.Relation],
       asOf: Option[com.histmersion.api.library.Tree.RegionTimeTreeAsOf],
@@ -200,7 +286,7 @@ object Tree:
       samples: com.histmersion.api.library.Tree.RegionTimeTreeSamples = _root_.com.histmersion.api.library.Tree.RegionTimeTreeSamples(0),
       root: Option[com.histmersion.api.library.Tree.RegionTimeTreeRoot] = None
   ): List[Bucket] =
-    val (lo, hi) = order(_root_.com.histmersion.api.library.Tree.Year((from).value), _root_.com.histmersion.api.library.Tree.Year((to).value))
+    val (lo, hi) = order(_root_.com.histmersion.api.library.Tree.OrderA((from).value), _root_.com.histmersion.api.library.Tree.OrderB((to).value))
     regions(
       rows,
       nodes,
@@ -208,7 +294,7 @@ object Tree:
       asOf,
       _root_.com.histmersion.api.library.Tree.RegionsDepth((clamp(depth)).value),
       samples,
-      (mine, _) => timeTime(mine, _root_.com.histmersion.api.library.Tree.Year((lo).value), _root_.com.histmersion.api.library.Tree.Year((hi).value), _root_.com.histmersion.api.library.Tree.Depth(1), samples),
+      (mine, _) => timeTime(mine, _root_.com.histmersion.api.library.Tree.TimeTimeFrom((lo).value), _root_.com.histmersion.api.library.Tree.TimeTimeTo((hi).value), _root_.com.histmersion.api.library.Tree.ClampDepth(1), samples),
       root
     )._1
 
@@ -219,23 +305,23 @@ object Tree:
       asOf: Option[com.histmersion.api.library.Tree.RegionsAsOf],
       depth: com.histmersion.api.library.Tree.RegionsDepth,
       samples: com.histmersion.api.library.Tree.RegionsSamples,
-      leaf: (List[TreeRow], com.histmersion.api.library.Tree.NodeId) => List[Bucket],
-      root: Option[com.histmersion.api.library.Tree.NodeId] = None
-  ): (List[Bucket], com.histmersion.api.library.Tree.Count) =
+      leaf: (List[TreeRow], com.histmersion.api.library.Tree.RegionsLeafArg2) => List[Bucket],
+      root: Option[com.histmersion.api.library.Tree.RegionsRoot] = None
+  ): (List[Bucket], com.histmersion.api.library.Tree.RegionsResultPart2) =
     val byId = nodes.iterator.map(n => n.id -> n).toMap
-    def live(id: com.histmersion.api.library.Tree.NodeId) = byId.get(id).exists(n => coversAsOf(n.period, asOf))
+    def live(id: com.histmersion.api.library.Tree.RegionsLiveId) = byId.get(id).exists(n => coversAsOf(n.period, asOf))
     val edges = relations.filter(r =>
-      r.kind == _root_.com.histmersion.api.catalogue.Place.Relation.Kind(Place.Relation.PartOf) && ((coversAsOf(r.period, asOf)) == (true)) && live(r.childId) && live(r.parentId)
+      r.kind == _root_.com.histmersion.api.catalogue.Place.Relation.Kind(Place.Relation.PartOf) && ((coversAsOf(r.period, asOf)) == _root_.com.histmersion.api.library.Tree.CoversAsOfResult(true)) && live(r.childId) && live(r.parentId)
     )
     val kidsOf = edges.groupMap(_.parentId)(_.childId).view.mapValues(_.distinct).toMap
     val parents = edges.groupMap(_.childId)(_.parentId).view.mapValues(_.distinct).toMap
 
     val reach = rows.iterator.map(r => r.key -> ancestors(r.placeIds.filter(live).toSet, parents)).toMap
-    def at(id: com.histmersion.api.library.Tree.NodeId): List[TreeRow] = rows.filter(r => reach(r.key).contains(id))
+    def at(id: com.histmersion.api.library.Tree.RegionsAtId): List[TreeRow] = rows.filter(r => reach(r.key).contains(id))
 
     val drawnAt = scala.collection.mutable.Map.empty[String, Unit]
 
-    def level(ids: List[com.histmersion.api.library.Tree.NodeId], seen: Set[com.histmersion.api.library.Tree.NodeId], left: Int): List[Bucket] =
+    def level(ids: List[com.histmersion.api.library.Tree.RegionsLevelIds], seen: Set[com.histmersion.api.library.Tree.RegionsLevelSeen], left: com.histmersion.api.library.Tree.RegionsLevelLeft): List[Bucket] =
       ids.distinct
         .filterNot(seen.contains)
         .map(id => (id, at(id)))
@@ -282,8 +368,8 @@ object Tree:
       case Some(id) => List(id)
       case None     =>
         byId.values.iterator
-          .filter(n => ((coversAsOf(n.period, asOf)) == (true)) && parents.getOrElse(n.id, Nil).isEmpty)
-          .filter(((RegionNode.rootEligible) == (true)))
+          .filter(n => ((coversAsOf(n.period, asOf)) == _root_.com.histmersion.api.library.Tree.CoversAsOfResult(true)) && parents.getOrElse(n.id, Nil).isEmpty)
+          .filter(((RegionNode.rootEligible) == _root_.com.histmersion.api.catalogue.RegionNode.RootEligibleResult(true)))
           .map(_.id)
           .toList
     val located = level(rootIds, Set.empty, depth)
@@ -301,32 +387,32 @@ object Tree:
         )
     (roots, overlapOf(rows, rootIds.map(at)))
 
-  private def rendered(buckets: List[Bucket]): Set[String] =
+  private def rendered(buckets: List[Bucket]): Set[com.histmersion.api.library.Tree.RenderedResult] =
     buckets.iterator.flatMap(b => b.placeId.toSet ++ rendered(b.children)).toSet
 
-  private def ancestors(start: Set[com.histmersion.api.library.Tree.NodeId], parents: Map[com.histmersion.api.library.Tree.NodeId, List[com.histmersion.api.library.Tree.NodeId]]): Set[com.histmersion.api.library.Tree.NodeId] =
+  private def ancestors(start: Set[com.histmersion.api.library.Tree.AncestorsStart], parents: Map[com.histmersion.api.library.Tree.AncestorsParentsPart1, List[com.histmersion.api.library.Tree.AncestorsParentsPart2]]): Set[com.histmersion.api.library.Tree.AncestorsResult] =
     @annotation.tailrec
-    def go(frontier: Set[com.histmersion.api.library.Tree.NodeId], seen: Set[com.histmersion.api.library.Tree.NodeId]): Set[com.histmersion.api.library.Tree.NodeId] =
+    def go(frontier: Set[com.histmersion.api.library.Tree.AncestorsGoFrontier], seen: Set[com.histmersion.api.library.Tree.AncestorsGoSeen]): Set[com.histmersion.api.library.Tree.AncestorsGoResult] =
       val next = frontier.flatMap(parents.getOrElse(_, Nil)) -- seen
       if next.isEmpty then seen else go(next, seen ++ next)
     go(start, start)
 
-  private def distinct(rows: List[TreeRow]): Int = (rows.iterator.map(_.key).toSet.size)
+  private def distinct(rows: List[TreeRow]): com.histmersion.api.library.Tree.DistinctResult = _root_.com.histmersion.api.library.Tree.DistinctResult(rows.iterator.map(_.key).toSet.size)
 
-  private def overlapOf(rows: List[TreeRow], groups: List[List[TreeRow]]): Int =
+  private def overlapOf(rows: List[TreeRow], groups: List[List[TreeRow]]): com.histmersion.api.library.Tree.OverlapOfResult =
     val sets = groups.map(_.iterator.map(_.key).toSet).filter(_.nonEmpty)
-    if sets.sizeIs < 2 then (0)
-    else (rows.iterator.map(_.key).toSet.count(k => sets.count(_.contains(k)) > 1))
+    if sets.sizeIs < 2 then _root_.com.histmersion.api.library.Tree.OverlapOfResult(0)
+    else _root_.com.histmersion.api.library.Tree.OverlapOfResult(rows.iterator.map(_.key).toSet.count(k => sets.count(_.contains(k)) > 1))
 
   private def sampleOf(rows: List[TreeRow], n: com.histmersion.api.library.Tree.SampleOfN): List[Bucket.Sample] =
     if n <= 0 then Nil
     else rows.iterator.map(r => Bucket.Sample(r.citekey, r.title)).distinctBy(_.citekey).take((n).value).toList
 
-  private def clamp(depth: com.histmersion.api.library.Tree.Depth): com.histmersion.api.library.Tree.Depth = _root_.com.histmersion.api.library.Tree.Depth((depth).value.max(1).min((MaxDepth).value))
-  private def order(a: com.histmersion.api.library.Tree.Year, b: com.histmersion.api.library.Tree.Year): (com.histmersion.api.library.Tree.Year, com.histmersion.api.library.Tree.Year) = if a <= b then (_root_.com.histmersion.api.library.Tree.Year((a).value), _root_.com.histmersion.api.library.Tree.Year((b).value)) else (_root_.com.histmersion.api.library.Tree.Year((b).value), _root_.com.histmersion.api.library.Tree.Year((a).value))
+  private def clamp(depth: com.histmersion.api.library.Tree.ClampDepth): com.histmersion.api.library.Tree.ClampResult = _root_.com.histmersion.api.library.Tree.ClampResult((depth).value.max(1).min((MaxDepth).value))
+  private def order(a: com.histmersion.api.library.Tree.OrderA, b: com.histmersion.api.library.Tree.OrderB): (com.histmersion.api.library.Tree.OrderResultPart1, com.histmersion.api.library.Tree.OrderResultPart2) = if a <= b then (_root_.com.histmersion.api.library.Tree.OrderResultPart1((a).value), _root_.com.histmersion.api.library.Tree.OrderResultPart2((b).value)) else (_root_.com.histmersion.api.library.Tree.OrderResultPart1((b).value), _root_.com.histmersion.api.library.Tree.OrderResultPart2((a).value))
 
-  def parseBy(s: String): Option[List[String]] =
+  def parseBy(s: com.histmersion.api.library.Tree.ParseByS): Option[List[com.histmersion.api.library.Tree.ParseByResult]] =
     val parts = (s).value.split(",").map(_.trim.toLowerCase).filter(_.nonEmpty).toList
     if parts.nonEmpty && parts.forall(p => p == KindTime || p == KindRegion) && parts == parts.distinct
-    then Some((parts).map(refactorValue11 => (refactorValue11)))
+    then Some((parts).map(refactorValue11 => _root_.com.histmersion.api.library.Tree.ParseByResult(refactorValue11)))
     else None

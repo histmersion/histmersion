@@ -8,17 +8,35 @@ import hearth.kindlings.tapirschemaderivation.KindlingsSchema
 import sttp.tapir.Schema
 
 object Rename:
-  type ShortForm = ShortForm.T
-  object ShortForm extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
+  type ShortFormsResult = ShortFormsResult.T
+  object ShortFormsResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type ShortFormsCk = ShortFormsCk.T
+  object ShortFormsCk extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type FindingIdResult = FindingIdResult.T
+  object FindingIdResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type FindingIdId = FindingIdId.T
+  object FindingIdId extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type FindingIdOldCk = FindingIdOldCk.T
+  object FindingIdOldCk extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type FindingIdNewCk = FindingIdNewCk.T
+  object FindingIdNewCk extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type ReplaceTokenResult = ReplaceTokenResult.T
+  object ReplaceTokenResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type ReplaceTokenText = ReplaceTokenText.T
+  object ReplaceTokenText extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type ReplaceTokenOldCk = ReplaceTokenOldCk.T
+  object ReplaceTokenOldCk extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type ReplaceTokenNewCk = ReplaceTokenNewCk.T
+  object ReplaceTokenNewCk extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
-  def shortForms(ck: com.histmersion.api.library.Citekey): List[com.histmersion.api.library.Rename.ShortForm] =
-    ((ck).value.indices.filter(i => i > 0 && (ck).value.charAt(i) == '_').map((ck).value.take(_)).toList).map(refactorValue => _root_.com.histmersion.api.library.Rename.ShortForm(refactorValue))
+  def shortForms(ck: com.histmersion.api.library.Rename.ShortFormsCk): List[com.histmersion.api.library.Rename.ShortFormsResult] =
+    ((ck).value.indices.filter(i => i > 0 && (ck).value.charAt(i) == '_').map((ck).value.take(_)).toList).map(refactorValue => _root_.com.histmersion.api.library.Rename.ShortFormsResult(refactorValue))
 
-  def findingId(id: com.histmersion.api.library.Finding.Id, oldCk: com.histmersion.api.library.Citekey, newCk: com.histmersion.api.library.Citekey): Option[com.histmersion.api.library.Finding.Id] =
-    Option.when((id).value.startsWith((oldCk).value + "#"))(_root_.com.histmersion.api.library.Finding.Id((newCk).value + (id).value.drop((oldCk).value.length)))
+  def findingId(id: com.histmersion.api.library.Rename.FindingIdId, oldCk: com.histmersion.api.library.Rename.FindingIdOldCk, newCk: com.histmersion.api.library.Rename.FindingIdNewCk): Option[com.histmersion.api.library.Rename.FindingIdResult] =
+    Option.when((id).value.startsWith((oldCk).value + "#"))(_root_.com.histmersion.api.library.Rename.FindingIdResult((newCk).value + (id).value.drop((oldCk).value.length)))
 
-  def replaceToken(text: String, oldCk: com.histmersion.api.library.Citekey, newCk: com.histmersion.api.library.Citekey): String =
+  def replaceToken(text: com.histmersion.api.library.Rename.ReplaceTokenText, oldCk: com.histmersion.api.library.Rename.ReplaceTokenOldCk, newCk: com.histmersion.api.library.Rename.ReplaceTokenNewCk): com.histmersion.api.library.Rename.ReplaceTokenResult =
     val token = s"(?<![a-z0-9_.-])${java.util.regex.Pattern.quote((oldCk).value)}(?![a-z0-9_.-])".r
     token.replaceAllIn(text, java.util.regex.Matcher.quoteReplacement((newCk).value))
 

@@ -23,54 +23,54 @@ object MergeResolutions:
 
 
   object Text:
-    type Flag = Flag.T
-    object Flag extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-    type Problem = Problem.T
-    object Problem extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-    type Resolution = Resolution.T
-    object Resolution extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-    type Template = Template.T
-    object Template extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-    type TemplateLine = TemplateLine.T
-    object TemplateLine extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-    type TemplateOptions = TemplateOptions.T
-    object TemplateOptions extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
+    type TemplateOptsResult = TemplateOptsResult.T
+    object TemplateOptsResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type TemplateLineResult = TemplateLineResult.T
+    object TemplateLineResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
+    type FlagResultPart1 = FlagResultPart1.T
+    object FlagResultPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type FlagS = FlagS.T
+    object FlagS extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type TemplateResult = TemplateResult.T
+    object TemplateResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type TextsResult = TextsResult.T
+    object TextsResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
-    def flag(s: com.histmersion.api.exchange.MergeResolutions.Text.Flag): Either[com.histmersion.api.exchange.MergeResolutions.Text.Problem, MergeResolution] =
+    def flag(s: com.histmersion.api.exchange.MergeResolutions.Text.FlagS): Either[com.histmersion.api.exchange.MergeResolutions.Text.FlagResultPart1, MergeResolution] =
       (s).value.indexOf('=') match
         case i if i > 0 && i < (s).value.length - 1 => Right(MergeResolution(_root_.com.histmersion.api.exchange.MergeResolution.Issue((s).value.take(i).trim), _root_.com.histmersion.api.exchange.MergeResolution.Decision((s).value.drop(i + 1).trim)))
-        case _                              => Left(_root_.com.histmersion.api.exchange.MergeResolutions.Text.Problem(s"--resolve $s: expected ID=decision, e.g. S-3c1e7a2b=keep-left"))
+        case _                              => Left(_root_.com.histmersion.api.exchange.MergeResolutions.Text.FlagResultPart1(s"--resolve $s: expected ID=decision, e.g. S-3c1e7a2b=keep-left"))
 
-    def template(p: MergePlan, current: MergeResolutions): com.histmersion.api.exchange.MergeResolutions.Text.Template =
+    def template(p: MergePlan, current: MergeResolutions): com.histmersion.api.exchange.MergeResolutions.Text.TemplateResult =
       val chosen = current.resolve.map(r => r.issue -> r.decision).toMap
-      def opts(i: MergeIssue): com.histmersion.api.exchange.MergeResolutions.Text.TemplateOptions =
+      def opts(i: MergeIssue): com.histmersion.api.exchange.MergeResolutions.Text.TemplateOptsResult =
         i.options
           .map { k =>
             val arg = (k, i.suggested) match
               case (_, Some(s)) if s.kind == k && s.argument.isDefined => s":${s.argument.get}"
               case (MergeDecision.Kind.Map, _) => s":${i.left.map(_.label).getOrElse("<citekey>")}"
-              case _ if ((k.takesArgument) == (true))        => ":<value>"
+              case _ if ((k.takesArgument) == _root_.com.histmersion.api.exchange.MergeDecision.Kind.TakesArgumentResult(true))        => ":<value>"
               case _                           => ""
             MergeDecision.Kind.wireOf(k) + arg
           }
           .mkString(" | ")
-      def line(i: MergeIssue): com.histmersion.api.exchange.MergeResolutions.Text.TemplateLine =
+      def line(i: MergeIssue): com.histmersion.api.exchange.MergeResolutions.Text.TemplateLineResult =
         val what = s"${i.entity.wire} — ${i.title}".replace("\n", " ")
         val cond = i.condition.fold("")(c => s"if ${c.issue} = ${MergeDecision.Kind.wireOf(c.when)}: ")
         (chosen.get(i.id), i.condition, i.severity) match
           case (Some(d), _, _)    => s"  ${i.id}: $d    # $cond$what"
           case (None, Some(_), _) =>
-            _root_.com.histmersion.api.exchange.MergeResolutions.Text.TemplateLine(s"  # ${i.id}: ${i.suggested.fold("")(_.wire)}    # $cond$what; decide ${opts(i)}")
+            _root_.com.histmersion.api.exchange.MergeResolutions.Text.TemplateLineResult(s"  # ${i.id}: ${i.suggested.fold("")(_.wire)}    # $cond$what; decide ${opts(i)}")
           case (None, None, MergeIssue.Severity.Default) =>
-            _root_.com.histmersion.api.exchange.MergeResolutions.Text.TemplateLine(s"  # ${i.id}: ${i.decision.orElse(i.suggested).fold("")(_.wire)}    # default — $what; decide ${opts(i)}")
+            _root_.com.histmersion.api.exchange.MergeResolutions.Text.TemplateLineResult(s"  # ${i.id}: ${i.decision.orElse(i.suggested).fold("")(_.wire)}    # default — $what; decide ${opts(i)}")
           case (None, None, _) if i.decidedBy.contains(MergeIssue.DecidedBy.Policy) =>
-            _root_.com.histmersion.api.exchange.MergeResolutions.Text.TemplateLine(s"  # ${i.id}: ${i.decision.fold("")(_.wire)}    # by policy — $what")
+            _root_.com.histmersion.api.exchange.MergeResolutions.Text.TemplateLineResult(s"  # ${i.id}: ${i.decision.fold("")(_.wire)}    # by policy — $what")
           case (None, None, _) =>
-            _root_.com.histmersion.api.exchange.MergeResolutions.Text.TemplateLine(s"  ${i.id}:    # $what; decide ${opts(i)}" + i.suggested.fold("")(s => s" (suggested: ${s.wire})"))
+            _root_.com.histmersion.api.exchange.MergeResolutions.Text.TemplateLineResult(s"  ${i.id}:    # $what; decide ${opts(i)}" + i.suggested.fold("")(s => s" (suggested: ${s.wire})"))
       val issues = p.issues.filter(_.severity != MergeIssue.Severity.Info)
-      _root_.com.histmersion.api.exchange.MergeResolutions.Text.Template(List(
+      _root_.com.histmersion.api.exchange.MergeResolutions.Text.TemplateResult(List(
         List(
           s"# resolutions for bundle ${p.bundleId} from ${p.from.label.getOrElse(p.from.id.toString)} — plan ${p.planHash}",
           "# left = this collection (here), right = the bundle. An id with no value is still open.",
@@ -89,11 +89,11 @@ object MergeResolutions:
     /** YAML literal blocks: `|-` when the text has no final newline, `|` with one, `|+` with more, so the text reads
       * back exactly.
       */
-    def texts(current: MergeResolutions): List[com.histmersion.api.exchange.MergeResolutions.Text.Resolution] =
+    def texts(current: MergeResolutions): List[com.histmersion.api.exchange.MergeResolutions.Text.TextsResult] =
       val withText = current.resolve.flatMap(r => r.text.map(r.issue -> _)).sortBy(_._1)
       if withText.isEmpty then Nil
       else
-        _root_.com.histmersion.api.exchange.MergeResolutions.Text.Resolution("texts:") :: withText.flatMap { (id, t) =>
+        _root_.com.histmersion.api.exchange.MergeResolutions.Text.TextsResult("texts:") :: withText.flatMap { (id, t) =>
           val chomp = if !t.endsWith("\n") then "-" else if t.endsWith("\n\n") then "+" else ""
           val lines = t.stripSuffix("\n").split("\n", -1).toList
           // with `|+` the empty last lines are the text's own trailing breaks

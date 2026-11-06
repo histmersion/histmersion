@@ -15,9 +15,11 @@ final case class SearchResult(
       KindlingsSchema, com.histmersion.api.json.Schema:
   def page: OffsetPage = OffsetPage(total, offset, com.histmersion.api.RowCount(hits.size))
 object SearchResult:
-  type Total = Total.T
-  object Total extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
+  type OfTotal = OfTotal.T
+  object OfTotal extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type OfOffset = OfOffset.T
+  object OfOffset extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
-  def of(total: com.histmersion.api.library.SearchResult.Total, hits: List[Hit], offset: com.histmersion.api.personal.UnreadPage.Offset): SearchResult =
+  def of(total: com.histmersion.api.library.SearchResult.OfTotal, hits: List[Hit], offset: com.histmersion.api.library.SearchResult.OfOffset): SearchResult =
     SearchResult(com.histmersion.api.RowCount((total).value), hits, com.histmersion.api.Offset((offset).value), OffsetPage(com.histmersion.api.RowCount((total).value), com.histmersion.api.Offset((offset).value), com.histmersion.api.RowCount(hits.size)).next)

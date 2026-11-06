@@ -27,10 +27,10 @@ final case class EventGeo(
 ) derives KindlingsCodecAsObject,
       KindlingsSchema, com.histmersion.api.json.Schema
 object EventGeo:
-  type Problem = Problem.T
-  object Problem extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
 
+  type MissingEndResult = MissingEndResult.T
+  object MissingEndResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
   type Label = Label.T
   object Label extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
@@ -57,11 +57,11 @@ object EventGeo:
   type Dating = Dating.T
   object Dating extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
-  def missingEnd(ts: TimeSpan): Option[com.histmersion.api.catalogue.EventGeo.Problem] =
+  def missingEnd(ts: TimeSpan): Option[com.histmersion.api.catalogue.EventGeo.MissingEndResult] =
     val hasStart = ts.notBefore.isDefined || ts.beginBy.isDefined
     val hasEnd = ts.endFrom.isDefined || ts.notAfter.isDefined
-    if hasStart && !hasEnd then Some(_root_.com.histmersion.api.catalogue.EventGeo.Problem("end not recorded"))
-    else if hasEnd && !hasStart then Some(_root_.com.histmersion.api.catalogue.EventGeo.Problem("start not recorded"))
+    if hasStart && !hasEnd then Some(_root_.com.histmersion.api.catalogue.EventGeo.MissingEndResult("end not recorded"))
+    else if hasEnd && !hasStart then Some(_root_.com.histmersion.api.catalogue.EventGeo.MissingEndResult("start not recorded"))
     else None
 
   final case class List(events: scala.List[EventGeo], unplaced: List.Unplaced = _root_.com.histmersion.api.catalogue.EventGeo.List.Unplaced(0), imprecise: List.Imprecise = _root_.com.histmersion.api.catalogue.EventGeo.List.Imprecise(0))

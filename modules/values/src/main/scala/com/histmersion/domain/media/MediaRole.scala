@@ -1,7 +1,13 @@
 package com.histmersion.domain.media
 object MediaRole:
-  type Wire = Wire.T
-  object Wire extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type PlaceRoles = PlaceRoles.T
+  object PlaceRoles extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type All = All.T
+  object All extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type OrderResult = OrderResult.T
+  object OrderResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type OrderRole = OrderRole.T
+  object OrderRole extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
   val Image = "image"
   val LocatorMap = "locator-map"
@@ -25,14 +31,14 @@ object MediaRole:
   val Map = "map"
 
   /** The roles a place's or event's picture can have — what `media.wikidata.*-properties` may name. */
-  val placeRoles: List[com.histmersion.domain.media.MediaRole.Wire] = List(_root_.com.histmersion.domain.media.MediaRole.Wire(Image), _root_.com.histmersion.domain.media.MediaRole.Wire(AerialView), _root_.com.histmersion.domain.media.MediaRole.Wire(Plan), _root_.com.histmersion.domain.media.MediaRole.Wire(LocatorMap), _root_.com.histmersion.domain.media.MediaRole.Wire(RouteMap))
+  val placeRoles: List[com.histmersion.domain.media.MediaRole.PlaceRoles] = List(_root_.com.histmersion.domain.media.MediaRole.PlaceRoles(Image), _root_.com.histmersion.domain.media.MediaRole.PlaceRoles(AerialView), _root_.com.histmersion.domain.media.MediaRole.PlaceRoles(Plan), _root_.com.histmersion.domain.media.MediaRole.PlaceRoles(LocatorMap), _root_.com.histmersion.domain.media.MediaRole.PlaceRoles(RouteMap))
 
   /** Every role, in card order: a place's own picture before an object found there and a map of it; a source shows its
     * cover before an illustration.
     */
-  val all: List[com.histmersion.domain.media.MediaRole.Wire] = placeRoles ++ List(Wire(Depiction), Wire(Object), Wire(Map), Wire(Cover), Wire(Illustration))
+  val all: List[com.histmersion.domain.media.MediaRole.All] = placeRoles ++ List(Depiction, Object, Map, Cover, Illustration)
 
   /** Pure: the rank of a role on a card (unknown roles last). */
-  def order(role: com.histmersion.domain.media.MediaRole.Wire): Int = all.indexOf(role) match
-    case -1 => (all.size)
-    case i  => (i)
+  def order(role: com.histmersion.domain.media.MediaRole.OrderRole): com.histmersion.domain.media.MediaRole.OrderResult = all.indexOf(role) match
+    case -1 => _root_.com.histmersion.domain.media.MediaRole.OrderResult(all.size)
+    case i  => _root_.com.histmersion.domain.media.MediaRole.OrderResult(i)

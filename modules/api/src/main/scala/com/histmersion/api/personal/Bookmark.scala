@@ -18,13 +18,13 @@ final case class Bookmark(
     updatedAt: Bookmark.UpdatedAt = _root_.com.histmersion.api.personal.Bookmark.UpdatedAt("")
 ) derives KindlingsCodecAsObject,
       KindlingsSchema, com.histmersion.api.json.Schema:
-  def name: com.histmersion.api.personal.Bookmark.Name = label.map(_.value).filter(_.trim.nonEmpty).getOrElse(title)
+  def name: com.histmersion.api.personal.Bookmark.NameResult = label.map(_.value).filter(_.trim.nonEmpty).getOrElse(title)
 
 object Bookmark:
-  type Name = Name.T
-  object Name extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
 
+  type NameResult = NameResult.T
+  object NameResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
   type CreatedAt = CreatedAt.T
   object CreatedAt extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]

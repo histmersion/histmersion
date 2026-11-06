@@ -3,13 +3,29 @@ package com.histmersion.api.automation
 import com.histmersion.api.Plural
 import com.histmersion.api.given
 object AutopilotMarkdown:
+  type BriefResult = BriefResult.T
+  object BriefResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type GoalResult = GoalResult.T
+  object GoalResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type PaceResult = PaceResult.T
+  object PaceResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type FocusResult = FocusResult.T
+  object FocusResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type StatusResult = StatusResult.T
+  object StatusResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type StatusIngestedBy = StatusIngestedBy.T
+  object StatusIngestedBy extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type StatusBeforeBacklog = StatusBeforeBacklog.T
+  object StatusBeforeBacklog extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type StatusAfterBacklog = StatusAfterBacklog.T
+  object StatusAfterBacklog extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
   import Autopilot.*
 
-  private def brief(m: ManagerBrief): com.histmersion.api.Markdown.Text =
+  private def brief(m: ManagerBrief): com.histmersion.api.automation.AutopilotMarkdown.BriefResult =
     s"${m.id} ${m.state}" + m.note.filter(n => n.nonEmpty && n != m.state).fold("")(n => s" ($n)")
 
-  def goal(g: GoalProgress): com.histmersion.api.Markdown.Text =
+  def goal(g: GoalProgress): com.histmersion.api.automation.AutopilotMarkdown.GoalResult =
     val mgrs = if g.managers.isEmpty then "no managers" else g.managers.map(brief).mkString("; ")
     val pace = s"${g.doneLast7} done in 7 days, ${g.open} open" + g.etaDays.fold("")(d => s", ~$d day(s) at that pace")
     s"**${g.slug}** _(${g.status})_${g.parent.fold("")(p => s" ⊂ $p")} · ${Plural.count(g.sources, _root_.com.histmersion.api.Plural.CountSingular("source"))}, " +
@@ -18,16 +34,16 @@ object AutopilotMarkdown:
                                                    else "") +
       s" · $mgrs · $pace" + g.lastActivity.fold("")(t => s" · last activity $t")
 
-  private def pace(g: FocusGoal): com.histmersion.api.Markdown.Text =
-    _root_.com.histmersion.api.Markdown.Text(s"${g.doneLast7} done in 7 days, ${g.open} open" + g.etaDays.fold("")(d => s", ~$d day(s) at that pace"))
+  private def pace(g: FocusGoal): com.histmersion.api.automation.AutopilotMarkdown.PaceResult =
+    _root_.com.histmersion.api.automation.AutopilotMarkdown.PaceResult(s"${g.doneLast7} done in 7 days, ${g.open} open" + g.etaDays.fold("")(d => s", ~$d day(s) at that pace"))
 
-  def focus(f: FocusInfo): com.histmersion.api.Markdown.Text =
+  def focus(f: FocusInfo): com.histmersion.api.automation.AutopilotMarkdown.FocusResult =
     val head = s"## Focus: ${if ((f.on) == _root_.com.histmersion.api.automation.Autopilot.FocusInfo.On(true)) then s"at most ${f.max} active goals" else "not in force"}" +
       (if f.maxFrom == _root_.com.histmersion.api.automation.Autopilot.FocusInfo.MaxFrom("person") then " (set by a person)" else " (agents.autopilot.max-active-goals)")
     val lines = List(
       f.note.map(n => s"_${n}_"),
       Option.when((f.held).value > 0)(
-        s"${Plural.count(f.held, _root_.com.histmersion.api.Plural.Noun.Singular("model-using item"))} held for the focus (nothing cancelled; runs in flight finish)"
+        s"${Plural.count(f.held, _root_.com.histmersion.api.Plural.NounSingular("model-using item"))} held for the focus (nothing cancelled; runs in flight finish)"
       ),
       Option.when(f.changes.nonEmpty)(s"Just now: ${f.changes.mkString("; ")}")
     ).flatten
@@ -61,10 +77,10 @@ object AutopilotMarkdown:
     */
   def status(
       s: Autopilot.EngineStatus,
-      ingestedBy: com.histmersion.api.Markdown.Text = _root_.com.histmersion.api.Markdown.Text(""),
-      beforeBacklog: List[com.histmersion.api.Markdown.Text] = Nil,
-      afterBacklog: List[com.histmersion.api.Markdown.Text] = Nil
-  ): com.histmersion.api.Markdown.Text =
+      ingestedBy: com.histmersion.api.automation.AutopilotMarkdown.StatusIngestedBy = _root_.com.histmersion.api.automation.AutopilotMarkdown.StatusIngestedBy(""),
+      beforeBacklog: List[com.histmersion.api.automation.AutopilotMarkdown.StatusBeforeBacklog] = Nil,
+      afterBacklog: List[com.histmersion.api.automation.AutopilotMarkdown.StatusAfterBacklog] = Nil
+  ): com.histmersion.api.automation.AutopilotMarkdown.StatusResult =
     val head = s"# Autopilot: ${if ((s.on) == _root_.com.histmersion.api.automation.Autopilot.EngineStatus.On(true)) then "ON" else "off"}" +
       s.since.fold("")(t => s" (since $t${s.by.fold("")(b => s", by $b")})")
     val warn = List(
@@ -77,7 +93,7 @@ object AutopilotMarkdown:
             "`histmersion agent autopilot undrain` lifts it"
         else
           s"DRAINING since ${d.since}${if d.by.nonEmpty then s" by ${d.by}" else ""}: nothing new starts; " +
-            s"${Plural.count(d.inFlight, _root_.com.histmersion.api.Plural.Noun.Singular("run"))} in flight still finishing"
+            s"${Plural.count(d.inFlight, _root_.com.histmersion.api.Plural.NounSingular("run"))} in flight still finishing"
       ),
       Option.when(!((s.agentsEnabled) == _root_.com.histmersion.api.automation.Autopilot.EngineStatus.AgentsEnabled(true)))("agents are disabled on this server (agents.enabled = false): nothing runs"),
       Option.when(((s.agentsEnabled) == _root_.com.histmersion.api.automation.Autopilot.EngineStatus.AgentsEnabled(true)) && !((s.managersEnabled) == _root_.com.histmersion.api.automation.Autopilot.EngineStatus.ManagersEnabled(true)))(
@@ -106,5 +122,5 @@ object AutopilotMarkdown:
       )
     val changes = if s.changes.isEmpty then "" else "\n\n## Just now\n\n" + s.changes.map(c => s"- $c").mkString("\n")
     val goals = if s.goals.isEmpty then "_No research goals._" else s.goals.map(g => s"- ${goal(g)}").mkString("\n")
-    _root_.com.histmersion.api.Markdown.Text((List(head, "") ++ warn ++ facts).mkString("\n") + changes + s.focus.fold("")(f => "\n\n" + focus(f)) +
+    _root_.com.histmersion.api.automation.AutopilotMarkdown.StatusResult((List(head, "") ++ warn ++ facts).mkString("\n") + changes + s.focus.fold("")(f => "\n\n" + focus(f)) +
       s"\n\n## Goals (${s.goals.size})\n\n" + goals)

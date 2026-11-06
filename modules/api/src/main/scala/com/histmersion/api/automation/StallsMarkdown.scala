@@ -1,10 +1,12 @@
 package com.histmersion.api.automation
 import com.histmersion.api.given
 object StallsMarkdown:
+  type ReportResult = ReportResult.T
+  object ReportResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
   import Stalls.*
 
-  def report(r: StallReport): com.histmersion.api.Markdown.Text =
+  def report(r: StallReport): com.histmersion.api.automation.StallsMarkdown.ReportResult =
     val head = s"# Stalled goals: ${r.stalled.size} of ${r.goals} with no progress in ${r.days} day(s)"
     val reasons =
       if r.byReason.isEmpty then "" else "\n\n" + r.byReason.map(x => s"${x.code} ${x.count}").mkString(" · ")
@@ -16,4 +18,4 @@ object StallsMarkdown:
             s"  - unblock: `${s.action}`"
         }
         .mkString("\n")
-    _root_.com.histmersion.api.Markdown.Text(head + reasons + rows)
+    _root_.com.histmersion.api.automation.StallsMarkdown.ReportResult(head + reasons + rows)

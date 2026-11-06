@@ -7,9 +7,9 @@ import com.histmersion.api.automation.ManagersMarkdown
 import com.histmersion.api.given
 
 object RepairAcquire:
-  type Markdown = Markdown.T
-  object Markdown extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
+  type MarkdownResult = MarkdownResult.T
+  object MarkdownResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
   final case class RepairRequest(dryRun: RepairRequest.DryRun = _root_.com.histmersion.api.library.RepairAcquire.RepairRequest.DryRun(false), by: Option[RepairRequest.By] = None)
       derives KindlingsCodecAsObject,
@@ -81,7 +81,7 @@ object RepairAcquire:
   val Remove = "remove"
   val Keep = "keep"
 
-  def markdown(r: RepairResult): com.histmersion.api.library.RepairAcquire.Markdown =
+  def markdown(r: RepairResult): com.histmersion.api.library.RepairAcquire.MarkdownResult =
     val verb = if ((r.dryRun) == _root_.com.histmersion.api.library.RepairAcquire.RepairResult.DryRun(true)) then "would " else ""
     val head = s"# Repair of the acquisition list${if ((r.dryRun) == _root_.com.histmersion.api.library.RepairAcquire.RepairResult.DryRun(true)) then " (dry run: nothing changed)" else ""}\n\n" +
       s"- ${verb}move ${Plural.count(r.moved, _root_.com.histmersion.api.Plural.CountSingular("legal open-access work"))} into the watchers' ingest backlogs\n" +

@@ -13,8 +13,6 @@ final case class Facet(
 ) derives KindlingsCodecAsObject,
       KindlingsSchema, com.histmersion.api.json.Schema
 object Facet:
-  type Field = Field.T
-  object Field extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
 
   type Value = Value.T
@@ -30,18 +28,22 @@ object Facet:
     case Tags, Authors, Places, Topics, Status, Provenance
 
   object Field:
-    type Wire = Wire.T
-    object Wire extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type LabelResult = LabelResult.T
+    object LabelResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type ParseS = ParseS.T
+    object ParseS extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type All = All.T
+    object All extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
-    def label(f: Field): com.histmersion.api.library.Facet.Field.Wire = f match
-      case Tags       => _root_.com.histmersion.api.library.Facet.Field.Wire("tags");
-      case Authors    => _root_.com.histmersion.api.library.Facet.Field.Wire("authors");
-      case Places     => _root_.com.histmersion.api.library.Facet.Field.Wire("places")
-      case Topics     => _root_.com.histmersion.api.library.Facet.Field.Wire("topics");
-      case Status     => _root_.com.histmersion.api.library.Facet.Field.Wire("status");
-      case Provenance => _root_.com.histmersion.api.library.Facet.Field.Wire("provenance")
+    def label(f: Field): com.histmersion.api.library.Facet.Field.LabelResult = f match
+      case Tags       => _root_.com.histmersion.api.library.Facet.Field.LabelResult("tags");
+      case Authors    => _root_.com.histmersion.api.library.Facet.Field.LabelResult("authors");
+      case Places     => _root_.com.histmersion.api.library.Facet.Field.LabelResult("places")
+      case Topics     => _root_.com.histmersion.api.library.Facet.Field.LabelResult("topics");
+      case Status     => _root_.com.histmersion.api.library.Facet.Field.LabelResult("status");
+      case Provenance => _root_.com.histmersion.api.library.Facet.Field.LabelResult("provenance")
 
-    def parse(s: com.histmersion.api.library.Facet.Field.Wire): Option[Field] =
-      values.find(f => label(f) == _root_.com.histmersion.api.library.Facet.Field.Wire((s).value.trim.toLowerCase) || f.toString.equalsIgnoreCase((s).value.trim))
+    def parse(s: com.histmersion.api.library.Facet.Field.ParseS): Option[Field] =
+      values.find(f => label(f) == _root_.com.histmersion.api.library.Facet.Field.LabelResult((s).value.trim.toLowerCase) || f.toString.equalsIgnoreCase((s).value.trim))
 
-    val all: List[com.histmersion.api.library.Facet.Field.Wire] = values.toList.map(_root_.com.histmersion.api.library.Facet.Field.Wire((label).value))
+    val all: List[com.histmersion.api.library.Facet.Field.All] = values.toList.map(_root_.com.histmersion.api.library.Facet.Field.All((label).value))

@@ -15,7 +15,7 @@ object ImportJobKinds:
 
   val MediaImport: JobKindEntry = JobKindEntry.of(
     JobInfo.Kind("media-import"),
-    _root_.com.histmersion.api.jobs.JobKinds.Wire("Fetch pictures"),
+    _root_.com.histmersion.api.jobs.JobKindEntry.OfName("Fetch pictures"),
     _root_.com.histmersion.api.jobs.JobKindEntry.OfMeaning("Asks a picture provider (Wikidata, museums, the Library of Congress…) for pictures of places and events."),
     stoppable = _root_.com.histmersion.api.jobs.JobKindEntry.OfStoppable(true),
     subject = Media.of

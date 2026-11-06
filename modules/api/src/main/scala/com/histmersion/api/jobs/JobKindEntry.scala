@@ -18,6 +18,8 @@ object JobKindEntry:
   type SubjectResult = SubjectResult.T
   object SubjectResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
+  type OfName = OfName.T
+  object OfName extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type OfMeaning = OfMeaning.T
   object OfMeaning extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type OfStoppable = _root_.com.histmersion.api.jobs.JobKindEntry.Stoppable
@@ -34,7 +36,7 @@ object JobKindEntry:
 
   def of(
       kind: JobInfo.Kind,
-      name: com.histmersion.api.jobs.JobKinds.Wire,
+      name: com.histmersion.api.jobs.JobKindEntry.OfName,
       meaning: com.histmersion.api.jobs.JobKindEntry.OfMeaning,
       stoppable: com.histmersion.api.jobs.JobKindEntry.OfStoppable = _root_.com.histmersion.api.jobs.JobKindEntry.OfStoppable(false),
       subject: JobDetail => Option[com.histmersion.api.jobs.JobKindEntry.OfSubjectResult] = _ => None,

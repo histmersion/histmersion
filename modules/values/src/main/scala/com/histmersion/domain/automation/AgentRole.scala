@@ -17,5 +17,7 @@ object AgentRole:
   type Wire = Wire.T
   object Wire extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
+  type ParseS = ParseS.T
+  object ParseS extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
-  def parse(s: com.histmersion.domain.automation.AgentRole.Wire): Option[AgentRole] = values.find(_.wire == _root_.com.histmersion.domain.automation.AgentRole.Wire((s).value.trim.toLowerCase))
+  def parse(s: com.histmersion.domain.automation.AgentRole.ParseS): Option[AgentRole] = values.find(_.wire == _root_.com.histmersion.domain.automation.AgentRole.Wire((s).value.trim.toLowerCase))

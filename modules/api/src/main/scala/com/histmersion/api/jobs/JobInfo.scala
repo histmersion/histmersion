@@ -22,11 +22,15 @@ final case class JobInfo(
 ) derives KindlingsCodecAsObject,
       KindlingsSchema, com.histmersion.api.json.Schema:
   def state: JobState = JobState.parse(status).getOrElse(JobState.Failed)
-  def isTerminal: Boolean = state.isTerminal
-  def succeeded: Boolean = (state == JobState.Done)
+  def isTerminal: com.histmersion.api.jobs.JobInfo.IsTerminalResult = state.isTerminal
+  def succeeded: com.histmersion.api.jobs.JobInfo.SucceededResult = _root_.com.histmersion.api.jobs.JobInfo.SucceededResult(state == JobState.Done)
 object JobInfo:
 
   /** A job's kind as the wire names it (`ingest`, `merge-apply`); the server checks it against its registered kinds. */
+  type IsTerminalResult = IsTerminalResult.T
+  object IsTerminalResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type SucceededResult = SucceededResult.T
+  object SucceededResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
   type Status = Status.T
   object Status extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]

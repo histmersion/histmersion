@@ -30,13 +30,17 @@ object PresetRegion:
   type Label = Label.T
   object Label extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
+  type FromWireS = FromWireS.T
+  object FromWireS extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type WireResult = WireResult.T
+  object WireResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
-  def fromWire(s: com.histmersion.api.catalogue.PresetRegion.Wire): Option[PresetRegion] = values.find(_.wire == _root_.com.histmersion.api.catalogue.PresetRegion.Wire((s).value.trim))
+  def fromWire(s: com.histmersion.api.catalogue.PresetRegion.FromWireS): Option[PresetRegion] = values.find(_.wire == _root_.com.histmersion.api.catalogue.PresetRegion.Wire((s).value.trim))
 
   given WireEnumValues[PresetRegion]:
     def all: Array[PresetRegion] = PresetRegion.values
-    def wire(e: PresetRegion): _root_.com.histmersion.api.WireEnumValues.Wire = _root_.com.histmersion.api.WireEnumValues.Wire((e.wire).value)
-    def fromWire(s: _root_.com.histmersion.api.WireEnumValues.Wire): _root_.scala.Option[PresetRegion] = PresetRegion.fromWire(_root_.com.histmersion.api.catalogue.PresetRegion.Wire((s).value))
+    def wire(e: PresetRegion): _root_.com.histmersion.api.WireEnumValues.WireResult = _root_.com.histmersion.api.WireEnumValues.WireResult((e.wire).value)
+    def fromWire(s: _root_.com.histmersion.api.WireEnumValues.FromWireS): _root_.scala.Option[PresetRegion] = PresetRegion.fromWire(_root_.com.histmersion.api.catalogue.PresetRegion.FromWireS((s).value))
 
   given io.circe.Encoder[PresetRegion] = WireEnum.encoder
   given io.circe.Decoder[PresetRegion] = WireEnum.decoder

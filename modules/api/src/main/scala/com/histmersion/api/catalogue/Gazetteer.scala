@@ -14,26 +14,42 @@ import io.circe.{Decoder, Encoder}
 import sttp.tapir.Schema
 
 object Gazetteer:
-  type DatasetField = DatasetField.T
-  object DatasetField extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type DatasetName = DatasetName.T
-  object DatasetName extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type PlaceRef = PlaceRef.T
-  object PlaceRef extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type Problem = Problem.T
-  object Problem extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type Rank = Rank.T
-  object Rank extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
+  type DatasetPickResult = DatasetPickResult.T
+  object DatasetPickResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type FromTsvRowGetResult = FromTsvRowGetResult.T
+  object FromTsvRowGetResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type FromTsvRowGetK = FromTsvRowGetK.T
+  object FromTsvRowGetK extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
+  type SourceKeyResult = SourceKeyResult.T
+  object SourceKeyResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type SourceKeyDataset = SourceKeyDataset.T
+  object SourceKeyDataset extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type DatasetSlugResult = DatasetSlugResult.T
+  object DatasetSlugResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type DatasetSlugFileName = DatasetSlugFileName.T
+  object DatasetSlugFileName extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type SlugResult = SlugResult.T
+  object SlugResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type SlugS = SlugS.T
+  object SlugS extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type RankResult = RankResult.T
+  object RankResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type ImportedSources = ImportedSourcesValue
   type ImportedSourcesValue = ImportedSourcesValue.T
   object ImportedSourcesValue extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type CanonicalResult = CanonicalResult.T
+  object CanonicalResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type DefaultOpenStartWindowYears = DefaultOpenStartWindowYearsValue
   type DefaultOpenStartWindowYearsValue = DefaultOpenStartWindowYearsValue.T
   object DefaultOpenStartWindowYearsValue extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type ValiditySourceKey = _root_.com.histmersion.api.catalogue.Gazetteer.SourceInfo.Key
-  val ValiditySourceKey: _root_.com.histmersion.api.catalogue.Gazetteer.SourceInfo.Key.type = _root_.com.histmersion.api.catalogue.Gazetteer.SourceInfo.Key
+  type UnknownWhenSilentResult = UnknownWhenSilentResult.T
+  object UnknownWhenSilentResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type UnknownWhenSilentSourceKey = UnknownWhenSilentSourceKey.T
+  object UnknownWhenSilentSourceKey extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type ValiditySourceKey = _root_.com.histmersion.api.catalogue.Gazetteer.UnknownWhenSilentSourceKey
+  val ValiditySourceKey: _root_.com.histmersion.api.catalogue.Gazetteer.UnknownWhenSilentSourceKey.type = _root_.com.histmersion.api.catalogue.Gazetteer.UnknownWhenSilentSourceKey
   type ValidityWindowYears = ValidityWindowYears.T
   object ValidityWindowYears extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type DefaultPointAreaKinds = DefaultPointAreaKindsValue
@@ -42,30 +58,68 @@ object Gazetteer:
   type PointAreaSources = PointAreaSourcesValue
   type PointAreaSourcesValue = PointAreaSourcesValue.T
   object PointAreaSourcesValue extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type FromFeatureDataset = _root_.com.histmersion.api.catalogue.Gazetteer.DatasetName
-  val FromFeatureDataset: _root_.com.histmersion.api.catalogue.Gazetteer.DatasetName.type = _root_.com.histmersion.api.catalogue.Gazetteer.DatasetName
-  type FromTsvRowDataset = _root_.com.histmersion.api.catalogue.Gazetteer.DatasetName
-  val FromTsvRowDataset: _root_.com.histmersion.api.catalogue.Gazetteer.DatasetName.type = _root_.com.histmersion.api.catalogue.Gazetteer.DatasetName
+  type PointOnlyResult = PointOnlyResult.T
+  object PointOnlyResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type DropsPointAreaResult = DropsPointAreaResult.T
+  object DropsPointAreaResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type DropsPointAreaSource = DropsPointAreaSource.T
+  object DropsPointAreaSource extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type DropsPointAreaKinds = DropsPointAreaKinds.T
+  object DropsPointAreaKinds extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type StrResult = StrResult.T
+  object StrResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type CitationOfResult = CitationOfResult.T
+  object CitationOfResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type PlaceIdForResult = PlaceIdForResult.T
+  object PlaceIdForResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type PlaceIdForRef = PlaceIdForRef.T
+  object PlaceIdForRef extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type PlaceIdForDataset = PlaceIdForDataset.T
+  object PlaceIdForDataset extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type FromFeatureResultPart1 = FromFeatureResultPart1.T
+  object FromFeatureResultPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type FromFeatureDataset = _root_.com.histmersion.api.catalogue.Gazetteer.PlaceIdForDataset
+  val FromFeatureDataset: _root_.com.histmersion.api.catalogue.Gazetteer.PlaceIdForDataset.type = _root_.com.histmersion.api.catalogue.Gazetteer.PlaceIdForDataset
+  type FromFeatureOrdinal = FromFeatureOrdinal.T
+  object FromFeatureOrdinal extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type FromFeatureDefaultSource = FromFeatureDefaultSource.T
+  object FromFeatureDefaultSource extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type FromTsvRowResultPart1 = FromTsvRowResultPart1.T
+  object FromTsvRowResultPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type FromTsvRowHeader = FromTsvRowHeader.T
+  object FromTsvRowHeader extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type FromTsvRowCells = FromTsvRowCells.T
+  object FromTsvRowCells extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type FromTsvRowDataset = _root_.com.histmersion.api.catalogue.Gazetteer.PlaceIdForDataset
+  val FromTsvRowDataset: _root_.com.histmersion.api.catalogue.Gazetteer.PlaceIdForDataset.type = _root_.com.histmersion.api.catalogue.Gazetteer.PlaceIdForDataset
+  type FromTsvRowLine = FromTsvRowLine.T
+  object FromTsvRowLine extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type FromTsvRowDefaultSource = FromTsvRowDefaultSource.T
+  object FromTsvRowDefaultSource extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type TsvCellsResult = TsvCellsResult.T
+  object TsvCellsResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type TsvCellsLine = TsvCellsLine.T
+  object TsvCellsLine extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
-  def sourceKey(kind: com.histmersion.api.catalogue.Gazetteer.Kind, dataset: Option[com.histmersion.api.catalogue.Gazetteer.DatasetName] = None): com.histmersion.api.catalogue.Gazetteer.SourceInfo.Key = kind match
-    case com.histmersion.api.catalogue.Gazetteer.Kind.Lpf => _root_.com.histmersion.api.catalogue.Gazetteer.SourceInfo.Key(s"lpf:${dataset.getOrElse("")}")
+  def sourceKey(kind: com.histmersion.api.catalogue.Gazetteer.Kind, dataset: Option[com.histmersion.api.catalogue.Gazetteer.SourceKeyDataset] = None): com.histmersion.api.catalogue.Gazetteer.SourceKeyResult = kind match
+    case com.histmersion.api.catalogue.Gazetteer.Kind.Lpf => _root_.com.histmersion.api.catalogue.Gazetteer.SourceKeyResult(s"lpf:${dataset.getOrElse("")}")
     case k                                                => k.wire
 
-  def datasetSlug(fileName: com.histmersion.api.catalogue.Gazetteer.SourceInfo.File): com.histmersion.api.catalogue.Gazetteer.DatasetName =
+  def datasetSlug(fileName: com.histmersion.api.catalogue.Gazetteer.DatasetSlugFileName): com.histmersion.api.catalogue.Gazetteer.DatasetSlugResult =
     val base = fileName
       .replaceAll("(?i)(\\.meta)?\\.(jsonld|json|geojson|ndjson|jsonl|tsv)(\\.gz)?$", "")
       .replaceAll("(?i)\\.lpf$", "")
-    _root_.com.histmersion.api.catalogue.Gazetteer.DatasetName((slug(base)).value.take(48))
+    _root_.com.histmersion.api.catalogue.Gazetteer.DatasetSlugResult((slug(base)).value.take(48))
 
-  private def slug(s: String): String =
-    ((s).value.trim.toLowerCase(java.util.Locale.ROOT).replaceAll("[^a-z0-9]+", "_").replaceAll("^_+|_+$", ""))
+  private def slug(s: com.histmersion.api.catalogue.Gazetteer.SlugS): com.histmersion.api.catalogue.Gazetteer.SlugResult =
+    _root_.com.histmersion.api.catalogue.Gazetteer.SlugResult((s).value.trim.toLowerCase(java.util.Locale.ROOT).replaceAll("[^a-z0-9]+", "_").replaceAll("^_+|_+$", ""))
 
-  def rank(m: Place.Match): com.histmersion.api.catalogue.Gazetteer.Rank = m.importSource.flatMap(com.histmersion.api.catalogue.Gazetteer.Kind.ofKey) match
-    case None                                                        => if m.importSource.isEmpty then _root_.com.histmersion.api.catalogue.Gazetteer.Rank(0) else _root_.com.histmersion.api.catalogue.Gazetteer.Rank(5)
-    case Some(com.histmersion.api.catalogue.Gazetteer.Kind.Lpf)      => _root_.com.histmersion.api.catalogue.Gazetteer.Rank(1)
-    case Some(com.histmersion.api.catalogue.Gazetteer.Kind.Wikidata) => _root_.com.histmersion.api.catalogue.Gazetteer.Rank(2)
-    case Some(com.histmersion.api.catalogue.Gazetteer.Kind.Tgn)      => _root_.com.histmersion.api.catalogue.Gazetteer.Rank(3)
-    case Some(com.histmersion.api.catalogue.Gazetteer.Kind.Geonames) => _root_.com.histmersion.api.catalogue.Gazetteer.Rank(4)
+  def rank(m: Place.Match): com.histmersion.api.catalogue.Gazetteer.RankResult = m.importSource.flatMap(com.histmersion.api.catalogue.Gazetteer.Kind.ofKey) match
+    case None                                                        => if m.importSource.isEmpty then _root_.com.histmersion.api.catalogue.Gazetteer.RankResult(0) else _root_.com.histmersion.api.catalogue.Gazetteer.RankResult(5)
+    case Some(com.histmersion.api.catalogue.Gazetteer.Kind.Lpf)      => _root_.com.histmersion.api.catalogue.Gazetteer.RankResult(1)
+    case Some(com.histmersion.api.catalogue.Gazetteer.Kind.Wikidata) => _root_.com.histmersion.api.catalogue.Gazetteer.RankResult(2)
+    case Some(com.histmersion.api.catalogue.Gazetteer.Kind.Tgn)      => _root_.com.histmersion.api.catalogue.Gazetteer.RankResult(3)
+    case Some(com.histmersion.api.catalogue.Gazetteer.Kind.Geonames) => _root_.com.histmersion.api.catalogue.Gazetteer.RankResult(4)
 
   val ImportedSources: List[com.histmersion.api.catalogue.Gazetteer.ImportedSources] =
     List(
@@ -74,7 +128,7 @@ object Gazetteer:
       com.histmersion.api.catalogue.Gazetteer.Kind.Tgn
     ).map(k => _root_.com.histmersion.api.catalogue.Gazetteer.ImportedSourcesValue((sourceKey(k)).value))
 
-  def canonical(byOwn: List[Place.Match], byLinks: List[Place.Match] = Nil): Option[com.histmersion.api.catalogue.Place.Id] =
+  def canonical(byOwn: List[Place.Match], byLinks: List[Place.Match] = Nil): Option[com.histmersion.api.catalogue.Gazetteer.CanonicalResult] =
     (byOwn.map(_ -> 0) ++ byLinks.map(_ -> 1))
       .groupBy(_._1.placeId)
       .values
@@ -89,13 +143,13 @@ object Gazetteer:
   /** GeoNames, Wikidata and TGN leave most items undated, and their silence means unknown: an item with no inception
     * was not there since forever.
     */
-  def unknownWhenSilent(sourceKey: com.histmersion.api.catalogue.Gazetteer.SourceInfo.Key): Boolean =
+  def unknownWhenSilent(sourceKey: com.histmersion.api.catalogue.Gazetteer.UnknownWhenSilentSourceKey): com.histmersion.api.catalogue.Gazetteer.UnknownWhenSilentResult =
     com.histmersion.api.catalogue.Gazetteer.Kind
       .ofKey(sourceKey)
       .exists(k => k != com.histmersion.api.catalogue.Gazetteer.Kind.Lpf)
 
   def validity(sourceKey: com.histmersion.api.catalogue.Gazetteer.ValiditySourceKey, span: Span, windowYears: com.histmersion.api.catalogue.Gazetteer.ValidityWindowYears): Validity = span match
-    case Span(None, Some(end)) if ((unknownWhenSilent(sourceKey)) == (true)) =>
+    case Span(None, Some(end)) if ((unknownWhenSilent(sourceKey)) == _root_.com.histmersion.api.catalogue.Gazetteer.UnknownWhenSilentResult(true)) =>
       Validity(Some(_root_.com.histmersion.api.catalogue.Year((end).value - math.max(0, (windowYears).value))), Some(end), startUnknown = _root_.com.histmersion.api.Validity.StartUnknown(true))
     case Span(from, to) => Validity(from, to, startUnknown = _root_.com.histmersion.api.Validity.StartUnknown(false))
 
@@ -108,8 +162,8 @@ object Gazetteer:
   /** GeoNames, Wikidata and TGN give every item a coordinate and no boundary. */
   val PointAreaSources: List[com.histmersion.api.catalogue.Gazetteer.PointAreaSources] = (ImportedSources).map(refactorValue16 => _root_.com.histmersion.api.catalogue.Gazetteer.PointAreaSourcesValue((refactorValue16).value))
 
-  def pointOnly(g: Option[GazGeometry]): Boolean = g match
-    case None                     => (true)
+  def pointOnly(g: Option[GazGeometry]): com.histmersion.api.catalogue.Gazetteer.PointOnlyResult = g match
+    case None                     => _root_.com.histmersion.api.catalogue.Gazetteer.PointOnlyResult(true)
     case Some(GazGeometry.Wkt(t)) =>
       val u = t.trim.toUpperCase(java.util.Locale.ROOT).replaceFirst("^SRID=\\d+;", "")
       u.startsWith("POINT") || u.startsWith("MULTIPOINT")
@@ -122,11 +176,11 @@ object Gazetteer:
         .flatMap(_.asString)
         .exists(k => k == "Point" || k == "MultiPoint")
 
-  def dropsPointArea(source: com.histmersion.api.catalogue.Gazetteer.SourceInfo.Key, r: GazRecord, kinds: Set[com.histmersion.api.catalogue.Gazetteer.Kind.Wire]): Boolean =
+  def dropsPointArea(source: com.histmersion.api.catalogue.Gazetteer.DropsPointAreaSource, r: GazRecord, kinds: Set[com.histmersion.api.catalogue.Gazetteer.DropsPointAreaKinds]): com.histmersion.api.catalogue.Gazetteer.DropsPointAreaResult =
     PointAreaSources.contains(source) && kinds.contains(r.kind) && pointOnly(r.geometry)
 
   def inDataset(r: GazRecord, ds: LpfDataset): GazRecord =
-    if ((r.span.isEmpty) == (true)) && !((ds.span.isEmpty) == (true)) then r.modify(_.span).setTo(ds.span) else r
+    if ((r.span.isEmpty) == _root_.com.histmersion.api.Span.IsEmptyResult(true)) && !((ds.span.isEmpty) == _root_.com.histmersion.api.Span.IsEmptyResult(true)) then r.modify(_.span).setTo(ds.span) else r
 
   def mergeNames(ns: List[GazName]): List[GazName] =
     ns.map(n => n.modify(_.name).setTo(n.name.trim).modify(_.lang).setTo(n.lang.trim.toLowerCase(java.util.Locale.ROOT)))
@@ -150,10 +204,10 @@ object Gazetteer:
 
   def span(j: Json): Span = Lpf.parseWhen(j).getOrElse(Span.always)
 
-  private def str(o: JsonObject, keys: String*): Option[String] =
-    (keys.iterator.flatMap(k => o(k).flatMap(_.asString)).map(_.trim).find(_.nonEmpty)).map(refactorValue9 => (refactorValue9))
+  private def str(o: JsonObject, keys: String*): Option[com.histmersion.api.catalogue.Gazetteer.StrResult] =
+    (keys.iterator.flatMap(k => o(k).flatMap(_.asString)).map(_.trim).find(_.nonEmpty)).map(refactorValue9 => _root_.com.histmersion.api.catalogue.Gazetteer.StrResult(refactorValue9))
 
-  private def citationOf(n: JsonObject): Option[com.histmersion.api.catalogue.Gazetteer.SourceInfo.Citation] =
+  private def citationOf(n: JsonObject): Option[com.histmersion.api.catalogue.Gazetteer.CitationOfResult] =
     val cites = n("citations").flatMap(_.asArray).map(_.toList).getOrElse(Nil).flatMap { c =>
       c.asString.orElse(
         c.asObject.flatMap(o =>
@@ -165,7 +219,7 @@ object Gazetteer:
         )
       )
     }
-    Option.when(cites.nonEmpty)(_root_.com.histmersion.api.catalogue.Gazetteer.SourceInfo.Citation(cites.distinct.mkString("; ")))
+    Option.when(cites.nonEmpty)(_root_.com.histmersion.api.catalogue.Gazetteer.CitationOfResult(cites.distinct.mkString("; ")))
 
   private def readNames(f: JsonObject): List[GazName] =
     f("names").flatMap(_.asArray).map(_.toList).getOrElse(Nil).flatMap { j =>
@@ -211,7 +265,7 @@ object Gazetteer:
       }
       .distinctBy(_.id)
 
-  def placeIdFor(own: Option[ExternalId], ref: com.histmersion.api.catalogue.Gazetteer.PlaceRef, dataset: com.histmersion.api.catalogue.Gazetteer.DatasetName): com.histmersion.api.catalogue.Place.Id =
+  def placeIdFor(own: Option[ExternalId], ref: com.histmersion.api.catalogue.Gazetteer.PlaceIdForRef, dataset: com.histmersion.api.catalogue.Gazetteer.PlaceIdForDataset): com.histmersion.api.catalogue.Gazetteer.PlaceIdForResult =
     own.map(_.placeId).getOrElse {
       val tail = slug((ref).value.split("[/#=]").filter(_.trim.nonEmpty).lastOption.getOrElse(ref))
       s"lpf_${dataset}_${if tail.nonEmpty then tail.take(64) else "x" + Integer.toHexString(ref.hashCode)}"
@@ -220,10 +274,10 @@ object Gazetteer:
   def fromFeature(
       j: Json,
       dataset: com.histmersion.api.catalogue.Gazetteer.FromFeatureDataset,
-      ordinal: Int,
-      defaultSource: Option[com.histmersion.api.catalogue.Gazetteer.SourceInfo.Key] = None
-  ): Either[com.histmersion.api.catalogue.Gazetteer.Problem, GazRecord] =
-    Lpf.readFeature(j, _root_.com.histmersion.api.catalogue.Lpf.Kind.Wire(com.histmersion.api.catalogue.Place.Kind.Site), ordinal).flatMap { in =>
+      ordinal: com.histmersion.api.catalogue.Gazetteer.FromFeatureOrdinal,
+      defaultSource: Option[com.histmersion.api.catalogue.Gazetteer.FromFeatureDefaultSource] = None
+  ): Either[com.histmersion.api.catalogue.Gazetteer.FromFeatureResultPart1, GazRecord] =
+    Lpf.readFeature(j, _root_.com.histmersion.api.catalogue.Lpf.ReadFeatureDefaultKind(com.histmersion.api.catalogue.Place.Kind.Site), ordinal).flatMap { in =>
       val f = j.asObject.getOrElse(JsonObject.empty)
       val raw = str(f, "@id", "id").orElse(f("properties").flatMap(_.asObject).flatMap(str(_, "@id", "id", "pid")))
       raw.toRight(s"feature #$ordinal has no @id").map { ref =>
@@ -250,7 +304,7 @@ object Gazetteer:
     }
 
   def dataset(top: JsonObject, sidecar: Option[JsonObject] = None): LpfDataset =
-    def pick(keys: String*): Option[com.histmersion.api.catalogue.Gazetteer.DatasetField] = sidecar.flatMap(str(_, keys*)).orElse(str(top, keys*))
+    def pick(keys: String*): Option[com.histmersion.api.catalogue.Gazetteer.DatasetPickResult] = sidecar.flatMap(str(_, keys*)).orElse(str(top, keys*))
     val when = sidecar.flatMap(_("when")).orElse(top("when")).fold(Span.always)(span)
     LpfDataset(
       pick("title", "name", "label"),
@@ -264,46 +318,46 @@ object Gazetteer:
     * `@lang`.
     */
   def fromTsvRow(
-      header: List[String],
-      cells: List[String],
+      header: List[com.histmersion.api.catalogue.Gazetteer.FromTsvRowHeader],
+      cells: List[com.histmersion.api.catalogue.Gazetteer.FromTsvRowCells],
       dataset: com.histmersion.api.catalogue.Gazetteer.FromTsvRowDataset,
-      line: Int,
-      defaultSource: Option[com.histmersion.api.catalogue.Gazetteer.SourceInfo.Key] = None
-  ): Either[com.histmersion.api.catalogue.Gazetteer.Problem, GazRecord] =
+      line: com.histmersion.api.catalogue.Gazetteer.FromTsvRowLine,
+      defaultSource: Option[com.histmersion.api.catalogue.Gazetteer.FromTsvRowDefaultSource] = None
+  ): Either[com.histmersion.api.catalogue.Gazetteer.FromTsvRowResultPart1, GazRecord] =
     val row =
       header.map((_).value.trim.toLowerCase(java.util.Locale.ROOT)).zip(cells.map((_).value.trim) ++ List.fill(header.size)("")).toMap
-    def get(k: String): Option[String] = (row.get((k).value).filter(_.nonEmpty)).map(refactorValue19 => (refactorValue19))
-    (get(("id")), get(("title"))) match
-      case (None, _)                => Left(_root_.com.histmersion.api.catalogue.Gazetteer.Problem(s"line $line: no id"))
-      case (_, None)                => Left(_root_.com.histmersion.api.catalogue.Gazetteer.Problem(s"line $line: no title"))
+    def get(k: com.histmersion.api.catalogue.Gazetteer.FromTsvRowGetK): Option[com.histmersion.api.catalogue.Gazetteer.FromTsvRowGetResult] = (row.get((k).value).filter(_.nonEmpty)).map(refactorValue19 => _root_.com.histmersion.api.catalogue.Gazetteer.FromTsvRowGetResult(refactorValue19))
+    (get(_root_.com.histmersion.api.catalogue.Gazetteer.FromTsvRowGetK("id")), get(_root_.com.histmersion.api.catalogue.Gazetteer.FromTsvRowGetK("title"))) match
+      case (None, _)                => Left(_root_.com.histmersion.api.catalogue.Gazetteer.FromTsvRowResultPart1(s"line $line: no id"))
+      case (_, None)                => Left(_root_.com.histmersion.api.catalogue.Gazetteer.FromTsvRowResultPart1(s"line $line: no title"))
       case (Some(ref), Some(title)) =>
         val own = ExternalId.parse(ref)
-        val variants = get(("variants")).toList.flatMap((_).value.split(";").toList).map(_.trim).filter(_.nonEmpty).map { v =>
+        val variants = get(_root_.com.histmersion.api.catalogue.Gazetteer.FromTsvRowGetK("variants")).toList.flatMap((_).value.split(";").toList).map(_.trim).filter(_.nonEmpty).map { v =>
           val at = v.lastIndexOf('@')
           if at > 0 && v.drop(at + 1).matches("[A-Za-z]{2,3}(-[A-Za-z0-9]+)?") then
             GazName(_root_.com.histmersion.api.catalogue.GazName.Name(v.take(at).trim), _root_.com.histmersion.api.catalogue.GazName.Lang(v.drop(at + 1)))
           else GazName(_root_.com.histmersion.api.catalogue.GazName.Name(v))
         }
-        val links = get(("matches")).toList
+        val links = get(_root_.com.histmersion.api.catalogue.Gazetteer.FromTsvRowGetK("matches")).toList
           .flatMap((_).value.split(";").toList)
-          .flatMap({ val refactorFunction3 = ExternalId.parse; (refactorValue8) => refactorFunction3(_root_.com.histmersion.api.library.ExternalId.Reference(refactorValue8)) })
+          .flatMap({ val refactorFunction3 = ExternalId.parse; (refactorValue8) => refactorFunction3(_root_.com.histmersion.api.library.ExternalId.ParseRaw(refactorValue8)) })
           .filterNot(own.contains)
           .distinct
           .map(GazLink(_, LinkMatch.Close))
         val point = for
-          lon <- get(("lon")).flatMap((_).value.toDoubleOption)
-          lat <- get(("lat")).flatMap((_).value.toDoubleOption)
+          lon <- get(_root_.com.histmersion.api.catalogue.Gazetteer.FromTsvRowGetK("lon")).flatMap((_).value.toDoubleOption)
+          lat <- get(_root_.com.histmersion.api.catalogue.Gazetteer.FromTsvRowGetK("lat")).flatMap((_).value.toDoubleOption)
         yield GazGeometry.GeoJson(_root_.com.histmersion.api.catalogue.GazGeometry.GeoJson.Text(s"""{"type":"Point","coordinates":[$lon,$lat]}"""))
         val kind =
-          get(("types"))
+          get(_root_.com.histmersion.api.catalogue.Gazetteer.FromTsvRowGetK("types"))
             .flatMap(t => (t).value.split(";").toList.flatMap({ val refactorFunction4 = com.histmersion.api.catalogue.Place.Kind.parse; (refactorValue10) => refactorFunction4(_root_.com.histmersion.api.catalogue.Place.Kind.ParseS(refactorValue10)) }).headOption)
             .getOrElse(com.histmersion.api.catalogue.Place.Kind.Site)
-        val sp = Span(get(("start")).flatMap(Lpf.parseYear), get(("end")).flatMap(Lpf.parseYear))
+        val sp = Span(get(_root_.com.histmersion.api.catalogue.Gazetteer.FromTsvRowGetK("start")).flatMap(Lpf.parseYear), get(_root_.com.histmersion.api.catalogue.Gazetteer.FromTsvRowGetK("end")).flatMap(Lpf.parseYear))
         val props = JsonObject.fromIterable(
-          get(("ccodes"))
+          get(_root_.com.histmersion.api.catalogue.Gazetteer.FromTsvRowGetK("ccodes"))
             .map(c => "ccodes" -> Json.arr((c).value.split("[;,]").toList.map(_.trim).filter(_.nonEmpty).map(Json.fromString)*))
             .toList ++
-            get(("types")).map(t => "types" -> Json.fromString((t).value)).toList
+            get(_root_.com.histmersion.api.catalogue.Gazetteer.FromTsvRowGetK("types")).map(t => "types" -> Json.fromString((t).value)).toList
         )
         Right(
           GazRecord(
@@ -312,18 +366,18 @@ object Gazetteer:
             placeId = com.histmersion.api.catalogue.Place.Id(placeIdFor(own, ref, dataset)),
             label = title,
             kind = _root_.com.histmersion.api.catalogue.GazRecord.Kind(kind),
-            geometry = point.orElse(get(("geowkt")).map(GazGeometry.Wkt(_))),
+            geometry = point.orElse(get(_root_.com.histmersion.api.catalogue.Gazetteer.FromTsvRowGetK("geowkt")).map(GazGeometry.Wkt(_))),
             span = sp,
             names = mergeNames(GazName(title) :: variants),
             links = links,
-            source = get(("title_source")).orElse(defaultSource),
+            source = get(_root_.com.histmersion.api.catalogue.Gazetteer.FromTsvRowGetK("title_source")).orElse(defaultSource),
             properties = Option.when(props.nonEmpty)(_root_.com.histmersion.api.catalogue.GazRecord.Properties(Json.fromJsonObject(props).noSpaces)),
-            descriptions = get(("description")).map(GazDescription(_)).toList
+            descriptions = get(_root_.com.histmersion.api.catalogue.Gazetteer.FromTsvRowGetK("description")).map(GazDescription(_)).toList
           )
         )
 
   /** LP-TSV has no quoting: a tab separates, nothing escapes. */
-  def tsvCells(line: String): List[String] = ((line).value.split("\t", -1).toList).map(refactorValue7 => (refactorValue7))
+  def tsvCells(line: com.histmersion.api.catalogue.Gazetteer.TsvCellsLine): List[com.histmersion.api.catalogue.Gazetteer.TsvCellsResult] = ((line).value.split("\t", -1).toList).map(refactorValue7 => _root_.com.histmersion.api.catalogue.Gazetteer.TsvCellsResult(refactorValue7))
 
   final case class Extract(
       name: Extract.Name,
@@ -369,20 +423,26 @@ object Gazetteer:
   enum Kind:
     case Geonames, Wikidata, Lpf, Tgn
 
-    def wire: com.histmersion.api.catalogue.Gazetteer.Kind.Wire = _root_.com.histmersion.api.catalogue.Gazetteer.Kind.Wire(toString.toLowerCase(java.util.Locale.ROOT))
+    def wire: com.histmersion.api.catalogue.Gazetteer.Kind.WireResult = _root_.com.histmersion.api.catalogue.Gazetteer.Kind.WireResult(toString.toLowerCase(java.util.Locale.ROOT))
 
   object Kind:
-    type Wire = Wire.T
-    object Wire extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type WireResult = WireResult.T
+    object WireResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type ParseS = ParseS.T
+    object ParseS extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type OfKeyKey = OfKeyKey.T
+    object OfKeyKey extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type FromWireS = FromWireS.T
+    object FromWireS extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
-    def parse(s: com.histmersion.api.catalogue.Gazetteer.Kind.Wire): Option[Kind] = values.find(_.wire == _root_.com.histmersion.api.catalogue.Gazetteer.Kind.Wire((s).value.trim.toLowerCase(java.util.Locale.ROOT)))
+    def parse(s: com.histmersion.api.catalogue.Gazetteer.Kind.ParseS): Option[Kind] = values.find(_.wire == _root_.com.histmersion.api.catalogue.Gazetteer.Kind.WireResult((s).value.trim.toLowerCase(java.util.Locale.ROOT)))
 
-    def ofKey(key: com.histmersion.api.catalogue.Gazetteer.SourceInfo.Key): Option[Kind] = parse(_root_.com.histmersion.api.catalogue.Gazetteer.Kind.Wire((key).value.takeWhile(_ != ':')))
+    def ofKey(key: com.histmersion.api.catalogue.Gazetteer.Kind.OfKeyKey): Option[Kind] = parse(_root_.com.histmersion.api.catalogue.Gazetteer.Kind.ParseS((key).value.takeWhile(_ != ':')))
 
     given WireEnumValues[Kind]:
       def all: Array[Kind] = Kind.values
-      def wire(e: Kind): _root_.com.histmersion.api.WireEnumValues.Wire = _root_.com.histmersion.api.WireEnumValues.Wire((e.wire).value)
-      def fromWire(s: _root_.com.histmersion.api.WireEnumValues.Wire): _root_.scala.Option[Kind] = parse(_root_.com.histmersion.api.catalogue.Gazetteer.Kind.Wire((s).value))
+      def wire(e: Kind): _root_.com.histmersion.api.WireEnumValues.WireResult = _root_.com.histmersion.api.WireEnumValues.WireResult((e.wire).value)
+      def fromWire(s: _root_.com.histmersion.api.WireEnumValues.FromWireS): _root_.scala.Option[Kind] = parse(_root_.com.histmersion.api.catalogue.Gazetteer.Kind.ParseS((s).value))
     given Encoder[Kind] = WireEnum.encoder
     given Decoder[Kind] = WireEnum.decoder
     given Schema[Kind] = WireEnum.schema
@@ -414,12 +474,12 @@ object Gazetteer:
         _.records).setTo(((records).value + (o.records).value).value).modify(_.created).setTo((created).value + o.created).modify(_.joined).setTo(joined + o.joined).modify(_.placesChanged).setTo(placesChanged + o.placesChanged).modify(_.namesAdded).setTo(namesAdded + o.namesAdded).modify(_.namesRemoved).setTo(namesRemoved + o.namesRemoved).modify(_.namesChanged).setTo(namesChanged + o.namesChanged).modify(_.linksAdded).setTo(linksAdded + o.linksAdded).modify(_.linksRemoved).setTo(linksRemoved + o.linksRemoved).modify(_.placesRemoved).setTo(placesRemoved + o.placesRemoved).modify(_.skipped).setTo((skipped ++ o.skipped).take(20)).modify(_.descriptionsAdded).setTo(descriptionsAdded + o.descriptionsAdded).modify(_.descriptionsRemoved).setTo(descriptionsRemoved + o.descriptionsRemoved).modify(_.descriptionsChanged).setTo(descriptionsChanged + o.descriptionsChanged).modify(_.linksChanged).setTo(linksChanged + o.linksChanged).modify(_.pointAreasSkipped).setTo(pointAreasSkipped + o.pointAreasSkipped
       )
 
-    def unchanged: Boolean =
+    def unchanged: com.histmersion.api.catalogue.Gazetteer.LoadCounts.UnchangedResult =
       created == 0 && placesChanged == 0 && namesAdded == 0 && namesRemoved == 0 && namesChanged == 0 &&
         linksAdded == 0 && linksRemoved == 0 && linksChanged == 0 && placesRemoved == 0 &&
         descriptionsAdded == 0 && descriptionsRemoved == 0 && descriptionsChanged == 0
 
-    def describe: String =
+    def describe: com.histmersion.api.catalogue.Gazetteer.LoadCounts.DescribeResult =
       s"$source $version: ${Plural.count(records, _root_.com.histmersion.api.Plural.CountSingular("record"))}, $created new place(s), $joined joined an existing place, " +
         s"$placesChanged place(s) changed, names +$namesAdded −$namesRemoved ~$namesChanged, links +$linksAdded −$linksRemoved" +
         (if linksChanged > 0 then s" ~$linksChanged" else "") +
@@ -432,6 +492,10 @@ object Gazetteer:
         (if skipped.nonEmpty then s", ${skipped.size} skipped" else "")
 
   object LoadCounts:
+    type UnchangedResult = UnchangedResult.T
+    object UnchangedResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type DescribeResult = DescribeResult.T
+    object DescribeResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
     type Source = Source.T
     object Source extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
