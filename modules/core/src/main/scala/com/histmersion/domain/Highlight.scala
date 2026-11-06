@@ -21,18 +21,18 @@ object Highlight:
   object ApplyResultPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type ApplyResultPart2 = ApplyResultPart2.T
   object ApplyResultPart2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type ApplyHtml = ApplyHtml.T
-  object ApplyHtml extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type ApplyQ = ApplyQ.T
-  object ApplyQ extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type ApplyHtml = _root_.com.histmersion.domain.Highlight.VerbatimEndHtml
+  val ApplyHtml: _root_.com.histmersion.domain.Highlight.VerbatimEndHtml.type = _root_.com.histmersion.domain.Highlight.VerbatimEndHtml
+  type ApplyQ = _root_.com.histmersion.domain.Highlight.TermsQ
+  val ApplyQ: _root_.com.histmersion.domain.Highlight.TermsQ.type = _root_.com.histmersion.domain.Highlight.TermsQ
   type MarksResultPart1 = MarksResultPart1.T
   object MarksResultPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type MarksResultPart2 = MarksResultPart2.T
   object MarksResultPart2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type MarksHtml = MarksHtml.T
-  object MarksHtml extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type MarksTerms = MarksTerms.T
-  object MarksTerms extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type MarksHtml = _root_.com.histmersion.domain.Highlight.VerbatimEndHtml
+  val MarksHtml: _root_.com.histmersion.domain.Highlight.VerbatimEndHtml.type = _root_.com.histmersion.domain.Highlight.VerbatimEndHtml
+  type MarksTerms = _root_.com.histmersion.domain.Highlight.PatternTerms
+  val MarksTerms: _root_.com.histmersion.domain.Highlight.PatternTerms.type = _root_.com.histmersion.domain.Highlight.PatternTerms
   type PatternTerms = PatternTerms.T
   object PatternTerms extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type MarkTextResult = MarkTextResult.T

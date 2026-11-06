@@ -84,18 +84,18 @@ object QueueView:
   object TopicLabelT extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type AddFormTopicsId = AddFormTopicsId.T
   object AddFormTopicsId extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type RenderGroupTopic = RenderGroupTopic.T
-  object RenderGroupTopic extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type RenderGroupTopicsId = RenderGroupTopicsId.T
-  object RenderGroupTopicsId extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type RenderGroupTopic = _root_.com.histmersion.web.QueueView.HeadingTopic
+  val RenderGroupTopic: _root_.com.histmersion.web.QueueView.HeadingTopic.type = _root_.com.histmersion.web.QueueView.HeadingTopic
+  type RenderGroupTopicsId = _root_.com.histmersion.web.QueueView.EditFormTopicsId
+  val RenderGroupTopicsId: _root_.com.histmersion.web.QueueView.EditFormTopicsId.type = _root_.com.histmersion.web.QueueView.EditFormTopicsId
   type RenderGroupChecksPart1 = RenderGroupChecksPart1.T
   object RenderGroupChecksPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type RenderGroupGoalsPart1 = RenderGroupGoalsPart1.T
   object RenderGroupGoalsPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type RenderGroupTarget = RenderGroupTarget.T
   object RenderGroupTarget extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type RenderItemTopicsId = RenderItemTopicsId.T
-  object RenderItemTopicsId extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type RenderItemTopicsId = _root_.com.histmersion.web.QueueView.EditFormTopicsId
+  val RenderItemTopicsId: _root_.com.histmersion.web.QueueView.EditFormTopicsId.type = _root_.com.histmersion.web.QueueView.EditFormTopicsId
   type RenderItemIsTarget = RenderItemIsTarget.T
   object RenderItemIsTarget extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type ListNameResult = ListNameResult.T

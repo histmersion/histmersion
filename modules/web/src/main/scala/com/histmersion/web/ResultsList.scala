@@ -38,8 +38,8 @@ object ResultsList:
   object PageSizeResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type NextLabelResult = NextLabelResult.T
   object NextLabelResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type HitRowInPanel = HitRowInPanel.T
-  object HitRowInPanel extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type HitRowInPanel = _root_.com.histmersion.web.ResultsList.OpenSourceInPanel
+  val HitRowInPanel: _root_.com.histmersion.web.ResultsList.OpenSourceInPanel.type = _root_.com.histmersion.web.ResultsList.OpenSourceInPanel
   type OpenSourceCk = OpenSourceCk.T
   object OpenSourceCk extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type OpenSourceInPanel = OpenSourceInPanel.T

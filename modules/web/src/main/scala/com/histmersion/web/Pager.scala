@@ -21,8 +21,8 @@ object Pager:
   object PreviousResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type PreviousOffset = PreviousOffset.T
   object PreviousOffset extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type PreviousLimit = PreviousLimit.T
-  object PreviousLimit extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type PreviousLimit = _root_.com.histmersion.web.Pager.NextLimit
+  val PreviousLimit: _root_.com.histmersion.web.Pager.NextLimit.type = _root_.com.histmersion.web.Pager.NextLimit
   type NextResult = NextResult.T
   object NextResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type NextOffset = NextOffset.T
@@ -35,8 +35,8 @@ object Pager:
   object ApplyLabel extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type ApplyOffset = ApplyOffset.T
   object ApplyOffset extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type ApplyLimit = ApplyLimit.T
-  object ApplyLimit extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type ApplyLimit = _root_.com.histmersion.web.Pager.NextLimit
+  val ApplyLimit: _root_.com.histmersion.web.Pager.NextLimit.type = _root_.com.histmersion.web.Pager.NextLimit
   type ApplyShown = ApplyShown.T
   object ApplyShown extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type ApplyTotal = ApplyTotal.T

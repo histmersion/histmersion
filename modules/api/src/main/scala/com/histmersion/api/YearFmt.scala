@@ -14,10 +14,10 @@ object YearFmt:
   object PeriodEnd extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type OpenPeriodResult = OpenPeriodResult.T
   object OpenPeriodResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type OpenPeriodStart = OpenPeriodStart.T
-  object OpenPeriodStart extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type OpenPeriodEnd = OpenPeriodEnd.T
-  object OpenPeriodEnd extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type OpenPeriodStart = _root_.com.histmersion.api.YearFmt.PeriodStart
+  val OpenPeriodStart: _root_.com.histmersion.api.YearFmt.PeriodStart.type = _root_.com.histmersion.api.YearFmt.PeriodStart
+  type OpenPeriodEnd = _root_.com.histmersion.api.YearFmt.PeriodEnd
+  val OpenPeriodEnd: _root_.com.histmersion.api.YearFmt.PeriodEnd.type = _root_.com.histmersion.api.YearFmt.PeriodEnd
   type OpenPeriodNone = OpenPeriodNone.T
   object OpenPeriodNone extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type SpanResult = SpanResult.T

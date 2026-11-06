@@ -13,22 +13,22 @@ object ImageSize:
   object OfBytes extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Array[_root_.scala.Byte], _root_.io.github.iltotore.iron.constraint.any.Pure]
   type U8B = U8B.T
   object U8B extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Array[_root_.scala.Byte], _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type Be16B = Be16B.T
-  object Be16B extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Array[_root_.scala.Byte], _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type Le16B = Le16B.T
-  object Le16B extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Array[_root_.scala.Byte], _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type Be32B = Be32B.T
-  object Be32B extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Array[_root_.scala.Byte], _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type PngB = PngB.T
-  object PngB extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Array[_root_.scala.Byte], _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type PngSizeB = PngSizeB.T
-  object PngSizeB extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Array[_root_.scala.Byte], _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type Be16B = _root_.com.histmersion.api.media.ImageSize.U8B
+  val Be16B: _root_.com.histmersion.api.media.ImageSize.U8B.type = _root_.com.histmersion.api.media.ImageSize.U8B
+  type Le16B = _root_.com.histmersion.api.media.ImageSize.U8B
+  val Le16B: _root_.com.histmersion.api.media.ImageSize.U8B.type = _root_.com.histmersion.api.media.ImageSize.U8B
+  type Be32B = _root_.com.histmersion.api.media.ImageSize.U8B
+  val Be32B: _root_.com.histmersion.api.media.ImageSize.U8B.type = _root_.com.histmersion.api.media.ImageSize.U8B
+  type PngB = _root_.com.histmersion.api.media.ImageSize.U8B
+  val PngB: _root_.com.histmersion.api.media.ImageSize.U8B.type = _root_.com.histmersion.api.media.ImageSize.U8B
+  type PngSizeB = _root_.com.histmersion.api.media.ImageSize.U8B
+  val PngSizeB: _root_.com.histmersion.api.media.ImageSize.U8B.type = _root_.com.histmersion.api.media.ImageSize.U8B
   type GifB = GifB.T
   object GifB extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Array[_root_.scala.Byte], _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type GifSizeB = GifSizeB.T
-  object GifSizeB extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Array[_root_.scala.Byte], _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type JpegB = JpegB.T
-  object JpegB extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Array[_root_.scala.Byte], _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type GifSizeB = _root_.com.histmersion.api.media.ImageSize.U8B
+  val GifSizeB: _root_.com.histmersion.api.media.ImageSize.U8B.type = _root_.com.histmersion.api.media.ImageSize.U8B
+  type JpegB = _root_.com.histmersion.api.media.ImageSize.U8B
+  val JpegB: _root_.com.histmersion.api.media.ImageSize.U8B.type = _root_.com.histmersion.api.media.ImageSize.U8B
   type JpegSizeB = JpegSizeB.T
   object JpegSizeB extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Array[_root_.scala.Byte], _root_.io.github.iltotore.iron.constraint.any.Pure]
 
@@ -42,16 +42,16 @@ object ImageSize:
   object U8I extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type Be16Result = Be16Result.T
   object Be16Result extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type Be16I = Be16I.T
-  object Be16I extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type Be16I = _root_.com.histmersion.api.media.ImageSize.U8I
+  val Be16I: _root_.com.histmersion.api.media.ImageSize.U8I.type = _root_.com.histmersion.api.media.ImageSize.U8I
   type Le16Result = Le16Result.T
   object Le16Result extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type Le16I = Le16I.T
-  object Le16I extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type Le16I = _root_.com.histmersion.api.media.ImageSize.U8I
+  val Le16I: _root_.com.histmersion.api.media.ImageSize.U8I.type = _root_.com.histmersion.api.media.ImageSize.U8I
   type Be32Result = Be32Result.T
   object Be32Result extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type Be32I = Be32I.T
-  object Be32I extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type Be32I = _root_.com.histmersion.api.media.ImageSize.U8I
+  val Be32I: _root_.com.histmersion.api.media.ImageSize.U8I.type = _root_.com.histmersion.api.media.ImageSize.U8I
   type PngResult = PngResult.T
   object PngResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type PngSizeResultPart1 = PngSizeResultPart1.T

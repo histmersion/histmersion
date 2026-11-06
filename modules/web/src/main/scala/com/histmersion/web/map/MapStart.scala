@@ -26,8 +26,8 @@ object MapStart:
   object InitialResultPart2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type InitialStored = InitialStored.T
   object InitialStored extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type RememberZoom = RememberZoom.T
-  object RememberZoom extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type RememberZoom = _root_.com.histmersion.web.map.MapStart.EncodeZoom
+  val RememberZoom: _root_.com.histmersion.web.map.MapStart.EncodeZoom.type = _root_.com.histmersion.web.map.MapStart.EncodeZoom
 
   val StorageKey = "histmersion.mapView"
 

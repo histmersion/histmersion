@@ -26,10 +26,10 @@ object AgentVerify:
   object WordsNormalised extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type SimilarWordResult = SimilarWordResult.T
   object SimilarWordResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type SimilarWordA = SimilarWordA.T
-  object SimilarWordA extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type SimilarWordB = SimilarWordB.T
-  object SimilarWordB extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type SimilarWordA = _root_.com.histmersion.domain.AgentVerify.EditDistanceAtMostOneA
+  val SimilarWordA: _root_.com.histmersion.domain.AgentVerify.EditDistanceAtMostOneA.type = _root_.com.histmersion.domain.AgentVerify.EditDistanceAtMostOneA
+  type SimilarWordB = _root_.com.histmersion.domain.AgentVerify.EditDistanceAtMostOneB
+  val SimilarWordB: _root_.com.histmersion.domain.AgentVerify.EditDistanceAtMostOneB.type = _root_.com.histmersion.domain.AgentVerify.EditDistanceAtMostOneB
   type EditDistanceAtMostOneResult = EditDistanceAtMostOneResult.T
   object EditDistanceAtMostOneResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type EditDistanceAtMostOneA = EditDistanceAtMostOneA.T
@@ -68,8 +68,8 @@ object AgentVerify:
   object WikilinksText extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type LinkProblemsResult = LinkProblemsResult.T
   object LinkProblemsResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type LinkProblemsText = LinkProblemsText.T
-  object LinkProblemsText extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type LinkProblemsText = _root_.com.histmersion.domain.AgentVerify.WikilinksText
+  val LinkProblemsText: _root_.com.histmersion.domain.AgentVerify.WikilinksText.type = _root_.com.histmersion.domain.AgentVerify.WikilinksText
   type LinkProblemsIsCitekeyArg1 = LinkProblemsIsCitekeyArg1.T
   object LinkProblemsIsCitekeyArg1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type LinkProblemsIsCitekeyResult = LinkProblemsIsCitekeyResult.T

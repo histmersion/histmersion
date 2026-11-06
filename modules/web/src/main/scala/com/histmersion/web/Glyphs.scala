@@ -24,8 +24,8 @@ object Glyphs:
   object SvgExtraClass extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type BadgeResult = BadgeResult.T
   object BadgeResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type BadgeName = BadgeName.T
-  object BadgeName extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type BadgeName = _root_.com.histmersion.web.Glyphs.BadgeOfName
+  val BadgeName: _root_.com.histmersion.web.Glyphs.BadgeOfName.type = _root_.com.histmersion.web.Glyphs.BadgeOfName
   type BadgeOfResult = BadgeOfResult.T
   object BadgeOfResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type BadgeOfName = BadgeOfName.T

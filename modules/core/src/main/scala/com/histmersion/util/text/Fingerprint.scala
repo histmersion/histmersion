@@ -23,10 +23,10 @@ object Fingerprint extends RefinedType[String, Pure]:
   object FoldS extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type TokensResult = TokensResult.T
   object TokensResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type TokensS = TokensS.T
-  object TokensS extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type OfS = OfS.T
-  object OfS extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type TokensS = _root_.com.histmersion.util.text.Fingerprint.FoldS
+  val TokensS: _root_.com.histmersion.util.text.Fingerprint.FoldS.type = _root_.com.histmersion.util.text.Fingerprint.FoldS
+  type OfS = _root_.com.histmersion.util.text.Fingerprint.FoldS
+  val OfS: _root_.com.histmersion.util.text.Fingerprint.FoldS.type = _root_.com.histmersion.util.text.Fingerprint.FoldS
 
   private val quotes: Map[com.histmersion.util.text.Fingerprint.QuotesPart1, com.histmersion.util.text.Fingerprint.QuotesPart2] = Map('’' -> "'", '‘' -> "'")
 

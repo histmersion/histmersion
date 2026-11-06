@@ -69,8 +69,8 @@ object MarkdownLint:
   type FixLoopNonOverlappingReach = FixLoopNonOverlappingReach.T
   object FixLoopNonOverlappingReach extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
-  type IssuesText = IssuesText.T
-  object IssuesText extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type IssuesText = _root_.com.histmersion.server.MarkdownLint.CheckText
+  val IssuesText: _root_.com.histmersion.server.MarkdownLint.CheckText.type = _root_.com.histmersion.server.MarkdownLint.CheckText
   type LookupsResult = LookupsResult.T
   object LookupsResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type LookupsTexts = LookupsTexts.T

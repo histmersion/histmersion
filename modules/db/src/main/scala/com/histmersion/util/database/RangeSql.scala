@@ -20,16 +20,16 @@ object RangeSql:
     */
   type StartResult = StartResult.T
   object StartResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type StartCol = StartCol.T
-  object StartCol extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type StartCol = _root_.com.histmersion.util.database.RangeSql.EndCol
+  val StartCol: _root_.com.histmersion.util.database.RangeSql.EndCol.type = _root_.com.histmersion.util.database.RangeSql.EndCol
   type EndResult = EndResult.T
   object EndResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type EndCol = EndCol.T
   object EndCol extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type ColsResult = ColsResult.T
   object ColsResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type ColsCol = ColsCol.T
-  object ColsCol extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type ColsCol = _root_.com.histmersion.util.database.RangeSql.EndCol
+  val ColsCol: _root_.com.histmersion.util.database.RangeSql.EndCol.type = _root_.com.histmersion.util.database.RangeSql.EndCol
   type ColsStartAs = ColsStartAs.T
   object ColsStartAs extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type ColsEndAs = ColsEndAs.T
@@ -58,10 +58,10 @@ object RangeSql:
   object AlwaysResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type LiteralResult = LiteralResult.T
   object LiteralResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type LiteralStart = LiteralStart.T
-  object LiteralStart extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type LiteralEnd = LiteralEnd.T
-  object LiteralEnd extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type LiteralStart = _root_.com.histmersion.util.database.RangeSql.BoundsStart
+  val LiteralStart: _root_.com.histmersion.util.database.RangeSql.BoundsStart.type = _root_.com.histmersion.util.database.RangeSql.BoundsStart
+  type LiteralEnd = _root_.com.histmersion.util.database.RangeSql.BoundsEnd
+  val LiteralEnd: _root_.com.histmersion.util.database.RangeSql.BoundsEnd.type = _root_.com.histmersion.util.database.RangeSql.BoundsEnd
   type LiteralOfResult = LiteralOfResult.T
   object LiteralOfResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type PeriodStart = PeriodStart.T

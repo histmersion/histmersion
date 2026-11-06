@@ -39,16 +39,16 @@ object BuiltinMedia:
   object OrderedRegistered extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type CheckOfResult = CheckOfResult.T
   object CheckOfResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type CheckOfName = CheckOfName.T
-  object CheckOfName extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type CheckOfName = _root_.com.histmersion.domain.media.imports.BuiltinMedia.EntryName
+  val CheckOfName: _root_.com.histmersion.domain.media.imports.BuiltinMedia.EntryName.type = _root_.com.histmersion.domain.media.imports.BuiltinMedia.EntryName
   type ProviderOfResult = ProviderOfResult.T
   object ProviderOfResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type ProviderOfName = ProviderOfName.T
-  object ProviderOfName extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type ProviderOfName = _root_.com.histmersion.domain.media.imports.BuiltinMedia.EntryName
+  val ProviderOfName: _root_.com.histmersion.domain.media.imports.BuiltinMedia.EntryName.type = _root_.com.histmersion.domain.media.imports.BuiltinMedia.EntryName
   type LicencesForResult = LicencesForResult.T
   object LicencesForResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type LicencesForName = LicencesForName.T
-  object LicencesForName extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type LicencesForName = _root_.com.histmersion.domain.media.imports.BuiltinMedia.EntryName
+  val LicencesForName: _root_.com.histmersion.domain.media.imports.BuiltinMedia.EntryName.type = _root_.com.histmersion.domain.media.imports.BuiltinMedia.EntryName
 
   final case class Entry(
       plugin: Entry.Plugin,

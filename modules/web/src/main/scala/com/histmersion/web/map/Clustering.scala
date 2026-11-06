@@ -37,8 +37,8 @@ object Clustering:
   object GroupsPtsPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type GroupsZ = GroupsZ.T
   object GroupsZ extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type GroupsRadius = GroupsRadius.T
-  object GroupsRadius extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type GroupsRadius = _root_.com.histmersion.web.map.Clustering.GroupRadius
+  val GroupsRadius: _root_.com.histmersion.web.map.Clustering.GroupRadius.type = _root_.com.histmersion.web.map.Clustering.GroupRadius
   type InViewResult = InViewResult.T
   object InViewResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type InViewMargin = InViewMargin.T

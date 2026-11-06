@@ -8,8 +8,8 @@ import scala.concurrent.duration.*
   * host is treated as having no copy: it is neither retried nor worked around.
   */
 object Challenge:
-  type IsChallengeBody = IsChallengeBody.T
-  object IsChallengeBody extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Array[_root_.scala.Byte], _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type IsChallengeBody = _root_.com.histmersion.pluginhost.Challenge.IsAnubisBody
+  val IsChallengeBody: _root_.com.histmersion.pluginhost.Challenge.IsAnubisBody.type = _root_.com.histmersion.pluginhost.Challenge.IsAnubisBody
   type IsAnubisBody = IsAnubisBody.T
   object IsAnubisBody extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Array[_root_.scala.Byte], _root_.io.github.iltotore.iron.constraint.any.Pure]
 

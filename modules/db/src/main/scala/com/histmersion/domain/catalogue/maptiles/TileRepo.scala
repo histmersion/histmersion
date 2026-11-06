@@ -65,14 +65,14 @@ private[maptiles] object TileRepo:
   object SiteCellsSiteType extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type SiteCellsModernFrom = SiteCellsModernFrom.T
   object SiteCellsModernFrom extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type DatedSitesWindowPart1 = DatedSitesWindowPart1.T
-  object DatedSitesWindowPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type DatedSitesWindowPart2 = DatedSitesWindowPart2.T
-  object DatedSitesWindowPart2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type DatedSitesSiteType = DatedSitesSiteType.T
-  object DatedSitesSiteType extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type DatedSitesModernFrom = DatedSitesModernFrom.T
-  object DatedSitesModernFrom extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type DatedSitesWindowPart1 = _root_.com.histmersion.domain.catalogue.maptiles.TileRepo.SiteCandidatesWindowPart1
+  val DatedSitesWindowPart1: _root_.com.histmersion.domain.catalogue.maptiles.TileRepo.SiteCandidatesWindowPart1.type = _root_.com.histmersion.domain.catalogue.maptiles.TileRepo.SiteCandidatesWindowPart1
+  type DatedSitesWindowPart2 = _root_.com.histmersion.domain.catalogue.maptiles.TileRepo.SiteCandidatesWindowPart2
+  val DatedSitesWindowPart2: _root_.com.histmersion.domain.catalogue.maptiles.TileRepo.SiteCandidatesWindowPart2.type = _root_.com.histmersion.domain.catalogue.maptiles.TileRepo.SiteCandidatesWindowPart2
+  type DatedSitesSiteType = _root_.com.histmersion.domain.catalogue.maptiles.TileRepo.SiteCandidatesSiteType
+  val DatedSitesSiteType: _root_.com.histmersion.domain.catalogue.maptiles.TileRepo.SiteCandidatesSiteType.type = _root_.com.histmersion.domain.catalogue.maptiles.TileRepo.SiteCandidatesSiteType
+  type DatedSitesModernFrom = _root_.com.histmersion.domain.catalogue.maptiles.TileRepo.SiteCandidatesModernFrom
+  val DatedSitesModernFrom: _root_.com.histmersion.domain.catalogue.maptiles.TileRepo.SiteCandidatesModernFrom.type = _root_.com.histmersion.domain.catalogue.maptiles.TileRepo.SiteCandidatesModernFrom
 
   val Groups: Map[TileLayer, List[com.histmersion.domain.catalogue.maptiles.TileRepo.GroupsPart2]] = Map(
     // an undated site is shown by its findings, or by an event, dated then

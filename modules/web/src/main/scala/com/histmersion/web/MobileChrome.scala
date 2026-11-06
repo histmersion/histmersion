@@ -19,16 +19,16 @@ object MobileChrome:
   /** A drawer: which edge it comes from. */
   type SwipesInResult = SwipesInResult.T
   object SwipesInResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type SwipesInDx = SwipesInDx.T
-  object SwipesInDx extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type SwipesInDy = SwipesInDy.T
-  object SwipesInDy extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type SwipesInDx = _root_.com.histmersion.web.MobileChrome.HorizontalDx
+  val SwipesInDx: _root_.com.histmersion.web.MobileChrome.HorizontalDx.type = _root_.com.histmersion.web.MobileChrome.HorizontalDx
+  type SwipesInDy = _root_.com.histmersion.web.MobileChrome.HorizontalDy
+  val SwipesInDy: _root_.com.histmersion.web.MobileChrome.HorizontalDy.type = _root_.com.histmersion.web.MobileChrome.HorizontalDy
   type SwipesOutResult = SwipesOutResult.T
   object SwipesOutResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type SwipesOutDx = SwipesOutDx.T
-  object SwipesOutDx extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type SwipesOutDy = SwipesOutDy.T
-  object SwipesOutDy extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type SwipesOutDx = _root_.com.histmersion.web.MobileChrome.HorizontalDx
+  val SwipesOutDx: _root_.com.histmersion.web.MobileChrome.HorizontalDx.type = _root_.com.histmersion.web.MobileChrome.HorizontalDx
+  type SwipesOutDy = _root_.com.histmersion.web.MobileChrome.HorizontalDy
+  val SwipesOutDy: _root_.com.histmersion.web.MobileChrome.HorizontalDy.type = _root_.com.histmersion.web.MobileChrome.HorizontalDy
   type HorizontalDx = HorizontalDx.T
   object HorizontalDx extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type HorizontalDy = HorizontalDy.T

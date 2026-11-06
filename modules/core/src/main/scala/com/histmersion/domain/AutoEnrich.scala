@@ -23,10 +23,10 @@ object AutoEnrich:
   object DecideAgentsEnabled extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type DecideSwitchOn = DecideSwitchOn.T
   object DecideSwitchOn extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type DecideFindings = DecideFindings.T
-  object DecideFindings extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type DecideNotes = DecideNotes.T
-  object DecideNotes extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type DecideFindings = _root_.com.histmersion.domain.AutoEnrich.EnrichedByFindings
+  val DecideFindings: _root_.com.histmersion.domain.AutoEnrich.EnrichedByFindings.type = _root_.com.histmersion.domain.AutoEnrich.EnrichedByFindings
+  type DecideNotes = _root_.com.histmersion.domain.AutoEnrich.EnrichedByNotes
+  val DecideNotes: _root_.com.histmersion.domain.AutoEnrich.EnrichedByNotes.type = _root_.com.histmersion.domain.AutoEnrich.EnrichedByNotes
   type EnrichedByResult = EnrichedByResult.T
   object EnrichedByResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type EnrichedByFindings = EnrichedByFindings.T

@@ -28,8 +28,8 @@ object Pages:
   object SideLinkOn extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type GroupName = GroupName.T
   object GroupName extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type ResearchGoal = ResearchGoal.T
-  object ResearchGoal extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type ResearchGoal = _root_.com.histmersion.web.Pages.ActivityGoal
+  val ResearchGoal: _root_.com.histmersion.web.Pages.ActivityGoal.type = _root_.com.histmersion.web.Pages.ActivityGoal
   type SectionHeading = SectionHeading.T
   object SectionHeading extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type AgentsOffText = AgentsOffText.T

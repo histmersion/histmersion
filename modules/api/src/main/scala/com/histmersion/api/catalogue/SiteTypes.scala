@@ -14,8 +14,8 @@ object SiteTypes:
   object GetId extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type IconResult = IconResult.T
   object IconResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type IconId = IconId.T
-  object IconId extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type IconId = _root_.com.histmersion.api.catalogue.SiteTypes.GetId
+  val IconId: _root_.com.histmersion.api.catalogue.SiteTypes.GetId.type = _root_.com.histmersion.api.catalogue.SiteTypes.GetId
   type PleiadesTypesPart1 = PleiadesTypesPart1.T
   object PleiadesTypesPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type PleiadesTypesPart2 = PleiadesTypesPart2.T
@@ -44,8 +44,8 @@ object SiteTypes:
   object WikidataClassesPart2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type WikidataResult = WikidataResult.T
   object WikidataResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type WikidataP31 = WikidataP31.T
-  object WikidataP31 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type WikidataP31 = _root_.com.histmersion.api.catalogue.SiteTypes.WikidataOwnP31
+  val WikidataP31: _root_.com.histmersion.api.catalogue.SiteTypes.WikidataOwnP31.type = _root_.com.histmersion.api.catalogue.SiteTypes.WikidataOwnP31
   type WikidataSuperclasses = WikidataSuperclasses.T
   object WikidataSuperclasses extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type WikidataImportClass = WikidataImportClass.T
@@ -72,8 +72,8 @@ object SiteTypes:
   object OfFcode extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type OfWikidataClass = OfWikidataClass.T
   object OfWikidataClass extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type OfP31 = OfP31.T
-  object OfP31 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type OfP31 = _root_.com.histmersion.api.catalogue.SiteTypes.WikidataOwnP31
+  val OfP31: _root_.com.histmersion.api.catalogue.SiteTypes.WikidataOwnP31.type = _root_.com.histmersion.api.catalogue.SiteTypes.WikidataOwnP31
 
   final case class SiteType(id: SiteType.Id, label: SiteType.Label, icon: SiteType.Icon)
 

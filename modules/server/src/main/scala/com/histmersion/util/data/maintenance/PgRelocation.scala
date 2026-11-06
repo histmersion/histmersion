@@ -23,10 +23,10 @@ object PgRelocation:
   object PatchResultPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Array[_root_.scala.Byte], _root_.io.github.iltotore.iron.constraint.any.Pure]
   type PatchBytes = PatchBytes.T
   object PatchBytes extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Array[_root_.scala.Byte], _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type PatchFrom = PatchFrom.T
-  object PatchFrom extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Array[_root_.scala.Byte], _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type PatchTo = PatchTo.T
-  object PatchTo extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Array[_root_.scala.Byte], _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type PatchFrom = _root_.com.histmersion.util.data.maintenance.PgRelocation.ReplaceAllFrom
+  val PatchFrom: _root_.com.histmersion.util.data.maintenance.PgRelocation.ReplaceAllFrom.type = _root_.com.histmersion.util.data.maintenance.PgRelocation.ReplaceAllFrom
+  type PatchTo = _root_.com.histmersion.util.data.maintenance.PgRelocation.ReplaceAllTo
+  val PatchTo: _root_.com.histmersion.util.data.maintenance.PgRelocation.ReplaceAllTo.type = _root_.com.histmersion.util.data.maintenance.PgRelocation.ReplaceAllTo
   type IsMachOB = IsMachOB.T
   object IsMachOB extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Array[_root_.scala.Byte], _root_.io.github.iltotore.iron.constraint.any.Pure]
   type LastNulD = LastNulD.T

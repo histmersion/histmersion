@@ -127,8 +127,8 @@ object Agents:
     object CostResultPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
     type CostPricesPart1 = CostPricesPart1.T
     object CostPricesPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-    type CostModel = CostModel.T
-    object CostModel extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type CostModel = _root_.com.histmersion.api.automation.Agents.Prices.UnpricedModel
+    val CostModel: _root_.com.histmersion.api.automation.Agents.Prices.UnpricedModel.type = _root_.com.histmersion.api.automation.Agents.Prices.UnpricedModel
     type BillingResultPart1 = BillingResultPart1.T
     object BillingResultPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
     type BillingPricesPart1 = BillingPricesPart1.T

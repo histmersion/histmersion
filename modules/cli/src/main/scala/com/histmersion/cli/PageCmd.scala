@@ -22,12 +22,12 @@ object PageCmd:
   object NextCursor extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type OlderResult = OlderResult.T
   object OlderResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type OlderCommand = OlderCommand.T
-  object OlderCommand extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type OlderOptsPart1 = OlderOptsPart1.T
-  object OlderOptsPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type OlderOptsPart2 = OlderOptsPart2.T
-  object OlderOptsPart2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type OlderCommand = _root_.com.histmersion.cli.PageCmd.NextCommand
+  val OlderCommand: _root_.com.histmersion.cli.PageCmd.NextCommand.type = _root_.com.histmersion.cli.PageCmd.NextCommand
+  type OlderOptsPart1 = _root_.com.histmersion.cli.PageCmd.NextOptsPart1
+  val OlderOptsPart1: _root_.com.histmersion.cli.PageCmd.NextOptsPart1.type = _root_.com.histmersion.cli.PageCmd.NextOptsPart1
+  type OlderOptsPart2 = _root_.com.histmersion.cli.PageCmd.NextOptsPart2
+  val OlderOptsPart2: _root_.com.histmersion.cli.PageCmd.NextOptsPart2.type = _root_.com.histmersion.cli.PageCmd.NextOptsPart2
   type QuoteResult = QuoteResult.T
   object QuoteResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type QuoteV = QuoteV.T

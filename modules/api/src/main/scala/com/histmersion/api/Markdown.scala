@@ -14,10 +14,10 @@ object Markdown:
   object FmtYearV extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type PeriodResult = PeriodResult.T
   object PeriodResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type PeriodStart = PeriodStart.T
-  object PeriodStart extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type PeriodEnd = PeriodEnd.T
-  object PeriodEnd extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type PeriodStart = _root_.com.histmersion.api.Markdown.PeriodLabelStart
+  val PeriodStart: _root_.com.histmersion.api.Markdown.PeriodLabelStart.type = _root_.com.histmersion.api.Markdown.PeriodLabelStart
+  type PeriodEnd = _root_.com.histmersion.api.Markdown.PeriodLabelEnd
+  val PeriodEnd: _root_.com.histmersion.api.Markdown.PeriodLabelEnd.type = _root_.com.histmersion.api.Markdown.PeriodLabelEnd
   type PeriodLabelResult = PeriodLabelResult.T
   object PeriodLabelResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type PeriodLabelStart = PeriodLabelStart.T

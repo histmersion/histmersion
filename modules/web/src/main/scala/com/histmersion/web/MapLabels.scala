@@ -106,8 +106,8 @@ object MapLabels:
   object FrameResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type FrameT = FrameT.T
   object FrameT extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type FrameReduced = FrameReduced.T
-  object FrameReduced extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type FrameReduced = _root_.com.histmersion.web.MapLabels.RenderReduced
+  val FrameReduced: _root_.com.histmersion.web.MapLabels.RenderReduced.type = _root_.com.histmersion.web.MapLabels.RenderReduced
   type RenderScale = RenderScale.T
   object RenderScale extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type RenderReduced = RenderReduced.T

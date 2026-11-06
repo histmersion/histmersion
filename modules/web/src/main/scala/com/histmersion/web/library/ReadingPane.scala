@@ -27,8 +27,8 @@ object ReadingPane:
   object CachedCachePart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type CachedKey = CachedKey.T
   object CachedKey extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type ReadSourceCk = ReadSourceCk.T
-  object ReadSourceCk extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type ReadSourceCk = _root_.com.histmersion.web.library.ReadingPane.FindingsCk
+  val ReadSourceCk: _root_.com.histmersion.web.library.ReadingPane.FindingsCk.type = _root_.com.histmersion.web.library.ReadingPane.FindingsCk
   type ReadArticleSlug = ReadArticleSlug.T
   object ReadArticleSlug extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type ElementChosen = ElementChosen.T
@@ -39,8 +39,8 @@ object ReadingPane:
   object ActionsByline extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type ExploreResult = ExploreResult.T
   object ExploreResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type SourcePaneCk = SourcePaneCk.T
-  object SourcePaneCk extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type SourcePaneCk = _root_.com.histmersion.web.library.ReadingPane.FindingsCk
+  val SourcePaneCk: _root_.com.histmersion.web.library.ReadingPane.FindingsCk.type = _root_.com.histmersion.web.library.ReadingPane.FindingsCk
   type FindingsCk = FindingsCk.T
   object FindingsCk extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type CountLinkHref0 = CountLinkHref0.T
@@ -49,10 +49,10 @@ object ReadingPane:
   object CountLinkText extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type CountLinkN = CountLinkN.T
   object CountLinkN extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type SourceLinksCk = SourceLinksCk.T
-  object SourceLinksCk extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type ArticlePaneSlug = ArticlePaneSlug.T
-  object ArticlePaneSlug extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type SourceLinksCk = _root_.com.histmersion.web.library.ReadingPane.FindingsCk
+  val SourceLinksCk: _root_.com.histmersion.web.library.ReadingPane.FindingsCk.type = _root_.com.histmersion.web.library.ReadingPane.FindingsCk
+  type ArticlePaneSlug = _root_.com.histmersion.web.library.ReadingPane.ReadArticleSlug
+  val ArticlePaneSlug: _root_.com.histmersion.web.library.ReadingPane.ReadArticleSlug.type = _root_.com.histmersion.web.library.ReadingPane.ReadArticleSlug
   type RefNowReadingPart1 = RefNowReadingPart1.T
   object RefNowReadingPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type MessageResult = MessageResult.T

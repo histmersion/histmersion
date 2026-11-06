@@ -28,8 +28,8 @@ object Years:
   object ToAstronomicalH extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type ShiftResult = ShiftResult.T
   object ShiftResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type ShiftH = ShiftH.T
-  object ShiftH extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type ShiftH = _root_.com.histmersion.api.Years.ToAstronomicalH
+  val ShiftH: _root_.com.histmersion.api.Years.ToAstronomicalH.type = _root_.com.histmersion.api.Years.ToAstronomicalH
   type ShiftD = ShiftD.T
   object ShiftD extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type NoYearZero = NoYearZero.T

@@ -32,8 +32,8 @@ object SecretForm:
   object ReferenceText extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type ShownResult = ShownResult.T
   object ShownResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type ShownText = ShownText.T
-  object ShownText extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type ShownText = _root_.com.histmersion.config.edit.SecretForm.OfText
+  val ShownText: _root_.com.histmersion.config.edit.SecretForm.OfText.type = _root_.com.histmersion.config.edit.SecretForm.OfText
 
   val ValueScheme = "value"
   val EnvScheme = "env"

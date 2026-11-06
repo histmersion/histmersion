@@ -11,8 +11,8 @@ object ModelChains:
   object ParseChainResultPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type ParseChainS = ParseChainS.T
   object ParseChainS extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type ParseChainKnown = ParseChainKnown.T
-  object ParseChainKnown extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type ParseChainKnown = _root_.com.histmersion.api.automation.ModelChains.ParseModelsKnown
+  val ParseChainKnown: _root_.com.histmersion.api.automation.ModelChains.ParseModelsKnown.type = _root_.com.histmersion.api.automation.ModelChains.ParseModelsKnown
   type ParseModelsResultPart1 = ParseModelsResultPart1.T
   object ParseModelsResultPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type ParseModelsRefs = ParseModelsRefs.T
@@ -25,8 +25,8 @@ object ModelChains:
   object ParseAllowancesResultPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type ParseAllowancesS = ParseAllowancesS.T
   object ParseAllowancesS extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type ParseAllowancesKnown = ParseAllowancesKnown.T
-  object ParseAllowancesKnown extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type ParseAllowancesKnown = _root_.com.histmersion.api.automation.ModelChains.ParseAllowanceKnown
+  val ParseAllowancesKnown: _root_.com.histmersion.api.automation.ModelChains.ParseAllowanceKnown.type = _root_.com.histmersion.api.automation.ModelChains.ParseAllowanceKnown
   type ParseAllowanceResultPart1 = ParseAllowanceResultPart1.T
   object ParseAllowanceResultPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type ParseAllowanceTarget = ParseAllowanceTarget.T
@@ -45,8 +45,8 @@ object ModelChains:
   object LimitStateReservePct extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type LimitStateNow = LimitStateNow.T
   object LimitStateNow extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type StatesNow = StatesNow.T
-  object StatesNow extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type StatesNow = _root_.com.histmersion.api.automation.ModelChains.LimitStateNow
+  val StatesNow: _root_.com.histmersion.api.automation.ModelChains.LimitStateNow.type = _root_.com.histmersion.api.automation.ModelChains.LimitStateNow
   type VerdictResultPart1 = VerdictResultPart1.T
   object VerdictResultPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type VerdictResultPart2 = VerdictResultPart2.T

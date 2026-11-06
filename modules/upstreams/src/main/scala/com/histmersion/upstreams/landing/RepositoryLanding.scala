@@ -46,8 +46,8 @@ object RepositoryLanding:
   object MatchesHostEntry extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type OnHostResult = OnHostResult.T
   object OnHostResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type OnHostUrl = OnHostUrl.T
-  object OnHostUrl extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type OnHostUrl = _root_.com.histmersion.upstreams.landing.RepositoryLanding.HostUrl
+  val OnHostUrl: _root_.com.histmersion.upstreams.landing.RepositoryLanding.HostUrl.type = _root_.com.histmersion.upstreams.landing.RepositoryLanding.HostUrl
   type OnHostHosts = OnHostHosts.T
   object OnHostHosts extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type HostResult = HostResult.T
@@ -72,22 +72,22 @@ object RepositoryLanding:
   object MetaTagsResultPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type MetaTagsResultPart2 = MetaTagsResultPart2.T
   object MetaTagsResultPart2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type MetaTagsHtml = MetaTagsHtml.T
-  object MetaTagsHtml extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type MetaTagsHtml = _root_.com.histmersion.upstreams.landing.RepositoryLanding.GalleyPdfUrlsHtml
+  val MetaTagsHtml: _root_.com.histmersion.upstreams.landing.RepositoryLanding.GalleyPdfUrlsHtml.type = _root_.com.histmersion.upstreams.landing.RepositoryLanding.GalleyPdfUrlsHtml
   type DecodeResult = DecodeResult.T
   object DecodeResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type DecodeS = DecodeS.T
   object DecodeS extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type GeneratorsResult = GeneratorsResult.T
   object GeneratorsResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type GeneratorsHtml = GeneratorsHtml.T
-  object GeneratorsHtml extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type GeneratorsHtml = _root_.com.histmersion.upstreams.landing.RepositoryLanding.GalleyPdfUrlsHtml
+  val GeneratorsHtml: _root_.com.histmersion.upstreams.landing.RepositoryLanding.GalleyPdfUrlsHtml.type = _root_.com.histmersion.upstreams.landing.RepositoryLanding.GalleyPdfUrlsHtml
   type CitationPdfUrlsResult = CitationPdfUrlsResult.T
   object CitationPdfUrlsResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type CitationPdfUrlsHtml = CitationPdfUrlsHtml.T
-  object CitationPdfUrlsHtml extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type CitationPdfUrlsPageUrl = CitationPdfUrlsPageUrl.T
-  object CitationPdfUrlsPageUrl extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type CitationPdfUrlsHtml = _root_.com.histmersion.upstreams.landing.RepositoryLanding.GalleyPdfUrlsHtml
+  val CitationPdfUrlsHtml: _root_.com.histmersion.upstreams.landing.RepositoryLanding.GalleyPdfUrlsHtml.type = _root_.com.histmersion.upstreams.landing.RepositoryLanding.GalleyPdfUrlsHtml
+  type CitationPdfUrlsPageUrl = _root_.com.histmersion.upstreams.landing.RepositoryLanding.AbsolutePageUrl
+  val CitationPdfUrlsPageUrl: _root_.com.histmersion.upstreams.landing.RepositoryLanding.AbsolutePageUrl.type = _root_.com.histmersion.upstreams.landing.RepositoryLanding.AbsolutePageUrl
   type AbsoluteResult = AbsoluteResult.T
   object AbsoluteResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type AbsoluteHref = AbsoluteHref.T
@@ -96,28 +96,28 @@ object RepositoryLanding:
   object AbsolutePageUrl extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type IsRepositoryResult = IsRepositoryResult.T
   object IsRepositoryResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type IsRepositoryPageUrl = IsRepositoryPageUrl.T
-  object IsRepositoryPageUrl extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type IsRepositoryPageUrl = _root_.com.histmersion.upstreams.landing.RepositoryLanding.AbsolutePageUrl
+  val IsRepositoryPageUrl: _root_.com.histmersion.upstreams.landing.RepositoryLanding.AbsolutePageUrl.type = _root_.com.histmersion.upstreams.landing.RepositoryLanding.AbsolutePageUrl
   type IsRepositoryIndexSaysRepository = IsRepositoryIndexSaysRepository.T
   object IsRepositoryIndexSaysRepository extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type IsRepositoryHtml = IsRepositoryHtml.T
-  object IsRepositoryHtml extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type IsRepositoryHtml = _root_.com.histmersion.upstreams.landing.RepositoryLanding.GalleyPdfUrlsHtml
+  val IsRepositoryHtml: _root_.com.histmersion.upstreams.landing.RepositoryLanding.GalleyPdfUrlsHtml.type = _root_.com.histmersion.upstreams.landing.RepositoryLanding.GalleyPdfUrlsHtml
   type PdfsOfResult = PdfsOfResult.T
   object PdfsOfResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type PdfsOfPageUrl = PdfsOfPageUrl.T
-  object PdfsOfPageUrl extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type PdfsOfIndexSaysRepository = PdfsOfIndexSaysRepository.T
-  object PdfsOfIndexSaysRepository extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type PdfsOfHtml = PdfsOfHtml.T
-  object PdfsOfHtml extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type PdfsOfPageUrl = _root_.com.histmersion.upstreams.landing.RepositoryLanding.AbsolutePageUrl
+  val PdfsOfPageUrl: _root_.com.histmersion.upstreams.landing.RepositoryLanding.AbsolutePageUrl.type = _root_.com.histmersion.upstreams.landing.RepositoryLanding.AbsolutePageUrl
+  type PdfsOfIndexSaysRepository = _root_.com.histmersion.upstreams.landing.RepositoryLanding.IsRepositoryIndexSaysRepository
+  val PdfsOfIndexSaysRepository: _root_.com.histmersion.upstreams.landing.RepositoryLanding.IsRepositoryIndexSaysRepository.type = _root_.com.histmersion.upstreams.landing.RepositoryLanding.IsRepositoryIndexSaysRepository
+  type PdfsOfHtml = _root_.com.histmersion.upstreams.landing.RepositoryLanding.GalleyPdfUrlsHtml
+  val PdfsOfHtml: _root_.com.histmersion.upstreams.landing.RepositoryLanding.GalleyPdfUrlsHtml.type = _root_.com.histmersion.upstreams.landing.RepositoryLanding.GalleyPdfUrlsHtml
   type PdfsOfOaPublisher = PdfsOfOaPublisher.T
   object PdfsOfOaPublisher extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type GalleyPdfUrlsResult = GalleyPdfUrlsResult.T
   object GalleyPdfUrlsResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type GalleyPdfUrlsHtml = GalleyPdfUrlsHtml.T
   object GalleyPdfUrlsHtml extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type GalleyPdfUrlsPageUrl = GalleyPdfUrlsPageUrl.T
-  object GalleyPdfUrlsPageUrl extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type GalleyPdfUrlsPageUrl = _root_.com.histmersion.upstreams.landing.RepositoryLanding.AbsolutePageUrl
+  val GalleyPdfUrlsPageUrl: _root_.com.histmersion.upstreams.landing.RepositoryLanding.AbsolutePageUrl.type = _root_.com.histmersion.upstreams.landing.RepositoryLanding.AbsolutePageUrl
   type OjsDownloadResult = OjsDownloadResult.T
   object OjsDownloadResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type OjsDownloadUrl = OjsDownloadUrl.T

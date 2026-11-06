@@ -23,8 +23,8 @@ object ShelfList:
   object IsReadI extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type HrefOfResult = HrefOfResult.T
   object HrefOfResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type ElementChosen = ElementChosen.T
-  object ElementChosen extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type ElementChosen = _root_.com.histmersion.web.library.ShelfList.RowChosen
+  val ElementChosen: _root_.com.histmersion.web.library.ShelfList.RowChosen.type = _root_.com.histmersion.web.library.ShelfList.RowChosen
   type RowChosen = RowChosen.T
   object RowChosen extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 

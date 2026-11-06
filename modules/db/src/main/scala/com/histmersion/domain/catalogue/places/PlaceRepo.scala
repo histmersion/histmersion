@@ -101,14 +101,14 @@ private[places] object PlaceRepo:
   object HierarchyModernFrom extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type PlacesOfFindingId = PlacesOfFindingId.T
   object PlacesOfFindingId extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type GeoJsonQueryKind = GeoJsonQueryKind.T
-  object GeoJsonQueryKind extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type GeoJsonQueryKind = _root_.com.histmersion.domain.catalogue.places.PlaceRepo.GeoJsonTimeQueryKind
+  val GeoJsonQueryKind: _root_.com.histmersion.domain.catalogue.places.PlaceRepo.GeoJsonTimeQueryKind.type = _root_.com.histmersion.domain.catalogue.places.PlaceRepo.GeoJsonTimeQueryKind
   type GeoJsonQueryAsOf = GeoJsonQueryAsOf.T
   object GeoJsonQueryAsOf extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type GeoJsonQueryLimit = GeoJsonQueryLimit.T
-  object GeoJsonQueryLimit extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type GeoJsonQueryModernFrom = GeoJsonQueryModernFrom.T
-  object GeoJsonQueryModernFrom extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type GeoJsonQueryLimit = _root_.com.histmersion.domain.catalogue.places.PlaceRepo.GeoJsonTimeQueryLimit
+  val GeoJsonQueryLimit: _root_.com.histmersion.domain.catalogue.places.PlaceRepo.GeoJsonTimeQueryLimit.type = _root_.com.histmersion.domain.catalogue.places.PlaceRepo.GeoJsonTimeQueryLimit
+  type GeoJsonQueryModernFrom = _root_.com.histmersion.domain.catalogue.places.PlaceRepo.GeoJsonTimeQueryModernFrom
+  val GeoJsonQueryModernFrom: _root_.com.histmersion.domain.catalogue.places.PlaceRepo.GeoJsonTimeQueryModernFrom.type = _root_.com.histmersion.domain.catalogue.places.PlaceRepo.GeoJsonTimeQueryModernFrom
   type GeoJsonTimeQueryKind = GeoJsonTimeQueryKind.T
   object GeoJsonTimeQueryKind extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type GeoJsonTimeQueryLimit = GeoJsonTimeQueryLimit.T

@@ -113,14 +113,14 @@ object Vp8l:
   object PredictorResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type PredictorM = PredictorM.T
   object PredictorM extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type PredictorL = PredictorL.T
-  object PredictorL extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type PredictorT = PredictorT.T
-  object PredictorT extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type PredictorL = _root_.com.histmersion.util.basemap.Vp8l.SelectL
+  val PredictorL: _root_.com.histmersion.util.basemap.Vp8l.SelectL.type = _root_.com.histmersion.util.basemap.Vp8l.SelectL
+  type PredictorT = _root_.com.histmersion.util.basemap.Vp8l.SelectT
+  val PredictorT: _root_.com.histmersion.util.basemap.Vp8l.SelectT.type = _root_.com.histmersion.util.basemap.Vp8l.SelectT
   type PredictorTr = PredictorTr.T
   object PredictorTr extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type PredictorTl = PredictorTl.T
-  object PredictorTl extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type PredictorTl = _root_.com.histmersion.util.basemap.Vp8l.SelectTl
+  val PredictorTl: _root_.com.histmersion.util.basemap.Vp8l.SelectTl.type = _root_.com.histmersion.util.basemap.Vp8l.SelectTl
   type PredictH = PredictH.T
   object PredictH extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type DeltaResult = DeltaResult.T

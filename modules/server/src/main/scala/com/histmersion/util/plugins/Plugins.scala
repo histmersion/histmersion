@@ -30,8 +30,8 @@ object Plugins:
 
   type Keys = Keys.T
   object Keys extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type LoadChanged = LoadChanged.T
-  object LoadChanged extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type LoadChanged = _root_.com.histmersion.util.plugins.Plugins.CarriedChanged
+  val LoadChanged: _root_.com.histmersion.util.plugins.Plugins.CarriedChanged.type = _root_.com.histmersion.util.plugins.Plugins.CarriedChanged
   type GenerationErrors = GenerationErrors.T
   object GenerationErrors extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type GenerationCarryPart1 = GenerationCarryPart1.T

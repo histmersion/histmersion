@@ -60,12 +60,12 @@ object BasemapLabels:
   object PropK extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type TextResult = TextResult.T
   object TextResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type TextK = TextK.T
-  object TextK extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type TextK = _root_.com.histmersion.util.basemap.BasemapLabels.PropK
+  val TextK: _root_.com.histmersion.util.basemap.BasemapLabels.PropK.type = _root_.com.histmersion.util.basemap.BasemapLabels.PropK
   type NumberResult = NumberResult.T
   object NumberResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type NumberK = NumberK.T
-  object NumberK extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type NumberK = _root_.com.histmersion.util.basemap.BasemapLabels.PropK
+  val NumberK: _root_.com.histmersion.util.basemap.BasemapLabels.PropK.type = _root_.com.histmersion.util.basemap.BasemapLabels.PropK
   type NamesResultPart1 = NamesResultPart1.T
   object NamesResultPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type NamesResultPart2 = NamesResultPart2.T
@@ -140,10 +140,10 @@ object BasemapLabels:
   object ClipLPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type ClipLPart2 = ClipLPart2.T
   object ClipLPart2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type ClipX = ClipX.T
-  object ClipX extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type ClipY = ClipY.T
-  object ClipY extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type ClipX = _root_.com.histmersion.util.basemap.BasemapLabels.RelX
+  val ClipX: _root_.com.histmersion.util.basemap.BasemapLabels.RelX.type = _root_.com.histmersion.util.basemap.BasemapLabels.RelX
+  type ClipY = _root_.com.histmersion.util.basemap.BasemapLabels.RelY
+  val ClipY: _root_.com.histmersion.util.basemap.BasemapLabels.RelY.type = _root_.com.histmersion.util.basemap.BasemapLabels.RelY
   type ClipBuffer = ClipBuffer.T
   object ClipBuffer extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type RelResultPart1 = RelResultPart1.T
@@ -168,8 +168,8 @@ object BasemapLabels:
   object PropsResultPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type TilesResultPart1 = TilesResultPart1.T
   object TilesResultPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type TilesMaxZoom = TilesMaxZoom.T
-  object TilesMaxZoom extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type TilesMaxZoom = _root_.com.histmersion.util.basemap.BasemapLabels.InTileMaxZoom
+  val TilesMaxZoom: _root_.com.histmersion.util.basemap.BasemapLabels.InTileMaxZoom.type = _root_.com.histmersion.util.basemap.BasemapLabels.InTileMaxZoom
   type WriteResultPart1 = WriteResultPart1.T
   object WriteResultPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type WriteResultPart2 = WriteResultPart2.T

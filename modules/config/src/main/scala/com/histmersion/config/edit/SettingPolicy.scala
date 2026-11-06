@@ -18,8 +18,8 @@ object SettingPolicy:
   object AllLiteralConsent extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type CheckResultPart2 = CheckResultPart2.T
   object CheckResultPart2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type CheckLiteralConsent = CheckLiteralConsent.T
-  object CheckLiteralConsent extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type CheckLiteralConsent = _root_.com.histmersion.config.edit.SettingPolicy.ValueLiteralConsent
+  val CheckLiteralConsent: _root_.com.histmersion.config.edit.SettingPolicy.ValueLiteralConsent.type = _root_.com.histmersion.config.edit.SettingPolicy.ValueLiteralConsent
   type ValueResultPart2 = ValueResultPart2.T
   object ValueResultPart2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type ValueLiteralConsent = ValueLiteralConsent.T

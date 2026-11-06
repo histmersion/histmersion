@@ -73,8 +73,8 @@ object Patches:
   object ParseEdgeFlag extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type ParseEdgeS = ParseEdgeS.T
   object ParseEdgeS extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type ParsePeriodS = ParsePeriodS.T
-  object ParsePeriodS extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type ParsePeriodS = _root_.com.histmersion.cli.Patches.CsvS
+  val ParsePeriodS: _root_.com.histmersion.cli.Patches.CsvS.type = _root_.com.histmersion.cli.Patches.CsvS
   type ReadFileResultPart2 = ReadFileResultPart2.T
   object ReadFileResultPart2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type ReadFileFlag = ReadFileFlag.T

@@ -94,14 +94,14 @@ object ReviewArticle:
   object MechanicalSlug extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type MechanicalKind = MechanicalKind.T
   object MechanicalKind extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type MechanicalBody = MechanicalBody.T
-  object MechanicalBody extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type MechanicalBody = _root_.com.histmersion.domain.ReviewArticle.HeadingsBody
+  val MechanicalBody: _root_.com.histmersion.domain.ReviewArticle.HeadingsBody.type = _root_.com.histmersion.domain.ReviewArticle.HeadingsBody
   type MechanicalIsTargetArg1 = MechanicalIsTargetArg1.T
   object MechanicalIsTargetArg1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type MechanicalIsTargetResult = MechanicalIsTargetResult.T
   object MechanicalIsTargetResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type MechanicalGenerated = MechanicalGenerated.T
-  object MechanicalGenerated extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type MechanicalGenerated = _root_.com.histmersion.domain.ReviewArticle.RequiredSectionsGenerated
+  val MechanicalGenerated: _root_.com.histmersion.domain.ReviewArticle.RequiredSectionsGenerated.type = _root_.com.histmersion.domain.ReviewArticle.RequiredSectionsGenerated
   type CoverageDriftFrom = CoverageDriftFrom.T
   object CoverageDriftFrom extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type EvidenceCheckIsCitekeyArg1 = EvidenceCheckIsCitekeyArg1.T
@@ -122,8 +122,8 @@ object ReviewArticle:
   object VerdictOfResultPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type VerdictOfStated = VerdictOfStated.T
   object VerdictOfStated extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type VerdictOfLast = VerdictOfLast.T
-  object VerdictOfLast extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type VerdictOfLast = _root_.com.histmersion.domain.ReviewArticle.CheckChecksLast
+  val VerdictOfLast: _root_.com.histmersion.domain.ReviewArticle.CheckChecksLast.type = _root_.com.histmersion.domain.ReviewArticle.CheckChecksLast
   type SettleResultPart1 = SettleResultPart1.T
   object SettleResultPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type SettleResultPart2Part2 = SettleResultPart2Part2.T
@@ -140,8 +140,8 @@ object ReviewArticle:
   object CheckRulesResultPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type CheckRulesResultPart2Part2 = CheckRulesResultPart2Part2.T
   object CheckRulesResultPart2Part2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type CheckRulesLast = CheckRulesLast.T
-  object CheckRulesLast extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type CheckRulesLast = _root_.com.histmersion.domain.ReviewArticle.CheckChecksLast
+  val CheckRulesLast: _root_.com.histmersion.domain.ReviewArticle.CheckChecksLast.type = _root_.com.histmersion.domain.ReviewArticle.CheckChecksLast
   type SpotCheckTools = SpotCheckTools.T
   object SpotCheckTools extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type SpotVerdicts = SpotVerdicts.T
@@ -160,8 +160,8 @@ object ReviewArticle:
   object CheckSpotChecksResultPart2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type CheckSpotChecksResultPart3 = CheckSpotChecksResultPart3.T
   object CheckSpotChecksResultPart3 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type CheckSpotChecksLast = CheckSpotChecksLast.T
-  object CheckSpotChecksLast extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type CheckSpotChecksLast = _root_.com.histmersion.domain.ReviewArticle.CheckChecksLast
+  val CheckSpotChecksLast: _root_.com.histmersion.domain.ReviewArticle.CheckChecksLast.type = _root_.com.histmersion.domain.ReviewArticle.CheckChecksLast
   type EmptySlotsOfResultPart1 = EmptySlotsOfResultPart1.T
   object EmptySlotsOfResultPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type EmptySlotsOfResultPart2 = EmptySlotsOfResultPart2.T
@@ -172,14 +172,14 @@ object ReviewArticle:
   object CheckColdReaderResultPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type CheckColdReaderResultPart2Part2 = CheckColdReaderResultPart2Part2.T
   object CheckColdReaderResultPart2Part2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type CheckColdReaderLast = CheckColdReaderLast.T
-  object CheckColdReaderLast extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type CheckColdReaderLast = _root_.com.histmersion.domain.ReviewArticle.CheckChecksLast
+  val CheckColdReaderLast: _root_.com.histmersion.domain.ReviewArticle.CheckChecksLast.type = _root_.com.histmersion.domain.ReviewArticle.CheckChecksLast
   type CheckSkepticResultPart1 = CheckSkepticResultPart1.T
   object CheckSkepticResultPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type CheckSkepticResultPart2Part2 = CheckSkepticResultPart2Part2.T
   object CheckSkepticResultPart2Part2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type CheckSkepticLast = CheckSkepticLast.T
-  object CheckSkepticLast extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type CheckSkepticLast = _root_.com.histmersion.domain.ReviewArticle.CheckChecksLast
+  val CheckSkepticLast: _root_.com.histmersion.domain.ReviewArticle.CheckChecksLast.type = _root_.com.histmersion.domain.ReviewArticle.CheckChecksLast
   type CheckSkepticIsCitekeyArg1 = CheckSkepticIsCitekeyArg1.T
   object CheckSkepticIsCitekeyArg1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type CheckSkepticIsCitekeyResult = CheckSkepticIsCitekeyResult.T
@@ -188,8 +188,8 @@ object ReviewArticle:
   object CheckSkepticTextArg1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type CheckSkepticTextResult = CheckSkepticTextResult.T
   object CheckSkepticTextResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type CheckSkepticMinRatio = CheckSkepticMinRatio.T
-  object CheckSkepticMinRatio extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type CheckSkepticMinRatio = _root_.com.histmersion.domain.ReviewArticle.EvidenceCheckMinRatio
+  val CheckSkepticMinRatio: _root_.com.histmersion.domain.ReviewArticle.EvidenceCheckMinRatio.type = _root_.com.histmersion.domain.ReviewArticle.EvidenceCheckMinRatio
   type IsMissingCritiqueResult = IsMissingCritiqueResult.T
   object IsMissingCritiqueResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type RecordedMinorWhy = RecordedMinorWhy.T
@@ -218,38 +218,38 @@ object ReviewArticle:
   object ClaimWindowQuote extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type LabelledResult = LabelledResult.T
   object LabelledResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type LabelledSentence = LabelledSentence.T
-  object LabelledSentence extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type LabelledSentence = _root_.com.histmersion.domain.ReviewArticle.ClaimWindowSentence
+  val LabelledSentence: _root_.com.histmersion.domain.ReviewArticle.ClaimWindowSentence.type = _root_.com.histmersion.domain.ReviewArticle.ClaimWindowSentence
   type LabelledCriticised = LabelledCriticised.T
   object LabelledCriticised extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type QualifiedClaimResult = QualifiedClaimResult.T
   object QualifiedClaimResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type QualifiedClaimSentence = QualifiedClaimSentence.T
-  object QualifiedClaimSentence extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type QualifiedClaimQuote = QualifiedClaimQuote.T
-  object QualifiedClaimQuote extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type QualifiedClaimCriticised = QualifiedClaimCriticised.T
-  object QualifiedClaimCriticised extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type QualifiedClaimSentence = _root_.com.histmersion.domain.ReviewArticle.ClaimWindowSentence
+  val QualifiedClaimSentence: _root_.com.histmersion.domain.ReviewArticle.ClaimWindowSentence.type = _root_.com.histmersion.domain.ReviewArticle.ClaimWindowSentence
+  type QualifiedClaimQuote = _root_.com.histmersion.domain.ReviewArticle.ClaimWindowQuote
+  val QualifiedClaimQuote: _root_.com.histmersion.domain.ReviewArticle.ClaimWindowQuote.type = _root_.com.histmersion.domain.ReviewArticle.ClaimWindowQuote
+  type QualifiedClaimCriticised = _root_.com.histmersion.domain.ReviewArticle.LabelledCriticised
+  val QualifiedClaimCriticised: _root_.com.histmersion.domain.ReviewArticle.LabelledCriticised.type = _root_.com.histmersion.domain.ReviewArticle.LabelledCriticised
   type CheckCritiquesResultPart2 = CheckCritiquesResultPart2.T
   object CheckCritiquesResultPart2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type CheckCritiquesResultPart3 = CheckCritiquesResultPart3.T
   object CheckCritiquesResultPart3 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type CheckCritiquesLast = CheckCritiquesLast.T
-  object CheckCritiquesLast extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type CheckCritiquesLast = _root_.com.histmersion.domain.ReviewArticle.CheckChecksLast
+  val CheckCritiquesLast: _root_.com.histmersion.domain.ReviewArticle.CheckChecksLast.type = _root_.com.histmersion.domain.ReviewArticle.CheckChecksLast
   type OnePerPairResultPart2 = OnePerPairResultPart2.T
   object OnePerPairResultPart2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type CheckNotMaterialResultPart2 = CheckNotMaterialResultPart2.T
   object CheckNotMaterialResultPart2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type CheckNotMaterialResultPart3 = CheckNotMaterialResultPart3.T
   object CheckNotMaterialResultPart3 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type CheckNotMaterialLast = CheckNotMaterialLast.T
-  object CheckNotMaterialLast extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type CheckNotMaterialLast = _root_.com.histmersion.domain.ReviewArticle.CheckChecksLast
+  val CheckNotMaterialLast: _root_.com.histmersion.domain.ReviewArticle.CheckChecksLast.type = _root_.com.histmersion.domain.ReviewArticle.CheckChecksLast
   type ChecksOfResultPart2 = ChecksOfResultPart2.T
   object ChecksOfResultPart2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type ChecksOfResultPart3 = ChecksOfResultPart3.T
   object ChecksOfResultPart3 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type ChecksOfLast = ChecksOfLast.T
-  object ChecksOfLast extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type ChecksOfLast = _root_.com.histmersion.domain.ReviewArticle.CheckChecksLast
+  val ChecksOfLast: _root_.com.histmersion.domain.ReviewArticle.CheckChecksLast.type = _root_.com.histmersion.domain.ReviewArticle.CheckChecksLast
   type CheckChecksResultPart2 = CheckChecksResultPart2.T
   object CheckChecksResultPart2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type CheckChecksResultPart3 = CheckChecksResultPart3.T
@@ -276,10 +276,10 @@ object ReviewArticle:
   object CheckRecheckResultPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type CheckRecheckResultPart2Part2 = CheckRecheckResultPart2Part2.T
   object CheckRecheckResultPart2Part2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type CheckRecheckEdited = CheckRecheckEdited.T
-  object CheckRecheckEdited extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type CheckRecheckLast = CheckRecheckLast.T
-  object CheckRecheckLast extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type CheckRecheckEdited = _root_.com.histmersion.domain.ReviewArticle.ScopeEdited
+  val CheckRecheckEdited: _root_.com.histmersion.domain.ReviewArticle.ScopeEdited.type = _root_.com.histmersion.domain.ReviewArticle.ScopeEdited
+  type CheckRecheckLast = _root_.com.histmersion.domain.ReviewArticle.CheckChecksLast
+  val CheckRecheckLast: _root_.com.histmersion.domain.ReviewArticle.CheckChecksLast.type = _root_.com.histmersion.domain.ReviewArticle.CheckChecksLast
   type KeyResultPart1 = KeyResultPart1.T
   object KeyResultPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type KeyResultPart2 = KeyResultPart2.T
@@ -318,12 +318,12 @@ object ReviewArticle:
   object FixerTurnsPerFinding extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type FixerTurnsCap = FixerTurnsCap.T
   object FixerTurnsCap extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type CheckBodySlug = CheckBodySlug.T
-  object CheckBodySlug extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type CheckBodySlug = _root_.com.histmersion.domain.ReviewArticle.MechanicalSlug
+  val CheckBodySlug: _root_.com.histmersion.domain.ReviewArticle.MechanicalSlug.type = _root_.com.histmersion.domain.ReviewArticle.MechanicalSlug
   type CheckBodyBefore = CheckBodyBefore.T
   object CheckBodyBefore extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type CheckBodyKind = CheckBodyKind.T
-  object CheckBodyKind extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type CheckBodyKind = _root_.com.histmersion.domain.ReviewArticle.MechanicalKind
+  val CheckBodyKind: _root_.com.histmersion.domain.ReviewArticle.MechanicalKind.type = _root_.com.histmersion.domain.ReviewArticle.MechanicalKind
   type CheckFixResultPart1 = CheckFixResultPart1.T
   object CheckFixResultPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type CheckFixResultPart2Part2 = CheckFixResultPart2Part2.T

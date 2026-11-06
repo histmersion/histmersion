@@ -9,10 +9,10 @@ import scala.util.Try
   */
 object Clipboard:
 
-  type CopyText = CopyText.T
-  object CopyText extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type CopyWhat = CopyWhat.T
-  object CopyWhat extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type CopyText = _root_.com.histmersion.web.ui.Clipboard.FallbackText
+  val CopyText: _root_.com.histmersion.web.ui.Clipboard.FallbackText.type = _root_.com.histmersion.web.ui.Clipboard.FallbackText
+  type CopyWhat = _root_.com.histmersion.web.ui.Clipboard.FallbackWhat
+  val CopyWhat: _root_.com.histmersion.web.ui.Clipboard.FallbackWhat.type = _root_.com.histmersion.web.ui.Clipboard.FallbackWhat
   type FallbackText = FallbackText.T
   object FallbackText extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type FallbackWhat = FallbackWhat.T

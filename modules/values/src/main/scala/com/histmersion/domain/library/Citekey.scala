@@ -20,8 +20,8 @@ object Citekey extends RefinedType[String, CitekeyRule]:
   object ParseRaw extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type ValidResult = ValidResult.T
   object ValidResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type ValidRaw = ValidRaw.T
-  object ValidRaw extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type ValidRaw = _root_.com.histmersion.domain.library.Citekey.ParseRaw
+  val ValidRaw: _root_.com.histmersion.domain.library.Citekey.ParseRaw.type = _root_.com.histmersion.domain.library.Citekey.ParseRaw
 
   def parse(raw: com.histmersion.domain.library.Citekey.ParseRaw): Either[com.histmersion.domain.library.Citekey.ParseResultPart1, Citekey] =
     val s = Option(raw).map((_).value.trim).getOrElse("")

@@ -1,0 +1,6 @@
+REJECTED_NOT_APPLIED
+This provisional preview selected 559 helper shapes in 177 files. The final rule
+also requires an immediate stable object template and excludes unqualified calls
+with local imports, protecting lexical method resolution. The corrected applied
+preview is project-forwarded-parameters-2: 555 helper shapes in 175 production files.
+No application source was changed by this proposal. No defect denominator changed.

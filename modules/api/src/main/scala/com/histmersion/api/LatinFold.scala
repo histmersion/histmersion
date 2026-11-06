@@ -24,8 +24,8 @@ object LatinFold:
   object IsCombiningMarkC extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Char, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type FoldCharResult = FoldCharResult.T
   object FoldCharResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type FoldCharC = FoldCharC.T
-  object FoldCharC extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Char, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type FoldCharC = _root_.com.histmersion.api.LatinFold.IsCombiningMarkC
+  val FoldCharC: _root_.com.histmersion.api.LatinFold.IsCombiningMarkC.type = _root_.com.histmersion.api.LatinFold.IsCombiningMarkC
   type FoldResult = FoldResult.T
   object FoldResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type FoldS = FoldS.T

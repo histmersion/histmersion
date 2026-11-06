@@ -46,8 +46,8 @@ object Gazetteer:
   object UnknownWhenSilentResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type UnknownWhenSilentSourceKey = UnknownWhenSilentSourceKey.T
   object UnknownWhenSilentSourceKey extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type ValiditySourceKey = ValiditySourceKey.T
-  object ValiditySourceKey extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type ValiditySourceKey = _root_.com.histmersion.api.catalogue.Gazetteer.UnknownWhenSilentSourceKey
+  val ValiditySourceKey: _root_.com.histmersion.api.catalogue.Gazetteer.UnknownWhenSilentSourceKey.type = _root_.com.histmersion.api.catalogue.Gazetteer.UnknownWhenSilentSourceKey
   type ValidityWindowYears = ValidityWindowYears.T
   object ValidityWindowYears extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type DefaultPointAreaKinds = DefaultPointAreaKinds.T
@@ -74,8 +74,8 @@ object Gazetteer:
   object PlaceIdForDataset extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type FromFeatureResultPart1 = FromFeatureResultPart1.T
   object FromFeatureResultPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type FromFeatureDataset = FromFeatureDataset.T
-  object FromFeatureDataset extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type FromFeatureDataset = _root_.com.histmersion.api.catalogue.Gazetteer.PlaceIdForDataset
+  val FromFeatureDataset: _root_.com.histmersion.api.catalogue.Gazetteer.PlaceIdForDataset.type = _root_.com.histmersion.api.catalogue.Gazetteer.PlaceIdForDataset
   type FromFeatureOrdinal = FromFeatureOrdinal.T
   object FromFeatureOrdinal extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type FromFeatureDefaultSource = FromFeatureDefaultSource.T
@@ -86,8 +86,8 @@ object Gazetteer:
   object FromTsvRowHeader extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type FromTsvRowCells = FromTsvRowCells.T
   object FromTsvRowCells extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type FromTsvRowDataset = FromTsvRowDataset.T
-  object FromTsvRowDataset extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type FromTsvRowDataset = _root_.com.histmersion.api.catalogue.Gazetteer.PlaceIdForDataset
+  val FromTsvRowDataset: _root_.com.histmersion.api.catalogue.Gazetteer.PlaceIdForDataset.type = _root_.com.histmersion.api.catalogue.Gazetteer.PlaceIdForDataset
   type FromTsvRowLine = FromTsvRowLine.T
   object FromTsvRowLine extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type FromTsvRowDefaultSource = FromTsvRowDefaultSource.T

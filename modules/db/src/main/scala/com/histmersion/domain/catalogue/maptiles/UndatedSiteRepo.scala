@@ -19,8 +19,8 @@ private[maptiles] object UndatedSiteRepo:
   object Group extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type TypedSiteType = TypedSiteType.T
   object TypedSiteType extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type CandidatesSiteType = CandidatesSiteType.T
-  object CandidatesSiteType extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type CandidatesSiteType = _root_.com.histmersion.domain.catalogue.maptiles.UndatedSiteRepo.TypedSiteType
+  val CandidatesSiteType: _root_.com.histmersion.domain.catalogue.maptiles.UndatedSiteRepo.TypedSiteType.type = _root_.com.histmersion.domain.catalogue.maptiles.UndatedSiteRepo.TypedSiteType
   type CandidatesExcept = CandidatesExcept.T
   object CandidatesExcept extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type ItemsSiteType = ItemsSiteType.T

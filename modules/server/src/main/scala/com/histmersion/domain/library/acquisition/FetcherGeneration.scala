@@ -22,12 +22,12 @@ object FetcherGeneration:
   object PartsCoreKey extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type OfResult = OfResult.T
   object OfResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type OfPlanPart1 = OfPlanPart1.T
-  object OfPlanPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type OfContact = OfContact.T
-  object OfContact extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type OfCoreKey = OfCoreKey.T
-  object OfCoreKey extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type OfPlanPart1 = _root_.com.histmersion.domain.library.acquisition.FetcherGeneration.PartsPlanPart1
+  val OfPlanPart1: _root_.com.histmersion.domain.library.acquisition.FetcherGeneration.PartsPlanPart1.type = _root_.com.histmersion.domain.library.acquisition.FetcherGeneration.PartsPlanPart1
+  type OfContact = _root_.com.histmersion.domain.library.acquisition.FetcherGeneration.PartsContact
+  val OfContact: _root_.com.histmersion.domain.library.acquisition.FetcherGeneration.PartsContact.type = _root_.com.histmersion.domain.library.acquisition.FetcherGeneration.PartsContact
+  type OfCoreKey = _root_.com.histmersion.domain.library.acquisition.FetcherGeneration.PartsCoreKey
+  val OfCoreKey: _root_.com.histmersion.domain.library.acquisition.FetcherGeneration.PartsCoreKey.type = _root_.com.histmersion.domain.library.acquisition.FetcherGeneration.PartsCoreKey
 
   def parts(
       plan: List[(com.histmersion.domain.library.acquisition.FetcherGeneration.PartsPlanPart1, Access)],

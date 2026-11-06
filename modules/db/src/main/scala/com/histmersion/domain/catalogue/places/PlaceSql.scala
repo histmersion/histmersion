@@ -31,26 +31,26 @@ object PlaceSql:
   object NormLabelSqlCol extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type ModernSqlResult = ModernSqlResult.T
   object ModernSqlResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type ModernSqlAlias = ModernSqlAlias.T
-  object ModernSqlAlias extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type ModernSqlAlias = _root_.com.histmersion.domain.catalogue.places.PlaceSql.ImportedSqlAlias
+  val ModernSqlAlias: _root_.com.histmersion.domain.catalogue.places.PlaceSql.ImportedSqlAlias.type = _root_.com.histmersion.domain.catalogue.places.PlaceSql.ImportedSqlAlias
   type DefaultModernFrom = DefaultModernFrom.T
   object DefaultModernFrom extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type UndatedSqlResult = UndatedSqlResult.T
   object UndatedSqlResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type UndatedSqlAlias = UndatedSqlAlias.T
-  object UndatedSqlAlias extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type UndatedSqlAlias = _root_.com.histmersion.domain.catalogue.places.PlaceSql.ImportedSqlAlias
+  val UndatedSqlAlias: _root_.com.histmersion.domain.catalogue.places.PlaceSql.ImportedSqlAlias.type = _root_.com.histmersion.domain.catalogue.places.PlaceSql.ImportedSqlAlias
   type TimelessSqlResult = TimelessSqlResult.T
   object TimelessSqlResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type TimelessSqlAlias = TimelessSqlAlias.T
-  object TimelessSqlAlias extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type TimelessSqlAlias = _root_.com.histmersion.domain.catalogue.places.PlaceSql.ImportedSqlAlias
+  val TimelessSqlAlias: _root_.com.histmersion.domain.catalogue.places.PlaceSql.ImportedSqlAlias.type = _root_.com.histmersion.domain.catalogue.places.PlaceSql.ImportedSqlAlias
   type TimeBasisSqlResult = TimeBasisSqlResult.T
   object TimeBasisSqlResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type TimeBasisSqlAlias = TimeBasisSqlAlias.T
-  object TimeBasisSqlAlias extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type TimeBasisSqlAlias = _root_.com.histmersion.domain.catalogue.places.PlaceSql.ImportedSqlAlias
+  val TimeBasisSqlAlias: _root_.com.histmersion.domain.catalogue.places.PlaceSql.ImportedSqlAlias.type = _root_.com.histmersion.domain.catalogue.places.PlaceSql.ImportedSqlAlias
   type TimeWindowCteAsOf = TimeWindowCteAsOf.T
   object TimeWindowCteAsOf extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type TimeWindowCteModernFrom = TimeWindowCteModernFrom.T
-  object TimeWindowCteModernFrom extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type TimeWindowCteModernFrom = _root_.com.histmersion.domain.catalogue.places.PlaceSql.WindowCteModernFrom
+  val TimeWindowCteModernFrom: _root_.com.histmersion.domain.catalogue.places.PlaceSql.WindowCteModernFrom.type = _root_.com.histmersion.domain.catalogue.places.PlaceSql.WindowCteModernFrom
   type WindowCteWindowPart1 = WindowCteWindowPart1.T
   object WindowCteWindowPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type WindowCteWindowPart2 = WindowCteWindowPart2.T
@@ -59,16 +59,16 @@ object PlaceSql:
   object WindowCteModernFrom extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type InTimeSqlResult = InTimeSqlResult.T
   object InTimeSqlResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type InTimeSqlAlias = InTimeSqlAlias.T
-  object InTimeSqlAlias extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type InTimeSqlAlias = _root_.com.histmersion.domain.catalogue.places.PlaceSql.ImportedSqlAlias
+  val InTimeSqlAlias: _root_.com.histmersion.domain.catalogue.places.PlaceSql.ImportedSqlAlias.type = _root_.com.histmersion.domain.catalogue.places.PlaceSql.ImportedSqlAlias
   type InTimeSqlAsOf = InTimeSqlAsOf.T
   object InTimeSqlAsOf extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type InTimeSqlKind = InTimeSqlKind.T
-  object InTimeSqlKind extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type InTimeSqlKind = _root_.com.histmersion.domain.catalogue.places.PlaceSql.InWindowSqlKind
+  val InTimeSqlKind: _root_.com.histmersion.domain.catalogue.places.PlaceSql.InWindowSqlKind.type = _root_.com.histmersion.domain.catalogue.places.PlaceSql.InWindowSqlKind
   type InWindowSqlResult = InWindowSqlResult.T
   object InWindowSqlResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type InWindowSqlAlias = InWindowSqlAlias.T
-  object InWindowSqlAlias extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type InWindowSqlAlias = _root_.com.histmersion.domain.catalogue.places.PlaceSql.ImportedSqlAlias
+  val InWindowSqlAlias: _root_.com.histmersion.domain.catalogue.places.PlaceSql.ImportedSqlAlias.type = _root_.com.histmersion.domain.catalogue.places.PlaceSql.ImportedSqlAlias
   type InWindowSqlWindowPart1 = InWindowSqlWindowPart1.T
   object InWindowSqlWindowPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type InWindowSqlWindowPart2 = InWindowSqlWindowPart2.T

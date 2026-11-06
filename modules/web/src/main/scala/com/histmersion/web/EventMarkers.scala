@@ -28,10 +28,10 @@ object EventMarkers:
   object QueryTier extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type QueryUndated = QueryUndated.T
   object QueryUndated extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type LoadTilesPart1 = LoadTilesPart1.T
-  object LoadTilesPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type LoadTilesPart2 = LoadTilesPart2.T
-  object LoadTilesPart2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type LoadTilesPart1 = _root_.com.histmersion.web.EventMarkers.QueryTilesPart1
+  val LoadTilesPart1: _root_.com.histmersion.web.EventMarkers.QueryTilesPart1.type = _root_.com.histmersion.web.EventMarkers.QueryTilesPart1
+  type LoadTilesPart2 = _root_.com.histmersion.web.EventMarkers.QueryTilesPart2
+  val LoadTilesPart2: _root_.com.histmersion.web.EventMarkers.QueryTilesPart2.type = _root_.com.histmersion.web.EventMarkers.QueryTilesPart2
   type LoadSpanPart1 = LoadSpanPart1.T
   object LoadSpanPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type LoadSpanPart2 = LoadSpanPart2.T

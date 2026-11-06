@@ -57,8 +57,8 @@ object EnrichSource:
   object CheckClassificationResultPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type CheckClassificationResultPart2Part2 = CheckClassificationResultPart2Part2.T
   object CheckClassificationResultPart2Part2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type CheckClassificationMaxAbsYear = CheckClassificationMaxAbsYear.T
-  object CheckClassificationMaxAbsYear extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type CheckClassificationMaxAbsYear = _root_.com.histmersion.domain.EnrichSource.ConvertMaxAbsYear
+  val CheckClassificationMaxAbsYear: _root_.com.histmersion.domain.EnrichSource.ConvertMaxAbsYear.type = _root_.com.histmersion.domain.EnrichSource.ConvertMaxAbsYear
   type CheckClassificationLast = CheckClassificationLast.T
   object CheckClassificationLast extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type NormaliseTagResult = NormaliseTagResult.T
@@ -71,12 +71,12 @@ object EnrichSource:
   object CenturiesMentionedText extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type MentionsCenturyResult = MentionsCenturyResult.T
   object MentionsCenturyResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type MentionsCenturyText = MentionsCenturyText.T
-  object MentionsCenturyText extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type MentionsCenturyText = _root_.com.histmersion.domain.EnrichSource.CenturiesMentionedText
+  val MentionsCenturyText: _root_.com.histmersion.domain.EnrichSource.CenturiesMentionedText.type = _root_.com.histmersion.domain.EnrichSource.CenturiesMentionedText
   type StatesYearResult = StatesYearResult.T
   object StatesYearResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type StatesYearText = StatesYearText.T
-  object StatesYearText extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type StatesYearText = _root_.com.histmersion.domain.EnrichSource.CenturiesMentionedText
+  val StatesYearText: _root_.com.histmersion.domain.EnrichSource.CenturiesMentionedText.type = _root_.com.histmersion.domain.EnrichSource.CenturiesMentionedText
   type OrdinalResult = OrdinalResult.T
   object OrdinalResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type OrdinalN = OrdinalN.T
@@ -87,8 +87,8 @@ object EnrichSource:
   object CenturyAsYearStart extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type CenturyAsYearEnd = CenturyAsYearEnd.T
   object CenturyAsYearEnd extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type CenturyAsYearText = CenturyAsYearText.T
-  object CenturyAsYearText extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type CenturyAsYearText = _root_.com.histmersion.domain.EnrichSource.CenturiesMentionedText
+  val CenturyAsYearText: _root_.com.histmersion.domain.EnrichSource.CenturiesMentionedText.type = _root_.com.histmersion.domain.EnrichSource.CenturiesMentionedText
   type CenturyAsYearGap = CenturyAsYearGap.T
   object CenturyAsYearGap extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type PointerPhraseResult = PointerPhraseResult.T
@@ -113,8 +113,8 @@ object EnrichSource:
   object CheckFindingsResultPart2Part2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type CheckFindingsMinRatio = CheckFindingsMinRatio.T
   object CheckFindingsMinRatio extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type CheckFindingsMaxAbsYear = CheckFindingsMaxAbsYear.T
-  object CheckFindingsMaxAbsYear extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type CheckFindingsMaxAbsYear = _root_.com.histmersion.domain.EnrichSource.ConvertMaxAbsYear
+  val CheckFindingsMaxAbsYear: _root_.com.histmersion.domain.EnrichSource.ConvertMaxAbsYear.type = _root_.com.histmersion.domain.EnrichSource.ConvertMaxAbsYear
   type CheckFindingsExistingClaims = CheckFindingsExistingClaims.T
   object CheckFindingsExistingClaims extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type CheckFindingsLast = CheckFindingsLast.T

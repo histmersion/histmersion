@@ -18,8 +18,8 @@ object ResultsWidth:
   object ClampResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type ClampW = ClampW.T
   object ClampW extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type ClampViewport = ClampViewport.T
-  object ClampViewport extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type ClampViewport = _root_.com.histmersion.web.ResultsWidth.MaxViewport
+  val ClampViewport: _root_.com.histmersion.web.ResultsWidth.MaxViewport.type = _root_.com.histmersion.web.ResultsWidth.MaxViewport
   type StepResult = StepResult.T
   object StepResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type StepW = StepW.T
@@ -28,8 +28,8 @@ object ResultsWidth:
   object StepKey extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type StepShift = StepShift.T
   object StepShift extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type StepViewport = StepViewport.T
-  object StepViewport extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type StepViewport = _root_.com.histmersion.web.ResultsWidth.MaxViewport
+  val StepViewport: _root_.com.histmersion.web.ResultsWidth.MaxViewport.type = _root_.com.histmersion.web.ResultsWidth.MaxViewport
   type DecodeResult = DecodeResult.T
   object DecodeResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type DecodeRaw = DecodeRaw.T

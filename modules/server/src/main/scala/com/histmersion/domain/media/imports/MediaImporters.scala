@@ -28,10 +28,10 @@ object MediaImporters:
   object LookupCollectionsPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type ResolveResultPart1 = ResolveResultPart1.T
   object ResolveResultPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type ResolveAsked = ResolveAsked.T
-  object ResolveAsked extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type ResolveCollectionsPart1 = ResolveCollectionsPart1.T
-  object ResolveCollectionsPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type ResolveAsked = _root_.com.histmersion.domain.media.imports.MediaImporters.LookupAsked
+  val ResolveAsked: _root_.com.histmersion.domain.media.imports.MediaImporters.LookupAsked.type = _root_.com.histmersion.domain.media.imports.MediaImporters.LookupAsked
+  type ResolveCollectionsPart1 = _root_.com.histmersion.domain.media.imports.MediaImporters.LookupCollectionsPart1
+  val ResolveCollectionsPart1: _root_.com.histmersion.domain.media.imports.MediaImporters.LookupCollectionsPart1.type = _root_.com.histmersion.domain.media.imports.MediaImporters.LookupCollectionsPart1
   type InfosCollectionsPart1 = InfosCollectionsPart1.T
   object InfosCollectionsPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type InfosPluginOfArg1 = InfosPluginOfArg1.T

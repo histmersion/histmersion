@@ -670,8 +670,8 @@ object Source:
     object PeriodOfStart extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
     type PeriodOfEnd = PeriodOfEnd.T
     object PeriodOfEnd extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
-    type PeriodOfWhat = PeriodOfWhat.T
-    object PeriodOfWhat extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type PeriodOfWhat = _root_.com.histmersion.api.library.Source.Write.OutOfRangeWhat
+    val PeriodOfWhat: _root_.com.histmersion.api.library.Source.Write.OutOfRangeWhat.type = _root_.com.histmersion.api.library.Source.Write.OutOfRangeWhat
     type OutOfRangeResult = OutOfRangeResult.T
     object OutOfRangeResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
     type OutOfRangeWhat = OutOfRangeWhat.T

@@ -28,12 +28,12 @@ object AcquireRecheck:
   object DueAtRetryHours extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type IsDueResult = IsDueResult.T
   object IsDueResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type IsDueGeneration = IsDueGeneration.T
-  object IsDueGeneration extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type IsDueEveryDays = IsDueEveryDays.T
-  object IsDueEveryDays extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type IsDueRetryHours = IsDueRetryHours.T
-  object IsDueRetryHours extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type IsDueGeneration = _root_.com.histmersion.domain.AcquireRecheck.DueAtGeneration
+  val IsDueGeneration: _root_.com.histmersion.domain.AcquireRecheck.DueAtGeneration.type = _root_.com.histmersion.domain.AcquireRecheck.DueAtGeneration
+  type IsDueEveryDays = _root_.com.histmersion.domain.AcquireRecheck.DueAtEveryDays
+  val IsDueEveryDays: _root_.com.histmersion.domain.AcquireRecheck.DueAtEveryDays.type = _root_.com.histmersion.domain.AcquireRecheck.DueAtEveryDays
+  type IsDueRetryHours = _root_.com.histmersion.domain.AcquireRecheck.DueAtRetryHours
+  val IsDueRetryHours: _root_.com.histmersion.domain.AcquireRecheck.DueAtRetryHours.type = _root_.com.histmersion.domain.AcquireRecheck.DueAtRetryHours
   type ActionDois = ActionDois.T
   object ActionDois extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type ActionHeldArg1 = ActionHeldArg1.T
@@ -60,12 +60,12 @@ object AcquireRecheck:
   object GenerationResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type GenerationParts = GenerationParts.T
   object GenerationParts extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type NextDueGeneration = NextDueGeneration.T
-  object NextDueGeneration extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type NextDueEveryDays = NextDueEveryDays.T
-  object NextDueEveryDays extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type NextDueRetryHours = NextDueRetryHours.T
-  object NextDueRetryHours extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type NextDueGeneration = _root_.com.histmersion.domain.AcquireRecheck.DueAtGeneration
+  val NextDueGeneration: _root_.com.histmersion.domain.AcquireRecheck.DueAtGeneration.type = _root_.com.histmersion.domain.AcquireRecheck.DueAtGeneration
+  type NextDueEveryDays = _root_.com.histmersion.domain.AcquireRecheck.DueAtEveryDays
+  val NextDueEveryDays: _root_.com.histmersion.domain.AcquireRecheck.DueAtEveryDays.type = _root_.com.histmersion.domain.AcquireRecheck.DueAtEveryDays
+  type NextDueRetryHours = _root_.com.histmersion.domain.AcquireRecheck.DueAtRetryHours
+  val NextDueRetryHours: _root_.com.histmersion.domain.AcquireRecheck.DueAtRetryHours.type = _root_.com.histmersion.domain.AcquireRecheck.DueAtRetryHours
   type CheckedSinceResult = CheckedSinceResult.T
   object CheckedSinceResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type JobPicksTriedByJob = JobPicksTriedByJob.T

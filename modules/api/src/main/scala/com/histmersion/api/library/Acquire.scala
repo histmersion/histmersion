@@ -22,26 +22,26 @@ object Acquire:
   object CitekeyResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type CitekeyAuthors = CitekeyAuthors.T
   object CitekeyAuthors extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type CitekeyYear = CitekeyYear.T
-  object CitekeyYear extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type CitekeyYear = _root_.com.histmersion.api.library.Acquire.LegacyCitekeyYear
+  val CitekeyYear: _root_.com.histmersion.api.library.Acquire.LegacyCitekeyYear.type = _root_.com.histmersion.api.library.Acquire.LegacyCitekeyYear
   type CitekeyTitle = CitekeyTitle.T
   object CitekeyTitle extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type LegacyCitekeyResult = LegacyCitekeyResult.T
   object LegacyCitekeyResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type LegacyCitekeyAuthors = LegacyCitekeyAuthors.T
-  object LegacyCitekeyAuthors extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type LegacyCitekeyAuthors = _root_.com.histmersion.api.library.Acquire.CitekeyAuthors
+  val LegacyCitekeyAuthors: _root_.com.histmersion.api.library.Acquire.CitekeyAuthors.type = _root_.com.histmersion.api.library.Acquire.CitekeyAuthors
   type LegacyCitekeyYear = LegacyCitekeyYear.T
   object LegacyCitekeyYear extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type LegacyCitekeyTitle = LegacyCitekeyTitle.T
-  object LegacyCitekeyTitle extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type LegacyCitekeyTitle = _root_.com.histmersion.api.library.Acquire.CitekeyTitle
+  val LegacyCitekeyTitle: _root_.com.histmersion.api.library.Acquire.CitekeyTitle.type = _root_.com.histmersion.api.library.Acquire.CitekeyTitle
   type CitekeyCandidatesResult = CitekeyCandidatesResult.T
   object CitekeyCandidatesResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type CitekeyCandidatesAuthors = CitekeyCandidatesAuthors.T
-  object CitekeyCandidatesAuthors extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type CitekeyCandidatesYear = CitekeyCandidatesYear.T
-  object CitekeyCandidatesYear extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type CitekeyCandidatesTitle = CitekeyCandidatesTitle.T
-  object CitekeyCandidatesTitle extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type CitekeyCandidatesAuthors = _root_.com.histmersion.api.library.Acquire.CitekeyAuthors
+  val CitekeyCandidatesAuthors: _root_.com.histmersion.api.library.Acquire.CitekeyAuthors.type = _root_.com.histmersion.api.library.Acquire.CitekeyAuthors
+  type CitekeyCandidatesYear = _root_.com.histmersion.api.library.Acquire.LegacyCitekeyYear
+  val CitekeyCandidatesYear: _root_.com.histmersion.api.library.Acquire.LegacyCitekeyYear.type = _root_.com.histmersion.api.library.Acquire.LegacyCitekeyYear
+  type CitekeyCandidatesTitle = _root_.com.histmersion.api.library.Acquire.CitekeyTitle
+  val CitekeyCandidatesTitle: _root_.com.histmersion.api.library.Acquire.CitekeyTitle.type = _root_.com.histmersion.api.library.Acquire.CitekeyTitle
   type IsRetractingNatureResult = IsRetractingNatureResult.T
   object IsRetractingNatureResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type IsRetractingNatureN = IsRetractingNatureN.T
@@ -80,8 +80,8 @@ object Acquire:
   object RecommendationCitedByCount extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type StatusForVerdict = StatusForVerdict.T
   object StatusForVerdict extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type StatusDecisionVerdict = StatusDecisionVerdict.T
-  object StatusDecisionVerdict extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type StatusDecisionVerdict = _root_.com.histmersion.api.library.Acquire.StatusForVerdict
+  val StatusDecisionVerdict: _root_.com.histmersion.api.library.Acquire.StatusForVerdict.type = _root_.com.histmersion.api.library.Acquire.StatusForVerdict
   type StatusDecisionForce = StatusDecisionForce.T
   object StatusDecisionForce extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type ClassifyResult = ClassifyResult.T

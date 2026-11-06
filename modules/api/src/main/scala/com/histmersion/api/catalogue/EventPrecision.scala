@@ -26,8 +26,8 @@ object EventPrecision:
   object OfResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type OfUncertainty = OfUncertainty.T
   object OfUncertainty extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type OfPlusMinus = OfPlusMinus.T
-  object OfPlusMinus extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type OfPlusMinus = _root_.com.histmersion.api.catalogue.EventPrecision.UncertaintyPlusMinus
+  val OfPlusMinus: _root_.com.histmersion.api.catalogue.EventPrecision.UncertaintyPlusMinus.type = _root_.com.histmersion.api.catalogue.EventPrecision.UncertaintyPlusMinus
   type MappedResult = MappedResult.T
   object MappedResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type MappedPrecision = MappedPrecision.T

@@ -15,18 +15,18 @@ object SourceLink:
   /** The identifier label: the DOI when there is one, else our citekey (the owner's rule). */
   type IdLabelResult = IdLabelResult.T
   object IdLabelResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type IdLabelCitekey = IdLabelCitekey.T
-  object IdLabelCitekey extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type IdLabelCitekey = _root_.com.histmersion.web.SourceLink.HrefCitekey
+  val IdLabelCitekey: _root_.com.histmersion.web.SourceLink.HrefCitekey.type = _root_.com.histmersion.web.SourceLink.HrefCitekey
   type IdLabelDoi = IdLabelDoi.T
   object IdLabelDoi extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type HrefResult = HrefResult.T
   object HrefResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type HrefCitekey = HrefCitekey.T
   object HrefCitekey extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type ApplyCitekey = ApplyCitekey.T
-  object ApplyCitekey extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type ApplyDoi = ApplyDoi.T
-  object ApplyDoi extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type ApplyCitekey = _root_.com.histmersion.web.SourceLink.HrefCitekey
+  val ApplyCitekey: _root_.com.histmersion.web.SourceLink.HrefCitekey.type = _root_.com.histmersion.web.SourceLink.HrefCitekey
+  type ApplyDoi = _root_.com.histmersion.web.SourceLink.IdLabelDoi
+  val ApplyDoi: _root_.com.histmersion.web.SourceLink.IdLabelDoi.type = _root_.com.histmersion.web.SourceLink.IdLabelDoi
   type ApplyLabel = ApplyLabel.T
   object ApplyLabel extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type HtmlResult = HtmlResult.T

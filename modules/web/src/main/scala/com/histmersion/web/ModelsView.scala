@@ -51,22 +51,22 @@ object ModelsView:
   object AgeTextSeconds extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type LimitsTextResult = LimitsTextResult.T
   object LimitsTextResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type BodyBusy = BodyBusy.T
-  object BodyBusy extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type BodyBusy = _root_.com.histmersion.web.ModelsView.AllowanceFormBusy
+  val BodyBusy: _root_.com.histmersion.web.ModelsView.AllowanceFormBusy.type = _root_.com.histmersion.web.ModelsView.AllowanceFormBusy
   type FloorsTextResult = FloorsTextResult.T
   object FloorsTextResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type FloorsTextFloors = FloorsTextFloors.T
   object FloorsTextFloors extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type PlansBlockBusy = PlansBlockBusy.T
   object PlansBlockBusy extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type ChainRowBusy = ChainRowBusy.T
-  object ChainRowBusy extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type ChainRowBusy = _root_.com.histmersion.web.ModelsView.AllowanceFormBusy
+  val ChainRowBusy: _root_.com.histmersion.web.ModelsView.AllowanceFormBusy.type = _root_.com.histmersion.web.ModelsView.AllowanceFormBusy
   type AmountResult = AmountResult.T
   object AmountResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type AmountV = AmountV.T
   object AmountV extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type AllowanceRowBusy = AllowanceRowBusy.T
-  object AllowanceRowBusy extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type AllowanceRowBusy = _root_.com.histmersion.web.ModelsView.AllowanceFormBusy
+  val AllowanceRowBusy: _root_.com.histmersion.web.ModelsView.AllowanceFormBusy.type = _root_.com.histmersion.web.ModelsView.AllowanceFormBusy
   type AllowanceFormBusy = AllowanceFormBusy.T
   object AllowanceFormBusy extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
 

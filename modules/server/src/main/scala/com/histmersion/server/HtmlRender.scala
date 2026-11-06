@@ -37,8 +37,8 @@ object HtmlRender:
   object SourceLinkLabel extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type SourceRefResult = SourceRefResult.T
   object SourceRefResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type SourceRefLabel = SourceRefLabel.T
-  object SourceRefLabel extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type SourceRefLabel = _root_.com.histmersion.server.HtmlRender.SourceLinkLabel
+  val SourceRefLabel: _root_.com.histmersion.server.HtmlRender.SourceLinkLabel.type = _root_.com.histmersion.server.HtmlRender.SourceLinkLabel
   type ReadableResult = ReadableResult.T
   object ReadableResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type ArticleRefResult = ArticleRefResult.T

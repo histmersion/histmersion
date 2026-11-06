@@ -47,18 +47,18 @@ object Tree:
   object TimeTimeFrom extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type TimeTimeTo = TimeTimeTo.T
   object TimeTimeTo extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type TimeTimeDepth = TimeTimeDepth.T
-  object TimeTimeDepth extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type TimeTimeSamples = TimeTimeSamples.T
-  object TimeTimeSamples extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type TimeTreeFrom = TimeTreeFrom.T
-  object TimeTreeFrom extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type TimeTreeTo = TimeTreeTo.T
-  object TimeTreeTo extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type TimeTreeDepth = TimeTreeDepth.T
-  object TimeTreeDepth extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type TimeTreeSamples = TimeTreeSamples.T
-  object TimeTreeSamples extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type TimeTimeDepth = _root_.com.histmersion.api.library.Tree.ClampDepth
+  val TimeTimeDepth: _root_.com.histmersion.api.library.Tree.ClampDepth.type = _root_.com.histmersion.api.library.Tree.ClampDepth
+  type TimeTimeSamples = _root_.com.histmersion.api.library.Tree.RegionsSamples
+  val TimeTimeSamples: _root_.com.histmersion.api.library.Tree.RegionsSamples.type = _root_.com.histmersion.api.library.Tree.RegionsSamples
+  type TimeTreeFrom = _root_.com.histmersion.api.library.Tree.TimeTimeFrom
+  val TimeTreeFrom: _root_.com.histmersion.api.library.Tree.TimeTimeFrom.type = _root_.com.histmersion.api.library.Tree.TimeTimeFrom
+  type TimeTreeTo = _root_.com.histmersion.api.library.Tree.TimeTimeTo
+  val TimeTreeTo: _root_.com.histmersion.api.library.Tree.TimeTimeTo.type = _root_.com.histmersion.api.library.Tree.TimeTimeTo
+  type TimeTreeDepth = _root_.com.histmersion.api.library.Tree.ClampDepth
+  val TimeTreeDepth: _root_.com.histmersion.api.library.Tree.ClampDepth.type = _root_.com.histmersion.api.library.Tree.ClampDepth
+  type TimeTreeSamples = _root_.com.histmersion.api.library.Tree.RegionsSamples
+  val TimeTreeSamples: _root_.com.histmersion.api.library.Tree.RegionsSamples.type = _root_.com.histmersion.api.library.Tree.RegionsSamples
   type TimeLevelFrom = TimeLevelFrom.T
   object TimeLevelFrom extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type TimeLevelTo = TimeLevelTo.T
@@ -67,8 +67,8 @@ object Tree:
   object TimeLevelSize extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type TimeLevelDepth = TimeLevelDepth.T
   object TimeLevelDepth extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type TimeLevelSamples = TimeLevelSamples.T
-  object TimeLevelSamples extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type TimeLevelSamples = _root_.com.histmersion.api.library.Tree.RegionsSamples
+  val TimeLevelSamples: _root_.com.histmersion.api.library.Tree.RegionsSamples.type = _root_.com.histmersion.api.library.Tree.RegionsSamples
   type TimeLevelNestArg2 = TimeLevelNestArg2.T
   object TimeLevelNestArg2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type TimeLevelNestArg3 = TimeLevelNestArg3.T
@@ -79,38 +79,38 @@ object Tree:
   object SplitRatio extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type SplitWorthShowingParent = SplitWorthShowingParent.T
   object SplitWorthShowingParent extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type RegionTreeAsOf = RegionTreeAsOf.T
-  object RegionTreeAsOf extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type RegionTreeDepth = RegionTreeDepth.T
-  object RegionTreeDepth extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type RegionTreeSamples = RegionTreeSamples.T
-  object RegionTreeSamples extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type RegionTreeRoot = RegionTreeRoot.T
-  object RegionTreeRoot extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type RegionTreeAsOf = _root_.com.histmersion.api.library.Tree.CoversAsOfAsOf
+  val RegionTreeAsOf: _root_.com.histmersion.api.library.Tree.CoversAsOfAsOf.type = _root_.com.histmersion.api.library.Tree.CoversAsOfAsOf
+  type RegionTreeDepth = _root_.com.histmersion.api.library.Tree.ClampDepth
+  val RegionTreeDepth: _root_.com.histmersion.api.library.Tree.ClampDepth.type = _root_.com.histmersion.api.library.Tree.ClampDepth
+  type RegionTreeSamples = _root_.com.histmersion.api.library.Tree.RegionsSamples
+  val RegionTreeSamples: _root_.com.histmersion.api.library.Tree.RegionsSamples.type = _root_.com.histmersion.api.library.Tree.RegionsSamples
+  type RegionTreeRoot = _root_.com.histmersion.api.library.Tree.RegionsRoot
+  val RegionTreeRoot: _root_.com.histmersion.api.library.Tree.RegionsRoot.type = _root_.com.histmersion.api.library.Tree.RegionsRoot
   type TimeRegionTreeFrom = TimeRegionTreeFrom.T
   object TimeRegionTreeFrom extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type TimeRegionTreeTo = TimeRegionTreeTo.T
   object TimeRegionTreeTo extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type TimeRegionTreeDepth = TimeRegionTreeDepth.T
-  object TimeRegionTreeDepth extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type TimeRegionTreeSamples = TimeRegionTreeSamples.T
-  object TimeRegionTreeSamples extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type TimeRegionTreeDepth = _root_.com.histmersion.api.library.Tree.ClampDepth
+  val TimeRegionTreeDepth: _root_.com.histmersion.api.library.Tree.ClampDepth.type = _root_.com.histmersion.api.library.Tree.ClampDepth
+  type TimeRegionTreeSamples = _root_.com.histmersion.api.library.Tree.RegionsSamples
+  val TimeRegionTreeSamples: _root_.com.histmersion.api.library.Tree.RegionsSamples.type = _root_.com.histmersion.api.library.Tree.RegionsSamples
   type RegionTimeTreeFrom = RegionTimeTreeFrom.T
   object RegionTimeTreeFrom extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type RegionTimeTreeTo = RegionTimeTreeTo.T
   object RegionTimeTreeTo extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type RegionTimeTreeAsOf = RegionTimeTreeAsOf.T
-  object RegionTimeTreeAsOf extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type RegionTimeTreeDepth = RegionTimeTreeDepth.T
-  object RegionTimeTreeDepth extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type RegionTimeTreeSamples = RegionTimeTreeSamples.T
-  object RegionTimeTreeSamples extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type RegionTimeTreeRoot = RegionTimeTreeRoot.T
-  object RegionTimeTreeRoot extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type RegionTimeTreeAsOf = _root_.com.histmersion.api.library.Tree.CoversAsOfAsOf
+  val RegionTimeTreeAsOf: _root_.com.histmersion.api.library.Tree.CoversAsOfAsOf.type = _root_.com.histmersion.api.library.Tree.CoversAsOfAsOf
+  type RegionTimeTreeDepth = _root_.com.histmersion.api.library.Tree.ClampDepth
+  val RegionTimeTreeDepth: _root_.com.histmersion.api.library.Tree.ClampDepth.type = _root_.com.histmersion.api.library.Tree.ClampDepth
+  type RegionTimeTreeSamples = _root_.com.histmersion.api.library.Tree.RegionsSamples
+  val RegionTimeTreeSamples: _root_.com.histmersion.api.library.Tree.RegionsSamples.type = _root_.com.histmersion.api.library.Tree.RegionsSamples
+  type RegionTimeTreeRoot = _root_.com.histmersion.api.library.Tree.RegionsRoot
+  val RegionTimeTreeRoot: _root_.com.histmersion.api.library.Tree.RegionsRoot.type = _root_.com.histmersion.api.library.Tree.RegionsRoot
   type RegionsResultPart2 = RegionsResultPart2.T
   object RegionsResultPart2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type RegionsAsOf = RegionsAsOf.T
-  object RegionsAsOf extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type RegionsAsOf = _root_.com.histmersion.api.library.Tree.CoversAsOfAsOf
+  val RegionsAsOf: _root_.com.histmersion.api.library.Tree.CoversAsOfAsOf.type = _root_.com.histmersion.api.library.Tree.CoversAsOfAsOf
   type RegionsDepth = RegionsDepth.T
   object RegionsDepth extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type RegionsSamples = RegionsSamples.T

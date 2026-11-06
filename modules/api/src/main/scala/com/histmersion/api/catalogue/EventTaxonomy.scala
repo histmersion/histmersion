@@ -20,30 +20,30 @@ object EventTaxonomy:
   object LabelRulesPart2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type RefineResult = RefineResult.T
   object RefineResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type RefineKind = RefineKind.T
-  object RefineKind extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type RefineKind = _root_.com.histmersion.api.catalogue.EventTaxonomy.CanonicalKind
+  val RefineKind: _root_.com.histmersion.api.catalogue.EventTaxonomy.CanonicalKind.type = _root_.com.histmersion.api.catalogue.EventTaxonomy.CanonicalKind
   type RefineLabel = RefineLabel.T
   object RefineLabel extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type OfKind = OfKind.T
-  object OfKind extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type OfKind = _root_.com.histmersion.api.catalogue.EventTaxonomy.CanonicalKind
+  val OfKind: _root_.com.histmersion.api.catalogue.EventTaxonomy.CanonicalKind.type = _root_.com.histmersion.api.catalogue.EventTaxonomy.CanonicalKind
   type GroupResult = GroupResult.T
   object GroupResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type GroupKind = GroupKind.T
-  object GroupKind extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type GroupKind = _root_.com.histmersion.api.catalogue.EventTaxonomy.CanonicalKind
+  val GroupKind: _root_.com.histmersion.api.catalogue.EventTaxonomy.CanonicalKind.type = _root_.com.histmersion.api.catalogue.EventTaxonomy.CanonicalKind
   type IconResult = IconResult.T
   object IconResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type IconKind = IconKind.T
-  object IconKind extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type IconKind = _root_.com.histmersion.api.catalogue.EventTaxonomy.CanonicalKind
+  val IconKind: _root_.com.histmersion.api.catalogue.EventTaxonomy.CanonicalKind.type = _root_.com.histmersion.api.catalogue.EventTaxonomy.CanonicalKind
   type IsNaturalResult = IsNaturalResult.T
   object IsNaturalResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type IsNaturalKind = IsNaturalKind.T
-  object IsNaturalKind extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type IsNaturalKind = _root_.com.histmersion.api.catalogue.EventTaxonomy.CanonicalKind
+  val IsNaturalKind: _root_.com.histmersion.api.catalogue.EventTaxonomy.CanonicalKind.type = _root_.com.histmersion.api.catalogue.EventTaxonomy.CanonicalKind
   type MatchesResult = MatchesResult.T
   object MatchesResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type MatchesFilter = MatchesFilter.T
   object MatchesFilter extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type MatchesKind = MatchesKind.T
-  object MatchesKind extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type MatchesKind = _root_.com.histmersion.api.catalogue.EventTaxonomy.CanonicalKind
+  val MatchesKind: _root_.com.histmersion.api.catalogue.EventTaxonomy.CanonicalKind.type = _root_.com.histmersion.api.catalogue.EventTaxonomy.CanonicalKind
   type ConditionFilter = ConditionFilter.T
   object ConditionFilter extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 

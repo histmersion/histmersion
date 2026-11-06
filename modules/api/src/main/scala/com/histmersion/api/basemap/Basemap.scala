@@ -34,8 +34,8 @@ object Basemap:
   object TileYResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type TileYLat = TileYLat.T
   object TileYLat extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type TileYZ = TileYZ.T
-  object TileYZ extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type TileYZ = _root_.com.histmersion.api.basemap.Basemap.TileXZ
+  val TileYZ: _root_.com.histmersion.api.basemap.Basemap.TileXZ.type = _root_.com.histmersion.api.basemap.Basemap.TileXZ
   type TileRangeResultPart1Part1 = TileRangeResultPart1Part1.T
   object TileRangeResultPart1Part1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type TileRangeResultPart1Part2 = TileRangeResultPart1Part2.T
@@ -44,8 +44,8 @@ object Basemap:
   object TileRangeResultPart2Part1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type TileRangeResultPart2Part2 = TileRangeResultPart2Part2.T
   object TileRangeResultPart2Part2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type TileRangeZ = TileRangeZ.T
-  object TileRangeZ extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type TileRangeZ = _root_.com.histmersion.api.basemap.Basemap.TileXZ
+  val TileRangeZ: _root_.com.histmersion.api.basemap.Basemap.TileXZ.type = _root_.com.histmersion.api.basemap.Basemap.TileXZ
   type TileCountResult = TileCountResult.T
   object TileCountResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type TileCountMinZoom = TileCountMinZoom.T

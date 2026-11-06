@@ -26,8 +26,8 @@ object Fmt:
   object PeriodStrB extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type ColorResult = ColorResult.T
   object ColorResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type ColorT = ColorT.T
-  object ColorT extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type ColorT = _root_.com.histmersion.web.Fmt.ColorOnT
+  val ColorT: _root_.com.histmersion.web.Fmt.ColorOnT.type = _root_.com.histmersion.web.Fmt.ColorOnT
   type ColorOnResult = ColorOnResult.T
   object ColorOnResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type ColorOnStopsPart1 = ColorOnStopsPart1.T
@@ -52,8 +52,8 @@ object Fmt:
   object DisplayS extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type DisplayTagResult = DisplayTagResult.T
   object DisplayTagResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type DisplayTagS = DisplayTagS.T
-  object DisplayTagS extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type DisplayTagS = _root_.com.histmersion.web.Fmt.DisplayS
+  val DisplayTagS: _root_.com.histmersion.web.Fmt.DisplayS.type = _root_.com.histmersion.web.Fmt.DisplayS
   type EscResult = EscResult.T
   object EscResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type EscS = EscS.T

@@ -326,8 +326,8 @@ object ApiClient:
   object EnqueueReviewSlug extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type FetchHtmlResult = FetchHtmlResult.T
   object FetchHtmlResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type FetchHtmlUrl = FetchHtmlUrl.T
-  object FetchHtmlUrl extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type FetchHtmlUrl = _root_.com.histmersion.web.ApiClient.FetchTextUrl
+  val FetchHtmlUrl: _root_.com.histmersion.web.ApiClient.FetchTextUrl.type = _root_.com.histmersion.web.ApiClient.FetchTextUrl
   type TextResult = TextResult.T
   object TextResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type TextEpPart3 = TextEpPart3.T

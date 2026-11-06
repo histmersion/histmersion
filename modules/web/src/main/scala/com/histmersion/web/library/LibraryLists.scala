@@ -28,10 +28,10 @@ object LibraryLists:
   object KeyResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type KeysResult = KeysResult.T
   object KeysResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type TurnToOffset = TurnToOffset.T
-  object TurnToOffset extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type ReadSourcesOffset = ReadSourcesOffset.T
-  object ReadSourcesOffset extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type TurnToOffset = _root_.com.histmersion.web.library.LibraryLists.ReadArticlesOffset
+  val TurnToOffset: _root_.com.histmersion.web.library.LibraryLists.ReadArticlesOffset.type = _root_.com.histmersion.web.library.LibraryLists.ReadArticlesOffset
+  type ReadSourcesOffset = _root_.com.histmersion.web.library.LibraryLists.ReadArticlesOffset
+  val ReadSourcesOffset: _root_.com.histmersion.web.library.LibraryLists.ReadArticlesOffset.type = _root_.com.histmersion.web.library.LibraryLists.ReadArticlesOffset
   type ReadArticlesOffset = ReadArticlesOffset.T
   object ReadArticlesOffset extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
 

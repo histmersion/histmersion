@@ -30,12 +30,12 @@ private[places] object TreeRepo:
   object ClosureResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type ClosureIds = ClosureIds.T
   object ClosureIds extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type ClosureParamsIds = ClosureParamsIds.T
-  object ClosureParamsIds extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type NodesQueryIds = NodesQueryIds.T
-  object NodesQueryIds extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type RelationsQueryIds = RelationsQueryIds.T
-  object RelationsQueryIds extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type ClosureParamsIds = _root_.com.histmersion.domain.catalogue.places.TreeRepo.ClosureIds
+  val ClosureParamsIds: _root_.com.histmersion.domain.catalogue.places.TreeRepo.ClosureIds.type = _root_.com.histmersion.domain.catalogue.places.TreeRepo.ClosureIds
+  type NodesQueryIds = _root_.com.histmersion.domain.catalogue.places.TreeRepo.ClosureIds
+  val NodesQueryIds: _root_.com.histmersion.domain.catalogue.places.TreeRepo.ClosureIds.type = _root_.com.histmersion.domain.catalogue.places.TreeRepo.ClosureIds
+  type RelationsQueryIds = _root_.com.histmersion.domain.catalogue.places.TreeRepo.ClosureIds
+  val RelationsQueryIds: _root_.com.histmersion.domain.catalogue.places.TreeRepo.ClosureIds.type = _root_.com.histmersion.domain.catalogue.places.TreeRepo.ClosureIds
   type GazetteerPlaceIds = GazetteerPlaceIds.T
   object GazetteerPlaceIds extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 

@@ -20,8 +20,8 @@ object Notes:
   object ToImportForce extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type BodyResult = BodyResult.T
   object BodyResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type BodyText = BodyText.T
-  object BodyText extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type BodyText = _root_.com.histmersion.cli.Notes.FrontmatterText
+  val BodyText: _root_.com.histmersion.cli.Notes.FrontmatterText.type = _root_.com.histmersion.cli.Notes.FrontmatterText
   type FiguresCitekey = FiguresCitekey.T
   object FiguresCitekey extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type FiguresMaxBytes = FiguresMaxBytes.T
@@ -30,8 +30,8 @@ object Notes:
   object FiguresMaxCount extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type MdPathResult = MdPathResult.T
   object MdPathResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type MdPathText = MdPathText.T
-  object MdPathText extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type MdPathText = _root_.com.histmersion.cli.Notes.FrontmatterText
+  val MdPathText: _root_.com.histmersion.cli.Notes.FrontmatterText.type = _root_.com.histmersion.cli.Notes.FrontmatterText
   type FrontmatterResult = FrontmatterResult.T
   object FrontmatterResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type FrontmatterText = FrontmatterText.T

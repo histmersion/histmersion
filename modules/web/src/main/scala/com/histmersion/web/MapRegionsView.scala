@@ -25,8 +25,8 @@ object MapRegionsView:
   object CurrentDryRun extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type ChooseId = ChooseId.T
   object ChooseId extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type StartDryRun = StartDryRun.T
-  object StartDryRun extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type StartDryRun = _root_.com.histmersion.web.MapRegionsView.CurrentDryRun
+  val StartDryRun: _root_.com.histmersion.web.MapRegionsView.CurrentDryRun.type = _root_.com.histmersion.web.MapRegionsView.CurrentDryRun
   type CanDownload = CanDownload.T
   object CanDownload extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type Busy = Busy.T

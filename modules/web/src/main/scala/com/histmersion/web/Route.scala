@@ -119,20 +119,20 @@ object Route:
   object DecodeResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type DecodeS = DecodeS.T
   object DecodeS extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type ParsePath = ParsePath.T
-  object ParsePath extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type ParsePath = _root_.com.histmersion.web.Route.SegmentsPath
+  val ParsePath: _root_.com.histmersion.web.Route.SegmentsPath.type = _root_.com.histmersion.web.Route.SegmentsPath
   type HrefOfResult = HrefOfResult.T
   object HrefOfResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type QueueItemResult = QueueItemResult.T
   object QueueItemResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type QueueItemId = QueueItemId.T
   object QueueItemId extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type LegacyPath = LegacyPath.T
-  object LegacyPath extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type LegacyPath = _root_.com.histmersion.web.Route.SegmentsPath
+  val LegacyPath: _root_.com.histmersion.web.Route.SegmentsPath.type = _root_.com.histmersion.web.Route.SegmentsPath
   type IsAppPathResult = IsAppPathResult.T
   object IsAppPathResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type IsAppPathPath = IsAppPathPath.T
-  object IsAppPathPath extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type IsAppPathPath = _root_.com.histmersion.web.Route.SegmentsPath
+  val IsAppPathPath: _root_.com.histmersion.web.Route.SegmentsPath.type = _root_.com.histmersion.web.Route.SegmentsPath
 
   def front(p: PlaceTab): Route = p match
     case PlaceTab.Explore  => Explore

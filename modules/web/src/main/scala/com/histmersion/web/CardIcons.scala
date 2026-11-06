@@ -28,8 +28,8 @@ object CardIcons:
   object KindOfHasCover extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type SourceResult = SourceResult.T
   object SourceResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type SourceHasCover = SourceHasCover.T
-  object SourceHasCover extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type SourceHasCover = _root_.com.histmersion.web.CardIcons.KindOfHasCover
+  val SourceHasCover: _root_.com.histmersion.web.CardIcons.KindOfHasCover.type = _root_.com.histmersion.web.CardIcons.KindOfHasCover
   type PlaceResult = PlaceResult.T
   object PlaceResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type PlaceKind = PlaceKind.T

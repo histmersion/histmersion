@@ -16,8 +16,8 @@ object NoMap:
   object MessageWhy extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type HtmlResult = HtmlResult.T
   object HtmlResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type HtmlWhy = HtmlWhy.T
-  object HtmlWhy extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type HtmlWhy = _root_.com.histmersion.web.map.NoMap.MessageWhy
+  val HtmlWhy: _root_.com.histmersion.web.map.NoMap.MessageWhy.type = _root_.com.histmersion.web.map.NoMap.MessageWhy
 
   final class Shapes(val id: Shapes.Id) extends ShapeSet:
     // `var`: the ids the app set, read back as it set them

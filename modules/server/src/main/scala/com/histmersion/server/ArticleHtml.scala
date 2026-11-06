@@ -37,12 +37,12 @@ object ArticleHtml:
   object SourceUrlQ extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type ToggleResult = ToggleResult.T
   object ToggleResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type ToggleCk = ToggleCk.T
-  object ToggleCk extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type ToggleCk = _root_.com.histmersion.server.ArticleHtml.LinkCk
+  val ToggleCk: _root_.com.histmersion.server.ArticleHtml.LinkCk.type = _root_.com.histmersion.server.ArticleHtml.LinkCk
   type ToggleFull = ToggleFull.T
   object ToggleFull extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type ToggleQ = ToggleQ.T
-  object ToggleQ extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type ToggleQ = _root_.com.histmersion.server.ArticleHtml.LinkQ
+  val ToggleQ: _root_.com.histmersion.server.ArticleHtml.LinkQ.type = _root_.com.histmersion.server.ArticleHtml.LinkQ
   type MatchNavResult = MatchNavResult.T
   object MatchNavResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type MatchNavMatches = MatchNavMatches.T

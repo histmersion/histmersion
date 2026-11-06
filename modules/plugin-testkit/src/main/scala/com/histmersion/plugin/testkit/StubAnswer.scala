@@ -12,8 +12,8 @@ object StubAnswer:
   object OkContentType extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type TextBody = TextBody.T
   object TextBody extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type TextContentType = TextContentType.T
-  object TextContentType extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type TextContentType = _root_.com.histmersion.plugin.testkit.StubAnswer.OkContentType
+  val TextContentType: _root_.com.histmersion.plugin.testkit.StubAnswer.OkContentType.type = _root_.com.histmersion.plugin.testkit.StubAnswer.OkContentType
 
   type Body = Body.T
   object Body extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Array[_root_.scala.Byte], _root_.io.github.iltotore.iron.constraint.any.Pure]

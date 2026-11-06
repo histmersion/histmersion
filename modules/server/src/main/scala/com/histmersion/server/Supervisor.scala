@@ -56,12 +56,12 @@ object Supervisor:
   object PgOptionsSettingsPart2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type PgStartResult = PgStartResult.T
   object PgStartResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type PgStartPort = PgStartPort.T
-  object PgStartPort extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type PgStartSettingsPart1 = PgStartSettingsPart1.T
-  object PgStartSettingsPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type PgStartSettingsPart2 = PgStartSettingsPart2.T
-  object PgStartSettingsPart2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type PgStartPort = _root_.com.histmersion.server.Supervisor.PgOptionsPort
+  val PgStartPort: _root_.com.histmersion.server.Supervisor.PgOptionsPort.type = _root_.com.histmersion.server.Supervisor.PgOptionsPort
+  type PgStartSettingsPart1 = _root_.com.histmersion.server.Supervisor.PgOptionsSettingsPart1
+  val PgStartSettingsPart1: _root_.com.histmersion.server.Supervisor.PgOptionsSettingsPart1.type = _root_.com.histmersion.server.Supervisor.PgOptionsSettingsPart1
+  type PgStartSettingsPart2 = _root_.com.histmersion.server.Supervisor.PgOptionsSettingsPart2
+  val PgStartSettingsPart2: _root_.com.histmersion.server.Supervisor.PgOptionsSettingsPart2.type = _root_.com.histmersion.server.Supervisor.PgOptionsSettingsPart2
   type MbResult = MbResult.T
   object MbResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type MbBytes = MbBytes.T
@@ -80,8 +80,8 @@ object Supervisor:
   object PgSettingsResultPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type PgSettingsResultPart2 = PgSettingsResultPart2.T
   object PgSettingsResultPart2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type PgSettingsRamBytes = PgSettingsRamBytes.T
-  object PgSettingsRamBytes extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type PgSettingsRamBytes = _root_.com.histmersion.server.Supervisor.SizeRamBytes
+  val PgSettingsRamBytes: _root_.com.histmersion.server.Supervisor.SizeRamBytes.type = _root_.com.histmersion.server.Supervisor.SizeRamBytes
   type PhysicalMemoryResult = PhysicalMemoryResult.T
   object PhysicalMemoryResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type PhysicalMemoryOsName = PhysicalMemoryOsName.T
@@ -102,12 +102,12 @@ object Supervisor:
   object BundledResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type ReloadSourceReadResultPart1 = ReloadSourceReadResultPart1.T
   object ReloadSourceReadResultPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type InitClusterUser = InitClusterUser.T
-  object InitClusterUser extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type InitClusterUser = _root_.com.histmersion.server.Supervisor.InitdbUser
+  val InitClusterUser: _root_.com.histmersion.server.Supervisor.InitdbUser.type = _root_.com.histmersion.server.Supervisor.InitdbUser
   type InitClusterPassword = InitClusterPassword.T
   object InitClusterPassword extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type SuperviseConverterPort = SuperviseConverterPort.T
-  object SuperviseConverterPort extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type SuperviseConverterPort = _root_.com.histmersion.server.Supervisor.ConverterCmdPort
+  val SuperviseConverterPort: _root_.com.histmersion.server.Supervisor.ConverterCmdPort.type = _root_.com.histmersion.server.Supervisor.ConverterCmdPort
   type RunResultPart1 = RunResultPart1.T
   object RunResultPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type RunResultPart2 = RunResultPart2.T

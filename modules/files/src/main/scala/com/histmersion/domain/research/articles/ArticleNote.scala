@@ -35,8 +35,8 @@ object ArticleNote:
   object RenderGenerated extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type FilterMapResultPart1 = FilterMapResultPart1.T
   object FilterMapResultPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type ParseText = ParseText.T
-  object ParseText extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type ParseText = _root_.com.histmersion.domain.research.articles.ArticleNote.SplitText
+  val ParseText: _root_.com.histmersion.domain.research.articles.ArticleNote.SplitText.type = _root_.com.histmersion.domain.research.articles.ArticleNote.SplitText
   type ParseFallbackSlug = ParseFallbackSlug.T
   object ParseFallbackSlug extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type ParseFallbackKind = ParseFallbackKind.T
@@ -57,22 +57,22 @@ object ArticleNote:
   object RawK extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type StrResult = StrResult.T
   object StrResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type StrMPart1 = StrMPart1.T
-  object StrMPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type StrK = StrK.T
-  object StrK extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type StrMPart1 = _root_.com.histmersion.domain.research.articles.ArticleNote.RawMPart1
+  val StrMPart1: _root_.com.histmersion.domain.research.articles.ArticleNote.RawMPart1.type = _root_.com.histmersion.domain.research.articles.ArticleNote.RawMPart1
+  type StrK = _root_.com.histmersion.domain.research.articles.ArticleNote.RawK
+  val StrK: _root_.com.histmersion.domain.research.articles.ArticleNote.RawK.type = _root_.com.histmersion.domain.research.articles.ArticleNote.RawK
   type ListResult = ListResult.T
   object ListResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type ListMPart1 = ListMPart1.T
-  object ListMPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type ListK = ListK.T
-  object ListK extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type ListMPart1 = _root_.com.histmersion.domain.research.articles.ArticleNote.RawMPart1
+  val ListMPart1: _root_.com.histmersion.domain.research.articles.ArticleNote.RawMPart1.type = _root_.com.histmersion.domain.research.articles.ArticleNote.RawMPart1
+  type ListK = _root_.com.histmersion.domain.research.articles.ArticleNote.RawK
+  val ListK: _root_.com.histmersion.domain.research.articles.ArticleNote.RawK.type = _root_.com.histmersion.domain.research.articles.ArticleNote.RawK
   type LongResult = LongResult.T
   object LongResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type LongMPart1 = LongMPart1.T
-  object LongMPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type LongK = LongK.T
-  object LongK extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type LongMPart1 = _root_.com.histmersion.domain.research.articles.ArticleNote.RawMPart1
+  val LongMPart1: _root_.com.histmersion.domain.research.articles.ArticleNote.RawMPart1.type = _root_.com.histmersion.domain.research.articles.ArticleNote.RawMPart1
+  type LongK = _root_.com.histmersion.domain.research.articles.ArticleNote.RawK
+  val LongK: _root_.com.histmersion.domain.research.articles.ArticleNote.RawK.type = _root_.com.histmersion.domain.research.articles.ArticleNote.RawK
 
   def render(a: Article, generated: Option[com.histmersion.domain.research.articles.ArticleNote.RenderGenerated] = None): com.histmersion.domain.research.articles.ArticleNote.RenderResult =
     val reasons = Option.when(a.reasons.nonEmpty) {

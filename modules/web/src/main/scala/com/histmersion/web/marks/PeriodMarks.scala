@@ -29,16 +29,16 @@ object PeriodMarks:
   object StartChangesFrom extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type StartChangesTo = StartChangesTo.T
   object StartChangesTo extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type StartAtFrom = StartAtFrom.T
-  object StartAtFrom extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type StartAtTo = StartAtTo.T
-  object StartAtTo extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type StartAtFrom = _root_.com.histmersion.web.marks.PeriodMarks.StartChangesFrom
+  val StartAtFrom: _root_.com.histmersion.web.marks.PeriodMarks.StartChangesFrom.type = _root_.com.histmersion.web.marks.PeriodMarks.StartChangesFrom
+  type StartAtTo = _root_.com.histmersion.web.marks.PeriodMarks.StartChangesTo
+  val StartAtTo: _root_.com.histmersion.web.marks.PeriodMarks.StartChangesTo.type = _root_.com.histmersion.web.marks.PeriodMarks.StartChangesTo
   type AddName = AddName.T
   object AddName extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type AddFrom = AddFrom.T
-  object AddFrom extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type AddTo = AddTo.T
-  object AddTo extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type AddFrom = _root_.com.histmersion.web.marks.PeriodMarks.TargetFrom
+  val AddFrom: _root_.com.histmersion.web.marks.PeriodMarks.TargetFrom.type = _root_.com.histmersion.web.marks.PeriodMarks.TargetFrom
+  type AddTo = _root_.com.histmersion.web.marks.PeriodMarks.TargetTo
+  val AddTo: _root_.com.histmersion.web.marks.PeriodMarks.TargetTo.type = _root_.com.histmersion.web.marks.PeriodMarks.TargetTo
   type SectionNaming = SectionNaming.T
   object SectionNaming extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type SectionCurrentResultPart1 = SectionCurrentResultPart1.T

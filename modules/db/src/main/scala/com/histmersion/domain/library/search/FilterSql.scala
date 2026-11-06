@@ -53,32 +53,32 @@ object FilterSql:
   object PlaceIdsSourceIds extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type PlaceIdsFindingIds = PlaceIdsFindingIds.T
   object PlaceIdsFindingIds extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type PlaceIdsFindingFa = PlaceIdsFindingFa.T
-  object PlaceIdsFindingFa extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type PlaceIdsFindingFa = _root_.com.histmersion.domain.library.search.FilterSql.FindingPeriodWhereFa
+  val PlaceIdsFindingFa: _root_.com.histmersion.domain.library.search.FilterSql.FindingPeriodWhereFa.type = _root_.com.histmersion.domain.library.search.FilterSql.FindingPeriodWhereFa
   type PlaceNameSourceP = PlaceNameSourceP.T
   object PlaceNameSourceP extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type PlaceSourceP = PlaceSourceP.T
-  object PlaceSourceP extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type PlaceSourceP = _root_.com.histmersion.domain.library.search.FilterSql.PlaceNameSourceP
+  val PlaceSourceP: _root_.com.histmersion.domain.library.search.FilterSql.PlaceNameSourceP.type = _root_.com.histmersion.domain.library.search.FilterSql.PlaceNameSourceP
   type PlaceFindingP = PlaceFindingP.T
   object PlaceFindingP extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type PlaceFindingFa = PlaceFindingFa.T
-  object PlaceFindingFa extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type PlaceFindingFa = _root_.com.histmersion.domain.library.search.FilterSql.FindingPeriodWhereFa
+  val PlaceFindingFa: _root_.com.histmersion.domain.library.search.FilterSql.FindingPeriodWhereFa.type = _root_.com.histmersion.domain.library.search.FilterSql.FindingPeriodWhereFa
   type TitleLikeResult = TitleLikeResult.T
   object TitleLikeResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type EnvelopesGeom = EnvelopesGeom.T
   object EnvelopesGeom extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type HasFindingPlaceCriteriaResult = HasFindingPlaceCriteriaResult.T
   object HasFindingPlaceCriteriaResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type FindingPlaceWhereFa = FindingPlaceWhereFa.T
-  object FindingPlaceWhereFa extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type FindingPlaceWhereFa = _root_.com.histmersion.domain.library.search.FilterSql.FindingPeriodWhereFa
+  val FindingPlaceWhereFa: _root_.com.histmersion.domain.library.search.FilterSql.FindingPeriodWhereFa.type = _root_.com.histmersion.domain.library.search.FilterSql.FindingPeriodWhereFa
   type FindingPlaceWhereSa = FindingPlaceWhereSa.T
   object FindingPlaceWhereSa extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type FindingPeriodWhereFa = FindingPeriodWhereFa.T
   object FindingPeriodWhereFa extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type FindingWhereFa = FindingWhereFa.T
-  object FindingWhereFa extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type FindingWhereSa = FindingWhereSa.T
-  object FindingWhereSa extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type FindingWhereFa = _root_.com.histmersion.domain.library.search.FilterSql.FindingPeriodWhereFa
+  val FindingWhereFa: _root_.com.histmersion.domain.library.search.FilterSql.FindingPeriodWhereFa.type = _root_.com.histmersion.domain.library.search.FilterSql.FindingPeriodWhereFa
+  type FindingWhereSa = _root_.com.histmersion.domain.library.search.FilterSql.FindingPlaceWhereSa
+  val FindingWhereSa: _root_.com.histmersion.domain.library.search.FilterSql.FindingPlaceWhereSa.type = _root_.com.histmersion.domain.library.search.FilterSql.FindingPlaceWhereSa
   type OrderByResult = OrderByResult.T
   object OrderByResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type OrderBySqlUseCte = OrderBySqlUseCte.T

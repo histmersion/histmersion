@@ -355,8 +355,8 @@ object Article:
     object SqueezeS extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
     type OccurrencesResult = OccurrencesResult.T
     object OccurrencesResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
-    type OccurrencesText = OccurrencesText.T
-    object OccurrencesText extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type OccurrencesText = _root_.com.histmersion.api.research.Article.Edits.CutText
+    val OccurrencesText: _root_.com.histmersion.api.research.Article.Edits.CutText.type = _root_.com.histmersion.api.research.Article.Edits.CutText
     type OccurrencesNeedle = OccurrencesNeedle.T
     object OccurrencesNeedle extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
     type LocateResultPart1 = LocateResultPart1.T
@@ -365,8 +365,8 @@ object Article:
     object LocateResultPart2Part1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
     type LocateResultPart2Part2 = LocateResultPart2Part2.T
     object LocateResultPart2Part2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
-    type LocateText = LocateText.T
-    object LocateText extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type LocateText = _root_.com.histmersion.api.research.Article.Edits.CutText
+    val LocateText: _root_.com.histmersion.api.research.Article.Edits.CutText.type = _root_.com.histmersion.api.research.Article.Edits.CutText
     type LocateAnchor = LocateAnchor.T
     object LocateAnchor extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
     type CutResult = CutResult.T
@@ -381,8 +381,8 @@ object Article:
     object ApplyOneResultPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
     type ApplyOneResultPart2 = ApplyOneResultPart2.T
     object ApplyOneResultPart2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-    type ApplyOneText = ApplyOneText.T
-    object ApplyOneText extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type ApplyOneText = _root_.com.histmersion.api.research.Article.Edits.CutText
+    val ApplyOneText: _root_.com.histmersion.api.research.Article.Edits.CutText.type = _root_.com.histmersion.api.research.Article.Edits.CutText
     type ApplyAllBody = ApplyAllBody.T
     object ApplyAllBody extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
     type ApplyAllRefuseResult = ApplyAllRefuseResult.T
@@ -895,8 +895,8 @@ object Article:
     object LinkMarkdownDisplayLabelResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
     type ResolveMarkdownResult = ResolveMarkdownResult.T
     object ResolveMarkdownResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-    type ResolveMarkdownMd = ResolveMarkdownMd.T
-    object ResolveMarkdownMd extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type ResolveMarkdownMd = _root_.com.histmersion.api.research.Article.Links.LinkMarkdownMd
+    val ResolveMarkdownMd: _root_.com.histmersion.api.research.Article.Links.LinkMarkdownMd.type = _root_.com.histmersion.api.research.Article.Links.LinkMarkdownMd
     type ResolveMarkdownIsSourceArg1 = ResolveMarkdownIsSourceArg1.T
     object ResolveMarkdownIsSourceArg1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
     type ResolveMarkdownIsSourceResult = ResolveMarkdownIsSourceResult.T

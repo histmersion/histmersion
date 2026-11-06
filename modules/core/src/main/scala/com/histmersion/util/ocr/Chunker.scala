@@ -30,8 +30,8 @@ object Chunker:
   object SplitResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type SplitSection = SplitSection.T
   object SplitSection extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type SplitMax = SplitMax.T
-  object SplitMax extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type SplitMax = _root_.com.histmersion.util.ocr.Chunker.HardSplitMax
+  val SplitMax: _root_.com.histmersion.util.ocr.Chunker.HardSplitMax.type = _root_.com.histmersion.util.ocr.Chunker.HardSplitMax
   type HardSplitResult = HardSplitResult.T
   object HardSplitResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type HardSplitP = HardSplitP.T

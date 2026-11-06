@@ -53,10 +53,10 @@ object ContextMenu:
   object ShowUnderTitle extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type NativeWantedResult = NativeWantedResult.T
   object NativeWantedResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type OnTitle = OnTitle.T
-  object OnTitle extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type ButtonTitle = ButtonTitle.T
-  object ButtonTitle extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type OnTitle = _root_.com.histmersion.web.ui.ContextMenu.ShowUnderTitle
+  val OnTitle: _root_.com.histmersion.web.ui.ContextMenu.ShowUnderTitle.type = _root_.com.histmersion.web.ui.ContextMenu.ShowUnderTitle
+  type ButtonTitle = _root_.com.histmersion.web.ui.ContextMenu.ShowUnderTitle
+  val ButtonTitle: _root_.com.histmersion.web.ui.ContextMenu.ShowUnderTitle.type = _root_.com.histmersion.web.ui.ContextMenu.ShowUnderTitle
   type ButtonExtraCls = ButtonExtraCls.T
   object ButtonExtraCls extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 

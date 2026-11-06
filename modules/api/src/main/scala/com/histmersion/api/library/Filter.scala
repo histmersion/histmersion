@@ -85,18 +85,18 @@ object Filter:
   object OfYearFrom extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type OfYearTo = OfYearTo.T
   object OfYearTo extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type OfFrom = OfFrom.T
-  object OfFrom extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type OfTo = OfTo.T
-  object OfTo extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type OfMinLon = OfMinLon.T
-  object OfMinLon extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type OfMinLat = OfMinLat.T
-  object OfMinLat extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type OfMaxLon = OfMaxLon.T
-  object OfMaxLon extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type OfMaxLat = OfMaxLat.T
-  object OfMaxLat extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type OfFrom = _root_.com.histmersion.api.library.Filter.PeriodOfFrom
+  val OfFrom: _root_.com.histmersion.api.library.Filter.PeriodOfFrom.type = _root_.com.histmersion.api.library.Filter.PeriodOfFrom
+  type OfTo = _root_.com.histmersion.api.library.Filter.PeriodOfTo
+  val OfTo: _root_.com.histmersion.api.library.Filter.PeriodOfTo.type = _root_.com.histmersion.api.library.Filter.PeriodOfTo
+  type OfMinLon = _root_.com.histmersion.api.library.Filter.BboxOfMinLon
+  val OfMinLon: _root_.com.histmersion.api.library.Filter.BboxOfMinLon.type = _root_.com.histmersion.api.library.Filter.BboxOfMinLon
+  type OfMinLat = _root_.com.histmersion.api.library.Filter.BboxOfMinLat
+  val OfMinLat: _root_.com.histmersion.api.library.Filter.BboxOfMinLat.type = _root_.com.histmersion.api.library.Filter.BboxOfMinLat
+  type OfMaxLon = _root_.com.histmersion.api.library.Filter.BboxOfMaxLon
+  val OfMaxLon: _root_.com.histmersion.api.library.Filter.BboxOfMaxLon.type = _root_.com.histmersion.api.library.Filter.BboxOfMaxLon
+  type OfMaxLat = _root_.com.histmersion.api.library.Filter.BboxOfMaxLat
+  val OfMaxLat: _root_.com.histmersion.api.library.Filter.BboxOfMaxLat.type = _root_.com.histmersion.api.library.Filter.BboxOfMaxLat
   type OfSort = OfSort.T
   object OfSort extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type OfLimit = OfLimit.T

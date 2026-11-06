@@ -19,8 +19,8 @@ object MapLibreStyles:
 
   type BackgroundResult = BackgroundResult.T
   object BackgroundResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type StyleOrigin = StyleOrigin.T
-  object StyleOrigin extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type StyleOrigin = _root_.com.histmersion.web.map.maplibre.MapLibreStyles.ContoursOrigin
+  val StyleOrigin: _root_.com.histmersion.web.map.maplibre.MapLibreStyles.ContoursOrigin.type = _root_.com.histmersion.web.map.maplibre.MapLibreStyles.ContoursOrigin
   type CreditsResult = CreditsResult.T
   object CreditsResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type ExpandTemplate = ExpandTemplate.T
@@ -35,8 +35,8 @@ object MapLibreStyles:
   object ResolveNames extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type ResolveReduced = ResolveReduced.T
   object ResolveReduced extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type ResolveOrigin = ResolveOrigin.T
-  object ResolveOrigin extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type ResolveOrigin = _root_.com.histmersion.web.map.maplibre.MapLibreStyles.ContoursOrigin
+  val ResolveOrigin: _root_.com.histmersion.web.map.maplibre.MapLibreStyles.ContoursOrigin.type = _root_.com.histmersion.web.map.maplibre.MapLibreStyles.ContoursOrigin
   type ResolveSeaDepth = ResolveSeaDepth.T
   object ResolveSeaDepth extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type ReplaceStringFrom = ReplaceStringFrom.T

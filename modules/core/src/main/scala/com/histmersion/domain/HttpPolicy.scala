@@ -42,8 +42,8 @@ object HttpPolicy:
   object DecideCode extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type DecideRetryAfter = DecideRetryAfter.T
   object DecideRetryAfter extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type DecideAttempt = DecideAttempt.T
-  object DecideAttempt extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type DecideAttempt = _root_.com.histmersion.domain.HttpPolicy.BackoffMsAttempt
+  val DecideAttempt: _root_.com.histmersion.domain.HttpPolicy.BackoffMsAttempt.type = _root_.com.histmersion.domain.HttpPolicy.BackoffMsAttempt
   type DecideMaxRetries = DecideMaxRetries.T
   object DecideMaxRetries extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type DecideMaxRetryAfterSeconds = DecideMaxRetryAfterSeconds.T

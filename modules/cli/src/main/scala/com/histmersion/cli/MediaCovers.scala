@@ -29,10 +29,10 @@ object MediaCovers:
   object LinkedResultPart2Part1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type LinkedResultPart2Part2 = LinkedResultPart2Part2.T
   object LinkedResultPart2Part2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type LinkedOnly = LinkedOnly.T
-  object LinkedOnly extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type LinkedRefresh = LinkedRefresh.T
-  object LinkedRefresh extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type LinkedOnly = _root_.com.histmersion.cli.MediaCovers.LinkedQueryOnly
+  val LinkedOnly: _root_.com.histmersion.cli.MediaCovers.LinkedQueryOnly.type = _root_.com.histmersion.cli.MediaCovers.LinkedQueryOnly
+  type LinkedRefresh = _root_.com.histmersion.cli.MediaCovers.LinkedQueryRefresh
+  val LinkedRefresh: _root_.com.histmersion.cli.MediaCovers.LinkedQueryRefresh.type = _root_.com.histmersion.cli.MediaCovers.LinkedQueryRefresh
   type OneCk = OneCk.T
   object OneCk extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type OneDryRun = OneDryRun.T
@@ -41,12 +41,12 @@ object MediaCovers:
   object CalibreStepResultPart2Part2Part1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type CalibreStepResultPart2Part2Part2 = CalibreStepResultPart2Part2Part2.T
   object CalibreStepResultPart2Part2Part2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type CalibreStepOnly = CalibreStepOnly.T
-  object CalibreStepOnly extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type CalibreStepRefresh = CalibreStepRefresh.T
-  object CalibreStepRefresh extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type CalibreStepDryRun = CalibreStepDryRun.T
-  object CalibreStepDryRun extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type CalibreStepOnly = _root_.com.histmersion.cli.MediaCovers.LinkedQueryOnly
+  val CalibreStepOnly: _root_.com.histmersion.cli.MediaCovers.LinkedQueryOnly.type = _root_.com.histmersion.cli.MediaCovers.LinkedQueryOnly
+  type CalibreStepRefresh = _root_.com.histmersion.cli.MediaCovers.LinkedQueryRefresh
+  val CalibreStepRefresh: _root_.com.histmersion.cli.MediaCovers.LinkedQueryRefresh.type = _root_.com.histmersion.cli.MediaCovers.LinkedQueryRefresh
+  type CalibreStepDryRun = _root_.com.histmersion.cli.MediaCovers.OneDryRun
+  val CalibreStepDryRun: _root_.com.histmersion.cli.MediaCovers.OneDryRun.type = _root_.com.histmersion.cli.MediaCovers.OneDryRun
   type CalibreStepLimit = CalibreStepLimit.T
   object CalibreStepLimit extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
