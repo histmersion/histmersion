@@ -35,6 +35,8 @@ final case class Filter(
   def hasFindingCriteria: Boolean = (period.isDefined || bbox.isDefined || places.nonEmpty || tags.nonEmpty)
 
 object Filter:
+  type Last = Last.T
+  object Last extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type Latitude = Latitude.T
   object Latitude extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type Longitude = Longitude.T

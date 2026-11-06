@@ -76,12 +76,12 @@ object SourcesMarkdown:
     else
       def block(title: String, rs: Vector[NeighborRow])(item: NeighborRow => com.histmersion.api.library.Source.Neighbor.Line): com.histmersion.api.Markdown.Text =
         if rs.isEmpty then _root_.com.histmersion.api.Markdown.Text("") else _root_.com.histmersion.api.Markdown.Text(s"\n\n**$title**\n${rs.map(r => s"- _${r.kind}_ → ${item(r)}").mkString("\n")}")
-      def sources(dir: com.histmersion.api.library.Source.Neighbor.Direction.Wire) = rows.filter(r => r.target == NeighborTarget.Source && r.direction == dir)
+      def sources(dir: com.histmersion.api.library.ContradictionRow.Direction.Wire) = rows.filter(r => r.target == NeighborTarget.Source && r.direction == dir)
       val sourceItem: NeighborRow => com.histmersion.api.library.Source.Neighbor.Line = r =>
         val st = r.status.map(s => s" _(${s.wire})_").getOrElse("")
         _root_.com.histmersion.api.library.Source.Neighbor.Line(s"[[${r.citekey}]]${r.title.map(t => s" — $t").getOrElse("")}$st")
       s"### Sources · $citekey" +
-        block(("Outgoing (this → other)"), sources(_root_.com.histmersion.api.library.Source.Neighbor.Direction.Wire("out")))(sourceItem) +
+        block(("Outgoing (this → other)"), sources(_root_.com.histmersion.api.library.ContradictionRow.Direction.Wire("out")))(sourceItem) +
         block("Incoming (other → this)", sources("in"))(sourceItem) +
         block("Articles", rows.filter(_.target == NeighborTarget.Article))(r =>
           s"[${r.title.getOrElse(Label.display(r.citekey))}](/article/${r.citekey})"

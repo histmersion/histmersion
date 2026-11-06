@@ -5,8 +5,14 @@ object AssetLinks:
   object Body extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type Html = Html.T
   object Html extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type Kind = Kind.T
+  object Kind extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type Target = Target.T
   object Target extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type TargetId = TargetId.T
+  object TargetId extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type TargetKind = TargetKind.T
+  object TargetKind extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type Title = Title.T
   object Title extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type Url = Url.T
@@ -121,13 +127,13 @@ object AssetLinks:
     _root_.com.histmersion.api.media.AssetLinks.Html(BareImg.replaceAllIn((html).value, _ => java.util.regex.Matcher.quoteReplacement("""<img loading="lazy" """)))
 
   /** Must match the converter's `_safe_name`: either side may name a file. */
-  def safeName(raw: String): com.histmersion.api.media.Asset.FileName = com.histmersion.api.text.SafeName.of(raw)
+  def safeName(raw: String): com.histmersion.api.exchange.Bundle.Asset.FileName = com.histmersion.api.text.SafeName.of(raw)
 
-  def mimeOf(name: com.histmersion.api.media.Asset.Extension): com.histmersion.api.media.Asset.Mime =
+  def mimeOf(name: com.histmersion.api.exchange.Bundle.Asset.Extension): com.histmersion.api.exchange.Bundle.Asset.Mime =
     (name).value.toLowerCase.reverse.takeWhile(_ != '.').reverse match
-      case "png"          => _root_.com.histmersion.api.media.Asset.Mime("image/png")
-      case "jpg" | "jpeg" => _root_.com.histmersion.api.media.Asset.Mime("image/jpeg")
-      case "gif"          => _root_.com.histmersion.api.media.Asset.Mime("image/gif")
-      case "webp"         => _root_.com.histmersion.api.media.Asset.Mime("image/webp")
-      case "svg"          => _root_.com.histmersion.api.media.Asset.Mime("image/svg+xml")
-      case _              => _root_.com.histmersion.api.media.Asset.Mime("application/octet-stream")
+      case "png"          => _root_.com.histmersion.api.exchange.Bundle.Asset.Mime("image/png")
+      case "jpg" | "jpeg" => _root_.com.histmersion.api.exchange.Bundle.Asset.Mime("image/jpeg")
+      case "gif"          => _root_.com.histmersion.api.exchange.Bundle.Asset.Mime("image/gif")
+      case "webp"         => _root_.com.histmersion.api.exchange.Bundle.Asset.Mime("image/webp")
+      case "svg"          => _root_.com.histmersion.api.exchange.Bundle.Asset.Mime("image/svg+xml")
+      case _              => _root_.com.histmersion.api.exchange.Bundle.Asset.Mime("application/octet-stream")

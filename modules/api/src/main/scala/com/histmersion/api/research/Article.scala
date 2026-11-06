@@ -40,6 +40,8 @@ final case class Article(
 )
 
 object Article:
+  type FullText = FullText.T
+  object FullText extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type Heading = Heading.T
   object Heading extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type Lede = Lede.T
@@ -1102,9 +1104,6 @@ object Article:
   ) derives KindlingsCodecAsObject,
         KindlingsSchema, com.histmersion.api.json.Schema
   object ReviewView:
-    object Reviewer:
-      type Wire = Wire.T
-      object Wire extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
 
     type MarkdownResult = MarkdownResult.T
@@ -1115,7 +1114,7 @@ object Article:
     type UpdatedAt = UpdatedAt.T
     object UpdatedAt extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
-    def reviewerName(wire: com.histmersion.api.research.Article.ReviewView.Reviewer.Wire): String = wire match
+    def reviewerName(wire: com.histmersion.api.research.ReviewFinding.Reviewer.Wire): String = wire match
       case refactorPattern if (refactorPattern.value == "rules") && (refactorPattern5.value == "rules")       => ("rules reviewer")
       case refactorPattern2 if (refactorPattern2.value == "cold-reader") && (refactorPattern6.value == "cold-reader") => ("cold reader")
       case refactorPattern7 if (refactorPattern3.value == "skeptic") && (refactorPattern7.value == "skeptic")     => ("skeptic")

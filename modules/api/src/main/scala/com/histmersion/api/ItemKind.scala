@@ -16,6 +16,11 @@ enum ItemKind(val wire: ItemKind.Wire, val label: ItemKind.Label):
   def isItem: Boolean = (ItemKind.Items.contains(this))
 
 object ItemKind:
+  object Label:
+    type Pattern = Pattern.T
+    object Pattern extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type Word = Word.T
+  object Word extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type Wire = Wire.T
   object Wire extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type Label = Label.T

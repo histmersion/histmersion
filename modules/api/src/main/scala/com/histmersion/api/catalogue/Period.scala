@@ -12,8 +12,14 @@ final case class Period(start: com.histmersion.api.catalogue.Year, end: com.hist
   def isPoint: Boolean = (start == end)
 
 object Period:
+  type End = End.T
+  object End extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type Id = Id.T
+  object Id extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type IsoYear = IsoYear.T
   object IsoYear extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type Start = Start.T
+  object Start extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
 
   final case class Detail(

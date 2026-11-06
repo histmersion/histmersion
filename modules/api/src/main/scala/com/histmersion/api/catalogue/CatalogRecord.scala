@@ -33,6 +33,16 @@ final case class CatalogRecord(
       KindlingsSchema, com.histmersion.api.json.Schema:
   def key: (com.histmersion.api.catalogue.CatalogRecord.Provider, com.histmersion.api.catalogue.CatalogRecord.ProviderId) = (_root_.com.histmersion.api.catalogue.CatalogRecord.Provider((provider).value), _root_.com.histmersion.api.catalogue.CatalogRecord.ProviderId((providerId).value))
 object CatalogRecord:
+  object Wikidata:
+    type Class = Class.T
+    object Class extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type ImportClass = ImportClass.T
+    object ImportClass extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type P31Json = P31Json.T
+    object P31Json extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object Group:
+    type Label = Label.T
+    object Label extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type EventId = EventId.T
   object EventId extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 

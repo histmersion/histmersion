@@ -9,6 +9,9 @@ final case class ArchiveFile(name: ArchiveFile.Name, format: Option[ArchiveFile.
       KindlingsSchema, com.histmersion.api.json.Schema
 
 object ArchiveFile:
+  object Format:
+    type Wire = Wire.T
+    object Wire extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type Name = Name.T
   object Name extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type Format = Format.T

@@ -223,7 +223,7 @@ object Gazetteer:
       ordinal: Int,
       defaultSource: Option[com.histmersion.api.catalogue.Gazetteer.SourceInfo.Key] = None
   ): Either[com.histmersion.api.catalogue.Gazetteer.Problem, GazRecord] =
-    Lpf.readFeature(j, _root_.com.histmersion.api.catalogue.Lpf.Kind.Wire(com.histmersion.api.catalogue.Place.Kind.Site), ordinal).flatMap { in =>
+    Lpf.readFeature(j, _root_.com.histmersion.api.Api.ArticleQuery.Kind.Wire(com.histmersion.api.catalogue.Place.Kind.Site), ordinal).flatMap { in =>
       val f = j.asObject.getOrElse(JsonObject.empty)
       val raw = str(f, "@id", "id").orElse(f("properties").flatMap(_.asObject).flatMap(str(_, "@id", "id", "pid")))
       raw.toRight(s"feature #$ordinal has no @id").map { ref =>

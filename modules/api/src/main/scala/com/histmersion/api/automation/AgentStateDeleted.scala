@@ -11,6 +11,9 @@ final case class AgentStateDeleted(
       KindlingsSchema, com.histmersion.api.json.Schema
 
 object AgentStateDeleted:
+  object Key:
+    type Wire = Wire.T
+    object Wire extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type Key = Key.T
   object Key extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type Deleted = Deleted.T

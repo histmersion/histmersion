@@ -24,7 +24,7 @@ object Markdown:
   private[api] def period(start: Option[com.histmersion.api.Markdown.PeriodStart], end: Option[com.histmersion.api.Markdown.PeriodEnd]): String = ((periodLabel(start, end)).value)
 
   def periodLabel(start: Option[com.histmersion.api.Markdown.PeriodLabelStart], end: Option[com.histmersion.api.Markdown.PeriodLabelEnd]): String = YearFmt.period(start, end)
-  private[api] def place(region: Option[com.histmersion.api.Place.Region], lat: Option[com.histmersion.api.Geo.Latitude], lon: Option[com.histmersion.api.Geo.Longitude]): String =
+  private[api] def place(region: Option[com.histmersion.api.catalogue.Place.Region], lat: Option[com.histmersion.api.Geo.Latitude], lon: Option[com.histmersion.api.Geo.Longitude]): String =
     (lat, lon) match
       case (Some(la), Some(lo)) => (s"${region.map((_).value + " ").getOrElse("")}($la, $lo)")
       case _                    => region.getOrElse("")
@@ -42,7 +42,7 @@ object Markdown:
 
   private[api] def enc(s: String): String = (java.net.URLEncoder.encode((s).value, "UTF-8").replace("+", "%20"))
 
-  def bodySlice(text: com.histmersion.api.Source.Body, offset: com.histmersion.api.personal.UnreadPage.Offset, total: Int): String =
+  def bodySlice(text: com.histmersion.api.library.Source.Body, offset: com.histmersion.api.personal.UnreadPage.Offset, total: Int): String =
     val remaining = (total).value - (offset).value - (text).value.length
     if remaining > 0 then (s"$text\n\n_…$remaining more chars — pass offset=${(offset).value + (text).value.length}_")
     else ((text).value)

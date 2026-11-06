@@ -7,11 +7,6 @@ import com.histmersion.api.WireEnum
 import com.histmersion.api.given
 
 object ModelChains:
-  object Model:
-    type Problem = Problem.T
-    object Problem extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-    type Spec = Spec.T
-    object Spec extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   object Chain:
     type Problem = Problem.T
     object Problem extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
@@ -36,16 +31,16 @@ object ModelChains:
   def parseChain(s: com.histmersion.api.automation.ModelChains.Chain.Spec, known: Set[com.histmersion.api.automation.ModelChains.ParseChainKnown] = Set.empty): Either[com.histmersion.api.automation.ModelChains.Chain.Problem, List[ModelRef]] =
     val parts = (s).value.split('>').toList.map(_.trim)
     if parts.forall(_.isEmpty) then Right(Nil)
-    else (parseModels((parts).map(refactorValue => _root_.com.histmersion.api.automation.ModelChains.Model.Spec(refactorValue)), known)).left.map(refactorError => _root_.com.histmersion.api.automation.ModelChains.Chain.Problem((refactorError).value))
+    else (parseModels((parts).map(refactorValue => _root_.com.histmersion.api.automation.Agents.ModelRef.Model.Spec(refactorValue)), known)).left.map(refactorError => _root_.com.histmersion.api.automation.ModelChains.Chain.Problem((refactorError).value))
 
-  def parseModels(refs: List[com.histmersion.api.automation.ModelChains.Model.Spec], known: Set[com.histmersion.api.automation.ModelChains.KnownModel] = Set.empty): Either[com.histmersion.api.automation.ModelChains.Model.Problem, List[ModelRef]] =
+  def parseModels(refs: List[com.histmersion.api.automation.Agents.ModelRef.Model.Spec], known: Set[com.histmersion.api.automation.ModelChains.KnownModel] = Set.empty): Either[com.histmersion.api.automation.Agents.ModelRef.Model.Problem, List[ModelRef]] =
     val parsed = refs.map((_).value.trim).filter(_.nonEmpty).map(ModelRef.parse(_root_.com.histmersion.api.automation.Agents.ModelRef.Wire(_), known))
     parsed.collect { case Left(m) => m } match
       case Nil =>
         val ms = parsed.collect { case Right(m) => m }
         val dup = ms.diff(ms.distinct).map(_.wire).distinct
-        if dup.nonEmpty then Left(_root_.com.histmersion.api.automation.ModelChains.Model.Problem(s"a chain names a model twice: ${dup.mkString(", ")}")) else Right(ms)
-      case errs => Left(_root_.com.histmersion.api.automation.ModelChains.Model.Problem(errs.mkString("; ")))
+        if dup.nonEmpty then Left(_root_.com.histmersion.api.automation.Agents.ModelRef.Model.Problem(s"a chain names a model twice: ${dup.mkString(", ")}")) else Right(ms)
+      case errs => Left(_root_.com.histmersion.api.automation.Agents.ModelRef.Model.Problem(errs.mkString("; ")))
 
   def chainText(ms: List[ModelRef]): String = (ms.map(_.wire).mkString(" > "))
 

@@ -82,6 +82,47 @@ files = [f for f in subprocess.check_output(['git', 'ls-files', 'modules']).deco
 src = {f: open(f, errors='ignore').read() for f in files}
 BASES = {'Array[Byte]': '_root_.scala.Array[_root_.scala.Byte]', 'Array[Int]': '_root_.scala.Array[_root_.scala.Int]', 'String': '_root_.java.lang.String', 'Int': '_root_.scala.Int', 'Long': '_root_.scala.Long', 'Boolean': '_root_.scala.Boolean', 'Double': '_root_.scala.Double', 'Char': '_root_.scala.Char', 'Byte': '_root_.scala.Byte'}
 PLAIN = {'String': 'String', 'Int': 'Int', 'Long': 'Long', 'Boolean': 'Boolean', 'Double': 'Double', 'Char': 'Char', 'Byte': 'Byte'}
+def index():
+    idx = {}
+    for f, s in src.items():
+        if '/src/main/' not in f: continue
+        pk = re.search(r'^package ([\w.]+)', s, re.M)
+        if not pk: continue
+        stack = []
+        for n, l in enumerate(s.split('\n')):
+            m = re.match(r'(\s*)(?:private(?:\[\w+\])? |protected |final |case |sealed |abstract )*(object|class|enum|trait) (\w+)', l)
+            if not m: continue
+            ind = len(m.group(1))
+            while stack and stack[-1][0] >= ind: stack.pop()
+            q = '.'.join([pk.group(1)] + [x[1] for x in stack] + [m.group(3)])
+            e = idx.setdefault(q, {})
+            e[m.group(2)] = (f, n, ind, l)
+            stack.append((ind, m.group(3)))
+    return idx
+# a new owner must not shadow a real type of the same name: its concepts go onto that type
+idx0 = index()
+byShort = collections.defaultdict(list)
+for q, e in idx0.items():
+    byShort[q.rsplit('.', 1)[1]].append(q)
+moved = ambiguous = 0
+for t in list(newbase):
+    owner, n = t.rsplit('.', 1); short = owner.rsplit('.', 1)[1]
+    if owner in idx0 or short[0].islower():
+        continue
+    cands = [q for q in byShort[short] if q.startswith('com.histmersion.api.') == owner.startswith('com.histmersion.api.') and 'object' in idx0[q]]
+    if len(cands) > 1:
+        same = [q for q in cands if q.rsplit('.', 1)[0] == owner.rsplit('.', 1)[0]]
+        cands = same or [q for q in cands if q.count('.') == min(c.count('.') for c in cands)][:1]
+    if not cands:
+        if byShort[short]:
+            ambiguous += 1
+        continue
+    t2 = cands[0] + '.' + n
+    for f, v in list(table.items()):
+        if v == t:
+            table[f] = t2
+    newbase[t2] = newbase.pop(t); moved += 1
+print('new concepts moved onto their real owner', moved, 'owner exists only as a non-object', ambiguous)
 # one alternation over every name, longest first, so one pass does them all
 names = sorted(table, key=len, reverse=True)
 stat = collections.Counter()
@@ -121,23 +162,6 @@ for path, ns in byPath.items():
     src[path] = '\n'.join(out)
 print('definitions removed', removed, 'with a body, kept', kept_body, 'references', dict(stat))
 # new concepts go into the deepest existing owner
-def index():
-    idx = {}
-    for f, s in src.items():
-        if '/src/main/' not in f: continue
-        pk = re.search(r'^package ([\w.]+)', s, re.M)
-        if not pk: continue
-        stack = []
-        for n, l in enumerate(s.split('\n')):
-            m = re.match(r'(\s*)(?:private(?:\[\w+\])? |protected |final |case |sealed |abstract )*(object|class|enum|trait) (\w+)', l)
-            if not m: continue
-            ind = len(m.group(1))
-            while stack and stack[-1][0] >= ind: stack.pop()
-            q = '.'.join([pk.group(1)] + [x[1] for x in stack] + [m.group(3)])
-            e = idx.setdefault(q, {})
-            e[m.group(2)] = (f, n, ind, l)
-            stack.append((ind, m.group(3)))
-    return idx
 idx = index()
 grouped = collections.defaultdict(list)
 for t, b in newbase.items():
@@ -183,7 +207,7 @@ for owner, items in sorted(grouped.items()):
                     drop.add(f'{owner}.{n}')
                 print('NO HOME', owner); continue
             path = f"modules/{mod}/src/main/scala/{pkg.replace('.', '/')}/{first[0]}.scala"
-            newfiles[path].append((pkg, first[0], nest(0))); place['new file'] += 1
+            newfiles[path].append((pkg, first[0], nest(2))); place['new file'] += 1
 for f, ins in inserts.items():
     ls = src[f].split('\n')
     for n, b in sorted(ins, key=lambda x: -x[0]):

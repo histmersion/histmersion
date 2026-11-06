@@ -1,9 +1,6 @@
 package com.histmersion.api.personal
 
 object PersonalMarkdown:
-  object Excerpt:
-    type Length = Length.T
-    object Length extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type Instant = Instant.T
   object Instant extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
@@ -26,7 +23,7 @@ object PersonalMarkdown:
     if bs.isEmpty then _root_.com.histmersion.api.Markdown.Text("_No bookmarks._")
     else _root_.com.histmersion.api.Markdown.Text((s"**Bookmarks** — ${bs.size}" :: "" :: bs.map(bookmarkLine)).mkString("\n"))
 
-  def excerpt(text: com.histmersion.api.personal.Note.Text, chars: com.histmersion.api.personal.PersonalMarkdown.Excerpt.Length = _root_.com.histmersion.api.personal.PersonalMarkdown.Excerpt.Length(120)): com.histmersion.api.Markdown.Text =
+  def excerpt(text: com.histmersion.api.personal.Note.Text, chars: com.histmersion.api.checks.FormatIssue.Excerpt.Length = _root_.com.histmersion.api.checks.FormatIssue.Excerpt.Length(120)): com.histmersion.api.Markdown.Text =
     val first = (text).value.linesIterator.map(_.trim).find(_.nonEmpty).getOrElse("")
     if first.length <= (chars).value then _root_.com.histmersion.api.Markdown.Text(first) else _root_.com.histmersion.api.Markdown.Text(first.take((chars).value - 1).trim + "…")
 

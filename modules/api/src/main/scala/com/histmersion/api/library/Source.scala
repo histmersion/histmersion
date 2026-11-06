@@ -47,16 +47,14 @@ final case class Source(
 
 object Source:
   object Neighbor:
-    object Direction:
-      type Wire = Wire.T
-      object Wire extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  object Neighbor:
     type Line = Line.T
     object Line extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type AuthorName = AuthorName.T
   object AuthorName extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type AuthorSurname = AuthorSurname.T
   object AuthorSurname extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type Body = Body.T
+  object Body extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type EdgePart = EdgePart.T
   object EdgePart extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type EdgeRole = EdgeRole.T
@@ -342,6 +340,8 @@ object Source:
         com.histmersion.api.json.Schema
 
   object Graph:
+    type Depth = Depth.T
+    object Depth extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
     type Root = Root.T
     object Root extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
     type Depth = Depth.T
@@ -756,7 +756,7 @@ object Source:
           case _                  => None
         Finding(id, citekey, in.claim, in.region, geo, p, in.periodName, in.tags, conf, in.significance)
 
-    private[api] def confidenceOf(raw: Option[com.histmersion.api.library.Finding.Confidence.Wire], what: String): Either[com.histmersion.api.library.Source.Write.Problem, Option[Confidence]] =
+    private[api] def confidenceOf(raw: Option[com.histmersion.api.library.Confidence.Wire], what: String): Either[com.histmersion.api.library.Source.Write.Problem, Option[Confidence]] =
       raw.map((_).value.trim).filter(_.nonEmpty) match
         case None    => Right(None)
         case Some(c) =>

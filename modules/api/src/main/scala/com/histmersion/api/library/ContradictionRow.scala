@@ -19,5 +19,8 @@ final case class ContradictionRow(
       KindlingsSchema, com.histmersion.api.json.Schema
 
 object ContradictionRow:
+  object Direction:
+    type Wire = Wire.T
+    object Wire extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type Direction = Direction.T
   object Direction extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
