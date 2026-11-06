@@ -1,0 +1,20 @@
+## modules/core/src/main/scala/com/histmersion/domain/catalogue/evidence/AttestationPlan.scala
+79:34 [E007] 79 |          val body = kept.flatMap(in.bodies.get) / |      Found:    com.histmersion.domain.MergePlanner.Input.BodiesKey => / |        Option[com.histmersion.domain.MergePlanner.Input.BodiesValue.T] / |      Required: com.histmersion.api.exchange.Bundle.Source.BodySha256 => / |        Option[com.histmersion.domain.MergePlanner.Input.BodiesValue.T]
+87:46 [E006] 87 |              Some(AnchorTry(t, foreign, Some(a), body.flatMap(TextAnchor.chunkOf(_, a, in.chunkChars)), None)) / |                                              Not found: a
+95:42 [E007] 95 |                if foreign then q.rightRev(t.uid) else q.localRev(t.uid), / |Found:    com.histmersion.util.data.exchange.PairQuestions.RightRevResult / |Required: com.histmersion.util.data.exchange.BundlePlan.Ledger.ForeignRev
+95:65 [E007] 95 |                if foreign then q.rightRev(t.uid) else q.localRev(t.uid), / |Found:    com.histmersion.util.data.exchange.PairQuestions.LocalRevResult / |Required: com.histmersion.util.data.exchange.BundlePlan.Ledger.ForeignRev
+96:30 [E007] 96 |                kept.getOrElse(""), / |Found:    com.histmersion.api.exchange.Bundle.Source.BodySha256 | String / |Required: com.histmersion.util.data.exchange².BundlePlan.Local.Rev / |where:    exchange  is a package in package com.histmersion.api / |          exchange² is a package in package com.histmersion.util.data
+172:28 [E007] 172 |              issue.flatMap(f.decisionIn).map(_.kind) match / |Found:    com.histmersion.util.data.exchange.PlanFolds.DecisionInIssue => / |  Option[com.histmersion.api.exchange².MergeDecision] / |Required: com.histmersion.api.exchange².MergeIssue.Id => / |  Option[com.histmersion.api.exchange².MergeDecision] / |where:    exchange  is a package in package com.histmersion.util.data
+181:51 [E007] 181 |        attFixes += AttestationFix(t.uid, Some(a), co, drop = AttestationFix.Drop(false)) / |Found:    (co : Option[com.histmersion.api.exchange.Bundle.Attestation.ChunkOrd]) / |Required: Option[com.histmersion.domain.MergePlanner.AttestationFix.ChunkOrd]
+184:22 [E007] 184 |        issue.flatMap(f.decisionIn).map(_.kind) match / |Found:    com.histmersion.util.data.exchange.PlanFolds.DecisionInIssue => / |  Option[com.histmersion.api.exchange².MergeDecision] / |Required: com.histmersion.api.exchange².MergeIssue.Id => / |  Option[com.histmersion.api.exchange².MergeDecision] / |where:    exchange  is a package in package com.histmersion.util.data
+
+## modules/core/src/main/scala/com/histmersion/domain/library/workflows/EnrichComparison.scala
+74:50 [E007] 74 |        periodStart = cls.flatMap(_.period).map(_.start), / |             Found:    (_$14.start : com.histmersion.api.catalogue.Year) / |             Required: com.histmersion.Year.T
+75:48 [E007] 75 |        periodEnd = cls.flatMap(_.period).map(_.end), / |               Found:    (_$16.end : com.histmersion.api.catalogue.Year) / |               Required: com.histmersion.Year.T
+
+## modules/core/src/main/scala/com/histmersion/domain/CodexRetention.scala
+55:100 [E172] 55 |      files.filter(f => inSessions(f.rel) && f.modifiedMs.value < cutoff).sortBy(_.modifiedMs.value) / |No given instance of type Ordering[ / |  io.github.iltotore.iron.IronType[Long, / |    io.github.iltotore.iron.constraint.any.Pure] / |] was found for parameter ord of method sortBy in trait SeqOps. / |I found:
+
+## modules/core/src/main/scala/com/histmersion/domain/catalogue/evidence/TextAnchor.scala
+70:9 [E172] 70 |        }) / | No given instance of type Ordering[ / |   (Int, Int, / |     io.github.iltotore.iron.IronType[Int, / |       io.github.iltotore.iron.constraint.any.Pure] / |   )
+
