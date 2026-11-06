@@ -15,14 +15,14 @@ object EventsMarkdown:
     val prec = EventPrecision.label(e.precision).fold("")(l => s" · $l")
     (s"- **${e.label}** `${e.id}` _(${e.kind} · ${e.scale} · ${e.historicity} · $ts$prec)_$ck")
 
-  def eventList(result: EventList): com.histmersion.api.Markdown.Text =
+  def eventList(result: EventList): String =
     OffsetPage.markdown(result.page, ("event(s)"), ("_No matching events._"), result.events)(eventLine)
 
   private[api] def eventScale(e: EventSummary): String =
     (s"${e.scale} (${if ((e.scaleStated) == _root_.com.histmersion.api.catalogue.EventSummary.ScaleStated(true)) then "stated" else "derived"})")
 
   /** An event's page; `pictures` are its pictures' lines, as the page that shows them renders them. */
-  def event(d: EventCard, pictures: List[com.histmersion.api.catalogue.EventsMarkdown.Picture] = Nil): com.histmersion.api.Markdown.Text =
+  def event(d: EventCard, pictures: List[com.histmersion.api.catalogue.EventsMarkdown.Picture] = Nil): String =
     val e = d.event
     val header = s"# ${e.label}\n\n_`${e.id}` · ${e.kind} · ${e.historicity} · ${timeSpan(e.timeSpan)}_"
     val desc = e.description.map(d => s"\n\n$d").getOrElse("")
@@ -70,6 +70,6 @@ object EventsMarkdown:
         .mkString("\n")
     val wd = d.wikidata.map(q => s"  \n**Wikidata:** $q").getOrElse("")
     val media = if pictures.isEmpty then "" else "\n\n**Pictures**\n" + pictures.mkString("\n")
-    _root_.com.histmersion.api.Markdown.Text(header + desc + ck + place + scale + datingLine + wd + geom + parent + children + datings + edges + parts + media +
+    (header + desc + ck + place + scale + datingLine + wd + geom + parent + children + datings + edges + parts + media +
       corrections +
       EventLinksMarkdown.context(d))

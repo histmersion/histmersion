@@ -13,6 +13,8 @@ object SiteTypes:
   object Geonames:
     type Fcode = Fcode.T
     object Fcode extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type ReportSummary = ReportSummary.T
+  object ReportSummary extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
   type ByIdPart1 = _root_.com.histmersion.api.catalogue.SiteTypes.SiteType.Id
   val ByIdPart1: _root_.com.histmersion.api.catalogue.SiteTypes.SiteType.Id.type = _root_.com.histmersion.api.catalogue.SiteTypes.SiteType.Id
@@ -22,8 +24,6 @@ object SiteTypes:
   val IconId: _root_.com.histmersion.api.catalogue.SiteTypes.SiteType.Id.type = _root_.com.histmersion.api.catalogue.SiteTypes.SiteType.Id
   type WikidataP31 = _root_.com.histmersion.api.catalogue.CatalogRecord.Wikidata.Class
   val WikidataP31: _root_.com.histmersion.api.catalogue.CatalogRecord.Wikidata.Class.type = _root_.com.histmersion.api.catalogue.CatalogRecord.Wikidata.Class
-  type OfPlaceKind = OfPlaceKind.T
-  object OfPlaceKind extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type OfP31 = _root_.com.histmersion.api.catalogue.CatalogRecord.Wikidata.Class
   val OfP31: _root_.com.histmersion.api.catalogue.CatalogRecord.Wikidata.Class.type = _root_.com.histmersion.api.catalogue.CatalogRecord.Wikidata.Class
 
@@ -348,18 +348,18 @@ object SiteTypes:
 
   def of(
       placeId: com.histmersion.api.catalogue.Place.Id,
-      placeKind: com.histmersion.api.catalogue.SiteTypes.OfPlaceKind,
+      placeKind: com.histmersion.api.catalogue.Place.Kind.Wire,
       stored: Option[com.histmersion.api.catalogue.SiteTypes.SiteType.Id],
       featureTypes: Option[com.histmersion.api.catalogue.SiteTypes.Pleiades.FeatureType],
       fcode: Option[com.histmersion.api.catalogue.SiteTypes.Geonames.Fcode],
       wikidataClass: Option[com.histmersion.api.catalogue.CatalogRecord.Wikidata.Class],
       p31: List[com.histmersion.api.catalogue.SiteTypes.OfP31] = Nil
   ): Option[com.histmersion.api.catalogue.SiteTypes.SiteType.Id] =
-    if placeKind != _root_.com.histmersion.api.catalogue.SiteTypes.OfPlaceKind(com.histmersion.api.catalogue.Place.Kind.Site) && placeKind != _root_.com.histmersion.api.catalogue.SiteTypes.OfPlaceKind(com.histmersion.api.catalogue.Place.Kind.Feature)
+    if placeKind != _root_.com.histmersion.api.catalogue.Place.Kind.Wire(com.histmersion.api.catalogue.Place.Kind.Site) && placeKind != _root_.com.histmersion.api.catalogue.Place.Kind.Wire(com.histmersion.api.catalogue.Place.Kind.Feature)
     then None
     else
       stored
-        .filter(_root_.com.histmersion.api.catalogue.SiteTypes.ByIdPart1((byId)).contains)
+        .filter(_root_.com.histmersion.api.catalogue.SiteTypes.ByIdPart1((byId).value).contains)
         .orElse(featureTypes.flatMap({ val refactorFunction3 = pleiades; (refactorValue5) => refactorFunction3(_root_.com.histmersion.api.catalogue.SiteTypes.Pleiades.FeatureType((refactorValue5).value)) }))
         .orElse(fcode.flatMap({ val refactorFunction2 = geonames; (refactorValue10) => refactorFunction2(_root_.com.histmersion.api.catalogue.SiteTypes.Geonames.Fcode((refactorValue10).value)) }))
         .orElse(wikidataOwn(p31))
@@ -377,8 +377,6 @@ object SiteTypes:
         KindlingsSchema, com.histmersion.api.json.Schema
   object Report:
 
-    type SummaryResult = SummaryResult.T
-    object SummaryResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
     type DryRun = DryRun.T
     object DryRun extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
@@ -393,10 +391,10 @@ object SiteTypes:
     type Failed = Failed.T
     object Failed extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
-    def summary(r: Report): com.histmersion.api.catalogue.SiteTypes.Report.SummaryResult =
-      if (r.dryRun).value then _root_.com.histmersion.api.catalogue.SiteTypes.Report.SummaryResult(s"${r.pending} Wikidata site(s) on the map would be asked about")
+    def summary(r: Report): com.histmersion.api.catalogue.SiteTypes.ReportSummary =
+      if (r.dryRun).value then _root_.com.histmersion.api.catalogue.SiteTypes.ReportSummary(s"${r.pending} Wikidata site(s) on the map would be asked about")
       else
-        _root_.com.histmersion.api.catalogue.SiteTypes.Report.SummaryResult((List(
+        _root_.com.histmersion.api.catalogue.SiteTypes.ReportSummary((List(
           s"${r.asked} site(s) asked",
           s"typed: ${if r.typed.isEmpty then "none" else r.typed.map(c => s"${c.key} ${c.n}").mkString(", ")}",
           s"${r.untyped} kept the import's class",

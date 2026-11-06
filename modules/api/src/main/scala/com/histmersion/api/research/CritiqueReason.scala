@@ -17,8 +17,6 @@ object CritiqueReason:
 
   type Reason = Reason.T
   object Reason extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type By = By.T
-  object By extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
   given Schema[CritiqueReason] = KindlingsSchema
     .derived[CritiqueReason]

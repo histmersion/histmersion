@@ -3,8 +3,8 @@ import com.histmersion.api.given
 object AssetsMarkdown:
 
 
-  def assets(citekey: com.histmersion.api.library.Citekey, as: Vector[AssetInfo]): com.histmersion.api.Markdown.Text =
-    if as.isEmpty then _root_.com.histmersion.api.Markdown.Text(s"_No assets stored for **$citekey**._")
+  def assets(citekey: com.histmersion.api.library.Citekey, as: Vector[AssetInfo]): String =
+    if as.isEmpty then (s"_No assets stored for **$citekey**._")
     else
       val rows = as.map { a =>
         val size = (a.width, a.height) match
@@ -12,7 +12,7 @@ object AssetsMarkdown:
           case _                  => "—"
         s"| ${a.name} | ${a.mime} | $size | ${a.bytes} | `${AssetLinks.url(citekey, a.name)}` |"
       }
-      _root_.com.histmersion.api.Markdown.Text((List(
+      ((List(
         s"### ${as.size} asset(s) · $citekey",
         "",
         "| name | mime | size | bytes | url |",

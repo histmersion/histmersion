@@ -11,20 +11,20 @@ import com.histmersion.api.given
 object PlanQuota:
   type Now = Now.T
   object Now extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type PoolId = PoolId.T
-  object PoolId extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type PoolIdText = PoolIdText.T
+  object PoolIdText extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type Problem = Problem.T
   object Problem extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type WindowStateNow = _root_.com.histmersion.api.automation.PlanQuota.Now
   val WindowStateNow: _root_.com.histmersion.api.automation.PlanQuota.Now.type = _root_.com.histmersion.api.automation.PlanQuota.Now
   type VerdictNow = _root_.com.histmersion.api.automation.PlanQuota.Now
   val VerdictNow: _root_.com.histmersion.api.automation.PlanQuota.Now.type = _root_.com.histmersion.api.automation.PlanQuota.Now
-  type VerdictModel = _root_.com.histmersion.api.automation.PlanQuota.Reading.Model
-  val VerdictModel: _root_.com.histmersion.api.automation.PlanQuota.Reading.Model.type = _root_.com.histmersion.api.automation.PlanQuota.Reading.Model
+  type VerdictModel = _root_.com.histmersion.api.automation.ModelChains.ChainEntry.Model
+  val VerdictModel: _root_.com.histmersion.api.automation.ModelChains.ChainEntry.Model.type = _root_.com.histmersion.api.automation.ModelChains.ChainEntry.Model
   type RefreshNeedNow = _root_.com.histmersion.api.automation.PlanQuota.Now
   val RefreshNeedNow: _root_.com.histmersion.api.automation.PlanQuota.Now.type = _root_.com.histmersion.api.automation.PlanQuota.Now
-  type RefreshNeedModel = _root_.com.histmersion.api.automation.PlanQuota.Reading.Model
-  val RefreshNeedModel: _root_.com.histmersion.api.automation.PlanQuota.Reading.Model.type = _root_.com.histmersion.api.automation.PlanQuota.Reading.Model
+  type RefreshNeedModel = _root_.com.histmersion.api.automation.ModelChains.ChainEntry.Model
+  val RefreshNeedModel: _root_.com.histmersion.api.automation.ModelChains.ChainEntry.Model.type = _root_.com.histmersion.api.automation.ModelChains.ChainEntry.Model
   type RefreshDecisionLastAttempt = _root_.com.histmersion.api.automation.PlanQuota.RefreshInfo.LastAttempt
   val RefreshDecisionLastAttempt: _root_.com.histmersion.api.automation.PlanQuota.RefreshInfo.LastAttempt.type = _root_.com.histmersion.api.automation.PlanQuota.RefreshInfo.LastAttempt
   type RefreshDecisionMinGapMs = _root_.com.histmersion.api.automation.PlanQuota.Rules.MinGap
@@ -41,8 +41,6 @@ object PlanQuota:
   object PoolId:
     type Wire = Wire.T
     object Wire extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-    type Title = Title.T
-    object Title extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
 
     def parse(s: com.histmersion.api.automation.PlanQuota.PoolId.Wire): Option[PoolId] = values.find(_.wire == _root_.com.histmersion.api.automation.PlanQuota.PoolId.Wire((s).value.trim.toLowerCase(java.util.Locale.ROOT)))
@@ -110,8 +108,6 @@ object PlanQuota:
     type Kind = Kind.T
     object Kind extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]:
       given _root_.scala.math.Ordering[T] = _root_.scala.math.Ordering.by[T, _root_.java.lang.String](_.value)
-    type UsedPct = UsedPct.T
-    object UsedPct extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
     type ResetsAt = ResetsAt.T
     object ResetsAt extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
     type Rejected = Rejected.T
@@ -119,19 +115,17 @@ object PlanQuota:
     type ObservedAt = ObservedAt.T
     object ObservedAt extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]:
       given _root_.scala.math.Ordering[T] = _root_.scala.math.Ordering.by[T, _root_.scala.Long](_.value)
-    type Model = Model.T
-    object Model extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
   final case class Floors(byKind: Map[Floors.ByKindKey, Floors.ByKindValue]):
     def text: com.histmersion.api.automation.PlanQuota.Floors.Wire = _root_.com.histmersion.api.automation.PlanQuota.Floors.Wire(byKind.toList.sortBy(_._1).map((k, v) => s"$k=$v").mkString(", "))
-    def of(limit: com.histmersion.api.automation.PlanQuota.Floors.OfLimit, kind: com.histmersion.api.automation.PlanQuota.Floors.OfKind, default: com.histmersion.api.automation.PlanQuota.Rules.DefaultFloor): com.histmersion.api.automation.PlanQuota.Floors.OfResult =
+    def of(limit: com.histmersion.api.automation.PlanQuota.Floors.OfLimit, kind: com.histmersion.api.automation.PlanQuota.Floors.OfKind, default: com.histmersion.api.automation.PlanQuota.Rules.DefaultFloor): com.histmersion.api.automation.PlanQuota.Floors.Floor =
       byKind.get(_root_.com.histmersion.api.automation.PlanQuota.Floors.ByKindKey(s"$limit/$kind")).orElse(byKind.get(kind)).getOrElse(default)
 
   object Floors:
+    type Floor = Floor.T
+    object Floor extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
     type Wire = Wire.T
     object Wire extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-    type OfResult = OfResult.T
-    object OfResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
     type OfLimit = _root_.com.histmersion.api.automation.PlanQuota.Reading.Limit
     val OfLimit: _root_.com.histmersion.api.automation.PlanQuota.Reading.Limit.type = _root_.com.histmersion.api.automation.PlanQuota.Reading.Limit
     type OfKind = _root_.com.histmersion.api.automation.PlanQuota.Reading.Kind
@@ -182,10 +176,6 @@ object PlanQuota:
   )
 
   object WindowState:
-    type Floor = Floor.T
-    object Floor extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
-    type LeftPct = LeftPct.T
-    object LeftPct extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
     type Stale = Stale.T
     object Stale extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
     type Usable = Usable.T
@@ -212,7 +202,7 @@ object PlanQuota:
       object Until extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
 
-  def current(readings: List[Reading], now: com.histmersion.api.automation.PlanQuota.Now, model: Option[com.histmersion.api.automation.PlanQuota.Reading.Model] = None): List[Reading] =
+  def current(readings: List[Reading], now: com.histmersion.api.automation.PlanQuota.Now, model: Option[com.histmersion.api.automation.ModelChains.ChainEntry.Model] = None): List[Reading] =
     readings
       .filter(r => r.resetsAt.forall((_).value > now))
       .filter(r => r.model.isEmpty || model.isEmpty || r.model == model)
@@ -236,7 +226,7 @@ object PlanQuota:
           s"${r.kind}: ${pct(left)}% left when last read, floor $floor% (+${rules.marginPct} while the reading is stale)"
         )
       else None
-    WindowState(r, floor, _root_.com.histmersion.api.automation.PlanQuota.WindowState.LeftPct(left), stale, _root_.com.histmersion.api.automation.PlanQuota.WindowState.Usable(why.isEmpty), (why).map(refactorValue4 => _root_.com.histmersion.api.automation.PlanQuota.WindowState.Why(refactorValue4)))
+    WindowState(r, floor, _root_.com.histmersion.api.automation.PlanQuota.WindowStatus.LeftPct(left), stale, _root_.com.histmersion.api.automation.PlanQuota.WindowState.Usable(why.isEmpty), (why).map(refactorValue4 => _root_.com.histmersion.api.automation.PlanQuota.WindowState.Why(refactorValue4)))
 
   def verdict(
       readings: List[Reading],
@@ -341,9 +331,9 @@ object PlanQuota:
       force: Boolean = (false)
   ): Either[com.histmersion.api.automation.PlanQuota.Problem, Option[RefreshNeed]] =
     login match
-      case _ if !(enabled)                              => Left(_root_.com.histmersion.api.automation.PlanQuota.Problem("refresh is off for this pool"))
+      case _ if !(enabled).value                              => Left(_root_.com.histmersion.api.automation.PlanQuota.Problem("refresh is off for this pool"))
       case Login.Missing(why)                         => Left(_root_.com.histmersion.api.automation.PlanQuota.Problem(s"no login: $why"))
-      case _ if (force)                                 => Right(need)
+      case _ if (force).value                                 => Right(need)
       case _ if need.isEmpty                          => Left(_root_.com.histmersion.api.automation.PlanQuota.Problem("the reading decides by itself"))
       case _ if ((throttled(lastAttempt, minGapMs, now)) == (true)) =>
         Left(_root_.com.histmersion.api.automation.PlanQuota.Problem("a fresh reading was taken (or tried) less than stale-minutes ago"))
@@ -366,16 +356,6 @@ object PlanQuota:
         KindlingsSchema, com.histmersion.api.json.Schema
 
   object WindowStatus:
-    type Limit = Limit.T
-    object Limit extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-    type Kind = Kind.T
-    object Kind extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-    type UsedPct = UsedPct.T
-    object UsedPct extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
-    type LeftPct = LeftPct.T
-    object LeftPct extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
-    type Floor = Floor.T
-    object Floor extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
     type Usable = Usable.T
     object Usable extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
     type Stale = Stale.T
@@ -416,12 +396,6 @@ object PlanQuota:
         KindlingsSchema, com.histmersion.api.json.Schema
 
   object PoolStatus:
-    type Pool = Pool.T
-    object Pool extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-    type Title = Title.T
-    object Title extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-    type Kind = Kind.T
-    object Kind extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
     type Covers = Covers.T
     object Covers extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
     type Floors = Floors.T
@@ -461,10 +435,6 @@ object PlanQuota:
     object LastAttempt extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
     type At = At.T
     object At extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-    type Mode = Mode.T
-    object Mode extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-    type Trigger = Trigger.T
-    object Trigger extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
     type Ok = Ok.T
     object Ok extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
     type Detail = Detail.T
@@ -473,9 +443,6 @@ object PlanQuota:
 
   final case class QuotaRefresh(pool: Option[QuotaRefresh.Pool] = None) derives KindlingsCodecAsObject, KindlingsSchema, com.histmersion.api.json.Schema
 
-  object QuotaRefresh:
-    type Pool = Pool.T
-    object Pool extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
 
   final case class PoolRefreshed(pool: PoolRefreshed.Pool, refreshed: PoolRefreshed.Refreshed, detail: PoolRefreshed.Detail, status: PoolStatus)
@@ -483,8 +450,6 @@ object PlanQuota:
         KindlingsSchema, com.histmersion.api.json.Schema
 
   object PoolRefreshed:
-    type Pool = Pool.T
-    object Pool extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
     type Refreshed = Refreshed.T
     object Refreshed extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
     type Detail = Detail.T
@@ -521,8 +486,6 @@ object PlanQuota:
         KindlingsSchema, com.histmersion.api.json.Schema
 
   object Cooldown:
-    type Model = Model.T
-    object Model extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
     type Until = Until.T
     object Until extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
     type Reason = Reason.T
@@ -553,10 +516,6 @@ object PlanQuota:
         KindlingsSchema, com.histmersion.api.json.Schema
 
   object ModWindow:
-    type Kind = Kind.T
-    object Kind extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-    type PercentUsed = PercentUsed.T
-    object PercentUsed extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
     type ResetsAt = ResetsAt.T
     object ResetsAt extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 

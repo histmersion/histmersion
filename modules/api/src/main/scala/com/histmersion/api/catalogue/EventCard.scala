@@ -25,9 +25,9 @@ trait EventCard:
   def datings: List[EventDating]
   def edges: List[EventEdge]
   def participants: List[EventParticipant]
-  def wikidata: Option[com.histmersion.api.catalogue.CatalogRecord.Wikidata]
+  def wikidata: Option[com.histmersion.api.catalogue.EventEntry.Wikidata]
   def tier: com.histmersion.api.catalogue.EventGeo.Tier
-  def names: List[com.histmersion.api.catalogue.CatalogRecord.Names]
+  def names: List[com.histmersion.api.catalogue.EventEntry.Names]
   def catalogue: List[EventCatalogueRef]
   def sources: List[EventSourceRef]
   def findings: List[EventFindingRef]

@@ -13,7 +13,7 @@ class PreviewSuite extends munit.FunSuite:
     com.histmersion.api.library.Title("1177 BC"),
     (List("Eric H. Cline")).map(com.histmersion.api.library.AuthorName.apply),
     (Some(2014)).map(com.histmersion.api.catalogue.Year.apply),
-    (Some("Princeton UP")).map(com.histmersion.api.library.Venue.apply),
+    (Some("Princeton UP")).map(com.histmersion.api.library.Source.Venue.apply),
     Source.Status.Current,
     List("bronze_age_collapse"),
     List("Eastern_Mediterranean"),

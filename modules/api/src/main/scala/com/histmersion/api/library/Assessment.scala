@@ -26,8 +26,6 @@ final case class Assessment(
 object Assessment:
   type Target = Target.T
   object Target extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type CitedByCount = CitedByCount.T
-  object CitedByCount extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type InfluentialCitations = InfluentialCitations.T
   object InfluentialCitations extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type IsRetracted = IsRetracted.T

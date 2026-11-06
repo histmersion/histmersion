@@ -14,7 +14,7 @@ final case class MetadataPatch(
     title: Option[com.histmersion.api.library.Title] = None,
     authors: Option[List[com.histmersion.api.library.AuthorName]] = None,
     year: Option[com.histmersion.api.catalogue.Year] = None,
-    venue: Option[com.histmersion.api.library.Venue] = None,
+    venue: Option[com.histmersion.api.library.Source.Venue] = None,
     doi: Option[com.histmersion.api.library.Doi] = None,
     status: Option[com.histmersion.api.library.Source.Status] = None,
     provenance: Option[MetadataPatch.Provenance] = None,
@@ -24,8 +24,6 @@ final case class MetadataPatch(
       com.histmersion.api.json.Schema
 object MetadataPatch:
 
-  type Provenance = Provenance.T
-  object Provenance extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
   private val derived: Codec.AsObject[MetadataPatch] = KindlingsCodecAsObject.derived[MetadataPatch]
 

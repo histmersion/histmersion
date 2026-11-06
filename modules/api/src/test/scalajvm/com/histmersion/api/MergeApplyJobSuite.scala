@@ -45,8 +45,8 @@ class MergeApplyJobSuite extends munit.FunSuite:
 
   test("the jobs list names what a merge apply is about: its plan"):
     val j = JobInfo(
-      com.histmersion.api.jobs.JobInfo.Id("j1"),
-      com.histmersion.api.jobs.JobInfo.Kind(MergeApplyJob.JobKind),
+      com.histmersion.api.SpatialHierarchyResult.Job.Id("j1"),
+      com.histmersion.api.jobs.JobKinds.Wire(MergeApplyJob.JobKind),
       "running",
       detail = Some(com.histmersion.api.exchange.ExchangeJobKinds.PlanHash(Some("abc123")))
     )

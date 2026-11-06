@@ -149,9 +149,9 @@ class ListFiltersViewSuite extends munit.FunSuite:
       JobsView.filterOf(Some(JobState.Failed), List("ingest"), None, Some("2026-10-01"), None),
       ListFilters.JobFilter(List("failed"), List("ingest"), None, Some("2026-10-01"), None)
     )
-    val rows = List(JobInfo(com.histmersion.api.jobs.JobInfo.Id("1"), com.histmersion.api.jobs.JobInfo.Kind("ingest"), "done"), JobInfo(com.histmersion.api.jobs.JobInfo.Id("2"), com.histmersion.api.jobs.JobInfo.Kind("reocr"), "failed"), JobInfo(com.histmersion.api.jobs.JobInfo.Id("3"), com.histmersion.api.jobs.JobInfo.Kind("ingest"), "failed"))
-    assertEquals(JobsView.visible(rows, ListFilters.JobFilter(kind = List("ingest"))).map(_.id), List("1", "3").map(com.histmersion.api.jobs.JobInfo.Id.apply))
+    val rows = List(JobInfo(com.histmersion.api.SpatialHierarchyResult.Job.Id("1"), com.histmersion.api.jobs.JobKinds.Wire("ingest"), "done"), JobInfo(com.histmersion.api.SpatialHierarchyResult.Job.Id("2"), com.histmersion.api.jobs.JobKinds.Wire("reocr"), "failed"), JobInfo(com.histmersion.api.SpatialHierarchyResult.Job.Id("3"), com.histmersion.api.jobs.JobKinds.Wire("ingest"), "failed"))
+    assertEquals(JobsView.visible(rows, ListFilters.JobFilter(kind = List("ingest"))).map(_.id), List("1", "3").map(com.histmersion.api.SpatialHierarchyResult.Job.Id.apply))
     assertEquals(
       JobsView.visible(rows, ListFilters.JobFilter(status = List("failed"), kind = List("ingest"))).map(_.id),
-      List("3").map(com.histmersion.api.jobs.JobInfo.Id.apply)
+      List("3").map(com.histmersion.api.SpatialHierarchyResult.Job.Id.apply)
     )

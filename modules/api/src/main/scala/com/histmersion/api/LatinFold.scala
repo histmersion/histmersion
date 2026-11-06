@@ -7,13 +7,11 @@ package com.histmersion.api
 object LatinFold:
 
   type Pairs = PairsValue
-  type PairsValue = PairsValue.T
-  object PairsValue extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type FoldCharC = Char
 
   private val Pairs: com.histmersion.api.LatinFold.Pairs =
     // Latin-1 Supplement
-    _root_.com.histmersion.api.LatinFold.PairsValue("ÀAÁAÂAÃAÄAÅAÇCÈEÉEÊEËEÌIÍIÎIÏIÐDÑNÒOÓOÔOÕOÖOØOÙUÚUÛUÜUÝYàaáaâaãaäaåaçcèeéeêeëeìi" +
+    ("ÀAÁAÂAÃAÄAÅAÇCÈEÉEÊEËEÌIÍIÎIÏIÐDÑNÒOÓOÔOÕOÖOØOÙUÚUÛUÜUÝYàaáaâaãaäaåaçcèeéeêeëeìi" +
       "íiîiïiðdñnòoóoôoõoöoøoùuúuûuüuýyÿy" +
       // Latin Extended-A
       "ĀAāaĂAăaĄAąaĆCćcĈCĉcĊCċcČCčcĎDďdĐDđdĒEēeĔEĕeĖEėeĘEęeĚEěeĜGĝgĞGğgĠGġgĢGģgĤHĥhĦHħh" +
@@ -71,16 +69,16 @@ object LatinFold:
   private val Table: Map[Char, String] =
     (Pairs).value.grouped(2).map(p => p(0) -> p(1).toString).toMap ++ Multi
 
-  def tableChars: Set[Char] = (Table.keySet).map(refactorValue => ((refactorValue)))
+  def tableChars: Set[Char] = (Table.keySet).map(refactorValue => ((refactorValue).value))
 
   private def isCombiningMark(c: Char): Boolean = c >= '\u0300' && c <= '\u036f'
 
   def foldChar(c: com.histmersion.api.LatinFold.FoldCharC): String =
-    if ((isCombiningMark(c)) == (true)) then ("") else Table.getOrElse(((c)), c.toString)
+    if ((isCombiningMark(c)) == (true)) then ("") else Table.getOrElse(((c).value), c.toString)
 
   def fold(s: String): String =
-    val b = new StringBuilder((s).length)
-    (s).foreach ({ c =>
+    val b = new StringBuilder((s).value.length)
+    (s).value.foreach ({ c =>
       if !(isCombiningMark((c))).value then
         Table.get((c)) match
           case Some(r) => b ++= r

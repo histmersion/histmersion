@@ -30,7 +30,7 @@ final case class UiConfig(
     tilesTone: UiConfig.TilesTone = _root_.com.histmersion.api.instance.UiConfig.TilesTone("light"),
     plugins: PluginsReport = PluginsReport(),
     docsUrl: UiConfig.DocsUrl = _root_.com.histmersion.api.instance.UiConfig.DocsUrl(""),
-    baseMapSource: UiConfig.BaseMapSource = _root_.com.histmersion.api.instance.UiConfig.BaseMapSource("auto"),
+    baseMapSource: UiConfig.BaseMapSource = _root_.com.histmersion.api.basemap.BaseMapSource.Wire("auto"),
     mapLanguage: UiConfig.MapLanguage = _root_.com.histmersion.api.instance.UiConfig.MapLanguage("en"),
     mapStart: MapStartConfig = MapStartConfig(),
     setupDue: UiConfig.SetupDue = _root_.com.histmersion.api.instance.UiConfig.SetupDue(false)
@@ -74,8 +74,6 @@ object UiConfig:
   object TilesTone extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type DocsUrl = DocsUrl.T
   object DocsUrl extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type BaseMapSource = BaseMapSource.T
-  object BaseMapSource extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type MapLanguage = MapLanguage.T
   object MapLanguage extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type SetupDue = SetupDue.T

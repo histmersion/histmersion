@@ -39,7 +39,7 @@ object ActivityMarkdown:
         .map(i => s"${e.queueList.getOrElse("queue")} item #$i") ++
       e.approval.map(a => s"approval #$a")
 
-  def line(e: Entry): com.histmersion.api.Markdown.Text =
+  def line(e: Entry): String =
     val kind = e.entryKind.fold(e.kind)(_.wording)
     val state = stateOf(e)
     val id = e.entryKind
@@ -47,12 +47,12 @@ object ActivityMarkdown:
       .flatMap(_ => e.job)
       .fold("")(j => s" `${j.take(8)}`")
     val refsText = refs(e)
-    s"- ${minute(e.at)} · **$kind**$id · ${(headline(e)).replace('\n', ' ').take(200)}" +
+    s"- ${minute(e.at)} · **$kind**$id · ${(headline(e)).value.replace('\n', ' ').take(200)}" +
       (if (state).value.nonEmpty then s" · $state" else "") +
       e.error.filter(_.nonEmpty).fold("")(err => s" — ${err.take(160)}") +
       (if refsText.nonEmpty then s" _(${refsText.mkString(", ")})_" else "")
 
-  def page(p: Page, olderHint: com.histmersion.api.automation.Activity.Page.Next => String): com.histmersion.api.Markdown.Text =
+  def page(p: Page, olderHint: com.histmersion.api.Paging.Cursor => String): String =
     val head = s"**Activity** — ${p.counts.running} running now · ${p.counts.problemsWeek} problem(s) this week"
     val body = if p.entries.isEmpty then "_Nothing here._" else p.entries.map(line).mkString("\n")
     (List(head, "", body) ++ p.next.map(c => s"\n${olderHint(c)}").toList).mkString("\n")

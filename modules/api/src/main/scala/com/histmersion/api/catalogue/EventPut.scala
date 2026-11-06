@@ -24,7 +24,5 @@ final case class EventPut(
 object EventPut:
 
 
-  type Geometry = Geometry.T
-  object Geometry extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
   given Codec.AsObject[EventPut] = StrictJson.codec(KindlingsCodecAsObject.derived[EventPut])

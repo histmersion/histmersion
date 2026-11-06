@@ -34,15 +34,15 @@ object GoalsExport:
       "Do not edit: the next export overwrites this file. The source of truth is Histmersion " +
       "(`histmersion goals …`)._"
 
-  def render(views: List[GoalView], itemStatus: Map[com.histmersion.api.automation.GoalsExport.RenderItemStatusPart1, com.histmersion.api.automation.GoalsExport.RenderItemStatusPart2]): com.histmersion.api.Markdown.Text =
+  def render(views: List[GoalView], itemStatus: Map[com.histmersion.api.automation.GoalsExport.RenderItemStatusPart1, com.histmersion.api.automation.GoalsExport.RenderItemStatusPart2]): String =
     val goals = views.map(_.goal)
     val head = List(Header, Notice, summary(goals), "---")
     val known = goals.map(_.slug).toSet
     val body =
-      if views.isEmpty then List("_No goals._") else tree(views).map((v, depth) => block(v, ((depth)), known, itemStatus))
-    _root_.com.histmersion.api.Markdown.Text((head ++ body).mkString("\n\n") + "\n")
+      if views.isEmpty then List("_No goals._") else tree(views).map((v, depth) => block(v, ((depth).value), known, itemStatus))
+    ((head ++ body).mkString("\n\n") + "\n")
 
-  private[api] def summary(goals: List[Goal]): com.histmersion.api.Markdown.Text =
+  private[api] def summary(goals: List[Goal]): String =
     val slugs = goals.map(_.slug).toSet
     val topLevel = goals.count(g => g.parentSlug.forall(p => !slugs.contains(p)))
     val counts = goals.groupBy(_.status).view.mapValues(_.size).toMap
@@ -50,7 +50,7 @@ object GoalsExport:
       .filterNot(com.histmersion.api.automation.Goal.Status.all.contains)
       .sorted
     val byStatus = order.map(s => s" · $s ${counts(s)}").mkString
-    _root_.com.histmersion.api.Markdown.Text(s"${goals.size} goal(s): $topLevel top-level, ${goals.size - topLevel} sub-goal(s)$byStatus")
+    (s"${goals.size} goal(s): $topLevel top-level, ${goals.size - topLevel} sub-goal(s)$byStatus")
 
   private[api] def tree(views: List[GoalView]): List[(GoalView, Int)] =
     val bySlug = views.map(v => v.goal.slug -> v).toMap
@@ -60,15 +60,15 @@ object GoalsExport:
       (v, depth) :: children
         .getOrElse(Some(v.goal.slug), Nil)
         .filterNot(c => seen.contains(c.goal.slug))
-        .flatMap(c => walk(c, ((depth) + 1), seen + c.goal.slug))
+        .flatMap(c => walk(c, ((depth).value + 1), seen + c.goal.slug))
     val placed = roots.flatMap(r => walk(r, (0), Set(r.goal.slug)))
     val shown = placed.map(_._1.goal.slug).toSet
     val strays = views.filterNot(v => shown.contains(v.goal.slug)).sortBy(_.goal.slug).map(_ -> 0)
     placed ++ strays
 
-  private def block(v: GoalView, depth: Int, known: Set[com.histmersion.api.research.ReviewGoal.Slug], itemStatus: Map[com.histmersion.api.automation.GoalsExport.BlockItemStatusPart1, com.histmersion.api.automation.GoalsExport.BlockItemStatusPart2]): com.histmersion.api.Markdown.Text =
+  private def block(v: GoalView, depth: Int, known: Set[com.histmersion.api.research.ReviewGoal.Slug], itemStatus: Map[com.histmersion.api.automation.GoalsExport.BlockItemStatusPart1, com.histmersion.api.automation.GoalsExport.BlockItemStatusPart2]): String =
     val g = v.goal
-    val heading = s"${"#" * math.min((depth) + 2, 6)} ${oneLine(g.title)}"
+    val heading = s"${"#" * math.min((depth).value + 2, 6)} ${oneLine(g.title)}"
     val facts = List(
       Some(s"`${g.slug}` · ${g.status}"),
       Option(YearFmt.openPeriod(g.periodStart, g.periodEnd, (""))).filter(_.nonEmpty).map(p => s"**Period:** $p"),
@@ -87,11 +87,11 @@ object GoalsExport:
       .toList
     (List(heading + "\n\n" + facts) ++ notes ++ links ++ sch ++ plan).mkString("\n\n")
 
-  private def linkSections(links: List[GoalLink], itemStatus: Map[com.histmersion.api.automation.GoalsExport.LinkSectionsItemStatusPart1, com.histmersion.api.automation.GoalsExport.LinkSectionsItemStatusPart2]): List[com.histmersion.api.Markdown.Text] =
+  private def linkSections(links: List[GoalLink], itemStatus: Map[com.histmersion.api.automation.GoalsExport.LinkSectionsItemStatusPart1, com.histmersion.api.automation.GoalsExport.LinkSectionsItemStatusPart2]): List[String] =
     def section(
         kind: com.histmersion.api.automation.Goal.LinkKind,
-        label: com.histmersion.api.Markdown.Text,
-        line: GoalLink => com.histmersion.api.Markdown.Text,
+        label: String,
+        line: GoalLink => String,
         key: GoalLink => (Long, com.histmersion.api.automation.Goal.LinkSectionKey)
     ) =
       links.filter(_.kind == kind).sortBy(key) match
@@ -102,43 +102,43 @@ object GoalsExport:
     List(
       section(
         com.histmersion.api.automation.Goal.LinkKind.Article,
-        _root_.com.histmersion.api.Markdown.Text("Articles"),
-        l => _root_.com.histmersion.api.Markdown.Text(s"[[${l.ref}]]${titled(l)}${noted(l)}"),
+        ("Articles"),
+        l => (s"[[${l.ref}]]${titled(l)}${noted(l)}"),
         byRef
       ),
       section(
         com.histmersion.api.automation.Goal.LinkKind.Source,
-        _root_.com.histmersion.api.Markdown.Text("Sources"),
-        l => _root_.com.histmersion.api.Markdown.Text(s"[[${l.ref}]]${titled(l)}${noted(l)}"),
+        ("Sources"),
+        l => (s"[[${l.ref}]]${titled(l)}${noted(l)}"),
         byRef
       ),
       section(
         com.histmersion.api.automation.Goal.LinkKind.Query,
-        _root_.com.histmersion.api.Markdown.Text("Searches"),
+        ("Searches"),
         l => s"\"${oneLine(l.ref)}\"${noted(l)}",
         byRef
       ),
       section(
         com.histmersion.api.automation.Goal.LinkKind.QueueItem,
-        _root_.com.histmersion.api.Markdown.Text("Queue items"),
+        ("Queue items"),
         l => queueLine(l, itemStatus),
         byId
       )
     ).flatten
 
-  private def titled(l: GoalLink): com.histmersion.api.Markdown.Text = l.title.fold(" — (not found)")(t => s" — ${oneLine(t)}")
-  private def noted(l: GoalLink): com.histmersion.api.Markdown.Text = l.note.map(oneLine).filter(_.nonEmpty).fold("")(n => s" · $n")
+  private def titled(l: GoalLink): String = l.title.fold(" — (not found)")(t => s" — ${oneLine(t)}")
+  private def noted(l: GoalLink): String = l.note.map(oneLine).filter(_.nonEmpty).fold("")(n => s" · $n")
 
-  private def queueLine(l: GoalLink, itemStatus: Map[com.histmersion.api.automation.Goal.Plans.GoalLink.QueueNumber, com.histmersion.api.automation.ItemStatus.Wire]): com.histmersion.api.Markdown.Text =
+  private def queueLine(l: GoalLink, itemStatus: Map[com.histmersion.api.automation.Goal.Plans.GoalLink.QueueNumber, com.histmersion.api.automation.ItemStatus.Wire]): String =
     l.ref.toIntOption.flatMap(itemStatus.get) match
       case Some(st) =>
         val box = if st == Queue.Done then "[x]" else "[ ]"
         s"$box `#${l.ref}` ${l.title.map(oneLine).getOrElse("")}${noted(l)}"
-      case None => _root_.com.histmersion.api.Markdown.Text(s"`#${l.ref}` (not found)${noted(l)}")
+      case None => (s"`#${l.ref}` (not found)${noted(l)}")
 
-  private def scheduleLine(s: GoalSchedule): com.histmersion.api.Markdown.Text =
+  private def scheduleLine(s: GoalSchedule): String =
     val state = if ((s.enabled) == _root_.com.histmersion.api.automation.Goal.Plans.GoalSchedule.Enabled(true)) then "on" else "off"
     val budget = s.budgetUsd.fold("")(b => s" · cap ${AgentsMarkdown.usd(b)} USD")
-    _root_.com.histmersion.api.Markdown.Text(s"${s.kind.wire} · `${s.cron}` · $state$budget")
+    (s"${s.kind.wire} · `${s.cron}` · $state$budget")
 
-  private def oneLine(s: String): String = ((s).linesIterator.map(_.trim).filter(_.nonEmpty).mkString(" "))
+  private def oneLine(s: String): String = ((s).value.linesIterator.map(_.trim).filter(_.nonEmpty).mkString(" "))

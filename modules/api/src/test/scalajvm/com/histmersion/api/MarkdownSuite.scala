@@ -20,7 +20,7 @@ class MarkdownSuite extends munit.FunSuite:
     title = com.histmersion.api.library.Title("1177 BC"),
     authors = (List("Eric H. Cline")).map(com.histmersion.api.library.AuthorName.apply),
     year = (Some(2014)).map(com.histmersion.api.catalogue.Year.apply),
-    venue = (Some("PUP")).map(com.histmersion.api.library.Venue.apply),
+    venue = (Some("PUP")).map(com.histmersion.api.library.Source.Venue.apply),
     status = Source.Status.Current,
     topics = List("collapse"),
     regions = List("Levant"),

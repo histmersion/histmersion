@@ -6,7 +6,7 @@ object SafeName:
   /** The safe name of `raw`; `image.png` when nothing is left. */
 
   def of(raw: String): com.histmersion.api.text.SafeName.Sanitized =
-    val base = (raw).replace('\\', '/').split('/').lastOption.getOrElse("")
+    val base = (raw).value.replace('\\', '/').split('/').lastOption.getOrElse("")
     val cleaned = base
       .map(c => if c.isLetterOrDigit || c == '.' || c == '_' || c == '-' then c else '-')
       .mkString

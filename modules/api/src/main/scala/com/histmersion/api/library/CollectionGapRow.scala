@@ -13,7 +13,7 @@ final case class CollectionGapRow(
     authors: List[com.histmersion.api.library.AuthorName],
     doi: Option[com.histmersion.api.library.Doi],
     year: Option[com.histmersion.api.catalogue.Year],
-    venue: Option[com.histmersion.api.library.Venue],
+    venue: Option[com.histmersion.api.library.Source.Venue],
     summary: Option[CollectionGapRow.Summary],
     topics: List[CollectionGapRow.Topics],
     provenance: Option[CollectionGapRow.Provenance],

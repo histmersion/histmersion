@@ -46,7 +46,7 @@ abstract class SourceServiceContract extends LibraryStoreSuite:
       (List("Zqauthor, Ann")).map(com.histmersion.api.library.AuthorName.apply),
       None,
       (Some(1990)).map(com.histmersion.api.catalogue.Year.apply),
-      (Some("Zq Review")).map(com.histmersion.api.library.Venue.apply),
+      (Some("Zq Review")).map(com.histmersion.api.library.Source.Venue.apply),
       com.histmersion.api.library.Source.Status.Current,
       List("bronze age"),
       List("Zqland"),

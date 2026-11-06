@@ -20,7 +20,7 @@ object BundleMarkdown:
     else if (n).value < 1024L * 1024 * 1024 then (s"${(n).value / (1024L * 1024)} MB")
     else (s"${(n).value / (1024L * 1024 * 1024)} GB")
 
-  def manifest(m: Bundle.Manifest): com.histmersion.api.Markdown.Text =
+  def manifest(m: Bundle.Manifest): String =
     val files = m.files
       .filter((_.lines).value > 0)
       .map(f => s"| ${f.path.stripPrefix("entities/").stripSuffix(".ndjson")} | ${f.lines} |")
@@ -31,12 +31,12 @@ object BundleMarkdown:
       if files.isEmpty then "_(no records)_" else ("| records | lines |" :: "|---|---:|" :: files).mkString("\n")
     ).mkString("\n\n")
 
-  def verify(r: Bundle.VerifyResult): com.histmersion.api.Markdown.Text =
+  def verify(r: Bundle.VerifyResult): String =
     val head = if ((r.ok) == _root_.com.histmersion.api.exchange.Bundle.VerifyResult.Ok(true)) then s"**OK** — every checksum, record and ${Plural.count(r.blobsChecked, _root_.com.histmersion.api.Plural.CountSingular("blob"))} verified"
     else s"**NOT OK** — ${Plural.count(_root_.com.histmersion.api.Plural.CountN((r.problems.size).toLong), _root_.com.histmersion.api.Plural.CountSingular("problem"))}"
     (head :: r.manifest.map(manifest).toList ++ problems(("Problems"), r.problems)).mkString("\n\n")
 
-  def importResult(r: Bundle.ImportResult): com.histmersion.api.Markdown.Text =
+  def importResult(r: Bundle.ImportResult): String =
     val verb =
       if r.problems.nonEmpty then "**Refused** — nothing was written"
       else if ((r.dryRun) == _root_.com.histmersion.api.exchange.Bundle.ImportResult.DryRun(true)) then "**Dry run** — nothing was written; this is what an import would do"

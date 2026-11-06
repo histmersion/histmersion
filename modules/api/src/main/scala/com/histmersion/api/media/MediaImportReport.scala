@@ -6,7 +6,7 @@ import com.histmersion.api.given
 
 final case class MediaImportReport(
     provider: com.histmersion.api.media.MediaItem.Provider,
-    dryRun: com.histmersion.api.media.MediaImportRequest.DryRun,
+    dryRun: com.histmersion.api.library.RepairAcquire.RepairRequest.DryRun,
     targets: MediaImportReport.Targets = _root_.com.histmersion.api.media.MediaImportReport.Targets(0),
     items: MediaImportReport.Items = _root_.com.histmersion.api.media.MediaImportReport.Items(0),
     statements: MediaImportReport.Statements = _root_.com.histmersion.api.media.MediaImportReport.Statements(0),

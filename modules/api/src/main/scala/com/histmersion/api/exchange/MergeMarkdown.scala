@@ -13,7 +13,7 @@ object MergeMarkdown:
   def who(i: Bundle.Instance): String =
     (i.label.fold(i.id.toString.take(8) + "…")(l => s"$l (${i.id.toString.take(8)}…)"))
 
-  def plan(p: MergePlan, all: Boolean = (false)): com.histmersion.api.Markdown.Text =
+  def plan(p: MergePlan, all: Boolean = (false)): String =
     val m = p.matches
     val open =
       p.issues.filter(i => i.severity == MergeIssue.Severity.Blocking && i.condition.isEmpty && i.decision.isEmpty)
@@ -35,18 +35,18 @@ object MergeMarkdown:
     val sections = List(
       section(("Problems (no decision fixes these)"), p.problems.map(x => (s"- $x"))),
       section(("Resolutions not used (errors)"), p.resolutionErrors.map(x => (s"- $x"))),
-      section(("Blocking"), open.map(((issue)))),
-      section(("Decided"), decided.map(((issue)))),
-      section(("Conditional (listed now, so no new issue appears after a decision)"), conditional.map(((issue)))),
+      section(("Blocking"), open.map(((issue).value))),
+      section(("Decided"), decided.map(((issue).value))),
+      section(("Conditional (listed now, so no new issue appears after a decision)"), conditional.map(((issue).value))),
       section(
         ("Defaults (applied unless overridden with --resolve)"),
         (if ((all) == (true)) then defaults else defaults.take(5)).map(issue) ++
-          Option.when(!(all) && defaults.size > 5)(s"- … ${defaults.size - 5} more (--all)").toList
+          Option.when(!(all).value && defaults.size > 5)(s"- … ${defaults.size - 5} more (--all)").toList
       ),
       section(
         ("Info"),
         ((if ((all) == (true)) then p.info else p.info.take(8)).map(x => s"- $x") ++
-          Option.when(!(all) && p.info.size > 8)(s"- … ${p.info.size - 8} more (--all)").toList).map(refactorValue5 => (refactorValue5))
+          Option.when(!(all).value && p.info.size > 8)(s"- … ${p.info.size - 8} more (--all)").toList).map(refactorValue5 => (refactorValue5))
       ),
       section(
         ("Matches"),
@@ -63,7 +63,7 @@ object MergeMarkdown:
           s"(${Plural.count(p.changes, _root_.com.histmersion.api.Plural.CountSingular("change"))}; a backup is taken first)._"
     (head :: sections ++ List(next)).mkString("\n\n")
 
-  def applied(r: MergeApplyResult): com.histmersion.api.Markdown.Text =
+  def applied(r: MergeApplyResult): String =
     val t = r.tally
     def count(k: com.histmersion.api.exchange.Bundle.Kind)(f: Bundle.KindCounts => com.histmersion.api.exchange.MergeMarkdown.AppliedCount): com.histmersion.api.exchange.MergeMarkdown.AppliedCount =
       r.counts.find(_.kind == k).fold(0)(f)
@@ -101,23 +101,23 @@ object MergeMarkdown:
       .toList
     val sections = List(
       section(("Problems (nothing was written)"), r.problems.map(x => (s"- $x"))),
-      section(("Open"), r.issues.map(((issue)))),
+      section(("Open"), r.issues.map(((issue).value))),
       section(("Notes"), r.notes.map(x => (s"- $x")))
     ).flatten
-    _root_.com.histmersion.api.Markdown.Text((head :: body ++ sections).mkString("\n\n"))
+    ((head :: body ++ sections).mkString("\n\n"))
 
-  def applyJob(j: MergeApplyJob): com.histmersion.api.Markdown.Text =
+  def applyJob(j: MergeApplyJob): String =
     j.state match
       case MergeJobState.Running =>
-        _root_.com.histmersion.api.Markdown.Text(s"**Applying** plan ${j.planHash} — job `${j.job}`, ${(j.elapsedMs).value / 1000} s so far (a backup is taken first).")
+        (s"**Applying** plan ${j.planHash} — job `${j.job}`, ${(j.elapsedMs).value / 1000} s so far (a backup is taken first).")
       case MergeJobState.Failed =>
-        _root_.com.histmersion.api.Markdown.Text(s"**The merge apply failed** (job `${j.job}`): ${j.error.getOrElse("no reason given")}")
+        (s"**The merge apply failed** (job `${j.job}`): ${j.error.getOrElse("no reason given")}")
       case MergeJobState.Interrupted =>
-        _root_.com.histmersion.api.Markdown.Text(s"**The merge apply was interrupted** (job `${j.job}`): ${j.error.getOrElse(MergeApplyJob.InterruptedText)}")
+        (s"**The merge apply was interrupted** (job `${j.job}`): ${j.error.getOrElse(MergeApplyJob.InterruptedText)}")
       case MergeJobState.Done => j.result.fold(s"**Done** (job `${j.job}`).")(applied)
 
-  def merges(ms: List[MergeInfo]): com.histmersion.api.Markdown.Text =
-    if ms.isEmpty then _root_.com.histmersion.api.Markdown.Text("_No merges yet: nothing was imported from another collection._")
+  def merges(ms: List[MergeInfo]): String =
+    if ms.isEmpty then ("_No merges yet: nothing was imported from another collection._")
     else
       ("| merge | when | from | bundle | plan | ledger | redirects | backup |" ::
         "|---|---|---|---|---|---|---|---|" ::
@@ -127,7 +127,7 @@ object MergeMarkdown:
             s"${m.backup.getOrElse("—")} |"
         )).mkString("\n")
 
-  def detail(d: MergeDetail): com.histmersion.api.Markdown.Text =
+  def detail(d: MergeDetail): String =
     val m = d.merge
     val head = List(
       s"**Merge** `${m.id}` · ${m.appliedAt} · from ${who(m.from)}",
@@ -148,9 +148,9 @@ object MergeMarkdown:
       "**Remembered decisions**\n" +
         d.remembered.map(x => s"- `${x.issue}` = `${x.decision}`").mkString("\n")
     )
-    _root_.com.histmersion.api.Markdown.Text((head :: report ++ res.toList ++ rem.toList).mkString("\n\n"))
+    ((head :: report ++ res.toList ++ rem.toList).mkString("\n\n"))
 
-  def ledger(l: MergeLedger): com.histmersion.api.Markdown.Text =
+  def ledger(l: MergeLedger): String =
     val head = l.query.fold("**Merge ledger** (latest)")(q => s"**Merge ledger** of `$q`")
     val rows =
       if l.entries.isEmpty then List("_No ledger rows._")
@@ -166,7 +166,7 @@ object MergeMarkdown:
       "**Redirects** (merged-away uid → the record here)\n" +
         l.redirects.map(r => s"- `${r.aliasUid}` → `${r.uid}` (${r.kind})").mkString("\n")
     )
-    _root_.com.histmersion.api.Markdown.Text(((head :: rows.mkString("\n") :: Nil) ++ redirects.toList).mkString("\n\n"))
+    (((head :: rows.mkString("\n") :: Nil) ++ redirects.toList).mkString("\n\n"))
 
   def renamed(r: LabelRenamed): String =
     val what = r.entity match
@@ -177,10 +177,10 @@ object MergeMarkdown:
     (s"**$what renamed** `${r.from}` → `${r.to}`; the old label stays an alias — reads and writes naming it go to `${r.to}`." +
       (if r.rewritten.nonEmpty then s" Links rewritten in ${r.rewritten.map(a => s"`$a`").mkString(", ")}." else ""))
 
-  private def section(title: String, lines: List[String]): Option[com.histmersion.api.Markdown.Text] =
-    Option.when(lines.nonEmpty)(_root_.com.histmersion.api.Markdown.Text(s"**$title**\n" + lines.mkString("\n")))
+  private def section(title: String, lines: List[String]): Option[String] =
+    Option.when(lines.nonEmpty)((s"**$title**\n" + lines.mkString("\n")))
 
-  def issue(i: MergeIssue): com.histmersion.api.Markdown.Text =
+  def issue(i: MergeIssue): String =
     val cond = i.condition.fold("")(c => s" _(if ${c.issue} = ${MergeDecision.Kind.wireOf(c.when)})_")
     val lines = List(
       i.left.map(s => s"here `${s.label}`" + s.lines.map(l => s" · $l").mkString),
@@ -192,7 +192,7 @@ object MergeMarkdown:
       ),
       i.decision.map(d => s"decided `${d.wire}`" + i.decidedBy.fold("")(by))
     ).flatten
-    _root_.com.histmersion.api.Markdown.Text((s"- `${i.id}` ${i.entity.wire} — ${i.title}$cond" :: lines.map(l => s"  - $l")).mkString("\n"))
+    ((s"- `${i.id}` ${i.entity.wire} — ${i.title}$cond" :: lines.map(l => s"  - $l")).mkString("\n"))
 
   private def by(b: MergeIssue.DecidedBy): String = b match
     case MergeIssue.DecidedBy.Remembered => (" as an earlier merge apply did")

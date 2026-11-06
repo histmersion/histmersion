@@ -22,6 +22,8 @@ enum ProviderKind(val wire: ProviderKind.Wire):
 object ProviderKind:
   /** The host's own providers, in their order. */
   object Plugin:
+    type FilePath = FilePath.T
+    object FilePath extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
     type Id = Id.T
     object Id extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
     type Name = Name.T

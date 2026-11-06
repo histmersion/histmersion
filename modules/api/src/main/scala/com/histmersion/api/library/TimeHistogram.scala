@@ -11,7 +11,7 @@ final case class TimeHistogram(
     buckets: List[TimeBucket],
     // Defaults keep the `by=time` JSON byte-identical for older clients.
     by: TimeHistogram.By = _root_.com.histmersion.api.library.TimeHistogram.By("time"),
-    unit: TimeHistogram.Unit = _root_.com.histmersion.api.library.TimeHistogram.Unit("sources"),
+    unit: TimeHistogram.Unit = _root_.com.histmersion.api.library.Histogram.Unit("sources"),
     total: TimeHistogram.Total = _root_.com.histmersion.api.library.TimeHistogram.Total(0),
     depth: TimeHistogram.Depth = _root_.com.histmersion.api.library.TimeHistogram.Depth(0),
     asOf: Option[TimeHistogram.AsOf] = None,
@@ -28,11 +28,7 @@ object TimeHistogram:
   object Bucket extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type By = By.T
   object By extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type Unit = Unit.T
-  object Unit extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type Total = Total.T
   object Total extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type Depth = Depth.T
   object Depth extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type AsOf = AsOf.T
-  object AsOf extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]

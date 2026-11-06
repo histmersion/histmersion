@@ -41,7 +41,7 @@ object Articles:
   private val StandIns =
     Set("placeholder", "todo", "tbd", "tba", "fixme", "xxx", "summary", "tk", "na", "n a", "none", "wip")
 
-  def summaryOf(raw: Option[com.histmersion.api.research.Article.Summary]): Either[com.histmersion.api.research.Articles.Problem, Option[com.histmersion.api.research.Article.Summary]] =
+  def summaryOf(raw: Option[com.histmersion.api.research.Article.SummaryText]): Either[com.histmersion.api.research.Articles.Problem, Option[com.histmersion.api.research.Article.SummaryText]] =
     raw.map((_).value.trim).filter(_.nonEmpty) match
       case None    => Right(None)
       case Some(s) =>
@@ -51,13 +51,13 @@ object Articles:
             _root_.com.histmersion.api.research.Articles.Problem(s"summary '$s' is a stand-in, not a summary — write the one-paragraph lede, or omit it " +
               "and the article's opening paragraph (or its `## Summary` section) is used")
           )
-        else Right(Some(_root_.com.histmersion.api.research.Article.Summary(s)))
+        else Right(Some(_root_.com.histmersion.api.research.Article.SummaryText(s)))
 
   val Kinds = List("concept", "myth", "culture", "region", "timeline", "report", "index")
 
   private val Kind = """^[a-z][a-z0-9_-]*$""".r
 
-  def notFound(slug: com.histmersion.api.research.ReviewGoal.Slug): Api.Error = Api.Error(_root_.com.histmersion.api.Api.Error.Message(s"No article '$slug'"), Some(_root_.com.histmersion.api.Api.Error.Code(Write.CodeNotFound)))
+  def notFound(slug: com.histmersion.api.research.ReviewGoal.Slug): Api.Error = Api.Error(_root_.com.histmersion.api.Api.Error.Problem(s"No article '$slug'"), Some(_root_.com.histmersion.api.Api.Error.Code(Write.CodeNotFound)))
 
   def kindOf(raw: com.histmersion.api.research.Article.Kind.Wire): Either[com.histmersion.api.research.Articles.Problem, com.histmersion.api.research.Article.Kind.Wire] =
     val k = (raw).value.trim.toLowerCase
@@ -65,7 +65,7 @@ object Articles:
     else Left(_root_.com.histmersion.api.research.Articles.Problem(s"invalid kind '$raw' — one of ${Kinds.mkString(", ")} (or another lower-case word)"))
 
   def kindOfDir(dirName: String): com.histmersion.api.research.Article.Kind.Wire =
-    val d = (dirName).trim.toLowerCase
+    val d = (dirName).value.trim.toLowerCase
     if d.length > 1 && d.endsWith("s") && !Kinds.contains(d) then _root_.com.histmersion.api.research.Article.Kind.Wire(d.dropRight(1)) else _root_.com.histmersion.api.research.Article.Kind.Wire(d)
 
   def dirOfKind(kind: com.histmersion.api.research.Article.Kind.Wire): String = ((kind).value.trim.toLowerCase)
@@ -153,7 +153,7 @@ object Articles:
         (if after.isEmpty then "" else "\n\n" + after.mkString("\n")))
       Right(_root_.com.histmersion.api.research.Article.Body(result))
 
-  private def periodOf(start: Option[com.histmersion.api.library.Tree.Year], end: Option[com.histmersion.api.library.Tree.Year]): Either[com.histmersion.api.research.Articles.Problem, Option[Period]] =
+  private def periodOf(start: Option[com.histmersion.api.catalogue.Year], end: Option[com.histmersion.api.catalogue.Year]): Either[com.histmersion.api.research.Articles.Problem, Option[Period]] =
     (start, end) match
       case (Some(a), Some(b)) if a <= b => Right(Some(Period(a, b)))
       case (Some(a), Some(b))           => Left(_root_.com.histmersion.api.research.Articles.Problem(s"period_start ($a) must not be after period_end ($b)"))

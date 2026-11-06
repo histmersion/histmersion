@@ -21,8 +21,12 @@ object Geocode:
     object Direction extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
     type Fraction = Fraction.T
     object Fraction extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type Apostrophe = Apostrophe.T
+  object Apostrophe extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Char, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type DistanceKm = DistanceKm.T
   object DistanceKm extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type Joiner = Joiner.T
+  object Joiner extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type Key = Key.T
   object Key extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type KindRank = KindRank.T
@@ -31,20 +35,16 @@ object Geocode:
   object Latitude extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type Longitude = Longitude.T
   object Longitude extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type QualifierWord = QualifierWord.T
+  object QualifierWord extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type Separator = Separator.T
+  object Separator extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Char, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
 
   type Separators = SeparatorsValue
-  type SeparatorsValue = SeparatorsValue.T
-  object SeparatorsValue extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Char, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type Apostrophes = ApostrophesValue
-  type ApostrophesValue = ApostrophesValue.T
-  object ApostrophesValue extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Char, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type QualifierWords = QualifierWordsValue
-  type QualifierWordsValue = QualifierWordsValue.T
-  object QualifierWordsValue extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type Joiners = JoinersValue
-  type JoinersValue = JoinersValue.T
-  object JoinersValue extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type BroadKind = _root_.com.histmersion.api.catalogue.Geocode.Candidate.Kind
   val BroadKind: _root_.com.histmersion.api.catalogue.Geocode.Candidate.Kind.type = _root_.com.histmersion.api.catalogue.Geocode.Candidate.Kind
   type TierOfImportSource = _root_.com.histmersion.api.catalogue.Place.Match.ImportSource
@@ -91,18 +91,18 @@ object Geocode:
   /** Must equal the separator list of the SQL function `histmersion_place_key`. */
   val Separators: Set[com.histmersion.api.catalogue.Geocode.Separators] =
     ((" \u00a0\t\n\r!\"#$%&()*+,-./:;<=>?@[\\]^_{|}~" +
-      "\u2010\u2011\u2012\u2013\u2014\u2015\u201c\u201d\u201e\u00ab\u00bb\u00b7\u2026").toSet).map(refactorValue => _root_.com.histmersion.api.catalogue.Geocode.SeparatorsValue(refactorValue))
+      "\u2010\u2011\u2012\u2013\u2014\u2015\u201c\u201d\u201e\u00ab\u00bb\u00b7\u2026").toSet).map(refactorValue => _root_.com.histmersion.api.catalogue.Geocode.Separator(refactorValue))
 
   /** Apostrophe-likes, dropped ("Rus'" = "Rus"). Must equal the SQL function `histmersion_place_key`'s. */
-  val Apostrophes: Set[com.histmersion.api.catalogue.Geocode.Apostrophes] = ("'`\u00b4\u2018\u2019\u02bc\u02b9".toSet).map(refactorValue2 => _root_.com.histmersion.api.catalogue.Geocode.ApostrophesValue(refactorValue2))
+  val Apostrophes: Set[com.histmersion.api.catalogue.Geocode.Apostrophes] = ("'`\u00b4\u2018\u2019\u02bc\u02b9".toSet).map(refactorValue2 => _root_.com.histmersion.api.catalogue.Geocode.Apostrophe(refactorValue2))
 
   private val Aside = "\\([^)]*\\)".r
 
   def key(s: String): com.histmersion.api.catalogue.Geocode.Key =
-    val b = new StringBuilder((s).length)
-    Aside.replaceAllIn((s), " ").foreach { c =>
-      if Apostrophes.contains(_root_.com.histmersion.api.catalogue.Geocode.Apostrophes(_root_.com.histmersion.api.catalogue.Geocode.ApostrophesValue(c))) then ()
-      else if Separators.contains(_root_.com.histmersion.api.catalogue.Geocode.Separators(_root_.com.histmersion.api.catalogue.Geocode.SeparatorsValue(c))) then b += ' '
+    val b = new StringBuilder((s).value.length)
+    Aside.replaceAllIn((s).value, " ").foreach { c =>
+      if Apostrophes.contains(_root_.com.histmersion.api.catalogue.Geocode.Apostrophes(_root_.com.histmersion.api.catalogue.Geocode.Apostrophe(c))) then ()
+      else if Separators.contains(_root_.com.histmersion.api.catalogue.Geocode.Separators(_root_.com.histmersion.api.catalogue.Geocode.Separator(c))) then b += ' '
       else LatinFold.foldChar((c)).foreach(f => b += (if f >= 'A' && f <= 'Z' then (f + 32).toChar else f))
     }
     val spaced = b.result().replaceAll(" {2,}", " ").dropWhile(_ == ' ').reverse.dropWhile(_ == ' ').reverse
@@ -148,37 +148,37 @@ object Geocode:
     object Within extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
   private val QualifierWords: Set[com.histmersion.api.catalogue.Geocode.QualifierWords] = Set(
-    _root_.com.histmersion.api.catalogue.Geocode.QualifierWordsValue("north"),
-    _root_.com.histmersion.api.catalogue.Geocode.QualifierWordsValue("south"),
-    _root_.com.histmersion.api.catalogue.Geocode.QualifierWordsValue("east"),
-    _root_.com.histmersion.api.catalogue.Geocode.QualifierWordsValue("west"),
-    _root_.com.histmersion.api.catalogue.Geocode.QualifierWordsValue("northern"),
-    _root_.com.histmersion.api.catalogue.Geocode.QualifierWordsValue("southern"),
-    _root_.com.histmersion.api.catalogue.Geocode.QualifierWordsValue("eastern"),
-    _root_.com.histmersion.api.catalogue.Geocode.QualifierWordsValue("western"),
-    _root_.com.histmersion.api.catalogue.Geocode.QualifierWordsValue("northeast"),
-    _root_.com.histmersion.api.catalogue.Geocode.QualifierWordsValue("northwest"),
-    _root_.com.histmersion.api.catalogue.Geocode.QualifierWordsValue("southeast"),
-    _root_.com.histmersion.api.catalogue.Geocode.QualifierWordsValue("southwest"),
-    _root_.com.histmersion.api.catalogue.Geocode.QualifierWordsValue("northeastern"),
-    _root_.com.histmersion.api.catalogue.Geocode.QualifierWordsValue("northwestern"),
-    _root_.com.histmersion.api.catalogue.Geocode.QualifierWordsValue("southeastern"),
-    _root_.com.histmersion.api.catalogue.Geocode.QualifierWordsValue("southwestern"),
-    _root_.com.histmersion.api.catalogue.Geocode.QualifierWordsValue("central"),
-    _root_.com.histmersion.api.catalogue.Geocode.QualifierWordsValue("upper"),
-    _root_.com.histmersion.api.catalogue.Geocode.QualifierWordsValue("lower"),
-    _root_.com.histmersion.api.catalogue.Geocode.QualifierWordsValue("inner"),
-    _root_.com.histmersion.api.catalogue.Geocode.QualifierWordsValue("outer"),
-    _root_.com.histmersion.api.catalogue.Geocode.QualifierWordsValue("greater"),
-    _root_.com.histmersion.api.catalogue.Geocode.QualifierWordsValue("coastal"),
-    _root_.com.histmersion.api.catalogue.Geocode.QualifierWordsValue("interior"),
-    _root_.com.histmersion.api.catalogue.Geocode.QualifierWordsValue("middle"),
-    _root_.com.histmersion.api.catalogue.Geocode.QualifierWordsValue("mid"),
-    _root_.com.histmersion.api.catalogue.Geocode.QualifierWordsValue("highland"),
-    _root_.com.histmersion.api.catalogue.Geocode.QualifierWordsValue("lowland")
+    _root_.com.histmersion.api.catalogue.Geocode.QualifierWord("north"),
+    _root_.com.histmersion.api.catalogue.Geocode.QualifierWord("south"),
+    _root_.com.histmersion.api.catalogue.Geocode.QualifierWord("east"),
+    _root_.com.histmersion.api.catalogue.Geocode.QualifierWord("west"),
+    _root_.com.histmersion.api.catalogue.Geocode.QualifierWord("northern"),
+    _root_.com.histmersion.api.catalogue.Geocode.QualifierWord("southern"),
+    _root_.com.histmersion.api.catalogue.Geocode.QualifierWord("eastern"),
+    _root_.com.histmersion.api.catalogue.Geocode.QualifierWord("western"),
+    _root_.com.histmersion.api.catalogue.Geocode.QualifierWord("northeast"),
+    _root_.com.histmersion.api.catalogue.Geocode.QualifierWord("northwest"),
+    _root_.com.histmersion.api.catalogue.Geocode.QualifierWord("southeast"),
+    _root_.com.histmersion.api.catalogue.Geocode.QualifierWord("southwest"),
+    _root_.com.histmersion.api.catalogue.Geocode.QualifierWord("northeastern"),
+    _root_.com.histmersion.api.catalogue.Geocode.QualifierWord("northwestern"),
+    _root_.com.histmersion.api.catalogue.Geocode.QualifierWord("southeastern"),
+    _root_.com.histmersion.api.catalogue.Geocode.QualifierWord("southwestern"),
+    _root_.com.histmersion.api.catalogue.Geocode.QualifierWord("central"),
+    _root_.com.histmersion.api.catalogue.Geocode.QualifierWord("upper"),
+    _root_.com.histmersion.api.catalogue.Geocode.QualifierWord("lower"),
+    _root_.com.histmersion.api.catalogue.Geocode.QualifierWord("inner"),
+    _root_.com.histmersion.api.catalogue.Geocode.QualifierWord("outer"),
+    _root_.com.histmersion.api.catalogue.Geocode.QualifierWord("greater"),
+    _root_.com.histmersion.api.catalogue.Geocode.QualifierWord("coastal"),
+    _root_.com.histmersion.api.catalogue.Geocode.QualifierWord("interior"),
+    _root_.com.histmersion.api.catalogue.Geocode.QualifierWord("middle"),
+    _root_.com.histmersion.api.catalogue.Geocode.QualifierWord("mid"),
+    _root_.com.histmersion.api.catalogue.Geocode.QualifierWord("highland"),
+    _root_.com.histmersion.api.catalogue.Geocode.QualifierWord("lowland")
   )
 
-  private val Joiners: Set[com.histmersion.api.catalogue.Geocode.Joiners] = Set(_root_.com.histmersion.api.catalogue.Geocode.JoinersValue("and"), _root_.com.histmersion.api.catalogue.Geocode.JoinersValue("or"))
+  private val Joiners: Set[com.histmersion.api.catalogue.Geocode.Joiners] = Set(_root_.com.histmersion.api.catalogue.Geocode.Joiner("and"), _root_.com.histmersion.api.catalogue.Geocode.Joiner("or"))
 
   def stripQualifier(name: com.histmersion.api.catalogue.Geocode.Attempt.Name): Option[(com.histmersion.api.catalogue.Geocode.Attempt.Name, String)] =
     val words = (name).value.trim.split("[\\s\\-]+").toList.filter(_.nonEmpty)
@@ -194,7 +194,7 @@ object Geocode:
     )
 
   def compassBox(dropped: String): Option[(com.histmersion.api.catalogue.Geocode.Compass.Fraction, com.histmersion.api.catalogue.Geocode.Compass.Fraction, com.histmersion.api.catalogue.Geocode.Compass.Fraction, com.histmersion.api.catalogue.Geocode.Compass.Fraction)] =
-    val words = (dropped).split("[\\s\\-]+").map({ val refactorFunction = key; (refactorValue7) => refactorFunction((refactorValue7)) }).filter((_).value.nonEmpty).toList
+    val words = (dropped).value.split("[\\s\\-]+").map({ val refactorFunction = key; (refactorValue7) => refactorFunction((refactorValue7)) }).filter((_).value.nonEmpty).toList
     val dirs = words.flatMap(w => Compass.get(_root_.com.histmersion.api.catalogue.Geocode.Compass.Direction((w).value.stripSuffix("ern"))).orElse(Compass.get(_root_.com.histmersion.api.catalogue.Geocode.Compass.Direction((w).value))))
     dirs match
       case List(box) => Some({ val refactorTuple10 = box; (_root_.com.histmersion.api.catalogue.Geocode.Compass.Fraction((refactorTuple10._1).value), _root_.com.histmersion.api.catalogue.Geocode.Compass.Fraction((refactorTuple10._2).value), _root_.com.histmersion.api.catalogue.Geocode.Compass.Fraction((refactorTuple10._3).value), _root_.com.histmersion.api.catalogue.Geocode.Compass.Fraction((refactorTuple10._4).value)) })
@@ -255,7 +255,7 @@ object Geocode:
     def overlaps(p: Period): Boolean = from.forall(_ <= p.end) && to.forall(_ >= p.start)
 
     def gap(p: Period): com.histmersion.api.catalogue.Geocode.Candidate.Gap =
-      if (overlaps(p)) then _root_.com.histmersion.api.catalogue.Geocode.Candidate.Gap(0L)
+      if (overlaps(p)).value then _root_.com.histmersion.api.catalogue.Geocode.Candidate.Gap(0L)
       else to.filter((_).value < p.start).map((p.start).value - _).orElse(from.filter((_).value > p.end).map((_).value - p.end)).getOrElse(_root_.com.histmersion.api.catalogue.Geocode.Candidate.Gap(0L))
 
   object Candidate:
@@ -358,8 +358,8 @@ object Geocode:
 
   def distanceKm(lon1: com.histmersion.api.catalogue.Geocode.Longitude, lat1: com.histmersion.api.catalogue.Geocode.Latitude, lon2: com.histmersion.api.catalogue.Geocode.Longitude, lat2: com.histmersion.api.catalogue.Geocode.Latitude): com.histmersion.api.catalogue.Geocode.DistanceKm =
     val r = 6371.0
-    val dLat = math.toRadians(((lat2).value - (lat1).value))
-    val dLon = math.toRadians(((lon2).value - (lon1).value))
+    val dLat = math.toRadians(((lat2).value - (lat1).value).value)
+    val dLon = math.toRadians(((lon2).value - (lon1).value).value)
     val a = math.pow(math.sin(dLat / 2), 2) +
       math.cos(math.toRadians((lat1).value)) * math.cos(math.toRadians(lat2)) * math.pow(math.sin(dLon / 2), 2)
     _root_.com.histmersion.api.catalogue.Geocode.DistanceKm(2 * r * math.asin(math.min(1.0, math.sqrt(a))))
@@ -400,10 +400,6 @@ object Geocode:
     object Asked extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
     type Region = Region.T
     object Region extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-    type FromLon = FromLon.T
-    object FromLon extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
-    type FromLat = FromLat.T
-    object FromLat extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
   def worthMoving(m: Move, minKm: com.histmersion.api.catalogue.Geocode.Move.MinKm): Boolean = (m.km).value > minKm
 
@@ -425,7 +421,7 @@ object Geocode:
     type Region = Region.T
     object Region extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
-  def periodOf(from: Option[com.histmersion.api.library.Tree.Year], to: Option[com.histmersion.api.library.Tree.Year]): Option[Period] = (from, to) match
+  def periodOf(from: Option[com.histmersion.api.catalogue.Year], to: Option[com.histmersion.api.catalogue.Year]): Option[Period] = (from, to) match
     case (Some(a), Some(b)) => Some(Period(math.min((a).value, (b).value), math.max((a).value, (b).value)))
     case (Some(a), None)    => Some(Period(a, a))
     case (None, Some(b))    => Some(Period(b, b))

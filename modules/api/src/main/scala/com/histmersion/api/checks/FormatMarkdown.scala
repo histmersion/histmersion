@@ -17,8 +17,8 @@ object FormatMarkdown:
     val fx = i.fix.fold("")(f => s" · fix: $f")
     _root_.com.histmersion.api.checks.FormatMarkdown.IssueLine(s"$fld L${i.line}:${i.column} $sev ${i.rule.wire} — ${i.message}$ex$fx")
 
-  def notice(issues: List[FormatIssue]): com.histmersion.api.Markdown.Text =
-    if issues.isEmpty then _root_.com.histmersion.api.Markdown.Text("")
+  def notice(issues: List[FormatIssue]): String =
+    if issues.isEmpty then ("")
     else
       val errs = issues.count(_.severity == FormatSeverity.Error)
       val head = s"## Formatting: ${problems(_root_.com.histmersion.api.checks.FormatReport.IssueCount(issues.size))}" +
@@ -26,11 +26,11 @@ object FormatMarkdown:
       val tip = if issues.exists(_.fix.nonEmpty) then
         "\n\n_Repairs marked `fix:` are applied by `histmersion article lint <slug> --fix` / `lint --source <citekey> --fix`._"
       else ""
-      _root_.com.histmersion.api.Markdown.Text(s"\n\n$head\n\n${issues.map(i => s"- ${line(i)}").mkString("\n")}$tip")
+      (s"\n\n$head\n\n${issues.map(i => s"- ${line(i)}").mkString("\n")}$tip")
 
-  def report(r: FormatReport): com.histmersion.api.Markdown.Text =
+  def report(r: FormatReport): String =
     val fixed = if r.fixed.isEmpty then "" else r.fixed.map(f => s"- fixed: $f").mkString("", "\n", "\n\n")
-    if r.issues.isEmpty then _root_.com.histmersion.api.Markdown.Text(s"$fixed### ${r.subject}: no formatting problems")
+    if r.issues.isEmpty then (s"$fixed### ${r.subject}: no formatting problems")
     else
       val head = s"### ${r.subject}: ${problems(_root_.com.histmersion.api.checks.FormatReport.IssueCount(r.issues.size))} (${r.errors} error(s), ${r.warnings} warning(s))"
-      _root_.com.histmersion.api.Markdown.Text(s"$fixed$head\n\n${r.issues.map(i => s"- ${line(i)}").mkString("\n")}")
+      (s"$fixed$head\n\n${r.issues.map(i => s"- ${line(i)}").mkString("\n")}")

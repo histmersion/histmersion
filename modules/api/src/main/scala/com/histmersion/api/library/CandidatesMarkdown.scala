@@ -6,7 +6,7 @@ object CandidatesMarkdown:
   private def counts(cs: List[CandidateCount]): String =
     if cs.isEmpty then ("none yet") else (cs.map(c => s"${c.count} ${c.state}").mkString(", "))
 
-  def list(l: CandidateList): com.histmersion.api.Markdown.Text =
+  def list(l: CandidateList): String =
     val head = s"# Candidates${l.goal.fold(" (every goal)")(g => s" for goal `$g`")} — ${l.state}"
     val total = s"Counts: ${counts(l.counts)}."
     val rows = l.candidates.map { c =>
@@ -18,18 +18,18 @@ object CandidatesMarkdown:
     }
     val tail = l.next.map(n => s"More: `--offset $n`.").toList
     val body = if rows.isEmpty then List(s"No ${l.state} candidates.") else rows
-    _root_.com.histmersion.api.Markdown.Text((head :: "" :: total :: "" :: body ++ (if tail.isEmpty then Nil else "" :: tail)).mkString("\n"))
+    ((head :: "" :: total :: "" :: body ++ (if tail.isEmpty then Nil else "" :: tail)).mkString("\n"))
 
-  def sweep(s: CandidateSweep): com.histmersion.api.Markdown.Text =
+  def sweep(s: CandidateSweep): String =
     val w = s.watches.map { w =>
       s"- ${w.index} ${w.kind} `${w.subject}`: ${w.lastError.fold(s"${w.lastFound} found")(e => s"not read — $e")}" +
         w.watermark.fold("")(d => s" (reads from $d next)")
     }
     val left = if s.skipped.isEmpty then ""
     else " Left out: " + s.skipped.toList.sortBy(_._1).map((k, n) => s"$n $k").mkString(", ") + "."
-    _root_.com.histmersion.api.Markdown.Text((s"# Candidate sweep of goal `${s.goal}`${if ((s.dryRun) == _root_.com.histmersion.api.library.CandidateSweep.DryRun(true)) then " (dry run: nothing stored)" else ""}" :: "" ::
+    ((s"# Candidate sweep of goal `${s.goal}`${if ((s.dryRun) == _root_.com.histmersion.api.library.CandidateSweep.DryRun(true)) then " (dry run: nothing stored)" else ""}" :: "" ::
       s"${s.found} work(s) found by ${s.watches.size} watch(es): ${s.added} new candidate(s), ${s.again} found again.$left " +
       s"${s.unseen} unseen candidate(s) wait for a decision (`histmersion candidates --goal ${s.goal}`)." :: "" ::
       (s.notes.map(n => s"- **$n**") ++ (if s.notes.isEmpty then Nil else List("")) ++ w)).mkString("\n"))
 
-  def marked(m: CandidateMarked): com.histmersion.api.Markdown.Text = _root_.com.histmersion.api.Markdown.Text(s"${m.updated} candidate(s) marked ${m.state}.")
+  def marked(m: CandidateMarked): String = (s"${m.updated} candidate(s) marked ${m.state}.")

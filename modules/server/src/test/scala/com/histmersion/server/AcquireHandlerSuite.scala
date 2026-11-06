@@ -61,7 +61,7 @@ class AcquireHandlerSuite extends com.histmersion.db.DbSuite:
     title = (Some("Massive migration test")).map(com.histmersion.api.library.Title.apply),
     year = (Some(2015)).map(com.histmersion.api.catalogue.Year.apply),
     authors = (List("Wolfgang Haak")).map(com.histmersion.api.library.AuthorName.apply),
-    venue = (Some("Nature")).map(com.histmersion.api.library.Venue.apply),
+    venue = (Some("Nature")).map(com.histmersion.api.library.Source.Venue.apply),
     citedByCount = Some(900),
     citekey = (Some("zzacq_ingested")).map(com.histmersion.api.library.Citekey.apply)
   )

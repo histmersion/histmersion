@@ -5,12 +5,12 @@ import sttp.tapir.Schema
 import com.histmersion.api.given
 
 final case class AssetDetail(
-    name: com.histmersion.api.media.AssetInfo.Name,
-    mime: com.histmersion.api.media.AssetInfo.Mime,
+    name: com.histmersion.api.exchange.Bundle.Asset.FileName,
+    mime: com.histmersion.api.exchange.Bundle.Asset.MimeText,
     bytes: com.histmersion.api.ByteCount,
     sha256: com.histmersion.api.Sha256,
-    width: Option[com.histmersion.api.media.AssetInfo.Width] = None,
-    height: Option[com.histmersion.api.media.AssetInfo.Height] = None,
+    width: Option[com.histmersion.api.media.ImageSize.Width] = None,
+    height: Option[com.histmersion.api.media.ImageSize.Height] = None,
     kind: Option[com.histmersion.api.media.MediaItem.Kind] = None,
     caption: Option[com.histmersion.api.media.MediaItem.Caption] = None,
     license: Option[com.histmersion.api.media.MediaItem.License] = None,

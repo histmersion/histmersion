@@ -6,14 +6,14 @@ import com.histmersion.api.given
 
 final case class MediaItem(
     uid: MediaItem.Uid,
-    name: com.histmersion.api.media.AssetInfo.Name,
-    mime: com.histmersion.api.media.AssetInfo.Mime,
+    name: com.histmersion.api.exchange.Bundle.Asset.FileName,
+    mime: com.histmersion.api.exchange.Bundle.Asset.MimeText,
     bytes: com.histmersion.api.ByteCount,
     citekey: Option[com.histmersion.api.library.Citekey] = None,
     provider: Option[MediaItem.Provider] = None,
     providerKey: Option[MediaItem.ProviderKey] = None,
-    width: Option[com.histmersion.api.media.AssetInfo.Width] = None,
-    height: Option[com.histmersion.api.media.AssetInfo.Height] = None,
+    width: Option[com.histmersion.api.media.ImageSize.Width] = None,
+    height: Option[com.histmersion.api.media.ImageSize.Height] = None,
     kind: Option[MediaItem.Kind] = None,
     caption: Option[MediaItem.Caption] = None,
     license: Option[MediaItem.License] = None,

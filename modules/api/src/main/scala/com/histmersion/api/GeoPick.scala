@@ -38,12 +38,12 @@ object GeoPick:
   given io.circe.Decoder[GeoPick] = WireEnum.decoder
   given Schema[GeoPick] = WireEnum.schema
 
-  def yearOf(pick: GeoPick, lo: com.histmersion.api.library.Tree.Year, hi: com.histmersion.api.library.Tree.Year): com.histmersion.api.library.Tree.Year = pick match
-    case Start => _root_.com.histmersion.api.library.Tree.Year((lo).value)
-    case End   => _root_.com.histmersion.api.library.Tree.Year((hi).value)
-    case _     => _root_.com.histmersion.api.library.Tree.Year(((lo).value + (hi).value) / 2)
+  def yearOf(pick: GeoPick, lo: com.histmersion.api.catalogue.Year, hi: com.histmersion.api.catalogue.Year): com.histmersion.api.catalogue.Year = pick match
+    case Start => _root_.com.histmersion.api.catalogue.Year((lo).value)
+    case End   => _root_.com.histmersion.api.catalogue.Year((hi).value)
+    case _     => _root_.com.histmersion.api.catalogue.Year(((lo).value + (hi).value) / 2)
 
-  def resolve(asOf: Option[com.histmersion.api.library.Tree.Year], from: Option[com.histmersion.api.library.Tree.Year], to: Option[com.histmersion.api.library.Tree.Year], pick: GeoPick): GeoTime =
+  def resolve(asOf: Option[com.histmersion.api.catalogue.Year], from: Option[com.histmersion.api.catalogue.Year], to: Option[com.histmersion.api.catalogue.Year], pick: GeoPick): GeoTime =
     val span = (from, to) match
       case (Some(a), Some(b)) => Some(((a).value.min((b).value), (a).value.max((b).value)))
       case (Some(a), None)    => Some((a, a))

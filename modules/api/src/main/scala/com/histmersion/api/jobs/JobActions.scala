@@ -3,11 +3,11 @@ package com.histmersion.api.jobs
 import com.histmersion.api.RegisteredJobKinds
 import com.histmersion.api.given
 object JobActions:
+  type StoppableText = StoppableText.T
+  object StoppableText extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type Wire = Wire.T
   object Wire extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type Stoppable = StoppableValue
-  type StoppableValue = StoppableValue.T
-  object StoppableValue extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
   val all: List[com.histmersion.api.jobs.JobActions.Wire] = List(_root_.com.histmersion.api.jobs.JobActions.Wire("pause"), _root_.com.histmersion.api.jobs.JobActions.Wire("resume"), _root_.com.histmersion.api.jobs.JobActions.Wire("cancel"))
 

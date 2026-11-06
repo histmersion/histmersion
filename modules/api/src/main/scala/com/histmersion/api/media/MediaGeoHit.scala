@@ -6,7 +6,7 @@ import com.histmersion.api.given
 
 final case class MediaGeoHit(
     citekey: Option[com.histmersion.api.library.Citekey],
-    assetName: com.histmersion.api.media.AssetInfo.Name,
+    assetName: com.histmersion.api.exchange.Bundle.Asset.FileName,
     kind: Option[com.histmersion.api.media.MediaItem.Kind],
     lat: com.histmersion.api.catalogue.Latitude,
     lon: com.histmersion.api.catalogue.Longitude,

@@ -189,7 +189,7 @@ private[acquisition] object CandidateRepo:
           com.histmersion.api.library.Title(r.title),
           (r.year).map(com.histmersion.api.catalogue.Year.apply),
           (r.authors).map(com.histmersion.api.library.AuthorName.apply),
-          (r.venue).map(com.histmersion.api.library.Venue.apply),
+          (r.venue).map(com.histmersion.api.library.Source.Venue.apply),
           r.abstractText,
           r.isOa,
           r.arxivId,

@@ -22,8 +22,8 @@ class MediaCmdSuite extends munit.FunSuite:
   private given console: com.histmersion.util.console.Console = com.histmersion.util.console.Console.standard
 
   private val running = JobInfo(
-    com.histmersion.api.jobs.JobInfo.Id("j7"),
-    com.histmersion.api.jobs.JobInfo.Kind("media-import"),
+    com.histmersion.api.SpatialHierarchyResult.Job.Id("j7"),
+    com.histmersion.api.jobs.JobKinds.Wire("media-import"),
     "running",
     progress = Some("100/300 place(s)/event(s) asked · batch 2"),
     detail = Some(

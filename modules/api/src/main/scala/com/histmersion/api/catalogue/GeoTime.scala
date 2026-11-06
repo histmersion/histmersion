@@ -13,9 +13,6 @@ enum GeoTime:
     case Within(lo, hi, _) => Some((lo, hi))
 
 object GeoTime:
-  object At:
-    type Year = Year.T
-    object Year extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
   object Within:
     type From = From.T

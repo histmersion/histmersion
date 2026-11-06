@@ -250,7 +250,7 @@ class IngestSuite extends munit.FunSuite:
     assertEquals(JobState.next(Queued, Paused), None)
 
   test("JobInfo exposes the state its status names"):
-    val j = JobInfo(com.histmersion.api.jobs.JobInfo.Id("i"), com.histmersion.api.jobs.JobInfo.Kind(Ingest.KindIngest), "running", (Some("ck")).map(com.histmersion.api.library.Citekey.apply))
+    val j = JobInfo(com.histmersion.api.SpatialHierarchyResult.Job.Id("i"), com.histmersion.api.jobs.JobKinds.Wire(Ingest.KindIngest), "running", (Some("ck")).map(com.histmersion.api.library.Citekey.apply))
     assert(!j.isTerminal && !j.succeeded)
     assert(j.modify(_.status).setTo("done").succeeded)
     // an unparseable status must not read as success
@@ -259,8 +259,8 @@ class IngestSuite extends munit.FunSuite:
   // ── Markdown ─────────────────────────────────────────────────────────────────────────────────
   test("job Markdown names the status, the citekey and the failure"):
     val j = JobInfo(
-      com.histmersion.api.jobs.JobInfo.Id("abc"),
-      com.histmersion.api.jobs.JobInfo.Kind(Ingest.KindIngest),
+      com.histmersion.api.SpatialHierarchyResult.Job.Id("abc"),
+      com.histmersion.api.jobs.JobKinds.Wire(Ingest.KindIngest),
       "failed",
       (Some("ck")).map(com.histmersion.api.library.Citekey.apply),
       None,
@@ -275,7 +275,7 @@ class IngestSuite extends munit.FunSuite:
     assert(out.contains("012345678"), out)
 
   test("job Markdown names the acquisition item a job will tick off, and nothing when there is none"):
-    val j = JobInfo(com.histmersion.api.jobs.JobInfo.Id("abc"), com.histmersion.api.jobs.JobInfo.Kind(Ingest.KindIngest), "running", (Some("ck")).map(com.histmersion.api.library.Citekey.apply), acquireItem = Some(42))
+    val j = JobInfo(com.histmersion.api.SpatialHierarchyResult.Job.Id("abc"), com.histmersion.api.jobs.JobKinds.Wire(Ingest.KindIngest), "running", (Some("ck")).map(com.histmersion.api.library.Citekey.apply), acquireItem = Some(42))
     assert(
       IngestMarkdown.job(j).contains("**acquisition item:** 42 (ticked off when the job succeeds)"),
       IngestMarkdown.job(j)
@@ -306,8 +306,8 @@ class IngestSuite extends munit.FunSuite:
   test("an init job's Markdown says what it imports and which period definitions it skipped"):
     val plan = InitPlan(gazetteer = true, fetch = List("periodo"))
     val j = JobInfo(
-      com.histmersion.api.jobs.JobInfo.Id("j1"),
-      com.histmersion.api.jobs.JobInfo.Kind(InitPlan.JobKind),
+      com.histmersion.api.SpatialHierarchyResult.Job.Id("j1"),
+      com.histmersion.api.jobs.JobKinds.Wire(InitPlan.JobKind),
       "done",
       detail = Some(
         InitPlan
@@ -327,4 +327,4 @@ class IngestSuite extends munit.FunSuite:
     assert(table.startsWith("### 1 job\n"), table)
     assert(table.contains("| j1 | init | bundled gazetteer, fetch periodo | done |"), table)
     assertEquals(InitPlan.describe(InitPlan()), "nothing to import")
-    assertEquals(JobDetail.subject(JobInfo(com.histmersion.api.jobs.JobInfo.Id("j2"), com.histmersion.api.jobs.JobInfo.Kind(Ingest.KindIngest), "done", (Some("ck_x")).map(com.histmersion.api.library.Citekey.apply))), Some("ck_x"))
+    assertEquals(JobDetail.subject(JobInfo(com.histmersion.api.SpatialHierarchyResult.Job.Id("j2"), com.histmersion.api.jobs.JobKinds.Wire(Ingest.KindIngest), "done", (Some("ck_x")).map(com.histmersion.api.library.Citekey.apply))), Some("ck_x"))

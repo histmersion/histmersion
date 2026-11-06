@@ -12,6 +12,8 @@ import hearth.kindlings.tapirschemaderivation.KindlingsSchema
 import sttp.tapir.Schema
 import com.histmersion.api.json.NewtypeCodecs.given
 object Storage:
+  type DefaultLowFreeBytesNumber = DefaultLowFreeBytesNumber.T
+  object DefaultLowFreeBytesNumber extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type Depth = Depth.T
   object Depth extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type Hint = Hint.T
@@ -19,10 +21,8 @@ object Storage:
 
 
   type DefaultLowFreeBytes = DefaultLowFreeBytesValue
-  type DefaultLowFreeBytesValue = DefaultLowFreeBytesValue.T
-  object DefaultLowFreeBytesValue extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
-  val DefaultLowFreeBytes: com.histmersion.api.maintenance.Storage.DefaultLowFreeBytes = _root_.com.histmersion.api.maintenance.Storage.DefaultLowFreeBytesValue(10L * 1000 * 1000 * 1000)
+  val DefaultLowFreeBytes: com.histmersion.api.maintenance.Storage.DefaultLowFreeBytes = _root_.com.histmersion.api.maintenance.Storage.DefaultLowFreeBytesNumber(10L * 1000 * 1000 * 1000)
 
   def under(child: com.histmersion.api.maintenance.Storage.Entry.Path, parent: com.histmersion.api.maintenance.Storage.Entry.Path): Boolean =
     def norm(p: com.histmersion.api.maintenance.Storage.Entry.Path) = (p).value.replace('\\', '/').stripSuffix("/")

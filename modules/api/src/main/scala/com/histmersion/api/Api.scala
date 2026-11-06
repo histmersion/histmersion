@@ -170,18 +170,6 @@ object Api:
 
   /** `region` is still sent by older links and clients; it is one more place name. */
 
-  type SourceViewPart3 = SourceViewPart3.T
-  object SourceViewPart3 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type ExportSourcePart3 = ExportSourcePart3.T
-  object ExportSourcePart3 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type ExportArticlePart3 = ExportArticlePart3.T
-  object ExportArticlePart3 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type JobPart1 = JobPart1.T
-  object JobPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type JobControlPart1Part1 = JobControlPart1Part1.T
-  object JobControlPart1Part1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type JobsPart1Part4 = JobsPart1Part4.T
-  object JobsPart1Part4 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
   final case class FindingsQuery(filter: Filter, region: Option[FindingsQuery.Region]):
     def toFilter: Filter =
@@ -275,8 +263,6 @@ object Api:
       object Text extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
     type FullText = FullText.T
     object FullText extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
-    type Section = Section.T
-    object Section extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
     type Heading = Heading.T
     object Heading extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
     type Offset = Offset.T
@@ -284,7 +270,7 @@ object Api:
     type Chars = Chars.T
     object Chars extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
-  lazy val sourceView: PublicEndpoint[SourceViewQuery, com.histmersion.api.Api.Error, com.histmersion.api.Api.SourceViewPart3, Any] =
+  lazy val sourceView: PublicEndpoint[SourceViewQuery, com.histmersion.api.Api.Error, com.histmersion.api.library.Source.View, Any] =
     (endpoint.get
       .in("api" / "sources" / path[String]("citekey") / "view")
       .in(query[Boolean]("fullText").default(false))
@@ -295,7 +281,7 @@ object Api:
       .mapInTo[SourceViewQuery]
       .errorOut(statusCode(StatusCode.NotFound))
       .errorOut(jsonBody[com.histmersion.api.Api.Error])
-      .out(stringBody)).mapOut[_root_.com.histmersion.api.Api.SourceViewPart3]((refactorDecoded: _root_.java.lang.String) => _root_.com.histmersion.api.Api.SourceViewPart3(refactorDecoded))((refactorEncoded: _root_.com.histmersion.api.Api.SourceViewPart3) => (refactorEncoded).value)
+      .out(stringBody)).mapOut[_root_.com.histmersion.api.library.Source.View]((refactorDecoded: _root_.java.lang.String) => _root_.com.histmersion.api.library.Source.View(refactorDecoded))((refactorEncoded: _root_.com.histmersion.api.library.Source.View) => (refactorEncoded).value)
 
   final case class PassagesQuery(
       citekey: com.histmersion.api.library.Citekey,
@@ -372,8 +358,6 @@ object Api:
     object Unit extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
     type Depth = Depth.T
     object Depth extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
-    type AsOf = AsOf.T
-    object AsOf extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
     type Samples = Samples.T
     object Samples extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
     type Size = Size.T
@@ -411,19 +395,19 @@ object Api:
       .in(query[List[String]]("kind"))
       .out(jsonBody[List[NeighborRow]])).mapIn[(_root_.com.histmersion.api.library.Citekey, _root_.scala.List[_root_.com.histmersion.api.library.Edge.Kind.Wire])]((refactorDecoded5: (_root_.java.lang.String, _root_.scala.List[_root_.java.lang.String])) => (_root_.com.histmersion.api.library.Citekey((refactorDecoded5)._1), ((refactorDecoded5)._2).map(refactorElement5 => _root_.com.histmersion.api.library.Edge.Kind.Wire(refactorElement5))))((refactorEncoded5: (_root_.com.histmersion.api.library.Citekey, _root_.scala.List[_root_.com.histmersion.api.library.Edge.Kind.Wire])) => (((refactorEncoded5)._1).value, ((refactorEncoded5)._2).map(refactorElement6 => (refactorElement6).value)))
 
-  lazy val graph: PublicEndpoint[(com.histmersion.api.library.Citekey, Option[com.histmersion.api.library.Source.Graph.Depth]), com.histmersion.api.Api.Error, Source.Graph, Any] =
+  lazy val graph: PublicEndpoint[(com.histmersion.api.library.Citekey, Option[com.histmersion.api.library.Source.Graph.DepthCount]), com.histmersion.api.Api.Error, Source.Graph, Any] =
     (base.get
       .in("graph" / path[String]("citekey"))
       .in(query[Option[Int]]("depth"))
-      .out(jsonBody[Source.Graph])).mapIn[(_root_.com.histmersion.api.library.Citekey, _root_.scala.Option[_root_.com.histmersion.api.library.Source.Graph.Depth])]((refactorDecoded112: (_root_.java.lang.String, _root_.scala.Option[_root_.scala.Int])) => (_root_.com.histmersion.api.library.Citekey((refactorDecoded112)._1), ((refactorDecoded112)._2).map(refactorElement99 => _root_.com.histmersion.api.library.Source.Graph.Depth(refactorElement99))))((refactorEncoded112: (_root_.com.histmersion.api.library.Citekey, _root_.scala.Option[_root_.com.histmersion.api.library.Source.Graph.Depth])) => (((refactorEncoded112)._1).value, ((refactorEncoded112)._2).map(refactorElement100 => (refactorElement100).value)))
+      .out(jsonBody[Source.Graph])).mapIn[(_root_.com.histmersion.api.library.Citekey, _root_.scala.Option[_root_.com.histmersion.api.library.Source.Graph.DepthCount])]((refactorDecoded112: (_root_.java.lang.String, _root_.scala.Option[_root_.scala.Int])) => (_root_.com.histmersion.api.library.Citekey((refactorDecoded112)._1), ((refactorDecoded112)._2).map(refactorElement99 => _root_.com.histmersion.api.library.Source.Graph.DepthCount(refactorElement99))))((refactorEncoded112: (_root_.com.histmersion.api.library.Citekey, _root_.scala.Option[_root_.com.histmersion.api.library.Source.Graph.DepthCount])) => (((refactorEncoded112)._1).value, ((refactorEncoded112)._2).map(refactorElement100 => (refactorElement100).value)))
 
   lazy val contradictions
-      : PublicEndpoint[(Option[com.histmersion.api.library.Citekey], Option[com.histmersion.api.Api.PlacesGeoQuery.AsOf]), com.histmersion.api.Api.Error, ContradictionsResult, Any] =
+      : PublicEndpoint[(Option[com.histmersion.api.library.Citekey], Option[com.histmersion.api.Api.AggregateQuery.AsOf]), com.histmersion.api.Api.Error, ContradictionsResult, Any] =
     (base.get
       .in("contradictions")
       .in(query[Option[String]]("citekey"))
       .in(query[Option[Long]]("since"))
-      .out(jsonBody[ContradictionsResult])).mapIn[(_root_.scala.Option[_root_.com.histmersion.api.library.Citekey], _root_.scala.Option[_root_.com.histmersion.api.Api.PlacesGeoQuery.AsOf])]((refactorDecoded7: (_root_.scala.Option[_root_.java.lang.String], _root_.scala.Option[_root_.scala.Long])) => (((refactorDecoded7)._1).map(refactorElement9 => _root_.com.histmersion.api.library.Citekey(refactorElement9)), ((refactorDecoded7)._2).map(refactorElement10 => _root_.com.histmersion.api.Api.PlacesGeoQuery.AsOf(refactorElement10))))((refactorEncoded7: (_root_.scala.Option[_root_.com.histmersion.api.library.Citekey], _root_.scala.Option[_root_.com.histmersion.api.Api.PlacesGeoQuery.AsOf])) => (((refactorEncoded7)._1).map(refactorElement11 => (refactorElement11).value), ((refactorEncoded7)._2).map(refactorElement12 => (refactorElement12).value)))
+      .out(jsonBody[ContradictionsResult])).mapIn[(_root_.scala.Option[_root_.com.histmersion.api.library.Citekey], _root_.scala.Option[_root_.com.histmersion.api.Api.AggregateQuery.AsOf])]((refactorDecoded7: (_root_.scala.Option[_root_.java.lang.String], _root_.scala.Option[_root_.scala.Long])) => (((refactorDecoded7)._1).map(refactorElement9 => _root_.com.histmersion.api.library.Citekey(refactorElement9)), ((refactorDecoded7)._2).map(refactorElement10 => _root_.com.histmersion.api.Api.AggregateQuery.AsOf(refactorElement10))))((refactorEncoded7: (_root_.scala.Option[_root_.com.histmersion.api.library.Citekey], _root_.scala.Option[_root_.com.histmersion.api.Api.AggregateQuery.AsOf])) => (((refactorEncoded7)._1).map(refactorElement11 => (refactorElement11).value), ((refactorEncoded7)._2).map(refactorElement12 => (refactorElement12).value)))
 
   lazy val seed: PublicEndpoint[SeedRequest, com.histmersion.api.Api.Error, SeedResult, Any] =
     writeBase.post.in("seed").in(jsonBody[SeedRequest]).out(jsonBody[SeedResult])
@@ -513,11 +497,11 @@ object Api:
   lazy val importNote: PublicEndpoint[NoteImport, com.histmersion.api.Api.Error, SeedResult, Any] =
     writeBase.post.in("sources" / "import").in(jsonBody[NoteImport]).out(jsonBody[SeedResult])
 
-  lazy val exportSource: PublicEndpoint[com.histmersion.api.library.Citekey, com.histmersion.api.Api.Error, com.histmersion.api.Api.ExportSourcePart3, Any] =
+  lazy val exportSource: PublicEndpoint[com.histmersion.api.library.Citekey, com.histmersion.api.Api.Error, com.histmersion.api.library.Source.Export, Any] =
     (endpoint.get
       .in("api" / "sources" / path[String]("citekey") / "export")
       .errorOut(writeErrors)
-      .out(stringBody)).mapIn[_root_.com.histmersion.api.library.Citekey]((refactorDecoded16: _root_.java.lang.String) => _root_.com.histmersion.api.library.Citekey(refactorDecoded16))((refactorEncoded16: _root_.com.histmersion.api.library.Citekey) => (refactorEncoded16).value).mapOut[_root_.com.histmersion.api.Api.ExportSourcePart3]((refactorDecoded17: _root_.java.lang.String) => _root_.com.histmersion.api.Api.ExportSourcePart3(refactorDecoded17))((refactorEncoded17: _root_.com.histmersion.api.Api.ExportSourcePart3) => (refactorEncoded17).value)
+      .out(stringBody)).mapIn[_root_.com.histmersion.api.library.Citekey]((refactorDecoded16: _root_.java.lang.String) => _root_.com.histmersion.api.library.Citekey(refactorDecoded16))((refactorEncoded16: _root_.com.histmersion.api.library.Citekey) => (refactorEncoded16).value).mapOut[_root_.com.histmersion.api.library.Source.Export]((refactorDecoded17: _root_.java.lang.String) => _root_.com.histmersion.api.library.Source.Export(refactorDecoded17))((refactorEncoded17: _root_.com.histmersion.api.library.Source.Export) => (refactorEncoded17).value)
 
   lazy val citekeys: PublicEndpoint[Unit, com.histmersion.api.Api.Error, List[com.histmersion.api.library.Citekey], Any] =
     (base.get.in("citekeys").out(jsonBody[List[String]])).mapOut[_root_.scala.List[_root_.com.histmersion.api.library.Citekey]]((refactorDecoded2: _root_.scala.List[_root_.java.lang.String]) => (refactorDecoded2).map(refactorElement => _root_.com.histmersion.api.library.Citekey(refactorElement)))((refactorEncoded2: _root_.scala.List[_root_.com.histmersion.api.library.Citekey]) => (refactorEncoded2).map(refactorElement2 => (refactorElement2).value))
@@ -628,8 +612,6 @@ object Api:
     object Kind:
       type Wire = Wire.T
       object Wire extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-    type Kind = Kind.T
-    object Kind extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
     type Text = Text.T
     object Text extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
@@ -719,11 +701,11 @@ object Api:
       .errorOut(writeErrors)
       .out(jsonBody[Article.Deleted])).mapIn[_root_.com.histmersion.api.research.ReviewGoal.Slug]((refactorDecoded145: _root_.java.lang.String) => _root_.com.histmersion.api.research.ReviewGoal.Slug(refactorDecoded145))((refactorEncoded145: _root_.com.histmersion.api.research.ReviewGoal.Slug) => (refactorEncoded145).value)
 
-  lazy val exportArticle: PublicEndpoint[com.histmersion.api.research.ReviewGoal.Slug, com.histmersion.api.Api.Error, com.histmersion.api.Api.ExportArticlePart3, Any] =
+  lazy val exportArticle: PublicEndpoint[com.histmersion.api.research.ReviewGoal.Slug, com.histmersion.api.Api.Error, com.histmersion.api.research.Article.Export, Any] =
     (endpoint.get
       .in("api" / "articles" / path[String]("slug") / "export")
       .errorOut(writeErrors)
-      .out(stringBody)).mapIn[_root_.com.histmersion.api.research.ReviewGoal.Slug]((refactorDecoded146: _root_.java.lang.String) => _root_.com.histmersion.api.research.ReviewGoal.Slug(refactorDecoded146))((refactorEncoded146: _root_.com.histmersion.api.research.ReviewGoal.Slug) => (refactorEncoded146).value).mapOut[_root_.com.histmersion.api.Api.ExportArticlePart3]((refactorDecoded147: _root_.java.lang.String) => _root_.com.histmersion.api.Api.ExportArticlePart3(refactorDecoded147))((refactorEncoded147: _root_.com.histmersion.api.Api.ExportArticlePart3) => (refactorEncoded147).value)
+      .out(stringBody)).mapIn[_root_.com.histmersion.api.research.ReviewGoal.Slug]((refactorDecoded146: _root_.java.lang.String) => _root_.com.histmersion.api.research.ReviewGoal.Slug(refactorDecoded146))((refactorEncoded146: _root_.com.histmersion.api.research.ReviewGoal.Slug) => (refactorEncoded146).value).mapOut[_root_.com.histmersion.api.research.Article.Export]((refactorDecoded147: _root_.java.lang.String) => _root_.com.histmersion.api.research.Article.Export(refactorDecoded147))((refactorEncoded147: _root_.com.histmersion.api.research.Article.Export) => (refactorEncoded147).value)
 
   lazy val importArticle: PublicEndpoint[Article.Import, com.histmersion.api.Api.Error, SeedResult, Any] =
     base.post.in("articles" / "import").in(jsonBody[Article.Import]).out(jsonBody[SeedResult])
@@ -904,7 +886,7 @@ object Api:
     ManagersApi.steering ++ AutopilotApi.draining ++ ManagersApi.stalled ++ UiApi.all ++ EventsApi.all ++ AcquireApi.all ++ BasemapApi.all ++ TilesApi.all ++ ConfigEditApi.all ++ personal.PersonalApi.all ++
     library.CollectionsApi.all
 
-  lazy val places: PublicEndpoint[(Option[com.histmersion.api.Api.PlacesGeoQuery.Kind], Option[com.histmersion.api.Api.PlacesGeoQuery.AsOf], Option[com.histmersion.api.Api.PlacesGeoQuery.Limit]), com.histmersion.api.Api.Error, List[
+  lazy val places: PublicEndpoint[(Option[com.histmersion.api.catalogue.Place.Kind.Wire], Option[com.histmersion.api.Api.AggregateQuery.AsOf], Option[com.histmersion.api.Api.PlacesGeoQuery.Limit]), com.histmersion.api.Api.Error, List[
     Place.Hit
   ], Any] =
     (base.get
@@ -912,7 +894,7 @@ object Api:
       .in(query[Option[String]]("q"))
       .in(query[Option[Long]]("asOf"))
       .in(query[Option[Int]]("limit"))
-      .out(jsonBody[List[Place.Hit]])).mapIn[(_root_.scala.Option[_root_.com.histmersion.api.Api.PlacesGeoQuery.Kind], _root_.scala.Option[_root_.com.histmersion.api.Api.PlacesGeoQuery.AsOf], _root_.scala.Option[_root_.com.histmersion.api.Api.PlacesGeoQuery.Limit])]((refactorDecoded150: (_root_.scala.Option[_root_.java.lang.String], _root_.scala.Option[_root_.scala.Long], _root_.scala.Option[_root_.scala.Int])) => (((refactorDecoded150)._1).map(refactorElement121 => _root_.com.histmersion.api.Api.PlacesGeoQuery.Kind(refactorElement121)), ((refactorDecoded150)._2).map(refactorElement122 => _root_.com.histmersion.api.Api.PlacesGeoQuery.AsOf(refactorElement122)), ((refactorDecoded150)._3).map(refactorElement123 => _root_.com.histmersion.api.Api.PlacesGeoQuery.Limit(refactorElement123))))((refactorEncoded150: (_root_.scala.Option[_root_.com.histmersion.api.Api.PlacesGeoQuery.Kind], _root_.scala.Option[_root_.com.histmersion.api.Api.PlacesGeoQuery.AsOf], _root_.scala.Option[_root_.com.histmersion.api.Api.PlacesGeoQuery.Limit])) => (((refactorEncoded150)._1).map(refactorElement124 => (refactorElement124).value), ((refactorEncoded150)._2).map(refactorElement125 => (refactorElement125).value), ((refactorEncoded150)._3).map(refactorElement126 => (refactorElement126).value)))
+      .out(jsonBody[List[Place.Hit]])).mapIn[(_root_.scala.Option[_root_.com.histmersion.api.catalogue.Place.Kind.Wire], _root_.scala.Option[_root_.com.histmersion.api.Api.AggregateQuery.AsOf], _root_.scala.Option[_root_.com.histmersion.api.Api.PlacesGeoQuery.Limit])]((refactorDecoded150: (_root_.scala.Option[_root_.java.lang.String], _root_.scala.Option[_root_.scala.Long], _root_.scala.Option[_root_.scala.Int])) => (((refactorDecoded150)._1).map(refactorElement121 => _root_.com.histmersion.api.catalogue.Place.Kind.Wire(refactorElement121)), ((refactorDecoded150)._2).map(refactorElement122 => _root_.com.histmersion.api.Api.AggregateQuery.AsOf(refactorElement122)), ((refactorDecoded150)._3).map(refactorElement123 => _root_.com.histmersion.api.Api.PlacesGeoQuery.Limit(refactorElement123))))((refactorEncoded150: (_root_.scala.Option[_root_.com.histmersion.api.catalogue.Place.Kind.Wire], _root_.scala.Option[_root_.com.histmersion.api.Api.AggregateQuery.AsOf], _root_.scala.Option[_root_.com.histmersion.api.Api.PlacesGeoQuery.Limit])) => (((refactorEncoded150)._1).map(refactorElement124 => (refactorElement124).value), ((refactorEncoded150)._2).map(refactorElement125 => (refactorElement125).value), ((refactorEncoded150)._3).map(refactorElement126 => (refactorElement126).value)))
 
   final case class PlacesGeoQuery(
       kind: Option[PlacesGeoQuery.Kind] = None,
@@ -924,18 +906,12 @@ object Api:
   )
 
   object PlacesGeoQuery:
-    type Kind = Kind.T
-    object Kind extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-    type AsOf = AsOf.T
-    object AsOf extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
     type Limit = Limit.T
     object Limit extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
     type From = From.T
     object From extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
     type To = To.T
     object To extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
-    type Pick = Pick.T
-    object Pick extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
   lazy val placesGeo: PublicEndpoint[PlacesGeoQuery, com.histmersion.api.Api.Error, com.histmersion.api.Api.PlacesGeo.Json, Any] =
     (base.get
@@ -952,38 +928,38 @@ object Api:
       .out(stringBody)).mapOut[_root_.com.histmersion.api.Api.PlacesGeo.Json]((refactorDecoded14: _root_.java.lang.String) => _root_.com.histmersion.api.Api.PlacesGeo.Json(refactorDecoded14))((refactorEncoded14: _root_.com.histmersion.api.Api.PlacesGeo.Json) => (refactorEncoded14).value)
 
   lazy val placeChildren
-      : PublicEndpoint[(com.histmersion.api.catalogue.Place.Id, Option[com.histmersion.api.Api.PlacesGeoQuery.AsOf]), com.histmersion.api.Api.Error, List[Place.Summary], Any] =
+      : PublicEndpoint[(com.histmersion.api.catalogue.Place.Id, Option[com.histmersion.api.Api.AggregateQuery.AsOf]), com.histmersion.api.Api.Error, List[Place.Summary], Any] =
     (base.get
       .in("places" / path[String]("id") / "children")
       .in(query[Option[Long]]("asOf"))
       .out(jsonBody[List[Place.Summary]])
-      .errorOut(statusCode(StatusCode.NotFound))).mapIn[(_root_.com.histmersion.api.catalogue.Place.Id, _root_.scala.Option[_root_.com.histmersion.api.Api.PlacesGeoQuery.AsOf])]((refactorDecoded45: (_root_.java.lang.String, _root_.scala.Option[_root_.scala.Long])) => (_root_.com.histmersion.api.catalogue.Place.Id((refactorDecoded45)._1), ((refactorDecoded45)._2).map(refactorElement35 => _root_.com.histmersion.api.Api.PlacesGeoQuery.AsOf(refactorElement35))))((refactorEncoded45: (_root_.com.histmersion.api.catalogue.Place.Id, _root_.scala.Option[_root_.com.histmersion.api.Api.PlacesGeoQuery.AsOf])) => (((refactorEncoded45)._1).value, ((refactorEncoded45)._2).map(refactorElement36 => (refactorElement36).value)))
+      .errorOut(statusCode(StatusCode.NotFound))).mapIn[(_root_.com.histmersion.api.catalogue.Place.Id, _root_.scala.Option[_root_.com.histmersion.api.Api.AggregateQuery.AsOf])]((refactorDecoded45: (_root_.java.lang.String, _root_.scala.Option[_root_.scala.Long])) => (_root_.com.histmersion.api.catalogue.Place.Id((refactorDecoded45)._1), ((refactorDecoded45)._2).map(refactorElement35 => _root_.com.histmersion.api.Api.AggregateQuery.AsOf(refactorElement35))))((refactorEncoded45: (_root_.com.histmersion.api.catalogue.Place.Id, _root_.scala.Option[_root_.com.histmersion.api.Api.AggregateQuery.AsOf])) => (((refactorEncoded45)._1).value, ((refactorEncoded45)._2).map(refactorElement36 => (refactorElement36).value)))
 
   lazy val placeTree
-      : PublicEndpoint[(com.histmersion.api.catalogue.Place.Id, Option[com.histmersion.api.Api.PlacesGeoQuery.AsOf], Option[com.histmersion.api.catalogue.Place.Depth]), com.histmersion.api.Api.Error, List[Place.TreeRow], Any] =
+      : PublicEndpoint[(com.histmersion.api.catalogue.Place.Id, Option[com.histmersion.api.Api.AggregateQuery.AsOf], Option[com.histmersion.api.catalogue.Place.Depth]), com.histmersion.api.Api.Error, List[Place.TreeRow], Any] =
     (base.get
       .in("places" / path[String]("id") / "tree")
       .in(query[Option[Long]]("asOf"))
       .in(query[Option[Int]]("depth"))
       .out(jsonBody[List[Place.TreeRow]])
-      .errorOut(statusCode(StatusCode.NotFound))).mapIn[(_root_.com.histmersion.api.catalogue.Place.Id, _root_.scala.Option[_root_.com.histmersion.api.Api.PlacesGeoQuery.AsOf], _root_.scala.Option[_root_.com.histmersion.api.catalogue.Place.Depth])]((refactorDecoded152: (_root_.java.lang.String, _root_.scala.Option[_root_.scala.Long], _root_.scala.Option[_root_.scala.Int])) => (_root_.com.histmersion.api.catalogue.Place.Id((refactorDecoded152)._1), ((refactorDecoded152)._2).map(refactorElement129 => _root_.com.histmersion.api.Api.PlacesGeoQuery.AsOf(refactorElement129)), ((refactorDecoded152)._3).map(refactorElement130 => _root_.com.histmersion.api.catalogue.Place.Depth(refactorElement130))))((refactorEncoded152: (_root_.com.histmersion.api.catalogue.Place.Id, _root_.scala.Option[_root_.com.histmersion.api.Api.PlacesGeoQuery.AsOf], _root_.scala.Option[_root_.com.histmersion.api.catalogue.Place.Depth])) => (((refactorEncoded152)._1).value, ((refactorEncoded152)._2).map(refactorElement131 => (refactorElement131).value), ((refactorEncoded152)._3).map(refactorElement132 => (refactorElement132).value)))
+      .errorOut(statusCode(StatusCode.NotFound))).mapIn[(_root_.com.histmersion.api.catalogue.Place.Id, _root_.scala.Option[_root_.com.histmersion.api.Api.AggregateQuery.AsOf], _root_.scala.Option[_root_.com.histmersion.api.catalogue.Place.Depth])]((refactorDecoded152: (_root_.java.lang.String, _root_.scala.Option[_root_.scala.Long], _root_.scala.Option[_root_.scala.Int])) => (_root_.com.histmersion.api.catalogue.Place.Id((refactorDecoded152)._1), ((refactorDecoded152)._2).map(refactorElement129 => _root_.com.histmersion.api.Api.AggregateQuery.AsOf(refactorElement129)), ((refactorDecoded152)._3).map(refactorElement130 => _root_.com.histmersion.api.catalogue.Place.Depth(refactorElement130))))((refactorEncoded152: (_root_.com.histmersion.api.catalogue.Place.Id, _root_.scala.Option[_root_.com.histmersion.api.Api.AggregateQuery.AsOf], _root_.scala.Option[_root_.com.histmersion.api.catalogue.Place.Depth])) => (((refactorEncoded152)._1).value, ((refactorEncoded152)._2).map(refactorElement131 => (refactorElement131).value), ((refactorEncoded152)._3).map(refactorElement132 => (refactorElement132).value)))
 
   lazy val place
-      : PublicEndpoint[(com.histmersion.api.catalogue.Place.Id, Option[com.histmersion.api.Api.PlacesGeoQuery.AsOf], Option[com.histmersion.api.catalogue.Place.Detail]), com.histmersion.api.Api.Error, PlaceDetail, Any] =
+      : PublicEndpoint[(com.histmersion.api.catalogue.Place.Id, Option[com.histmersion.api.Api.AggregateQuery.AsOf], Option[com.histmersion.api.catalogue.Place.Detail]), com.histmersion.api.Api.Error, PlaceDetail, Any] =
     (base.get
       .in("places" / path[String]("id"))
       .in(query[Option[Long]]("asOf"))
       .in(query[Option[Boolean]]("counts"))
       .out(jsonBody[PlaceDetail])
-      .errorOut(statusCode(StatusCode.NotFound))).mapIn[(_root_.com.histmersion.api.catalogue.Place.Id, _root_.scala.Option[_root_.com.histmersion.api.Api.PlacesGeoQuery.AsOf], _root_.scala.Option[_root_.com.histmersion.api.catalogue.Place.Detail])]((refactorDecoded47: (_root_.java.lang.String, _root_.scala.Option[_root_.scala.Long], _root_.scala.Option[_root_.scala.Boolean])) => (_root_.com.histmersion.api.catalogue.Place.Id((refactorDecoded47)._1), ((refactorDecoded47)._2).map(refactorElement41 => _root_.com.histmersion.api.Api.PlacesGeoQuery.AsOf(refactorElement41)), ((refactorDecoded47)._3).map(refactorElement42 => _root_.com.histmersion.api.catalogue.Place.Detail(refactorElement42))))((refactorEncoded47: (_root_.com.histmersion.api.catalogue.Place.Id, _root_.scala.Option[_root_.com.histmersion.api.Api.PlacesGeoQuery.AsOf], _root_.scala.Option[_root_.com.histmersion.api.catalogue.Place.Detail])) => (((refactorEncoded47)._1).value, ((refactorEncoded47)._2).map(refactorElement43 => (refactorElement43).value), ((refactorEncoded47)._3).map(refactorElement44 => (refactorElement44).value)))
+      .errorOut(statusCode(StatusCode.NotFound))).mapIn[(_root_.com.histmersion.api.catalogue.Place.Id, _root_.scala.Option[_root_.com.histmersion.api.Api.AggregateQuery.AsOf], _root_.scala.Option[_root_.com.histmersion.api.catalogue.Place.Detail])]((refactorDecoded47: (_root_.java.lang.String, _root_.scala.Option[_root_.scala.Long], _root_.scala.Option[_root_.scala.Boolean])) => (_root_.com.histmersion.api.catalogue.Place.Id((refactorDecoded47)._1), ((refactorDecoded47)._2).map(refactorElement41 => _root_.com.histmersion.api.Api.AggregateQuery.AsOf(refactorElement41)), ((refactorDecoded47)._3).map(refactorElement42 => _root_.com.histmersion.api.catalogue.Place.Detail(refactorElement42))))((refactorEncoded47: (_root_.com.histmersion.api.catalogue.Place.Id, _root_.scala.Option[_root_.com.histmersion.api.Api.AggregateQuery.AsOf], _root_.scala.Option[_root_.com.histmersion.api.catalogue.Place.Detail])) => (((refactorEncoded47)._1).value, ((refactorEncoded47)._2).map(refactorElement43 => (refactorElement43).value), ((refactorEncoded47)._3).map(refactorElement44 => (refactorElement44).value)))
 
   lazy val placeFootprints
-      : PublicEndpoint[(com.histmersion.api.catalogue.Place.Id, Option[com.histmersion.api.Api.PlacesGeoQuery.AsOf]), com.histmersion.api.Api.Error, List[Place.Footprint], Any] =
+      : PublicEndpoint[(com.histmersion.api.catalogue.Place.Id, Option[com.histmersion.api.Api.AggregateQuery.AsOf]), com.histmersion.api.Api.Error, List[Place.Footprint], Any] =
     (base.get
       .in("places" / path[String]("id") / "footprints")
       .in(query[Option[Long]]("asOf"))
       .out(jsonBody[List[Place.Footprint]])
-      .errorOut(statusCode(StatusCode.NotFound))).mapIn[(_root_.com.histmersion.api.catalogue.Place.Id, _root_.scala.Option[_root_.com.histmersion.api.Api.PlacesGeoQuery.AsOf])]((refactorDecoded154: (_root_.java.lang.String, _root_.scala.Option[_root_.scala.Long])) => (_root_.com.histmersion.api.catalogue.Place.Id((refactorDecoded154)._1), ((refactorDecoded154)._2).map(refactorElement137 => _root_.com.histmersion.api.Api.PlacesGeoQuery.AsOf(refactorElement137))))((refactorEncoded154: (_root_.com.histmersion.api.catalogue.Place.Id, _root_.scala.Option[_root_.com.histmersion.api.Api.PlacesGeoQuery.AsOf])) => (((refactorEncoded154)._1).value, ((refactorEncoded154)._2).map(refactorElement138 => (refactorElement138).value)))
+      .errorOut(statusCode(StatusCode.NotFound))).mapIn[(_root_.com.histmersion.api.catalogue.Place.Id, _root_.scala.Option[_root_.com.histmersion.api.Api.AggregateQuery.AsOf])]((refactorDecoded154: (_root_.java.lang.String, _root_.scala.Option[_root_.scala.Long])) => (_root_.com.histmersion.api.catalogue.Place.Id((refactorDecoded154)._1), ((refactorDecoded154)._2).map(refactorElement137 => _root_.com.histmersion.api.Api.AggregateQuery.AsOf(refactorElement137))))((refactorEncoded154: (_root_.com.histmersion.api.catalogue.Place.Id, _root_.scala.Option[_root_.com.histmersion.api.Api.AggregateQuery.AsOf])) => (((refactorEncoded154)._1).value, ((refactorEncoded154)._2).map(refactorElement138 => (refactorElement138).value)))
 
   lazy val placeLinks: PublicEndpoint[com.histmersion.api.catalogue.Place.Id, com.histmersion.api.Api.Error, List[Place.Link], Any] =
     (base.get
@@ -1133,12 +1109,6 @@ object Api:
   object EventQuery:
     type Text = Text.T
     object Text extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-    type Kind = Kind.T
-    object Kind extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-    type Historicity = Historicity.T
-    object Historicity extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-    type PlaceId = PlaceId.T
-    object PlaceId extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
     type Tier = Tier.T
     object Tier extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
     type Context = Context.T
@@ -1269,8 +1239,6 @@ object Api:
     object Status:
       type Wire = Wire.T
       object Wire extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-    type Status = Status.T
-    object Status extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
     type Limit = Limit.T
     object Limit extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
     type Offset = Offset.T
@@ -1393,13 +1361,13 @@ object Api:
       .out(fileBody)
       .out(header[String](sttp.model.HeaderNames.ContentDisposition))
 
-  lazy val job: PublicEndpoint[com.histmersion.api.Api.JobPart1, com.histmersion.api.Api.Error, JobInfo, Any] =
+  lazy val job: PublicEndpoint[com.histmersion.api.SpatialHierarchyResult.Job.Id, com.histmersion.api.Api.Error, JobInfo, Any] =
     (base.get
       .in("jobs" / path[String]("id"))
       .out(jsonBody[JobInfo])
-      .errorOut(statusCode(StatusCode.NotFound))).mapIn[_root_.com.histmersion.api.Api.JobPart1]((refactorDecoded192: _root_.java.lang.String) => _root_.com.histmersion.api.Api.JobPart1(refactorDecoded192))((refactorEncoded192: _root_.com.histmersion.api.Api.JobPart1) => (refactorEncoded192).value)
+      .errorOut(statusCode(StatusCode.NotFound))).mapIn[_root_.com.histmersion.api.SpatialHierarchyResult.Job.Id]((refactorDecoded192: _root_.java.lang.String) => _root_.com.histmersion.api.SpatialHierarchyResult.Job.Id(refactorDecoded192))((refactorEncoded192: _root_.com.histmersion.api.SpatialHierarchyResult.Job.Id) => (refactorEncoded192).value)
 
-  lazy val jobControl: PublicEndpoint[(com.histmersion.api.Api.JobControlPart1Part1, com.histmersion.api.Api.JobControl.Action), com.histmersion.api.Api.Error, JobInfo, Any] =
+  lazy val jobControl: PublicEndpoint[(com.histmersion.api.SpatialHierarchyResult.Job.Id, com.histmersion.api.Api.JobControl.Action), com.histmersion.api.Api.Error, JobInfo, Any] =
     endpoint.post
       .in("api" / "jobs" / path[String]("id") / path[String]("action"))
       .errorOut(
@@ -1438,7 +1406,7 @@ object Api:
       .out(jsonBody[Activity.Page])).mapIn[(_root_.scala.Option[_root_.com.histmersion.api.automation.Activity.Kind], _root_.scala.Option[_root_.com.histmersion.api.automation.Activity.Actor], _root_.scala.Option[_root_.com.histmersion.api.automation.Activity.Subject], _root_.scala.Option[_root_.com.histmersion.api.automation.Activity.Limit], _root_.scala.Option[_root_.com.histmersion.api.automation.Activity.Cursor])]((refactorDecoded193: (_root_.scala.Option[_root_.java.lang.String], _root_.scala.Option[_root_.java.lang.String], _root_.scala.Option[_root_.java.lang.String], _root_.scala.Option[_root_.scala.Int], _root_.scala.Option[_root_.java.lang.String])) => (((refactorDecoded193)._1).map(refactorElement161 => _root_.com.histmersion.api.automation.Activity.Kind(refactorElement161)), ((refactorDecoded193)._2).map(refactorElement162 => _root_.com.histmersion.api.automation.Activity.Actor(refactorElement162)), ((refactorDecoded193)._3).map(refactorElement163 => _root_.com.histmersion.api.automation.Activity.Subject(refactorElement163)), ((refactorDecoded193)._4).map(refactorElement164 => _root_.com.histmersion.api.automation.Activity.Limit(refactorElement164)), ((refactorDecoded193)._5).map(refactorElement165 => _root_.com.histmersion.api.automation.Activity.Cursor(refactorElement165))))((refactorEncoded193: (_root_.scala.Option[_root_.com.histmersion.api.automation.Activity.Kind], _root_.scala.Option[_root_.com.histmersion.api.automation.Activity.Actor], _root_.scala.Option[_root_.com.histmersion.api.automation.Activity.Subject], _root_.scala.Option[_root_.com.histmersion.api.automation.Activity.Limit], _root_.scala.Option[_root_.com.histmersion.api.automation.Activity.Cursor])) => (((refactorEncoded193)._1).map(refactorElement166 => (refactorElement166).value), ((refactorEncoded193)._2).map(refactorElement167 => (refactorElement167).value), ((refactorEncoded193)._3).map(refactorElement168 => (refactorElement168).value), ((refactorEncoded193)._4).map(refactorElement169 => (refactorElement169).value), ((refactorEncoded193)._5).map(refactorElement170 => (refactorElement170).value)))
 
   lazy val jobs: PublicEndpoint[
-    (ListFilters.JobFilter, Option[com.histmersion.api.Api.Jobs.Limit], Option[com.histmersion.api.Api.Jobs.Status], Option[com.histmersion.api.Api.JobsPart1Part4]),
+    (ListFilters.JobFilter, Option[com.histmersion.api.Api.Jobs.Limit], Option[com.histmersion.api.Api.Jobs.Status], Option[com.histmersion.api.Jobs.Filter]),
     com.histmersion.api.Api.Error,
     (List[JobInfo], Paging.Page),
     Any
@@ -1450,7 +1418,7 @@ object Api:
       .in(query[Option[String]]("before"))
       .in(query[Option[String]]("upTo"))
       .out(jsonBody[List[JobInfo]])
-      .out(Paging.headers)).mapIn[(_root_.com.histmersion.api.automation.ListFilters.JobFilter, _root_.scala.Option[_root_.com.histmersion.api.Api.Jobs.Limit], _root_.scala.Option[_root_.com.histmersion.api.Api.Jobs.Status], _root_.scala.Option[_root_.com.histmersion.api.Api.JobsPart1Part4])]((refactorDecoded194: (_root_.com.histmersion.api.automation.ListFilters.JobFilter, _root_.scala.Option[_root_.scala.Int], _root_.scala.Option[_root_.java.lang.String], _root_.scala.Option[_root_.java.lang.String])) => ((refactorDecoded194)._1, ((refactorDecoded194)._2).map(refactorElement171 => _root_.com.histmersion.api.Api.Jobs.Limit(refactorElement171)), ((refactorDecoded194)._3).map(refactorElement172 => _root_.com.histmersion.api.Api.Jobs.Status(refactorElement172)), ((refactorDecoded194)._4).map(refactorElement173 => _root_.com.histmersion.api.Api.JobsPart1Part4(refactorElement173))))((refactorEncoded194: (_root_.com.histmersion.api.automation.ListFilters.JobFilter, _root_.scala.Option[_root_.com.histmersion.api.Api.Jobs.Limit], _root_.scala.Option[_root_.com.histmersion.api.Api.Jobs.Status], _root_.scala.Option[_root_.com.histmersion.api.Api.JobsPart1Part4])) => ((refactorEncoded194)._1, ((refactorEncoded194)._2).map(refactorElement174 => (refactorElement174).value), ((refactorEncoded194)._3).map(refactorElement175 => (refactorElement175).value), ((refactorEncoded194)._4).map(refactorElement176 => (refactorElement176).value)))
+      .out(Paging.headers)).mapIn[(_root_.com.histmersion.api.automation.ListFilters.JobFilter, _root_.scala.Option[_root_.com.histmersion.api.Api.Jobs.Limit], _root_.scala.Option[_root_.com.histmersion.api.Api.Jobs.Status], _root_.scala.Option[_root_.com.histmersion.api.Jobs.Filter])]((refactorDecoded194: (_root_.com.histmersion.api.automation.ListFilters.JobFilter, _root_.scala.Option[_root_.scala.Int], _root_.scala.Option[_root_.java.lang.String], _root_.scala.Option[_root_.java.lang.String])) => ((refactorDecoded194)._1, ((refactorDecoded194)._2).map(refactorElement171 => _root_.com.histmersion.api.Api.Jobs.Limit(refactorElement171)), ((refactorDecoded194)._3).map(refactorElement172 => _root_.com.histmersion.api.Api.Jobs.Status(refactorElement172)), ((refactorDecoded194)._4).map(refactorElement173 => _root_.com.histmersion.api.Jobs.Filter(refactorElement173))))((refactorEncoded194: (_root_.com.histmersion.api.automation.ListFilters.JobFilter, _root_.scala.Option[_root_.com.histmersion.api.Api.Jobs.Limit], _root_.scala.Option[_root_.com.histmersion.api.Api.Jobs.Status], _root_.scala.Option[_root_.com.histmersion.api.Jobs.Filter])) => ((refactorEncoded194)._1, ((refactorEncoded194)._2).map(refactorElement174 => (refactorElement174).value), ((refactorEncoded194)._3).map(refactorElement175 => (refactorElement175).value), ((refactorEncoded194)._4).map(refactorElement176 => (refactorElement176).value)))
 
   lazy val assets: PublicEndpoint[com.histmersion.api.Api.Assets.Kind, com.histmersion.api.Api.Error, List[AssetInfo], Any] =
     (base.get.in("sources" / path[String]("citekey") / "assets").out(jsonBody[List[AssetInfo]])).mapIn[_root_.com.histmersion.api.Api.Assets.Kind]((refactorDecoded89: _root_.java.lang.String) => _root_.com.histmersion.api.Api.Assets.Kind(refactorDecoded89))((refactorEncoded89: _root_.com.histmersion.api.Api.Assets.Kind) => (refactorEncoded89).value)
@@ -1492,16 +1460,12 @@ object Api:
   )
 
   object MediaGeoQuery:
-    type Kind = Kind.T
-    object Kind extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
     type From = From.T
     object From extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
     type To = To.T
     object To extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
     type Limit = Limit.T
     object Limit extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
-    type Provider = Provider.T
-    object Provider extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
     type License = License.T
     object License extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
@@ -1530,14 +1494,8 @@ object Api:
   )
 
   object MediaQuery:
-    type Provider = Provider.T
-    object Provider extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
     type License = License.T
     object License extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-    type Place = Place.T
-    object Place extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-    type Event = Event.T
-    object Event extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
     type Q = Q.T
     object Q extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
     type Limit = Limit.T
@@ -1660,7 +1618,7 @@ object Api:
     * `default`, format `jpg|png`.
     */
   lazy val iiifImage: PublicEndpoint[
-    (com.histmersion.api.exchange.Bundle.Asset.Uid, com.histmersion.api.media.Iiif.Region, com.histmersion.api.media.Iiif.Size, com.histmersion.api.media.Iiif.Rotation, com.histmersion.api.media.Iiif.Quality, com.histmersion.api.media.Iiif.Format),
+    (com.histmersion.api.exchange.Bundle.Asset.Uid, com.histmersion.api.media.Iiif.RegionText, com.histmersion.api.media.Iiif.SizeText, com.histmersion.api.media.Iiif.Rotation, com.histmersion.api.media.Iiif.Quality, com.histmersion.api.media.Iiif.Format),
     com.histmersion.api.Api.Error,
     (com.histmersion.api.Api.FileBytes, com.histmersion.api.Api.ContentType),
     Any
@@ -1676,18 +1634,18 @@ object Api:
       .out(byteArrayBody)
       .out(header[String](sttp.model.HeaderNames.ContentType))
       .out(header(sttp.model.Header(sttp.model.HeaderNames.AccessControlAllowOrigin, "*")))
-      .out(header(sttp.model.Header(sttp.model.HeaderNames.CacheControl, "public, max-age=31536000, immutable")))).mapIn[(_root_.com.histmersion.api.exchange.Bundle.Asset.Uid, _root_.com.histmersion.api.media.Iiif.Region, _root_.com.histmersion.api.media.Iiif.Size, _root_.com.histmersion.api.media.Iiif.Rotation, _root_.com.histmersion.api.media.Iiif.Quality, _root_.com.histmersion.api.media.Iiif.Format)]((refactorDecoded211: (_root_.java.lang.String, _root_.java.lang.String, _root_.java.lang.String, _root_.java.lang.String, _root_.java.lang.String, _root_.java.lang.String)) => (_root_.com.histmersion.api.exchange.Bundle.Asset.Uid((refactorDecoded211)._1), _root_.com.histmersion.api.media.Iiif.Region((refactorDecoded211)._2), _root_.com.histmersion.api.media.Iiif.Size((refactorDecoded211)._3), _root_.com.histmersion.api.media.Iiif.Rotation((refactorDecoded211)._4), _root_.com.histmersion.api.media.Iiif.Quality((refactorDecoded211)._5), _root_.com.histmersion.api.media.Iiif.Format((refactorDecoded211)._6)))((refactorEncoded211: (_root_.com.histmersion.api.exchange.Bundle.Asset.Uid, _root_.com.histmersion.api.media.Iiif.Region, _root_.com.histmersion.api.media.Iiif.Size, _root_.com.histmersion.api.media.Iiif.Rotation, _root_.com.histmersion.api.media.Iiif.Quality, _root_.com.histmersion.api.media.Iiif.Format)) => (((refactorEncoded211)._1).value, ((refactorEncoded211)._2).value, ((refactorEncoded211)._3).value, ((refactorEncoded211)._4).value, ((refactorEncoded211)._5).value, ((refactorEncoded211)._6).value)).mapOut[(_root_.com.histmersion.api.Api.FileBytes, _root_.com.histmersion.api.Api.ContentType)]((refactorDecoded212: (_root_.scala.Array[_root_.scala.Byte], _root_.java.lang.String)) => (_root_.com.histmersion.api.Api.FileBytes((refactorDecoded212)._1), _root_.com.histmersion.api.Api.ContentType((refactorDecoded212)._2)))((refactorEncoded212: (_root_.com.histmersion.api.Api.FileBytes, _root_.com.histmersion.api.Api.ContentType)) => (((refactorEncoded212)._1).value, ((refactorEncoded212)._2).value))
+      .out(header(sttp.model.Header(sttp.model.HeaderNames.CacheControl, "public, max-age=31536000, immutable")))).mapIn[(_root_.com.histmersion.api.exchange.Bundle.Asset.Uid, _root_.com.histmersion.api.media.Iiif.RegionText, _root_.com.histmersion.api.media.Iiif.SizeText, _root_.com.histmersion.api.media.Iiif.Rotation, _root_.com.histmersion.api.media.Iiif.Quality, _root_.com.histmersion.api.media.Iiif.Format)]((refactorDecoded211: (_root_.java.lang.String, _root_.java.lang.String, _root_.java.lang.String, _root_.java.lang.String, _root_.java.lang.String, _root_.java.lang.String)) => (_root_.com.histmersion.api.exchange.Bundle.Asset.Uid((refactorDecoded211)._1), _root_.com.histmersion.api.media.Iiif.RegionText((refactorDecoded211)._2), _root_.com.histmersion.api.media.Iiif.SizeText((refactorDecoded211)._3), _root_.com.histmersion.api.media.Iiif.Rotation((refactorDecoded211)._4), _root_.com.histmersion.api.media.Iiif.Quality((refactorDecoded211)._5), _root_.com.histmersion.api.media.Iiif.Format((refactorDecoded211)._6)))((refactorEncoded211: (_root_.com.histmersion.api.exchange.Bundle.Asset.Uid, _root_.com.histmersion.api.media.Iiif.RegionText, _root_.com.histmersion.api.media.Iiif.SizeText, _root_.com.histmersion.api.media.Iiif.Rotation, _root_.com.histmersion.api.media.Iiif.Quality, _root_.com.histmersion.api.media.Iiif.Format)) => (((refactorEncoded211)._1).value, ((refactorEncoded211)._2).value, ((refactorEncoded211)._3).value, ((refactorEncoded211)._4).value, ((refactorEncoded211)._5).value, ((refactorEncoded211)._6).value)).mapOut[(_root_.com.histmersion.api.Api.FileBytes, _root_.com.histmersion.api.Api.ContentType)]((refactorDecoded212: (_root_.scala.Array[_root_.scala.Byte], _root_.java.lang.String)) => (_root_.com.histmersion.api.Api.FileBytes((refactorDecoded212)._1), _root_.com.histmersion.api.Api.ContentType((refactorDecoded212)._2)))((refactorEncoded212: (_root_.com.histmersion.api.Api.FileBytes, _root_.com.histmersion.api.Api.ContentType)) => (((refactorEncoded212)._1).value, ((refactorEncoded212)._2).value))
 
   final case class Error(message: Error.Message, code: Option[Error.Code] = None) derives KindlingsCodecAsObject, KindlingsSchema, com.histmersion.api.json.Schema
   object Error:
+    type Problem = Problem.T
+    object Problem extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
 
     /** Tapir hands the matcher an `Any`, and under `-source:future` a constructor pattern on `Any` warns (it is not
       * `Matchable`), so the value is checked with a type test.
       */
 
-    type Message = Message.T
-    object Message extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
     type Code = Code.T
     object Code extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
@@ -1695,8 +1653,14 @@ object Api:
       case e if e.isInstanceOf[Error] && e.asInstanceOf[Error].code.contains(code) => (true)
 
   object Index:
+    type Block = Block.T
+    object Block extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Current = Current.T
+    object Current extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
     type PathTemplate = PathTemplate.T
     object PathTemplate extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Readme = Readme.T
+    object Readme extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
     type RepoPath = RepoPath.T
     object RepoPath extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
@@ -1705,16 +1669,6 @@ object Api:
       given _root_.scala.math.Ordering[T] = _root_.scala.math.Ordering.by[T, _root_.java.lang.String](_.value)
     type MarkdownResult = MarkdownResult.T
     object MarkdownResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-    type SpliceResultPart2 = SpliceResultPart2.T
-    object SpliceResultPart2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-    type SpliceReadme = SpliceReadme.T
-    object SpliceReadme extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-    type SpliceIndex = SpliceIndex.T
-    object SpliceIndex extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-    type CurrentResult = CurrentResult.T
-    object CurrentResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-    type CurrentReadme = CurrentReadme.T
-    object CurrentReadme extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
     val Begin = "<!-- BEGIN API INDEX (generated by `just api-docs` — do not edit by hand) -->"
     val End = "<!-- END API INDEX -->"
@@ -1732,17 +1686,17 @@ object Api:
 
     val Page = "docs/user-guide/reference/rest-api.md"
 
-    def splice(readme: com.histmersion.api.Api.Index.SpliceReadme, index: com.histmersion.api.Api.Index.SpliceIndex): Either[com.histmersion.api.Api.Error.Message, com.histmersion.api.Api.Index.SpliceResultPart2] =
+    def splice(readme: com.histmersion.api.Api.Index.Readme, index: com.histmersion.api.Api.Index.Block): Either[com.histmersion.api.Api.Error.Problem, com.histmersion.api.Api.Index.Readme] =
       val (b, e) = ((readme).value.indexOf(Begin), (readme).value.indexOf(End))
-      if b < 0 || e < b then Left(_root_.com.histmersion.api.Api.Error.Message(s"$Page has no $Begin … $End block"))
-      else Right(_root_.com.histmersion.api.Api.Index.SpliceResultPart2((readme).value.substring(0, b + Begin.length) + "\n" + index + "\n" + (readme).value.substring(e)))
+      if b < 0 || e < b then Left(_root_.com.histmersion.api.Api.Error.Problem(s"$Page has no $Begin … $End block"))
+      else Right(_root_.com.histmersion.api.Api.Index.Readme((readme).value.substring(0, b + Begin.length) + "\n" + index + "\n" + (readme).value.substring(e)))
 
-    def current(readme: com.histmersion.api.Api.Index.CurrentReadme): Option[com.histmersion.api.Api.Index.CurrentResult] =
+    def current(readme: com.histmersion.api.Api.Index.Readme): Option[com.histmersion.api.Api.Index.Current] =
       val (b, e) = ((readme).value.indexOf(Begin), (readme).value.indexOf(End))
-      Option.when(b >= 0 && e > b)(_root_.com.histmersion.api.Api.Index.CurrentResult((readme).value.substring(b + Begin.length, e).trim))
+      Option.when(b >= 0 && e > b)(_root_.com.histmersion.api.Api.Index.Current((readme).value.substring(b + Begin.length, e).trim))
 
   @main def generateApiIndex(repo: com.histmersion.api.Api.Index.RepoPath): Unit =
     val p = java.nio.file.Path.of((repo).value).resolve(Index.Page)
-    Index.splice(_root_.com.histmersion.api.Api.Index.SpliceReadme(java.nio.file.Files.readString(p)), Index.markdown(Api.all)) match
+    Index.splice(_root_.com.histmersion.api.Api.Index.Readme(java.nio.file.Files.readString(p)), Index.markdown(Api.all)) match
       case Left(e)  => throw IllegalStateException(e)
       case Right(s) => val _ = java.nio.file.Files.writeString(p, s)

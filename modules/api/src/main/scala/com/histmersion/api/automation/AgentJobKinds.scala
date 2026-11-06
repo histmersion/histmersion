@@ -8,6 +8,6 @@ object AgentJobKinds:
     JobKindEntry.of(
       JobInfo.Kind("agent"),
       _root_.com.histmersion.api.jobs.JobKinds.Wire("Agent run"),
-      _root_.com.histmersion.api.jobs.JobKindEntry.OfMeaning("An agent run; the agent runs window shows its steps."),
+      _root_.com.histmersion.api.jobs.JobKindMeaning("An agent run; the agent runs window shows its steps."),
       ownControl = _root_.com.histmersion.api.jobs.JobKindEntry.OfOwnControl(true)
     )

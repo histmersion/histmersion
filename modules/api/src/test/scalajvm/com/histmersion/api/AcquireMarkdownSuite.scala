@@ -31,7 +31,7 @@ class AcquireMarkdownSuite extends munit.FunSuite:
     title = (Some("Massive migration from the steppe")).map(com.histmersion.api.library.Title.apply),
     year = (Some(2015)).map(com.histmersion.api.catalogue.Year.apply),
     authors = (List("Wolfgang Haak", "Iosif Lazaridis", "Nick Patterson")).map(com.histmersion.api.library.AuthorName.apply),
-    venue = (Some("Nature")).map(com.histmersion.api.library.Venue.apply),
+    venue = (Some("Nature")).map(com.histmersion.api.library.Source.Venue.apply),
     citedByCount = Some(2065),
     isOa = true,
     oaStatus = Some("green"),

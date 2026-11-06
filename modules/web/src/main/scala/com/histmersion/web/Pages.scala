@@ -247,7 +247,7 @@ object Pages:
   private def jobPage(id: com.histmersion.web.Pages.JobPageId): HtmlElement =
     val job = Var(Option.empty[Either[String, JobInfo]])
     div(
-      onMountCallback(_ => ApiClient.job(com.histmersion.api.jobs.JobInfo.Id(id)).onComplete(r => job.set(Some(r.toEither.left.map(_.getMessage))))),
+      onMountCallback(_ => ApiClient.job(com.histmersion.api.SpatialHierarchyResult.Job.Id(id)).onComplete(r => job.set(Some(r.toEither.left.map(_.getMessage))))),
       child <-- job.signal.map {
         case None          => p(cls := "muted", "Loading…")
         case Some(Left(m)) => p(cls := "form-error", role := "alert", s"Could not read job $id: $m")

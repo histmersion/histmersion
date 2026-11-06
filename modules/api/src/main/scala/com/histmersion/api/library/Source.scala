@@ -27,7 +27,7 @@ final case class Source(
     authors: List[com.histmersion.api.library.AuthorName],
     doi: Option[com.histmersion.api.library.Doi],
     year: Option[com.histmersion.api.catalogue.Year],
-    venue: Option[com.histmersion.api.library.Venue],
+    venue: Option[com.histmersion.api.library.Source.Venue],
     status: com.histmersion.api.library.Source.Status,
     topics: List[Source.Topics],
     regions: List[Source.Regions],
@@ -59,8 +59,12 @@ object Source:
   object EdgePart extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type EdgeRole = EdgeRole.T
   object EdgeRole extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type Export = Export.T
+  object Export extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type Venue = Venue.T
   object Venue extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type View = View.T
+  object View extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
   type Topics = Topics.T
   object Topics extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
@@ -78,12 +82,8 @@ object Source:
   object Provenance extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type CalibreId = CalibreId.T
   object CalibreId extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type OcrMarkdown = OcrMarkdown.T
-  object OcrMarkdown extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type Notes = Notes.T
   object Notes extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type UpdatedAt = UpdatedAt.T
-  object UpdatedAt extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
   enum Status:
     case Foundational, Current, Contested, Superseded, Debunked, Retracted, Unassessed
@@ -110,9 +110,6 @@ object Source:
         KindlingsSchema,
         com.histmersion.api.json.Schema
 
-  object Alias:
-    type Value = Value.T
-    object Value extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
   final case class Candidate(
       id: Candidate.Id,
@@ -121,7 +118,7 @@ object Source:
       title: com.histmersion.api.library.Title,
       year: Option[com.histmersion.api.catalogue.Year] = None,
       authors: List[com.histmersion.api.library.AuthorName] = (Nil).map(com.histmersion.api.library.AuthorName.apply),
-      venue: Option[com.histmersion.api.library.Venue] = None,
+      venue: Option[com.histmersion.api.library.Source.Venue] = None,
       abstractText: Option[Candidate.AbstractText] = None,
       isOa: Candidate.IsOa = _root_.com.histmersion.api.library.Source.Candidate.IsOa(false),
       arxivId: Option[Candidate.ArxivId] = None,
@@ -136,8 +133,6 @@ object Source:
   object Candidate:
     type Id = Id.T
     object Id extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
-    type Goal = Goal.T
-    object Goal extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
     type AbstractText = AbstractText.T
     object AbstractText extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
     type IsOa = IsOa.T
@@ -253,11 +248,9 @@ object Source:
       _root_.com.histmersion.api.library.Source.Delete.Markdown((List(head, "", s"**${d.title}**") ++ blockers ++ counts ++ aliases ++ edgesIn ++ coverage ++ files ++ failed ++
         mentions ++ calibreLines ++ tail).mkString("\n"))
 
-  final case class DeleteRequest(apply: DeleteRequest.Apply = _root_.com.histmersion.api.library.Source.DeleteRequest.Apply(false)) derives KindlingsSchema, com.histmersion.api.json.Schema
+  final case class DeleteRequest(apply: DeleteRequest.Apply = _root_.com.histmersion.api.Api.Apply(false)) derives KindlingsSchema, com.histmersion.api.json.Schema
   object DeleteRequest:
 
-    type Apply = Apply.T
-    object Apply extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
     given Codec.AsObject[DeleteRequest] = StrictJson.codec(KindlingsCodecAsObject.derived[DeleteRequest])
 
@@ -283,8 +276,6 @@ object Source:
 
   object Deletion:
 
-    type Title = Title.T
-    object Title extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
     type Applied = Applied.T
     object Applied extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
     type Aliases = Aliases.T
@@ -305,7 +296,7 @@ object Source:
       title: com.histmersion.api.library.Title,
       authors: List[com.histmersion.api.library.AuthorName],
       year: Option[com.histmersion.api.catalogue.Year],
-      venue: Option[com.histmersion.api.library.Venue],
+      venue: Option[com.histmersion.api.library.Source.Venue],
       status: com.histmersion.api.library.Source.Status,
       topics: List[com.histmersion.api.library.Source.Topics],
       regions: List[com.histmersion.api.library.Source.Regions],
@@ -324,11 +315,6 @@ object Source:
         KindlingsSchema,
         com.histmersion.api.json.Schema
 
-  object Detail:
-    type OcrMarkdown = OcrMarkdown.T
-    object OcrMarkdown extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-    type UpdatedAt = UpdatedAt.T
-    object UpdatedAt extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
   final case class Graph(
       root: Graph.Root,
@@ -340,12 +326,8 @@ object Source:
         com.histmersion.api.json.Schema
 
   object Graph:
-    type Depth = Depth.T
-    object Depth extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
-    type Root = Root.T
-    object Root extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-    type Depth = Depth.T
-    object Depth extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type DepthCount = DepthCount.T
+    object DepthCount extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
   object Kinds:
     type Wire = Wire.T
@@ -383,7 +365,7 @@ object Source:
       else if words.exists(_.contains("dataset")) || id.exists(d => DataDoiPrefixes.exists(d.startsWith)) then _root_.com.histmersion.api.library.Source.Kinds.Wire(Dataset)
       else
         id.flatMap({ val refactorFunction2 = isbnDoi; (refactorValue14) => refactorFunction2(_root_.com.histmersion.api.library.Doi(refactorValue14)) }) match
-          case Some(chapter)        => if (chapter) then _root_.com.histmersion.api.library.Source.Kinds.Wire(Chapter) else _root_.com.histmersion.api.library.Source.Kinds.Wire(Book)
+          case Some(chapter)        => if (chapter).value then _root_.com.histmersion.api.library.Source.Kinds.Wire(Chapter) else _root_.com.histmersion.api.library.Source.Kinds.Wire(Book)
           case None if id.isDefined => _root_.com.histmersion.api.library.Source.Kinds.Wire(Paper)
           case None                 =>
             if ((hasCover) == (true)) || provenance.map((_).value.trim.toLowerCase(java.util.Locale.ROOT)).exists(BookProvenance.contains)
@@ -396,10 +378,10 @@ object Source:
       else
         @tailrec def isbnEnd(i: Int, digits: Int): Option[Int] =
           if digits >= 13 then Some(i)
-          else if (i) < suffix.length && suffix((i).value).isDigit then isbnEnd(((i) + 1), ((digits) + 1))
-          else if (i) < suffix.length && suffix((i).value) == '-' then isbnEnd(((i) + 1), digits)
+          else if (i).value < suffix.length && suffix((i).value).isDigit then isbnEnd(((i).value + 1), ((digits).value + 1))
+          else if (i).value < suffix.length && suffix((i).value) == '-' then isbnEnd(((i).value + 1), digits)
           else None
-        isbnEnd((0), (0)).map(end => (suffix.drop((end)).exists(_.isLetterOrDigit)))
+        isbnEnd((0), (0)).map(end => (suffix.drop((end).value).exists(_.isLetterOrDigit)))
 
   final case class Match(
       rightUid: UUID,
@@ -459,7 +441,7 @@ object Source:
       authors: List[com.histmersion.api.library.AuthorName] = (Nil).map(com.histmersion.api.library.AuthorName.apply),
       doi: Option[com.histmersion.api.library.Doi] = None,
       year: Option[com.histmersion.api.catalogue.Year] = None,
-      venue: Option[com.histmersion.api.library.Venue] = None,
+      venue: Option[com.histmersion.api.library.Source.Venue] = None,
       status: Option[com.histmersion.api.library.Source.Status] = None,
       topics: List[com.histmersion.api.library.Source.Topics] = Nil,
       regions: List[com.histmersion.api.library.Source.Regions] = Nil,
@@ -611,7 +593,7 @@ object Source:
         authors = p.authors,
         doi = (blankToNone(p.doi.map(_.value))).map(com.histmersion.api.library.Doi.apply),
         year = p.year,
-        venue = (blankToNone(p.venue.map(_.value))).map(com.histmersion.api.library.Venue.apply),
+        venue = (blankToNone(p.venue.map(_.value))).map(com.histmersion.api.library.Source.Venue.apply),
         status = p.status.getOrElse(com.histmersion.api.library.Source.Status.Unassessed),
         topics = p.topics,
         regions = p.regions,
@@ -661,7 +643,7 @@ object Source:
         def cleared(f: MetadataField) = meta.clear.contains(f)
         existing.modify(
           _.title).setTo(meta.title.getOrElse(existing.title)).modify(_.authors).setTo(meta.authors.getOrElse(existing.authors)).modify(_.year).setTo(if cleared(MetadataField.Year) then None else meta.year.orElse(existing.year)).modify(_.venue).setTo(if cleared(MetadataField.Venue) then None
-          else meta.venue.fold(existing.venue)(v => blankToNone(Some(v.value)).map(com.histmersion.api.library.Venue.apply))).modify(_.doi).setTo(if cleared(MetadataField.Doi) then None
+          else meta.venue.fold(existing.venue)(v => blankToNone(Some(v.value)).map(com.histmersion.api.library.Source.Venue.apply))).modify(_.doi).setTo(if cleared(MetadataField.Doi) then None
           else meta.doi.fold(existing.doi)(d => blankToNone(Some(d.value)).map(com.histmersion.api.library.Doi.apply))).modify(_.status).setTo(newStatus).modify(_.summary).setTo(patch.summary.orElse(existing.summary)).modify(_.ocrMarkdown).setTo(patch.body.orElse(existing.ocrMarkdown)).modify(_.notes).setTo(patch.notes.orElse(existing.notes)).modify(_.topics).setTo(patch.topics.getOrElse(existing.topics)).modify(_.regions).setTo(patch.regions.getOrElse(existing.regions)).modify(_.tags).setTo(patch.tags.fold(existing.tags)(applyList(existing.tags, _))).modify(_.period).setTo(period).modify(_.findings).setTo(fs).modify(_.edges).setTo(newEdges).modify(_.provenance).setTo(if cleared(MetadataField.Provenance) then None
           else meta.provenance.orElse(existing.provenance)).modify(_.calibreId).setTo(if cleared(MetadataField.CalibreId) then None
           else meta.calibreId.map(_.trim).orElse(existing.calibreId)
@@ -766,17 +748,17 @@ object Source:
             .toRight(_root_.com.histmersion.api.library.Source.Write.Problem(s"$what: confidence '$c' is not one of ${Confidence.values.map(_.wire).mkString("|")}"))
 
     /** Postgres rejects an inverted int8range. */
-    private[api] def periodOf(start: Option[com.histmersion.api.library.Tree.Year], end: Option[com.histmersion.api.library.Tree.Year], what: com.histmersion.api.library.Source.Write.PeriodOfWhat): Either[com.histmersion.api.library.Source.Write.Problem, Option[Period]] =
-      def sane(v: com.histmersion.api.library.Tree.Year) = v >= Filter.Earliest && v <= Filter.Latest
+    private[api] def periodOf(start: Option[com.histmersion.api.catalogue.Year], end: Option[com.histmersion.api.catalogue.Year], what: com.histmersion.api.library.Source.Write.PeriodOfWhat): Either[com.histmersion.api.library.Source.Write.Problem, Option[Period]] =
+      def sane(v: com.histmersion.api.catalogue.Year) = v >= Filter.Earliest && v <= Filter.Latest
       (start, end) match
-        case (Some(a), _) if !sane(a)     => Left(_root_.com.histmersion.api.library.Source.Write.Problem((outOfRange(what, ("period_start"), _root_.com.histmersion.api.library.Tree.Year((a).value))).value))
-        case (_, Some(b)) if !sane(b)     => Left(_root_.com.histmersion.api.library.Source.Write.Problem((outOfRange(what, ("period_end"), _root_.com.histmersion.api.library.Tree.Year((b).value))).value))
+        case (Some(a), _) if !sane(a)     => Left(_root_.com.histmersion.api.library.Source.Write.Problem((outOfRange(what, ("period_start"), _root_.com.histmersion.api.catalogue.Year((a).value))).value))
+        case (_, Some(b)) if !sane(b)     => Left(_root_.com.histmersion.api.library.Source.Write.Problem((outOfRange(what, ("period_end"), _root_.com.histmersion.api.catalogue.Year((b).value))).value))
         case (Some(a), Some(b)) if a <= b => Right(Some(Period(a, b)))
         case (Some(a), Some(b))           => Left(_root_.com.histmersion.api.library.Source.Write.Problem(s"$what: period_start ($a) must not be after period_end ($b)"))
         case (None, None)                 => Right(None)
         case _                            => Left(_root_.com.histmersion.api.library.Source.Write.Problem(s"$what: give both period_start and period_end, or neither"))
 
-    private[api] def outOfRange(what: String, field: String, v: com.histmersion.api.library.Tree.Year): com.histmersion.api.library.Source.Write.Problem =
+    private[api] def outOfRange(what: String, field: String, v: com.histmersion.api.catalogue.Year): com.histmersion.api.library.Source.Write.Problem =
       _root_.com.histmersion.api.library.Source.Write.Problem(s"$what: $field ($v) is outside the representable range " +
         s"[${Filter.Earliest}, ${Filter.Latest}] — deep time is signed YEARS, BCE negative")
 

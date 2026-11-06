@@ -43,8 +43,8 @@ class VacuumSuite extends munit.FunSuite:
       "place_names: 1237921 → 0 dead rows, 3.7 GB → 3.7 GB (81.2 s)"
     )
     val job = JobInfo(
-      com.histmersion.api.jobs.JobInfo.Id("j1"),
-      com.histmersion.api.jobs.JobInfo.Kind(Vacuum.JobKind),
+      com.histmersion.api.SpatialHierarchyResult.Job.Id("j1"),
+      com.histmersion.api.jobs.JobKinds.Wire(Vacuum.JobKind),
       "running",
       None,
       None,

@@ -28,8 +28,6 @@ final case class Attestation(
       KindlingsSchema, com.histmersion.api.json.Schema
 
 object Attestation:
-  type Id = Id.T
-  object Id extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
 
   type Id = Id.T

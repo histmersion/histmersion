@@ -313,7 +313,7 @@ object CollectionsService:
                     title = (item.title.orElse(Some(""))).map(com.histmersion.api.library.Title.apply),
                     authors = (Some(item.authors)).map(_.map(com.histmersion.api.library.AuthorName.apply)),
                     year = (item.year.map(_.value)).map(com.histmersion.api.catalogue.Year.apply),
-                    venue = (item.publisher).map(com.histmersion.api.library.Venue.apply),
+                    venue = (item.publisher).map(com.histmersion.api.library.Source.Venue.apply),
                     doi = (doi).map(com.histmersion.api.library.Doi.apply),
                     calibreId = Some(item.id.value)
                   )
@@ -330,7 +330,7 @@ object CollectionsService:
               authors = (item.authors).map(com.histmersion.api.library.AuthorName.apply),
               doi = (doi).map(com.histmersion.api.library.Doi.apply),
               year = (item.year.map(_.value)).map(com.histmersion.api.catalogue.Year.apply),
-              venue = (item.publisher).map(com.histmersion.api.library.Venue.apply),
+              venue = (item.publisher).map(com.histmersion.api.library.Source.Venue.apply),
               status = Some(
                 com.histmersion.domain.library.Source.Status.Unassessed
                   .transformInto[com.histmersion.api.library.Source.Status]

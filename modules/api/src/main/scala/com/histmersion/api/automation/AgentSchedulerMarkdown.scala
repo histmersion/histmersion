@@ -8,7 +8,7 @@ object AgentSchedulerMarkdown:
 
   private def goal(g: Option[com.histmersion.api.research.ReviewGoal.Slug]) = g.fold("library work")(x => s"goal $x")
 
-  def waiting(w: Waiting): com.histmersion.api.Markdown.Text =
+  def waiting(w: Waiting): String =
     val place = if (w.position).value > 0 then s"${w.position}. " else "- "
     s"$place#${w.item} ${w.jobType} **${w.target}** (${w.manager}; ${goal(w.goal)}; priority ${w.priority}; " +
       s"waited ${AgentSchedulerMarkdown.minutes(w.waitedMinutes)}) — _${w.code}_: ${w.why}" +
@@ -17,7 +17,7 @@ object AgentSchedulerMarkdown:
   def minutes(m: com.histmersion.api.automation.AgentScheduler.Waiting.WaitedMinutes): String =
     if (m).value < 60 then (s"$m min") else (s"${(m).value / 60} h" + (if (m).value % 60 != 0 then s" ${(m).value % 60} min" else ""))
 
-  def status(s: SchedulerStatus): com.histmersion.api.Markdown.Text =
+  def status(s: SchedulerStatus): String =
     val head = s"# Scheduler: ${s.strategy}" + (if s.strategyFrom == _root_.com.histmersion.api.automation.AgentScheduler.SchedulerStatus.StrategyFrom("person") then " (set by a person)"
                                                 else " (agents.scheduler.strategy)")
     val facts = List(

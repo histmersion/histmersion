@@ -3,8 +3,8 @@ package com.histmersion.api.automation
 object AgentStateMarkdown:
 
 
-  def agentStateList(entries: List[AgentStateEntry]): com.histmersion.api.Markdown.Text =
-    if entries.isEmpty then _root_.com.histmersion.api.Markdown.Text("_No agent state entries._")
+  def agentStateList(entries: List[AgentStateEntry]): String =
+    if entries.isEmpty then ("_No agent state entries._")
     else
       val body = entries
         .map { e =>
@@ -12,8 +12,8 @@ object AgentStateMarkdown:
           s"- `${e.key}` = $short"
         }
         .mkString("\n")
-      _root_.com.histmersion.api.Markdown.Text(s"### ${entries.size} key(s)\n\n$body")
+      (s"### ${entries.size} key(s)\n\n$body")
 
-  def agentState(e: AgentStateEntry): com.histmersion.api.Markdown.Text =
+  def agentState(e: AgentStateEntry): String =
     val upd = e.updatedAt.map(u => s"  \n_Updated: ${u}_").getOrElse("")
-    _root_.com.histmersion.api.Markdown.Text(s"# `${e.key}`\n\n```json\n${e.value}\n```$upd")
+    (s"# `${e.key}`\n\n```json\n${e.value}\n```$upd")

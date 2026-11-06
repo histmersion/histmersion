@@ -18,8 +18,6 @@ final case class EventImportRequest(
       KindlingsSchema, com.histmersion.api.json.Schema
 
 object EventImportRequest:
-  type Provider = Provider.T
-  object Provider extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type DryRun = DryRun.T
   object DryRun extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type Limit = Limit.T

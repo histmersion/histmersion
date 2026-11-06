@@ -46,7 +46,7 @@ final class SkeletonIngest(sources: SourceService) extends IngestJobs:
           authors = (meta.authors).map(com.histmersion.api.library.AuthorName.apply),
           doi = (meta.doi).map(com.histmersion.api.library.Doi.apply),
           year = (meta.year).map(com.histmersion.api.catalogue.Year.apply),
-          venue = (meta.venue).map(com.histmersion.api.library.Venue.apply),
+          venue = (meta.venue).map(com.histmersion.api.library.Source.Venue.apply),
           status = Some(Source.Status.Unassessed),
           summary = meta.summary,
           citedByCount = meta.citedByCount,
@@ -68,7 +68,7 @@ final class SkeletonIngest(sources: SourceService) extends IngestJobs:
               title = (Some(meta.title).filter(_.nonEmpty)).map(com.histmersion.api.library.Title.apply),
               authors = (Option(meta.authors).filter(_.nonEmpty)).map(_.map(com.histmersion.api.library.AuthorName.apply)),
               year = (meta.year).map(com.histmersion.api.catalogue.Year.apply),
-              venue = (meta.venue).map(com.histmersion.api.library.Venue.apply),
+              venue = (meta.venue).map(com.histmersion.api.library.Source.Venue.apply),
               doi = (meta.doi).map(com.histmersion.api.library.Doi.apply)
             )
           ),

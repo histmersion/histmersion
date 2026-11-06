@@ -12,10 +12,10 @@ final case class RegionNode(
 )
 
 object RegionNode:
+  type RootKindsText = RootKindsText.T
+  object RootKindsText extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
   type RootKinds = RootKindsValue
-  type RootKindsValue = RootKindsValue.T
-  object RootKindsValue extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
   type Id = Id.T
   object Id extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
@@ -29,9 +29,9 @@ object RegionNode:
   object Withdrawn extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
   val RootKinds: Set[com.histmersion.api.catalogue.RegionNode.RootKinds] = Set(
-    _root_.com.histmersion.api.catalogue.RegionNode.RootKindsValue(com.histmersion.api.catalogue.Place.Kind.Region),
-    _root_.com.histmersion.api.catalogue.RegionNode.RootKindsValue(com.histmersion.api.catalogue.Place.Kind.Polity),
-    _root_.com.histmersion.api.catalogue.RegionNode.RootKindsValue("continent")
+    _root_.com.histmersion.api.catalogue.RegionNode.RootKindsText(com.histmersion.api.catalogue.Place.Kind.Region),
+    _root_.com.histmersion.api.catalogue.RegionNode.RootKindsText(com.histmersion.api.catalogue.Place.Kind.Polity),
+    _root_.com.histmersion.api.catalogue.RegionNode.RootKindsText("continent")
   )
 
   /** Pleiades writes an uncertain identification into the label: a trailing `?` on the name or a part of it ("Theren?
@@ -42,4 +42,4 @@ object RegionNode:
     (l.startsWith("*") || l.contains("?") || l.toLowerCase.startsWith("withdrawn"))
 
   def rootEligible(n: RegionNode): Boolean =
-    RootKinds.contains(_root_.com.histmersion.api.catalogue.RegionNode.RootKindsValue((n.kind).value)) && !((n.withdrawn) == _root_.com.histmersion.api.catalogue.RegionNode.Withdrawn(true)) && !((uncertainLabel(_root_.com.histmersion.api.catalogue.RegionNode.Label((n.label).value))) == (true))
+    RootKinds.contains(_root_.com.histmersion.api.catalogue.RegionNode.RootKindsText((n.kind).value)) && !((n.withdrawn) == _root_.com.histmersion.api.catalogue.RegionNode.Withdrawn(true)) && !((uncertainLabel(_root_.com.histmersion.api.catalogue.RegionNode.Label((n.label).value))) == (true))

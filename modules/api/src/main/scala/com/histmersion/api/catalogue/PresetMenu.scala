@@ -3,16 +3,16 @@ package com.histmersion.api.catalogue
 import com.histmersion.api.BBox
 import com.histmersion.api.given
 object PresetMenu:
+  type PeriodSource = PeriodSource.T
+  object PeriodSource extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type PeriodoId = PeriodoId.T
   object PeriodoId extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type Share = Share.T
   object Share extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type ShareThreshold = ShareThreshold.T
+  object ShareThreshold extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
   type MinShare = MinShareValue
-  type MinShareValue = MinShareValue.T
-  object MinShareValue extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type SourceResult = SourceResult.T
-  object SourceResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
   final case class Group(region: PresetRegion, presets: List[HistoricalPeriod], inView: Group.InView)
 
@@ -20,7 +20,7 @@ object PresetMenu:
     type InView = InView.T
     object InView extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
-  val MinShare: com.histmersion.api.catalogue.PresetMenu.MinShare = _root_.com.histmersion.api.catalogue.PresetMenu.MinShareValue(0.5)
+  val MinShare: com.histmersion.api.catalogue.PresetMenu.MinShare = _root_.com.histmersion.api.catalogue.PresetMenu.ShareThreshold(0.5)
 
   def share(view: BBox, box: BBox): com.histmersion.api.catalogue.PresetMenu.Share =
     val area = ((view.maxLon).value - view.minLon) * (view.maxLat - view.minLat)
@@ -41,7 +41,7 @@ object PresetMenu:
       }
       .sortBy(g => if ((g.inView) == _root_.com.histmersion.api.catalogue.PresetMenu.Group.InView(true)) then (0, -cover(g.region)) else (1, 0.0))
 
-  def source(p: HistoricalPeriod): Option[com.histmersion.api.catalogue.PresetMenu.SourceResult] =
+  def source(p: HistoricalPeriod): Option[com.histmersion.api.catalogue.PresetMenu.PeriodSource] =
     p.authority.map(a =>
       a.split(" · ", 2) match
         case Array(id, rest) if id.startsWith("PeriodO ") => rest

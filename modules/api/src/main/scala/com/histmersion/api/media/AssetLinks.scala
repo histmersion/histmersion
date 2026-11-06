@@ -32,8 +32,8 @@ object AssetLinks:
   val ToAbsoluteCitekey: _root_.com.histmersion.api.library.Citekey.type = _root_.com.histmersion.api.library.Citekey
   type UrlCitekey = _root_.com.histmersion.api.library.Citekey
   val UrlCitekey: _root_.com.histmersion.api.library.Citekey.type = _root_.com.histmersion.api.library.Citekey
-  type UrlName = _root_.com.histmersion.api.media.AssetInfo.Name
-  val UrlName: _root_.com.histmersion.api.media.AssetInfo.Name.type = _root_.com.histmersion.api.media.AssetInfo.Name
+  type UrlName = _root_.com.histmersion.api.exchange.Bundle.Asset.FileName
+  val UrlName: _root_.com.histmersion.api.exchange.Bundle.Asset.FileName.type = _root_.com.histmersion.api.exchange.Bundle.Asset.FileName
 
   private val ImageLink = """!\[([^\]]*)\]\(\s*<?([^)>\s]+)>?(\s+"[^"]*")?\s*\)""".r
 
@@ -42,7 +42,7 @@ object AssetLinks:
   private def mapImages(md: com.histmersion.api.media.AssetLinks.Body)(f: (String, com.histmersion.api.media.AssetLinks.Target, String) => String): com.histmersion.api.media.AssetLinks.Body =
     _root_.com.histmersion.api.media.AssetLinks.Body(ImageLink.replaceAllIn(
       (md).value,
-      m => java.util.regex.Matcher.quoteReplacement((f((m.group(1)), _root_.com.histmersion.api.media.AssetLinks.Target(m.group(2)), (Option(m.group(3)).getOrElse("")))))
+      m => java.util.regex.Matcher.quoteReplacement((f((m.group(1)), _root_.com.histmersion.api.media.AssetLinks.Target(m.group(2)), (Option(m.group(3)).getOrElse("")))).value)
     ))
 
   private def retarget(md: com.histmersion.api.media.AssetLinks.Body, from: com.histmersion.api.media.AssetLinks.Url, to: com.histmersion.api.media.AssetLinks.Url): com.histmersion.api.media.AssetLinks.Body =
@@ -69,7 +69,7 @@ object AssetLinks:
     var n = 0
     _root_.com.histmersion.api.media.AssetLinks.Body((mapImages(_root_.com.histmersion.api.media.AssetLinks.Body((md).value))((alt, target, title) =>
       n += 1
-      val label = if (alt).trim.nonEmpty then alt else s"Figure $n"
+      val label = if (alt).value.trim.nonEmpty then alt else s"Figure $n"
       (s"![$label]($target$title)")
     )).value)
 
@@ -93,7 +93,7 @@ object AssetLinks:
     """(?i)^(original\s+|research\s+|review\s+|short\s+)?(article|paper|research|communication|report)$""".r
 
   private def flatten(s: String): String =
-    ((s).toLowerCase.filter(c => c.isLetterOrDigit || c == ' ').replaceAll("\\s+", " ").trim)
+    ((s).value.toLowerCase.filter(c => c.isLetterOrDigit || c == ' ').replaceAll("\\s+", " ").trim)
 
   def dropBoilerplateHeadings(md: com.histmersion.api.media.AssetLinks.Body, title: com.histmersion.api.media.AssetLinks.Title): com.histmersion.api.media.AssetLinks.Body =
     val want = flatten(((title).value))
@@ -102,7 +102,7 @@ object AssetLinks:
       if !l.startsWith("#") then false
       else
         val text = flatten((l.dropWhile(_ == '#')))
-        (text).nonEmpty && (BoilerplateHeading.matches((text).value) || ((want).value.nonEmpty && text == want))
+        (text).value.nonEmpty && (BoilerplateHeading.matches((text).value) || ((want).value.nonEmpty && text == want))
     }
     _root_.com.histmersion.api.media.AssetLinks.Body(kept.mkString("\n"))
 
@@ -119,7 +119,7 @@ object AssetLinks:
   def url(citekey: com.histmersion.api.media.AssetLinks.UrlCitekey, name: com.histmersion.api.media.AssetLinks.UrlName): com.histmersion.api.media.AssetLinks.Url = (webBase(citekey)).value + enc(name)
 
   private def enc(s: String): String =
-    (java.net.URLEncoder.encode((s), "UTF-8").replace("+", "%20"))
+    (java.net.URLEncoder.encode((s).value, "UTF-8").replace("+", "%20"))
 
   private val BareImg = """<img(?![^>]*\bloading=)\s""".r
 
@@ -129,11 +129,11 @@ object AssetLinks:
   /** Must match the converter's `_safe_name`: either side may name a file. */
   def safeName(raw: String): com.histmersion.api.exchange.Bundle.Asset.FileName = com.histmersion.api.text.SafeName.of(raw)
 
-  def mimeOf(name: com.histmersion.api.exchange.Bundle.Asset.Extension): com.histmersion.api.exchange.Bundle.Asset.Mime =
+  def mimeOf(name: com.histmersion.api.exchange.Bundle.Asset.Extension): com.histmersion.api.exchange.Bundle.Asset.MimeText =
     (name).value.toLowerCase.reverse.takeWhile(_ != '.').reverse match
-      case "png"          => _root_.com.histmersion.api.exchange.Bundle.Asset.Mime("image/png")
-      case "jpg" | "jpeg" => _root_.com.histmersion.api.exchange.Bundle.Asset.Mime("image/jpeg")
-      case "gif"          => _root_.com.histmersion.api.exchange.Bundle.Asset.Mime("image/gif")
-      case "webp"         => _root_.com.histmersion.api.exchange.Bundle.Asset.Mime("image/webp")
-      case "svg"          => _root_.com.histmersion.api.exchange.Bundle.Asset.Mime("image/svg+xml")
-      case _              => _root_.com.histmersion.api.exchange.Bundle.Asset.Mime("application/octet-stream")
+      case "png"          => _root_.com.histmersion.api.exchange.Bundle.Asset.MimeText("image/png")
+      case "jpg" | "jpeg" => _root_.com.histmersion.api.exchange.Bundle.Asset.MimeText("image/jpeg")
+      case "gif"          => _root_.com.histmersion.api.exchange.Bundle.Asset.MimeText("image/gif")
+      case "webp"         => _root_.com.histmersion.api.exchange.Bundle.Asset.MimeText("image/webp")
+      case "svg"          => _root_.com.histmersion.api.exchange.Bundle.Asset.MimeText("image/svg+xml")
+      case _              => _root_.com.histmersion.api.exchange.Bundle.Asset.MimeText("application/octet-stream")

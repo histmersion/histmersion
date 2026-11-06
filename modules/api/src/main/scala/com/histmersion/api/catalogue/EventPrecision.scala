@@ -3,17 +3,17 @@ package com.histmersion.api.catalogue
 import com.histmersion.api.{TimeSpan, YearFmt, Years}
 import com.histmersion.api.given
 object EventPrecision:
+  type ApproximateUpToNumber = ApproximateUpToNumber.T
+  object ApproximateUpToNumber extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type Bound = Bound.T
   object Bound extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type PreciseUpToNumber = PreciseUpToNumber.T
+  object PreciseUpToNumber extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type Uncertainty = Uncertainty.T
   object Uncertainty extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
   type PreciseUpTo = PreciseUpToValue
-  type PreciseUpToValue = PreciseUpToValue.T
-  object PreciseUpToValue extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type ApproximateUpTo = ApproximateUpToValue
-  type ApproximateUpToValue = ApproximateUpToValue.T
-  object ApproximateUpToValue extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type OfPlusMinus = _root_.com.histmersion.api.catalogue.EventSummary.PlusMinus
   val OfPlusMinus: _root_.com.histmersion.api.catalogue.EventSummary.PlusMinus.type = _root_.com.histmersion.api.catalogue.EventSummary.PlusMinus
   type LabelPrecision = _root_.com.histmersion.api.catalogue.EventSummary.Precision
@@ -25,13 +25,13 @@ object EventPrecision:
   val Undated = "undated"
   val all: List[com.histmersion.api.catalogue.EventSummary.Precision] = List(_root_.com.histmersion.api.catalogue.EventSummary.Precision(Precise), _root_.com.histmersion.api.catalogue.EventSummary.Precision(Approximate), _root_.com.histmersion.api.catalogue.EventSummary.Precision(Imprecise), _root_.com.histmersion.api.catalogue.EventSummary.Precision(Undated))
 
-  val PreciseUpTo: com.histmersion.api.catalogue.EventPrecision.PreciseUpTo = _root_.com.histmersion.api.catalogue.EventPrecision.PreciseUpToValue((50).toLong)
-  val ApproximateUpTo: com.histmersion.api.catalogue.EventPrecision.ApproximateUpTo = _root_.com.histmersion.api.catalogue.EventPrecision.ApproximateUpToValue((500).toLong)
+  val PreciseUpTo: com.histmersion.api.catalogue.EventPrecision.PreciseUpTo = _root_.com.histmersion.api.catalogue.EventPrecision.PreciseUpToNumber((50).toLong)
+  val ApproximateUpTo: com.histmersion.api.catalogue.EventPrecision.ApproximateUpTo = _root_.com.histmersion.api.catalogue.EventPrecision.ApproximateUpToNumber((500).toLong)
 
   /** Widths are taken in astronomical years: historical years have no year 0. */
   def uncertainty(ts: TimeSpan, plusMinus: Option[com.histmersion.api.catalogue.EventSummary.PlusMinus]): Option[com.histmersion.api.catalogue.EventPrecision.Uncertainty] =
     ts.outer.map { (a, b) =>
-      def a2(y: com.histmersion.api.library.Tree.Year) = Years.toAstronomical(y)
+      def a2(y: com.histmersion.api.catalogue.Year) = Years.toAstronomical(y)
       def width(x: Option[com.histmersion.api.catalogue.EventPrecision.Bound], y: Option[com.histmersion.api.catalogue.EventPrecision.Bound]): com.histmersion.api.catalogue.EventPrecision.Uncertainty = (for p <- x; q <- y yield a2(q) - a2(p)).getOrElse(0L).max(0)
       val derived =
         if ts.beginBy.isEmpty && ts.endFrom.isEmpty then (a2(b) - a2(a)).abs / 2
@@ -63,7 +63,7 @@ object EventPrecision:
       case None    => m.map(x => (s"dated by $x"))
 
   private def lowerFirst(s: String): String =
-    ((s).split(" ", -1)
+    ((s).value.split(" ", -1)
       .map(w =>
         if w.length >= 2 && w.charAt(0).isUpper && w.charAt(1).isLower then s"${w.charAt(0).toLower}${w.substring(1)}"
         else w

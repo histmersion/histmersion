@@ -7,9 +7,9 @@ object PassagesMarkdown:
   object Excerpt extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
 
-  def render(r: PassageResult): com.histmersion.api.Markdown.Text =
+  def render(r: PassageResult): String =
     val what = if ((r.regex) == _root_.com.histmersion.api.library.PassageResult.Regex(true)) then s"/${r.query}/" else s"\"${r.query}\""
-    if r.passages.isEmpty then _root_.com.histmersion.api.Markdown.Text(s"_No match for $what in `${r.citekey}` (${r.bodyChars} chars searched)._")
+    if r.passages.isEmpty then (s"_No match for $what in `${r.citekey}` (${r.bodyChars} chars searched)._")
     else
       val counted =
         if ((r.capped) == _root_.com.histmersion.api.library.PassageResult.Capped(true)) then s"${r.matches}+ matches (counting stopped)" else Plural.count(r.matches, _root_.com.histmersion.api.Plural.CountSingular("match"), _root_.com.histmersion.api.Plural.CountPlural("matches"))
@@ -22,7 +22,7 @@ object PassagesMarkdown:
       }
       val more = (r.total).value - r.passages.size
       val tail = if more > 0 then List(s"_$more more — raise limit or narrow the query._") else Nil
-      _root_.com.histmersion.api.Markdown.Text((head :: items ++ tail).mkString("\n\n"))
+      ((head :: items ++ tail).mkString("\n\n"))
 
   def marked(p: PassageHit): com.histmersion.api.library.PassagesMarkdown.Excerpt =
     val b = new StringBuilder(p.text.length + p.matches.size * 4)

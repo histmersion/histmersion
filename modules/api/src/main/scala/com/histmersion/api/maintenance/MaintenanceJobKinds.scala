@@ -7,7 +7,7 @@ object MaintenanceJobKinds:
   val Vacuum: JobKindEntry = JobKindEntry.of(
     JobInfo.Kind("vacuum"),
     _root_.com.histmersion.api.jobs.JobKinds.Wire("Clean up the database"),
-    _root_.com.histmersion.api.jobs.JobKindEntry.OfMeaning("Database clean-up (VACUUM): frees the space old row versions hold after a re-seed or a gazetteer load."),
+    _root_.com.histmersion.api.jobs.JobKindMeaning("Database clean-up (VACUUM): frees the space old row versions hold after a re-seed or a gazetteer load."),
     subject =
       com.histmersion.api.maintenance.VacuumPlan.Detail.of(_).map(com.histmersion.api.maintenance.Vacuum.describe)
   )

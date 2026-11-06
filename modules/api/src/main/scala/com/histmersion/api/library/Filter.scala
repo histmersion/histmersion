@@ -35,8 +35,12 @@ final case class Filter(
   def hasFindingCriteria: Boolean = (period.isDefined || bbox.isDefined || places.nonEmpty || tags.nonEmpty)
 
 object Filter:
+  type EarliestYear = EarliestYear.T
+  object EarliestYear extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type Last = Last.T
   object Last extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type LatestYear = LatestYear.T
+  object LatestYear extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type Latitude = Latitude.T
   object Latitude extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type Longitude = Longitude.T
@@ -50,11 +54,7 @@ object Filter:
   /** Open-ended bounds, far enough inside bigint that `int8range(..,'[]')` cannot overflow. */
 
   type Earliest = EarliestValue
-  type EarliestValue = EarliestValue.T
-  object EarliestValue extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type Latest = LatestValue
-  type LatestValue = LatestValue.T
-  object LatestValue extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type OfFrom = _root_.com.histmersion.api.library.Filter.YearFrom
   val OfFrom: _root_.com.histmersion.api.library.Filter.YearFrom.type = _root_.com.histmersion.api.library.Filter.YearFrom
   type OfTo = _root_.com.histmersion.api.library.Filter.YearTo
@@ -86,19 +86,17 @@ object Filter:
   object Offset extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type Title = Title.T
   object Title extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type Goal = Goal.T
-  object Goal extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
-  val Earliest: com.histmersion.api.library.Filter.Earliest = _root_.com.histmersion.api.library.Filter.EarliestValue(-1000000000L)
-  val Latest: com.histmersion.api.library.Filter.Latest = _root_.com.histmersion.api.library.Filter.LatestValue(1000000000L)
+  val Earliest: com.histmersion.api.library.Filter.Earliest = _root_.com.histmersion.api.library.Filter.EarliestYear(-1000000000L)
+  val Latest: com.histmersion.api.library.Filter.Latest = _root_.com.histmersion.api.library.Filter.LatestYear(1000000000L)
 
   /** Postgres rejects an inverted range (`range lower bound must be less than or equal to range upper bound`), so a
     * nonsense bound is clamped before it can build one.
     */
-  def clamp(v: com.histmersion.api.library.Tree.Year): com.histmersion.api.library.Tree.Year = math.max(Earliest, math.min(Latest, (v).value))
+  def clamp(v: com.histmersion.api.catalogue.Year): com.histmersion.api.catalogue.Year = math.max(Earliest, math.min(Latest, (v).value))
 
   def periodOf(from: Option[com.histmersion.api.library.Filter.YearFrom], to: Option[com.histmersion.api.library.Filter.YearTo]): Option[Period] =
-    (from.map({ val refactorFunction4 = clamp; (refactorValue36) => refactorFunction4(_root_.com.histmersion.api.library.Tree.Year((refactorValue36).value)) }), to.map({ val refactorFunction5 = clamp; (refactorValue37) => refactorFunction5(_root_.com.histmersion.api.library.Tree.Year((refactorValue37).value)) })) match
+    (from.map({ val refactorFunction4 = clamp; (refactorValue36) => refactorFunction4(_root_.com.histmersion.api.catalogue.Year((refactorValue36).value)) }), to.map({ val refactorFunction5 = clamp; (refactorValue37) => refactorFunction5(_root_.com.histmersion.api.catalogue.Year((refactorValue37).value)) })) match
       case (None, None)       => None
       case (Some(a), Some(b)) => Some(if a <= b then Period(a, b) else Period(b, a))
       case (Some(a), None)    => Some(Period(a, Latest))
@@ -137,11 +135,11 @@ object Filter:
       limit: Option[com.histmersion.api.library.Filter.Limit] = None,
       offset: Option[com.histmersion.api.personal.UnreadPage.Offset] = None,
       title: Option[com.histmersion.api.library.Filter.Title] = None,
-      goal: Option[com.histmersion.api.library.Filter.Goal] = None
+      goal: Option[com.histmersion.api.research.ReviewGoal.Slug] = None
   ): Filter =
-    def clean(xs: List[String]) = xs.flatMap((_).split(",")).map(_.trim).filter(_.nonEmpty)
+    def clean(xs: List[String]) = xs.flatMap((_).value.split(",")).map(_.trim).filter(_.nonEmpty)
     Filter(
-      q = q.map((_).value.trim).filter((_).nonEmpty),
+      q = q.map((_).value.trim).filter((_).value.nonEmpty),
       tags = clean(tags),
       authors = clean(authors),
       places = clean(places),
@@ -153,8 +151,8 @@ object Filter:
       sort = sort.flatMap(Sort.parse).getOrElse(Sort.Relevance),
       limit = limit.getOrElse(0),
       offset = offset.getOrElse(0).max(0),
-      title = title.map((_).value.trim).filter((_).nonEmpty),
-      goal = goal.map((_).value.trim).filter((_).nonEmpty)
+      title = title.map((_).value.trim).filter((_).value.nonEmpty),
+      goal = goal.map((_).value.trim).filter((_).value.nonEmpty)
     )
 
   /** [[Param.brief]] is the agents' wording, a few words: every turn of an agent step re-sends a tool's schema. */
@@ -290,7 +288,7 @@ object Filter:
       limit: Option[com.histmersion.api.library.Filter.Limit],
       offset: Option[com.histmersion.api.library.Filter.Offset],
       title: Option[com.histmersion.api.library.Filter.Title] = None,
-      goal: Option[com.histmersion.api.library.Filter.Goal] = None
+      goal: Option[com.histmersion.api.research.ReviewGoal.Slug] = None
   ):
     def toFilter: Filter =
       Filter.of(

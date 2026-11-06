@@ -14,8 +14,6 @@ object Wcag:
   object Ratio extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
   type AaText = AaTextValue
-  type AaTextValue = AaTextValue.T
-  object AaTextValue extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
   def luminance(r: com.histmersion.api.Wcag.Channel, g: com.histmersion.api.Wcag.Channel, b: com.histmersion.api.Wcag.Channel): com.histmersion.api.Wcag.Luminance =
     def lin(c: com.histmersion.api.Wcag.Channel): com.histmersion.api.Wcag.LinearChannel =
@@ -36,4 +34,4 @@ object Wcag:
     (math.max(la, lb) + 0.05) / (math.min(la, lb) + 0.05)
 
   /** AA for normal text; large text (≥ 18.66 px bold) needs 3. */
-  val AaText: com.histmersion.api.Wcag.AaText = _root_.com.histmersion.api.Wcag.AaTextValue(4.5)
+  val AaText: com.histmersion.api.Wcag.AaText = _root_.com.histmersion.api.Wcag.Ratio(4.5)

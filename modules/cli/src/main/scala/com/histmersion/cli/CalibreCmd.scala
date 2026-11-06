@@ -305,7 +305,7 @@ object CalibreCmd:
                 s"queued job ${a.jobId} for ${a.citekey}" +
                   item.fold("")(i => s" — acquisition item $i is ticked off when it succeeds")
               )
-              if noWait || json then Right(()) else IngestCmd.pollJob(c, com.histmersion.api.jobs.JobInfo.Id(a.jobId), 0)
+              if noWait || json then Right(()) else IngestCmd.pollJob(c, com.histmersion.api.SpatialHierarchyResult.Job.Id(a.jobId), 0)
             }
     }
 
@@ -422,7 +422,7 @@ object CalibreCmd:
                   title = (Some(b.title)).map(com.histmersion.api.library.Title.apply),
                   authors = (Some(b.authors)).map(_.map(com.histmersion.api.library.AuthorName.apply)),
                   year = (b.year).map(com.histmersion.api.catalogue.Year.apply),
-                  venue = (b.publisher).map(com.histmersion.api.library.Venue.apply),
+                  venue = (b.publisher).map(com.histmersion.api.library.Source.Venue.apply),
                   doi = (b.doi).map(com.histmersion.api.library.Doi.apply),
                   calibreId = Some(b.id.toString)
                 )
@@ -439,7 +439,7 @@ object CalibreCmd:
             authors = (b.authors).map(com.histmersion.api.library.AuthorName.apply),
             doi = (b.doi).map(com.histmersion.api.library.Doi.apply),
             year = (b.year).map(com.histmersion.api.catalogue.Year.apply),
-            venue = (b.publisher).map(com.histmersion.api.library.Venue.apply),
+            venue = (b.publisher).map(com.histmersion.api.library.Source.Venue.apply),
             status = Some(com.histmersion.api.library.Source.Status.Unassessed),
             tags = b.tags,
             summary = summary,

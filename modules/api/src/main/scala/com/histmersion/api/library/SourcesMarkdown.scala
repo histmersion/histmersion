@@ -5,12 +5,10 @@ import com.histmersion.api.media.AssetLinks
 
 object SourcesMarkdown:
 
-  type SourceRenamedListXs = SourceRenamedListXs.T
-  object SourceRenamedListXs extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
 
-  def sourceFindingsOnly(findings: Vector[Finding.Row]): com.histmersion.api.Markdown.Text =
-    if findings.isEmpty then _root_.com.histmersion.api.Markdown.Text("_(no findings)_")
+  def sourceFindingsOnly(findings: Vector[Finding.Row]): String =
+    if findings.isEmpty then ("_(no findings)_")
     else
       val items = findings.map { f =>
         val loc = place(f.regionName, f.lat, f.lon)
@@ -26,9 +24,9 @@ object SourcesMarkdown:
           .mkString(" · ")
         s"- ${f.claim}${if tail.nonEmpty then s"  \n  _${tail}_" else ""}"
       }
-      _root_.com.histmersion.api.Markdown.Text(s"## Findings (${findings.size})\n${items.mkString("\n")}")
+      (s"## Findings (${findings.size})\n${items.mkString("\n")}")
 
-  def source(s: Source.Detail, findings: Vector[Finding.Row], fullText: Boolean): com.histmersion.api.Markdown.Text =
+  def source(s: Source.Detail, findings: Vector[Finding.Row], fullText: Boolean): String =
     val authorLinks = if s.authors.map(_.value).nonEmpty then chipLinks(s.authors.map(_.value), "author") else ""
     val meta = List(authorLinks, year(s.year.map((refactorCallback => (refactorCallback.value.toInt)))), s.venue.map(_.value).getOrElse(""), s.status.wire).filter(_.nonEmpty).mkString(" · ")
     val per = period(s.periodStart, s.periodEnd)
@@ -62,20 +60,20 @@ object SourcesMarkdown:
     // Normalised here as well as at import: older bodies still carry `/Users/…/figures/x.png` links, which a
     // browser resolves against the server root and draws 0×0.
     val body =
-      if !(fullText) then ""
+      if !(fullText).value then ""
       else
         s.ocrMarkdown
           .map(t => s"\n\n---\n\n${AssetLinks.normalizeBody(t, s.title.value)}")
           .getOrElse("\n\n_(no full text stored)_")
-    _root_.com.histmersion.api.Markdown.Text(header + topics + regions + tags + doi + prov + uid + summary + notes + findingsMd + body)
+    (header + topics + regions + tags + doi + prov + uid + summary + notes + findingsMd + body)
 
-  def neighbors(citekey: com.histmersion.api.library.Citekey, rows: Vector[NeighborRow]): com.histmersion.api.Markdown.Text =
+  def neighbors(citekey: com.histmersion.api.library.Citekey, rows: Vector[NeighborRow]): String =
     if rows.isEmpty then
-      _root_.com.histmersion.api.Markdown.Text(s"_No references recorded for **$citekey**._ An empty result is not evidence of agreement — " +
+      (s"_No references recorded for **$citekey**._ An empty result is not evidence of agreement — " +
         "disagreement edges are sparse (the corpus has only a handful); use `contradictions` for a focused view.")
     else
-      def block(title: String, rs: Vector[NeighborRow])(item: NeighborRow => com.histmersion.api.library.Source.Neighbor.Line): com.histmersion.api.Markdown.Text =
-        if rs.isEmpty then _root_.com.histmersion.api.Markdown.Text("") else _root_.com.histmersion.api.Markdown.Text(s"\n\n**$title**\n${rs.map(r => s"- _${r.kind}_ → ${item(r)}").mkString("\n")}")
+      def block(title: String, rs: Vector[NeighborRow])(item: NeighborRow => com.histmersion.api.library.Source.Neighbor.Line): String =
+        if rs.isEmpty then ("") else (s"\n\n**$title**\n${rs.map(r => s"- _${r.kind}_ → ${item(r)}").mkString("\n")}")
       def sources(dir: com.histmersion.api.library.ContradictionRow.Direction.Wire) = rows.filter(r => r.target == NeighborTarget.Source && r.direction == dir)
       val sourceItem: NeighborRow => com.histmersion.api.library.Source.Neighbor.Line = r =>
         val st = r.status.map(s => s" _(${s.wire})_").getOrElse("")
@@ -88,8 +86,8 @@ object SourcesMarkdown:
         ) +
         block("Not in the corpus yet", rows.filter(_.target == NeighborTarget.Unresolved))(r => s"**${r.citekey}**")
 
-  def graph(g: Source.Graph): com.histmersion.api.Markdown.Text =
-    if g.nodes.isEmpty then _root_.com.histmersion.api.Markdown.Text(s"_No graph data for **${g.root}**._")
+  def graph(g: Source.Graph): String =
+    if g.nodes.isEmpty then (s"_No graph data for **${g.root}**._")
     else
       val header =
         s"### Source graph · ${g.root} (depth ${g.depth}, ${Plural.count(_root_.com.histmersion.api.Plural.CountN((g.nodes.size).toLong), _root_.com.histmersion.api.Plural.CountSingular("node"))}, ${Plural.count(_root_.com.histmersion.api.Plural.CountN((g.links.size).toLong), _root_.com.histmersion.api.Plural.CountSingular("link"))})"
@@ -107,16 +105,16 @@ object SourcesMarkdown:
           s"- `${l.source}` →_${l.kind}_ `${l.target}`"
         }
         .mkString("\n")
-      _root_.com.histmersion.api.Markdown.Text(s"$header\n\n**Nodes**\n$nodeLines\n\n**Links**\n$linkLines")
+      (s"$header\n\n**Nodes**\n$nodeLines\n\n**Links**\n$linkLines")
 
-  def contradictions(result: ContradictionsResult, citekey: Option[com.histmersion.api.library.Citekey]): com.histmersion.api.Markdown.Text =
+  def contradictions(result: ContradictionsResult, citekey: Option[com.histmersion.api.library.Citekey]): String =
     if result.rows.isEmpty then
       citekey match
         case Some(ck) =>
-          _root_.com.histmersion.api.Markdown.Text(s"_No disagreement edges or contested status for **$ck**._ An empty result is not evidence " +
+          (s"_No disagreement edges or contested status for **$ck**._ An empty result is not evidence " +
             "of agreement — disagreement edges are extremely sparse in the corpus.")
         case None =>
-          _root_.com.histmersion.api.Markdown.Text("_No contradictions found in the corpus._")
+          ("_No contradictions found in the corpus._")
     else
       val items = result.rows.map { r =>
         val edge = (r.direction, r.kind, r.otherCitekey) match
@@ -136,9 +134,9 @@ object SourcesMarkdown:
         "_Edge kinds: references, challenges, refutes, updates, superseded_by. " +
         "An empty result is not evidence of agreement._"
 
-  def sourceRenamed(r: Source.Renamed): com.histmersion.api.Markdown.Text =
+  def sourceRenamed(r: Source.Renamed): String =
     val c = r.counts
-    def list(xs: List[com.histmersion.api.library.SourcesMarkdown.SourceRenamedListXs]) = if xs.isEmpty then "none" else xs.map(x => s"`$x`").mkString(", ")
+    def list(xs: List[String]) = if xs.isEmpty then "none" else xs.map(x => s"`$x`").mkString(", ")
     val columns =
       if c.columns.isEmpty then ""
       else "\n" + c.columns.map(n => s"  - ${n.table}: ${n.rows}").mkString("\n")

@@ -9,10 +9,7 @@ final case class GraphNode(
     title: Option[com.histmersion.api.library.Title] = None,
     year: Option[com.histmersion.api.catalogue.Year] = None,
     status: Option[com.histmersion.api.library.Source.Status] = None,
-    depth: GraphNode.Depth = _root_.com.histmersion.api.library.GraphNode.Depth(0)
+    depth: GraphNode.Depth = _root_.com.histmersion.api.library.Source.Graph.DepthCount(0)
 ) derives KindlingsCodecAsObject,
       KindlingsSchema, com.histmersion.api.json.Schema
 
-object GraphNode:
-  type Depth = Depth.T
-  object Depth extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]

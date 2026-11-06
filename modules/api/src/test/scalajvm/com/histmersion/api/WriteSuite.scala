@@ -45,7 +45,7 @@ class WriteSuite extends munit.FunSuite:
     authors = (List("Haak", "Reich")).map(com.histmersion.api.library.AuthorName.apply),
     doi = (Some("10.1038/x")).map(com.histmersion.api.library.Doi.apply),
     year = (Some(2015)).map(com.histmersion.api.catalogue.Year.apply),
-    venue = (Some("Nature")).map(com.histmersion.api.library.Venue.apply),
+    venue = (Some("Nature")).map(com.histmersion.api.library.Source.Venue.apply),
     status = com.histmersion.api.library.Source.Status.Foundational,
     topics = List("ancient_dna"),
     regions = List("Eurasian Steppe"),
@@ -359,13 +359,13 @@ class WriteSuite extends munit.FunSuite:
   // a split left a volume record with doi = "" — neither a DOI nor "none"
   test("a blank DOI or venue is stored as none; in a patch, \"\" clears the field"):
     import io.circe.parser.decode
-    val put = Source.Write.applyPut(com.histmersion.api.library.Citekey("zz_blank"), Source.Put(com.histmersion.api.library.Title("T"), doi = (Some("  ")).map(com.histmersion.api.library.Doi.apply), venue = (Some("")).map(com.histmersion.api.library.Venue.apply)))
+    val put = Source.Write.applyPut(com.histmersion.api.library.Citekey("zz_blank"), Source.Put(com.histmersion.api.library.Title("T"), doi = (Some("  ")).map(com.histmersion.api.library.Doi.apply), venue = (Some("")).map(com.histmersion.api.library.Source.Venue.apply)))
     assertEquals(put.map(s => (s.doi, s.venue)), Right((None, None)))
-    val existing = put.toOption.get.copy(doi = Some(com.histmersion.api.library.Doi("10.1/x")), venue = Some(com.histmersion.api.library.Venue("V")))
+    val existing = put.toOption.get.copy(doi = Some(com.histmersion.api.library.Doi("10.1/x")), venue = Some(com.histmersion.api.library.Source.Venue("V")))
     val cleared = decode[Source.Patch]("""{"metadata":{"doi":"","venue":" "}}""").toOption.get
     assertEquals(Source.Write.applyPatch(existing, cleared).map(s => (s.doi, s.venue)), Right((None, None)))
     val kept = decode[Source.Patch]("""{"metadata":{"title":"T2"}}""").toOption.get
-    assertEquals(Source.Write.applyPatch(existing, kept).map(s => (s.doi, s.venue)), Right((Some(com.histmersion.api.library.Doi("10.1/x")), Some(com.histmersion.api.library.Venue("V")))))
+    assertEquals(Source.Write.applyPatch(existing, kept).map(s => (s.doi, s.venue)), Right((Some(com.histmersion.api.library.Doi("10.1/x")), Some(com.histmersion.api.library.Source.Venue("V")))))
 
   // #745: {"doi":null} decoded to "absent" and was silently ignored
   test("metadata: an explicit null clears a nullable field; absent leaves it alone"):

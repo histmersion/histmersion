@@ -5,7 +5,7 @@ import com.histmersion.api.given
 object BasemapMarkdown:
 
 
-  def status(s: Basemap.Status): com.histmersion.api.Markdown.Text =
+  def status(s: Basemap.Status): String =
     val head =
       if ((s.available) == _root_.com.histmersion.api.basemap.Basemap.Status.Available(true)) then "The local base map is downloaded."
       else s"The local base map is not downloaded — run `${s.fetchCommand}`."
@@ -54,22 +54,22 @@ object BasemapMarkdown:
     ).flatten
     (head :: "" :: table :: "" :: notes).mkString("\n")
 
-  def onDemand(o: Basemap.OnDemand): com.histmersion.api.Markdown.Text =
-    if !((o.enabled) == _root_.com.histmersion.api.basemap.Basemap.OnDemand.Enabled(true)) then _root_.com.histmersion.api.Markdown.Text("Relief deeper than the extract: off (basemap.terrain.on-demand.enabled).")
+  def onDemand(o: Basemap.OnDemand): String =
+    if !((o.enabled) == _root_.com.histmersion.api.basemap.Basemap.OnDemand.Enabled(true)) then ("Relief deeper than the extract: off (basemap.terrain.on-demand.enabled).")
     else
       s"Relief deeper than the extract: read when a page shows an area, to zoom ${o.maxZoom}; cached " +
         s"${o.tiles} tiles, ${Backup.humanBytes(o.bytes)} of ${Backup.humanBytes(o.maxBytes)} at `${o.dir}`" +
         o.offlineUntil.fold(".")(t => s" — the provider was unreachable; asked again after $t.")
 
-  def outside(what: String, key: com.histmersion.api.basemap.Basemap.Layer.Wire, o: Basemap.OnDemand): com.histmersion.api.Markdown.Text =
-    if !((o.enabled) == _root_.com.histmersion.api.basemap.Basemap.OnDemand.Enabled(true)) then _root_.com.histmersion.api.Markdown.Text(s"$what outside the downloaded region: off (basemap.$key.on-demand.enabled).")
+  def outside(what: String, key: com.histmersion.api.basemap.Basemap.Layer.Wire, o: Basemap.OnDemand): String =
+    if !((o.enabled) == _root_.com.histmersion.api.basemap.Basemap.OnDemand.Enabled(true)) then (s"$what outside the downloaded region: off (basemap.$key.on-demand.enabled).")
     else
       s"$what outside the downloaded region (and deeper than it): read when a page shows it, to zoom ${o.maxZoom}; cached " +
         s"${o.tiles} tiles, ${Backup.humanBytes(o.bytes)} of ${Backup.humanBytes(o.maxBytes)} at `${o.dir}`" +
         o.offlineUntil.fold(".")(t => s" — the provider was unreachable; asked again after $t.")
 
-  def plain(html: String): String = ((html).replaceAll("<[^>]+>", ""))
+  def plain(html: String): String = ((html).value.replaceAll("<[^>]+>", ""))
 
-  def removed(r: Basemap.Removed): com.histmersion.api.Markdown.Text =
-    if r.removed.isEmpty then _root_.com.histmersion.api.Markdown.Text("Nothing to remove: no base-map file is downloaded.")
+  def removed(r: Basemap.Removed): String =
+    if r.removed.isEmpty then ("Nothing to remove: no base-map file is downloaded.")
     else s"Removed ${Backup.humanBytes(r.bytes)}:\n" + r.removed.map(f => s"- `$f`").mkString("\n")

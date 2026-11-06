@@ -22,7 +22,7 @@ object Csv:
       row = List.newBuilder[String]
       any = false
 
-    val s = (text).replace("\r\n", "\n").replace('\r', '\n')
+    val s = (text).value.replace("\r\n", "\n").replace('\r', '\n')
     while i < s.length do
       val c = s.charAt(i)
       if quoted then

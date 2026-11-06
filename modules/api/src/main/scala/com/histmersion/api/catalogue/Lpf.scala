@@ -42,8 +42,8 @@ object Lpf:
   type ParseDefaultKind = _root_.com.histmersion.api.Api.ArticleQuery.Kind.Wire
   val ParseDefaultKind: _root_.com.histmersion.api.Api.ArticleQuery.Kind.Wire.type = _root_.com.histmersion.api.Api.ArticleQuery.Kind.Wire
 
-  def toIso(historicalYear: com.histmersion.api.library.Tree.Year): com.histmersion.api.catalogue.Period.IsoYear = Years.toAstronomical(historicalYear)
-  def fromIso(isoYear: com.histmersion.api.catalogue.Period.IsoYear): com.histmersion.api.library.Tree.Year = Years.fromAstronomical(isoYear)
+  def toIso(historicalYear: com.histmersion.api.catalogue.Year): com.histmersion.api.catalogue.Period.IsoYear = Years.toAstronomical(historicalYear)
+  def fromIso(isoYear: com.histmersion.api.catalogue.Period.IsoYear): com.histmersion.api.catalogue.Year = Years.fromAstronomical(isoYear)
 
   val Context = "https://raw.githubusercontent.com/LinkedPasts/linked-places/master/linkedplaces-context-v1.1.jsonld"
 
@@ -71,8 +71,8 @@ object Lpf:
   /** Bare years (`"-1400"`, `"1400 BCE"`) are historical reckoning, the practical convention in WHG/Pleiades data; ISO
     * 8601 dates with month and day (`"-0500-01-01"`) are astronomical and converted via [[fromIso]].
     */
-  def parseYear(raw: String): Option[com.histmersion.api.library.Tree.Year] =
-    val t = Circa.replaceFirstIn((raw).trim.toLowerCase, "")
+  def parseYear(raw: String): Option[com.histmersion.api.catalogue.Year] =
+    val t = Circa.replaceFirstIn((raw).value.trim.toLowerCase, "")
     if t.isEmpty then None
     else
       val isIso = IsoDate.findFirstIn(t).isDefined
@@ -82,22 +82,22 @@ object Lpf:
         else 0
       Digits.findFirstIn(t).flatMap(_.toLongOption).map { n =>
         val y = if n < 0 then n else if era < 0 then -n else n
-        if isIso then _root_.com.histmersion.api.library.Tree.Year((fromIso(_root_.com.histmersion.api.catalogue.Period.IsoYear(y))).value) else _root_.com.histmersion.api.library.Tree.Year(y)
+        if isIso then _root_.com.histmersion.api.catalogue.Year((fromIso(_root_.com.histmersion.api.catalogue.Period.IsoYear(y))).value) else _root_.com.histmersion.api.catalogue.Year(y)
       }
 
   /** LPF mixes `"-1400"` and `-1400`. */
-  private def yearOf(j: Json): Option[com.histmersion.api.library.Tree.Year] =
+  private def yearOf(j: Json): Option[com.histmersion.api.catalogue.Year] =
     Years.fromJson(j, parseYear)
 
   /** LPF puts the certain value in `in` and the fuzzy bounds in `earliest`/`latest`. */
-  private def bound(j: Json, wide: com.histmersion.api.catalogue.Lpf.Bound.Wire, narrow: com.histmersion.api.catalogue.Lpf.Bound.Wire): Option[com.histmersion.api.library.Tree.Year] =
+  private def bound(j: Json, wide: com.histmersion.api.catalogue.Lpf.Bound.Wire, narrow: com.histmersion.api.catalogue.Lpf.Bound.Wire): Option[com.histmersion.api.catalogue.Year] =
     j.asObject match
-      case None      => (yearOf(j)).map(refactorValue22 => _root_.com.histmersion.api.library.Tree.Year((refactorValue22).value))
+      case None      => (yearOf(j)).map(refactorValue22 => _root_.com.histmersion.api.catalogue.Year((refactorValue22).value))
       case Some(obj) =>
         (obj("in")
           .flatMap(yearOf)
           .orElse(obj((wide).value).flatMap(yearOf))
-          .orElse(obj((narrow).value).flatMap(yearOf))).map(refactorValue => _root_.com.histmersion.api.library.Tree.Year((refactorValue).value))
+          .orElse(obj((narrow).value).flatMap(yearOf))).map(refactorValue => _root_.com.histmersion.api.catalogue.Year((refactorValue).value))
 
   def parseWhen(j: Json): Option[Span] =
     def span(o: JsonObject): Option[Span] =
@@ -142,10 +142,10 @@ object Lpf:
     (keys.iterator.flatMap(k => o(k).flatMap(_.asString)).map(_.trim).find(_.nonEmpty)).map(refactorValue25 => (refactorValue25))
 
   private def slug(s: String): com.histmersion.api.research.ReviewGoal.Slug =
-    _root_.com.histmersion.api.research.ReviewGoal.Slug((s).trim.toLowerCase.replaceAll("[^a-z0-9]+", "_").replaceAll("^_+|_+$", "").take(64))
+    _root_.com.histmersion.api.research.ReviewGoal.Slug((s).value.trim.toLowerCase.replaceAll("[^a-z0-9]+", "_").replaceAll("^_+|_+$", "").take(64))
 
   private def propertyPeriod(o: JsonObject): Option[Span] =
-    def fromPair(a: Option[com.histmersion.api.library.Tree.Year], b: Option[com.histmersion.api.library.Tree.Year]): Option[Span] = (a, b) match
+    def fromPair(a: Option[com.histmersion.api.catalogue.Year], b: Option[com.histmersion.api.catalogue.Year]): Option[Span] = (a, b) match
       case (Some(x), Some(y)) => Some(if x <= y then Span(a, b) else Span(b, a))
       case (None, None)       => None
       case _                  => Some(Span(a, b))
@@ -189,7 +189,7 @@ object Lpf:
         })
     }
     val alts = str(props, "alt_names", "altNames", "NAME_ALT", "nameAlt").toList
-      .flatMap((_).split("[|;]").toList)
+      .flatMap((_).value.split("[|;]").toList)
       .map(_.trim)
       .filter(_.nonEmpty)
       .map(Place.Name(_root_.com.histmersion.api.catalogue.Place.Name.Value(_)))
@@ -292,7 +292,7 @@ object Lpf:
       json: String,
       defaultKind: com.histmersion.api.catalogue.Lpf.ParseDefaultKind = _root_.com.histmersion.api.catalogue.Lpf.ParseDefaultKind(com.histmersion.api.catalogue.Place.Kind.Region)
   ): Either[com.histmersion.api.catalogue.Lpf.Problem, List[Place.Input]] =
-    io.circe.parser.parse((json)).left.map(e => s"invalid JSON: ${e.getMessage}").flatMap { doc =>
+    io.circe.parser.parse((json).value).left.map(e => s"invalid JSON: ${e.getMessage}").flatMap { doc =>
       val found: Option[List[Json]] =
         doc.asArray
           .map(_.toList)

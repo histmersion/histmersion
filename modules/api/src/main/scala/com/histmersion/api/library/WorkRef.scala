@@ -12,9 +12,9 @@ final case class WorkRef(
     title: Option[com.histmersion.api.library.Title] = None,
     year: Option[com.histmersion.api.catalogue.Year] = None,
     authors: List[com.histmersion.api.library.AuthorName] = (Nil).map(com.histmersion.api.library.AuthorName.apply),
-    venue: Option[com.histmersion.api.library.Venue] = None,
+    venue: Option[com.histmersion.api.library.Source.Venue] = None,
     citedByCount: Option[WorkRef.CitedByCount] = None,
-    isOa: WorkRef.IsOa = _root_.com.histmersion.api.library.WorkRef.IsOa(false),
+    isOa: WorkRef.IsOa = _root_.com.histmersion.api.library.Source.Candidate.IsOa(false),
     oaStatus: Option[WorkRef.OaStatus] = None,
     oaUrl: Option[WorkRef.OaUrl] = None,
     isRetracted: WorkRef.IsRetracted = _root_.com.histmersion.api.library.WorkRef.IsRetracted(false),
@@ -31,12 +31,6 @@ final case class WorkRef(
 object WorkRef:
   type OpenalexId = OpenalexId.T
   object OpenalexId extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type ArxivId = ArxivId.T
-  object ArxivId extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type CitedByCount = CitedByCount.T
-  object CitedByCount extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type IsOa = IsOa.T
-  object IsOa extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type OaStatus = OaStatus.T
   object OaStatus extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type OaUrl = OaUrl.T
@@ -45,8 +39,6 @@ object WorkRef:
   object IsRetracted extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type WorkType = WorkType.T
   object WorkType extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type AbstractText = AbstractText.T
-  object AbstractText extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type ReferencedWorks = ReferencedWorks.T
   object ReferencedWorks extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type InDb = InDb.T

@@ -7,15 +7,15 @@ object PlacesMarkdown:
   type KindOfKind = _root_.com.histmersion.api.catalogue.Place.Summary.Kind
   val KindOfKind: _root_.com.histmersion.api.catalogue.Place.Summary.Kind.type = _root_.com.histmersion.api.catalogue.Place.Summary.Kind
 
-  private[api] def kindOf(kind: com.histmersion.api.catalogue.PlacesMarkdown.KindOfKind, ps: Option[com.histmersion.api.catalogue.Period.Start], pe: Option[com.histmersion.api.catalogue.Period.End]): com.histmersion.api.Markdown.Text =
+  private[api] def kindOf(kind: com.histmersion.api.catalogue.PlacesMarkdown.KindOfKind, ps: Option[com.histmersion.api.catalogue.Period.Start], pe: Option[com.histmersion.api.catalogue.Period.End]): String =
     val p = period(ps, pe)
-    if p.isEmpty then kind else _root_.com.histmersion.api.Markdown.Text(s"$kind · $p")
+    if p.isEmpty then kind else (s"$kind · $p")
 
-  private[api] def kindWhen(s: Place.Summary): com.histmersion.api.Markdown.Text =
-    if s.dating == Place.Dating.Stated then kindOf(s.kind, s.periodStart, s.periodEnd) else _root_.com.histmersion.api.Markdown.Text(s"${s.kind} · ${s.when}")
+  private[api] def kindWhen(s: Place.Summary): String =
+    if s.dating == Place.Dating.Stated then kindOf(s.kind, s.periodStart, s.periodEnd) else (s"${s.kind} · ${s.when}")
 
-  def places(rows: Vector[Place.Hit], asOf: Option[com.histmersion.api.catalogue.Place.Entry.AsOf] = None): com.histmersion.api.Markdown.Text =
-    if rows.isEmpty then _root_.com.histmersion.api.Markdown.Text("_No matching places._")
+  def places(rows: Vector[Place.Hit], asOf: Option[com.histmersion.api.catalogue.Place.Entry.AsOf] = None): String =
+    if rows.isEmpty then ("_No matching places._")
     else
       val items = rows.map { h =>
         val alt = h.matchedName.filter(!_.equalsIgnoreCase(h.label)).map(n => s" (matched “$n”)").getOrElse("")
@@ -25,8 +25,8 @@ object PlacesMarkdown:
       }
       s"### ${rows.size} place(s)${asOfNote(asOf)}\n\n${items.mkString("\n")}"
 
-  def placeTree(rows: Vector[Place.TreeRow]): com.histmersion.api.Markdown.Text =
-    if rows.isEmpty then _root_.com.histmersion.api.Markdown.Text("_No hierarchy._")
+  def placeTree(rows: Vector[Place.TreeRow]): String =
+    if rows.isEmpty then ("_No hierarchy._")
     else
       rows
         .map { r =>
@@ -35,15 +35,15 @@ object PlacesMarkdown:
         }
         .mkString("\n")
 
-  def placeImport(r: Place.ImportResult): com.histmersion.api.Markdown.Text =
+  def placeImport(r: Place.ImportResult): String =
     val head = r.job.fold(s"imported ${r.places} place(s), ${r.names} name(s), ${r.relations} relation(s)")(id =>
       s"job `$id` started (`histmersion jobs $id` follows it)"
     )
-    if r.failed.isEmpty then _root_.com.histmersion.api.Markdown.Text(head)
-    else _root_.com.histmersion.api.Markdown.Text(s"$head\n\nskipped:\n${r.failed.map(f => s"- $f").mkString("\n")}")
+    if r.failed.isEmpty then (head)
+    else (s"$head\n\nskipped:\n${r.failed.map(f => s"- $f").mkString("\n")}")
 
-  def gazetteerSources(rows: List[Gazetteer.SourceInfo]): com.histmersion.api.Markdown.Text =
-    if rows.isEmpty then _root_.com.histmersion.api.Markdown.Text("_No external gazetteer sources: no pinned extracts and no LPF files._")
+  def gazetteerSources(rows: List[Gazetteer.SourceInfo]): String =
+    if rows.isEmpty then ("_No external gazetteer sources: no pinned extracts and no LPF files._")
     else
       val head =
         "| source | file | pinned | imported | places | names | links | licence |\n|---|---|---|---|---:|---:|---:|---|"
@@ -54,19 +54,19 @@ object PlacesMarkdown:
         s"| ${r.key} — ${r.title} | $file | ${r.pinnedVersion.getOrElse("—")} | $imported | ${n(r.places)} | " +
           s"${n(r.names)} | ${n(r.links)} | ${r.licence.getOrElse("—")} |"
       }
-      _root_.com.histmersion.api.Markdown.Text((head :: body).mkString("\n"))
+      ((head :: body).mkString("\n"))
 
-  def placeNameChanged(r: Place.NameChanged): com.histmersion.api.Markdown.Text =
+  def placeNameChanged(r: Place.NameChanged): String =
     val lang = if r.lang.isEmpty then "" else s" (${r.lang})"
     val what =
       if !((r.added) == _root_.com.histmersion.api.catalogue.Place.NameChanged.Added(true)) then s"removed the name **${r.name}**$lang from"
       else if !((r.changed) == _root_.com.histmersion.api.catalogue.Place.NameChanged.Changed(true)) then s"**${r.name}**$lang was already a name added by hand to"
       else if ((r.wasImported) == _root_.com.histmersion.api.catalogue.Place.NameChanged.WasImported(true)) then s"kept **${r.name}**$lang (a name the seed gives) as one added by hand, on"
       else s"added the name **${r.name}**$lang to"
-    _root_.com.histmersion.api.Markdown.Text(s"$what **${r.label}** `${r.placeId}` — names added by hand survive every re-seed")
+    (s"$what **${r.label}** `${r.placeId}` — names added by hand survive every re-seed")
 
-  def manualPlaceNames(rows: List[ManualPlaceName]): com.histmersion.api.Markdown.Text =
-    if rows.isEmpty then _root_.com.histmersion.api.Markdown.Text("_No names added by hand._")
+  def manualPlaceNames(rows: List[ManualPlaceName]): String =
+    if rows.isEmpty then ("_No names added by hand._")
     else
       s"${rows.size} name(s) added by hand:\n\n" + rows
         .map { r =>
@@ -74,7 +74,7 @@ object PlacesMarkdown:
         }
         .mkString("\n")
 
-  def placeOverrideChanged(r: Place.OverrideChanged): com.histmersion.api.Markdown.Text =
+  def placeOverrideChanged(r: Place.OverrideChanged): String =
     val kind = if r.kindBefore == r.kindAfter then s"kind ${r.kindAfter}" else s"kind ${r.kindBefore} → ${r.kindAfter}"
     val period = if r.periodBefore == r.periodAfter then s"period ${r.periodAfter}"
     else s"period ${r.periodBefore} → ${r.periodAfter}"
@@ -88,18 +88,18 @@ object PlacesMarkdown:
       if ((r.reset) == _root_.com.histmersion.api.catalogue.Place.OverrideChanged.Reset(true)) then s"reset **${r.label}** `${r.placeId}` to what its source says: $kind, $period$point"
       else s"set **${r.label}** `${r.placeId}`: $kind, $period$point — kept by every re-seed and re-import"
     val lost = if r.unlocated == _root_.com.histmersion.api.catalogue.Place.OverrideChanged.Unlocated(0) then "" else s"; **${r.unlocated}** of them now have no place at all"
-    _root_.com.histmersion.api.Markdown.Text(s"$head\n\nfindings matched again: ${r.findingsBefore} → ${r.findingsAfter}$lost")
+    (s"$head\n\nfindings matched again: ${r.findingsBefore} → ${r.findingsAfter}$lost")
 
-  def placeGone(r: Place.Gone): com.histmersion.api.Markdown.Text =
+  def placeGone(r: Place.Gone): String =
     val head = r.into match
       case Some(into) =>
         s"merged **${r.label}** `${r.placeId}` into **${r.intoLabel.getOrElse(into)}** `$into` — `${r.placeId}` now resolves to it"
       case None => s"removed **${r.label}** `${r.placeId}`"
     val lost = if r.unlocated == _root_.com.histmersion.api.catalogue.Place.Gone.Unlocated(0) then "" else s"; **${r.unlocated}** of them now have no place at all"
-    _root_.com.histmersion.api.Markdown.Text(s"$head; no re-seed brings it back\n\nfindings matched again: ${r.findingsBefore} → ${r.findingsAfter}$lost")
+    (s"$head; no re-seed brings it back\n\nfindings matched again: ${r.findingsBefore} → ${r.findingsAfter}$lost")
 
-  def placeOverrides(rows: List[Place.Override]): com.histmersion.api.Markdown.Text =
-    if rows.isEmpty then _root_.com.histmersion.api.Markdown.Text("_No place has a kind, period or point set by hand._")
+  def placeOverrides(rows: List[Place.Override]): String =
+    if rows.isEmpty then ("_No place has a kind, period or point set by hand._")
     else
       s"${rows.size} place(s) with a kind, period or point set by hand:\n\n" + rows
         .map { r =>
@@ -117,18 +117,18 @@ object PlacesMarkdown:
         }
         .mkString("\n")
 
-  def placeAdded(p: Place.Summary): com.histmersion.api.Markdown.Text =
+  def placeAdded(p: Place.Summary): String =
     s"added **${p.label}** `${p.id}` _(${kindOf(p.kind, p.periodStart, p.periodEnd)})_" +
       p.source.fold("")(src => s" — source: $src") +
       "\n\nIt is this collection's own place (carried in a bundle, never touched by a re-seed). " +
       "Run `histmersion places rebuild` to match findings to it."
 
-  def placeRebuild(r: Place.RebuildResult): com.histmersion.api.Markdown.Text =
-    _root_.com.histmersion.api.Markdown.Text(s"${r.links} finding→place link(s) over ${r.places} place(s) " +
+  def placeRebuild(r: Place.RebuildResult): String =
+    (s"${r.links} finding→place link(s) over ${r.places} place(s) " +
       s"(${r.byGeometry} by geometry, ${r.byName} by region name); " +
       s"${r.located} finding(s) located, ${r.unlocated} unlocated")
 
-  def place(d: Place.Card, tree: Vector[Place.TreeRow] = Vector.empty): com.histmersion.api.Markdown.Text =
+  def place(d: Place.Card, tree: Vector[Place.TreeRow] = Vector.empty): String =
     val p = d.place
     val header = s"# ${p.label}${contestedMark((((d.contested) == (true)) || ((p.contested) == _root_.com.histmersion.api.catalogue.Place.Summary.Contested(true))), p.label)}" +
       s"\n\n_`${p.id}` · ${kindWhen(p)}" +
@@ -143,7 +143,7 @@ object PlacesMarkdown:
     val geom = d.geometry
       .map(g => s"  \n**Geometry:** ${g.take(40).takeWhile(_ != ',')}… (GeoJSON)")
       .getOrElse("  \n**Geometry:** _none_")
-    def list(title: com.histmersion.api.Markdown.Text, xs: List[Place.Summary]) =
+    def list(title: String, xs: List[Place.Summary]) =
       if xs.isEmpty then ""
       else
         s"\n\n**$title**\n" +

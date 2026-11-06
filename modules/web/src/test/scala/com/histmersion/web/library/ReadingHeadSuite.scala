@@ -16,7 +16,7 @@ class ReadingHeadSuite extends munit.FunSuite:
     com.histmersion.api.library.Title("1177 B.C."),
     (List("Eric H. Cline")).map(com.histmersion.api.library.AuthorName.apply),
     (Some(2014)).map(com.histmersion.api.catalogue.Year.apply),
-    (Some("Princeton University Press")).map(com.histmersion.api.library.Venue.apply),
+    (Some("Princeton University Press")).map(com.histmersion.api.library.Source.Venue.apply),
     Source.Status.Current,
     Nil,
     List("levant", "anatolia"),

@@ -9,7 +9,7 @@ import com.histmersion.api.ItemKind
 final case class UnreadRow(
     kind: ItemKind,
     id: ItemKey,
-    title: com.histmersion.api.personal.ReadMark.Title,
+    title: com.histmersion.api.library.Title,
     authors: List[com.histmersion.api.library.AuthorName] = Nil,
     year: Option[com.histmersion.api.catalogue.Year] = None,
     status: Option[UnreadRow.Status] = None,
