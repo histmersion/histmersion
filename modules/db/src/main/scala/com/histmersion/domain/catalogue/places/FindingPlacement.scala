@@ -23,8 +23,9 @@ object FindingPlacement:
   object ToleranceKmResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type PlaceSourceResult = PlaceSourceResult.T
   object PlaceSourceResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type DefaultToleranceKm = DefaultToleranceKm.T
-  object DefaultToleranceKm extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type DefaultToleranceKm = DefaultToleranceKmValue
+  type DefaultToleranceKmValue = DefaultToleranceKmValue.T
+  object DefaultToleranceKmValue extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type ApplyToleranceKm = ApplyToleranceKm.T
   object ApplyToleranceKm extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type PlaceholderFindingsSqlResult = PlaceholderFindingsSqlResult.T

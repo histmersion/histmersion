@@ -30,8 +30,9 @@ object Vp8l:
   object Vp8lChunkB extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Array[_root_.scala.Byte], _root_.io.github.iltotore.iron.constraint.any.Pure]
   type BuildLengths = BuildLengths.T
   object BuildLengths extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Array[_root_.scala.Int], _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type DistanceMap = DistanceMap.T
-  object DistanceMap extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Array[_root_.scala.Int], _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type DistanceMap = DistanceMapValue
+  type DistanceMapValue = DistanceMapValue.T
+  object DistanceMapValue extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Array[_root_.scala.Int], _root_.io.github.iltotore.iron.constraint.any.Pure]
   type PredictPx = PredictPx.T
   object PredictPx extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Array[_root_.scala.Int], _root_.io.github.iltotore.iron.constraint.any.Pure]
   type ColourPx = ColourPx.T

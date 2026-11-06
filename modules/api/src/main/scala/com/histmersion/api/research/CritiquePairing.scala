@@ -159,9 +159,9 @@ object CritiquePairing:
     if ms.isEmpty then None
     else
       val near = ms.map(m =>
-        YearRe.findAllMatchIn(text.substring(m.end, math.min(text.length, m.end + 25))).map(_.group(1).toInt).toSet
+        YearRe.findAllMatchIn((text).value.substring(m.end, math.min((text).value.length, m.end + 25))).map(_.group(1).toInt).toSet
       )
-      if year.exists(y => near.exists(_(y))) then Some(Mention.Strong)
+      if year.exists(y => near.exists(_((y).value))) then Some(Mention.Strong)
       else if near.forall(_.nonEmpty) then Some(Mention.Conflict)
       else Some(Mention.Weak)
 

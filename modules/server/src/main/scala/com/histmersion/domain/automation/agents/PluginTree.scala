@@ -10,8 +10,9 @@ object PluginTree:
   object TreeResultPart2Part1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type TreeResultPart2Part2 = TreeResultPart2Part2.T
   object TreeResultPart2Part2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type Owned = Owned.T
-  object Owned extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type Owned = OwnedValue
+  type OwnedValue = OwnedValue.T
+  object OwnedValue extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type WriteResultPart1 = WriteResultPart1.T
   object WriteResultPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type WriteTreeResultPart1 = WriteTreeResultPart1.T

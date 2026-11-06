@@ -20,16 +20,19 @@ import com.histmersion.api.research.Article
   * is a person's decision, made with `histmersion article delete`.
   */
 object ArticleTools:
-  type ArticleCoverageDoc = ArticleCoverageDoc.T
-  object ArticleCoverageDoc extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type ArticleCoverageDoc = ArticleCoverageDocValue
+  type ArticleCoverageDocValue = ArticleCoverageDocValue.T
+  object ArticleCoverageDocValue extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type ArticleCoverageMarkdownResult = ArticleCoverageMarkdownResult.T
   object ArticleCoverageMarkdownResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type ArticleReviewDoc = ArticleReviewDoc.T
-  object ArticleReviewDoc extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type ArticleReviewDoc = ArticleReviewDocValue
+  type ArticleReviewDocValue = ArticleReviewDocValue.T
+  object ArticleReviewDocValue extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type ArticleReviewMarkdownResult = ArticleReviewMarkdownResult.T
   object ArticleReviewMarkdownResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type CheckEditsDoc = CheckEditsDoc.T
-  object CheckEditsDoc extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type CheckEditsDoc = CheckEditsDocValue
+  type CheckEditsDocValue = CheckEditsDocValue.T
+  object CheckEditsDocValue extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type CheckEditsResult = CheckEditsResult.T
   object CheckEditsResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 

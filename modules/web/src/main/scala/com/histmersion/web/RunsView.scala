@@ -108,8 +108,9 @@ object RunsView:
   object BudgetS extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type TokensResult = TokensResult.T
   object TokensResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type StepColumns = StepColumns.T
-  object StepColumns extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type StepColumns = StepColumnsValue
+  type StepColumnsValue = StepColumnsValue.T
+  object StepColumnsValue extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type StepCellsResultPart1 = StepCellsResultPart1.T
   object StepCellsResultPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type StepCellsResultPart2 = StepCellsResultPart2.T

@@ -11,8 +11,9 @@ package com.histmersion.domain
 object CodexRetention:
 
   /** The directories of run transcripts, relative to the home. */
-  type SessionDirs = SessionDirs.T
-  object SessionDirs extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type SessionDirs = SessionDirsValue
+  type SessionDirsValue = SessionDirsValue.T
+  object SessionDirsValue extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type InSessionsResult = InSessionsResult.T
   object InSessionsResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type InSessionsRel = InSessionsRel.T

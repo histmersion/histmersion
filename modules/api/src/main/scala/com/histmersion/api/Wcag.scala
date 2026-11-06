@@ -37,8 +37,9 @@ object Wcag:
   object ContrastBPart2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type ContrastBPart3 = ContrastBPart3.T
   object ContrastBPart3 extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type AaText = AaText.T
-  object AaText extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type AaText = AaTextValue
+  type AaTextValue = AaTextValue.T
+  object AaTextValue extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
   def luminance(r: com.histmersion.api.Wcag.LuminanceR, g: com.histmersion.api.Wcag.LuminanceG, b: com.histmersion.api.Wcag.LuminanceB): com.histmersion.api.Wcag.LuminanceResult =
     def lin(c: com.histmersion.api.Wcag.LuminanceLinC): com.histmersion.api.Wcag.LuminanceLinResult =
@@ -59,4 +60,4 @@ object Wcag:
     (math.max(la, lb) + 0.05) / (math.min(la, lb) + 0.05)
 
   /** AA for normal text; large text (≥ 18.66 px bold) needs 3. */
-  val AaText: com.histmersion.api.Wcag.AaText = _root_.com.histmersion.api.Wcag.AaText(4.5)
+  val AaText: com.histmersion.api.Wcag.AaText = _root_.com.histmersion.api.Wcag.AaTextValue(4.5)

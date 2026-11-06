@@ -72,8 +72,9 @@ object ManagerPolicy:
   object WaitsForOpenPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type WaitsForOpenPart2 = WaitsForOpenPart2.T
   object WaitsForOpenPart2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type GoalKinds = GoalKinds.T
-  object GoalKinds extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type GoalKinds = GoalKindsValue
+  type GoalKindsValue = GoalKindsValue.T
+  object GoalKindsValue extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type BlocksResult = BlocksResult.T
   object BlocksResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type BlocksKind = BlocksKind.T

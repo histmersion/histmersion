@@ -12,8 +12,9 @@ object TileGrid:
   /** A tile is 512 CSS pixels a side where MapLibre draws it at its own zoom. */
   type PointsAtResult = PointsAtResult.T
   object PointsAtResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type TilePx = TilePx.T
-  object TilePx extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type TilePx = TilePxValue
+  type TilePxValue = TilePxValue.T
+  object TilePxValue extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type OfMaxZoom = OfMaxZoom.T
   object OfMaxZoom extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type OfMaxPoints = OfMaxPoints.T

@@ -41,10 +41,12 @@ object Smithsonian:
   val SearchUrlExcludedUnits: _root_.com.histmersion.plugins.media.Smithsonian.QueryExcludedUnits.type = _root_.com.histmersion.plugins.media.Smithsonian.QueryExcludedUnits
   type UnitOfResult = UnitOfResult.T
   object UnitOfResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type DateLabels = DateLabels.T
-  object DateLabels extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type MakerLabels = MakerLabels.T
-  object MakerLabels extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type DateLabels = DateLabelsValue
+  type DateLabelsValue = DateLabelsValue.T
+  object DateLabelsValue extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type MakerLabels = MakerLabelsValue
+  type MakerLabelsValue = MakerLabelsValue.T
+  object MakerLabelsValue extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type RecordsResultPart1 = RecordsResultPart1.T
   object RecordsResultPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type RecordsResultPart2Part1 = RecordsResultPart2Part1.T

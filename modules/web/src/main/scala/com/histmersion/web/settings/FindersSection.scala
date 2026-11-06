@@ -10,8 +10,9 @@ import com.raquo.laminar.api.L.*
 object FindersSection:
 
   /** The finders among the plugins: those that register a source fetcher. Pure. */
-  type FinderIds = FinderIds.T
-  object FinderIds extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type FinderIds = FinderIdsValue
+  type FinderIdsValue = FinderIdsValue.T
+  object FinderIdsValue extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
   def finders(ui: UiConfig): List[com.histmersion.api.plugins.PluginStatus] =
     ui.plugins.plugins.filter(p => p.provides.exists(_.startsWith("source-fetcher:")) || FinderIds(p.id))

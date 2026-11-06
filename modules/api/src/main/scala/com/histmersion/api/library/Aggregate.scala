@@ -100,7 +100,7 @@ object Aggregate:
 
   def histogram(rows: List[Period.Row], from: com.histmersion.api.library.Aggregate.HistogramFrom, to: com.histmersion.api.library.Aggregate.HistogramTo): List[TimeBucket] =
     val (lo, hi) = order(_root_.com.histmersion.api.library.Aggregate.OrderA((from).value), _root_.com.histmersion.api.library.Aggregate.OrderB((to).value))
-    histogram(rows, lo, hi, bucketSize(hi - lo))
+    histogram(rows, _root_.com.histmersion.api.library.Aggregate.BucketsFrom((lo).value), _root_.com.histmersion.api.library.Aggregate.BucketsTo((hi).value), bucketSize((hi).value - lo))
 
   def histogram(
       rows: List[Period.Row],

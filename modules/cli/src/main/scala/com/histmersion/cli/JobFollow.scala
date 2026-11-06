@@ -13,10 +13,12 @@ import com.histmersion.util.console.Console
 object JobFollow:
 
   /** How often a job is asked for. This process's own cadence, not a server tunable. */
-  type PollMs = PollMs.T
-  object PollMs extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type BackupPollMs = BackupPollMs.T
-  object BackupPollMs extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type PollMs = PollMsValue
+  type PollMsValue = PollMsValue.T
+  object PollMsValue extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type BackupPollMs = BackupPollMsValue
+  type BackupPollMsValue = BackupPollMsValue.T
+  object BackupPollMsValue extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type FailedWhat = FailedWhat.T
   object FailedWhat extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type FailedWhy = FailedWhy.T

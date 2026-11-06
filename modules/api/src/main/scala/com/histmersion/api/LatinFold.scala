@@ -6,8 +6,9 @@ package com.histmersion.api
   */
 object LatinFold:
 
-  type Pairs = Pairs.T
-  object Pairs extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type Pairs = PairsValue
+  type PairsValue = PairsValue.T
+  object PairsValue extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type MultiPart1 = MultiPart1.T
   object MultiPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Char, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type MultiPart2 = MultiPart2.T
@@ -33,7 +34,7 @@ object LatinFold:
 
   private val Pairs: com.histmersion.api.LatinFold.Pairs =
     // Latin-1 Supplement
-    _root_.com.histmersion.api.LatinFold.Pairs("ÀAÁAÂAÃAÄAÅAÇCÈEÉEÊEËEÌIÍIÎIÏIÐDÑNÒOÓOÔOÕOÖOØOÙUÚUÛUÜUÝYàaáaâaãaäaåaçcèeéeêeëeìi" +
+    _root_.com.histmersion.api.LatinFold.PairsValue("ÀAÁAÂAÃAÄAÅAÇCÈEÉEÊEËEÌIÍIÎIÏIÐDÑNÒOÓOÔOÕOÖOØOÙUÚUÛUÜUÝYàaáaâaãaäaåaçcèeéeêeëeìi" +
       "íiîiïiðdñnòoóoôoõoöoøoùuúuûuüuýyÿy" +
       // Latin Extended-A
       "ĀAāaĂAăaĄAąaĆCćcĈCĉcĊCċcČCčcĎDďdĐDđdĒEēeĔEĕeĖEėeĘEęeĚEěeĜGĝgĞGğgĠGġgĢGģgĤHĥhĦHħh" +
@@ -89,7 +90,7 @@ object LatinFold:
   )
 
   private val Table: Map[com.histmersion.api.LatinFold.TablePart1, com.histmersion.api.LatinFold.TablePart2] =
-    Pairs.grouped(2).map(p => p(0) -> p(1).toString).toMap ++ Multi
+    (Pairs).value.grouped(2).map(p => p(0) -> p(1).toString).toMap ++ Multi
 
   def tableChars: Set[com.histmersion.api.LatinFold.TableCharsResult] = (Table.keySet).map(refactorValue => _root_.com.histmersion.api.LatinFold.TableCharsResult((refactorValue).value))
 

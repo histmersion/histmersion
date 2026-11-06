@@ -103,8 +103,8 @@ object AssetLinks:
 
   private def retarget(md: com.histmersion.api.media.AssetLinks.RetargetMd, from: com.histmersion.api.media.AssetLinks.RetargetFrom, to: com.histmersion.api.media.AssetLinks.RetargetTo): com.histmersion.api.media.AssetLinks.RetargetResult =
     mapImages(_root_.com.histmersion.api.media.AssetLinks.MapImagesMd((md).value))((alt, target, title) =>
-      if !target.startsWith(from) then s"![$alt]($target$title)"
-      else s"![$alt]($to${target.drop(from.length)}$title)"
+      if !(target).value.startsWith((from).value) then _root_.com.histmersion.api.media.AssetLinks.MapImagesFResult(s"![$alt]($target$title)")
+      else _root_.com.histmersion.api.media.AssetLinks.MapImagesFResult(s"![$alt]($to${(target).value.drop((from).value.length)}$title)")
     )
 
   private val FiguresTarget = """^(?:[a-z]+:)?(?:[^?#]*[/\\])?figures[/\\]([^/\\?#]+)$""".r
@@ -117,17 +117,17 @@ object AssetLinks:
     mapImages(_root_.com.histmersion.api.media.AssetLinks.MapImagesMd((md).value))((alt, target, title) =>
       target match
         case FiguresTarget(name) => s"![$alt]($Prefix${safeName(java.net.URLDecoder.decode(name, "UTF-8"))}$title)"
-        case _                   => s"![$alt]($target$title)"
+        case _                   => _root_.com.histmersion.api.media.AssetLinks.MapImagesFResult(s"![$alt]($target$title)")
     )
 
   /** An OCR body writes `![](…)`; a figure with no alt text is invisible to a screen reader. */
   def numberFigures(md: com.histmersion.api.media.AssetLinks.NumberFiguresMd): com.histmersion.api.media.AssetLinks.NumberFiguresResult =
     var n = 0
-    mapImages(_root_.com.histmersion.api.media.AssetLinks.MapImagesMd((md).value))((alt, target, title) =>
+    _root_.com.histmersion.api.media.AssetLinks.NumberFiguresResult((mapImages(_root_.com.histmersion.api.media.AssetLinks.MapImagesMd((md).value))((alt, target, title) =>
       n += 1
-      val label = if alt.trim.nonEmpty then alt else s"Figure $n"
-      s"![$label]($target$title)"
-    )
+      val label = if (alt).value.trim.nonEmpty then alt else s"Figure $n"
+      _root_.com.histmersion.api.media.AssetLinks.MapImagesFResult(s"![$label]($target$title)")
+    )).value)
 
   /** The OCR sidecar brackets text it read inside a picture with these markers. */
   private val PictureText =
@@ -158,19 +158,19 @@ object AssetLinks:
       if !l.startsWith("#") then false
       else
         val text = flatten(_root_.com.histmersion.api.media.AssetLinks.FlattenS(l.dropWhile(_ == '#')))
-        (text).value.nonEmpty && (BoilerplateHeading.matches((text).value) || (want.nonEmpty && text == want))
+        (text).value.nonEmpty && (BoilerplateHeading.matches((text).value) || ((want).value.nonEmpty && text == want))
     }
     _root_.com.histmersion.api.media.AssetLinks.DropBoilerplateHeadingsResult(kept.mkString("\n"))
 
   def normalizeBody(md: com.histmersion.api.media.AssetLinks.NormalizeBodyMd, title: com.histmersion.api.media.AssetLinks.NormalizeBodyTitle = _root_.com.histmersion.api.media.AssetLinks.NormalizeBodyTitle("")): com.histmersion.api.media.AssetLinks.NormalizeBodyResult =
-    dropBoilerplateHeadings(collapsePictureText(_root_.com.histmersion.api.media.AssetLinks.CollapsePictureTextMd((fromFigures(md)).value)), title)
+    _root_.com.histmersion.api.media.AssetLinks.NormalizeBodyResult((dropBoilerplateHeadings(_root_.com.histmersion.api.media.AssetLinks.DropBoilerplateHeadingsMd((collapsePictureText(_root_.com.histmersion.api.media.AssetLinks.CollapsePictureTextMd((fromFigures(md)).value))).value), title)).value)
 
-  def toWeb(md: com.histmersion.api.media.AssetLinks.ToWebMd, citekey: com.histmersion.api.media.AssetLinks.ToWebCitekey): com.histmersion.api.media.AssetLinks.ToWebResult = retarget(md, _root_.com.histmersion.api.media.AssetLinks.RetargetFrom(Prefix), _root_.com.histmersion.api.media.AssetLinks.RetargetTo((webBase(citekey)).value))
+  def toWeb(md: com.histmersion.api.media.AssetLinks.ToWebMd, citekey: com.histmersion.api.media.AssetLinks.ToWebCitekey): com.histmersion.api.media.AssetLinks.ToWebResult = _root_.com.histmersion.api.media.AssetLinks.ToWebResult((retarget(md, _root_.com.histmersion.api.media.AssetLinks.RetargetFrom(Prefix), _root_.com.histmersion.api.media.AssetLinks.RetargetTo((webBase(citekey)).value))).value)
 
   def toAbsolute(md: com.histmersion.api.media.AssetLinks.ToAbsoluteMd, citekey: com.histmersion.api.media.AssetLinks.ToAbsoluteCitekey, publicUrl: com.histmersion.api.media.AssetLinks.ToAbsolutePublicUrl): com.histmersion.api.media.AssetLinks.ToAbsoluteResult =
     _root_.com.histmersion.api.media.AssetLinks.ToAbsoluteResult((retarget(md, _root_.com.histmersion.api.media.AssetLinks.RetargetFrom(Prefix), _root_.com.histmersion.api.media.AssetLinks.RetargetTo((publicUrl).value.trim.stripSuffix("/") + webBase(citekey)))).value)
 
-  def webBase(citekey: com.histmersion.api.media.AssetLinks.WebBaseCitekey): com.histmersion.api.media.AssetLinks.WebBaseResult = s"/source/${enc(_root_.com.histmersion.api.media.AssetLinks.EncS((citekey).value))}/assets/"
+  def webBase(citekey: com.histmersion.api.media.AssetLinks.WebBaseCitekey): com.histmersion.api.media.AssetLinks.WebBaseResult = _root_.com.histmersion.api.media.AssetLinks.WebBaseResult(s"/source/${enc(_root_.com.histmersion.api.media.AssetLinks.EncS((citekey).value))}/assets/")
 
   def url(citekey: com.histmersion.api.media.AssetLinks.UrlCitekey, name: com.histmersion.api.media.AssetLinks.UrlName): com.histmersion.api.media.AssetLinks.UrlResult = (webBase(citekey)).value + enc(name)
 

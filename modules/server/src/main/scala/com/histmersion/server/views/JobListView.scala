@@ -33,8 +33,9 @@ object JobListView:
   object PageBefore extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type PageUpTo = PageUpTo.T
   object PageUpTo extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type JobStatuses = JobStatuses.T
-  object JobStatuses extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type JobStatuses = JobStatusesValue
+  type JobStatusesValue = JobStatusesValue.T
+  object JobStatusesValue extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
   val JobStatuses: Seq[com.histmersion.server.views.JobListView.JobStatuses] = (JobState.values.map(_.wire) ++ RunState.values.map(_.wire)).distinct.toSeq
 

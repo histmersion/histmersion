@@ -122,7 +122,8 @@ object SiteTypesControllers:
   object PoliteIntervalMs extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type RunSiteTypesProgressArg1 = RunSiteTypesProgressArg1.T
   object RunSiteTypesProgressArg1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type SiteTypesJobKind = SiteTypesJobKind.T
-  object SiteTypesJobKind extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type SiteTypesJobKind = SiteTypesJobKindValue
+  type SiteTypesJobKindValue = SiteTypesJobKindValue.T
+  object SiteTypesJobKindValue extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
   val SiteTypesJobKind: com.histmersion.domain.catalogue.places.SiteTypesControllers.SiteTypesJobKind = com.histmersion.api.catalogue.PlacesJobKinds.SiteTypes.kind.value

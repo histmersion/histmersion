@@ -31,10 +31,12 @@ private[places] object FindingPlaceRepo:
   object ExplicitOnlySqlResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type ExplicitOnlySqlAlias = ExplicitOnlySqlAlias.T
   object ExplicitOnlySqlAlias extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type DefaultPlaceholderMin = DefaultPlaceholderMin.T
-  object DefaultPlaceholderMin extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type DefaultPlaceholderAreaShare = DefaultPlaceholderAreaShare.T
-  object DefaultPlaceholderAreaShare extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type DefaultPlaceholderMin = DefaultPlaceholderMinValue
+  type DefaultPlaceholderMinValue = DefaultPlaceholderMinValue.T
+  object DefaultPlaceholderMinValue extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type DefaultPlaceholderAreaShare = DefaultPlaceholderAreaShareValue
+  type DefaultPlaceholderAreaShareValue = DefaultPlaceholderAreaShareValue.T
+  object DefaultPlaceholderAreaShareValue extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type PlaceholderSqlResult = PlaceholderSqlResult.T
   object PlaceholderSqlResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type PlaceholderSqlF = PlaceholderSqlF.T

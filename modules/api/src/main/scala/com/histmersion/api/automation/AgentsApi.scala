@@ -33,8 +33,9 @@ object AgentsApi:
   object ControlPart1Part3 extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type ControlPart1Part4 = ControlPart1Part4.T
   object ControlPart1Part4 extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type Actions = Actions.T
-  object Actions extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type Actions = ActionsValue
+  type ActionsValue = ActionsValue.T
+  object ActionsValue extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type ApprovalsPart1Part2 = ApprovalsPart1Part2.T
   object ApprovalsPart1Part2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type ApprovalsPart1Part3 = ApprovalsPart1Part3.T
@@ -142,7 +143,7 @@ object AgentsApi:
       .in(query[Option[Long]]("budgetTokens"))
       .out(jsonBody[RunInfo])).mapIn[(_root_.com.histmersion.api.automation.AgentsApi.ControlPart1Part1, _root_.com.histmersion.api.automation.AgentsApi.ControlPart1Part2, _root_.scala.Option[_root_.com.histmersion.api.automation.AgentsApi.ControlPart1Part3], _root_.scala.Option[_root_.com.histmersion.api.automation.AgentsApi.ControlPart1Part4])]((refactorDecoded25: (_root_.java.lang.String, _root_.java.lang.String, _root_.scala.Option[_root_.scala.Double], _root_.scala.Option[_root_.scala.Long])) => (_root_.com.histmersion.api.automation.AgentsApi.ControlPart1Part1((refactorDecoded25)._1), _root_.com.histmersion.api.automation.AgentsApi.ControlPart1Part2((refactorDecoded25)._2), ((refactorDecoded25)._3).map(refactorElement31 => _root_.com.histmersion.api.automation.AgentsApi.ControlPart1Part3(refactorElement31)), ((refactorDecoded25)._4).map(refactorElement32 => _root_.com.histmersion.api.automation.AgentsApi.ControlPart1Part4(refactorElement32))))((refactorEncoded25: (_root_.com.histmersion.api.automation.AgentsApi.ControlPart1Part1, _root_.com.histmersion.api.automation.AgentsApi.ControlPart1Part2, _root_.scala.Option[_root_.com.histmersion.api.automation.AgentsApi.ControlPart1Part3], _root_.scala.Option[_root_.com.histmersion.api.automation.AgentsApi.ControlPart1Part4])) => (((refactorEncoded25)._1).value, ((refactorEncoded25)._2).value, ((refactorEncoded25)._3).map(refactorElement33 => (refactorElement33).value), ((refactorEncoded25)._4).map(refactorElement34 => (refactorElement34).value)))
 
-  val Actions: List[com.histmersion.api.automation.AgentsApi.Actions] = List(_root_.com.histmersion.api.automation.AgentsApi.Actions("pause"), _root_.com.histmersion.api.automation.AgentsApi.Actions("resume"), _root_.com.histmersion.api.automation.AgentsApi.Actions("cancel"))
+  val Actions: List[com.histmersion.api.automation.AgentsApi.Actions] = List(_root_.com.histmersion.api.automation.AgentsApi.ActionsValue("pause"), _root_.com.histmersion.api.automation.AgentsApi.ActionsValue("resume"), _root_.com.histmersion.api.automation.AgentsApi.ActionsValue("cancel"))
 
   lazy val approvals: PublicEndpoint[
     (ListFilters.ApprovalFilter, Option[com.histmersion.api.automation.AgentsApi.ApprovalsPart1Part2], Option[com.histmersion.api.automation.AgentsApi.ApprovalsPart1Part3], Option[com.histmersion.api.automation.AgentsApi.ApprovalsPart1Part4]),

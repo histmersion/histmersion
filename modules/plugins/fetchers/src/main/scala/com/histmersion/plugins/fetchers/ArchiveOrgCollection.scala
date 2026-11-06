@@ -45,8 +45,9 @@ object ArchiveOrgCollection:
   object FileFormat extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type OriginalResultPart1 = OriginalResultPart1.T
   object OriginalResultPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type Rows = Rows.T
-  object Rows extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type Rows = RowsValue
+  type RowsValue = RowsValue.T
+  object RowsValue extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
   val Rows: com.histmersion.plugins.fetchers.ArchiveOrgCollection.Rows = 8
 

@@ -119,8 +119,9 @@ object AutopilotPolicy:
   object DepthTextResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type DepthTextD = DepthTextD.T
   object DepthTextD extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type NotePrefix = NotePrefix.T
-  object NotePrefix extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type NotePrefix = NotePrefixValue
+  type NotePrefixValue = NotePrefixValue.T
+  object NotePrefixValue extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type NoteResult = NoteResult.T
   object NoteResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type DepthResult = DepthResult.T

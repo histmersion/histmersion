@@ -13,8 +13,9 @@ object Critiques:
   type BuildSideCk = BuildSideCk.T
   object BuildSideCk extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
-  type Kinds = Kinds.T
-  object Kinds extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type Kinds = KindsValue
+  type KindsValue = KindsValue.T
+  object KindsValue extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type OlderFirstResult = OlderFirstResult.T
   object OlderFirstResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type OlderFirstKinds = OlderFirstKinds.T

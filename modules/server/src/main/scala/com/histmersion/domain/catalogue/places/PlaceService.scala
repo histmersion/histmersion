@@ -841,8 +841,9 @@ object PlaceService:
     object RemoveId extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
     type RemoveReason = RemoveReason.T
     object RemoveReason extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-    type RootKinds = RootKinds.T
-    object RootKinds extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type RootKinds = RootKindsValue
+    type RootKindsValue = RootKindsValue.T
+    object RootKindsValue extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
     type PeriodOfSidesPart1 = PeriodOfSidesPart1.T
     object PeriodOfSidesPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
     type PeriodOfSidesPart2 = PeriodOfSidesPart2.T

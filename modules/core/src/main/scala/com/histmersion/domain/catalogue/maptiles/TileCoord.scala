@@ -37,10 +37,12 @@ object TileCoord:
   object UnitsOfResultPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type UnitsOfResultPart2 = UnitsOfResultPart2.T
   object UnitsOfResultPart2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type Extent = Extent.T
-  object Extent extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type MaxLat = MaxLat.T
-  object MaxLat extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type Extent = ExtentValue
+  type ExtentValue = ExtentValue.T
+  object ExtentValue extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type MaxLat = MaxLatValue
+  type MaxLatValue = MaxLatValue.T
+  object MaxLatValue extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type OfResultPart1 = OfResultPart1.T
   object OfResultPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type OfZ = _root_.com.histmersion.domain.catalogue.maptiles.TileCoord.Z

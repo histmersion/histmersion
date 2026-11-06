@@ -21,7 +21,7 @@ final class PlanMatchKind[A](listed: A => PlanMatchKind.ListedResult, line: A =>
 
   /** The matches the plan's Markdown lists (at most `limit`), one line each. */
   def lines(m: PlanMatches, limit: com.histmersion.api.exchange.PlanMatchKind.LinesLimit): List[com.histmersion.api.exchange.PlanMatchKind.LinesResult] =
-    m.rows.flatMap(decoder.decodeJson(_).toOption).filter({ val refactorFunction = listed; (refactorValue) => ((refactorFunction(refactorValue)) == _root_.com.histmersion.api.exchange.PlanMatchKind.ListedResult(true)) }).take((limit).value).map(line)
+    m.rows.flatMap(decoder.decodeJson(_).toOption).filter({ val refactorFunction = listed; (refactorValue) => ((refactorFunction(refactorValue)) == _root_.com.histmersion.api.exchange.PlanMatchKind.ListedResult(true)) }).take((limit).value).map({ val refactorFunction3 = line; (refactorValue3) => _root_.com.histmersion.api.exchange.PlanMatchKind.LinesResult((refactorFunction3(refactorValue3)).value) })
 
 object PlanMatchKind:
   type ListedResult = ListedResult.T

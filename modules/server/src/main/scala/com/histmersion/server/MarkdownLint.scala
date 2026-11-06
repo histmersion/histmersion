@@ -101,14 +101,18 @@ object MarkdownLint:
   object FixText extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type CheckText = CheckText.T
   object CheckText extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type KnownTags = KnownTags.T
-  object KnownTags extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type VoidTags = VoidTags.T
-  object VoidTags extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type BlockTags = BlockTags.T
-  object BlockTags extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type MetaKeys = MetaKeys.T
-  object MetaKeys extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type KnownTags = KnownTagsValue
+  type KnownTagsValue = KnownTagsValue.T
+  object KnownTagsValue extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type VoidTags = VoidTagsValue
+  type VoidTagsValue = VoidTagsValue.T
+  object VoidTagsValue extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type BlockTags = BlockTagsValue
+  type BlockTagsValue = BlockTagsValue.T
+  object BlockTagsValue extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type MetaKeys = MetaKeysValue
+  type MetaKeysValue = MetaKeysValue.T
+  object MetaKeysValue extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
   final case class Context(
       article: Context.Article = false,

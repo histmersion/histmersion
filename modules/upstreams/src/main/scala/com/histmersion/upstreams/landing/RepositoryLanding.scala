@@ -30,8 +30,9 @@ object RepositoryLanding:
   type LooksLikeHtmlB = LooksLikeHtmlB.T
   object LooksLikeHtmlB extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Array[_root_.scala.Byte], _root_.io.github.iltotore.iron.constraint.any.Pure]
 
-  type PublisherSourceTypes = PublisherSourceTypes.T
-  object PublisherSourceTypes extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type PublisherSourceTypes = PublisherSourceTypesValue
+  type PublisherSourceTypesValue = PublisherSourceTypesValue.T
+  object PublisherSourceTypesValue extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type WordLabelResult = WordLabelResult.T
   object WordLabelResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type WordLabelLabel = WordLabelLabel.T
@@ -138,7 +139,7 @@ object RepositoryLanding:
     object Open extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
   /** OpenAlex `source.type`s that are a publisher's, not a repository's. */
-  val PublisherSourceTypes: Set[com.histmersion.upstreams.landing.RepositoryLanding.PublisherSourceTypes] = Set(_root_.com.histmersion.upstreams.landing.RepositoryLanding.PublisherSourceTypes("journal"), _root_.com.histmersion.upstreams.landing.RepositoryLanding.PublisherSourceTypes("conference"), _root_.com.histmersion.upstreams.landing.RepositoryLanding.PublisherSourceTypes("ebook platform"), _root_.com.histmersion.upstreams.landing.RepositoryLanding.PublisherSourceTypes("book series"))
+  val PublisherSourceTypes: Set[com.histmersion.upstreams.landing.RepositoryLanding.PublisherSourceTypes] = Set(_root_.com.histmersion.upstreams.landing.RepositoryLanding.PublisherSourceTypesValue("journal"), _root_.com.histmersion.upstreams.landing.RepositoryLanding.PublisherSourceTypesValue("conference"), _root_.com.histmersion.upstreams.landing.RepositoryLanding.PublisherSourceTypesValue("ebook platform"), _root_.com.histmersion.upstreams.landing.RepositoryLanding.PublisherSourceTypesValue("book series"))
 
   /** One file of a Zenodo record: where to download it and its MD5, when the record states one. */
   final case class ZenodoFile(url: ZenodoFile.Url, md5: Option[ZenodoFile.Md5])
@@ -171,7 +172,7 @@ object RepositoryLanding:
       */
     def denied(host: com.histmersion.upstreams.landing.RepositoryLanding.Rules.DeniedHost): com.histmersion.upstreams.landing.RepositoryLanding.Rules.DeniedResult =
       denyHosts.exists(d => matchesHost(host, d)) ||
-        (!allowed(_root_.com.histmersion.upstreams.landing.RepositoryLanding.Rules.AllowedHost((host).value)) && host.split('.').toList.dropRight(1).exists(l => denyHostWords.exists(w => wordLabel(l, w))))
+        (!((allowed(_root_.com.histmersion.upstreams.landing.RepositoryLanding.Rules.AllowedHost((host).value))) == _root_.com.histmersion.upstreams.landing.RepositoryLanding.Rules.AllowedResult(true)) && (host).value.split('.').toList.dropRight(1).exists(l => denyHostWords.exists(w => wordLabel(l, w))))
 
     /** A university's host: `.edu` (`.edu.au` too), `.ac.<cc>`, or a label that is a configured word ([[wordLabel]]:
       * `repository`, `eprints`, `pure`, `opus4`, `uni-tuebingen` for `uni-`).
@@ -237,8 +238,8 @@ object RepositoryLanding:
     * (`pure` is not `purepharma`, `press` is not `pressreader`).
     */
   def wordLabel(label: com.histmersion.upstreams.landing.RepositoryLanding.WordLabelLabel, w: com.histmersion.upstreams.landing.RepositoryLanding.WordLabelW): com.histmersion.upstreams.landing.RepositoryLanding.WordLabelResult =
-    (w).value.nonEmpty && (label == w || ((w).value.endsWith("-") && (label).value.startsWith((w).value)) ||
-      ((label).value.startsWith((w).value) && (label).value.length > (w).value.length && { val c = label.charAt(w.length); c == '-' || c.isDigit }))
+    _root_.com.histmersion.upstreams.landing.RepositoryLanding.WordLabelResult((w).value.nonEmpty && (label == w || ((w).value.endsWith("-") && (label).value.startsWith((w).value)) ||
+      ((label).value.startsWith((w).value) && (label).value.length > (w).value.length && { val c = (label).value.charAt((w).value.length); c == '-' || c.isDigit })))
 
   /** A host entry matches the host itself or any subdomain of it. */
   def matchesHost(host: com.histmersion.upstreams.landing.RepositoryLanding.MatchesHostHost, entry: com.histmersion.upstreams.landing.RepositoryLanding.MatchesHostEntry): com.histmersion.upstreams.landing.RepositoryLanding.MatchesHostResult =
@@ -374,7 +375,7 @@ object RepositoryLanding:
       for
         key <- attrs.get("name").orElse(attrs.get("property")).map(_.trim.toLowerCase).filter(_.nonEmpty)
         content <- attrs.get("content").map({ val refactorFunction = decode; (refactorValue5) => refactorFunction(_root_.com.histmersion.upstreams.landing.RepositoryLanding.DecodeS(refactorValue5)) }).map((_).value.trim)
-      yield key -> content
+      yield { val refactorTuple = key -> content; (_root_.com.histmersion.upstreams.landing.RepositoryLanding.MetaTagsResultPart1(refactorTuple._1), _root_.com.histmersion.upstreams.landing.RepositoryLanding.MetaTagsResultPart2(refactorTuple._2)) }
     }
 
   /** The part of a page the tags are read from: an item page's `<head>` sits well inside this. */
@@ -395,7 +396,7 @@ object RepositoryLanding:
 
   /** Pure: the `citation_pdf_url`s a page names, made absolute against `pageUrl`, http(s) only. */
   def citationPdfUrls(html: com.histmersion.upstreams.landing.RepositoryLanding.CitationPdfUrlsHtml, pageUrl: com.histmersion.upstreams.landing.RepositoryLanding.CitationPdfUrlsPageUrl): List[com.histmersion.upstreams.landing.RepositoryLanding.CitationPdfUrlsResult] =
-    metaTags(html).collect { case (refactorPattern2, u) if (refactorPattern2.value == "citation_pdf_url") && ((u).value.nonEmpty) => absolute(_root_.com.histmersion.upstreams.landing.RepositoryLanding.AbsoluteHref((u).value), pageUrl) }.flatten.distinct
+    (metaTags(html).collect { case (refactorPattern2, u) if (refactorPattern2.value == "citation_pdf_url") && ((u).value.nonEmpty) => absolute(_root_.com.histmersion.upstreams.landing.RepositoryLanding.AbsoluteHref((u).value), pageUrl) }.flatten.distinct).map(refactorValue6 => _root_.com.histmersion.upstreams.landing.RepositoryLanding.CitationPdfUrlsResult((refactorValue6).value))
 
   /** Pure: `href` against the page it is on (`/bitstream/…` → `https://host/bitstream/…`). */
   def absolute(href: com.histmersion.upstreams.landing.RepositoryLanding.AbsoluteHref, pageUrl: com.histmersion.upstreams.landing.RepositoryLanding.AbsolutePageUrl): Option[com.histmersion.upstreams.landing.RepositoryLanding.AbsoluteResult] =

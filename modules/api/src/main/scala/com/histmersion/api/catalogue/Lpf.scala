@@ -130,10 +130,10 @@ object Lpf:
     j.asObject match
       case None      => (yearOf(j)).map(refactorValue22 => _root_.com.histmersion.api.catalogue.Lpf.BoundResult((refactorValue22).value))
       case Some(obj) =>
-        obj("in")
+        (obj("in")
           .flatMap(yearOf)
           .orElse(obj((wide).value).flatMap(yearOf))
-          .orElse(obj((narrow).value).flatMap(yearOf))
+          .orElse(obj((narrow).value).flatMap(yearOf))).map(refactorValue => _root_.com.histmersion.api.catalogue.Lpf.BoundResult((refactorValue).value))
 
   def parseWhen(j: Json): Option[Span] =
     def span(o: JsonObject): Option[Span] =

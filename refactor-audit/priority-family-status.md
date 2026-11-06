@@ -1,6 +1,92 @@
 # Priority-family status
 
-## Current checkpoint: generated helper adapters applied, compilation incomplete
+## Current checkpoint: generated companion/value collisions repaired, compilation incomplete
+
+Three applications use the existing pipeline. project-helper-adapters-2 applies168
+compiler AST patches in48 production files (128 E007/40 E008); project-value-names-2
+applies560 patches for176 companion/value collisions in108 production files; and
+project-helper-adapters-3 applies65 newly exposed repairs in36 production files
+(54 E007/11 E008). Together these are793 AST patches across142 distinct production
+files, with zero application test edits. No individual application expression/type
+mappings or new runners/verifiers/report frameworks were introduced. These applied
+transformations are not a global verified-policy repair count or automation rate.
+
+The naming root cause is a generated newtype companion sharing a term name with
+an existing value. For example AgentsApi.Actions is already a String newtype, but
+the conflicting List value makes Actions("pause") resolve as indexing and demand
+an Int. generatedValueNames chooses a fresh companion/canonical alias, retains
+the old public type as an alias and preserves the value's name. It updates208
+rooted constructor heads inside their own initializers, plus176 alias declarations
+and176 companion names. Other ordinary value uses, including indexing, remain
+unchanged. This is naming repair, not semantic equivalence or primitive elimination.
+
+Eligibility requires unique indexed definitions, a typed same-name value, exact
+owner-match generated-value provenance, a canonical .T alias, an empty qualified
+Pure companion and a stable object owner. Non-rooted or other same-name term uses
+in that initializer veto the repair. Empty/raw initializers need no constructor.
+Outside-initializer constructor/member references, ambiguous/unindexed definitions,
+custom behavior and instance owners remain outside this repair's coverage.
+
+The initial preview selected56 of188 unique indexed collision candidates; final
+preview2 additionally handles initializers with no constructor, selecting176 and
+retaining12 explicit unresolved IDs. Preview1 was not applied; its source evidence
+remains. No negative fixture expectation was weakened. Four positive fixture cases
+match the independent golden exactly and actual rewritten Scala3.10 future-source/
+fatal-E165 compile/runtime passes: String/Int list elements, a scalar, an empty list,
+old type aliases, preserved indexing/iteration and fresh-name collision avoidance.
+Seven negative cases remain outside the plan. Their origins are synthetic test
+data. The unchanged adapter modes retain their preceding fixture evidence.
+
+The remaining12 collision candidates require further targeted-rule or design review,
+not exceptions or compliance credit. Three current API examples explain its limits:
+EventGeometry.GeometryTypes has an Ordering given, Source.Section.All is generated
+for lowercase all while colliding with an untyped All marker, and CritiqueReason.
+MaxChars conservatively fails the same-name-reference guard on the foreign member
+Coverage.Reason.MaxChars. All12 IDs/source witnesses remain in shapes.tsv; broader
+collision coverage outside unique indexed supported shapes is unestablished.
+
+| Module | Before, frontier23/latest | After adapters, frontier24 | After naming, frontier25 | Final frontier26 |
+|---|---:|---:|---:|---:|
+| api JVM and JS, each | 2297 | 2232 | 1986 | 1958 |
+| values | 25 | cached | 18 | cached18 |
+| upstreams | 282 | 262 | 250 | 247 |
+| plugin-vaults | 98 | 97 | cached | 95 |
+| plugins/calibre | 193 | 178 | 155 | 148 |
+| plugins/ai-http | 77 | 76 | 65 | 65 |
+
+All ten previously failing tasks still fail; hello/latest1, hello-ai/latest7 and
+chimney-iron retain cached failures. Reported E120 naming diagnostics decrease
+133 ->6 between frontier24/25 and remain6 in26. These are compiler observations,
+not stable policy IDs or a proof that every changed diagnostic is classified.
+Compiler checks, stack16m, maxErrors10000 and serial compilation are unchanged;
+all3170 source/build hashes are stable in every build. Dependent application tests
+remain blocked. Plugin API/resolver/console sources are unchanged: prior plugin API
+45/48 with3 client-validation conflicts is retained, not rerun or claimed anew.
+No whole-project test/native pass is claimed. Other policy families retain their
+earlier evidence; they were not reassessed by these model/compiler runs.
+
+The48 helper files and108 naming files verified before the final application;
+all36 final helper files also match their frozen preview. The complete final
+3169-Scala-source census matches frontier26 (which additionally snapshots build.sbt).
+type-positions-after-value-names-1 records176 removed and176 introduced opaque
+definition IDs, with every old/new pair explicit in RENAME_NEWTYPE evidence and
+all176 generated origins carried to the new IDs. They are renamed definitions,
+not removed model concepts or176 new violations. The final census2 preserves
+those origins exactly and has zero further shape-ID delta. Counts remain
+production26894/test19 shapes, production886/test6009 raw candidates, with zero
+raw-ID introduction/removal/correction in both scans. Final positions137010;
+overlap groups2980 (previous2981), unresolved references16256 (previous16228).
+Alias/import/inferred/inherited/external resolution remains partial; changed group
+or use counts do not shrink the outstanding historical denominator or imply
+semantic acceptance. No detector refinement round, new exception, inventory
+acceptance or overall automatic-repair percentage is claimed.
+
+Next work is remaining naming eligibility and collection/helper/library-boundary
+flows in the fresh compiler frontier. Remaining raw candidates, semantic type
+sharing, smart construction and application tests stay in scope. The original
+scope and90% automatic-repair target remain unchanged and unproven.
+
+## Previous checkpoint: generated helper adapters applied, compilation incomplete
 
 project-helper-adapters-1 applies 513 compiler AST patches across 110 production
 files, with zero application test edits: 471 E007 adapters and 42 E008 native-member

@@ -15,7 +15,7 @@ final case class ChatAnswer(status: ChatAnswer.Status, body: ChatAnswer.Body):
 
   /** The turn the answer says, or the failure's description. */
   def turn: Either[com.histmersion.plugins.ai.ChatAnswer.TurnResultPart1, AiTurn] =
-    if (status).value / 100 != 2 then Left(ChatAnswer.errorMessage(_root_.com.histmersion.plugins.ai.ChatAnswer.ErrorMessageStatus((status).value), _root_.com.histmersion.plugins.ai.ChatAnswer.ErrorMessageBody((body).value)))
+    if (status).value / 100 != 2 then Left(_root_.com.histmersion.plugins.ai.ChatAnswer.TurnResultPart1((ChatAnswer.errorMessage(_root_.com.histmersion.plugins.ai.ChatAnswer.ErrorMessageStatus((status).value), _root_.com.histmersion.plugins.ai.ChatAnswer.ErrorMessageBody((body).value))).value))
     else decode((body).value)(using ChatAnswer.response).left.map((refactorCallback => _root_.com.histmersion.plugins.ai.ChatAnswer.TurnResultPart1(refactorCallback.getMessage)))
 
 object ChatAnswer:

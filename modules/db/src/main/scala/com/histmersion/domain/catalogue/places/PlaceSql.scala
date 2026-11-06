@@ -21,8 +21,9 @@ object PlaceSql:
   object ImportedSqlResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type ImportedSqlAlias = ImportedSqlAlias.T
   object ImportedSqlAlias extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type ImportedList = ImportedList.T
-  object ImportedList extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type ImportedList = ImportedListValue
+  type ImportedListValue = ImportedListValue.T
+  object ImportedListValue extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type SourceTierSql = SourceTierSql.T
   object SourceTierSql extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type NormLabelSqlResult = NormLabelSqlResult.T
@@ -33,8 +34,9 @@ object PlaceSql:
   object ModernSqlResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type ModernSqlAlias = _root_.com.histmersion.domain.catalogue.places.PlaceSql.ImportedSqlAlias
   val ModernSqlAlias: _root_.com.histmersion.domain.catalogue.places.PlaceSql.ImportedSqlAlias.type = _root_.com.histmersion.domain.catalogue.places.PlaceSql.ImportedSqlAlias
-  type DefaultModernFrom = DefaultModernFrom.T
-  object DefaultModernFrom extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type DefaultModernFrom = DefaultModernFromValue
+  type DefaultModernFromValue = DefaultModernFromValue.T
+  object DefaultModernFromValue extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type UndatedSqlResult = UndatedSqlResult.T
   object UndatedSqlResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type UndatedSqlAlias = _root_.com.histmersion.domain.catalogue.places.PlaceSql.ImportedSqlAlias

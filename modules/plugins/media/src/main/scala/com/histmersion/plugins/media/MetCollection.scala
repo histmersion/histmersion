@@ -57,8 +57,9 @@ object MetCollection:
   object YearResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type YearAstronomical = YearAstronomical.T
   object YearAstronomical extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type GeographyFields = GeographyFields.T
-  object GeographyFields extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type GeographyFields = GeographyFieldsValue
+  type GeographyFieldsValue = GeographyFieldsValue.T
+  object GeographyFieldsValue extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type RecordResultPart1 = RecordResultPart1.T
   object RecordResultPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 

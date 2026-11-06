@@ -7,8 +7,9 @@ import com.histmersion.api.jobs.JobDetail
 object EventsJobKinds:
 
   /** The catalogue an events job reads, as a person names it, in the job's detail. */
-  type Catalogue = Catalogue.T
-  object Catalogue extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type Catalogue = CatalogueValue
+  type CatalogueValue = CatalogueValue.T
+  object CatalogueValue extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
   val Catalogue: JobDetail.Field[Option[com.histmersion.api.catalogue.EventsJobKinds.Catalogue]] = JobDetail.Field(_root_.com.histmersion.api.jobs.JobDetail.Field.Name("events"), None)
 

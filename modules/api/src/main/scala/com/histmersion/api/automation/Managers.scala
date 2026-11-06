@@ -22,8 +22,9 @@ object Managers:
   object WatchIdResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type WatchIdGoal = WatchIdGoal.T
   object WatchIdGoal extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type Actions = Actions.T
-  object Actions extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type Actions = ActionsValue
+  type ActionsValue = ActionsValue.T
+  object ActionsValue extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
   export com.histmersion.api.automation.Manager.Kind as Kind
   export com.histmersion.api.automation.Manager.State as State
@@ -309,9 +310,9 @@ object Managers:
                 case "minSources" | "min-sources"                 => int.map(n => c.copy(minSources = Some(_root_.com.histmersion.api.automation.Managers.ManagerConfig.MinSources(n))))
                 case "maxArticles" | "max-articles"               => int.map(n => c.copy(maxArticles = Some(_root_.com.histmersion.api.automation.Managers.ManagerConfig.MaxArticles(n))))
                 case "autoIngestPerDay" | "auto-ingest-per-day"   => int.map(n => c.copy(autoIngestPerDay = Some(_root_.com.histmersion.api.automation.Managers.ManagerConfig.AutoIngestPerDay(n))))
-                case "inferFilter" | "infer-filter"               => bool(_root_.com.histmersion.api.automation.Managers.ManagerConfig.BoolK(k), _root_.com.histmersion.api.automation.Managers.ManagerConfig.BoolV(v)).map(b => c.copy(inferFilter = Some(_root_.com.histmersion.api.automation.Managers.ManagerConfig.InferFilter((b).value))))
-                case "autoIngest" | "auto-ingest"                 => bool(_root_.com.histmersion.api.automation.Managers.ManagerConfig.BoolK(k), _root_.com.histmersion.api.automation.Managers.ManagerConfig.BoolV(v)).map(b => c.copy(autoIngest = Some(_root_.com.histmersion.api.automation.Managers.ManagerConfig.AutoIngest((b).value))))
-                case "autoApprove" | "auto-approve"               => bool(_root_.com.histmersion.api.automation.Managers.ManagerConfig.BoolK(k), _root_.com.histmersion.api.automation.Managers.ManagerConfig.BoolV(v)).map(b => c.copy(autoApprove = Some(_root_.com.histmersion.api.automation.Managers.ManagerConfig.AutoApprove((b).value))))
+                case "inferFilter" | "infer-filter"               => (bool(_root_.com.histmersion.api.automation.Managers.ManagerConfig.BoolK(k), _root_.com.histmersion.api.automation.Managers.ManagerConfig.BoolV(v)).map(b => c.copy(inferFilter = Some(_root_.com.histmersion.api.automation.Managers.ManagerConfig.InferFilter((b).value))))).left.map(refactorError4 => (refactorError4).value)
+                case "autoIngest" | "auto-ingest"                 => (bool(_root_.com.histmersion.api.automation.Managers.ManagerConfig.BoolK(k), _root_.com.histmersion.api.automation.Managers.ManagerConfig.BoolV(v)).map(b => c.copy(autoIngest = Some(_root_.com.histmersion.api.automation.Managers.ManagerConfig.AutoIngest((b).value))))).left.map(refactorError5 => (refactorError5).value)
+                case "autoApprove" | "auto-approve"               => (bool(_root_.com.histmersion.api.automation.Managers.ManagerConfig.BoolK(k), _root_.com.histmersion.api.automation.Managers.ManagerConfig.BoolV(v)).map(b => c.copy(autoApprove = Some(_root_.com.histmersion.api.automation.Managers.ManagerConfig.AutoApprove((b).value))))).left.map(refactorError6 => (refactorError6).value)
                 case "extendMinNew" | "extend-min-new"            => int.map(n => c.copy(extendMinNew = Some(_root_.com.histmersion.api.automation.Managers.ManagerConfig.ExtendMinNew(n))))
                 case "sweeps"                                     =>
                   val ws = v.split(",").toList.map(_.trim).filter(_.nonEmpty)
@@ -883,4 +884,4 @@ object Managers:
     object Suggest extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
 
-  val Actions: List[com.histmersion.api.automation.Managers.Actions] = List(_root_.com.histmersion.api.automation.Managers.Actions("pause"), _root_.com.histmersion.api.automation.Managers.Actions("resume"), _root_.com.histmersion.api.automation.Managers.Actions("stop"))
+  val Actions: List[com.histmersion.api.automation.Managers.Actions] = List(_root_.com.histmersion.api.automation.Managers.ActionsValue("pause"), _root_.com.histmersion.api.automation.Managers.ActionsValue("resume"), _root_.com.histmersion.api.automation.Managers.ActionsValue("stop"))

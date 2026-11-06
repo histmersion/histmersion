@@ -26,8 +26,9 @@ object WikidataSettings:
   object EventRolesResultPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type EventRolesResultPart2 = EventRolesResultPart2.T
   object EventRolesResultPart2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type PictureRoles = PictureRoles.T
-  object PictureRoles extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type PictureRoles = PictureRolesValue
+  type PictureRolesValue = PictureRolesValue.T
+  object PictureRolesValue extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type RolesResultPart1 = RolesResultPart1.T
   object RolesResultPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type RolesResultPart2 = RolesResultPart2.T

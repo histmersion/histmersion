@@ -22,8 +22,9 @@ object Storage:
   type ShownWalkSeen = ShownWalkSeen.T
   object ShownWalkSeen extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
-  type DefaultLowFreeBytes = DefaultLowFreeBytes.T
-  object DefaultLowFreeBytes extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type DefaultLowFreeBytes = DefaultLowFreeBytesValue
+  type DefaultLowFreeBytesValue = DefaultLowFreeBytesValue.T
+  object DefaultLowFreeBytesValue extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type UnderResult = UnderResult.T
   object UnderResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type UnderChild = UnderChild.T
@@ -41,7 +42,7 @@ object Storage:
   type SizeResult = SizeResult.T
   object SizeResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
-  val DefaultLowFreeBytes: com.histmersion.api.maintenance.Storage.DefaultLowFreeBytes = 10L * 1000 * 1000 * 1000
+  val DefaultLowFreeBytes: com.histmersion.api.maintenance.Storage.DefaultLowFreeBytes = _root_.com.histmersion.api.maintenance.Storage.DefaultLowFreeBytesValue(10L * 1000 * 1000 * 1000)
 
   def under(child: com.histmersion.api.maintenance.Storage.UnderChild, parent: com.histmersion.api.maintenance.Storage.UnderParent): com.histmersion.api.maintenance.Storage.UnderResult =
     def norm(p: com.histmersion.api.maintenance.Storage.UnderNormP) = (p).value.replace('\\', '/').stripSuffix("/")

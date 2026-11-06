@@ -14,10 +14,12 @@ object EventPrecision:
 
   type All = All.T
   object All extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type PreciseUpTo = PreciseUpTo.T
-  object PreciseUpTo extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type ApproximateUpTo = ApproximateUpTo.T
-  object ApproximateUpTo extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type PreciseUpTo = PreciseUpToValue
+  type PreciseUpToValue = PreciseUpToValue.T
+  object PreciseUpToValue extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type ApproximateUpTo = ApproximateUpToValue
+  type ApproximateUpToValue = ApproximateUpToValue.T
+  object ApproximateUpToValue extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type UncertaintyResult = UncertaintyResult.T
   object UncertaintyResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type UncertaintyPlusMinus = UncertaintyPlusMinus.T
@@ -55,8 +57,8 @@ object EventPrecision:
   val Undated = "undated"
   val all: List[com.histmersion.api.catalogue.EventPrecision.All] = List(_root_.com.histmersion.api.catalogue.EventPrecision.All(Precise), _root_.com.histmersion.api.catalogue.EventPrecision.All(Approximate), _root_.com.histmersion.api.catalogue.EventPrecision.All(Imprecise), _root_.com.histmersion.api.catalogue.EventPrecision.All(Undated))
 
-  val PreciseUpTo: com.histmersion.api.catalogue.EventPrecision.PreciseUpTo = _root_.com.histmersion.api.catalogue.EventPrecision.PreciseUpTo((50).toLong)
-  val ApproximateUpTo: com.histmersion.api.catalogue.EventPrecision.ApproximateUpTo = _root_.com.histmersion.api.catalogue.EventPrecision.ApproximateUpTo((500).toLong)
+  val PreciseUpTo: com.histmersion.api.catalogue.EventPrecision.PreciseUpTo = _root_.com.histmersion.api.catalogue.EventPrecision.PreciseUpToValue((50).toLong)
+  val ApproximateUpTo: com.histmersion.api.catalogue.EventPrecision.ApproximateUpTo = _root_.com.histmersion.api.catalogue.EventPrecision.ApproximateUpToValue((500).toLong)
 
   /** Widths are taken in astronomical years: historical years have no year 0. */
   def uncertainty(ts: TimeSpan, plusMinus: Option[com.histmersion.api.catalogue.EventPrecision.UncertaintyPlusMinus]): Option[com.histmersion.api.catalogue.EventPrecision.UncertaintyResult] =

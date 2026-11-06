@@ -14,8 +14,9 @@ import com.augustnagro.magnum.*
   */
 private[review] object ArticleReviewRepo:
 
-  type WaitingKinds = WaitingKinds.T
-  object WaitingKinds extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type WaitingKinds = WaitingKindsValue
+  type WaitingKindsValue = WaitingKindsValue.T
+  object WaitingKindsValue extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type FactsResultPart1 = FactsResultPart1.T
   object FactsResultPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type FactsResultPart2Part2 = FactsResultPart2Part2.T

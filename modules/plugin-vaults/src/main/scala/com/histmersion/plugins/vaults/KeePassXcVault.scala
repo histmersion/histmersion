@@ -29,13 +29,13 @@ final class KeePassXcVault(
   def resolve(ref: com.histmersion.plugins.vaults.KeePassXcVault.ResolveRef): Either[com.histmersion.plugins.vaults.KeePassXcVault.ResolveResultPart1, com.histmersion.plugins.vaults.KeePassXcVault.ResolveResultPart2] =
     request(_root_.com.histmersion.plugins.vaults.KeePassXcVault.RequestRef((ref).value)).flatMap { (entry, attr) =>
       if yubikeys.nonEmpty then
-        withYubiKey(s"read '$ref'", s"for '$ref'", entry)(yk =>
+        withYubiKey(_root_.com.histmersion.plugins.vaults.KeePassXcVault.WithYubiKeyWhat(s"read '$ref'"), _root_.com.histmersion.plugins.vaults.KeePassXcVault.WithYubiKeyPurpose(s"for '$ref'"), _root_.com.histmersion.plugins.vaults.KeePassXcVault.WithYubiKeyEntry((entry).value))(yk =>
           Subprocess
-            .run(argv(attr, entry, Some(yk)), Map.empty, stdin, yubikeyTimeout)
+            .run(argv(_root_.com.histmersion.plugins.vaults.KeePassXcVault.ArgvAttr((attr).value), _root_.com.histmersion.plugins.vaults.KeePassXcVault.ArgvEntry((entry).value), Some(yk)), Map.empty, (stdin).map(refactorValue4 => _root_.com.histmersion.plugins.vaults.Subprocess.RunStdin(refactorValue4)), yubikeyTimeout)
             .map(r => if r.exit == 0 then Right(r) else Left(r))
         )
           .flatMap(r => Vaults.answer(name, ref, Right(r), _ => None))
-      else Vaults.answer(name, ref, Subprocess.run(argv(attr, entry, None), Map.empty, stdin, timeout), classify(entry))
+      else Vaults.answer(name, ref, Subprocess.run(argv(_root_.com.histmersion.plugins.vaults.KeePassXcVault.ArgvAttr((attr).value), _root_.com.histmersion.plugins.vaults.KeePassXcVault.ArgvEntry((entry).value), None), Map.empty, (stdin).map(refactorValue3 => _root_.com.histmersion.plugins.vaults.Subprocess.RunStdin(refactorValue3)), timeout), classify(_root_.com.histmersion.plugins.vaults.KeePassXcVault.ClassifyEntry((entry).value)))
     }
 
   /** Every reference through ONE `keepassxc-cli open` session ([[KeePassXcSession]]): one unlock, one YubiKey touch. A
@@ -111,7 +111,7 @@ final class KeePassXcVault(
     opened match
       case Left(e)  => batched.map((r, _) => r -> Left(e)).toMap
       case Right(o) =>
-        try readAll(o, (batched).map(refactorValue9 => { val refactorTuple3 = refactorValue9; (_root_.com.histmersion.plugins.vaults.KeePassXcVault.ReadAllBatchedPart1((refactorTuple3._1).value), { val refactorTuple4 = refactorTuple3._2; (_root_.com.histmersion.plugins.vaults.KeePassXcVault.ReadAllBatchedPart2Part1((refactorTuple4._1).value), _root_.com.histmersion.plugins.vaults.KeePassXcVault.ReadAllBatchedPart2Part2((refactorTuple4._2).value)) }) }))
+        try (readAll(o, (batched).map(refactorValue9 => { val refactorTuple3 = refactorValue9; (_root_.com.histmersion.plugins.vaults.KeePassXcVault.ReadAllBatchedPart1((refactorTuple3._1).value), { val refactorTuple4 = refactorTuple3._2; (_root_.com.histmersion.plugins.vaults.KeePassXcVault.ReadAllBatchedPart2Part1((refactorTuple4._1).value), _root_.com.histmersion.plugins.vaults.KeePassXcVault.ReadAllBatchedPart2Part2((refactorTuple4._2).value)) }) }))).iterator.map { case (refactorKey2, refactorItem2) => (_root_.com.histmersion.plugins.vaults.KeePassXcVault.SessionResultPart1((refactorKey2).value), ((refactorItem2).left.map(refactorError5 => _root_.com.histmersion.plugins.vaults.KeePassXcVault.SessionResultPart2Part1((refactorError5).value))).map(refactorValue10 => _root_.com.histmersion.plugins.vaults.KeePassXcVault.SessionResultPart2Part2((refactorValue10).value))) }.toMap
         finally
           val _ = o.session.send(_root_.com.histmersion.plugin.Processes.Session.SendLine("exit"))
           val _ = o.session.close(timeout)

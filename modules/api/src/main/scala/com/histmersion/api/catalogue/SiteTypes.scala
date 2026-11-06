@@ -409,9 +409,9 @@ object SiteTypes:
       stored
         .filter(_root_.com.histmersion.api.catalogue.SiteTypes.ByIdPart1((byId).value).contains)
         .orElse(featureTypes.flatMap({ val refactorFunction3 = pleiades; (refactorValue5) => refactorFunction3(_root_.com.histmersion.api.catalogue.SiteTypes.PleiadesFeatureTypes((refactorValue5).value)) }))
-        .orElse(fcode.flatMap(geonames))
+        .orElse(fcode.flatMap({ val refactorFunction2 = geonames; (refactorValue10) => refactorFunction2(_root_.com.histmersion.api.catalogue.SiteTypes.GeonamesFcode((refactorValue10).value)) }))
         .orElse(wikidataOwn(p31))
-        .orElse(wikidataClass.flatMap(c => wikidataClasses.get(c.trim)))
+        .orElse(wikidataClass.flatMap(c => wikidataClasses.get((c).value.trim)))
 
   final case class Report(
       dryRun: Report.DryRun,

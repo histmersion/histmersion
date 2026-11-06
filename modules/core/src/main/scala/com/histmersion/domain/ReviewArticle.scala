@@ -70,8 +70,9 @@ object ReviewArticle:
   type CheckSetAsideHeldReason = CheckSetAsideHeldReason.T
   object CheckSetAsideHeldReason extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
-  type ExplainSlots = ExplainSlots.T
-  object ExplainSlots extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type ExplainSlots = ExplainSlotsValue
+  type ExplainSlotsValue = ExplainSlotsValue.T
+  object ExplainSlotsValue extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type ChecksDescriptionResult = ChecksDescriptionResult.T
   object ChecksDescriptionResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type CitedLinesResult = CitedLinesResult.T
@@ -142,10 +143,12 @@ object ReviewArticle:
   object CheckRulesResultPart2Part2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type CheckRulesLast = _root_.com.histmersion.domain.ReviewArticle.CheckChecksLast
   val CheckRulesLast: _root_.com.histmersion.domain.ReviewArticle.CheckChecksLast.type = _root_.com.histmersion.domain.ReviewArticle.CheckChecksLast
-  type SpotCheckTools = SpotCheckTools.T
-  object SpotCheckTools extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type SpotVerdicts = SpotVerdicts.T
-  object SpotVerdicts extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type SpotCheckTools = SpotCheckToolsValue
+  type SpotCheckToolsValue = SpotCheckToolsValue.T
+  object SpotCheckToolsValue extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type SpotVerdicts = SpotVerdictsValue
+  type SpotVerdictsValue = SpotVerdictsValue.T
+  object SpotVerdictsValue extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type SpotChecksRequiredResult = SpotChecksRequiredResult.T
   object SpotChecksRequiredResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type SpotChecksRequiredMin = SpotChecksRequiredMin.T
@@ -264,8 +267,9 @@ object ReviewArticle:
   object FinalRegressionEdited extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type FinalRegressionMinRatio = FinalRegressionMinRatio.T
   object FinalRegressionMinRatio extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type FactualKinds = FactualKinds.T
-  object FactualKinds extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type FactualKinds = FactualKindsValue
+  type FactualKindsValue = FactualKindsValue.T
+  object FactualKindsValue extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type ScopeResultPart2 = ScopeResultPart2.T
   object ScopeResultPart2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type ScopeEdited = ScopeEdited.T

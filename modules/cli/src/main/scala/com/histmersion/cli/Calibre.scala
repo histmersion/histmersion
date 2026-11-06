@@ -318,8 +318,9 @@ object Calibre:
   object ImportSummaryFromCalibre extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type ImportSummaryCurrent = ImportSummaryCurrent.T
   object ImportSummaryCurrent extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type ReplaceableFormats = ReplaceableFormats.T
-  object ReplaceableFormats extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type ReplaceableFormats = ReplaceableFormatsValue
+  type ReplaceableFormatsValue = ReplaceableFormatsValue.T
+  object ReplaceableFormatsValue extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type FormatOfResultPart1 = FormatOfResultPart1.T
   object FormatOfResultPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type FormatOfResultPart2 = FormatOfResultPart2.T
@@ -374,8 +375,9 @@ object Calibre:
   object MarkdownUpdateAllResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type MarkdownUpdateAllApplied = MarkdownUpdateAllApplied.T
   object MarkdownUpdateAllApplied extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type SettableFields = SettableFields.T
-  object SettableFields extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type SettableFields = SettableFieldsValue
+  type SettableFieldsValue = SettableFieldsValue.T
+  object SettableFieldsValue extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type SetCmdResultPart1 = SetCmdResultPart1.T
   object SetCmdResultPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type SetCmdResultPart2 = SetCmdResultPart2.T

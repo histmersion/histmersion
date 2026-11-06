@@ -24,10 +24,12 @@ object PlaceGlyph:
   object OfKind extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type OfGeometryType = OfGeometryType.T
   object OfGeometryType extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type NoBoundary = NoBoundary.T
-  object NoBoundary extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type People = People.T
-  object People extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type NoBoundary = NoBoundaryValue
+  type NoBoundaryValue = NoBoundaryValue.T
+  object NoBoundaryValue extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type People = PeopleValue
+  type PeopleValue = PeopleValue.T
+  object PeopleValue extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type LabelHtmlResult = LabelHtmlResult.T
   object LabelHtmlResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type LabelHtmlLabel = LabelHtmlLabel.T

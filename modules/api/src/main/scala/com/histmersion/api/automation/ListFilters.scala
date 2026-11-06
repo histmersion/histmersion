@@ -361,7 +361,7 @@ object ListFilters:
       _root_.com.histmersion.api.automation.ListFilters.UnescapeResult(new String(out.toByteArray, "UTF-8"))
 
   def encodeFacets(fs: List[(com.histmersion.api.automation.ListFilters.EncodeFacetsFsPart1, List[(com.histmersion.api.automation.ListFilters.EncodeFacetsFsPart2Part1, com.histmersion.api.automation.ListFilters.EncodeFacetsFsPart2Part2)])]): com.histmersion.api.automation.ListFilters.EncodeFacetsResult =
-    fs.flatMap((f, vs) => vs.map((v, n) => s"$f=${escape(_root_.com.histmersion.api.automation.ListFilters.EscapeS((v).value))}=$n")).mkString(",")
+    _root_.com.histmersion.api.automation.ListFilters.EncodeFacetsResult(fs.flatMap((f, vs) => vs.map((v, n) => s"$f=${escape(_root_.com.histmersion.api.automation.ListFilters.EscapeS((v).value))}=$n")).mkString(","))
 
   def decodeFacets(s: com.histmersion.api.automation.ListFilters.DecodeFacetsS): List[(com.histmersion.api.automation.ListFilters.DecodeFacetsResultPart1, List[(com.histmersion.api.automation.ListFilters.DecodeFacetsResultPart2Part1, com.histmersion.api.automation.ListFilters.DecodeFacetsResultPart2Part2)])] =
     val triples = (s).value.split(',').toList.map(_.trim).filter(_.nonEmpty).flatMap { t =>

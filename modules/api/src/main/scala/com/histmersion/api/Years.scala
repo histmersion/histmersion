@@ -32,8 +32,9 @@ object Years:
   val ShiftH: _root_.com.histmersion.api.Years.ToAstronomicalH.type = _root_.com.histmersion.api.Years.ToAstronomicalH
   type ShiftD = ShiftD.T
   object ShiftD extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type NoYearZero = NoYearZero.T
-  object NoYearZero extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type NoYearZero = NoYearZeroValue
+  type NoYearZeroValue = NoYearZeroValue.T
+  object NoYearZeroValue extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type ParseResultPart1 = ParseResultPart1.T
   object ParseResultPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type ParseResultPart2 = ParseResultPart2.T
@@ -61,7 +62,7 @@ object Years:
 
   def shift(h: com.histmersion.api.Years.ShiftH, d: com.histmersion.api.Years.ShiftD): com.histmersion.api.Years.ShiftResult = fromAstronomical((toAstronomical(h)).value + d)
 
-  val NoYearZero: com.histmersion.api.Years.NoYearZero = _root_.com.histmersion.api.Years.NoYearZero("there is no year 0 (1 BCE is -1, 1 CE is 1)")
+  val NoYearZero: com.histmersion.api.Years.NoYearZero = _root_.com.histmersion.api.Years.NoYearZeroValue("there is no year 0 (1 BCE is -1, 1 CE is 1)")
 
   private val Circa = "^(?:c|ca|circa)\\.?\\s+".r
   private val EraBce = "(?:bce|bc|b\\.c\\.e\\.|b\\.c\\.)"

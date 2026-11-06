@@ -270,8 +270,9 @@ object Bootstrap:
   object FetchNetworkResultPart2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type FetchNetworkName = FetchNetworkName.T
   object FetchNetworkName extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type PeriodSeed = PeriodSeed.T
-  object PeriodSeed extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type PeriodSeed = PeriodSeedValue
+  type PeriodSeedValue = PeriodSeedValue.T
+  object PeriodSeedValue extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type SkippedListed = SkippedListed.T
   object SkippedListed extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type SourcesResult = SourcesResult.T

@@ -41,8 +41,9 @@ object BundleTar:
   type ParseHeaderH = ParseHeaderH.T
   object ParseHeaderH extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Array[_root_.scala.Byte], _root_.io.github.iltotore.iron.constraint.any.Pure]
 
-  type MaxSize = MaxSize.T
-  object MaxSize extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type MaxSize = MaxSizeValue
+  type MaxSizeValue = MaxSizeValue.T
+  object MaxSizeValue extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type HeaderResultPart1 = HeaderResultPart1.T
   object HeaderResultPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type HeaderName = HeaderName.T

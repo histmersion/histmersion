@@ -25,8 +25,9 @@ object HostProvided:
 
   type RegisterResultPart1 = RegisterResultPart1.T
   object RegisterResultPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type Ids = Ids.T
-  object Ids extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type Ids = IdsValue
+  type IdsValue = IdsValue.T
+  object IdsValue extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type ApplyId = ApplyId.T
   object ApplyId extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type ApplyContributeResultPart1 = ApplyContributeResultPart1.T

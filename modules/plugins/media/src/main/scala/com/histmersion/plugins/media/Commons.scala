@@ -15,8 +15,9 @@ object Commons:
   type ImageInfoEntryPart1 = ImageInfoEntryPart1.T
   object ImageInfoEntryPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
-  type MetaFields = MetaFields.T
-  object MetaFields extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type MetaFields = MetaFieldsValue
+  type MetaFieldsValue = MetaFieldsValue.T
+  object MetaFieldsValue extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type FileTitleResult = FileTitleResult.T
   object FileTitleResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type FileTitleName = FileTitleName.T

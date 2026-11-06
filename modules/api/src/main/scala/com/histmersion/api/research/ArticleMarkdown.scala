@@ -64,7 +64,7 @@ object ArticleMarkdown:
 
   def article(v: Article.View, parts: List[com.histmersion.api.research.ArticleMarkdown.ArticleParts] = Nil): com.histmersion.api.research.ArticleMarkdown.ArticleResult =
     if parts.isEmpty then _root_.com.histmersion.api.research.ArticleMarkdown.ArticleResult((articleFull(v)).value)
-    else articleParts(v, (parts.filter(AllParts.contains)).map(refactorValue => _root_.com.histmersion.api.research.ArticleMarkdown.ArticlePartsShow((refactorValue).value)))
+    else _root_.com.histmersion.api.research.ArticleMarkdown.ArticleResult((articleParts(v, (parts.filter(AllParts.contains)).map(refactorValue => _root_.com.histmersion.api.research.ArticleMarkdown.ArticlePartsShow((refactorValue).value)))).value)
 
   private def articleFull(v: Article.View): com.histmersion.api.research.ArticleMarkdown.ArticleFullResult =
     val a = v.article

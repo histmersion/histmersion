@@ -40,8 +40,9 @@ object FirstPartySettings:
   object ReadsHostKeyResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type ReadsHostKeyChanged = ReadsHostKeyChanged.T
   object ReadsHostKeyChanged extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type ClientKeys = ClientKeys.T
-  object ClientKeys extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type ClientKeys = ClientKeysValue
+  type ClientKeysValue = ClientKeysValue.T
+  object ClientKeysValue extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type ByIdPart1 = ByIdPart1.T
   object ByIdPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type OfPlugin = OfPlugin.T
