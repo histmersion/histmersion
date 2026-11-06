@@ -10,12 +10,12 @@ import scala.util.Try
   * whether it waits for a restart and whether it is a credential — what Settings' "Advanced" form is generated from and
   * what a write is checked against. Pure: built from reference.conf's text.
   */
-final class ConfigSchema private (val fields: List[SettingField], blocks: Map[SettingKey, ConfigSchema.BlocksValue]):
+final class ConfigSchema private (val fields: List[SettingField], blocks: Map[SettingKey, SettingField.Doc]):
 
   private val byKey: Map[SettingKey, SettingField] = fields.map(f => f.key -> f).toMap
 
   /** A block's documentation (`histmersion.backups`), empty when it has none or is no block. */
-  def blockDoc(key: SettingKey): com.histmersion.config.edit.ConfigSchema.BlockDocResult = blocks.getOrElse(key, "")
+  def blockDoc(key: SettingKey): SettingField.Doc = blocks.getOrElse(key, SettingField.Doc(""))
 
   def isBlock(key: SettingKey): Boolean = blocks.contains(key) && !byKey.contains(key)
 
@@ -27,16 +27,16 @@ final class ConfigSchema private (val fields: List[SettingField], blocks: Map[Se
       .get(key)
       .orElse(
         Option.when(ConfigSchema.inOpenBlock(key))(
-          SettingField(key, ConfigSchema.openKind(key), None, "", None, ConfigSchema.restartOf(key), SecretRule.of(key))
+          SettingField(key, ConfigSchema.openKind(key), None, SettingField.Doc(""), None, ConfigSchema.restartOf(key), SecretRule.of(key))
         )
       )
 
   /** The known settings named most like `key`, for "did you mean". */
-  def closest(key: SettingKey, n: com.histmersion.config.edit.ConfigSchema.ClosestCount = 3): List[SettingKey] =
+  def closest(key: SettingKey, n: Int = 3): List[SettingKey] =
     val k = key.relative
     fields
-      .map(f => f.key -> ConfigSchema.distance(k, f.key.relative))
-      .filter(_._2 <= math.max(2, k.length / 3))
+      .map(f => f.key -> ConfigSchema.distance(k.value, f.key.relative.value))
+      .filter(_._2 <= math.max(2, k.value.length / 3))
       .sortBy(_._2)
       .take(n)
       .map(_._1)
@@ -47,27 +47,18 @@ final class ConfigSchema private (val fields: List[SettingField], blocks: Map[Se
     order.map(s => s -> fields.filter(_.section == s))
 
 object ConfigSchema:
-  type ClosestCount = ClosestCount.T
-  object ClosestCount extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
-
   /** The schema of the reference.conf on the class path. */
-  type BlocksValue = BlocksValue.T
-  object BlocksValue extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-
-  type BlockDocResult = BlockDocResult.T
-  object BlockDocResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-
   lazy val reference: ConfigSchema = of(referenceText)
 
   def referenceText: com.histmersion.config.edit.ReferenceDocs.Text =
     val is = Option(getClass.getClassLoader.getResourceAsStream("reference.conf"))
       .getOrElse(throw IllegalStateException("reference.conf is missing from the class path"))
-    try String(is.readAllBytes, java.nio.charset.StandardCharsets.UTF_8)
+    try ReferenceDocs.Text(String(is.readAllBytes, java.nio.charset.StandardCharsets.UTF_8))
     finally is.close()
 
   /** The schema of a reference.conf's text. */
   def of(text: com.histmersion.config.edit.ReferenceDocs.Text): ConfigSchema =
-    val raw = ConfigFactory.parseString(text)
+    val raw = ConfigFactory.parseString(text.value)
     val resolved = raw.resolve(ConfigResolveOptions.noSystem)
     val docs = ReferenceDocs(text)
     val nodes = walk(raw.root, Nil)
@@ -80,8 +71,8 @@ object ConfigSchema:
           key,
           kind,
           dflt,
-          docs.doc(line, key.leaf),
-          docs.envVar(line, key.leaf),
+          SettingField.Doc(docs.doc(line, key.leaf.value)),
+          docs.envVar(line, key.leaf.value),
           restartOf(key),
           SecretRule.of(key)
         )
@@ -89,7 +80,7 @@ object ConfigSchema:
     }.flatten
     val blocks = nodes
       .collect { case (path, v, true) =>
-        SettingKey.either(path.mkString(".")).toOption.map(k => k -> docs.doc(v.origin.lineNumber, k.leaf))
+        SettingKey.either(path.mkString(".")).toOption.map(k => k -> SettingField.Doc(docs.doc(v.origin.lineNumber, k.leaf.value)))
       }
       .flatten
       .toMap
@@ -98,7 +89,7 @@ object ConfigSchema:
   /** Every node of the tree in the file's order (`isBlock` for an object), the open blocks' contents left out. */
   private def walk(o: ConfigObject, prefix: List[com.histmersion.config.edit.SettingKey.Segment]): List[(List[com.histmersion.config.edit.SettingKey.Segment], ConfigValue, Boolean)] =
     o.keySet.asScala.toList.sortBy(k => o.get(k).origin.lineNumber).flatMap { k =>
-      val p = prefix :+ k
+      val p = prefix :+ SettingKey.Segment(k)
       o.get(k) match
         case child: ConfigObject if openBlock(p) => List((p, child, true))
         case child: ConfigObject                 =>
@@ -113,7 +104,7 @@ object ConfigSchema:
     * single value.
     */
   def openKind(key: SettingKey): SettingKind =
-    if key.leaf == "enabled" && key.within(SettingKey.applyUnsafe("histmersion.plugins")) then SettingKind.Flag
+    if key.leaf == SettingKey.Segment("enabled") && key.within(SettingKey.applyUnsafe("histmersion.plugins")) then SettingKind.Flag
     else SettingKind.Any
 
   def inOpenBlock(key: SettingKey): Boolean =
@@ -122,7 +113,7 @@ object ConfigSchema:
 
   def restartOf(key: SettingKey): Option[com.histmersion.config.edit.SettingField.Restart] =
     ConfigReload.RestartOnly.collectFirst {
-      case (k, why) if com.histmersion.config.HotPlan.keyMatches(key.value, k) => why
+      case (k, why) if com.histmersion.config.HotPlan.keyMatches(ConfigReload.ChangedKey(key.value), k) => SettingField.Restart(why.value)
     }
 
   /** Levenshtein distance, for "did you mean". */

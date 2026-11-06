@@ -34,22 +34,13 @@ final case class AppConfig(
     events: EventsConfig,
     config: ConfigReload.Config,
     basemap: BasemapConfig,
-    setup: SetupConfig = SetupConfig(completed = false)
+    setup: SetupConfig = SetupConfig(completed = SetupConfig.Completed(false))
 ) derives ConfigReader
 
 object AppConfig:
-  type ConfigText = ConfigText.T
-  object ConfigText extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type Key = Key.T
-  object Key extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type Problem = Problem.T
-  object Problem extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   /** reference.conf with the environment's overrides — no user file. What tests and `about`-less tools read. Must run
     * on a platform thread (main), not an Ox virtual thread: the env read uses GraalVM StackValue under native-image.
     */
-
-  type LookupResultResult = LookupResultResult.T
-  object LookupResultResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
   def load(): AppConfig = load(ConfigFactory.systemEnvironment())
 
@@ -63,35 +54,35 @@ object AppConfig:
     * environment — env > file > reference.conf. A missing file is no error; one that does not parse or does not
     * type-check is, naming the file and the key. Main thread only, like [[load]].
     */
-  def loadWithUserFile(): Either[com.histmersion.config.AppConfig.Problem, LoadedConfig] =
+  def loadWithUserFile(): Either[ConfigLayers.Problem, LoadedConfig] =
     val env = ConfigFactory.systemEnvironment()
     loadWithUserFile(env, UserPaths.configFile(lookup(env)))
 
   /** The same with an explicit environment and file (tests; `file = None`: no location). */
-  def loadWithUserFile(env: org.ekrich.config.Config, file: Option[java.nio.file.Path]): Either[com.histmersion.config.AppConfig.Problem, LoadedConfig] =
+  def loadWithUserFile(env: org.ekrich.config.Config, file: Option[java.nio.file.Path]): Either[ConfigLayers.Problem, LoadedConfig] =
     // Parse reference.conf and resolve ${?ENV} overrides from the given environment only — deliberately
     // NOT ConfigFactory.load(), which folds ALL system properties into HOCON (dotted keys like
     // `io.netty.allocator.type` then collide and blow up sconfig under native-image).
     val reference = ConfigLayers.reference
     // sconfig's parse errors already start with the file (their origin): not twice
-    def inFile(p: java.nio.file.Path)(msg: com.histmersion.config.AppConfig.Problem) =
-      s"Histmersion config file $p: ${msg.stripPrefix(s"$p: ")}"
+    def inFile(p: java.nio.file.Path)(msg: ConfigLayers.Problem) =
+      ConfigLayers.Problem(s"Histmersion config file $p: ${msg.value.stripPrefix(s"$p: ")}")
     file match
       case None =>
         val merged = ConfigLayers.merged(reference, ConfigFactory.empty, env)
         decode(merged).left
-          .map(e => s"Histmersion config error: $e")
-          .map(LoadedConfig(_, UserConfigFile(None, loaded = false), env = env, merged = ConfigReload.settings(merged)))
+          .map(configError)
+          .map(LoadedConfig(_, UserConfigFile(None, loaded = UserConfigFile.Loaded(false)), env = env, merged = ConfigReload.settings(merged)))
       case Some(p) =>
         ConfigLayers.parse(p).left.map(inFile(p)).flatMap {
           case None =>
             val merged = ConfigLayers.merged(reference, ConfigFactory.empty, env)
             decode(merged).left
-              .map(e => s"Histmersion config error: $e")
+              .map(configError)
               .map(
                 LoadedConfig(
                   _,
-                  UserConfigFile(Some(p), loaded = false),
+                  UserConfigFile(Some(p), loaded = UserConfigFile.Loaded(false)),
                   env = env,
                   merged = ConfigReload.settings(merged)
                 )
@@ -102,7 +93,7 @@ object AppConfig:
   /** The user config file `file` as a load parses it: HOCON with its includes, unresolved; `None` when there is no such
     * file.
     */
-  def parseUserFile(file: java.nio.file.Path): Either[com.histmersion.config.AppConfig.Problem, Option[org.ekrich.config.Config]] =
+  def parseUserFile(file: java.nio.file.Path): Either[ConfigLayers.Problem, Option[org.ekrich.config.Config]] =
     ConfigLayers.parse(file)
 
   /** Is `origin` the user config file `file` itself, not a file it includes? */
@@ -112,18 +103,18 @@ object AppConfig:
   /** The same load over the TEXT of a config file (a change checked before it is written, without a file; an include in
     * it is not followed).
     */
-  def loadWithUserText(env: org.ekrich.config.Config, text: com.histmersion.config.AppConfig.ConfigText): Either[com.histmersion.config.AppConfig.Problem, LoadedConfig] =
-    val within = (msg: String) => s"Histmersion config: $msg"
+  def loadWithUserText(env: org.ekrich.config.Config, text: String): Either[ConfigLayers.Problem, LoadedConfig] =
+    val within = (msg: ConfigLayers.Problem) => ConfigLayers.Problem(s"Histmersion config: $msg")
     try withUser(ConfigLayers.reference, ConfigFactory.parseString(text), env, None, within)
-    catch case e: org.ekrich.config.ConfigException => Left(within(e.getMessage))
+    catch case e: org.ekrich.config.ConfigException => Left(within(ConfigLayers.Problem(e.getMessage)))
 
   private def withUser(
       reference: org.ekrich.config.Config,
       user: org.ekrich.config.Config,
       env: org.ekrich.config.Config,
       p: Option[java.nio.file.Path],
-      inFile: com.histmersion.config.AppConfig.Problem => com.histmersion.config.AppConfig.Problem
-  ): Either[com.histmersion.config.AppConfig.Problem, LoadedConfig] =
+      inFile: ConfigLayers.Problem => ConfigLayers.Problem
+  ): Either[ConfigLayers.Problem, LoadedConfig] =
     for
       // the settings and the KIND of each from the defaults alone: an env value is always a
       // string, and would make every key it overrides look like a string setting
@@ -135,21 +126,24 @@ object AppConfig:
       _ <- ConfigLayers.typeCheck(keys.settings, asFiled, known).left.map(inFile)
       merged <- resolved(ConfigLayers.merged(reference, user, env)).left.map(inFile)
       cfg <- decode(merged).left.map(inFile)
-    yield LoadedConfig(cfg, UserConfigFile(p, loaded = true, keys.unknown), user, env, ConfigReload.settings(merged))
+    yield LoadedConfig(cfg, UserConfigFile(p, loaded = UserConfigFile.Loaded(true), keys.unknown), user, env, ConfigReload.settings(merged))
 
   /** An environment `Config` as a lookup (its keys are variable names, not paths). */
-  def lookup(env: org.ekrich.config.Config): com.histmersion.config.AppConfig.Key => Option[com.histmersion.config.AppConfig.LookupResultResult] =
+  def lookup(env: org.ekrich.config.Config): String => Option[String] =
     name =>
       Option(env.root.get(name)).map(_.unwrapped).collect { case s: String => s; case o if o != null => o.toString }
 
-  private def resolved(c: => org.ekrich.config.Config): Either[com.histmersion.config.AppConfig.Problem, org.ekrich.config.Config] =
+  private def resolved(c: => org.ekrich.config.Config): Either[ConfigLayers.Problem, org.ekrich.config.Config] =
     try Right(c.resolve())
-    catch case e: org.ekrich.config.ConfigException => Left(e.getMessage)
+    catch case e: org.ekrich.config.ConfigException => Left(ConfigLayers.Problem(e.getMessage))
+
+  private def configError(e: ConfigLayers.Problem): ConfigLayers.Problem =
+    ConfigLayers.Problem(s"Histmersion config error: $e")
 
   /** Decode the settings of a merged tree (`LoadedConfig.merged`, or one [[ConfigReload.effective]] made of it).
     */
-  def fromMerged(c: org.ekrich.config.Config): Either[com.histmersion.config.AppConfig.Problem, AppConfig] = decode(c)
+  def fromMerged(c: org.ekrich.config.Config): Either[ConfigLayers.Problem, AppConfig] = decode(c)
 
-  private def decode(c: => org.ekrich.config.Config): Either[com.histmersion.config.AppConfig.Problem, AppConfig] =
+  private def decode(c: => org.ekrich.config.Config): Either[ConfigLayers.Problem, AppConfig] =
     try ConfigReader[AppConfig].from(c.getConfig("histmersion").root).left.map(ConfigLayers.describe)
-    catch case e: org.ekrich.config.ConfigException => Left(e.getMessage)
+    catch case e: org.ekrich.config.ConfigException => Left(ConfigLayers.Problem(e.getMessage))

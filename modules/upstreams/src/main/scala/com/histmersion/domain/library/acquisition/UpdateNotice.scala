@@ -1,5 +1,5 @@
 package com.histmersion.domain.library.acquisition
-final case class UpdateNotice(kind: Option[UpdateNotice.Kind], label: Option[UpdateNotice.Label], doi: Option[com.histmersion.domain.library.Doi])
+final case class UpdateNotice(kind: Option[UpdateNotice.Kind], label: Option[UpdateNotice.Label], doi: Option[com.histmersion.plugin.Doi])
 
 object UpdateNotice:
   type Kind = Kind.T

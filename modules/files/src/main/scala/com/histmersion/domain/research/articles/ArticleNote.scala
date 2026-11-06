@@ -5,7 +5,8 @@ import com.histmersion.util.data.mirror.Frontmatter as MirrorFrontmatter
 import org.yaml.snakeyaml.Yaml
 import scala.compiletime.asMatchable
 import scala.jdk.CollectionConverters.*
-import com.histmersion.api.catalogue.Period
+import com.histmersion.api.catalogue.{Period, Year}
+import com.histmersion.api.library.Citekey
 import com.histmersion.api.research.{Article, Articles}
 
 /** `wiki/<kind>/<slug>.md` ⇄ [[Article]] — the same frontmatter-plus-body shape as [[Export.note]] /
@@ -18,45 +19,29 @@ import com.histmersion.api.research.{Article, Articles}
   * JVM-only (snakeyaml); the pure text extractors `heading` and `lede` live in [[Articles]].
   */
 object ArticleNote:
-  type Generated = Generated.T
-  object Generated extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type Text = Text.T
-  object Text extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type Yaml = Yaml.T
-  object Yaml extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-
   /** Frontmatter key order of a rendered article note. `generated` (#958) is the coverage sections code renders from
     * the filter; they go after the body between [[ArticleCoverage.GeneratedStart]] and
     * [[ArticleCoverage.GeneratedEnd]], which [[parse]] drops again — the stored body never holds them, and the filter
     * and reasons they come from travel in the frontmatter.
     */
 
-  type ParseText = _root_.com.histmersion.domain.research.articles.ArticleNote.Text
-  val ParseText: _root_.com.histmersion.domain.research.articles.ArticleNote.Text.type = _root_.com.histmersion.domain.research.articles.ArticleNote.Text
-  type StrMPart1 = String
-  type StrK = String
-  type ListMPart1 = String
-  type ListK = String
-  type LongMPart1 = String
-  type LongK = String
-
-  def render(a: Article, generated: Option[com.histmersion.domain.research.articles.ArticleNote.Generated] = None): com.histmersion.domain.research.articles.ArticleNote.Text =
+  def render(a: Article, generated: Option[String] = None): String =
     val reasons = Option.when(a.reasons.nonEmpty) {
       val r = new java.util.LinkedHashMap[String, Any]()
-      a.reasons.toList.sortBy(_._1).foreach((k, v) => r.put(k, v))
+      a.reasons.toList.sortBy(_._1.value).foreach((k, v) => r.put(k.value, v.value))
       "reasons" -> r
     }
     val fields = List(
-      "type" -> a.kind,
-      "slug" -> a.slug,
-      "title" -> a.title,
-      "summary" -> a.summary.orNull,
-      "regions" -> a.regions.asJava,
-      "tags" -> a.tags.asJava,
-      "period_start" -> a.period.map(p => Long.box(p.start)).orNull,
-      "period_end" -> a.period.map(p => Long.box(p.end)).orNull
+      "type" -> a.kind.value,
+      "slug" -> a.slug.value,
+      "title" -> a.title.value,
+      "summary" -> a.summary.map(_.value).orNull,
+      "regions" -> a.regions.map(_.value).asJava,
+      "tags" -> a.tags.map(_.value).asJava,
+      "period_start" -> a.period.map(p => Long.box(p.start.value)).orNull,
+      "period_end" -> a.period.map(p => Long.box(p.end.value)).orNull
     ) ++ a.filter.map(f => "filter" -> filterMap(f)).toList ++ reasons.toList
-    val body = (a.body.trim :: generated.map(_.trim).filter(_.nonEmpty).toList).filter(_.nonEmpty).mkString("\n\n")
+    val body = (a.body.value.trim :: generated.map(_.trim).filter(_.nonEmpty).toList).filter(_.nonEmpty).mkString("\n\n")
     MirrorFrontmatter(fields).note(Option.when(body.nonEmpty)(body))
 
   /** The filter as a frontmatter map: only the parts it has, in a fixed order. */
@@ -64,11 +49,12 @@ object ArticleNote:
     val m = new java.util.LinkedHashMap[String, Any]()
     f.query.foreach(m.put("query", _))
     def lst(k: String, xs: List[String]) = if xs.nonEmpty then m.put(k, xs.asJava)
-    lst("topics", f.topics); lst("tags", f.tags); lst("status", f.status); lst("places", f.places)
-    lst("authors", f.authors)
-    f.from.foreach(v => m.put("from", Long.box(v)))
-    f.to.foreach(v => m.put("to", Long.box(v)))
-    lst("extra_queries", f.extraQueries)
+    lst("topics", f.topics.map(_.value)); lst("tags", f.tags.map(_.value)); lst("status", f.status.map(_.value))
+    lst("places", f.places.map(_.value))
+    lst("authors", f.authors.map(_.value))
+    f.from.foreach(v => m.put("from", Long.box(v.value)))
+    f.to.foreach(v => m.put("to", Long.box(v.value)))
+    lst("extra_queries", f.extraQueries.map(_.value))
     m
 
   /** Parse a note's text. `fallbackSlug` is normally the filename, `fallbackKind` the directory it came from —
@@ -79,25 +65,31 @@ object ArticleNote:
     * dropped. `question:` (a report's driving question) and `topics:`/ `cultures:` (list dimensions) ARE kept — as the
     * summary and as tags respectively — because they are the same thing under another name.
     */
-  def parse(text: com.histmersion.domain.research.articles.ArticleNote.ParseText, fallbackSlug: com.histmersion.domain.research.Slug, fallbackKind: com.histmersion.domain.research.Article.Kind): Option[Article] =
+  def parse(text: String, fallbackSlug: Article.Slug, fallbackKind: Article.KindValue): Option[Article] =
     split(text).map { (yaml, rawBody) =>
       val m = parseYaml(yaml)
-      val body = Article.Coverage.stripGenerated(rawBody).trim
-      val slug = str(m, "slug").getOrElse(fallbackSlug).trim.toLowerCase
+      val body = Article.Body(Article.Coverage.stripGenerated(Article.Body(rawBody)).value.trim)
+      val slug = str(m, "slug").getOrElse(fallbackSlug.value).trim.toLowerCase
       Article(
-        slug = slug,
-        title = str(m, "title").orElse(Articles.heading(body)).getOrElse(slug),
-        kind = str(m, "type").orElse(str(m, "kind")).getOrElse(fallbackKind).trim.toLowerCase,
+        slug = Article.Slug(slug),
+        title = Article.Title(str(m, "title").orElse(Articles.heading(body).map(_.value)).getOrElse(slug)),
+        kind = Article.KindValue(
+          str(m, "type").orElse(str(m, "kind")).getOrElse(fallbackKind.value).trim.toLowerCase
+        ),
         body = body,
-        summary = str(m, "summary").orElse(str(m, "question")).orElse(Articles.lede(body)),
+        summary = str(m, "summary")
+          .orElse(str(m, "question"))
+          .orElse(Articles.lede(body).map(_.value))
+          .map(Article.SummaryText(_)),
         tags = (list(m, "tags") ++ list(m, "topics") ++ list(m, "cultures"))
           .map(_.trim)
           .filter(_.nonEmpty)
-          .distinct,
-        regions = list(m, "regions").map(_.trim).filter(_.nonEmpty),
+          .distinct
+          .map(Article.Tags(_)),
+        regions = list(m, "regions").map(_.trim).filter(_.nonEmpty).map(Article.Regions(_)),
         period = (long(m, "period_start"), long(m, "period_end")) match
-          case (Some(a), Some(b)) if a <= b => Some(Period(a, b))
-          case (Some(a), Some(b))           => Some(Period(b, a))
+          case (Some(a), Some(b)) if a <= b => Some(Period(Year(a), Year(b)))
+          case (Some(a), Some(b))           => Some(Period(Year(b), Year(a)))
           case _                            => None,
         filter = raw(m, "filter")
           .collect { case f: java.util.Map[?, ?] => f.asScala.toMap.map((k, v) => k.toString -> v) }
@@ -105,15 +97,15 @@ object ArticleNote:
             Article.Filter
               .normalise(
                 Article.Filter(
-                  str(f, "query"),
-                  list(f, "topics"),
-                  list(f, "tags"),
-                  list(f, "status"),
-                  list(f, "places"),
-                  list(f, "authors"),
-                  long(f, "from"),
-                  long(f, "to"),
-                  list(f, "extra_queries")
+                  str(f, "query").map(Article.Filter.Query(_)),
+                  list(f, "topics").map(Article.Filter.Topics(_)),
+                  list(f, "tags").map(Article.Filter.Tags(_)),
+                  list(f, "status").map(Article.Filter.Status(_)),
+                  list(f, "places").map(Article.Filter.Places(_)),
+                  list(f, "authors").map(Article.Filter.Authors(_)),
+                  long(f, "from").map(Article.Filter.From(_)),
+                  long(f, "to").map(Article.Filter.To(_)),
+                  list(f, "extra_queries").map(Article.Filter.ExtraQueries(_))
                 )
               )
               .toOption
@@ -124,6 +116,7 @@ object ArticleNote:
             r.asScala.toList
               .flatMap((k, v) => Option(v).map(x => k.toString.trim.toLowerCase -> x.toString.trim))
               .filter((k, v) => k.nonEmpty && v.nonEmpty)
+              .map((k, v) => Citekey(k) -> Article.ReasonsValue(v))
               .toMap
           }
           .getOrElse(Map.empty)
@@ -132,7 +125,7 @@ object ArticleNote:
 
   // ── YAML plumbing (deliberately independent of Frontmatter's private copy) ────────────────────
   /** Split a note into (yaml, body); `None` when it has no opening `---` fence. */
-  private def split(text: com.histmersion.domain.research.articles.ArticleNote.Text): Option[(com.histmersion.domain.research.articles.ArticleNote.Yaml, com.histmersion.domain.research.articles.ArticleNote.Text)] =
+  private def split(text: String): Option[(String, String)] =
     val t = text.stripPrefix("﻿")
     if !t.startsWith("---") then None
     else
@@ -146,7 +139,7 @@ object ArticleNote:
           case i  => after.substring(i + 1)
         Some((rest.substring(0, end), body))
 
-  private def parseYaml(yaml: com.histmersion.domain.research.articles.ArticleNote.Yaml): Map[String, Any] =
+  private def parseYaml(yaml: String): Map[String, Any] =
     Option(new Yaml().load[AnyRef](yaml)) match
       case Some(m: java.util.Map[?, ?]) => m.asScala.toMap.map((k, v) => k.toString -> v)
       case _                            => Map.empty
@@ -154,13 +147,13 @@ object ArticleNote:
   // decoded YAML values are type-tested (E165, #879): `asMatchable` states that is intended
   private def raw(m: Map[String, Any], k: String): Option[Matchable] =
     m.get(k).flatMap(v => Option(v)).map(_.asMatchable)
-  private def str(m: Map[com.histmersion.domain.research.articles.ArticleNote.StrMPart1, Any], k: com.histmersion.domain.research.articles.ArticleNote.StrK): Option[String] =
+  private def str(m: Map[String, Any], k: String): Option[String] =
     raw(m, k).map(_.toString).map(_.trim).filter(s => s.nonEmpty && s != "null")
-  private def list(m: Map[com.histmersion.domain.research.articles.ArticleNote.ListMPart1, Any], k: com.histmersion.domain.research.articles.ArticleNote.ListK): List[String] = raw(m, k) match
+  private def list(m: Map[String, Any], k: String): List[String] = raw(m, k) match
     case Some(l: java.util.List[?]) => l.asScala.toList.flatMap(x => Option(x)).map(_.toString)
     case Some(s: String)            => s.split(",").toList.map(_.trim).filter(_.nonEmpty)
     case _                          => Nil
-  private def long(m: Map[com.histmersion.domain.research.articles.ArticleNote.LongMPart1, Any], k: com.histmersion.domain.research.articles.ArticleNote.LongK): Option[Long] = raw(m, k) match
+  private def long(m: Map[String, Any], k: String): Option[Long] = raw(m, k) match
     case Some(n: java.lang.Number) => Some(n.longValue)
     case Some(o)                   => o.toString.toLongOption
     case None                      => None

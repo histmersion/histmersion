@@ -3,7 +3,7 @@ package com.histmersion.config.edit
 /** What a credential's setting holds, as far as it may be told: whether one is set and how it is referred to — never
   * the value.
   */
-enum SecretForm(val wire: SecretForm.Wire, val describe: SecretForm.Describe):
+enum SecretForm(val wire: String, val describe: String):
   case Unset extends SecretForm("unset", "not set")
 
   /** `env:<NAME>`: the server's environment variable. */
@@ -19,22 +19,6 @@ enum SecretForm(val wire: SecretForm.Wire, val describe: SecretForm.Describe):
   case Plain extends SecretForm("plain", "set")
 
 object SecretForm:
-  type Literal = Literal.T
-  object Literal extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type Problem = Problem.T
-  object Problem extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type Reference = Reference.T
-  object Reference extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type Shown = Shown.T
-  object Shown extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type Wire = Wire.T
-  object Wire extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type Describe = Describe.T
-  object Describe extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-
-  type ShownText = _root_.com.histmersion.config.edit.SecretForm.Literal
-  val ShownText: _root_.com.histmersion.config.edit.SecretForm.Literal.type = _root_.com.histmersion.config.edit.SecretForm.Literal
-
   val ValueScheme = "value"
   val EnvScheme = "env"
   private val EnvName = "[A-Za-z_][A-Za-z0-9_]*".r
@@ -44,14 +28,14 @@ object SecretForm:
   val Forms = "env:<NAME>, <vault>:<entry> (keepassxc:…, 1password:…, bitwarden:…) or value:<the value itself>"
 
   /** How `text` refers to a credential (`rule`: what its setting is). */
-  def of(text: com.histmersion.config.edit.SecretForm.Literal, rule: SecretRule): SecretForm =
+  def of(text: String, rule: SecretRule): SecretForm =
     val t = Option(text).getOrElse("").trim
     if t.isEmpty then Unset
     else if rule == SecretRule.FromEnvironment then Plain
     else reference(t).fold(_ => Plain, identity)
 
   /** The reference's form, or why `text` is none. Never repeats `text` (it may be the value). */
-  def reference(text: com.histmersion.config.edit.SecretForm.Reference): Either[com.histmersion.config.edit.SecretForm.Problem, SecretForm] =
+  def reference(text: String): Either[String, SecretForm] =
     val t = text.trim
     t.indexOf(':') match
       case i if i <= 0 => Left(s"a credential is written as a reference — $Forms — never as the bare value")
@@ -68,7 +52,7 @@ object SecretForm:
   /** The reference as it may be shown: the scheme and name of an environment variable or a vault entry, `value:***` for
     * a literal, nothing for a plain value.
     */
-  def shown(text: com.histmersion.config.edit.SecretForm.ShownText, rule: SecretRule): Option[com.histmersion.config.edit.SecretForm.Shown] =
+  def shown(text: String, rule: SecretRule): Option[String] =
     of(text, rule) match
       case Environment | Vault => Some(text.trim)
       case Literal             => Some(s"$ValueScheme:***")
