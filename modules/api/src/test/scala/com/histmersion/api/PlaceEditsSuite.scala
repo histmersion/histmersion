@@ -21,8 +21,8 @@ class PlaceEditsSuite extends munit.FunSuite:
     com.histmersion.api.catalogue.Place.Add(label, kind, lon, lat, source)
 
   test("a name is trimmed and its inner whitespace collapsed; blank and overlong are refused"):
-    assertEquals(com.histmersion.api.catalogue.Place.Edits.name("  Lake   Kinneret "), Right("Lake Kinneret"))
-    assert(com.histmersion.api.catalogue.Place.Edits.name("   ").isLeft)
+    assertEquals(com.histmersion.api.catalogue.Place.Edits.name(com.histmersion.api.catalogue.Place.Name.Value("  Lake   Kinneret ")), Right("Lake Kinneret"))
+    assert(com.histmersion.api.catalogue.Place.Edits.name(com.histmersion.api.catalogue.Place.Name.Value("   ")).isLeft)
     assert(
       com.histmersion.api.catalogue.Place.Edits
         .name("x" * (com.histmersion.api.catalogue.Place.Edits.MaxName + 1))
@@ -30,19 +30,19 @@ class PlaceEditsSuite extends munit.FunSuite:
     )
 
   test("a language tag is lower-cased; absent or blank is unspecified; junk is refused"):
-    assertEquals(com.histmersion.api.catalogue.Place.Edits.lang(Some("EN")), Right("en"))
-    assertEquals(com.histmersion.api.catalogue.Place.Edits.lang(Some("sr-Latn")), Right("sr-latn"))
-    assertEquals(com.histmersion.api.catalogue.Place.Edits.lang(Some("grc")), Right("grc"))
+    assertEquals(com.histmersion.api.catalogue.Place.Edits.lang(Some(com.histmersion.api.catalogue.Place.Name.Lang("EN"))), Right("en"))
+    assertEquals(com.histmersion.api.catalogue.Place.Edits.lang(Some(com.histmersion.api.catalogue.Place.Name.Lang("sr-Latn"))), Right("sr-latn"))
+    assertEquals(com.histmersion.api.catalogue.Place.Edits.lang(Some(com.histmersion.api.catalogue.Place.Name.Lang("grc"))), Right("grc"))
     assertEquals(com.histmersion.api.catalogue.Place.Edits.lang(None), Right(""))
-    assertEquals(com.histmersion.api.catalogue.Place.Edits.lang(Some("  ")), Right(""))
+    assertEquals(com.histmersion.api.catalogue.Place.Edits.lang(Some(com.histmersion.api.catalogue.Place.Name.Lang("  "))), Right(""))
     assertEquals(
-      com.histmersion.api.catalogue.Place.Edits.lang(Some("English")).left.map(_.code),
+      com.histmersion.api.catalogue.Place.Edits.lang(Some(com.histmersion.api.catalogue.Place.Name.Lang("English"))).left.map(_.code),
       Left(Some(Write.CodeInvalid))
     )
 
   test("the default id is local_ + the folded label"):
-    assertEquals(com.histmersion.api.catalogue.Place.Edits.defaultId("Gornji Grad"), "local_gornji_grad")
-    assertEquals(com.histmersion.api.catalogue.Place.Edits.defaultId("Kraków – Wawel"), "local_krakow_wawel")
+    assertEquals(com.histmersion.api.catalogue.Place.Edits.defaultId(com.histmersion.api.catalogue.Place.Label("Gornji Grad")), "local_gornji_grad")
+    assertEquals(com.histmersion.api.catalogue.Place.Edits.defaultId(com.histmersion.api.catalogue.Place.Label("Kraków – Wawel")), "local_krakow_wawel")
     assertEquals(com.histmersion.api.catalogue.Place.Edits.defaultId("Ze'elim Gully"), "local_zeelim_gully")
 
   test("a hand-added place becomes a point import row with its label, names, period and source"):
@@ -52,7 +52,7 @@ class PlaceEditsSuite extends munit.FunSuite:
     val r = com.histmersion.api.catalogue.Place.Edits.toInput(in).fold(e => fail(e.message), identity)
     assertEquals(r.place.id, com.histmersion.api.catalogue.Place.Id("local_gornji_grad"))
     assertEquals(r.place.kind, Place.Kind.Site)
-    assertEquals(r.place.period, Some(Period(-1300, -1100)))
+    assertEquals(r.place.period, Some(Period(com.histmersion.api.catalogue.Year(-1300), com.histmersion.api.catalogue.Year(-1100))))
     assertEquals(r.place.source, Some("Wikidata Q1003020"))
     assertEquals(
       r.place.geometry
@@ -63,9 +63,9 @@ class PlaceEditsSuite extends munit.FunSuite:
     assertEquals(
       r.names,
       List(
-        com.histmersion.api.catalogue.Place.Name("Gornji Grad"),
-        com.histmersion.api.catalogue.Place.Name("Gornij", "hr"),
-        com.histmersion.api.catalogue.Place.Name("Gornji Grad", "hr")
+        com.histmersion.api.catalogue.Place.Name(com.histmersion.api.catalogue.Place.Name.Value("Gornji Grad")),
+        com.histmersion.api.catalogue.Place.Name(com.histmersion.api.catalogue.Place.Name.Value("Gornij"), com.histmersion.api.catalogue.Place.Name.Lang("hr")),
+        com.histmersion.api.catalogue.Place.Name(com.histmersion.api.catalogue.Place.Name.Value("Gornji Grad"), com.histmersion.api.catalogue.Place.Name.Lang("hr"))
       )
     )
     assertEquals(r.relations, Nil)
@@ -75,7 +75,7 @@ class PlaceEditsSuite extends munit.FunSuite:
       .toInput(add().modify(_.id).setTo(Some(com.histmersion.api.catalogue.Place.Id("my.place-1"))).modify(_.periodEnd).setTo((Some(-700): _root_.scala.Option[_root_.scala.Long])))
       .toOption
       .get
-    assertEquals((r.place.id, r.place.period), (com.histmersion.api.catalogue.Place.Id("my.place-1"), Some(Period(-700, -700))))
+    assertEquals((r.place.id, r.place.period), (com.histmersion.api.catalogue.Place.Id("my.place-1"), Some(Period(com.histmersion.api.catalogue.Year(-700), com.histmersion.api.catalogue.Year(-700)))))
 
   test("a hand-added place needs a source, a known kind, real coordinates, a usable id and an ordered period"):
     def refused(in: com.histmersion.api.catalogue.Place.Add, says: String) =
@@ -96,8 +96,8 @@ class PlaceEditsSuite extends munit.FunSuite:
   test("the CSV export is the supplement's format, quoted where it must be"):
     val csv = com.histmersion.api.catalogue.Place.Edits.csv(
       List(
-        ManualPlaceName("ne_lake_1", "Sea of Galilee", "Lake Kinneret", "en"),
-        ManualPlaceName("p2", "Tell, \"the\" mound", "Tall", "")
+        ManualPlaceName(com.histmersion.api.catalogue.Place.Id("ne_lake_1"), com.histmersion.api.catalogue.ManualPlaceName.Label("Sea of Galilee"), com.histmersion.api.catalogue.ManualPlaceName.Name("Lake Kinneret"), com.histmersion.api.catalogue.ManualPlaceName.Lang("en")),
+        ManualPlaceName(com.histmersion.api.catalogue.Place.Id("p2"), com.histmersion.api.catalogue.ManualPlaceName.Label("Tell, \"the\" mound"), com.histmersion.api.catalogue.ManualPlaceName.Name("Tall"), com.histmersion.api.catalogue.ManualPlaceName.Lang(""))
       )
     )
     assertEquals(
@@ -112,12 +112,12 @@ class PlaceEditsSuite extends munit.FunSuite:
 
   test("the Markdown of an edit says what changed and that it survives a re-seed"):
     val added = com.histmersion.api.catalogue.Place.NameChanged(
-      "ne_lake_1",
-      "Sea of Galilee",
-      "Lake Kinneret",
-      "en",
-      added = true,
-      changed = true
+      com.histmersion.api.catalogue.Place.Id("ne_lake_1"),
+      com.histmersion.api.catalogue.Place.NameChanged.Label("Sea of Galilee"),
+      com.histmersion.api.catalogue.Place.NameChanged.Name("Lake Kinneret"),
+      com.histmersion.api.catalogue.Place.NameChanged.Lang("en"),
+      added = com.histmersion.api.catalogue.Place.NameChanged.Added(true),
+      changed = com.histmersion.api.catalogue.Place.NameChanged.Changed(true)
     )
     assertEquals(
       PlacesMarkdown.placeNameChanged(added),
@@ -131,31 +131,31 @@ class PlaceEditsSuite extends munit.FunSuite:
         .startsWith("removed the name **Lake Kinneret** (en) from")
     )
     assertEquals(PlacesMarkdown.manualPlaceNames(Nil), "_No names added by hand._")
-    assert(PlacesMarkdown.manualPlaceNames(List(ManualPlaceName("p", "P", "N", ""))).contains("- **N** → P `p`"))
+    assert(PlacesMarkdown.manualPlaceNames(List(ManualPlaceName(com.histmersion.api.catalogue.Place.Id("p"), com.histmersion.api.catalogue.ManualPlaceName.Label("P"), com.histmersion.api.catalogue.ManualPlaceName.Name("N"), com.histmersion.api.catalogue.ManualPlaceName.Lang("")))).contains("- **N** → P `p`"))
 
   // ── a person's kind and period for a place (V080) ───────────────────────────────────────────────
 
   test("an override: a kind (lower-cased), a period with one or both sides, a reason; or a reset alone"):
     assertEquals(
       com.histmersion.api.catalogue.Place.Overrides.edit(
-        com.histmersion.api.catalogue.Place.OverrideSet(kind = Some(" Region "), reason = Some("  one of   14 "))
+        com.histmersion.api.catalogue.Place.OverrideSet(kind = Some(com.histmersion.api.catalogue.Place.OverrideSet.Kind(" Region ")), reason = Some("  one of   14 "))
       ),
-      Right(com.histmersion.api.catalogue.Place.OverrideEdit.Put(Some("region"), None, Some("one of 14")))
+      Right(com.histmersion.api.catalogue.Place.OverrideEdit.Put(Some(com.histmersion.api.catalogue.Place.OverrideEdit.Put.Kind("region")), None, Some(com.histmersion.api.catalogue.Place.OverrideEdit.Put.Reason("one of 14"))))
     )
     assertEquals(
       com.histmersion.api.catalogue.Place.Overrides
-        .edit(com.histmersion.api.catalogue.Place.OverrideSet(periodStart = Some(-7))),
-      Right(com.histmersion.api.catalogue.Place.OverrideEdit.Put(None, Some((Some(-7L), None)), None))
+        .edit(com.histmersion.api.catalogue.Place.OverrideSet(periodStart = Some(com.histmersion.api.catalogue.Year(-7)))),
+      Right(com.histmersion.api.catalogue.Place.OverrideEdit.Put(None, Some((Some(com.histmersion.api.catalogue.Year(-7L)), None)), None))
     )
     assertEquals(
       com.histmersion.api.catalogue.Place.Overrides.edit(
         com.histmersion.api.catalogue.Place
-          .OverrideSet(kind = Some("polity"), periodStart = Some(-27), periodEnd = Some(410))
+          .OverrideSet(kind = Some(com.histmersion.api.catalogue.Place.OverrideSet.Kind("polity")), periodStart = Some(com.histmersion.api.catalogue.Year(-27)), periodEnd = Some(com.histmersion.api.catalogue.Year(410)))
       ),
-      Right(com.histmersion.api.catalogue.Place.OverrideEdit.Put(Some("polity"), Some((Some(-27L), Some(410L))), None))
+      Right(com.histmersion.api.catalogue.Place.OverrideEdit.Put(Some(com.histmersion.api.catalogue.Place.OverrideEdit.Put.Kind("polity")), Some((Some(com.histmersion.api.catalogue.Year(-27L)), Some(com.histmersion.api.catalogue.Year(410L)))), None))
     )
     assertEquals(
-      com.histmersion.api.catalogue.Place.Overrides.edit(com.histmersion.api.catalogue.Place.OverrideSet(reset = true)),
+      com.histmersion.api.catalogue.Place.Overrides.edit(com.histmersion.api.catalogue.Place.OverrideSet(reset = com.histmersion.api.catalogue.Place.OverrideSet.Reset(true))),
       Right(com.histmersion.api.catalogue.Place.OverrideEdit.Reset)
     )
 
@@ -164,25 +164,25 @@ class PlaceEditsSuite extends munit.FunSuite:
       com.histmersion.api.catalogue.Place.Overrides.edit(in).left.map(_.code)
     assertEquals(refused(com.histmersion.api.catalogue.Place.OverrideSet()), Left(Some(Write.CodeInvalid)))
     assertEquals(
-      refused(com.histmersion.api.catalogue.Place.OverrideSet(kind = Some("  "), reason = Some("why"))),
+      refused(com.histmersion.api.catalogue.Place.OverrideSet(kind = Some(com.histmersion.api.catalogue.Place.OverrideSet.Kind("  ")), reason = Some("why"))),
       Left(Some(Write.CodeInvalid))
     )
     assertEquals(
-      refused(com.histmersion.api.catalogue.Place.OverrideSet(kind = Some("town"))),
+      refused(com.histmersion.api.catalogue.Place.OverrideSet(kind = Some(com.histmersion.api.catalogue.Place.OverrideSet.Kind("town")))),
       Left(Some(Write.CodeInvalid))
     )
     assertEquals(
-      refused(com.histmersion.api.catalogue.Place.OverrideSet(periodStart = Some(10), periodEnd = Some(-10))),
+      refused(com.histmersion.api.catalogue.Place.OverrideSet(periodStart = Some(com.histmersion.api.catalogue.Year(10)), periodEnd = Some(com.histmersion.api.catalogue.Year(-10)))),
       Left(Some(Write.CodeInvalid))
     )
     assertEquals(
-      refused(com.histmersion.api.catalogue.Place.OverrideSet(kind = Some("region"), reset = true)),
+      refused(com.histmersion.api.catalogue.Place.OverrideSet(kind = Some(com.histmersion.api.catalogue.Place.OverrideSet.Kind("region")), reset = true)),
       Left(Some(Write.CodeInvalid))
     )
     assertEquals(
       refused(
         com.histmersion.api.catalogue.Place.OverrideSet(
-          kind = Some("region"),
+          kind = Some(com.histmersion.api.catalogue.Place.OverrideSet.Kind("region")),
           reason = Some("x" * (com.histmersion.api.catalogue.Place.Overrides.MaxReason + 1))
         )
       ),
@@ -195,25 +195,25 @@ class PlaceEditsSuite extends munit.FunSuite:
     )
     assertEquals(
       parse("""{"reset":true}""").flatMap(_.as[com.histmersion.api.catalogue.Place.OverrideSet]),
-      Right(com.histmersion.api.catalogue.Place.OverrideSet(reset = true))
+      Right(com.histmersion.api.catalogue.Place.OverrideSet(reset = com.histmersion.api.catalogue.Place.OverrideSet.Reset(true)))
     )
 
   test("a period as a reader sees it, and the Markdown of an override"):
-    assertEquals(com.histmersion.api.catalogue.Place.Overrides.periodText(Some(-27), Some(410)), "27 BCE–410 CE")
-    assertEquals(com.histmersion.api.catalogue.Place.Overrides.periodText(Some(-7), None), "from 7 BCE")
-    assertEquals(com.histmersion.api.catalogue.Place.Overrides.periodText(None, Some(410)), "until 410 CE")
+    assertEquals(com.histmersion.api.catalogue.Place.Overrides.periodText(Some(com.histmersion.api.catalogue.Year(-27)), Some(com.histmersion.api.catalogue.Year(410))), "27 BCE–410 CE")
+    assertEquals(com.histmersion.api.catalogue.Place.Overrides.periodText(Some(com.histmersion.api.catalogue.Year(-7)), None), "from 7 BCE")
+    assertEquals(com.histmersion.api.catalogue.Place.Overrides.periodText(None, Some(com.histmersion.api.catalogue.Year(410))), "until 410 CE")
     assertEquals(com.histmersion.api.catalogue.Place.Overrides.periodText(None, None), "undated")
     val set = com.histmersion.api.catalogue.Place.OverrideChanged(
-      "pleiades_886355306",
-      "Regio XII (Piscina Publica)",
-      reset = false,
-      "site",
-      "region",
-      "undated",
-      "undated",
-      59,
-      0,
-      0
+      com.histmersion.api.catalogue.Place.Id("pleiades_886355306"),
+      com.histmersion.api.catalogue.Place.OverrideChanged.Label("Regio XII (Piscina Publica)"),
+      reset = com.histmersion.api.catalogue.Place.OverrideChanged.Reset(false),
+      com.histmersion.api.catalogue.Place.OverrideChanged.KindBefore("site"),
+      com.histmersion.api.catalogue.Place.OverrideChanged.KindAfter("region"),
+      com.histmersion.api.catalogue.Place.OverrideChanged.PeriodBefore("undated"),
+      com.histmersion.api.catalogue.Place.OverrideChanged.PeriodAfter("undated"),
+      com.histmersion.api.catalogue.Place.OverrideChanged.FindingsBefore(59),
+      com.histmersion.api.catalogue.Place.OverrideChanged.FindingsAfter(0),
+      com.histmersion.api.catalogue.Place.OverrideChanged.Unlocated(0)
     )
     assertEquals(
       PlacesMarkdown.placeOverrideChanged(set),
@@ -232,17 +232,17 @@ class PlaceEditsSuite extends munit.FunSuite:
     )
     assertEquals(PlacesMarkdown.placeOverrides(Nil), "_No place has a kind, period or point set by hand._")
     val row = com.histmersion.api.catalogue.Place.Override(
-      "pleiades_886355306",
-      "Regio XII (Piscina Publica)",
-      Some("region"),
-      Some(-7),
+      com.histmersion.api.catalogue.Place.Id("pleiades_886355306"),
+      com.histmersion.api.catalogue.Place.Override.Label("Regio XII (Piscina Publica)"),
+      Some(com.histmersion.api.catalogue.Place.Override.Kind("region")),
+      Some(com.histmersion.api.catalogue.Year(-7)),
       None,
-      periodSet = true,
-      Some("one of the 14 regiones"),
-      "site",
+      periodSet = com.histmersion.api.catalogue.Place.Override.PeriodSet(true),
+      Some(com.histmersion.api.catalogue.Place.Override.Reason("one of the 14 regiones")),
+      com.histmersion.api.catalogue.Place.Override.SourceKind("site"),
       None,
       None,
-      "2026-10-09T16:00:00Z"
+      com.histmersion.api.catalogue.Place.Override.UpdatedAt("2026-10-09T16:00:00Z")
     )
     assertEquals(
       PlacesMarkdown.placeOverrides(List(row)),
@@ -256,17 +256,17 @@ class PlaceEditsSuite extends munit.FunSuite:
     assertEquals(
       com.histmersion.api.catalogue.Place.Overrides.edit(
         com.histmersion.api.catalogue.Place
-          .OverrideSet(pointLat = Some(38.5), pointLon = Some(57.5), reason = Some("Pleiades reprPoint"))
+          .OverrideSet(pointLat = Some(38.5), pointLon = Some(57.5), reason = Some(com.histmersion.api.catalogue.Place.OverrideSet.Reason("Pleiades reprPoint")))
       ),
       Right(
         com.histmersion.api.catalogue.Place.OverrideEdit
-          .Put(None, None, Some("Pleiades reprPoint"), Some(GeoPoint(57.5, 38.5)))
+          .Put(None, None, Some(com.histmersion.api.catalogue.Place.OverrideEdit.Put.Reason("Pleiades reprPoint")), Some(GeoPoint(57.5, 38.5)))
       )
     )
     assertEquals(
       com.histmersion.api.catalogue.Place.Overrides.edit(
         com.histmersion.api.catalogue.Place.OverrideSet(
-          kind = Some("region"),
+          kind = Some(com.histmersion.api.catalogue.Place.OverrideSet.Kind("region")),
           pointLat = Some(-16.1),
           pointLon = Some(31.4),
           reason = Some("Wikidata P625")
@@ -274,7 +274,7 @@ class PlaceEditsSuite extends munit.FunSuite:
       ),
       Right(
         com.histmersion.api.catalogue.Place.OverrideEdit
-          .Put(Some("region"), None, Some("Wikidata P625"), Some(GeoPoint(31.4, -16.1)))
+          .Put(Some(com.histmersion.api.catalogue.Place.OverrideEdit.Put.Kind("region")), None, Some(com.histmersion.api.catalogue.Place.OverrideEdit.Put.Reason("Wikidata P625")), Some(GeoPoint(31.4, -16.1)))
       )
     )
     def refused(in: com.histmersion.api.catalogue.Place.OverrideSet) =
@@ -285,32 +285,32 @@ class PlaceEditsSuite extends munit.FunSuite:
       "no reason: a point must name where it comes from"
     )
     assertEquals(
-      refused(com.histmersion.api.catalogue.Place.OverrideSet(pointLat = Some(38.5), reason = Some("x"))),
+      refused(com.histmersion.api.catalogue.Place.OverrideSet(pointLat = Some(38.5), reason = Some(com.histmersion.api.catalogue.Place.OverrideSet.Reason("x")))),
       Left(Some(Write.CodeInvalid))
     )
     assertEquals(
       refused(
-        com.histmersion.api.catalogue.Place.OverrideSet(pointLat = Some(91), pointLon = Some(0), reason = Some("x"))
+        com.histmersion.api.catalogue.Place.OverrideSet(pointLat = Some(91), pointLon = Some(0), reason = Some(com.histmersion.api.catalogue.Place.OverrideSet.Reason("x")))
       ),
       Left(Some(Write.CodeInvalid))
     )
     assertEquals(
       refused(
-        com.histmersion.api.catalogue.Place.OverrideSet(pointLat = Some(0), pointLon = Some(-181), reason = Some("x"))
-      ),
-      Left(Some(Write.CodeInvalid))
-    )
-    assertEquals(
-      refused(
-        com.histmersion.api.catalogue.Place
-          .OverrideSet(pointLat = Some(Double.NaN), pointLon = Some(0), reason = Some("x"))
+        com.histmersion.api.catalogue.Place.OverrideSet(pointLat = Some(0), pointLon = Some(-181), reason = Some(com.histmersion.api.catalogue.Place.OverrideSet.Reason("x")))
       ),
       Left(Some(Write.CodeInvalid))
     )
     assertEquals(
       refused(
         com.histmersion.api.catalogue.Place
-          .OverrideSet(pointLat = Some(1), pointLon = Some(1), reason = Some("x"), reset = true)
+          .OverrideSet(pointLat = Some(Double.NaN), pointLon = Some(0), reason = Some(com.histmersion.api.catalogue.Place.OverrideSet.Reason("x")))
+      ),
+      Left(Some(Write.CodeInvalid))
+    )
+    assertEquals(
+      refused(
+        com.histmersion.api.catalogue.Place
+          .OverrideSet(pointLat = Some(com.histmersion.api.catalogue.Latitude(1)), pointLon = Some(com.histmersion.api.catalogue.Longitude(1)), reason = Some(com.histmersion.api.catalogue.Place.OverrideSet.Reason("x")), reset = com.histmersion.api.catalogue.Place.OverrideSet.Reset(true))
       ),
       Left(Some(Write.CodeInvalid))
     )
@@ -320,36 +320,36 @@ class PlaceEditsSuite extends munit.FunSuite:
       ),
       Right(
         com.histmersion.api.catalogue.Place
-          .OverrideSet(reason = Some("r"), pointLat = Some(38.5), pointLon = Some(57.5))
+          .OverrideSet(reason = Some(com.histmersion.api.catalogue.Place.OverrideSet.Reason("r")), pointLat = Some(38.5), pointLon = Some(57.5))
       )
     )
 
   test("--point is latitude,longitude"):
-    assertEquals(com.histmersion.api.catalogue.Place.Overrides.parsePoint("38.5,57.5"), Right((38.5, 57.5)))
+    assertEquals(com.histmersion.api.catalogue.Place.Overrides.parsePoint(com.histmersion.api.catalogue.Place.Overrides.PointText("38.5,57.5")), Right((38.5, 57.5)))
     assertEquals(
-      com.histmersion.api.catalogue.Place.Overrides.parsePoint(" -16.10108 , 31.45915 "),
+      com.histmersion.api.catalogue.Place.Overrides.parsePoint(com.histmersion.api.catalogue.Place.Overrides.PointText(" -16.10108 , 31.45915 ")),
       Right((-16.10108, 31.45915))
     )
-    assert(com.histmersion.api.catalogue.Place.Overrides.parsePoint("38.5").isLeft)
-    assert(com.histmersion.api.catalogue.Place.Overrides.parsePoint("38.5,57.5,1").isLeft)
-    assert(com.histmersion.api.catalogue.Place.Overrides.parsePoint("north,east").isLeft)
-    assert(com.histmersion.api.catalogue.Place.Overrides.parsePoint("95,10").isLeft)
-    assert(com.histmersion.api.catalogue.Place.Overrides.parsePoint("10,190").isLeft)
+    assert(com.histmersion.api.catalogue.Place.Overrides.parsePoint(com.histmersion.api.catalogue.Place.Overrides.PointText("38.5")).isLeft)
+    assert(com.histmersion.api.catalogue.Place.Overrides.parsePoint(com.histmersion.api.catalogue.Place.Overrides.PointText("38.5,57.5,1")).isLeft)
+    assert(com.histmersion.api.catalogue.Place.Overrides.parsePoint(com.histmersion.api.catalogue.Place.Overrides.PointText("north,east")).isLeft)
+    assert(com.histmersion.api.catalogue.Place.Overrides.parsePoint(com.histmersion.api.catalogue.Place.Overrides.PointText("95,10")).isLeft)
+    assert(com.histmersion.api.catalogue.Place.Overrides.parsePoint(com.histmersion.api.catalogue.Place.Overrides.PointText("10,190")).isLeft)
 
   test("a point as a reader sees it, and in the Markdown of a set and of the overrides"):
     assertEquals(com.histmersion.api.catalogue.Place.Overrides.pointText(38.5, 57.5), "38.5000 N 57.5000 E")
     assertEquals(com.histmersion.api.catalogue.Place.Overrides.pointText(-16.10108, -31.45915), "16.1011 S 31.4592 W")
     val moved = com.histmersion.api.catalogue.Place.OverrideChanged(
-      "pleiades_952097",
-      "Parthyene/Parthia",
-      reset = false,
-      "region",
-      "region",
-      "900 BCE–300 CE",
-      "900 BCE–300 CE",
-      0,
-      0,
-      0,
+      com.histmersion.api.catalogue.Place.Id("pleiades_952097"),
+      com.histmersion.api.catalogue.Place.OverrideChanged.Label("Parthyene/Parthia"),
+      reset = com.histmersion.api.catalogue.Place.OverrideChanged.Reset(false),
+      com.histmersion.api.catalogue.Place.OverrideChanged.KindBefore("region"),
+      com.histmersion.api.catalogue.Place.OverrideChanged.KindAfter("region"),
+      com.histmersion.api.catalogue.Place.OverrideChanged.PeriodBefore("900 BCE–300 CE"),
+      com.histmersion.api.catalogue.Place.OverrideChanged.PeriodAfter("900 BCE–300 CE"),
+      com.histmersion.api.catalogue.Place.OverrideChanged.FindingsBefore(0),
+      com.histmersion.api.catalogue.Place.OverrideChanged.FindingsAfter(0),
+      com.histmersion.api.catalogue.Place.OverrideChanged.Unlocated(0),
       Some(33.09361),
       Some(44.58083),
       Some(38.5),
@@ -373,17 +373,17 @@ class PlaceEditsSuite extends munit.FunSuite:
       "an unmoved point is stated once"
     )
     val row = com.histmersion.api.catalogue.Place.Override(
-      "pleiades_952097",
-      "Parthyene/Parthia",
+      com.histmersion.api.catalogue.Place.Id("pleiades_952097"),
+      com.histmersion.api.catalogue.Place.Override.Label("Parthyene/Parthia"),
       None,
       None,
       None,
-      periodSet = false,
-      Some("Pleiades reprPoint"),
-      "region",
-      Some(-900),
-      Some(300),
-      "2026-10-10T12:00:00Z",
+      periodSet = com.histmersion.api.catalogue.Place.Override.PeriodSet(false),
+      Some(com.histmersion.api.catalogue.Place.Override.Reason("Pleiades reprPoint")),
+      com.histmersion.api.catalogue.Place.Override.SourceKind("region"),
+      Some(com.histmersion.api.catalogue.Year(-900)),
+      Some(com.histmersion.api.catalogue.Year(300)),
+      com.histmersion.api.catalogue.Place.Override.UpdatedAt("2026-10-10T12:00:00Z"),
       Some(38.5),
       Some(57.5),
       Some(33.09361),

@@ -9,10 +9,10 @@ class AgentModeSuite extends munit.FunSuite:
   private val switches = for on <- List(false, true); draining <- List(false, true) yield (on, draining)
 
   test("the mode the switches stand for: off is paused, draining or not"):
-    assertEquals(AgentMode.of(autopilotOn = true, draining = false), AgentMode.Working)
-    assertEquals(AgentMode.of(autopilotOn = true, draining = true), AgentMode.Finishing)
-    assertEquals(AgentMode.of(autopilotOn = false, draining = false), AgentMode.Paused)
-    assertEquals(AgentMode.of(autopilotOn = false, draining = true), AgentMode.Paused)
+    assertEquals(AgentMode.of(autopilotOn = com.histmersion.api.automation.AgentMode.Step.Autopilot.On(true), draining = com.histmersion.api.automation.AgentMode.Step.Drain.On(false)), AgentMode.Working)
+    assertEquals(AgentMode.of(autopilotOn = com.histmersion.api.automation.AgentMode.Step.Autopilot.On(true), draining = com.histmersion.api.automation.AgentMode.Step.Drain.On(true)), AgentMode.Finishing)
+    assertEquals(AgentMode.of(autopilotOn = com.histmersion.api.automation.AgentMode.Step.Autopilot.On(false), draining = com.histmersion.api.automation.AgentMode.Step.Drain.On(false)), AgentMode.Paused)
+    assertEquals(AgentMode.of(autopilotOn = com.histmersion.api.automation.AgentMode.Step.Autopilot.On(false), draining = com.histmersion.api.automation.AgentMode.Step.Drain.On(true)), AgentMode.Paused)
 
   test("from every state of the switches, the steps reach the chosen mode, with no step to spare"):
     for (on, draining) <- switches; to <- AgentMode.values do
@@ -28,14 +28,14 @@ class AgentModeSuite extends munit.FunSuite:
 
   test("pausing lifts a drain before turning the autopilot off; working lifts it before turning it on"):
     assertEquals(
-      AgentMode.steps(autopilotOn = true, draining = true, AgentMode.Paused),
-      List(Step.Drain(false), Step.Autopilot(false))
+      AgentMode.steps(autopilotOn = com.histmersion.api.automation.AgentMode.Step.Autopilot.On(true), draining = com.histmersion.api.automation.AgentMode.Step.Drain.On(true), AgentMode.Paused),
+      List(Step.Drain(com.histmersion.api.automation.AgentMode.Step.Drain.On(false)), Step.Autopilot(com.histmersion.api.automation.AgentMode.Step.Autopilot.On(false)))
     )
     assertEquals(
-      AgentMode.steps(autopilotOn = false, draining = true, AgentMode.Working),
-      List(Step.Drain(false), Step.Autopilot(true))
+      AgentMode.steps(autopilotOn = com.histmersion.api.automation.AgentMode.Step.Autopilot.On(false), draining = com.histmersion.api.automation.AgentMode.Step.Drain.On(true), AgentMode.Working),
+      List(Step.Drain(com.histmersion.api.automation.AgentMode.Step.Drain.On(false)), Step.Autopilot(com.histmersion.api.automation.AgentMode.Step.Autopilot.On(true)))
     )
-    assertEquals(AgentMode.steps(autopilotOn = true, draining = false, AgentMode.Finishing), List(Step.Drain(true)))
+    assertEquals(AgentMode.steps(autopilotOn = com.histmersion.api.automation.AgentMode.Step.Autopilot.On(true), draining = com.histmersion.api.automation.AgentMode.Step.Drain.On(false), AgentMode.Finishing), List(Step.Drain(com.histmersion.api.automation.AgentMode.Step.Drain.On(true))))
 
   test("the words: the control's three choices and the card's heading"):
     assertEquals(
@@ -43,6 +43,6 @@ class AgentModeSuite extends munit.FunSuite:
       List("Working", "Finish current work, then pause", "Pause now")
     )
     assertEquals(AgentMode.Finishing.heading, "Research agents are finishing current work, then pausing")
-    assertEquals(AgentMode.parse("finish"), Some(AgentMode.Finishing))
-    assertEquals(AgentMode.parse("Paused"), Some(AgentMode.Paused))
-    assertEquals(AgentMode.parse("stop"), None)
+    assertEquals(AgentMode.parse(com.histmersion.api.automation.AgentMode.Wire("finish")), Some(AgentMode.Finishing))
+    assertEquals(AgentMode.parse(com.histmersion.api.automation.AgentMode.Wire("Paused")), Some(AgentMode.Paused))
+    assertEquals(AgentMode.parse(com.histmersion.api.automation.AgentMode.Wire("stop")), None)

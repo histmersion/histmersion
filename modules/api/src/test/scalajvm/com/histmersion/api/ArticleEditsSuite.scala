@@ -42,7 +42,7 @@ class ArticleEditsSuite extends munit.FunSuite:
     val gone = applyAll(Body, List(e(Op.Delete, "The ship carried copper [[knapp2016_tin]]."))).body
     assertEquals(gone, Body.replace("The ship carried copper [[knapp2016_tin]].\n\n", ""))
     // a sentence deleted mid-paragraph leaves one space
-    assertEquals(applyAll("A b. C d. E f.", List(e(Op.Delete, "C d."))).body, "A b. E f.")
+    assertEquals(applyAll(com.histmersion.api.research.Article.Body("A b. C d. E f."), List(e(Op.Delete, "C d."))).body, "A b. E f.")
 
   // the Codex strict schema sends null (or "") for a field it has nothing for: a replace with no text
   // used to read as a DELETE of its anchor
@@ -67,7 +67,7 @@ class ArticleEditsSuite extends munit.FunSuite:
       applyAll(wrapped, List(e(Op.Replace, "the Aegean   by sea", "the Aegean by ship"))).body,
       "Tin reached the Aegean by ship [[knapp2016_tin]]."
     )
-    assert(locate(wrapped, "the aegean by sea").isLeft, "case is not normalised")
+    assert(locate(wrapped, com.histmersion.api.research.Article.Edits.Anchor("the aegean by sea")).isLeft, "case is not normalised")
 
   test("a missing or ambiguous anchor is a problem naming the edit and the anchor's head; the edit is skipped"):
     val r = applyAll(
@@ -91,15 +91,15 @@ class ArticleEditsSuite extends munit.FunSuite:
 
   test("a refused edit is skipped with its reason; the rest apply"):
     val es = List(e(Op.InsertAfter, "by sea", " [[ghost2020_x]]"), e(Op.Replace, "Two dates", "Three dates"))
-    val r = applyAll(Body, es, a => Option.when(a.text.exists(_.contains("ghost")))("its text is refused: ghost"))
+    val r = applyAll(Body, es, a => Option.when(a.text.exists(_.contains("ghost")))(com.histmersion.api.research.Article.Edits.EditResult.Problem("its text is refused: ghost")))
     assertEquals(r.body, Body.replace("Two dates", "Three dates"))
     assertEquals(r.problems, List("edit 1 (insertAfter \"by sea\"): its text is refused: ghost"))
 
   test("a check request is edits or a body, not both and not neither"):
     assert(ArticleCheckRequest().draft.isLeft)
-    assert(ArticleCheckRequest(List(e(Op.Delete, "x")), Some("b")).draft.isLeft)
-    assertEquals(ArticleCheckRequest(body = Some("b")).draft, Right(Draft.Body("b")))
-    assertEquals(head("a  long\nanchor " * 10, 20), "a long anchor a long…")
+    assert(ArticleCheckRequest(List(e(Op.Delete, "x")), Some(com.histmersion.api.research.Article.Body("b"))).draft.isLeft)
+    assertEquals(ArticleCheckRequest(body = Some(com.histmersion.api.research.Article.Body("b"))).draft, Right(Draft.Body(com.histmersion.api.research.Article.Edits.Draft.Body.Text("b"))))
+    assertEquals(head("a  long\nanchor " * 10, com.histmersion.api.research.Article.Edits.HeadLimit(20)), "a long anchor a long…")
 
   test("the answer's JSON: op by its wire name, text optional"):
     val js = """[{"op":"insertAfter","anchor":"by sea","text":" x"},{"op":"delete","anchor":"y"}]"""

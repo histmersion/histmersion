@@ -14,19 +14,19 @@ import com.histmersion.api.research.Article
 class ArticleReviewViewSuite extends munit.FunSuite:
 
   private val rejected = ReviewFinding(
-    "S2",
-    "skeptic",
-    "major",
-    "omitted-critique",
-    "Debate",
-    "no critique",
-    "",
-    "",
-    "rejected",
-    note = "the record does not bear on it",
-    closedBy = Some("fixer"),
-    closedRound = Some(2),
-    closedRunNumber = Some(1)
+    com.histmersion.api.research.ReviewFinding.Id("S2"),
+    com.histmersion.api.research.ReviewFinding.Reviewer("skeptic"),
+    com.histmersion.api.research.ReviewFinding.Severity("major"),
+    com.histmersion.api.research.ReviewFinding.Kind("omitted-critique"),
+    com.histmersion.api.research.ReviewFinding.Where("Debate"),
+    com.histmersion.api.research.ReviewFinding.Problem("no critique"),
+    com.histmersion.api.research.ReviewFinding.Fix(""),
+    com.histmersion.api.research.ReviewFinding.Quote(""),
+    com.histmersion.api.research.ReviewFinding.Outcome("rejected"),
+    note = com.histmersion.api.research.ReviewFinding.Note("the record does not bear on it"),
+    closedBy = Some(com.histmersion.api.automation.Activity.Actor("fixer")),
+    closedRound = Some(com.histmersion.api.research.ReviewRound.Round(2)),
+    closedRunNumber = Some(com.histmersion.api.research.ReviewRound.RunNumber(1))
   )
 
   test("reviewers by the names a person reads"):
@@ -50,13 +50,13 @@ class ArticleReviewViewSuite extends munit.FunSuite:
 
   test("the Markdown: state, goals, approvals waiting, then the history by run and round"):
     val v = Article.ReviewView(
-      "zz-art",
-      ReviewBadge(ReviewState.Passed, "passed", "Reviewed: passed — no MAJOR finding is open."),
-      outcome = Some("converged after 1 run"),
-      updatedAt = Some("2026-10-02T09:00:00Z"),
-      rounds = List(ReviewRound("r", 1, 1, None, List(rejected))),
-      goals = List(ReviewGoal("g", "A goal", "reviewed")),
-      approvals = List(ReviewApproval(7, "article-filter"))
+      com.histmersion.api.research.Article.Slug("zz-art"),
+      ReviewBadge(ReviewState.Passed, com.histmersion.api.research.ReviewBadge.Label("passed"), com.histmersion.api.research.ReviewBadge.Detail("Reviewed: passed — no MAJOR finding is open.")),
+      outcome = Some(com.histmersion.api.research.Article.ReviewView.Outcome("converged after 1 run")),
+      updatedAt = Some(com.histmersion.api.research.Article.UpdatedAt("2026-10-02T09:00:00Z")),
+      rounds = List(ReviewRound(com.histmersion.api.research.ReviewRound.Run("r"), com.histmersion.api.research.ReviewRound.RunNumber(1), com.histmersion.api.research.ReviewRound.Round(1), None, List(rejected))),
+      goals = List(ReviewGoal(com.histmersion.api.research.ReviewGoal.Slug("g"), com.histmersion.api.research.ReviewGoal.Title("A goal"), com.histmersion.api.research.ReviewGoal.Status("reviewed"))),
+      approvals = List(ReviewApproval(com.histmersion.api.research.ReviewApproval.Id(7), com.histmersion.api.research.ReviewApproval.Kind("article-filter")))
     )
     val md = Article.ReviewView.markdown(v)
     assert(md.startsWith("## Review of [[zz-art]]\n\n**passed** — Reviewed: passed — no MAJOR finding is open."), md)
@@ -73,8 +73,8 @@ class ArticleReviewViewSuite extends munit.FunSuite:
     assert(Article.ReviewView.markdown(v.modify(_.rounds).setTo(Nil)).endsWith("No finding recorded."))
 
   test("the state crosses the wire as its word"):
-    val b = ReviewBadge(ReviewState.InReview, "in review · round 2", "In review.", round = Some(2))
+    val b = ReviewBadge(ReviewState.InReview, com.histmersion.api.research.ReviewBadge.Label("in review · round 2"), com.histmersion.api.research.ReviewBadge.Detail("In review."), round = Some(2))
     assert(b.asJson.noSpaces.contains("\"state\":\"in-review\""), b.asJson.noSpaces)
     assertEquals(decode[ReviewBadge](b.asJson.noSpaces), Right(b))
-    assertEquals(ReviewState.parse(" Majors-Open "), Some(ReviewState.MajorsOpen))
+    assertEquals(ReviewState.parse(com.histmersion.api.research.ReviewState.Wire(" Majors-Open ")), Some(ReviewState.MajorsOpen))
     assertEquals(Goal.Stages.all.map(_._1), com.histmersion.api.automation.Goal.Status.all)

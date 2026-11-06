@@ -10,13 +10,13 @@ class DomainSuite extends munit.FunSuite:
 
   // ── Label ──────────────────────────────────────────────────────────────────────────────────────
   test("Label.display replaces underscores with spaces"):
-    assertEquals(Label.display("bronze_age_collapse"), "bronze age collapse")
+    assertEquals(Label.display(com.histmersion.api.library.Label.Text("bronze_age_collapse")), "bronze age collapse")
 
   test("Label.display passes through strings without underscores"):
-    assertEquals(Label.display("concept"), "concept")
+    assertEquals(Label.display(com.histmersion.api.library.Label.Text("concept")), "concept")
 
   test("Label.display handles empty string"):
-    assertEquals(Label.display(""), "")
+    assertEquals(Label.display(com.histmersion.api.library.Label.Text("")), "")
 
   // ── YearFmt ────────────────────────────────────────────────────────────────────────────────────
   test("YearFmt positive year"):
@@ -35,23 +35,23 @@ class DomainSuite extends munit.FunSuite:
     assertEquals(YearFmt(-1L), "1 BCE")
 
   test("YearFmt.period renders a range"):
-    assertEquals(YearFmt.period(Some(-1300L), Some(-1100L)), "1300 BCE–1100 BCE")
+    assertEquals(YearFmt.period(Some(com.histmersion.api.catalogue.Year(-1300L)), Some(com.histmersion.api.catalogue.Year(-1100L))), "1300 BCE–1100 BCE")
 
   test("YearFmt.period renders a point"):
-    assertEquals(YearFmt.period(Some(-1200L), Some(-1200L)), "1200 BCE")
+    assertEquals(YearFmt.period(Some(com.histmersion.api.catalogue.Year(-1200L)), Some(com.histmersion.api.catalogue.Year(-1200L))), "1200 BCE")
 
   test("YearFmt.period is empty when either bound is missing"):
-    assertEquals(YearFmt.period(None, Some(-1200L)), "")
-    assertEquals(YearFmt.period(Some(-1200L), None), "")
+    assertEquals(YearFmt.period(None, Some(com.histmersion.api.catalogue.Year(-1200L))), "")
+    assertEquals(YearFmt.period(Some(com.histmersion.api.catalogue.Year(-1200L)), None), "")
 
   // ── Confidence ─────────────────────────────────────────────────────────────────────────────────
   test("Confidence.fromString case-insensitive"):
-    assertEquals(Confidence.fromString("High"), Some(Confidence.High))
-    assertEquals(Confidence.fromString("high"), Some(Confidence.High))
-    assertEquals(Confidence.fromString("CONTESTED"), Some(Confidence.Contested))
+    assertEquals(Confidence.fromString(com.histmersion.api.library.Confidence.Wire("High")), Some(Confidence.High))
+    assertEquals(Confidence.fromString(com.histmersion.api.library.Confidence.Wire("high")), Some(Confidence.High))
+    assertEquals(Confidence.fromString(com.histmersion.api.library.Confidence.Wire("CONTESTED")), Some(Confidence.Contested))
 
   test("Confidence.fromString returns None for unknown"):
-    assertEquals(Confidence.fromString("unknown"), None)
+    assertEquals(Confidence.fromString(com.histmersion.api.library.Confidence.Wire("unknown")), None)
 
   test("Confidence wire representation is lowercase"):
     val wev = summon[WireEnumValues[Confidence]]
@@ -60,11 +60,11 @@ class DomainSuite extends munit.FunSuite:
 
   // ── SourceStatus ───────────────────────────────────────────────────────────────────────────────
   test("SourceStatus.fromString case-insensitive"):
-    assertEquals(Source.Status.fromString("foundational"), Source.Status.Foundational)
-    assertEquals(Source.Status.fromString("Contested"), Source.Status.Contested)
+    assertEquals(Source.Status.fromString(com.histmersion.api.library.Source.Status.Wire("foundational")), Source.Status.Foundational)
+    assertEquals(Source.Status.fromString(com.histmersion.api.library.Source.Status.Wire("Contested")), Source.Status.Contested)
 
   test("SourceStatus.fromString defaults to Unassessed for unknown"):
-    assertEquals(Source.Status.fromString("bogus"), Source.Status.Unassessed)
+    assertEquals(Source.Status.fromString(com.histmersion.api.library.Source.Status.Wire("bogus")), Source.Status.Unassessed)
 
   test("SourceStatus wire representation is lowercase"):
     val wev = summon[WireEnumValues[Source.Status]]
@@ -85,11 +85,11 @@ class DomainSuite extends munit.FunSuite:
 
   // ── ArticleKind ────────────────────────────────────────────────────────────────────────────────
   test("ArticleKind.fromString case-insensitive"):
-    assertEquals(Article.Kind.fromString("concept"), Some(Article.Kind.Concept))
-    assertEquals(Article.Kind.fromString("TIMELINE"), Some(Article.Kind.Timeline))
+    assertEquals(Article.Kind.fromString(com.histmersion.api.research.Article.Kind.Wire("concept")), Some(Article.Kind.Concept))
+    assertEquals(Article.Kind.fromString(com.histmersion.api.research.Article.Kind.Wire("TIMELINE")), Some(Article.Kind.Timeline))
 
   test("ArticleKind.fromString returns None for unknown"):
-    assertEquals(Article.Kind.fromString("bogus"), None)
+    assertEquals(Article.Kind.fromString(com.histmersion.api.research.Article.Kind.Wire("bogus")), None)
 
   // ── SourceRef ──────────────────────────────────────────────────────────────────────────────────
   test("SourceRef.idLabel prefers DOI"):
@@ -108,24 +108,24 @@ class DomainSuite extends munit.FunSuite:
     assertEquals(r.idLabel, "haak2015")
 
   test("SourceRef.surname handles Firstname Lastname"):
-    assertEquals(com.histmersion.api.library.Source.Ref.surname("Walter Burkert"), "Burkert")
+    assertEquals(com.histmersion.api.library.Source.Ref.surname(com.histmersion.api.library.AuthorName("Walter Burkert")), "Burkert")
 
   test("SourceRef.surname handles Lastname, Firstname"):
-    assertEquals(com.histmersion.api.library.Source.Ref.surname("Beekes, Robert"), "Beekes")
+    assertEquals(com.histmersion.api.library.Source.Ref.surname(com.histmersion.api.library.AuthorName("Beekes, Robert")), "Beekes")
 
   test("SourceRef.shortAuthors single author"):
-    assertEquals(com.histmersion.api.library.Source.Ref.shortAuthors(List("Walter Burkert")), "Burkert")
+    assertEquals(com.histmersion.api.library.Source.Ref.shortAuthors(List(com.histmersion.api.library.AuthorName("Walter Burkert"))), "Burkert")
 
   test("SourceRef.shortAuthors two authors"):
     assertEquals(
-      com.histmersion.api.library.Source.Ref.shortAuthors(List("Haak, Wolfgang", "Lazaridis, Iosif")),
+      com.histmersion.api.library.Source.Ref.shortAuthors(List(com.histmersion.api.library.AuthorName("Haak, Wolfgang"), com.histmersion.api.library.AuthorName("Lazaridis, Iosif"))),
       "Haak & Lazaridis"
     )
 
   test("SourceRef.shortAuthors three+ authors"):
     assertEquals(
       com.histmersion.api.library.Source.Ref
-        .shortAuthors(List("Haak, Wolfgang", "Lazaridis, Iosif", "Patterson, Nick")),
+        .shortAuthors(List(com.histmersion.api.library.AuthorName("Haak, Wolfgang"), com.histmersion.api.library.AuthorName("Lazaridis, Iosif"), com.histmersion.api.library.AuthorName("Patterson, Nick"))),
       "Haak et al."
     )
 
@@ -153,11 +153,11 @@ class DomainSuite extends munit.FunSuite:
 
   test("HtmlAtoms.sourceLink is the one anchor shape; the DOI attribute only when there is one"):
     assertEquals(
-      HtmlAtoms.sourceLink("a2020_b", Some("10.1/x"), "10.1/x"),
+      HtmlAtoms.sourceLink(com.histmersion.api.library.Citekey("a2020_b"), Some(com.histmersion.api.library.Doi("10.1/x")), "10.1/x"),
       """<a class="src-ref" data-ck="a2020_b" data-doi="10.1/x" href="/source/a2020_b">10.1/x</a>"""
     )
     assertEquals(
-      HtmlAtoms.sourceLink("a2020_b", Some(" "), "a2020_b"),
+      HtmlAtoms.sourceLink(com.histmersion.api.library.Citekey("a2020_b"), Some(com.histmersion.api.library.Doi(" ")), "a2020_b"),
       """<a class="src-ref" data-ck="a2020_b" href="/source/a2020_b">a2020_b</a>"""
     )
 

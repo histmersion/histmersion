@@ -67,7 +67,7 @@ class ApiSurfaceSuite extends munit.FunSuite:
     assert(md.startsWith("3 endpoints on 2 paths:"), md)
     assert(md.contains("| `GET` · `PUT` | `/api/sources/{citekey}` |"), md)
     assertEquals(
-      Api.Index.splice("a\n" + Api.Index.Begin + "\nold\n" + Api.Index.End + "\nb", "new"),
+      Api.Index.splice("a\n" + Api.Index.Begin + "\nold\n" + Api.Index.End + "\nb", com.histmersion.api.Api.Index.MarkdownResult("new")),
       Right("a\n" + Api.Index.Begin + "\nnew\n" + Api.Index.End + "\nb")
     )
-    assert(Api.Index.splice("no markers", "x").isLeft)
+    assert(Api.Index.splice(com.histmersion.api.Api.Index.Readme("no markers"), com.histmersion.api.Api.Index.MarkdownResult("x")).isLeft)

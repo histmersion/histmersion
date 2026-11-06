@@ -13,13 +13,13 @@ class MergeApplyJobSuite extends munit.FunSuite:
 
   private val result = MergeApplyResult(
     UUID.fromString("00000000-0000-0000-0000-000000000001"),
-    Bundle.Instance(UUID.fromString("00000000-0000-0000-0000-000000000002"), Some("work")),
-    applied = true,
-    "abc123"
+    Bundle.Instance(UUID.fromString("00000000-0000-0000-0000-000000000002"), Some(com.histmersion.api.exchange.Bundle.Instance.Label("work"))),
+    applied = com.histmersion.api.exchange.MergeApplyResult.Applied(true),
+    com.histmersion.api.exchange.MergeApplyResult.PlanHash("abc123")
   )
 
   private def of(status: JobState, error: Option[String] = None, r: Option[MergeApplyResult] = None) =
-    MergeApplyJob.of("j1", status, "f" * 64, "abc123", 1500, error, r)
+    MergeApplyJob.of(com.histmersion.api.SpatialHierarchyResult.Job.Id("j1"), status, "f" * 64, com.histmersion.api.exchange.MergeApplyJob.OfPlanHash("abc123"), com.histmersion.api.exchange.MergeApplyJob.OfElapsedMs(1500), error, r)
 
   test("a running row is running; a done one carries its report"):
     assertEquals(of(JobState.Running).state, MergeJobState.Running)
@@ -47,7 +47,7 @@ class MergeApplyJobSuite extends munit.FunSuite:
     val j = JobInfo(
       com.histmersion.api.SpatialHierarchyResult.Job.Id("j1"),
       com.histmersion.api.jobs.JobKinds.Wire(MergeApplyJob.JobKind),
-      "running",
-      detail = Some(com.histmersion.api.exchange.ExchangeJobKinds.PlanHash(Some("abc123")))
+      com.histmersion.api.jobs.JobInfo.Status("running"),
+      detail = Some(com.histmersion.api.exchange.ExchangeJobKinds.PlanHash(Some(com.histmersion.api.exchange.MergePlan.PlanHash("abc123"))))
     )
     assertEquals(JobDetail.subject(j), Some("merge plan abc123"))

@@ -11,10 +11,10 @@ class PersonalMarkdownSuite extends munit.FunSuite:
   test("a bookmark line: its name, the item's title when renamed, what and where, when, its id"):
     val b = Bookmark(
       id,
-      Target.item(ItemKind.Source, "cline2014_1177"),
-      "1177 B.C.",
+      Target.item(ItemKind.Source, com.histmersion.api.personal.ItemKey("cline2014_1177")),
+      com.histmersion.api.library.Title("1177 B.C."),
       Some(Bookmark.Label("the collapse book")),
-      "2026-10-30T12:40:00.123456Z"
+      com.histmersion.api.personal.Bookmark.CreatedAt("2026-10-30T12:40:00.123456Z")
     )
     assertEquals(
       PersonalMarkdown.bookmarkLine(b),
@@ -27,19 +27,19 @@ class PersonalMarkdownSuite extends munit.FunSuite:
       nid,
       Target(ItemKind.Point, lat = Some(Latitude(37.5)), lon = Some(Longitude(22.75))),
       Note.Text("\n\nBridge here?\nSecond line."),
-      "Place on the map",
-      "2026-10-30T12:40:00Z",
-      "2026-10-31T09:00:00Z"
+      com.histmersion.api.library.Title("Place on the map"),
+      com.histmersion.api.personal.Note.CreatedAt("2026-10-30T12:40:00Z"),
+      com.histmersion.api.personal.Note.UpdatedAt("2026-10-31T09:00:00Z")
     )
     assert(PersonalMarkdown.noteLine(n).endsWith("\n  Bridge here?"), PersonalMarkdown.noteLine(n))
     assert(PersonalMarkdown.note(n).contains("place on the map · 37.50° N, 22.75° E"), PersonalMarkdown.note(n))
     assert(PersonalMarkdown.note(n).contains("changed 2026-10-31 09:00"))
-    assertEquals(PersonalMarkdown.excerpt("x" * 200, 10), "x" * 9 + "…")
+    assertEquals(PersonalMarkdown.excerpt("x" * 200, com.histmersion.api.checks.FormatIssue.Excerpt.Length(10)), "x" * 9 + "…")
 
   test("read marks"):
     assertEquals(
       PersonalMarkdown.readLine(
-        ReadMark(ItemKind.Article, ItemKey("a"), "A", read = true, readAt = Some("2026-10-30T12:40:00Z"))
+        ReadMark(ItemKind.Article, ItemKey("a"), com.histmersion.api.personal.ReadMark.Title("A"), read = com.histmersion.api.personal.ReadMark.Read(true), readAt = Some(com.histmersion.api.personal.ReadMark.ReadAt("2026-10-30T12:40:00Z")))
       ),
       "- **A** — article `a` · read 2026-10-30 12:40"
     )

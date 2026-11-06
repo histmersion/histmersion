@@ -59,7 +59,7 @@ class IngestSuite extends munit.FunSuite:
 
   // ── alt text ─────────────────────────────────────────────────────────────────────────────────
   test("numberFigures names unlabelled figures in document order and keeps real captions"):
-    val out = AssetLinks.numberFigures("![](a.png)\n![Map of Anatolia](b.png)\n![](c.png)")
+    val out = AssetLinks.numberFigures(com.histmersion.api.media.AssetLinks.Body("![](a.png)\n![Map of Anatolia](b.png)\n![](c.png)"))
     assert(out.contains("![Figure 1](a.png)"), out)
     assert(out.contains("![Map of Anatolia](b.png)"), out)
     assert(out.contains("![Figure 3](c.png)"), out)
@@ -79,7 +79,7 @@ class IngestSuite extends munit.FunSuite:
   test("collapsePictureText leaves a body without the markers untouched, and is idempotent"):
     assertEquals(AssetLinks.collapsePictureText(md), md)
     val once =
-      AssetLinks.collapsePictureText("**----- Start of picture text -----**<br>x**----- End of picture text -----**")
+      AssetLinks.collapsePictureText(com.histmersion.api.media.AssetLinks.Body("**----- Start of picture text -----**<br>x**----- End of picture text -----**"))
     assertEquals(AssetLinks.collapsePictureText(once), once)
 
   test("normalizeBody does both, and stays idempotent"):
@@ -107,7 +107,7 @@ class IngestSuite extends munit.FunSuite:
         |
         |Page two of the same running head.
         |""".stripMargin
-    val out = AssetLinks.dropBoilerplateHeadings(body, "The Collapse of the Bronze Age")
+    val out = AssetLinks.dropBoilerplateHeadings(body, com.histmersion.api.media.AssetLinks.Title("The Collapse of the Bronze Age"))
     assert(!out.contains("# Article"), out)
     assert(!out.contains("Bronze Age\n"), out)
     assert(out.contains("## Methods"), out)
@@ -115,42 +115,42 @@ class IngestSuite extends munit.FunSuite:
 
   test("a section that merely CONTAINS the title is kept — only exact headings go"):
     val body = "## Article structure\n\n## The Title in context\n"
-    assertEquals(AssetLinks.dropBoilerplateHeadings(body, "The Title"), body.stripSuffix("\n"))
+    assertEquals(AssetLinks.dropBoilerplateHeadings(body, com.histmersion.api.media.AssetLinks.Title("The Title")), body.stripSuffix("\n"))
 
   test("normalizeBody with a title is still idempotent"):
     val in = "# Article\n\n![](/abs/md/ck/figures/f.png)\n\n## T\n\nprose\n"
-    val once = AssetLinks.normalizeBody(in, "T")
-    assertEquals(AssetLinks.normalizeBody(once, "T"), once)
+    val once = AssetLinks.normalizeBody(in, com.histmersion.api.media.AssetLinks.NormalizeBodyTitle("T"))
+    assertEquals(AssetLinks.normalizeBody(once, com.histmersion.api.media.AssetLinks.NormalizeBodyTitle("T")), once)
     assert(!once.contains("# Article"), once)
     assert(once.contains("![](assets/f.png)"), once)
 
   // ── assets/… → the served path ───────────────────────────────────────────────────────────────
   test("toWeb points image links at /source/{citekey}/assets/{name}"):
-    val out = AssetLinks.toWeb(md, "haak2015_massive")
+    val out = AssetLinks.toWeb(md, com.histmersion.api.media.AssetLinks.ToWebCitekey("haak2015_massive"))
     assert(out.contains("![Figure 1](/source/haak2015_massive/assets/fig-1.png)"), out)
     assert(out.contains("(/source/haak2015_massive/assets/plot.jpg \"a title\")"), out)
 
   test("toWeb leaves non-image and foreign links alone"):
-    val out = AssetLinks.toWeb(md, "x")
+    val out = AssetLinks.toWeb(md, com.histmersion.api.media.AssetLinks.ToWebCitekey("x"))
     assert(out.contains("[not an image](assets/fig-1.png)"), out)
     assert(out.contains("![remote](https://example.org/x.png)"), out)
 
   test("toWeb percent-encodes a citekey and name that need it"):
-    assertEquals(AssetLinks.url("a b", "c d.png"), "/source/a%20b/assets/c%20d.png")
+    assertEquals(AssetLinks.url(com.histmersion.api.media.AssetLinks.UrlCitekey("a b"), com.histmersion.api.media.AssetLinks.UrlName("c d.png")), "/source/a%20b/assets/c%20d.png")
 
   // ── assets/… → absolute (MCP) ────────────────────────────────────────────────────────────────
   test("toAbsolute prefixes the public URL and tolerates a trailing slash"):
-    val a = AssetLinks.toAbsolute(md, "ck", "http://host:9/")
-    val b = AssetLinks.toAbsolute(md, "ck", "http://host:9")
+    val a = AssetLinks.toAbsolute(md, com.histmersion.api.media.AssetLinks.ToAbsoluteCitekey("ck"), com.histmersion.api.media.AssetLinks.Url("http://host:9/"))
+    val b = AssetLinks.toAbsolute(md, com.histmersion.api.media.AssetLinks.ToAbsoluteCitekey("ck"), com.histmersion.api.media.AssetLinks.Url("http://host:9"))
     assertEquals(a, b)
     assert(a.contains("![Figure 1](http://host:9/source/ck/assets/fig-1.png)"), a)
 
   test("toAbsolute with a blank public URL degrades to the served path"):
-    assertEquals(AssetLinks.toAbsolute("![a](assets/x.png)", "ck", "  "), "![a](/source/ck/assets/x.png)")
+    assertEquals(AssetLinks.toAbsolute(com.histmersion.api.media.AssetLinks.ToAbsoluteMd("![a](assets/x.png)"), com.histmersion.api.media.AssetLinks.ToAbsoluteCitekey("ck"), com.histmersion.api.media.AssetLinks.Url("  ")), "![a](/source/ck/assets/x.png)")
 
   test("rewriting is idempotent — a rewritten body does not move again"):
-    val once = AssetLinks.toWeb(md, "ck")
-    assertEquals(AssetLinks.toWeb(once, "ck"), once)
+    val once = AssetLinks.toWeb(md, com.histmersion.api.media.AssetLinks.ToWebCitekey("ck"))
+    assertEquals(AssetLinks.toWeb(once, com.histmersion.api.media.AssetLinks.ToWebCitekey("ck")), once)
 
   // ── rendered HTML ────────────────────────────────────────────────────────────────────────────
   test("lazyImages adds loading=lazy exactly once"):
@@ -171,9 +171,9 @@ class IngestSuite extends munit.FunSuite:
     assertEquals(AssetLinks.safeName("---"), "image.png")
 
   test("mimeOf maps the extensions the converter emits"):
-    assertEquals(AssetLinks.mimeOf("a.PNG"), "image/png")
-    assertEquals(AssetLinks.mimeOf("a.jpeg"), "image/jpeg")
-    assertEquals(AssetLinks.mimeOf("a.bin"), "application/octet-stream")
+    assertEquals(AssetLinks.mimeOf(com.histmersion.api.exchange.Bundle.Asset.Extension("a.PNG")), "image/png")
+    assertEquals(AssetLinks.mimeOf(com.histmersion.api.exchange.Bundle.Asset.Extension("a.jpeg")), "image/jpeg")
+    assertEquals(AssetLinks.mimeOf(com.histmersion.api.exchange.Bundle.Asset.Extension("a.bin")), "application/octet-stream")
 
   // ── image headers (figures read off disk carry no declared size) ─────────────────────────────
   private def png(w: Int, h: Int): Array[Byte] =
@@ -235,8 +235,8 @@ class IngestSuite extends munit.FunSuite:
 
   test("job states round-trip through their wire spelling"):
     JobState.values.foreach(s => assertEquals(JobState.parse(s.wire), Some(s)))
-    assertEquals(JobState.parse(" DONE "), Some(JobState.Done))
-    assertEquals(JobState.parse("nonsense"), None)
+    assertEquals(JobState.parse(com.histmersion.api.jobs.JobState.Wire(" DONE ")), Some(JobState.Done))
+    assertEquals(JobState.parse(com.histmersion.api.jobs.JobState.Wire("nonsense")), None)
 
   test("only done, failed and cancelled are terminal; a paused job goes on"):
     assertEquals(JobState.values.filter(_.isTerminal).toSet, Set(JobState.Done, JobState.Failed, JobState.Cancelled))
@@ -250,7 +250,7 @@ class IngestSuite extends munit.FunSuite:
     assertEquals(JobState.next(Queued, Paused), None)
 
   test("JobInfo exposes the state its status names"):
-    val j = JobInfo(com.histmersion.api.SpatialHierarchyResult.Job.Id("i"), com.histmersion.api.jobs.JobKinds.Wire(Ingest.KindIngest), "running", (Some("ck")).map(com.histmersion.api.library.Citekey.apply))
+    val j = JobInfo(com.histmersion.api.SpatialHierarchyResult.Job.Id("i"), com.histmersion.api.jobs.JobKinds.Wire(Ingest.KindIngest), com.histmersion.api.jobs.JobInfo.Status("running"), (Some("ck")).map(com.histmersion.api.library.Citekey.apply))
     assert(!j.isTerminal && !j.succeeded)
     assert(j.modify(_.status).setTo("done").succeeded)
     // an unparseable status must not read as success
@@ -261,13 +261,13 @@ class IngestSuite extends munit.FunSuite:
     val j = JobInfo(
       com.histmersion.api.SpatialHierarchyResult.Job.Id("abc"),
       com.histmersion.api.jobs.JobKinds.Wire(Ingest.KindIngest),
-      "failed",
+      com.histmersion.api.jobs.JobInfo.Status("failed"),
       (Some("ck")).map(com.histmersion.api.library.Citekey.apply),
       None,
-      Some("converter down"),
+      Some(com.histmersion.api.jobs.JobInfo.Error("converter down")),
       (Some("0123456789abcdef")).map(com.histmersion.api.Sha256.apply),
-      "t0",
-      "t1"
+      com.histmersion.api.jobs.JobInfo.CreatedAt("t0"),
+      com.histmersion.api.jobs.JobInfo.UpdatedAt("t1")
     )
     val out = IngestMarkdown.job(j)
     assert(out.contains("### job abc · ingest"), out)
@@ -275,7 +275,7 @@ class IngestSuite extends munit.FunSuite:
     assert(out.contains("012345678"), out)
 
   test("job Markdown names the acquisition item a job will tick off, and nothing when there is none"):
-    val j = JobInfo(com.histmersion.api.SpatialHierarchyResult.Job.Id("abc"), com.histmersion.api.jobs.JobKinds.Wire(Ingest.KindIngest), "running", (Some("ck")).map(com.histmersion.api.library.Citekey.apply), acquireItem = Some(42))
+    val j = JobInfo(com.histmersion.api.SpatialHierarchyResult.Job.Id("abc"), com.histmersion.api.jobs.JobKinds.Wire(Ingest.KindIngest), com.histmersion.api.jobs.JobInfo.Status("running"), (Some("ck")).map(com.histmersion.api.library.Citekey.apply), acquireItem = Some(42))
     assert(
       IngestMarkdown.job(j).contains("**acquisition item:** 42 (ticked off when the job succeeds)"),
       IngestMarkdown.job(j)
@@ -286,35 +286,35 @@ class IngestSuite extends munit.FunSuite:
 
   test("empty listings say so rather than rendering an empty table"):
     assertEquals(IngestMarkdown.jobs(Vector.empty), "_No jobs._")
-    assert(IngestMarkdown.assets("ck", Vector.empty).contains("No assets stored"))
+    assert(IngestMarkdown.assets(com.histmersion.api.library.Citekey("ck"), Vector.empty).contains("No assets stored"))
 
   test("asset Markdown carries the URL each figure is served at"):
-    val out = IngestMarkdown.assets("ck", Vector(AssetInfo("f.png", "image/png", 120, com.histmersion.api.Sha256("sha"), Some(4), Some(2))))
+    val out = IngestMarkdown.assets(com.histmersion.api.library.Citekey("ck"), Vector(AssetInfo(com.histmersion.api.media.AssetInfo.Name("f.png"), com.histmersion.api.media.AssetInfo.Mime("image/png"), com.histmersion.api.ByteCount(120), com.histmersion.api.Sha256("sha"), Some(com.histmersion.api.media.ImageSize.Width(4)), Some(com.histmersion.api.media.ImageSize.Height(2)))))
     assert(out.contains("/source/ck/assets/f.png"), out)
     assert(out.contains("4×2"), out)
 
   // #652: the stored original is `<sha256>.<ext>`; the download keeps the format in its name
   test("the original's Content-Disposition names the citekey and keeps the stored extension"):
-    val d = Ingest.originalDisposition("lazaridis2014_ancient", "d26217e5abc.pdf")
+    val d = Ingest.originalDisposition(com.histmersion.api.library.Citekey("lazaridis2014_ancient"), com.histmersion.api.library.Ingest.StoredName("d26217e5abc.pdf"))
     assertEquals(d, "attachment; filename=\"lazaridis2014_ancient.pdf\"")
     assertEquals(Ingest.dispositionExtension(d), Some("pdf"))
-    assertEquals(Ingest.dispositionExtension("attachment; filename=x.EPUB"), Some("epub"))
-    assertEquals(Ingest.originalDisposition("k", "noext"), "attachment; filename=\"k.bin\"")
-    assertEquals(Ingest.dispositionExtension("inline"), None)
+    assertEquals(Ingest.dispositionExtension(com.histmersion.api.library.Ingest.Disposition("attachment; filename=x.EPUB")), Some("epub"))
+    assertEquals(Ingest.originalDisposition(com.histmersion.api.library.Citekey("k"), com.histmersion.api.library.Ingest.StoredName("noext")), "attachment; filename=\"k.bin\"")
+    assertEquals(Ingest.dispositionExtension(com.histmersion.api.library.Ingest.Disposition("inline")), None)
 
   // #770 / #771: an init job names what it imports; the periods it skipped are counted and listed
   test("an init job's Markdown says what it imports and which period definitions it skipped"):
-    val plan = InitPlan(gazetteer = true, fetch = List("periodo"))
+    val plan = InitPlan(gazetteer = com.histmersion.api.exchange.InitPlan.Gazetteer(true), fetch = List("periodo"))
     val j = JobInfo(
       com.histmersion.api.SpatialHierarchyResult.Job.Id("j1"),
       com.histmersion.api.jobs.JobKinds.Wire(InitPlan.JobKind),
-      "done",
+      com.histmersion.api.jobs.JobInfo.Status("done"),
       detail = Some(
         InitPlan
           .Detail(Some(plan))
           .set(
             SkippedPeriod.Skipped,
-            List(SkippedPeriod("p0x1", "Old Kingdom", Period.Skip.OutOfRange, "-2701 → 2150 lies outside"))
+            List(SkippedPeriod(com.histmersion.api.catalogue.SkippedPeriod.Id("p0x1"), com.histmersion.api.catalogue.SkippedPeriod.Label("Old Kingdom"), Period.Skip.OutOfRange, com.histmersion.api.catalogue.SkippedPeriod.Detail("-2701 → 2150 lies outside")))
           )
           .set(SkippedPeriod.SkippedCount, 1)
       )
@@ -327,4 +327,4 @@ class IngestSuite extends munit.FunSuite:
     assert(table.startsWith("### 1 job\n"), table)
     assert(table.contains("| j1 | init | bundled gazetteer, fetch periodo | done |"), table)
     assertEquals(InitPlan.describe(InitPlan()), "nothing to import")
-    assertEquals(JobDetail.subject(JobInfo(com.histmersion.api.SpatialHierarchyResult.Job.Id("j2"), com.histmersion.api.jobs.JobKinds.Wire(Ingest.KindIngest), "done", (Some("ck_x")).map(com.histmersion.api.library.Citekey.apply))), Some("ck_x"))
+    assertEquals(JobDetail.subject(JobInfo(com.histmersion.api.SpatialHierarchyResult.Job.Id("j2"), com.histmersion.api.jobs.JobKinds.Wire(Ingest.KindIngest), com.histmersion.api.jobs.JobInfo.Status("done"), (Some("ck_x")).map(com.histmersion.api.library.Citekey.apply))), Some("ck_x"))

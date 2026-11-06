@@ -18,6 +18,6 @@ class ItemCountsSuite extends munit.FunSuite:
         "weird" -> 9
       )
     )
-    assertEquals(c, ItemCounts(12, 1, 3, 40, 5, 6, 7))
+    assertEquals(c, ItemCounts(com.histmersion.api.automation.Managers.ItemCounts.Pending(12), com.histmersion.api.automation.Managers.ItemCounts.Held(1), com.histmersion.api.automation.Managers.ItemCounts.Active(3), com.histmersion.api.automation.Managers.ItemCounts.Done(40), com.histmersion.api.automation.Managers.ItemCounts.Stopped(5), com.histmersion.api.automation.Managers.ItemCounts.Failed(6), com.histmersion.api.automation.Managers.ItemCounts.Cancelled(7)))
     assertEquals(c.open, 16)
     assertEquals(ItemCounts.of(Nil), ItemCounts())

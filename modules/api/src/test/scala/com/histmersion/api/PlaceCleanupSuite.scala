@@ -22,28 +22,28 @@ class PlaceCleanupSuite extends munit.FunSuite:
     assert(!Place.Precision.gridCentre(22.50001, 37.5))
 
   test("only a Pleiades point is an atlas grid square; a Wikidata coordinate in whole minutes is not"):
-    assertEquals(Place.Precision.of("pleiades_1001895", 22.5, 37.5), Place.Precision.GridCell)
-    assertEquals(Place.Precision.of("curated_brittany", 22.5, 37.5), Place.Precision.Stated)
-    assertEquals(Place.Precision.of("wikidata_q1", 22.25, 37.25), Place.Precision.Stated)
-    assertEquals(Place.Precision.of("pleiades_1332", 22.29543, 39.44387), Place.Precision.Stated)
+    assertEquals(Place.Precision.of(com.histmersion.api.catalogue.Place.Id("pleiades_1001895"), 22.5, 37.5), Place.Precision.GridCell)
+    assertEquals(Place.Precision.of(com.histmersion.api.catalogue.Place.Id("curated_brittany"), 22.5, 37.5), Place.Precision.Stated)
+    assertEquals(Place.Precision.of(com.histmersion.api.catalogue.Place.Id("wikidata_q1"), 22.25, 37.25), Place.Precision.Stated)
+    assertEquals(Place.Precision.of(com.histmersion.api.catalogue.Place.Id("pleiades_1332"), 22.29543, 39.44387), Place.Precision.Stated)
     assertEquals(Place.Precision.values.toList.map(_.wire), List("stated", "grid-cell"))
-    assertEquals(Place.Precision.parse("grid-cell"), Some(Place.Precision.GridCell))
+    assertEquals(Place.Precision.parse(com.histmersion.api.catalogue.Place.Precision.Wire("grid-cell")), Some(Place.Precision.GridCell))
 
   test("the people kind: offered, parsed from foreign labels, and no area"):
     assert(Place.Kind.all.contains(Place.Kind.People))
-    assertEquals(Place.Kind.parse("people, tribe"), Some(Place.Kind.People))
-    assertEquals(Place.Kind.parse("tribe"), Some(Place.Kind.People))
+    assertEquals(Place.Kind.parse(com.histmersion.api.catalogue.Place.Kind.ParseS("people, tribe")), Some(Place.Kind.People))
+    assertEquals(Place.Kind.parse(com.histmersion.api.catalogue.Place.Kind.ParseS("tribe")), Some(Place.Kind.People))
     assert(!com.histmersion.api.catalogue.Place.Shape.isArea(Place.Kind.People))
     assert(!com.histmersion.api.catalogue.Place.Shape.pointOnlyArea(Place.Kind.People, hasBoundary = false))
 
   test("a place's Markdown: the shape and, for a grid-square point, the location"):
     val pt = Some("""{"type":"Point","coordinates":[22.5,37.5]}""")
     def detail(kind: String, precision: Place.Precision) = PlaceDetail(
-      com.histmersion.api.catalogue.Place.Summary(com.histmersion.api.catalogue.Place.Id("pleiades_1001895"), "Thessalia", kind, None, None, None, ""),
+      com.histmersion.api.catalogue.Place.Summary(com.histmersion.api.catalogue.Place.Id("pleiades_1001895"), com.histmersion.api.catalogue.Place.Summary.Label("Thessalia"), kind, None, None, None, com.histmersion.api.catalogue.Place.Summary.Names("")),
       pt,
       Nil,
       Nil,
-      0,
+      com.histmersion.api.catalogue.Place.Counts.Findings(0),
       None,
       locationPrecision = precision
     )

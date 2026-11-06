@@ -45,24 +45,24 @@ class OffsetPageSuite extends munit.FunSuite:
         .contains("past the end")
     )
 
-  private val g = Goal("g1", "A goal", "planned")
-  private def ev(i: Int) = EventSummary(s"e$i", s"Event $i", "battle", TimeSpan(), "attested")
+  private val g = Goal(com.histmersion.api.automation.Goal.Slug("g1"), com.histmersion.api.automation.Goal.Title("A goal"), com.histmersion.api.automation.Goal.StatusValue("planned"))
+  private def ev(i: Int) = EventSummary(s"e$i", s"Event $i", com.histmersion.api.catalogue.EventSummary.Kind("battle"), TimeSpan(), com.histmersion.api.catalogue.EventSummary.Historicity("attested"))
 
   test("every paged list prints its footer: events, goals, attestations, asset links, pictures (#1798)"):
-    val events = EventsMarkdown.eventList(EventList.of(412, List(ev(1), ev(2)), 50))
+    val events = EventsMarkdown.eventList(EventList.of(com.histmersion.api.catalogue.EventList.Total(412), List(ev(1), ev(2)), com.histmersion.api.personal.UnreadPage.Offset(50)))
     assert(events.startsWith("### 2 of 412 event(s)") && events.contains("next: offset=52"), events)
-    val goals = GoalsMarkdown.goalList(Goal.List.of(30, List(g), 0))
+    val goals = GoalsMarkdown.goalList(Goal.List.of(com.histmersion.api.RowCount(30), List(g), com.histmersion.api.personal.UnreadPage.Offset(0)))
     assert(goals.contains("### 1 of 30 goal(s)") && goals.contains("next: offset=1"), goals)
-    val all = GoalsMarkdown.goalList(Goal.List.of(1, List(g), 0))
+    val all = GoalsMarkdown.goalList(Goal.List.of(com.histmersion.api.RowCount(1), List(g), com.histmersion.api.personal.UnreadPage.Offset(0)))
     assert(all.startsWith("### 1 goal(s)") && !all.contains("showing"), all)
-    val att = AttestationsMarkdown.attestationList(Attestation.List.of(5, Nil, 10))
+    val att = AttestationsMarkdown.attestationList(Attestation.List.of(com.histmersion.api.RowCount(5), Nil, com.histmersion.api.personal.UnreadPage.Offset(10)))
     assert(att.contains("past the end"), att)
-    val links = MediaMarkdown.assetLinkList(AssetLink.List.of(0, Nil, 0))
+    val links = MediaMarkdown.assetLinkList(AssetLink.List.of(com.histmersion.api.RowCount(0), Nil, com.histmersion.api.personal.UnreadPage.Offset(0)))
     assertEquals(links, "_No asset links._")
 
   test("the JSON carries offset and next; a body without them still decodes (older server)"):
     import io.circe.syntax.*
-    val j = EventList.of(412, List(ev(1)), 50).asJson
+    val j = EventList.of(com.histmersion.api.catalogue.EventList.Total(412), List(ev(1)), com.histmersion.api.personal.UnreadPage.Offset(50)).asJson
     assertEquals(j.hcursor.get[Int]("offset"), Right(50))
     assertEquals(j.hcursor.get[Option[Int]]("next"), Right(Some(51)))
     val old = io.circe.parser.decode[Goal.List]("""{"total":1,"goals":[]}""")
