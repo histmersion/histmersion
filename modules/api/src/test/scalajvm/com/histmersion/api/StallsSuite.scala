@@ -1,5 +1,7 @@
 package com.histmersion.api
 
+import com.histmersion.testsupport.ComparedByValue.given
+
 import hearth.kindlings.optics.syntax.*
 
 import com.histmersion.api.automation.Stalls.*
@@ -11,56 +13,62 @@ import com.histmersion.api.automation.StallsMarkdown
   */
 class StallsSuite extends munit.FunSuite:
 
-  private def f(slug: String = "g", idle: Option[Int] = Some(5)) = Facts(slug, idleDays = idle)
+  private def f(slug: Facts.Slug = Facts.Slug("g"), idle: Option[Facts.IdleDays] = Some(Facts.IdleDays(5))) = Facts(slug, idleDays = idle)
 
   test("stalled: no progress in N days, or never"):
-    assert(stalled(f(idle = Some(3)), com.histmersion.api.automation.Stalls.ReportDays(3)))
-    assert(!stalled(f(idle = Some(2)), com.histmersion.api.automation.Stalls.ReportDays(3)))
+    assert(stalled(f(idle = Some(Facts.IdleDays(3))), com.histmersion.api.automation.Stalls.ReportDays(3)))
+    assert(!stalled(f(idle = Some(Facts.IdleDays(2))), com.histmersion.api.automation.Stalls.ReportDays(3)))
     assert(stalled(f(idle = None), com.histmersion.api.automation.Stalls.ReportDays(3)))
 
   test("the first reason that holds is named, with its action"):
     def code(x: Facts) = classify(x)._1
     val base = f()
-    assertEquals(code(base.modify(_.draining).setTo(true).modify(_.approvals).setTo(List(1L -> "goal-plan"))), Code.Drain)
+    assertEquals(code(base.modify(_.draining).setTo(Facts.Draining(true)).modify(_.approvals).setTo(List(Facts.ApprovalId(1L) -> Facts.ApprovalKind("goal-plan")))), Code.Drain)
     val (c, why, action) =
-      classify(base.modify(_.approvals).setTo(List(7L -> "goal-plan", 3L -> "goal-plan", 9L -> "article-publish")))
+      classify(base.modify(_.approvals).setTo(List(Facts.ApprovalId(7L) -> Facts.ApprovalKind("goal-plan"), Facts.ApprovalId(3L) -> Facts.ApprovalKind("goal-plan"), Facts.ApprovalId(9L) -> Facts.ApprovalKind("article-publish"))))
     assertEquals(c, Code.Person)
-    assert(why.contains("3 open approvals (goal-plan 2, article-publish 1; oldest #3)"), why)
-    assert(action.contains("decide-all approve --subject g"), action)
-    assertEquals(code(base.modify(_.personHeld).setTo(2)), Code.Held)
-    assertEquals(code(base.modify(_.paused).setTo(List("seed:g"))), Code.Paused)
+    assert(why.value.contains("3 open approvals (goal-plan 2, article-publish 1; oldest #3)"), why)
+    assert(action.value.contains("decide-all approve --subject g"), action)
+    assertEquals(code(base.modify(_.personHeld).setTo(Facts.PersonHeld(2))), Code.Held)
+    assertEquals(code(base.modify(_.paused).setTo(List(Facts.Paused("seed:g")))), Code.Paused)
     assertEquals(
-      code(base.modify(_.waits).setTo(List(SchedWait("blocked", "budget: today's agent spend reached …")))),
+      code(base.modify(_.waits).setTo(List(SchedWait(SchedWait.Code("blocked"), SchedWait.Why("budget: today's agent spend reached …"))))),
       Code.Budget
     )
     assertEquals(
-      code(base.modify(_.waits).setTo(List(SchedWait("blocked", "starved: reviewer chain below its plan floor")))),
+      code(base.modify(_.waits).setTo(List(SchedWait(SchedWait.Code("blocked"), SchedWait.Why("starved: reviewer chain below its plan floor"))))),
       Code.Quota
     )
-    assertEquals(code(base.modify(_.waits).setTo(List(SchedWait("pool", "plan pool chatgpt-plan …")))), Code.Quota)
-    val q = classify(base.modify(_.waits).setTo(List(SchedWait("capacity", "no place free", 12))))
-    assert(q._1 == Code.Queue && q._2.contains("#12") && q._3.contains("focus priority g"), q)
-    assertEquals(code(base.modify(_.waits).setTo(List(SchedWait("blocked", "its goal's plan comes first")))), Code.Blocked)
-    assertEquals(code(base.modify(_.running).setTo(1)), Code.Running)
-    assertEquals(code(base.modify(_.lastStop).setTo(Some("stopped: 3 failed runs"))), Code.Failed)
-    assertEquals(code(base.modify(_.noCandidates).setTo(true)), Code.NoCandidates)
+    assertEquals(code(base.modify(_.waits).setTo(List(SchedWait(SchedWait.Code("pool"), SchedWait.Why("plan pool chatgpt-plan …"))))), Code.Quota)
+    val q = classify(base.modify(_.waits).setTo(List(SchedWait(SchedWait.Code("capacity"), SchedWait.Why("no place free"), SchedWait.Position(12)))))
+    assert(q._1 == Stall.Code(Code.Queue) && q._2.value.contains("#12") && q._3.value.contains("focus priority g"), q)
+    assertEquals(code(base.modify(_.waits).setTo(List(SchedWait(SchedWait.Code("blocked"), SchedWait.Why("its goal's plan comes first"))))), Code.Blocked)
+    assertEquals(code(base.modify(_.running).setTo(Facts.Running(1))), Code.Running)
+    assertEquals(code(base.modify(_.lastStop).setTo(Some(Facts.LastStop("stopped: 3 failed runs")))), Code.Failed)
+    assertEquals(code(base.modify(_.noCandidates).setTo(Facts.NoCandidates(true))), Code.NoCandidates)
     assertEquals(
-      code(base.modify(_.noCandidates).setTo(true).modify(_.sources).setTo(2)),
+      code(base.modify(_.noCandidates).setTo(Facts.NoCandidates(true)).modify(_.sources).setTo(Facts.Sources(2))),
       Code.Idle,
       "it has sources: not a candidates problem"
     )
-    assert(classify(base)._2.startsWith("nothing open"))
-    assert(classify(base.modify(_.open).setTo(2))._2.contains("none due yet"))
+    assert(classify(base)._2.value.startsWith("nothing open"))
+    assert(classify(base.modify(_.open).setTo(Facts.Open(2)))._2.value.contains("none due yet"))
 
   test("the report: only the stalled, the longest idle first (never first of all), counts per reason"):
     val r = report(
-      List(f("a", Some(4)), f("b", None), f("c", Some(9)), f("d", Some(1)), f("e", Some(4)).modify(_.running).setTo(1)),
+      List(
+        f(Facts.Slug("a"), Some(Facts.IdleDays(4))),
+        f(Facts.Slug("b"), None),
+        f(Facts.Slug("c"), Some(Facts.IdleDays(9))),
+        f(Facts.Slug("d"), Some(Facts.IdleDays(1))),
+        f(Facts.Slug("e"), Some(Facts.IdleDays(4))).modify(_.running).setTo(Facts.Running(1))
+      ),
       com.histmersion.api.automation.Stalls.ReportDays(3),
       com.histmersion.api.automation.Stalls.ReportAt("now")
     )
     assertEquals(r.stalled.map(_.slug), List("b", "c", "a", "e"))
     assertEquals(r.goals, 5)
-    assertEquals(r.byReason, List(ReasonCount(Code.Idle, com.histmersion.api.automation.Stalls.ReasonCount.Count(3)), ReasonCount(Code.Running, com.histmersion.api.automation.Stalls.ReasonCount.Count(1))))
+    assertEquals(r.byReason, List(ReasonCount(ReasonCount.Code(Code.Idle), com.histmersion.api.automation.Stalls.ReasonCount.Count(3)), ReasonCount(ReasonCount.Code(Code.Running), com.histmersion.api.automation.Stalls.ReasonCount.Count(1))))
     val md = StallsMarkdown.report(r)
     assert(
       md.startsWith("# Stalled goals: 4 of 5 with no progress in 3 day(s)") && md.contains("**b**") && md.contains(

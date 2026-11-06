@@ -37,8 +37,8 @@ class MarkdownSuite extends munit.FunSuite:
   private val finding = Finding.Row(
     com.histmersion.api.library.Finding.Claim("Ugarit destroyed"),
     Some(com.histmersion.api.catalogue.Place.Region("Ugarit")),
-    Some(35.78),
-    Some(35.6),
+    Some(com.histmersion.api.catalogue.Longitude(35.78)),
+    Some(com.histmersion.api.catalogue.Latitude(35.6)),
     Some(com.histmersion.api.catalogue.Year(-1200)),
     Some(com.histmersion.api.catalogue.Year(-1180)),
     None,
@@ -85,7 +85,7 @@ class MarkdownSuite extends munit.FunSuite:
       snippet = Some(com.histmersion.api.library.Search.Snippet("…the **Uluburun** wreck…")),
       matchedHeading = Some(com.histmersion.api.library.SearchHit.MatchedHeading("CHAPTER 3"))
     )
-    val md = SearchMarkdown.searchResults(SearchResult(com.histmersion.api.RowCount(1), List(Hit(hit, Nil, List("full text matches 'x'")))))
+    val md = SearchMarkdown.searchResults(SearchResult(com.histmersion.api.RowCount(1), List(Hit(hit, Nil, List(Hit.Why("full text matches 'x'"))))))
     assert(md.contains("> _CHAPTER 3_ — …the **Uluburun** wreck…"), md)
 
   // ── paging footer (A6) ────────────────────────────────────────────────────────────────────────
@@ -139,13 +139,13 @@ class MarkdownSuite extends munit.FunSuite:
   // ── histogram collapse (A16) ──────────────────────────────────────────────────────────────────
 
   test("collapseHistogram leaves short histograms unchanged"):
-    val buckets = (1 to 5).map(i => TimeBucket(i * 100L, i * 100 + 99, i)).toList
+    val buckets = (1 to 5).map(i => TimeBucket(TimeBucket.Start(i * 100L), TimeBucket.End(i * 100 + 99L), TimeBucket.Count(i))).toList
     val result = SearchMarkdown.collapseHistogram(buckets)
     assertEquals(result.size, 5)
-    assert(result.forall(_.merged == 1))
+    assert(result.forall(_.merged.value == 1))
 
   test("collapseHistogram collapses runs of identical counts when > 12 rows"):
-    val buckets = (1 to 20).map(i => TimeBucket(i * 100L, i * 100 + 99, if i <= 10 then com.histmersion.api.library.TimeBucket.Count(2) else com.histmersion.api.library.TimeBucket.Count(5))).toList
+    val buckets = (1 to 20).map(i => TimeBucket(TimeBucket.Start(i * 100L), TimeBucket.End(i * 100 + 99L), if i <= 10 then com.histmersion.api.library.TimeBucket.Count(2) else com.histmersion.api.library.TimeBucket.Count(5))).toList
     val result = SearchMarkdown.collapseHistogram(buckets)
     assert(result.sizeIs < 20, s"expected fewer rows, got ${result.size}")
     assertEquals(result.head.count, 2)
@@ -196,16 +196,16 @@ class MarkdownHopsSuite extends munit.FunSuite:
 
   test("neighbors renders each row by its classified target: source, article, unresolved"):
     val rows = Vector(
-      NeighborRow(com.histmersion.api.library.NeighborRow.Direction("out"), com.histmersion.api.library.Edge.Kind("challenges"), com.histmersion.api.library.Citekey("cline2014_year"), Some(com.histmersion.api.library.Title("1177 BC")), Some(Source.Status.Current)),
-      NeighborRow(com.histmersion.api.library.NeighborRow.Direction("in"), com.histmersion.api.library.Edge.Kind("references"), com.histmersion.api.library.Citekey("drews1993_end"), Some(com.histmersion.api.library.Title("The End of the Bronze Age"))),
+      NeighborRow(com.histmersion.api.library.NeighborRow.Direction("out"), com.histmersion.api.library.Edge.Kind.Challenges, com.histmersion.api.library.Citekey("cline2014_year"), Some(com.histmersion.api.library.Title("1177 BC")), Some(Source.Status.Current)),
+      NeighborRow(com.histmersion.api.library.NeighborRow.Direction("in"), com.histmersion.api.library.Edge.Kind.References, com.histmersion.api.library.Citekey("drews1993_end"), Some(com.histmersion.api.library.Title("The End of the Bronze Age"))),
       NeighborRow(
         com.histmersion.api.library.NeighborRow.Direction("out"),
-        com.histmersion.api.library.Edge.Kind("updates"),
+        com.histmersion.api.library.Edge.Kind.Updates,
         com.histmersion.api.library.Citekey("bronze_age_collapse"),
         Some(com.histmersion.api.library.Title("Bronze Age collapse")),
         target = NeighborTarget.Article
       ),
-      NeighborRow(com.histmersion.api.library.NeighborRow.Direction("out"), com.histmersion.api.library.Edge.Kind("refutes"), com.histmersion.api.library.Citekey("ghost2019_absent"), None, target = NeighborTarget.Unresolved)
+      NeighborRow(com.histmersion.api.library.NeighborRow.Direction("out"), com.histmersion.api.library.Edge.Kind.Refutes, com.histmersion.api.library.Citekey("ghost2019_absent"), None, target = NeighborTarget.Unresolved)
     )
     val out = SourcesMarkdown.neighbors(com.histmersion.api.library.Citekey("x2020_y"), rows)
     assert(out.contains("**Outgoing (this → other)**\n- _challenges_ → [[cline2014_year]] — 1177 BC _(current)_"), out)
@@ -217,7 +217,7 @@ class MarkdownHopsSuite extends munit.FunSuite:
 
   test("stripSourcesSection removes a TRAILING hand-written list, not a mid-article section"):
     val body = "# T\n\nprose\n\n## Sources\n\n- [[a2015_x]]\n- [[b2016_y]]\n"
-    assertEquals(ArticleMarkdown.stripSourcesSection(body).trim, "# T\n\nprose")
+    assertEquals(ArticleMarkdown.stripSourcesSection(com.histmersion.api.research.Article.Body(body)).value.trim, "# T\n\nprose")
     val mid = "# T\n\n## Sources\n\nA paragraph arguing about sources.\n\n## Later\n\nmore\n"
-    assertEquals(ArticleMarkdown.stripSourcesSection(mid), mid)
+    assertEquals(ArticleMarkdown.stripSourcesSection(com.histmersion.api.research.Article.Body(mid)), mid)
     assertEquals(ArticleMarkdown.stripSourcesSection(com.histmersion.api.research.Article.Body("# T\n\nno list here\n")), "# T\n\nno list here\n")

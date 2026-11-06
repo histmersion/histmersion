@@ -11,10 +11,14 @@ import com.histmersion.api.maintenance.{Storage, StorageMarkdown}
 class StorageSuite extends munit.FunSuite:
 
   private val GB = 1000L * 1000 * 1000
-  private val vol = "/Volumes/Data (/dev/disk3s5)"
+  private val vol = Storage.Volume.Id("/Volumes/Data (/dev/disk3s5)")
+  private val entryVolume = Storage.Entry.Volume(vol.value)
 
-  private def e(key: String, path: Option[String], bytes: Long, shrink: Option[String] = None) =
-    Storage.Entry(key, key, com.histmersion.api.maintenance.Storage.Entry.Group("caches"), path, (Some(bytes)).map(com.histmersion.api.ByteCount.apply), (Some(1L)).map(com.histmersion.api.maintenance.Storage.FileCount.apply), volume = Some(vol), shrink = shrink)
+  private def e(key: Storage.Entry.Key, path: Option[Storage.Entry.Path], bytes: com.histmersion.api.ByteCount, shrink: Option[Storage.Entry.Shrink] = None) =
+    Storage.Entry(key, Storage.Entry.Label(key.value), com.histmersion.api.maintenance.Storage.Entry.Group("caches"), path, Some(bytes), Some(Storage.FileCount(1L)), volume = Some(entryVolume), shrink = shrink)
+
+  private def shrinkOf(key: Storage.Entry.Key, keep: Storage.Advice.Keep): Option[Storage.Entry.Shrink] =
+    Storage.Advice.shrink(key, keep).map(h => Storage.Entry.Shrink(h.value))
 
   test("paths nest by containment — the innermost parent, either separator, not a mere prefix"):
     assert(Storage.under(com.histmersion.api.maintenance.Storage.Entry.Path("/d/pg"), com.histmersion.api.maintenance.Storage.Entry.Path("/d")))
@@ -23,10 +27,10 @@ class StorageSuite extends munit.FunSuite:
     assert(!Storage.under(com.histmersion.api.maintenance.Storage.Entry.Path("/data2"), com.histmersion.api.maintenance.Storage.Entry.Path("/data")))
     val nested = Storage.nest(
       List(
-        e("install", Some("/h"), 10),
-        e("kit", Some("/h/kit"), 2),
-        e("deep", Some("/h/kit/lib"), 1),
-        e("logs", Some("/d/logs"), 3),
+        e(Storage.Entry.Key("install"), Some(Storage.Entry.Path("/h")), com.histmersion.api.ByteCount(10)),
+        e(Storage.Entry.Key("kit"), Some(Storage.Entry.Path("/h/kit")), com.histmersion.api.ByteCount(2)),
+        e(Storage.Entry.Key("deep"), Some(Storage.Entry.Path("/h/kit/lib")), com.histmersion.api.ByteCount(1)),
+        e(Storage.Entry.Key("logs"), Some(Storage.Entry.Path("/d/logs")), com.histmersion.api.ByteCount(3)),
         Storage.Entry(com.histmersion.api.maintenance.Storage.Entry.Key("database"), com.histmersion.api.maintenance.Storage.Entry.Label("db"), com.histmersion.api.maintenance.Storage.Entry.Group("database"), None, (Some(5L)).map(com.histmersion.api.ByteCount.apply), within = Some(com.histmersion.api.maintenance.Storage.Entry.Key("cluster")))
       )
     )
@@ -43,11 +47,11 @@ class StorageSuite extends munit.FunSuite:
 
   test("the total counts every byte once: what is inside another entry is not added again"):
     val es = Storage.nest(
-      List(e("install", Some("/h"), 10 * GB), e("kit", Some("/h/kit"), 2 * GB), e("logs", Some("/d/logs"), GB))
+      List(e(Storage.Entry.Key("install"), Some(Storage.Entry.Path("/h")), com.histmersion.api.ByteCount(10 * GB)), e(Storage.Entry.Key("kit"), Some(Storage.Entry.Path("/h/kit")), com.histmersion.api.ByteCount(2 * GB)), e(Storage.Entry.Key("logs"), Some(Storage.Entry.Path("/d/logs")), com.histmersion.api.ByteCount(GB)))
     )
     assertEquals(Storage.total(es), com.histmersion.api.ByteCount(11 * GB))
     // the same path twice: the later one is within the earlier
-    val twice = Storage.nest(List(e("a", Some("/x"), 5), e("b", Some("/x"), 5)))
+    val twice = Storage.nest(List(e(Storage.Entry.Key("a"), Some(Storage.Entry.Path("/x")), com.histmersion.api.ByteCount(5)), e(Storage.Entry.Key("b"), Some(Storage.Entry.Path("/x")), com.histmersion.api.ByteCount(5))))
     assertEquals(twice.map(_.within), List(None, Some("a")))
     assertEquals(Storage.total(twice), com.histmersion.api.ByteCount(5L))
 
@@ -55,9 +59,9 @@ class StorageSuite extends munit.FunSuite:
     val es = Storage.nest(
       List(
         Storage.Entry(com.histmersion.api.maintenance.Storage.Entry.Key("database"), com.histmersion.api.maintenance.Storage.Entry.Label("db"), com.histmersion.api.maintenance.Storage.Entry.Group("database"), None, (Some(5L)).map(com.histmersion.api.ByteCount.apply), within = Some(com.histmersion.api.maintenance.Storage.Entry.Key("cluster"))),
-        e("cluster", Some("/d/pg"), 6),
-        e("gone", Some("/nope"), 0).modify(_.exists).setTo(false).modify(_.bytes).setTo((None: _root_.scala.Option[com.histmersion.api.ByteCount])),
-        e("logs", Some("/d/logs"), 1)
+        e(Storage.Entry.Key("cluster"), Some(Storage.Entry.Path("/d/pg")), com.histmersion.api.ByteCount(6)),
+        e(Storage.Entry.Key("gone"), Some(Storage.Entry.Path("/nope")), com.histmersion.api.ByteCount(0)).modify(_.exists).setTo(Storage.Entry.Exists(false)).modify(_.bytes).setTo((None: _root_.scala.Option[com.histmersion.api.ByteCount])),
+        e(Storage.Entry.Key("logs"), Some(Storage.Entry.Path("/d/logs")), com.histmersion.api.ByteCount(1))
       )
     )
     assertEquals(Storage.shown(es).map((x, d) => x.key -> d), List("cluster" -> 0, "database" -> 1, "logs" -> 0))
@@ -66,11 +70,11 @@ class StorageSuite extends munit.FunSuite:
     val r = Storage.Report(
       entries = Storage.nest(
         List(
-          e("backups", Some("/d/backups"), 30 * GB, Storage.Advice.shrink(com.histmersion.api.maintenance.Storage.Entry.Key("backups"), com.histmersion.api.maintenance.Storage.Advice.Keep(5))),
-          e("basemap", Some("/c/basemap"), 3 * GB, Storage.Advice.shrink(com.histmersion.api.maintenance.Storage.Entry.Key("basemap"), com.histmersion.api.maintenance.Storage.Advice.Keep(5))),
-          e("originals", Some("/d/uploads"), 40 * GB), // nothing to do about it: not named
-          e("gazetteer", Some("/c/gazetteer"), 1 * GB, Storage.Advice.shrink(com.histmersion.api.maintenance.Storage.Entry.Key("gazetteer"), com.histmersion.api.maintenance.Storage.Advice.Keep(5))),
-          e("logs", Some("/d/logs"), GB / 2, Storage.Advice.shrink(com.histmersion.api.maintenance.Storage.Entry.Key("logs"), com.histmersion.api.maintenance.Storage.Advice.Keep(5)))
+          e(Storage.Entry.Key("backups"), Some(Storage.Entry.Path("/d/backups")), com.histmersion.api.ByteCount(30 * GB), shrinkOf(com.histmersion.api.maintenance.Storage.Entry.Key("backups"), com.histmersion.api.maintenance.Storage.Advice.Keep(5))),
+          e(Storage.Entry.Key("basemap"), Some(Storage.Entry.Path("/c/basemap")), com.histmersion.api.ByteCount(3 * GB), shrinkOf(com.histmersion.api.maintenance.Storage.Entry.Key("basemap"), com.histmersion.api.maintenance.Storage.Advice.Keep(5))),
+          e(Storage.Entry.Key("originals"), Some(Storage.Entry.Path("/d/uploads")), com.histmersion.api.ByteCount(40 * GB)), // nothing to do about it: not named
+          e(Storage.Entry.Key("gazetteer"), Some(Storage.Entry.Path("/c/gazetteer")), com.histmersion.api.ByteCount(1 * GB), shrinkOf(com.histmersion.api.maintenance.Storage.Entry.Key("gazetteer"), com.histmersion.api.maintenance.Storage.Advice.Keep(5))),
+          e(Storage.Entry.Key("logs"), Some(Storage.Entry.Path("/d/logs")), com.histmersion.api.ByteCount(GB / 2), shrinkOf(com.histmersion.api.maintenance.Storage.Entry.Key("logs"), com.histmersion.api.maintenance.Storage.Advice.Keep(5)))
         )
       ),
       volumes = List(Storage.Volume(vol, com.histmersion.api.ByteCount(500 * GB), com.histmersion.api.ByteCount(4 * GB)), Storage.Volume("/other", com.histmersion.api.ByteCount(100 * GB), com.histmersion.api.ByteCount(50 * GB)))
@@ -79,44 +83,44 @@ class StorageSuite extends munit.FunSuite:
     assertEquals(hints.size, 1, hints)
     val h = hints.head
     assert(
-      h.startsWith(
+      h.value.startsWith(
         s"Low disk space on $vol: 4.0 GB free of 500.0 GB. Biggest here: backups 30.0 GB (lower backups.keep (now 5)"
       ),
       h
     )
-    assert(h.contains("basemap 3.0 GB (histmersion basemap rm"), h)
-    assert(h.contains("gazetteer 1.0 GB"), h)
-    assert(!h.contains("logs") && !h.contains("originals"), h)
+    assert(h.value.contains("basemap 3.0 GB (histmersion basemap rm"), h)
+    assert(h.value.contains("gazetteer 1.0 GB"), h)
+    assert(!h.value.contains("logs") && !h.value.contains("originals"), h)
     assertEquals(Storage.hints(r.modify(_.lowFreeBytes).setTo(com.histmersion.api.ByteCount(GB))), Nil)
     assertEquals(Storage.hints(r.modify(_.entries).setTo(Nil)), List(s"Low disk space on $vol: 4.0 GB free of 500.0 GB."))
 
   test("every location with something to do about it says what"):
-    assert(Storage.Advice.shrink(com.histmersion.api.maintenance.Storage.Entry.Key("backups"), com.histmersion.api.maintenance.Storage.Advice.Keep(0)).exists(_.contains("now 0")))
-    assert(Storage.Advice.shrink(com.histmersion.api.maintenance.Storage.Entry.Key("toolchain"), com.histmersion.api.maintenance.Storage.Advice.Keep(5)).exists(_.contains("histmersion-toolchain remove")))
-    assert(Storage.Advice.shrink(com.histmersion.api.maintenance.Storage.Entry.Key("database"), com.histmersion.api.maintenance.Storage.Advice.Keep(5)).exists(_.contains("maintenance vacuum")))
+    assert(Storage.Advice.shrink(com.histmersion.api.maintenance.Storage.Entry.Key("backups"), com.histmersion.api.maintenance.Storage.Advice.Keep(0)).exists(_.value.contains("now 0")))
+    assert(Storage.Advice.shrink(com.histmersion.api.maintenance.Storage.Entry.Key("toolchain"), com.histmersion.api.maintenance.Storage.Advice.Keep(5)).exists(_.value.contains("histmersion-toolchain remove")))
+    assert(Storage.Advice.shrink(com.histmersion.api.maintenance.Storage.Entry.Key("database"), com.histmersion.api.maintenance.Storage.Advice.Keep(5)).exists(_.value.contains("maintenance vacuum")))
     assert(Storage.Advice.shrink(com.histmersion.api.maintenance.Storage.Entry.Key("cache:thumbs"), com.histmersion.api.maintenance.Storage.Advice.Keep(5)).isDefined)
     assertEquals(Storage.Advice.shrink(com.histmersion.api.maintenance.Storage.Entry.Key("originals"), com.histmersion.api.maintenance.Storage.Advice.Keep(5)), None)
     assertEquals(Storage.Advice.shrink(com.histmersion.api.maintenance.Storage.Entry.Key("plugins"), com.histmersion.api.maintenance.Storage.Advice.Keep(5)), None)
 
   test("sizes: at least for a capped walk, a dash for nothing measured, not there for a missing path"):
-    assertEquals(Storage.size(e("a", Some("/a"), 2 * GB)), "2.0 GB")
-    assertEquals(Storage.size(e("a", Some("/a"), 2 * GB).modify(_.partial).setTo(true)), "at least 2.0 GB")
-    assertEquals(Storage.size(e("a", Some("/a"), 0).modify(_.bytes).setTo((None: _root_.scala.Option[com.histmersion.api.ByteCount]))), "—")
-    assertEquals(Storage.size(e("a", Some("/a"), 0).modify(_.bytes).setTo((None: _root_.scala.Option[com.histmersion.api.ByteCount])).modify(_.exists).setTo(false)), "not there")
+    assertEquals(Storage.size(e(Storage.Entry.Key("a"), Some(Storage.Entry.Path("/a")), com.histmersion.api.ByteCount(2 * GB))), "2.0 GB")
+    assertEquals(Storage.size(e(Storage.Entry.Key("a"), Some(Storage.Entry.Path("/a")), com.histmersion.api.ByteCount(2 * GB)).modify(_.partial).setTo(Storage.Entry.Partial(true))), "at least 2.0 GB")
+    assertEquals(Storage.size(e(Storage.Entry.Key("a"), Some(Storage.Entry.Path("/a")), com.histmersion.api.ByteCount(0)).modify(_.bytes).setTo((None: _root_.scala.Option[com.histmersion.api.ByteCount]))), "—")
+    assertEquals(Storage.size(e(Storage.Entry.Key("a"), Some(Storage.Entry.Path("/a")), com.histmersion.api.ByteCount(0)).modify(_.bytes).setTo((None: _root_.scala.Option[com.histmersion.api.ByteCount])).modify(_.exists).setTo(Storage.Entry.Exists(false))), "not there")
 
   test("the CLI's own locations join the report; one the server reports already is not listed twice"):
     val server = Storage.Report(
-      entries = List(e("install", Some("/h"), 10 * GB)),
+      entries = List(e(Storage.Entry.Key("install"), Some(Storage.Entry.Path("/h")), com.histmersion.api.ByteCount(10 * GB))),
       volumes = List(Storage.Volume(vol, com.histmersion.api.ByteCount(500 * GB), com.histmersion.api.ByteCount(400 * GB)))
     )
-    val local = List(e("install", Some("/h"), 10 * GB), e("calibre-originals", Some("/o"), 2 * GB))
+    val local = List(e(Storage.Entry.Key("install"), Some(Storage.Entry.Path("/h")), com.histmersion.api.ByteCount(10 * GB)), e(Storage.Entry.Key("calibre-originals"), Some(Storage.Entry.Path("/o")), com.histmersion.api.ByteCount(2 * GB)))
     val merged = Storage.addLocal(
       server,
       local,
       List(Storage.Volume(vol, com.histmersion.api.ByteCount(500 * GB), com.histmersion.api.ByteCount(400 * GB)), Storage.Volume(com.histmersion.api.maintenance.Storage.Volume.Id("/usb"), com.histmersion.api.ByteCount(10 * GB), com.histmersion.api.ByteCount(1 * GB)))
     )
     assertEquals(merged.entries.map(x => x.key -> x.host), List("install" -> "server", "calibre-originals" -> "cli"))
-    assertEquals(merged.volumes.map(_.id), List(vol, "/usb"))
+    assertEquals(merged.volumes.map(_.id), List(vol, Storage.Volume.Id("/usb")))
     assertEquals(Storage.addLocal(server, local.take(1), Nil), server)
 
   private val report = Storage.Report(
@@ -141,7 +145,7 @@ class StorageSuite extends munit.FunSuite:
           Some(com.histmersion.api.maintenance.Storage.Entry.Path("/d/pg")),
           (Some(10 * GB)).map(com.histmersion.api.ByteCount.apply),
           (Some(3000L)).map(com.histmersion.api.maintenance.Storage.FileCount.apply),
-          volume = Some(vol)
+          volume = Some(entryVolume)
         ),
         Storage.Entry(
           com.histmersion.api.maintenance.Storage.Entry.Key("backups"),
@@ -150,8 +154,8 @@ class StorageSuite extends munit.FunSuite:
           Some(com.histmersion.api.maintenance.Storage.Entry.Path("/d/backups")),
           (Some(28 * GB)).map(com.histmersion.api.ByteCount.apply),
           (Some(5L)).map(com.histmersion.api.maintenance.Storage.FileCount.apply),
-          volume = Some(vol),
-          shrink = Storage.Advice.shrink(com.histmersion.api.maintenance.Storage.Entry.Key("backups"), com.histmersion.api.maintenance.Storage.Advice.Keep(5))
+          volume = Some(entryVolume),
+          shrink = shrinkOf(com.histmersion.api.maintenance.Storage.Entry.Key("backups"), com.histmersion.api.maintenance.Storage.Advice.Keep(5))
         ),
         Storage.Entry(com.histmersion.api.maintenance.Storage.Entry.Key("toolchain"), com.histmersion.api.maintenance.Storage.Entry.Label("GraalVM toolchain"), com.histmersion.api.maintenance.Storage.Entry.Group("install"), Some(com.histmersion.api.maintenance.Storage.Entry.Path("/d/toolchain")), None, None, exists = com.histmersion.api.maintenance.Storage.Entry.Exists(false)),
         Storage.Entry(
@@ -163,13 +167,13 @@ class StorageSuite extends munit.FunSuite:
           (Some(3L)).map(com.histmersion.api.maintenance.Storage.FileCount.apply),
           partial = com.histmersion.api.maintenance.Storage.Entry.Partial(true),
           detail = Some(com.histmersion.api.maintenance.Storage.Entry.Detail("vector 410.0 MB · terrain 190.0 MB")),
-          volume = Some(vol)
+          volume = Some(entryVolume)
         )
       )
     ),
-    tables = List(TableSize(com.histmersion.api.TableSize.Name("sources"), 5 * GB), TableSize(com.histmersion.api.TableSize.Name("assets"), 2 * GB)),
+    tables = List(TableSize(com.histmersion.api.TableSize.Name("sources"), com.histmersion.api.ByteCount(5 * GB)), TableSize(com.histmersion.api.TableSize.Name("assets"), com.histmersion.api.ByteCount(2 * GB))),
     volumes = List(Storage.Volume(vol, com.histmersion.api.ByteCount(994 * GB), com.histmersion.api.ByteCount(120 * GB))),
-    backups = Some(BackupsUsage(com.histmersion.api.backup.BackupsUsage.Count(5), 28 * GB, Some(com.histmersion.api.backup.BackupsUsage.Newest("histmersion-20261019T212919Z.dump")), com.histmersion.api.backup.BackupsUsage.Keep(5)))
+    backups = Some(BackupsUsage(com.histmersion.api.backup.BackupsUsage.Count(5), com.histmersion.api.ByteCount(28 * GB), Some(com.histmersion.api.backup.BackupsUsage.Newest("histmersion-20261019T212919Z.dump")), com.histmersion.api.backup.BackupsUsage.Keep(5)))
   )
 
   test("histmersion about: the Storage section — total, nesting, backups, tables, free space"):

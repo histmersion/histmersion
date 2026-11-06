@@ -7,6 +7,7 @@ import hearth.kindlings.optics.syntax.*
 import com.histmersion.api.catalogue.Geocode.*
 import com.histmersion.api.catalogue.Period
 import com.histmersion.api.catalogue.Place
+import com.histmersion.api.catalogue.{Latitude, Longitude, Year}
 
 /** The geocoder's pure half (#981): the name key, the readings of a name, and the ranking — each case mirrors a real
   * failure of 2026-10-06.
@@ -67,50 +68,50 @@ class GeocodeSuite extends munit.FunSuite:
 
   // ── ranking ──────────────────────────────────────────────────────────────────────────────────
 
-  private val Min = 4
+  private val Min = Placeholder.Min(4)
 
   private def c(
-      id: String,
-      label: String,
-      kind: String,
-      byLabel: Boolean = true,
-      from: Option[Long] = None,
-      to: Option[Long] = None,
-      dim: Int = 2,
-      area: Double = 10.0,
-      shared: Int = 1,
-      lon: Double = 0,
-      lat: Double = 0
+      id: Place.Id,
+      label: Place.Label,
+      kind: Candidate.Kind,
+      byLabel: Candidate.ByLabel = Candidate.ByLabel(true),
+      from: Option[Year] = None,
+      to: Option[Year] = None,
+      dim: Candidate.Dimension = Candidate.Dimension(2),
+      area: Candidate.Area = Candidate.Area(10.0),
+      shared: Approximation.Rough.Places = Approximation.Rough.Places(1),
+      lon: Longitude = Longitude(0),
+      lat: Latitude = Latitude(0)
   ) =
     Candidate(id, label, kind, byLabel, from, to, dim, area, shared, lon, lat)
 
   // the live gazetteer's "Albania" candidates
   private val iranSite = c(
-    "pleiades_903043",
-    "[Hulwan]/Valashfarr/Beth Lashpar/Chala/Albania",
-    Place.Kind.Site,
-    byLabel = false,
-    from = Some(-750),
-    to = Some(1599),
-    dim = 0,
-    area = 0,
-    lon = 45.86,
-    lat = 34.47
+    Place.Id("pleiades_903043"),
+    Place.Label("[Hulwan]/Valashfarr/Beth Lashpar/Chala/Albania"),
+    Candidate.Kind(Place.Kind.Site),
+    byLabel = Candidate.ByLabel(false),
+    from = Some(Year(-750)),
+    to = Some(Year(1599)),
+    dim = Candidate.Dimension(0),
+    area = Candidate.Area(0),
+    lon = Longitude(45.86),
+    lat = Latitude(34.47)
   )
-  private val country = c("ne_country_alb", "Albania", Place.Kind.Region, area = 3.0, lon = 19.97, lat = 41.25)
+  private val country = c(Place.Id("ne_country_alb"), Place.Label("Albania"), Candidate.Kind(Place.Kind.Region), area = Candidate.Area(3.0), lon = Longitude(19.97), lat = Latitude(41.25))
   private val caucasian = c(
-    "pleiades_863731",
-    "Albania",
-    Place.Kind.Region,
-    from = Some(-330),
-    to = Some(2100),
-    dim = 0,
-    area = 0,
-    lon = 48.16,
-    lat = 41.38
+    Place.Id("pleiades_863731"),
+    Place.Label("Albania"),
+    Candidate.Kind(Place.Kind.Region),
+    from = Some(Year(-330)),
+    to = Some(Year(2100)),
+    dim = Candidate.Dimension(0),
+    area = Candidate.Area(0),
+    lon = Longitude(48.16),
+    lat = Latitude(41.38)
   )
   private val snap1920 =
-    c("cliopatria_albania_1920_1935", "Albania", Place.Kind.Polity, from = Some(1920), to = Some(1935), area = 2.9)
+    c(Place.Id("cliopatria_albania_1920_1935"), Place.Label("Albania"), Candidate.Kind(Place.Kind.Polity), from = Some(Year(1920)), to = Some(Year(1935)), area = Candidate.Area(2.9))
   private val albania = List(iranSite, country, caucasian, snap1920)
 
   private def best(cs: List[Candidate], hint: KindHint = KindHint.Unknown, at: Option[Period] = None) =
@@ -137,28 +138,28 @@ class GeocodeSuite extends munit.FunSuite:
 
   test("Mesopotamia: Pleiades' placeholder points at 37.5/37.5 rank after the curated region"):
     val ph = (1 to 3).toList.map(i =>
-      c(s"pleiades_$i", "Mesopotamia", Place.Kind.Region, dim = 0, area = 0, shared = 17, lon = 37.5, lat = 37.5)
+      c(Place.Id(s"pleiades_$i"), Place.Label("Mesopotamia"), Candidate.Kind(Place.Kind.Region), dim = Candidate.Dimension(0), area = Candidate.Area(0), shared = Approximation.Rough.Places(17), lon = Longitude(37.5), lat = Latitude(37.5))
     )
-    val curated = c("mesopotamia", "Mesopotamia", Place.Kind.Region, area = 50.0, lon = 43.74, lat = 33.15)
+    val curated = c(Place.Id("mesopotamia"), Place.Label("Mesopotamia"), Candidate.Kind(Place.Kind.Region), area = Candidate.Area(50.0), lon = Longitude(43.74), lat = Latitude(33.15))
     assertEquals(best(ph :+ curated), "mesopotamia")
     // alone, a placeholder still resolves — and the choice says it is rough
     val r = choose(com.histmersion.api.catalogue.Geocode.Resolution.Asked("Mesopotamia"), Attempt(com.histmersion.api.catalogue.Geocode.Attempt.Name("Mesopotamia")), rank(ph, KindHint.Unknown, None, Min), Min).get
     assertEquals(r.approximate, List(Approximation.Rough(com.histmersion.api.catalogue.Geocode.Approximation.Rough.Places(17))))
     assert(r.describe.contains("placeholder point shared by 17 places"), r.describe)
     assert(
-      !isPlaceholder(c("x", "x", Place.Kind.Site, dim = 0, shared = 3), Min),
+      !isPlaceholder(c(Place.Id("x"), Place.Label("x"), Candidate.Kind(Place.Kind.Site), dim = Candidate.Dimension(0), shared = Approximation.Rough.Places(3)), Min),
       "fewer than the minimum is a real point"
     )
 
   test("Thessalia: a point on an atlas grid square's centre ranks below every precise candidate, and says so"):
     // the live pair (2026-10-09): the late Roman province at the 5° cell's centre 37.5 N 22.5 E — in
     // the Peloponnese — and the region at its real point; both Pleiades, both labelled Thessalia
-    val province = c("pleiades_1001895", "Thessalia", Place.Kind.Region, dim = 0, area = 0, lon = 22.5, lat = 37.5)
-      .modify(_.gridCell).setTo(true)
-    val region = c("pleiades_1332", "Thessalia", Place.Kind.Region, dim = 0, area = 0, lon = 22.29543, lat = 39.44387)
+    val province = c(Place.Id("pleiades_1001895"), Place.Label("Thessalia"), Candidate.Kind(Place.Kind.Region), dim = Candidate.Dimension(0), area = Candidate.Area(0), lon = Longitude(22.5), lat = Latitude(37.5))
+      .modify(_.gridCell).setTo(Candidate.GridCell(true))
+    val region = c(Place.Id("pleiades_1332"), Place.Label("Thessalia"), Candidate.Kind(Place.Kind.Region), dim = Candidate.Dimension(0), area = Candidate.Area(0), lon = Longitude(22.29543), lat = Latitude(39.44387))
     assertEquals(best(List(province, region)), "pleiades_1332")
     assertEquals(best(List(province, region), at = Some(Period(com.histmersion.api.catalogue.Year(400), com.histmersion.api.catalogue.Year(500)))), "pleiades_1332")
-    val site = c("pleiades_x", "Thessalia", Place.Kind.Site, byLabel = false, dim = 0, area = 0, lon = 22.4, lat = 39.6)
+    val site = c(Place.Id("pleiades_x"), Place.Label("Thessalia"), Candidate.Kind(Place.Kind.Site), byLabel = Candidate.ByLabel(false), dim = Candidate.Dimension(0), area = Candidate.Area(0), lon = Longitude(22.4), lat = Latitude(39.6))
     assertEquals(best(List(province, site)), "pleiades_x", "a precise alias beats a grid-square label")
     // alone, it still resolves — marked approximate
     val r = choose(com.histmersion.api.catalogue.Geocode.Resolution.Asked("Thessalia"), Attempt(com.histmersion.api.catalogue.Geocode.Attempt.Name("Thessalia")), rank(List(province), KindHint.Unknown, None, Min), Min).get
@@ -167,7 +168,7 @@ class GeocodeSuite extends munit.FunSuite:
 
   test("Kievan Rus': the snapshot whose period covers the finding's, else the nearest in time"):
     val snaps = List((882L, 883L), (990L, 1017L), (1040L, 1235L), (1236L, 1240L)).map((a, b) =>
-      c(s"cliopatria_kievan_rus_${a}_$b", "Kievan Rus'", Place.Kind.Polity, from = Some(a), to = Some(b), area = 1.0)
+      c(Place.Id(s"cliopatria_kievan_rus_${a}_$b"), Place.Label("Kievan Rus'"), Candidate.Kind(Place.Kind.Polity), from = Some(Year(a)), to = Some(Year(b)), area = Candidate.Area(1.0))
     )
     assertEquals(best(snaps, at = Some(Period(com.histmersion.api.catalogue.Year(1000), com.histmersion.api.catalogue.Year(1000)))), "cliopatria_kievan_rus_990_1017")
     assertEquals(best(snaps, at = Some(Period(com.histmersion.api.catalogue.Year(1100), com.histmersion.api.catalogue.Year(1200)))), "cliopatria_kievan_rus_1040_1235")
@@ -192,26 +193,26 @@ class GeocodeSuite extends munit.FunSuite:
       "several overlap: the smaller area, then the id"
     )
     // undated: the longest-lived snapshot, never the 1236-1240 rump (whose shape is the smallest)
-    val rump = snaps.map(s => if s.id.endsWith("1236_1240") then s.modify(_.area).setTo((0.1: _root_.scala.Double)) else s)
+    val rump = snaps.map(s => if s.id.value.endsWith("1236_1240") then s.modify(_.area).setTo(Candidate.Area(0.1)) else s)
     assertEquals(best(rump), "cliopatria_kievan_rus_1040_1235")
 
   test("Ur: without a hint the broad entity, with 'site' the city"):
-    val city = c("pleiades_912985", "Ur(i)", Place.Kind.Site, dim = 0, area = 0, from = Some(-6200), to = Some(2100))
-    val polity = c("ur_iii", "Ur", Place.Kind.Polity, from = Some(-2112), to = Some(-2004))
+    val city = c(Place.Id("pleiades_912985"), Place.Label("Ur(i)"), Candidate.Kind(Place.Kind.Site), dim = Candidate.Dimension(0), area = Candidate.Area(0), from = Some(Year(-6200)), to = Some(Year(2100)))
+    val polity = c(Place.Id("ur_iii"), Place.Label("Ur"), Candidate.Kind(Place.Kind.Polity), from = Some(Year(-2112)), to = Some(Year(-2004)))
     assertEquals(best(List(city, polity)), "ur_iii")
     assertEquals(best(List(city, polity), hint = KindHint.Site), "pleiades_912985")
     assertEquals(best(List(city, polity), hint = KindHint.Site, at = Some(Period(com.histmersion.api.catalogue.Year(-2100), com.histmersion.api.catalogue.Year(-2000)))), "pleiades_912985")
 
   test("water: a feature before a site of the same name"):
-    val sea = c("pleiades_697709", "Mortuum Mare", Place.Kind.Feature, dim = 0, area = 0)
-    val town = c("x_town", "Mortuum Mare", Place.Kind.Site, dim = 0, area = 0)
+    val sea = c(Place.Id("pleiades_697709"), Place.Label("Mortuum Mare"), Candidate.Kind(Place.Kind.Feature), dim = Candidate.Dimension(0), area = Candidate.Area(0))
+    val town = c(Place.Id("x_town"), Place.Label("Mortuum Mare"), Candidate.Kind(Place.Kind.Site), dim = Candidate.Dimension(0), area = Candidate.Area(0))
     assertEquals(best(List(town, sea), hint = KindHint.Water), "pleiades_697709")
     assertEquals(best(List(town, sea), hint = KindHint.Site), "x_town")
 
   test("an undated finding prefers an undated place over a dated snapshot"):
     val snap =
-      c("cliopatria_denmark_1945_1945", "Denmark", Place.Kind.Polity, from = Some(1945), to = Some(1945), area = 1.0)
-    val ne = c("ne_country_dnk", "Denmark", Place.Kind.Region, area = 5.0)
+      c(Place.Id("cliopatria_denmark_1945_1945"), Place.Label("Denmark"), Candidate.Kind(Place.Kind.Polity), from = Some(Year(1945)), to = Some(Year(1945)), area = Candidate.Area(1.0))
+    val ne = c(Place.Id("ne_country_dnk"), Place.Label("Denmark"), Candidate.Kind(Place.Kind.Region), area = Candidate.Area(5.0))
     assertEquals(best(List(snap, ne)), "ne_country_dnk")
 
   test("a qualifier-stripped choice is approximate and says what was dropped"):
@@ -224,11 +225,11 @@ class GeocodeSuite extends munit.FunSuite:
     assertEquals(choose(com.histmersion.api.catalogue.Geocode.Resolution.Asked("Dead Sea"), Attempt(com.histmersion.api.catalogue.Geocode.Attempt.Name("Dead Sea")), Nil, Min), None)
 
   test("period overlap and gap use inclusive bounds"):
-    val p = c("p", "p", Place.Kind.Polity, from = Some(-100), to = Some(100))
-    assert(p.overlaps(Period(100, 200)) && p.overlaps(Period(-300, -100)))
-    assertEquals(p.gap(Period(150, 160)), 50L)
-    assertEquals(p.gap(Period(-300, -200)), 100L)
-    assert(c("u", "u", Place.Kind.Region).overlaps(Period(-5000, -4000)), "undated is always valid")
+    val p = c(Place.Id("p"), Place.Label("p"), Candidate.Kind(Place.Kind.Polity), from = Some(Year(-100)), to = Some(Year(100)))
+    assert(p.overlaps(Period(Year(100), Year(200))) && p.overlaps(Period(Year(-300), Year(-100))))
+    assertEquals(p.gap(Period(Year(150), Year(160))), 50L)
+    assertEquals(p.gap(Period(Year(-300), Year(-200))), 100L)
+    assert(c(Place.Id("u"), Place.Label("u"), Candidate.Kind(Place.Kind.Region)).overlaps(Period(Year(-5000), Year(-4000))), "undated is always valid")
 
   test("kind hints parse leniently: a model's synonym is a hint, anything else none"):
     assertEquals(KindHint.parse(com.histmersion.api.catalogue.Geocode.KindHint.Wire("Site")), KindHint.Site)
@@ -241,22 +242,22 @@ class GeocodeSuite extends munit.FunSuite:
   // ── the repair ───────────────────────────────────────────────────────────────────────────────
 
   test("distance and the move line"):
-    assertEqualsDouble(distanceKm(com.histmersion.api.catalogue.Longitude(0), com.histmersion.api.catalogue.Latitude(0), com.histmersion.api.catalogue.Longitude(0), com.histmersion.api.catalogue.Latitude(1)), 111.19, 0.01)
+    assertEqualsDouble(distanceKm(com.histmersion.api.catalogue.Longitude(0), com.histmersion.api.catalogue.Latitude(0), com.histmersion.api.catalogue.Longitude(0), com.histmersion.api.catalogue.Latitude(1)).value, 111.19, 0.01)
     val m = Move(
       com.histmersion.api.library.Finding.Id("heraclides2025_ancient#0"),
       com.histmersion.api.library.Citekey("heraclides2025_ancient"),
       com.histmersion.api.catalogue.Geocode.Move.Asked("Albania"),
       Some(com.histmersion.api.catalogue.Geocode.Move.Region("[Hulwan]/Valashfarr/Beth Lashpar/Chala/Albania")),
-      45.85589,
-      34.46511,
-      Resolution(com.histmersion.api.catalogue.Geocode.Resolution.Asked("Albania"), com.histmersion.api.catalogue.Place.Id("ne_country_alb"), com.histmersion.api.catalogue.Place.Label("Albania"), 19.97, 41.25)
+      Longitude(45.85589),
+      Latitude(34.46511),
+      Resolution(com.histmersion.api.catalogue.Geocode.Resolution.Asked("Albania"), com.histmersion.api.catalogue.Place.Id("ne_country_alb"), com.histmersion.api.catalogue.Place.Label("Albania"), Longitude(19.97), Latitude(41.25))
     )
-    assert(m.km > 2000 && m.km < 2500, m.km)
-    assert(worthMoving(m, com.histmersion.api.catalogue.Geocode.Move.MinKm(25)) && !worthMoving(m.modify(_.to).setTo(m.to.modify(_.lon).setTo((45.86: _root_.scala.Double)).modify(_.lat).setTo((34.47: _root_.scala.Double))), com.histmersion.api.catalogue.Geocode.Move.MinKm(25)))
+    assert(m.km.value > 2000 && m.km.value < 2500, m.km)
+    assert(worthMoving(m, com.histmersion.api.catalogue.Geocode.Move.MinKm(25)) && !worthMoving(m.modify(_.to).setTo(m.to.modify(_.lon).setTo(Longitude(45.86)).modify(_.lat).setTo(Latitude(34.47))), com.histmersion.api.catalogue.Geocode.Move.MinKm(25)))
     assertEquals(
       m.describe,
       "heraclides2025_ancient#0: 'Albania' (stored as '[Hulwan]/Valashfarr/Beth Lashpar/Chala/Albania') at 34.47 N 45.86 E → Albania [ne_country_alb] at 41.25 N 19.97 E, " +
-        String.format(java.util.Locale.ROOT, "%.0f km", m.km)
+        String.format(java.util.Locale.ROOT, "%.0f km", m.km.value)
     )
 
   // ── the fill (#987) ──────────────────────────────────────────────────────────────────────────
@@ -266,14 +267,14 @@ class GeocodeSuite extends munit.FunSuite:
       com.histmersion.api.library.Finding.Id("meshel2025_dead#2"),
       com.histmersion.api.library.Citekey("meshel2025_dead"),
       com.histmersion.api.catalogue.Geocode.Placement.Region("Dead Sea"),
-      Resolution(com.histmersion.api.catalogue.Geocode.Resolution.Asked("Dead Sea"), com.histmersion.api.catalogue.Place.Id("ne_lake_1159126747"), com.histmersion.api.catalogue.Place.Label("Dead Sea"), 35.5, 31.5)
+      Resolution(com.histmersion.api.catalogue.Geocode.Resolution.Asked("Dead Sea"), com.histmersion.api.catalogue.Place.Id("ne_lake_1159126747"), com.histmersion.api.catalogue.Place.Label("Dead Sea"), Longitude(35.5), Latitude(31.5))
     )
     assertEquals(p.describe, "meshel2025_dead#2: 'Dead Sea' → Dead Sea [ne_lake_1159126747] at 31.50 N 35.50 E")
     val q = Placement(
       com.histmersion.api.library.Finding.Id("x#0"),
       com.histmersion.api.library.Citekey("x"),
       com.histmersion.api.catalogue.Geocode.Placement.Region("southern Levant"),
-      Resolution(com.histmersion.api.catalogue.Geocode.Resolution.Asked("southern Levant"), com.histmersion.api.catalogue.Place.Id("levant"), com.histmersion.api.catalogue.Place.Label("Levant"), 36.0, 33.0, List(Approximation.Qualifier(com.histmersion.api.catalogue.Geocode.Approximation.Qualifier.Dropped("southern"))))
+      Resolution(com.histmersion.api.catalogue.Geocode.Resolution.Asked("southern Levant"), com.histmersion.api.catalogue.Place.Id("levant"), com.histmersion.api.catalogue.Place.Label("Levant"), Longitude(36.0), Latitude(33.0), List(Approximation.Qualifier(com.histmersion.api.catalogue.Geocode.Approximation.Qualifier.Dropped("southern"))))
     )
     assert(q.describe.endsWith("(approximate: 'southern' dropped)"), q.describe)
 
@@ -297,9 +298,9 @@ class GeocodeSuite extends munit.FunSuite:
   // ── the external sources (#1064) ─────────────────────────────────────────────────────────────
 
   test("tier: a bulk-imported place never outranks a seed place of the same label ('Varna' stays the city)"):
-    val city = c("ne_city_varna", "Varna", Place.Kind.Site, dim = 0, area = 0)
+    val city = c(Place.Id("ne_city_varna"), Place.Label("Varna"), Candidate.Kind(Place.Kind.Site), dim = Candidate.Dimension(0), area = Candidate.Area(0))
     val province =
-      c("geonames_864563", "Varna", Place.Kind.Region, dim = 0, area = 0).modify(_.tier).setTo(tierOf(Some("geonames")))
+      c(Place.Id("geonames_864563"), Place.Label("Varna"), Candidate.Kind(Place.Kind.Region), dim = Candidate.Dimension(0), area = Candidate.Area(0)).modify(_.tier).setTo(tierOf(Some(Place.Match.ImportSource("geonames"))))
     assertEquals(
       rank(List(province, city), KindHint.Unknown, None, com.histmersion.api.catalogue.Geocode.Placeholder.Min(4)).map(_.id),
       List("ne_city_varna", "geonames_864563")
@@ -311,15 +312,15 @@ class GeocodeSuite extends munit.FunSuite:
   test("a place matched by a DATED name is dated by it: the historical name wins in its own period"):
     // two places known as "Zzmikoyan" by an alternative name: one from 1935 to 1956, one undated
     val dated = c(
-      "geonames_174710",
-      "Yeghegnadzor",
-      Place.Kind.Site,
-      byLabel = false,
-      from = Some(1935),
-      to = Some(1956),
-      dim = 0,
-      area = 0
+      Place.Id("geonames_174710"),
+      Place.Label("Yeghegnadzor"),
+      Candidate.Kind(Place.Kind.Site),
+      byLabel = Candidate.ByLabel(false),
+      from = Some(Year(1935)),
+      to = Some(Year(1956)),
+      dim = Candidate.Dimension(0),
+      area = Candidate.Area(0)
     )
-    val undated = c("geonames_100", "Mikoyan farm", Place.Kind.Site, byLabel = false, dim = 0, area = 0)
+    val undated = c(Place.Id("geonames_100"), Place.Label("Mikoyan farm"), Candidate.Kind(Place.Kind.Site), byLabel = Candidate.ByLabel(false), dim = Candidate.Dimension(0), area = Candidate.Area(0))
     assertEquals(rank(List(undated, dated), KindHint.Unknown, Some(Period(com.histmersion.api.catalogue.Year(1940), com.histmersion.api.catalogue.Year(1945))), com.histmersion.api.catalogue.Geocode.Placeholder.Min(4)).head.id, "geonames_174710")
     assertEquals(rank(List(dated, undated), KindHint.Unknown, Some(Period(com.histmersion.api.catalogue.Year(1990), com.histmersion.api.catalogue.Year(2000))), com.histmersion.api.catalogue.Geocode.Placeholder.Min(4)).head.id, "geonames_100")

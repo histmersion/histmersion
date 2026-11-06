@@ -53,8 +53,8 @@ class ListFiltersSuite extends munit.FunSuite:
       range(Some(com.histmersion.api.automation.ListFilters.TimeBound("2026-10-01")), Some(com.histmersion.api.automation.ListFilters.TimeBound("2026-10-01")), now).map(_._2),
       Right(Some(Instant.parse("2026-10-02T00:00:00Z")))
     )
-    assert(range(Some(com.histmersion.api.automation.ListFilters.TimeBound("2026-10-05")), Some(com.histmersion.api.automation.ListFilters.TimeBound("2026-10-01")), now).left.exists(_.contains("before")))
-    assert(range(Some(com.histmersion.api.automation.ListFilters.TimeBound("soon")), None, now).left.exists(_.startsWith("since:")))
+    assert(range(Some(com.histmersion.api.automation.ListFilters.TimeBound("2026-10-05")), Some(com.histmersion.api.automation.ListFilters.TimeBound("2026-10-01")), now).left.exists(_.value.contains("before")))
+    assert(range(Some(com.histmersion.api.automation.ListFilters.TimeBound("soon")), None, now).left.exists(_.value.startsWith("since:")))
     assertEquals(range(None, None, now), Right((None, None)))
 
   test("a closed vocabulary names the first unknown value and the words allowed"):
@@ -72,11 +72,15 @@ class ListFiltersSuite extends munit.FunSuite:
 
   test("the facet header round-trips any value, in order; a malformed triple is skipped"):
     val fs = List(
-      "kind" -> List("goal-plan" -> 64, "edge" -> 3),
-      "model" -> List("codex:gpt-6.1-sol" -> 752, "a,b=c%d" -> 1, "Žeus" -> 2)
+      FacetName("kind") -> List(Term("goal-plan") -> com.histmersion.api.RowCount(64), Term("edge") -> com.histmersion.api.RowCount(3)),
+      FacetName("model") -> List(
+        Term("codex:gpt-6.1-sol") -> com.histmersion.api.RowCount(752),
+        Term("a,b=c%d") -> com.histmersion.api.RowCount(1),
+        Term("Žeus") -> com.histmersion.api.RowCount(2)
+      )
     )
     val enc = encodeFacets(fs)
-    assert(!enc.contains("Ž") && enc.split(',').length == 5, enc)
+    assert(!enc.value.contains("Ž") && enc.value.split(',').length == 5, enc)
     assertEquals(decodeFacets(enc), fs)
     assertEquals(
       decodeFacets(com.histmersion.api.automation.ListFilters.EncodedFacets("kind=edge=3,junk,kind=x=notanumber,=v=1,kind=goal-plan=2")),
@@ -87,21 +91,24 @@ class ListFiltersSuite extends munit.FunSuite:
 
   test("a page carries the facets in a header of its own, and its total is the states picked"):
     val p = Paging.Page.filtered(
-      List("open" -> 87, "approved" -> 290),
+      List(Paging.Page.CountState("open") -> Paging.Count(87), Paging.Page.CountState("approved") -> Paging.Count(290)),
       List(com.histmersion.api.Paging.Page.CountState("open")),
       Some(com.histmersion.api.library.Filter.Last("12")),
-      List("kind" -> List("goal-plan" -> 64), "decidedBy" -> Nil)
+      List(
+        com.histmersion.api.library.Facet.Name("kind") -> List(com.histmersion.api.library.Facet.Value("goal-plan") -> com.histmersion.api.library.Facet.Count(64)),
+        com.histmersion.api.library.Facet.Name("decidedBy") -> Nil
+      )
     )
     assertEquals(p.total, 87)
     assertEquals(p.facets, List("kind" -> List("goal-plan" -> 64)))
-    assertEquals(p.facet("kind"), List("goal-plan" -> 64))
-    assertEquals(p.facet("nothing"), Nil)
+    assertEquals(p.facet(com.histmersion.api.library.Facet.Name("kind")), List("goal-plan" -> 64))
+    assertEquals(p.facet(com.histmersion.api.library.Facet.Name("nothing")), Nil)
     assertEquals(
-      Paging.Page.filtered(List("open" -> 2, "failed" -> 1, "done" -> 4), List(com.histmersion.api.Paging.Page.CountState("open"), com.histmersion.api.Paging.Page.CountState("failed")), None).total,
+      Paging.Page.filtered(List(Paging.Page.CountState("open") -> Paging.Count(2), Paging.Page.CountState("failed") -> Paging.Count(1), Paging.Page.CountState("done") -> Paging.Count(4)), List(com.histmersion.api.Paging.Page.CountState("open"), com.histmersion.api.Paging.Page.CountState("failed")), None).total,
       3
     )
-    assertEquals(Paging.Page.filtered(List("open" -> 2, "done" -> 4), Nil, None).total, 6)
-    assertEquals(facetLine(com.histmersion.api.automation.ListFilters.FacetName("By kind"), List("goal-plan" -> 64, "edge" -> 3)), "By kind: goal-plan 64 · edge 3")
+    assertEquals(Paging.Page.filtered(List(Paging.Page.CountState("open") -> Paging.Count(2), Paging.Page.CountState("done") -> Paging.Count(4)), Nil, None).total, 6)
+    assertEquals(facetLine(com.histmersion.api.automation.ListFilters.FacetName("By kind"), List(Term("goal-plan") -> com.histmersion.api.RowCount(64), Term("edge") -> com.histmersion.api.RowCount(3))), "By kind: goal-plan 64 · edge 3")
     assertEquals(facetLine(com.histmersion.api.automation.ListFilters.FacetName("By kind"), Nil), "")
 
   test("what a heading and a next-page line say about a filter"):

@@ -12,22 +12,28 @@ import com.histmersion.api.maintenance.{Vacuum, VacuumPlan}
   */
 class VacuumSuite extends munit.FunSuite:
 
-  private val defaults = List("places", "place_names", "finding_places")
-  private val existing = Set("places", "place_names", "finding_places", "findings", "events")
+  private val defaults = List(Vacuum.Table("places"), Vacuum.Table("place_names"), Vacuum.Table("finding_places"))
+  private val existing = Set("places", "place_names", "finding_places", "findings", "events").map(Vacuum.Table(_))
 
   test("no table named: the configured ones; named ones are trimmed, lower-cased, de-duplicated, comma lists split"):
-    assertEquals(Vacuum.plan(Vacuum.Request(), defaults, existing), Right(VacuumPlan(com.histmersion.api.maintenance.VacuumPlan.Analyze(false), defaults)))
+    assertEquals(Vacuum.plan(Vacuum.Request(), defaults, existing), Right(
+        VacuumPlan(
+          com.histmersion.api.maintenance.VacuumPlan.Analyze(false),
+          List(Vacuum.Request.Tables("places"), Vacuum.Request.Tables("place_names"), Vacuum.Request.Tables("finding_places"))
+        )
+      )
+    )
     assertEquals(
       Vacuum.plan(Vacuum.Request(analyze = com.histmersion.api.maintenance.Vacuum.Request.Analyze(true), tables = List(com.histmersion.api.maintenance.Vacuum.Request.Tables(" Findings "), com.histmersion.api.maintenance.Vacuum.Request.Tables("events,findings"))), defaults, existing),
       Right(VacuumPlan(com.histmersion.api.maintenance.VacuumPlan.Analyze(true), List(com.histmersion.api.maintenance.Vacuum.Request.Tables("findings"), com.histmersion.api.maintenance.Vacuum.Request.Tables("events"))))
     )
 
   test("a name that is no identifier, or no table of the store, is refused — and so is an empty list"):
-    def refused(tables: List[String], d: List[String] = defaults) =
+    def refused(tables: List[Vacuum.Request.Tables], d: List[Vacuum.Table] = defaults) =
       Vacuum.plan(Vacuum.Request(tables = tables), d, existing).left.map(e => (e.code, e.message))
-    assertEquals(refused(List("places; DROP TABLE x")).left.map(_._1), Left(Some(Write.CodeInvalid)))
-    assertEquals(refused(List("pg_catalog.pg_class")).left.map(_._1), Left(Some(Write.CodeInvalid)))
-    assertEquals(refused(List("nope")), Left((Some(Write.CodeInvalid), "no such table: nope")))
+    assertEquals(refused(List(Vacuum.Request.Tables("places; DROP TABLE x"))).left.map(_._1), Left(Some(Write.CodeInvalid)))
+    assertEquals(refused(List(Vacuum.Request.Tables("pg_catalog.pg_class"))).left.map(_._1), Left(Some(Write.CodeInvalid)))
+    assertEquals(refused(List(Vacuum.Request.Tables("nope"))), Left((Some(Write.CodeInvalid), "no such table: nope")))
     assertEquals(refused(Nil, Nil).left.map(_._1), Left(Some(Write.CodeInvalid)))
 
   test("the statement quotes the table; ANALYZE only when asked"):

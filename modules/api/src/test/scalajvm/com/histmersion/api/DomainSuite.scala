@@ -22,19 +22,19 @@ class DomainSuite extends munit.FunSuite:
 
   // ── YearFmt ────────────────────────────────────────────────────────────────────────────────────
   test("YearFmt positive year"):
-    assertEquals(YearFmt(530L), "530 CE")
+    assertEquals(YearFmt(com.histmersion.api.catalogue.Year(530L)), "530 CE")
 
   test("YearFmt negative year is BCE"):
-    assertEquals(YearFmt(-1300L), "1300 BCE")
+    assertEquals(YearFmt(com.histmersion.api.catalogue.Year(-1300L)), "1300 BCE")
 
   test("YearFmt year 0 is 1 BCE (no year zero in historical reckoning)"):
-    assertEquals(YearFmt(0L), "1 BCE")
+    assertEquals(YearFmt(com.histmersion.api.catalogue.Year(0L)), "1 BCE")
 
   test("YearFmt year 1 is 1 CE"):
-    assertEquals(YearFmt(1L), "1 CE")
+    assertEquals(YearFmt(com.histmersion.api.catalogue.Year(1L)), "1 CE")
 
   test("YearFmt year -1 is 1 BCE"):
-    assertEquals(YearFmt(-1L), "1 BCE")
+    assertEquals(YearFmt(com.histmersion.api.catalogue.Year(-1L)), "1 BCE")
 
   test("YearFmt.period renders a range"):
     assertEquals(YearFmt.period(Some(com.histmersion.api.catalogue.Year(-1300L)), Some(com.histmersion.api.catalogue.Year(-1100L))), "1300 BCE–1100 BCE")

@@ -44,11 +44,12 @@ class OffsetPageSuite extends munit.FunSuite:
     assert(
       OffsetPage
         .markdown(OffsetPage(com.histmersion.api.RowCount(3), com.histmersion.api.Offset(10), com.histmersion.api.RowCount(0)), "goal(s)", "_No goals._", Nil)((_: Int).toString)
+        .value
         .contains("past the end")
     )
 
   private val g = Goal(com.histmersion.api.automation.Goal.Slug("g1"), com.histmersion.api.automation.Goal.Title("A goal"), com.histmersion.api.automation.Goal.StatusValue("planned"))
-  private def ev(i: Int) = EventSummary(s"e$i", s"Event $i", com.histmersion.api.catalogue.EventSummary.Kind("battle"), TimeSpan(), com.histmersion.api.catalogue.EventSummary.Historicity("attested"))
+  private def ev(i: Int) = EventSummary(com.histmersion.api.catalogue.Event.Id(s"e$i"), com.histmersion.api.catalogue.EventSummary.Label(s"Event $i"), com.histmersion.api.catalogue.EventSummary.Kind("battle"), TimeSpan(), com.histmersion.api.catalogue.EventSummary.Historicity("attested"))
 
   test("every paged list prints its footer: events, goals, attestations, asset links, pictures (#1798)"):
     val events = EventsMarkdown.eventList(EventList.of(com.histmersion.api.catalogue.EventList.Total(412), List(ev(1), ev(2)), com.histmersion.api.personal.UnreadPage.Offset(50)))

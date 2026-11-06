@@ -16,7 +16,7 @@ import com.histmersion.api.media.{AssetInfo, AssetLinks, ImageSize}
 import com.histmersion.api.catalogue.Period
 class IngestSuite extends munit.FunSuite:
 
-  private val md =
+  private val md = AssetLinks.Body(
     """# Paper
       |
       |![Figure 1](assets/fig-1.png)
@@ -25,17 +25,18 @@ class IngestSuite extends munit.FunSuite:
       |
       |[not an image](assets/fig-1.png) and ![remote](https://example.org/x.png)
       |""".stripMargin
+  )
 
   // ── figures/… → assets/… (the seed importer's normalisation) ─────────────────────────────────
   test("fromFigures rewrites only figures/ image links"):
-    val in = "![a](figures/x.png)\n![b](assets/y.png)\n[c](figures/x.png)"
-    val out = AssetLinks.fromFigures(in)
+    val in = AssetLinks.Body("![a](figures/x.png)\n![b](assets/y.png)\n[c](figures/x.png)")
+    val out = AssetLinks.fromFigures(in).value
     assert(out.contains("![a](assets/x.png)"), out)
     assert(out.contains("![b](assets/y.png)"), out)
     assert(out.contains("[c](figures/x.png)"), "a plain link is not an image link: " + out)
 
   test("fromFigures rewrites an ABSOLUTE converter path, which is what the corpus actually stores"):
-    val in = "![](/Users/me/research/md/olander2022_ielanguage/figures/paper.pdf-0023-02.png)"
+    val in = AssetLinks.Body("![](/Users/me/research/md/olander2022_ielanguage/figures/paper.pdf-0023-02.png)")
     assertEquals(AssetLinks.fromFigures(in), "![](assets/paper.pdf-0023-02.png)")
 
   test("fromFigures accepts every other spelling of the same path"):
@@ -47,31 +48,32 @@ class IngestSuite extends munit.FunSuite:
       "file:///abs/md/ck/figures/x.png",
       "C:\\corpus\\md\\ck\\figures\\x.png"
     )
-    cases.foreach(c => assertEquals(AssetLinks.fromFigures(s"![a]($c)"), "![a](assets/x.png)", c))
+    cases.foreach(c => assertEquals(AssetLinks.fromFigures(AssetLinks.Body(s"![a]($c)")), "![a](assets/x.png)", c))
 
   test("fromFigures maps the name through safeName, so link and stored asset agree"):
-    assertEquals(AssetLinks.fromFigures("![](figures/a b&c.png)".replace(" ", "%20")), "![](assets/a-b-c.png)")
+    assertEquals(AssetLinks.fromFigures(AssetLinks.Body("![](figures/a b&c.png)".replace(" ", "%20"))), "![](assets/a-b-c.png)")
 
   test("fromFigures leaves assets/, remote and non-image links alone, and is idempotent"):
-    val in = "![a](assets/x.png) ![b](https://e.org/figures/y.png) [c](figures/x.png)"
+    val in = AssetLinks.Body("![a](assets/x.png) ![b](https://e.org/figures/y.png) [c](figures/x.png)")
     val once = AssetLinks.fromFigures(in)
-    assert(once.contains("![a](assets/x.png)"), once)
-    assert(once.contains("[c](figures/x.png)"), once)
+    assert(once.value.contains("![a](assets/x.png)"), once)
+    assert(once.value.contains("[c](figures/x.png)"), once)
     assertEquals(AssetLinks.fromFigures(once), once)
 
   // ── alt text ─────────────────────────────────────────────────────────────────────────────────
   test("numberFigures names unlabelled figures in document order and keeps real captions"):
-    val out = AssetLinks.numberFigures(com.histmersion.api.media.AssetLinks.Body("![](a.png)\n![Map of Anatolia](b.png)\n![](c.png)"))
+    val out = AssetLinks.numberFigures(AssetLinks.Body("![](a.png)\n![Map of Anatolia](b.png)\n![](c.png)")).value
     assert(out.contains("![Figure 1](a.png)"), out)
     assert(out.contains("![Map of Anatolia](b.png)"), out)
     assert(out.contains("![Figure 3](c.png)"), out)
 
   // ── OCR picture-text dumps ───────────────────────────────────────────────────────────────────
   test("collapsePictureText folds an OCR picture-text block into a <details>"):
-    val in =
+    val in = AssetLinks.Body(
       "before\n\n**----- Start of picture text -----**<br>\nSlavic<br>Baltic<br>" +
         "**----- End of picture text -----**<br>\n\nafter"
-    val out = AssetLinks.collapsePictureText(in)
+    )
+    val out = AssetLinks.collapsePictureText(in).value
     assert(out.startsWith("before"), out)
     assert(out.endsWith("after"), out)
     assert(out.contains("<details class=\"figtext\"><summary>figure text</summary>"), out)
@@ -85,16 +87,17 @@ class IngestSuite extends munit.FunSuite:
     assertEquals(AssetLinks.collapsePictureText(once), once)
 
   test("normalizeBody does both, and stays idempotent"):
-    val in =
+    val in = AssetLinks.Body(
       "![](/abs/md/ck/figures/f.png)\n\n**----- Start of picture text -----**<br>t**----- End of picture text -----**"
+    )
     val once = AssetLinks.normalizeBody(in)
-    assert(once.contains("![](assets/f.png)"), once)
-    assert(once.contains("<details"), once)
+    assert(once.value.contains("![](assets/f.png)"), once)
+    assert(once.value.contains("<details"), once)
     assertEquals(AssetLinks.normalizeBody(once), once)
 
   // ── OCR boilerplate headings (item 24) ───────────────────────────────────────────────────────
   test("the journal banner and the repeated running head are dropped, real sections are not"):
-    val body =
+    val body = AssetLinks.Body(
       """# Article
         |
         |## The Collapse of the Bronze Age
@@ -109,31 +112,32 @@ class IngestSuite extends munit.FunSuite:
         |
         |Page two of the same running head.
         |""".stripMargin
-    val out = AssetLinks.dropBoilerplateHeadings(body, com.histmersion.api.media.AssetLinks.Title("The Collapse of the Bronze Age"))
+    )
+    val out = AssetLinks.dropBoilerplateHeadings(body, com.histmersion.api.media.AssetLinks.Title("The Collapse of the Bronze Age")).value
     assert(!out.contains("# Article"), out)
     assert(!out.contains("Bronze Age\n"), out)
     assert(out.contains("## Methods"), out)
     assert(out.contains("Page two of the same running head."), out)
 
   test("a section that merely CONTAINS the title is kept — only exact headings go"):
-    val body = "## Article structure\n\n## The Title in context\n"
-    assertEquals(AssetLinks.dropBoilerplateHeadings(body, com.histmersion.api.media.AssetLinks.Title("The Title")), body.stripSuffix("\n"))
+    val body = AssetLinks.Body("## Article structure\n\n## The Title in context\n")
+    assertEquals(AssetLinks.dropBoilerplateHeadings(body, com.histmersion.api.media.AssetLinks.Title("The Title")), body.value.stripSuffix("\n"))
 
   test("normalizeBody with a title is still idempotent"):
-    val in = "# Article\n\n![](/abs/md/ck/figures/f.png)\n\n## T\n\nprose\n"
+    val in = AssetLinks.Body("# Article\n\n![](/abs/md/ck/figures/f.png)\n\n## T\n\nprose\n")
     val once = AssetLinks.normalizeBody(in, com.histmersion.api.media.AssetLinks.NormalizeBodyTitle("T"))
     assertEquals(AssetLinks.normalizeBody(once, com.histmersion.api.media.AssetLinks.NormalizeBodyTitle("T")), once)
-    assert(!once.contains("# Article"), once)
-    assert(once.contains("![](assets/f.png)"), once)
+    assert(!once.value.contains("# Article"), once)
+    assert(once.value.contains("![](assets/f.png)"), once)
 
   // ── assets/… → the served path ───────────────────────────────────────────────────────────────
   test("toWeb points image links at /source/{citekey}/assets/{name}"):
-    val out = AssetLinks.toWeb(md, com.histmersion.api.media.AssetLinks.ToWebCitekey("haak2015_massive"))
+    val out = AssetLinks.toWeb(md, com.histmersion.api.media.AssetLinks.ToWebCitekey("haak2015_massive")).value
     assert(out.contains("![Figure 1](/source/haak2015_massive/assets/fig-1.png)"), out)
     assert(out.contains("(/source/haak2015_massive/assets/plot.jpg \"a title\")"), out)
 
   test("toWeb leaves non-image and foreign links alone"):
-    val out = AssetLinks.toWeb(md, com.histmersion.api.media.AssetLinks.ToWebCitekey("x"))
+    val out = AssetLinks.toWeb(md, com.histmersion.api.media.AssetLinks.ToWebCitekey("x")).value
     assert(out.contains("[not an image](assets/fig-1.png)"), out)
     assert(out.contains("![remote](https://example.org/x.png)"), out)
 
@@ -142,8 +146,8 @@ class IngestSuite extends munit.FunSuite:
 
   // ── assets/… → absolute (MCP) ────────────────────────────────────────────────────────────────
   test("toAbsolute prefixes the public URL and tolerates a trailing slash"):
-    val a = AssetLinks.toAbsolute(md, com.histmersion.api.media.AssetLinks.ToAbsoluteCitekey("ck"), com.histmersion.api.media.AssetLinks.Url("http://host:9/"))
-    val b = AssetLinks.toAbsolute(md, com.histmersion.api.media.AssetLinks.ToAbsoluteCitekey("ck"), com.histmersion.api.media.AssetLinks.Url("http://host:9"))
+    val a = AssetLinks.toAbsolute(md, com.histmersion.api.media.AssetLinks.ToAbsoluteCitekey("ck"), com.histmersion.api.media.AssetLinks.Url("http://host:9/")).value
+    val b = AssetLinks.toAbsolute(md, com.histmersion.api.media.AssetLinks.ToAbsoluteCitekey("ck"), com.histmersion.api.media.AssetLinks.Url("http://host:9")).value
     assertEquals(a, b)
     assert(a.contains("![Figure 1](http://host:9/source/ck/assets/fig-1.png)"), a)
 
@@ -156,13 +160,13 @@ class IngestSuite extends munit.FunSuite:
 
   // ── rendered HTML ────────────────────────────────────────────────────────────────────────────
   test("lazyImages adds loading=lazy exactly once"):
-    val html = """<p><img src="/source/ck/assets/a.png" alt="A" /></p>"""
-    val out = AssetLinks.lazyImages(html)
+    val html = AssetLinks.Html("""<p><img src="/source/ck/assets/a.png" alt="A" /></p>""")
+    val out = AssetLinks.lazyImages(html).value
     assertEquals(out.sliding("loading=".length).count(_ == "loading="), 1)
     assert(out.startsWith("""<p><img loading="lazy" src="""), out)
 
   test("lazyImages leaves an <img> that already declares loading alone"):
-    val html = """<img loading="eager" src="x">"""
+    val html = AssetLinks.Html("""<img loading="eager" src="x">""")
     assertEquals(AssetLinks.lazyImages(html), html)
 
   // ── names and mime types ─────────────────────────────────────────────────────────────────────
@@ -178,23 +182,23 @@ class IngestSuite extends munit.FunSuite:
     assertEquals(AssetLinks.mimeOf(com.histmersion.api.exchange.Bundle.Asset.Extension("a.bin")), "application/octet-stream")
 
   // ── image headers (figures read off disk carry no declared size) ─────────────────────────────
-  private def png(w: Int, h: Int): Array[Byte] =
+  private def png(w: ImageSize.Width, h: ImageSize.Height): ImageSize.Bytes =
     val b = new Array[Byte](24)
     Array[Byte](0x89.toByte, 'P', 'N', 'G', 13, 10, 26, 10).copyToArray(b)
-    List(16 -> w, 20 -> h).foreach { (off, v) =>
+    List(16 -> w.value, 20 -> h.value).foreach { (off, v) =>
       (0 until 4).foreach(i => b(off + i) = ((v >>> (8 * (3 - i))) & 0xff).toByte)
     }
-    b
+    ImageSize.Bytes(b)
 
-  private def gif(w: Int, h: Int): Array[Byte] =
+  private def gif(w: ImageSize.Width, h: ImageSize.Height): ImageSize.Bytes =
     val b = new Array[Byte](10)
     "GIF89a".getBytes("US-ASCII").copyToArray(b)
-    b(6) = (w & 0xff).toByte; b(7) = ((w >>> 8) & 0xff).toByte
-    b(8) = (h & 0xff).toByte; b(9) = ((h >>> 8) & 0xff).toByte
-    b
+    b(6) = (w.value & 0xff).toByte; b(7) = ((w.value >>> 8) & 0xff).toByte
+    b(8) = (h.value & 0xff).toByte; b(9) = ((h.value >>> 8) & 0xff).toByte
+    ImageSize.Bytes(b)
 
   /** SOI, one APP0 segment to be skipped, then SOF0 carrying height then width. */
-  private def jpeg(w: Int, h: Int): Array[Byte] =
+  private def jpeg(w: ImageSize.Width, h: ImageSize.Height): ImageSize.Bytes =
     val app0 = Array[Byte](0xff.toByte, 0xe0.toByte, 0, 4, 0, 0)
     val sof0 = Array[Byte](
       0xff.toByte,
@@ -202,25 +206,25 @@ class IngestSuite extends munit.FunSuite:
       0,
       17,
       8,
-      ((h >>> 8) & 0xff).toByte,
-      (h & 0xff).toByte,
-      ((w >>> 8) & 0xff).toByte,
-      (w & 0xff).toByte
+      ((h.value >>> 8) & 0xff).toByte,
+      (h.value & 0xff).toByte,
+      ((w.value >>> 8) & 0xff).toByte,
+      (w.value & 0xff).toByte
     ) ++
       new Array[Byte](8)
-    Array[Byte](0xff.toByte, 0xd8.toByte) ++ app0 ++ sof0
+    ImageSize.Bytes(Array[Byte](0xff.toByte, 0xd8.toByte) ++ app0 ++ sof0)
 
   test("ImageSize reads PNG, GIF and JPEG headers"):
-    assertEquals(ImageSize.of(png(1920, 1080)), Some((1920, 1080)))
-    assertEquals(ImageSize.of(gif(640, 480)), Some((640, 480)))
-    assertEquals(ImageSize.of(jpeg(800, 600)), Some((800, 600)))
+    assertEquals(ImageSize.of(png(ImageSize.Width(1920), ImageSize.Height(1080))), Some((1920, 1080)))
+    assertEquals(ImageSize.of(gif(ImageSize.Width(640), ImageSize.Height(480))), Some((640, 480)))
+    assertEquals(ImageSize.of(jpeg(ImageSize.Width(800), ImageSize.Height(600))), Some((800, 600)))
 
   test("ImageSize gives up rather than guessing"):
-    assertEquals(ImageSize.of(Array.empty), None)
-    assertEquals(ImageSize.of("not an image at all".getBytes("UTF-8")), None)
-    assertEquals(ImageSize.of(png(1, 1).take(20)), None, "a truncated PNG has no readable IHDR")
+    assertEquals(ImageSize.of(ImageSize.Bytes(Array.empty[Byte])), None)
+    assertEquals(ImageSize.of(ImageSize.Bytes("not an image at all".getBytes("UTF-8"))), None)
+    assertEquals(ImageSize.of(ImageSize.Bytes(png(ImageSize.Width(1), ImageSize.Height(1)).value.take(20))), None, "a truncated PNG has no readable IHDR")
     // an SOI with no frame header must terminate rather than loop
-    assertEquals(ImageSize.of(Array[Byte](0xff.toByte, 0xd8.toByte, 0, 0)), None)
+    assertEquals(ImageSize.of(ImageSize.Bytes(Array[Byte](0xff.toByte, 0xd8.toByte, 0, 0))), None)
 
   // ── the job state machine ────────────────────────────────────────────────────────────────────
   test("legal job transitions and nothing else"):

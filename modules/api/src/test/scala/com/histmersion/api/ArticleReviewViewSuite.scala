@@ -33,7 +33,7 @@ class ArticleReviewViewSuite extends munit.FunSuite:
 
   test("reviewers by the names a person reads"):
     assertEquals(
-      List("rules", "cold-reader", "skeptic", "mechanical", "fixer").map(Article.ReviewView.reviewerName),
+      List("rules", "cold-reader", "skeptic", "mechanical", "fixer").map(r => Article.ReviewView.reviewerName(ReviewFinding.Reviewer(r))),
       List("rules reviewer", "cold reader", "skeptic", "mechanical check", "fixer")
     )
 
@@ -42,13 +42,13 @@ class ArticleReviewViewSuite extends munit.FunSuite:
       Article.ReviewView.outcomeLine(rejected),
       "rejected by fixer in run 1, round 2: the record does not bear on it"
     )
-    val open = rejected.modify(_.outcome).setTo("open").modify(_.note).setTo("").modify(_.closedBy).setTo(None).modify(_.closedRound).setTo(None).modify(_.closedRunNumber).setTo(None)
+    val open = rejected.modify(_.outcome).setTo(ReviewFinding.Outcome("open")).modify(_.note).setTo(ReviewFinding.Note("")).modify(_.closedBy).setTo(None).modify(_.closedRound).setTo(None).modify(_.closedRunNumber).setTo(None)
     assertEquals(Article.ReviewView.outcomeLine(open), "open")
     assertEquals(
-      Article.ReviewView.outcomeLine(open.modify(_.deferred).setTo(true).modify(_.reopened).setTo(2)),
+      Article.ReviewView.outcomeLine(open.modify(_.deferred).setTo(ReviewFinding.Deferred(true)).modify(_.reopened).setTo(ReviewFinding.Reopened(2))),
       "open (left for the next run) (reopened 2 times)"
     )
-    assertEquals(Article.ReviewView.outcomeLine(open.modify(_.outcome).setTo("wont-fix")), "won't fix")
+    assertEquals(Article.ReviewView.outcomeLine(open.modify(_.outcome).setTo(ReviewFinding.Outcome("wont-fix"))), "won't fix")
 
   test("the Markdown: state, goals, approvals waiting, then the history by run and round"):
     val v = Article.ReviewView(
@@ -61,18 +61,18 @@ class ArticleReviewViewSuite extends munit.FunSuite:
       approvals = List(ReviewApproval(com.histmersion.api.research.ReviewApproval.Id(7), com.histmersion.api.research.ReviewApproval.Kind("article-filter")))
     )
     val md = Article.ReviewView.markdown(v)
-    assert(md.startsWith("## Review of [[zz-art]]\n\n**passed** — Reviewed: passed — no MAJOR finding is open."), md)
-    assert(md.contains("Review manager: converged after 1 run (2026-10-02T09:00:00Z)"), md)
-    assert(md.contains("- `g` (reviewed) A goal"), md)
-    assert(md.contains("- approval #7 (article-filter)"), md)
+    assert(md.value.startsWith("## Review of [[zz-art]]\n\n**passed** — Reviewed: passed — no MAJOR finding is open."), md)
+    assert(md.value.contains("Review manager: converged after 1 run (2026-10-02T09:00:00Z)"), md)
+    assert(md.value.contains("- `g` (reviewed) A goal"), md)
+    assert(md.value.contains("- approval #7 (article-filter)"), md)
     assert(
-      md.contains(
+      md.value.contains(
         "#### Run 1, round 1\n\n- **S2** MAJOR · skeptic · omitted-critique · Debate: no critique — " +
           "*rejected by fixer in run 1, round 2: the record does not bear on it*"
       ),
       md
     )
-    assert(Article.ReviewView.markdown(v.modify(_.rounds).setTo(Nil)).endsWith("No finding recorded."))
+    assert(Article.ReviewView.markdown(v.modify(_.rounds).setTo(Nil)).value.endsWith("No finding recorded."))
 
   test("the state crosses the wire as its word"):
     val b = ReviewBadge(ReviewState.InReview, com.histmersion.api.research.ReviewBadge.Label("in review · round 2"), com.histmersion.api.research.ReviewBadge.Detail("In review."), round = Some(com.histmersion.api.research.ReviewRound.Round(2)))

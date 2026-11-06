@@ -132,8 +132,8 @@ class FilterSuite extends munit.FunSuite:
         com.histmersion.api.library.Finding.Id("cline2014_collapse#0"),
         com.histmersion.api.library.Finding.Claim("Ugarit destroyed"),
         Some(com.histmersion.api.catalogue.Place.Region("Ugarit")),
-        Some(35.8),
-        Some(35.6),
+        Some(com.histmersion.api.catalogue.Longitude(35.8)),
+        Some(com.histmersion.api.catalogue.Latitude(35.6)),
         Some(com.histmersion.api.catalogue.Year(-1190)),
         Some(com.histmersion.api.catalogue.Year(-1185)),
         None,
@@ -206,17 +206,17 @@ class FilterSuite extends munit.FunSuite:
     // refuses outright (`range lower bound must be less than or equal to range upper bound`) — a 500
     // on a perfectly ordinary query string.
     val p = Filter.periodOf(Some(com.histmersion.api.catalogue.Year(2000000000L)), None).get
-    assert(p.start <= p.end, p.toString)
+    assert(p.start.value <= p.end.value, p.toString)
     assertEquals(p, Period(Filter.Latest, Filter.Latest))
 
   test("a `to` below the open-ended lower sentinel does not invert it either"):
     val p = Filter.periodOf(None, Some(com.histmersion.api.catalogue.Year(-2000000000L))).get
-    assert(p.start <= p.end, p.toString)
+    assert(p.start.value <= p.end.value, p.toString)
     assertEquals(p, Period(Filter.Earliest, Filter.Earliest))
 
   test("both bounds are clamped, and a reversed pair is still ordered"):
     assertEquals(
-      Filter.periodOf(Some(Long.MaxValue), Some(Long.MinValue)),
+      Filter.periodOf(Some(com.histmersion.api.catalogue.Year(Long.MaxValue)), Some(com.histmersion.api.catalogue.Year(Long.MinValue))),
       Some(Period(Filter.Earliest, Filter.Latest))
     )
     assertEquals(Filter.periodOf(Some(com.histmersion.api.catalogue.Year(-1100)), Some(com.histmersion.api.catalogue.Year(-1300))), Some(Period(com.histmersion.api.catalogue.Year(-1300), com.histmersion.api.catalogue.Year(-1100))))

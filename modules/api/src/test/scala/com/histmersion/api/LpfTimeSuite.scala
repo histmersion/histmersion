@@ -87,10 +87,10 @@ class LpfTimeSuite extends munit.FunSuite:
     assertEquals(in.place.bounds, (Some(-300L), None))
     assertEquals(in.place.period, Some(Period(com.histmersion.api.catalogue.Year(-300), com.histmersion.api.catalogue.Year(-300))), "the known year")
     assertEquals(in.place.open, Some(OpenSide.End))
-    assertEquals(in.names.find(_.name == "Old X").map(_.bounds), Some((None, Some(200L))))
-    assertEquals(in.names.find(_.name == "New X").map(_.bounds), Some((Some(1200L), Some(1300L))))
+    assertEquals(in.names.find(_.name.value == "Old X").map(_.bounds), Some((None, Some(200L))))
+    assertEquals(in.names.find(_.name.value == "New X").map(_.bounds), Some((Some(1200L), Some(1300L))))
     assertEquals(in.relations.map(_.bounds), List((None, Some(-100L))))
-    assertEquals(Lpf.parse(Lpf.render(List(in))), Right(List(in)), "parse(render(x)) == x with open sides")
+    assertEquals(Lpf.parse(Lpf.render(List(in)).value), Right(List(in)), "parse(render(x)) == x with open sides")
 
   test("properties.period with one side missing stays open too"):
     def per(props: String) =

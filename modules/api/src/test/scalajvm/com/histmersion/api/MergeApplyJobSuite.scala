@@ -20,8 +20,8 @@ class MergeApplyJobSuite extends munit.FunSuite:
     com.histmersion.api.exchange.MergeApplyResult.PlanHash("abc123")
   )
 
-  private def of(status: JobState, error: Option[String] = None, r: Option[MergeApplyResult] = None) =
-    MergeApplyJob.of(com.histmersion.api.SpatialHierarchyResult.Job.Id("j1"), status, "f" * 64, com.histmersion.api.exchange.MergeApplyJob.OfPlanHash("abc123"), com.histmersion.api.exchange.MergeApplyJob.OfElapsedMs(1500), error, r)
+  private def of(status: JobState, error: Option[MergeApplyJob.OfError] = None, r: Option[MergeApplyResult] = None) =
+    MergeApplyJob.of(com.histmersion.api.SpatialHierarchyResult.Job.Id("j1"), status, MergeApplyJob.OfBundle("f" * 64), com.histmersion.api.exchange.MergeApplyJob.OfPlanHash("abc123"), com.histmersion.api.exchange.MergeApplyJob.OfElapsedMs(1500), error, r)
 
   test("a running row is running; a done one carries its report"):
     assertEquals(of(JobState.Running).state, MergeJobState.Running)
@@ -32,17 +32,17 @@ class MergeApplyJobSuite extends munit.FunSuite:
     )
 
   test("a row a restart failed is interrupted, and says nothing was half applied"):
-    val j = of(JobState.Failed, error = Some(JobState.Interrupted))
+    val j = of(JobState.Failed, error = Some(MergeApplyJob.OfError(JobState.Interrupted)))
     assertEquals(j.state, MergeJobState.Interrupted)
-    assert(j.error.exists(e => e.contains("never half applied") && e.contains("merge list")), j.error.toString)
+    assert(j.error.exists(e => e.value.contains("never half applied") && e.value.contains("merge list")), j.error.toString)
     assert(MergeMarkdown.applyJob(j).startsWith("**The merge apply was interrupted**"), MergeMarkdown.applyJob(j))
 
   test("a crash is failed with its reason; done without a recorded report is failed, not done"):
     assertEquals(
-      of(JobState.Failed, error = Some("merge apply crashed: boom")).error,
+      of(JobState.Failed, error = Some(MergeApplyJob.OfError("merge apply crashed: boom"))).error,
       Some("merge apply crashed: boom")
     )
-    assertEquals(of(JobState.Failed, error = Some("merge apply crashed: boom")).state, MergeJobState.Failed)
+    assertEquals(of(JobState.Failed, error = Some(MergeApplyJob.OfError("merge apply crashed: boom"))).state, MergeJobState.Failed)
     assertEquals(of(JobState.Done).state, MergeJobState.Failed)
 
   test("the jobs list names what a merge apply is about: its plan"):

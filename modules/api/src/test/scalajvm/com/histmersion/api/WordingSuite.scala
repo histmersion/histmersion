@@ -34,13 +34,13 @@ class WordingSuite extends munit.FunSuite:
     )
 
   test("every pipeline has wording"):
-    Pipeline.values.foreach(p => readable(Wording.pipeline(p), p.wire))
+    Pipeline.values.foreach(p => readable(Wording.pipeline(p), p.wire.value))
     assertEquals(Wording.pipeline(Pipeline.ReviewArticle), "Review an article")
     assertEquals(Wording.pipeline(Pipeline.EnrichSource), "Enrich a source")
     assertEquals(Wording.pipeline(Pipeline.AcquisitionSweep), "Look for copies to fetch")
 
   test("every approval kind has wording"):
-    Approval.Kind.values.foreach(k => readable(Wording.approvalKind(k), k.wire))
+    Approval.Kind.values.foreach(k => readable(Wording.approvalKind(k), k.wire.value))
     assertEquals(Wording.approvalKind(Approval.Kind.ArticlePublish), "Make an article readable")
     assertEquals(Wording.approvalKind(Approval.Kind.StatusChange), "Change a source's status")
     assertEquals(Wording.approvalKind(Approval.Kind.Edge), "Link two sources")
@@ -67,15 +67,15 @@ class WordingSuite extends munit.FunSuite:
         Agents.JobKind,
         MergeApplyJob.JobKind,
         Acquire.Checks.RecheckJob.JobKind
-      ).filterNot(k => RegisteredJobKinds.all.parse(k).isDefined),
+      ).filterNot(k => RegisteredJobKinds.all.parse(com.histmersion.api.jobs.JobKinds.Wire(k)).isDefined),
       Nil
     )
 
   test("every state, status and manager kind has wording"):
-    Run.State.values.foreach(s => readable(Wording.runState(s), s.wire))
-    Approval.State.values.foreach(s => readable(Wording.approvalState(s), s.wire))
+    Run.State.values.foreach(s => readable(Wording.runState(s), s.wire.value))
+    Approval.State.values.foreach(s => readable(Wording.approvalState(s), s.wire.value))
     JobState.values.foreach(s => assert(Wording.jobState(s).head.isUpper, s.toString))
-    Manager.Kind.values.foreach(k => readable(Wording.managerKind(k), k.wire))
+    Manager.Kind.values.foreach(k => readable(Wording.managerKind(k), k.wire.value))
     Source.Status.values.foreach(s => assert(Wording.status(s).head.isUpper, s.toString))
     assertEquals(Wording.status(Source.Status.Unassessed), "Not assessed")
     assertEquals(Wording.runState(Run.State.WaitingApproval), "Waiting for a decision")
@@ -124,4 +124,4 @@ class WordingSuite extends munit.FunSuite:
     assertEquals(Wording.heading("disputed-grand-theories"), "Disputed grand theories")
     assertEquals(Wording.heading("Indo-European origins"), "Indo-European origins")
     assertEquals(Wording.value("bronze_age_collapse"), "bronze age collapse")
-    UiLabels.known.foreach((wire, label) => readable(label, wire))
+    UiLabels.known.foreach((wire, label) => readable(label.value, wire.value))

@@ -33,20 +33,20 @@ class PagingSuite extends munit.FunSuite:
     assertEquals(Paging.grouped(com.histmersion.api.Paging.GroupSize(-4321)), "-4,321")
 
   test("the per-state counts round-trip through their header, a malformed pair skipped"):
-    val counts = List("done" -> 2400, "failed" -> 27, "queued" -> 3)
+    val counts = List(Paging.Page.CountState("done") -> Paging.Count(2400), Paging.Page.CountState("failed") -> Paging.Count(27), Paging.Page.CountState("queued") -> Paging.Count(3))
     assertEquals(Paging.decodeCounts(Paging.encodeCounts(counts)), counts)
     assertEquals(Paging.encodeCounts(Nil), "")
     assertEquals(Paging.decodeCounts(com.histmersion.api.automation.Activity.Counts.Wire("")), Nil)
     assertEquals(Paging.decodeCounts(com.histmersion.api.automation.Activity.Counts.Wire(" done = 4 ,junk,x=y,running=1")), List("done" -> 4, "running" -> 1))
 
   test("a page's total is its state's count under a filter, else every state's"):
-    val counts = List("done" -> 10, "failed" -> 3)
+    val counts = List(Paging.Page.CountState("done") -> Paging.Count(10), Paging.Page.CountState("failed") -> Paging.Count(3))
     val all = Paging.Page.of(counts, None, Some(com.histmersion.api.library.Filter.Last("j9")))
     assertEquals((all.total, all.next, all.hasMore, all.all), (13, Some("j9"), true, 13))
     assertEquals(Paging.Page.of(counts, Some(com.histmersion.api.Paging.Page.CountState("failed")), None).total, 3)
     assertEquals(Paging.Page.of(counts, Some(com.histmersion.api.Paging.Page.CountState("running")), None).total, 0)
-    assertEquals(all.count("failed"), 3)
-    assertEquals(all.count("running"), 0)
+    assertEquals(all.count(Paging.Page.CountState("failed")), 3)
+    assertEquals(all.count(Paging.Page.CountState("running")), 0)
     assert(!Paging.Page.empty.hasMore)
 
   test("limit + 1 rows say whether more lie beyond the page"):
@@ -56,11 +56,11 @@ class PagingSuite extends munit.FunSuite:
 
   test("the older line names the next cursor, and is absent on the last page"):
     val more = Paging.Page(com.histmersion.api.Paging.Page.Total(30), Some(com.histmersion.api.Paging.Cursor("abc")), Nil)
-    assertEquals(Paging.olderLine(more, c => s"`--before $c`"), Some("Older: `--before abc`"))
-    assertEquals(Paging.olderLine(more.modify(_.next).setTo(None), c => c), None)
+    assertEquals(Paging.olderLine(more, c => Paging.OlderLine.Text(s"`--before $c`")), Some("Older: `--before abc`"))
+    assertEquals(Paging.olderLine(more.modify(_.next).setTo(None), c => Paging.OlderLine.Text(c.value)), None)
 
   test("the jobs, runs and approvals listings head a partial page and say how to go on"):
-    val page = Paging.Page(com.histmersion.api.Paging.Page.Total(250), Some(com.histmersion.api.Paging.Cursor("j2")), List("done" -> 240, "failed" -> 10))
+    val page = Paging.Page(com.histmersion.api.Paging.Page.Total(250), Some(com.histmersion.api.Paging.Cursor("j2")), List(Paging.Page.CountState("done") -> Paging.Count(240), Paging.Page.CountState("failed") -> Paging.Count(10)))
     val js = Vector(JobInfo(com.histmersion.api.SpatialHierarchyResult.Job.Id("j1"), com.histmersion.api.jobs.JobKinds.Wire(Ingest.KindIngest), com.histmersion.api.jobs.JobInfo.Status("done")), JobInfo(com.histmersion.api.SpatialHierarchyResult.Job.Id("j2"), com.histmersion.api.jobs.JobKinds.Wire(Ingest.KindIngest), com.histmersion.api.jobs.JobInfo.Status("done")))
     val md = IngestMarkdown.jobs(js, page, Some(com.histmersion.api.library.Ingest.JobStatus("done")), Some(com.histmersion.api.library.Ingest.JobAge("Older: `histmersion jobs --before j2`")))
     assert(md.startsWith("### Latest 2 of 250 done jobs\n"), md)
@@ -69,7 +69,7 @@ class PagingSuite extends munit.FunSuite:
     assertEquals(IngestMarkdown.jobs(Vector.empty, page, Some(com.histmersion.api.library.Ingest.JobStatus("failed"))), "_No failed jobs._")
 
     val rs = List(RunInfo(com.histmersion.api.automation.Agents.RunInfo.Id("r1"), com.histmersion.api.automation.Agents.RunInfo.Pipeline("enrich-source"), com.histmersion.api.automation.Agents.RunInfo.Target("a2020_b"), com.histmersion.api.automation.Agents.RunInfo.Status("done")))
-    val runs = AgentsMarkdown.runs(rs, page.modify(_.total).setTo(12), None, Some(com.histmersion.api.Paging.Cursor("Older: x")))
+    val runs = AgentsMarkdown.runs(rs, page.modify(_.total).setTo(Paging.Page.Total(12)), None, Some(com.histmersion.api.Paging.Cursor("Older: x")))
     assert(runs.startsWith("# Agent runs\n\nLatest 1 of 12 runs.\n\n- r1"), runs)
     assert(runs.endsWith("\n\nOlder: x"), runs)
     assertEquals(AgentsMarkdown.runs(rs), "# Agent runs\n\n- " + AgentsMarkdown.runLine(rs.head))

@@ -14,14 +14,14 @@ class AliasesSuite extends munit.FunSuite:
 
   test("the rule names the kind's identifier"):
     assert(
-      Aliases.rule(AliasKinds.SourceRecords).startsWith("The old citekey stays an alias"),
+      Aliases.rule(AliasKinds.SourceRecords).value.startsWith("The old citekey stays an alias"),
       Aliases.rule(AliasKinds.SourceRecords)
     )
     assert(
-      Aliases.rule(AliasKinds.GoalRecords).contains("under its new slug"),
+      Aliases.rule(AliasKinds.GoalRecords).value.contains("under its new slug"),
       Aliases.rule(AliasKinds.GoalRecords)
     )
-    AliasKinds.all.foreach(k => assert(Aliases.rule(k).contains("every write"), k.toString))
+    AliasKinds.all.foreach(k => assert(Aliases.rule(k).value.contains("every write"), k.toString))
 
   test("followed: a note only when the identifier asked for was an old one"):
     assertEquals(
@@ -30,7 +30,7 @@ class AliasesSuite extends munit.FunSuite:
     )
     assertEquals(Aliases.followed(AliasKinds.EventRecords, com.histmersion.api.aliases.Aliases.Id(" zz_new "), com.histmersion.api.aliases.Aliases.Id("zz_new")), None)
     assertEquals(Aliases.note(AliasKinds.GoalRecords, com.histmersion.api.aliases.Aliases.Id("a"), com.histmersion.api.aliases.Aliases.Id("a"))(com.histmersion.api.aliases.Aliases.Note("md")), "md")
-    assert(Aliases.note(AliasKinds.GoalRecords, com.histmersion.api.aliases.Aliases.Id("a"), com.histmersion.api.aliases.Aliases.Id("b"))(com.histmersion.api.aliases.Aliases.Note("md")).endsWith("\n\nmd"))
+    assert(Aliases.note(AliasKinds.GoalRecords, com.histmersion.api.aliases.Aliases.Id("a"), com.histmersion.api.aliases.Aliases.Id("b"))(com.histmersion.api.aliases.Aliases.Note("md")).value.endsWith("\n\nmd"))
 
   test("every label kind of a bundle that can be renamed has an alias kind"):
     assertEquals(
