@@ -47,7 +47,7 @@ object TileCoord:
   type Y = Y.T
   object Y extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
-  val Extent: com.histmersion.domain.catalogue.maptiles.TileCoord.Extent = 4096
+  val Extent: com.histmersion.domain.catalogue.maptiles.TileCoord.Extent = com.histmersion.domain.catalogue.maptiles.TileCoord.Extent(4096)
 
   /** How far north and south the grid goes: Web Mercator's square world. */
   val MaxLat: com.histmersion.domain.catalogue.maptiles.TileCoord.MaxLat = 85.0511287798

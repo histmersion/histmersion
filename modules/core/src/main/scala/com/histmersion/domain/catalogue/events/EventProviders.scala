@@ -132,7 +132,7 @@ object EventProviders:
           la >= b.minLat && la <= b.maxLat &&
             (if b.crossesAntimeridian then lo >= b.minLon || lo <= b.maxLon else lo >= b.minLon && lo <= b.maxLon)
         val inRegion = t.region.forall(in)
-        if t.area.exists(b => !in(b)) then Left("outside --bbox")
+        if t.area.exists(b => !in(b)) then Left(com.histmersion.domain.catalogue.events.EventProviders.Problem("outside --bbox"))
         else
           r.kind match
             case EventTaxonomy.Eruption =>
@@ -146,4 +146,4 @@ object EventProviders:
                 Left(s"magnitude below $min${if inRegion then "" else " outside the region"}")
               else Right(())
             case _ => Right(())
-      case _ => Left("no position")
+      case _ => Left(com.histmersion.domain.catalogue.events.EventProviders.Problem("no position"))

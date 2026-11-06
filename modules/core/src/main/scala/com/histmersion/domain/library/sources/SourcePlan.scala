@@ -187,12 +187,12 @@ final class SourcePlan(in: MergePlanner.Input) extends PlanRun:
         mk(MergeIssue.Kind.StatusDiffers, s"status differs: ${l.status.wire} here, ${r.status.wire} in the bundle", lr)
       ),
       Option.when(p.evidence.titleDiffers)(
-        mk(MergeIssue.Kind.TitleDiffers, "title differs", lr, why = List(s"here: ${l.title}", s"bundle: ${r.title}"))
+        mk(MergeIssue.Kind.TitleDiffers, com.histmersion.domain.library.sources.SourcePlan.FieldIssuesMkTitle("title differs"), lr, why = List(s"here: ${l.title}", s"bundle: ${r.title}"))
       ),
       Option.when(p.evidence.authors == MergeText.AuthorAgreement.Disjoint)(
         mk(
           MergeIssue.Kind.AuthorsDiffers,
-          "no author in common",
+          com.histmersion.domain.library.sources.SourcePlan.FieldIssuesMkTitle("no author in common"),
           lr,
           why = List(s"here: ${l.authors.mkString("; ")}", s"bundle: ${r.authors.mkString("; ")}")
         )
@@ -296,7 +296,7 @@ final class SourcePlan(in: MergePlanner.Input) extends PlanRun:
       (s: com.histmersion.api.exchange.Bundle.Source) => s.citekey,
       (s: com.histmersion.api.exchange.Bundle.Source) =>
         in.labels.citekeys.get(s.citekey).orElse(in.labels.aliases.get(s.citekey)),
-      "citekey",
+      com.histmersion.util.data.exchange.PlanQuestions.LabelTakenWhat("citekey"),
       lr,
       (_: com.histmersion.api.exchange.Bundle.Source, _: UUID) => None,
       (s: com.histmersion.api.exchange.Bundle.Source, o: UUID) =>
@@ -350,7 +350,7 @@ final class SourcePlan(in: MergePlanner.Input) extends PlanRun:
     es.modify(_.sources)
       .setTo(
         MergePlanner
-          .replaced(es0.sources, _.uid, sourceLine, es0, (_: com.histmersion.api.exchange.Bundle.Source) => true)
+          .replaced(es0.sources, _.uid, sourceLine, es0, (_: com.histmersion.api.exchange.Bundle.Source) => com.histmersion.domain.MergePlanner.ReplacedKeep(true))
       )
 
   override def planned(plan: MergePlan): MergePlan =

@@ -82,7 +82,7 @@ object MediaMatch:
     Uncertain.exists(s.contains)
 
   /** Pure: the name key of a value (empty when it is uncertain or blank). */
-  def keyOf(v: com.histmersion.domain.media.imports.MediaMatch.KeyOfV): com.histmersion.domain.media.imports.MediaMatch.KeyOfResult = if uncertain(v) then "" else Geocode.key(v)
+  def keyOf(v: com.histmersion.domain.media.imports.MediaMatch.KeyOfV): com.histmersion.domain.media.imports.MediaMatch.KeyOfResult = if uncertain(v) then com.histmersion.domain.media.imports.MediaMatch.KeyOfResult("") else Geocode.key(v)
 
   /** Pure: do two periods overlap? */
   def overlaps(a: Period, b: Period): Boolean = a.start.value <= b.end.value && b.start.value <= a.end.value
@@ -108,18 +108,18 @@ object MediaMatch:
     */
   def geography(rec: MediaRecord, target: PlaceInfo, resolve: Resolve, specific: com.histmersion.domain.media.imports.MediaMatch.GeographySpecific): Either[com.histmersion.domain.media.imports.MediaMatch.GeographyResultPart1, com.histmersion.domain.media.imports.MediaMatch.GeographyResultPart2] =
     val named = rec.geography.flatMap((f, v) => Option(keyOf(v)).filter(_.nonEmpty).map(k => (f, v.trim, k)))
-    if named.isEmpty then Left("no place on the record")
+    if named.isEmpty then Left(com.histmersion.domain.media.imports.MediaMatch.GeographyResultPart1("no place on the record"))
     else if specific then
       named.iterator.map((f, v, k) => (f, v, resolve(k))).find(_._3.nonEmpty) match
-        case None                                         => Left("its place is not on the map")
+        case None                                         => Left(com.histmersion.domain.media.imports.MediaMatch.GeographyResultPart1("its place is not on the map"))
         case Some((f, v, ids)) if ids == Set(target.id)   => Right(s"$f = $v")
-        case Some((_, _, ids)) if ids.contains(target.id) => Left("its place name is ambiguous on the map")
-        case Some(_)                                      => Left("names another place on the map")
+        case Some((_, _, ids)) if ids.contains(target.id) => Left(com.histmersion.domain.media.imports.MediaMatch.GeographyResultPart1("its place name is ambiguous on the map"))
+        case Some(_)                                      => Left(com.histmersion.domain.media.imports.MediaMatch.GeographyResultPart1("names another place on the map"))
     else
       named.find((_, _, k) => target.keys(k)) match
-        case None            => Left("its place is not this one")
+        case None            => Left(com.histmersion.domain.media.imports.MediaMatch.GeographyResultPart1("its place is not this one"))
         case Some((f, v, k)) =>
-          if resolve(k) == Set(target.id) then Right(s"$f = $v") else Left("its place name is ambiguous on the map")
+          if resolve(k) == Set(target.id) then Right(s"$f = $v") else Left(com.histmersion.domain.media.imports.MediaMatch.GeographyResultPart1("its place name is ambiguous on the map"))
 
   /** Pure: the museum rule — geography, then the dates ([[dated]]); the basis names both. */
   def museum(
@@ -128,7 +128,7 @@ object MediaMatch:
       resolve: Resolve,
       latest: Option[com.histmersion.domain.media.imports.MediaMatch.MuseumLatest] = None
   ): Either[com.histmersion.domain.media.imports.MediaMatch.MuseumResultPart1, com.histmersion.domain.media.imports.MediaMatch.MuseumResultPart2] =
-    geography(rec, target, resolve, specific = true).flatMap(dated(_, rec, target, latest))
+    geography(rec, target, resolve, specific = com.histmersion.domain.media.imports.MediaMatch.GeographySpecific(true)).flatMap(dated(_, rec, target, latest))
 
   /** Pure: the dates half of a match, after the place half (`basis`): the record must be dated; with a `latest` year (a
     * collection's `max-year`: the last year the research is about), made by then — a record made later is refused
@@ -137,9 +137,9 @@ object MediaMatch:
     */
   def dated(basis: com.histmersion.domain.media.imports.MediaMatch.DatedBasis, rec: MediaRecord, target: PlaceInfo, latest: Option[com.histmersion.Year]): Either[com.histmersion.domain.media.imports.MediaMatch.DatedResultPart1, com.histmersion.domain.media.imports.MediaMatch.DatedResultPart2] =
     (rec.period, target.period) match
-      case (None, _)                                      => Left("no dates on the record")
+      case (None, _)                                      => Left(com.histmersion.domain.media.imports.MediaMatch.DatedResultPart1("no dates on the record"))
       case (Some(r), _) if latest.exists(r.end.value > _) => Left(s"made after ${year(latest.get)}")
-      case (_, None)                                      => Left("the place has no period to compare")
+      case (_, None)                                      => Left(com.histmersion.domain.media.imports.MediaMatch.DatedResultPart1("the place has no period to compare"))
       case (Some(r), Some(p))                             =>
         val window = latest
           .filter(y => y >= p.start.value && y < p.end.value)
@@ -188,12 +188,12 @@ object MediaMatch:
           case Some(basis)                                   => Right(basis)
           case None if byId.exists(_._2.contains(target.id)) => Left("its place id is ambiguous on the map")
           case None if byId.nonEmpty                         => Left("its place id names another place on the map")
-          case None                                          => geography(rec, target, resolve, specific = true)
+          case None                                          => geography(rec, target, resolve, specific = com.histmersion.domain.media.imports.MediaMatch.GeographySpecific(true))
     geo.flatMap(dated(_, rec, target, latest))
 
   /** Pure: the map rule — a location naming the target, a map made by `maxYear` (public domain). */
   def map(rec: MediaRecord, target: PlaceInfo, resolve: Resolve, maxYear: com.histmersion.Year): Either[com.histmersion.domain.media.imports.MediaMatch.MapResultPart1, com.histmersion.domain.media.imports.MediaMatch.MapResultPart2] =
     rec.period match
-      case None                             => Left("no date on the map")
+      case None                             => Left(com.histmersion.domain.media.imports.MediaMatch.MapResultPart1("no date on the map"))
       case Some(p) if p.end.value > maxYear => Left(s"made after $maxYear")
-      case Some(p) => geography(rec, target, resolve, specific = false).map(geo => s"$geo; map of ${years(p)}")
+      case Some(p) => geography(rec, target, resolve, specific = com.histmersion.domain.media.imports.MediaMatch.GeographySpecific(false)).map(geo => s"$geo; map of ${years(p)}")

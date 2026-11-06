@@ -25,7 +25,7 @@ object CodexRetention:
   type SessionDirsValue = SessionDirsValue.T
   object SessionDirsValue extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
-  val SessionDirs: List[com.histmersion.domain.CodexRetention.SessionDirs] = List("sessions", "archived_sessions")
+  val SessionDirs: List[com.histmersion.domain.CodexRetention.SessionDirs] = List(com.histmersion.domain.CodexRetention.SessionDirsValue("sessions"), com.histmersion.domain.CodexRetention.SessionDirsValue("archived_sessions"))
 
   /** One file under the home: its path relative to the home (`/`-separated), size, last change. */
   final case class FileInfo(rel: FileInfo.Rel, bytes: FileInfo.Bytes, modifiedMs: FileInfo.ModifiedMs)

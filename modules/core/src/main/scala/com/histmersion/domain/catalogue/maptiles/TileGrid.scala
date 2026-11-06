@@ -21,7 +21,7 @@ object TileGrid:
   type CellUnits = CellUnits.T
   object CellUnits extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
-  val TilePx: com.histmersion.domain.catalogue.maptiles.TileGrid.TilePx = 512
+  val TilePx: com.histmersion.domain.catalogue.maptiles.TileGrid.TilePx = com.histmersion.domain.catalogue.maptiles.TileGrid.TilePx(512)
 
   /** The grid of `ui.map-tiles`: tiles to `maxZoom`, groups above `maxPoints` items, cells of `cellPx` pixels (each
     * held to at least 1 and at most a tile).

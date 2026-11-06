@@ -57,10 +57,10 @@ object GoalFocus:
   val PickWhyMinSources: _root_.com.histmersion.domain.GoalFocus.Settings.MinSources.type = _root_.com.histmersion.domain.GoalFocus.Settings.MinSources
 
   enum Stage(val rank: Stage.Rank, val wire: Stage.Wire):
-    case Reviewing extends Stage(0, "reviewing")
-    case Compiling extends Stage(1, "compiling")
-    case Ready extends Stage(2, "ready")
-    case Gathering extends Stage(3, "gathering")
+    case Reviewing extends Stage(com.histmersion.domain.GoalFocus.Stage.Rank(0), com.histmersion.domain.GoalFocus.Stage.Wire("reviewing"))
+    case Compiling extends Stage(com.histmersion.domain.GoalFocus.Stage.Rank(1), com.histmersion.domain.GoalFocus.Stage.Wire("compiling"))
+    case Ready extends Stage(com.histmersion.domain.GoalFocus.Stage.Rank(2), com.histmersion.domain.GoalFocus.Stage.Wire("ready"))
+    case Gathering extends Stage(com.histmersion.domain.GoalFocus.Stage.Rank(3), com.histmersion.domain.GoalFocus.Stage.Wire("gathering"))
 
   object Stage:
     type Rank = Rank.T
@@ -88,12 +88,12 @@ object GoalFocus:
       itemId: Work.ItemId,
       kind: Work.Kind,
       status: Work.Status,
-      target: Work.Target = "",
-      person: Work.Person = false,
-      focusHeld: Work.FocusHeld = false,
-      personHeld: Work.PersonHeld = false,
+      target: Work.Target = com.histmersion.domain.GoalFocus.Work.Target(""),
+      person: Work.Person = com.histmersion.domain.GoalFocus.Work.Person(false),
+      focusHeld: Work.FocusHeld = com.histmersion.domain.GoalFocus.Work.FocusHeld(false),
+      personHeld: Work.PersonHeld = com.histmersion.domain.GoalFocus.Work.PersonHeld(false),
       approval: Option[Work.Approval] = None,
-      approvalByPerson: Work.ApprovalByPerson = false
+      approvalByPerson: Work.ApprovalByPerson = com.histmersion.domain.GoalFocus.Work.ApprovalByPerson(false)
   ):
     def waitsForPerson: Boolean = approval.isDefined && approvalByPerson
 
@@ -130,16 +130,16 @@ object GoalFocus:
       slug: Facts.Slug,
       parent: Option[Facts.Parent] = None,
       status: Facts.Status = Goal.Status.Seeding,
-      createdAt: Facts.CreatedAt = "",
-      sources: Facts.Sources = 0,
-      articles: Facts.Articles = 0,
-      unreviewed: Facts.Unreviewed = 0,
-      compileOpen: Facts.CompileOpen = 0,
+      createdAt: Facts.CreatedAt = com.histmersion.domain.GoalFocus.Facts.CreatedAt(""),
+      sources: Facts.Sources = com.histmersion.domain.GoalFocus.Facts.Sources(0),
+      articles: Facts.Articles = com.histmersion.domain.GoalFocus.Facts.Articles(0),
+      unreviewed: Facts.Unreviewed = com.histmersion.domain.GoalFocus.Facts.Unreviewed(0),
+      compileOpen: Facts.CompileOpen = com.histmersion.domain.GoalFocus.Facts.CompileOpen(0),
       work: List[Work] = Nil,
       lastStop: Option[Facts.LastStop] = None,
-      pinned: Facts.Pinned = false,
-      priority: Facts.Priority = 0,
-      active: Facts.Active = false,
+      pinned: Facts.Pinned = com.histmersion.domain.GoalFocus.Facts.Pinned(false),
+      priority: Facts.Priority = com.histmersion.domain.GoalFocus.Facts.Priority(0),
+      active: Facts.Active = com.histmersion.domain.GoalFocus.Facts.Active(false),
       since: Option[Facts.Since] = None
   )
 
@@ -175,7 +175,7 @@ object GoalFocus:
     * `plansByPerson` = a person decides goal plans (`agents.approvals.goal-plan = manual`) and `openPersonPlans` of
     * them are open — at `max` such open plans, no further goal is activated only to ask for one more.
     */
-  final case class Settings(max: Settings.Max, minSources: Settings.MinSources, plansByPerson: Settings.PlansByPerson = false, openPersonPlans: Settings.OpenPersonPlans = 0)
+  final case class Settings(max: Settings.Max, minSources: Settings.MinSources, plansByPerson: Settings.PlansByPerson = com.histmersion.domain.GoalFocus.Settings.PlansByPerson(false), openPersonPlans: Settings.OpenPersonPlans = com.histmersion.domain.GoalFocus.Settings.OpenPersonPlans(0))
 
   object Settings:
     type Max = Max.T
@@ -210,7 +210,7 @@ object GoalFocus:
     val Plans = "plans"
 
   /** An active or queued goal, with why it is where it is. */
-  final case class Pick(slug: Pick.Slug, stage: Stage, why: Pick.Why, pinned: Pick.Pinned = false, since: Option[Pick.Since] = None)
+  final case class Pick(slug: Pick.Slug, stage: Stage, why: Pick.Why, pinned: Pick.Pinned = com.histmersion.domain.GoalFocus.Pick.Pinned(false), since: Option[Pick.Since] = None)
 
   object Pick:
     type Slug = Slug.T
@@ -308,10 +308,10 @@ object GoalFocus:
 
   /** The stage in words, with the numbers behind it. */
   def stageWhy(f: Facts, st: Stage, minSources: com.histmersion.domain.GoalFocus.Settings.MinSources): com.histmersion.domain.GoalFocus.Pick.Why = st match
-    case Stage.Reviewing => s"${f.unreviewed} of ${Plural.count(f.articles, "article")} still to pass review"
-    case Stage.Compiling => s"${Plural.count(f.compileOpen, "approved article")} to compile"
-    case Stage.Ready => s"${Plural.count(f.sources, "source")} (at least ${math.max(1, minSources)}), no article yet"
-    case Stage.Gathering => s"${Plural.count(f.sources, "source")}: still gathering its plan and sources"
+    case Stage.Reviewing => s"${f.unreviewed} of ${Plural.count(f.articles, com.histmersion.api.Plural.CountSingular("article"))} still to pass review"
+    case Stage.Compiling => s"${Plural.count(f.compileOpen, com.histmersion.api.Plural.CountSingular("approved article"))} to compile"
+    case Stage.Ready => s"${Plural.count(f.sources, com.histmersion.api.Plural.CountSingular("source"))} (at least ${math.max(1, minSources)}), no article yet"
+    case Stage.Gathering => s"${Plural.count(f.sources, com.histmersion.api.Plural.CountSingular("source"))}: still gathering its plan and sources"
 
   /** Where one goal stands now. A parent with unfinished sub-goals counts only its plan; a goal whose model-using items
     * all wait for a person (an approval only a person decides, or a person's hold), or that has none left (stopped:
@@ -328,25 +328,25 @@ object GoalFocus:
       if runnable.isEmpty && open.nonEmpty then
         Fit.Waits(
           Code.Children,
-          s"waits for its ${Plural.count(open.size, "unfinished sub-goal")} before its own articles"
+          s"waits for its ${Plural.count(open.size, com.histmersion.api.Plural.CountSingular("unfinished sub-goal"))} before its own articles"
         )
       else if f.work.isEmpty then
         f.lastStop match
           case Some(o) => Fit.Waits(Code.Stuck, s"stuck: its last item stopped — ${o.take(300)}")
           case None    =>
-            Fit.Waits(Code.Idle, "idle: nothing for a model to do until its cron fires or new sources arrive")
+            Fit.Waits(Code.Idle, com.histmersion.domain.GoalFocus.Fit.Waits.Why("idle: nothing for a model to do until its cron fires or new sources arrive"))
       else if runnable.isEmpty then
         val ids = (allowed ++ allowed
           .flatMap(blockers(_, f.work))).flatMap(w => w.approval.filter(_ => w.approvalByPerson)).distinct.sorted
         if ids.nonEmpty then
           Fit.Waits(Code.Person, s"waits for a person: ${ids.map(i => s"approval #$i").mkString(", ")}")
-        else Fit.Waits(Code.Held, "its items are held by a person")
+        else Fit.Waits(Code.Held, com.histmersion.domain.GoalFocus.Fit.Waits.Why("its items are held by a person"))
       else if !f.active && !f.pinned && s.plansByPerson && s.max > 0 && s.openPersonPlans >= s.max &&
         runnable.forall(w => w.kind == PlanGoalItem && w.status == ItemStatus.Pending.wire)
       then
         Fit.Waits(
           Code.Plans,
-          s"its next step is a goal plan, and ${Plural.count(s.openPersonPlans, "goal plan")} already wait for a person"
+          s"its next step is a goal plan, and ${Plural.count(s.openPersonPlans, com.histmersion.api.Plural.CountSingular("goal plan"))} already wait for a person"
         )
       else Fit.Candidate(stage(f, s.minSources))
 
@@ -514,8 +514,8 @@ object GoalFocus:
       kind: Item.Kind,
       status: Item.Status,
       goals: List[Item.Goals],
-      person: Item.Person = false,
-      focusHeld: Item.FocusHeld = false
+      person: Item.Person = com.histmersion.domain.GoalFocus.Item.Person(false),
+      focusHeld: Item.FocusHeld = com.histmersion.domain.GoalFocus.Item.FocusHeld(false)
   )
 
   object Item:

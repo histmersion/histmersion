@@ -29,7 +29,7 @@ object CompareRuns:
   type OutputName = OutputName.T
   object OutputName extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
-  final case class Tokens(input: Tokens.Input = 0, output: Tokens.Output = 0, cacheRead: Tokens.CacheRead = 0, cacheWrite: Tokens.CacheWrite = 0):
+  final case class Tokens(input: Tokens.Input = com.histmersion.domain.CompareRuns.Tokens.Input(0), output: Tokens.Output = com.histmersion.domain.CompareRuns.Tokens.Output(0), cacheRead: Tokens.CacheRead = com.histmersion.domain.CompareRuns.Tokens.CacheRead(0), cacheWrite: Tokens.CacheWrite = com.histmersion.domain.CompareRuns.Tokens.CacheWrite(0)):
     def +(o: Tokens): Tokens =
       Tokens(input + o.input, output + o.output, cacheRead + o.cacheRead, cacheWrite + o.cacheWrite)
 

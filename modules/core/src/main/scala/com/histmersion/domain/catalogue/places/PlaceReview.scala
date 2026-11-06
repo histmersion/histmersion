@@ -67,16 +67,16 @@ object PlaceReview:
   type EvidenceOfResult = EvidenceOfResult.T
   object EvidenceOfResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
-  val PolityTypes: Set[com.histmersion.domain.catalogue.places.PlaceReview.PolityTypes] = Set("province", "province-2", "satrapy", "regio-augusti", "state", "diocese")
+  val PolityTypes: Set[com.histmersion.domain.catalogue.places.PlaceReview.PolityTypes] = Set(com.histmersion.domain.catalogue.places.PlaceReview.PolityTypesValue("province"), com.histmersion.domain.catalogue.places.PlaceReview.PolityTypesValue("province-2"), com.histmersion.domain.catalogue.places.PlaceReview.PolityTypesValue("satrapy"), com.histmersion.domain.catalogue.places.PlaceReview.PolityTypesValue("regio-augusti"), com.histmersion.domain.catalogue.places.PlaceReview.PolityTypesValue("state"), com.histmersion.domain.catalogue.places.PlaceReview.PolityTypesValue("diocese"))
 
   /** Pleiades types that make a place a people. */
-  val PeopleTypes: Set[com.histmersion.domain.catalogue.places.PlaceReview.PeopleTypes] = Set("people")
+  val PeopleTypes: Set[com.histmersion.domain.catalogue.places.PlaceReview.PeopleTypes] = Set(com.histmersion.domain.catalogue.places.PlaceReview.PeopleTypesValue("people"))
 
   /** Pleiades types that make a "region" a settlement. */
-  val SiteTypes: Set[com.histmersion.domain.catalogue.places.PlaceReview.SiteTypes] = Set("settlement", "settlement-modern", "deme-attic")
+  val SiteTypes: Set[com.histmersion.domain.catalogue.places.PlaceReview.SiteTypes] = Set(com.histmersion.domain.catalogue.places.PlaceReview.SiteTypesValue("settlement"), com.histmersion.domain.catalogue.places.PlaceReview.SiteTypesValue("settlement-modern"), com.histmersion.domain.catalogue.places.PlaceReview.SiteTypesValue("deme-attic"))
 
   /** Pleiades' "still extant" upper bound (`maxDate = 2100`). */
-  val ExtantYear: com.histmersion.domain.catalogue.places.PlaceReview.ExtantYear = 2100L
+  val ExtantYear: com.histmersion.domain.catalogue.places.PlaceReview.ExtantYear = com.histmersion.domain.catalogue.places.PlaceReview.ExtantYear(2100L)
 
   /** The Wikidata classes the extract selects places by (`db/gazetteer`), in words. */
   val WikidataClasses: Map[com.histmersion.domain.catalogue.places.PlaceReview.WikidataClassesPart1, com.histmersion.domain.catalogue.places.PlaceReview.WikidataClassesPart2] = Map(
@@ -86,7 +86,7 @@ object PlaceReview:
     "Q15661340" -> "ancient city",
     "Q839954" -> "archaeological site"
   )
-  val WikidataPolity: com.histmersion.domain.catalogue.places.PlaceReview.WikidataPolity = "Q3024240"
+  val WikidataPolity: com.histmersion.domain.catalogue.places.PlaceReview.WikidataPolity = com.histmersion.domain.catalogue.places.PlaceReview.WikidataPolity("Q3024240")
 
   private val Withdrawn = "(?i)^withdrawn\\b.*".r
 
@@ -302,7 +302,7 @@ object PlaceReview:
               )
             )
       case None if Withdrawn.matches(e.label.trim) =>
-        Some(Proposal.Review(e.id, e.label, "withdrawn by Pleiades, with no replacement named", ev))
+        Some(Proposal.Review(e.id, e.label, com.histmersion.domain.catalogue.places.PlaceReview.Proposal.Review.Reason("withdrawn by Pleiades, with no replacement named"), ev))
       case None if e.kind == Place.Kind.Feature => None
       case None                                 =>
         val settled = types.intersect(SiteTypes)
@@ -323,7 +323,7 @@ object PlaceReview:
           if e.kind == Place.Kind.Polity && write.isEmpty then None
           else Some(Proposal.Reclassify(e.id, e.label, e.kind, Place.Kind.Polity, write, note, ev))
         else if types.intersect(PeopleTypes).nonEmpty && !keepSite then
-          to(Place.Kind.People, "a people or civic tribe — a group of persons, not a territory")
+          to(Place.Kind.People, com.histmersion.domain.catalogue.places.PlaceReview.ProposeToReason("a people or civic tribe — a group of persons, not a territory"))
         else if settled.nonEmpty && !RegionAside.matches(e.label) then
           to(Place.Kind.Site, s"a settlement (${settled.toList.sorted.mkString(", ")}), not a region")
         else if e.kind != Place.Kind.Polity && e.items.exists(_.itemClass.contains(WikidataPolity)) then

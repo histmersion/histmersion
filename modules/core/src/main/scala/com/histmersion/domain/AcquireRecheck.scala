@@ -80,7 +80,7 @@ object AcquireRecheck:
   /** An item's last check: when, under which fetcher generation ([[generation]]), and whether it got no answer
     * ([[Outcome.Failed]]: a rate limit, an upstream down).
     */
-  final case class LastCheck(at: Instant, generation: LastCheck.Generation, failed: LastCheck.Failed = false)
+  final case class LastCheck(at: Instant, generation: LastCheck.Generation, failed: LastCheck.Failed = com.histmersion.domain.AcquireRecheck.LastCheck.Failed(false))
 
   object LastCheck:
     type Generation = Generation.T
@@ -139,16 +139,16 @@ object AcquireRecheck:
   /** What a check found, as stored (`acquire_checks.outcome`). */
   enum Outcome(val wire: Outcome.Wire):
     /** In the corpus with its original: closed. */
-    case Closed extends Outcome("closed")
+    case Closed extends Outcome(com.histmersion.domain.AcquireRecheck.Outcome.Wire("closed"))
 
     /** A legal copy found and handed to the conversion; the conversion closes the item. */
-    case Fetched extends Outcome("fetched")
+    case Fetched extends Outcome(com.histmersion.domain.AcquireRecheck.Outcome.Wire("fetched"))
 
     /** The legal chain has no copy (yet). */
-    case NoCopy extends Outcome("no-copy")
+    case NoCopy extends Outcome(com.histmersion.domain.AcquireRecheck.Outcome.Wire("no-copy"))
 
     /** The check did not get to an answer (an upstream down, the converter refused): tried again when due. */
-    case Failed extends Outcome("failed")
+    case Failed extends Outcome(com.histmersion.domain.AcquireRecheck.Outcome.Wire("failed"))
 
   object Outcome:
     type Wire = Wire.T
@@ -288,11 +288,11 @@ object AcquireRecheck:
     */
   final case class Tally(
       total: Tally.Total,
-      tried: Tally.Tried = 0,
-      closed: Tally.Closed = 0,
-      fetched: Tally.Fetched = 0,
-      noCopy: Tally.NoCopy = 0,
-      failed: Tally.Failed = 0,
+      tried: Tally.Tried = com.histmersion.domain.AcquireRecheck.Tally.Tried(0),
+      closed: Tally.Closed = com.histmersion.domain.AcquireRecheck.Tally.Closed(0),
+      fetched: Tally.Fetched = com.histmersion.domain.AcquireRecheck.Tally.Fetched(0),
+      noCopy: Tally.NoCopy = com.histmersion.domain.AcquireRecheck.Tally.NoCopy(0),
+      failed: Tally.Failed = com.histmersion.domain.AcquireRecheck.Tally.Failed(0),
       lastFailure: Option[Tally.LastFailure] = None
   ):
     def add(outcome: Outcome, detail: com.histmersion.domain.AcquireRecheck.Detail): Tally = outcome match

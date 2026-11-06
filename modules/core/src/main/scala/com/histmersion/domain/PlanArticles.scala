@@ -51,7 +51,7 @@ object PlanArticles:
       query: Option[ArticleAnswer.Query] = None,
       topics: List[ArticleAnswer.Topics] = Nil,
       tags: List[ArticleAnswer.Tags] = Nil,
-      why: ArticleAnswer.Why = ""
+      why: ArticleAnswer.Why = com.histmersion.domain.PlanArticles.ArticleAnswer.Why("")
   ) derives KindlingsCodecAsObject
   object ArticleAnswer:
     type Slug = Slug.T
@@ -145,7 +145,7 @@ object PlanArticles:
                   case Left(m)        => problems += s"article '$s': $m"; acc
                   case Right(None)    => problems += s"article '$s' has no filter: give a query, topics or tags"; acc
                   case Right(Some(f)) =>
-                    acc :+ Candidate(s, x.title.trim, k, f, Option(x.why).map(_.trim).getOrElse(""))
+                    acc :+ Candidate(s, x.title.trim, k, f, Option(x.why).map(_.trim).getOrElse(com.histmersion.domain.PlanArticles.Candidate.Why("")))
       }
       .toList
     if kept.size > maxArticles then problems += s"at most $maxArticles articles (you gave ${kept.size})"
@@ -187,7 +187,7 @@ object PlanArticles:
               loop(
                 tail,
                 acc,
-                drop :+ s"'${c.slug}': ${c.filter.line} returns ${Plural.count(n, "source")}; at least ${limits.minSources}"
+                drop :+ s"'${c.slug}': ${c.filter.line} returns ${Plural.count(n, com.histmersion.api.Plural.CountSingular("source"))}; at least ${limits.minSources}"
               )
             else
               worst match
@@ -219,5 +219,5 @@ object PlanArticles:
 
   /** The worklog line of a run. */
   def logLine(goal: com.histmersion.domain.automation.Goal.Slug, plan: ArticlePlan, outcome: com.histmersion.domain.PlanArticles.Outcome, runId: com.histmersion.domain.automation.Run.Id): com.histmersion.domain.PlanArticles.LogLine =
-    s"propose-articles $goal: ${Plural.count(plan.articles.size, "article")} proposed, ${plan.dropped.size} dropped — $outcome " +
+    s"propose-articles $goal: ${Plural.count(plan.articles.size, com.histmersion.api.Plural.CountSingular("article"))} proposed, ${plan.dropped.size} dropped — $outcome " +
       s"(agent run ${runId.take(8)})"

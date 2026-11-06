@@ -75,7 +75,7 @@ object BundlePlan:
     type Tombstoned = Tombstoned.T
     object Tombstoned extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
-    val absent: Local = Local(None, tombstoned = false, None)
+    val absent: Local = Local(None, tombstoned = com.histmersion.util.data.exchange.BundlePlan.Local.Tombstoned(false), None)
 
   def entity(foreignRev: com.histmersion.util.data.exchange.BundlePlan.Ledger.ForeignRev, local: Local, ownBundle: com.histmersion.util.data.exchange.BundlePlan.EntityOwnBundle): Decision =
     entity(foreignRev, foreignRev, local, ownBundle)

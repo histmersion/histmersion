@@ -42,7 +42,7 @@ object AgentProposals:
       status: Option[Source.Status] = None,
       edgeKind: Option[Edge.Kind] = None,
       target: Option[Proposal.Target] = None,
-      evidence: Proposal.Evidence = "",
+      evidence: Proposal.Evidence = com.histmersion.domain.AgentProposals.Proposal.Evidence(""),
       quote: Option[Proposal.Quote] = None
   ) derives KindlingsCodecAsObject,
         KindlingsSchema, com.histmersion.api.json.Schema:

@@ -114,7 +114,7 @@ final class AttestationPlan(in: MergePlanner.Input) extends PlanRun:
                   if foreign then Some(att) else Some(MergeIssue.Detail.side(r)),
                   List(if t.quote.exists(_.nonEmpty) then
                     "the quote (with its prefix and suffix) was looked for, exactly and with spacing ignored"
-                  else "it has a position but no quote, so it cannot be found again"),
+                  else com.histmersion.api.exchange.MergeIssue.Why("it has a position but no quote, so it cannot be found again")),
                   List(km.Drop, km.KeepUnanchored),
                   None,
                   c,
@@ -176,13 +176,13 @@ final class AttestationPlan(in: MergePlanner.Input) extends PlanRun:
     }
     tries.filterNot(_.foreign).foreach {
       case AnchorTry(t, _, Some(a), co, _) =>
-        attFixes += AttestationFix(t.uid, Some(a), co, drop = false)
+        attFixes += AttestationFix(t.uid, Some(a), co, drop = com.histmersion.domain.MergePlanner.AttestationFix.Drop(false))
         f.count(_.modify(_.attestationsReanchored).using(_ + 1))
       case AnchorTry(t, _, None, _, issue) =>
         issue.flatMap(f.decisionIn).map(_.kind) match
-          case Some(km.KeepUnanchored) => attFixes += AttestationFix(t.uid, None, None, drop = false)
+          case Some(km.KeepUnanchored) => attFixes += AttestationFix(t.uid, None, None, drop = com.histmersion.domain.MergePlanner.AttestationFix.Drop(false))
           case _                       =>
-            attFixes += AttestationFix(t.uid, None, None, drop = true)
+            attFixes += AttestationFix(t.uid, None, None, drop = com.histmersion.domain.MergePlanner.AttestationFix.Drop(true))
             f.count(_.modify(_.attestationsDropped).using(_ + 1))
     }
 

@@ -32,7 +32,7 @@ object UndatedCells:
     @tailrec def loop(rest: List[GridCell], sum: com.histmersion.domain.catalogue.maptiles.UndatedCells.Total): com.histmersion.domain.catalogue.maptiles.UndatedCells.Total = rest match
       case c :: tail => loop(tail, sum + c.n - c.dup)
       case Nil       => sum
-    loop(dated, 0L) + undated.iterator.map(_.n.toLong).sum
+    loop(dated, com.histmersion.domain.catalogue.maptiles.UndatedCells.Total(0L)) + undated.iterator.map(_.n.toLong).sum
 
   /** One square's cell: `dated` and `undated` of the same square, either missing. None when it holds nothing. */
   private[maptiles] def cellOf(z: com.histmersion.domain.catalogue.maptiles.TileCoord.Z, dated: Option[GridCell], undated: Option[GridCell]): Option[TileCell] =

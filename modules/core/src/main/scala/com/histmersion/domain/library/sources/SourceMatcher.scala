@@ -123,7 +123,7 @@ object SourceMatcher:
   def fixed(x: com.histmersion.domain.library.sources.SourceMatcher.FixedX, places: com.histmersion.domain.library.sources.SourceMatcher.FixedPlaces): com.histmersion.domain.library.sources.SourceMatcher.FixedResult = s"%.${places}f".formatLocal(java.util.Locale.ROOT, x)
 
   def signed(w: com.histmersion.domain.library.sources.SourceMatcher.SignedW): com.histmersion.domain.library.sources.SourceMatcher.SignedResult =
-    val s = if w == math.rint(w) then w.toLong.toString else fixed(w, 1)
+    val s = if w == math.rint(w) then w.toLong.toString else fixed(w, com.histmersion.domain.library.sources.SourceMatcher.FixedPlaces(1))
     if w >= 0 then s"+$s" else s
 
   // ── blocking ────────────────────────────────────────────────────────────────────────────────
@@ -184,8 +184,8 @@ object SourceMatcher:
       if fr.nonEmpty && fr == fl then "title the same" -> w.titleFingerprint
       else if mr.nonEmpty && (mr == ml || mr == fl || fr == ml) then
         "main title the same, the subtitle differs" -> w.titleMain
-      else if jw >= w.titleSimilarAtLeast then s"titles similar (Jaro-Winkler ${fixed(jw, 2)})" -> w.titleSimilar
-      else if tj >= w.titleTokensAtLeast then s"title words overlap (Jaccard ${fixed(tj, 2)})" -> w.titleTokens
+      else if jw >= w.titleSimilarAtLeast then s"titles similar (Jaro-Winkler ${fixed(jw, com.histmersion.domain.library.sources.SourceMatcher.FixedPlaces(2))})" -> w.titleSimilar
+      else if tj >= w.titleTokensAtLeast then s"title words overlap (Jaccard ${fixed(tj, com.histmersion.domain.library.sources.SourceMatcher.FixedPlaces(2))})" -> w.titleTokens
       else "titles differ" -> w.titleDiffers
 
     // authors

@@ -36,9 +36,9 @@ object PointAreas:
     case Dated, EndOnly, Undated
 
     def wire: com.histmersion.domain.catalogue.places.PointAreas.Dating.WireResult = this match
-      case Dated   => "dated"
-      case EndOnly => "end-only"
-      case Undated => "undated"
+      case Dated   => com.histmersion.domain.catalogue.places.PointAreas.Dating.WireResult("dated")
+      case EndOnly => com.histmersion.domain.catalogue.places.PointAreas.Dating.WireResult("end-only")
+      case Undated => com.histmersion.domain.catalogue.places.PointAreas.Dating.WireResult("undated")
 
   object Dating:
     type WireResult = WireResult.T
@@ -77,20 +77,20 @@ object PointAreas:
       source: Listed.Source,
       kind: Listed.Kind,
       dating: Dating,
-      findings: Listed.Findings = 0,
-      alone: Listed.Alone = 0,
-      pinned: Listed.Pinned = 0
+      findings: Listed.Findings = com.histmersion.domain.catalogue.places.PointAreas.Listed.Findings(0),
+      alone: Listed.Alone = com.histmersion.domain.catalogue.places.PointAreas.Listed.Alone(0),
+      pinned: Listed.Pinned = com.histmersion.domain.catalogue.places.PointAreas.Listed.Pinned(0)
   ):
     def detail: com.histmersion.domain.catalogue.places.PointAreas.Listed.DetailResult =
       val what = s"$label ($source $kind, ${dating.wire})"
       val held =
         if findings == 0 then ""
         else if alone == 0 then
-          s": ${Plural.count(findings.toLong, "finding")}, ${
+          s": ${Plural.count(findings.toLong, com.histmersion.api.Plural.CountSingular("finding"))}, ${
               if findings == 1 then "also" else "each also"
             } at another place"
         else if findings == 1 then ": 1 finding, at no other place"
-        else s": ${Plural.count(findings.toLong, "finding")}, $alone of them at no other place"
+        else s": ${Plural.count(findings.toLong, com.histmersion.api.Plural.CountSingular("finding"))}, $alone of them at no other place"
       val kept = if pinned > 0 then
         s" — kept: named by $pinned attestation(s)/asset link(s)/place override(s); move or reset those first"
       else ""
@@ -127,7 +127,7 @@ object PointAreas:
       maxItems: com.histmersion.domain.catalogue.places.PointAreas.ReportMaxItems
   ): LintRuleReport =
     val total = groups.map(_.places).sum
-    if total == 0 then LintRuleReport(rule.name, rule.description, 0, Nil)
+    if total == 0 then LintRuleReport(rule.name, rule.description, com.histmersion.api.checks.Lint.LintRuleReport.Count(0), Nil)
     else
       val groupItems = groups
         .sortBy(g => (g.source, g.kind, g.dating.ordinal))
@@ -147,6 +147,6 @@ object PointAreas:
   def fixed(removed: com.histmersion.domain.catalogue.places.PointAreas.FixedRemoved, remaining: com.histmersion.domain.catalogue.places.PointAreas.FixedRemaining, findings: com.histmersion.domain.catalogue.places.PointAreas.FixedFindings, sources: com.histmersion.domain.catalogue.places.PointAreas.FixedSources): com.histmersion.domain.catalogue.places.PointAreas.FixedResult =
     s"${Lint.PlaceImportedPointArea}: $removed point-only imported area(s) removed" +
       (if findings > 0 then
-         s", ${Plural.count(findings.toLong, "finding")} of ${Plural.count(sources.toLong, "source")} matched to places again"
+         s", ${Plural.count(findings.toLong, com.histmersion.api.Plural.CountSingular("finding"))} of ${Plural.count(sources.toLong, com.histmersion.api.Plural.CountSingular("source"))} matched to places again"
        else "") +
       (if remaining > 0 then s", $remaining still to remove" else "")

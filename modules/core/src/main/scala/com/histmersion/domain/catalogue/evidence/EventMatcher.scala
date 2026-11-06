@@ -96,7 +96,7 @@ object EventMatcher:
         val reasons =
           Option
             .when(ps.nonEmpty)(
-              s"names it ${Plural.count(ps.size, "time")}: " +
+              s"names it ${Plural.count(ps.size, com.histmersion.api.Plural.CountSingular("time"))}: " +
                 ps.map(p => s"\"${p.quote}\"").distinct.take(3).mkString(", ")
             )
             .toList ++

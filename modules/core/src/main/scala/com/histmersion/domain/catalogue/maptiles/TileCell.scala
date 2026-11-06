@@ -16,7 +16,7 @@ final case class TileCell(
     south: TileCell.South,
     east: TileCell.East,
     north: TileCell.North,
-    undated: TileCell.Undated = 0
+    undated: TileCell.Undated = com.histmersion.domain.catalogue.maptiles.TileCell.Undated(0)
 ):
   def isItem: Boolean = n == 1
 

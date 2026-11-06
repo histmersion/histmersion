@@ -121,11 +121,11 @@ object AgentVerify:
   def findQuote(quote: com.histmersion.domain.AgentProposals.Proposal.Quote, body: com.histmersion.domain.AgentVerify.SourceBody, minRatio: com.histmersion.domain.AgentVerify.MinRatio): QuoteMatch =
     val q = normalise(quote)
     val b = normalise(body)
-    if q.isEmpty then QuoteMatch.Missing(0)
+    if q.isEmpty then QuoteMatch.Missing(com.histmersion.domain.AgentVerify.QuoteMatch.Missing.Best(0))
     else if b.contains(q) then QuoteMatch.Verbatim
     else
       val qw = words(q)
-      if qw.length < 4 then QuoteMatch.Missing(0)
+      if qw.length < 4 then QuoteMatch.Missing(com.histmersion.domain.AgentVerify.QuoteMatch.Missing.Best(0))
       else
         val bw = words(b)
         val heads = qw.take(3).toSet
@@ -176,10 +176,10 @@ object AgentVerify:
     * cannot be turned into a calendar year without a calibration curve.
     */
   enum YearUnit(val wire: YearUnit.Wire):
-    case BCE extends YearUnit("BCE")
-    case CE extends YearUnit("CE")
-    case CalBP extends YearUnit("calBP")
-    case BP extends YearUnit("BP")
+    case BCE extends YearUnit(com.histmersion.domain.AgentVerify.YearUnit.Wire("BCE"))
+    case CE extends YearUnit(com.histmersion.domain.AgentVerify.YearUnit.Wire("CE"))
+    case CalBP extends YearUnit(com.histmersion.domain.AgentVerify.YearUnit.Wire("calBP"))
+    case BP extends YearUnit(com.histmersion.domain.AgentVerify.YearUnit.Wire("BP"))
 
   object YearUnit:
     type Wire = Wire.T

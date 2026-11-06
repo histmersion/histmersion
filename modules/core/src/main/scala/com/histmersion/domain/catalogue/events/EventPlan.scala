@@ -59,7 +59,7 @@ final class EventPlan(in: MergePlanner.Input) extends PlanRun:
       _.uid,
       _.id,
       e => in.labels.events.get(e.id),
-      "event id",
+      com.histmersion.util.data.exchange.PlanQuestions.LabelTakenWhat("event id"),
       List(km.KeepLeft, km.KeepRight, km.RenameRight),
       (e, o) => localEvent.get(o).filter(sameCore(_, e)).map(_ => SameEvent),
       (e, o) => localEvent.get(o).map(MergeIssue.Detail.eventDetail(_, e))
@@ -113,7 +113,7 @@ final class EventPlan(in: MergePlanner.Input) extends PlanRun:
   override def lines(es: BundleEntities, es0: BundleEntities): BundleEntities =
     es.modify(_.events)
       .setTo(
-        MergePlanner.replaced(es0.events, _.uid, eventLine, es0, (_: com.histmersion.api.exchange.Bundle.Event) => true)
+        MergePlanner.replaced(es0.events, _.uid, eventLine, es0, (_: com.histmersion.api.exchange.Bundle.Event) => com.histmersion.domain.MergePlanner.ReplacedKeep(true))
       )
 
   // gazetteer places: an event written must point at a place that is here or coming

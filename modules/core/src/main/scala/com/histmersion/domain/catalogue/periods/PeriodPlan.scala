@@ -114,7 +114,7 @@ final class PeriodPlan(in: MergePlanner.Input) extends PlanRun:
     es.modify(_.periods)
       .setTo(
         MergePlanner
-          .replaced(es0.periods, _.uid, periodLine, es0, (_: com.histmersion.api.exchange.Bundle.Period) => true)
+          .replaced(es0.periods, _.uid, periodLine, es0, (_: com.histmersion.api.exchange.Bundle.Period) => com.histmersion.domain.MergePlanner.ReplacedKeep(true))
       )
 
 object PeriodPlan:

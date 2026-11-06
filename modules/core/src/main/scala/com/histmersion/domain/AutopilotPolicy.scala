@@ -130,17 +130,17 @@ object AutopilotPolicy:
         Some(s"${a.slug}: its filter returns ${a.hits} source(s), fewer than $minSources")
       else None
     }
-    if n == 0 then Verdict.Reject("the plan names no article")
+    if n == 0 then Verdict.Reject(com.histmersion.domain.AutopilotPolicy.Verdict.Reject.Reason("the plan names no article"))
     else if bad.nonEmpty then Verdict.Reject(s"checks failed — ${bad.mkString("; ")}")
     else if n > cap then
-      Verdict.Leave(s"${Plural.count(n, "article")} exceed the daily cap of $cap for one research area")
+      Verdict.Leave(s"${Plural.count(n, com.histmersion.api.Plural.CountSingular("article"))} exceed the daily cap of $cap for one research area")
     else if approvedToday + n > cap then
       Verdict.Leave(
         s"the area's daily cap is reached ($approvedToday of $cap articles approved today); decided tomorrow"
       )
     else
       Verdict.Approve(
-        s"${Plural.count(n, "article")}, every slug free and every filter at least $minSources sources " +
+        s"${Plural.count(n, com.histmersion.api.Plural.CountSingular("article"))}, every slug free and every filter at least $minSources sources " +
           s"(${articles.map(a => s"${a.slug} ${a.hits}").mkString(", ")}); ${approvedToday + n} of $cap today"
       )
 
@@ -178,21 +178,21 @@ object AutopilotPolicy:
     * tomorrow.
     */
   def articlePublish(d: DraftFacts, minSources: com.histmersion.domain.AutopilotPolicy.MinSources, approvedToday: com.histmersion.domain.AutopilotPolicy.ApprovedToday, cap: com.histmersion.domain.AutopilotPolicy.Cap): Verdict =
-    if !d.filterRecorded then Verdict.Reject("the run records no coverage filter")
+    if !d.filterRecorded then Verdict.Reject(com.histmersion.domain.AutopilotPolicy.Verdict.Reject.Reason("the run records no coverage filter"))
     else if d.hits.forall(_ < minSources) then
       Verdict.Reject(
         s"its filter returns ${d.hits.fold("an unknown number of")(_.toString)} source(s), fewer than $minSources"
       )
     else if d.problems.nonEmpty then
       Verdict.Reject(
-        s"the self-check left ${Plural.count(d.problems.size, "problem")}: ${d.problems.take(3).mkString("; ").take(600)}"
+        s"the self-check left ${Plural.count(d.problems.size, com.histmersion.api.Plural.CountSingular("problem"))}: ${d.problems.take(3).mkString("; ").take(600)}"
       )
-    else if d.cited == 0 then Verdict.Reject("the text cites no source")
+    else if d.cited == 0 then Verdict.Reject(com.histmersion.domain.AutopilotPolicy.Verdict.Reject.Reason("the text cites no source"))
     else if d.create && !d.slugFree then Verdict.Reject(s"the slug ${d.slug} is taken now")
     else if approvedToday >= cap then Verdict.Leave(s"the daily cap of $cap drafts is reached; decided tomorrow")
     else
       Verdict.Approve(
-        s"filter ${d.hits.getOrElse(0)} sources (at least $minSources), ${Plural.count(d.cited, "source")} cited, " +
+        s"filter ${d.hits.getOrElse(0)} sources (at least $minSources), ${Plural.count(d.cited, com.histmersion.api.Plural.CountSingular("source"))} cited, " +
           s"no self-check problem; ${approvedToday + 1} of $cap today"
       )
 
@@ -215,16 +215,16 @@ object AutopilotPolicy:
     * within `cap` plans a day.
     */
   def goalPlan(p: GoalPlanFacts, maxDepth: com.histmersion.domain.AutopilotPolicy.DepthLimit, approvedToday: com.histmersion.domain.AutopilotPolicy.ApprovedToday, cap: com.histmersion.domain.AutopilotPolicy.Cap): Verdict =
-    if p.subGoals + p.queries + p.works == 0 then Verdict.Reject("the plan proposes nothing")
+    if p.subGoals + p.queries + p.works == 0 then Verdict.Reject(com.histmersion.domain.AutopilotPolicy.Verdict.Reject.Reason("the plan proposes nothing"))
     else if p.subGoals > 0 && p.depth >= maxDepth then
       Verdict.Reject(
-        s"it proposes ${Plural.count(p.subGoals, "sub-goal")} for a goal ${depthText(p.depth)}; " +
+        s"it proposes ${Plural.count(p.subGoals, com.histmersion.api.Plural.CountSingular("sub-goal"))} for a goal ${depthText(p.depth)}; " +
           s"sub-goals stop at depth $maxDepth (the deepest sub-goal the checks approve)"
       )
     else if approvedToday >= cap then Verdict.Leave(s"the daily cap of $cap goal plans is reached; decided tomorrow")
     else
       Verdict.Approve(
-        s"${Plural.count(p.subGoals, "sub-goal")}, ${Plural.count(p.queries, "query", "queries")}, ${Plural.count(p.works, "work")}" +
+        s"${Plural.count(p.subGoals, com.histmersion.api.Plural.CountSingular("sub-goal"))}, ${Plural.count(p.queries, com.histmersion.api.Plural.CountSingular("query"), com.histmersion.api.Plural.CountPlural("queries"))}, ${Plural.count(p.works, com.histmersion.api.Plural.CountSingular("work"))}" +
           s" (depth ${p.depth} of $maxDepth); ${approvedToday + 1} of $cap today"
       )
 
@@ -236,7 +236,7 @@ object AutopilotPolicy:
     if !active then Some(s"focus: goal $goal is not one of the active goals; its plan waits for a person or its turn")
     else if proposed > 0 && openSubGoals + proposed > math.max(0, limit) then
       Some(
-        s"focus: goal $goal has ${Plural.count(openSubGoals, "unfinished sub-goal")} and the plan adds $proposed; at most " +
+        s"focus: goal $goal has ${Plural.count(openSubGoals, com.histmersion.api.Plural.CountSingular("unfinished sub-goal"))} and the plan adds $proposed; at most " +
           s"$limit are opened by code (the autopilot's limit on open sub-goals)"
       )
     else None
@@ -248,7 +248,7 @@ object AutopilotPolicy:
     */
   def goalPlanSubGoals(goal: com.histmersion.domain.automation.Goal.Slug, openSubGoals: com.histmersion.domain.AutopilotPolicy.OpenCount, proposed: com.histmersion.domain.AutopilotPolicy.Proposed, limit: com.histmersion.domain.AutopilotPolicy.Limit): Option[com.histmersion.domain.AutopilotPolicy.Description] =
     Option.when(proposed > 0 && openSubGoals + proposed > math.max(0, limit))(
-      s"goal $goal has ${Plural.count(openSubGoals, "unfinished sub-goal")} and the plan adds $proposed; at most " +
+      s"goal $goal has ${Plural.count(openSubGoals, com.histmersion.api.Plural.CountSingular("unfinished sub-goal"))} and the plan adds $proposed; at most " +
         s"$limit are opened by code (the autopilot's limit on open sub-goals)"
     )
 
@@ -264,7 +264,7 @@ object AutopilotPolicy:
     */
   def goalPlansWait(unfinished: com.histmersion.domain.AutopilotPolicy.Unfinished, limit: com.histmersion.domain.AutopilotPolicy.Limit): Option[com.histmersion.domain.AutopilotPolicy.Description] =
     Option.when(limit > 0 && unfinished > limit)(
-      s"goal plans wait until the unfinished goals drop to $limit: ${Plural.count(unfinished, "goal")} with an approved " +
+      s"goal plans wait until the unfinished goals drop to $limit: ${Plural.count(unfinished, com.histmersion.api.Plural.CountSingular("goal"))} with an approved " +
         s"plan ${if unfinished == 1 then "is" else "are"} not reviewed yet (the autopilot's limit on unfinished goals)"
     )
 
@@ -343,7 +343,7 @@ object AutopilotPolicy:
           Manager.State.Active.wire
         ) && !open && cooled
     )(
-      s"its ${Plural.count(f.articles, "article")} are compiled and passed review: its next article is proposed " +
+      s"its ${Plural.count(f.articles, com.histmersion.api.Plural.CountSingular("article"))} are compiled and passed review: its next article is proposed " +
         "(the plan goes through the article-plan approvals)"
     )
 
@@ -417,7 +417,7 @@ object AutopilotPolicy:
         if reviewed then
           (
             Goal.Status.Reviewed,
-            (if hasOwn then s"its ${Plural.count(f.articles, "article")} passed review" else "") +
+            (if hasOwn then s"its ${Plural.count(f.articles, com.histmersion.api.Plural.CountSingular("article"))} passed review" else "") +
               (if kids.nonEmpty then
                  s"${if hasOwn then ", " else ""}its ${Plural.count(kids.size, "sub-goal")} are reviewed"
                else "")
@@ -425,7 +425,7 @@ object AutopilotPolicy:
         else if compiled then
           (
             Goal.Status.Compiled,
-            (if hasOwn then s"${Plural.count(f.articles, "article")} compiled, none left to compile"
+            (if hasOwn then s"${Plural.count(f.articles, com.histmersion.api.Plural.CountSingular("article"))} compiled, none left to compile"
              else "nothing left to compile") +
               (if kids.nonEmpty then s", its ${Plural.count(kids.size, "sub-goal")} are compiled" else "")
           )
@@ -456,7 +456,7 @@ object AutopilotPolicy:
       state: ManagerRow.State,
       cron: Option[ManagerRow.Cron],
       autoIngest: Option[ManagerRow.AutoIngest],
-      planItem: ManagerRow.PlanItem = false,
+      planItem: ManagerRow.PlanItem = com.histmersion.domain.AutopilotPolicy.ManagerRow.PlanItem(false),
       extendMinNew: Option[ManagerRow.ExtendMinNew] = None
   )
 
@@ -654,7 +654,7 @@ object AutopilotPolicy:
   ): Option[com.histmersion.domain.AutopilotPolicy.Description] =
     if min <= 0 || newSources < min then None
     else if lastExtend.exists(t => t.plus(Duration.ofDays(math.max(0, cooldownDays).toLong)).isAfter(now)) then None
-    else Some(s"its filter returns ${Plural.count(newSources, "source")} it neither cites nor gives a reason for")
+    else Some(s"its filter returns ${Plural.count(newSources, com.histmersion.api.Plural.CountSingular("source"))} it neither cites nor gives a reason for")
 
   // ── caps, housekeeping, throughput ─────────────────────────────────────────────────────────────
 

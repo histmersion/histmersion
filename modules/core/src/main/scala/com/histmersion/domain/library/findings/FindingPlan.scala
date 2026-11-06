@@ -186,7 +186,7 @@ final class FindingPlan(in: MergePlanner.Input) extends PlanRun:
     es.modify(_.findings)
       .setTo(
         MergePlanner
-          .replaced(es0.findings, _.uid, findingLine, es0, (_: com.histmersion.api.exchange.Bundle.Finding) => true)
+          .replaced(es0.findings, _.uid, findingLine, es0, (_: com.histmersion.api.exchange.Bundle.Finding) => com.histmersion.domain.MergePlanner.ReplacedKeep(true))
       )
 
 object FindingPlan:
@@ -274,10 +274,10 @@ object FindingPlan:
 
   /** Caution ranks: contested is the least sure, then low, medium, high. */
   private def caution(c: Confidence): com.histmersion.domain.library.findings.FindingPlan.CautionResult = c match
-    case Confidence.Contested => 0
-    case Confidence.Low       => 1
-    case Confidence.Medium    => 2
-    case Confidence.High      => 3
+    case Confidence.Contested => com.histmersion.domain.library.findings.FindingPlan.CautionResult(0)
+    case Confidence.Low       => com.histmersion.domain.library.findings.FindingPlan.CautionResult(1)
+    case Confidence.Medium    => com.histmersion.domain.library.findings.FindingPlan.CautionResult(2)
+    case Confidence.High      => com.histmersion.domain.library.findings.FindingPlan.CautionResult(3)
 
   /** Pair each bundle finding with at most one finding here, one-to-one: the same claim first, then the nearest
     * near-duplicate (token Jaccard ≥ `nearAtLeast` and overlapping periods).

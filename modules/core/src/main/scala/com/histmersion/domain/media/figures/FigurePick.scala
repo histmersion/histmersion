@@ -54,7 +54,7 @@ object FigurePick:
       name: Figure.Name,
       width: Option[Figure.Width],
       height: Option[Figure.Height],
-      refs: Figure.Refs = 1,
+      refs: Figure.Refs = com.histmersion.domain.media.figures.FigurePick.Figure.Refs(1),
       firstAt: Option[Figure.FirstAt] = None
   )
 
@@ -72,12 +72,12 @@ object FigurePick:
 
   /** The thresholds (`media.illustrations`). */
   final case class Rules(
-      minSide: Rules.MinSide = 160,
-      minArea: Rules.MinArea = 40000,
+      minSide: Rules.MinSide = com.histmersion.domain.media.figures.FigurePick.Rules.MinSide(160),
+      minArea: Rules.MinArea = com.histmersion.domain.media.figures.FigurePick.Rules.MinArea(40000),
       maxAspect: Rules.MaxAspect = 4.0,
-      maxRefs: Rules.MaxRefs = 2,
-      earlyPages: Rules.EarlyPages = 6,
-      pageScanMin: Rules.PageScanMin = 5
+      maxRefs: Rules.MaxRefs = com.histmersion.domain.media.figures.FigurePick.Rules.MaxRefs(2),
+      earlyPages: Rules.EarlyPages = com.histmersion.domain.media.figures.FigurePick.Rules.EarlyPages(6),
+      pageScanMin: Rules.PageScanMin = com.histmersion.domain.media.figures.FigurePick.Rules.PageScanMin(5)
   )
 
   object Rules:
@@ -127,13 +127,13 @@ object FigurePick:
     (f.width, f.height) match
       case (Some(w), Some(h)) if w > 0 && h > 0 =>
         val aspect = math.max(w, h).toDouble / math.min(w, h)
-        if aspect > rules.maxAspect then Some("a strip")
-        else if math.min(w, h) < rules.minSide then Some("too small")
-        else if w.toLong * h < rules.minArea then Some("too small")
-        else if f.refs > rules.maxRefs then Some("repeated in the text")
-        else if scans.contains((w, h)) then Some("a page scan")
+        if aspect > rules.maxAspect then Some(com.histmersion.domain.media.figures.FigurePick.RejectResult("a strip"))
+        else if math.min(w, h) < rules.minSide then Some(com.histmersion.domain.media.figures.FigurePick.RejectResult("too small"))
+        else if w.toLong * h < rules.minArea then Some(com.histmersion.domain.media.figures.FigurePick.RejectResult("too small"))
+        else if f.refs > rules.maxRefs then Some(com.histmersion.domain.media.figures.FigurePick.RejectResult("repeated in the text"))
+        else if scans.contains((w, h)) then Some(com.histmersion.domain.media.figures.FigurePick.RejectResult("a page scan"))
         else None
-      case _ => Some("no size")
+      case _ => Some(com.histmersion.domain.media.figures.FigurePick.RejectResult("no size"))
 
   /** Pure: the figure's weight — its area, halved past the early pages (or, without a page in its name, past the first
     * third of the text).
@@ -173,4 +173,4 @@ object FigurePick:
   /** Pure: the figures with their links counted in `body`. */
   def withRefs(figs: List[Figure], body: com.histmersion.domain.media.figures.FigurePick.WithRefsBody): List[Figure] =
     val r = refs(body)
-    figs.map(f => r.get(f.name).fold(f.copy(refs = 0, firstAt = None))((n, at) => f.copy(refs = n, firstAt = Some(at))))
+    figs.map(f => r.get(f.name).fold(f.copy(refs = com.histmersion.domain.media.figures.FigurePick.Figure.Refs(0), firstAt = None))((n, at) => f.copy(refs = n, firstAt = Some(at))))

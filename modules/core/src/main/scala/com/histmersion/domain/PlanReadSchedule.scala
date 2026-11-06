@@ -21,12 +21,12 @@ object PlanReadSchedule:
       now: Instant
   ): ScheduledRead =
     schedule match
-      case ReadSchedule.Off             => ScheduledRead.NotDue("the schedule is off")
+      case ReadSchedule.Off             => ScheduledRead.NotDue(com.histmersion.domain.ScheduledRead.NotDue.Why("the schedule is off"))
       case ReadSchedule.Every(interval) =>
         val latest = List(newestReading, lastAttempt).flatten.maxOption
         val age = latest.map(Duration.between(_, now))
-        if !autopilotOn then ScheduledRead.NotDue("the autopilot is off")
-        else if !wanted then ScheduledRead.NotDue("no queued work wants the pool")
+        if !autopilotOn then ScheduledRead.NotDue(com.histmersion.domain.ScheduledRead.NotDue.Why("the autopilot is off"))
+        else if !wanted then ScheduledRead.NotDue(com.histmersion.domain.ScheduledRead.NotDue.Why("no queued work wants the pool"))
         else
           age.filter(_.toMinutes < interval.toMinutes) match
             case Some(a) => ScheduledRead.NotDue(s"read ${a.toMinutes} min ago (every ${interval.toMinutes} min)")

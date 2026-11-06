@@ -16,7 +16,7 @@ final case class StoredEvent(
     wikidata: Option[StoredEvent.Wikidata],
     keys: Set[(StoredEvent.KeysPart1, StoredEvent.KeysPart2)],
     catalogue: StoredEvent.Catalogue,
-    label: StoredEvent.Label = ""
+    label: StoredEvent.Label = com.histmersion.domain.catalogue.events.StoredEvent.Label("")
 )
 
 object StoredEvent:

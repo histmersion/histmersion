@@ -54,7 +54,7 @@ object Ident:
 
   def parse(raw: com.histmersion.domain.library.acquisition.Ident.ParseRaw): Either[com.histmersion.domain.library.acquisition.Ident.ParseResultPart1, Ident] =
     val s = Option(raw).getOrElse("").trim
-    if s.isEmpty then Left("empty identifier — give a DOI, arxiv:<id>, or a citekey")
+    if s.isEmpty then Left(com.histmersion.domain.library.acquisition.Ident.ParseResultPart1("empty identifier — give a DOI, arxiv:<id>, or a citekey"))
     else
       doi(s)
         .map(Ident.Doi.apply)
