@@ -1,5 +1,7 @@
 package com.histmersion.api
 
+import com.histmersion.testsupport.ComparedByValue.given
+
 /** The diacritic folding table and the citekeys built on it (#878). Shared, so it runs on the JVM AND on Scala.js — the
   * reason the table exists is that Scala.js has no `java.text.Normalizer`.
   */

@@ -1,5 +1,7 @@
 package com.histmersion.api
 
+import com.histmersion.testsupport.ComparedByValue.given
+
 class WcagSuite extends munit.FunSuite:
 
   test("black on white is 21:1, a colour on itself 1:1, and the ratio is symmetric"):

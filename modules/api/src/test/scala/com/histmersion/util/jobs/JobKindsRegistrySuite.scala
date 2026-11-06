@@ -1,4 +1,6 @@
 package com.histmersion.util.jobs
+
+import com.histmersion.testsupport.ComparedByValue.given
 import hearth.kindlings.optics.syntax.*
 
 import com.histmersion.api.jobs.JobInfo

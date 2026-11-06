@@ -1,5 +1,7 @@
 package com.histmersion.api
 
+import com.histmersion.testsupport.ComparedByValue.given
+
 /** Pure tests for the ingest contract (plan §1.8): the four spellings of an image link, the job state machine and the
   * Markdown renderers. No database, no HTTP.
   */

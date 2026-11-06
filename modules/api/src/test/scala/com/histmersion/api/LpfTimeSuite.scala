@@ -1,5 +1,7 @@
 package com.histmersion.api
 
+import com.histmersion.testsupport.ComparedByValue.given
+
 /** The LPF reader's years and timespans (#1403). Shared: it runs on the JVM AND under Scala.js, so a regex the JS
   * backend cannot compile (a look-behind) fails here rather than in the browser.
   */

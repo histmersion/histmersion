@@ -1,5 +1,7 @@
 package com.histmersion.api
 
+import com.histmersion.testsupport.ComparedByValue.given
+
 import io.circe.parser.parse
 import com.histmersion.api.jobs.{JobDetail, JobInfo}
 import com.histmersion.api.library.IngestMarkdown

@@ -1,5 +1,7 @@
 package com.histmersion.api
 
+import com.histmersion.testsupport.ComparedByValue.given
+
 import com.histmersion.api.automation.GoalsMarkdown
 import com.histmersion.api.catalogue.EventsMarkdown
 import com.histmersion.api.catalogue.AttestationsMarkdown

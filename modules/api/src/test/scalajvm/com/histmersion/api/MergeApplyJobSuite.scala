@@ -1,5 +1,7 @@
 package com.histmersion.api
 
+import com.histmersion.testsupport.ComparedByValue.given
+
 import java.util.UUID
 import com.histmersion.api.exchange.{MergeApplyJob, MergeApplyResult, MergeJobState, MergeMarkdown}
 import com.histmersion.api.jobs.{JobDetail, JobInfo, JobState}

@@ -1,5 +1,7 @@
 package com.histmersion.util.text
 
+import com.histmersion.testsupport.ComparedByValue.given
+
 /** The `[[target]]` links of wiki text, whatever record holds it. */
 
 import com.histmersion.api.text.WikiLinks
