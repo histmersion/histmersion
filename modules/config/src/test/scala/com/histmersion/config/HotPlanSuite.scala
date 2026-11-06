@@ -9,13 +9,13 @@ import scala.jdk.CollectionConverters.*
 class HotPlanSuite extends munit.FunSuite:
 
   private val nodes = List(
-    HotNode("pool", Nil, List("histmersion.db")),
-    HotNode("migrations", List("pool"), Nil),
-    HotNode("query-pool", List("pool", "migrations"), List("histmersion.query", "histmersion.db")),
-    HotNode("lease", List("migrations"), Nil),
-    HotNode("plugins", Nil, List("histmersion.plugins", "histmersion.acquire")),
-    HotNode("acquisition", List("plugins"), List("histmersion.acquire")),
-    HotNode("watch", Nil, List("histmersion.config"))
+    HotNode(com.histmersion.config.HotNode.Name("pool"), Nil, List(com.histmersion.config.HotNode.Keys("histmersion.db"))),
+    HotNode(com.histmersion.config.HotNode.Name("migrations"), List(com.histmersion.config.HotNode.Deps("pool")), Nil),
+    HotNode(com.histmersion.config.HotNode.Name("query-pool"), List(com.histmersion.config.HotNode.Deps("pool"), com.histmersion.config.HotNode.Deps("migrations")), List(com.histmersion.config.HotNode.Keys("histmersion.query"), com.histmersion.config.HotNode.Keys("histmersion.db"))),
+    HotNode(com.histmersion.config.HotNode.Name("lease"), List(com.histmersion.config.HotNode.Deps("migrations")), Nil),
+    HotNode(com.histmersion.config.HotNode.Name("plugins"), Nil, List(com.histmersion.config.HotNode.Keys("histmersion.plugins"), com.histmersion.config.HotNode.Keys("histmersion.acquire"))),
+    HotNode(com.histmersion.config.HotNode.Name("acquisition"), List(com.histmersion.config.HotNode.Deps("plugins")), List(com.histmersion.config.HotNode.Keys("histmersion.acquire"))),
+    HotNode(com.histmersion.config.HotNode.Name("watch"), Nil, List(com.histmersion.config.HotNode.Keys("histmersion.config")))
   )
 
   test("order: dependencies first, declaration order among independent nodes"):
@@ -24,45 +24,45 @@ class HotPlanSuite extends munit.FunSuite:
       Right(List("pool", "migrations", "query-pool", "lease", "plugins", "acquisition", "watch"))
     )
     // declared out of order: still built after what it needs
-    val shuffled = List(HotNode("b", List("a"), Nil), HotNode("c", Nil, Nil), HotNode("a", Nil, Nil))
+    val shuffled = List(HotNode(com.histmersion.config.HotNode.Name("b"), List(com.histmersion.config.HotNode.Deps("a")), Nil), HotNode(com.histmersion.config.HotNode.Name("c"), Nil, Nil), HotNode(com.histmersion.config.HotNode.Name("a"), Nil, Nil))
     assertEquals(HotPlan.order(shuffled), Right(List("c", "a", "b")))
 
   test("order refuses a cycle, naming it; a dependency on no node; a name used twice"):
     val cyc = List(
-      HotNode("a", List("c"), Nil),
-      HotNode("b", List("a"), Nil),
-      HotNode("c", List("b"), Nil),
-      HotNode("free", Nil, Nil)
+      HotNode(com.histmersion.config.HotNode.Name("a"), List(com.histmersion.config.HotNode.Deps("c")), Nil),
+      HotNode(com.histmersion.config.HotNode.Name("b"), List(com.histmersion.config.HotNode.Deps("a")), Nil),
+      HotNode(com.histmersion.config.HotNode.Name("c"), List(com.histmersion.config.HotNode.Deps("b")), Nil),
+      HotNode(com.histmersion.config.HotNode.Name("free"), Nil, Nil)
     )
     val e = HotPlan.order(cyc).swap.getOrElse(fail("a cycle was ordered"))
     assert(e.contains("cycle"), e)
     assert(e.contains("a → c → b → a"), e)
-    val self = HotPlan.order(List(HotNode("a", List("a"), Nil))).swap.getOrElse(fail("self-loop ordered"))
+    val self = HotPlan.order(List(HotNode(com.histmersion.config.HotNode.Name("a"), List(com.histmersion.config.HotNode.Deps("a")), Nil))).swap.getOrElse(fail("self-loop ordered"))
     assert(self.contains("a → a"), self)
-    assert(HotPlan.order(List(HotNode("a", List("nope"), Nil))).swap.exists(_.contains("a → nope")))
-    assert(HotPlan.order(List(HotNode("a", Nil, Nil), HotNode("a", Nil, Nil))).swap.exists(_.contains("twice")))
+    assert(HotPlan.order(List(HotNode(com.histmersion.config.HotNode.Name("a"), List(com.histmersion.config.HotNode.Deps("nope")), Nil))).swap.exists(_.contains("a → nope")))
+    assert(HotPlan.order(List(HotNode(com.histmersion.config.HotNode.Name("a"), Nil, Nil), HotNode(com.histmersion.config.HotNode.Name("a"), Nil, Nil))).swap.exists(_.contains("twice")))
 
   test("keyMatches: the key, a key under it, a block above it — not a sibling sharing a prefix"):
-    assert(HotPlan.keyMatches("histmersion.db.url", "histmersion.db"))
-    assert(HotPlan.keyMatches("histmersion.db", "histmersion.db"))
-    assert(HotPlan.keyMatches("histmersion", "histmersion.db"))
-    assert(!HotPlan.keyMatches("histmersion.dbx.url", "histmersion.db"))
-    assert(!HotPlan.keyMatches("histmersion.query.user", "histmersion.db"))
+    assert(HotPlan.keyMatches(com.histmersion.config.ConfigReload.ChangedKey("histmersion.db.url"), com.histmersion.config.ConfigReload.Key("histmersion.db")))
+    assert(HotPlan.keyMatches(com.histmersion.config.ConfigReload.ChangedKey("histmersion.db"), com.histmersion.config.ConfigReload.Key("histmersion.db")))
+    assert(HotPlan.keyMatches(com.histmersion.config.ConfigReload.ChangedKey("histmersion"), com.histmersion.config.ConfigReload.Key("histmersion.db")))
+    assert(!HotPlan.keyMatches(com.histmersion.config.ConfigReload.ChangedKey("histmersion.dbx.url"), com.histmersion.config.ConfigReload.Key("histmersion.db")))
+    assert(!HotPlan.keyMatches(com.histmersion.config.ConfigReload.ChangedKey("histmersion.query.user"), com.histmersion.config.ConfigReload.Key("histmersion.db")))
 
   test("plan: the touched nodes and every dependent, in build order"):
     assertEquals(
-      HotPlan.plan(nodes, List("histmersion.db.url")),
+      HotPlan.plan(nodes, List(com.histmersion.config.ConfigReload.ChangedKey("histmersion.db.url"))),
       Right(List("pool", "migrations", "query-pool", "lease"))
     )
-    assertEquals(HotPlan.plan(nodes, List("histmersion.query.password")), Right(List("query-pool")))
+    assertEquals(HotPlan.plan(nodes, List(com.histmersion.config.ConfigReload.ChangedKey("histmersion.query.password"))), Right(List("query-pool")))
     assertEquals(
-      HotPlan.plan(nodes, List("histmersion.plugins.keepassxc.enabled")),
+      HotPlan.plan(nodes, List(com.histmersion.config.ConfigReload.ChangedKey("histmersion.plugins.keepassxc.enabled"))),
       Right(List("plugins", "acquisition"))
     )
-    assertEquals(HotPlan.plan(nodes, List("histmersion.acquire.chain")), Right(List("plugins", "acquisition")))
-    assertEquals(HotPlan.plan(nodes, List("histmersion.limits.search")), Right(Nil))
-    assertEquals(HotPlan.plan(nodes, Nil, forced = Set("lease")), Right(List("lease")))
-    assert(HotPlan.plan(List(HotNode("a", List("a"), List("k"))), List("k")).isLeft)
+    assertEquals(HotPlan.plan(nodes, List(com.histmersion.config.ConfigReload.ChangedKey("histmersion.acquire.chain"))), Right(List("plugins", "acquisition")))
+    assertEquals(HotPlan.plan(nodes, List(com.histmersion.config.ConfigReload.ChangedKey("histmersion.limits.search"))), Right(Nil))
+    assertEquals(HotPlan.plan(nodes, Nil, forced = Set(com.histmersion.config.HotNode.Name("lease"))), Right(List("lease")))
+    assert(HotPlan.plan(List(HotNode(com.histmersion.config.HotNode.Name("a"), List(com.histmersion.config.HotNode.Deps("a")), List(com.histmersion.config.HotNode.Keys("k")))), List(com.histmersion.config.ConfigReload.ChangedKey("k"))).isLeft)
 
   // ── ConfigReload ───────────────────────────────────────────────────────────────────────────────
 
