@@ -25,19 +25,25 @@ import scala.util.Try
   *     leave the ingests without CORE.
   */
 object CoreQuota:
+  type Cap = Cap.T
+  object Cap extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type Cost = Cost.T
+  object Cost extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type Description = Description.T
+  object Description extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type HeaderName = HeaderName.T
+  object HeaderName extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type RetryAt = RetryAt.T
+  object RetryAt extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type Spent = Spent.T
+  object Spent extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type StatusCode = StatusCode.T
+  object StatusCode extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
   /** What a call to CORE is for: the share of the daily budget it spends. */
-  type ObserveIntName = ObserveIntName.T
-  object ObserveIntName extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
-  type ObserveCode = ObserveCode.T
-  object ObserveCode extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type ObserveHeadersPart1 = ObserveHeadersPart1.T
-  object ObserveHeadersPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type ObserveHeadersPart2 = ObserveHeadersPart2.T
   object ObserveHeadersPart2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type RetryAtV = RetryAtV.T
-  object RetryAtV extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
   enum Purpose(val wire: Purpose.Wire, val label: Purpose.Label):
     /** The acquisition chain's `core` step: a work's download URLs by its DOI. */
@@ -62,13 +68,11 @@ object CoreQuota:
       exhaustedPauseSeconds: Limits.ExhaustedPauseSeconds,
       maxWaitSeconds: Limits.MaxWaitSeconds
   ):
-    def cost(p: Purpose): com.histmersion.domain.CoreQuota.Limits.CostResult = p match
+    def cost(p: Purpose): com.histmersion.domain.CoreQuota.Cost = p match
       case Purpose.Lookup => lookupCost.max(0)
       case Purpose.Search => searchCost.max(0)
 
   object Limits:
-    type CostResult = CostResult.T
-    object CostResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
     type PerMinute = PerMinute.T
     object PerMinute extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
@@ -113,16 +117,12 @@ object CoreQuota:
       window: Option[Window],
       recent: Vector[Instant] = Vector.empty
   ):
-    def spent: com.histmersion.domain.CoreQuota.State.SpentResult = lookupTokens + searchTokens
-    def spentOn(p: Purpose): com.histmersion.domain.CoreQuota.State.SpentOnResult = p match
+    def spent: com.histmersion.domain.CoreQuota.Spent = lookupTokens + searchTokens
+    def spentOn(p: Purpose): com.histmersion.domain.CoreQuota.Spent = p match
       case Purpose.Lookup => lookupTokens
       case Purpose.Search => searchTokens
 
   object State:
-    type SpentResult = SpentResult.T
-    object SpentResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
-    type SpentOnResult = SpentOnResult.T
-    object SpentOnResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
     type LookupTokens = LookupTokens.T
     object LookupTokens extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
@@ -137,7 +137,7 @@ object CoreQuota:
     case OverBudget(purpose: Purpose, spent: Refusal.OverBudget.Spent, cap: Refusal.OverBudget.Cap)
     case Paced(waitMs: Refusal.Paced.WaitMs)
 
-    def describe: com.histmersion.domain.CoreQuota.Refusal.DescribeResult = this match
+    def describe: com.histmersion.domain.CoreQuota.Description = this match
       case Blocked(until, why)       => s"CORE asked to wait until $until ($why)"
       case OverBudget(p, spent, cap) =>
         s"CORE's daily budget for ${p.label} is spent ($spent of $cap tokens today, UTC; acquire.core." +
@@ -148,21 +148,19 @@ object CoreQuota:
 
   object Refusal:
     object Blocked:
-      type Why = Why.T
-      object Why extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+      type Why = com.histmersion.domain.CoreQuota.Block.Why
+      val Why: _root_.com.histmersion.domain.CoreQuota.Block.Why.type = _root_.com.histmersion.domain.CoreQuota.Block.Why
 
     object OverBudget:
-      type Spent = Spent.T
-      object Spent extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
-      type Cap = Cap.T
-      object Cap extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+      type Spent = com.histmersion.domain.CoreQuota.Spent
+      val Spent: _root_.com.histmersion.domain.CoreQuota.Spent.type = _root_.com.histmersion.domain.CoreQuota.Spent
+      type Cap = com.histmersion.domain.CoreQuota.Cap
+      val Cap: _root_.com.histmersion.domain.CoreQuota.Cap.type = _root_.com.histmersion.domain.CoreQuota.Cap
 
     object Paced:
-      type WaitMs = WaitMs.T
-      object WaitMs extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
+      type WaitMs = com.histmersion.domain.CoreQuota.Grant.WaitMs
+      val WaitMs: _root_.com.histmersion.domain.CoreQuota.Grant.WaitMs.type = _root_.com.histmersion.domain.CoreQuota.Grant.WaitMs
 
-    type DescribeResult = DescribeResult.T
-    object DescribeResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
   /** A call may go out after `waitMs`; `state` already counts it. */
   final case class Grant(state: State, waitMs: Grant.WaitMs)
@@ -217,8 +215,8 @@ object CoreQuota:
     * and a block after a 429 or when `Remaining` reached 0 — until the time CORE gave, else `exhaustedPauseSeconds`
     * from now. A block is only ever lengthened by an answer.
     */
-  def observe(s: State, limits: Limits, code: com.histmersion.domain.CoreQuota.ObserveCode, headers: Map[com.histmersion.domain.CoreQuota.ObserveHeadersPart1, com.histmersion.domain.CoreQuota.ObserveHeadersPart2], now: Instant): State =
-    def int(name: com.histmersion.domain.CoreQuota.ObserveIntName) = headers.get(name).flatMap(_.trim.toIntOption)
+  def observe(s: State, limits: Limits, code: com.histmersion.domain.CoreQuota.StatusCode, headers: Map[com.histmersion.domain.CoreQuota.HeaderName, com.histmersion.domain.CoreQuota.ObserveHeadersPart2], now: Instant): State =
+    def int(name: com.histmersion.domain.CoreQuota.HeaderName) = headers.get(name).flatMap(_.trim.toIntOption)
     val window = Window(int("x-ratelimit-limit"), int("x-ratelimit-remaining"), now)
     val retry = retryAt(headers.get("x-ratelimit-retry-after"), now).orElse(retryAt(headers.get("retry-after"), now))
     val pause = now.plusSeconds(limits.exhaustedPauseSeconds.toLong.max(1L))
@@ -239,7 +237,7 @@ object CoreQuota:
   /** A retry time as CORE gives it (`2026-10-26T18:52:11+0000`), an ISO-8601 instant or offset time, delay seconds, or
     * an HTTP date.
     */
-  def retryAt(v: Option[com.histmersion.domain.CoreQuota.RetryAtV], now: Instant): Option[Instant] =
+  def retryAt(v: Option[com.histmersion.domain.CoreQuota.RetryAt], now: Instant): Option[Instant] =
     v.map(_.trim).filter(_.nonEmpty).flatMap { s =>
       Try(OffsetDateTime.parse(s, CoreTime).toInstant).toOption
         .orElse(Try(OffsetDateTime.parse(s).toInstant).toOption)

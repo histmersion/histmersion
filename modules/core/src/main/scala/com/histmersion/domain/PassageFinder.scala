@@ -30,107 +30,57 @@ import java.util.regex.{Matcher, Pattern, PatternSyntaxException}
   * into it.
   */
 object PassageFinder:
+  type ContextChars = ContextChars.T
+  object ContextChars extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type Heading = Heading.T
+  object Heading extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type Limit = Limit.T
+  object Limit extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type MatchCount = MatchCount.T
+  object MatchCount extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type MaxMatches = MaxMatches.T
+  object MaxMatches extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type Passage = Passage.T
+  object Passage extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type Problem = Problem.T
+  object Problem extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type Query = Query.T
+  object Query extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type Regex = Regex.T
+  object Regex extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type SourceText = SourceText.T
+  object SourceText extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type TimeoutMs = TimeoutMs.T
+  object TimeoutMs extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
   /** The body `get_source` reads — chunks in order, joined by a blank line (`SourceRepo.bodyText`). */
-  type BodyResult = BodyResult.T
-  object BodyResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type FindResultPart1 = FindResultPart1.T
-  object FindResultPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type FindQuery = FindQuery.T
-  object FindQuery extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type FindRegex = FindRegex.T
-  object FindRegex extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type FindLimit = FindLimit.T
-  object FindLimit extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type FindContext = FindContext.T
-  object FindContext extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type FindMaxMatches = FindMaxMatches.T
-  object FindMaxMatches extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type FindTimeoutMs = FindTimeoutMs.T
-  object FindTimeoutMs extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type CompileResultPart1 = CompileResultPart1.T
-  object CompileResultPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type CompileQ = CompileQ.T
-  object CompileQ extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type CompileRegex = CompileRegex.T
-  object CompileRegex extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type FoldCharResult = FoldCharResult.T
-  object FoldCharResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type FoldCharC = FoldCharC.T
-  object FoldCharC extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Char, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type FoldResult = FoldResult.T
-  object FoldResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type FoldS = FoldS.T
-  object FoldS extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type IsMarkResult = IsMarkResult.T
-  object IsMarkResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type IsMarkC = IsMarkC.T
-  object IsMarkC extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Char, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type MatchesResultPart1Part1 = MatchesResultPart1Part1.T
-  object MatchesResultPart1Part1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type MatchesResultPart1Part2 = MatchesResultPart1Part2.T
-  object MatchesResultPart1Part2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type MatchesResultPart2 = MatchesResultPart2.T
-  object MatchesResultPart2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type MatchesSource = MatchesSource.T
-  object MatchesSource extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type MatchesMax = MatchesMax.T
-  object MatchesMax extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type MergeSpansPart1 = MergeSpansPart1.T
   object MergeSpansPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type MergeSpansPart2 = MergeSpansPart2.T
   object MergeSpansPart2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type MergeText = _root_.com.histmersion.domain.PassageFinder.DropBlanksText
-  val MergeText: _root_.com.histmersion.domain.PassageFinder.DropBlanksText.type = _root_.com.histmersion.domain.PassageFinder.DropBlanksText
-  type MergeContext = MergeContext.T
-  object MergeContext extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type StartOfResult = StartOfResult.T
-  object StartOfResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type StartOfText = _root_.com.histmersion.domain.PassageFinder.DropBlanksText
-  val StartOfText: _root_.com.histmersion.domain.PassageFinder.DropBlanksText.type = _root_.com.histmersion.domain.PassageFinder.DropBlanksText
-  type StartOfS = StartOfS.T
-  object StartOfS extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type StartOfHalf = StartOfHalf.T
-  object StartOfHalf extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type SkipBlanksResult = SkipBlanksResult.T
-  object SkipBlanksResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type SkipBlanksText = _root_.com.histmersion.domain.PassageFinder.DropBlanksText
-  val SkipBlanksText: _root_.com.histmersion.domain.PassageFinder.DropBlanksText.type = _root_.com.histmersion.domain.PassageFinder.DropBlanksText
-  type SkipBlanksFrom = SkipBlanksFrom.T
-  object SkipBlanksFrom extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type SkipBlanksUpTo = SkipBlanksUpTo.T
-  object SkipBlanksUpTo extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type EndOfResult = EndOfResult.T
-  object EndOfResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type EndOfText = _root_.com.histmersion.domain.PassageFinder.DropBlanksText
-  val EndOfText: _root_.com.histmersion.domain.PassageFinder.DropBlanksText.type = _root_.com.histmersion.domain.PassageFinder.DropBlanksText
-  type EndOfE = EndOfE.T
-  object EndOfE extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type EndOfHalf = EndOfHalf.T
-  object EndOfHalf extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type DropBlanksResult = DropBlanksResult.T
-  object DropBlanksResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type DropBlanksText = DropBlanksText.T
-  object DropBlanksText extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type DropBlanksTo = DropBlanksTo.T
-  object DropBlanksTo extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type DropBlanksDownTo = DropBlanksDownTo.T
-  object DropBlanksDownTo extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type MergeText = _root_.com.histmersion.domain.PassageFinder.Folded.Text
+  val MergeText: _root_.com.histmersion.domain.PassageFinder.Folded.Text.type = _root_.com.histmersion.domain.PassageFinder.Folded.Text
+  type StartOfText = _root_.com.histmersion.domain.PassageFinder.Folded.Text
+  val StartOfText: _root_.com.histmersion.domain.PassageFinder.Folded.Text.type = _root_.com.histmersion.domain.PassageFinder.Folded.Text
+  type SkipBlanksText = _root_.com.histmersion.domain.PassageFinder.Folded.Text
+  val SkipBlanksText: _root_.com.histmersion.domain.PassageFinder.Folded.Text.type = _root_.com.histmersion.domain.PassageFinder.Folded.Text
+  type EndOfText = _root_.com.histmersion.domain.PassageFinder.Folded.Text
+  val EndOfText: _root_.com.histmersion.domain.PassageFinder.Folded.Text.type = _root_.com.histmersion.domain.PassageFinder.Folded.Text
 
-  def body(segments: Seq[Chunk]): com.histmersion.domain.PassageFinder.BodyResult = segments.map(_.body).mkString(Separator)
+  def body(segments: Seq[Chunk]): com.histmersion.domain.PassageFinder.Passage = segments.map(_.body).mkString(Separator)
 
   private val Separator = "\n\n"
 
   def find(
       citekey: com.histmersion.domain.library.Citekey,
       segments: Seq[Chunk],
-      query: com.histmersion.domain.PassageFinder.FindQuery,
-      regex: com.histmersion.domain.PassageFinder.FindRegex,
-      limit: com.histmersion.domain.PassageFinder.FindLimit,
-      context: com.histmersion.domain.PassageFinder.FindContext,
-      maxMatches: com.histmersion.domain.PassageFinder.FindMaxMatches,
-      timeoutMs: com.histmersion.domain.PassageFinder.FindTimeoutMs
-  )(using timer: com.histmersion.util.time.Timer): Either[com.histmersion.domain.PassageFinder.FindResultPart1, PassageResult] =
+      query: com.histmersion.domain.PassageFinder.Query,
+      regex: com.histmersion.domain.PassageFinder.Regex,
+      limit: com.histmersion.domain.PassageFinder.Limit,
+      context: com.histmersion.domain.PassageFinder.ContextChars,
+      maxMatches: com.histmersion.domain.PassageFinder.MaxMatches,
+      timeoutMs: com.histmersion.domain.PassageFinder.TimeoutMs
+  )(using timer: com.histmersion.util.time.Timer): Either[com.histmersion.domain.PassageFinder.Problem, PassageResult] =
     val q = Option(query).getOrElse("").trim
     if q.isEmpty then Left("the query is empty — give the words to find")
     else
@@ -160,7 +110,7 @@ object PassageFinder:
       }
 
   /** The query as a pattern over the FOLDED body. */
-  private[domain] def compile(q: com.histmersion.domain.PassageFinder.CompileQ, regex: com.histmersion.domain.PassageFinder.CompileRegex): Either[com.histmersion.domain.PassageFinder.CompileResultPart1, Pattern] =
+  private[domain] def compile(q: com.histmersion.domain.PassageFinder.Query, regex: com.histmersion.domain.PassageFinder.Regex): Either[com.histmersion.domain.PassageFinder.Problem, Pattern] =
     val flags = Pattern.CASE_INSENSITIVE | Pattern.UNICODE_CASE | Pattern.MULTILINE
     if regex then
       try Right(Pattern.compile(fold(q), flags))
@@ -175,7 +125,7 @@ object PassageFinder:
       Right(Pattern.compile(words.map(Pattern.quote).mkString("\\s+"), flags))
 
   /** One character as the matcher sees it: [[LatinFold]] plus the OCR typography. */
-  private[domain] def foldChar(c: com.histmersion.domain.PassageFinder.FoldCharC): com.histmersion.domain.PassageFinder.FoldCharResult =
+  private[domain] def foldChar(c: Char): String =
     if c < '\u0080' then c.toString
     else
       c match
@@ -191,16 +141,16 @@ object PassageFinder:
         case 'ﬄ'                                     => "ffl"
         case _                                       => LatinFold.foldChar(c)
 
-  private[domain] def fold(s: com.histmersion.domain.PassageFinder.FoldS): com.histmersion.domain.PassageFinder.FoldResult = Folded(s).text
+  private[domain] def fold(s: com.histmersion.domain.PassageFinder.SourceText): com.histmersion.domain.PassageFinder.Folded.Text = Folded(s).text
 
   /** `source` folded, with the index of the source character every folded character came from (`back(folded.length) ==
     * source.length`), so a match maps back to the original offsets.
     */
   final private[domain] class Folded(val text: Folded.Text, back: Array[Int]):
-    def start(i: com.histmersion.domain.PassageFinder.Folded.StartI): com.histmersion.domain.PassageFinder.Folded.StartResult = back(i)
+    def start(i: com.histmersion.Offset): com.histmersion.Offset = back(i)
 
     /** The original end of a match ending (exclusive) at folded index `i`. */
-    def end(i: com.histmersion.domain.PassageFinder.Folded.EndI, source: com.histmersion.domain.PassageFinder.Folded.EndSource): com.histmersion.domain.PassageFinder.Folded.EndResult =
+    def end(i: com.histmersion.Offset, source: com.histmersion.domain.PassageFinder.SourceText): com.histmersion.Offset =
       if i <= 0 then 0
       else
         // the combining marks of the last letter belong to the match too
@@ -212,20 +162,8 @@ object PassageFinder:
     type Text = Text.T
     object Text extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
-    type StartResult = StartResult.T
-    object StartResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
-    type StartI = StartI.T
-    object StartI extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
-    type EndResult = EndResult.T
-    object EndResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
-    type EndI = EndI.T
-    object EndI extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
-    type EndSource = EndSource.T
-    object EndSource extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-    type ApplySource = ApplySource.T
-    object ApplySource extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
-    def apply(source: com.histmersion.domain.PassageFinder.Folded.ApplySource): Folded =
+    def apply(source: com.histmersion.domain.PassageFinder.SourceText): Folded =
       val sb = new java.lang.StringBuilder(source.length) // local accumulators
       val back = new scala.collection.mutable.ArrayBuilder.ofInt
       back.sizeHint(source.length + 1)
@@ -240,7 +178,7 @@ object PassageFinder:
       back += source.length
       new Folded(sb.toString, back.result())
 
-  private def isMark(c: com.histmersion.domain.PassageFinder.IsMarkC): com.histmersion.domain.PassageFinder.IsMarkResult = c >= '̀' && c <= 'ͯ'
+  private def isMark(c: Char): Boolean = c >= '̀' && c <= 'ͯ'
 
   final private class TimedOut extends RuntimeException(null, null, false, false)
 
@@ -250,28 +188,18 @@ object PassageFinder:
   final private class Bounded(s: CharSequence, until: com.histmersion.util.time.Timer.Deadline) extends CharSequence:
     // a counter, so the clock is read once per 64 Ki characters rather than on every one
     private var reads = 0
-    def length: com.histmersion.domain.PassageFinder.Bounded.LengthResult = s.length
-    def charAt(i: com.histmersion.domain.PassageFinder.Bounded.CharAtI): com.histmersion.domain.PassageFinder.Bounded.CharAtResult =
+    def length: Int = s.length
+    def charAt(i: com.histmersion.Offset): Char =
       reads += 1
       if (reads & 0xffff) == 0 && until.exceeded then throw new TimedOut
       s.charAt(i)
-    def subSequence(a: com.histmersion.domain.PassageFinder.Bounded.SubSequenceA, b: com.histmersion.domain.PassageFinder.Bounded.SubSequenceB): CharSequence = new Bounded(s.subSequence(a, b), until)
+    def subSequence(a: com.histmersion.Offset, b: com.histmersion.Offset): CharSequence = new Bounded(s.subSequence(a, b), until)
     override def toString: String = s.toString
 
   object Bounded:
-    type LengthResult = LengthResult.T
-    object LengthResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
-    type CharAtResult = CharAtResult.T
-    object CharAtResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Char, _root_.io.github.iltotore.iron.constraint.any.Pure]
-    type CharAtI = CharAtI.T
-    object CharAtI extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
-    type SubSequenceA = SubSequenceA.T
-    object SubSequenceA extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
-    type SubSequenceB = SubSequenceB.T
-    object SubSequenceB extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
   /** Every non-empty match as `[start, end)` in the ORIGINAL body, in order, up to `max`. */
-  private def matches(p: Pattern, f: Folded, source: com.histmersion.domain.PassageFinder.MatchesSource, max: com.histmersion.domain.PassageFinder.MatchesMax, until: com.histmersion.util.time.Timer.Deadline): (Vector[(com.histmersion.domain.PassageFinder.MatchesResultPart1Part1, com.histmersion.domain.PassageFinder.MatchesResultPart1Part2)], com.histmersion.domain.PassageFinder.MatchesResultPart2) =
+  private def matches(p: Pattern, f: Folded, source: com.histmersion.domain.PassageFinder.SourceText, max: com.histmersion.domain.PassageFinder.MaxMatches, until: com.histmersion.util.time.Timer.Deadline): (Vector[(com.histmersion.domain.PassageFinder.MatchCount, com.histmersion.Offset)], Boolean) =
     val m: Matcher = p.matcher(new Bounded(f.text, until))
     val out = Vector.newBuilder[(Int, Int)]
     // the Matcher is itself a cursor, so the loop around it counts with two local vars
@@ -305,7 +233,7 @@ object PassageFinder:
     * than the match does); any other starts a passage of its own, which begins no earlier than where the previous one
     * ended — so no text is shown twice, and dense matches do not snowball into one enormous passage.
     */
-  private def merge(spans: Vector[(com.histmersion.domain.PassageFinder.MergeSpansPart1, com.histmersion.domain.PassageFinder.MergeSpansPart2)], text: com.histmersion.domain.PassageFinder.MergeText, context: com.histmersion.domain.PassageFinder.MergeContext): Vector[Range] =
+  private def merge(spans: Vector[(com.histmersion.domain.PassageFinder.MergeSpansPart1, com.histmersion.domain.PassageFinder.MergeSpansPart2)], text: com.histmersion.domain.PassageFinder.MergeText, context: com.histmersion.domain.PassageFinder.ContextChars): Vector[Range] =
     val half = context / 2
     spans.foldLeft(Vector.empty[Range]) { case (acc, (s, e)) =>
       acc.lastOption match
@@ -319,7 +247,7 @@ object PassageFinder:
   /** Where a passage around a match starting at `s` begins: the first line start within `half` characters before it,
     * else the first word start, else exactly `half` before; leading blanks dropped.
     */
-  private[domain] def startOf(text: com.histmersion.domain.PassageFinder.StartOfText, s: com.histmersion.domain.PassageFinder.StartOfS, half: com.histmersion.domain.PassageFinder.StartOfHalf): com.histmersion.domain.PassageFinder.StartOfResult =
+  private[domain] def startOf(text: com.histmersion.domain.PassageFinder.StartOfText, s: com.histmersion.Offset, half: com.histmersion.Offset): com.histmersion.Offset =
     val lo = (s - half).max(0)
     val begin =
       if lo == 0 then 0
@@ -332,13 +260,13 @@ object PassageFinder:
     skipBlanks(text, begin, s)
 
   @annotation.tailrec
-  private def skipBlanks(text: com.histmersion.domain.PassageFinder.SkipBlanksText, from: com.histmersion.domain.PassageFinder.SkipBlanksFrom, upTo: com.histmersion.domain.PassageFinder.SkipBlanksUpTo): com.histmersion.domain.PassageFinder.SkipBlanksResult =
+  private def skipBlanks(text: com.histmersion.domain.PassageFinder.SkipBlanksText, from: com.histmersion.Offset, upTo: com.histmersion.Offset): com.histmersion.Offset =
     if from < upTo && text.charAt(from).isWhitespace then skipBlanks(text, from + 1, upTo) else from
 
   /** Where a passage around a match ending at `e` ends: the last line end within `half` characters after it, else the
     * last word end, else exactly `half` after; trailing blanks dropped.
     */
-  private[domain] def endOf(text: com.histmersion.domain.PassageFinder.EndOfText, e: com.histmersion.domain.PassageFinder.EndOfE, half: com.histmersion.domain.PassageFinder.EndOfHalf): com.histmersion.domain.PassageFinder.EndOfResult =
+  private[domain] def endOf(text: com.histmersion.domain.PassageFinder.EndOfText, e: com.histmersion.Offset, half: com.histmersion.Offset): com.histmersion.Offset =
     val hi = (e + half).min(text.length)
     val finish =
       if hi == text.length then hi
@@ -351,21 +279,21 @@ object PassageFinder:
     dropBlanks(text, finish, e)
 
   @annotation.tailrec
-  private def dropBlanks(text: com.histmersion.domain.PassageFinder.DropBlanksText, to: com.histmersion.domain.PassageFinder.DropBlanksTo, downTo: com.histmersion.domain.PassageFinder.DropBlanksDownTo): com.histmersion.domain.PassageFinder.DropBlanksResult =
+  private def dropBlanks(text: com.histmersion.domain.PassageFinder.Folded.Text, to: com.histmersion.Offset, downTo: com.histmersion.Offset): com.histmersion.Offset =
     if to > downTo && text.charAt(to - 1).isWhitespace then dropBlanks(text, to - 1, downTo) else to
 
   /** The heading a body offset sits under: its chunk's breadcrumb, or — for a body stored without chunks, whose heading
     * lines are still in the text — the nearest Markdown heading above it.
     */
   final private class Headings(segments: Seq[Chunk], text: Headings.Text):
-    private val starts: Array[com.histmersion.domain.PassageFinder.Headings.Starts] =
+    private val starts: Array[com.histmersion.Offset] =
       segments.iterator.scanLeft(0)((at, c) => at + c.body.length + Separator.length).take(segments.size).toArray
 
-    private lazy val inline: Vector[(com.histmersion.domain.PassageFinder.Headings.InlinePart1, com.histmersion.domain.PassageFinder.Headings.InlinePart2)] =
+    private lazy val inline: Vector[(com.histmersion.Offset, com.histmersion.domain.PassageFinder.Heading)] =
       val Heading = """(?m)^#{1,6}[ \t]+(.*?)[ \t]*#*[ \t]*$""".r
       Heading.findAllMatchIn(text).map(m => (m.start, m.group(1))).filter(_._2.nonEmpty).toVector
 
-    def at(offset: com.histmersion.domain.PassageFinder.Headings.AtOffset): Option[com.histmersion.domain.PassageFinder.Headings.AtResult] =
+    def at(offset: com.histmersion.Offset): Option[com.histmersion.domain.PassageFinder.Heading] =
       val i = java.util.Arrays.binarySearch(starts, offset) match
         case k if k >= 0 => k
         case k           => -k - 2
@@ -376,13 +304,3 @@ object PassageFinder:
     type Text = Text.T
     object Text extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
-    type Starts = Starts.T
-    object Starts extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
-    type InlinePart1 = InlinePart1.T
-    object InlinePart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
-    type InlinePart2 = InlinePart2.T
-    object InlinePart2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-    type AtResult = AtResult.T
-    object AtResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-    type AtOffset = AtOffset.T
-    object AtOffset extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]

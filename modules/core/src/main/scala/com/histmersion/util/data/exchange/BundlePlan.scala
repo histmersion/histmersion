@@ -22,47 +22,13 @@ import com.histmersion.api.exchange.Bundle
   */
 object BundlePlan:
 
-  type CountsLoopInserted = CountsLoopInserted.T
-  object CountsLoopInserted extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type CountsLoopUpdated = CountsLoopUpdated.T
-  object CountsLoopUpdated extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type CountsLoopUnchanged = CountsLoopUnchanged.T
-  object CountsLoopUnchanged extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type CountsLoopKeptLocal = CountsLoopKeptLocal.T
-  object CountsLoopKeptLocal extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type CountsLoopConflicts = CountsLoopConflicts.T
-  object CountsLoopConflicts extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type CountsLoopDeleted = CountsLoopDeleted.T
-  object CountsLoopDeleted extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type CountsLoopSkippedDeleted = CountsLoopSkippedDeleted.T
-  object CountsLoopSkippedDeleted extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type CountsLoopHeld = CountsLoopHeld.T
-  object CountsLoopHeld extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type CascadeGoneResult = CascadeGoneResult.T
-  object CascadeGoneResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type CascadeHeldResult = CascadeHeldResult.T
-  object CascadeHeldResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type CascadeWritingResult = CascadeWritingResult.T
-  object CascadeWritingResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
-  type EntityForeignRev = EntityForeignRev.T
-  object EntityForeignRev extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type EntityOwnBundle = EntityOwnBundle.T
   object EntityOwnBundle extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type EntityLocalizedRev = EntityLocalizedRev.T
-  object EntityLocalizedRev extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type TombstoneOwnBundle = TombstoneOwnBundle.T
   object TombstoneOwnBundle extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type LedgerAfterForeignRev = _root_.com.histmersion.util.data.exchange.BundlePlan.Ledger.ForeignRev
   val LedgerAfterForeignRev: _root_.com.histmersion.util.data.exchange.BundlePlan.Ledger.ForeignRev.type = _root_.com.histmersion.util.data.exchange.BundlePlan.Ledger.ForeignRev
-  type LedgerAfterTombstone = LedgerAfterTombstone.T
-  object LedgerAfterTombstone extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type LedgerAfterLocalizedRev = LedgerAfterLocalizedRev.T
-  object LedgerAfterLocalizedRev extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type LedgerAfterLocalRev = LedgerAfterLocalRev.T
-  object LedgerAfterLocalRev extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type CascadeDeletedHereResult = CascadeDeletedHereResult.T
-  object CascadeDeletedHereResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
   enum Decision:
     case Insert, FastForward, Unchanged, KeepLocal, Conflict, SkipDeleted, Delete, RecordTombstone
@@ -83,13 +49,11 @@ object BundlePlan:
     case Held
 
     /** Does it write the row (or remove it)? */
-    def writes: com.histmersion.util.data.exchange.BundlePlan.Decision.WritesResult = this match
+    def writes: Boolean = this match
       case Insert | FastForward | Delete => true
       case _                             => false
 
   object Decision:
-    type WritesResult = WritesResult.T
-    object WritesResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
   /** The ledger's foreign rev for a tombstone, which has no content to hash. */
   val DeletedRev = "deleted"
@@ -114,14 +78,14 @@ object BundlePlan:
 
     val absent: Local = Local(None, tombstoned = false, None)
 
-  def entity(foreignRev: com.histmersion.util.data.exchange.BundlePlan.EntityForeignRev, local: Local, ownBundle: com.histmersion.util.data.exchange.BundlePlan.EntityOwnBundle): Decision =
+  def entity(foreignRev: com.histmersion.util.data.exchange.BundlePlan.Ledger.ForeignRev, local: Local, ownBundle: com.histmersion.util.data.exchange.BundlePlan.EntityOwnBundle): Decision =
     entity(foreignRev, foreignRev, local, ownBundle)
 
   /** As above, for a line whose uid (and the uids it refers to) were mapped onto this instance's: `foreignRev` is the
     * bundle's rev, as the ledger remembers it; `localizedRev` the rev of the same line in this instance's terms,
     * comparable with the local row's. Without a mapping they are equal.
     */
-  def entity(foreignRev: com.histmersion.util.data.exchange.BundlePlan.EntityForeignRev, localizedRev: com.histmersion.util.data.exchange.BundlePlan.EntityLocalizedRev, local: Local, ownBundle: com.histmersion.util.data.exchange.BundlePlan.EntityOwnBundle): Decision =
+  def entity(foreignRev: com.histmersion.util.data.exchange.BundlePlan.Ledger.ForeignRev, localizedRev: com.histmersion.util.data.exchange.BundlePlan.Local.Rev, local: Local, ownBundle: com.histmersion.util.data.exchange.BundlePlan.EntityOwnBundle): Decision =
     local.rev match
       case Some(r) if r == localizedRev                                => Decision.Unchanged
       case Some(_) if ownBundle                                        => Decision.KeepLocal
@@ -148,14 +112,14 @@ object BundlePlan:
   def counts(kind: Bundle.Kind, ds: Iterable[Decision]): com.histmersion.api.exchange.Bundle.KindCounts =
     val decisions = ds.iterator
     @tailrec def loop(
-        inserted: com.histmersion.util.data.exchange.BundlePlan.CountsLoopInserted,
-        updated: com.histmersion.util.data.exchange.BundlePlan.CountsLoopUpdated,
-        unchanged: com.histmersion.util.data.exchange.BundlePlan.CountsLoopUnchanged,
-        keptLocal: com.histmersion.util.data.exchange.BundlePlan.CountsLoopKeptLocal,
-        conflicts: com.histmersion.util.data.exchange.BundlePlan.CountsLoopConflicts,
-        deleted: com.histmersion.util.data.exchange.BundlePlan.CountsLoopDeleted,
-        skippedDeleted: com.histmersion.util.data.exchange.BundlePlan.CountsLoopSkippedDeleted,
-        held: com.histmersion.util.data.exchange.BundlePlan.CountsLoopHeld
+        inserted: Int,
+        updated: Int,
+        unchanged: Int,
+        keptLocal: Int,
+        conflicts: Int,
+        deleted: Int,
+        skippedDeleted: Int,
+        held: Int
     ): com.histmersion.api.exchange.Bundle.KindCounts =
       if !decisions.hasNext then
         com.histmersion.api.exchange.Bundle.KindCounts(
@@ -195,7 +159,7 @@ object BundlePlan:
     * so the old ancestor stays, and a later change over there is seen as the conflict it is; a conflict or a skip
     * leaves it as well. For a tombstone `foreignRev` is a fixed marker.
     */
-  def ledgerAfter(d: Decision, foreignRev: com.histmersion.util.data.exchange.BundlePlan.LedgerAfterForeignRev, tombstone: com.histmersion.util.data.exchange.BundlePlan.LedgerAfterTombstone): Option[Ledger] =
+  def ledgerAfter(d: Decision, foreignRev: com.histmersion.util.data.exchange.BundlePlan.LedgerAfterForeignRev, tombstone: com.histmersion.util.data.exchange.BundlePlan.Local.Tombstoned): Option[Ledger] =
     ledgerAfter(d, foreignRev, foreignRev, None, tombstone)
 
   /** As above with the line mapped onto this instance (`localizedRev`, see [[entity]]), and the local rev a `Kept` row
@@ -205,9 +169,9 @@ object BundlePlan:
   def ledgerAfter(
       d: Decision,
       foreignRev: com.histmersion.util.data.exchange.BundlePlan.LedgerAfterForeignRev,
-      localizedRev: com.histmersion.util.data.exchange.BundlePlan.LedgerAfterLocalizedRev,
-      localRev: Option[com.histmersion.util.data.exchange.BundlePlan.LedgerAfterLocalRev],
-      tombstone: com.histmersion.util.data.exchange.BundlePlan.LedgerAfterTombstone
+      localizedRev: com.histmersion.util.data.exchange.BundlePlan.Ledger.LocalRevAfter,
+      localRev: Option[com.histmersion.util.data.exchange.BundlePlan.Ledger.LocalRevAfter],
+      tombstone: com.histmersion.util.data.exchange.BundlePlan.Local.Tombstoned
   ): Option[Ledger] =
     d match
       case Decision.Conflict | Decision.SkipDeleted | Decision.KeepLocal | Decision.Skip | Decision.Held => None
@@ -223,17 +187,17 @@ object BundlePlan:
   def cascade(
       decisions: Map[java.util.UUID, Decision],
       refs: List[BundleEntities.Reference],
-      deletedHere: java.util.UUID => com.histmersion.util.data.exchange.BundlePlan.CascadeDeletedHereResult
+      deletedHere: java.util.UUID => Boolean
   ): Map[java.util.UUID, Decision] =
-    def gone(ds: Map[java.util.UUID, Decision])(u: java.util.UUID): com.histmersion.util.data.exchange.BundlePlan.CascadeGoneResult =
+    def gone(ds: Map[java.util.UUID, Decision])(u: java.util.UUID): Boolean =
       ds.get(u) match
         case Some(Decision.SkipDeleted) | Some(Decision.Delete) | Some(Decision.RecordTombstone) |
             Some(Decision.Skip) =>
           true
         case Some(_) => false
         case None    => deletedHere(u)
-    def held(ds: Map[java.util.UUID, Decision])(u: java.util.UUID): com.histmersion.util.data.exchange.BundlePlan.CascadeHeldResult = ds.get(u).contains(Decision.Held)
-    def writing(ds: Map[java.util.UUID, Decision])(u: java.util.UUID): com.histmersion.util.data.exchange.BundlePlan.CascadeWritingResult =
+    def held(ds: Map[java.util.UUID, Decision])(u: java.util.UUID): Boolean = ds.get(u).contains(Decision.Held)
+    def writing(ds: Map[java.util.UUID, Decision])(u: java.util.UUID): Boolean =
       ds.get(u).exists(d => d == Decision.Insert || d == Decision.FastForward)
     // every round turns at least one writing line into a non-writing one, so it ends within
     // `decisions.size` rounds

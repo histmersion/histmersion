@@ -22,16 +22,16 @@ trait PlanQuestions extends PairQuestions:
   def localized: BundleEntities
 
   /** A uid the bundle's lines have, in this collection's terms. */
-  def inLocalized(u: UUID): com.histmersion.util.data.exchange.PlanQuestions.InLocalizedResult
+  def inLocalized(u: UUID): Boolean
 
   /** The bundle's uid of a uid here. */
   def bundleUidOf(u: UUID): UUID
 
   /** A line the rows' decisions write, before any question is answered. */
-  def writesInitially(u: UUID): com.histmersion.util.data.exchange.PlanQuestions.WritesInitiallyResult
+  def writesInitially(u: UUID): Boolean
 
   /** Whether a record of the bundle is already merged with one here. */
-  def merged(foreign: UUID): com.histmersion.util.data.exchange.PlanQuestions.MergedResult
+  def merged(foreign: UUID): Boolean
 
   /** A record of the bundle that is one with a record here. */
   def merge(foreign: UUID, here: UUID, how: PlanMerge): Unit
@@ -50,12 +50,6 @@ trait PlanQuestions extends PairQuestions:
   ): Unit
 
 object PlanQuestions:
-  type InLocalizedResult = InLocalizedResult.T
-  object InLocalizedResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type WritesInitiallyResult = WritesInitiallyResult.T
-  object WritesInitiallyResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type MergedResult = MergedResult.T
-  object MergedResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type LabelTakenLabelResult = LabelTakenLabelResult.T
   object LabelTakenLabelResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type LabelTakenWhat = LabelTakenWhat.T

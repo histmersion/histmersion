@@ -211,16 +211,6 @@ object FindingPlan:
   object ClaimWordsClaim extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type KmResult = KmResult.T
   object KmResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type KmLon1 = KmLon1.T
-  object KmLon1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type KmLat1 = KmLat1.T
-  object KmLat1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type KmLon2 = KmLon2.T
-  object KmLon2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type KmLat2 = KmLat2.T
-  object KmLat2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type SamePlaceResult = SamePlaceResult.T
-  object SamePlaceResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type SamePlaceWithinKm = SamePlaceWithinKm.T
   object SamePlaceWithinKm extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type CautionResult = CautionResult.T
@@ -263,7 +253,7 @@ object FindingPlan:
   private def claimWords(claim: com.histmersion.domain.library.findings.FindingPlan.ClaimWordsClaim): Set[com.histmersion.domain.library.findings.FindingPlan.ClaimWordsResult] = MergeText.significant(MergeText.tokens(claim)).toSet
 
   /** Great-circle distance in km. */
-  def km(lon1: com.histmersion.domain.library.findings.FindingPlan.KmLon1, lat1: com.histmersion.domain.library.findings.FindingPlan.KmLat1, lon2: com.histmersion.domain.library.findings.FindingPlan.KmLon2, lat2: com.histmersion.domain.library.findings.FindingPlan.KmLat2): com.histmersion.domain.library.findings.FindingPlan.KmResult =
+  def km(lon1: com.histmersion.Longitude, lat1: com.histmersion.Latitude, lon2: com.histmersion.Longitude, lat2: com.histmersion.Latitude): com.histmersion.domain.library.findings.FindingPlan.KmResult =
     val (p1, p2) = (math.toRadians(lat1), math.toRadians(lat2))
     val dp = p2 - p1
     val dl = math.toRadians(lon2 - lon1)
@@ -277,7 +267,7 @@ object FindingPlan:
       a: com.histmersion.api.exchange.Bundle.Finding,
       b: com.histmersion.api.exchange.Bundle.Finding,
       withinKm: com.histmersion.domain.library.findings.FindingPlan.SamePlaceWithinKm
-  ): com.histmersion.domain.library.findings.FindingPlan.SamePlaceResult =
+  ): Boolean =
     val points = for { x <- a.lon; y <- a.lat; u <- b.lon; v <- b.lat } yield km(x, y, u, v) <= withinKm
     val regions = text(a.region).zip(text(b.region)).map((x, y) => MergeText.fingerprint(x) == MergeText.fingerprint(y))
     points.orElse(regions).forall(identity) || points.contains(true) || regions.contains(true)

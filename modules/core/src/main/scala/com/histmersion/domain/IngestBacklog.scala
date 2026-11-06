@@ -13,89 +13,41 @@ import java.time.Instant
   * list. The pure rules; the supervisor reads the facts and writes the result.
   */
 object IngestBacklog:
+  type DayAllowance = DayAllowance.T
+  object DayAllowance extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type DaysToDrain = DaysToDrain.T
+  object DaysToDrain extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type DrainHorizon = DrainHorizon.T
+  object DrainHorizon extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type DrainLimit = DrainLimit.T
+  object DrainLimit extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type DrainedToday = DrainedToday.T
+  object DrainedToday extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type OwnAllowance = OwnAllowance.T
+  object OwnAllowance extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type Problem = Problem.T
+  object Problem extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type SharedAllowance = SharedAllowance.T
+  object SharedAllowance extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type SweepAllowance = SweepAllowance.T
+  object SweepAllowance extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type TotalBacklog = TotalBacklog.T
+  object TotalBacklog extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
   /** How the legal chain says a work has no legal file (`AcquisitionControllers.ingestLegal`): such a work goes to the
     * acquisition list at once; any other failure is tried again later.
     */
-  type DrainTakeLeftPart1 = DrainTakeLeftPart1.T
-  object DrainTakeLeftPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type DrainTakeLeftPart2 = DrainTakeLeftPart2.T
-  object DrainTakeLeftPart2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type DrainTakeSh = DrainTakeSh.T
-  object DrainTakeSh extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type DaysToDrainGoResult = DaysToDrainGoResult.T
-  object DaysToDrainGoResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type DaysToDrainGoBs = DaysToDrainGoBs.T
-  object DaysToDrainGoBs extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type DaysToDrainGoDay = DaysToDrainGoDay.T
-  object DaysToDrainGoDay extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type DaysToDrainGoDrainDayResult = DaysToDrainGoDrainDayResult.T
-  object DaysToDrainGoDrainDayResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type DaysToDrainGoDrainDayRest = DaysToDrainGoDrainDayRest.T
-  object DaysToDrainGoDrainDayRest extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type DaysToDrainGoDrainDayCur = DaysToDrainGoDrainDayCur.T
-  object DaysToDrainGoDrainDayCur extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type DaysToDrainGoDrainDayRoom = DaysToDrainGoDrainDayRoom.T
-  object DaysToDrainGoDrainDayRoom extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
-  type IsNoLegalCopyResult = IsNoLegalCopyResult.T
-  object IsNoLegalCopyResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type IsNoLegalCopyMessage = IsNoLegalCopyMessage.T
-  object IsNoLegalCopyMessage extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type SweepAllowanceResult = SweepAllowanceResult.T
-  object SweepAllowanceResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type SweepAllowanceOwn = SweepAllowanceOwn.T
-  object SweepAllowanceOwn extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type SweepAllowanceShared = SweepAllowanceShared.T
-  object SweepAllowanceShared extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type SweepAllowanceOwnBacklog = SweepAllowanceOwnBacklog.T
-  object SweepAllowanceOwnBacklog extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type SweepAllowanceAllBacklog = SweepAllowanceAllBacklog.T
-  object SweepAllowanceAllBacklog extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type DrainOwnLeftPart1 = DrainOwnLeftPart1.T
-  object DrainOwnLeftPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type DrainOwnLeftPart2 = DrainOwnLeftPart2.T
-  object DrainOwnLeftPart2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type DrainShared = DrainShared.T
-  object DrainShared extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type DrainMax = DrainMax.T
-  object DrainMax extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type PlaceInCorpus = PlaceInCorpus.T
-  object PlaceInCorpus extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type PlaceAcquire = PlaceAcquire.T
-  object PlaceAcquire extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type PlaceOpenBacklog = PlaceOpenBacklog.T
-  object PlaceOpenBacklog extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type PlaceSettledHere = PlaceSettledHere.T
-  object PlaceSettledHere extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type OnFailureMessage = OnFailureMessage.T
-  object OnFailureMessage extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type OnFailureFailures = OnFailureFailures.T
-  object OnFailureFailures extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type OnFailureMaxFailures = OnFailureMaxFailures.T
-  object OnFailureMaxFailures extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type OnFailureBackoffMinutes = OnFailureBackoffMinutes.T
-  object OnFailureBackoffMinutes extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type OnFailureMaxBackoffMinutes = OnFailureMaxBackoffMinutes.T
-  object OnFailureMaxBackoffMinutes extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type DaysToDrainResult = DaysToDrainResult.T
-  object DaysToDrainResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type DaysToDrainSharedPerDay = DaysToDrainSharedPerDay.T
-  object DaysToDrainSharedPerDay extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type DaysToDrainSharedLeftToday = DaysToDrainSharedLeftToday.T
-  object DaysToDrainSharedLeftToday extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type DaysToDrainHorizon = DaysToDrainHorizon.T
-  object DaysToDrainHorizon extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
   val NoLegalCopy = "no legal open-access copy of"
 
-  def isNoLegalCopy(message: com.histmersion.domain.IngestBacklog.IsNoLegalCopyMessage): com.histmersion.domain.IngestBacklog.IsNoLegalCopyResult = Option(message).exists(_.trim.startsWith(NoLegalCopy))
+  def isNoLegalCopy(message: com.histmersion.domain.IngestBacklog.Problem): Boolean = Option(message).exists(_.trim.startsWith(NoLegalCopy))
 
   /** What a watcher's next sweep may ingest of its NEW finds: what is left of its own allowance (`own`) and of the
     * shared one (`shared`, the autopilot's; None = no shared cap), each after the backlog that drains under it first —
     * the watcher's own pending items (`ownBacklog`) and every drainable watcher's (`allBacklog`). Never negative.
     */
-  def sweepAllowance(own: com.histmersion.domain.IngestBacklog.SweepAllowanceOwn, shared: Option[com.histmersion.domain.IngestBacklog.SweepAllowanceShared], ownBacklog: com.histmersion.domain.IngestBacklog.SweepAllowanceOwnBacklog, allBacklog: com.histmersion.domain.IngestBacklog.SweepAllowanceAllBacklog): com.histmersion.domain.IngestBacklog.SweepAllowanceResult =
+  def sweepAllowance(own: com.histmersion.domain.IngestBacklog.OwnAllowance, shared: Option[com.histmersion.domain.IngestBacklog.SharedAllowance], ownBacklog: com.histmersion.domain.IngestBacklog.Lane.Backlog, allBacklog: com.histmersion.domain.IngestBacklog.TotalBacklog): com.histmersion.domain.IngestBacklog.SweepAllowance =
     val mine = own - math.max(0, ownBacklog)
     val all = shared.fold(Int.MaxValue)(_ - math.max(0, allBacklog))
     math.max(0, math.min(mine, all))
@@ -116,9 +68,9 @@ object IngestBacklog:
     * paused, auto-ingest off — drains nothing) and of the shared one (None = no shared cap); at most `max` (one tick's
     * share: an ingest fetches a file, so a tick takes only a few).
     */
-  def drain(entries: List[Entry], ownLeft: Map[com.histmersion.domain.IngestBacklog.DrainOwnLeftPart1, com.histmersion.domain.IngestBacklog.DrainOwnLeftPart2], shared: Option[com.histmersion.domain.IngestBacklog.DrainShared], now: Instant, max: com.histmersion.domain.IngestBacklog.DrainMax): List[Entry] =
+  def drain(entries: List[Entry], ownLeft: Map[com.histmersion.domain.IngestBacklog.Entry.ManagerId, com.histmersion.domain.IngestBacklog.Lane.LeftToday], shared: Option[com.histmersion.domain.IngestBacklog.SharedAllowance], now: Instant, max: com.histmersion.domain.IngestBacklog.DrainLimit): List[Entry] =
     val ordered = entries.filter(_.notBefore.forall(!_.isAfter(now))).sortBy(e => (-e.priority, e.id))
-    @tailrec def take(rest: List[Entry], acc: Vector[Entry], left: Map[com.histmersion.domain.IngestBacklog.DrainTakeLeftPart1, com.histmersion.domain.IngestBacklog.DrainTakeLeftPart2], sh: Option[com.histmersion.domain.IngestBacklog.DrainTakeSh]): List[Entry] =
+    @tailrec def take(rest: List[Entry], acc: Vector[Entry], left: Map[com.histmersion.domain.IngestBacklog.Entry.ManagerId, com.histmersion.domain.IngestBacklog.Lane.LeftToday], sh: Option[com.histmersion.domain.IngestBacklog.SharedAllowance]): List[Entry] =
       rest match
         case Nil       => acc.toList
         case e :: tail =>
@@ -151,10 +103,10 @@ object IngestBacklog:
       object Item extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
   def place(
-      inCorpus: Option[com.histmersion.domain.IngestBacklog.PlaceInCorpus],
-      acquire: Option[com.histmersion.domain.IngestBacklog.PlaceAcquire],
-      openBacklog: Option[com.histmersion.domain.IngestBacklog.PlaceOpenBacklog],
-      settledHere: Option[com.histmersion.domain.IngestBacklog.PlaceSettledHere]
+      inCorpus: Option[com.histmersion.domain.library.Citekey],
+      acquire: Option[com.histmersion.domain.IngestBacklog.Placement.JoinAcquire.Item],
+      openBacklog: Option[com.histmersion.domain.IngestBacklog.Placement.JoinBacklog.Item],
+      settledHere: Option[com.histmersion.domain.IngestBacklog.Placement.SettledBefore.Item]
   ): Placement =
     inCorpus
       .map(Placement.InCorpus(_))
@@ -181,11 +133,11 @@ object IngestBacklog:
       object Why extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
   def onFailure(
-      message: com.histmersion.domain.IngestBacklog.OnFailureMessage,
-      failures: com.histmersion.domain.IngestBacklog.OnFailureFailures,
-      maxFailures: com.histmersion.domain.IngestBacklog.OnFailureMaxFailures,
-      backoffMinutes: com.histmersion.domain.IngestBacklog.OnFailureBackoffMinutes,
-      maxBackoffMinutes: com.histmersion.domain.IngestBacklog.OnFailureMaxBackoffMinutes,
+      message: com.histmersion.domain.IngestBacklog.Problem,
+      failures: com.histmersion.domain.IngestBacklog.Failure.Retry.Failures,
+      maxFailures: com.histmersion.domain.ManagerDefaults.MaxFailures,
+      backoffMinutes: com.histmersion.domain.ManagerDefaults.BackoffMinutes,
+      maxBackoffMinutes: com.histmersion.domain.ManagerDefaults.MaxBackoffMinutes,
       now: Instant
   ): Failure =
     val why = Option(message).map(_.trim).filter(_.nonEmpty).getOrElse("the ingest failed").take(500)
@@ -213,19 +165,19 @@ object IngestBacklog:
     */
   def daysToDrain(
       lanes: List[Lane],
-      sharedPerDay: Option[com.histmersion.domain.IngestBacklog.DaysToDrainSharedPerDay],
-      sharedLeftToday: Option[com.histmersion.domain.IngestBacklog.DaysToDrainSharedLeftToday],
-      horizon: com.histmersion.domain.IngestBacklog.DaysToDrainHorizon = 3650
-  ): Option[com.histmersion.domain.IngestBacklog.DaysToDrainResult] =
+      sharedPerDay: Option[com.histmersion.domain.IngestBacklog.Lane.PerDay],
+      sharedLeftToday: Option[com.histmersion.domain.IngestBacklog.Lane.LeftToday],
+      horizon: com.histmersion.domain.IngestBacklog.DrainHorizon = 3650
+  ): Option[com.histmersion.domain.IngestBacklog.DaysToDrain] =
     @annotation.tailrec
-    def go(bs: Vector[com.histmersion.domain.IngestBacklog.DaysToDrainGoBs], day: com.histmersion.domain.IngestBacklog.DaysToDrainGoDay): Option[com.histmersion.domain.IngestBacklog.DaysToDrainGoResult] =
+    def go(bs: Vector[com.histmersion.domain.IngestBacklog.Lane.Backlog], day: Int): Option[com.histmersion.domain.IngestBacklog.DaysToDrain] =
       if bs.forall(_ <= 0) then Some(math.max(0, day - 1))
       else if day > horizon then None
       else
         val caps = lanes.map(l => math.max(0, if day == 0 then l.leftToday else l.perDay)).toVector
         val share = (if day == 0 then sharedLeftToday.orElse(sharedPerDay) else sharedPerDay).map(math.max(0, _))
         val order = bs.indices.sortBy(i => -bs(i))
-        @tailrec def drainDay(rest: List[com.histmersion.domain.IngestBacklog.DaysToDrainGoDrainDayRest], cur: Vector[com.histmersion.domain.IngestBacklog.DaysToDrainGoDrainDayCur], room: com.histmersion.domain.IngestBacklog.DaysToDrainGoDrainDayRoom): Vector[com.histmersion.domain.IngestBacklog.DaysToDrainGoDrainDayResult] =
+        @tailrec def drainDay(rest: List[com.histmersion.domain.IngestBacklog.DayAllowance], cur: Vector[Int], room: com.histmersion.domain.IngestBacklog.DayAllowance): Vector[com.histmersion.domain.IngestBacklog.DrainedToday] =
           rest match
             case Nil       => cur
             case i :: tail =>

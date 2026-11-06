@@ -6,8 +6,6 @@ import com.histmersion.api.jobs.{JobInfo, JobState}
   */
 object JobControlRules:
 
-  type StoppableResult = StoppableResult.T
-  object StoppableResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type StoppableKind = StoppableKind.T
   object StoppableKind extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type DecideResultPart1 = DecideResultPart1.T
@@ -19,7 +17,7 @@ object JobControlRules:
   type StoppedLineLast = StoppedLineLast.T
   object StoppedLineLast extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
-  def stoppable(kind: com.histmersion.util.jobs.JobControlRules.StoppableKind): com.histmersion.util.jobs.JobControlRules.StoppableResult = com.histmersion.api.jobs.JobActions.Stoppable.contains(kind)
+  def stoppable(kind: com.histmersion.util.jobs.JobControlRules.StoppableKind): Boolean = com.histmersion.api.jobs.JobActions.Stoppable.contains(kind)
 
   /** The step that answers `action` on `job` (a kind whose runner controls its own jobs is handed the action); `Left`
     * says why it cannot be done. `resumable`: this server holds the paused job's way to go on (a restart loses it).

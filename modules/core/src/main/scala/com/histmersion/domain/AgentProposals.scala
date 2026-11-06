@@ -15,29 +15,19 @@ import com.histmersion.api.library.Source
   * (docs/research-embedded-agents.md §3 "Security", §5.2 "Approvals").
   */
 object AgentProposals:
+  type Description = Description.T
+  object Description extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type MinRatio = MinRatio.T
+  object MinRatio extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type Problem = Problem.T
+  object Problem extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type Text = Text.T
+  object Text extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
   /** The edge kinds an agent may propose: the disagreement kinds the writing guide counts. A plain `references` edge is
     * code's business (`refs`), never a model's.
     */
-  type CheckQuotedResultPart1 = CheckQuotedResultPart1.T
-  object CheckQuotedResultPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type CheckQuotedResultPart2 = CheckQuotedResultPart2.T
-  object CheckQuotedResultPart2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type CheckQuotedKeys = CheckQuotedKeys.T
-  object CheckQuotedKeys extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
-  type CheckResultPart1 = CheckResultPart1.T
-  object CheckResultPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type CheckIsCitekeyArg1 = CheckIsCitekeyArg1.T
-  object CheckIsCitekeyArg1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type CheckIsCitekeyResult = CheckIsCitekeyResult.T
-  object CheckIsCitekeyResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type CheckTextArg1 = CheckTextArg1.T
-  object CheckTextArg1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type CheckTextResult = CheckTextResult.T
-  object CheckTextResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type CheckMinRatio = CheckMinRatio.T
-  object CheckMinRatio extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
   val EdgeKinds: List[Edge.Kind] =
     List(Edge.Kind.Challenges, Edge.Kind.Refutes, Edge.Kind.Updates, Edge.Kind.SupersededBy)
@@ -57,7 +47,7 @@ object AgentProposals:
   ) derives KindlingsCodecAsObject,
         KindlingsSchema, com.histmersion.api.json.Schema:
     /** One line for a person: what would change. */
-    def describe: com.histmersion.domain.AgentProposals.Proposal.DescribeResult = kind match
+    def describe: com.histmersion.domain.AgentProposals.Description = kind match
       case Approval.Kind.StatusChange => s"[[$citekey]] status → ${status.fold("?")(_.wire)}"
       case Approval.Kind.Edge         =>
         s"edge [[$citekey]] ${edgeKind.fold("?")(Edge.Kind.wireOf)} [[${target.getOrElse("?")}]]"
@@ -74,8 +64,6 @@ object AgentProposals:
       case _ => com.histmersion.api.library.Source.Patch()
 
   object Proposal:
-    type DescribeResult = DescribeResult.T
-    object DescribeResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
     type Target = Target.T
     object Target extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
@@ -170,13 +158,13 @@ object AgentProposals:
     */
   def check(
       a: ProposalAnswer,
-      isCitekey: com.histmersion.domain.AgentProposals.CheckIsCitekeyArg1 => com.histmersion.domain.AgentProposals.CheckIsCitekeyResult,
-      text: com.histmersion.domain.AgentProposals.CheckTextArg1 => Option[com.histmersion.domain.AgentProposals.CheckTextResult],
-      minRatio: com.histmersion.domain.AgentProposals.CheckMinRatio
-  ): Either[com.histmersion.domain.AgentProposals.CheckResultPart1, Proposal] =
+      isCitekey: com.histmersion.domain.library.Citekey => Boolean,
+      text: com.histmersion.domain.AgentProposals.Text => Option[com.histmersion.domain.AgentProposals.Text],
+      minRatio: com.histmersion.domain.AgentProposals.MinRatio
+  ): Either[com.histmersion.domain.AgentProposals.Problem, Proposal] =
     val ck = a.citekey.trim
     val label = s"proposal for ${if ck.isEmpty then "?" else ck}"
-    def quoted(keys: List[com.histmersion.domain.AgentProposals.CheckQuotedKeys]): Either[com.histmersion.domain.AgentProposals.CheckQuotedResultPart1, com.histmersion.domain.AgentProposals.CheckQuotedResultPart2] =
+    def quoted(keys: List[com.histmersion.domain.library.Citekey]): Either[com.histmersion.domain.AgentProposals.Problem, com.histmersion.domain.AgentProposals.Proposal.Quote] =
       val q = a.quote.trim
       if q.isEmpty then Left(s"$label: no quote")
       else if keys.flatMap(text).exists(t => AgentVerify.findQuote(q, t, minRatio).accepted) then Right(q)

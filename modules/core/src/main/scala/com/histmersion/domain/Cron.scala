@@ -20,7 +20,7 @@ final case class Cron(
     anyWeekday: Cron.AnyWeekday
 ):
 
-  private def dayMatches(d: LocalDate): com.histmersion.domain.Cron.DayMatchesResult =
+  private def dayMatches(d: LocalDate): Boolean =
     val dom = days.contains(d.getDayOfMonth)
     val dow = weekdays.contains(d.getDayOfWeek.getValue % 7) // java: Monday = 1 … Sunday = 7 → 0
     months.contains(d.getMonthValue) && {
@@ -54,35 +54,25 @@ final case class Cron(
   /** The shortest gap between the next `n` firings after `from`, in minutes (`None` if it fires less than twice) — how
     * a schedule that would run too often is refused.
     */
-  def shortestGapMinutes(from: Instant, n: com.histmersion.domain.Cron.ShortestGapMinutesN = 48): Option[com.histmersion.domain.Cron.ShortestGapMinutesResult] =
+  def shortestGapMinutes(from: Instant, n: com.histmersion.domain.Cron.SampleCount = 48): Option[com.histmersion.domain.Cron.GapMinutes] =
     val times = Iterator.iterate(next(from))(_.flatMap(next)).takeWhile(_.isDefined).map(_.get).take(n).toList
     times.zip(times.drop(1)).map((a, b) => ChronoUnit.MINUTES.between(a, b)).minOption
 
 object Cron:
+  type FieldText = FieldText.T
+  object FieldText extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type GapMinutes = GapMinutes.T
+  object GapMinutes extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type Problem = Problem.T
+  object Problem extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type SampleCount = SampleCount.T
+  object SampleCount extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
   /** How far ahead [[Cron.next]] looks: four years and a day covers every leap-day expression. */
-  type FieldNumResultPart1 = FieldNumResultPart1.T
-  object FieldNumResultPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type FieldNumResultPart2 = FieldNumResultPart2.T
   object FieldNumResultPart2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type FieldNumS = FieldNumS.T
-  object FieldNumS extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
-  type DayMatchesResult = DayMatchesResult.T
-  object DayMatchesResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type ShortestGapMinutesResult = ShortestGapMinutesResult.T
-  object ShortestGapMinutesResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type ShortestGapMinutesN = ShortestGapMinutesN.T
-  object ShortestGapMinutesN extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type FieldResultPart1 = FieldResultPart1.T
-  object FieldResultPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type FieldResultPart2 = FieldResultPart2.T
   object FieldResultPart2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type FieldRaw = FieldRaw.T
-  object FieldRaw extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type ParseResultPart1 = ParseResultPart1.T
-  object ParseResultPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type ParseRaw = ParseRaw.T
-  object ParseRaw extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
   type Text = Text.T
   object Text extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
@@ -129,8 +119,8 @@ object Cron:
   )
 
   /** One field → its values, or why not. */
-  private def field(raw: com.histmersion.domain.Cron.FieldRaw, f: Field): Either[com.histmersion.domain.Cron.FieldResultPart1, Set[com.histmersion.domain.Cron.FieldResultPart2]] =
-    def num(s: com.histmersion.domain.Cron.FieldNumS): Either[com.histmersion.domain.Cron.FieldNumResultPart1, com.histmersion.domain.Cron.FieldNumResultPart2] =
+  private def field(raw: com.histmersion.domain.Cron.FieldText, f: Field): Either[com.histmersion.domain.Cron.Problem, Set[com.histmersion.domain.Cron.FieldResultPart2]] =
+    def num(s: com.histmersion.domain.Cron.FieldText): Either[com.histmersion.domain.Cron.Problem, com.histmersion.domain.Cron.FieldNumResultPart2] =
       s.toIntOption
         .filter(n => n >= f.min && n <= f.max)
         .toRight(s"${f.name}: '$s' is not a number from ${f.min} to ${f.max}")
@@ -159,7 +149,7 @@ object Cron:
       case None    => Right(each.collect { case Right(v) => v }.flatten.toSet)
 
   /** Parse an expression (or a shortcut). */
-  def parse(raw: com.histmersion.domain.Cron.ParseRaw): Either[com.histmersion.domain.Cron.ParseResultPart1, Cron] =
+  def parse(raw: com.histmersion.domain.Cron.Text): Either[com.histmersion.domain.Cron.Problem, Cron] =
     val t = Option(raw).map(_.trim).getOrElse("")
     val expr = Shortcuts.getOrElse(t.toLowerCase, t)
     val parts = expr.split("\\s+").toList.filter(_.nonEmpty)

@@ -45,12 +45,6 @@ object FigurePick:
   object RejectScansPart2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type ScoreResult = ScoreResult.T
   object ScoreResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type RefsResultPart1 = RefsResultPart1.T
-  object RefsResultPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type RefsResultPart2Part1 = RefsResultPart2Part1.T
-  object RefsResultPart2Part1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type RefsResultPart2Part2 = RefsResultPart2Part2.T
-  object RefsResultPart2Part2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type RefsBody = RefsBody.T
   object RefsBody extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type WithRefsBody = _root_.com.histmersion.domain.media.figures.FigurePick.RefsBody
@@ -164,7 +158,7 @@ object FigurePick:
   /** Pure: every figure a converted text links (`assets/<name>`, the form the converter writes), with how many times
     * and where first (a share of the text) — one pass, whatever the number of figures.
     */
-  def refs(body: com.histmersion.domain.media.figures.FigurePick.RefsBody): Map[com.histmersion.domain.media.figures.FigurePick.RefsResultPart1, (com.histmersion.domain.media.figures.FigurePick.RefsResultPart2Part1, com.histmersion.domain.media.figures.FigurePick.RefsResultPart2Part2)] =
+  def refs(body: com.histmersion.domain.media.figures.FigurePick.RefsBody): Map[com.histmersion.domain.media.figures.FigurePick.Figure.Name, (com.histmersion.domain.media.figures.FigurePick.Figure.Refs, com.histmersion.domain.media.figures.FigurePick.Figure.FirstAt)] =
     if body.isEmpty then Map.empty
     else
       val len = body.length.toDouble

@@ -166,7 +166,7 @@ object PlaceReview:
     /** Nothing automatic: a person decides. */
     case Review(id: Proposal.Review.Id, label: Proposal.Review.Label, reason: Proposal.Review.Reason, evidence: List[Proposal.Review.Evidence])
 
-    def id: com.histmersion.domain.catalogue.places.PlaceReview.Proposal.IdResult
+    def id: com.histmersion.domain.catalogue.places.PlaceReview.Candidate.Id
 
     /** One line: id, label, current → proposed kind, why, and the evidence. */
     def describe: com.histmersion.domain.catalogue.places.PlaceReview.Proposal.DescribeResult = s"$id $detail"
@@ -185,7 +185,7 @@ object PlaceReview:
           s"$label: review — $reason${ev(evidence)}"
 
     /** Does `--fix` act on it? */
-    def fixable: com.histmersion.domain.catalogue.places.PlaceReview.Proposal.FixableResult = this match
+    def fixable: Boolean = this match
       case _: Review => false
       case _         => true
 
@@ -194,10 +194,10 @@ object PlaceReview:
     object DetailEvE extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
     object Reclassify:
-      type Id = Id.T
-      object Id extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-      type Label = Label.T
-      object Label extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+      type Id = com.histmersion.domain.catalogue.places.PlaceReview.Candidate.Id
+      val Id: _root_.com.histmersion.domain.catalogue.places.PlaceReview.Candidate.Id.type = _root_.com.histmersion.domain.catalogue.places.PlaceReview.Candidate.Id
+      type Label = com.histmersion.domain.catalogue.places.PlaceReview.Candidate.Label
+      val Label: _root_.com.histmersion.domain.catalogue.places.PlaceReview.Candidate.Label.type = _root_.com.histmersion.domain.catalogue.places.PlaceReview.Candidate.Label
       type From = From.T
       object From extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
       type To = To.T
@@ -208,10 +208,10 @@ object PlaceReview:
       object Evidence extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
     object Merge:
-      type Id = Id.T
-      object Id extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-      type Label = Label.T
-      object Label extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+      type Id = com.histmersion.domain.catalogue.places.PlaceReview.Candidate.Id
+      val Id: _root_.com.histmersion.domain.catalogue.places.PlaceReview.Candidate.Id.type = _root_.com.histmersion.domain.catalogue.places.PlaceReview.Candidate.Id
+      type Label = com.histmersion.domain.catalogue.places.PlaceReview.Candidate.Label
+      val Label: _root_.com.histmersion.domain.catalogue.places.PlaceReview.Candidate.Label.type = _root_.com.histmersion.domain.catalogue.places.PlaceReview.Candidate.Label
       type Into = Into.T
       object Into extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
       type IntoLabel = IntoLabel.T
@@ -222,23 +222,19 @@ object PlaceReview:
       object Evidence extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
     object Review:
-      type Id = Id.T
-      object Id extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-      type Label = Label.T
-      object Label extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+      type Id = com.histmersion.domain.catalogue.places.PlaceReview.Candidate.Id
+      val Id: _root_.com.histmersion.domain.catalogue.places.PlaceReview.Candidate.Id.type = _root_.com.histmersion.domain.catalogue.places.PlaceReview.Candidate.Id
+      type Label = com.histmersion.domain.catalogue.places.PlaceReview.Candidate.Label
+      val Label: _root_.com.histmersion.domain.catalogue.places.PlaceReview.Candidate.Label.type = _root_.com.histmersion.domain.catalogue.places.PlaceReview.Candidate.Label
       type Reason = Reason.T
       object Reason extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
       type Evidence = Evidence.T
       object Evidence extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
-    type IdResult = IdResult.T
-    object IdResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
     type DescribeResult = DescribeResult.T
     object DescribeResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
     type DetailResult = DetailResult.T
     object DetailResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-    type FixableResult = FixableResult.T
-    object FixableResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
   /** The duplicate's name, when the title says "Withdrawn (duplicate): X". */
   def duplicateOf(label: com.histmersion.domain.catalogue.places.PlaceReview.DuplicateOfLabel): Option[com.histmersion.domain.catalogue.places.PlaceReview.DuplicateOfResult] = label.trim match

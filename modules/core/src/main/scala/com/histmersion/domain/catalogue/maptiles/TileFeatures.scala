@@ -6,36 +6,20 @@ package com.histmersion.domain.catalogue.maptiles
 import hearth.kindlings.optics.syntax.*
 
 object TileFeatures:
-  type TextResultPart1 = TextResultPart1.T
-  object TextResultPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type TextK = TextK.T
-  object TextK extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type TextV = TextV.T
-  object TextV extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type WholeResultPart1 = WholeResultPart1.T
-  object WholeResultPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type WholeK = WholeK.T
-  object WholeK extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type WholeV = WholeV.T
   object WholeV extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type UndatedResultPart1 = UndatedResultPart1.T
-  object UndatedResultPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type OfZoom = OfZoom.T
-  object OfZoom extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type OfRecordArg1 = OfRecordArg1.T
-  object OfRecordArg1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
   import com.histmersion.api.catalogue.{EventGeo, SiteTile, TileProps as P}
 
   /** A text property; none when there is no value. */
-  def text(k: com.histmersion.domain.catalogue.maptiles.TileFeatures.TextK, v: com.histmersion.domain.catalogue.maptiles.TileFeatures.TextV): Seq[(com.histmersion.domain.catalogue.maptiles.TileFeatures.TextResultPart1, TileValue)] = Seq(k -> TileValue.Text(v))
-  def text(k: com.histmersion.domain.catalogue.maptiles.TileFeatures.TextK, v: Option[com.histmersion.domain.catalogue.maptiles.TileFeatures.TextV]): Seq[(com.histmersion.domain.catalogue.maptiles.TileFeatures.TextResultPart1, TileValue)] = v.toSeq.map(s => k -> TileValue.Text(s))
+  def text(k: String, v: String): Seq[(String, TileValue)] = Seq(k -> TileValue.Text(v))
+  def text(k: String, v: Option[String]): Seq[(String, TileValue)] = v.toSeq.map(s => k -> TileValue.Text(s))
 
   /** A whole-number property; none when there is no value. */
-  def whole(k: com.histmersion.domain.catalogue.maptiles.TileFeatures.WholeK, v: Option[com.histmersion.domain.catalogue.maptiles.TileFeatures.WholeV]): Seq[(com.histmersion.domain.catalogue.maptiles.TileFeatures.WholeResultPart1, TileValue)] = v.toSeq.map(n => k -> TileValue.Whole(n))
+  def whole(k: String, v: Option[com.histmersion.domain.catalogue.maptiles.TileFeatures.WholeV]): Seq[(String, TileValue)] = v.toSeq.map(n => k -> TileValue.Whole(n))
 
   /** How many of a cell's items (or whether an item) have no known date: left out when none. */
-  private def undated(c: TileCell): Seq[(com.histmersion.domain.catalogue.maptiles.TileFeatures.UndatedResultPart1, TileValue)] =
+  private def undated(c: TileCell): Seq[(String, TileValue)] =
     Option.when(c.undated > 0)(P.Undated -> TileValue.Whole(c.undated.toLong)).toSeq
 
   /** A cell of several items: its key, count, dates' range and box. */
@@ -87,9 +71,9 @@ object TileFeatures:
     * item's key; an item whose record is gone since its cell was read is left out), every one with the tile's zoom.
     */
   def of[A](
-      zoom: com.histmersion.domain.catalogue.maptiles.TileFeatures.OfZoom,
+      zoom: com.histmersion.domain.catalogue.maptiles.TileCoord.Z,
       cells: Seq[TileCell],
-      record: com.histmersion.domain.catalogue.maptiles.TileFeatures.OfRecordArg1 => Option[A],
+      record: String => Option[A],
       feature: (TileCell, A) => TilePoint
   ): Seq[TilePoint] =
     val z = P.Zoom -> TileValue.Whole(zoom.toLong)

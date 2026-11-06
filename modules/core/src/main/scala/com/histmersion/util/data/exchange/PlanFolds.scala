@@ -24,7 +24,7 @@ trait PlanFolds:
   def foldedTo(foreign: UUID): Option[UUID]
 
   /** A uid this collection's rows have. */
-  def here(u: UUID): com.histmersion.util.data.exchange.PlanFolds.HereResult
+  def here(u: UUID): Boolean
 
   /** The uid here a uid of the bundle maps onto (a redirect or the ledger), else itself. */
   def toLocal(u: UUID): UUID
@@ -39,7 +39,5 @@ trait PlanFolds:
   def keepLocal(foreign: UUID): Unit
 
 object PlanFolds:
-  type HereResult = HereResult.T
-  object HereResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type DecisionInIssue = DecisionInIssue.T
   object DecisionInIssue extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]

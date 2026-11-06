@@ -13,20 +13,6 @@ object EventMatcher:
   /** How far a finding may be from the event (`km`) and how many years apart (`years`; 0 = their spans overlap), what a
     * name match and a finding weigh, the least score kept, and the least length of a name worth searching for.
     */
-  type SearchNamesResult = SearchNamesResult.T
-  object SearchNamesResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type SearchNamesNames = SearchNamesNames.T
-  object SearchNamesNames extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type SearchNamesMinChars = SearchNamesMinChars.T
-  object SearchNamesMinChars extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type FindingWeightResult = FindingWeightResult.T
-  object FindingWeightResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type CandidatesNamedPart1 = CandidatesNamedPart1.T
-  object CandidatesNamedPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type CandidatesTitlesPart1 = CandidatesTitlesPart1.T
-  object CandidatesTitlesPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type CandidatesTitlesPart2 = CandidatesTitlesPart2.T
-  object CandidatesTitlesPart2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
   final case class Weights(
       km: Weights.Km,
@@ -70,7 +56,7 @@ object EventMatcher:
   /** Pure: the names worth searching a body for — distinct ignoring case, at least `minChars` long and more than a bare
     * kind word ("Battle", "Siege"), longest first (a longer name is the stronger match).
     */
-  def searchNames(names: List[com.histmersion.domain.catalogue.evidence.EventMatcher.SearchNamesNames], minChars: com.histmersion.domain.catalogue.evidence.EventMatcher.SearchNamesMinChars): List[com.histmersion.domain.catalogue.evidence.EventMatcher.SearchNamesResult] =
+  def searchNames(names: List[String], minChars: com.histmersion.domain.catalogue.evidence.EventMatcher.Weights.MinNameChars): List[String] =
     val generic = (EventTaxonomy.kinds.map(_.label) ++ EventTaxonomy.kinds.map(_.kind)).map(_.toLowerCase).toSet
     names
       .map(_.trim.replaceAll("\\s+", " "))
@@ -81,7 +67,7 @@ object EventMatcher:
   /** Pure: how much one finding says — 1 at the event's place and time, falling linearly to 0 at `km` away and at
     * `years` apart.
     */
-  def findingWeight(f: NearFinding, w: Weights): com.histmersion.domain.catalogue.evidence.EventMatcher.FindingWeightResult =
+  def findingWeight(f: NearFinding, w: Weights): com.histmersion.domain.catalogue.evidence.EventMatcher.Weights.Finding =
     val space = if w.km <= 0 then 0.0 else (1.0 - f.km / w.km).max(0.0)
     val time =
       if w.years <= 0 then (if f.yearGap == 0 then 1.0 else 0.0) else (1.0 - f.yearGap.toDouble / w.years).max(0.0)
@@ -95,9 +81,9 @@ object EventMatcher:
   def candidates(
       eventId: com.histmersion.domain.catalogue.Event.Id,
       near: List[NearFinding],
-      named: Map[com.histmersion.domain.catalogue.evidence.EventMatcher.CandidatesNamedPart1, List[EventPassage]],
+      named: Map[String, List[EventPassage]],
       w: Weights,
-      titles: Map[com.histmersion.domain.catalogue.evidence.EventMatcher.CandidatesTitlesPart1, com.histmersion.domain.catalogue.evidence.EventMatcher.CandidatesTitlesPart2] = Map.empty
+      titles: Map[String, String] = Map.empty
   ): List[EventLinkCandidate] =
     val byCk = near.groupBy(_.citekey)
     (byCk.keySet ++ named.keySet).toList

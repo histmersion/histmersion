@@ -39,14 +39,10 @@ object AcquisitionSweepRules:
   object CheckRankingResultPart2Part2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type CheckRankingLast = CheckRankingLast.T
   object CheckRankingLast extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type IngestPicksIsOaResult = IngestPicksIsOaResult.T
-  object IngestPicksIsOaResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type IngestPicksAllowed = IngestPicksAllowed.T
   object IngestPicksAllowed extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type IngestOaResultPart2Part2 = IngestOaResultPart2Part2.T
   object IngestOaResultPart2Part2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type IngestOaIsOaResult = IngestOaIsOaResult.T
-  object IngestOaIsOaResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type IngestOaAllowed = IngestOaAllowed.T
   object IngestOaAllowed extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type IngestOaIngestResultPart1 = IngestOaIngestResultPart1.T
@@ -147,7 +143,7 @@ object AcquisitionSweepRules:
     * every closed pick, every failed one and the open ones past the cap stay for the acquisition list. Returns what was
     * ingested, in order. Nothing is offered past the cap.
     */
-  def ingestPicks[A, B](picks: List[A], isOa: A => com.histmersion.domain.library.workflows.AcquisitionSweepRules.IngestPicksIsOaResult, allowed: com.histmersion.domain.library.workflows.AcquisitionSweepRules.IngestPicksAllowed)(ingest: A => Option[B]): List[(A, B)] =
+  def ingestPicks[A, B](picks: List[A], isOa: A => Boolean, allowed: com.histmersion.domain.library.workflows.AcquisitionSweepRules.IngestPicksAllowed)(ingest: A => Option[B]): List[(A, B)] =
     picks
       .filter(isOa)
       .foldLeft(Vector.empty[(A, B)]) { (done, p) =>
@@ -159,7 +155,7 @@ object AcquisitionSweepRules:
     * offered and FAILED, with why — a work with no legal file goes to the acquisition list, any other failure back to
     * the backlog. The open-access picks never offered are the caller's: they wait in the backlog.
     */
-  def ingestOa[A, B](picks: List[A], isOa: A => com.histmersion.domain.library.workflows.AcquisitionSweepRules.IngestOaIsOaResult, allowed: com.histmersion.domain.library.workflows.AcquisitionSweepRules.IngestOaAllowed)(
+  def ingestOa[A, B](picks: List[A], isOa: A => Boolean, allowed: com.histmersion.domain.library.workflows.AcquisitionSweepRules.IngestOaAllowed)(
       ingest: A => Either[com.histmersion.domain.library.workflows.AcquisitionSweepRules.IngestOaIngestResultPart1, B]
   ): (List[(A, B)], List[(A, com.histmersion.domain.library.workflows.AcquisitionSweepRules.IngestOaResultPart2Part2)]) =
     @tailrec def loop(rest: List[A], ok: Vector[(A, B)], ko: Vector[(A, com.histmersion.domain.library.workflows.AcquisitionSweepRules.IngestOaLoopKoPart2)]): (List[(A, B)], List[(A, com.histmersion.domain.library.workflows.AcquisitionSweepRules.IngestOaLoopResultPart2Part2)]) =

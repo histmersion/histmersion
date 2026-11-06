@@ -20,53 +20,39 @@ import java.time.format.DateTimeFormatter
   *     checked, by the JDK; nothing here can switch that off.
   */
 object HttpPolicy:
+  type MaxRetries = MaxRetries.T
+  object MaxRetries extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type MaxRetryAfterSeconds = MaxRetryAfterSeconds.T
+  object MaxRetryAfterSeconds extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type OsName = OsName.T
+  object OsName extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type PemCertificate = PemCertificate.T
+  object PemCertificate extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Array[_root_.scala.Byte], _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type PemText = PemText.T
+  object PemText extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type RetryAfter = RetryAfter.T
+  object RetryAfter extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type SlowDown = SlowDown.T
+  object SlowDown extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type StatusCode = StatusCode.T
+  object StatusCode extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type SystemTrust = SystemTrust.T
+  object SystemTrust extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type UserAgent = UserAgent.T
+  object UserAgent extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
   /** What to do with an answer. */
   type Throttled = ThrottledValue
   type ThrottledValue = ThrottledValue.T
   object ThrottledValue extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type UserAgentResult = UserAgentResult.T
-  object UserAgentResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type UserAgentConfigured = UserAgentConfigured.T
-  object UserAgentConfigured extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type UserAgentFallback = UserAgentFallback.T
-  object UserAgentFallback extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type BackoffMsResult = BackoffMsResult.T
-  object BackoffMsResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type BackoffMsAttempt = BackoffMsAttempt.T
-  object BackoffMsAttempt extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type RetryAfterMsResult = RetryAfterMsResult.T
-  object RetryAfterMsResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type RetryAfterMsV = RetryAfterMsV.T
-  object RetryAfterMsV extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type DecideCode = DecideCode.T
-  object DecideCode extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type DecideRetryAfter = DecideRetryAfter.T
-  object DecideRetryAfter extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type DecideAttempt = _root_.com.histmersion.domain.HttpPolicy.BackoffMsAttempt
-  val DecideAttempt: _root_.com.histmersion.domain.HttpPolicy.BackoffMsAttempt.type = _root_.com.histmersion.domain.HttpPolicy.BackoffMsAttempt
-  type DecideMaxRetries = DecideMaxRetries.T
-  object DecideMaxRetries extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type DecideMaxRetryAfterSeconds = DecideMaxRetryAfterSeconds.T
-  object DecideMaxRetryAfterSeconds extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type DecideSlowDown = DecideSlowDown.T
-  object DecideSlowDown extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type DecideAttempt = Int
+  val DecideAttempt: Int.type = Int
   type MacKeychains = MacKeychainsValue
   type MacKeychainsValue = MacKeychainsValue.T
   object MacKeychainsValue extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type LinuxBundles = LinuxBundlesValue
   type LinuxBundlesValue = LinuxBundlesValue.T
   object LinuxBundlesValue extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type TrustSystemTrust = TrustSystemTrust.T
-  object TrustSystemTrust extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type TrustExtraCaFile = TrustExtraCaFile.T
-  object TrustExtraCaFile extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type TrustOsName = TrustOsName.T
-  object TrustOsName extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type PemCertificatesResult = PemCertificatesResult.T
-  object PemCertificatesResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Array[_root_.scala.Byte], _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type PemCertificatesText = PemCertificatesText.T
-  object PemCertificatesText extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
   enum Step:
     case Accept
@@ -90,7 +76,7 @@ object HttpPolicy:
     * comment) removed — so a setting that once carried a contact can never put it on the wire. A blank result falls
     * back to `fallback`.
     */
-  def userAgent(configured: com.histmersion.domain.HttpPolicy.UserAgentConfigured, fallback: com.histmersion.domain.HttpPolicy.UserAgentFallback = "Histmersion"): com.histmersion.domain.HttpPolicy.UserAgentResult =
+  def userAgent(configured: com.histmersion.domain.HttpPolicy.UserAgent, fallback: com.histmersion.domain.HttpPolicy.UserAgent = "Histmersion"): com.histmersion.domain.HttpPolicy.UserAgent =
     val cleaned = Option(configured)
       .getOrElse("")
       .replaceAll("""\(\s*mailto:[^)]*\)""", "")
@@ -101,10 +87,10 @@ object HttpPolicy:
     if cleaned.isEmpty then fallback else cleaned
 
   /** The wait before asking again after the `attempt`-th (0-based) slow-down: 1, 2, 4 … s. */
-  def backoffMs(attempt: com.histmersion.domain.HttpPolicy.BackoffMsAttempt): com.histmersion.domain.HttpPolicy.BackoffMsResult = (1L << attempt.max(0).min(10)) * 1000L
+  def backoffMs(attempt: Int): com.histmersion.domain.HttpPolicy.Step.Wait.Ms = (1L << attempt.max(0).min(10)) * 1000L
 
   /** A `Retry-After` value — delay seconds or an HTTP date — as milliseconds from `now`. */
-  def retryAfterMs(v: Option[com.histmersion.domain.HttpPolicy.RetryAfterMsV], now: Instant): Option[com.histmersion.domain.HttpPolicy.RetryAfterMsResult] =
+  def retryAfterMs(v: Option[com.histmersion.domain.HttpPolicy.RetryAfter], now: Instant): Option[com.histmersion.domain.HttpPolicy.Step.Wait.Ms] =
     v.map(_.trim).filter(_.nonEmpty).flatMap { s =>
       s.toLongOption
         .map(_ * 1000L)
@@ -120,13 +106,13 @@ object HttpPolicy:
     * code does not (MediaWiki's `maxlag` comes back as a 200), named `why`.
     */
   def decide(
-      code: com.histmersion.domain.HttpPolicy.DecideCode,
-      retryAfter: Option[com.histmersion.domain.HttpPolicy.DecideRetryAfter],
+      code: com.histmersion.domain.HttpPolicy.StatusCode,
+      retryAfter: Option[com.histmersion.domain.HttpPolicy.RetryAfter],
       attempt: com.histmersion.domain.HttpPolicy.DecideAttempt,
-      maxRetries: com.histmersion.domain.HttpPolicy.DecideMaxRetries,
-      maxRetryAfterSeconds: com.histmersion.domain.HttpPolicy.DecideMaxRetryAfterSeconds,
+      maxRetries: com.histmersion.domain.HttpPolicy.MaxRetries,
+      maxRetryAfterSeconds: com.histmersion.domain.HttpPolicy.MaxRetryAfterSeconds,
       now: Instant,
-      slowDown: Option[com.histmersion.domain.HttpPolicy.DecideSlowDown] = None
+      slowDown: Option[com.histmersion.domain.HttpPolicy.SlowDown] = None
   ): Step =
     if Throttled(code) || slowDown.isDefined then
       val why = slowDown.getOrElse(s"HTTP $code")
@@ -177,7 +163,7 @@ object HttpPolicy:
   /** The trust sources of a configuration on an OS (`os.name`): the JDK's always; the system's when `systemTrust`
     * (macOS keychains, else the Linux bundles); a PEM file when one is named.
     */
-  def trust(systemTrust: com.histmersion.domain.HttpPolicy.TrustSystemTrust, extraCaFile: Option[com.histmersion.domain.HttpPolicy.TrustExtraCaFile], osName: com.histmersion.domain.HttpPolicy.TrustOsName): List[Trust] =
+  def trust(systemTrust: com.histmersion.domain.HttpPolicy.SystemTrust, extraCaFile: Option[com.histmersion.domain.HttpPolicy.Trust.PemFile.Path], osName: com.histmersion.domain.HttpPolicy.OsName): List[Trust] =
     val mac = osName.toLowerCase(java.util.Locale.ROOT).contains("mac")
     val system = Option.when(systemTrust)(if mac then Trust.Keychains(MacKeychains) else Trust.Bundle(LinuxBundles))
     Trust.Jdk :: system.toList ++ extraCaFile.map(Trust.PemFile(_)).toList
@@ -188,7 +174,7 @@ object HttpPolicy:
   /** The DER bytes of every certificate in a PEM text, in order; anything else (keys, comments, `security`'s chatter, a
     * block that is not base64) is skipped.
     */
-  def pemCertificates(text: com.histmersion.domain.HttpPolicy.PemCertificatesText): List[com.histmersion.domain.HttpPolicy.PemCertificatesResult] =
+  def pemCertificates(text: com.histmersion.domain.HttpPolicy.PemText): List[com.histmersion.domain.HttpPolicy.PemCertificate] =
     PemCert.findAllMatchIn(Option(text).getOrElse("")).toList.flatMap { m =>
       scala.util
         .Try(java.util.Base64.getMimeDecoder.decode(m.group(1).replaceAll("\\s+", "")))

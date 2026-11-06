@@ -7,21 +7,15 @@ import scala.annotation.tailrec
   * by its findings is in both counts; it stays a dated one, and leaves the undated count. Pure.
   */
 object UndatedCells:
+  type Total = Total.T
+  object Total extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
   /** The cells of tile `z`/`x`/`y` (`perSide` squares a side) from the `dated` and the `undated` counts: a square of
     * one site is that site, any other its count, with how many of it have no known date.
     */
-  type TotalLoopResult = TotalLoopResult.T
-  object TotalLoopResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type TotalLoopSum = TotalLoopSum.T
-  object TotalLoopSum extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
-  type MergeZ = _root_.com.histmersion.domain.catalogue.maptiles.UndatedCells.CellOfZ
-  val MergeZ: _root_.com.histmersion.domain.catalogue.maptiles.UndatedCells.CellOfZ.type = _root_.com.histmersion.domain.catalogue.maptiles.UndatedCells.CellOfZ
-  type TotalResult = TotalResult.T
-  object TotalResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type CellOfZ = CellOfZ.T
-  object CellOfZ extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type MergeZ = _root_.com.histmersion.domain.catalogue.maptiles.TileCoord.Z
+  val MergeZ: _root_.com.histmersion.domain.catalogue.maptiles.TileCoord.Z.type = _root_.com.histmersion.domain.catalogue.maptiles.TileCoord.Z
 
   def merge(z: com.histmersion.domain.catalogue.maptiles.UndatedCells.MergeZ, dated: List[GridCell], undated: List[GridCell]): List[TileCell] =
     val byUndated = undated.iterator.map(u => (u.gx, u.gy) -> u).toMap
@@ -34,14 +28,14 @@ object UndatedCells:
     (withDated.reverse ++ undatedOnly)
 
   /** The total a tile would hold: every dated site and every undated one not counted among them. */
-  def total(dated: List[GridCell], undated: List[GridCell]): com.histmersion.domain.catalogue.maptiles.UndatedCells.TotalResult =
-    @tailrec def loop(rest: List[GridCell], sum: com.histmersion.domain.catalogue.maptiles.UndatedCells.TotalLoopSum): com.histmersion.domain.catalogue.maptiles.UndatedCells.TotalLoopResult = rest match
+  def total(dated: List[GridCell], undated: List[GridCell]): com.histmersion.domain.catalogue.maptiles.UndatedCells.Total =
+    @tailrec def loop(rest: List[GridCell], sum: com.histmersion.domain.catalogue.maptiles.UndatedCells.Total): com.histmersion.domain.catalogue.maptiles.UndatedCells.Total = rest match
       case c :: tail => loop(tail, sum + c.n - c.dup)
       case Nil       => sum
     loop(dated, 0L) + undated.iterator.map(_.n.toLong).sum
 
   /** One square's cell: `dated` and `undated` of the same square, either missing. None when it holds nothing. */
-  private[maptiles] def cellOf(z: com.histmersion.domain.catalogue.maptiles.UndatedCells.CellOfZ, dated: Option[GridCell], undated: Option[GridCell]): Option[TileCell] =
+  private[maptiles] def cellOf(z: com.histmersion.domain.catalogue.maptiles.TileCoord.Z, dated: Option[GridCell], undated: Option[GridCell]): Option[TileCell] =
     val d = dated.fold(0)(_.n)
     val dup = dated.fold(0)(_.dup)
     val u = (undated.fold(0)(_.n) - dup).max(0)

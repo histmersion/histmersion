@@ -11,47 +11,23 @@ import com.histmersion.util.text.ComparedText
   * its config). Nothing is judged: counts, tokens, times, and what one run produced that the others did not.
   */
 object CompareRuns:
+  type Key = Key.T
+  object Key extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type Problem = Problem.T
+  object Problem extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type Similarity = Similarity.T
+  object Similarity extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type Text = Text.T
+  object Text extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
   // ── what is compared: the recorded runs ──────────────────────────────────────────────────────
 
   /** Tokens, as a provider reports them; `input` includes the cached ones. */
-  type UnionInOrderPlaceResult = UnionInOrderPlaceResult.T
-  object UnionInOrderPlaceResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type UnionInOrderPlaceRest = UnionInOrderPlaceRest.T
-  object UnionInOrderPlaceRest extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type UnionInOrderPlaceA = UnionInOrderPlaceA.T
-  object UnionInOrderPlaceA extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type UnionInOrderPlacePos = UnionInOrderPlacePos.T
-  object UnionInOrderPlacePos extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
-  type CompareResultPart1 = CompareResultPart1.T
-  object CompareResultPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type CompareBillingArg1 = CompareBillingArg1.T
-  object CompareBillingArg1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type CompareBillingResult = CompareBillingResult.T
-  object CompareBillingResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type UnionInOrderResult = UnionInOrderResult.T
-  object UnionInOrderResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type UnionInOrderLists = UnionInOrderLists.T
-  object UnionInOrderLists extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type Seconds = Seconds.T
   object Seconds extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type StepSideBillingArg1 = StepSideBillingArg1.T
-  object StepSideBillingArg1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type StepSideBillingResult = StepSideBillingResult.T
-  object StepSideBillingResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type OutputName = OutputName.T
   object OutputName extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type WordsResult = WordsResult.T
-  object WordsResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type WordsS = WordsS.T
-  object WordsS extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type SimilarityResult = SimilarityResult.T
-  object SimilarityResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type SimilarityA = SimilarityA.T
-  object SimilarityA extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type SimilarityB = SimilarityB.T
-  object SimilarityB extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
   final case class Tokens(input: Tokens.Input = 0, output: Tokens.Output = 0, cacheRead: Tokens.CacheRead = 0, cacheWrite: Tokens.CacheWrite = 0):
     def +(o: Tokens): Tokens =
@@ -335,9 +311,9 @@ object CompareRuns:
   /** `outputs` compares what the runs' workflow produced (its owner's, [[OutputComparison]]). */
   def compare(
       runs: List[Run],
-      billing: com.histmersion.domain.CompareRuns.CompareBillingArg1 => Option[com.histmersion.domain.CompareRuns.CompareBillingResult],
+      billing: com.histmersion.domain.CompareRuns.StepSide.Billing => Option[com.histmersion.domain.CompareRuns.StepSide.Billing],
       outputs: OutputComparison
-  ): Either[com.histmersion.domain.CompareRuns.CompareResultPart1, Comparison] =
+  ): Either[com.histmersion.domain.CompareRuns.Problem, Comparison] =
     for
       _ <- Either.cond(runs.size >= 2, (), "give at least two runs to compare")
       _ <- Either.cond(runs.map(_.run.id).distinct.size == runs.size, (), "a run is given twice")
@@ -373,10 +349,10 @@ object CompareRuns:
   /** Every list's names in one order: the first list's, each later name placed after the name it follows in its own
     * list (a run with more rounds or windows slots its extra steps in).
     */
-  def unionInOrder(lists: List[List[com.histmersion.domain.CompareRuns.UnionInOrderLists]]): List[com.histmersion.domain.CompareRuns.UnionInOrderResult] =
+  def unionInOrder(lists: List[List[com.histmersion.domain.CompareRuns.Key]]): List[com.histmersion.domain.CompareRuns.Key] =
     lists
       .foldLeft(Vector.empty[String]) { (acc, names) =>
-        @tailrec def place(rest: List[com.histmersion.domain.CompareRuns.UnionInOrderPlaceRest], a: Vector[com.histmersion.domain.CompareRuns.UnionInOrderPlaceA], pos: com.histmersion.domain.CompareRuns.UnionInOrderPlacePos): Vector[com.histmersion.domain.CompareRuns.UnionInOrderPlaceResult] =
+        @tailrec def place(rest: List[com.histmersion.domain.CompareRuns.Key], a: Vector[com.histmersion.domain.CompareRuns.Key], pos: Int): Vector[com.histmersion.domain.CompareRuns.Key] =
           rest match
             case Nil       => a
             case n :: tail =>
@@ -396,7 +372,7 @@ object CompareRuns:
 
   private def sum(us: List[Tokens]): Tokens = us.foldLeft(Tokens.Zero)(_ + _)
 
-  def stepSide(attempts: List[Step], billing: com.histmersion.domain.CompareRuns.StepSideBillingArg1 => Option[com.histmersion.domain.CompareRuns.StepSideBillingResult]): StepSide =
+  def stepSide(attempts: List[Step], billing: com.histmersion.domain.CompareRuns.StepSide.Billing => Option[com.histmersion.domain.CompareRuns.StepSide.Billing]): StepSide =
     val models = attempts.flatMap(_.model).distinct
     StepSide(
       models,
@@ -434,10 +410,10 @@ object CompareRuns:
       .flatMap(_.output)
       .flatMap(decode[O](_).toOption)
 
-  private def words(s: com.histmersion.domain.CompareRuns.WordsS): Set[com.histmersion.domain.CompareRuns.WordsResult] =
+  private def words(s: String): Set[String] =
     ComparedText.normalise(Option(s).getOrElse("")).split("[^\\p{L}\\p{N}]+").filter(_.length > 2).toSet
 
   /** Jaccard similarity of two texts' words (0 when both have none). */
-  def similarity(a: com.histmersion.domain.CompareRuns.SimilarityA, b: com.histmersion.domain.CompareRuns.SimilarityB): com.histmersion.domain.CompareRuns.SimilarityResult =
+  def similarity(a: com.histmersion.domain.CompareRuns.Text, b: com.histmersion.domain.CompareRuns.Text): com.histmersion.domain.CompareRuns.Similarity =
     val (x, y) = (words(a), words(b))
     if x.isEmpty && y.isEmpty then 0.0 else (x intersect y).size.toDouble / (x union y).size
