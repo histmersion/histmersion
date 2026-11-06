@@ -34,6 +34,6 @@ object CitationLint:
           val verdict =
             if near.sizeIs == 1 then s"resolves to ${near.head} (fixable: lint --fix)"
             else s"ambiguous between ${shown.mkString(", ")}$more"
-          Some(LintItem(e.src.value.toString, _root_.com.histmersion.api.checks.Lint.LintItem.Detail(s"${e.kind} → ${e.dst.value.toString} $verdict")))
+          Some(LintItem(_root_.com.histmersion.api.library.Citekey(e.src.value.toString), _root_.com.histmersion.api.checks.Lint.LintItem.Detail(s"${e.kind} → ${e.dst.value.toString} $verdict")))
       }
       .sortBy(i => (i.citekey, i.detail))

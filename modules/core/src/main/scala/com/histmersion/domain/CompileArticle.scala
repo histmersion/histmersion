@@ -40,8 +40,9 @@ object CompileArticle:
   object CheckExtractMaxClaims extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type CheckExtractLast = CheckExtractLast.T
   object CheckExtractLast extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type DisagreementKinds = DisagreementKinds.T
-  object DisagreementKinds extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type DisagreementKinds = DisagreementKindsValue
+  type DisagreementKindsValue = DisagreementKindsValue.T
+  object DisagreementKindsValue extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type EvidenceFilter = _root_.com.histmersion.domain.CompileArticle.Evidence.Filter
   val EvidenceFilter: _root_.com.histmersion.domain.CompileArticle.Evidence.Filter.type = _root_.com.histmersion.domain.CompileArticle.Evidence.Filter
   type EvidenceTextResult = EvidenceTextResult.T

@@ -1,3 +1,3 @@
 path	sha256
-tools/refactor/value-names-fixture/src/main/scala/Excluded.scala	a4d3ed1ac16d568ad6dd0a5c124e9e912425dde3a6524aceb97ba841a13449f2
-tools/refactor/value-names-fixture/src/main/scala/Values.scala	d4a9c82acb89d216f61d76945e8db51b1fee8b31f8f5b6f521ce615a6345ab86
+tools/refactor/value-names-fixture/src/main/scala/Excluded.scala	a10c0fc1a9a44665d4f389de5f05912e54148e6f8dee522f6095d18220247ecb
+tools/refactor/value-names-fixture/src/main/scala/Values.scala	515b80549b966babcb5a5dad244b931ac4d32a17faef9c43bd8c18f0f2817d42

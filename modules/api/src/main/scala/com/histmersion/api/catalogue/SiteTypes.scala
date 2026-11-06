@@ -8,8 +8,8 @@ import hearth.kindlings.tapirschemaderivation.KindlingsSchema
   */
 object SiteTypes:
 
-  type ByIdPart1 = ByIdPart1.T
-  object ByIdPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type ByIdPart1 = _root_.com.histmersion.api.catalogue.SiteTypes.SiteType.Id
+  val ByIdPart1: _root_.com.histmersion.api.catalogue.SiteTypes.SiteType.Id.type = _root_.com.histmersion.api.catalogue.SiteTypes.SiteType.Id
   type GetId = GetId.T
   object GetId extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type IconResult = _root_.com.histmersion.api.catalogue.SiteTypes.SiteType.Icon
@@ -411,7 +411,7 @@ object SiteTypes:
         .orElse(featureTypes.flatMap({ val refactorFunction3 = pleiades; (refactorValue5) => refactorFunction3(_root_.com.histmersion.api.catalogue.SiteTypes.PleiadesFeatureTypes((refactorValue5).value)) }))
         .orElse(fcode.flatMap({ val refactorFunction2 = geonames; (refactorValue10) => refactorFunction2(_root_.com.histmersion.api.catalogue.SiteTypes.GeonamesFcode((refactorValue10).value)) }))
         .orElse(wikidataOwn(p31))
-        .orElse(wikidataClass.flatMap(c => wikidataClasses.get((c).value.trim)))
+        .orElse(wikidataClass.flatMap(c => wikidataClasses.get(_root_.com.histmersion.api.catalogue.SiteTypes.WikidataClassesPart1((c).value.trim))))
 
   final case class Report(
       dryRun: Report.DryRun,

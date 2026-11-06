@@ -81,7 +81,7 @@ object ImageSize:
   private def be16(b: com.histmersion.api.media.ImageSize.Be16B, i: com.histmersion.api.media.ImageSize.Be16I): com.histmersion.api.media.ImageSize.Be16Result = ((u8(b, i)).value << 8) | u8(b, _root_.com.histmersion.api.media.ImageSize.U8I((i).value + 1))
   private def le16(b: com.histmersion.api.media.ImageSize.Le16B, i: com.histmersion.api.media.ImageSize.Le16I): com.histmersion.api.media.ImageSize.Le16Result = ((u8(b, _root_.com.histmersion.api.media.ImageSize.U8I((i).value + 1))).value << 8) | u8(b, i)
   private def be32(b: com.histmersion.api.media.ImageSize.Be32B, i: com.histmersion.api.media.ImageSize.Be32I): com.histmersion.api.media.ImageSize.Be32Result =
-    ((u8(b, i)).value << 24) | ((u8(b, _root_.com.histmersion.api.media.ImageSize.U8I((i).value + 1))).value << 16) | (u8(b, i + 2) << 8) | u8(b, i + 3)
+    ((u8(b, i)).value << 24) | ((u8(b, _root_.com.histmersion.api.media.ImageSize.U8I((i).value + 1))).value << 16) | (u8(b, (i).value + 2) << 8) | u8(b, i + 3)
 
   private def png(b: com.histmersion.api.media.ImageSize.PngB): com.histmersion.api.media.ImageSize.PngResult =
     (b).value.length >= 24 && u8(b, _root_.com.histmersion.api.media.ImageSize.U8I(0)) == 0x89 && b(1) == 'P' && b(2) == 'N' && b(3) == 'G'

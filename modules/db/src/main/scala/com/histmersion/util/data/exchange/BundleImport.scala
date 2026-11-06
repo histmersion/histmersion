@@ -32,8 +32,9 @@ import com.histmersion.api.Api
   */
 object BundleImport:
 
-  type DeletedRev = DeletedRev.T
-  object DeletedRev extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type DeletedRev = DeletedRevValue
+  type DeletedRevValue = DeletedRevValue.T
+  object DeletedRevValue extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type ImportingOn = ImportingOn.T
   object ImportingOn extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
 

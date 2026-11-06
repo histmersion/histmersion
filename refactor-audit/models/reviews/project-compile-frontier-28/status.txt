@@ -1,0 +1,4 @@
+COMPILE_FAILED
+exit=1
+source-files=3170
+All source hashes stable during compilation. Later commands may not execute after the first failed command.

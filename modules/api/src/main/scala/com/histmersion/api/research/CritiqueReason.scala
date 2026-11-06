@@ -11,8 +11,9 @@ final case class CritiqueReason(src: com.histmersion.api.library.Citekey, dst: c
   def ref: CritiqueRef = CritiqueRef(src, dst)
 
 object CritiqueReason:
-  type MaxChars = MaxChars.T
-  object MaxChars extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type MaxChars = MaxCharsValue
+  type MaxCharsValue = MaxCharsValue.T
+  object MaxCharsValue extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type ParseResultPart1 = ParseResultPart1.T
   object ParseResultPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type ParseS = ParseS.T
@@ -42,7 +43,7 @@ object CritiqueReason:
     )
     .modify(_.by)(_.description("Who set it (filled by the server when left out)"))
 
-  val MaxChars: com.histmersion.api.research.CritiqueReason.MaxChars = _root_.com.histmersion.api.research.CritiqueReason.MaxChars(Coverage.Reason.MaxChars)
+  val MaxChars: com.histmersion.api.research.CritiqueReason.MaxChars = _root_.com.histmersion.api.research.CritiqueReason.MaxCharsValue(Coverage.Reason.MaxChars)
 
   def parse(s: com.histmersion.api.research.CritiqueReason.ParseS): Either[com.histmersion.api.research.CritiqueReason.ParseResultPart1, CritiqueReason] =
     val i = (s).value.indexOf('=')

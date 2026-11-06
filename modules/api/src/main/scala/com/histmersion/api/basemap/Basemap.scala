@@ -151,7 +151,7 @@ object Basemap:
     }.sum
 
   /** Web Mercator's ±85.05°: as far as web maps go. */
-  val World: BBox = BBox(-180, -85.05, 180, 85.05)
+  val World: BBox = BBox(-180, _root_.com.histmersion.api.catalogue.Latitude(-85.05), 180, _root_.com.histmersion.api.catalogue.Latitude(85.05))
 
   def validBBox(s: com.histmersion.api.basemap.Basemap.ValidBBoxS): Either[com.histmersion.api.basemap.Basemap.ValidBBoxResultPart1, BBox] =
     if (s).value.trim.equalsIgnoreCase("world") then Right(World)
@@ -382,7 +382,7 @@ object Basemap:
       layer: LayerInfo.Layer,
       present: LayerInfo.Present,
       file: LayerInfo.File,
-      bytes: com.histmersion.api.ByteCount = 0,
+      bytes: com.histmersion.api.ByteCount = _root_.com.histmersion.api.ByteCount((0).toLong),
       minZoom: Option[LayerInfo.MinZoom] = None,
       maxZoom: Option[LayerInfo.MaxZoom] = None,
       bbox: Option[LayerInfo.Bbox] = None,

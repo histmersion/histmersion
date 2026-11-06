@@ -32,7 +32,7 @@ object BBox:
 
   def parse(s: com.histmersion.api.BBox.ParseS): Option[BBox] =
     val parts = (s).value.split(",").map(_.trim).toList
-    parts.traverseDouble.filter(_.length == 4).map(a => BBox(a(0), a(1), a(2), a(3)))
+    parts.traverseDouble.filter(_.length == 4).map(a => BBox(_root_.com.histmersion.api.catalogue.Longitude(a(0)), _root_.com.histmersion.api.catalogue.Latitude(a(1)), _root_.com.histmersion.api.catalogue.Longitude(a(2)), _root_.com.histmersion.api.catalogue.Latitude(a(3))))
 
   extension (xs: List[String])
     private def traverseDouble: Option[Array[Double]] =

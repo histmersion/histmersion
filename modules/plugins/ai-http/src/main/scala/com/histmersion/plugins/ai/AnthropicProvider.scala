@@ -86,7 +86,7 @@ object AnthropicProvider:
     _root_.com.histmersion.plugins.ai.AnthropicProvider.WithoutStructuredOutputValue("claude-opus-4-20250514")
   )
 
-  def structuredOutput(model: com.histmersion.plugins.ai.AnthropicProvider.StructuredOutputModel): com.histmersion.plugins.ai.AnthropicProvider.StructuredOutputResult = !WithoutStructuredOutput(_root_.com.histmersion.plugins.ai.AnthropicProvider.WithoutStructuredOutputValue((model).value))
+  def structuredOutput(model: com.histmersion.plugins.ai.AnthropicProvider.StructuredOutputModel): com.histmersion.plugins.ai.AnthropicProvider.StructuredOutputResult = _root_.com.histmersion.plugins.ai.AnthropicProvider.StructuredOutputResult(!WithoutStructuredOutput(_root_.com.histmersion.plugins.ai.AnthropicProvider.WithoutStructuredOutputValue((model).value)))
 
   def noStructuredOutput(model: com.histmersion.plugins.ai.AnthropicProvider.NoStructuredOutputModel): com.histmersion.plugins.ai.AnthropicProvider.NoStructuredOutputResult =
     _root_.com.histmersion.plugins.ai.AnthropicProvider.NoStructuredOutputResult(s"UnsupportedModelForStructuredOutputException: Model '$model' does not support structured output. " +

@@ -5,8 +5,8 @@ import com.histmersion.api.given
 
 final case class MapStartConfig(
     mode: MapStartConfig.Mode = MapStartMode.Last.wire,
-    lat: com.histmersion.api.catalogue.Latitude = 37.0,
-    lon: com.histmersion.api.catalogue.Longitude = 30.0,
+    lat: com.histmersion.api.catalogue.Latitude = _root_.com.histmersion.api.catalogue.Latitude(37.0),
+    lon: com.histmersion.api.catalogue.Longitude = _root_.com.histmersion.api.catalogue.Longitude(30.0),
     zoom: MapStartConfig.Zoom = 5,
     label: MapStartConfig.Label = _root_.com.histmersion.api.instance.MapStartConfig.Label("")
 ) derives KindlingsCodecAsObject,

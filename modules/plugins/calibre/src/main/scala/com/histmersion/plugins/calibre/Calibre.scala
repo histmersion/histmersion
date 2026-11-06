@@ -105,7 +105,7 @@ final class Calibre(cfg: com.histmersion.plugins.calibre.Calibre.Library, shell:
       _ <- Either.cond(!((guiRunning) == _root_.com.histmersion.plugins.calibre.Calibre.GuiRunningResult(true)), (), GuiRunning)
       cur <- byId(_root_.com.histmersion.plugins.calibre.Calibre.ByIdId((id).value)).flatMap(_.toRight(s"there is no Calibre entry $id"))
       changes <- Calibre.updatePlan(meta, cur)
-      _ <- write(id, changes)
+      _ <- write(_root_.com.histmersion.plugins.calibre.Calibre.WriteId((id).value), changes)
     yield changes
 
   /** `calibre update --all`: plan the update of every linked entry against ONE listing of the library; with `apply`,
@@ -290,8 +290,8 @@ object Calibre:
   object FormatOfResultPart2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type ReplaceFormatCmdResult = ReplaceFormatCmdResult.T
   object ReplaceFormatCmdResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type ReplaceFormatCmdCalibredb = ReplaceFormatCmdCalibredb.T
-  object ReplaceFormatCmdCalibredb extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type ReplaceFormatCmdCalibredb = _root_.com.histmersion.plugins.calibre.Calibre.Library.Calibredb
+  val ReplaceFormatCmdCalibredb: _root_.com.histmersion.plugins.calibre.Calibre.Library.Calibredb.type = _root_.com.histmersion.plugins.calibre.Calibre.Library.Calibredb
   type ReplaceFormatCmdLibArgs = ReplaceFormatCmdLibArgs.T
   object ReplaceFormatCmdLibArgs extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type ReplaceFormatCmdId = ReplaceFormatCmdId.T
@@ -314,10 +314,10 @@ object Calibre:
   object MergeIdentifiersCurrentPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type MergeIdentifiersCurrentPart2 = MergeIdentifiersCurrentPart2.T
   object MergeIdentifiersCurrentPart2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type MergeIdentifiersDoi = MergeIdentifiersDoi.T
-  object MergeIdentifiersDoi extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type MergeIdentifiersIsbn = MergeIdentifiersIsbn.T
-  object MergeIdentifiersIsbn extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type MergeIdentifiersDoi = _root_.com.histmersion.plugins.calibre.Calibre.Push.Doi
+  val MergeIdentifiersDoi: _root_.com.histmersion.plugins.calibre.Calibre.Push.Doi.type = _root_.com.histmersion.plugins.calibre.Calibre.Push.Doi
+  type MergeIdentifiersIsbn = _root_.com.histmersion.plugins.calibre.Calibre.Push.Isbn
+  val MergeIdentifiersIsbn: _root_.com.histmersion.plugins.calibre.Calibre.Push.Isbn.type = _root_.com.histmersion.plugins.calibre.Calibre.Push.Isbn
   type IdentifiersValueResult = IdentifiersValueResult.T
   object IdentifiersValueResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type IdentifiersValueIdsPart1 = IdentifiersValueIdsPart1.T
@@ -595,7 +595,7 @@ object Calibre:
       )
       _ <- value(_root_.com.histmersion.plugins.calibre.Calibre.SetCmdValueK("title")).fold(Right(()))(t => Either.cond(!((isBlank(_root_.com.histmersion.plugins.calibre.Calibre.IsBlankS((t).value))) == _root_.com.histmersion.plugins.calibre.Calibre.IsBlankResult(true)), (), "refusing a blank or Unknown title"))
       _ <- value(_root_.com.histmersion.plugins.calibre.Calibre.SetCmdValueK("authors")).fold(Right(()))(a =>
-        Either.cond((a).value.split("&").map(_.trim).forall(x => !isBlank(_root_.com.histmersion.plugins.calibre.Calibre.IsBlankS(x))), (), "refusing a blank or Unknown author")
+        Either.cond((a).value.split("&").map(_.trim).forall(x => !((isBlank(_root_.com.histmersion.plugins.calibre.Calibre.IsBlankS(x))) == _root_.com.histmersion.plugins.calibre.Calibre.IsBlankResult(true))), (), "refusing a blank or Unknown author")
       )
     yield List(calibredb, "set_metadata") ++ libArgs ++ List(id.toString) ++
       fields.flatMap((k, v) => List("--field", s"$k:$v"))
@@ -745,7 +745,7 @@ object Calibre:
     /** Equal after [[norm]], or one extends the other: Calibre often keeps or drops a subtitle. */
     def titleMatches(a: com.histmersion.plugins.calibre.Calibre.Audit.TitleMatchesA, b: com.histmersion.plugins.calibre.Calibre.Audit.TitleMatchesB): com.histmersion.plugins.calibre.Calibre.Audit.TitleMatchesResult =
       val (x, y) = (norm(_root_.com.histmersion.plugins.calibre.Calibre.Audit.NormS((a).value)), norm(_root_.com.histmersion.plugins.calibre.Calibre.Audit.NormS((b).value)))
-      (x).value.nonEmpty && (y).value.nonEmpty && (x.startsWith(y) || y.startsWith(x))
+      (x).value.nonEmpty && (y).value.nonEmpty && ((x).value.startsWith(y) || y.startsWith(x))
 
     /** "Güterbock, Hans G." and "Hans G. Güterbock" are the same surname; a bracketed role or life span ("Ken Dowden
       * (ed.)", "Gimbutienė, Marija (1921-1994)") is not part of the name.

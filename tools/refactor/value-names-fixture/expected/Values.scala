@@ -13,11 +13,16 @@ object Values:
   type Label = LabelValue
   type LabelValue = LabelValue.T
   object LabelValue extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  val Label: Label = _root_.collisionfixture.Values.LabelValue("label")
+  val Label: Label = _root_.collisionfixture.Values.LabelValue(Foreign.Label)
   type Empty = EmptyValue
   type EmptyValue = EmptyValue.T
   object EmptyValue extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   val Empty: List[Empty] = Nil
+  type Ordered = OrderedValue
+  type OrderedValue = OrderedValue.T
+  object OrderedValue extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]:
+    given _root_.scala.math.Ordering[T] = _root_.scala.math.Ordering.by[T, _root_.scala.Int](_.value)
+  val Ordered: List[Ordered] = List(_root_.collisionfixture.Values.OrderedValue(7), _root_.collisionfixture.Values.OrderedValue(3))
   def identity(value: Names): Names = value
 
 object Consumer:
@@ -29,3 +34,7 @@ object Consumer:
     assert(Values.Counts(0).value == 3 && Values.Counts(1).value == 7)
     assert(Values.Label.value == "label" && Values.NamesValue == 17)
     assert(Values.Empty.isEmpty)
+    assert(Values.Ordered.sorted.map(_.value) == List(3, 7))
+
+object Foreign:
+  val Label = "label"

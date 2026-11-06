@@ -28,7 +28,7 @@ object Aliases:
       "reference) goes to the record under its new one, and the answer names the new one.")
 
   def rule(k: AliasKind): com.histmersion.api.aliases.Aliases.RuleResult =
-    (Rule).value.replaceFirst("The old one", s"The old ${k.idWord.value}").replace("new one", s"new ${k.idWord.value}")
+    _root_.com.histmersion.api.aliases.Aliases.RuleResult((Rule).value.replaceFirst("The old one", s"The old ${k.idWord.value}").replace("new one", s"new ${k.idWord.value}"))
 
   def followed(k: AliasKind, asked: com.histmersion.api.aliases.Aliases.FollowedAsked, now: com.histmersion.api.aliases.Aliases.FollowedNow): Option[com.histmersion.api.aliases.Aliases.FollowedResult] =
     val a = (asked).value.trim

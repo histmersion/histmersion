@@ -408,7 +408,7 @@ object Tree:
     if n <= 0 then Nil
     else rows.iterator.map(r => Bucket.Sample(r.citekey, r.title)).distinctBy(_.citekey).take((n).value).toList
 
-  private def clamp(depth: com.histmersion.api.library.Tree.ClampDepth): com.histmersion.api.library.Tree.ClampResult = (depth).value.max(1).min((MaxDepth).value)
+  private def clamp(depth: com.histmersion.api.library.Tree.ClampDepth): com.histmersion.api.library.Tree.ClampResult = _root_.com.histmersion.api.library.Tree.ClampResult((depth).value.max(1).min((MaxDepth).value))
   private def order(a: com.histmersion.api.library.Tree.OrderA, b: com.histmersion.api.library.Tree.OrderB): (com.histmersion.api.library.Tree.OrderResultPart1, com.histmersion.api.library.Tree.OrderResultPart2) = if a <= b then (_root_.com.histmersion.api.library.Tree.OrderResultPart1((a).value), _root_.com.histmersion.api.library.Tree.OrderResultPart2((b).value)) else (_root_.com.histmersion.api.library.Tree.OrderResultPart1((b).value), _root_.com.histmersion.api.library.Tree.OrderResultPart2((a).value))
 
   def parseBy(s: com.histmersion.api.library.Tree.ParseByS): Option[List[com.histmersion.api.library.Tree.ParseByResult]] =

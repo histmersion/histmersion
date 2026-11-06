@@ -918,9 +918,9 @@ object Article:
       classify(targets(body), { val refactorFunction2 = isSource; (refactorValue11) => _root_.com.histmersion.api.research.Article.Links.ClassifyIsSourceResult((refactorFunction2(_root_.com.histmersion.api.research.Article.Links.LinksIsSourceArg1((refactorValue11).value))).value) })
 
     def hrefFor(target: com.histmersion.api.research.Article.Links.HrefForTarget, citekeyOf: com.histmersion.api.research.Article.Links.HrefForCitekeyOfArg1 => Option[com.histmersion.api.research.Article.Links.HrefForCitekeyOfResult], isArticle: com.histmersion.api.research.Article.Links.HrefForIsArticleArg1 => com.histmersion.api.research.Article.Links.HrefForIsArticleResult): Option[com.histmersion.api.research.Article.Links.HrefForResult] =
-      citekeyOf(_root_.com.histmersion.api.research.Article.Links.HrefForCitekeyOfArg1((target).value))
+      (citekeyOf(_root_.com.histmersion.api.research.Article.Links.HrefForCitekeyOfArg1((target).value))
         .map(ck => s"/source/$ck")
-        .orElse(Option.when(((isArticle(_root_.com.histmersion.api.research.Article.Links.HrefForIsArticleArg1((target).value))) == _root_.com.histmersion.api.research.Article.Links.HrefForIsArticleResult(true)))(s"/article/$target"))
+        .orElse(Option.when(((isArticle(_root_.com.histmersion.api.research.Article.Links.HrefForIsArticleArg1((target).value))) == _root_.com.histmersion.api.research.Article.Links.HrefForIsArticleResult(true)))(s"/article/$target"))).map(refactorValue28 => _root_.com.histmersion.api.research.Article.Links.HrefForResult(refactorValue28))
 
     def linkMarkdown(
         md: com.histmersion.api.research.Article.Links.LinkMarkdownMd,

@@ -102,10 +102,10 @@ object AssetLinks:
     ))
 
   private def retarget(md: com.histmersion.api.media.AssetLinks.RetargetMd, from: com.histmersion.api.media.AssetLinks.RetargetFrom, to: com.histmersion.api.media.AssetLinks.RetargetTo): com.histmersion.api.media.AssetLinks.RetargetResult =
-    mapImages(_root_.com.histmersion.api.media.AssetLinks.MapImagesMd((md).value))((alt, target, title) =>
+    _root_.com.histmersion.api.media.AssetLinks.RetargetResult((mapImages(_root_.com.histmersion.api.media.AssetLinks.MapImagesMd((md).value))((alt, target, title) =>
       if !(target).value.startsWith((from).value) then _root_.com.histmersion.api.media.AssetLinks.MapImagesFResult(s"![$alt]($target$title)")
       else _root_.com.histmersion.api.media.AssetLinks.MapImagesFResult(s"![$alt]($to${(target).value.drop((from).value.length)}$title)")
-    )
+    )).value)
 
   private val FiguresTarget = """^(?:[a-z]+:)?(?:[^?#]*[/\\])?figures[/\\]([^/\\?#]+)$""".r
 

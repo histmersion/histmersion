@@ -154,8 +154,8 @@ object Licence:
     object IsPublicDomainResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
     type NeverResult = NeverResult.T
     object NeverResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
-    type ByWirePart1 = ByWirePart1.T
-    object ByWirePart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type ByWirePart1 = _root_.com.histmersion.domain.Licence.Family.Wire
+    val ByWirePart1: _root_.com.histmersion.domain.Licence.Family.Wire.type = _root_.com.histmersion.domain.Licence.Family.Wire
     type FromWireS = FromWireS.T
     object FromWireS extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
