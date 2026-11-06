@@ -4,7 +4,7 @@ package com.histmersion.api
 private[api] object Ascii:
 
   def lower(s: String): String =
-    val cs = (s).toCharArray
+    val cs = (s).value.toCharArray
     var i = 0
     while i < cs.length do
       val c = cs(i)

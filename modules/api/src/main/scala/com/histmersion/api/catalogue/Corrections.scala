@@ -11,6 +11,8 @@ object Corrections:
   object StatusResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type ShowJson = ShowJson.T
   object ShowJson extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type MarkdownResult = com.histmersion.api.catalogue.Corrections.Markdown
+  val MarkdownResult: _root_.com.histmersion.api.catalogue.Corrections.Markdown.type = _root_.com.histmersion.api.catalogue.Corrections.Markdown
 
   enum Outcome:
     case Keep
@@ -49,7 +51,7 @@ object Corrections:
 
   private object Fmt:
 
-    def clip(s: String): String = if (s).length > 80 then ((s).take(79) + "…") else ((s))
+    def clip(s: String): String = if (s).value.length > 80 then ((s).value.take(79) + "…") else ((s).value)
 
   def markdown(l: Correction.List): com.histmersion.api.catalogue.Corrections.Markdown =
     if l.corrections.isEmpty then _root_.com.histmersion.api.catalogue.Corrections.Markdown("_No corrections by hand._")

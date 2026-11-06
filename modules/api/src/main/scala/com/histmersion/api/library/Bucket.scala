@@ -35,6 +35,8 @@ object Bucket:
   object Start extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type End = End.T
   object End extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type PlaceId = com.histmersion.api.catalogue.Place.Id
+  val PlaceId: _root_.com.histmersion.api.catalogue.Place.Id.type = _root_.com.histmersion.api.catalogue.Place.Id
   type Count = Count.T
   object Count extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type Overlap = Overlap.T

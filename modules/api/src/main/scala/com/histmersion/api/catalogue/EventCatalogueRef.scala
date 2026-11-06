@@ -19,6 +19,8 @@ final case class EventCatalogueRef(
       KindlingsSchema, com.histmersion.api.json.Schema
 
 object EventCatalogueRef:
+  type Provider = com.histmersion.api.catalogue.CatalogRecord.Provider
+  val Provider: _root_.com.histmersion.api.catalogue.CatalogRecord.Provider.type = _root_.com.histmersion.api.catalogue.CatalogRecord.Provider
   type ProviderId = ProviderId.T
   object ProviderId extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type Url = Url.T

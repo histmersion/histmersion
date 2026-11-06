@@ -35,12 +35,12 @@ object Palette:
   private def token(family: String, known: List[String], name: String): String =
     if known.contains(name) then (s"--$family-$name") else (s"--$family-default")
 
-  def edge(kind: com.histmersion.api.Api.ArticleQuery.Kind.Wire): com.histmersion.api.Palette.CssVar = _root_.com.histmersion.api.Palette.CssVar((token(("edge"), (edgeKinds).map(refactorValue2 => ((refactorValue2).value)), ((kind).value))))
-  def status(status: com.histmersion.api.Api.GoalQuery.Status.Wire): com.histmersion.api.Palette.CssVar = _root_.com.histmersion.api.Palette.CssVar((token(("status"), (statuses).map(refactorValue3 => ((refactorValue3).value)), ((status).value))))
+  def edge(kind: com.histmersion.api.Api.ArticleQuery.Kind.Wire): com.histmersion.api.Palette.CssVar = _root_.com.histmersion.api.Palette.CssVar((token(("edge"), (edgeKinds).map(refactorValue2 => ((refactorValue2).value)), ((kind).value))).value)
+  def status(status: com.histmersion.api.Api.GoalQuery.Status.Wire): com.histmersion.api.Palette.CssVar = _root_.com.histmersion.api.Palette.CssVar((token(("status"), (statuses).map(refactorValue3 => ((refactorValue3).value)), ((status).value))).value)
 
   def goalStage(stage: com.histmersion.api.Api.GoalQuery.Status.Wire): com.histmersion.api.Palette.CssVar = _root_.com.histmersion.api.Palette.CssVar(s"--stage-${(stage).value.trim.toLowerCase}")
   def goalStageSoft(stage: com.histmersion.api.Palette.GoalStageSoftStage): com.histmersion.api.Palette.CssVar = _root_.com.histmersion.api.Palette.CssVar(s"${goalStage(stage)}-soft")
-  def media(kind: com.histmersion.api.Api.ArticleQuery.Kind.Wire): com.histmersion.api.Palette.CssVar = _root_.com.histmersion.api.Palette.CssVar((token(("media"), (mediaKinds).map(refactorValue9 => ((refactorValue9).value)), ((kind).value))))
+  def media(kind: com.histmersion.api.Api.ArticleQuery.Kind.Wire): com.histmersion.api.Palette.CssVar = _root_.com.histmersion.api.Palette.CssVar((token(("media"), (mediaKinds).map(refactorValue9 => ((refactorValue9).value)), ((kind).value))).value)
   def confidence(level: com.histmersion.api.library.Confidence.Wire): com.histmersion.api.Palette.CssVar = _root_.com.histmersion.api.Palette.CssVar(s"--conf-$level")
 
   def allTokens: List[com.histmersion.api.Palette.CssVar] =

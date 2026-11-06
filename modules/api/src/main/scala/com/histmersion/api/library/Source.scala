@@ -82,8 +82,12 @@ object Source:
   object Provenance extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type CalibreId = CalibreId.T
   object CalibreId extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type OcrMarkdown = OcrMarkdown.T
+  object OcrMarkdown extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type Notes = Notes.T
   object Notes extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type UpdatedAt = UpdatedAt.T
+  object UpdatedAt extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
   enum Status:
     case Foundational, Current, Contested, Superseded, Debunked, Retracted, Unassessed
@@ -110,6 +114,9 @@ object Source:
         KindlingsSchema,
         com.histmersion.api.json.Schema
 
+  object Alias:
+    type Value = com.histmersion.api.library.Citekey
+    val Value: _root_.com.histmersion.api.library.Citekey.type = _root_.com.histmersion.api.library.Citekey
 
   final case class Candidate(
       id: Candidate.Id,
@@ -133,6 +140,8 @@ object Source:
   object Candidate:
     type Id = Id.T
     object Id extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Goal = com.histmersion.api.research.ReviewGoal.Slug
+    val Goal: _root_.com.histmersion.api.research.ReviewGoal.Slug.type = _root_.com.histmersion.api.research.ReviewGoal.Slug
     type AbstractText = AbstractText.T
     object AbstractText extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
     type IsOa = IsOa.T
@@ -251,6 +260,8 @@ object Source:
   final case class DeleteRequest(apply: DeleteRequest.Apply = _root_.com.histmersion.api.Api.Apply(false)) derives KindlingsSchema, com.histmersion.api.json.Schema
   object DeleteRequest:
 
+    type Apply = com.histmersion.api.Api.Apply
+    val Apply: _root_.com.histmersion.api.Api.Apply.type = _root_.com.histmersion.api.Api.Apply
 
     given Codec.AsObject[DeleteRequest] = StrictJson.codec(KindlingsCodecAsObject.derived[DeleteRequest])
 
@@ -276,6 +287,8 @@ object Source:
 
   object Deletion:
 
+    type Title = com.histmersion.api.library.Title
+    val Title: _root_.com.histmersion.api.library.Title.type = _root_.com.histmersion.api.library.Title
     type Applied = Applied.T
     object Applied extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
     type Aliases = Aliases.T
@@ -315,6 +328,11 @@ object Source:
         KindlingsSchema,
         com.histmersion.api.json.Schema
 
+  object Detail:
+    type OcrMarkdown = com.histmersion.api.library.Source.OcrMarkdown
+    val OcrMarkdown: _root_.com.histmersion.api.library.Source.OcrMarkdown.type = _root_.com.histmersion.api.library.Source.OcrMarkdown
+    type UpdatedAt = com.histmersion.api.library.Source.UpdatedAt
+    val UpdatedAt: _root_.com.histmersion.api.library.Source.UpdatedAt.type = _root_.com.histmersion.api.library.Source.UpdatedAt
 
   final case class Graph(
       root: Graph.Root,
@@ -328,6 +346,10 @@ object Source:
   object Graph:
     type DepthCount = DepthCount.T
     object DepthCount extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Root = com.histmersion.api.library.Citekey
+    val Root: _root_.com.histmersion.api.library.Citekey.type = _root_.com.histmersion.api.library.Citekey
+    type Depth = com.histmersion.api.library.Source.Graph.DepthCount
+    val Depth: _root_.com.histmersion.api.library.Source.Graph.DepthCount.type = _root_.com.histmersion.api.library.Source.Graph.DepthCount
 
   object Kinds:
     type Wire = Wire.T
@@ -365,7 +387,7 @@ object Source:
       else if words.exists(_.contains("dataset")) || id.exists(d => DataDoiPrefixes.exists(d.startsWith)) then _root_.com.histmersion.api.library.Source.Kinds.Wire(Dataset)
       else
         id.flatMap({ val refactorFunction2 = isbnDoi; (refactorValue14) => refactorFunction2(_root_.com.histmersion.api.library.Doi(refactorValue14)) }) match
-          case Some(chapter)        => if (chapter) then _root_.com.histmersion.api.library.Source.Kinds.Wire(Chapter) else _root_.com.histmersion.api.library.Source.Kinds.Wire(Book)
+          case Some(chapter)        => if (chapter).value then _root_.com.histmersion.api.library.Source.Kinds.Wire(Chapter) else _root_.com.histmersion.api.library.Source.Kinds.Wire(Book)
           case None if id.isDefined => _root_.com.histmersion.api.library.Source.Kinds.Wire(Paper)
           case None                 =>
             if ((hasCover) == (true)) || provenance.map((_).value.trim.toLowerCase(java.util.Locale.ROOT)).exists(BookProvenance.contains)
@@ -378,10 +400,10 @@ object Source:
       else
         @tailrec def isbnEnd(i: Int, digits: Int): Option[Int] =
           if digits >= 13 then Some(i)
-          else if (i) < suffix.length && suffix((i).value).isDigit then isbnEnd(((i) + 1), ((digits) + 1))
-          else if (i) < suffix.length && suffix((i).value) == '-' then isbnEnd(((i) + 1), digits)
+          else if (i).value < suffix.length && suffix((i).value).isDigit then isbnEnd(((i).value + 1), ((digits).value + 1))
+          else if (i).value < suffix.length && suffix((i).value) == '-' then isbnEnd(((i).value + 1), digits)
           else None
-        isbnEnd((0), (0)).map(end => (suffix.drop((end)).exists(_.isLetterOrDigit)))
+        isbnEnd((0), (0)).map(end => (suffix.drop((end).value).exists(_.isLetterOrDigit)))
 
   final case class Match(
       rightUid: UUID,

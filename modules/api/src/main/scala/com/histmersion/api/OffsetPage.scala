@@ -17,7 +17,7 @@ object OffsetPage:
   val FullSetMax: com.histmersion.api.OffsetPage.FullSetMax = _root_.com.histmersion.api.OffsetPage.FullSetMaxValue(500)
 
   def header(p: OffsetPage, noun: String): String =
-    if (p.isAll) then (s"### ${math.max(p.total.value, p.shown.value)} $noun")
+    if (p.isAll).value then (s"### ${math.max(p.total.value, p.shown.value)} $noun")
     else (s"### ${p.shown.value} of ${p.total.value} $noun")
 
   def footer(p: OffsetPage): String =
@@ -30,6 +30,6 @@ object OffsetPage:
   def markdown[A](p: OffsetPage, noun: String, empty: String, items: List[A])(line: A => String): com.histmersion.api.OffsetPage.MarkdownResult =
     if items.isEmpty then
       p.offset.value match
-        case 0 => _root_.com.histmersion.api.OffsetPage.MarkdownResult((empty))
+        case 0 => _root_.com.histmersion.api.OffsetPage.MarkdownResult((empty).value)
         case o => _root_.com.histmersion.api.OffsetPage.MarkdownResult(s"$empty\n\n_offset=$o is past the end: there are ${p.total.value}_")
-    else _root_.com.histmersion.api.OffsetPage.MarkdownResult(s"${header(p, ((noun)))}\n\n${items.map(line).mkString("\n")}${footer(p)}")
+    else _root_.com.histmersion.api.OffsetPage.MarkdownResult(s"${header(p, ((noun).value))}\n\n${items.map(line).mkString("\n")}${footer(p)}")

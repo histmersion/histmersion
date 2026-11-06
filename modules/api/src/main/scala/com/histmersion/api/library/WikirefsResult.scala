@@ -23,5 +23,7 @@ object WikirefsResult:
   object DoiCount extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type Dois = Dois.T
   object Dois extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type Arxiv = com.histmersion.api.library.WorkRef.ArxivId
+  val Arxiv: _root_.com.histmersion.api.library.WorkRef.ArxivId.type = _root_.com.histmersion.api.library.WorkRef.ArxivId
   type Known = Known.T
   object Known extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]

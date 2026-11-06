@@ -24,6 +24,8 @@ object SiteTypes:
   val IconId: _root_.com.histmersion.api.catalogue.SiteTypes.SiteType.Id.type = _root_.com.histmersion.api.catalogue.SiteTypes.SiteType.Id
   type WikidataP31 = _root_.com.histmersion.api.catalogue.CatalogRecord.Wikidata.Class
   val WikidataP31: _root_.com.histmersion.api.catalogue.CatalogRecord.Wikidata.Class.type = _root_.com.histmersion.api.catalogue.CatalogRecord.Wikidata.Class
+  type OfPlaceKind = com.histmersion.api.catalogue.Place.Kind.Wire
+  val OfPlaceKind: _root_.com.histmersion.api.catalogue.Place.Kind.Wire.type = _root_.com.histmersion.api.catalogue.Place.Kind.Wire
   type OfP31 = _root_.com.histmersion.api.catalogue.CatalogRecord.Wikidata.Class
   val OfP31: _root_.com.histmersion.api.catalogue.CatalogRecord.Wikidata.Class.type = _root_.com.histmersion.api.catalogue.CatalogRecord.Wikidata.Class
 
@@ -359,7 +361,7 @@ object SiteTypes:
     then None
     else
       stored
-        .filter(_root_.com.histmersion.api.catalogue.SiteTypes.ByIdPart1((byId)).contains)
+        .filter(_root_.com.histmersion.api.catalogue.SiteTypes.ByIdPart1((byId).value).contains)
         .orElse(featureTypes.flatMap({ val refactorFunction3 = pleiades; (refactorValue5) => refactorFunction3(_root_.com.histmersion.api.catalogue.SiteTypes.Pleiades.FeatureType((refactorValue5).value)) }))
         .orElse(fcode.flatMap({ val refactorFunction2 = geonames; (refactorValue10) => refactorFunction2(_root_.com.histmersion.api.catalogue.SiteTypes.Geonames.Fcode((refactorValue10).value)) }))
         .orElse(wikidataOwn(p31))
@@ -377,6 +379,8 @@ object SiteTypes:
         KindlingsSchema, com.histmersion.api.json.Schema
   object Report:
 
+    type SummaryResult = com.histmersion.api.catalogue.SiteTypes.ReportSummary
+    val SummaryResult: _root_.com.histmersion.api.catalogue.SiteTypes.ReportSummary.type = _root_.com.histmersion.api.catalogue.SiteTypes.ReportSummary
 
     type DryRun = DryRun.T
     object DryRun extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]

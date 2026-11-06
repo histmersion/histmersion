@@ -31,6 +31,12 @@ final case class WorkRef(
 object WorkRef:
   type OpenalexId = OpenalexId.T
   object OpenalexId extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type ArxivId = com.histmersion.api.library.WorkRef.ArxivId
+  val ArxivId: _root_.com.histmersion.api.library.WorkRef.ArxivId.type = _root_.com.histmersion.api.library.WorkRef.ArxivId
+  type CitedByCount = com.histmersion.api.library.Source.CitedByCount
+  val CitedByCount: _root_.com.histmersion.api.library.Source.CitedByCount.type = _root_.com.histmersion.api.library.Source.CitedByCount
+  type IsOa = com.histmersion.api.library.Source.Candidate.IsOa
+  val IsOa: _root_.com.histmersion.api.library.Source.Candidate.IsOa.type = _root_.com.histmersion.api.library.Source.Candidate.IsOa
   type OaStatus = OaStatus.T
   object OaStatus extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type OaUrl = OaUrl.T
@@ -39,6 +45,8 @@ object WorkRef:
   object IsRetracted extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type WorkType = WorkType.T
   object WorkType extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type AbstractText = com.histmersion.api.library.Source.Candidate.AbstractText
+  val AbstractText: _root_.com.histmersion.api.library.Source.Candidate.AbstractText.type = _root_.com.histmersion.api.library.Source.Candidate.AbstractText
   type ReferencedWorks = ReferencedWorks.T
   object ReferencedWorks extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type InDb = InDb.T

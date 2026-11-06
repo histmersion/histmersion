@@ -8,3 +8,8 @@ final case class MergeApplyRequest(bundle: MergeApplyRequest.Bundle, planHash: M
     derives KindlingsCodecAsObject,
       KindlingsSchema, com.histmersion.api.json.Schema
 
+object MergeApplyRequest:
+  type Bundle = com.histmersion.api.exchange.Bundle.Name
+  val Bundle: _root_.com.histmersion.api.exchange.Bundle.Name.type = _root_.com.histmersion.api.exchange.Bundle.Name
+  type PlanHash = com.histmersion.api.exchange.MergePlan.PlanHash
+  val PlanHash: _root_.com.histmersion.api.exchange.MergePlan.PlanHash.type = _root_.com.histmersion.api.exchange.MergePlan.PlanHash

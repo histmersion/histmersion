@@ -47,6 +47,12 @@ object ReviewFinding:
   object Outcome extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type Note = Note.T
   object Note extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type ClosedBy = com.histmersion.api.automation.Activity.Actor
+  val ClosedBy: _root_.com.histmersion.api.automation.Activity.Actor.type = _root_.com.histmersion.api.automation.Activity.Actor
+  type ClosedRound = com.histmersion.api.research.ReviewRound.Round
+  val ClosedRound: _root_.com.histmersion.api.research.ReviewRound.Round.type = _root_.com.histmersion.api.research.ReviewRound.Round
+  type ClosedRunNumber = com.histmersion.api.research.ReviewRound.RunNumber
+  val ClosedRunNumber: _root_.com.histmersion.api.research.ReviewRound.RunNumber.type = _root_.com.histmersion.api.research.ReviewRound.RunNumber
   type Reopened = Reopened.T
   object Reopened extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type Deferred = Deferred.T

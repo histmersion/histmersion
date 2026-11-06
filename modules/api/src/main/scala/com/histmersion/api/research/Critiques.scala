@@ -24,11 +24,19 @@ object Critiques:
 
 
   type Kinds = KindsValue
+  type KindsValue = com.histmersion.api.research.CritiquePair.Kinds
+  val KindsValue: _root_.com.histmersion.api.research.CritiquePair.Kinds.type = _root_.com.histmersion.api.research.CritiquePair.Kinds
+  type OlderFirstKinds = com.histmersion.api.research.CritiquePair.Kinds
+  val OlderFirstKinds: _root_.com.histmersion.api.research.CritiquePair.Kinds.type = _root_.com.histmersion.api.research.CritiquePair.Kinds
   type ParagraphsResult = _root_.com.histmersion.api.research.Critiques.Block.Text
   val ParagraphsResult: _root_.com.histmersion.api.research.Critiques.Block.Text.type = _root_.com.histmersion.api.research.Critiques.Block.Text
   type ParagraphsBody = String
   type BuildBody = String
   type TogetherBody = String
+  type MethodPartResult = com.histmersion.api.research.Critiques.Method
+  val MethodPartResult: _root_.com.histmersion.api.research.Critiques.Method.type = _root_.com.histmersion.api.research.Critiques.Method
+  type MarkdownResult = com.histmersion.api.research.Critiques.Markdown
+  val MarkdownResult: _root_.com.histmersion.api.research.Critiques.Markdown.type = _root_.com.histmersion.api.research.Critiques.Markdown
 
   val Kinds: List[com.histmersion.api.research.Critiques.Kinds] = Article.Coverage.DisagreementKinds
 
@@ -49,7 +57,7 @@ object Critiques:
     object Text extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
   def units(body: String): List[Block] =
-    val lines = (body).replace("\r\n", "\n").split("\n", -1).toVector
+    val lines = (body).value.replace("\r\n", "\n").split("\n", -1).toVector
     val skip = notUsedLines(lines)
     val out = List.newBuilder[Block]
     val cur = new StringBuilder()
@@ -80,8 +88,8 @@ object Critiques:
     out.result()
 
   private def notUsedLines(lines: Vector[String]): Set[Int] =
-    def heading(l: String) = (l).trim.startsWith("#")
-    def level(l: String) = (l).trim.takeWhile(_ == '#').length
+    def heading(l: String) = (l).value.trim.startsWith("#")
+    def level(l: String) = (l).value.trim.takeWhile(_ == '#').length
     lines.indexWhere(l => heading(l) && l.trim.replaceAll("^#+\\s*", "").trim.toLowerCase.startsWith("not used")) match
       case -1 => Set.empty
       case i  =>

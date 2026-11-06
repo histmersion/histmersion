@@ -31,6 +31,8 @@ object EventImportReport:
 
 
   /** An events import job's report, in its detail. */
+  type MarkdownResult = com.histmersion.api.catalogue.EventImportReport.Markdown
+  val MarkdownResult: _root_.com.histmersion.api.catalogue.EventImportReport.Markdown.type = _root_.com.histmersion.api.catalogue.EventImportReport.Markdown
 
   type Provider = Provider.T
   object Provider extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]

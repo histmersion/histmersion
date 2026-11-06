@@ -19,6 +19,8 @@ final case class ReadMark(
 object ReadMark:
 
 
+  type Title = com.histmersion.api.library.Title
+  val Title: _root_.com.histmersion.api.library.Title.type = _root_.com.histmersion.api.library.Title
   type Read = Read.T
   object Read extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type ReadAt = ReadAt.T

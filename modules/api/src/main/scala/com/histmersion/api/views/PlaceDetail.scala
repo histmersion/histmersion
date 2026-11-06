@@ -34,6 +34,8 @@ object PlaceDetail:
   object Geometry extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type Findings = Findings.T
   object Findings extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type AsOf = com.histmersion.api.views.Time.AsOf
+  val AsOf: _root_.com.histmersion.api.views.Time.AsOf.type = _root_.com.histmersion.api.views.Time.AsOf
   type Contested = Contested.T
   object Contested extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type HasBoundary = HasBoundary.T

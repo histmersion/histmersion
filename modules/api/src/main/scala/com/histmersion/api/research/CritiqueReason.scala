@@ -17,6 +17,8 @@ object CritiqueReason:
 
   type Reason = Reason.T
   object Reason extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type By = com.histmersion.api.automation.Activity.Actor
+  val By: _root_.com.histmersion.api.automation.Activity.Actor.type = _root_.com.histmersion.api.automation.Activity.Actor
 
   given Schema[CritiqueReason] = KindlingsSchema
     .derived[CritiqueReason]

@@ -134,7 +134,7 @@ object MergeIssue:
 
     given WireEnumValues[Severity]:
       def all: Array[Severity] = Severity.values
-      def wire(e: Severity): _root_.com.histmersion.api.WireEnumValues.Wire = _root_.com.histmersion.api.WireEnumValues.Wire((Ascii.lower((e.toString))))
+      def wire(e: Severity): _root_.com.histmersion.api.WireEnumValues.Wire = _root_.com.histmersion.api.WireEnumValues.Wire((Ascii.lower((e.toString))).value)
       def fromWire(s: _root_.com.histmersion.api.WireEnumValues.Wire): _root_.scala.Option[Severity] = Severity.values.find(_.toString.equalsIgnoreCase((s).value.trim))
 
   /** Who decided an issue. */
@@ -159,7 +159,7 @@ object MergeIssue:
 
     given WireEnumValues[DecidedBy]:
       def all: Array[DecidedBy] = DecidedBy.values
-      def wire(e: DecidedBy): _root_.com.histmersion.api.WireEnumValues.Wire = _root_.com.histmersion.api.WireEnumValues.Wire((Ascii.lower((e.toString))))
+      def wire(e: DecidedBy): _root_.com.histmersion.api.WireEnumValues.Wire = _root_.com.histmersion.api.WireEnumValues.Wire((Ascii.lower((e.toString))).value)
       def fromWire(s: _root_.com.histmersion.api.WireEnumValues.Wire): _root_.scala.Option[DecidedBy] = DecidedBy.values.find(_.toString.equalsIgnoreCase((s).value.trim))
 
 
@@ -189,7 +189,7 @@ object MergeIssue:
       case Some(b)                        => (s"${b.start.fold("…")(_.toString)}..${b.end.fold("…")(_.toString)}")
 
     def preview(s: String, n: com.histmersion.api.exchange.MergeIssue.Detail.ClipLength = _root_.com.histmersion.api.exchange.MergeIssue.Detail.ClipLength(80)): String =
-      val one = (s).replaceAll("\\s+", " ").trim
+      val one = (s).value.replaceAll("\\s+", " ").trim
       if one.length <= (n).value then (one) else (one.take((n).value - 1) + "…")
 
     def span(r: Bundle.Range): IssueSpan = IssueSpan(r.start, r.end)
@@ -199,7 +199,7 @@ object MergeIssue:
       Option.when(a.isDefined || b.isDefined)(IssueSpan(a, b))
 
     def clip(s: Option[String], n: com.histmersion.api.exchange.MergeIssue.Detail.ClipLength = _root_.com.histmersion.api.exchange.MergeIssue.Detail.ClipLength(600)): Option[String] =
-      s.map((_).trim).filter(_.nonEmpty).map(t => if t.length <= (n).value then (t) else (t.take((n).value - 1) + "…"))
+      s.map((_).value.trim).filter(_.nonEmpty).map(t => if t.length <= (n).value then (t) else (t.take((n).value - 1) + "…"))
 
     def sourceFields(l: Bundle.Source, r: Bundle.Source): List[IssueField] =
       def range(p: Option[Bundle.Range]) = p.map(x => rangeText(Some(x)))

@@ -82,6 +82,8 @@ object AutopilotStatus:
   object On extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type Since = Since.T
   object Since extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type By = com.histmersion.api.automation.Activity.Actor
+  val By: _root_.com.histmersion.api.automation.Activity.Actor.type = _root_.com.histmersion.api.automation.Activity.Actor
   type AgentsEnabled = AgentsEnabled.T
   object AgentsEnabled extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type ManagersEnabled = ManagersEnabled.T
@@ -100,5 +102,9 @@ object AutopilotStatus:
   object LastLint extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type Changes = Changes.T
   object Changes extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type Backlog = com.histmersion.api.library.RepairAcquire.RepairResult.Backlog
+  val Backlog: _root_.com.histmersion.api.library.RepairAcquire.RepairResult.Backlog.type = _root_.com.histmersion.api.library.RepairAcquire.RepairResult.Backlog
+  type BacklogDays = com.histmersion.api.library.RepairAcquire.RepairResult.BacklogDays
+  val BacklogDays: _root_.com.histmersion.api.library.RepairAcquire.RepairResult.BacklogDays.type = _root_.com.histmersion.api.library.RepairAcquire.RepairResult.BacklogDays
   type GoalPlansWait = GoalPlansWait.T
   object GoalPlansWait extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]

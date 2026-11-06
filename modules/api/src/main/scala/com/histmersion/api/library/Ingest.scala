@@ -62,10 +62,16 @@ object Ingest:
   )
 
   object Params:
+    type Filename = com.histmersion.api.exchange.Bundle.Asset.FileName
+    val Filename: _root_.com.histmersion.api.exchange.Bundle.Asset.FileName.type = _root_.com.histmersion.api.exchange.Bundle.Asset.FileName
     type Quality = Quality.T
     object Quality extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
     type Force = Force.T
     object Force extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Provenance = com.histmersion.api.library.Source.Provenance
+    val Provenance: _root_.com.histmersion.api.library.Source.Provenance.type = _root_.com.histmersion.api.library.Source.Provenance
+    type AcquireItem = com.histmersion.api.library.Acquire.ItemNumber
+    val AcquireItem: _root_.com.histmersion.api.library.Acquire.ItemNumber.type = _root_.com.histmersion.api.library.Acquire.ItemNumber
 
   final case class Report(
       citekey: com.histmersion.api.library.Citekey,
@@ -85,6 +91,8 @@ object Ingest:
     object Created extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
     type EdgesAdded = EdgesAdded.T
     object EdgesAdded extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type DropIn = com.histmersion.api.library.Ingest.DropInPath
+    val DropIn: _root_.com.histmersion.api.library.Ingest.DropInPath.type = _root_.com.histmersion.api.library.Ingest.DropInPath
 
 
   final case class Request(
@@ -99,6 +107,8 @@ object Ingest:
   object Request:
     type Id = Id.T
     object Id extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Arxiv = com.histmersion.api.library.WorkRef.ArxivId
+    val Arxiv: _root_.com.histmersion.api.library.WorkRef.ArxivId.type = _root_.com.histmersion.api.library.WorkRef.ArxivId
     type Refetch = Refetch.T
     object Refetch extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
     type LegalOnly = LegalOnly.T
@@ -108,6 +118,8 @@ object Ingest:
   final case class Step(step: Step.Value, ok: Step.Ok, detail: Step.Detail) derives KindlingsCodecAsObject, KindlingsSchema, com.histmersion.api.json.Schema
 
   object Step:
+    type Value = com.histmersion.api.library.Ingest.StepName
+    val Value: _root_.com.histmersion.api.library.Ingest.StepName.type = _root_.com.histmersion.api.library.Ingest.StepName
     type Ok = Ok.T
     object Ok extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
     type Detail = Detail.T

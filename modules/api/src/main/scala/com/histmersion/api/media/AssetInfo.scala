@@ -15,3 +15,12 @@ final case class AssetInfo(
 ) derives KindlingsCodecAsObject,
       KindlingsSchema, com.histmersion.api.json.Schema
 
+object AssetInfo:
+  type Name = com.histmersion.api.exchange.Bundle.Asset.FileName
+  val Name: _root_.com.histmersion.api.exchange.Bundle.Asset.FileName.type = _root_.com.histmersion.api.exchange.Bundle.Asset.FileName
+  type Mime = com.histmersion.api.exchange.Bundle.Asset.MimeText
+  val Mime: _root_.com.histmersion.api.exchange.Bundle.Asset.MimeText.type = _root_.com.histmersion.api.exchange.Bundle.Asset.MimeText
+  type Width = com.histmersion.api.media.ImageSize.Width
+  val Width: _root_.com.histmersion.api.media.ImageSize.Width.type = _root_.com.histmersion.api.media.ImageSize.Width
+  type Height = com.histmersion.api.media.ImageSize.Height
+  val Height: _root_.com.histmersion.api.media.ImageSize.Height.type = _root_.com.histmersion.api.media.ImageSize.Height

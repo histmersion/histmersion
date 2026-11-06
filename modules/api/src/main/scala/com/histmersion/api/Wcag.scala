@@ -14,6 +14,8 @@ object Wcag:
   object Ratio extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
   type AaText = AaTextValue
+  type AaTextValue = com.histmersion.api.Wcag.Ratio
+  val AaTextValue: _root_.com.histmersion.api.Wcag.Ratio.type = _root_.com.histmersion.api.Wcag.Ratio
 
   def luminance(r: com.histmersion.api.Wcag.Channel, g: com.histmersion.api.Wcag.Channel, b: com.histmersion.api.Wcag.Channel): com.histmersion.api.Wcag.Luminance =
     def lin(c: com.histmersion.api.Wcag.Channel): com.histmersion.api.Wcag.LinearChannel =

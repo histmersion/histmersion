@@ -56,6 +56,8 @@ object Queue:
     type Id = Id.T
     object Id extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]:
       given _root_.scala.math.Ordering[T] = _root_.scala.math.Ordering.by[T, _root_.scala.Int](_.value)
+    type List = List.T
+    object List extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
     type Text = Text.T
     object Text extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
     type Topic = Topic.T
@@ -71,6 +73,8 @@ object Queue:
     object DoneAt extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
     type CreatedBy = CreatedBy.T
     object CreatedBy extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type ClosedBy = ClosedBy.T
+    object ClosedBy extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
 
   final case class ItemGoals(item: com.histmersion.api.automation.Queue.QueueItem.Id, goals: List[GoalRef]) derives KindlingsCodecAsObject, KindlingsSchema, com.histmersion.api.json.Schema
@@ -91,6 +95,8 @@ object Queue:
   object QueueAdd:
 
 
+    type CreatedAt = com.histmersion.api.automation.Queue.QueueItem.CreatedAt
+    val CreatedAt: _root_.com.histmersion.api.automation.Queue.QueueItem.CreatedAt.type = _root_.com.histmersion.api.automation.Queue.QueueItem.CreatedAt
 
     given Codec.AsObject[QueueAdd] = StrictJson.codec(KindlingsCodecAsObject.derived[QueueAdd])
 
@@ -105,6 +111,8 @@ object Queue:
   object QueuePatch:
 
 
+    type ClosedBy = com.histmersion.api.automation.Queue.QueueItem.ClosedBy
+    val ClosedBy: _root_.com.histmersion.api.automation.Queue.QueueItem.ClosedBy.type = _root_.com.histmersion.api.automation.Queue.QueueItem.ClosedBy
 
     given Codec.AsObject[QueuePatch] = StrictJson.codec(KindlingsCodecAsObject.derived[QueuePatch])
 
@@ -120,6 +128,8 @@ object Queue:
         KindlingsSchema, com.histmersion.api.json.Schema
 
   object QueueImported:
+    type List = com.histmersion.api.automation.Queue.QueueItem.List
+    val List: _root_.com.histmersion.api.automation.Queue.QueueItem.List.type = _root_.com.histmersion.api.automation.Queue.QueueItem.List
     type Items = Items.T
     object Items extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
     type Notes = Notes.T
@@ -239,8 +249,8 @@ object Queue:
     def flush(): Unit = { flushItem(); flushNote() }
 
     def push(segment: String, index: Int): Unit =
-      val i = math.min((index), stack.length)
-      stack = stack.take(i) :+ (segment)
+      val i = math.min((index).value, stack.length)
+      stack = stack.take(i) :+ (segment).value
 
     (text).value.linesIterator.foreach { line =>
       line match
@@ -267,7 +277,7 @@ object Queue:
     flush()
     out.result()
 
-  private def isBold(s: String): Boolean = ((s).startsWith("**") && (s).value.endsWith("**"))
+  private def isBold(s: String): Boolean = ((s).value.startsWith("**") && (s).value.endsWith("**"))
 
   private def entryDate(stack: Vector[String]): Option[com.histmersion.api.automation.Queue.EntryDate] =
     stack.headOption.flatMap (({
@@ -276,7 +286,7 @@ object Queue:
     }).value).value
 
   private def trimBlank(ls: List[String]): List[String] =
-    (ls.dropWhile((_).trim.isEmpty).reverse.dropWhile((_).trim.isEmpty).reverse).map(refactorValue15 => ((refactorValue15)))
+    (ls.dropWhile((_).value.trim.isEmpty).reverse.dropWhile((_).value.trim.isEmpty).reverse).map(refactorValue15 => ((refactorValue15).value))
 
   private def defaultPreamble(kind: Kind): com.histmersion.api.automation.Queue.Preamble = kind match
     case Kind.Acquire =>
@@ -326,7 +336,7 @@ object Queue:
       prev = p
       is.foreach(i => blocks += (if i.status == Note then Block.Note(i.text) else Block.Item(bullet(kind, i))))
     }
-    _root_.com.histmersion.api.automation.Queue.RenderResult((join(blocks.result())))
+    _root_.com.histmersion.api.automation.Queue.RenderResult((join(blocks.result())).value)
 
   private def headingLines(prev: Vector[String], next: Vector[String]): List[Block] =
     if next.isEmpty then Nil
@@ -335,7 +345,7 @@ object Queue:
       val from = firstDiff.getOrElse(next.length - 1)
       (from until next.length).toList.map { i =>
         val seg = next(i)
-        if ((isBold(((seg)))) == (true)) then Block.Heading(seg)
+        if ((isBold(((seg).value))) == (true)) then Block.Heading(seg)
         else Block.Heading(_root_.com.histmersion.api.automation.Queue.Block.Heading.Line(s"${"#" * (i + 2)} $seg"))
       }
 

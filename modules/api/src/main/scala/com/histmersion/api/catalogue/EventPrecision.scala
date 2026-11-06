@@ -13,7 +13,11 @@ object EventPrecision:
   object Uncertainty extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
   type PreciseUpTo = PreciseUpToValue
+  type PreciseUpToValue = com.histmersion.api.catalogue.EventPrecision.PreciseUpToNumber
+  val PreciseUpToValue: _root_.com.histmersion.api.catalogue.EventPrecision.PreciseUpToNumber.type = _root_.com.histmersion.api.catalogue.EventPrecision.PreciseUpToNumber
   type ApproximateUpTo = ApproximateUpToValue
+  type ApproximateUpToValue = com.histmersion.api.catalogue.EventPrecision.ApproximateUpToNumber
+  val ApproximateUpToValue: _root_.com.histmersion.api.catalogue.EventPrecision.ApproximateUpToNumber.type = _root_.com.histmersion.api.catalogue.EventPrecision.ApproximateUpToNumber
   type OfPlusMinus = _root_.com.histmersion.api.catalogue.EventSummary.PlusMinus
   val OfPlusMinus: _root_.com.histmersion.api.catalogue.EventSummary.PlusMinus.type = _root_.com.histmersion.api.catalogue.EventSummary.PlusMinus
   type LabelPrecision = _root_.com.histmersion.api.catalogue.EventSummary.Precision
@@ -63,7 +67,7 @@ object EventPrecision:
       case None    => m.map(x => (s"dated by $x"))
 
   private def lowerFirst(s: String): String =
-    ((s).split(" ", -1)
+    ((s).value.split(" ", -1)
       .map(w =>
         if w.length >= 2 && w.charAt(0).isUpper && w.charAt(1).isLower then s"${w.charAt(0).toLower}${w.substring(1)}"
         else w

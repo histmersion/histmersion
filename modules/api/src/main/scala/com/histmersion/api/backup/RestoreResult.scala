@@ -18,11 +18,15 @@ final case class RestoreResult(
       KindlingsSchema, com.histmersion.api.json.Schema
 
 object RestoreResult:
+  type File = com.histmersion.api.backup.Backup.Result.File
+  val File: _root_.com.histmersion.api.backup.Backup.Result.File.type = _root_.com.histmersion.api.backup.Backup.Result.File
   type SchemaVersion = SchemaVersion.T
   object SchemaVersion extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type SourcesBefore = SourcesBefore.T
   object SourcesBefore extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type SourcesAfter = SourcesAfter.T
   object SourcesAfter extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type DurationMs = com.histmersion.api.backup.Backup.Result.DurationMs
+  val DurationMs: _root_.com.histmersion.api.backup.Backup.Result.DurationMs.type = _root_.com.histmersion.api.backup.Backup.Result.DurationMs
   type Warnings = Warnings.T
   object Warnings extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]

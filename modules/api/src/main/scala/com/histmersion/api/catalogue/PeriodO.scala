@@ -27,10 +27,20 @@ object PeriodO:
 
 
   type MinYear = MinYearValue
+  type MinYearValue = com.histmersion.api.catalogue.PeriodO.MinYearNumber
+  val MinYearValue: _root_.com.histmersion.api.catalogue.PeriodO.MinYearNumber.type = _root_.com.histmersion.api.catalogue.PeriodO.MinYearNumber
   type MaxYear = MaxYearValue
+  type MaxYearValue = com.histmersion.api.catalogue.PeriodO.MaxYearNumber
+  val MaxYearValue: _root_.com.histmersion.api.catalogue.PeriodO.MaxYearNumber.type = _root_.com.histmersion.api.catalogue.PeriodO.MaxYearNumber
   type SpanFactor = SpanFactorValue
+  type SpanFactorValue = com.histmersion.api.catalogue.PeriodO.SpanFactorNumber
+  val SpanFactorValue: _root_.com.histmersion.api.catalogue.PeriodO.SpanFactorNumber.type = _root_.com.histmersion.api.catalogue.PeriodO.SpanFactorNumber
   type MinImplausibleSpan = MinImplausibleSpanValue
+  type MinImplausibleSpanValue = com.histmersion.api.catalogue.PeriodO.MinImplausibleSpanNumber
+  val MinImplausibleSpanValue: _root_.com.histmersion.api.catalogue.PeriodO.MinImplausibleSpanNumber.type = _root_.com.histmersion.api.catalogue.PeriodO.MinImplausibleSpanNumber
   type MinSiblings = MinSiblingsValue
+  type MinSiblingsValue = com.histmersion.api.catalogue.PeriodO.MinSiblingsCount
+  val MinSiblingsValue: _root_.com.histmersion.api.catalogue.PeriodO.MinSiblingsCount.type = _root_.com.histmersion.api.catalogue.PeriodO.MinSiblingsCount
   type AuthorityId = _root_.com.histmersion.api.catalogue.PeriodO.Authority.Id
   val AuthorityId: _root_.com.histmersion.api.catalogue.PeriodO.Authority.Id.type = _root_.com.histmersion.api.catalogue.PeriodO.Authority.Id
   type DefinitionId = _root_.com.histmersion.api.catalogue.PeriodO.Definition.Id
@@ -53,7 +63,7 @@ object PeriodO:
   val MinSiblings: com.histmersion.api.catalogue.PeriodO.MinSiblings = _root_.com.histmersion.api.catalogue.PeriodO.MinSiblingsCount(3)
 
   def parse(json: String): Either[com.histmersion.api.catalogue.PeriodO.Problem, PeriodODataset] =
-    io.circe.parser.parse((json)).left.map(e => s"not JSON: ${e.getMessage}").flatMap { doc =>
+    io.circe.parser.parse((json).value).left.map(e => s"not JSON: ${e.getMessage}").flatMap { doc =>
       val c = doc.hcursor
       val overlay = c.downField("histmersion")
       def strings(key: com.histmersion.api.catalogue.PeriodO.Wire): List[(com.histmersion.api.catalogue.PeriodO.Definition.Id, String)] = (overlay
@@ -140,8 +150,8 @@ object PeriodO:
       c: ACursor
   ): Either[SkippedPeriod, com.histmersion.api.catalogue.PeriodO.Definition] =
     // FASTI labels its Ukrainian periods in Ukrainian, with the English label as an alternative
-    val own = str(c, _root_.com.histmersion.api.catalogue.PeriodO.Wire("label")).map((_).trim).filter(_.nonEmpty)
-    val english = str(c, _root_.com.histmersion.api.catalogue.PeriodO.Wire("languageTag")).exists((_).toLowerCase.startsWith("en"))
+    val own = str(c, _root_.com.histmersion.api.catalogue.PeriodO.Wire("label")).map((_).value.trim).filter(_.nonEmpty)
+    val english = str(c, _root_.com.histmersion.api.catalogue.PeriodO.Wire("languageTag")).exists((_).value.toLowerCase.startsWith("en"))
     val label = (if english then own else None)
       .orElse(
         c.downField("localizedLabels")
@@ -156,7 +166,7 @@ object PeriodO:
       .getOrElse(id)
     val start = bound(c.downField("start").downField("in"), _root_.com.histmersion.api.catalogue.PeriodO.Wire("earliestYear"))
     val stop = bound(c.downField("stop").downField("in"), _root_.com.histmersion.api.catalogue.PeriodO.Wire("latestYear"))
-    val region = str(c, _root_.com.histmersion.api.catalogue.PeriodO.Wire("spatialCoverageDescription")).map((_).trim).filter(_.nonEmpty).orElse {
+    val region = str(c, _root_.com.histmersion.api.catalogue.PeriodO.Wire("spatialCoverageDescription")).map((_).value.trim).filter(_.nonEmpty).orElse {
       val labels = c
         .downField("spatialCoverage")
         .focus
@@ -196,7 +206,7 @@ object PeriodO:
     val defs = ds.authorities.flatMap(a => a.periods.map(a -> _))
     val ids = defs.map(_._2.id).toSet
     val authorityRoots =
-      if !(roots) then Nil
+      if !(roots).value then Nil
       else
         ds.authorities.filter(_.periods.nonEmpty).map { a =>
           HistoricalPeriod(
@@ -211,7 +221,7 @@ object PeriodO:
       val parent = ds.parents.get(d.id).filter(ids.contains) match
         case curated @ Some(_) => curated
         case None              =>
-          val own = d.broader.filter(ids.contains).orElse(Option.when((roots))(a.id))
+          val own = d.broader.filter(ids.contains).orElse(Option.when((roots).value)(a.id))
           if ((ds.curated) == (true)) then own else existing.getOrElse(d.id, own)
       HistoricalPeriod(
         d.id,

@@ -14,5 +14,11 @@ final case class ListPatch(
 object ListPatch:
 
 
+  type Add = com.histmersion.api.Write.ListItem
+  val Add: _root_.com.histmersion.api.Write.ListItem.type = _root_.com.histmersion.api.Write.ListItem
+  type Remove = com.histmersion.api.Write.ListItem
+  val Remove: _root_.com.histmersion.api.Write.ListItem.type = _root_.com.histmersion.api.Write.ListItem
+  type Replace = com.histmersion.api.Write.ListItem
+  val Replace: _root_.com.histmersion.api.Write.ListItem.type = _root_.com.histmersion.api.Write.ListItem
 
   given Codec.AsObject[ListPatch] = StrictJson.codec(KindlingsCodecAsObject.derived[ListPatch])

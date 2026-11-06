@@ -8,6 +8,8 @@ object JobActions:
   type Wire = Wire.T
   object Wire extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type Stoppable = StoppableValue
+  type StoppableValue = com.histmersion.api.jobs.JobActions.StoppableText
+  val StoppableValue: _root_.com.histmersion.api.jobs.JobActions.StoppableText.type = _root_.com.histmersion.api.jobs.JobActions.StoppableText
 
   val all: List[com.histmersion.api.jobs.JobActions.Wire] = List(_root_.com.histmersion.api.jobs.JobActions.Wire("pause"), _root_.com.histmersion.api.jobs.JobActions.Wire("resume"), _root_.com.histmersion.api.jobs.JobActions.Wire("cancel"))
 

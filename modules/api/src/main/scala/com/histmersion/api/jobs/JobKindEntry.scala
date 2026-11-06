@@ -15,9 +15,15 @@ final case class JobKindEntry(
 
 object JobKindEntry:
   /** An entry from its owner's words. */
+  type SubjectResult = com.histmersion.api.jobs.JobKinds.Subject
+  val SubjectResult: _root_.com.histmersion.api.jobs.JobKinds.Subject.type = _root_.com.histmersion.api.jobs.JobKinds.Subject
 
+  type OfMeaning = com.histmersion.api.jobs.JobKindMeaning
+  val OfMeaning: _root_.com.histmersion.api.jobs.JobKindMeaning.type = _root_.com.histmersion.api.jobs.JobKindMeaning
   type OfStoppable = _root_.com.histmersion.api.jobs.JobKindEntry.Stoppable
   val OfStoppable: _root_.com.histmersion.api.jobs.JobKindEntry.Stoppable.type = _root_.com.histmersion.api.jobs.JobKindEntry.Stoppable
+  type OfSubjectResult = com.histmersion.api.jobs.JobKinds.Subject
+  val OfSubjectResult: _root_.com.histmersion.api.jobs.JobKinds.Subject.type = _root_.com.histmersion.api.jobs.JobKinds.Subject
   type OfOwnControl = _root_.com.histmersion.api.jobs.JobKindEntry.OwnControl
   val OfOwnControl: _root_.com.histmersion.api.jobs.JobKindEntry.OwnControl.type = _root_.com.histmersion.api.jobs.JobKindEntry.OwnControl
 

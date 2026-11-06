@@ -7,7 +7,11 @@ import com.histmersion.api.given
 import com.histmersion.api.Api
 
 object AgentsApi:
+  type ControlPart1Part2 = com.histmersion.api.automation.Agents.Action
+  val ControlPart1Part2: _root_.com.histmersion.api.automation.Agents.Action.type = _root_.com.histmersion.api.automation.Agents.Action
   type Actions = ActionsValue
+  type ActionsValue = com.histmersion.api.automation.Agents.Action
+  val ActionsValue: _root_.com.histmersion.api.automation.Agents.Action.type = _root_.com.histmersion.api.automation.Agents.Action
 
   import Agents.*
 

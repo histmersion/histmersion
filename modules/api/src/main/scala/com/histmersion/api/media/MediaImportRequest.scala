@@ -15,6 +15,8 @@ final case class MediaImportRequest(
       KindlingsSchema, com.histmersion.api.json.Schema
 
 object MediaImportRequest:
+  type DryRun = com.histmersion.api.library.RepairAcquire.RepairRequest.DryRun
+  val DryRun: _root_.com.histmersion.api.library.RepairAcquire.RepairRequest.DryRun.type = _root_.com.histmersion.api.library.RepairAcquire.RepairRequest.DryRun
   type Limit = Limit.T
   object Limit extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type Refresh = Refresh.T

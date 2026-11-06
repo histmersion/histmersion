@@ -42,7 +42,7 @@ object AssetLinks:
   private def mapImages(md: com.histmersion.api.media.AssetLinks.Body)(f: (String, com.histmersion.api.media.AssetLinks.Target, String) => String): com.histmersion.api.media.AssetLinks.Body =
     _root_.com.histmersion.api.media.AssetLinks.Body(ImageLink.replaceAllIn(
       (md).value,
-      m => java.util.regex.Matcher.quoteReplacement((f((m.group(1)), _root_.com.histmersion.api.media.AssetLinks.Target(m.group(2)), (Option(m.group(3)).getOrElse("")))))
+      m => java.util.regex.Matcher.quoteReplacement((f((m.group(1)), _root_.com.histmersion.api.media.AssetLinks.Target(m.group(2)), (Option(m.group(3)).getOrElse("")))).value)
     ))
 
   private def retarget(md: com.histmersion.api.media.AssetLinks.Body, from: com.histmersion.api.media.AssetLinks.Url, to: com.histmersion.api.media.AssetLinks.Url): com.histmersion.api.media.AssetLinks.Body =
@@ -69,7 +69,7 @@ object AssetLinks:
     var n = 0
     _root_.com.histmersion.api.media.AssetLinks.Body((mapImages(_root_.com.histmersion.api.media.AssetLinks.Body((md).value))((alt, target, title) =>
       n += 1
-      val label = if (alt).trim.nonEmpty then alt else s"Figure $n"
+      val label = if (alt).value.trim.nonEmpty then alt else s"Figure $n"
       (s"![$label]($target$title)")
     )).value)
 
@@ -93,7 +93,7 @@ object AssetLinks:
     """(?i)^(original\s+|research\s+|review\s+|short\s+)?(article|paper|research|communication|report)$""".r
 
   private def flatten(s: String): String =
-    ((s).toLowerCase.filter(c => c.isLetterOrDigit || c == ' ').replaceAll("\\s+", " ").trim)
+    ((s).value.toLowerCase.filter(c => c.isLetterOrDigit || c == ' ').replaceAll("\\s+", " ").trim)
 
   def dropBoilerplateHeadings(md: com.histmersion.api.media.AssetLinks.Body, title: com.histmersion.api.media.AssetLinks.Title): com.histmersion.api.media.AssetLinks.Body =
     val want = flatten(((title).value))
@@ -102,7 +102,7 @@ object AssetLinks:
       if !l.startsWith("#") then false
       else
         val text = flatten((l.dropWhile(_ == '#')))
-        (text).nonEmpty && (BoilerplateHeading.matches((text).value) || ((want).value.nonEmpty && text == want))
+        (text).value.nonEmpty && (BoilerplateHeading.matches((text).value) || ((want).value.nonEmpty && text == want))
     }
     _root_.com.histmersion.api.media.AssetLinks.Body(kept.mkString("\n"))
 
@@ -119,7 +119,7 @@ object AssetLinks:
   def url(citekey: com.histmersion.api.media.AssetLinks.UrlCitekey, name: com.histmersion.api.media.AssetLinks.UrlName): com.histmersion.api.media.AssetLinks.Url = (webBase(citekey)).value + enc(name)
 
   private def enc(s: String): String =
-    (java.net.URLEncoder.encode((s), "UTF-8").replace("+", "%20"))
+    (java.net.URLEncoder.encode((s).value, "UTF-8").replace("+", "%20"))
 
   private val BareImg = """<img(?![^>]*\bloading=)\s""".r
 

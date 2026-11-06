@@ -33,6 +33,27 @@ object Target:
   object Where extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
 
+  type ItemKey = com.histmersion.api.personal.ItemKey
+  val ItemKey: _root_.com.histmersion.api.personal.ItemKey.type = _root_.com.histmersion.api.personal.ItemKey
+  type CheckResultPart1 = com.histmersion.api.personal.Target.Problem
+  val CheckResultPart1: _root_.com.histmersion.api.personal.Target.Problem.type = _root_.com.histmersion.api.personal.Target.Problem
+  type CheckWhat = String
+  object CheckWhat:
+    inline def apply(v: String): String = v
+  type WhereResult = com.histmersion.api.personal.Target.Where
+  val WhereResult: _root_.com.histmersion.api.personal.Target.Where.type = _root_.com.histmersion.api.personal.Target.Where
+  type Round1Result = String
+  object Round1Result:
+    inline def apply(v: String): String = v
+  type DegreesResult = String
+  object DegreesResult:
+    inline def apply(v: String): String = v
+  type DegreesPlus = String
+  object DegreesPlus:
+    inline def apply(v: String): String = v
+  type DegreesMinus = String
+  object DegreesMinus:
+    inline def apply(v: String): String = v
 
   def item(kind: ItemKind, key: com.histmersion.api.personal.ItemKey): Target = Target(kind, Some(ItemKey((key).value.trim)))
 
@@ -89,8 +110,8 @@ object Target:
       case _               => _root_.com.histmersion.api.personal.Target.Where("")
 
   private def round1(v: Double): String =
-    (BigDecimal((v)).setScale(1, BigDecimal.RoundingMode.HALF_UP).bigDecimal.stripTrailingZeros.toPlainString)
+    (BigDecimal((v).value).setScale(1, BigDecimal.RoundingMode.HALF_UP).bigDecimal.stripTrailingZeros.toPlainString)
 
   private def degrees(v: Double, plus: String, minus: String): String =
-    val a = BigDecimal(math.abs((v))).setScale(2, BigDecimal.RoundingMode.HALF_UP).bigDecimal.toPlainString
+    val a = BigDecimal(math.abs((v).value)).setScale(2, BigDecimal.RoundingMode.HALF_UP).bigDecimal.toPlainString
     s"$a° ${if v >= 0 then plus else minus}"

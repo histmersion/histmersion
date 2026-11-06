@@ -286,9 +286,9 @@ object Managers:
                 case "minSources" | "min-sources"                 => int.map(n => c.copy(minSources = Some(_root_.com.histmersion.api.automation.Managers.ManagerConfig.MinSources(n))))
                 case "maxArticles" | "max-articles"               => int.map(n => c.copy(maxArticles = Some(_root_.com.histmersion.api.automation.Managers.ManagerConfig.MaxArticles(n))))
                 case "autoIngestPerDay" | "auto-ingest-per-day"   => int.map(n => c.copy(autoIngestPerDay = Some(_root_.com.histmersion.api.automation.Managers.ManagerConfig.AutoIngestPerDay(n))))
-                case "inferFilter" | "infer-filter"               => (bool(_root_.com.histmersion.api.automation.AgentStateDeleted.Key.Wire(k), (v)).map(b => c.copy(inferFilter = Some(_root_.com.histmersion.api.automation.Managers.ManagerConfig.InferFilter((b)))))).left.map(refactorError4 => (refactorError4).value)
-                case "autoIngest" | "auto-ingest"                 => (bool(_root_.com.histmersion.api.automation.AgentStateDeleted.Key.Wire(k), (v)).map(b => c.copy(autoIngest = Some(_root_.com.histmersion.api.automation.Managers.ManagerConfig.AutoIngest((b)))))).left.map(refactorError5 => (refactorError5).value)
-                case "autoApprove" | "auto-approve"               => (bool(_root_.com.histmersion.api.automation.AgentStateDeleted.Key.Wire(k), (v)).map(b => c.copy(autoApprove = Some(_root_.com.histmersion.api.automation.Managers.ManagerConfig.AutoApprove((b)))))).left.map(refactorError6 => (refactorError6).value)
+                case "inferFilter" | "infer-filter"               => (bool(_root_.com.histmersion.api.automation.AgentStateDeleted.Key.Wire(k), (v)).map(b => c.copy(inferFilter = Some(_root_.com.histmersion.api.automation.Managers.ManagerConfig.InferFilter((b).value))))).left.map(refactorError4 => (refactorError4).value)
+                case "autoIngest" | "auto-ingest"                 => (bool(_root_.com.histmersion.api.automation.AgentStateDeleted.Key.Wire(k), (v)).map(b => c.copy(autoIngest = Some(_root_.com.histmersion.api.automation.Managers.ManagerConfig.AutoIngest((b).value))))).left.map(refactorError5 => (refactorError5).value)
+                case "autoApprove" | "auto-approve"               => (bool(_root_.com.histmersion.api.automation.AgentStateDeleted.Key.Wire(k), (v)).map(b => c.copy(autoApprove = Some(_root_.com.histmersion.api.automation.Managers.ManagerConfig.AutoApprove((b).value))))).left.map(refactorError6 => (refactorError6).value)
                 case "extendMinNew" | "extend-min-new"            => int.map(n => c.copy(extendMinNew = Some(_root_.com.histmersion.api.automation.Managers.ManagerConfig.ExtendMinNew(n))))
                 case "sweeps"                                     =>
                   val ws = v.split(",").toList.map(_.trim).filter(_.nonEmpty)
@@ -324,7 +324,7 @@ object Managers:
         }
       }
 
-    private def bool(k: com.histmersion.api.automation.AgentStateDeleted.Key.Wire, v: String): Either[com.histmersion.api.automation.Managers.ManagerConfig.Problem, Boolean] = (v).toLowerCase match
+    private def bool(k: com.histmersion.api.automation.AgentStateDeleted.Key.Wire, v: String): Either[com.histmersion.api.automation.Managers.ManagerConfig.Problem, Boolean] = (v).value.toLowerCase match
       case "true" | "on" | "yes"  => Right((true))
       case "false" | "off" | "no" => Right((false))
       case _                      => Left(_root_.com.histmersion.api.automation.Managers.ManagerConfig.Problem(s"$k: '$v' is not true or false"))
@@ -408,6 +408,8 @@ object Managers:
     object ItemId extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
     type At = At.T
     object At extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Kind = Kind.T
+    object Kind extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
     type Text = Text.T
     object Text extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
@@ -438,6 +440,10 @@ object Managers:
   object ManagerInfo:
     type Id = Id.T
     object Id extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Kind = com.histmersion.api.automation.Manager.Kind.Wire
+    val Kind: _root_.com.histmersion.api.automation.Manager.Kind.Wire.type = _root_.com.histmersion.api.automation.Manager.Kind.Wire
+    type State = com.histmersion.api.automation.Manager.State.Wire
+    val State: _root_.com.histmersion.api.automation.Manager.State.Wire.type = _root_.com.histmersion.api.automation.Manager.State.Wire
     type PauseRuns = PauseRuns.T
     object PauseRuns extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
     type StatusNote = StatusNote.T
@@ -587,8 +593,12 @@ object Managers:
     object Ref extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
     type Id = Id.T
     object Id extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Kind = Kind.T
+    object Kind extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
     type Target = Target.T
     object Target extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Status = com.histmersion.api.automation.ItemStatus.Wire
+    val Status: _root_.com.histmersion.api.automation.ItemStatus.Wire.type = _root_.com.histmersion.api.automation.ItemStatus.Wire
     type Priority = Priority.T
     object Priority extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
     type Attempts = Attempts.T
@@ -599,6 +609,8 @@ object Managers:
     object NotBefore extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
     type Outcome = Outcome.T
     object Outcome extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Origin = com.histmersion.api.automation.Managers.ItemOrigin.Wire
+    val Origin: _root_.com.histmersion.api.automation.Managers.ItemOrigin.Wire.type = _root_.com.histmersion.api.automation.Managers.ItemOrigin.Wire
     type CreatedAt = CreatedAt.T
     object CreatedAt extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
     type UpdatedAt = UpdatedAt.T
@@ -744,6 +756,8 @@ object Managers:
         KindlingsSchema, com.histmersion.api.json.Schema
 
   object ManagerCreate:
+    type Kind = com.histmersion.api.automation.Manager.Kind.Wire
+    val Kind: _root_.com.histmersion.api.automation.Manager.Kind.Wire.type = _root_.com.histmersion.api.automation.Manager.Kind.Wire
     type Paused = Paused.T
     object Paused extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
     type Cron = Cron.T
@@ -764,6 +778,8 @@ object Managers:
         KindlingsSchema, com.histmersion.api.json.Schema
 
   object EnqueueRequest:
+    type Kind = com.histmersion.api.automation.Managers.EnqueueKind.Wire
+    val Kind: _root_.com.histmersion.api.automation.Managers.EnqueueKind.Wire.type = _root_.com.histmersion.api.automation.Managers.EnqueueKind.Wire
     type Target = Target.T
     object Target extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
     type Priority = Priority.T

@@ -9,5 +9,7 @@ final case class CoverageSearch(query: CoverageSearch.Query, total: CoverageSear
       KindlingsSchema, com.histmersion.api.json.Schema
 
 object CoverageSearch:
+  type Query = com.histmersion.api.Api.Search.Text
+  val Query: _root_.com.histmersion.api.Api.Search.Text.type = _root_.com.histmersion.api.Api.Search.Text
   type Total = Total.T
   object Total extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]

@@ -16,6 +16,8 @@ object RegionNode:
   object RootKindsText extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
   type RootKinds = RootKindsValue
+  type RootKindsValue = com.histmersion.api.catalogue.RegionNode.RootKindsText
+  val RootKindsValue: _root_.com.histmersion.api.catalogue.RegionNode.RootKindsText.type = _root_.com.histmersion.api.catalogue.RegionNode.RootKindsText
 
   type Id = Id.T
   object Id extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]

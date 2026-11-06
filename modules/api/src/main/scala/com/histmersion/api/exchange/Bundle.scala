@@ -101,8 +101,8 @@ object Bundle:
   def blobSha(path: String): Option[com.histmersion.api.Sha256] =
     val prefix = "blobs/sha256/"
     (Option
-      .when((path).startsWith(prefix)) {
-        val rest = (path).drop(prefix.length)
+      .when((path).value.startsWith(prefix)) {
+        val rest = (path).value.drop(prefix.length)
         rest.drop(3)
       }
       .filter(s =>
@@ -113,6 +113,8 @@ object Bundle:
   final case class Alias(alias: Alias.Value, sourceUid: UUID, createdAt: Alias.CreatedAt) derives KindlingsCodecAsObject
 
   object Alias:
+    type Value = com.histmersion.api.library.Citekey
+    val Value: _root_.com.histmersion.api.library.Citekey.type = _root_.com.histmersion.api.library.Citekey
     type CreatedAt = CreatedAt.T
     object CreatedAt extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
@@ -132,8 +134,16 @@ object Bundle:
   ) derives KindlingsCodecAsObject
 
   object Article:
+    type Slug = com.histmersion.api.research.ReviewGoal.Slug
+    val Slug: _root_.com.histmersion.api.research.ReviewGoal.Slug.type = _root_.com.histmersion.api.research.ReviewGoal.Slug
     type Title = Title.T
     object Title extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Kind = com.histmersion.api.research.Article.Kind.Wire
+    val Kind: _root_.com.histmersion.api.research.Article.Kind.Wire.type = _root_.com.histmersion.api.research.Article.Kind.Wire
+    type Body = com.histmersion.api.research.Article.Body
+    val Body: _root_.com.histmersion.api.research.Article.Body.type = _root_.com.histmersion.api.research.Article.Body
+    type Summary = com.histmersion.api.research.Article.SummaryText
+    val Summary: _root_.com.histmersion.api.research.Article.SummaryText.type = _root_.com.histmersion.api.research.Article.SummaryText
     type Tags = Tags.T
     object Tags extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
     type Regions = Regions.T
@@ -146,6 +156,8 @@ object Bundle:
   final case class ArticleAlias(alias: ArticleAlias.Alias, articleUid: UUID, createdAt: ArticleAlias.CreatedAt) derives KindlingsCodecAsObject
 
   object ArticleAlias:
+    type Alias = com.histmersion.api.research.ReviewGoal.Slug
+    val Alias: _root_.com.histmersion.api.research.ReviewGoal.Slug.type = _root_.com.histmersion.api.research.ReviewGoal.Slug
     type CreatedAt = CreatedAt.T
     object CreatedAt extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
@@ -163,6 +175,8 @@ object Bundle:
   object ArticleVersion:
     type BodySha256 = BodySha256.T
     object BodySha256 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Summary = com.histmersion.api.research.Article.SummaryText
+    val Summary: _root_.com.histmersion.api.research.Article.SummaryText.type = _root_.com.histmersion.api.research.Article.SummaryText
     type VersionOf = VersionOf.T
     object VersionOf extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
     type UpdatedAt = UpdatedAt.T
@@ -185,6 +199,8 @@ object Bundle:
     object CheckedAt extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
     type Retracted = Retracted.T
     object Retracted extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type CitedBy = com.histmersion.api.library.Acquire.CitedByCount
+    val CitedBy: _root_.com.histmersion.api.library.Acquire.CitedByCount.type = _root_.com.histmersion.api.library.Acquire.CitedByCount
     type Influential = Influential.T
     object Influential extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
     type Verdict = Verdict.T
@@ -222,6 +238,14 @@ object Bundle:
     object Variant extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
     type Name = Name.T
     object Name extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Mime = com.histmersion.api.exchange.Bundle.Asset.MimeText
+    val Mime: _root_.com.histmersion.api.exchange.Bundle.Asset.MimeText.type = _root_.com.histmersion.api.exchange.Bundle.Asset.MimeText
+    type Width = com.histmersion.api.media.ImageSize.Width
+    val Width: _root_.com.histmersion.api.media.ImageSize.Width.type = _root_.com.histmersion.api.media.ImageSize.Width
+    type Height = com.histmersion.api.media.ImageSize.Height
+    val Height: _root_.com.histmersion.api.media.ImageSize.Height.type = _root_.com.histmersion.api.media.ImageSize.Height
+    type Kind = com.histmersion.api.media.AssetKind.Wire
+    val Kind: _root_.com.histmersion.api.media.AssetKind.Wire.type = _root_.com.histmersion.api.media.AssetKind.Wire
     type Caption = Caption.T
     object Caption extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
     type License = License.T
@@ -248,6 +272,8 @@ object Bundle:
   ) derives KindlingsCodecAsObject
 
   object AssetLink:
+    type Relation = com.histmersion.api.media.AssetRelation.Wire
+    val Relation: _root_.com.histmersion.api.media.AssetRelation.Wire.type = _root_.com.histmersion.api.media.AssetRelation.Wire
     type TargetType = TargetType.T
     object TargetType extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
     type TargetId = TargetId.T
@@ -347,12 +373,16 @@ object Bundle:
     object TargetId extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
     type Field = Field.T
     object Field extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Value = Value.T
+    object Value extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
     type Upstream = Upstream.T
     object Upstream extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
     type UpstreamValue = UpstreamValue.T
     object UpstreamValue extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
     type UpstreamNow = UpstreamNow.T
     object UpstreamNow extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Status = com.histmersion.api.catalogue.EventCorrection.Status
+    val Status: _root_.com.histmersion.api.catalogue.EventCorrection.Status.type = _root_.com.histmersion.api.catalogue.EventCorrection.Status
     type CreatedAt = CreatedAt.T
     object CreatedAt extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
     type UpdatedAt = UpdatedAt.T
@@ -362,6 +392,9 @@ object Bundle:
 
   final case class Edge(srcUid: UUID, dstUid: UUID, kind: Edge.Kind) derives KindlingsCodecAsObject
 
+  object Edge:
+    type Kind = com.histmersion.api.library.Edge.Kind.Wire
+    val Kind: _root_.com.histmersion.api.library.Edge.Kind.Wire.type = _root_.com.histmersion.api.library.Edge.Kind.Wire
 
   final case class Event(
       uid: UUID,
@@ -399,8 +432,12 @@ object Bundle:
   ) derives KindlingsCodecAsObject
 
   object Event:
+    type Id = com.histmersion.api.catalogue.Event.Id
+    val Id: _root_.com.histmersion.api.catalogue.Event.Id.type = _root_.com.histmersion.api.catalogue.Event.Id
     type Label = Label.T
     object Label extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Kind = Kind.T
+    object Kind extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
     type NotBefore = NotBefore.T
     object NotBefore extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
     type BeginBy = BeginBy.T
@@ -409,8 +446,12 @@ object Bundle:
     object EndFrom extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
     type NotAfter = NotAfter.T
     object NotAfter extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Historicity = com.histmersion.api.catalogue.Historicity.Wire
+    val Historicity: _root_.com.histmersion.api.catalogue.Historicity.Wire.type = _root_.com.histmersion.api.catalogue.Historicity.Wire
     type Geom = Geom.T
     object Geom extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type PlaceId = com.histmersion.api.catalogue.Place.Id
+    val PlaceId: _root_.com.histmersion.api.catalogue.Place.Id.type = _root_.com.histmersion.api.catalogue.Place.Id
     type Description = Description.T
     object Description extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
     type UpdatedAt = UpdatedAt.T
@@ -435,6 +476,8 @@ object Bundle:
   final case class EventAlias(alias: EventAlias.Alias, eventUid: UUID, createdAt: EventAlias.CreatedAt) derives KindlingsCodecAsObject
 
   object EventAlias:
+    type Alias = com.histmersion.api.catalogue.Event.Id
+    val Alias: _root_.com.histmersion.api.catalogue.Event.Id.type = _root_.com.histmersion.api.catalogue.Event.Id
     type CreatedAt = CreatedAt.T
     object CreatedAt extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
@@ -453,6 +496,8 @@ object Bundle:
   object EventCandidate:
     type Score = Score.T
     object Score extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Status = Status.T
+    object Status extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
     type Findings = Findings.T
     object Findings extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
     type Reasons = Reasons.T
@@ -490,6 +535,8 @@ object Bundle:
     object Url extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
     type Label = Label.T
     object Label extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Kind = Kind.T
+    object Kind extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
     type NotBefore = NotBefore.T
     object NotBefore extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
     type BeginBy = BeginBy.T
@@ -504,6 +551,8 @@ object Bundle:
     object Magnitude extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
     type Deaths = Deaths.T
     object Deaths extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Historicity = com.histmersion.api.catalogue.Historicity.Wire
+    val Historicity: _root_.com.histmersion.api.catalogue.Historicity.Wire.type = _root_.com.histmersion.api.catalogue.Historicity.Wire
     type RetrievedAt = RetrievedAt.T
     object RetrievedAt extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
@@ -547,6 +596,8 @@ object Bundle:
   ) derives KindlingsCodecAsObject
 
   object EventEdge:
+    type Kind = Kind.T
+    object Kind extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
     type Note = Note.T
     object Note extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
@@ -640,6 +691,8 @@ object Bundle:
   ) derives KindlingsCodecAsObject
 
   object Finding:
+    type Id = com.histmersion.api.library.Finding.Id
+    val Id: _root_.com.histmersion.api.library.Finding.Id.type = _root_.com.histmersion.api.library.Finding.Id
     type Claim = Claim.T
     object Claim extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
     type Region = Region.T
@@ -678,8 +731,12 @@ object Bundle:
   ) derives KindlingsCodecAsObject
 
   object Goal:
+    type Slug = com.histmersion.api.research.ReviewGoal.Slug
+    val Slug: _root_.com.histmersion.api.research.ReviewGoal.Slug.type = _root_.com.histmersion.api.research.ReviewGoal.Slug
     type Title = Title.T
     object Title extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Status = com.histmersion.api.Api.GoalQuery.Status.Wire
+    val Status: _root_.com.histmersion.api.Api.GoalQuery.Status.Wire.type = _root_.com.histmersion.api.Api.GoalQuery.Status.Wire
     type Notes = Notes.T
     object Notes extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
     type Tags = Tags.T
@@ -700,6 +757,8 @@ object Bundle:
   final case class GoalAlias(alias: GoalAlias.Alias, goalUid: UUID, createdAt: GoalAlias.CreatedAt) derives KindlingsCodecAsObject
 
   object GoalAlias:
+    type Alias = com.histmersion.api.research.ReviewGoal.Slug
+    val Alias: _root_.com.histmersion.api.research.ReviewGoal.Slug.type = _root_.com.histmersion.api.research.ReviewGoal.Slug
     type CreatedAt = CreatedAt.T
     object CreatedAt extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
@@ -712,6 +771,8 @@ object Bundle:
   ) derives KindlingsCodecAsObject
 
   object GoalLink:
+    type Kind = com.histmersion.api.automation.Goal.LinkKind.Wire
+    val Kind: _root_.com.histmersion.api.automation.Goal.LinkKind.Wire.type = _root_.com.histmersion.api.automation.Goal.LinkKind.Wire
     type Ref = Ref.T
     object Ref extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
     type Note = Note.T
@@ -723,6 +784,8 @@ object Bundle:
       derives KindlingsCodecAsObject
 
   object GoalSchedule:
+    type Kind = com.histmersion.api.automation.ScheduleKind.Wire
+    val Kind: _root_.com.histmersion.api.automation.ScheduleKind.Wire.type = _root_.com.histmersion.api.automation.ScheduleKind.Wire
     type Cron = Cron.T
     object Cron extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
     type Enabled = Enabled.T
@@ -761,6 +824,8 @@ object Bundle:
     object Conflicts extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
     type Notes = Notes.T
     object Notes extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type PlanHash = com.histmersion.api.exchange.MergePlan.PlanHash
+    val PlanHash: _root_.com.histmersion.api.exchange.MergePlan.PlanHash.type = _root_.com.histmersion.api.exchange.MergePlan.PlanHash
 
 
   final case class Instance(id: UUID, label: Option[Instance.Label] = None) derives KindlingsCodecAsObject, KindlingsSchema, com.histmersion.api.json.Schema
@@ -845,12 +910,16 @@ object Bundle:
   ) derives KindlingsCodecAsObject
 
   object Period:
+    type Id = Id.T
+    object Id extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
     type Label = Label.T
     object Label extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
     type Authority = Authority.T
     object Authority extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
     type Region = Region.T
     object Region extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type ParentId = ParentId.T
+    object ParentId extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
     type UpdatedAt = UpdatedAt.T
     object UpdatedAt extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
     type Rev = Rev.T
@@ -875,8 +944,12 @@ object Bundle:
   ) derives KindlingsCodecAsObject
 
   object Place:
+    type Id = com.histmersion.api.catalogue.Place.Id
+    val Id: _root_.com.histmersion.api.catalogue.Place.Id.type = _root_.com.histmersion.api.catalogue.Place.Id
     type Label = Label.T
     object Label extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Kind = com.histmersion.api.catalogue.Place.Kind.Wire
+    val Kind: _root_.com.histmersion.api.catalogue.Place.Kind.Wire.type = _root_.com.histmersion.api.catalogue.Place.Kind.Wire
     type Geom = Geom.T
     object Geom extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
     type Source = Source.T
@@ -889,14 +962,20 @@ object Bundle:
   final case class PlaceAlias(alias: PlaceAlias.Alias, placeUid: UUID, createdAt: PlaceAlias.CreatedAt) derives KindlingsCodecAsObject
 
   object PlaceAlias:
+    type Alias = com.histmersion.api.catalogue.Place.Id
+    val Alias: _root_.com.histmersion.api.catalogue.Place.Id.type = _root_.com.histmersion.api.catalogue.Place.Id
     type CreatedAt = CreatedAt.T
     object CreatedAt extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
   final case class PlaceLink(scheme: PlaceLink.Scheme, externalId: PlaceLink.ExternalId, relation: PlaceLink.Relation) derives KindlingsCodecAsObject
 
   object PlaceLink:
+    type Scheme = com.histmersion.api.catalogue.LinkScheme.Wire
+    val Scheme: _root_.com.histmersion.api.catalogue.LinkScheme.Wire.type = _root_.com.histmersion.api.catalogue.LinkScheme.Wire
     type ExternalId = ExternalId.T
     object ExternalId extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Relation = Relation.T
+    object Relation extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
   final case class PlaceName(name: PlaceName.Name, lang: Option[PlaceName.Lang], period: Option[Range]) derives KindlingsCodecAsObject
 
@@ -908,6 +987,11 @@ object Bundle:
 
   final case class PlaceRelation(parentId: PlaceRelation.ParentId, kind: PlaceRelation.Kind, period: Option[Range]) derives KindlingsCodecAsObject
 
+  object PlaceRelation:
+    type ParentId = com.histmersion.api.catalogue.Place.Id
+    val ParentId: _root_.com.histmersion.api.catalogue.Place.Id.type = _root_.com.histmersion.api.catalogue.Place.Id
+    type Kind = Kind.T
+    object Kind extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
   final case class PlaceType(typeLabel: PlaceType.TypeLabel, period: Option[Range], citekey: Option[com.histmersion.api.library.Citekey])
       derives KindlingsCodecAsObject
@@ -931,10 +1015,14 @@ object Bundle:
   ) derives KindlingsCodecAsObject
 
   object QueueItem:
+    type List = com.histmersion.api.automation.Queue.Wire
+    val List: _root_.com.histmersion.api.automation.Queue.Wire.type = _root_.com.histmersion.api.automation.Queue.Wire
     type Text = Text.T
     object Text extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
     type Topic = Topic.T
     object Topic extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Status = Status.T
+    object Status extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
     type Reason = Reason.T
     object Reason extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
     type CreatedAt = CreatedAt.T
@@ -970,6 +1058,10 @@ object Bundle:
       derives KindlingsCodecAsObject
 
   object SiteType:
+    type PlaceId = com.histmersion.api.catalogue.Place.Id
+    val PlaceId: _root_.com.histmersion.api.catalogue.Place.Id.type = _root_.com.histmersion.api.catalogue.Place.Id
+    type Value = Value.T
+    object Value extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
     type CheckedAt = CheckedAt.T
     object CheckedAt extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
@@ -1009,10 +1101,14 @@ object Bundle:
     object Regions extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
     type Tags = Tags.T
     object Tags extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Summary = Summary.T
+    object Summary extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
     type Notes = Notes.T
     object Notes extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
     type Provenance = Provenance.T
     object Provenance extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type CitedByCount = com.histmersion.api.library.Acquire.CitedByCount
+    val CitedByCount: _root_.com.histmersion.api.library.Acquire.CitedByCount.type = _root_.com.histmersion.api.library.Acquire.CitedByCount
     type InfluentialCitations = InfluentialCitations.T
     object InfluentialCitations extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
     type AddedDate = AddedDate.T
@@ -1046,6 +1142,8 @@ object Bundle:
   object UnresolvedEdge:
     type Dst = Dst.T
     object Dst extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Kind = com.histmersion.api.library.Edge.Kind.Wire
+    val Kind: _root_.com.histmersion.api.library.Edge.Kind.Wire.type = _root_.com.histmersion.api.library.Edge.Kind.Wire
 
   final case class Upload(sha256: com.histmersion.api.Sha256, bytes: com.histmersion.api.ByteCount, manifest: Option[Manifest], problems: List[Upload.Problems])
       derives KindlingsCodecAsObject,

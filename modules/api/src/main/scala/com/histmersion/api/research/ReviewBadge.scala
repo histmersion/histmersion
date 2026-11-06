@@ -29,3 +29,5 @@ object ReviewBadge:
   object Findings extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type Runs = Runs.T
   object Runs extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type Round = com.histmersion.api.research.ReviewRound.Round
+  val Round: _root_.com.histmersion.api.research.ReviewRound.Round.type = _root_.com.histmersion.api.research.ReviewRound.Round

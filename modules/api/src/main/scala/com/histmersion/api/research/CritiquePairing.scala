@@ -66,7 +66,7 @@ object CritiquePairing:
 
   private def letters(s: String): String =
     LatinFold.fold(s).toLowerCase(java.util.Locale.ROOT).filter(c => c >= 'a' && c <= 'z')
-  private def ascii(s: String): String = ((s).toLowerCase(java.util.Locale.ROOT).filter(c => c >= 'a' && c <= 'z'))
+  private def ascii(s: String): String = ((s).value.toLowerCase(java.util.Locale.ROOT).filter(c => c >= 'a' && c <= 'z'))
 
   def names(citekey: com.histmersion.api.library.Citekey, authors: List[com.histmersion.api.library.AuthorName]): List[String] =
     val lead = (citekey).value.takeWhile(_.isLetter).toLowerCase(java.util.Locale.ROOT)
@@ -84,16 +84,16 @@ object CritiquePairing:
   private val LinkRe = """!?\\?\[\\?\[[^\[\]\n]+?\\?\]\\?\]""".r
   private val YearRe = """(?<!\d)(1[0-9]\d\d|20\d\d)(?!\d)""".r
 
-  private def words(text: String): List[String] = ((text).split("\\s+").toList.filter(_.exists(_.isLetterOrDigit))).map(refactorValue2 => (refactorValue2))
+  private def words(text: String): List[String] = ((text).value.split("\\s+").toList.filter(_.exists(_.isLetterOrDigit))).map(refactorValue2 => (refactorValue2))
 
-  private def prose(text: String): String = (LinkRe.replaceAllIn((text), " "))
+  private def prose(text: String): String = (LinkRe.replaceAllIn((text).value, " "))
 
   private enum Mention:
     case Strong, Weak, Conflict
 
   private def mention(text: String, name: com.histmersion.api.library.AuthorName, year: Option[com.histmersion.api.catalogue.Year]): Option[Mention] =
     val re = ("(?<!\\p{L})" + java.util.regex.Pattern.quote((name).value) + "(?!\\p{L})").r
-    val ms = re.findAllMatchIn((text)).toList
+    val ms = re.findAllMatchIn((text).value).toList
     if ms.isEmpty then None
     else
       val near = ms.map(m =>

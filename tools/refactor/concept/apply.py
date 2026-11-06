@@ -21,7 +21,7 @@ second = {}
 for p in sorted(glob.glob(f'{OUT}/out2/*.tsv')):
     for l in open(p):
         a = l.rstrip('\n').split('\t')
-        if not (len(a) == 2 and a[0] in rows and rows[a[0]]['pure'] and a[1].strip() != 'keep'):
+        if not (len(a) == 2 and a[0] in rows and rows[a[0]]['pure'] and a[1].strip() != 'keep' and rows[a[0]]['module'] == 'api'):
             continue
         f, d = a[0], a[1].strip()
         if d == 'native' and rows[f]['field']:
@@ -195,24 +195,43 @@ if names:
         s = src[f]
         if any(True for _ in [0]) and 'com.histmersion' in s:
             src[f] = rx.sub(sub, s)
-# definitions of renamed types go
+# definitions of renamed types go, matched by full path: two owners in one file may share a short name
 byPath = collections.defaultdict(set)
 for f in table:
-    byPath[rows[f]['path']].add(rows[f]['name'])
-removed = kept_body = 0
-for path, ns in byPath.items():
-    ls = src[path].split('\n'); out = []; i = 0
+    byPath[rows[f]['path']].add(f)
+removed = kept_body = aliased = 0
+OWNER = re.compile(r'(\s*)(?:private(?:\[\w+\])? |protected |final |case |sealed |abstract )*(object|class|enum|trait) (\w+)')
+for path, fs in byPath.items():
+    ls = src[path].split('\n'); out = []; i = 0; stack = []
+    pk = re.search(r'^package ([\w.]+)', src[path], re.M).group(1)
     while i < len(ls):
         l = ls[i]
-        m = re.match(r'\s*type (\w+) = \1\.T\s*$', l)
-        o = re.match(r'(\s*)(?:private(?:\[\w+\])? )?object (\w+) extends \S*RefinedType\[.*\]\s*(:?)\s*$', l)
-        if m and m.group(1) in ns and i + 1 < len(ls) and re.search(rf'object {m.group(1)} extends', ls[i + 1]):
+        if l.strip():
+            ind = len(l) - len(l.lstrip())
+            while stack and stack[-1][0] >= ind:
+                stack.pop()
+        m = re.match(r'(\s*)type (\w+) = \2\.T\s*$', l)
+        if m and i + 1 < len(ls) and re.search(rf'object {m.group(2)} extends', ls[i + 1]):
+            fq = '.'.join([pk] + [x[1] for x in stack] + [m.group(2)])
             o2 = re.match(r'(\s*).*\]\s*(:?)\s*$', ls[i + 1])
-            if o2 and not o2.group(2):
-                i += 2; removed += 1; continue
-            kept_body += 1
+            if fq in fs and o2 and not o2.group(2):
+                sp, n = m.group(1), m.group(2); t = table[fq]
+                if fq in second and t != 'native':
+                    out += [f'{sp}type {n} = {t}', f'{sp}val {n}: _root_.{t}.type = _root_.{t}']; aliased += 1
+                elif fq in second:
+                    b = PLAIN.get(rows[fq]['base'], rows[fq]['base'])
+                    out += [f'{sp}type {n} = {b}', f'{sp}object {n}:', f'{sp}  inline def apply(v: {b}): {b} = v']; aliased += 1
+                else:
+                    removed += 1
+                i += 2; continue
+            if fq in fs:
+                kept_body += 1
+        o = OWNER.match(l)
+        if o:
+            stack.append((len(o.group(1)), o.group(3)))
         out.append(l); i += 1
     src[path] = '\n'.join(out)
+print('forwarding aliases', aliased)
 print('definitions removed', removed, 'with a body, kept', kept_body, 'references', dict(stat))
 # new concepts go into the deepest existing owner
 idx = index()

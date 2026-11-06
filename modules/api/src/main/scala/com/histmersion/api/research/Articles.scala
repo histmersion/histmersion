@@ -65,7 +65,7 @@ object Articles:
     else Left(_root_.com.histmersion.api.research.Articles.Problem(s"invalid kind '$raw' — one of ${Kinds.mkString(", ")} (or another lower-case word)"))
 
   def kindOfDir(dirName: String): com.histmersion.api.research.Article.Kind.Wire =
-    val d = (dirName).trim.toLowerCase
+    val d = (dirName).value.trim.toLowerCase
     if d.length > 1 && d.endsWith("s") && !Kinds.contains(d) then _root_.com.histmersion.api.research.Article.Kind.Wire(d.dropRight(1)) else _root_.com.histmersion.api.research.Article.Kind.Wire(d)
 
   def dirOfKind(kind: com.histmersion.api.research.Article.Kind.Wire): String = ((kind).value.trim.toLowerCase)

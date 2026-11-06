@@ -32,6 +32,8 @@ object MediaThumb:
   object ThumbPath extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
 
+  type MarkdownLineResult = com.histmersion.api.media.MediaThumb.MarkdownLine
+  val MarkdownLineResult: _root_.com.histmersion.api.media.MediaThumb.MarkdownLine.type = _root_.com.histmersion.api.media.MediaThumb.MarkdownLine
 
   type Role = Role.T
   object Role extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]

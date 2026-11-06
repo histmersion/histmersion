@@ -47,6 +47,8 @@ object Bookmark:
   type Label = Label.T
 
   object Label extends RefinedType[String, Pure]:
+    type TidyResultPart1 = com.histmersion.api.personal.Bookmark.Problem
+    val TidyResultPart1: _root_.com.histmersion.api.personal.Bookmark.Problem.type = _root_.com.histmersion.api.personal.Bookmark.Problem
 
     val MaxChars = 200
 

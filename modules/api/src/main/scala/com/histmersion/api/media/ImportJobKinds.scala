@@ -10,6 +10,8 @@ object ImportJobKinds:
 
   /** What a media job does, as a person reads it, in the job's detail. */
   type Media = MediaValue
+  type MediaValue = com.histmersion.api.media.ImportJobKinds.MediaText
+  val MediaValue: _root_.com.histmersion.api.media.ImportJobKinds.MediaText.type = _root_.com.histmersion.api.media.ImportJobKinds.MediaText
 
   val Media: JobDetail.Field[Option[com.histmersion.api.media.ImportJobKinds.Media]] = JobDetail.Field(_root_.com.histmersion.api.jobs.JobDetail.Field.Name("media"), None)
 

@@ -47,7 +47,7 @@ object ActivityMarkdown:
       .flatMap(_ => e.job)
       .fold("")(j => s" `${j.take(8)}`")
     val refsText = refs(e)
-    s"- ${minute(e.at)} · **$kind**$id · ${(headline(e)).replace('\n', ' ').take(200)}" +
+    s"- ${minute(e.at)} · **$kind**$id · ${(headline(e)).value.replace('\n', ' ').take(200)}" +
       (if (state).value.nonEmpty then s" · $state" else "") +
       e.error.filter(_.nonEmpty).fold("")(err => s" — ${err.take(160)}") +
       (if refsText.nonEmpty then s" _(${refsText.mkString(", ")})_" else "")

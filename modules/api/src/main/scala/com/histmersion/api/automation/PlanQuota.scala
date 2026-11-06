@@ -41,6 +41,8 @@ object PlanQuota:
   object PoolId:
     type Wire = Wire.T
     object Wire extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Title = Title.T
+    object Title extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
 
     def parse(s: com.histmersion.api.automation.PlanQuota.PoolId.Wire): Option[PoolId] = values.find(_.wire == _root_.com.histmersion.api.automation.PlanQuota.PoolId.Wire((s).value.trim.toLowerCase(java.util.Locale.ROOT)))
@@ -108,6 +110,8 @@ object PlanQuota:
     type Kind = Kind.T
     object Kind extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]:
       given _root_.scala.math.Ordering[T] = _root_.scala.math.Ordering.by[T, _root_.java.lang.String](_.value)
+    type UsedPct = UsedPct.T
+    object UsedPct extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
     type ResetsAt = ResetsAt.T
     object ResetsAt extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
     type Rejected = Rejected.T
@@ -115,6 +119,8 @@ object PlanQuota:
     type ObservedAt = ObservedAt.T
     object ObservedAt extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]:
       given _root_.scala.math.Ordering[T] = _root_.scala.math.Ordering.by[T, _root_.scala.Long](_.value)
+    type Model = com.histmersion.api.automation.ModelChains.ChainEntry.Model
+    val Model: _root_.com.histmersion.api.automation.ModelChains.ChainEntry.Model.type = _root_.com.histmersion.api.automation.ModelChains.ChainEntry.Model
 
   final case class Floors(byKind: Map[Floors.ByKindKey, Floors.ByKindValue]):
     def text: com.histmersion.api.automation.PlanQuota.Floors.Wire = _root_.com.histmersion.api.automation.PlanQuota.Floors.Wire(byKind.toList.sortBy(_._1).map((k, v) => s"$k=$v").mkString(", "))
@@ -126,6 +132,8 @@ object PlanQuota:
     object Floor extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
     type Wire = Wire.T
     object Wire extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type OfResult = com.histmersion.api.automation.PlanQuota.Floors.Floor
+    val OfResult: _root_.com.histmersion.api.automation.PlanQuota.Floors.Floor.type = _root_.com.histmersion.api.automation.PlanQuota.Floors.Floor
     type OfLimit = _root_.com.histmersion.api.automation.PlanQuota.Reading.Limit
     val OfLimit: _root_.com.histmersion.api.automation.PlanQuota.Reading.Limit.type = _root_.com.histmersion.api.automation.PlanQuota.Reading.Limit
     type OfKind = _root_.com.histmersion.api.automation.PlanQuota.Reading.Kind
@@ -176,6 +184,10 @@ object PlanQuota:
   )
 
   object WindowState:
+    type Floor = com.histmersion.api.automation.PlanQuota.Floors.Floor
+    val Floor: _root_.com.histmersion.api.automation.PlanQuota.Floors.Floor.type = _root_.com.histmersion.api.automation.PlanQuota.Floors.Floor
+    type LeftPct = com.histmersion.api.automation.PlanQuota.WindowStatus.LeftPct
+    val LeftPct: _root_.com.histmersion.api.automation.PlanQuota.WindowStatus.LeftPct.type = _root_.com.histmersion.api.automation.PlanQuota.WindowStatus.LeftPct
     type Stale = Stale.T
     object Stale extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
     type Usable = Usable.T
@@ -331,9 +343,9 @@ object PlanQuota:
       force: Boolean = (false)
   ): Either[com.histmersion.api.automation.PlanQuota.Problem, Option[RefreshNeed]] =
     login match
-      case _ if !(enabled)                              => Left(_root_.com.histmersion.api.automation.PlanQuota.Problem("refresh is off for this pool"))
+      case _ if !(enabled).value                              => Left(_root_.com.histmersion.api.automation.PlanQuota.Problem("refresh is off for this pool"))
       case Login.Missing(why)                         => Left(_root_.com.histmersion.api.automation.PlanQuota.Problem(s"no login: $why"))
-      case _ if (force)                                 => Right(need)
+      case _ if (force).value                                 => Right(need)
       case _ if need.isEmpty                          => Left(_root_.com.histmersion.api.automation.PlanQuota.Problem("the reading decides by itself"))
       case _ if ((throttled(lastAttempt, minGapMs, now)) == (true)) =>
         Left(_root_.com.histmersion.api.automation.PlanQuota.Problem("a fresh reading was taken (or tried) less than stale-minutes ago"))
@@ -356,6 +368,16 @@ object PlanQuota:
         KindlingsSchema, com.histmersion.api.json.Schema
 
   object WindowStatus:
+    type Limit = com.histmersion.api.automation.PlanQuota.Reading.Limit
+    val Limit: _root_.com.histmersion.api.automation.PlanQuota.Reading.Limit.type = _root_.com.histmersion.api.automation.PlanQuota.Reading.Limit
+    type Kind = Kind.T
+    object Kind extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type UsedPct = com.histmersion.api.automation.PlanQuota.Reading.UsedPct
+    val UsedPct: _root_.com.histmersion.api.automation.PlanQuota.Reading.UsedPct.type = _root_.com.histmersion.api.automation.PlanQuota.Reading.UsedPct
+    type LeftPct = LeftPct.T
+    object LeftPct extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Floor = com.histmersion.api.automation.PlanQuota.Floors.Floor
+    val Floor: _root_.com.histmersion.api.automation.PlanQuota.Floors.Floor.type = _root_.com.histmersion.api.automation.PlanQuota.Floors.Floor
     type Usable = Usable.T
     object Usable extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
     type Stale = Stale.T
@@ -396,6 +418,12 @@ object PlanQuota:
         KindlingsSchema, com.histmersion.api.json.Schema
 
   object PoolStatus:
+    type Pool = com.histmersion.api.automation.PlanQuota.PoolId.Wire
+    val Pool: _root_.com.histmersion.api.automation.PlanQuota.PoolId.Wire.type = _root_.com.histmersion.api.automation.PlanQuota.PoolId.Wire
+    type Title = com.histmersion.api.automation.PlanQuota.PoolId.Title
+    val Title: _root_.com.histmersion.api.automation.PlanQuota.PoolId.Title.type = _root_.com.histmersion.api.automation.PlanQuota.PoolId.Title
+    type Kind = Kind.T
+    object Kind extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
     type Covers = Covers.T
     object Covers extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
     type Floors = Floors.T
@@ -435,6 +463,10 @@ object PlanQuota:
     object LastAttempt extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
     type At = At.T
     object At extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Mode = com.histmersion.api.automation.PlanQuota.RefreshMode.Wire
+    val Mode: _root_.com.histmersion.api.automation.PlanQuota.RefreshMode.Wire.type = _root_.com.histmersion.api.automation.PlanQuota.RefreshMode.Wire
+    type Trigger = com.histmersion.api.automation.PlanQuota.RefreshTrigger.Wire
+    val Trigger: _root_.com.histmersion.api.automation.PlanQuota.RefreshTrigger.Wire.type = _root_.com.histmersion.api.automation.PlanQuota.RefreshTrigger.Wire
     type Ok = Ok.T
     object Ok extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
     type Detail = Detail.T
@@ -443,6 +475,9 @@ object PlanQuota:
 
   final case class QuotaRefresh(pool: Option[QuotaRefresh.Pool] = None) derives KindlingsCodecAsObject, KindlingsSchema, com.histmersion.api.json.Schema
 
+  object QuotaRefresh:
+    type Pool = com.histmersion.api.automation.PlanQuota.PoolId.Wire
+    val Pool: _root_.com.histmersion.api.automation.PlanQuota.PoolId.Wire.type = _root_.com.histmersion.api.automation.PlanQuota.PoolId.Wire
 
 
   final case class PoolRefreshed(pool: PoolRefreshed.Pool, refreshed: PoolRefreshed.Refreshed, detail: PoolRefreshed.Detail, status: PoolStatus)
@@ -450,6 +485,8 @@ object PlanQuota:
         KindlingsSchema, com.histmersion.api.json.Schema
 
   object PoolRefreshed:
+    type Pool = com.histmersion.api.automation.PlanQuota.PoolId.Wire
+    val Pool: _root_.com.histmersion.api.automation.PlanQuota.PoolId.Wire.type = _root_.com.histmersion.api.automation.PlanQuota.PoolId.Wire
     type Refreshed = Refreshed.T
     object Refreshed extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
     type Detail = Detail.T
@@ -486,6 +523,8 @@ object PlanQuota:
         KindlingsSchema, com.histmersion.api.json.Schema
 
   object Cooldown:
+    type Model = com.histmersion.api.automation.ModelChains.ChainEntry.Model
+    val Model: _root_.com.histmersion.api.automation.ModelChains.ChainEntry.Model.type = _root_.com.histmersion.api.automation.ModelChains.ChainEntry.Model
     type Until = Until.T
     object Until extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
     type Reason = Reason.T
@@ -516,6 +555,10 @@ object PlanQuota:
         KindlingsSchema, com.histmersion.api.json.Schema
 
   object ModWindow:
+    type Kind = com.histmersion.api.automation.PlanQuota.WindowStatus.Kind
+    val Kind: _root_.com.histmersion.api.automation.PlanQuota.WindowStatus.Kind.type = _root_.com.histmersion.api.automation.PlanQuota.WindowStatus.Kind
+    type PercentUsed = com.histmersion.api.automation.PlanQuota.Reading.UsedPct
+    val PercentUsed: _root_.com.histmersion.api.automation.PlanQuota.Reading.UsedPct.type = _root_.com.histmersion.api.automation.PlanQuota.Reading.UsedPct
     type ResetsAt = ResetsAt.T
     object ResetsAt extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 

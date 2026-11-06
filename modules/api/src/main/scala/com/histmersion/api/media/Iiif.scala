@@ -26,6 +26,8 @@ object Iiif:
   type SizeText = SizeText.T
   object SizeText extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
+  type ParseFormatResultPart1 = com.histmersion.api.library.ArchiveFile.Format.Problem
+  val ParseFormatResultPart1: _root_.com.histmersion.api.library.ArchiveFile.Format.Problem.type = _root_.com.histmersion.api.library.ArchiveFile.Format.Problem
 
   val ApiContext = "http://iiif.io/api/image/3/context.json"
   val Protocol = "http://iiif.io/api/image"
@@ -50,6 +52,8 @@ object Iiif:
       type H = H.T
       object H extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
+    type ParseResultPart1 = com.histmersion.api.media.Iiif.Region.Problem
+    val ParseResultPart1: _root_.com.histmersion.api.media.Iiif.Region.Problem.type = _root_.com.histmersion.api.media.Iiif.Region.Problem
 
     def parse(s: com.histmersion.api.media.Iiif.Region.Wire): Either[com.histmersion.api.media.Iiif.Region.Problem, Region] = (s).value.trim.toLowerCase match
       case "full" | "square" => Right(Full)
@@ -98,6 +102,8 @@ object Iiif:
       type H = H.T
       object H extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
+    type ParseResultPart1 = com.histmersion.api.media.Iiif.Size.Problem
+    val ParseResultPart1: _root_.com.histmersion.api.media.Iiif.Size.Problem.type = _root_.com.histmersion.api.media.Iiif.Size.Problem
 
     def parse(s: com.histmersion.api.media.Iiif.Size.Wire): Either[com.histmersion.api.media.Iiif.Size.Problem, Size] =
       val t = (s).value.trim

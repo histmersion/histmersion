@@ -11,6 +11,10 @@ import com.histmersion.api.views.QueueListing
 object OpsApi:
 
   // explicit imports: a wildcard would shadow tapir's `query`/`path` with this object's own members
+  type QueueExportPart3 = com.histmersion.api.automation.Queue.Export
+  val QueueExportPart3: _root_.com.histmersion.api.automation.Queue.Export.type = _root_.com.histmersion.api.automation.Queue.Export
+  type GoalsExportPart3 = com.histmersion.api.automation.Goal.Export
+  val GoalsExportPart3: _root_.com.histmersion.api.automation.Goal.Export.type = _root_.com.histmersion.api.automation.Goal.Export
 
   import com.histmersion.api.checks.Lint.{LintFixResult, LintReport}
   import com.histmersion.api.library.Query.{QueryRequest, QueryResult, SchemaTables}
@@ -62,7 +66,7 @@ object OpsApi:
           .description("only the items this agent run or background job wrote or ticked off (its id)")
       )
       .errorOut(opsErrors)
-      .out(jsonBody[QueueListing])).mapIn[(_root_.com.histmersion.api.automation.Queue.Wire, Boolean, _root_.scala.Option[_root_.com.histmersion.api.automation.Queue.Wire], _root_.scala.Option[_root_.com.histmersion.api.automation.Queue.Wire])]((refactorDecoded5: (_root_.java.lang.String, _root_.scala.Boolean, _root_.scala.Option[_root_.java.lang.String], _root_.scala.Option[_root_.java.lang.String])) => (_root_.com.histmersion.api.automation.Queue.Wire((refactorDecoded5)._1), ((refactorDecoded5)._2), ((refactorDecoded5)._3).map(refactorElement5 => _root_.com.histmersion.api.automation.Queue.Wire(refactorElement5)), ((refactorDecoded5)._4).map(refactorElement6 => _root_.com.histmersion.api.automation.Queue.Wire(refactorElement6))))((refactorEncoded5: (_root_.com.histmersion.api.automation.Queue.Wire, Boolean, _root_.scala.Option[_root_.com.histmersion.api.automation.Queue.Wire], _root_.scala.Option[_root_.com.histmersion.api.automation.Queue.Wire])) => (((refactorEncoded5)._1).value, ((refactorEncoded5)._2), ((refactorEncoded5)._3).map(refactorElement7 => (refactorElement7).value), ((refactorEncoded5)._4).map(refactorElement8 => (refactorElement8).value)))
+      .out(jsonBody[QueueListing])).mapIn[(_root_.com.histmersion.api.automation.Queue.Wire, Boolean, _root_.scala.Option[_root_.com.histmersion.api.automation.Queue.Wire], _root_.scala.Option[_root_.com.histmersion.api.automation.Queue.Wire])]((refactorDecoded5: (_root_.java.lang.String, _root_.scala.Boolean, _root_.scala.Option[_root_.java.lang.String], _root_.scala.Option[_root_.java.lang.String])) => (_root_.com.histmersion.api.automation.Queue.Wire((refactorDecoded5)._1), ((refactorDecoded5)._2), ((refactorDecoded5)._3).map(refactorElement5 => _root_.com.histmersion.api.automation.Queue.Wire(refactorElement5)), ((refactorDecoded5)._4).map(refactorElement6 => _root_.com.histmersion.api.automation.Queue.Wire(refactorElement6))))((refactorEncoded5: (_root_.com.histmersion.api.automation.Queue.Wire, Boolean, _root_.scala.Option[_root_.com.histmersion.api.automation.Queue.Wire], _root_.scala.Option[_root_.com.histmersion.api.automation.Queue.Wire])) => (((refactorEncoded5)._1).value, ((refactorEncoded5)._2).value, ((refactorEncoded5)._3).map(refactorElement7 => (refactorElement7).value), ((refactorEncoded5)._4).map(refactorElement8 => (refactorElement8).value)))
 
   lazy val queueAdd: PublicEndpoint[(com.histmersion.api.automation.Queue.Wire, QueueAdd), Api.Error, QueueItem, Any] =
     (endpoint.post

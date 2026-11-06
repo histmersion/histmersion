@@ -5,8 +5,14 @@ object WebPaths:
   object Segment extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
   type Places = PlacesValue
+  type PlacesValue = com.histmersion.api.WebPaths.Segment
+  val PlacesValue: _root_.com.histmersion.api.WebPaths.Segment.type = _root_.com.histmersion.api.WebPaths.Segment
   type Items = ItemsValue
+  type ItemsValue = com.histmersion.api.WebPaths.Segment
+  val ItemsValue: _root_.com.histmersion.api.WebPaths.Segment.type = _root_.com.histmersion.api.WebPaths.Segment
   type Legacy = LegacyValue
+  type LegacyValue = com.histmersion.api.WebPaths.Segment
+  val LegacyValue: _root_.com.histmersion.api.WebPaths.Segment.type = _root_.com.histmersion.api.WebPaths.Segment
 
   val Places: Set[com.histmersion.api.WebPaths.Places] = Set(_root_.com.histmersion.api.WebPaths.Segment("explore"), _root_.com.histmersion.api.WebPaths.Segment("library"), _root_.com.histmersion.api.WebPaths.Segment("research"), _root_.com.histmersion.api.WebPaths.Segment("settings"), _root_.com.histmersion.api.WebPaths.Segment("setup"))
 

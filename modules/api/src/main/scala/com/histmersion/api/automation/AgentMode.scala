@@ -53,5 +53,7 @@ object AgentMode:
   final case class ModeSet(mode: ModeSet.Mode, by: Option[ModeSet.By] = None) derives KindlingsCodecAsObject, KindlingsSchema, com.histmersion.api.json.Schema
 
   object ModeSet:
+    type Mode = com.histmersion.api.automation.AgentMode.Wire
+    val Mode: _root_.com.histmersion.api.automation.AgentMode.Wire.type = _root_.com.histmersion.api.automation.AgentMode.Wire
     type By = By.T
     object By extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]

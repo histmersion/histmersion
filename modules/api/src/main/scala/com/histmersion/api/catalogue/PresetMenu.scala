@@ -13,6 +13,10 @@ object PresetMenu:
   object ShareThreshold extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
   type MinShare = MinShareValue
+  type MinShareValue = com.histmersion.api.catalogue.PresetMenu.ShareThreshold
+  val MinShareValue: _root_.com.histmersion.api.catalogue.PresetMenu.ShareThreshold.type = _root_.com.histmersion.api.catalogue.PresetMenu.ShareThreshold
+  type SourceResult = com.histmersion.api.catalogue.PresetMenu.PeriodSource
+  val SourceResult: _root_.com.histmersion.api.catalogue.PresetMenu.PeriodSource.type = _root_.com.histmersion.api.catalogue.PresetMenu.PeriodSource
 
   final case class Group(region: PresetRegion, presets: List[HistoricalPeriod], inView: Group.InView)
 
