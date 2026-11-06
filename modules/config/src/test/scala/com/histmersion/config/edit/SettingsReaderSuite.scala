@@ -25,13 +25,13 @@ class SettingsReaderSuite extends munit.FunSuite:
 
   test("each setting's value in the file, what applies, and where that comes from"):
     val r = readings("histmersion { backups.keep = 3, ui.page-size = 40 }", Map("HISTMERSION_BACKUPS_KEEP" -> "9"))
-    assertEquals(r("ui.page-size").inFile, Some(SettingValue.Number(BigDecimal(40))))
-    assertEquals(r("ui.page-size").source, SettingSource.File)
-    assertEquals(r("backups.keep").inFile, Some(SettingValue.Number(BigDecimal(3))))
-    assertEquals(r("backups.keep").source, SettingSource.Environment)
-    assertEquals(r("backups.keep").effective.map(_.hocon), Some("\"9\""))
-    assertEquals(r("lint.max-items").source, SettingSource.Default)
-    assertEquals(r("lint.max-items").inFile, None)
+    assertEquals(r(com.histmersion.config.edit.SettingKey.Relative("ui.page-size")).inFile, Some(SettingValue.Number(BigDecimal(40))))
+    assertEquals(r(com.histmersion.config.edit.SettingKey.Relative("ui.page-size")).source, SettingSource.File)
+    assertEquals(r(com.histmersion.config.edit.SettingKey.Relative("backups.keep")).inFile, Some(SettingValue.Number(BigDecimal(3))))
+    assertEquals(r(com.histmersion.config.edit.SettingKey.Relative("backups.keep")).source, SettingSource.Environment)
+    assertEquals(r(com.histmersion.config.edit.SettingKey.Relative("backups.keep")).effective.map(_.hocon), Some("\"9\""))
+    assertEquals(r(com.histmersion.config.edit.SettingKey.Relative("lint.max-items")).source, SettingSource.Default)
+    assertEquals(r(com.histmersion.config.edit.SettingKey.Relative("lint.max-items")).inFile, None)
 
   test("a credential is told only by how it is held"):
     val r = readings(
@@ -39,21 +39,21 @@ class SettingsReaderSuite extends munit.FunSuite:
         "histmersion.plugins.media-europeana.api-key = \"value:abc\"\n",
       Map("HISTMERSION_API_KEY" -> "s3cret")
     )
-    assertEquals(r("plugins.oa-core.api-key").credential, Some(SecretForm.Vault))
-    assertEquals(r("plugins.oa-core.api-key").shown, Some("keepassxc:Histmersion/CORE#password"))
-    assertEquals(r("plugins.media-europeana.api-key").shown, Some("value:***"))
-    assertEquals(r("auth.api-key").credential, Some(SecretForm.Plain))
-    assertEquals(r("auth.api-key").shown, None)
-    assertEquals(r("acquire.core.api-key").credential, Some(SecretForm.Unset))
+    assertEquals(r(com.histmersion.config.edit.SettingKey.Relative("plugins.oa-core.api-key")).credential, Some(SecretForm.Vault))
+    assertEquals(r(com.histmersion.config.edit.SettingKey.Relative("plugins.oa-core.api-key")).shown, Some("keepassxc:Histmersion/CORE#password"))
+    assertEquals(r(com.histmersion.config.edit.SettingKey.Relative("plugins.media-europeana.api-key")).shown, Some("value:***"))
+    assertEquals(r(com.histmersion.config.edit.SettingKey.Relative("auth.api-key")).credential, Some(SecretForm.Plain))
+    assertEquals(r(com.histmersion.config.edit.SettingKey.Relative("auth.api-key")).shown, None)
+    assertEquals(r(com.histmersion.config.edit.SettingKey.Relative("acquire.core.api-key")).credential, Some(SecretForm.Unset))
 
   test("a setting written with a substitution or by an included file is locked, with why"):
     val r = readings("histmersion.ui.tiles = ${?MY_TILES}\n")
-    assert(r("ui.tiles").locked.exists(_.isInstanceOf[SettingError.Substitution]))
-    assertEquals(r("ui.tiles").source, SettingSource.File)
+    assert(r(com.histmersion.config.edit.SettingKey.Relative("ui.tiles")).locked.exists(_.isInstanceOf[SettingError.Substitution]))
+    assertEquals(r(com.histmersion.config.edit.SettingKey.Relative("ui.tiles")).source, SettingSource.File)
 
   test("only the settings under a prefix"):
     val r = readings("", prefix = Some("backups"))
-    assert(r.keySet.forall(_.startsWith("backups.")) && r.contains("backups.keep"), s"${r.keySet}")
+    assert(r.keySet.forall(_.startsWith("backups.")) && r.contains(com.histmersion.config.edit.SettingKey.Relative("backups.keep")), s"${r.keySet}")
 
   test("loading a config file's text says what loading the file says"):
     assert(AppConfig.loadWithUserText(ConfigFactory.empty, "histmersion.backups.keep = 3").isRight)

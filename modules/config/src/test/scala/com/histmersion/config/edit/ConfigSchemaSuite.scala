@@ -11,8 +11,8 @@ class ConfigSchemaSuite extends munit.FunSuite:
     assertEquals(field("backups.keep").default, Some(SettingValue.Number(BigDecimal(5))))
     assertEquals(field("config.watch").kind, SettingKind.Flag)
     assertEquals(field("acquire.candidates.indexes").kind, SettingKind.Items)
-    assertEquals(field("ui.base-map-source").default, Some(SettingValue.Text("auto")))
-    assertEquals(field("acquire.contact-email").default, Some(SettingValue.Text("")))
+    assertEquals(field("ui.base-map-source").default, Some(SettingValue.Text(com.histmersion.config.edit.SettingValue.Text.Value("auto"))))
+    assertEquals(field("acquire.contact-email").default, Some(SettingValue.Text(com.histmersion.config.edit.SettingValue.Text.Value(""))))
 
   test("the documentation: the comment at the line's end, its environment line's, and the lines that continue them"):
     val keep = field("backups.keep").doc

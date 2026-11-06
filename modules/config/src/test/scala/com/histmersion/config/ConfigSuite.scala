@@ -69,7 +69,7 @@ class ConfigSuite extends munit.FunSuite:
     val missing = Files.createTempDirectory("histmersion-conf").resolve("histmersion.conf")
     val l = loaded(env(), missing)
     assertEquals(l.config, AppConfig.load(env()))
-    assertEquals(l.file, UserConfigFile(Some(missing), loaded = false))
+    assertEquals(l.file, UserConfigFile(Some(missing), loaded = com.histmersion.config.UserConfigFile.Loaded(false)))
 
   test("user file: one that does not parse stops the load with an error naming the file"):
     val f = confFile("histmersion { server { port = 8123 \n")
@@ -183,7 +183,7 @@ class ConfigSuite extends munit.FunSuite:
   test("claude-code env: the defaults switch features off; nothing about thinking, structured outputs or web fetch"):
     val cc = AppConfig.load(env()).agents.providers.claudeCode
     val set = cc.envChanges.collect { case (k, Some(v)) => k -> v }.toMap
-    assertEquals(set.get("CLAUDE_CODE_DISABLE_ARTIFACT"), Some("1"))
+    assertEquals(set.get(com.histmersion.config.ClaudeCodeConfig.EnvKey("CLAUDE_CODE_DISABLE_ARTIFACT")), Some("1"))
     assert(set.keySet.forall(_.startsWith("CLAUDE_CODE_DISABLE_")) && set.values.forall(_ == "1"), set)
     List(
       "THINKING",
@@ -208,11 +208,11 @@ class ConfigSuite extends munit.FunSuite:
     val l = loaded(env(), f)
     assertEquals(l.file.unknownKeys, Nil)
     val ch = l.config.agents.providers.claudeCode.envChanges.toMap
-    assertEquals(ch.get("CLAUDE_CODE_DISABLE_CRON"), Some(None))
-    assertEquals(ch.get("CLAUDE_CODE_DISABLE_WORKFLOWS"), Some(None))
-    assertEquals(ch.get("MY_FLAG"), Some(Some("x")))
-    assertEquals(ch.get("CLAUDE_CODE_DISABLE_ARTIFACT"), Some(Some("true")))
-    assertEquals(ch.get("CLAUDE_CODE_DISABLE_BUNDLED_SKILLS"), Some(Some("1")), "the other defaults stay")
+    assertEquals(ch.get(com.histmersion.config.ClaudeCodeConfig.EnvKey("CLAUDE_CODE_DISABLE_CRON")), Some(None))
+    assertEquals(ch.get(com.histmersion.config.ClaudeCodeConfig.EnvKey("CLAUDE_CODE_DISABLE_WORKFLOWS")), Some(None))
+    assertEquals(ch.get(com.histmersion.config.ClaudeCodeConfig.EnvKey("MY_FLAG")), Some(Some("x")))
+    assertEquals(ch.get(com.histmersion.config.ClaudeCodeConfig.EnvKey("CLAUDE_CODE_DISABLE_ARTIFACT")), Some(Some("true")))
+    assertEquals(ch.get(com.histmersion.config.ClaudeCodeConfig.EnvKey("CLAUDE_CODE_DISABLE_BUNDLED_SKILLS")), Some(Some("1")), "the other defaults stay")
     assert(!l.config.agents.providers.claudeCode.disableSlashCommands)
 
   test("claude-code env: a variable in the server's own environment wins over the file and the default"):
@@ -226,19 +226,19 @@ class ConfigSuite extends munit.FunSuite:
       f
     )
     val ch = l.config.agents.providers.claudeCode.envChanges.toMap
-    assertEquals(ch.get("CLAUDE_CODE_DISABLE_CRON"), Some(Some("0")))
-    assertEquals(ch.get("CLAUDE_CODE_DISABLE_ARTIFACT"), Some(None))
+    assertEquals(ch.get(com.histmersion.config.ClaudeCodeConfig.EnvKey("CLAUDE_CODE_DISABLE_CRON")), Some(Some("0")))
+    assertEquals(ch.get(com.histmersion.config.ClaudeCodeConfig.EnvKey("CLAUDE_CODE_DISABLE_ARTIFACT")), Some(None))
     assert(!l.config.agents.providers.claudeCode.disableSlashCommands)
 
   test("user file: no location at all (HOME unset) is the defaults"):
     val l = AppConfig.loadWithUserFile(env(), None).fold(m => fail(m), identity)
-    assertEquals(l.file, UserConfigFile(None, loaded = false))
+    assertEquals(l.file, UserConfigFile(None, loaded = com.histmersion.config.UserConfigFile.Loaded(false)))
 
   test("the installer's template reads as a file with no settings"):
     val root = Path.of(sys.props.getOrElse("histmersion.repoRoot", "."))
     val t = root.resolve("scripts/bundle/histmersion.conf.template")
     val l = loaded(env(), t)
-    assertEquals(l.file, UserConfigFile(Some(t), loaded = true))
+    assertEquals(l.file, UserConfigFile(Some(t), loaded = com.histmersion.config.UserConfigFile.Loaded(true)))
     assertEquals(l.config, AppConfig.load(env()))
     // its commented example, uncommented, is all real settings
     val example = Files
@@ -329,23 +329,23 @@ class ConfigSuite extends munit.FunSuite:
     )
     assertEquals(UserPaths.configFile(e()), None)
     assertEquals(
-      UserPaths.dataDir("", e("HOME" -> "/home/u", "XDG_DATA_HOME" -> "/xd"), "Linux"),
+      UserPaths.dataDir(com.histmersion.config.RuntimeConfig.DataDir(""), e("HOME" -> "/home/u", "XDG_DATA_HOME" -> "/xd"), com.histmersion.config.UserPaths.OsName("Linux")),
       Some(Path.of("/xd/histmersion"))
     )
-    assertEquals(UserPaths.dataDir("/own", e("HOME" -> "/home/u"), "Linux"), Some(Path.of("/own")))
+    assertEquals(UserPaths.dataDir(com.histmersion.config.RuntimeConfig.DataDir("/own"), e("HOME" -> "/home/u"), com.histmersion.config.UserPaths.OsName("Linux")), Some(Path.of("/own")))
 
   test("the map's geo feed has its own cap, above a listing page: a range draws every state in it"):
     val c = AppConfig.load()
     assertEquals(c.places.geoMaxLimit, 2000)
     assert(c.places.geoMaxLimit > c.limits.maxPage)
-    val p = c.places.copy(geoMaxLimit = 2000)
+    val p = c.places.copy(geoMaxLimit = com.histmersion.config.PlacesConfig.GeoLimit(2000))
     assertEquals(p.geoLimit(Some(400), 100), 400)
     assertEquals(p.geoLimit(Some(1744), 100), 1744) // past limits.max-page
     assertEquals(p.geoLimit(Some(5000), 100), 2000)
     assertEquals(p.geoLimit(None, 100), 100)
     assertEquals(p.geoLimit(Some(0), 100), 100)
     assertEquals(p.geoLimit(Some(-3), 100), 100)
-    assertEquals(c.places.copy(geoMaxLimit = 0).geoLimit(Some(50), 100), 1)
+    assertEquals(c.places.copy(geoMaxLimit = com.histmersion.config.PlacesConfig.GeoLimit(0)).geoLimit(Some(50), 100), 1)
 
   /** Guard for plan §1.9: no port numbers / service URLs hardcoded anywhere in main sources. */
   test("no hardcoded ports or CDN hosts in src/main (only reference.conf may carry them)"):
@@ -391,9 +391,9 @@ class ConfigSuite extends munit.FunSuite:
     )
 
   test("the schedule from config minutes: 0 is off, a negative number is refused"):
-    assertEquals(ScheduledRefresh.fromMinutes(0), Right(ScheduledRefresh.Off))
-    assertEquals(ScheduledRefresh.fromMinutes(30).map(minutes), Right(Some(30)))
-    assert(ScheduledRefresh.fromMinutes(-5).left.exists(_.contains("-5")))
+    assertEquals(ScheduledRefresh.fromMinutes(com.histmersion.config.Minutes(0)), Right(ScheduledRefresh.Off))
+    assertEquals(ScheduledRefresh.fromMinutes(com.histmersion.config.Minutes(30)).map(minutes), Right(Some(30)))
+    assert(ScheduledRefresh.fromMinutes(com.histmersion.config.Minutes(-5)).left.exists(_.contains("-5")))
 
   private def minutes(s: ScheduledRefresh): Option[Int] = s match
     case ScheduledRefresh.Every(i) => Some(i.value)
