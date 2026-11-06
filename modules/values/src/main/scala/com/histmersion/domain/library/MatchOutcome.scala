@@ -18,20 +18,16 @@ enum MatchOutcome:
   case DeletedHere
 
 object MatchOutcome:
-  type WireOfResult = WireOfResult.T
-  object WireOfResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type WireResult = WireResult.T
-  object WireResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type FromWireS = FromWireS.T
-  object FromWireS extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type Wire = Wire.T
+  object Wire extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
-  def wireOf(o: MatchOutcome): com.histmersion.domain.library.MatchOutcome.WireOfResult = o match
-    case Same          => _root_.com.histmersion.domain.library.MatchOutcome.WireOfResult("same")
-    case AutoMerge     => _root_.com.histmersion.domain.library.MatchOutcome.WireOfResult("auto-merge")
-    case NeedsDecision => _root_.com.histmersion.domain.library.MatchOutcome.WireOfResult("needs-decision")
-    case New           => _root_.com.histmersion.domain.library.MatchOutcome.WireOfResult("new")
-    case DeletedHere   => _root_.com.histmersion.domain.library.MatchOutcome.WireOfResult("deleted-here")
+  def wireOf(o: MatchOutcome): com.histmersion.domain.library.MatchOutcome.Wire = o match
+    case Same          => _root_.com.histmersion.domain.library.MatchOutcome.Wire("same")
+    case AutoMerge     => _root_.com.histmersion.domain.library.MatchOutcome.Wire("auto-merge")
+    case NeedsDecision => _root_.com.histmersion.domain.library.MatchOutcome.Wire("needs-decision")
+    case New           => _root_.com.histmersion.domain.library.MatchOutcome.Wire("new")
+    case DeletedHere   => _root_.com.histmersion.domain.library.MatchOutcome.Wire("deleted-here")
   given WireEnumValues[MatchOutcome]:
     def all: Array[MatchOutcome] = MatchOutcome.values
-    def wire(e: MatchOutcome): _root_.com.histmersion.WireEnumValues.WireResult = _root_.com.histmersion.WireEnumValues.WireResult((wireOf(e)).value)
-    def fromWire(s: _root_.com.histmersion.WireEnumValues.FromWireS): _root_.scala.Option[MatchOutcome] = MatchOutcome.values.find(o => wireOf(o) == _root_.com.histmersion.domain.library.MatchOutcome.WireOfResult((s).value.trim))
+    def wire(e: MatchOutcome): _root_.com.histmersion.WireEnumValues.Wire = _root_.com.histmersion.WireEnumValues.Wire((wireOf(e)).value)
+    def fromWire(s: _root_.com.histmersion.WireEnumValues.Wire): _root_.scala.Option[MatchOutcome] = MatchOutcome.values.find(o => wireOf(o) == _root_.com.histmersion.domain.library.MatchOutcome.Wire((s).value.trim))

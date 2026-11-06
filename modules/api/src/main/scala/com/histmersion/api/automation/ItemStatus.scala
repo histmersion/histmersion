@@ -9,15 +9,11 @@ enum ItemStatus(val wire: ItemStatus.Wire):
   case Cancelled extends ItemStatus(_root_.com.histmersion.api.automation.ItemStatus.Wire("cancelled"))
 
   /** Settled: only a person (re-open, enqueue) brings it back. */
-  def isFinal: com.histmersion.api.automation.ItemStatus.IsFinalResult = _root_.com.histmersion.api.automation.ItemStatus.IsFinalResult(this == Done || this == Stopped || this == Failed || this == Cancelled)
+  def isFinal: Boolean = (this == Done || this == Stopped || this == Failed || this == Cancelled)
 
 object ItemStatus:
   type Wire = Wire.T
   object Wire extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
-  type IsFinalResult = IsFinalResult.T
-  object IsFinalResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type ParseS = ParseS.T
-  object ParseS extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
-  def parse(s: com.histmersion.api.automation.ItemStatus.ParseS): Option[ItemStatus] = values.find(_.wire == _root_.com.histmersion.api.automation.ItemStatus.Wire((s).value.trim.toLowerCase))
+  def parse(s: com.histmersion.api.automation.ItemStatus.Wire): Option[ItemStatus] = values.find(_.wire == _root_.com.histmersion.api.automation.ItemStatus.Wire((s).value.trim.toLowerCase))

@@ -6,10 +6,6 @@ import com.histmersion.api.given
 
 object Activity:
 
-  type KeyOfResult = KeyOfResult.T
-  object KeyOfResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type KeyOfId = KeyOfId.T
-  object KeyOfId extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
   enum EntryKind(val wire: EntryKind.Wire):
     case Run extends EntryKind(_root_.com.histmersion.api.automation.Activity.EntryKind.Wire("run"))
@@ -18,22 +14,18 @@ object Activity:
     case Decision extends EntryKind(_root_.com.histmersion.api.automation.Activity.EntryKind.Wire("decision"))
 
     /** The entry's kind as the activity list names it. */
-    def wording: com.histmersion.api.automation.Activity.EntryKind.WordingResult = this match
-      case Run      => _root_.com.histmersion.api.automation.Activity.EntryKind.WordingResult("Agent work")
-      case Job      => _root_.com.histmersion.api.automation.Activity.EntryKind.WordingResult("Background job")
-      case Log      => _root_.com.histmersion.api.automation.Activity.EntryKind.WordingResult("Note")
-      case Decision => _root_.com.histmersion.api.automation.Activity.EntryKind.WordingResult("You decided")
+    def wording: String = this match
+      case Run      => ("Agent work")
+      case Job      => ("Background job")
+      case Log      => ("Note")
+      case Decision => ("You decided")
 
   object EntryKind:
     type Wire = Wire.T
     object Wire extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
-    type WordingResult = WordingResult.T
-    object WordingResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-    type ParseS = ParseS.T
-    object ParseS extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
-    def parse(s: com.histmersion.api.automation.Activity.EntryKind.ParseS): Option[EntryKind] = values.find(_.wire == _root_.com.histmersion.api.automation.Activity.EntryKind.Wire((s).value.trim.toLowerCase))
+    def parse(s: com.histmersion.api.automation.Activity.EntryKind.Wire): Option[EntryKind] = values.find(_.wire == _root_.com.histmersion.api.automation.Activity.EntryKind.Wire((s).value.trim.toLowerCase))
 
   enum Writer(val wire: Writer.Wire):
     case Agent extends Writer(_root_.com.histmersion.api.automation.Activity.Writer.Wire("agent"))
@@ -57,10 +49,8 @@ object Activity:
     type Label = Label.T
     object Label extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
-    type ParseS = ParseS.T
-    object ParseS extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
-    def parse(s: com.histmersion.api.automation.Activity.Show.ParseS): Option[Show] =
+    def parse(s: com.histmersion.api.automation.Activity.Show.Wire): Option[Show] =
       val t = (s).value.trim.toLowerCase
       values.find(v => v.wire == _root_.com.histmersion.api.automation.Activity.Show.Wire(t) || v.toString.toLowerCase == t)
 
@@ -88,6 +78,8 @@ object Activity:
     def entryKind: Option[EntryKind] = EntryKind.parse(kind)
 
   object Entry:
+    type Id = Id.T
+    object Id extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
     type Key = Key.T
     object Key extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
     type Kind = Kind.T
@@ -143,4 +135,4 @@ object Activity:
   val MaxLimit = 200
   val DefaultLimit = 30
 
-  def keyOf(kind: EntryKind, id: com.histmersion.api.automation.Activity.KeyOfId): com.histmersion.api.automation.Activity.KeyOfResult = _root_.com.histmersion.api.automation.Activity.KeyOfResult(s"${kind.wire}:$id")
+  def keyOf(kind: EntryKind, id: com.histmersion.api.automation.Activity.Entry.Id): com.histmersion.api.automation.Activity.Entry.Key = _root_.com.histmersion.api.automation.Activity.Entry.Key(s"${kind.wire}:$id")

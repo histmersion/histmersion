@@ -33,15 +33,11 @@ object DeletePart:
   type Label = Label.T
   object Label extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
-  type WireResult = WireResult.T
-  object WireResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type FromWireS = FromWireS.T
-  object FromWireS extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
   given WireEnumValues[DeletePart]:
     def all: Array[DeletePart] = DeletePart.values
-    def wire(e: DeletePart): _root_.com.histmersion.api.WireEnumValues.WireResult = _root_.com.histmersion.api.WireEnumValues.WireResult((e.wire).value)
-    def fromWire(s: _root_.com.histmersion.api.WireEnumValues.FromWireS): _root_.scala.Option[DeletePart] = DeletePart.values.find(_.wire == _root_.com.histmersion.api.library.DeletePart.Wire((s).value.trim.toLowerCase))
+    def wire(e: DeletePart): _root_.com.histmersion.api.WireEnumValues.Wire = _root_.com.histmersion.api.WireEnumValues.Wire((e.wire).value)
+    def fromWire(s: _root_.com.histmersion.api.WireEnumValues.Wire): _root_.scala.Option[DeletePart] = DeletePart.values.find(_.wire == _root_.com.histmersion.api.library.DeletePart.Wire((s).value.trim.toLowerCase))
   given Encoder[DeletePart] = WireEnum.encoder
   given Decoder[DeletePart] = WireEnum.decoder
   given Schema[DeletePart] = WireEnum.schema

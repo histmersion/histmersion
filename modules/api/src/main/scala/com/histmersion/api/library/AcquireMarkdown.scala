@@ -4,65 +4,19 @@ import com.histmersion.api.Plural
 import com.histmersion.api.given
 object AcquireMarkdown:
 
-  type EscResult = EscResult.T
-  object EscResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type EscS = EscS.T
-  object EscS extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type CellResult = CellResult.T
-  object CellResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type CellS = CellS.T
-  object CellS extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type NumResult = NumResult.T
-  object NumResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type NumN = NumN.T
-  object NumN extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type DoiLinkResult = DoiLinkResult.T
-  object DoiLinkResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type DoiLinkDoi = DoiLinkDoi.T
-  object DoiLinkDoi extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type TableResult = TableResult.T
-  object TableResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type TableHeader = TableHeader.T
-  object TableHeader extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type TableRows = TableRows.T
-  object TableRows extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type DiscoverResult = DiscoverResult.T
-  object DiscoverResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type WorkResult = WorkResult.T
-  object WorkResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type WikirefsResult = WikirefsResult.T
-  object WikirefsResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type RefsResult = RefsResult.T
-  object RefsResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type EdgeNoteResult = EdgeNoteResult.T
-  object EdgeNoteResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type AssessmentResult = AssessmentResult.T
-  object AssessmentResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type RetractionsUpdateResult = RetractionsUpdateResult.T
-  object RetractionsUpdateResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type FollowupsResult = FollowupsResult.T
-  object FollowupsResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type ArchiveSearchResult = ArchiveSearchResult.T
-  object ArchiveSearchResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type ArchiveItemResult = ArchiveItemResult.T
-  object ArchiveItemResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type IngestResult = IngestResult.T
-  object IngestResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type CalibreGapsResult = CalibreGapsResult.T
-  object CalibreGapsResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
-  private def esc(s: com.histmersion.api.library.AcquireMarkdown.EscS): com.histmersion.api.library.AcquireMarkdown.EscResult = _root_.com.histmersion.api.library.AcquireMarkdown.EscResult((s).value.replace("|", "\\|").replace("\n", " ").trim)
-  private def cell(s: Option[com.histmersion.api.library.AcquireMarkdown.CellS]): com.histmersion.api.library.AcquireMarkdown.CellResult = esc(s.getOrElse("—"))
-  private def num(n: Option[com.histmersion.api.library.AcquireMarkdown.NumN]): com.histmersion.api.library.AcquireMarkdown.NumResult = _root_.com.histmersion.api.library.AcquireMarkdown.NumResult(n.map(_.toString).getOrElse("—"))
+  private def esc(s: String): String = ((s).value.replace("|", "\\|").replace("\n", " ").trim)
+  private def cell(s: Option[String]): String = esc(s.getOrElse("—"))
+  private def num(n: Option[Int]): String = (n.map(_.toString).getOrElse("—"))
 
-  private def doiLink(doi: Option[com.histmersion.api.library.AcquireMarkdown.DoiLinkDoi]): com.histmersion.api.library.AcquireMarkdown.DoiLinkResult =
-    _root_.com.histmersion.api.library.AcquireMarkdown.DoiLinkResult(doi.map(d => s"[$d](https://doi.org/$d)").getOrElse("—"))
+  private def doiLink(doi: Option[com.histmersion.api.library.Doi]): String =
+    (doi.map(d => s"[$d](https://doi.org/$d)").getOrElse("—"))
 
-  private def table(header: List[com.histmersion.api.library.AcquireMarkdown.TableHeader], rows: List[List[com.histmersion.api.library.AcquireMarkdown.TableRows]]): com.histmersion.api.library.AcquireMarkdown.TableResult =
+  private def table(header: List[String], rows: List[List[String]]): String =
     val sep = header.map(_ => "---")
-    _root_.com.histmersion.api.library.AcquireMarkdown.TableResult((List(header, sep) ++ rows).map(_.mkString("| ", " | ", " |")).mkString("\n"))
+    ((List(header, sep) ++ rows).map(_.mkString("| ", " | ", " |")).mkString("\n"))
 
-  def discover(r: DiscoverResult): com.histmersion.api.library.AcquireMarkdown.DiscoverResult =
+  def discover(r: DiscoverResult): com.histmersion.api.Markdown.Text =
     if r.works.isEmpty then s"_No works found for **${esc(r.query)}**._"
     else
       val rows = r.works.map { w =>
@@ -85,7 +39,7 @@ object AcquireMarkdown:
         table(List("citekey", "title", "year", "authors", "cited", "doi", "notes"), rows) +
         "\n\n_Ingest one with `histmersion ingest <doi>`; `in db` means the corpus already has it._"
 
-  def work(w: WorkRef): com.histmersion.api.library.AcquireMarkdown.WorkResult =
+  def work(w: WorkRef): com.histmersion.api.Markdown.Text =
     val meta = List(
       w.authors.map(_.value).mkString(", "),
       w.year.map(_.value.toInt).map(_.toString).getOrElse(""),
@@ -112,7 +66,7 @@ object AcquireMarkdown:
     )
     lines.filter(_.nonEmpty).mkString("\n")
 
-  def wikirefs(r: WikirefsResult): com.histmersion.api.library.AcquireMarkdown.WikirefsResult =
+  def wikirefs(r: WikirefsResult): com.histmersion.api.Markdown.Text =
     if r.dois.isEmpty && r.arxiv.isEmpty then s"_No DOIs cited by **${esc(r.article)}**._"
     else
       val known = r.known.toSet
@@ -122,7 +76,7 @@ object AcquireMarkdown:
         (if r.arxiv.isEmpty then "" else s"\n\n**arXiv:** ${r.arxiv.mkString(", ")}") +
         "\n\n_A trailhead, not a reading list: assess before ingesting (`histmersion assess <doi>`)._"
 
-  def refs(r: RefsResult): com.histmersion.api.library.AcquireMarkdown.RefsResult =
+  def refs(r: RefsResult): com.histmersion.api.Markdown.Text =
     if r.references.isEmpty then s"_No reference list deposited for **${esc(r.target)}** (backend: ${r.backend})._"
     else
       val rows = r.references.map { x =>
@@ -137,11 +91,11 @@ object AcquireMarkdown:
         table(List("reference", "year", "doi", "in corpus"), rows) +
         s"\n\n_${r.resolved} of ${r.count} resolve to stored sources; ${edgeNote(r)}._"
 
-  private def edgeNote(r: RefsResult): com.histmersion.api.library.AcquireMarkdown.EdgeNoteResult =
+  private def edgeNote(r: RefsResult): String =
     if r.edgesAdded > 0 then s"${r.edgesAdded} `references` edge(s) written"
-    else _root_.com.histmersion.api.library.AcquireMarkdown.EdgeNoteResult("re-run with `--apply` to write the `references` edges")
+    else ("re-run with `--apply` to write the `references` edges")
 
-  def assessment(a: Assessment): com.histmersion.api.library.AcquireMarkdown.AssessmentResult =
+  def assessment(a: Assessment): com.histmersion.api.Markdown.Text =
     val icon = a.verdict match
       case Acquire.Verdicts.Retracted => "⛔"
       case Acquire.Verdicts.Corrected => "⚠"
@@ -189,15 +143,15 @@ object AcquireMarkdown:
       else "")
     head + rw + cr + applied
 
-  def retractionsUpdate(r: RetractionsUpdate): com.histmersion.api.library.AcquireMarkdown.RetractionsUpdateResult =
+  def retractionsUpdate(r: RetractionsUpdate): com.histmersion.api.Markdown.Text =
     r.error match
-      case Some(e)           => _root_.com.histmersion.api.library.AcquireMarkdown.RetractionsUpdateResult(s"Retraction Watch refresh FAILED: $e (the mirror still holds ${r.rows} row(s)).")
+      case Some(e)           => _root_.com.histmersion.api.Markdown.Text(s"Retraction Watch refresh FAILED: $e (the mirror still holds ${r.rows} row(s)).")
       case None if ((r.running) == _root_.com.histmersion.api.library.RetractionsUpdate.Running(true)) =>
-        _root_.com.histmersion.api.library.AcquireMarkdown.RetractionsUpdateResult(s"Retraction Watch refresh running in the background; the mirror holds **${r.rows}** row(s) " +
+        _root_.com.histmersion.api.Markdown.Text(s"Retraction Watch refresh running in the background; the mirror holds **${r.rows}** row(s) " +
           "so far. Ask again to see whether it has finished.")
-      case None => _root_.com.histmersion.api.library.AcquireMarkdown.RetractionsUpdateResult(s"Retraction Watch mirror: **${r.rows}** row(s) from ${r.source}.")
+      case None => _root_.com.histmersion.api.Markdown.Text(s"Retraction Watch mirror: **${r.rows}** row(s) from ${r.source}.")
 
-  def followups(r: FollowupsResult): com.histmersion.api.library.AcquireMarkdown.FollowupsResult =
+  def followups(r: FollowupsResult): com.histmersion.api.Markdown.Text =
     if r.followups.isEmpty then s"_Nothing cites **${esc(r.target)}** in that window._"
     else
       val rows = r.followups.map { f =>
@@ -227,7 +181,7 @@ object AcquireMarkdown:
         (if ctx.isEmpty then "" else "\n\n**Citation contexts**\n" + ctx.mkString("\n")) +
         applied + caveat
 
-  def archiveSearch(r: ArchiveSearchResult): com.histmersion.api.library.AcquireMarkdown.ArchiveSearchResult =
+  def archiveSearch(r: ArchiveSearchResult): com.histmersion.api.Markdown.Text =
     if r.items.isEmpty then s"_Nothing on archive.org for **${esc(r.query)}**._"
     else
       val rows = r.items.map(i =>
@@ -242,11 +196,11 @@ object AcquireMarkdown:
         table(List("identifier", "title", "year", "creator"), rows) +
         "\n\n_Check one with `histmersion archive info <id>` before importing._"
 
-  def archiveItem(i: ArchiveItem): com.histmersion.api.library.AcquireMarkdown.ArchiveItemResult =
+  def archiveItem(i: ArchiveItem): com.histmersion.api.Markdown.Text =
     val files =
       if i.files.isEmpty then "_no epub/pdf files_"
       else
-        table(List(_root_.com.histmersion.api.library.AcquireMarkdown.TableHeader("file"), _root_.com.histmersion.api.library.AcquireMarkdown.TableHeader("format"), _root_.com.histmersion.api.library.AcquireMarkdown.TableHeader("MB")), i.files.map(f => List(esc(f.name), cell(f.format), _root_.com.histmersion.api.library.AcquireMarkdown.TableRows(f.megabytes.toString))))
+        table(List(("file"), ("format"), ("MB")), i.files.map(f => List(esc(f.name), cell(f.format), (f.megabytes.toString))))
     val restriction =
       if ((i.lendingOnly) == _root_.com.histmersion.api.library.ArchiveItem.LendingOnly(true)) then
         List(
@@ -260,13 +214,13 @@ object AcquireMarkdown:
       s"### ${i.title.getOrElse(i.identifier)}",
       "",
       s"**Identifier:** `${i.identifier}`  ",
-      s"**Creator:** ${esc(_root_.com.histmersion.api.library.AcquireMarkdown.EscS(i.creator.mkString(", ")))}  ",
+      s"**Creator:** ${esc((i.creator.mkString(", ")))}  ",
       s"**Year:** ${num(i.year)}  ",
       s"**Publisher:** ${cell(i.publisher)}"
     ) ++ restriction ++ List("", files) ++ i.description.toList.flatMap(d => List("", d)))
       .mkString("\n")
 
-  def ingest(r: Ingest.Report): com.histmersion.api.library.AcquireMarkdown.IngestResult =
+  def ingest(r: Ingest.Report): com.histmersion.api.Markdown.Text =
     val steps = r.steps.map(s => s"- ${if ((s.ok) == _root_.com.histmersion.api.library.Ingest.Step.Ok(true)) then "✓" else "✗"} **${s.step}** — ${s.detail}")
     val pdf = r.pdf match
       case Some(p) =>
@@ -286,8 +240,8 @@ object AcquireMarkdown:
     ) ++ steps ++ r.dropIn.toList.flatMap(d => List("", s"> $d"))
       ++ r.assessment.toList.flatMap(a => List("", assessment(a)))).mkString("\n")
 
-  def calibreGaps(g: CalibreGaps): com.histmersion.api.library.AcquireMarkdown.CalibreGapsResult =
-    if g.gaps.isEmpty then _root_.com.histmersion.api.library.AcquireMarkdown.CalibreGapsResult("_Every stored source is in Calibre._")
+  def calibreGaps(g: CalibreGaps): com.histmersion.api.Markdown.Text =
+    if g.gaps.isEmpty then _root_.com.histmersion.api.Markdown.Text("_Every stored source is in Calibre._")
     else
       // An older server's listing has no `storedOriginal`: the column only when the server sent it.
       val said = g.gaps.exists(_.storedOriginal.isDefined)
@@ -296,13 +250,13 @@ object AcquireMarkdown:
           s"`${x.citekey}`",
           esc(x.title).take(70),
           num(x.year),
-          esc(_root_.com.histmersion.api.library.AcquireMarkdown.EscS(x.authors.take(2).mkString(", "))),
+          esc((x.authors.take(2).mkString(", "))),
           cell(x.provenance)
         ) ++
           Option.when(said)(x.storedOriginal.fold("?")(if _ then "stored" else "none")).toList
       )
-      _root_.com.histmersion.api.library.AcquireMarkdown.CalibreGapsResult(s"### ${g.count} source(s) not in Calibre\n\n" +
-        table((List("citekey", "title", "year", "authors", "provenance") ++ Option.when(said)("original").toList).map(refactorValue10 => _root_.com.histmersion.api.library.AcquireMarkdown.TableHeader(refactorValue10)), rows) +
+      _root_.com.histmersion.api.Markdown.Text(s"### ${g.count} source(s) not in Calibre\n\n" +
+        table((List("citekey", "title", "year", "authors", "provenance") ++ Option.when(said)("original").toList).map(refactorValue10 => (refactorValue10)), rows) +
         "\n\n_Push them with `histmersion calibre sync --apply`: the file is the original the server stored " +
         "(or `<cli.calibre.originals-dir>/<citekey>/paper.*` on this host); one with none needs " +
         "`histmersion calibre push <citekey> --file <path>`._")

@@ -1,0 +1,229 @@
+diff --git a/modules/values/src/main/scala/com/histmersion/Latitude.scala b/modules/values/src/main/scala/com/histmersion/Latitude.scala
+index 08f55bb84..9f5be2435 100644
+--- a/modules/values/src/main/scala/com/histmersion/Latitude.scala
++++ b/modules/values/src/main/scala/com/histmersion/Latitude.scala
+@@ -5,4 +5,5 @@ import io.github.iltotore.iron.constraint.numeric.Interval
+ /** Degrees north (negative: south) on WGS84. */
+ type Latitude = Latitude.T
+ 
+-object Latitude extends RefinedType[Double, Interval.Closed[-90.0, 90.0]]
++object Latitude extends RefinedType[Double, Interval.Closed[-90.0, 90.0]]:
++  extension (lat: T) def micro: Long = math.round(lat.value * 1e6)
+diff --git a/modules/values/src/main/scala/com/histmersion/Longitude.scala b/modules/values/src/main/scala/com/histmersion/Longitude.scala
+index eb04caa0c..3e1e2de9d 100644
+--- a/modules/values/src/main/scala/com/histmersion/Longitude.scala
++++ b/modules/values/src/main/scala/com/histmersion/Longitude.scala
+@@ -5,4 +5,5 @@ import io.github.iltotore.iron.constraint.numeric.Interval
+ /** Degrees east (negative: west) on WGS84. */
+ type Longitude = Longitude.T
+ 
+-object Longitude extends RefinedType[Double, Interval.Closed[-180.0, 180.0]]
++object Longitude extends RefinedType[Double, Interval.Closed[-180.0, 180.0]]:
++  extension (lon: T) def micro: Long = math.round(lon.value * 1e6)
+diff --git a/modules/values/src/main/scala/com/histmersion/domain/Licence.scala b/modules/values/src/main/scala/com/histmersion/domain/Licence.scala
+index 09a4c0b30..790b7be8b 100644
+--- a/modules/values/src/main/scala/com/histmersion/domain/Licence.scala
++++ b/modules/values/src/main/scala/com/histmersion/domain/Licence.scala
+@@ -51,14 +51,14 @@ object Licence:
+             p.startsWith("pdm") =>
+         Licence(Licence.Id("public-domain"), Licence.Family.PublicDomain)
+       case CcRe(nc, variant, version, port) =>
+-        val wire = Licence.Family.CcBy.wire + Option(nc).getOrElse("") + Option(variant).getOrElse("")
++        val wire = Licence.Family.CcBy.wire.value + Option(nc).getOrElse("") + Option(variant).getOrElse("")
+         val v = Option(version).map(x => if x.contains(".") then x else s"$x.0")
+         val id = (wire.toUpperCase(Locale.ROOT) :: v.toList ++ Option(port).map(_.toUpperCase(Locale.ROOT)).toList)
+           .mkString("-")
+-        Licence(Licence.Id(id), Licence.Family.fromWire(wire).getOrElse(Licence.Family.Unknown))
++        Licence(Licence.Id(id), Licence.Family.fromWire(Licence.Family.Wire(wire)).getOrElse(Licence.Family.Unknown))
+       case g if g.startsWith("gfdl") => Licence(Licence.Id("GFDL"), Licence.Family.Gfdl)
+       case a if a == "arr" || a == "all-rights-reserved" || a == "copyrighted" || a.startsWith("©") =>
+-        Licence(Licence.Id(Licence.Family.AllRightsReserved.wire), Licence.Family.AllRightsReserved)
++        Licence(Licence.Id(Licence.Family.AllRightsReserved.wire.value), Licence.Family.AllRightsReserved)
+       case other => unknown(_root_.com.histmersion.domain.Licence.Statement(other))
+ 
+   private val CcUrl =
+@@ -96,7 +96,7 @@ object Licence:
+     cands.iterator
+       .map({ val refactorFunction2 = classify; (refactorValue3) => refactorFunction2(_root_.com.histmersion.domain.Licence.Id(refactorValue3)) })
+       .find(_.family != Licence.Family.Unknown)
+-      .getOrElse(unknown(cands.headOption.getOrElse(_root_.com.histmersion.domain.Licence.Statement(""))))
++      .getOrElse(unknown(_root_.com.histmersion.domain.Licence.Statement(cands.headOption.getOrElse(""))))
+ 
+   /** A licence as it is stored and shown: an SPDX id (`CC-BY-SA-4.0`, `CC0-1.0`), `public-domain`, or — when it reads
+     * as no licence known — the statement itself. Classified into its family by the shared `domain.Licence`.
+diff --git a/modules/values/src/main/scala/com/histmersion/domain/automation/ProviderKind.scala b/modules/values/src/main/scala/com/histmersion/domain/automation/ProviderKind.scala
+index bd569c7db..c7182cdb2 100644
+--- a/modules/values/src/main/scala/com/histmersion/domain/automation/ProviderKind.scala
++++ b/modules/values/src/main/scala/com/histmersion/domain/automation/ProviderKind.scala
+@@ -14,31 +14,23 @@ enum ProviderKind(val wire: ProviderKind.Wire):
+   /** A provider a PLUGIN registered under this name (docs/research-plugins.md §22): metered, served through the host's
+     * tool loop. Parsed only while such a provider is registered (`known`).
+     */
+-  case Plugin(name: ProviderKind.Plugin.Name) extends ProviderKind(name)
++  case Plugin(name: ProviderKind.Wire) extends ProviderKind(name)
+ 
+   /** Runs a local command-line agent (one process per step attempt) rather than an HTTP API. */
+   def isCli: Boolean = (this == ClaudeCode || this == Codex || this == Opencode)
+ 
+ object ProviderKind:
+   /** The host's own providers, in their order. */
+-  object Plugin:
+-    type Name = Name.T
+-    object Name extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+-
+   type Wire = Wire.T
+   object Wire extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+ 
+-  type NamesKnown = NamesKnown.T
+-  object NamesKnown extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]:
+-    given _root_.scala.math.Ordering[T] = _root_.scala.math.Ordering.by[T, _root_.java.lang.String](_.value)
+-
+   val values: List[ProviderKind] = List(Anthropic, OpenAI, Local, ClaudeCode, Codex, Opencode)
+ 
+   /** A provider name: one of the host's, else one of the `known` plugin providers' (lower case). */
+-  def parse(s: com.histmersion.domain.automation.ProviderKind.Wire, known: Set[com.histmersion.domain.automation.ProviderKind.Plugin.Name] = Set.empty): Option[ProviderKind] =
++  def parse(s: com.histmersion.domain.automation.ProviderKind.Wire, known: Set[com.histmersion.domain.automation.ProviderKind.Wire] = Set.empty): Option[ProviderKind] =
+     val t = (s).value.trim.toLowerCase
+-    values.find(_.wire == _root_.com.histmersion.domain.automation.ProviderKind.Wire(t)).orElse(Option.when(known(_root_.com.histmersion.domain.automation.ProviderKind.Plugin.Name(t)))(Plugin(_root_.com.histmersion.domain.automation.ProviderKind.Plugin.Name(t))))
++    values.find(_.wire == _root_.com.histmersion.domain.automation.ProviderKind.Wire(t)).orElse(Option.when(known(_root_.com.histmersion.domain.automation.ProviderKind.Wire(t)))(Plugin(_root_.com.histmersion.domain.automation.ProviderKind.Wire(t))))
+ 
+   /** The names a reference may use, for an error message: the host's, then the plugins'. */
+-  def names(known: Set[com.histmersion.domain.automation.ProviderKind.Plugin.Name] = Set.empty): com.histmersion.domain.automation.ProviderKind.Plugin.Name =
+-    _root_.com.histmersion.domain.automation.ProviderKind.Plugin.Name((values.map(_.wire) ++ known.toList.sorted.filterNot(k => values.exists(_.wire == k))).mkString(", "))
++  def names(known: Set[com.histmersion.domain.automation.ProviderKind.Wire] = Set.empty): String =
++    (values.map(_.wire.value) ++ known.toList.map(_.value).sorted.filterNot(k => values.exists(_.wire.value == k))).mkString(", ")
+diff --git a/modules/values/src/main/scala/com/histmersion/domain/catalogue/Place.scala b/modules/values/src/main/scala/com/histmersion/domain/catalogue/Place.scala
+index 7469354b7..0e1c4f43a 100644
+--- a/modules/values/src/main/scala/com/histmersion/domain/catalogue/Place.scala
++++ b/modules/values/src/main/scala/com/histmersion/domain/catalogue/Place.scala
+@@ -9,7 +9,8 @@ object Place:
+   /** A place's id: the gazetteer it comes from, an underscore, that gazetteer's id (`geonames_2911611`). */
+   type Id = Id.T
+ 
+-  object Id extends RefinedType[String, Match["[a-z][a-z0-9]*_.+"]]
++  object Id extends RefinedType[String, Match["[a-z][a-z0-9]*_.+"]]:
++    extension (id: T) def isPleiades: Boolean = id.value.startsWith("pleiades_")
+ 
+   /** The five `kind`s the store recognises. Free text in the column (an importer may carry its own vocabulary), but
+     * these are what the CLI/UI offer and what api's `Lpf` maps foreign type labels onto. `people` (2026-10-09) is a
+@@ -85,18 +86,18 @@ object Place:
+       * Pure.
+       */
+     def gridCentre(lon: com.histmersion.Longitude, lat: com.histmersion.Latitude): Boolean =
+-      val x = math.round(lon * 1e6)
+-      val y = math.round(lat * 1e6)
+-      (CellsMicro.exists(c => Math.floorMod(x, c) == c / 2 && Math.floorMod(y, c) == c / 2))
++      val x = lon.micro
++      val y = lat.micro
++      (CellsMicro.map(_.value).exists(c => Math.floorMod(x, c) == c / 2 && Math.floorMod(y, c) == c / 2))
+ 
+     /** The precision of the point of place `placeId`. */
+     def of(placeId: com.histmersion.domain.catalogue.Place.Id, lon: com.histmersion.Longitude, lat: com.histmersion.Latitude): Precision =
+-      if placeId.startsWith("pleiades_") && gridCentre(lon, lat) then GridCell else Stated
++      if placeId.isPleiades && gridCentre(lon, lat) then GridCell else Stated
+ 
+     /** What a place says about a grid-cell point ("location: approximate (atlas grid square)" on a card). */
+     val Approximate: com.histmersion.domain.catalogue.Place.Precision.Approximate = _root_.com.histmersion.domain.catalogue.Place.Precision.ApproximateValue("approximate (atlas grid square)")
+ 
+-    def parse(s: com.histmersion.domain.catalogue.Place.Precision.Wire): Option[Precision] = values.find(_.wire == Ascii.lower(((s).value.trim)))
++    def parse(s: com.histmersion.domain.catalogue.Place.Precision.Wire): Option[Precision] = values.find(_.wire.value == Ascii.lower(((s).value.trim)))
+ 
+     given WireEnumValues[Precision]:
+       def all: Array[Precision] = Precision.values
+diff --git a/modules/values/src/main/scala/com/histmersion/domain/catalogue/places/Wikidata.scala b/modules/values/src/main/scala/com/histmersion/domain/catalogue/places/Wikidata.scala
+index 9edb6e1eb..70dd2a967 100644
+--- a/modules/values/src/main/scala/com/histmersion/domain/catalogue/places/Wikidata.scala
++++ b/modules/values/src/main/scala/com/histmersion/domain/catalogue/places/Wikidata.scala
+@@ -7,19 +7,14 @@ import io.github.iltotore.iron.constraint.string.Match
+ /** Wikidata item ids, as the gazetteer and the catalogues carry them. Pure. */
+ object Wikidata:
+ 
+-  type QidOfPlaceIdResult = QidOfPlaceIdResult.T
+-  object QidOfPlaceIdResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+-  type QidOfPlaceIdId = QidOfPlaceIdId.T
+-  object QidOfPlaceIdId extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+-
+   val CommonsCategory = "P373"
+ 
+   def isQid(s: String): Boolean = ((s).matches("Q[1-9][0-9]*"))
+ 
+   /** Pure: the item a gazetteer place id names (`wikidata_q132564` → `Q132564`). */
+-  def qidOfPlaceId(id: com.histmersion.domain.catalogue.places.Wikidata.QidOfPlaceIdId): Option[com.histmersion.domain.catalogue.places.Wikidata.QidOfPlaceIdResult] =
++  def qidOfPlaceId(id: com.histmersion.domain.catalogue.Place.Id): Option[Wikidata.Id] =
+     val s = (id).value.trim.toLowerCase(Locale.ROOT)
+-    Option.when(s.startsWith("wikidata_q"))("Q" + s.drop("wikidata_q".length)).filter((isQid))
++    Option.when(s.startsWith("wikidata_q"))("Q" + s.drop("wikidata_q".length)).flatMap(Wikidata.Id.option)
+ 
+   /** A Wikidata item: `Q` and its number (`Q12554`). */
+   type Id = Id.T
+diff --git a/modules/values/src/main/scala/com/histmersion/domain/library/Confidence.scala b/modules/values/src/main/scala/com/histmersion/domain/library/Confidence.scala
+index 41661bcc7..c0e1d4b11 100644
+--- a/modules/values/src/main/scala/com/histmersion/domain/library/Confidence.scala
++++ b/modules/values/src/main/scala/com/histmersion/domain/library/Confidence.scala
+@@ -5,7 +5,7 @@ enum Confidence:
+   case High, Medium, Low, Contested
+ 
+   /** The wire / storage spelling (`high`). */
+-  def wire: com.histmersion.domain.library.Confidence.Wire = Ascii.lower((toString))
++  def wire: com.histmersion.domain.library.Confidence.Wire = com.histmersion.domain.library.Confidence.Wire(Ascii.lower((toString)))
+ 
+ object Confidence:
+   type Wire = Wire.T
+diff --git a/modules/values/src/main/scala/com/histmersion/domain/library/Doi.scala b/modules/values/src/main/scala/com/histmersion/domain/library/Doi.scala
+index e0ef7931f..a793a361a 100644
+--- a/modules/values/src/main/scala/com/histmersion/domain/library/Doi.scala
++++ b/modules/values/src/main/scala/com/histmersion/domain/library/Doi.scala
+@@ -6,15 +6,12 @@ import io.github.iltotore.iron.constraint.string.Match
+ type Doi = Doi.T
+ 
+ object Doi extends RefinedType[String, Match["10\\.[0-9]+/\\S+"]]:
+-  type NormalizeResult = NormalizeResult.T
+-  object NormalizeResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+-
+   private val Core = """10\.\d{4,9}/[-._;()/:A-Za-z0-9<>\[\]]+""".r
+ 
+   /** The DOI a text gives (bare, `doi:`, or as a resolver URL), lower case — DOIs are case-insensitive — and without
+     * the punctuation a sentence leaves after it; `None` when it gives none.
+     */
+-  def normalize(raw: String): Option[com.histmersion.domain.library.Doi.NormalizeResult] =
++  def normalize(raw: String): Option[Doi] =
+     val s = Option(raw)
+       .getOrElse("")
+       .trim
+@@ -23,8 +20,8 @@ object Doi extends RefinedType[String, Match["10\\.[0-9]+/\\S+"]]:
+       .trim
+     Core
+       .findFirstIn(s)
+-      .map(
+-        _root_.com.histmersion.domain.library.Doi.NormalizeResult(_.stripSuffix(".")
++      .flatMap(
++        d => Doi.option(d.stripSuffix(".")
+           .stripSuffix(",")
+           .stripSuffix(";")
+           .stripSuffix(")")
+diff --git a/modules/values/src/main/scala/com/histmersion/domain/library/Source.scala b/modules/values/src/main/scala/com/histmersion/domain/library/Source.scala
+index 7a93ef868..4e502f9e5 100644
+--- a/modules/values/src/main/scala/com/histmersion/domain/library/Source.scala
++++ b/modules/values/src/main/scala/com/histmersion/domain/library/Source.scala
+@@ -10,7 +10,7 @@ object Source:
+     case Foundational, Current, Contested, Superseded, Debunked, Retracted, Unassessed
+ 
+     /** The wire / storage spelling (`current`), as the JSON codec writes it. */
+-    def wire: com.histmersion.domain.library.Source.Status.Wire = Ascii.lower((toString))
++    def wire: com.histmersion.domain.library.Source.Status.Wire = com.histmersion.domain.library.Source.Status.Wire(Ascii.lower((toString)))
+ 
+   object Status:
+     type Wire = Wire.T
+diff --git a/modules/values/src/main/scala/com/histmersion/domain/media/MediaRole.scala b/modules/values/src/main/scala/com/histmersion/domain/media/MediaRole.scala
+index 6406b3275..75009d3eb 100644
+--- a/modules/values/src/main/scala/com/histmersion/domain/media/MediaRole.scala
++++ b/modules/values/src/main/scala/com/histmersion/domain/media/MediaRole.scala
+@@ -30,7 +30,7 @@ object MediaRole:
+   /** Every role, in card order: a place's own picture before an object found there and a map of it; a source shows its
+     * cover before an illustration.
+     */
+-  val all: List[com.histmersion.domain.media.MediaRole.Wire] = placeRoles ++ List(Depiction, Object, Map, Cover, Illustration)
++  val all: List[com.histmersion.domain.media.MediaRole.Wire] = placeRoles ++ List(Wire(Depiction), Wire(Object), Wire(Map), Wire(Cover), Wire(Illustration))
+ 
+   /** Pure: the rank of a role on a card (unknown roles last). */
+   def order(role: com.histmersion.domain.media.MediaRole.Wire): Int = all.indexOf(role) match

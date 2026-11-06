@@ -10,18 +10,16 @@ import io.circe.Json
 import java.util.UUID
 import sttp.tapir.Schema
 object Bundle:
+  type ChangedCount = ChangedCount.T
+  object ChangedCount extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type Problem = Problem.T
+  object Problem extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type UpdatedAt = UpdatedAt.T
+  object UpdatedAt extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
   /** The kinds of entity a bundle carries one line per uid of — and what a tombstone says was deleted. Wire names are
     * kebab-case (`article-version`), as the V031 trigger writes them.
     */
-  type BlobPathResult = BlobPathResult.T
-  object BlobPathResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type BlobPathSha256 = BlobPathSha256.T
-  object BlobPathSha256 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type BlobShaResult = BlobShaResult.T
-  object BlobShaResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type BlobShaPath = BlobShaPath.T
-  object BlobShaPath extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
   enum Kind:
     case Source, Finding, Article, ArticleVersion, Asset, AssetLink, Attestation, Event, Goal, QueueItem
@@ -31,86 +29,74 @@ object Bundle:
       */
     case Place, Period
 
-    def wire: com.histmersion.api.exchange.Bundle.Kind.WireResult = _root_.com.histmersion.api.exchange.Bundle.Kind.WireResult((Kind.wireOf(this)).value)
+    def wire: com.histmersion.api.exchange.Bundle.Kind.Wire = _root_.com.histmersion.api.exchange.Bundle.Kind.Wire((Kind.wireOf(this)).value)
 
     /** The NDJSON file holding this kind's lines. */
-    def file: com.histmersion.api.exchange.Bundle.Kind.FileResult = _root_.com.histmersion.api.exchange.Bundle.Kind.FileResult(s"entities/${Kind.fileStem(this)}.ndjson")
+    def file: String = (s"entities/${Kind.fileStem(this)}.ndjson")
 
     /** The letter a merge issue about this kind of record starts its id with (`P-1a2b3c4d`). */
-    def issueLetter: com.histmersion.api.exchange.Bundle.Kind.IssueLetterResult = Kind.letterOf(this)
+    def issueLetter: String = Kind.letterOf(this)
 
   object Kind:
-    type WireResult = WireResult.T
-    object WireResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-    type FileResult = FileResult.T
-    object FileResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-    type IssueLetterResult = IssueLetterResult.T
-    object IssueLetterResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-    type WireOfResult = WireOfResult.T
-    object WireOfResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-    type FileStemResult = FileStemResult.T
-    object FileStemResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-    type LetterOfResult = LetterOfResult.T
-    object LetterOfResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-    type FromWireS = FromWireS.T
-    object FromWireS extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Wire = Wire.T
+    object Wire extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
-    def wireOf(k: Kind): com.histmersion.api.exchange.Bundle.Kind.WireOfResult = k match
-      case Source         => _root_.com.histmersion.api.exchange.Bundle.Kind.WireOfResult("source")
-      case Finding        => _root_.com.histmersion.api.exchange.Bundle.Kind.WireOfResult("finding")
-      case Article        => _root_.com.histmersion.api.exchange.Bundle.Kind.WireOfResult("article")
-      case ArticleVersion => _root_.com.histmersion.api.exchange.Bundle.Kind.WireOfResult("article-version")
-      case Asset          => _root_.com.histmersion.api.exchange.Bundle.Kind.WireOfResult("asset")
-      case AssetLink      => _root_.com.histmersion.api.exchange.Bundle.Kind.WireOfResult("asset-link")
-      case Attestation    => _root_.com.histmersion.api.exchange.Bundle.Kind.WireOfResult("attestation")
-      case Event          => _root_.com.histmersion.api.exchange.Bundle.Kind.WireOfResult("event")
-      case Goal           => _root_.com.histmersion.api.exchange.Bundle.Kind.WireOfResult("goal")
-      case QueueItem      => _root_.com.histmersion.api.exchange.Bundle.Kind.WireOfResult("queue-item")
-      case Place          => _root_.com.histmersion.api.exchange.Bundle.Kind.WireOfResult("place")
-      case Period         => _root_.com.histmersion.api.exchange.Bundle.Kind.WireOfResult("period")
+    def wireOf(k: Kind): com.histmersion.api.exchange.Bundle.Kind.Wire = k match
+      case Source         => _root_.com.histmersion.api.exchange.Bundle.Kind.Wire("source")
+      case Finding        => _root_.com.histmersion.api.exchange.Bundle.Kind.Wire("finding")
+      case Article        => _root_.com.histmersion.api.exchange.Bundle.Kind.Wire("article")
+      case ArticleVersion => _root_.com.histmersion.api.exchange.Bundle.Kind.Wire("article-version")
+      case Asset          => _root_.com.histmersion.api.exchange.Bundle.Kind.Wire("asset")
+      case AssetLink      => _root_.com.histmersion.api.exchange.Bundle.Kind.Wire("asset-link")
+      case Attestation    => _root_.com.histmersion.api.exchange.Bundle.Kind.Wire("attestation")
+      case Event          => _root_.com.histmersion.api.exchange.Bundle.Kind.Wire("event")
+      case Goal           => _root_.com.histmersion.api.exchange.Bundle.Kind.Wire("goal")
+      case QueueItem      => _root_.com.histmersion.api.exchange.Bundle.Kind.Wire("queue-item")
+      case Place          => _root_.com.histmersion.api.exchange.Bundle.Kind.Wire("place")
+      case Period         => _root_.com.histmersion.api.exchange.Bundle.Kind.Wire("period")
 
-    private def fileStem(k: Kind): com.histmersion.api.exchange.Bundle.Kind.FileStemResult = k match
-      case Source         => _root_.com.histmersion.api.exchange.Bundle.Kind.FileStemResult("sources")
-      case Finding        => _root_.com.histmersion.api.exchange.Bundle.Kind.FileStemResult("findings")
-      case Article        => _root_.com.histmersion.api.exchange.Bundle.Kind.FileStemResult("articles")
-      case ArticleVersion => _root_.com.histmersion.api.exchange.Bundle.Kind.FileStemResult("article-versions")
-      case Asset          => _root_.com.histmersion.api.exchange.Bundle.Kind.FileStemResult("assets")
-      case AssetLink      => _root_.com.histmersion.api.exchange.Bundle.Kind.FileStemResult("asset-links")
-      case Attestation    => _root_.com.histmersion.api.exchange.Bundle.Kind.FileStemResult("attestations")
-      case Event          => _root_.com.histmersion.api.exchange.Bundle.Kind.FileStemResult("events")
-      case Goal           => _root_.com.histmersion.api.exchange.Bundle.Kind.FileStemResult("goals")
-      case QueueItem      => _root_.com.histmersion.api.exchange.Bundle.Kind.FileStemResult("queue")
-      case Place          => _root_.com.histmersion.api.exchange.Bundle.Kind.FileStemResult("places")
-      case Period         => _root_.com.histmersion.api.exchange.Bundle.Kind.FileStemResult("periods")
+    private def fileStem(k: Kind): String = k match
+      case Source         => ("sources")
+      case Finding        => ("findings")
+      case Article        => ("articles")
+      case ArticleVersion => ("article-versions")
+      case Asset          => ("assets")
+      case AssetLink      => ("asset-links")
+      case Attestation    => ("attestations")
+      case Event          => ("events")
+      case Goal           => ("goals")
+      case QueueItem      => ("queue")
+      case Place          => ("places")
+      case Period         => ("periods")
 
-    private def letterOf(k: Kind): com.histmersion.api.exchange.Bundle.Kind.LetterOfResult = k match
-      case Source         => _root_.com.histmersion.api.exchange.Bundle.Kind.LetterOfResult("S")
-      case Finding        => _root_.com.histmersion.api.exchange.Bundle.Kind.LetterOfResult("F")
-      case Article        => _root_.com.histmersion.api.exchange.Bundle.Kind.LetterOfResult("A")
-      case ArticleVersion => _root_.com.histmersion.api.exchange.Bundle.Kind.LetterOfResult("V")
-      case Asset          => _root_.com.histmersion.api.exchange.Bundle.Kind.LetterOfResult("X")
-      case AssetLink      => _root_.com.histmersion.api.exchange.Bundle.Kind.LetterOfResult("K")
-      case Attestation    => _root_.com.histmersion.api.exchange.Bundle.Kind.LetterOfResult("T")
-      case Event          => _root_.com.histmersion.api.exchange.Bundle.Kind.LetterOfResult("E")
-      case Goal           => _root_.com.histmersion.api.exchange.Bundle.Kind.LetterOfResult("G")
-      case QueueItem      => _root_.com.histmersion.api.exchange.Bundle.Kind.LetterOfResult("Q")
-      case Place          => _root_.com.histmersion.api.exchange.Bundle.Kind.LetterOfResult("P")
-      case Period         => _root_.com.histmersion.api.exchange.Bundle.Kind.LetterOfResult("N")
+    private def letterOf(k: Kind): String = k match
+      case Source         => ("S")
+      case Finding        => ("F")
+      case Article        => ("A")
+      case ArticleVersion => ("V")
+      case Asset          => ("X")
+      case AssetLink      => ("K")
+      case Attestation    => ("T")
+      case Event          => ("E")
+      case Goal           => ("G")
+      case QueueItem      => ("Q")
+      case Place          => ("P")
+      case Period         => ("N")
 
-    def fromWire(s: com.histmersion.api.exchange.Bundle.Kind.FromWireS): Option[Kind] = values.find(_.wire == _root_.com.histmersion.api.exchange.Bundle.Kind.WireResult((s).value.trim.toLowerCase))
+    def fromWire(s: com.histmersion.api.exchange.Bundle.Kind.Wire): Option[Kind] = values.find(_.wire == _root_.com.histmersion.api.exchange.Bundle.Kind.Wire((s).value.trim.toLowerCase))
 
     given WireEnumValues[Kind]:
       def all: Array[Kind] = Kind.values
-      def wire(e: Kind): _root_.com.histmersion.api.WireEnumValues.WireResult = _root_.com.histmersion.api.WireEnumValues.WireResult((wireOf(e)).value)
-      def fromWire(s: _root_.com.histmersion.api.WireEnumValues.FromWireS): _root_.scala.Option[Kind] = Kind.fromWire(_root_.com.histmersion.api.exchange.Bundle.Kind.FromWireS((s).value))
+      def wire(e: Kind): _root_.com.histmersion.api.WireEnumValues.Wire = _root_.com.histmersion.api.WireEnumValues.Wire((wireOf(e)).value)
+      def fromWire(s: _root_.com.histmersion.api.WireEnumValues.Wire): _root_.scala.Option[Kind] = Kind.fromWire(_root_.com.histmersion.api.exchange.Bundle.Kind.Wire((s).value))
   val Format = "histmersion-bundle"
   val FormatVersion = 1
   val Extension = ".hmx"
   val ManifestPath = "manifest.json"
 
-  def blobPath(sha256: com.histmersion.api.exchange.Bundle.BlobPathSha256): com.histmersion.api.exchange.Bundle.BlobPathResult = _root_.com.histmersion.api.exchange.Bundle.BlobPathResult(s"blobs/sha256/${(sha256).value.take(2)}/$sha256")
+  def blobPath(sha256: com.histmersion.api.Sha256): String = (s"blobs/sha256/${(sha256).value.take(2)}/$sha256")
 
-  def blobSha(path: com.histmersion.api.exchange.Bundle.BlobShaPath): Option[com.histmersion.api.exchange.Bundle.BlobShaResult] =
+  def blobSha(path: String): Option[com.histmersion.api.Sha256] =
     val prefix = "blobs/sha256/"
     (Option
       .when((path).value.startsWith(prefix)) {
@@ -119,8 +105,8 @@ object Bundle:
       }
       .filter(s =>
         s.length == 64 && s.forall(c => c.isDigit || ('a' to 'f').contains(c)) &&
-          path == blobPath(_root_.com.histmersion.api.exchange.Bundle.BlobPathSha256(s))
-      )).map(refactorValue => _root_.com.histmersion.api.exchange.Bundle.BlobShaResult(refactorValue))
+          path == blobPath(_root_.com.histmersion.api.Sha256(s))
+      )).map(refactorValue => _root_.com.histmersion.api.Sha256(refactorValue))
 
   final case class Alias(alias: Alias.Value, sourceUid: UUID, createdAt: Alias.CreatedAt) derives KindlingsCodecAsObject
 
@@ -613,27 +599,15 @@ object Bundle:
     object Role extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
   object EventSets:
-    type CandidateStatusResult = CandidateStatusResult.T
-    object CandidateStatusResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-    type CandidateStatusHere = CandidateStatusHere.T
-    object CandidateStatusHere extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-    type CandidateStatusThere = CandidateStatusThere.T
-    object CandidateStatusThere extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-    type NewerResult = NewerResult.T
-    object NewerResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
-    type NewerHere = NewerHere.T
-    object NewerHere extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-    type NewerThere = NewerThere.T
-    object NewerThere extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
-    def candidateStatus(here: com.histmersion.api.exchange.Bundle.EventSets.CandidateStatusHere, there: com.histmersion.api.exchange.Bundle.EventSets.CandidateStatusThere): com.histmersion.api.exchange.Bundle.EventSets.CandidateStatusResult =
-      if here == _root_.com.histmersion.api.exchange.Bundle.EventSets.CandidateStatusHere("proposed") then _root_.com.histmersion.api.exchange.Bundle.EventSets.CandidateStatusResult((there).value) else _root_.com.histmersion.api.exchange.Bundle.EventSets.CandidateStatusResult((here).value)
+    def candidateStatus(here: com.histmersion.api.exchange.Bundle.EventCandidate.Status, there: com.histmersion.api.exchange.Bundle.EventCandidate.Status): com.histmersion.api.exchange.Bundle.EventCandidate.Status =
+      if here == _root_.com.histmersion.api.exchange.Bundle.EventCandidate.Status("proposed") then _root_.com.histmersion.api.exchange.Bundle.EventCandidate.Status((there).value) else _root_.com.histmersion.api.exchange.Bundle.EventCandidate.Status((here).value)
 
     /** Timestamps share one fixed-width UTC format, so text order is time order. */
-    def newer(here: Option[com.histmersion.api.exchange.Bundle.EventSets.NewerHere], there: Option[com.histmersion.api.exchange.Bundle.EventSets.NewerThere]): com.histmersion.api.exchange.Bundle.EventSets.NewerResult = (here, there) match
-      case (None, Some(_))    => _root_.com.histmersion.api.exchange.Bundle.EventSets.NewerResult(true)
-      case (Some(h), Some(t)) => _root_.com.histmersion.api.exchange.Bundle.EventSets.NewerResult((t).value > (h).value)
-      case _                  => _root_.com.histmersion.api.exchange.Bundle.EventSets.NewerResult(false)
+    def newer(here: Option[com.histmersion.api.exchange.Bundle.UpdatedAt], there: Option[com.histmersion.api.exchange.Bundle.UpdatedAt]): Boolean = (here, there) match
+      case (None, Some(_))    => (true)
+      case (Some(h), Some(t)) => ((t).value > (h).value)
+      case _                  => (false)
 
   final case class FileInfo(path: FileInfo.Path, lines: FileInfo.Lines, bytes: com.histmersion.api.ByteCount, sha256: com.histmersion.api.Sha256)
       derives KindlingsCodecAsObject,
@@ -647,8 +621,6 @@ object Bundle:
 
 
   object Files:
-    type All = All.T
-    object All extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
     val Edges = "entities/edges.ndjson"
     val UnresolvedEdges = "entities/unresolved-edges.ndjson"
@@ -669,7 +641,7 @@ object Bundle:
     val PlaceSiteTypes = "entities/site-types.ndjson"
     val Tombstones = "entities/tombstones.ndjson"
 
-    val all: List[com.histmersion.api.exchange.Bundle.Files.All] =
+    val all: List[String] =
       com.histmersion.api.exchange.Bundle.Kind.values.toList.map(_.file) ++
         List(
           Edges,
@@ -824,11 +796,9 @@ object Bundle:
       planHash: Option[ImportResult.PlanHash] = None
   ) derives KindlingsCodecAsObject,
         KindlingsSchema, com.histmersion.api.json.Schema:
-    def changed: com.histmersion.api.exchange.Bundle.ImportResult.ChangedResult = counts.map(_.changed).sum
+    def changed: com.histmersion.api.exchange.Bundle.ChangedCount = counts.map(_.changed).sum
 
   object ImportResult:
-    type ChangedResult = ChangedResult.T
-    object ChangedResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
     type DryRun = DryRun.T
     object DryRun extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
@@ -865,11 +835,9 @@ object Bundle:
       held: KindCounts.Held = _root_.com.histmersion.api.exchange.Bundle.KindCounts.Held(0)
   ) derives KindlingsCodecAsObject,
         KindlingsSchema, com.histmersion.api.json.Schema:
-    def changed: com.histmersion.api.exchange.Bundle.KindCounts.ChangedResult = _root_.com.histmersion.api.exchange.Bundle.KindCounts.ChangedResult((inserted).value + (updated).value + (deleted).value)
+    def changed: com.histmersion.api.exchange.Bundle.ChangedCount = _root_.com.histmersion.api.exchange.Bundle.ChangedCount((inserted).value + (updated).value + (deleted).value)
 
   object KindCounts:
-    type ChangedResult = ChangedResult.T
-    object ChangedResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
     type Inserted = Inserted.T
     object Inserted extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]

@@ -13,23 +13,19 @@ import com.histmersion.api.given
   *   - format: `jpg`, `png`
   */
 object Iiif:
+  object Format:
+    type Wire = Wire.T
+    object Wire extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object ContentType:
+    type Wire = Wire.T
+    object Wire extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type Format = Format.T
+  object Format extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type ImageId = ImageId.T
+  object ImageId extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
   type ParseFormatResultPart1 = ParseFormatResultPart1.T
   object ParseFormatResultPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type ParseFormatResultPart2 = ParseFormatResultPart2.T
-  object ParseFormatResultPart2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type ParseFormatS = ParseFormatS.T
-  object ParseFormatS extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type ContentTypeResult = ContentTypeResult.T
-  object ContentTypeResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type ContentTypeFormat = ContentTypeFormat.T
-  object ContentTypeFormat extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type InfoJsonId = InfoJsonId.T
-  object InfoJsonId extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type InfoJsonWidth = InfoJsonWidth.T
-  object InfoJsonWidth extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type InfoJsonHeight = InfoJsonHeight.T
-  object InfoJsonHeight extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
   val ApiContext = "http://iiif.io/api/image/3/context.json"
   val Protocol = "http://iiif.io/api/image"
@@ -40,6 +36,8 @@ object Iiif:
     case Pixels(x: Region.Pixels.X, y: Region.Pixels.Y, w: Region.Pixels.W, h: Region.Pixels.H)
 
   object Region:
+    type Wire = Wire.T
+    object Wire extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
     object Pixels:
       type X = X.T
       object X extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
@@ -52,10 +50,8 @@ object Iiif:
 
     type ParseResultPart1 = ParseResultPart1.T
     object ParseResultPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-    type ParseS = ParseS.T
-    object ParseS extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
-    def parse(s: com.histmersion.api.media.Iiif.Region.ParseS): Either[com.histmersion.api.media.Iiif.Region.ParseResultPart1, Region] = (s).value.trim.toLowerCase match
+    def parse(s: com.histmersion.api.media.Iiif.Region.Wire): Either[com.histmersion.api.media.Iiif.Region.ParseResultPart1, Region] = (s).value.trim.toLowerCase match
       case "full" | "square" => Right(Full)
       case other             =>
         other.split(",").toList match
@@ -78,6 +74,8 @@ object Iiif:
     case BestFit(w: Size.BestFit.W, h: Size.BestFit.H) // !w,h
 
   object Size:
+    type Wire = Wire.T
+    object Wire extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
     object Width:
       type W = W.T
       object W extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
@@ -100,10 +98,8 @@ object Iiif:
 
     type ParseResultPart1 = ParseResultPart1.T
     object ParseResultPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-    type ParseS = ParseS.T
-    object ParseS extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
-    def parse(s: com.histmersion.api.media.Iiif.Size.ParseS): Either[com.histmersion.api.media.Iiif.Size.ParseResultPart1, Size] =
+    def parse(s: com.histmersion.api.media.Iiif.Size.Wire): Either[com.histmersion.api.media.Iiif.Size.ParseResultPart1, Size] =
       val t = (s).value.trim
       t match
         case "max"                  => Right(Max)
@@ -135,17 +131,17 @@ object Iiif:
                 .toRight(_root_.com.histmersion.api.media.Iiif.Size.ParseResultPart1(s"invalid exact size: '$s'"))
             case _ => Left(_root_.com.histmersion.api.media.Iiif.Size.ParseResultPart1(s"invalid size: '$s'"))
 
-  def parseFormat(s: com.histmersion.api.media.Iiif.ParseFormatS): Either[com.histmersion.api.media.Iiif.ParseFormatResultPart1, com.histmersion.api.media.Iiif.ParseFormatResultPart2] = (s).value.trim.toLowerCase match
-    case "jpg" | "jpeg" => Right(_root_.com.histmersion.api.media.Iiif.ParseFormatResultPart2("jpg"))
-    case "png"          => Right(_root_.com.histmersion.api.media.Iiif.ParseFormatResultPart2("png"))
+  def parseFormat(s: com.histmersion.api.media.Iiif.Format.Wire): Either[com.histmersion.api.media.Iiif.ParseFormatResultPart1, com.histmersion.api.media.Iiif.Format] = (s).value.trim.toLowerCase match
+    case "jpg" | "jpeg" => Right(_root_.com.histmersion.api.media.Iiif.Format("jpg"))
+    case "png"          => Right(_root_.com.histmersion.api.media.Iiif.Format("png"))
     case other          => Left(_root_.com.histmersion.api.media.Iiif.ParseFormatResultPart1(s"unsupported format: '$other' (use jpg or png)"))
 
-  def contentType(format: com.histmersion.api.media.Iiif.ContentTypeFormat): com.histmersion.api.media.Iiif.ContentTypeResult = format match
-    case refactorPattern2 if (refactorPattern.value == "png") && (refactorPattern2.value == "png") => _root_.com.histmersion.api.media.Iiif.ContentTypeResult("image/png")
-    case _     => _root_.com.histmersion.api.media.Iiif.ContentTypeResult("image/jpeg")
+  def contentType(format: com.histmersion.api.media.Iiif.Format): com.histmersion.api.media.Iiif.ContentType.Wire = format match
+    case refactorPattern2 if (refactorPattern.value == "png") && (refactorPattern2.value == "png") => _root_.com.histmersion.api.media.Iiif.ContentType.Wire("image/png")
+    case _     => _root_.com.histmersion.api.media.Iiif.ContentType.Wire("image/jpeg")
 
   /** Built as `Json` by hand: the IIIF document's `@`-prefixed keys are beyond circe derivation. */
-  def infoJson(id: com.histmersion.api.media.Iiif.InfoJsonId, width: com.histmersion.api.media.Iiif.InfoJsonWidth, height: com.histmersion.api.media.Iiif.InfoJsonHeight): io.circe.Json =
+  def infoJson(id: com.histmersion.api.media.Iiif.ImageId, width: com.histmersion.api.media.ImageSize.Width, height: com.histmersion.api.media.ImageSize.Height): io.circe.Json =
     import io.circe.Json
     import io.circe.syntax.*
     Json.obj(

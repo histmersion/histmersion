@@ -7,6 +7,9 @@ import collections, glob, json, re, subprocess, sys
 OUT = 'refactor-audit/concept-table'
 WRITE = '--write' in sys.argv
 rows = {r['fqn']: r for r in json.load(open(f'{OUT}/rows.json'))}
+for r in rows.values():
+    if r['base'].endswith(']') and not r['base'].startswith('Array['):
+        r['base'] = 'Array[' + r['base']
 need = {f for f, r in rows.items() if not r['rule']}
 raw = {}
 for p in sorted(glob.glob(f'{OUT}/out/*.tsv')):
@@ -77,7 +80,7 @@ json.dump(redecide, open(f'{OUT}/redecide.json', 'w'), indent=0)
 print('table', collections.Counter('native' if t == 'native' else 'new' if t in newbase else 'existing' for t in table.values()), 'undecided', len(need) - len(raw), 'set aside', dict(why), 'new concepts', len(newbase))
 files = [f for f in subprocess.check_output(['git', 'ls-files', 'modules']).decode().split() if f.endswith('.scala')]
 src = {f: open(f, errors='ignore').read() for f in files}
-BASES = {'String': '_root_.java.lang.String', 'Int': '_root_.scala.Int', 'Long': '_root_.scala.Long', 'Boolean': '_root_.scala.Boolean', 'Double': '_root_.scala.Double', 'Char': '_root_.scala.Char', 'Byte': '_root_.scala.Byte'}
+BASES = {'Array[Byte]': '_root_.scala.Array[_root_.scala.Byte]', 'Array[Int]': '_root_.scala.Array[_root_.scala.Int]', 'String': '_root_.java.lang.String', 'Int': '_root_.scala.Int', 'Long': '_root_.scala.Long', 'Boolean': '_root_.scala.Boolean', 'Double': '_root_.scala.Double', 'Char': '_root_.scala.Char', 'Byte': '_root_.scala.Byte'}
 PLAIN = {'String': 'String', 'Int': 'Int', 'Long': 'Long', 'Boolean': 'Boolean', 'Double': 'Double', 'Char': 'Char', 'Byte': 'Byte'}
 # one alternation over every name, longest first, so one pass does them all
 names = sorted(table, key=len, reverse=True)

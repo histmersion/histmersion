@@ -1,24 +1,14 @@
 package com.histmersion.api.catalogue
 import com.histmersion.api.given
 object EventLinksMarkdown:
+  type Distance = Distance.T
+  object Distance extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
-  type KmResult = KmResult.T
-  object KmResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type KmD = KmD.T
-  object KmD extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type ContextResult = ContextResult.T
-  object ContextResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type LineResult = LineResult.T
-  object LineResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type ListResult = ListResult.T
-  object ListResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type ResultResult = ResultResult.T
-  object ResultResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
-  private def km(d: com.histmersion.api.catalogue.EventLinksMarkdown.KmD): com.histmersion.api.catalogue.EventLinksMarkdown.KmResult = _root_.com.histmersion.api.catalogue.EventLinksMarkdown.KmResult(s"${math.round((d).value)} km")
+  private def km(d: com.histmersion.api.catalogue.EventLinksMarkdown.Distance): String = (s"${math.round((d).value)} km")
 
-  def context(d: com.histmersion.api.catalogue.EventCard): com.histmersion.api.catalogue.EventLinksMarkdown.ContextResult =
-    val tier = s"\n\n**Tier:** ${d.tier}" + (if d.tier == _root_.com.histmersion.api.catalogue.EventCard.TierResult(EventTier.Catalogue) then
+  def context(d: com.histmersion.api.catalogue.EventCard): com.histmersion.api.Markdown.Text =
+    val tier = s"\n\n**Tier:** ${d.tier}" + (if d.tier == _root_.com.histmersion.api.catalogue.EventGeo.Tier(EventTier.Catalogue) then
                                                " — known from a catalogue only: a research lead, not evidence"
                                              else "")
     val names = if d.names.isEmpty then "" else s"  \n**Also called:** ${d.names.take(12).mkString(", ")}"
@@ -59,21 +49,21 @@ object EventLinksMarkdown:
       "\n\n**Leads**\n" + d.leads
         .map(l => s"- ${l.text}\n" + l.actions.map(a => s"  - ${a.label}: `${a.command}`").mkString("\n"))
         .mkString("\n")
-    _root_.com.histmersion.api.catalogue.EventLinksMarkdown.ContextResult(tier + names + cat + srcs + arts + near + cands + leads)
+    _root_.com.histmersion.api.Markdown.Text(tier + names + cat + srcs + arts + near + cands + leads)
 
-  private def line(c: EventLinkCandidate): com.histmersion.api.catalogue.EventLinksMarkdown.LineResult =
-    _root_.com.histmersion.api.catalogue.EventLinksMarkdown.LineResult(s"- [[${c.citekey}]]${c.title.fold("")(t => s" — $t")} · score ${c.score} · ${c.status}" +
+  private def line(c: EventLinkCandidate): String =
+    (s"- [[${c.citekey}]]${c.title.fold("")(t => s" — $t")} · score ${c.score} · ${c.status}" +
       (if c.reasons.isEmpty then "" else s" — ${c.reasons.mkString("; ")}"))
 
-  def list(l: EventLinkList): com.histmersion.api.catalogue.EventLinksMarkdown.ListResult =
-    if l.candidates.isEmpty then _root_.com.histmersion.api.catalogue.EventLinksMarkdown.ListResult(s"_No source in the corpus is near `${l.eventId}` in time and space or names it._")
+  def list(l: EventLinkList): com.histmersion.api.Markdown.Text =
+    if l.candidates.isEmpty then _root_.com.histmersion.api.Markdown.Text(s"_No source in the corpus is near `${l.eventId}` in time and space or names it._")
     else
-      _root_.com.histmersion.api.catalogue.EventLinksMarkdown.ListResult((s"## Sources that may discuss ${l.label} (`${l.eventId}`)" :: "" ::
+      _root_.com.histmersion.api.Markdown.Text((s"## Sources that may discuss ${l.label} (`${l.eventId}`)" :: "" ::
         "_Proposed from findings near it and passages naming it — unconfirmed until confirmed (an attestation)._" :: "" ::
         l.candidates.map(line)).mkString("\n"))
 
-  def result(r: EventLinksResult): com.histmersion.api.catalogue.EventLinksMarkdown.ResultResult =
-    _root_.com.histmersion.api.catalogue.EventLinksMarkdown.ResultResult(List(
+  def result(r: EventLinksResult): com.histmersion.api.Markdown.Text =
+    _root_.com.histmersion.api.Markdown.Text(List(
       Option.when(r.attested.nonEmpty)(
         "**Attested:** " + r.attested
           .map(a =>

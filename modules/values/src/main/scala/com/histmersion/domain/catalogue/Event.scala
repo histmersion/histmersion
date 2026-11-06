@@ -18,12 +18,8 @@ object Event:
 
   /** The relations between two events: Allen's interval relations and the causal ones. */
   object EdgeKind:
-    type Allen = Allen.T
-    object Allen extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-    type Causal = Causal.T
-    object Causal extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-    type All = All.T
-    object All extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Wire = Wire.T
+    object Wire extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
     val Before = "before"
     val Meets = "meets"
@@ -37,30 +33,30 @@ object Event:
     val Triggers = "triggers"
     val RespondsTo = "responds_to"
     val FallsWithin = "falls_within"
-    val allen: Set[com.histmersion.domain.catalogue.Event.EdgeKind.Allen] = Set(_root_.com.histmersion.domain.catalogue.Event.EdgeKind.Allen(Before), _root_.com.histmersion.domain.catalogue.Event.EdgeKind.Allen(Meets), _root_.com.histmersion.domain.catalogue.Event.EdgeKind.Allen(Overlaps), _root_.com.histmersion.domain.catalogue.Event.EdgeKind.Allen(During), _root_.com.histmersion.domain.catalogue.Event.EdgeKind.Allen(Starts), _root_.com.histmersion.domain.catalogue.Event.EdgeKind.Allen(Finishes), _root_.com.histmersion.domain.catalogue.Event.EdgeKind.Allen(Equals))
-    val causal: Set[com.histmersion.domain.catalogue.Event.EdgeKind.Causal] = Set(_root_.com.histmersion.domain.catalogue.Event.EdgeKind.Causal(Causes), _root_.com.histmersion.domain.catalogue.Event.EdgeKind.Causal(Enables), _root_.com.histmersion.domain.catalogue.Event.EdgeKind.Causal(Triggers), _root_.com.histmersion.domain.catalogue.Event.EdgeKind.Causal(RespondsTo), _root_.com.histmersion.domain.catalogue.Event.EdgeKind.Causal(FallsWithin))
-    val all: List[com.histmersion.domain.catalogue.Event.EdgeKind.All] =
+    val allen: Set[com.histmersion.domain.catalogue.Event.EdgeKind.Wire] = Set(_root_.com.histmersion.domain.catalogue.Event.EdgeKind.Wire(Before), _root_.com.histmersion.domain.catalogue.Event.EdgeKind.Wire(Meets), _root_.com.histmersion.domain.catalogue.Event.EdgeKind.Wire(Overlaps), _root_.com.histmersion.domain.catalogue.Event.EdgeKind.Wire(During), _root_.com.histmersion.domain.catalogue.Event.EdgeKind.Wire(Starts), _root_.com.histmersion.domain.catalogue.Event.EdgeKind.Wire(Finishes), _root_.com.histmersion.domain.catalogue.Event.EdgeKind.Wire(Equals))
+    val causal: Set[com.histmersion.domain.catalogue.Event.EdgeKind.Wire] = Set(_root_.com.histmersion.domain.catalogue.Event.EdgeKind.Wire(Causes), _root_.com.histmersion.domain.catalogue.Event.EdgeKind.Wire(Enables), _root_.com.histmersion.domain.catalogue.Event.EdgeKind.Wire(Triggers), _root_.com.histmersion.domain.catalogue.Event.EdgeKind.Wire(RespondsTo), _root_.com.histmersion.domain.catalogue.Event.EdgeKind.Wire(FallsWithin))
+    val all: List[com.histmersion.domain.catalogue.Event.EdgeKind.Wire] =
       List(
-        _root_.com.histmersion.domain.catalogue.Event.EdgeKind.All(Before),
-        _root_.com.histmersion.domain.catalogue.Event.EdgeKind.All(Meets),
-        _root_.com.histmersion.domain.catalogue.Event.EdgeKind.All(Overlaps),
-        _root_.com.histmersion.domain.catalogue.Event.EdgeKind.All(During),
-        _root_.com.histmersion.domain.catalogue.Event.EdgeKind.All(Starts),
-        _root_.com.histmersion.domain.catalogue.Event.EdgeKind.All(Finishes),
-        _root_.com.histmersion.domain.catalogue.Event.EdgeKind.All(Equals),
-        _root_.com.histmersion.domain.catalogue.Event.EdgeKind.All(Causes),
-        _root_.com.histmersion.domain.catalogue.Event.EdgeKind.All(Enables),
-        _root_.com.histmersion.domain.catalogue.Event.EdgeKind.All(Triggers),
-        _root_.com.histmersion.domain.catalogue.Event.EdgeKind.All(RespondsTo),
-        _root_.com.histmersion.domain.catalogue.Event.EdgeKind.All(FallsWithin)
+        _root_.com.histmersion.domain.catalogue.Event.EdgeKind.Wire(Before),
+        _root_.com.histmersion.domain.catalogue.Event.EdgeKind.Wire(Meets),
+        _root_.com.histmersion.domain.catalogue.Event.EdgeKind.Wire(Overlaps),
+        _root_.com.histmersion.domain.catalogue.Event.EdgeKind.Wire(During),
+        _root_.com.histmersion.domain.catalogue.Event.EdgeKind.Wire(Starts),
+        _root_.com.histmersion.domain.catalogue.Event.EdgeKind.Wire(Finishes),
+        _root_.com.histmersion.domain.catalogue.Event.EdgeKind.Wire(Equals),
+        _root_.com.histmersion.domain.catalogue.Event.EdgeKind.Wire(Causes),
+        _root_.com.histmersion.domain.catalogue.Event.EdgeKind.Wire(Enables),
+        _root_.com.histmersion.domain.catalogue.Event.EdgeKind.Wire(Triggers),
+        _root_.com.histmersion.domain.catalogue.Event.EdgeKind.Wire(RespondsTo),
+        _root_.com.histmersion.domain.catalogue.Event.EdgeKind.Wire(FallsWithin)
       )
 
   /** Where a candidate link between an event and a source stands. */
   object LinkStatus:
-    type All = All.T
-    object All extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Wire = Wire.T
+    object Wire extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
     val Proposed = "proposed"
     val Confirmed = "confirmed"
     val Rejected = "rejected"
-    val all: List[com.histmersion.domain.catalogue.Event.LinkStatus.All] = List(_root_.com.histmersion.domain.catalogue.Event.LinkStatus.All(Proposed), _root_.com.histmersion.domain.catalogue.Event.LinkStatus.All(Confirmed), _root_.com.histmersion.domain.catalogue.Event.LinkStatus.All(Rejected))
+    val all: List[com.histmersion.domain.catalogue.Event.LinkStatus.Wire] = List(_root_.com.histmersion.domain.catalogue.Event.LinkStatus.Wire(Proposed), _root_.com.histmersion.domain.catalogue.Event.LinkStatus.Wire(Confirmed), _root_.com.histmersion.domain.catalogue.Event.LinkStatus.Wire(Rejected))

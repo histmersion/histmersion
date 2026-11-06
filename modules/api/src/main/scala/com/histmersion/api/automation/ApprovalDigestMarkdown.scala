@@ -3,23 +3,17 @@ package com.histmersion.api.automation
 import com.histmersion.api.Plural
 import com.histmersion.api.given
 object ApprovalDigestMarkdown:
-  type DeciderResult = DeciderResult.T
-  object DeciderResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type DeciderDecidedBy = _root_.com.histmersion.api.automation.ApprovalDigest.KindGroup.DecidedBy
   val DeciderDecidedBy: _root_.com.histmersion.api.automation.ApprovalDigest.KindGroup.DecidedBy.type = _root_.com.histmersion.api.automation.ApprovalDigest.KindGroup.DecidedBy
-  type DigestResult = DigestResult.T
-  object DigestResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type BulkResult = BulkResult.T
-  object BulkResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
   import ApprovalDigest.*
 
-  private def decider(decidedBy: com.histmersion.api.automation.ApprovalDigestMarkdown.DeciderDecidedBy): com.histmersion.api.automation.ApprovalDigestMarkdown.DeciderResult = decidedBy match
-    case refactorPattern if (refactorPattern.value == "checked") && (refactorPattern2.value == "checked") => _root_.com.histmersion.api.automation.ApprovalDigestMarkdown.DeciderResult("the autopilot's checks (within the day's cap); a person may decide them first")
-    case Waits     => _root_.com.histmersion.api.automation.ApprovalDigestMarkdown.DeciderResult("nobody now: they wait (see above); a person may still decide one")
-    case _         => _root_.com.histmersion.api.automation.ApprovalDigestMarkdown.DeciderResult("a person")
+  private def decider(decidedBy: com.histmersion.api.automation.ApprovalDigestMarkdown.DeciderDecidedBy): com.histmersion.api.Markdown.Text = decidedBy match
+    case refactorPattern if (refactorPattern.value == "checked") && (refactorPattern2.value == "checked") => _root_.com.histmersion.api.Markdown.Text("the autopilot's checks (within the day's cap); a person may decide them first")
+    case Waits     => _root_.com.histmersion.api.Markdown.Text("nobody now: they wait (see above); a person may still decide one")
+    case _         => _root_.com.histmersion.api.Markdown.Text("a person")
 
-  def digest(d: Digest): com.histmersion.api.automation.ApprovalDigestMarkdown.DigestResult =
+  def digest(d: Digest): com.histmersion.api.Markdown.Text =
     val head = s"# Waiting for a person (${d.at.take(16).replace('T', ' ')} UTC)\n\n" +
       s"- ${Plural.count(d.total, "open approval")}" +
       (if d.heldForPerson > 0 then
@@ -35,9 +29,9 @@ object ApprovalDigestMarkdown:
         s"- ids: ${g.ids.map(i => s"#$i").mkString(", ")}${if (g.count).value > g.ids.size then ", …" else ""}\n" +
         s"- all at once: `histmersion agent decide-all approve --kind ${g.kind}` (or `reject`; `--dry-run` lists them)"
     }
-    _root_.com.histmersion.api.automation.ApprovalDigestMarkdown.DigestResult((head :: kinds).mkString("\n\n"))
+    _root_.com.histmersion.api.Markdown.Text((head :: kinds).mkString("\n\n"))
 
-  def bulk(r: BulkResult): com.histmersion.api.automation.ApprovalDigestMarkdown.BulkResult =
+  def bulk(r: BulkResult): com.histmersion.api.Markdown.Text =
     val verb = if r.dryRun then s"would ${r.decision}" else if r.decision == "approve" then "approved" else "rejected"
     s"# ${Plural.count(r.matched, _root_.com.histmersion.api.Plural.CountSingular("open approval"))} matched: $verb ${r.decided.size}" + (if r.dryRun then
                                                                                            " (dry run: nothing decided)"

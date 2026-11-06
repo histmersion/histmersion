@@ -7,21 +7,25 @@ import com.histmersion.api.given
 import com.histmersion.api.research.Article
 
 object Managers:
+  object Usd:
+    type Amount = Amount.T
+    object Amount extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object Stalls:
+    type Limit = Limit.T
+    object Limit extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object Scheduler:
+    type Limit = Limit.T
+    object Limit extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object ItemStatus:
+    type Wire = Wire.T
+    object Wire extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object ItemKind:
+    type Word = Word.T
+    object Word extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object Goal:
+    type Ref = Ref.T
+    object Ref extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
-  type ItemKindsResult = ItemKindsResult.T
-  object ItemKindsResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type ItemKindOfResult = ItemKindOfResult.T
-  object ItemKindOfResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type ItemKindOfWord = ItemKindOfWord.T
-  object ItemKindOfWord extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type SeedIdResult = SeedIdResult.T
-  object SeedIdResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type SeedIdGoal = SeedIdGoal.T
-  object SeedIdGoal extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type WatchIdResult = WatchIdResult.T
-  object WatchIdResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type WatchIdGoal = WatchIdGoal.T
-  object WatchIdGoal extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type Actions = ActionsValue
   type ActionsValue = ActionsValue.T
   object ActionsValue extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
@@ -45,10 +49,8 @@ object Managers:
     type Wire = Wire.T
     object Wire extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
-    type ParseS = ParseS.T
-    object ParseS extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
-    def parse(s: com.histmersion.api.automation.Managers.ItemOrigin.ParseS): Option[ItemOrigin] = values.find(_.wire == _root_.com.histmersion.api.automation.Managers.ItemOrigin.Wire((s).value.trim.toLowerCase))
+    def parse(s: com.histmersion.api.automation.Managers.ItemOrigin.Wire): Option[ItemOrigin] = values.find(_.wire == _root_.com.histmersion.api.automation.Managers.ItemOrigin.Wire((s).value.trim.toLowerCase))
 
   object Feed:
     val Started = "started"
@@ -88,16 +90,16 @@ object Managers:
 
   val OaIngest = "oa-ingest"
 
-  def itemKinds(k: Kind): List[com.histmersion.api.automation.Managers.ItemKindsResult] = k match
-    case Kind.Review => List(_root_.com.histmersion.api.automation.Managers.ItemKindsResult(ArticleReview), _root_.com.histmersion.api.automation.Managers.ItemKindsResult(InferFilter), _root_.com.histmersion.api.automation.Managers.ItemKindsResult(ArticleExtend))
-    case Kind.Enrich => List(_root_.com.histmersion.api.automation.Managers.ItemKindsResult(SourceEnrich))
-    case Kind.Seed   => List(_root_.com.histmersion.api.automation.Managers.ItemKindsResult(ProposeArticles), _root_.com.histmersion.api.automation.Managers.ItemKindsResult(ArticleCompile), _root_.com.histmersion.api.automation.Managers.ItemKindsResult(PlanGoalItem))
-    case Kind.Watch  => List(_root_.com.histmersion.api.automation.Managers.ItemKindsResult(AcquisitionSweep), _root_.com.histmersion.api.automation.Managers.ItemKindsResult(CurrencyCheck), _root_.com.histmersion.api.automation.Managers.ItemKindsResult(OaIngest))
+  def itemKinds(k: Kind): List[com.histmersion.api.automation.Managers.ManagerItem.Kind] = k match
+    case Kind.Review => List(_root_.com.histmersion.api.automation.Managers.ManagerItem.Kind(ArticleReview), _root_.com.histmersion.api.automation.Managers.ManagerItem.Kind(InferFilter), _root_.com.histmersion.api.automation.Managers.ManagerItem.Kind(ArticleExtend))
+    case Kind.Enrich => List(_root_.com.histmersion.api.automation.Managers.ManagerItem.Kind(SourceEnrich))
+    case Kind.Seed   => List(_root_.com.histmersion.api.automation.Managers.ManagerItem.Kind(ProposeArticles), _root_.com.histmersion.api.automation.Managers.ManagerItem.Kind(ArticleCompile), _root_.com.histmersion.api.automation.Managers.ManagerItem.Kind(PlanGoalItem))
+    case Kind.Watch  => List(_root_.com.histmersion.api.automation.Managers.ManagerItem.Kind(AcquisitionSweep), _root_.com.histmersion.api.automation.Managers.ManagerItem.Kind(CurrencyCheck), _root_.com.histmersion.api.automation.Managers.ManagerItem.Kind(OaIngest))
 
-  def itemKindOf(k: Kind, word: com.histmersion.api.automation.Managers.ItemKindOfWord): Option[com.histmersion.api.automation.Managers.ItemKindOfResult] =
+  def itemKindOf(k: Kind, word: com.histmersion.api.automation.Managers.ItemKind.Word): Option[com.histmersion.api.automation.Managers.ManagerItem.Kind] =
     val w = (word).value.trim.toLowerCase
     val kinds = itemKinds(k)
-    if w.isEmpty then (kinds.headOption).map(refactorValue => _root_.com.histmersion.api.automation.Managers.ItemKindOfResult((refactorValue).value))
+    if w.isEmpty then (kinds.headOption).map(refactorValue => _root_.com.histmersion.api.automation.Managers.ManagerItem.Kind((refactorValue).value))
     else
       val alias = w match
         case "review" | "article"        => ArticleReview
@@ -111,15 +113,15 @@ object Managers:
         case "plan-goal" | "goal-plan"   => PlanGoalItem
         case "ingest" | "backlog"        => OaIngest
         case other                       => other
-      (Option(alias).filter(kinds.contains)).map(refactorValue2 => _root_.com.histmersion.api.automation.Managers.ItemKindOfResult(refactorValue2))
+      (Option(alias).filter(kinds.contains)).map(refactorValue2 => _root_.com.histmersion.api.automation.Managers.ManagerItem.Kind(refactorValue2))
 
   val ReviewId = "review"
 
   val EnrichId = "enrich"
 
-  def seedId(goal: com.histmersion.api.automation.Managers.SeedIdGoal): com.histmersion.api.automation.Managers.SeedIdResult = _root_.com.histmersion.api.automation.Managers.SeedIdResult(s"seed:${(goal).value.trim}")
+  def seedId(goal: com.histmersion.api.automation.Managers.Goal.Ref): com.histmersion.api.automation.Managers.ManagerInfo.Id = _root_.com.histmersion.api.automation.Managers.ManagerInfo.Id(s"seed:${(goal).value.trim}")
 
-  def watchId(goal: com.histmersion.api.automation.Managers.WatchIdGoal): com.histmersion.api.automation.Managers.WatchIdResult = _root_.com.histmersion.api.automation.Managers.WatchIdResult(s"watch:${(goal).value.trim}")
+  def watchId(goal: com.histmersion.api.automation.Managers.Goal.Ref): com.histmersion.api.automation.Managers.ManagerInfo.Id = _root_.com.histmersion.api.automation.Managers.ManagerInfo.Id(s"watch:${(goal).value.trim}")
 
   enum Sweep(val wire: Sweep.Wire, val itemKind: Sweep.ItemKind):
     case Acquisition extends Sweep(_root_.com.histmersion.api.automation.Managers.Sweep.Wire("acquisition"), _root_.com.histmersion.api.automation.Managers.Sweep.ItemKind(AcquisitionSweep))
@@ -131,14 +133,10 @@ object Managers:
     type ItemKind = ItemKind.T
     object ItemKind extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
-    type ParseS = ParseS.T
-    object ParseS extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-    type OfItemKind = OfItemKind.T
-    object OfItemKind extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
-    def parse(s: com.histmersion.api.automation.Managers.Sweep.ParseS): Option[Sweep] =
+    def parse(s: com.histmersion.api.automation.Managers.Sweep.Wire): Option[Sweep] =
       values.find(x => x.wire == _root_.com.histmersion.api.automation.Managers.Sweep.Wire((s).value.trim.toLowerCase) || x.itemKind == _root_.com.histmersion.api.automation.Managers.Sweep.ItemKind((s).value.trim.toLowerCase))
-    def ofItem(kind: com.histmersion.api.automation.Managers.Sweep.OfItemKind): Option[Sweep] = values.find(_.itemKind == kind)
+    def ofItem(kind: com.histmersion.api.automation.Managers.Sweep.ItemKind): Option[Sweep] = values.find(_.itemKind == kind)
 
     def of(c: ManagerConfig): List[Sweep] =
       c.sweeps.fold(values.toList)(ws => values.toList.filter(s => ws.exists(w => parse(w).contains(s))))
@@ -153,10 +151,8 @@ object Managers:
     type Wire = Wire.T
     object Wire extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
-    type ParseS = ParseS.T
-    object ParseS extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
-    def parse(s: com.histmersion.api.automation.Managers.EnqueueKind.ParseS): Option[EnqueueKind] = (s).value.trim.toLowerCase match
+    def parse(s: com.histmersion.api.automation.Managers.EnqueueKind.Wire): Option[EnqueueKind] = (s).value.trim.toLowerCase match
       case "" | "article" | ArticleReview       => Some(Review)
       case ArticleExtend                        => Some(Extend)
       case SourceEnrich | "source"              => Some(Enrich)
@@ -226,20 +222,15 @@ object Managers:
       other.extendMinNew.orElse(extendMinNew)
     )
   object ManagerConfig:
+    object Key:
+      type Wire = Wire.T
+      object Wire extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Problem = Problem.T
+    object Problem extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Spec = Spec.T
+    object Spec extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
 
-    type ParseResultPart1 = ParseResultPart1.T
-    object ParseResultPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-    type ParseKvs = ParseKvs.T
-    object ParseKvs extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-    type BoolResultPart1 = BoolResultPart1.T
-    object BoolResultPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-    type BoolResultPart2 = BoolResultPart2.T
-    object BoolResultPart2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
-    type BoolK = BoolK.T
-    object BoolK extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-    type BoolV = BoolV.T
-    object BoolV extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
     type MaxRuns = MaxRuns.T
     object MaxRuns extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
@@ -288,7 +279,7 @@ object Managers:
     type ExtendMinNew = ExtendMinNew.T
     object ExtendMinNew extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
-    def parse(kvs: List[com.histmersion.api.automation.Managers.ManagerConfig.ParseKvs]): Either[com.histmersion.api.automation.Managers.ManagerConfig.ParseResultPart1, ManagerConfig] =
+    def parse(kvs: List[com.histmersion.api.automation.Managers.ManagerConfig.Spec]): Either[com.histmersion.api.automation.Managers.ManagerConfig.Problem, ManagerConfig] =
       kvs.foldLeft[Either[String, ManagerConfig]](Right(ManagerConfig())) { (acc, kv) =>
         acc.flatMap { c =>
           (kv).value.split("=", 2) match
@@ -310,16 +301,16 @@ object Managers:
                 case "minSources" | "min-sources"                 => int.map(n => c.copy(minSources = Some(_root_.com.histmersion.api.automation.Managers.ManagerConfig.MinSources(n))))
                 case "maxArticles" | "max-articles"               => int.map(n => c.copy(maxArticles = Some(_root_.com.histmersion.api.automation.Managers.ManagerConfig.MaxArticles(n))))
                 case "autoIngestPerDay" | "auto-ingest-per-day"   => int.map(n => c.copy(autoIngestPerDay = Some(_root_.com.histmersion.api.automation.Managers.ManagerConfig.AutoIngestPerDay(n))))
-                case "inferFilter" | "infer-filter"               => (bool(_root_.com.histmersion.api.automation.Managers.ManagerConfig.BoolK(k), _root_.com.histmersion.api.automation.Managers.ManagerConfig.BoolV(v)).map(b => c.copy(inferFilter = Some(_root_.com.histmersion.api.automation.Managers.ManagerConfig.InferFilter((b).value))))).left.map(refactorError4 => (refactorError4).value)
-                case "autoIngest" | "auto-ingest"                 => (bool(_root_.com.histmersion.api.automation.Managers.ManagerConfig.BoolK(k), _root_.com.histmersion.api.automation.Managers.ManagerConfig.BoolV(v)).map(b => c.copy(autoIngest = Some(_root_.com.histmersion.api.automation.Managers.ManagerConfig.AutoIngest((b).value))))).left.map(refactorError5 => (refactorError5).value)
-                case "autoApprove" | "auto-approve"               => (bool(_root_.com.histmersion.api.automation.Managers.ManagerConfig.BoolK(k), _root_.com.histmersion.api.automation.Managers.ManagerConfig.BoolV(v)).map(b => c.copy(autoApprove = Some(_root_.com.histmersion.api.automation.Managers.ManagerConfig.AutoApprove((b).value))))).left.map(refactorError6 => (refactorError6).value)
+                case "inferFilter" | "infer-filter"               => (bool(_root_.com.histmersion.api.automation.Managers.ManagerConfig.Key.Wire(k), (v)).map(b => c.copy(inferFilter = Some(_root_.com.histmersion.api.automation.Managers.ManagerConfig.InferFilter((b).value))))).left.map(refactorError4 => (refactorError4).value)
+                case "autoIngest" | "auto-ingest"                 => (bool(_root_.com.histmersion.api.automation.Managers.ManagerConfig.Key.Wire(k), (v)).map(b => c.copy(autoIngest = Some(_root_.com.histmersion.api.automation.Managers.ManagerConfig.AutoIngest((b).value))))).left.map(refactorError5 => (refactorError5).value)
+                case "autoApprove" | "auto-approve"               => (bool(_root_.com.histmersion.api.automation.Managers.ManagerConfig.Key.Wire(k), (v)).map(b => c.copy(autoApprove = Some(_root_.com.histmersion.api.automation.Managers.ManagerConfig.AutoApprove((b).value))))).left.map(refactorError6 => (refactorError6).value)
                 case "extendMinNew" | "extend-min-new"            => int.map(n => c.copy(extendMinNew = Some(_root_.com.histmersion.api.automation.Managers.ManagerConfig.ExtendMinNew(n))))
                 case "sweeps"                                     =>
                   val ws = v.split(",").toList.map(_.trim).filter(_.nonEmpty)
-                  ws.find(w => Sweep.parse(_root_.com.histmersion.api.automation.Managers.Sweep.ParseS(w)).isEmpty) match
+                  ws.find(w => Sweep.parse(_root_.com.histmersion.api.automation.Managers.Sweep.Wire(w)).isEmpty) match
                     case Some(w) =>
                       Left(s"$k: '$w' is not a sweep (one of: ${Sweep.values.map(_.wire).mkString(", ")})")
-                    case None => Right(c.copy(sweeps = Some(ws.flatMap({ val refactorFunction = Sweep.parse; (refactorValue4) => refactorFunction(_root_.com.histmersion.api.automation.Managers.Sweep.ParseS(refactorValue4)) }).distinct.map(_.wire))))
+                    case None => Right(c.copy(sweeps = Some(ws.flatMap({ val refactorFunction = Sweep.parse; (refactorValue4) => refactorFunction(_root_.com.histmersion.api.automation.Managers.Sweep.Wire(refactorValue4)) }).distinct.map(_.wire))))
                 case "dailyUsd" | "daily-usd" =>
                   v.toDoubleOption
                     .filter(_ >= 0)
@@ -339,7 +330,7 @@ object Managers:
                     .toList
                     .map(_.trim)
                     .filter(_.nonEmpty)
-                    .map({ val refactorFunction2 = Agents.ModelOverride.parse; (refactorValue5) => refactorFunction2(_root_.com.histmersion.api.automation.Agents.ModelOverride.ParseS(refactorValue5)) })
+                    .map({ val refactorFunction2 = Agents.ModelOverride.parse; (refactorValue5) => refactorFunction2(_root_.com.histmersion.api.automation.Agents.ModelOverride.Wire(refactorValue5)) })
                     .partitionMap(identity) match
                     case (Nil, ms) => Right(c.copy(models = Some(ms)))
                     case (errs, _) => Left(errs.mkString("; "))
@@ -348,10 +339,10 @@ object Managers:
         }
       }
 
-    private def bool(k: com.histmersion.api.automation.Managers.ManagerConfig.BoolK, v: com.histmersion.api.automation.Managers.ManagerConfig.BoolV): Either[com.histmersion.api.automation.Managers.ManagerConfig.BoolResultPart1, com.histmersion.api.automation.Managers.ManagerConfig.BoolResultPart2] = (v).value.toLowerCase match
-      case "true" | "on" | "yes"  => Right(_root_.com.histmersion.api.automation.Managers.ManagerConfig.BoolResultPart2(true))
-      case "false" | "off" | "no" => Right(_root_.com.histmersion.api.automation.Managers.ManagerConfig.BoolResultPart2(false))
-      case _                      => Left(_root_.com.histmersion.api.automation.Managers.ManagerConfig.BoolResultPart1(s"$k: '$v' is not true or false"))
+    private def bool(k: com.histmersion.api.automation.Managers.ManagerConfig.Key.Wire, v: String): Either[com.histmersion.api.automation.Managers.ManagerConfig.Problem, Boolean] = (v).value.toLowerCase match
+      case "true" | "on" | "yes"  => Right((true))
+      case "false" | "off" | "no" => Right((false))
+      case _                      => Left(_root_.com.histmersion.api.automation.Managers.ManagerConfig.Problem(s"$k: '$v' is not true or false"))
 
   final case class ItemCounts(
       pending: ItemCounts.Pending = _root_.com.histmersion.api.automation.Managers.ItemCounts.Pending(0),
@@ -363,35 +354,15 @@ object Managers:
       cancelled: ItemCounts.Cancelled = _root_.com.histmersion.api.automation.Managers.ItemCounts.Cancelled(0)
   ) derives KindlingsCodecAsObject,
         KindlingsSchema, com.histmersion.api.json.Schema:
-    def open: com.histmersion.api.automation.Managers.ItemCounts.OpenResult = _root_.com.histmersion.api.automation.Managers.ItemCounts.OpenResult((pending).value + (held).value + (active).value)
+    def open: com.histmersion.api.automation.Managers.ItemCounts.Open = _root_.com.histmersion.api.automation.Managers.ItemCounts.Open((pending).value + (held).value + (active).value)
   object ItemCounts:
+    type Count = Count.T
+    object Count extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Open = Open.T
+    object Open extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
 
-    type OfLoopRestPart1 = OfLoopRestPart1.T
-    object OfLoopRestPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-    type OfLoopRestPart2 = OfLoopRestPart2.T
-    object OfLoopRestPart2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
-    type OfLoopPending = OfLoopPending.T
-    object OfLoopPending extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
-    type OfLoopHeld = OfLoopHeld.T
-    object OfLoopHeld extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
-    type OfLoopActive = OfLoopActive.T
-    object OfLoopActive extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
-    type OfLoopDone = OfLoopDone.T
-    object OfLoopDone extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
-    type OfLoopStopped = OfLoopStopped.T
-    object OfLoopStopped extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
-    type OfLoopFailed = OfLoopFailed.T
-    object OfLoopFailed extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
-    type OfLoopCancelled = OfLoopCancelled.T
-    object OfLoopCancelled extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
-    type OpenResult = OpenResult.T
-    object OpenResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
-    type OfRowsPart1 = OfRowsPart1.T
-    object OfRowsPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-    type OfRowsPart2 = OfRowsPart2.T
-    object OfRowsPart2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
     type Pending = Pending.T
     object Pending extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
@@ -408,31 +379,31 @@ object Managers:
     type Cancelled = Cancelled.T
     object Cancelled extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
-    def of(rows: List[(com.histmersion.api.automation.Managers.ItemCounts.OfRowsPart1, com.histmersion.api.automation.Managers.ItemCounts.OfRowsPart2)]): ItemCounts =
+    def of(rows: List[(com.histmersion.api.automation.Managers.ItemStatus.Wire, com.histmersion.api.automation.Managers.ItemCounts.Count)]): ItemCounts =
       @tailrec def loop(
-          rest: List[(com.histmersion.api.automation.Managers.ItemCounts.OfLoopRestPart1, com.histmersion.api.automation.Managers.ItemCounts.OfLoopRestPart2)],
-          pending: com.histmersion.api.automation.Managers.ItemCounts.OfLoopPending,
-          held: com.histmersion.api.automation.Managers.ItemCounts.OfLoopHeld,
-          active: com.histmersion.api.automation.Managers.ItemCounts.OfLoopActive,
-          done: com.histmersion.api.automation.Managers.ItemCounts.OfLoopDone,
-          stopped: com.histmersion.api.automation.Managers.ItemCounts.OfLoopStopped,
-          failed: com.histmersion.api.automation.Managers.ItemCounts.OfLoopFailed,
-          cancelled: com.histmersion.api.automation.Managers.ItemCounts.OfLoopCancelled
+          rest: List[(com.histmersion.api.automation.Managers.ItemStatus.Wire, com.histmersion.api.automation.Managers.ItemCounts.Count)],
+          pending: com.histmersion.api.automation.Managers.ItemCounts.Pending,
+          held: com.histmersion.api.automation.Managers.ItemCounts.Held,
+          active: com.histmersion.api.automation.Managers.ItemCounts.Active,
+          done: com.histmersion.api.automation.Managers.ItemCounts.Done,
+          stopped: com.histmersion.api.automation.Managers.ItemCounts.Stopped,
+          failed: com.histmersion.api.automation.Managers.ItemCounts.Failed,
+          cancelled: com.histmersion.api.automation.Managers.ItemCounts.Cancelled
       ): ItemCounts =
         rest match
           case Nil            => ItemCounts(pending, held, active, done, stopped, failed, cancelled)
           case (s, n) :: tail =>
             ItemStatus.parse(s) match
-              case Some(ItemStatus.Pending)   => loop(tail, _root_.com.histmersion.api.automation.Managers.ItemCounts.OfLoopPending((pending).value + (n).value), held, active, done, stopped, failed, cancelled)
-              case Some(ItemStatus.Held)      => loop(tail, pending, _root_.com.histmersion.api.automation.Managers.ItemCounts.OfLoopHeld((held).value + (n).value), active, done, stopped, failed, cancelled)
-              case Some(ItemStatus.Active)    => loop(tail, pending, held, _root_.com.histmersion.api.automation.Managers.ItemCounts.OfLoopActive((active).value + (n).value), done, stopped, failed, cancelled)
-              case Some(ItemStatus.Done)      => loop(tail, pending, held, active, _root_.com.histmersion.api.automation.Managers.ItemCounts.OfLoopDone((done).value + (n).value), stopped, failed, cancelled)
-              case Some(ItemStatus.Stopped)   => loop(tail, pending, held, active, done, _root_.com.histmersion.api.automation.Managers.ItemCounts.OfLoopStopped((stopped).value + (n).value), failed, cancelled)
-              case Some(ItemStatus.Failed)    => loop(tail, pending, held, active, done, stopped, _root_.com.histmersion.api.automation.Managers.ItemCounts.OfLoopFailed((failed).value + (n).value), cancelled)
+              case Some(ItemStatus.Pending)   => loop(tail, _root_.com.histmersion.api.automation.Managers.ItemCounts.Pending((pending).value + (n).value), held, active, done, stopped, failed, cancelled)
+              case Some(ItemStatus.Held)      => loop(tail, pending, _root_.com.histmersion.api.automation.Managers.ItemCounts.Held((held).value + (n).value), active, done, stopped, failed, cancelled)
+              case Some(ItemStatus.Active)    => loop(tail, pending, held, _root_.com.histmersion.api.automation.Managers.ItemCounts.Active((active).value + (n).value), done, stopped, failed, cancelled)
+              case Some(ItemStatus.Done)      => loop(tail, pending, held, active, _root_.com.histmersion.api.automation.Managers.ItemCounts.Done((done).value + (n).value), stopped, failed, cancelled)
+              case Some(ItemStatus.Stopped)   => loop(tail, pending, held, active, done, _root_.com.histmersion.api.automation.Managers.ItemCounts.Stopped((stopped).value + (n).value), failed, cancelled)
+              case Some(ItemStatus.Failed)    => loop(tail, pending, held, active, done, stopped, _root_.com.histmersion.api.automation.Managers.ItemCounts.Failed((failed).value + (n).value), cancelled)
               case Some(ItemStatus.Cancelled) =>
-                loop(tail, pending, held, active, done, stopped, failed, _root_.com.histmersion.api.automation.Managers.ItemCounts.OfLoopCancelled((cancelled).value + (n).value))
+                loop(tail, pending, held, active, done, stopped, failed, _root_.com.histmersion.api.automation.Managers.ItemCounts.Cancelled((cancelled).value + (n).value))
               case None => loop(tail, pending, held, active, done, stopped, failed, cancelled)
-      loop(rows, _root_.com.histmersion.api.automation.Managers.ItemCounts.OfLoopPending(0), _root_.com.histmersion.api.automation.Managers.ItemCounts.OfLoopHeld(0), _root_.com.histmersion.api.automation.Managers.ItemCounts.OfLoopActive(0), _root_.com.histmersion.api.automation.Managers.ItemCounts.OfLoopDone(0), _root_.com.histmersion.api.automation.Managers.ItemCounts.OfLoopStopped(0), _root_.com.histmersion.api.automation.Managers.ItemCounts.OfLoopFailed(0), _root_.com.histmersion.api.automation.Managers.ItemCounts.OfLoopCancelled(0))
+      loop(rows, _root_.com.histmersion.api.automation.Managers.ItemCounts.Pending(0), _root_.com.histmersion.api.automation.Managers.ItemCounts.Held(0), _root_.com.histmersion.api.automation.Managers.ItemCounts.Active(0), _root_.com.histmersion.api.automation.Managers.ItemCounts.Done(0), _root_.com.histmersion.api.automation.Managers.ItemCounts.Stopped(0), _root_.com.histmersion.api.automation.Managers.ItemCounts.Failed(0), _root_.com.histmersion.api.automation.Managers.ItemCounts.Cancelled(0))
 
   final case class ManagerEvent(
       id: ManagerEvent.Id,
@@ -633,6 +604,8 @@ object Managers:
         KindlingsSchema, com.histmersion.api.json.Schema
 
   object ManagerItem:
+    type Ref = Ref.T
+    object Ref extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
     type Id = Id.T
     object Id extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
     type Kind = Kind.T
@@ -782,6 +755,8 @@ object Managers:
         KindlingsSchema, com.histmersion.api.json.Schema
 
   object EventPage:
+    type Limit = Limit.T
+    object Limit extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
     type Before = Before.T
     object Before extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
 

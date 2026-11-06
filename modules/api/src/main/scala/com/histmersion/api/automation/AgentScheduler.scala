@@ -6,10 +6,6 @@ import com.histmersion.api.given
 
 object AgentScheduler:
 
-  type WaitCodesPart1 = WaitCodesPart1.T
-  object WaitCodesPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type WaitCodesPart2 = WaitCodesPart2.T
-  object WaitCodesPart2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
   final case class StrategyLine(name: StrategyLine.Name, describe: StrategyLine.Describe = _root_.com.histmersion.api.automation.AgentScheduler.StrategyLine.Describe("")) derives KindlingsCodecAsObject, KindlingsSchema, com.histmersion.api.json.Schema
 
@@ -228,18 +224,18 @@ object AgentScheduler:
     val Paused = "paused"
 
   /** What a scheduler's wait code means, as the managers' view says it. */
-  val waitCodes: Map[com.histmersion.api.automation.AgentScheduler.WaitCodesPart1, com.histmersion.api.automation.AgentScheduler.WaitCodesPart2] = Map(
-    { val refactorTuple14 = "capacity" -> "No free place"; (_root_.com.histmersion.api.automation.AgentScheduler.WaitCodesPart1(refactorTuple14._1), _root_.com.histmersion.api.automation.AgentScheduler.WaitCodesPart2(refactorTuple14._2)) },
-    { val refactorTuple15 = "pool" -> "Plan is full"; (_root_.com.histmersion.api.automation.AgentScheduler.WaitCodesPart1(refactorTuple15._1), _root_.com.histmersion.api.automation.AgentScheduler.WaitCodesPart2(refactorTuple15._2)) },
-    { val refactorTuple3 = "manager-cap" -> "Manager is full"; (_root_.com.histmersion.api.automation.AgentScheduler.WaitCodesPart1(refactorTuple3._1), _root_.com.histmersion.api.automation.AgentScheduler.WaitCodesPart2(refactorTuple3._2)) },
-    { val refactorTuple4 = "blocked" -> "Blocked"; (_root_.com.histmersion.api.automation.AgentScheduler.WaitCodesPart1(refactorTuple4._1), _root_.com.histmersion.api.automation.AgentScheduler.WaitCodesPart2(refactorTuple4._2)) },
-    { val refactorTuple5 = "busy" -> "Busy"; (_root_.com.histmersion.api.automation.AgentScheduler.WaitCodesPart1(refactorTuple5._1), _root_.com.histmersion.api.automation.AgentScheduler.WaitCodesPart2(refactorTuple5._2)) },
-    { val refactorTuple6 = "budget" -> "Spending cap reached"; (_root_.com.histmersion.api.automation.AgentScheduler.WaitCodesPart1(refactorTuple6._1), _root_.com.histmersion.api.automation.AgentScheduler.WaitCodesPart2(refactorTuple6._2)) },
-    { val refactorTuple7 = "drain" -> "Finishing current work, then pausing"; (_root_.com.histmersion.api.automation.AgentScheduler.WaitCodesPart1(refactorTuple7._1), _root_.com.histmersion.api.automation.AgentScheduler.WaitCodesPart2(refactorTuple7._2)) },
-    { val refactorTuple21 = Code.Person -> "Needs your decision"; (_root_.com.histmersion.api.automation.AgentScheduler.WaitCodesPart1(refactorTuple21._1), _root_.com.histmersion.api.automation.AgentScheduler.WaitCodesPart2(refactorTuple21._2)) },
-    { val refactorTuple22 = Code.Held -> "Held by a person"; (_root_.com.histmersion.api.automation.AgentScheduler.WaitCodesPart1(refactorTuple22._1), _root_.com.histmersion.api.automation.AgentScheduler.WaitCodesPart2(refactorTuple22._2)) },
-    { val refactorTuple23 = Code.NotDue -> "Not due yet"; (_root_.com.histmersion.api.automation.AgentScheduler.WaitCodesPart1(refactorTuple23._1), _root_.com.histmersion.api.automation.AgentScheduler.WaitCodesPart2(refactorTuple23._2)) },
-    { val refactorTuple11 = Code.Running -> "Running"; (_root_.com.histmersion.api.automation.AgentScheduler.WaitCodesPart1(refactorTuple11._1), _root_.com.histmersion.api.automation.AgentScheduler.WaitCodesPart2(refactorTuple11._2)) },
-    { val refactorTuple12 = Code.Settled -> "Settled"; (_root_.com.histmersion.api.automation.AgentScheduler.WaitCodesPart1(refactorTuple12._1), _root_.com.histmersion.api.automation.AgentScheduler.WaitCodesPart2(refactorTuple12._2)) },
-    { val refactorTuple13 = Code.Paused -> "Paused"; (_root_.com.histmersion.api.automation.AgentScheduler.WaitCodesPart1(refactorTuple13._1), _root_.com.histmersion.api.automation.AgentScheduler.WaitCodesPart2(refactorTuple13._2)) }
+  val waitCodes: Map[com.histmersion.api.automation.AgentScheduler.Waiting.Code, String] = Map(
+    { val refactorTuple14 = "capacity" -> "No free place"; (_root_.com.histmersion.api.automation.AgentScheduler.Waiting.Code(refactorTuple14._1), (refactorTuple14._2)) },
+    { val refactorTuple15 = "pool" -> "Plan is full"; (_root_.com.histmersion.api.automation.AgentScheduler.Waiting.Code(refactorTuple15._1), (refactorTuple15._2)) },
+    { val refactorTuple3 = "manager-cap" -> "Manager is full"; (_root_.com.histmersion.api.automation.AgentScheduler.Waiting.Code(refactorTuple3._1), (refactorTuple3._2)) },
+    { val refactorTuple4 = "blocked" -> "Blocked"; (_root_.com.histmersion.api.automation.AgentScheduler.Waiting.Code(refactorTuple4._1), (refactorTuple4._2)) },
+    { val refactorTuple5 = "busy" -> "Busy"; (_root_.com.histmersion.api.automation.AgentScheduler.Waiting.Code(refactorTuple5._1), (refactorTuple5._2)) },
+    { val refactorTuple6 = "budget" -> "Spending cap reached"; (_root_.com.histmersion.api.automation.AgentScheduler.Waiting.Code(refactorTuple6._1), (refactorTuple6._2)) },
+    { val refactorTuple7 = "drain" -> "Finishing current work, then pausing"; (_root_.com.histmersion.api.automation.AgentScheduler.Waiting.Code(refactorTuple7._1), (refactorTuple7._2)) },
+    { val refactorTuple21 = Code.Person -> "Needs your decision"; (_root_.com.histmersion.api.automation.AgentScheduler.Waiting.Code(refactorTuple21._1), (refactorTuple21._2)) },
+    { val refactorTuple22 = Code.Held -> "Held by a person"; (_root_.com.histmersion.api.automation.AgentScheduler.Waiting.Code(refactorTuple22._1), (refactorTuple22._2)) },
+    { val refactorTuple23 = Code.NotDue -> "Not due yet"; (_root_.com.histmersion.api.automation.AgentScheduler.Waiting.Code(refactorTuple23._1), (refactorTuple23._2)) },
+    { val refactorTuple11 = Code.Running -> "Running"; (_root_.com.histmersion.api.automation.AgentScheduler.Waiting.Code(refactorTuple11._1), (refactorTuple11._2)) },
+    { val refactorTuple12 = Code.Settled -> "Settled"; (_root_.com.histmersion.api.automation.AgentScheduler.Waiting.Code(refactorTuple12._1), (refactorTuple12._2)) },
+    { val refactorTuple13 = Code.Paused -> "Paused"; (_root_.com.histmersion.api.automation.AgentScheduler.Waiting.Code(refactorTuple13._1), (refactorTuple13._2)) }
   )
