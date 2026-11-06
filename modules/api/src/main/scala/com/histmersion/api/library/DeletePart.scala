@@ -40,8 +40,8 @@ object DeletePart:
 
   given WireEnumValues[DeletePart]:
     def all: Array[DeletePart] = DeletePart.values
-    def wire(e: DeletePart): com.histmersion.api.library.DeletePart.WireResult = e.wire
-    def fromWire(s: com.histmersion.api.library.DeletePart.FromWireS): Option[DeletePart] = DeletePart.values.find(_.wire == _root_.com.histmersion.api.library.DeletePart.Wire((s).value.trim.toLowerCase))
+    def wire(e: DeletePart): _root_.com.histmersion.api.WireEnumValues.WireResult = _root_.com.histmersion.api.WireEnumValues.WireResult((e.wire).value)
+    def fromWire(s: _root_.com.histmersion.api.WireEnumValues.FromWireS): _root_.scala.Option[DeletePart] = DeletePart.values.find(_.wire == _root_.com.histmersion.api.library.DeletePart.Wire((s).value.trim.toLowerCase))
   given Encoder[DeletePart] = WireEnum.encoder
   given Decoder[DeletePart] = WireEnum.decoder
   given Schema[DeletePart] = WireEnum.schema

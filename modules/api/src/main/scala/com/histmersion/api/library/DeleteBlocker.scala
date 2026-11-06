@@ -40,8 +40,8 @@ object DeleteBlocker:
 
     given WireEnumValues[Kind]:
       def all: Array[Kind] = Kind.values
-      def wire(e: Kind): com.histmersion.api.library.DeleteBlocker.Kind.WireResult = e.wire
-      def fromWire(s: com.histmersion.api.library.DeleteBlocker.Kind.FromWireS): Option[Kind] = Kind.values.find(_.wire == _root_.com.histmersion.api.library.DeleteBlocker.Kind.Wire((s).value.trim.toLowerCase))
+      def wire(e: Kind): _root_.com.histmersion.api.WireEnumValues.WireResult = _root_.com.histmersion.api.WireEnumValues.WireResult((e.wire).value)
+      def fromWire(s: _root_.com.histmersion.api.WireEnumValues.FromWireS): _root_.scala.Option[Kind] = Kind.values.find(_.wire == _root_.com.histmersion.api.library.DeleteBlocker.Kind.Wire((s).value.trim.toLowerCase))
     given Encoder[Kind] = WireEnum.encoder
     given Decoder[Kind] = WireEnum.decoder
     given Schema[Kind] = WireEnum.schema

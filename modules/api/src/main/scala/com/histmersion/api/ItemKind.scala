@@ -44,8 +44,8 @@ object ItemKind:
 
   given WireEnumValues[ItemKind]:
     def all: Array[ItemKind] = ItemKind.values
-    def wire(e: ItemKind): com.histmersion.api.ItemKind.WireResult = e.wire
-    def fromWire(s: com.histmersion.api.ItemKind.FromWireS): Option[ItemKind] = values.find(_.wire == _root_.com.histmersion.api.ItemKind.Wire((s).value.trim.toLowerCase))
+    def wire(e: ItemKind): _root_.com.histmersion.api.WireEnumValues.WireResult = _root_.com.histmersion.api.WireEnumValues.WireResult((e.wire).value)
+    def fromWire(s: _root_.com.histmersion.api.WireEnumValues.FromWireS): _root_.scala.Option[ItemKind] = values.find(_.wire == _root_.com.histmersion.api.ItemKind.Wire((s).value.trim.toLowerCase))
   given Encoder[ItemKind] = WireEnum.encoder
   given Decoder[ItemKind] = WireEnum.decoder
   given Schema[ItemKind] = WireEnum.schema

@@ -69,5 +69,5 @@ object DecisionKind:
 
   given WireEnumValues[DecisionKind]:
     def all: Array[DecisionKind] = DecisionKind.values
-    def wire(e: DecisionKind): com.histmersion.util.data.exchange.DecisionKind.WireResult = wireOf(e)
-    def fromWire(s: com.histmersion.util.data.exchange.DecisionKind.FromWireS): Option[DecisionKind] = DecisionKind.values.find(k => wireOf(k) == _root_.com.histmersion.util.data.exchange.DecisionKind.WireOfResult((s).value.trim))
+    def wire(e: DecisionKind): _root_.com.histmersion.WireEnumValues.WireResult = _root_.com.histmersion.WireEnumValues.WireResult((wireOf(e)).value)
+    def fromWire(s: _root_.com.histmersion.WireEnumValues.FromWireS): _root_.scala.Option[DecisionKind] = DecisionKind.values.find(k => wireOf(k) == _root_.com.histmersion.util.data.exchange.DecisionKind.WireOfResult((s).value.trim))

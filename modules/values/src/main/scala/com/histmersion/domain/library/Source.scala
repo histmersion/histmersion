@@ -26,8 +26,8 @@ object Source:
 
     given WireEnumValues[Status]:
       def all: Array[Status] = Status.values
-      def wire(e: Status): com.histmersion.domain.library.Source.Status.WireResult = _root_.com.histmersion.domain.library.Source.Status.WireResult(e.toString.toLowerCase)
-      def fromWire(s: com.histmersion.domain.library.Source.Status.FromWireS): Option[Status] =
+      def wire(e: Status): _root_.com.histmersion.WireEnumValues.WireResult = _root_.com.histmersion.WireEnumValues.WireResult((_root_.com.histmersion.domain.library.Source.Status.WireResult(e.toString.toLowerCase)).value)
+      def fromWire(s: _root_.com.histmersion.WireEnumValues.FromWireS): _root_.scala.Option[Status] =
         Status.values.find(_.toString.equalsIgnoreCase((s).value))
 
   /** A source's stable identity across renames, merges and databases (`sources.uid`). */

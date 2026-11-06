@@ -49,5 +49,5 @@ object Edge:
 
     given WireEnumValues[Kind]:
       def all: Array[Kind] = Kind.values
-      def wire(e: Kind): com.histmersion.domain.library.Edge.Kind.WireResult = wireOf(e)
-      def fromWire(s: com.histmersion.domain.library.Edge.Kind.FromWireS): Option[Kind] = Kind.fromWire(s)
+      def wire(e: Kind): _root_.com.histmersion.WireEnumValues.WireResult = _root_.com.histmersion.WireEnumValues.WireResult((wireOf(e)).value)
+      def fromWire(s: _root_.com.histmersion.WireEnumValues.FromWireS): _root_.scala.Option[Kind] = Kind.fromWire(_root_.com.histmersion.domain.library.Edge.Kind.FromWireS((s).value))

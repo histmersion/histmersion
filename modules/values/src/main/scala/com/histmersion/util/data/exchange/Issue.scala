@@ -86,8 +86,8 @@ object Issue:
 
     given WireEnumValues[Kind]:
       def all: Array[Kind] = Kind.values
-      def wire(e: Kind): com.histmersion.util.data.exchange.Issue.Kind.WireResult = wireOf(e)
-      def fromWire(s: com.histmersion.util.data.exchange.Issue.Kind.FromWireS): Option[Kind] = Kind.values.find(k => wireOf(k) == _root_.com.histmersion.util.data.exchange.Issue.Kind.WireOfResult((s).value.trim))
+      def wire(e: Kind): _root_.com.histmersion.WireEnumValues.WireResult = _root_.com.histmersion.WireEnumValues.WireResult((wireOf(e)).value)
+      def fromWire(s: _root_.com.histmersion.WireEnumValues.FromWireS): _root_.scala.Option[Kind] = Kind.values.find(k => wireOf(k) == _root_.com.histmersion.util.data.exchange.Issue.Kind.WireOfResult((s).value.trim))
 
   /** How much an issue holds the merge up. */
   enum Severity:
@@ -108,8 +108,8 @@ object Issue:
 
     given WireEnumValues[Severity]:
       def all: Array[Severity] = Severity.values
-      def wire(e: Severity): com.histmersion.util.data.exchange.Issue.Severity.WireResult = Ascii.lower(_root_.com.histmersion.Ascii.LowerS(e.toString))
-      def fromWire(s: com.histmersion.util.data.exchange.Issue.Severity.FromWireS): Option[Severity] = Severity.values.find(_.toString.equalsIgnoreCase((s).value.trim))
+      def wire(e: Severity): _root_.com.histmersion.WireEnumValues.WireResult = _root_.com.histmersion.WireEnumValues.WireResult((Ascii.lower(_root_.com.histmersion.Ascii.LowerS(e.toString))).value)
+      def fromWire(s: _root_.com.histmersion.WireEnumValues.FromWireS): _root_.scala.Option[Severity] = Severity.values.find(_.toString.equalsIgnoreCase((s).value.trim))
 
   /** Who decided an issue. */
   enum DecidedBy:
@@ -135,5 +135,5 @@ object Issue:
 
     given WireEnumValues[DecidedBy]:
       def all: Array[DecidedBy] = DecidedBy.values
-      def wire(e: DecidedBy): com.histmersion.util.data.exchange.Issue.DecidedBy.WireResult = Ascii.lower(_root_.com.histmersion.Ascii.LowerS(e.toString))
-      def fromWire(s: com.histmersion.util.data.exchange.Issue.DecidedBy.FromWireS): Option[DecidedBy] = DecidedBy.values.find(_.toString.equalsIgnoreCase((s).value.trim))
+      def wire(e: DecidedBy): _root_.com.histmersion.WireEnumValues.WireResult = _root_.com.histmersion.WireEnumValues.WireResult((Ascii.lower(_root_.com.histmersion.Ascii.LowerS(e.toString))).value)
+      def fromWire(s: _root_.com.histmersion.WireEnumValues.FromWireS): _root_.scala.Option[DecidedBy] = DecidedBy.values.find(_.toString.equalsIgnoreCase((s).value.trim))

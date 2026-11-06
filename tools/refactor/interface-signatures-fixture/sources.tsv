@@ -1,2 +1,3 @@
 path	sha256
 tools/refactor/interface-signatures-fixture/input/Models.scala	59ebe7d18d5bd4ee2dc6d8ffb0033b77bb5fe5fadbc4e4bf7b3d5f61a43201fe
+tools/refactor/interface-signatures-fixture/input/Generics.scala	f45451ddf400b57f263b6b83a309c7d4e161ea37991c67d5b89d75075ca0b2a0

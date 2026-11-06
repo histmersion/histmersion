@@ -54,5 +54,5 @@ object Goal:
     def parse(s: com.histmersion.domain.automation.Goal.LinkKind.ParseS): Option[LinkKind] = values.find(_.wire == _root_.com.histmersion.domain.automation.Goal.LinkKind.Wire((s).value.trim.toLowerCase))
     given WireEnumValues[LinkKind]:
       def all: Array[LinkKind] = LinkKind.values
-      def wire(e: LinkKind): com.histmersion.domain.automation.Goal.LinkKind.WireResult = e.wire
-      def fromWire(s: com.histmersion.domain.automation.Goal.LinkKind.FromWireS): Option[LinkKind] = parse(s)
+      def wire(e: LinkKind): _root_.com.histmersion.WireEnumValues.WireResult = _root_.com.histmersion.WireEnumValues.WireResult((e.wire).value)
+      def fromWire(s: _root_.com.histmersion.WireEnumValues.FromWireS): _root_.scala.Option[LinkKind] = parse(_root_.com.histmersion.domain.automation.Goal.LinkKind.ParseS((s).value))

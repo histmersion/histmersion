@@ -52,8 +52,8 @@ object GeoPick:
 
   given WireEnumValues[GeoPick]:
     def all: Array[GeoPick] = GeoPick.values
-    def wire(e: GeoPick): com.histmersion.api.GeoPick.WireResult = e.wire
-    def fromWire(s: com.histmersion.api.GeoPick.FromWireS): Option[GeoPick] = parse(s)
+    def wire(e: GeoPick): _root_.com.histmersion.api.WireEnumValues.WireResult = _root_.com.histmersion.api.WireEnumValues.WireResult((e.wire).value)
+    def fromWire(s: _root_.com.histmersion.api.WireEnumValues.FromWireS): _root_.scala.Option[GeoPick] = parse(_root_.com.histmersion.api.GeoPick.ParseS((s).value))
   given io.circe.Encoder[GeoPick] = WireEnum.encoder
   given io.circe.Decoder[GeoPick] = WireEnum.decoder
   given Schema[GeoPick] = WireEnum.schema

@@ -154,8 +154,8 @@ object Place:
 
     given WireEnumValues[Precision]:
       def all: Array[Precision] = Precision.values
-      def wire(e: Precision): com.histmersion.api.catalogue.Place.Precision.WireResult = e.wire
-      def fromWire(s: com.histmersion.api.catalogue.Place.Precision.FromWireS): Option[Precision] = parse(s)
+      def wire(e: Precision): _root_.com.histmersion.api.WireEnumValues.WireResult = _root_.com.histmersion.api.WireEnumValues.WireResult((e.wire).value)
+      def fromWire(s: _root_.com.histmersion.api.WireEnumValues.FromWireS): _root_.scala.Option[Precision] = parse(_root_.com.histmersion.api.catalogue.Place.Precision.ParseS((s).value))
 
   final case class Add(
       label: Add.Label,
@@ -292,8 +292,8 @@ object Place:
 
     given WireEnumValues[Dating]:
       def all: Array[Dating] = Dating.values
-      def wire(e: Dating): com.histmersion.api.catalogue.Place.Dating.WireResult = e.wire
-      def fromWire(s: com.histmersion.api.catalogue.Place.Dating.FromWireS): Option[Dating] = parse(s)
+      def wire(e: Dating): _root_.com.histmersion.api.WireEnumValues.WireResult = _root_.com.histmersion.api.WireEnumValues.WireResult((e.wire).value)
+      def fromWire(s: _root_.com.histmersion.api.WireEnumValues.FromWireS): _root_.scala.Option[Dating] = parse(_root_.com.histmersion.api.catalogue.Place.Dating.ParseS((s).value))
     given io.circe.Encoder[Dating] = WireEnum.encoder
     given io.circe.Decoder[Dating] = WireEnum.decoder
     given Schema[Dating] = WireEnum.schema
@@ -1224,8 +1224,8 @@ object Place:
 
     given WireEnumValues[TimeBasis]:
       def all: Array[TimeBasis] = TimeBasis.values
-      def wire(e: TimeBasis): com.histmersion.api.catalogue.Place.TimeBasis.WireResult = e.wire
-      def fromWire(s: com.histmersion.api.catalogue.Place.TimeBasis.FromWireS): Option[TimeBasis] = parse(s)
+      def wire(e: TimeBasis): _root_.com.histmersion.api.WireEnumValues.WireResult = _root_.com.histmersion.api.WireEnumValues.WireResult((e.wire).value)
+      def fromWire(s: _root_.com.histmersion.api.WireEnumValues.FromWireS): _root_.scala.Option[TimeBasis] = parse(_root_.com.histmersion.api.catalogue.Place.TimeBasis.ParseS((s).value))
     given io.circe.Encoder[TimeBasis] = WireEnum.encoder
     given io.circe.Decoder[TimeBasis] = WireEnum.decoder
     given Schema[TimeBasis] = WireEnum.schema

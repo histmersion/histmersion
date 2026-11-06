@@ -132,8 +132,8 @@ object Geocode:
 
     given WireEnumValues[KindHint]:
       def all: Array[KindHint] = KindHint.values
-      def wire(e: KindHint): com.histmersion.api.catalogue.Geocode.KindHint.WireResult = e.wire
-      def fromWire(s: com.histmersion.api.catalogue.Geocode.KindHint.FromWireS): Option[KindHint] =
+      def wire(e: KindHint): _root_.com.histmersion.api.WireEnumValues.WireResult = _root_.com.histmersion.api.WireEnumValues.WireResult((e.wire).value)
+      def fromWire(s: _root_.com.histmersion.api.WireEnumValues.FromWireS): _root_.scala.Option[KindHint] =
         KindHint.values.find(_.wire == _root_.com.histmersion.api.catalogue.Geocode.KindHint.WireResult((s).value.trim.toLowerCase(java.util.Locale.ROOT)))
     given Encoder[KindHint] = WireEnum.encoder
     given Decoder[KindHint] = WireEnum.decoder

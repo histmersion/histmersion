@@ -19,5 +19,5 @@ object ScheduleKind:
   def parse(s: com.histmersion.domain.automation.ScheduleKind.ParseS): Option[ScheduleKind] = values.find(_.wire == _root_.com.histmersion.domain.automation.ScheduleKind.Wire((s).value.trim.toLowerCase))
   given WireEnumValues[ScheduleKind]:
     def all: Array[ScheduleKind] = ScheduleKind.values
-    def wire(e: ScheduleKind): com.histmersion.domain.automation.ScheduleKind.WireResult = e.wire
-    def fromWire(s: com.histmersion.domain.automation.ScheduleKind.FromWireS): Option[ScheduleKind] = parse(s)
+    def wire(e: ScheduleKind): _root_.com.histmersion.WireEnumValues.WireResult = _root_.com.histmersion.WireEnumValues.WireResult((e.wire).value)
+    def fromWire(s: _root_.com.histmersion.WireEnumValues.FromWireS): _root_.scala.Option[ScheduleKind] = parse(_root_.com.histmersion.domain.automation.ScheduleKind.ParseS((s).value))

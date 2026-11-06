@@ -24,8 +24,8 @@ object CritiqueState:
   def parse(s: com.histmersion.api.research.CritiqueState.ParseS): Option[CritiqueState] = values.find(_.wire == _root_.com.histmersion.api.research.CritiqueState.Wire((s).value.trim.toLowerCase))
   given WireEnumValues[CritiqueState]:
     def all: Array[CritiqueState] = CritiqueState.values
-    def wire(e: CritiqueState): com.histmersion.api.research.CritiqueState.WireResult = e.wire
-    def fromWire(s: com.histmersion.api.research.CritiqueState.FromWireS): Option[CritiqueState] = parse(s)
+    def wire(e: CritiqueState): _root_.com.histmersion.api.WireEnumValues.WireResult = _root_.com.histmersion.api.WireEnumValues.WireResult((e.wire).value)
+    def fromWire(s: _root_.com.histmersion.api.WireEnumValues.FromWireS): _root_.scala.Option[CritiqueState] = parse(_root_.com.histmersion.api.research.CritiqueState.ParseS((s).value))
   given Encoder[CritiqueState] = WireEnum.encoder
   given Decoder[CritiqueState] = WireEnum.decoder
   given Schema[CritiqueState] = WireEnum.schema
