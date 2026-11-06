@@ -136,7 +136,7 @@ object Query:
         dollarTag(sql, (i)) match
           case Some(tag) =>
             val end = (sql).indexOf(tag, i + (tag).length)
-            val to = if end < 0 then n else end + (tag).value.length
+            val to = if end < 0 then n else end + (tag).length
             cur.append((sql).substring(i, to)); i = to
           case None => { cur.append(c); i += 1 }
       else if c == ';' then { out += cur.toString; cur.clear(); i += 1 }

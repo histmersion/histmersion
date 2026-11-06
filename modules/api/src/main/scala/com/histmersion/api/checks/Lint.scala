@@ -405,7 +405,7 @@ object Lint:
       val text = current.toString.trim
       if text.nonEmpty then if (isListLeadIn((text))) then leadIn = Some((text)) else paras += text
       current.clear()
-    def isList(t: String) = (t).startsWith("- ") || (t).startsWith("* ") || "^\\d+[.)] ".r.findPrefixOf((t).value).isDefined
+    def isList(t: String) = (t).startsWith("- ") || (t).startsWith("* ") || "^\\d+[.)] ".r.findPrefixOf((t)).isDefined
     def block(nextIsList: Boolean): Unit = { flush(); settle(nextIsList) }
     for line <- lines do
       val t = line.trim
