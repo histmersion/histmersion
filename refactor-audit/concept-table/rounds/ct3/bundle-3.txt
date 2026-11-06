@@ -1,0 +1,12 @@
+## modules/core/src/test/scala/com/histmersion/api/PluginsReportSuite.scala
+43:20 [E007] 43 |    warnings = List("histmersion.plugins.portal.token: a secret written into the config (value:***)"), / |Found:    ( / |  "histmersion.plugins.portal.token: a secret written into the config (value:***)" / |   : String) / |Required: com.histmersion.api.plugins.PluginStatus.Warnings.T
+44:17 [E007] 44 |    error = Some("histmersion.plugins.portal.token: environment variable PORTAL_TOKEN is not set") / |Found:    ( / |  "histmersion.plugins.portal.token: environment variable PORTAL_TOKEN is not set" / |   : String) / |Required: com.histmersion.api.plugins.PluginDescription.Error.T
+
+## modules/core/src/test/scala/com/histmersion/domain/ArticleReviewStatusSuite.scala
+177:23 [E008] 177 |    assert(m1.deferred && m1.outcome == "open" && m1.reopened == 1, m1.toString) / |value && is not a member of com.histmersion.api.research.ReviewFinding.Deferred
+177:26 [E172] 177 |    assert(m1.deferred && m1.outcome == "open" && m1.reopened == 1, m1.toString) / |Values of types com.histmersion.api.research.ReviewFinding.Outcome and String cannot be compared with == or !=
+
+## modules/core/src/test/scala/com/histmersion/domain/library/workflows/AcquisitionSweepRulesSuite.scala
+28:35 [E007] 28 |    val (cs, skipped) = candidates(found, queued = Set(com.histmersion.domain.library.Doi("10.1000/c")), max = com.histmersion.domain.library.workflows.AcquisitionSwe / |Found:    (found : List[(String, com.histmersion.api.library.WorkRef)]) / |Required: List[( / |  com.histmersion.domain.library².workflows.AcquisitionSweepRules.Candidate. / |    Query, / |com.histmersion.api.library.WorkRef)]
+29:16 [E171] 29 |    assertEquals(cs.map(c => (c.doi, c.query)), List(("10.1000/a", "q1"))) / |missing argument for parameter clue of method assertEquals in trait Assertions: (obtained: A, expected: B, clue: => Any) / |  (implicit loc: munit.Location, compare: munit.Compare[A, B], diffOptions: / |    munit.diff.DiffOptions): Unit / 33 errors found / (core / Test / compileIncremental) Compilation failed
+
