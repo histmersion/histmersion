@@ -23,7 +23,7 @@ class WikidataEntitiesSuite extends munit.FunSuite:
   test("wbgetentities: the picture statements kept, deprecated and no-value ones dropped, P373 read"):
     val items = WikidataEntities.items(entities, Set(com.histmersion.upstreams.wikidata.WikidataStatement.Property("P18"), com.histmersion.upstreams.wikidata.WikidataStatement.Property("P242"))).toOption.get
     assertEquals(items.keySet, Set("Q1"), "a missing item is left out")
-    val q1 = items("Q1")
+    val q1 = items(com.histmersion.upstreams.wikidata.WikidataItem.Id("Q1"))
     assertEquals(
       q1.statements.map(s => (s.property, s.file, s.preferred)),
       List(("P18", "B.jpg", false), ("P18", "A.jpg", true), ("P242", "Map.svg", false))
@@ -31,7 +31,7 @@ class WikidataEntitiesSuite extends munit.FunSuite:
     assertEquals(q1.commonsCategory, Some("Mycenae"))
 
   test("best: the preferred statements when there are any, else the normal ones, capped"):
-    val st = WikidataEntities.items(entities, Set(com.histmersion.upstreams.wikidata.WikidataStatement.Property("P18"))).toOption.get("Q1").statements
+    val st = WikidataEntities.items(entities, Set(com.histmersion.upstreams.wikidata.WikidataStatement.Property("P18"))).toOption.get(com.histmersion.upstreams.wikidata.WikidataItem.Id("Q1")).statements
     assertEquals(WikidataStatement.best(st, com.histmersion.upstreams.wikidata.WikidataStatement.BestPer(2)).map(_.file), List("A.jpg"))
     val normals = st.map(_.copy(preferred = false))
     assertEquals(WikidataStatement.best(normals, com.histmersion.upstreams.wikidata.WikidataStatement.BestPer(1)).map(_.file), List("B.jpg"))
