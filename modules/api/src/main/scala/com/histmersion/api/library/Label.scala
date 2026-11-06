@@ -6,4 +6,4 @@ object Label:
   type DisplayS = DisplayS.T
   object DisplayS extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
-  def display(s: com.histmersion.api.library.Label.DisplayS): com.histmersion.api.library.Label.DisplayResult = s.replace("_", " ")
+  def display(s: com.histmersion.api.library.Label.DisplayS): com.histmersion.api.library.Label.DisplayResult = _root_.com.histmersion.api.library.Label.DisplayResult((s).value.replace("_", " "))

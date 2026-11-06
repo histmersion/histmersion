@@ -41,4 +41,4 @@ object JobKindEntry:
       stoppable: com.histmersion.api.jobs.JobKindEntry.OfStoppable = _root_.com.histmersion.api.jobs.JobKindEntry.OfStoppable(false),
       subject: JobDetail => Option[com.histmersion.api.jobs.JobKindEntry.OfSubjectResult] = _ => None,
       ownControl: com.histmersion.api.jobs.JobKindEntry.OfOwnControl = _root_.com.histmersion.api.jobs.JobKindEntry.OfOwnControl(false)
-  ): JobKindEntry = JobKindEntry(kind, JobKindName(name), JobKindMeaning(meaning), stoppable, subject, ownControl)
+  ): JobKindEntry = JobKindEntry(kind, JobKindName((name).value), JobKindMeaning((meaning).value), stoppable, subject, ownControl)

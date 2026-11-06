@@ -43,8 +43,8 @@ object ProviderKind:
 
   /** A provider name: one of the host's, else one of the `known` plugin providers' (lower case). */
   def parse(s: com.histmersion.api.automation.ProviderKind.ParseS, known: Set[com.histmersion.api.automation.ProviderKind.ParseKnown] = Set.empty): Option[ProviderKind] =
-    val t = s.trim.toLowerCase
-    values.find(_.wire == t).orElse(Option.when(known(t))(Plugin(t)))
+    val t = (s).value.trim.toLowerCase
+    values.find(_.wire == t).orElse(Option.when(known(_root_.com.histmersion.api.automation.ProviderKind.ParseKnown(t)))(Plugin(_root_.com.histmersion.api.automation.ProviderKind.Plugin.Name(t))))
 
   /** The names a reference may use, for an error message: the host's, then the plugins'. */
   def names(known: Set[com.histmersion.api.automation.ProviderKind.NamesKnown] = Set.empty): com.histmersion.api.automation.ProviderKind.NamesResult =

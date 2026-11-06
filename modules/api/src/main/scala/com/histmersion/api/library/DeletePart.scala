@@ -41,7 +41,7 @@ object DeletePart:
   given WireEnumValues[DeletePart]:
     def all: Array[DeletePart] = DeletePart.values
     def wire(e: DeletePart): com.histmersion.api.library.DeletePart.WireResult = e.wire
-    def fromWire(s: com.histmersion.api.library.DeletePart.FromWireS): Option[DeletePart] = DeletePart.values.find(_.wire == s.trim.toLowerCase)
+    def fromWire(s: com.histmersion.api.library.DeletePart.FromWireS): Option[DeletePart] = DeletePart.values.find(_.wire == (s).value.trim.toLowerCase)
   given Encoder[DeletePart] = WireEnum.encoder
   given Decoder[DeletePart] = WireEnum.decoder
   given Schema[DeletePart] = WireEnum.schema

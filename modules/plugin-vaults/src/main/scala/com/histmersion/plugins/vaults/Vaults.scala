@@ -52,13 +52,13 @@ object Vaults:
   val Version = "0.1.0"
 
   /** The vault's own settings, shared by all three. */
-  private[vaults] def timeout(seconds: com.histmersion.plugins.vaults.Vaults.TimeoutSeconds): FiniteDuration = seconds.max(1).seconds
+  private[vaults] def timeout(seconds: com.histmersion.plugins.vaults.Vaults.TimeoutSeconds): FiniteDuration = (seconds).value.max(1).seconds
 
   /** Pure: `<entry>#<field>`, the field defaulting to `dflt` (split at the LAST `#`). */
   def entryAndField(ref: com.histmersion.plugins.vaults.Vaults.EntryAndFieldRef, dflt: com.histmersion.plugins.vaults.Vaults.EntryAndFieldDflt): (com.histmersion.plugins.vaults.Vaults.EntryAndFieldResultPart1, com.histmersion.plugins.vaults.Vaults.EntryAndFieldResultPart2) =
-    ref.lastIndexOf('#') match
-      case -1 => (ref.trim, dflt)
-      case i  => (ref.take(i).trim, Option(ref.drop(i + 1).trim).filter(_.nonEmpty).getOrElse(dflt))
+    (ref).value.lastIndexOf('#') match
+      case -1 => (_root_.com.histmersion.plugins.vaults.Vaults.EntryAndFieldResultPart1((ref).value.trim), dflt)
+      case i  => (_root_.com.histmersion.plugins.vaults.Vaults.EntryAndFieldResultPart1((ref).value.take(i).trim), Option((ref).value.drop(i + 1).trim).filter(_.nonEmpty).getOrElse(dflt))
 
   /** A Secret given in a vault's own settings (its unlock password, its session), resolved through the host; `None`
     * when the setting is `null`.
@@ -68,7 +68,7 @@ object Vaults:
 
   /** Pure: `~/x` against HOME. */
   private[vaults] def expand(p: com.histmersion.plugins.vaults.Vaults.ExpandP, home: Option[com.histmersion.plugins.vaults.Vaults.ExpandHome]): com.histmersion.plugins.vaults.Vaults.ExpandResult =
-    home.filter(_ => p == "~" || p.startsWith("~/")).fold(p)(h => h + p.drop(1))
+    home.filter(_ => p == "~" || (p).value.startsWith("~/")).fold(p)(h => (h).value + (p).value.drop(1))
 
   /** Run the tool and turn its answer into the value or an error naming the reference — never the value. */
   private[vaults] def answer(

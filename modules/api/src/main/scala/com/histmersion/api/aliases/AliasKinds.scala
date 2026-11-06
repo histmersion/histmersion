@@ -14,7 +14,7 @@ object AliasKinds:
   type OfTargetTargetType = OfTargetTargetType.T
   object OfTargetTargetType extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
-  private def kind(noun: com.histmersion.api.aliases.AliasKinds.KindNoun, idWord: com.histmersion.api.aliases.AliasKinds.KindIdWord): AliasKind = AliasKind(RecordNoun(noun), KeyWord(idWord))
+  private def kind(noun: com.histmersion.api.aliases.AliasKinds.KindNoun, idWord: com.histmersion.api.aliases.AliasKinds.KindIdWord): AliasKind = AliasKind(RecordNoun((noun).value), KeyWord((idWord).value))
 
   val SourceRecords: AliasKind = kind(_root_.com.histmersion.api.aliases.AliasKinds.KindNoun("source"), _root_.com.histmersion.api.aliases.AliasKinds.KindIdWord("citekey"))
   val ArticleRecords: AliasKind = kind(_root_.com.histmersion.api.aliases.AliasKinds.KindNoun("article"), _root_.com.histmersion.api.aliases.AliasKinds.KindIdWord("slug"))
@@ -36,7 +36,7 @@ object AliasKinds:
     * ignored), when it is one whose old identifiers are followed.
     */
   def ofTarget(targetType: com.histmersion.api.aliases.AliasKinds.OfTargetTargetType): Option[AliasKind] =
-    targetType.trim.toLowerCase(java.util.Locale.ROOT) match
+    (targetType).value.trim.toLowerCase(java.util.Locale.ROOT) match
       case "event"   => Some(EventRecords)
       case "place"   => Some(PlaceRecords)
       case "source"  => Some(SourceRecords)

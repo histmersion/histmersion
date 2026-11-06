@@ -43,8 +43,8 @@ object RegionNode:
     * (river)", "Kisamon? Pr."), and a leading `*` for a reconstructed name ("*Granouas (river)").
     */
   def uncertainLabel(label: com.histmersion.api.catalogue.RegionNode.UncertainLabelLabel): com.histmersion.api.catalogue.RegionNode.UncertainLabelResult =
-    val l = label.trim
-    l.startsWith("*") || l.contains("?") || l.toLowerCase.startsWith("withdrawn")
+    val l = (label).value.trim
+    _root_.com.histmersion.api.catalogue.RegionNode.UncertainLabelResult(l.startsWith("*") || l.contains("?") || l.toLowerCase.startsWith("withdrawn"))
 
   def rootEligible(n: RegionNode): com.histmersion.api.catalogue.RegionNode.RootEligibleResult =
     RootKinds.contains(n.kind) && !n.withdrawn && !uncertainLabel(n.label)

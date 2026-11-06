@@ -27,7 +27,7 @@ final case class UpstreamSettings(
 ) derives ConfigReader:
 
   /** The contact e-mail, when one is configured: a blank one means anonymous (no polite pool, no Unpaywall). */
-  def contact: Option[com.histmersion.upstreams.settings.UpstreamSettings.ContactResult] = Option(contactEmail).map(_.trim).filter(_.nonEmpty)
+  def contact: Option[com.histmersion.upstreams.settings.UpstreamSettings.ContactResult] = (Option(contactEmail).map((_).value.trim).filter(_.nonEmpty)).map(refactorValue => _root_.com.histmersion.upstreams.settings.UpstreamSettings.ContactResult(refactorValue))
 
   /** The `mailto` value; empty without a contact, and [[Url]] drops an empty parameter. */
   def mailto: com.histmersion.upstreams.settings.UpstreamSettings.MailtoResult = contact.getOrElse("")

@@ -24,7 +24,7 @@ object Citekey extends RefinedType[String, CitekeyRule]:
   object ValidRaw extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
   def parse(raw: com.histmersion.domain.library.Citekey.ParseRaw): Either[com.histmersion.domain.library.Citekey.ParseResultPart1, Citekey] =
-    val s = Option(raw).map(_.trim).getOrElse("")
+    val s = Option(raw).map((_).value.trim).getOrElse("")
     if s.isEmpty then Left(_root_.com.histmersion.domain.library.Citekey.ParseResultPart1("citekey is required"))
     else if s.contains("..") then Left(_root_.com.histmersion.domain.library.Citekey.ParseResultPart1(s"invalid citekey '$raw' — it may not contain '..'"))
     else

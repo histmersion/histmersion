@@ -153,8 +153,8 @@ object AgentsMarkdown:
   import Agents.*
 
   def usd(d: com.histmersion.api.automation.AgentsMarkdown.UsdD): com.histmersion.api.automation.AgentsMarkdown.UsdResult =
-    val scale = if d != 0 && math.abs(d) < 0.0001 then 6 else 4
-    BigDecimal(d).setScale(scale, BigDecimal.RoundingMode.HALF_UP).toString
+    val scale = if d != 0 && math.abs((d).value) < 0.0001 then 6 else 4
+    _root_.com.histmersion.api.automation.AgentsMarkdown.UsdResult(BigDecimal((d).value).setScale(scale, BigDecimal.RoundingMode.HALF_UP).toString)
 
   def callShape(firstCallTokens: Option[com.histmersion.api.automation.AgentsMarkdown.CallShapeFirstCallTokens], turns: Option[com.histmersion.api.automation.AgentsMarkdown.CallShapeTurns]): com.histmersion.api.automation.AgentsMarkdown.CallShapeResult =
     (firstCallTokens.map(n => s"first call $n tok") ++ turns.map(t => Plural.count(t, "turn"))).mkString(" · ")
@@ -209,7 +209,7 @@ object AgentsMarkdown:
 
   private def amount(v: com.histmersion.api.automation.AgentsMarkdown.AmountV, m: ModelChains.Measure): com.histmersion.api.automation.AgentsMarkdown.AmountResult = m match
     case ModelChains.Measure.Tokens =>
-      ModelChains.Limit.compact(BigDecimal(v).setScale(0, BigDecimal.RoundingMode.HALF_UP))
+      ModelChains.Limit.compact(BigDecimal((v).value).setScale(0, BigDecimal.RoundingMode.HALF_UP))
     case ModelChains.Measure.Usd => usd(v)
 
   private def allowanceBlock(a: ModelChains.AllowanceStatus): com.histmersion.api.automation.AgentsMarkdown.AllowanceBlockResult =
@@ -226,13 +226,13 @@ object AgentsMarkdown:
   def allowance(a: ModelChains.AllowanceStatus): com.histmersion.api.automation.AgentsMarkdown.AllowanceResult = allowanceBlock(a)
 
   private def pct(d: com.histmersion.api.automation.AgentsMarkdown.PctD): com.histmersion.api.automation.AgentsMarkdown.PctResult =
-    java.math.BigDecimal(d).setScale(1, java.math.RoundingMode.HALF_UP).stripTrailingZeros.toPlainString
+    _root_.com.histmersion.api.automation.AgentsMarkdown.PctResult(java.math.BigDecimal((d).value).setScale(1, java.math.RoundingMode.HALF_UP).stripTrailingZeros.toPlainString)
 
   private def age(s: com.histmersion.api.automation.AgentsMarkdown.AgeS): com.histmersion.api.automation.AgentsMarkdown.AgeResult =
-    if s < 120 then _root_.com.histmersion.api.automation.AgentsMarkdown.AgeResult(s"$s s")
-    else if s < 7200 then s"${s / 60} min"
-    else if s < 172800 then s"${s / 3600} h"
-    else s"${s / 86400} d"
+    if (s).value < 120 then _root_.com.histmersion.api.automation.AgentsMarkdown.AgeResult(s"$s s")
+    else if (s).value < 7200 then _root_.com.histmersion.api.automation.AgentsMarkdown.AgeResult(s"${(s).value / 60} min")
+    else if (s).value < 172800 then _root_.com.histmersion.api.automation.AgentsMarkdown.AgeResult(s"${(s).value / 3600} h")
+    else _root_.com.histmersion.api.automation.AgentsMarkdown.AgeResult(s"${(s).value / 86400} d")
 
   def pool(p: PlanQuota.PoolStatus): com.histmersion.api.automation.AgentsMarkdown.PoolResult =
     val state =
@@ -345,7 +345,7 @@ object AgentsMarkdown:
 
   def runLine(r: RunInfo): com.histmersion.api.automation.AgentsMarkdown.RunLineResult =
     val budget = s"${usd(r.costUsd)}/${usd(r.budgetUsd)} USD"
-    val opts = Option(options(r)).filter(_.nonEmpty).fold("")(o => s" ($o)")
+    val opts = Option(options(r)).filter((_).value.nonEmpty).fold("")(o => s" ($o)")
     val goal = r.goal.fold("")(g => s" · goal $g")
     s"${r.id} · ${r.status} · ${r.pipeline} ${r.target}$opts$goal · ${tokens(r.usage)} · $budget" +
       r.progress.filter(_.nonEmpty).fold("")(p => s" · $p") + r.error.filter(_.nonEmpty).fold("")(e => s" · $e")
@@ -383,7 +383,7 @@ object AgentsMarkdown:
     val r = d.run
     val head = s"# Agent run ${r.id}${if r.dryRun then " (dry run)" else ""}\n\n" +
       s"- pipeline: ${r.pipeline} · target: ${r.target}${r.model.fold("")(m => s" · model: $m")}" +
-      Option(options(r)).filter(_.nonEmpty).fold("")(o => s" · $o") + "\n" +
+      Option(options(r)).filter((_).value.nonEmpty).fold("")(o => s" · $o") + "\n" +
       s"- status: **${r.status}**${r.error.filter(_.nonEmpty).fold("")(e => s" — $e")}\n" +
       r.progress.filter(_.nonEmpty).fold("")(p => s"- last: $p\n") +
       s"- spent: ${tokens(r.usage)} · ${usd(r.costUsd)} of ${usd(r.budgetUsd)} USD · budget ${r.budgetTokens} tokens\n" +
@@ -414,7 +414,7 @@ object AgentsMarkdown:
           )
           .mkString("\n\n")
     val msgs =
-      if !withMessages then ""
+      if !(withMessages).value then ""
       else
         "\n\n## Messages\n\n" + d.messages
           .map { m =>
@@ -444,7 +444,7 @@ object AgentsMarkdown:
       case Some(ApprovalKind.ArticleFilter) =>
         _root_.com.histmersion.api.automation.AgentsMarkdown.ChangeResult(s"record the coverage filter of [[${a.subject.getOrElse("?")}]]: ${a.filter.fold("?")(_.filter.line)}")
       case Some(ApprovalKind.ArticlePlan) =>
-        s"compile ${Plural.count(_root_.com.histmersion.api.Plural.CountN((a.articles.fold(0)(_.articles.size)).toLong), _root_.com.histmersion.api.Plural.CountSingular("new article"))} for goal **${a.subject.getOrElse("?")}**"
+        _root_.com.histmersion.api.automation.AgentsMarkdown.ChangeResult(s"compile ${Plural.count(_root_.com.histmersion.api.Plural.CountN((a.articles.fold(0)(_.articles.size)).toLong), _root_.com.histmersion.api.Plural.CountSingular("new article"))} for goal **${a.subject.getOrElse("?")}**")
       case Some(ApprovalKind.HintEffect) =>
         s"manager **${a.subject.getOrElse(
             "?"
@@ -483,7 +483,7 @@ object AgentsMarkdown:
         }
         .mkString("\n") + older.fold("")(o => s"\n\n$o")
 
-  private def indent(b: com.histmersion.api.automation.AgentsMarkdown.IndentB): com.histmersion.api.automation.AgentsMarkdown.IndentResult = b.linesIterator.map(l => if l.isEmpty then l else s"  $l").mkString("\n")
+  private def indent(b: com.histmersion.api.automation.AgentsMarkdown.IndentB): com.histmersion.api.automation.AgentsMarkdown.IndentResult = _root_.com.histmersion.api.automation.AgentsMarkdown.IndentResult((b).value.linesIterator.map(l => if l.isEmpty then l else s"  $l").mkString("\n"))
 
   def planBlock(p: Goal.Plans.Plan): com.histmersion.api.automation.AgentsMarkdown.PlanBlockResult =
     val goals = p.subGoals.map(g => s"- sub-goal `${g.slug}` — ${g.title}${g.notes.fold("")(n => s": $n")}")
@@ -506,7 +506,7 @@ object AgentsMarkdown:
       s"cites ${d.cited.size} source(s) · ${d.filter}"
     val problems =
       if d.problems.isEmpty then "self-check: clean" else d.problems.map(p => s"- self-check: $p").mkString("\n")
-    val text = if chars > 0 && d.text.length > chars then
+    val text = if (chars).value > 0 && d.text.length > chars then
       d.text.take(chars) + s"\n… (${d.text.length - chars} more characters)"
     else d.text
     _root_.com.histmersion.api.automation.AgentsMarkdown.DraftBlockResult(s"$head\n\n$problems\n\n```markdown\n$text\n```")
@@ -546,25 +546,25 @@ object AgentsMarkdown:
     val plan = v.plan.fold("")(p => s"\n\n## Approved plan\n\n${planBlock(p)}")
     GoalsMarkdown.goal(v.goal) + budget + children + links + sch + plan
 
-  private def cell(s: com.histmersion.api.automation.AgentsMarkdown.CellS): com.histmersion.api.automation.AgentsMarkdown.CellResult = s.replace("|", "\\|").replace("\n", " ")
+  private def cell(s: com.histmersion.api.automation.AgentsMarkdown.CellS): com.histmersion.api.automation.AgentsMarkdown.CellResult = _root_.com.histmersion.api.automation.AgentsMarkdown.CellResult((s).value.replace("|", "\\|").replace("\n", " "))
 
-  private def secs(n: com.histmersion.api.automation.AgentsMarkdown.SecsN): com.histmersion.api.automation.AgentsMarkdown.SecsResult = if n < 120 then _root_.com.histmersion.api.automation.AgentsMarkdown.SecsResult(s"$n s") else s"${n / 60} min ${n % 60} s"
+  private def secs(n: com.histmersion.api.automation.AgentsMarkdown.SecsN): com.histmersion.api.automation.AgentsMarkdown.SecsResult = if (n).value < 120 then _root_.com.histmersion.api.automation.AgentsMarkdown.SecsResult(s"$n s") else _root_.com.histmersion.api.automation.AgentsMarkdown.SecsResult(s"${(n).value / 60} min ${(n).value % 60} s")
 
   private def models(configured: List[com.histmersion.api.automation.AgentsMarkdown.ModelsConfigured], actual: List[com.histmersion.api.automation.AgentsMarkdown.ModelsActual]): com.histmersion.api.automation.AgentsMarkdown.ModelsResult =
     val conf = configured.mkString(", ")
-    val shown = actual.filterNot(a => configured.exists(c => c.drop(c.indexOf(':') + 1) == a))
+    val shown = actual.filterNot(a => configured.exists(c => (c).value.drop((c).value.indexOf(':') + 1) == a))
     if conf.isEmpty && actual.isEmpty then _root_.com.histmersion.api.automation.AgentsMarkdown.ModelsResult("—")
     else if shown.isEmpty then _root_.com.histmersion.api.automation.AgentsMarkdown.ModelsResult(conf)
     else _root_.com.histmersion.api.automation.AgentsMarkdown.ModelsResult(s"$conf → ${shown.mkString(", ")}")
 
   private def paid(costUsd: com.histmersion.api.automation.AgentsMarkdown.PaidCostUsd, billing: List[com.histmersion.api.automation.AgentsMarkdown.PaidBilling]): com.histmersion.api.automation.AgentsMarkdown.PaidResult =
-    val plan = billing.filter(_.startsWith("plan pool"))
-    if costUsd > 0 || plan.isEmpty then
+    val plan = billing.filter((_).value.startsWith("plan pool"))
+    if (costUsd).value > 0 || plan.isEmpty then
       s"${usd(costUsd)} USD" + (if plan.nonEmpty then s" + ${plan.mkString(", ")}" else "")
     else _root_.com.histmersion.api.automation.AgentsMarkdown.PaidResult(plan.mkString(", "))
 
   private def ratio(n: com.histmersion.api.automation.AgentsMarkdown.RatioN, of: com.histmersion.api.automation.AgentsMarkdown.RatioOf): com.histmersion.api.automation.AgentsMarkdown.RatioResult =
-    if of == 0 then _root_.com.histmersion.api.automation.AgentsMarkdown.RatioResult("—") else s"$n/$of (${BigDecimal(100.0 * n / of).setScale(0, BigDecimal.RoundingMode.HALF_UP)}%)"
+    if of == 0 then _root_.com.histmersion.api.automation.AgentsMarkdown.RatioResult("—") else s"$n/$of (${BigDecimal(((100.0 * (n).value / of).value).value).setScale(0, BigDecimal.RoundingMode.HALF_UP)}%)"
 
   def compare(c: RunCompare.Comparison): com.histmersion.api.automation.AgentsMarkdown.CompareResult =
     import RunCompare.*

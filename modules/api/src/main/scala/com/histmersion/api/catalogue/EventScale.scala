@@ -82,13 +82,13 @@ object EventScale:
   )
 
   def parse(s: com.histmersion.api.catalogue.EventScale.ParseS): Option[Option[com.histmersion.api.catalogue.EventScale.ParseResult]] =
-    s.trim.toLowerCase match
+    (s).value.trim.toLowerCase match
       case Local    => Some(Some(_root_.com.histmersion.api.catalogue.EventScale.ParseResult(Local)))
       case Regional => Some(Some(_root_.com.histmersion.api.catalogue.EventScale.ParseResult(Regional)))
       case Auto     => Some(None)
       case _        => None
 
-  def normKind(kind: com.histmersion.api.catalogue.EventScale.NormKindKind): com.histmersion.api.catalogue.EventScale.NormKindResult = kind.trim.toLowerCase.replaceAll("[\\s-]+", "_")
+  def normKind(kind: com.histmersion.api.catalogue.EventScale.NormKindKind): com.histmersion.api.catalogue.EventScale.NormKindResult = _root_.com.histmersion.api.catalogue.EventScale.NormKindResult((kind).value.trim.toLowerCase.replaceAll("[\\s-]+", "_"))
 
   def ofKind(kind: com.histmersion.api.catalogue.EventScale.OfKindKind): Option[com.histmersion.api.catalogue.EventScale.OfKindResult] =
     val k = normKind(kind)
@@ -97,7 +97,7 @@ object EventScale:
     else None
 
   def ofPlaceKind(placeKind: com.histmersion.api.catalogue.EventScale.OfPlaceKindPlaceKind): Option[com.histmersion.api.catalogue.EventScale.OfPlaceKindResult] =
-    placeKind.trim.toLowerCase match
+    (placeKind).value.trim.toLowerCase match
       case com.histmersion.api.catalogue.Place.Kind.Site | com.histmersion.api.catalogue.Place.Kind.Feature =>
         Some(_root_.com.histmersion.api.catalogue.EventScale.OfPlaceKindResult(Local))
       case com.histmersion.api.catalogue.Place.Kind.Region | com.histmersion.api.catalogue.Place.Kind.Polity |
@@ -106,7 +106,7 @@ object EventScale:
       case _ => None
 
   def ofGeometry(geometryType: com.histmersion.api.catalogue.EventScale.OfGeometryGeometryType): Option[com.histmersion.api.catalogue.EventScale.OfGeometryResult] =
-    geometryType.trim.toLowerCase.replace("st_", "") match
+    (geometryType).value.trim.toLowerCase.replace("st_", "") match
       case "point"                    => Some(_root_.com.histmersion.api.catalogue.EventScale.OfGeometryResult(Local))
       case "polygon" | "multipolygon" => Some(_root_.com.histmersion.api.catalogue.EventScale.OfGeometryResult(Regional))
       case _                          => None

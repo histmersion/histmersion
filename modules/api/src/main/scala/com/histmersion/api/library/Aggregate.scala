@@ -48,19 +48,19 @@ object Aggregate:
   object OrderB extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
   def bucketSize(spanYears: com.histmersion.api.library.Aggregate.BucketSizeSpanYears): com.histmersion.api.library.Aggregate.BucketSizeResult =
-    val span = math.abs(spanYears)
+    val span = math.abs((spanYears).value)
     if span >= 20000 then _root_.com.histmersion.api.library.Aggregate.BucketSizeResult((5000).toLong)
     else if span >= 5000 then _root_.com.histmersion.api.library.Aggregate.BucketSizeResult((1000).toLong)
     else if span >= 1000 then _root_.com.histmersion.api.library.Aggregate.BucketSizeResult((100).toLong)
     else _root_.com.histmersion.api.library.Aggregate.BucketSizeResult((10).toLong)
 
   def finer(size: com.histmersion.api.library.Aggregate.FinerSize): com.histmersion.api.library.Aggregate.FinerResult = size match
-    case s if s > 1000 => _root_.com.histmersion.api.library.Aggregate.FinerResult((1000).toLong)
-    case s if s > 100  => _root_.com.histmersion.api.library.Aggregate.FinerResult((100).toLong)
+    case s if (s).value > 1000 => _root_.com.histmersion.api.library.Aggregate.FinerResult((1000).toLong)
+    case s if (s).value > 100  => _root_.com.histmersion.api.library.Aggregate.FinerResult((100).toLong)
     case _             => _root_.com.histmersion.api.library.Aggregate.FinerResult((10).toLong)
 
   def buckets(from: com.histmersion.api.library.Aggregate.BucketsFrom, to: com.histmersion.api.library.Aggregate.BucketsTo, size: com.histmersion.api.library.Aggregate.BucketsSize): List[(com.histmersion.api.library.Aggregate.BucketsResultPart1, com.histmersion.api.library.Aggregate.BucketsResultPart2)] =
-    require(size > 0, s"bucket size must be positive, got $size")
+    require((size).value > 0, s"bucket size must be positive, got $size")
     val (lo, hi) = order(from, to)
     val first = Math.floorDiv(lo, size) * size
     // Not `Iterator.iterate(_ + size)`: near Long.MaxValue the addition wraps negative and the iterator never ends.
@@ -68,7 +68,7 @@ object Aggregate:
     var s = first
     var go = s <= hi
     while go do
-      val e = try Math.addExact(s, size - 1)
+      val e = try Math.addExact(s, (size).value - 1)
       catch case _: ArithmeticException => Long.MaxValue
       out += ((s, e))
       if e == Long.MaxValue then go = false
@@ -91,7 +91,7 @@ object Aggregate:
     type ParseS = ParseS.T
     object ParseS extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
-    def parse(s: com.histmersion.api.library.Aggregate.Counting.ParseS): Option[Counting] = s.trim.toLowerCase match
+    def parse(s: com.histmersion.api.library.Aggregate.Counting.ParseS): Option[Counting] = (s).value.trim.toLowerCase match
       case "starts"       => Some(Starts)
       case "overlap" | "" => Some(Overlap)
       case _              => None
@@ -120,7 +120,7 @@ object Aggregate:
         val byBucket = spans.iterator
           .map(_._1)
           .filter(y => y >= lo && y <= hi)
-          .map(y => Math.floorDiv(y, size) * size)
+          .map((y => Math.floorDiv((y).value, (size).value) * (size).value).value)
           .toList
           .groupBy(identity)
           .view

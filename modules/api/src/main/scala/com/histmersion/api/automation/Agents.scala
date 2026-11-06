@@ -38,15 +38,15 @@ object Agents:
     object Model extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
     def parse(s: com.histmersion.api.automation.Agents.ModelRef.ParseS, known: Set[com.histmersion.api.automation.Agents.ModelRef.ParseKnown] = Set.empty): Either[com.histmersion.api.automation.Agents.ModelRef.ParseResultPart1, ModelRef] =
-      val t = s.trim
+      val t = (s).value.trim
       t.indexOf(':') match
         case -1 => Left(s"'$t' is not provider:model (provider: ${ProviderKind.names(known)})")
         case i  =>
           val (p, m) = (t.substring(0, i), t.substring(i + 1).trim)
-          ProviderKind.parse(p, known) match
+          ProviderKind.parse(_root_.com.histmersion.api.automation.ProviderKind.ParseS(p), known) match
             case None                 => Left(s"unknown provider '$p' in '$t' (one of: ${ProviderKind.names(known)})")
             case Some(_) if m.isEmpty => Left(_root_.com.histmersion.api.automation.Agents.ModelRef.ParseResultPart1(s"'$t' names no model"))
-            case Some(k)              => Right(ModelRef(k, m))
+            case Some(k)              => Right(ModelRef(k, _root_.com.histmersion.api.automation.Agents.ModelRef.Model(m)))
 
   /** `input` counts all prompt tokens, cached ones included (the provider-normalised convention sttp-ai uses);
     * `cacheRead`/`cacheWrite` are subsets of it.
@@ -55,11 +55,11 @@ object Agents:
       derives KindlingsCodecAsObject,
         KindlingsSchema, com.histmersion.api.json.Schema:
     def +(o: Usage): Usage =
-      Usage(input + o.input, output + o.output, cacheRead + o.cacheRead, cacheWrite + o.cacheWrite)
-    def total: com.histmersion.api.automation.Agents.Usage.TotalResult = input + output
+      Usage((input).value + (o.input).value, (output).value + (o.output).value, (cacheRead).value + (o.cacheRead).value, (cacheWrite).value + (o.cacheWrite).value)
+    def total: com.histmersion.api.automation.Agents.Usage.TotalResult = (input).value + (output).value
 
     def budgeted(cacheReadWeight: com.histmersion.api.automation.Agents.Usage.BudgetedCacheReadWeight): com.histmersion.api.automation.Agents.Usage.BudgetedResult =
-      math.max(0L, input - cacheRead) + output + math.round(cacheRead.toDouble * math.max(0.0, cacheReadWeight))
+      math.max(0L, (input).value - (cacheRead).value) + output + math.round(cacheRead.toDouble * math.max(0.0, cacheReadWeight))
 
   object Usage:
     type TotalResult = TotalResult.T
@@ -143,7 +143,7 @@ object Agents:
     private[Agents] val Million = BigDecimal(1000000)
 
     def parse(s: com.histmersion.api.automation.Agents.Prices.ParseS): Either[com.histmersion.api.automation.Agents.Prices.ParseResultPart1, Map[com.histmersion.api.automation.Agents.Prices.ParseResultPart2Part1, Price]] =
-      val entries = s.split(";").toList.map(_.trim).filter(_.nonEmpty)
+      val entries = (s).value.split(";").toList.map(_.trim).filter(_.nonEmpty)
       val parsed = entries.map { e =>
         e.lastIndexOf('=') match
           case -1 => Left(s"'$e' is not <model>=<input>/<output>")
@@ -161,7 +161,7 @@ object Agents:
       }
       parsed.collect { case Left(m) => m } match
         case Nil  => Right(parsed.collect { case Right(kv) => kv }.toMap)
-        case errs => Left(errs.mkString("; "))
+        case errs => Left(_root_.com.histmersion.api.automation.Agents.Prices.ParseResultPart1(errs.mkString("; ")))
 
     /** An unpriced model is an error, never zero: sttp-ai's `PriceTable` counts an unknown model as free, so it would
       * never trip a cost budget.
@@ -235,7 +235,7 @@ object Agents:
     type ParseS = ParseS.T
     object ParseS extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
-    def parse(s: com.histmersion.api.automation.Agents.Origin.ParseS): Option[Origin] = values.find(_.wire == s.trim.toLowerCase)
+    def parse(s: com.histmersion.api.automation.Agents.Origin.ParseS): Option[Origin] = values.find(_.wire == (s).value.trim.toLowerCase)
 
   final case class ProbeRequest(citekey: com.histmersion.api.library.Citekey, model: Option[ProbeRequest.Model] = None)
       derives KindlingsCodecAsObject,
@@ -374,13 +374,13 @@ object Agents:
     object Model extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
     def parse(s: com.histmersion.api.automation.Agents.ModelOverride.ParseS): Either[com.histmersion.api.automation.Agents.ModelOverride.ParseResultPart1, ModelOverride] =
-      s.indexOf('=') match
-        case -1 => Left(s"'${s.trim}' is not <role>=<provider:model>")
+      (s).value.indexOf('=') match
+        case -1 => Left(_root_.com.histmersion.api.automation.Agents.ModelOverride.ParseResultPart1(s"'${(s).value.trim}' is not <role>=<provider:model>"))
         case i  =>
-          val (r, m) = (s.substring(0, i).trim.toLowerCase(java.util.Locale.ROOT), s.substring(i + 1).trim)
-          if r.isEmpty then Left(s"'${s.trim}' names no role")
-          else if m.isEmpty then Left(s"'${s.trim}' names no model")
-          else Right(ModelOverride(r, m))
+          val (r, m) = ((s).value.substring(0, i).trim.toLowerCase(java.util.Locale.ROOT), (s).value.substring(i + 1).trim)
+          if r.isEmpty then Left(_root_.com.histmersion.api.automation.Agents.ModelOverride.ParseResultPart1(s"'${(s).value.trim}' names no role"))
+          else if m.isEmpty then Left(_root_.com.histmersion.api.automation.Agents.ModelOverride.ParseResultPart1(s"'${(s).value.trim}' names no model"))
+          else Right(ModelOverride(_root_.com.histmersion.api.automation.Agents.ModelOverride.Role(r), _root_.com.histmersion.api.automation.Agents.ModelOverride.Model(m)))
 
   final case class RunParams(
       fix: Option[com.histmersion.api.automation.Agents.RunRequest.Fix] = None,
@@ -402,7 +402,7 @@ object Agents:
   ) derives KindlingsCodecAsObject,
         KindlingsSchema, com.histmersion.api.json.Schema:
     def fixes: com.histmersion.api.automation.Agents.RunParams.FixesResult = _root_.com.histmersion.api.automation.Agents.RunParams.FixesResult(fix.contains(true))
-    def noteList: List[com.histmersion.api.automation.Agents.RunParams.NoteListResult] = notes.getOrElse(Nil).map(_.trim).filter(_.nonEmpty)
+    def noteList: List[com.histmersion.api.automation.Agents.RunParams.NoteListResult] = (notes.getOrElse(Nil).map((_).value.trim).filter(_.nonEmpty)).map(refactorValue4 => _root_.com.histmersion.api.automation.Agents.RunParams.NoteListResult(refactorValue4))
     def overrides: List[ModelOverride] = modelFor.getOrElse(Nil)
 
   object RunParams:
@@ -536,7 +536,7 @@ object Agents:
   ) derives KindlingsCodecAsObject,
         KindlingsSchema, com.histmersion.api.json.Schema:
     def modelText: com.histmersion.api.automation.Agents.StepInfo.ModelTextResult = (model, actualModel) match
-      case (Some(m), Some(a)) if m.drop(m.indexOf(':') + 1) != a => _root_.com.histmersion.api.automation.Agents.StepInfo.ModelTextResult(s"$m → $a")
+      case (Some(m), Some(a)) if (m).value.drop((m).value.indexOf(':') + 1) != a => _root_.com.histmersion.api.automation.Agents.StepInfo.ModelTextResult(s"$m → $a")
       case (Some(m), _)                                          => m
       case (None, Some(a))                                       => a
       case (None, None)                                          => _root_.com.histmersion.api.automation.Agents.StepInfo.ModelTextResult("")
@@ -775,7 +775,7 @@ object Agents:
     type ParseS = ParseS.T
     object ParseS extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
-    def parse(s: com.histmersion.api.automation.Agents.Decision.ParseS): Option[Decision] = values.find(_.wire == s.trim.toLowerCase)
+    def parse(s: com.histmersion.api.automation.Agents.Decision.ParseS): Option[Decision] = values.find(_.wire == (s).value.trim.toLowerCase)
 
   final case class ApprovalInfo(
       id: ApprovalInfo.Id,

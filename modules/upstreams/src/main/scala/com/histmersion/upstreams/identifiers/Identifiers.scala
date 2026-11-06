@@ -35,11 +35,11 @@ object Identifiers:
       )
 
   def arxiv(raw: com.histmersion.upstreams.identifiers.Identifiers.ArxivRaw): Option[com.histmersion.upstreams.identifiers.Identifiers.ArxivResult] =
-    Option(raw).map(_.trim).filter(_.nonEmpty).flatMap { s =>
+    Option(raw).map((_).value.trim).filter(_.nonEmpty).flatMap { s =>
       s.toLowerCase match
-        case ArxivNew(id) => Some(id)
+        case ArxivNew(id) => Some(_root_.com.histmersion.upstreams.identifiers.Identifiers.ArxivResult(id))
         case _            =>
           s match
-            case ArxivOld(id) => Some(id)
+            case ArxivOld(id) => Some(_root_.com.histmersion.upstreams.identifiers.Identifiers.ArxivResult(id))
             case _            => None
     }

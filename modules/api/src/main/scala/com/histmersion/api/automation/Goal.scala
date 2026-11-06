@@ -77,7 +77,7 @@ object Goal:
 
     val SearchQuery: LinkKind = Query
 
-    def parse(s: com.histmersion.api.automation.Goal.LinkKind.ParseS): Option[LinkKind] = values.find(_.wire == s.trim.toLowerCase)
+    def parse(s: com.histmersion.api.automation.Goal.LinkKind.ParseS): Option[LinkKind] = values.find(_.wire == (s).value.trim.toLowerCase)
     given WireEnumValues[LinkKind]:
       def all: Array[LinkKind] = LinkKind.values
       def wire(e: LinkKind): com.histmersion.api.automation.Goal.LinkKind.WireResult = e.wire
@@ -113,7 +113,7 @@ object Goal:
     object OfOffset extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
     def of(total: com.histmersion.api.automation.Goal.List.OfTotal, rows: scala.List[Goal], offset: com.histmersion.api.automation.Goal.List.OfOffset): List =
-      List(com.histmersion.api.RowCount(total), rows, com.histmersion.api.Offset(offset), OffsetPage(com.histmersion.api.RowCount(total), com.histmersion.api.Offset(offset), com.histmersion.api.RowCount(rows.size)).next)
+      List(com.histmersion.api.RowCount((total).value), rows, com.histmersion.api.Offset((offset).value), OffsetPage(com.histmersion.api.RowCount(total), com.histmersion.api.Offset(offset), com.histmersion.api.RowCount(rows.size)).next)
 
   final case class Patch(
       title: Option[com.histmersion.api.automation.Goal.Title] = None,

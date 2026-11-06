@@ -73,7 +73,7 @@ object PlanQuota:
     type ParseS = ParseS.T
     object ParseS extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
-    def parse(s: com.histmersion.api.automation.PlanQuota.PoolId.ParseS): Option[PoolId] = values.find(_.wire == s.trim.toLowerCase(java.util.Locale.ROOT))
+    def parse(s: com.histmersion.api.automation.PlanQuota.PoolId.ParseS): Option[PoolId] = values.find(_.wire == (s).value.trim.toLowerCase(java.util.Locale.ROOT))
 
   /** A CLI configured to keep an API key in its environment (`use-api-key`) bills the key, not the plan. */
   final case class Logins(
@@ -119,7 +119,7 @@ object PlanQuota:
     type ParseS = ParseS.T
     object ParseS extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
-    def parse(s: com.histmersion.api.automation.PlanQuota.Source.ParseS): Option[Source] = values.find(_.wire == s.trim.toLowerCase(java.util.Locale.ROOT))
+    def parse(s: com.histmersion.api.automation.PlanQuota.Source.ParseS): Option[Source] = values.find(_.wire == (s).value.trim.toLowerCase(java.util.Locale.ROOT))
 
   /** Codex names its windows by length (`300m`/`10080m`): its `primary` is not always the 5-hour window. */
   final case class Reading(
@@ -177,7 +177,7 @@ object PlanQuota:
 
     val Empty: Floors = Floors(Map.empty)
     def parse(s: com.histmersion.api.automation.PlanQuota.Floors.ParseS): Either[com.histmersion.api.automation.PlanQuota.Floors.ParseResultPart1, Floors] =
-      val items = s.split(',').toList.map(_.trim).filter(_.nonEmpty)
+      val items = (s).value.split(',').toList.map(_.trim).filter(_.nonEmpty)
       val parsed = items.map { i =>
         i.indexOf('=') match
           case -1 => Left(s"'$i' is not <window>=<percent>")
@@ -190,7 +190,7 @@ object PlanQuota:
       }
       parsed.collect { case Left(m) => m } match
         case Nil  => Right(Floors(parsed.collect { case Right(kv) => kv }.toMap))
-        case errs => Left(errs.mkString("; "))
+        case errs => Left(_root_.com.histmersion.api.automation.PlanQuota.Floors.ParseResultPart1(errs.mkString("; ")))
 
   final case class Rules(floors: Floors, defaultFloor: Rules.DefaultFloor, staleMs: Rules.StaleMs, marginPct: Rules.MarginPct)
 
@@ -257,7 +257,7 @@ object PlanQuota:
   def windowState(r: Reading, rules: Rules, now: com.histmersion.api.automation.PlanQuota.WindowStateNow): WindowState =
     val floor = rules.floors.of(r.limit, r.kind, rules.defaultFloor)
     val left = (100.0 - r.usedPct).max(0)
-    val stale = now - r.observedAt > rules.staleMs
+    val stale = (now).value - r.observedAt > rules.staleMs
     val pct = (d: Double) =>
       java.math.BigDecimal(d).setScale(1, java.math.RoundingMode.HALF_UP).stripTrailingZeros.toPlainString
     val why =
@@ -282,9 +282,9 @@ object PlanQuota:
     val blocking = states.filterNot(_.usable)
     val earliest = blocking.flatMap(_.reading.resetsAt).minOption
     val v =
-      if held then Verdict.Blocked(_root_.com.histmersion.api.automation.PlanQuota.Verdict.Blocked.Reason("held: a person paused all agent use of this plan"), None)
+      if (held).value then Verdict.Blocked(_root_.com.histmersion.api.automation.PlanQuota.Verdict.Blocked.Reason("held: a person paused all agent use of this plan"), None)
       else
-        refusal.filter(_._2.forall(_ > now)) match
+        refusal.filter(_._2.forall(((_).value > now).value)) match
           case Some((why, until))             => Verdict.Blocked(why, until)
           case None if blocking.nonEmpty      => Verdict.Blocked(blocking.flatMap(_.why).mkString("; "), earliest)
           case None if states.isEmpty         => Verdict.Usable(Some(_root_.com.histmersion.api.automation.PlanQuota.Verdict.Usable.Note("no reading yet: unknown until a run reads it")))
@@ -304,7 +304,7 @@ object PlanQuota:
     type ParseS = ParseS.T
     object ParseS extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
-    def parse(s: com.histmersion.api.automation.PlanQuota.RefreshMode.ParseS): Option[RefreshMode] = values.find(_.wire == s.trim.toLowerCase(java.util.Locale.ROOT))
+    def parse(s: com.histmersion.api.automation.PlanQuota.RefreshMode.ParseS): Option[RefreshMode] = values.find(_.wire == (s).value.trim.toLowerCase(java.util.Locale.ROOT))
 
   enum Login:
     case Present(detail: Login.Present.Detail)
@@ -352,7 +352,7 @@ object PlanQuota:
       now: com.histmersion.api.automation.PlanQuota.RefreshNeedNow,
       model: Option[com.histmersion.api.automation.PlanQuota.RefreshNeedModel] = None
   ): Option[RefreshNeed] =
-    if held || refusal.exists(_._2.forall(_ > now)) then None
+    if held || refusal.exists(_._2.forall(((_).value > now).value)) then None
     else
       val states = current(readings, now, model).map(windowState(_, rules, now))
       if states.isEmpty then Some(RefreshNeed.NoReading)
@@ -363,7 +363,7 @@ object PlanQuota:
         )
 
   def throttled(lastAttempt: Option[com.histmersion.api.automation.PlanQuota.ThrottledLastAttempt], minGapMs: com.histmersion.api.automation.PlanQuota.ThrottledMinGapMs, now: com.histmersion.api.automation.PlanQuota.ThrottledNow): com.histmersion.api.automation.PlanQuota.ThrottledResult =
-    lastAttempt.exists(t => now - t < minGapMs)
+    lastAttempt.exists((t => (now).value - t < minGapMs).value)
 
   def refreshDecision(
       need: Option[RefreshNeed],
@@ -375,9 +375,9 @@ object PlanQuota:
       force: com.histmersion.api.automation.PlanQuota.RefreshDecisionForce = _root_.com.histmersion.api.automation.PlanQuota.RefreshDecisionForce(false)
   ): Either[com.histmersion.api.automation.PlanQuota.RefreshDecisionResultPart1, Option[RefreshNeed]] =
     login match
-      case _ if !enabled                              => Left(_root_.com.histmersion.api.automation.PlanQuota.RefreshDecisionResultPart1("refresh is off for this pool"))
+      case _ if !(enabled).value                              => Left(_root_.com.histmersion.api.automation.PlanQuota.RefreshDecisionResultPart1("refresh is off for this pool"))
       case Login.Missing(why)                         => Left(_root_.com.histmersion.api.automation.PlanQuota.RefreshDecisionResultPart1(s"no login: $why"))
-      case _ if force                                 => Right(need)
+      case _ if (force).value                                 => Right(need)
       case _ if need.isEmpty                          => Left(_root_.com.histmersion.api.automation.PlanQuota.RefreshDecisionResultPart1("the reading decides by itself"))
       case _ if throttled(lastAttempt, minGapMs, now) =>
         Left(_root_.com.histmersion.api.automation.PlanQuota.RefreshDecisionResultPart1("a fresh reading was taken (or tried) less than stale-minutes ago"))

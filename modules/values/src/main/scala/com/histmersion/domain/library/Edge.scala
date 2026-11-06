@@ -42,7 +42,7 @@ object Edge:
       case ReviewOf        => _root_.com.histmersion.domain.library.Edge.Kind.WireOfResult("review_of")
       case Verifies        => _root_.com.histmersion.domain.library.Edge.Kind.WireOfResult("verifies")
 
-    def fromWire(s: com.histmersion.domain.library.Edge.Kind.FromWireS): Option[Kind] = wireMap.get(s.toLowerCase)
+    def fromWire(s: com.histmersion.domain.library.Edge.Kind.FromWireS): Option[Kind] = wireMap.get(_root_.com.histmersion.domain.library.Edge.Kind.WireMapPart1((s).value.toLowerCase))
 
     /** All wire strings, for validators and legends. */
     val allWire: List[com.histmersion.domain.library.Edge.Kind.AllWire] = values.map(wireOf).toList

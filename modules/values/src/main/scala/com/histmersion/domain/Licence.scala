@@ -31,14 +31,14 @@ object Licence:
   type FirstKnownStatements = FirstKnownStatements.T
   object FirstKnownStatements extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
-  def unknown(statement: com.histmersion.domain.Licence.UnknownStatement): Licence = Licence(Licence.Id(statement), Licence.Family.Unknown)
+  def unknown(statement: com.histmersion.domain.Licence.UnknownStatement): Licence = Licence(Licence.Id((statement).value), Licence.Family.Unknown)
 
   /** Pure: the families a config string allows (`"cc0,public-domain,cc-by,cc-by-sa"`). Unknown names and the
     * never-allowed ones are dropped.
     */
   def allowList(csv: com.histmersion.domain.Licence.AllowListCsv): Set[Licence.Family] =
     Option(csv).toList
-      .flatMap(_.split(",").toList)
+      .flatMap((_).value.split(",").toList)
       .map(_.trim.toLowerCase(Locale.ROOT))
       .flatMap(Licence.Family.fromWire)
       .filterNot(_.never)
@@ -53,7 +53,7 @@ object Licence:
     * BY-SA 3.0 de`, `Public domain`) — as a [[Licence]]; [[LicenceFamily.Unknown]] when it is neither.
     */
   def classify(raw: com.histmersion.domain.Licence.ClassifyRaw): Licence =
-    val s = raw.trim.toLowerCase(Locale.ROOT).replaceAll("[\\s_]+", "-")
+    val s = (raw).value.trim.toLowerCase(Locale.ROOT).replaceAll("[\\s_]+", "-")
     s match
       case ""                                                        => unknown(_root_.com.histmersion.domain.Licence.UnknownStatement(""))
       case c if c.startsWith("cc0") || c == "cc-zero" || c == "cc-0" =>
@@ -71,7 +71,7 @@ object Licence:
       case g if g.startsWith("gfdl") => Licence(Licence.Id("GFDL"), Licence.Family.Gfdl)
       case a if a == "arr" || a == "all-rights-reserved" || a == "copyrighted" || a.startsWith("©") =>
         Licence(Licence.Id(Licence.Family.AllRightsReserved.wire), Licence.Family.AllRightsReserved)
-      case other => unknown(other)
+      case other => unknown(_root_.com.histmersion.domain.Licence.UnknownStatement(other))
 
   private val CcUrl =
     """^https?://(?:www\.)?creativecommons\.org/licenses/([a-z-]+)/([0-9](?:\.[0-9])?)(?:/([a-z]{2,3}))?/?(?:deed\.[a-z-]+)?$""".r
@@ -84,16 +84,16 @@ object Licence:
     * [[LicenceFamily.Unknown]]: never guessed.
     */
   def ofUrl(url: com.histmersion.domain.Licence.OfUrlUrl): Licence =
-    val u = Option(url).getOrElse("").trim.toLowerCase(Locale.ROOT)
+    val u = Option((url).value).getOrElse("").trim.toLowerCase(Locale.ROOT)
     u match
       case PdUrl("zero")              => Licence(Licence.Id("CC0-1.0"), Licence.Family.Cc0)
       case PdUrl(_)                   => Licence(Licence.Id("public-domain"), Licence.Family.PublicDomain)
-      case CcUrl(code, version, port) => classify(s"cc-$code-$version" + Option(port).fold("")("-" + _))
-      case _                          => unknown(u)
+      case CcUrl(code, version, port) => classify(_root_.com.histmersion.domain.Licence.ClassifyRaw(s"cc-$code-$version" + Option(port).fold("")("-" + _)))
+      case _                          => unknown(_root_.com.histmersion.domain.Licence.UnknownStatement(u))
 
   /** Pure: a statement as a licence — a Creative Commons URL read as one, anything else classified. */
   def ofStatement(stated: com.histmersion.domain.Licence.OfStatementStated): Licence =
-    if stated.toLowerCase(Locale.ROOT).matches("^https?://.*") then ofUrl(stated) else classify(stated)
+    if (stated).value.toLowerCase(Locale.ROOT).matches("^https?://.*") then ofUrl(stated) else classify(stated)
 
   /** Pure: the first of the candidates that reads as a known licence (the machine id first, then the short name);
     * [[LicenceFamily.Unknown]] with the first non-empty one when none does.
@@ -104,7 +104,7 @@ object Licence:
     * first non-empty one when none does.
     */
   def firstKnown(statements: List[com.histmersion.domain.Licence.FirstKnownStatements]): Licence =
-    val cands = statements.map(_.trim).filter(_.nonEmpty)
+    val cands = statements.map((_).value.trim).filter(_.nonEmpty)
     cands.iterator
       .map(classify)
       .find(_.family != Licence.Family.Unknown)
@@ -134,7 +134,7 @@ object Licence:
     case Unknown extends Family(_root_.com.histmersion.domain.Licence.Family.Wire("unknown"))
 
     /** Whether the licence requires the author to be named: every CC BY variant and the GFDL. */
-    def needsAttribution: com.histmersion.domain.Licence.Family.NeedsAttributionResult = wire.startsWith(Family.CcBy.wire) || this == Family.Gfdl
+    def needsAttribution: com.histmersion.domain.Licence.Family.NeedsAttributionResult = _root_.com.histmersion.domain.Licence.Family.NeedsAttributionResult((wire).value.startsWith((Family.CcBy.wire).value) || this == Family.Gfdl)
 
     /** The ones that need no credit at all (the credit line is still shown, as a courtesy and a source). */
     def isPublicDomain: com.histmersion.domain.Licence.Family.IsPublicDomainResult = _root_.com.histmersion.domain.Licence.Family.IsPublicDomainResult(this == Family.Cc0 || this == Family.PublicDomain)
@@ -159,7 +159,7 @@ object Licence:
     type FromWireS = FromWireS.T
     object FromWireS extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
-    val allowable: List[Family] = values.toList.filterNot(_.never)
+    val allowable: List[Family] = values.toList.filterNot((_.never).value)
 
     private val byWire: Map[com.histmersion.domain.Licence.Family.ByWirePart1, Family] = values.map(f => f.wire -> f).toMap
 

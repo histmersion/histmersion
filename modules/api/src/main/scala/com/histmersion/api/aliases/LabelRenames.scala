@@ -15,7 +15,7 @@ object LabelRenames:
   private val Shape = "^[a-z0-9][a-z0-9_.-]*$".r
 
   def validate(kind: Bundle.Kind, from: com.histmersion.api.aliases.LabelRenames.ValidateFrom, raw: com.histmersion.api.aliases.LabelRenames.ValidateRaw): Either[Api.Error, com.histmersion.api.aliases.LabelRenames.ValidateResultPart2] =
-    val to = raw.trim
+    val to = (raw).value.trim
     val what = kind match
       case Bundle.Kind.Article => "article slug"
       case Bundle.Kind.Event   => "event id"
@@ -23,5 +23,5 @@ object LabelRenames:
       case _                   => "goal slug"
     if !Shape.matches(to) then
       Left(Api.Error(_root_.com.histmersion.api.Api.Error.Message(s"'$to' is not an $what (lower-case letters, digits, '_', '.' and '-')"), Some(_root_.com.histmersion.api.Api.Error.Code(Write.CodeInvalid))))
-    else if to == from.trim then Left(Api.Error(_root_.com.histmersion.api.Api.Error.Message(s"'$to' is already that $what"), Some(_root_.com.histmersion.api.Api.Error.Code(Write.CodeInvalid))))
-    else Right(to)
+    else if to == (from).value.trim then Left(Api.Error(_root_.com.histmersion.api.Api.Error.Message(s"'$to' is already that $what"), Some(_root_.com.histmersion.api.Api.Error.Code(Write.CodeInvalid))))
+    else Right(_root_.com.histmersion.api.aliases.LabelRenames.ValidateResultPart2(to))

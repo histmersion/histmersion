@@ -21,7 +21,7 @@ object CritiqueState:
   type FromWireS = FromWireS.T
   object FromWireS extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
-  def parse(s: com.histmersion.api.research.CritiqueState.ParseS): Option[CritiqueState] = values.find(_.wire == s.trim.toLowerCase)
+  def parse(s: com.histmersion.api.research.CritiqueState.ParseS): Option[CritiqueState] = values.find(_.wire == (s).value.trim.toLowerCase)
   given WireEnumValues[CritiqueState]:
     def all: Array[CritiqueState] = CritiqueState.values
     def wire(e: CritiqueState): com.histmersion.api.research.CritiqueState.WireResult = e.wire

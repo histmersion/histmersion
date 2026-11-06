@@ -39,13 +39,13 @@ object ItemKind:
   val Readable: Set[ItemKind] = Set(Source, Article)
 
   def parse(s: com.histmersion.api.ItemKind.ParseS): Option[ItemKind] =
-    val t = Option(s).fold("")(_.trim.toLowerCase)
+    val t = Option(s).fold("")((_).value.trim.toLowerCase)
     values.find(k => k.wire == t || (t.endsWith("s") && k.wire == t.dropRight(1)))
 
   given WireEnumValues[ItemKind]:
     def all: Array[ItemKind] = ItemKind.values
     def wire(e: ItemKind): com.histmersion.api.ItemKind.WireResult = e.wire
-    def fromWire(s: com.histmersion.api.ItemKind.FromWireS): Option[ItemKind] = values.find(_.wire == s.trim.toLowerCase)
+    def fromWire(s: com.histmersion.api.ItemKind.FromWireS): Option[ItemKind] = values.find(_.wire == (s).value.trim.toLowerCase)
   given Encoder[ItemKind] = WireEnum.encoder
   given Decoder[ItemKind] = WireEnum.decoder
   given Schema[ItemKind] = WireEnum.schema

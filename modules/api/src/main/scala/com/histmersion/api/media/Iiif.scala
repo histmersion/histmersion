@@ -55,7 +55,7 @@ object Iiif:
     type ParseS = ParseS.T
     object ParseS extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
-    def parse(s: com.histmersion.api.media.Iiif.Region.ParseS): Either[com.histmersion.api.media.Iiif.Region.ParseResultPart1, Region] = s.trim.toLowerCase match
+    def parse(s: com.histmersion.api.media.Iiif.Region.ParseS): Either[com.histmersion.api.media.Iiif.Region.ParseResultPart1, Region] = (s).value.trim.toLowerCase match
       case "full" | "square" => Right(Full)
       case other             =>
         other.split(",").toList match
@@ -66,7 +66,7 @@ object Iiif:
               w <- ws.toIntOption.filter(_ > 0)
               h <- hs.toIntOption.filter(_ > 0)
             yield Pixels(x, y, w, h))
-              .toRight(s"invalid region coordinates: '$s' (expected x,y,w,h with w,h > 0)")
+              .toRight(_root_.com.histmersion.api.media.Iiif.Region.ParseResultPart1(s"invalid region coordinates: '$s' (expected x,y,w,h with w,h > 0)"))
           case _ => Left(_root_.com.histmersion.api.media.Iiif.Region.ParseResultPart1(s"invalid region: '$s' (expected 'full' or 'x,y,w,h')"))
 
   enum Size:
@@ -104,7 +104,7 @@ object Iiif:
     object ParseS extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
     def parse(s: com.histmersion.api.media.Iiif.Size.ParseS): Either[com.histmersion.api.media.Iiif.Size.ParseResultPart1, Size] =
-      val t = s.trim
+      val t = (s).value.trim
       t match
         case "max"                  => Right(Max)
         case "^max"                 => Right(ScaleUp)
@@ -113,35 +113,35 @@ object Iiif:
             case List(ws, hs) =>
               (for w <- ws.toIntOption.filter(_ > 0); h <- hs.toIntOption.filter(_ > 0)
               yield BestFit(w, h))
-                .toRight(s"invalid best-fit size: '$s'")
+                .toRight(_root_.com.histmersion.api.media.Iiif.Size.ParseResultPart1(s"invalid best-fit size: '$s'"))
             case _ => Left(_root_.com.histmersion.api.media.Iiif.Size.ParseResultPart1(s"invalid size: '$s'"))
         case _ if t.endsWith(",") =>
           t.dropRight(1)
             .toIntOption
             .filter(_ > 0)
             .map(Width(_))
-            .toRight(s"invalid width size: '$s'")
+            .toRight(_root_.com.histmersion.api.media.Iiif.Size.ParseResultPart1(s"invalid width size: '$s'"))
         case _ if t.startsWith(",") =>
           t.drop(1)
             .toIntOption
             .filter(_ > 0)
             .map(Height(_))
-            .toRight(s"invalid height size: '$s'")
+            .toRight(_root_.com.histmersion.api.media.Iiif.Size.ParseResultPart1(s"invalid height size: '$s'"))
         case _ =>
           t.split(",").toList match
             case List(ws, hs) =>
               (for w <- ws.toIntOption.filter(_ > 0); h <- hs.toIntOption.filter(_ > 0)
               yield Exact(w, h))
-                .toRight(s"invalid exact size: '$s'")
+                .toRight(_root_.com.histmersion.api.media.Iiif.Size.ParseResultPart1(s"invalid exact size: '$s'"))
             case _ => Left(_root_.com.histmersion.api.media.Iiif.Size.ParseResultPart1(s"invalid size: '$s'"))
 
-  def parseFormat(s: com.histmersion.api.media.Iiif.ParseFormatS): Either[com.histmersion.api.media.Iiif.ParseFormatResultPart1, com.histmersion.api.media.Iiif.ParseFormatResultPart2] = s.trim.toLowerCase match
+  def parseFormat(s: com.histmersion.api.media.Iiif.ParseFormatS): Either[com.histmersion.api.media.Iiif.ParseFormatResultPart1, com.histmersion.api.media.Iiif.ParseFormatResultPart2] = (s).value.trim.toLowerCase match
     case "jpg" | "jpeg" => Right(_root_.com.histmersion.api.media.Iiif.ParseFormatResultPart2("jpg"))
     case "png"          => Right(_root_.com.histmersion.api.media.Iiif.ParseFormatResultPart2("png"))
     case other          => Left(_root_.com.histmersion.api.media.Iiif.ParseFormatResultPart1(s"unsupported format: '$other' (use jpg or png)"))
 
   def contentType(format: com.histmersion.api.media.Iiif.ContentTypeFormat): com.histmersion.api.media.Iiif.ContentTypeResult = format match
-    case "png" => _root_.com.histmersion.api.media.Iiif.ContentTypeResult("image/png")
+    case refactorPattern2 if (refactorPattern.value == "png") && (refactorPattern2.value == "png") => _root_.com.histmersion.api.media.Iiif.ContentTypeResult("image/png")
     case _     => _root_.com.histmersion.api.media.Iiif.ContentTypeResult("image/jpeg")
 
   /** Built as `Json` by hand: the IIIF document's `@`-prefixed keys are beyond circe derivation. */
@@ -150,11 +150,11 @@ object Iiif:
     import io.circe.syntax.*
     Json.obj(
       "@context" -> Json.fromString(ApiContext),
-      "id" -> Json.fromString(id),
+      "id" -> Json.fromString((id).value),
       "type" -> Json.fromString("ImageService3"),
       "protocol" -> Json.fromString(Protocol),
-      "width" -> Json.fromInt(width),
-      "height" -> Json.fromInt(height),
+      "width" -> Json.fromInt((width).value),
+      "height" -> Json.fromInt((height).value),
       "profile" -> Json.fromString(Profile),
       "extraFormats" -> Json.arr(Json.fromString("png")),
       "extraQualities" -> Json.arr(),

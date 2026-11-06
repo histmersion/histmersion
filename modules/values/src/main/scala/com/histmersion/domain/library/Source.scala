@@ -28,7 +28,7 @@ object Source:
       def all: Array[Status] = Status.values
       def wire(e: Status): com.histmersion.domain.library.Source.Status.WireResult = _root_.com.histmersion.domain.library.Source.Status.WireResult(e.toString.toLowerCase)
       def fromWire(s: com.histmersion.domain.library.Source.Status.FromWireS): Option[Status] =
-        Status.values.find(_.toString.equalsIgnoreCase(s))
+        Status.values.find(_.toString.equalsIgnoreCase((s).value))
 
   /** A source's stable identity across renames, merges and databases (`sources.uid`). */
   type Uid = Uid.T

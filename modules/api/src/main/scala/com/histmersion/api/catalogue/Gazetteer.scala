@@ -105,10 +105,10 @@ object Gazetteer:
     val base = fileName
       .replaceAll("(?i)(\\.meta)?\\.(jsonld|json|geojson|ndjson|jsonl|tsv)(\\.gz)?$", "")
       .replaceAll("(?i)\\.lpf$", "")
-    slug(base).take(48)
+    _root_.com.histmersion.api.catalogue.Gazetteer.DatasetSlugResult((slug(base)).value.take(48))
 
   private def slug(s: com.histmersion.api.catalogue.Gazetteer.SlugS): com.histmersion.api.catalogue.Gazetteer.SlugResult =
-    s.trim.toLowerCase(java.util.Locale.ROOT).replaceAll("[^a-z0-9]+", "_").replaceAll("^_+|_+$", "")
+    _root_.com.histmersion.api.catalogue.Gazetteer.SlugResult((s).value.trim.toLowerCase(java.util.Locale.ROOT).replaceAll("[^a-z0-9]+", "_").replaceAll("^_+|_+$", ""))
 
   def rank(m: Place.Match): com.histmersion.api.catalogue.Gazetteer.RankResult = m.importSource.flatMap(com.histmersion.api.catalogue.Gazetteer.Kind.ofKey) match
     case None                                                        => if m.importSource.isEmpty then _root_.com.histmersion.api.catalogue.Gazetteer.RankResult(0) else _root_.com.histmersion.api.catalogue.Gazetteer.RankResult(5)
@@ -146,7 +146,7 @@ object Gazetteer:
 
   def validity(sourceKey: com.histmersion.api.catalogue.Gazetteer.ValiditySourceKey, span: Span, windowYears: com.histmersion.api.catalogue.Gazetteer.ValidityWindowYears): Validity = span match
     case Span(None, Some(end)) if unknownWhenSilent(sourceKey) =>
-      Validity(Some(end - math.max(0, windowYears)), Some(end), startUnknown = _root_.com.histmersion.api.Validity.StartUnknown(true))
+      Validity(Some(end - math.max(0, (windowYears).value)), Some(end), startUnknown = _root_.com.histmersion.api.Validity.StartUnknown(true))
     case Span(from, to) => Validity(from, to, startUnknown = _root_.com.histmersion.api.Validity.StartUnknown(false))
 
   val DefaultPointAreaKinds: List[com.histmersion.api.catalogue.Gazetteer.DefaultPointAreaKinds] = List(
@@ -263,7 +263,7 @@ object Gazetteer:
 
   def placeIdFor(own: Option[ExternalId], ref: com.histmersion.api.catalogue.Gazetteer.PlaceIdForRef, dataset: com.histmersion.api.catalogue.Gazetteer.PlaceIdForDataset): com.histmersion.api.catalogue.Gazetteer.PlaceIdForResult =
     own.map(_.placeId).getOrElse {
-      val tail = slug(ref.split("[/#=]").filter(_.trim.nonEmpty).lastOption.getOrElse(ref))
+      val tail = slug((ref).value.split("[/#=]").filter(_.trim.nonEmpty).lastOption.getOrElse(ref))
       s"lpf_${dataset}_${if tail.nonEmpty then tail.take(64) else "x" + Integer.toHexString(ref.hashCode)}"
     }
 
@@ -321,7 +321,7 @@ object Gazetteer:
       defaultSource: Option[com.histmersion.api.catalogue.Gazetteer.FromTsvRowDefaultSource] = None
   ): Either[com.histmersion.api.catalogue.Gazetteer.FromTsvRowResultPart1, GazRecord] =
     val row =
-      header.map(_.trim.toLowerCase(java.util.Locale.ROOT)).zip(cells.map(_.trim) ++ List.fill(header.size)("")).toMap
+      header.map((_).value.trim.toLowerCase(java.util.Locale.ROOT)).zip(cells.map((_).value.trim) ++ List.fill(header.size)("")).toMap
     def get(k: com.histmersion.api.catalogue.Gazetteer.FromTsvRowGetK): Option[com.histmersion.api.catalogue.Gazetteer.FromTsvRowGetResult] = row.get(k).filter(_.nonEmpty)
     (get(_root_.com.histmersion.api.catalogue.Gazetteer.FromTsvRowGetK("id")), get(_root_.com.histmersion.api.catalogue.Gazetteer.FromTsvRowGetK("title"))) match
       case (None, _)                => Left(_root_.com.histmersion.api.catalogue.Gazetteer.FromTsvRowResultPart1(s"line $line: no id"))
@@ -373,7 +373,7 @@ object Gazetteer:
         )
 
   /** LP-TSV has no quoting: a tab separates, nothing escapes. */
-  def tsvCells(line: com.histmersion.api.catalogue.Gazetteer.TsvCellsLine): List[com.histmersion.api.catalogue.Gazetteer.TsvCellsResult] = line.split("\t", -1).toList
+  def tsvCells(line: com.histmersion.api.catalogue.Gazetteer.TsvCellsLine): List[com.histmersion.api.catalogue.Gazetteer.TsvCellsResult] = ((line).value.split("\t", -1).toList).map(refactorValue7 => _root_.com.histmersion.api.catalogue.Gazetteer.TsvCellsResult(refactorValue7))
 
   final case class Extract(
       name: Extract.Name,
@@ -431,9 +431,9 @@ object Gazetteer:
     type FromWireS = FromWireS.T
     object FromWireS extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
-    def parse(s: com.histmersion.api.catalogue.Gazetteer.Kind.ParseS): Option[Kind] = values.find(_.wire == s.trim.toLowerCase(java.util.Locale.ROOT))
+    def parse(s: com.histmersion.api.catalogue.Gazetteer.Kind.ParseS): Option[Kind] = values.find(_.wire == (s).value.trim.toLowerCase(java.util.Locale.ROOT))
 
-    def ofKey(key: com.histmersion.api.catalogue.Gazetteer.Kind.OfKeyKey): Option[Kind] = parse(key.takeWhile(_ != ':'))
+    def ofKey(key: com.histmersion.api.catalogue.Gazetteer.Kind.OfKeyKey): Option[Kind] = parse(_root_.com.histmersion.api.catalogue.Gazetteer.Kind.ParseS((key).value.takeWhile(_ != ':')))
 
     given WireEnumValues[Kind]:
       def all: Array[Kind] = Kind.values
@@ -467,7 +467,7 @@ object Gazetteer:
         com.histmersion.api.json.Schema:
     def +(o: LoadCounts): LoadCounts =
       this.modify(
-        _.records).setTo(records + o.records).modify(_.created).setTo(created + o.created).modify(_.joined).setTo(joined + o.joined).modify(_.placesChanged).setTo(placesChanged + o.placesChanged).modify(_.namesAdded).setTo(namesAdded + o.namesAdded).modify(_.namesRemoved).setTo(namesRemoved + o.namesRemoved).modify(_.namesChanged).setTo(namesChanged + o.namesChanged).modify(_.linksAdded).setTo(linksAdded + o.linksAdded).modify(_.linksRemoved).setTo(linksRemoved + o.linksRemoved).modify(_.placesRemoved).setTo(placesRemoved + o.placesRemoved).modify(_.skipped).setTo((skipped ++ o.skipped).take(20)).modify(_.descriptionsAdded).setTo(descriptionsAdded + o.descriptionsAdded).modify(_.descriptionsRemoved).setTo(descriptionsRemoved + o.descriptionsRemoved).modify(_.descriptionsChanged).setTo(descriptionsChanged + o.descriptionsChanged).modify(_.linksChanged).setTo(linksChanged + o.linksChanged).modify(_.pointAreasSkipped).setTo(pointAreasSkipped + o.pointAreasSkipped
+        _.records).setTo(((records).value + (o.records).value).value).modify(_.created).setTo((created).value + o.created).modify(_.joined).setTo(joined + o.joined).modify(_.placesChanged).setTo(placesChanged + o.placesChanged).modify(_.namesAdded).setTo(namesAdded + o.namesAdded).modify(_.namesRemoved).setTo(namesRemoved + o.namesRemoved).modify(_.namesChanged).setTo(namesChanged + o.namesChanged).modify(_.linksAdded).setTo(linksAdded + o.linksAdded).modify(_.linksRemoved).setTo(linksRemoved + o.linksRemoved).modify(_.placesRemoved).setTo(placesRemoved + o.placesRemoved).modify(_.skipped).setTo((skipped ++ o.skipped).take(20)).modify(_.descriptionsAdded).setTo(descriptionsAdded + o.descriptionsAdded).modify(_.descriptionsRemoved).setTo(descriptionsRemoved + o.descriptionsRemoved).modify(_.descriptionsChanged).setTo(descriptionsChanged + o.descriptionsChanged).modify(_.linksChanged).setTo(linksChanged + o.linksChanged).modify(_.pointAreasSkipped).setTo(pointAreasSkipped + o.pointAreasSkipped
       )
 
     def unchanged: com.histmersion.api.catalogue.Gazetteer.LoadCounts.UnchangedResult =

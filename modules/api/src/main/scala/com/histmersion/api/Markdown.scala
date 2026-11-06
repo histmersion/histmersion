@@ -78,25 +78,25 @@ object Markdown:
   def periodLabel(start: Option[com.histmersion.api.Markdown.PeriodLabelStart], end: Option[com.histmersion.api.Markdown.PeriodLabelEnd]): com.histmersion.api.Markdown.PeriodLabelResult = YearFmt.period(start, end)
   private[api] def place(region: Option[com.histmersion.api.Markdown.PlaceRegion], lat: Option[com.histmersion.api.Markdown.PlaceLat], lon: Option[com.histmersion.api.Markdown.PlaceLon]): com.histmersion.api.Markdown.PlaceResult =
     (lat, lon) match
-      case (Some(la), Some(lo)) => s"${region.map(_ + " ").getOrElse("")}($la, $lo)"
+      case (Some(la), Some(lo)) => _root_.com.histmersion.api.Markdown.PlaceResult(s"${region.map((_).value + " ").getOrElse("")}($la, $lo)")
       case _                    => region.getOrElse("")
 
   def pagingFooter(p: OffsetPage): com.histmersion.api.Markdown.PagingFooterResult = OffsetPage.footer(p)
 
   def chipLinks(values: com.histmersion.api.Markdown.ChipLinksValues, hashKey: com.histmersion.api.Markdown.ChipLinksHashKey): com.histmersion.api.Markdown.ChipLinksResult =
-    chipLinks(values.split(",").iterator.map(_.trim).filter(_.nonEmpty).toList, hashKey)
+    chipLinks((values).value.split(",").iterator.map(_.trim).filter(_.nonEmpty).toList, hashKey)
 
   def chipLinks(values: List[com.histmersion.api.Markdown.ChipLinksValues], hashKey: com.histmersion.api.Markdown.ChipLinksHashKey): com.histmersion.api.Markdown.ChipLinksResult =
     values
-      .filter(_.nonEmpty)
+      .filter((_).value.nonEmpty)
       .map(v => s"[${Label.display(v).replace("[", "\\[").replace("]", "\\]")}](/#$hashKey=${enc(v)})")
       .mkString(", ")
 
-  private[api] def enc(s: com.histmersion.api.Markdown.EncS): com.histmersion.api.Markdown.EncResult = java.net.URLEncoder.encode(s, "UTF-8").replace("+", "%20")
+  private[api] def enc(s: com.histmersion.api.Markdown.EncS): com.histmersion.api.Markdown.EncResult = _root_.com.histmersion.api.Markdown.EncResult(java.net.URLEncoder.encode((s).value, "UTF-8").replace("+", "%20"))
 
   def bodySlice(text: com.histmersion.api.Markdown.BodySliceText, offset: com.histmersion.api.Markdown.BodySliceOffset, total: com.histmersion.api.Markdown.BodySliceTotal): com.histmersion.api.Markdown.BodySliceResult =
-    val remaining = total - offset - text.length
-    if remaining > 0 then s"$text\n\n_…$remaining more chars — pass offset=${offset + text.length}_"
+    val remaining = (total).value - (offset).value - text.length
+    if remaining > 0 then _root_.com.histmersion.api.Markdown.BodySliceResult(s"$text\n\n_…$remaining more chars — pass offset=${(offset).value + (text).value.length}_")
     else text
 
   def backup(r: Backup.Result): com.histmersion.api.Markdown.BackupResult =
@@ -137,7 +137,7 @@ object Markdown:
        |- **took:** ${r.durationMs} ms""".stripMargin + warn)
 
   def contestedMark(contested: com.histmersion.api.Markdown.ContestedMarkContested, label: com.histmersion.api.Markdown.ContestedMarkLabel = _root_.com.histmersion.api.Markdown.ContestedMarkLabel("")): com.histmersion.api.Markdown.ContestedMarkResult =
-    if contested && !label.toLowerCase.contains("contested") then _root_.com.histmersion.api.Markdown.ContestedMarkResult(" (contested)") else _root_.com.histmersion.api.Markdown.ContestedMarkResult("")
+    if contested && !(label).value.toLowerCase.contains("contested") then _root_.com.histmersion.api.Markdown.ContestedMarkResult(" (contested)") else _root_.com.histmersion.api.Markdown.ContestedMarkResult("")
 
   private[api] def asOfNote(asOf: Option[com.histmersion.api.Markdown.AsOfNoteAsOf]): com.histmersion.api.Markdown.AsOfNoteResult =
     asOf.map(y => s" · as of ${fmtYear(y)}").getOrElse("")

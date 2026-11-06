@@ -38,7 +38,7 @@ object ChatRequest:
     }
     val tools = Option.when(r.tools.nonEmpty)(Json.fromValues(r.tools.map { t =>
       val raw = parse(t.inputSchema).getOrElse(Json.obj())
-      val schema = if strictTools then SchemaJson(raw).strict.json else raw
+      val schema = if (strictTools).value then SchemaJson(raw).strict.json else raw
       val parameters = Encoder[Map[String, Json]].apply(schema.asObject.map(_.toMap).getOrElse(Map.empty))
       Json.obj(
         "type" -> Json.fromString("function"),

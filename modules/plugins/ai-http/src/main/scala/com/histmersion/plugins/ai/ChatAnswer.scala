@@ -15,7 +15,7 @@ final case class ChatAnswer(status: ChatAnswer.Status, body: ChatAnswer.Body):
 
   /** The turn the answer says, or the failure's description. */
   def turn: Either[com.histmersion.plugins.ai.ChatAnswer.TurnResultPart1, AiTurn] =
-    if status / 100 != 2 then Left(ChatAnswer.errorMessage(status, body))
+    if (status).value / 100 != 2 then Left(ChatAnswer.errorMessage(status, body))
     else decode(body)(using ChatAnswer.response).left.map(_.getMessage)
 
 object ChatAnswer:
@@ -59,14 +59,14 @@ object ChatAnswer:
     * answer of another shape, its body's start.
     */
   def errorMessage(status: com.histmersion.plugins.ai.ChatAnswer.ErrorMessageStatus, body: com.histmersion.plugins.ai.ChatAnswer.ErrorMessageBody): com.histmersion.plugins.ai.ChatAnswer.ErrorMessageResult =
-    val fallback = body.take(MaxRawErrorBody)
+    val fallback = (body).value.take(MaxRawErrorBody)
     parse(body).toOption.flatMap(_.asObject).flatMap(_("error")) match
       case Some(node) =>
         node.as(using error) match
           case Right(Some(message)) => message
           case Right(None)          => _root_.com.histmersion.plugins.ai.ChatAnswer.ErrorMessageResult(s"statusCode: $status, response: $body")
-          case Left(_)              => fallback
-      case None => fallback
+          case Left(_)              => _root_.com.histmersion.plugins.ai.ChatAnswer.ErrorMessageResult(fallback)
+      case None => _root_.com.histmersion.plugins.ai.ChatAnswer.ErrorMessageResult(fallback)
 
   private val error: Decoder[Option[com.histmersion.plugins.ai.ChatAnswer.Error]] = Decoder.instance { c =>
     for
@@ -212,9 +212,9 @@ object ChatAnswer:
         first.map(_._1).getOrElse(""),
         first.map(_._2).getOrElse(Nil),
         first.map(_._3) match
-          case Some("stop") | None                   => AiStop.EndTurn
-          case Some("tool_calls" | "function_calls") => AiStop.ToolUse
-          case Some("length")                        => AiStop.MaxTokens
+          case Some(refactorPattern) | None if (refactorPattern.value == "stop")                   => AiStop.EndTurn
+          case Some(refactorPattern2 | refactorPattern3) if (refactorPattern2.value == "tool_calls") && (refactorPattern3.value == "function_calls") => AiStop.ToolUse
+          case Some(refactorPattern4) if (refactorPattern4.value == "length")                        => AiStop.MaxTokens
           case Some(_)                               => AiStop.Other
         ,
         Some(u),

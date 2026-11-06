@@ -99,10 +99,10 @@ object CritiquePairing:
     def ref: CritiqueRef = CritiqueRef(cited, missing)
 
     def line: com.histmersion.api.research.CritiquePairing.Hit.LineResult =
-      s"paragraph \"$where\" names $named and cites [[$cited]] (${edges.mkString("; ")}) but not [[$missing]] — " +
-        (if mechanical then s"cite [[$missing]] there (fixable)"
+      _root_.com.histmersion.api.research.CritiquePairing.Hit.LineResult(s"paragraph \"$where\" names $named and cites [[$cited]] (${edges.mkString("; ")}) but not [[$missing]] — " +
+        (if (mechanical).value then s"cite [[$missing]] there (fixable)"
          else
-           s"cite [[$missing]] there if the name means that work (code does not: the name is shared, or the article cites it nowhere else)")
+           s"cite [[$missing]] there if the name means that work (code does not: the name is shared, or the article cites it nowhere else)"))
 
   object Hit:
     type LineResult = LineResult.T
@@ -125,27 +125,27 @@ object CritiquePairing:
 
   private def letters(s: com.histmersion.api.research.CritiquePairing.LettersS): com.histmersion.api.research.CritiquePairing.LettersResult =
     LatinFold.fold(s).toLowerCase(java.util.Locale.ROOT).filter(c => c >= 'a' && c <= 'z')
-  private def ascii(s: com.histmersion.api.research.CritiquePairing.AsciiS): com.histmersion.api.research.CritiquePairing.AsciiResult = s.toLowerCase(java.util.Locale.ROOT).filter(c => c >= 'a' && c <= 'z')
+  private def ascii(s: com.histmersion.api.research.CritiquePairing.AsciiS): com.histmersion.api.research.CritiquePairing.AsciiResult = _root_.com.histmersion.api.research.CritiquePairing.AsciiResult((s).value.toLowerCase(java.util.Locale.ROOT).filter(c => c >= 'a' && c <= 'z'))
 
   def names(citekey: com.histmersion.api.research.CritiquePairing.NamesCitekey, authors: List[com.histmersion.api.research.CritiquePairing.NamesAuthors]): List[com.histmersion.api.research.CritiquePairing.NamesResult] =
-    val lead = citekey.takeWhile(_.isLetter).toLowerCase(java.util.Locale.ROOT)
+    val lead = (citekey).value.takeWhile(_.isLetter).toLowerCase(java.util.Locale.ROOT)
     val words = authors
-      .flatMap(_.split("[\\s,]+").toList)
+      .flatMap((_).value.split("[\\s,]+").toList)
       .map(_.trim.stripSuffix("."))
       .filter(w => w.length >= 3 && w.head.isUpper)
-    val byKey = words.filter(w => lead.nonEmpty && (letters(w) == lead || ascii(w) == lead))
+    val byKey = words.filter(w => lead.nonEmpty && (letters(_root_.com.histmersion.api.research.CritiquePairing.LettersS(w)) == lead || ascii(_root_.com.histmersion.api.research.CritiquePairing.AsciiS(w)) == lead))
     val first = authors.headOption
-      .map(_.trim)
+      .map((_).value.trim)
       .filter(_.nonEmpty)
       .map(a => if a.contains(",") then a.takeWhile(_ != ',').trim else a.split("\\s+").last.trim)
-    (if byKey.nonEmpty then byKey else first.toList).filter(n => n.length >= 3 && n.head.isUpper).distinct
+    ((if byKey.nonEmpty then byKey else first.toList).filter(n => n.length >= 3 && n.head.isUpper).distinct).map(refactorValue3 => _root_.com.histmersion.api.research.CritiquePairing.NamesResult(refactorValue3))
 
   private val LinkRe = """!?\\?\[\\?\[[^\[\]\n]+?\\?\]\\?\]""".r
   private val YearRe = """(?<!\d)(1[0-9]\d\d|20\d\d)(?!\d)""".r
 
-  private def words(text: com.histmersion.api.research.CritiquePairing.WordsText): List[com.histmersion.api.research.CritiquePairing.WordsResult] = text.split("\\s+").toList.filter(_.exists(_.isLetterOrDigit))
+  private def words(text: com.histmersion.api.research.CritiquePairing.WordsText): List[com.histmersion.api.research.CritiquePairing.WordsResult] = ((text).value.split("\\s+").toList.filter(_.exists(_.isLetterOrDigit))).map(refactorValue2 => _root_.com.histmersion.api.research.CritiquePairing.WordsResult(refactorValue2))
 
-  private def prose(text: com.histmersion.api.research.CritiquePairing.ProseText): com.histmersion.api.research.CritiquePairing.ProseResult = LinkRe.replaceAllIn(text, " ")
+  private def prose(text: com.histmersion.api.research.CritiquePairing.ProseText): com.histmersion.api.research.CritiquePairing.ProseResult = _root_.com.histmersion.api.research.CritiquePairing.ProseResult(LinkRe.replaceAllIn((text).value, " "))
 
   private enum Mention:
     case Strong, Weak, Conflict
@@ -216,8 +216,8 @@ object CritiquePairing:
     val todo = hs.filter(_.mechanical).groupBy(h => (h.from, h.to))
     if todo.isEmpty then (body, Nil)
     else
-      val crlf = body.contains("\r\n")
-      val lines = body.replace("\r\n", "\n").split("\n", -1).toVector
+      val crlf = (body).value.contains("\r\n")
+      val lines = (body).value.replace("\r\n", "\n").split("\n", -1).toVector
       @tailrec def insert(
           rest: List[((com.histmersion.api.research.CritiquePairing.RepairInsertRestPart1Part1, com.histmersion.api.research.CritiquePairing.RepairInsertRestPart1Part2), List[Hit])],
           ls: Vector[com.histmersion.api.research.CritiquePairing.RepairInsertLs],
@@ -258,8 +258,8 @@ object CritiquePairing:
   def resolver(citekeys: Set[com.histmersion.api.research.CritiquePairing.ResolverCitekeys], aliases: Map[com.histmersion.api.research.CritiquePairing.ResolverAliasesPart1, com.histmersion.api.research.CritiquePairing.ResolverAliasesPart2]): com.histmersion.api.research.CritiquePairing.ResolverResultArg1 => Option[com.histmersion.api.research.CritiquePairing.ResolverResultResult] =
     val sorted = citekeys.toVector.sorted
     t =>
-      val k = t.trim.toLowerCase(java.util.Locale.ROOT)
-      if citekeys(k) then Some(k)
+      val k = (t).value.trim.toLowerCase(java.util.Locale.ROOT)
+      if citekeys(_root_.com.histmersion.api.research.CritiquePairing.ResolverCitekeys(k)) then Some(_root_.com.histmersion.api.research.CritiquePairing.ResolverResultResult(k))
       else
         aliases.get(k).filter(citekeys).orElse {
           val pre = sorted.filter(_.startsWith(k + "_"))

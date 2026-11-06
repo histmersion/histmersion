@@ -56,20 +56,20 @@ object Subprocess:
     * (the PATH the server started with).
     */
   def locate(tool: com.histmersion.plugins.vaults.Subprocess.LocateTool, path: Option[com.histmersion.plugins.vaults.Subprocess.LocatePath])(using files: com.histmersion.plugin.LocalFiles): Either[com.histmersion.plugins.vaults.Subprocess.LocateResultPart1, com.histmersion.plugins.vaults.Subprocess.LocateResultPart2] =
-    val t = Option(tool).getOrElse("").trim
+    val t = Option((tool).value).getOrElse("").trim
     def runnable(p: Path) = files.isFile(p) && files.isExecutable(p)
     if t.isEmpty then Left(_root_.com.histmersion.plugins.vaults.Subprocess.LocateResultPart1("no command is configured (cli = \"…\")"))
     else if t.contains('/') then
       val p = Path.of(t)
-      if runnable(p) then Right(p.toString) else Left(_root_.com.histmersion.plugins.vaults.Subprocess.LocateResultPart1(s"$t is not an executable file"))
+      if runnable(p) then Right(_root_.com.histmersion.plugins.vaults.Subprocess.LocateResultPart2(p.toString)) else Left(_root_.com.histmersion.plugins.vaults.Subprocess.LocateResultPart1(s"$t is not an executable file"))
     else
-      path.toList
-        .flatMap(_.split(java.io.File.pathSeparatorChar).toList)
+      ((path.toList
+        .flatMap((_).value.split(java.io.File.pathSeparatorChar).toList)
         .filter(_.nonEmpty)
         .map(d => Path.of(d, t))
         .find(runnable)
         .map(_.toString)
-        .toRight(s"$t was not found on the PATH")
+        .toRight(s"$t was not found on the PATH")).left.map(refactorError => _root_.com.histmersion.plugins.vaults.Subprocess.LocateResultPart1(refactorError))).map(refactorValue => _root_.com.histmersion.plugins.vaults.Subprocess.LocateResultPart2(refactorValue))
 
   /** Run `argv` with `env` added to the server's environment, `stdin` written and closed (no stdin: closed at once, so
     * a tool that would prompt sees end-of-file instead of waiting), within `timeout`. `Left` = it could not start or
@@ -110,15 +110,15 @@ object Subprocess:
 
   /** Pure: the tool's own message for a log line — the first non-blank stderr line, bounded. */
   def problem(err: com.histmersion.plugins.vaults.Subprocess.ProblemErr): com.histmersion.plugins.vaults.Subprocess.ProblemResult =
-    err.linesIterator.map(_.trim).find(_.nonEmpty).map(_.take(200)).getOrElse("no message")
+    _root_.com.histmersion.plugins.vaults.Subprocess.ProblemResult((err).value.linesIterator.map(_.trim).find(_.nonEmpty).map(_.take(200)).getOrElse("no message"))
 
   /** Pure: what a tool printed, without the one line break it ends with (`op read`, `bw get` and `keepassxc-cli show`
     * all end their value with one). Nothing else is trimmed: a value may begin or end with a space.
     */
-  def value(out: com.histmersion.plugins.vaults.Subprocess.ValueOut): com.histmersion.plugins.vaults.Subprocess.ValueResult = out.stripSuffix("\n").stripSuffix("\r")
+  def value(out: com.histmersion.plugins.vaults.Subprocess.ValueOut): com.histmersion.plugins.vaults.Subprocess.ValueResult = _root_.com.histmersion.plugins.vaults.Subprocess.ValueResult((out).value.stripSuffix("\n").stripSuffix("\r"))
 
   /** Pure: an argument that would read as an option of the tool is refused rather than passed on. */
   def plain(what: com.histmersion.plugins.vaults.Subprocess.PlainWhat, s: com.histmersion.plugins.vaults.Subprocess.PlainS): Either[com.histmersion.plugins.vaults.Subprocess.PlainResultPart1, com.histmersion.plugins.vaults.Subprocess.PlainResultPart2] =
-    if s.isEmpty then Left(_root_.com.histmersion.plugins.vaults.Subprocess.PlainResultPart1(s"$what is empty"))
-    else if s.startsWith("-") then Left(_root_.com.histmersion.plugins.vaults.Subprocess.PlainResultPart1(s"$what may not start with '-'"))
+    if (s).value.isEmpty then Left(_root_.com.histmersion.plugins.vaults.Subprocess.PlainResultPart1(s"$what is empty"))
+    else if (s).value.startsWith("-") then Left(_root_.com.histmersion.plugins.vaults.Subprocess.PlainResultPart1(s"$what may not start with '-'"))
     else Right(s)

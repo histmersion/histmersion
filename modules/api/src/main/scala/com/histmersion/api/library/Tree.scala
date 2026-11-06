@@ -188,7 +188,7 @@ object Tree:
   private def overlaps(row: TreeRow, from: com.histmersion.api.library.Tree.OverlapsFrom, to: com.histmersion.api.library.Tree.OverlapsTo): com.histmersion.api.library.Tree.OverlapsResult =
     Aggregate.span(row.toPeriodRow).exists((a, b) => a <= to && b >= from)
 
-  def midpoint(start: com.histmersion.api.library.Tree.MidpointStart, end: com.histmersion.api.library.Tree.MidpointEnd): com.histmersion.api.library.Tree.MidpointResult = start + Math.floorDiv(end - start, 2L)
+  def midpoint(start: com.histmersion.api.library.Tree.MidpointStart, end: com.histmersion.api.library.Tree.MidpointEnd): com.histmersion.api.library.Tree.MidpointResult = (start).value + Math.floorDiv((end).value - (start).value, 2L)
 
   def timeTime(rows: List[TreeRow], from: com.histmersion.api.library.Tree.TimeTimeFrom, to: com.histmersion.api.library.Tree.TimeTimeTo, depth: com.histmersion.api.library.Tree.TimeTimeDepth, samples: com.histmersion.api.library.Tree.TimeTimeSamples = _root_.com.histmersion.api.library.Tree.TimeTimeSamples(0)): List[Bucket] =
     val (lo, hi) = order(from, to)
@@ -238,7 +238,7 @@ object Tree:
   val SplitRatio: com.histmersion.api.library.Tree.SplitRatio = _root_.com.histmersion.api.library.Tree.SplitRatio(0.8)
 
   def splitWorthShowing(parent: com.histmersion.api.library.Tree.SplitWorthShowingParent, kids: List[Bucket]): List[Bucket] =
-    if kids.sizeIs > 1 && kids.exists(_.count < parent * SplitRatio) then kids else Nil
+    if kids.sizeIs > 1 && kids.exists(_.count < (parent).value * SplitRatio) then kids else Nil
 
   def regionTree(
       rows: List[TreeRow],
@@ -323,7 +323,7 @@ object Tree:
         .filterNot(seen.contains)
         .map(id => (id, at(id)))
         .filter((_, mine) => mine.nonEmpty)
-        .sortBy((id, mine) => (-distinct(mine), byId.get(id).fold("")(_.label.toLowerCase), id))
+        .sortBy((id, mine) => (-(distinct(mine)).value, byId.get(id).fold("")(_.label.toLowerCase), id))
         .flatMap { (id, mine) =>
           if drawnAt.contains(id) then None
           else
@@ -405,11 +405,11 @@ object Tree:
     if n <= 0 then Nil
     else rows.iterator.map(r => Bucket.Sample(r.citekey, r.title)).distinctBy(_.citekey).take(n).toList
 
-  private def clamp(depth: com.histmersion.api.library.Tree.ClampDepth): com.histmersion.api.library.Tree.ClampResult = depth.max(1).min(MaxDepth)
+  private def clamp(depth: com.histmersion.api.library.Tree.ClampDepth): com.histmersion.api.library.Tree.ClampResult = (depth).value.max(1).min(MaxDepth)
   private def order(a: com.histmersion.api.library.Tree.OrderA, b: com.histmersion.api.library.Tree.OrderB): (com.histmersion.api.library.Tree.OrderResultPart1, com.histmersion.api.library.Tree.OrderResultPart2) = if a <= b then (a, b) else (b, a)
 
   def parseBy(s: com.histmersion.api.library.Tree.ParseByS): Option[List[com.histmersion.api.library.Tree.ParseByResult]] =
-    val parts = s.split(",").map(_.trim.toLowerCase).filter(_.nonEmpty).toList
+    val parts = (s).value.split(",").map(_.trim.toLowerCase).filter(_.nonEmpty).toList
     if parts.nonEmpty && parts.forall(p => p == KindTime || p == KindRegion) && parts == parts.distinct
-    then Some(parts)
+    then Some((parts).map(refactorValue11 => _root_.com.histmersion.api.library.Tree.ParseByResult(refactorValue11)))
     else None

@@ -35,10 +35,10 @@ object BundleMarkdown:
   private def who(i: Bundle.Instance): com.histmersion.api.exchange.BundleMarkdown.WhoResult = _root_.com.histmersion.api.exchange.BundleMarkdown.WhoResult(i.label.fold(i.id.toString)(l => s"$l (${i.id})"))
 
   private def bytes(n: com.histmersion.api.exchange.BundleMarkdown.BytesN): com.histmersion.api.exchange.BundleMarkdown.BytesResult =
-    if n < 1024 then _root_.com.histmersion.api.exchange.BundleMarkdown.BytesResult(s"$n B")
-    else if n < 1024L * 1024 then s"${n / 1024} KB"
-    else if n < 1024L * 1024 * 1024 then s"${n / (1024L * 1024)} MB"
-    else s"${n / (1024L * 1024 * 1024)} GB"
+    if (n).value < 1024 then _root_.com.histmersion.api.exchange.BundleMarkdown.BytesResult(s"$n B")
+    else if (n).value < 1024L * 1024 then _root_.com.histmersion.api.exchange.BundleMarkdown.BytesResult(s"${(n).value / 1024} KB")
+    else if (n).value < 1024L * 1024 * 1024 then _root_.com.histmersion.api.exchange.BundleMarkdown.BytesResult(s"${(n).value / (1024L * 1024)} MB")
+    else _root_.com.histmersion.api.exchange.BundleMarkdown.BytesResult(s"${(n).value / (1024L * 1024 * 1024)} GB")
 
   def manifest(m: Bundle.Manifest): com.histmersion.api.exchange.BundleMarkdown.ManifestResult =
     val files = m.files

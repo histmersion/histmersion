@@ -87,12 +87,12 @@ object ListFilters:
   val FacetMax = 40
 
   def values(vs: List[com.histmersion.api.automation.ListFilters.ValuesVs]): List[com.histmersion.api.automation.ListFilters.ValuesResult] =
-    vs.flatMap(_.split(',')).map(_.trim).filter(_.nonEmpty).distinct
+    (vs.flatMap((_).value.split(',')).map(_.trim).filter(_.nonEmpty).distinct).map(refactorValue => _root_.com.histmersion.api.automation.ListFilters.ValuesResult(refactorValue))
 
   def words(groups: List[String]*): Option[com.histmersion.api.automation.ListFilters.WordsResult] =
     (Option(groups.filter(_.nonEmpty).map(_.mkString("/")).mkString(" ")).filter(_.nonEmpty)).map(refactorValue22 => _root_.com.histmersion.api.automation.ListFilters.WordsResult(refactorValue22))
 
-  def one(v: Option[com.histmersion.api.automation.ListFilters.OneV]): Option[com.histmersion.api.automation.ListFilters.OneResult] = v.map(_.trim).filter(_.nonEmpty)
+  def one(v: Option[com.histmersion.api.automation.ListFilters.OneV]): Option[com.histmersion.api.automation.ListFilters.OneResult] = (v.map((_).value.trim).filter(_.nonEmpty)).map(refactorValue2 => _root_.com.histmersion.api.automation.ListFilters.OneResult(refactorValue2))
 
   export com.histmersion.api.automation.Approval.DecidedBy as DecidedBy
 
@@ -114,7 +114,7 @@ object ListFilters:
 
     def qualifier: Option[com.histmersion.api.automation.ListFilters.ApprovalFilter.QualifierResult] =
       val n = normalized
-      words(n.state.orElse(Some(Agents.ApprovalState.Open.wire)).filter(_ != "all").toList, n.kind)
+      words(n.state.orElse(Some(Agents.ApprovalState.Open.wire)).filter(_ != "all").toList, (n.kind).map(refactorValue3 => (refactorValue3).value))
 
     def options: List[(com.histmersion.api.automation.ListFilters.ApprovalFilter.OptionsResultPart1, Option[com.histmersion.api.automation.ListFilters.ApprovalFilter.OptionsResultPart2])] =
       val n = normalized
@@ -153,7 +153,7 @@ object ListFilters:
       until: Option[RunFilter.Until] = None,
       subject: Option[RunFilter.Subject] = None
   ):
-    def qualifier: Option[com.histmersion.api.automation.ListFilters.RunFilter.QualifierResult] = { val n = normalized; words(n.status, n.pipeline) }
+    def qualifier: Option[com.histmersion.api.automation.ListFilters.RunFilter.QualifierResult] = { val n = normalized; words((n.status).map(refactorValue5 => (refactorValue5).value), (n.pipeline).map(refactorValue27 => (refactorValue27).value)) }
     def normalized: RunFilter =
       RunFilter(
         values(status).map(_.toLowerCase),
@@ -209,7 +209,7 @@ object ListFilters:
       until: Option[JobFilter.Until] = None,
       subject: Option[JobFilter.Subject] = None
   ):
-    def qualifier: Option[com.histmersion.api.automation.ListFilters.JobFilter.QualifierResult] = { val n = normalized; words(n.status, n.kind) }
+    def qualifier: Option[com.histmersion.api.automation.ListFilters.JobFilter.QualifierResult] = { val n = normalized; words((n.status).map(refactorValue14 => (refactorValue14).value), (n.kind).map(refactorValue15 => (refactorValue15).value)) }
     def normalized: JobFilter =
       JobFilter(
         values(status).map(_.toLowerCase),
@@ -304,7 +304,7 @@ object ListFilters:
   private val DateOnly = """(\d{4}-\d{2}-\d{2})""".r
 
   def timeBound(s: com.histmersion.api.automation.ListFilters.TimeBoundS, end: com.histmersion.api.automation.ListFilters.TimeBoundEnd, now: Instant): Either[com.histmersion.api.automation.ListFilters.TimeBoundResultPart1, Instant] =
-    s.trim.toLowerCase match
+    (s).value.trim.toLowerCase match
       case Relative(n, unit) =>
         val secs = n.toLong * (unit match { case "d" => 86400L; case "h" => 3600L; case _ => 60L })
         Right(now.minusSeconds(secs))
@@ -313,13 +313,13 @@ object ListFilters:
           .Try(LocalDate.parse(d))
           .toOption
           .map(day => (if end then day.plusDays(1) else day).atStartOfDay(ZoneOffset.UTC).toInstant)
-          .toRight(s"'$s' is not a date")
+          .toRight(_root_.com.histmersion.api.automation.ListFilters.TimeBoundResultPart1(s"'$s' is not a date"))
       case _ =>
         scala.util
-          .Try(Instant.parse(s.trim))
+          .Try(Instant.parse((s).value.trim))
           .toOption
           .toRight(
-            s"'$s' is neither a date (2026-10-01), an instant (2026-10-01T12:00:00Z) nor a time ago (7d, 12h, 30m)"
+            _root_.com.histmersion.api.automation.ListFilters.TimeBoundResultPart1(s"'$s' is neither a date (2026-10-01), an instant (2026-10-01T12:00:00Z) nor a time ago (7d, 12h, 30m)")
           )
 
   def range(
@@ -337,7 +337,7 @@ object ListFilters:
     */
   def escape(s: com.histmersion.api.automation.ListFilters.EscapeS): com.histmersion.api.automation.ListFilters.EscapeResult =
     val b = new StringBuilder
-    s.getBytes("UTF-8").foreach { byte =>
+    (s).value.getBytes("UTF-8").foreach { byte =>
       val c = (byte & 0xff).toChar
       if c > ' ' && c < 0x7f && c != '%' && c != ',' && c != '=' then b.append(c)
       else b.append(f"%%${byte & 0xff}%02X")
@@ -345,28 +345,28 @@ object ListFilters:
     _root_.com.histmersion.api.automation.ListFilters.EscapeResult(b.toString)
 
   def unescape(s: com.histmersion.api.automation.ListFilters.UnescapeS): com.histmersion.api.automation.ListFilters.UnescapeResult =
-    if !s.contains('%') then s
+    if !(s).value.contains('%') then s
     else
       val out = new java.io.ByteArrayOutputStream
       def hex(at: com.histmersion.api.automation.ListFilters.UnescapeHexAt): Option[com.histmersion.api.automation.ListFilters.UnescapeHexResult] =
         Option
-          .when(at + 3 <= s.length)(s.substring(at + 1, at + 3))
+          .when((at).value + 3 <= (s).value.length)((s).value.substring((at).value + 1, (at).value + 3))
           .filter(_.forall(c => Character.digit(c, 16) >= 0))
-          .map(Integer.parseInt(_, 16))
+          .map(_root_.com.histmersion.api.automation.ListFilters.UnescapeHexResult(Integer.parseInt(_, 16)))
       var i = 0
-      while i < s.length do
+      while i < (s).value.length do
         (if s(i) == '%' then hex(_root_.com.histmersion.api.automation.ListFilters.UnescapeHexAt(i)) else None) match
-          case Some(b) => out.write(b); i += 3
-          case None    => s.substring(i, i + 1).getBytes("UTF-8").foreach(x => out.write(x.toInt)); i += 1
+          case Some(b) => out.write((b).value); i += 3
+          case None    => (s).value.substring(i, i + 1).getBytes("UTF-8").foreach(x => out.write(x.toInt)); i += 1
       _root_.com.histmersion.api.automation.ListFilters.UnescapeResult(new String(out.toByteArray, "UTF-8"))
 
   def encodeFacets(fs: List[(com.histmersion.api.automation.ListFilters.EncodeFacetsFsPart1, List[(com.histmersion.api.automation.ListFilters.EncodeFacetsFsPart2Part1, com.histmersion.api.automation.ListFilters.EncodeFacetsFsPart2Part2)])]): com.histmersion.api.automation.ListFilters.EncodeFacetsResult =
     fs.flatMap((f, vs) => vs.map((v, n) => s"$f=${escape(v)}=$n")).mkString(",")
 
   def decodeFacets(s: com.histmersion.api.automation.ListFilters.DecodeFacetsS): List[(com.histmersion.api.automation.ListFilters.DecodeFacetsResultPart1, List[(com.histmersion.api.automation.ListFilters.DecodeFacetsResultPart2Part1, com.histmersion.api.automation.ListFilters.DecodeFacetsResultPart2Part2)])] =
-    val triples = s.split(',').toList.map(_.trim).filter(_.nonEmpty).flatMap { t =>
+    val triples = (s).value.split(',').toList.map(_.trim).filter(_.nonEmpty).flatMap { t =>
       t.split('=') match
-        case Array(f, v, n) if f.nonEmpty => n.trim.toIntOption.map(c => (f.trim, unescape(v), c))
+        case Array(f, v, n) if f.nonEmpty => n.trim.toIntOption.map(c => (f.trim, unescape(_root_.com.histmersion.api.automation.ListFilters.UnescapeS(v)), c))
         case _                            => None
     }
     triples.map(_._1).distinct.map(f => f -> triples.collect { case (`f`, v, n) => v -> n })

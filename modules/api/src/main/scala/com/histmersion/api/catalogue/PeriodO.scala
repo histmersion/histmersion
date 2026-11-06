@@ -202,7 +202,7 @@ object PeriodO:
       Option.when(labels.nonEmpty)(labels.mkString(", "))
     }
     def skip(reason: Period.Skip, detail: com.histmersion.api.catalogue.PeriodO.DefinitionSkipDetail) = Left(SkippedPeriod(id, label, reason, detail))
-    def outside(y: com.histmersion.api.catalogue.PeriodO.DefinitionOutsideY) = y < MinYear || y > MaxYear
+    def outside(y: com.histmersion.api.catalogue.PeriodO.DefinitionOutsideY) = (y).value < MinYear || y > MaxYear
     (start, stop) match
       case (Some(s), Some(e)) if outside(s) || outside(e) =>
         skip(Period.Skip.OutOfRange, _root_.com.histmersion.api.catalogue.PeriodO.DefinitionSkipDetail(s"$s → $e lies outside $MinYear..$MaxYear"))
@@ -229,7 +229,7 @@ object PeriodO:
     val defs = ds.authorities.flatMap(a => a.periods.map(a -> _))
     val ids = defs.map(_._2.id).toSet
     val authorityRoots =
-      if !roots then Nil
+      if !(roots).value then Nil
       else
         ds.authorities.filter(_.periods.nonEmpty).map { a =>
           HistoricalPeriod(
@@ -244,7 +244,7 @@ object PeriodO:
       val parent = ds.parents.get(d.id).filter(ids.contains) match
         case curated @ Some(_) => curated
         case None              =>
-          val own = d.broader.filter(ids.contains).orElse(Option.when(roots)(a.id))
+          val own = d.broader.filter(ids.contains).orElse(Option.when((roots).value)(a.id))
           if ds.curated then own else existing.getOrElse(d.id, own)
       HistoricalPeriod(
         d.id,

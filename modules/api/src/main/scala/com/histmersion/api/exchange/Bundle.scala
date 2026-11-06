@@ -97,7 +97,7 @@ object Bundle:
       case Place          => _root_.com.histmersion.api.exchange.Bundle.Kind.LetterOfResult("P")
       case Period         => _root_.com.histmersion.api.exchange.Bundle.Kind.LetterOfResult("N")
 
-    def fromWire(s: com.histmersion.api.exchange.Bundle.Kind.FromWireS): Option[Kind] = values.find(_.wire == s.trim.toLowerCase)
+    def fromWire(s: com.histmersion.api.exchange.Bundle.Kind.FromWireS): Option[Kind] = values.find(_.wire == (s).value.trim.toLowerCase)
 
     given WireEnumValues[Kind]:
       def all: Array[Kind] = Kind.values
@@ -108,19 +108,19 @@ object Bundle:
   val Extension = ".hmx"
   val ManifestPath = "manifest.json"
 
-  def blobPath(sha256: com.histmersion.api.exchange.Bundle.BlobPathSha256): com.histmersion.api.exchange.Bundle.BlobPathResult = s"blobs/sha256/${sha256.take(2)}/$sha256"
+  def blobPath(sha256: com.histmersion.api.exchange.Bundle.BlobPathSha256): com.histmersion.api.exchange.Bundle.BlobPathResult = _root_.com.histmersion.api.exchange.Bundle.BlobPathResult(s"blobs/sha256/${(sha256).value.take(2)}/$sha256")
 
   def blobSha(path: com.histmersion.api.exchange.Bundle.BlobShaPath): Option[com.histmersion.api.exchange.Bundle.BlobShaResult] =
     val prefix = "blobs/sha256/"
-    Option
-      .when(path.startsWith(prefix)) {
-        val rest = path.drop(prefix.length)
+    (Option
+      .when((path).value.startsWith(prefix)) {
+        val rest = (path).value.drop(prefix.length)
         rest.drop(3)
       }
       .filter(s =>
         s.length == 64 && s.forall(c => c.isDigit || ('a' to 'f').contains(c)) &&
-          path == blobPath(s)
-      )
+          path == blobPath(_root_.com.histmersion.api.exchange.Bundle.BlobPathSha256(s))
+      )).map(refactorValue => _root_.com.histmersion.api.exchange.Bundle.BlobShaResult(refactorValue))
 
   final case class Alias(alias: Alias.Value, sourceUid: UUID, createdAt: Alias.CreatedAt) derives KindlingsCodecAsObject
 
@@ -632,7 +632,7 @@ object Bundle:
     /** Timestamps share one fixed-width UTC format, so text order is time order. */
     def newer(here: Option[com.histmersion.api.exchange.Bundle.EventSets.NewerHere], there: Option[com.histmersion.api.exchange.Bundle.EventSets.NewerThere]): com.histmersion.api.exchange.Bundle.EventSets.NewerResult = (here, there) match
       case (None, Some(_))    => _root_.com.histmersion.api.exchange.Bundle.EventSets.NewerResult(true)
-      case (Some(h), Some(t)) => t > h
+      case (Some(h), Some(t)) => _root_.com.histmersion.api.exchange.Bundle.EventSets.NewerResult((t).value > (h).value)
       case _                  => _root_.com.histmersion.api.exchange.Bundle.EventSets.NewerResult(false)
 
   final case class FileInfo(path: FileInfo.Path, lines: FileInfo.Lines, bytes: com.histmersion.api.ByteCount, sha256: com.histmersion.api.Sha256)
@@ -865,7 +865,7 @@ object Bundle:
       held: KindCounts.Held = _root_.com.histmersion.api.exchange.Bundle.KindCounts.Held(0)
   ) derives KindlingsCodecAsObject,
         KindlingsSchema, com.histmersion.api.json.Schema:
-    def changed: com.histmersion.api.exchange.Bundle.KindCounts.ChangedResult = inserted + updated + deleted
+    def changed: com.histmersion.api.exchange.Bundle.KindCounts.ChangedResult = (inserted).value + (updated).value + deleted
 
   object KindCounts:
     type ChangedResult = ChangedResult.T

@@ -120,7 +120,7 @@ object Geocode:
     object FromWireS extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
     def parse(s: com.histmersion.api.catalogue.Geocode.KindHint.ParseS): KindHint =
-      val t = s.trim.toLowerCase(java.util.Locale.ROOT)
+      val t = (s).value.trim.toLowerCase(java.util.Locale.ROOT)
       values
         .find(_.wire == t)
         .getOrElse(t match
@@ -134,7 +134,7 @@ object Geocode:
       def all: Array[KindHint] = KindHint.values
       def wire(e: KindHint): com.histmersion.api.catalogue.Geocode.KindHint.WireResult = e.wire
       def fromWire(s: com.histmersion.api.catalogue.Geocode.KindHint.FromWireS): Option[KindHint] =
-        KindHint.values.find(_.wire == s.trim.toLowerCase(java.util.Locale.ROOT))
+        KindHint.values.find(_.wire == (s).value.trim.toLowerCase(java.util.Locale.ROOT))
     given Encoder[KindHint] = WireEnum.encoder
     given Decoder[KindHint] = WireEnum.decoder
     given Schema[KindHint] = WireEnum.schema
@@ -150,14 +150,14 @@ object Geocode:
   private val Aside = "\\([^)]*\\)".r
 
   def key(s: com.histmersion.api.catalogue.Geocode.KeyS): com.histmersion.api.catalogue.Geocode.KeyResult =
-    val b = new StringBuilder(s.length)
-    Aside.replaceAllIn(s, " ").foreach { c =>
-      if Apostrophes.contains(c) then ()
-      else if Separators.contains(c) then b += ' '
+    val b = new StringBuilder((s).value.length)
+    Aside.replaceAllIn((s).value, " ").foreach { c =>
+      if Apostrophes.contains(_root_.com.histmersion.api.catalogue.Geocode.Apostrophes(c)) then ()
+      else if Separators.contains(_root_.com.histmersion.api.catalogue.Geocode.Separators(c)) then b += ' '
       else LatinFold.foldChar(c).foreach(f => b += (if f >= 'A' && f <= 'Z' then (f + 32).toChar else f))
     }
     val spaced = b.result().replaceAll(" {2,}", " ").dropWhile(_ == ' ').reverse.dropWhile(_ == ' ').reverse
-    if spaced.startsWith("the ") then spaced.drop(4) else spaced
+    if spaced.startsWith("the ") then _root_.com.histmersion.api.catalogue.Geocode.KeyResult(spaced.drop(4)) else _root_.com.histmersion.api.catalogue.Geocode.KeyResult(spaced)
 
   enum Approximation:
     case Qualifier(dropped: Approximation.Qualifier.Dropped)
@@ -236,20 +236,20 @@ object Geocode:
   private val Joiners: Set[com.histmersion.api.catalogue.Geocode.Joiners] = Set(_root_.com.histmersion.api.catalogue.Geocode.Joiners("and"), _root_.com.histmersion.api.catalogue.Geocode.Joiners("or"))
 
   def stripQualifier(name: com.histmersion.api.catalogue.Geocode.StripQualifierName): Option[(com.histmersion.api.catalogue.Geocode.StripQualifierResultPart1, com.histmersion.api.catalogue.Geocode.StripQualifierResultPart2)] =
-    val words = name.trim.split("[\\s\\-]+").toList.filter(_.nonEmpty)
+    val words = (name).value.trim.split("[\\s\\-]+").toList.filter(_.nonEmpty)
     def isQ(w: com.histmersion.api.catalogue.Geocode.StripQualifierIsQW) = QualifierWords.contains(key(w))
     @annotation.tailrec
     def go(rest: List[com.histmersion.api.catalogue.Geocode.StripQualifierGoRest], dropped: List[com.histmersion.api.catalogue.Geocode.StripQualifierGoDropped]): (List[com.histmersion.api.catalogue.Geocode.StripQualifierGoResultPart1], List[com.histmersion.api.catalogue.Geocode.StripQualifierGoResultPart2]) = rest match
       case w :: tail if isQ(w)                                                      => go(tail, dropped :+ w)
       case j :: w :: tail if dropped.nonEmpty && Joiners.contains(key(j)) && isQ(w) => go(tail, dropped :+ j :+ w)
       case _                                                                        => (dropped, rest)
-    val (dropped, rest) = go(words, Nil)
+    val (dropped, rest) = go((words).map(refactorValue6 => _root_.com.histmersion.api.catalogue.Geocode.StripQualifierGoRest(refactorValue6)), Nil)
     Option.when(dropped.nonEmpty && rest.nonEmpty && key(rest.mkString(" ")).nonEmpty)(
       (_root_.com.histmersion.api.catalogue.Geocode.StripQualifierResultPart1(dropped.mkString(" ")), _root_.com.histmersion.api.catalogue.Geocode.StripQualifierResultPart2(rest.mkString(" ")))
     )
 
   def compassBox(dropped: com.histmersion.api.catalogue.Geocode.CompassBoxDropped): Option[(com.histmersion.api.catalogue.Geocode.CompassBoxResultPart1, com.histmersion.api.catalogue.Geocode.CompassBoxResultPart2, com.histmersion.api.catalogue.Geocode.CompassBoxResultPart3, com.histmersion.api.catalogue.Geocode.CompassBoxResultPart4)] =
-    val words = dropped.split("[\\s\\-]+").map(key).filter(_.nonEmpty).toList
+    val words = (dropped).value.split("[\\s\\-]+").map(key).filter(_.nonEmpty).toList
     val dirs = words.flatMap(w => Compass.get(w.stripSuffix("ern")).orElse(Compass.get(w)))
     dirs match
       case List(box) => Some(box)
@@ -272,8 +272,8 @@ object Geocode:
   private val Asides = "\\(([^)]*)\\)".r
 
   def attempts(name: com.histmersion.api.catalogue.Geocode.AttemptsName): List[Attempt] =
-    val n = name.trim
-    if key(n).isEmpty then Nil
+    val n = (name).value.trim
+    if (key(n)).value.isEmpty then Nil
     else
       val asides = Asides.findAllMatchIn(n).map(_.group(1).trim).filter(a => key(a).nonEmpty).map(Attempt(_)).toList
       val comma = n.lastIndexOf(',') match
@@ -283,7 +283,7 @@ object Geocode:
       val head = comma.fold(n)(_._1)
       val qualified =
         stripQualifier(head).map((q, base) => Attempt(base, comma.map(_._2), Some(Approximation.Qualifier(q))))
-      val all = List(Attempt(n)) ++ asides ++
+      val all = List(Attempt(_root_.com.histmersion.api.catalogue.Geocode.Attempt.Name(n))) ++ asides ++
         comma.map((a, in) => Attempt(a, Some(in))).toList ++
         qualified.toList ++
         comma.map((a, in) => Attempt(in, None, Some(Approximation.OnlyWithin(a)))).toList
@@ -306,12 +306,12 @@ object Geocode:
   ):
     def undated: com.histmersion.api.catalogue.Geocode.Candidate.UndatedResult = _root_.com.histmersion.api.catalogue.Geocode.Candidate.UndatedResult(from.isEmpty && to.isEmpty)
 
-    def span: com.histmersion.api.catalogue.Geocode.Candidate.SpanResult = (for a <- from; b <- to yield b - a).getOrElse(_root_.com.histmersion.api.catalogue.Geocode.Candidate.SpanResult(Long.MaxValue / 4))
+    def span: com.histmersion.api.catalogue.Geocode.Candidate.SpanResult = (for a <- from; b <- to yield (b).value - (a).value).getOrElse((_root_.com.histmersion.api.catalogue.Geocode.Candidate.SpanResult(Long.MaxValue / 4)).value)
     def overlaps(p: Period): com.histmersion.api.catalogue.Geocode.Candidate.OverlapsResult = from.forall(_ <= p.end) && to.forall(_ >= p.start)
 
     def gap(p: Period): com.histmersion.api.catalogue.Geocode.Candidate.GapResult =
-      if overlaps(p) then _root_.com.histmersion.api.catalogue.Geocode.Candidate.GapResult(0L)
-      else to.filter(_ < p.start).map(p.start - _).orElse(from.filter(_ > p.end).map(_ - p.end)).getOrElse(_root_.com.histmersion.api.catalogue.Geocode.Candidate.GapResult(0L))
+      if (overlaps(p)).value then _root_.com.histmersion.api.catalogue.Geocode.Candidate.GapResult(0L)
+      else to.filter((_).value < p.start).map(p.start - _).orElse(from.filter((_).value > p.end).map((_).value - p.end)).getOrElse(_root_.com.histmersion.api.catalogue.Geocode.Candidate.GapResult(0L))
 
   object Candidate:
     type UndatedResult = UndatedResult.T
@@ -421,10 +421,10 @@ object Geocode:
 
   def distanceKm(lon1: com.histmersion.api.catalogue.Geocode.DistanceKmLon1, lat1: com.histmersion.api.catalogue.Geocode.DistanceKmLat1, lon2: com.histmersion.api.catalogue.Geocode.DistanceKmLon2, lat2: com.histmersion.api.catalogue.Geocode.DistanceKmLat2): com.histmersion.api.catalogue.Geocode.DistanceKmResult =
     val r = 6371.0
-    val dLat = math.toRadians(lat2 - lat1)
-    val dLon = math.toRadians(lon2 - lon1)
+    val dLat = math.toRadians(((lat2).value - (lat1).value).value)
+    val dLon = math.toRadians(((lon2).value - (lon1).value).value)
     val a = math.pow(math.sin(dLat / 2), 2) +
-      math.cos(math.toRadians(lat1)) * math.cos(math.toRadians(lat2)) * math.pow(math.sin(dLon / 2), 2)
+      math.cos(math.toRadians((lat1).value)) * math.cos(math.toRadians(lat2)) * math.pow(math.sin(dLon / 2), 2)
     _root_.com.histmersion.api.catalogue.Geocode.DistanceKmResult(2 * r * math.asin(math.min(1.0, math.sqrt(a))))
 
   final case class Move(
@@ -493,7 +493,7 @@ object Geocode:
     object Region extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
   def periodOf(from: Option[com.histmersion.api.catalogue.Geocode.PeriodOfFrom], to: Option[com.histmersion.api.catalogue.Geocode.PeriodOfTo]): Option[Period] = (from, to) match
-    case (Some(a), Some(b)) => Some(Period(math.min(a, b), math.max(a, b)))
+    case (Some(a), Some(b)) => Some(Period(math.min((a).value, (b).value), math.max((a).value, (b).value)))
     case (Some(a), None)    => Some(Period(a, a))
     case (None, Some(b))    => Some(Period(b, b))
     case _                  => None

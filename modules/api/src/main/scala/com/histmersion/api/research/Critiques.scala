@@ -87,7 +87,7 @@ object Critiques:
     object Text extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
   def units(body: com.histmersion.api.research.Critiques.UnitsBody): List[Block] =
-    val lines = body.replace("\r\n", "\n").split("\n", -1).toVector
+    val lines = (body).value.replace("\r\n", "\n").split("\n", -1).toVector
     val skip = notUsedLines(lines)
     val out = List.newBuilder[Block]
     val cur = new StringBuilder()
@@ -110,16 +110,16 @@ object Critiques:
       else if fence then ()
       else if t.isEmpty then flush()
       else if t.startsWith("#") then flush()
-      else if t.startsWith("|") then { flush(); add(t); flush() }
-      else if ListItem.matches(t) then { flush(); add(t) }
-      else add(t)
+      else if t.startsWith("|") then { flush(); add(_root_.com.histmersion.api.research.Critiques.UnitsAddS(t)); flush() }
+      else if ListItem.matches(t) then { flush(); add(_root_.com.histmersion.api.research.Critiques.UnitsAddS(t)) }
+      else add(_root_.com.histmersion.api.research.Critiques.UnitsAddS(t))
     }
     flush()
     out.result()
 
   private def notUsedLines(lines: Vector[com.histmersion.api.research.Critiques.NotUsedLinesLines]): Set[com.histmersion.api.research.Critiques.NotUsedLinesResult] =
-    def heading(l: com.histmersion.api.research.Critiques.NotUsedLinesHeadingL) = l.trim.startsWith("#")
-    def level(l: com.histmersion.api.research.Critiques.NotUsedLinesLevelL) = l.trim.takeWhile(_ == '#').length
+    def heading(l: com.histmersion.api.research.Critiques.NotUsedLinesHeadingL) = (l).value.trim.startsWith("#")
+    def level(l: com.histmersion.api.research.Critiques.NotUsedLinesLevelL) = (l).value.trim.takeWhile(_ == '#').length
     lines.indexWhere(l => heading(l) && l.trim.replaceAll("^#+\\s*", "").trim.toLowerCase.startsWith("not used")) match
       case -1 => Set.empty
       case i  =>
@@ -189,8 +189,8 @@ object Critiques:
       .sortBy(p => (tier(p), kind(p), -(p.src.mentions + p.dst.mentions), p.src.citekey, p.dst.citekey))
 
   def summary(pairs: List[CritiquePair]): com.histmersion.api.research.Critiques.SummaryResult =
-    s"${Plural.count(_root_.com.histmersion.api.Plural.CountN((pairs.size).toLong), _root_.com.histmersion.api.Plural.CountSingular("pair"))} — ${count(pairs, CritiqueState.Addressed)} addressed, " +
-      s"${count(pairs, CritiqueState.Reasoned)} reasoned, ${count(pairs, CritiqueState.Open)} open"
+    _root_.com.histmersion.api.research.Critiques.SummaryResult(s"${Plural.count(_root_.com.histmersion.api.Plural.CountN((pairs.size).toLong), _root_.com.histmersion.api.Plural.CountSingular("pair"))} — ${count(pairs, CritiqueState.Addressed)} addressed, " +
+      s"${count(pairs, CritiqueState.Reasoned)} reasoned, ${count(pairs, CritiqueState.Open)} open")
 
   def methodPart(pairs: List[CritiquePair]): Option[com.histmersion.api.research.Critiques.MethodPartResult] =
     Option.when(pairs.nonEmpty)(_root_.com.histmersion.api.research.Critiques.MethodPartResult(s"disagreements checked: ${summary(pairs)}"))
@@ -231,7 +231,7 @@ object Critiques:
 
   def promptText(pairs: List[CritiquePair], maxOpen: com.histmersion.api.research.Critiques.PromptTextMaxOpen, maxReasoned: com.histmersion.api.research.Critiques.PromptTextMaxReasoned): (com.histmersion.api.research.Critiques.PromptTextResultPart1, List[CritiquePair]) =
     val open = toRule(pairs)
-    val shown = open.take(math.max(0, maxOpen))
+    val shown = open.take(math.max(0, (maxOpen).value))
     val rest = open.drop(shown.size)
     val background = ranked(pairs).filterNot(_.bearing)
     val reasoned = pairs.filter(_.state == CritiqueState.Reasoned)
@@ -247,7 +247,7 @@ object Critiques:
          else
            "Open pairs — rule on each one:\n" + shown.map(p => s"- ${pairText(p)}").mkString("\n") +
              (if rest.isEmpty then ""
-              else s"\n(${Plural.count(rest.size, "more open pair")} not shown, for a later pass: ${names(rest)})")
+              else s"\n(${Plural.count(_root_.com.histmersion.api.Plural.CountN((rest.size).toLong), _root_.com.histmersion.api.Plural.CountSingular("more open pair"))} not shown, for a later pass: ${names(rest)})")
         ) +
           (if background.isEmpty then ""
            else
@@ -258,8 +258,8 @@ object Critiques:
         else
           "\n\nSet aside with a stored reason (not open; challenge a wrong reason as a finding, with the record's sentence):\n" +
             reasoned
-              .take(math.max(0, maxReasoned))
+              .take(math.max(0, (maxReasoned).value))
               .map(p => s"- ${p.ref.wire}: ${p.reason.getOrElse("").take(200)}")
               .mkString("\n") +
-            (if reasoned.size > maxReasoned then s"\n(+${reasoned.size - maxReasoned} more)" else "")
+            (if reasoned.size > (maxReasoned).value then s"\n(+${reasoned.size - (maxReasoned).value} more)" else "")
       (_root_.com.histmersion.api.research.Critiques.PromptTextResultPart1(s"${summary(pairs)}.\n\n$openPart$reasonPart"), shown)

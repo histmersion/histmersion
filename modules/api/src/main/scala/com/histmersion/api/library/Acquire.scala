@@ -119,7 +119,7 @@ object Acquire:
     * generated key tries this form too.
     */
   def legacyCitekey(authors: List[com.histmersion.api.library.Acquire.LegacyCitekeyAuthors], year: Option[com.histmersion.api.library.Acquire.LegacyCitekeyYear], title: Option[com.histmersion.api.library.Acquire.LegacyCitekeyTitle]): com.histmersion.api.library.Acquire.LegacyCitekeyResult =
-    val first = authors.map(_.trim).find(_.nonEmpty)
+    val first = authors.map((_).value.trim).find(_.nonEmpty)
     val surname = first
       .map { a =>
         if a.contains(",") then a.takeWhile(_ != ',')
@@ -164,8 +164,8 @@ object Acquire:
     )
 
   private def isRetractingNature(n: com.histmersion.api.library.Acquire.IsRetractingNatureN): com.histmersion.api.library.Acquire.IsRetractingNatureResult =
-    val s = n.toLowerCase
-    s.contains("retraction") && !s.contains("reinstatement") || s.contains("withdrawal")
+    val s = (n).value.toLowerCase
+    _root_.com.histmersion.api.library.Acquire.IsRetractingNatureResult(s.contains("retraction") && !s.contains("reinstatement") || s.contains("withdrawal"))
 
   def verdict(
       retractions: List[RetractionNotice],
@@ -186,7 +186,7 @@ object Acquire:
       citedByCount match
         case None                                                      => _root_.com.histmersion.api.library.Acquire.VerdictResult(Verdicts.Unassessed)
         case Some(c) if c >= wellCitedAt                               => _root_.com.histmersion.api.library.Acquire.VerdictResult(Verdicts.Current)
-        case Some(c) if c < lowCitedAt && year.exists(_ < staleBefore) => _root_.com.histmersion.api.library.Acquire.VerdictResult(Verdicts.LowImpact)
+        case Some(c) if (c).value < (lowCitedAt).value && year.exists(_ < staleBefore) => _root_.com.histmersion.api.library.Acquire.VerdictResult(Verdicts.LowImpact)
         case Some(_)                                                   => _root_.com.histmersion.api.library.Acquire.VerdictResult(Verdicts.Current)
 
   /** Some publishers answer scripts with a 403, an empty file or a challenge, so an open-access work they host is
@@ -204,7 +204,7 @@ object Acquire:
         .map(_.trim)
         .filter(u => u.nonEmpty && !u.toLowerCase.contains(doi.toLowerCase))
         .fold("")(u => s" at $u")
-      val said = refusals.map(_.trim).filter(_.nonEmpty).distinct.mkString("; ")
+      val said = refusals.map((_).value.trim).filter(_.nonEmpty).distinct.mkString("; ")
       s"${if head.isEmpty then "" else s"$head. "}$title. https://doi.org/$doi — $oa$at, but no script may download " +
         s"it: download it in the browser${
             if said.isEmpty then "" else s" ($said)"
@@ -305,9 +305,9 @@ object Acquire:
       gapYears: com.histmersion.api.library.Acquire.ClassifyGapYears = _root_.com.histmersion.api.library.Acquire.ClassifyGapYears(5)
   ): com.histmersion.api.library.Acquire.ClassifyResult =
     val text = contexts.mkString(" ").toLowerCase
-    val strong = intents.map(_.toLowerCase).exists(i => i == "result" || i == "methodology")
+    val strong = intents.map((_).value.toLowerCase).exists(i => i == "result" || i == "methodology")
     val newer = (citingYear, targetYear) match
-      case (Some(c), Some(t)) => c - t >= gapYears
+      case (Some(c), Some(t)) => (c).value - (t).value >= gapYears
       case _                  => false
     def has(cues: List[com.histmersion.api.library.Acquire.ClassifyHasCues]) = cues.exists(text.contains)
 
@@ -354,12 +354,12 @@ object Acquire:
 
   /** Retraction Watch writes dates as `MM/DD/YYYY 0:00`; Postgres wants `YYYY-MM-DD`. */
   def rwDate(raw: Option[com.histmersion.api.library.Acquire.RwDateRaw]): Option[com.histmersion.api.library.Acquire.RwDateResult] =
-    raw.map(_.trim.takeWhile(_ != ' ')).flatMap { s =>
+    raw.map((_).value.trim.takeWhile(_ != ' ')).flatMap { s =>
       s.split("[/-]").toList match
         case m :: d :: y :: Nil if y.length == 4 && m.forall(_.isDigit) && d.forall(_.isDigit) =>
-          Some(f"${y.toInt}%04d-${m.toInt}%02d-${d.toInt}%02d")
+          Some(_root_.com.histmersion.api.library.Acquire.RwDateResult(f"${y.toInt}%04d-${m.toInt}%02d-${d.toInt}%02d"))
         case y :: m :: d :: Nil if y.length == 4 && m.forall(_.isDigit) && d.forall(_.isDigit) =>
-          Some(f"${y.toInt}%04d-${m.toInt}%02d-${d.toInt}%02d")
+          Some(_root_.com.histmersion.api.library.Acquire.RwDateResult(f"${y.toInt}%04d-${m.toInt}%02d-${d.toInt}%02d"))
         case _ => None
     }
 
@@ -494,7 +494,7 @@ object Acquire:
 
       def describe(j: RecheckJob): com.histmersion.api.library.Acquire.Checks.RecheckJob.DescribeResult =
         "the acquisition list's legal re-check of " +
-          (if j.all then "every open item with a DOI" else s"up to ${Plural.count(j.upTo, _root_.com.histmersion.api.Plural.CountSingular("due item"))}") +
+          (if (j.all).value then "every open item with a DOI" else s"up to ${Plural.count(j.upTo, _root_.com.histmersion.api.Plural.CountSingular("due item"))}") +
           j.resumes.fold("")(id => s" (resuming job $id)")
 
     final case class RecheckStatus(

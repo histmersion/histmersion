@@ -13,11 +13,11 @@ final class CalibreCollection(library: Calibre.Library, writeBack: CalibreCollec
 
   val title: com.histmersion.plugins.calibre.CalibreCollection.Title = _root_.com.histmersion.plugins.calibre.CalibreCollection.Title("Calibre")
   override val description: com.histmersion.plugins.calibre.CalibreCollection.Description =
-    s"The Calibre library at ${library.library}: read with calibredb (sqlite3 while the GUI holds it)" +
-      (if writeBack then ", written back with calibredb" else ", read-only")
+    _root_.com.histmersion.plugins.calibre.CalibreCollection.Description(s"The Calibre library at ${library.library}: read with calibredb (sqlite3 while the GUI holds it)" +
+      (if (writeBack).value then ", written back with calibredb" else ", read-only"))
 
   override def capabilities: Set[CollectionCapability] =
-    if writeBack then Set(CollectionCapability.Read, CollectionCapability.Add, CollectionCapability.Update)
+    if (writeBack).value then Set(CollectionCapability.Read, CollectionCapability.Add, CollectionCapability.Update)
     else Set(CollectionCapability.Read)
 
   override def readOnlyReason: String =
@@ -206,10 +206,10 @@ object CalibreCollection:
   def number(id: CollectionId): Either[com.histmersion.plugins.calibre.CalibreCollection.NumberResultPart1, com.histmersion.plugins.calibre.CalibreCollection.NumberResultPart2] =
     ((id.value.trim.toIntOption.toRight(s"'${id.value}' is not a Calibre id")).left.map(refactorError => _root_.com.histmersion.plugins.calibre.CalibreCollection.NumberResultPart1(refactorError))).map(refactorValue24 => _root_.com.histmersion.plugins.calibre.CalibreCollection.NumberResultPart2(refactorValue24))
 
-  def extension(name: com.histmersion.plugins.calibre.CalibreCollection.ExtensionName): com.histmersion.plugins.calibre.CalibreCollection.ExtensionResult = name.reverse.takeWhile(_ != '.').reverse.toLowerCase(java.util.Locale.ROOT)
+  def extension(name: com.histmersion.plugins.calibre.CalibreCollection.ExtensionName): com.histmersion.plugins.calibre.CalibreCollection.ExtensionResult = _root_.com.histmersion.plugins.calibre.CalibreCollection.ExtensionResult((name).value.reverse.takeWhile(_ != '.').reverse.toLowerCase(java.util.Locale.ROOT))
 
   def read(path: com.histmersion.plugins.calibre.CalibreCollection.ReadPath)(using files: com.histmersion.plugin.LocalFiles): Either[com.histmersion.plugins.calibre.CalibreCollection.ReadResultPart1, com.histmersion.plugins.calibre.CalibreCollection.ReadResultPart2] =
-    Try(files.read(Path.of(path))).toEither.left.map(e => s"cannot read $path (${e.getMessage})")
+    Try(files.read(Path.of((path).value))).toEither.left.map(e => s"cannot read $path (${e.getMessage})")
 
   /** `file` written as `<a temporary directory>/<name>.<extension>` (the extension is what tells Calibre the format),
     * `f` run on it, and the directory deleted whatever happens.

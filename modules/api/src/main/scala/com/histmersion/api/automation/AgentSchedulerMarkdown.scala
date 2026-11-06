@@ -27,7 +27,7 @@ object AgentSchedulerMarkdown:
       (if w.behind.isEmpty then "" else s" · behind ${w.behind.mkString(", ")}")
 
   def minutes(m: com.histmersion.api.automation.AgentSchedulerMarkdown.MinutesM): com.histmersion.api.automation.AgentSchedulerMarkdown.MinutesResult =
-    if m < 60 then _root_.com.histmersion.api.automation.AgentSchedulerMarkdown.MinutesResult(s"$m min") else s"${m / 60} h" + (if m % 60 != 0 then s" ${m % 60} min" else "")
+    if (m).value < 60 then _root_.com.histmersion.api.automation.AgentSchedulerMarkdown.MinutesResult(s"$m min") else _root_.com.histmersion.api.automation.AgentSchedulerMarkdown.MinutesResult(s"${(m).value / 60} h" + (if (m).value % 60 != 0 then s" ${(m).value % 60} min" else ""))
 
   def status(s: SchedulerStatus): com.histmersion.api.automation.AgentSchedulerMarkdown.StatusResult =
     val head = s"# Scheduler: ${s.strategy}" + (if s.strategyFrom == "person" then " (set by a person)"

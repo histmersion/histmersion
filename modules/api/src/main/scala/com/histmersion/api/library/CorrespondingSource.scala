@@ -15,5 +15,5 @@ object CorrespondingSource:
   object UrlCommit extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
   def url(repository: com.histmersion.api.library.CorrespondingSource.UrlRepository, commit: Option[com.histmersion.api.library.CorrespondingSource.UrlCommit]): com.histmersion.api.library.CorrespondingSource.UrlResult =
-    val repo = repository.trim.stripSuffix("/").stripSuffix(".git")
-    commit.map(_.trim).filter(_.nonEmpty).fold(repo)(c => _root_.com.histmersion.api.library.CorrespondingSource.UrlResult(s"$repo/tree/$c"))
+    val repo = (repository).value.trim.stripSuffix("/").stripSuffix(".git")
+    commit.map((_).value.trim).filter(_.nonEmpty).fold(repo)(c => _root_.com.histmersion.api.library.CorrespondingSource.UrlResult(s"$repo/tree/$c"))

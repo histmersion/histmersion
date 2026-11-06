@@ -96,10 +96,10 @@ object AssetLinks:
   val Prefix = "assets/"
 
   private def mapImages(md: com.histmersion.api.media.AssetLinks.MapImagesMd)(f: (com.histmersion.api.media.AssetLinks.MapImagesFArg1, com.histmersion.api.media.AssetLinks.MapImagesFArg2, com.histmersion.api.media.AssetLinks.MapImagesFArg3) => com.histmersion.api.media.AssetLinks.MapImagesFResult): com.histmersion.api.media.AssetLinks.MapImagesResult =
-    ImageLink.replaceAllIn(
-      md,
-      m => java.util.regex.Matcher.quoteReplacement(f(_root_.com.histmersion.api.media.AssetLinks.MapImagesFArg1(m.group(1)), _root_.com.histmersion.api.media.AssetLinks.MapImagesFArg2(m.group(2)), _root_.com.histmersion.api.media.AssetLinks.MapImagesFArg3(Option(m.group(3)).getOrElse(""))))
-    )
+    _root_.com.histmersion.api.media.AssetLinks.MapImagesResult(ImageLink.replaceAllIn(
+      (md).value,
+      m => java.util.regex.Matcher.quoteReplacement((f(_root_.com.histmersion.api.media.AssetLinks.MapImagesFArg1(m.group(1)), _root_.com.histmersion.api.media.AssetLinks.MapImagesFArg2(m.group(2)), _root_.com.histmersion.api.media.AssetLinks.MapImagesFArg3(Option(m.group(3)).getOrElse("")))).value)
+    ))
 
   private def retarget(md: com.histmersion.api.media.AssetLinks.RetargetMd, from: com.histmersion.api.media.AssetLinks.RetargetFrom, to: com.histmersion.api.media.AssetLinks.RetargetTo): com.histmersion.api.media.AssetLinks.RetargetResult =
     mapImages(md)((alt, target, title) =>
@@ -137,30 +137,30 @@ object AssetLinks:
     * render the rest as prose.
     */
   def collapsePictureText(md: com.histmersion.api.media.AssetLinks.CollapsePictureTextMd): com.histmersion.api.media.AssetLinks.CollapsePictureTextResult =
-    PictureText.replaceAllIn(
-      md,
+    _root_.com.histmersion.api.media.AssetLinks.CollapsePictureTextResult(PictureText.replaceAllIn(
+      (md).value,
       m =>
         val inner = m.group(1).replaceAll("(?s)\\R\\s*\\R", "<br>").replaceAll("\\R", " ").trim
         java.util.regex.Matcher
           .quoteReplacement(s"""<details class="figtext"><summary>figure text</summary><div>$inner</div></details>""")
-    )
+    ))
 
   private val BoilerplateHeading =
     """(?i)^(original\s+|research\s+|review\s+|short\s+)?(article|paper|research|communication|report)$""".r
 
   private def flatten(s: com.histmersion.api.media.AssetLinks.FlattenS): com.histmersion.api.media.AssetLinks.FlattenResult =
-    s.toLowerCase.filter(c => c.isLetterOrDigit || c == ' ').replaceAll("\\s+", " ").trim
+    _root_.com.histmersion.api.media.AssetLinks.FlattenResult((s).value.toLowerCase.filter(c => c.isLetterOrDigit || c == ' ').replaceAll("\\s+", " ").trim)
 
   def dropBoilerplateHeadings(md: com.histmersion.api.media.AssetLinks.DropBoilerplateHeadingsMd, title: com.histmersion.api.media.AssetLinks.DropBoilerplateHeadingsTitle): com.histmersion.api.media.AssetLinks.DropBoilerplateHeadingsResult =
     val want = flatten(title)
-    val kept = md.linesIterator.filterNot { line =>
+    val kept = (md).value.linesIterator.filterNot { line =>
       val l = line.trim
       if !l.startsWith("#") then false
       else
-        val text = flatten(l.dropWhile(_ == '#'))
-        text.nonEmpty && (BoilerplateHeading.matches(text) || (want.nonEmpty && text == want))
+        val text = flatten(_root_.com.histmersion.api.media.AssetLinks.FlattenS(l.dropWhile(_ == '#')))
+        (text).value.nonEmpty && (BoilerplateHeading.matches(text) || (want.nonEmpty && text == want))
     }
-    kept.mkString("\n")
+    _root_.com.histmersion.api.media.AssetLinks.DropBoilerplateHeadingsResult(kept.mkString("\n"))
 
   def normalizeBody(md: com.histmersion.api.media.AssetLinks.NormalizeBodyMd, title: com.histmersion.api.media.AssetLinks.NormalizeBodyTitle = _root_.com.histmersion.api.media.AssetLinks.NormalizeBodyTitle("")): com.histmersion.api.media.AssetLinks.NormalizeBodyResult =
     dropBoilerplateHeadings(collapsePictureText(fromFigures(md)), title)
@@ -168,25 +168,25 @@ object AssetLinks:
   def toWeb(md: com.histmersion.api.media.AssetLinks.ToWebMd, citekey: com.histmersion.api.media.AssetLinks.ToWebCitekey): com.histmersion.api.media.AssetLinks.ToWebResult = retarget(md, _root_.com.histmersion.api.media.AssetLinks.RetargetFrom(Prefix), webBase(citekey))
 
   def toAbsolute(md: com.histmersion.api.media.AssetLinks.ToAbsoluteMd, citekey: com.histmersion.api.media.AssetLinks.ToAbsoluteCitekey, publicUrl: com.histmersion.api.media.AssetLinks.ToAbsolutePublicUrl): com.histmersion.api.media.AssetLinks.ToAbsoluteResult =
-    retarget(md, _root_.com.histmersion.api.media.AssetLinks.RetargetFrom(Prefix), publicUrl.trim.stripSuffix("/") + webBase(citekey))
+    retarget(md, _root_.com.histmersion.api.media.AssetLinks.RetargetFrom(Prefix), (publicUrl).value.trim.stripSuffix("/") + webBase(citekey))
 
   def webBase(citekey: com.histmersion.api.media.AssetLinks.WebBaseCitekey): com.histmersion.api.media.AssetLinks.WebBaseResult = s"/source/${enc(citekey)}/assets/"
 
   def url(citekey: com.histmersion.api.media.AssetLinks.UrlCitekey, name: com.histmersion.api.media.AssetLinks.UrlName): com.histmersion.api.media.AssetLinks.UrlResult = webBase(citekey) + enc(name)
 
   private def enc(s: com.histmersion.api.media.AssetLinks.EncS): com.histmersion.api.media.AssetLinks.EncResult =
-    java.net.URLEncoder.encode(s, "UTF-8").replace("+", "%20")
+    _root_.com.histmersion.api.media.AssetLinks.EncResult(java.net.URLEncoder.encode((s).value, "UTF-8").replace("+", "%20"))
 
   private val BareImg = """<img(?![^>]*\bloading=)\s""".r
 
   def lazyImages(html: com.histmersion.api.media.AssetLinks.LazyImagesHtml): com.histmersion.api.media.AssetLinks.LazyImagesResult =
-    BareImg.replaceAllIn(html, _ => java.util.regex.Matcher.quoteReplacement("""<img loading="lazy" """))
+    _root_.com.histmersion.api.media.AssetLinks.LazyImagesResult(BareImg.replaceAllIn((html).value, _ => java.util.regex.Matcher.quoteReplacement("""<img loading="lazy" """)))
 
   /** Must match the converter's `_safe_name`: either side may name a file. */
   def safeName(raw: com.histmersion.api.media.AssetLinks.SafeNameRaw): com.histmersion.api.media.AssetLinks.SafeNameResult = com.histmersion.api.text.SafeName.of(raw)
 
   def mimeOf(name: com.histmersion.api.media.AssetLinks.MimeOfName): com.histmersion.api.media.AssetLinks.MimeOfResult =
-    name.toLowerCase.reverse.takeWhile(_ != '.').reverse match
+    (name).value.toLowerCase.reverse.takeWhile(_ != '.').reverse match
       case "png"          => _root_.com.histmersion.api.media.AssetLinks.MimeOfResult("image/png")
       case "jpg" | "jpeg" => _root_.com.histmersion.api.media.AssetLinks.MimeOfResult("image/jpeg")
       case "gif"          => _root_.com.histmersion.api.media.AssetLinks.MimeOfResult("image/gif")

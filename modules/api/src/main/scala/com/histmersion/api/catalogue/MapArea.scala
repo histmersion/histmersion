@@ -18,8 +18,8 @@ object MapArea:
   object ApproxGb extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
   def parse(entry: com.histmersion.api.catalogue.MapArea.ParseEntry): Option[MapArea] =
-    entry.split('|').toList.map(_.trim) match
-      case List(label, box, gb) if label.nonEmpty && box.nonEmpty => gb.toDoubleOption.map(MapArea(label, box, _))
+    (entry).value.split('|').toList.map(_.trim) match
+      case List(label, box, gb) if label.nonEmpty && box.nonEmpty => gb.toDoubleOption.map(MapArea(_root_.com.histmersion.api.catalogue.MapArea.Label(label), _root_.com.histmersion.api.catalogue.MapArea.Bbox(box), _root_.com.histmersion.api.catalogue.MapArea.ApproxGb(_)))
       case _                                                      => None
 
-  def size(gb: com.histmersion.api.catalogue.MapArea.SizeGb): com.histmersion.api.catalogue.MapArea.SizeResult = s"${BigDecimal(gb).setScale(1, BigDecimal.RoundingMode.HALF_UP)} GB"
+  def size(gb: com.histmersion.api.catalogue.MapArea.SizeGb): com.histmersion.api.catalogue.MapArea.SizeResult = _root_.com.histmersion.api.catalogue.MapArea.SizeResult(s"${BigDecimal((gb).value).setScale(1, BigDecimal.RoundingMode.HALF_UP)} GB")

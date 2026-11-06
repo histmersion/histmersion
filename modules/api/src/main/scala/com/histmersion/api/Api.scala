@@ -447,7 +447,7 @@ object Api:
 
   final case class FindingsQuery(filter: Filter, region: Option[FindingsQuery.Region]):
     def toFilter: Filter =
-      region.map(_.trim).filter(_.nonEmpty).fold(filter)(r => filter.copy(places = filter.places :+ r))
+      region.map((_).value.trim).filter(_.nonEmpty).fold(filter)(r => filter.copy(places = filter.places :+ _root_.com.histmersion.api.library.Filter.Places(r)))
 
   object FindingsQuery:
     type Region = Region.T
@@ -1993,16 +1993,16 @@ object Api:
     val Page = "docs/user-guide/reference/rest-api.md"
 
     def splice(readme: com.histmersion.api.Api.Index.SpliceReadme, index: com.histmersion.api.Api.Index.SpliceIndex): Either[com.histmersion.api.Api.Index.SpliceResultPart1, com.histmersion.api.Api.Index.SpliceResultPart2] =
-      val (b, e) = (readme.indexOf(Begin), readme.indexOf(End))
+      val (b, e) = ((readme).value.indexOf(Begin), (readme).value.indexOf(End))
       if b < 0 || e < b then Left(_root_.com.histmersion.api.Api.Index.SpliceResultPart1(s"$Page has no $Begin … $End block"))
-      else Right(readme.substring(0, b + Begin.length) + "\n" + index + "\n" + readme.substring(e))
+      else Right(_root_.com.histmersion.api.Api.Index.SpliceResultPart2((readme).value.substring(0, b + Begin.length) + "\n" + index + "\n" + (readme).value.substring(e)))
 
     def current(readme: com.histmersion.api.Api.Index.CurrentReadme): Option[com.histmersion.api.Api.Index.CurrentResult] =
-      val (b, e) = (readme.indexOf(Begin), readme.indexOf(End))
-      Option.when(b >= 0 && e > b)(readme.substring(b + Begin.length, e).trim)
+      val (b, e) = ((readme).value.indexOf(Begin), (readme).value.indexOf(End))
+      Option.when(b >= 0 && e > b)(_root_.com.histmersion.api.Api.Index.CurrentResult((readme).value.substring(b + Begin.length, e).trim))
 
   @main def generateApiIndex(repo: com.histmersion.api.Api.GenerateApiIndexRepo): Unit =
-    val p = java.nio.file.Path.of(repo).resolve(Index.Page)
+    val p = java.nio.file.Path.of((repo).value).resolve(Index.Page)
     Index.splice(_root_.com.histmersion.api.Api.Index.SpliceReadme(java.nio.file.Files.readString(p)), Index.markdown(Api.all)) match
       case Left(e)  => throw IllegalStateException(e)
       case Right(s) => val _ = java.nio.file.Files.writeString(p, s)

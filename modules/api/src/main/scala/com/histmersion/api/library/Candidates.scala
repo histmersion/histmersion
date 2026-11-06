@@ -41,7 +41,7 @@ object Candidates:
     type ParseS = ParseS.T
     object ParseS extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
-    def parse(s: com.histmersion.api.library.Candidates.WatchKind.ParseS): Option[WatchKind] = values.find(_.wire == s.trim.toLowerCase)
+    def parse(s: com.histmersion.api.library.Candidates.WatchKind.ParseS): Option[WatchKind] = values.find(_.wire == (s).value.trim.toLowerCase)
 
   enum State(val wire: State.Wire):
     case New extends State(_root_.com.histmersion.api.library.Candidates.State.Wire("new"))
@@ -55,14 +55,14 @@ object Candidates:
     type ParseS = ParseS.T
     object ParseS extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
-    def parse(s: com.histmersion.api.library.Candidates.State.ParseS): Option[State] = values.find(_.wire == s.trim.toLowerCase)
+    def parse(s: com.histmersion.api.library.Candidates.State.ParseS): Option[State] = values.find(_.wire == (s).value.trim.toLowerCase)
 
   val Indexes: List[com.histmersion.api.library.Candidates.Indexes] = List(_root_.com.histmersion.api.library.Candidates.Indexes("openalex"), _root_.com.histmersion.api.library.Candidates.Indexes("crossref"), _root_.com.histmersion.api.library.Candidates.Indexes("europepmc"), _root_.com.histmersion.api.library.Candidates.Indexes("arxiv"), _root_.com.histmersion.api.library.Candidates.Indexes("core"))
 
   def since(watermark: Option[com.histmersion.api.library.Candidates.SinceWatermark], today: java.time.LocalDate, lookbackDays: com.histmersion.api.library.Candidates.SinceLookbackDays): java.time.LocalDate =
     watermark
-      .flatMap(w => scala.util.Try(java.time.LocalDate.parse(w.take(10))).toOption)
-      .getOrElse(today.minusDays(math.max(0, lookbackDays).toLong))
+      .flatMap(w => scala.util.Try(java.time.LocalDate.parse((w).value.take(10))).toOption)
+      .getOrElse(today.minusDays(math.max(0, (lookbackDays).value).toLong))
 
   final case class Found(key: Found.Key, work: WorkRef, by: Found.By)
 
@@ -114,7 +114,7 @@ object Candidates:
     def tag(s: com.histmersion.api.library.Candidates.ArxivWorksTagS, t: com.histmersion.api.library.Candidates.ArxivWorksTagT): Option[com.histmersion.api.library.Candidates.ArxivWorksTagResult] =
       s"(?s)<$t[^>]*>(.*?)</$t>".r.findFirstMatchIn(s).map(_.group(1).replaceAll("\\s+", " ").trim).filter(_.nonEmpty)
     def unescape(s: com.histmersion.api.library.Candidates.ArxivWorksUnescapeS) =
-      s.replace("&lt;", "<").replace("&gt;", ">").replace("&quot;", "\"").replace("&apos;", "'").replace("&amp;", "&")
+      (s).value.replace("&lt;", "<").replace("&gt;", ">").replace("&quot;", "\"").replace("&apos;", "'").replace("&amp;", "&")
     "(?s)<entry>(.*?)</entry>".r.findAllMatchIn(atom).map(_.group(1)).toList.map { e =>
       val id = tag(e, "id").map(_.replaceFirst("^https?://arxiv.org/abs/", "").replaceAll("v\\d+$", ""))
       WorkRef(

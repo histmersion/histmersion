@@ -9,8 +9,8 @@ object WikidataClasses:
   object ParseS extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
   def parse(s: com.histmersion.upstreams.wikidata.WikidataClasses.ParseS): List[(com.histmersion.upstreams.wikidata.WikidataClasses.ParseResultPart1, com.histmersion.upstreams.wikidata.WikidataClasses.ParseResultPart2)] =
-    Option(s).toList
-      .flatMap(_.split(","))
+    (Option(s).toList
+      .flatMap((_).value.split(","))
       .map(_.trim)
       .filter(_.nonEmpty)
       .flatMap { e =>
@@ -18,4 +18,4 @@ object WikidataClasses:
           case Array(q, k) if q.matches("Q[1-9][0-9]*") && k.nonEmpty => Some(q -> k)
           case _                                                      => None
       }
-      .distinctBy(_._1)
+      .distinctBy(_._1)).map(refactorValue => { val refactorTuple = refactorValue; (_root_.com.histmersion.upstreams.wikidata.WikidataClasses.ParseResultPart1(refactorTuple._1), _root_.com.histmersion.upstreams.wikidata.WikidataClasses.ParseResultPart2(refactorTuple._2)) })

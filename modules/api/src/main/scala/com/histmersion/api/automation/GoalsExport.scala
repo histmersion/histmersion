@@ -98,7 +98,7 @@ object GoalsExport:
       (v, depth) :: children
         .getOrElse(Some(v.goal.slug), Nil)
         .filterNot(c => seen.contains(c.goal.slug))
-        .flatMap(c => walk(c, depth + 1, seen + c.goal.slug))
+        .flatMap(c => walk(c, _root_.com.histmersion.api.automation.GoalsExport.TreeWalkDepth((depth).value + 1), seen + c.goal.slug))
     val placed = roots.flatMap(r => walk(r, 0, Set(r.goal.slug)))
     val shown = placed.map(_._1.goal.slug).toSet
     val strays = views.filterNot(v => shown.contains(v.goal.slug)).sortBy(_.goal.slug).map(_ -> 0)
@@ -106,7 +106,7 @@ object GoalsExport:
 
   private def block(v: GoalView, depth: com.histmersion.api.automation.GoalsExport.BlockDepth, known: Set[com.histmersion.api.automation.GoalsExport.BlockKnown], itemStatus: Map[com.histmersion.api.automation.GoalsExport.BlockItemStatusPart1, com.histmersion.api.automation.GoalsExport.BlockItemStatusPart2]): com.histmersion.api.automation.GoalsExport.BlockResult =
     val g = v.goal
-    val heading = s"${"#" * math.min(depth + 2, 6)} ${oneLine(g.title)}"
+    val heading = s"${"#" * math.min((depth).value + 2, 6)} ${oneLine(g.title)}"
     val facts = List(
       Some(s"`${g.slug}` · ${g.status}"),
       Option(YearFmt.openPeriod(g.periodStart, g.periodEnd, "")).filter(_.nonEmpty).map(p => s"**Period:** $p"),
@@ -179,4 +179,4 @@ object GoalsExport:
     val budget = s.budgetUsd.fold("")(b => s" · cap ${AgentsMarkdown.usd(b)} USD")
     _root_.com.histmersion.api.automation.GoalsExport.ScheduleLineResult(s"${s.kind.wire} · `${s.cron}` · $state$budget")
 
-  private def oneLine(s: com.histmersion.api.automation.GoalsExport.OneLineS): com.histmersion.api.automation.GoalsExport.OneLineResult = s.linesIterator.map(_.trim).filter(_.nonEmpty).mkString(" ")
+  private def oneLine(s: com.histmersion.api.automation.GoalsExport.OneLineS): com.histmersion.api.automation.GoalsExport.OneLineResult = _root_.com.histmersion.api.automation.GoalsExport.OneLineResult((s).value.linesIterator.map(_.trim).filter(_.nonEmpty).mkString(" "))

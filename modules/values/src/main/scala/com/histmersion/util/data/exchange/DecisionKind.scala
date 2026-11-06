@@ -70,4 +70,4 @@ object DecisionKind:
   given WireEnumValues[DecisionKind]:
     def all: Array[DecisionKind] = DecisionKind.values
     def wire(e: DecisionKind): com.histmersion.util.data.exchange.DecisionKind.WireResult = wireOf(e)
-    def fromWire(s: com.histmersion.util.data.exchange.DecisionKind.FromWireS): Option[DecisionKind] = DecisionKind.values.find(k => wireOf(k) == s.trim)
+    def fromWire(s: com.histmersion.util.data.exchange.DecisionKind.FromWireS): Option[DecisionKind] = DecisionKind.values.find(k => wireOf(k) == (s).value.trim)

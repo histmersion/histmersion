@@ -78,31 +78,31 @@ object ArticleMarkdown:
           case -1 => s"$body\n\n$line"
           case i  => s"${body.take(i)}\n\n$line${body.drop(i)}"
     val footer = sourcesCited(v.sourcesCited)
-    val trimmed = if footer.isEmpty then head else stripSourcesSection(_root_.com.histmersion.api.research.ArticleMarkdown.StripSourcesSectionBody(head))
+    val trimmed = if (footer).value.isEmpty then head else stripSourcesSection(_root_.com.histmersion.api.research.ArticleMarkdown.StripSourcesSectionBody(head))
     trimmed + coverage(v) + backlinks(v.backlinks) + footer + FormatMarkdown.notice(v.formatting)
 
   private def coverage(v: Article.View): com.histmersion.api.research.ArticleMarkdown.CoverageResult = _root_.com.histmersion.api.research.ArticleMarkdown.CoverageResult(v.coverage.fold("")(c => "\n\n" + Article.Coverage.sections(c)))
 
   private[api] def metaLine(kind: com.histmersion.api.research.ArticleMarkdown.MetaLineKind, regions: List[com.histmersion.api.research.ArticleMarkdown.MetaLineRegions], period: com.histmersion.api.research.ArticleMarkdown.MetaLinePeriod, tags: List[com.histmersion.api.research.ArticleMarkdown.MetaLineTags]): com.histmersion.api.research.ArticleMarkdown.MetaLineResult =
-    val parts = List(Label.display(kind.trim), chipLinksList(regions, "place"), period.trim, chipLinksList(tags, "tag"))
+    val parts = List(Label.display((kind).value.trim), chipLinksList(regions, "place"), (period).value.trim, chipLinksList(tags, "tag"))
       .filter(_.nonEmpty)
     if parts.isEmpty then _root_.com.histmersion.api.research.ArticleMarkdown.MetaLineResult("") else s"_${parts.mkString(" · ")}_"
 
   private def chipLinksList(values: List[com.histmersion.api.research.ArticleMarkdown.ChipLinksListValues], hashKey: com.histmersion.api.research.ArticleMarkdown.ChipLinksListHashKey): com.histmersion.api.research.ArticleMarkdown.ChipLinksListResult =
     values
-      .filter(_.nonEmpty)
+      .filter((_).value.nonEmpty)
       .map(v => s"[${Label.display(v).replace("[", "\\[").replace("]", "\\]")}](/#$hashKey=${Markdown.enc(v)})")
       .mkString(", ")
 
   def stripSourcesSection(body: com.histmersion.api.research.ArticleMarkdown.StripSourcesSectionBody): com.histmersion.api.research.ArticleMarkdown.StripSourcesSectionResult =
     val heading = """^#{1,6}\s*(sources\b.*|references|bibliography|works cited)\s*$""".r
-    val lines = body.linesIterator.toList
+    val lines = (body).value.linesIterator.toList
     lines.lastIndexWhere(l => heading.matches(l.trim.toLowerCase)) match
       case -1 => body
       case i  =>
         val rest = lines.drop(i + 1).map(_.trim).filter(_.nonEmpty)
         if rest.forall(l => l.startsWith("-") || l.startsWith("*") || l.startsWith("[[") || l.startsWith("1."))
-        then lines.take(i).mkString("\n").stripTrailing
+        then _root_.com.histmersion.api.research.ArticleMarkdown.StripSourcesSectionResult(lines.take(i).mkString("\n").stripTrailing)
         else body
 
   private def articleParts(v: Article.View, show: List[com.histmersion.api.research.ArticleMarkdown.ArticlePartsShow]): com.histmersion.api.research.ArticleMarkdown.ArticlePartsResult =
@@ -110,7 +110,7 @@ object ArticleMarkdown:
     val out = List.newBuilder[String]
 
     if show.contains("summary") then
-      a.summary.map(_.trim).filter(_.nonEmpty).foreach(s => out += s"_${stripMd(s).take(200)}_")
+      a.summary.map(_.trim).filter(_.nonEmpty).foreach(s => out += s"_${(stripMd(s)).value.take(200)}_")
 
     if show.contains("body") then
       val body = a.body.trim
@@ -128,11 +128,11 @@ object ArticleMarkdown:
 
     if show.contains("backlinks") then
       val bl = backlinks(v.backlinks, truncate = _root_.com.histmersion.api.research.ArticleMarkdown.BacklinksTruncate(true))
-      if bl.nonEmpty then out += bl
+      if (bl).value.nonEmpty then out += (bl).value
 
     if show.contains("cited") then
       val sc = sourcesCited(v.sourcesCited, truncate = _root_.com.histmersion.api.research.ArticleMarkdown.SourcesCitedTruncate(true))
-      if sc.nonEmpty then out += sc
+      if (sc).value.nonEmpty then out += (sc).value
 
     if (show.contains("body") || show.contains("summary")) && v.formatting.nonEmpty then
       val shown = v.formatting.filter(i => show.contains(if i.field == FormatField.Summary then "summary" else "body"))
@@ -143,11 +143,11 @@ object ArticleMarkdown:
     else _root_.com.histmersion.api.research.ArticleMarkdown.ArticlePartsResult(result.mkString("\n\n"))
 
   private def stripMd(s: com.histmersion.api.research.ArticleMarkdown.StripMdS): com.histmersion.api.research.ArticleMarkdown.StripMdResult =
-    s.replaceAll("""\[\[([^\]|]+)\|([^\]]+)\]\]""", "$2")
+    _root_.com.histmersion.api.research.ArticleMarkdown.StripMdResult((s).value.replaceAll("""\[\[([^\]|]+)\|([^\]]+)\]\]""", "$2")
       .replaceAll("""\[\[([^\]]+)\]\]""", "$1")
       .replaceAll("""\[([^\]]+)\]\([^)]+\)""", "$1")
       .replaceAll("""[*_]{1,2}""", "")
-      .replaceAll("""`""", "")
+      .replaceAll("""`""", ""))
 
   def backlinks(rows: List[Backlink], truncate: com.histmersion.api.research.ArticleMarkdown.BacklinksTruncate = _root_.com.histmersion.api.research.ArticleMarkdown.BacklinksTruncate(false)): com.histmersion.api.research.ArticleMarkdown.BacklinksResult =
     if rows.isEmpty then _root_.com.histmersion.api.research.ArticleMarkdown.BacklinksResult("")
@@ -196,5 +196,5 @@ object ArticleMarkdown:
         .filter(_.nonEmpty)
         .mkString(" · ")
       val sum = a.summary.map(s => s"\n  ${s.trim}").getOrElse("")
-      s"- **${a.slug}** — ${a.title}\n  _${meta}_$sum"
+      _root_.com.histmersion.api.OffsetPage.MarkdownLineResult(s"- **${a.slug}** — ${a.title}\n  _${meta}_$sum")
     }

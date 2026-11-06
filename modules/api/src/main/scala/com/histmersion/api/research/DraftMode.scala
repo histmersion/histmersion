@@ -17,7 +17,7 @@ object DraftMode:
   type FromWireS = FromWireS.T
   object FromWireS extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
-  def parse(s: com.histmersion.api.research.DraftMode.ParseS): Option[DraftMode] = values.find(_.wire == s.trim.toLowerCase)
+  def parse(s: com.histmersion.api.research.DraftMode.ParseS): Option[DraftMode] = values.find(_.wire == (s).value.trim.toLowerCase)
   given WireEnumValues[DraftMode]:
     def all: Array[DraftMode] = DraftMode.values
     def wire(e: DraftMode): com.histmersion.api.research.DraftMode.WireResult = e.wire

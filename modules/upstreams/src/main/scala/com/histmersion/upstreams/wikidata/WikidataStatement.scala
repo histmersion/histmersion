@@ -18,5 +18,5 @@ object WikidataStatement:
   object Order extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
   def best(statements: List[WikidataStatement], per: com.histmersion.upstreams.wikidata.WikidataStatement.BestPer): List[WikidataStatement] =
-    val preferred = statements.filter(_.preferred)
+    val preferred = statements.filter((_.preferred).value)
     (if preferred.nonEmpty then preferred else statements).sortBy(_.order).take(per.max(0))

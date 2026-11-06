@@ -57,11 +57,11 @@ object EventRederiveReport:
         s"${r.changed} dating(s) ${if r.dryRun then "would change" else "changed"}, ${r.updated} event(s) refreshed"
       ),
       Option.when(r.after.nonEmpty)(s"precision ${counts(r.before)} → ${counts(r.after)}"),
-      Option.when(r.offMap > 0)(s"${r.offMap} imprecise (off the map, on the list)"),
+      Option.when((r.offMap).value > 0)(s"${r.offMap} imprecise (off the map, on the list)"),
       r.corrections.summary
     ).flatten.mkString(" · ")
 
   def markdown(r: EventRederiveReport): com.histmersion.api.catalogue.EventRederiveReport.MarkdownResult =
     val head =
-      s"## Event re-derivation — ${r.providers.mkString(", ")}${if r.dryRun then " (dry run: nothing stored)" else ""}"
-    (head :: "" :: summary(r).split(" · ").toList.map("- " + _) ++ r.examples.map("  - " + _)).mkString("\n")
+      s"## Event re-derivation — ${r.providers.mkString(", ")}${if (r.dryRun).value then " (dry run: nothing stored)" else ""}"
+    _root_.com.histmersion.api.catalogue.EventRederiveReport.MarkdownResult((head :: "" :: (summary(r)).value.split(" · ").toList.map("- " + _) ++ r.examples.map("  - " + _)).mkString("\n"))

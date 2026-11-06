@@ -9,7 +9,7 @@ import hearth.kindlings.sconfigderivation.ConfigReader
 final case class ProviderSettings(baseUrl: ProviderSettings.BaseUrl, apiKey: ProviderSettings.ApiKey, strictTools: ProviderSettings.StrictTools, timeoutSeconds: ProviderSettings.TimeoutSeconds)
     derives ConfigReader:
   override def toString: String =
-    s"ProviderSettings($baseUrl, apiKey=${if apiKey.isEmpty then "unset" else "<redacted>"}, " +
+    s"ProviderSettings($baseUrl, apiKey=${if (apiKey).value.isEmpty then "unset" else "<redacted>"}, " +
       s"strictTools=$strictTools, timeoutSeconds=$timeoutSeconds)"
 
 object ProviderSettings:

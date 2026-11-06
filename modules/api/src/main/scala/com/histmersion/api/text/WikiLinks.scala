@@ -55,7 +55,7 @@ object WikiLinks:
   private val Link = """(!?)\\?\[\\?\[([^\[\]\n]+?)\\?\]\\?\]""".r
 
   /** Whether a target reads as a citekey (a four-digit year or an underscore in it) rather than an article's slug. */
-  def isCitekeyShaped(s: com.histmersion.api.text.WikiLinks.IsCitekeyShapedS): com.histmersion.api.text.WikiLinks.IsCitekeyShapedResult = Citekey.matches(s)
+  def isCitekeyShaped(s: com.histmersion.api.text.WikiLinks.IsCitekeyShapedS): com.histmersion.api.text.WikiLinks.IsCitekeyShapedResult = _root_.com.histmersion.api.text.WikiLinks.IsCitekeyShapedResult(Citekey.matches((s).value))
 
   /** One link in a text: where it is, what was written, whether it is an embed or escaped, and its target. */
   final case class Occurrence(
@@ -99,10 +99,10 @@ object WikiLinks:
 
   /** A link's target as it is stored: no label, no anchor, lower case; none for an in-page anchor or a file name. */
   def normalize(raw: com.histmersion.api.text.WikiLinks.NormalizeRaw): Option[com.histmersion.api.text.WikiLinks.NormalizeResult] =
-    val noLabel = raw.takeWhile(_ != '|')
+    val noLabel = (raw).value.takeWhile(_ != '|')
     val noAnchor = noLabel.takeWhile(_ != '#')
     val t = noAnchor.trim.toLowerCase
-    if t.isEmpty || !SlugShape.matches(t) then None else Some(t)
+    if t.isEmpty || !SlugShape.matches(t) then None else Some(_root_.com.histmersion.api.text.WikiLinks.NormalizeResult(t))
 
   /** The distinct targets a text links, in order; embeds are not links. */
   def targets(body: com.histmersion.api.text.WikiLinks.TargetsBody): List[com.histmersion.api.text.WikiLinks.TargetsResult] =
@@ -118,7 +118,7 @@ object WikiLinks:
     */
   def rewriteLinks(md: com.histmersion.api.text.WikiLinks.RewriteLinksMd)(render: (com.histmersion.api.text.WikiLinks.RewriteLinksRenderArg1, Option[com.histmersion.api.text.WikiLinks.RewriteLinksRenderArg2], com.histmersion.api.text.WikiLinks.RewriteLinksRenderArg3) => com.histmersion.api.text.WikiLinks.RewriteLinksRenderResult): com.histmersion.api.text.WikiLinks.RewriteLinksResult =
     Link.replaceAllIn(
-      md,
+      (md).value,
       m =>
         val raw = m.group(2)
         val (targetPart, explicit) = raw.indexOf('|') match
@@ -138,7 +138,7 @@ object WikiLinks:
     if count == 0 then (md, _root_.com.histmersion.api.text.WikiLinks.RetargetResultPart2(0))
     else
       val out = Link.replaceAllIn(
-        md,
+        (md).value,
         m =>
           java.util.regex.Matcher.quoteReplacement(moved(m) match
             case None       => m.matched
@@ -151,7 +151,7 @@ object WikiLinks:
               val (s, e) = (m.start(2) - m.start, m.end(2) - m.start)
               m.matched.take(s) + newRaw + m.matched.drop(e))
       )
-      (out, count)
+      (_root_.com.histmersion.api.text.WikiLinks.RetargetResultPart1(out), count)
 
   /** Whether a text links `ck` (any case). */
   def links(text: com.histmersion.api.text.WikiLinks.LinksText, ck: com.histmersion.api.text.WikiLinks.LinksCk): com.histmersion.api.text.WikiLinks.LinksResult = targets(text).exists(_.equalsIgnoreCase(ck))

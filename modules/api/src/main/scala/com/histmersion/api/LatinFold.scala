@@ -99,11 +99,11 @@ object LatinFold:
     if isCombiningMark(c) then _root_.com.histmersion.api.LatinFold.FoldCharResult("") else Table.getOrElse(c, c.toString)
 
   def fold(s: com.histmersion.api.LatinFold.FoldS): com.histmersion.api.LatinFold.FoldResult =
-    val b = new StringBuilder(s.length)
-    s.foreach { c =>
-      if !isCombiningMark(c) then
-        Table.get(c) match
+    val b = new StringBuilder((s).value.length)
+    (s).value.foreach { c =>
+      if !(isCombiningMark(_root_.com.histmersion.api.LatinFold.IsCombiningMarkC(c))).value then
+        Table.get(_root_.com.histmersion.api.LatinFold.TablePart1(c)) match
           case Some(r) => b ++= r
           case None    => b += c
     }
-    b.result()
+    _root_.com.histmersion.api.LatinFold.FoldResult(b.result())

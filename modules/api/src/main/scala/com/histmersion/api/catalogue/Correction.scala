@@ -52,12 +52,12 @@ object Correction:
       derives KindlingsCodecAsObject,
         KindlingsSchema, com.histmersion.api.json.Schema:
     def +(o: Counts): Counts =
-      Counts(kept + o.kept, retired + o.retired, conflicts + o.conflicts)
+      Counts((kept).value + (o.kept).value, (retired).value + (o.retired).value, (conflicts).value + (o.conflicts).value)
     def isEmpty: com.histmersion.api.catalogue.Correction.Counts.IsEmptyResult = kept == 0 && retired == 0 && conflicts == 0
 
     def summary: Option[com.histmersion.api.catalogue.Correction.Counts.SummaryResult] =
-      Option.when(!isEmpty)(
-        s"corrections by hand: $kept kept, $retired retired (upstream agrees), $conflicts in conflict"
+      Option.when(!(isEmpty).value)(
+        _root_.com.histmersion.api.catalogue.Correction.Counts.SummaryResult(s"corrections by hand: $kept kept, $retired retired (upstream agrees), $conflicts in conflict")
       )
 
   object Counts:

@@ -96,7 +96,7 @@ object CatalogRecord:
   def eventId(r: CatalogRecord): com.histmersion.api.catalogue.CatalogRecord.EventIdResult = eventId(r.provider, r.providerId)
 
   def eventId(provider: com.histmersion.api.catalogue.CatalogRecord.EventIdProvider, providerId: com.histmersion.api.catalogue.CatalogRecord.EventIdProviderId): com.histmersion.api.catalogue.CatalogRecord.EventIdResult =
-    (provider + "_" + providerId).toLowerCase(java.util.Locale.ROOT).replaceAll("[^a-z0-9]+", "_").stripSuffix("_")
+    _root_.com.histmersion.api.catalogue.CatalogRecord.EventIdResult(((provider).value + "_" + providerId).toLowerCase(java.util.Locale.ROOT).replaceAll("[^a-z0-9]+", "_").stripSuffix("_"))
 
   def owner(eventId: com.histmersion.api.catalogue.CatalogRecord.OwnerEventId, catalogue: com.histmersion.api.catalogue.CatalogRecord.OwnerCatalogue, keys: Iterable[(com.histmersion.api.catalogue.CatalogRecord.OwnerKeysPart1, com.histmersion.api.catalogue.CatalogRecord.OwnerKeysPart2)]): Option[(com.histmersion.api.catalogue.CatalogRecord.OwnerResultPart1, com.histmersion.api.catalogue.CatalogRecord.OwnerResultPart2)] =
     val own = keys.filter(_._1 == catalogue).toList.sortBy(_._2)

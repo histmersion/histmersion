@@ -84,7 +84,7 @@ object CollectionsMarkdown:
         val by = who(b.authors)
         s"- **${b.id}** · ${b.title}$year — ${if by.isEmpty then "no author" else by}\n$files"
       }
-      val shown = if total > entries.size then s"${entries.size} of $total" else entries.size.toString
+      val shown = if (total).value > entries.size then s"${entries.size} of $total" else entries.size.toString
       (List(
         s"### $shown Calibre ${Plural.noun(total, "entry", "entries")} not linked to any source (newest first)",
         ""
@@ -102,7 +102,7 @@ object CollectionsMarkdown:
 
   /** The counted gaps as a table, then one line for the records with no fetched file. */
   def gaps(rows: List[CollectionGapRow]): com.histmersion.api.library.CollectionsMarkdown.GapsResult =
-    def esc(s: com.histmersion.api.library.CollectionsMarkdown.GapsEscS) = s.replace("|", "\\|").replace("\n", " ").trim
+    def esc(s: com.histmersion.api.library.CollectionsMarkdown.GapsEscS) = (s).value.replace("|", "\\|").replace("\n", " ").trim
     val counted = rows.filter(_.counted)
     val missing = rows.count(_.original == "none")
     val head =
@@ -124,27 +124,27 @@ object CollectionsMarkdown:
               "`<cli.calibre.originals-dir>/<citekey>/paper.*` on this host (`local`), else the original the server " +
               "stored (`stored`)._"
           )).mkString("\n")
-    if missing == 0 then _root_.com.histmersion.api.library.CollectionsMarkdown.GapsResult(head) else s"$head\n\n${uncountedLine(_root_.com.histmersion.api.library.CollectionsMarkdown.UncountedLineN(missing))}"
+    if missing == 0 then _root_.com.histmersion.api.library.CollectionsMarkdown.GapsResult(head) else _root_.com.histmersion.api.library.CollectionsMarkdown.GapsResult(s"$head\n\n${uncountedLine(_root_.com.histmersion.api.library.CollectionsMarkdown.UncountedLineN(missing))}")
 
   /** A sync: the gaps pushed (or that would be), each push, and the summary line. */
   def sync(s: CollectionSync): com.histmersion.api.library.CollectionsMarkdown.SyncResult =
     val ready = s.gaps.gaps.filter(_.counted)
     val missing = s.gaps.gaps.count(_.original == "none")
     val note = if missing == 0 then "" else " · " + uncountedLine(_root_.com.histmersion.api.library.CollectionsMarkdown.UncountedLineN(missing))
-    val table = if ready.nonEmpty then gaps(ready) + "\n\n" else ""
+    val table = if ready.nonEmpty then (gaps(ready)).value + "\n\n" else ""
     if !s.applied then
-      table + s"Dry run: ${ready.size} source(s) would be pushed$note" +
-        (if ready.nonEmpty then " Re-run with --apply." else "")
+      _root_.com.histmersion.api.library.CollectionsMarkdown.SyncResult(table + s"Dry run: ${ready.size} source(s) would be pushed$note" +
+        (if ready.nonEmpty then " Re-run with --apply." else ""))
     else
       val lines = s.pushes.map(p =>
         p.id.fold(s"  ! ${p.citekey}: ${p.error.getOrElse("")}")(id => s"  + ${p.citekey} → Calibre id $id")
       )
       val failed = s.pushes.count(_.id.isEmpty)
-      table + lines.map(_ + "\n").mkString + s"pushed ${s.pushes.size - failed} source(s), $failed failed$note"
+      _root_.com.histmersion.api.library.CollectionsMarkdown.SyncResult(table + lines.map(_ + "\n").mkString + s"pushed ${s.pushes.size - failed} source(s), $failed failed$note")
 
   /** An update of every linked item: what changes (or changed), then what was left alone and why. */
   def updateAll(rows: List[CollectionUpdateRow], applied: com.histmersion.api.library.CollectionsMarkdown.UpdateAllApplied): com.histmersion.api.library.CollectionsMarkdown.UpdateAllResult =
-    def cell(s: com.histmersion.api.library.CollectionsMarkdown.UpdateAllCellS) = s.replace("|", "\\|").replace("\n", " ").take(80)
+    def cell(s: com.histmersion.api.library.CollectionsMarkdown.UpdateAllCellS) = (s).value.replace("|", "\\|").replace("\n", " ").take(80)
     val changing = rows.collect {
       case r if r.state == "would-change" => (r, "")
       case r if r.state == "updated"      => (r, "written")
@@ -166,7 +166,7 @@ object CollectionsMarkdown:
     val head =
       if changing.isEmpty then s"_No linked Calibre entry needs updating ($upToDate up to date)._"
       else
-        val verb = if applied then "updated" else "would change"
+        val verb = if (applied).value then "updated" else "would change"
         (List(
           s"### ${changing.size} Calibre ${Plural.noun(changing.size, "entry", "entries")} $verb · $upToDate up to date",
           "",
@@ -175,12 +175,12 @@ object CollectionsMarkdown:
         ) ++ table).mkString("\n")
     val tail = if left.isEmpty then "" else s"\n\n**Left alone (${left.size})**\n\n${left.mkString("\n")}"
     val hint =
-      if !applied && changing.nonEmpty then "\n\n_Dry run. Re-run with `--apply` (Calibre GUI closed)._" else ""
+      if !(applied).value && changing.nonEmpty then "\n\n_Dry run. Re-run with `--apply` (Calibre GUI closed)._" else ""
     _root_.com.histmersion.api.library.CollectionsMarkdown.UpdateAllResult(head + tail + hint)
 
   /** An audit: the linked items that disagree with their records. */
   def audit(a: CollectionAudit): com.histmersion.api.library.CollectionsMarkdown.AuditResult =
-    def cell(s: com.histmersion.api.library.CollectionsMarkdown.AuditCellS) = s.replace("|", "\\|").replace("\n", " ").take(90)
+    def cell(s: com.histmersion.api.library.CollectionsMarkdown.AuditCellS) = (s).value.replace("|", "\\|").replace("\n", " ").take(90)
     def view(v: CollectionRecordView) = s"${v.title} — ${v.authors.mkString("; ")}${v.year.fold("")(y => s" ($y)")}"
     if a.findings.isEmpty then _root_.com.histmersion.api.library.CollectionsMarkdown.AuditResult(s"_All ${a.checked} linked Calibre entries agree with the corpus._")
     else

@@ -73,12 +73,12 @@ object MergeMarkdown:
       section(
         "Defaults (applied unless overridden with --resolve)",
         (if all then defaults else defaults.take(5)).map(issue) ++
-          Option.when(!all && defaults.size > 5)(s"- … ${defaults.size - 5} more (--all)").toList
+          Option.when(!(all).value && defaults.size > 5)(s"- … ${defaults.size - 5} more (--all)").toList
       ),
       section(
         "Info",
         (if all then p.info else p.info.take(8)).map(x => s"- $x") ++
-          Option.when(!all && p.info.size > 8)(s"- … ${p.info.size - 8} more (--all)").toList
+          Option.when(!(all).value && p.info.size > 8)(s"- … ${p.info.size - 8} more (--all)").toList
       ),
       section(
         "Matches",

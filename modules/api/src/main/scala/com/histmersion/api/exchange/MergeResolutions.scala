@@ -39,8 +39,8 @@ object MergeResolutions:
     object TextsResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
     def flag(s: com.histmersion.api.exchange.MergeResolutions.Text.FlagS): Either[com.histmersion.api.exchange.MergeResolutions.Text.FlagResultPart1, MergeResolution] =
-      s.indexOf('=') match
-        case i if i > 0 && i < s.length - 1 => Right(MergeResolution(s.take(i).trim, s.drop(i + 1).trim))
+      (s).value.indexOf('=') match
+        case i if i > 0 && i < (s).value.length - 1 => Right(MergeResolution(_root_.com.histmersion.api.exchange.MergeResolution.Issue((s).value.take(i).trim), _root_.com.histmersion.api.exchange.MergeResolution.Decision((s).value.drop(i + 1).trim)))
         case _                              => Left(_root_.com.histmersion.api.exchange.MergeResolutions.Text.FlagResultPart1(s"--resolve $s: expected ID=decision, e.g. S-3c1e7a2b=keep-left"))
 
     def template(p: MergePlan, current: MergeResolutions): com.histmersion.api.exchange.MergeResolutions.Text.TemplateResult =

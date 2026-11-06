@@ -22,7 +22,7 @@ object ConfigEdit:
     type ParseS = ParseS.T
     object ParseS extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
-    def parse(s: com.histmersion.api.settings.ConfigEdit.Source.ParseS): Option[Source] = values.find(_.wire == s.trim.toLowerCase)
+    def parse(s: com.histmersion.api.settings.ConfigEdit.Source.ParseS): Option[Source] = values.find(_.wire == (s).value.trim.toLowerCase)
 
   final case class Credential(rule: Credential.Rule, form: Credential.Form, shown: Option[Credential.Shown] = None)
       derives KindlingsCodecAsObject,
@@ -55,7 +55,7 @@ object ConfigEdit:
       locked: Option[Field.Locked] = None
   ) derives KindlingsCodecAsObject,
         KindlingsSchema:
-    def relative: com.histmersion.api.settings.ConfigEdit.Field.RelativeResult = key.stripPrefix("histmersion.")
+    def relative: com.histmersion.api.settings.ConfigEdit.Field.RelativeResult = _root_.com.histmersion.api.settings.ConfigEdit.Field.RelativeResult((key).value.stripPrefix("histmersion."))
 
   object Field:
     type RelativeResult = RelativeResult.T
@@ -106,7 +106,7 @@ object ConfigEdit:
         KindlingsSchema, com.histmersion.api.json.Schema:
     def fields: List[Field] = sections.flatMap(_.fields)
     def field(key: com.histmersion.api.settings.ConfigEdit.Page.FieldKey): Option[Field] =
-      val full = if key.startsWith("histmersion.") then key else s"histmersion.$key"
+      val full = if (key).value.startsWith("histmersion.") then key else s"histmersion.$key"
       fields.find(_.key == full)
 
   object Page:

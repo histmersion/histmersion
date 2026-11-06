@@ -15,6 +15,6 @@ object Slug extends RefinedType[String, Match["[a-z0-9][a-z0-9_.-]{0,120}"]]:
   object ParseRaw extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
   def parse(raw: com.histmersion.domain.research.Slug.ParseRaw): Either[com.histmersion.domain.research.Slug.ParseResultPart1, Slug] =
-    either(raw.trim.toLowerCase).left.map(_ =>
+    either((raw).value.trim.toLowerCase).left.map(_ =>
       _root_.com.histmersion.domain.research.Slug.ParseResultPart1(s"invalid slug '$raw' — use lower-case letters, digits, '_', '-' or '.' (e.g. sea_peoples)")
     )

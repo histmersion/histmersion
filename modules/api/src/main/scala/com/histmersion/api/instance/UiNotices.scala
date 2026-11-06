@@ -51,7 +51,7 @@ object UiNotices:
     type WiresResult = WiresResult.T
     object WiresResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
-    def parse(s: com.histmersion.api.instance.UiNotices.Board.ParseS): Option[Board] = values.find(_.wire == Option(s).map(_.trim.toLowerCase).getOrElse(""))
+    def parse(s: com.histmersion.api.instance.UiNotices.Board.ParseS): Option[Board] = values.find(_.wire == Option(s).map((_).value.trim.toLowerCase).getOrElse(""))
     def wires: List[com.histmersion.api.instance.UiNotices.Board.WiresResult] = values.toList.map(_.wire)
 
   final case class Counter(
@@ -83,10 +83,10 @@ object UiNotices:
     /** The agents at a glance, as the top bar says it. */
     def wording: com.histmersion.api.instance.UiNotices.AgentsGlance.WordingResult =
       def runs(n: com.histmersion.api.instance.UiNotices.AgentsGlance.WordingRunsN) = if n == 1 then "1 run" else s"$n runs"
-      if !on || (draining && running == 0) then _root_.com.histmersion.api.instance.UiNotices.AgentsGlance.WordingResult("Agents paused")
-      else if draining then s"Agents finishing current work · ${runs(running)}"
-      else if running > 0 then s"Agents working · ${runs(running)}"
-      else if queued > 0 then _root_.com.histmersion.api.instance.UiNotices.AgentsGlance.WordingResult(s"Agents working · $queued waiting")
+      if !(on).value || (draining && running == 0) then _root_.com.histmersion.api.instance.UiNotices.AgentsGlance.WordingResult("Agents paused")
+      else if (draining).value then s"Agents finishing current work · ${runs(running)}"
+      else if (running).value > 0 then s"Agents working · ${runs(running)}"
+      else if (queued).value > 0 then _root_.com.histmersion.api.instance.UiNotices.AgentsGlance.WordingResult(s"Agents working · $queued waiting")
       else _root_.com.histmersion.api.instance.UiNotices.AgentsGlance.WordingResult("Agents on · nothing to do")
 
   object AgentsGlance:
@@ -119,12 +119,12 @@ object UiNotices:
 
 
   def fresh(latest: Option[com.histmersion.api.instance.UiNotices.FreshLatest], seen: Option[com.histmersion.api.instance.UiNotices.FreshSeen]): com.histmersion.api.instance.UiNotices.FreshResult =
-    latest.exists(l => seen.forall(s => l > s))
+    _root_.com.histmersion.api.instance.UiNotices.FreshResult(latest.exists(l => seen.forall(s => (l).value > (s).value)))
 
   def counter(board: Board, count: Option[com.histmersion.api.instance.UiNotices.CounterCount], latest: Option[com.histmersion.api.instance.UiNotices.CounterLatest], seen: Option[com.histmersion.api.instance.UiNotices.CounterSeen]): Counter =
     Counter(board.wire, count.filter(_ => board.counted), latest, seen, fresh(latest, seen))
 
-  def advance(held: Option[com.histmersion.api.instance.UiNotices.AdvanceHeld], at: com.histmersion.api.instance.UiNotices.AdvanceAt): com.histmersion.api.instance.UiNotices.AdvanceResult = held.filter(_ > at).getOrElse(at)
+  def advance(held: Option[com.histmersion.api.instance.UiNotices.AdvanceHeld], at: com.histmersion.api.instance.UiNotices.AdvanceAt): com.histmersion.api.instance.UiNotices.AdvanceResult = held.filter((_).value > at).getOrElse(at)
 
   def badge(count: Option[com.histmersion.api.instance.UiNotices.BadgeCount]): Option[com.histmersion.api.instance.UiNotices.BadgeResult] =
-    count.filter(_ > 0).map(n => if n > 99 then _root_.com.histmersion.api.instance.UiNotices.BadgeResult("99+") else _root_.com.histmersion.api.instance.UiNotices.BadgeResult(n.toString))
+    count.filter((_).value > 0).map(n => if (n).value > 99 then _root_.com.histmersion.api.instance.UiNotices.BadgeResult("99+") else _root_.com.histmersion.api.instance.UiNotices.BadgeResult(n.toString))

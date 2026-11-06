@@ -35,9 +35,9 @@ object Place:
       * nothing recognisable is there, so the caller's default wins.
       */
     def parse(s: com.histmersion.domain.catalogue.Place.Kind.ParseS): Option[com.histmersion.domain.catalogue.Place.Kind.ParseResult] =
-      val t = s.trim.toLowerCase
+      val t = (s).value.trim.toLowerCase
       if t.isEmpty then None
-      else if all.contains(t) then Some(t)
+      else if all.contains(t) then Some(_root_.com.histmersion.domain.catalogue.Place.Kind.ParseResult(t))
       else if t.contains("people") || t.contains("tribe") then Some(_root_.com.histmersion.domain.catalogue.Place.Kind.ParseResult(People))
       else if t.contains("settlement") || t.contains("site") || t.contains("city") || t.contains("town")
         || t.contains("village") || t.contains("fort") || t.contains("temple") || t.contains("sanctuary")
@@ -104,7 +104,7 @@ object Place:
     /** What a place says about a grid-cell point ("location: approximate (atlas grid square)" on a card). */
     val Approximate: com.histmersion.domain.catalogue.Place.Precision.Approximate = _root_.com.histmersion.domain.catalogue.Place.Precision.Approximate("approximate (atlas grid square)")
 
-    def parse(s: com.histmersion.domain.catalogue.Place.Precision.ParseS): Option[Precision] = values.find(_.wire == Ascii.lower(s.trim))
+    def parse(s: com.histmersion.domain.catalogue.Place.Precision.ParseS): Option[Precision] = values.find(_.wire == Ascii.lower(_root_.com.histmersion.Ascii.LowerS((s).value.trim)))
 
     given WireEnumValues[Precision]:
       def all: Array[Precision] = Precision.values

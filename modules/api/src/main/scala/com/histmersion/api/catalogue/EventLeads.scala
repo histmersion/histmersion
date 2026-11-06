@@ -31,11 +31,11 @@ object EventLeads:
     YearFmt.span(ts)
 
   def size(vei: Option[com.histmersion.api.catalogue.EventLeads.SizeVei], magnitude: Option[com.histmersion.api.catalogue.EventLeads.SizeMagnitude]): Option[com.histmersion.api.catalogue.EventLeads.SizeResult] =
-    vei
+    (vei
       .map(v => s"VEI $v")
-      .orElse(magnitude.map(m => s"M ${BigDecimal(m).setScale(1, BigDecimal.RoundingMode.HALF_UP)}"))
+      .orElse(magnitude.map(m => s"M ${BigDecimal((m).value).setScale(1, BigDecimal.RoundingMode.HALF_UP)}"))).map(refactorValue2 => _root_.com.histmersion.api.catalogue.EventLeads.SizeResult(refactorValue2))
 
-  private def q(s: com.histmersion.api.catalogue.EventLeads.QS): com.histmersion.api.catalogue.EventLeads.QResult = "\"" + s.replace("\"", "'") + "\""
+  private def q(s: com.histmersion.api.catalogue.EventLeads.QS): com.histmersion.api.catalogue.EventLeads.QResult = _root_.com.histmersion.api.catalogue.EventLeads.QResult("\"" + (s).value.replace("\"", "'") + "\"")
 
   def actions(eventId: com.histmersion.api.catalogue.EventLeads.ActionsEventId, label: com.histmersion.api.catalogue.EventLeads.ActionsLabel, yrs: com.histmersion.api.catalogue.EventLeads.ActionsYrs, proposed: com.histmersion.api.catalogue.EventLeads.ActionsProposed): List[EventLead.Action] =
     List(
@@ -48,7 +48,7 @@ object EventLeads:
       EventLead.Action(
         _root_.com.histmersion.api.catalogue.EventLead.Action.Kind("acquire"),
         _root_.com.histmersion.api.catalogue.EventLead.Action.Label("add to the acquire queue"),
-        s"histmersion queue acquire add ${q(_root_.com.histmersion.api.catalogue.EventLeads.QS(s"literature on $label ($yrs)"))} --topic events"
+        _root_.com.histmersion.api.catalogue.EventLead.Action.Command(s"histmersion queue acquire add ${q(_root_.com.histmersion.api.catalogue.EventLeads.QS(s"literature on $label ($yrs)"))} --topic events")
       ),
       EventLead.Action(_root_.com.histmersion.api.catalogue.EventLead.Action.Kind("goal"), _root_.com.histmersion.api.catalogue.EventLead.Action.Label("link to a goal"), s"histmersion goals link <goal> --query ${q(label)}", Some(label))
     ) ++

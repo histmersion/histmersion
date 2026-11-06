@@ -157,11 +157,11 @@ object Stalls:
     type Running = Running.T
     object Running extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
-  def stalled(f: Facts, days: com.histmersion.api.automation.Stalls.StalledDays): com.histmersion.api.automation.Stalls.StalledResult = f.idleDays.forall(_ >= math.max(0, days))
+  def stalled(f: Facts, days: com.histmersion.api.automation.Stalls.StalledDays): com.histmersion.api.automation.Stalls.StalledResult = f.idleDays.forall(_ >= math.max(0, (days).value))
 
   def classify(f: Facts): (com.histmersion.api.automation.Stalls.ClassifyResultPart1, com.histmersion.api.automation.Stalls.ClassifyResultPart2, com.histmersion.api.automation.Stalls.ClassifyResultPart3) =
     val g = f.slug
-    def waitOf(p: SchedWait => com.histmersion.api.automation.Stalls.ClassifyWaitOfPResult) = f.waits.find(p)
+    def waitOf(p: SchedWait => com.histmersion.api.automation.Stalls.ClassifyWaitOfPResult) = f.waits.find({ val refactorFunction2 = p; (refactorValue2) => (refactorFunction2(refactorValue2)).value })
     if f.draining then
       (_root_.com.histmersion.api.automation.Stalls.ClassifyResultPart1(Code.Drain), _root_.com.histmersion.api.automation.Stalls.ClassifyResultPart2("the agents are draining: nothing new starts"), _root_.com.histmersion.api.automation.Stalls.ClassifyResultPart3("histmersion agent autopilot undrain"))
     else if f.approvals.nonEmpty then
@@ -205,7 +205,7 @@ object Stalls:
                 case Some(w) =>
                   (
                     _root_.com.histmersion.api.automation.Stalls.ClassifyResultPart1(Code.Queue),
-                    s"waits in the scheduler's queue (#${w.position}): ${w.why}",
+                    _root_.com.histmersion.api.automation.Stalls.ClassifyResultPart2(s"waits in the scheduler's queue (#${w.position}): ${w.why}"),
                     _root_.com.histmersion.api.automation.Stalls.ClassifyResultPart3(s"histmersion agent autopilot focus priority $g <n> (or pin it), or raise agents.max-concurrent-runs")
                   )
                 case None =>

@@ -41,11 +41,11 @@ object AgentMode:
   object StepsDraining extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
   def parse(s: com.histmersion.api.automation.AgentMode.ParseS): Option[AgentMode] =
-    val t = s.trim.toLowerCase
+    val t = (s).value.trim.toLowerCase
     values.find(m => m.wire == t || m.toString.toLowerCase == t)
 
   def of(autopilotOn: com.histmersion.api.automation.AgentMode.OfAutopilotOn, draining: com.histmersion.api.automation.AgentMode.OfDraining): AgentMode =
-    if !autopilotOn then Paused else if draining then Finishing else Working
+    if !(autopilotOn).value then Paused else if (draining).value then Finishing else Working
 
   enum Step:
     case Autopilot(on: Step.Autopilot.On)
@@ -61,7 +61,7 @@ object AgentMode:
 
   def steps(autopilotOn: com.histmersion.api.automation.AgentMode.StepsAutopilotOn, draining: com.histmersion.api.automation.AgentMode.StepsDraining, to: AgentMode): List[Step] = to match
     case Working   => Option.when(draining)(Step.Drain(false)).toList ++ Option.when(!autopilotOn)(Step.Autopilot(true))
-    case Finishing => Option.when(!draining)(Step.Drain(true)).toList ++ Option.when(!autopilotOn)(Step.Autopilot(true))
+    case Finishing => Option.when(!(draining).value)(Step.Drain(true)).toList ++ Option.when(!autopilotOn)(Step.Autopilot(true))
     case Paused    => Option.when(draining)(Step.Drain(false)).toList ++ Option.when(autopilotOn)(Step.Autopilot(false))
 
   final case class ModeSet(mode: ModeSet.Mode, by: Option[ModeSet.By] = None) derives KindlingsCodecAsObject, KindlingsSchema, com.histmersion.api.json.Schema

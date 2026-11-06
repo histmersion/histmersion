@@ -18,7 +18,7 @@ final class OpenAlexCrossref(cfg: UpstreamSettings, http: Plugin.Http, log: Plug
   def search(query: com.histmersion.upstreams.openalex.OpenAlexCrossref.SearchQuery, since: Option[com.histmersion.upstreams.openalex.OpenAlexCrossref.SearchSince], sort: Option[com.histmersion.upstreams.openalex.OpenAlexCrossref.SearchSort], limit: com.histmersion.upstreams.openalex.OpenAlexCrossref.SearchLimit): Either[com.histmersion.upstreams.openalex.OpenAlexCrossref.SearchResultPart1, List[WorkRef]] =
     // relevance keeps results ON TOPIC; sorting purely by citations surfaces mega-cited but tangential
     // work. `cited_by_count` comes back either way, so a caller can re-rank the relevant set.
-    val order = if sort.map(_.trim.toLowerCase).contains("cited") then "cited_by_count:desc"
+    val order = if sort.map((_).value.trim.toLowerCase).contains("cited") then "cited_by_count:desc"
     else "relevance_score:desc"
     val from = since.getOrElse(cfg.defaults.minYear)
     http
@@ -27,7 +27,7 @@ final class OpenAlexCrossref(cfg: UpstreamSettings, http: Plugin.Http, log: Plug
           cfg.openalex.url,
           "/works",
           "search" -> query,
-          "per-page" -> math.max(1, math.min(limit, 50)).toString,
+          "per-page" -> math.max(1, math.min((limit).value, 50)).toString,
           "sort" -> order,
           "filter" -> s"from_publication_date:$from-01-01,type:article|book|book-chapter",
           "select" -> WorkLookup.WorkFields,
@@ -51,7 +51,7 @@ final class OpenAlexCrossref(cfg: UpstreamSettings, http: Plugin.Http, log: Plug
       sort: Option[com.histmersion.upstreams.openalex.OpenAlexCrossref.CrossrefSearchSort],
       limit: com.histmersion.upstreams.openalex.OpenAlexCrossref.CrossrefSearchLimit
   ): Either[com.histmersion.upstreams.openalex.OpenAlexCrossref.CrossrefSearchResultPart1, List[WorkRef]] =
-    val bySort = if sort.map(_.trim.toLowerCase).contains("cited") then
+    val bySort = if sort.map((_).value.trim.toLowerCase).contains("cited") then
       List("sort" -> "is-referenced-by-count", "order" -> "desc")
     else Nil
     http
@@ -61,7 +61,7 @@ final class OpenAlexCrossref(cfg: UpstreamSettings, http: Plugin.Http, log: Plug
           "/works",
           (List(
             "query" -> query,
-            "rows" -> math.max(1, math.min(limit, 50)).toString,
+            "rows" -> math.max(1, math.min((limit).value, 50)).toString,
             "filter" -> s"from-pub-date:$from-01-01,type:journal-article,type:book,type:book-chapter,type:monograph,type:edited-book",
             "select" -> "DOI,title,author,issued,type,container-title,is-referenced-by-count,abstract",
             mailto

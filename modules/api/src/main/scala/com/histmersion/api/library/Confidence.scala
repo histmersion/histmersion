@@ -17,10 +17,10 @@ object Confidence:
   object FromWireS extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
   def fromString(s: com.histmersion.api.library.Confidence.FromStringS): Option[Confidence] =
-    values.find(_.toString.equalsIgnoreCase(s))
+    values.find(_.toString.equalsIgnoreCase((s).value))
 
   given WireEnumValues[Confidence]:
     def all: Array[Confidence] = Confidence.values
     def wire(e: Confidence): com.histmersion.api.library.Confidence.WireResult = _root_.com.histmersion.api.library.Confidence.WireResult(e.toString.toLowerCase)
     def fromWire(s: com.histmersion.api.library.Confidence.FromWireS): Option[Confidence] =
-      Confidence.values.find(_.toString.equalsIgnoreCase(s))
+      Confidence.values.find(_.toString.equalsIgnoreCase((s).value))

@@ -71,9 +71,9 @@ object Place:
       * nothing recognisable is there, so the caller's default wins.
       */
     def parse(s: com.histmersion.api.catalogue.Place.Kind.ParseS): Option[com.histmersion.api.catalogue.Place.Kind.ParseResult] =
-      val t = s.trim.toLowerCase
+      val t = (s).value.trim.toLowerCase
       if t.isEmpty then None
-      else if all.contains(t) then Some(t)
+      else if all.contains(t) then Some(_root_.com.histmersion.api.catalogue.Place.Kind.ParseResult(t))
       else if t.contains("people") || t.contains("tribe") then Some(_root_.com.histmersion.api.catalogue.Place.Kind.ParseResult(People))
       else if t.contains("settlement") || t.contains("site") || t.contains("city") || t.contains("town")
         || t.contains("village") || t.contains("fort") || t.contains("temple") || t.contains("sanctuary")
@@ -139,18 +139,18 @@ object Place:
       * Pure.
       */
     def gridCentre(lon: com.histmersion.api.catalogue.Place.Precision.GridCentreLon, lat: com.histmersion.api.catalogue.Place.Precision.GridCentreLat): com.histmersion.api.catalogue.Place.Precision.GridCentreResult =
-      val x = math.round(lon * 1e6)
-      val y = math.round(lat * 1e6)
-      _root_.com.histmersion.api.catalogue.Place.Precision.GridCentreResult(CellsMicro.exists(c => Math.floorMod(x, c) == c / 2 && Math.floorMod(y, c) == c / 2))
+      val x = math.round((lon).value * 1e6)
+      val y = math.round((lat).value * 1e6)
+      _root_.com.histmersion.api.catalogue.Place.Precision.GridCentreResult(CellsMicro.exists(c => Math.floorMod(x, (c).value) == c / 2 && Math.floorMod(y, c) == c / 2))
 
     /** The precision of the point of place `placeId`. */
     def of(placeId: com.histmersion.api.catalogue.Place.Precision.OfPlaceId, lon: com.histmersion.api.catalogue.Place.Precision.OfLon, lat: com.histmersion.api.catalogue.Place.Precision.OfLat): Precision =
-      if placeId.startsWith("pleiades_") && gridCentre(lon, lat) then GridCell else Stated
+      if (placeId).value.startsWith("pleiades_") && gridCentre(lon, lat) then GridCell else Stated
 
     /** What a place says about a grid-cell point ("location: approximate (atlas grid square)" on a card). */
     val Approximate: com.histmersion.api.catalogue.Place.Precision.Approximate = _root_.com.histmersion.api.catalogue.Place.Precision.Approximate("approximate (atlas grid square)")
 
-    def parse(s: com.histmersion.api.catalogue.Place.Precision.ParseS): Option[Precision] = values.find(_.wire == Ascii.lower(s.trim))
+    def parse(s: com.histmersion.api.catalogue.Place.Precision.ParseS): Option[Precision] = values.find(_.wire == Ascii.lower(_root_.com.histmersion.api.Ascii.LowerS((s).value.trim)))
 
     given WireEnumValues[Precision]:
       def all: Array[Precision] = Precision.values
@@ -288,7 +288,7 @@ object Place:
     type DescribeEnd = DescribeEnd.T
     object DescribeEnd extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
-    def parse(s: com.histmersion.api.catalogue.Place.Dating.ParseS): Option[Dating] = values.find(_.wire == s.trim.toLowerCase(java.util.Locale.ROOT))
+    def parse(s: com.histmersion.api.catalogue.Place.Dating.ParseS): Option[Dating] = values.find(_.wire == (s).value.trim.toLowerCase(java.util.Locale.ROOT))
 
     given WireEnumValues[Dating]:
       def all: Array[Dating] = Dating.values
@@ -364,17 +364,17 @@ object Place:
     private def invalid(msg: com.histmersion.api.catalogue.Place.Edits.InvalidMsg) = Api.Error(msg, Some(_root_.com.histmersion.api.Api.Error.Code(Write.CodeInvalid)))
 
     def name(raw: com.histmersion.api.catalogue.Place.Edits.NameRaw): Either[Api.Error, com.histmersion.api.catalogue.Place.Edits.NameResultPart2] =
-      val n = raw.trim.replaceAll("\\s+", " ")
+      val n = (raw).value.trim.replaceAll("\\s+", " ")
       if n.isEmpty then Left(invalid(_root_.com.histmersion.api.catalogue.Place.Edits.InvalidMsg("the name is empty")))
       else if n.length > MaxName then Left(invalid(_root_.com.histmersion.api.catalogue.Place.Edits.InvalidMsg(s"a place name is at most $MaxName characters")))
-      else Right(n)
+      else Right(_root_.com.histmersion.api.catalogue.Place.Edits.NameResultPart2(n))
 
     val MaxName = 200
 
     def lang(raw: Option[com.histmersion.api.catalogue.Place.Edits.LangRaw]): Either[Api.Error, com.histmersion.api.catalogue.Place.Edits.LangResultPart2] =
-      raw.map(_.trim.toLowerCase(java.util.Locale.ROOT)).filter(_.nonEmpty) match
+      raw.map((_).value.trim.toLowerCase(java.util.Locale.ROOT)).filter(_.nonEmpty) match
         case None                            => Right(_root_.com.histmersion.api.catalogue.Place.Edits.LangResultPart2(""))
-        case Some(l) if LangShape.matches(l) => Right(l)
+        case Some(l) if LangShape.matches(l) => Right(_root_.com.histmersion.api.catalogue.Place.Edits.LangResultPart2(l))
         case Some(l)                         => Left(invalid(_root_.com.histmersion.api.catalogue.Place.Edits.InvalidMsg(s"'$l' is not a language tag (e.g. en, grc, pl, sr-latn)")))
 
     def defaultId(label: com.histmersion.api.catalogue.Place.Edits.DefaultIdLabel): com.histmersion.api.catalogue.Place.Edits.DefaultIdResult =
@@ -441,7 +441,7 @@ object Place:
 
     def csv(rows: List[ManualPlaceName]): com.histmersion.api.catalogue.Place.Edits.CsvResult =
       def cell(s: com.histmersion.api.catalogue.Place.Edits.CsvCellS) =
-        if s.exists(c => c == ',' || c == '"' || c == '\n') then "\"" + s.replace("\"", "\"\"") + "\"" else s
+        if (s).value.exists(c => c == ',' || c == '"' || c == '\n') then "\"" + (s).value.replace("\"", "\"\"") + "\"" else s
       ("place_id,name,lang,why" :: rows.map(r =>
         List(r.placeId, r.name, r.lang, s"added by hand to ${r.label}").map(cell).mkString(",")
       ))
@@ -635,26 +635,26 @@ object Place:
     val Relations: List[com.histmersion.api.catalogue.Place.Link.Relations] = List(_root_.com.histmersion.api.catalogue.Place.Link.Relations("close_match"), _root_.com.histmersion.api.catalogue.Place.Link.Relations("exact_match"), _root_.com.histmersion.api.catalogue.Place.Link.Relations("broad_match"), _root_.com.histmersion.api.catalogue.Place.Link.Relations("see_also"))
 
     def url(scheme: com.histmersion.api.catalogue.Place.Link.UrlScheme, externalId: com.histmersion.api.catalogue.Place.Link.UrlExternalId): Option[com.histmersion.api.catalogue.Place.Link.UrlResult] =
-      val id = externalId.trim
+      val id = (externalId).value.trim
       if id.isEmpty then None
       else
-        scheme.trim.toLowerCase(java.util.Locale.ROOT) match
+        (scheme).value.trim.toLowerCase(java.util.Locale.ROOT) match
           case "wikidata" => Some(_root_.com.histmersion.api.catalogue.Place.Link.UrlResult(s"https://www.wikidata.org/wiki/$id"))
           case "geonames" => Some(_root_.com.histmersion.api.catalogue.Place.Link.UrlResult(s"https://www.geonames.org/$id"))
           case "pleiades" => Some(_root_.com.histmersion.api.catalogue.Place.Link.UrlResult(s"https://pleiades.stoa.org/places/$id"))
           case "tgn"      => Some(_root_.com.histmersion.api.catalogue.Place.Link.UrlResult(s"http://vocab.getty.edu/page/tgn/$id"))
           case "whg"      => Some(_root_.com.histmersion.api.catalogue.Place.Link.UrlResult(s"https://whgazetteer.org/places/$id/portal"))
-          case "commons"  => Some(s"https://commons.wikimedia.org/wiki/Category:${id.replace(' ', '_')}")
+          case "commons"  => Some(_root_.com.histmersion.api.catalogue.Place.Link.UrlResult(s"https://commons.wikimedia.org/wiki/Category:${id.replace(' ', '_')}"))
           case _          => None
 
-    def schemeTitle(scheme: com.histmersion.api.catalogue.Place.Link.SchemeTitleScheme): com.histmersion.api.catalogue.Place.Link.SchemeTitleResult = scheme.trim.toLowerCase(java.util.Locale.ROOT) match
+    def schemeTitle(scheme: com.histmersion.api.catalogue.Place.Link.SchemeTitleScheme): com.histmersion.api.catalogue.Place.Link.SchemeTitleResult = (scheme).value.trim.toLowerCase(java.util.Locale.ROOT) match
       case "wikidata" => _root_.com.histmersion.api.catalogue.Place.Link.SchemeTitleResult("Wikidata")
       case "geonames" => _root_.com.histmersion.api.catalogue.Place.Link.SchemeTitleResult("GeoNames")
       case "pleiades" => _root_.com.histmersion.api.catalogue.Place.Link.SchemeTitleResult("Pleiades")
       case "tgn"      => _root_.com.histmersion.api.catalogue.Place.Link.SchemeTitleResult("Getty TGN")
       case "whg"      => _root_.com.histmersion.api.catalogue.Place.Link.SchemeTitleResult("World Historical Gazetteer")
       case "commons"  => _root_.com.histmersion.api.catalogue.Place.Link.SchemeTitleResult("Commons category")
-      case other      => other
+      case other      => _root_.com.histmersion.api.catalogue.Place.Link.SchemeTitleResult(other)
 
   final case class Match(placeId: com.histmersion.api.catalogue.Place.Id, importSource: Option[Match.ImportSource], native: Match.Native = _root_.com.histmersion.api.catalogue.Place.Match.Native(true))
 
@@ -966,30 +966,30 @@ object Place:
         yield OverrideEdit.Put(kind, period, reason, point)
 
     def reason(raw: Option[com.histmersion.api.catalogue.Place.Overrides.ReasonRaw]): Either[Api.Error, Option[com.histmersion.api.catalogue.Place.Overrides.ReasonResultPart2]] =
-      val r = raw.map(_.trim.replaceAll("\\s+", " ")).filter(_.nonEmpty)
-      Either.cond(r.forall(_.length <= MaxReason), r, invalid(_root_.com.histmersion.api.catalogue.Place.Overrides.InvalidMsg(s"a reason is at most $MaxReason characters")))
+      val r = raw.map((_).value.trim.replaceAll("\\s+", " ")).filter(_.nonEmpty)
+      Either.cond(r.forall(_.length <= MaxReason), (r).map(refactorValue10 => _root_.com.histmersion.api.catalogue.Place.Overrides.ReasonResultPart2(refactorValue10)), invalid(_root_.com.histmersion.api.catalogue.Place.Overrides.InvalidMsg(s"a reason is at most $MaxReason characters")))
 
     def parsePoint(raw: com.histmersion.api.catalogue.Place.Overrides.ParsePointRaw): Either[com.histmersion.api.catalogue.Place.Overrides.ParsePointResultPart1, (com.histmersion.api.catalogue.Place.Overrides.ParsePointResultPart2Part1, com.histmersion.api.catalogue.Place.Overrides.ParsePointResultPart2Part2)] =
-      raw.split(",", -1).map(_.trim).toList match
+      (raw).value.split(",", -1).map(_.trim).toList match
         case List(a, b) =>
           (a.toDoubleOption, b.toDoubleOption) match
             case (Some(lat), Some(lon))
                 if !lat.isNaN && !lon.isNaN && lat >= -90 && lat <= 90 && lon >= -180 && lon <= 180 =>
-              Right((lat, lon))
+              Right((_root_.com.histmersion.api.catalogue.Place.Overrides.ParsePointResultPart2Part1(lat), _root_.com.histmersion.api.catalogue.Place.Overrides.ParsePointResultPart2Part2(lon)))
             case (Some(_), Some(_)) =>
               Left(_root_.com.histmersion.api.catalogue.Place.Overrides.ParsePointResultPart1(s"'$raw' is not a latitude,longitude (latitude −90..90, longitude −180..180)"))
             case _ => Left(_root_.com.histmersion.api.catalogue.Place.Overrides.ParsePointResultPart1(s"'$raw' is not a latitude,longitude pair of numbers, e.g. 37.95,58.21"))
         case _ => Left(_root_.com.histmersion.api.catalogue.Place.Overrides.ParsePointResultPart1(s"'$raw' is not latitude,longitude, e.g. 37.95,58.21"))
 
     def pointText(lat: com.histmersion.api.catalogue.Place.Overrides.PointTextLat, lon: com.histmersion.api.catalogue.Place.Overrides.PointTextLon): com.histmersion.api.catalogue.Place.Overrides.PointTextResult =
-      String.format(
+      _root_.com.histmersion.api.catalogue.Place.Overrides.PointTextResult(String.format(
         java.util.Locale.ROOT,
         "%.4f %s %.4f %s",
-        math.abs(lat),
-        if lat < 0 then "S" else "N",
-        math.abs(lon),
-        if lon < 0 then "W" else "E"
-      )
+        math.abs((lat).value),
+        if (lat).value < 0 then "S" else "N",
+        math.abs((lon).value),
+        if (lon).value < 0 then "W" else "E"
+      ))
 
     def periodText(start: Option[com.histmersion.api.catalogue.Place.Overrides.PeriodTextStart], end: Option[com.histmersion.api.catalogue.Place.Overrides.PeriodTextEnd]): com.histmersion.api.catalogue.Place.Overrides.PeriodTextResult = YearFmt.openPeriod(start, end)
 
@@ -1040,12 +1040,12 @@ object Place:
     type Periods = Periods.T
     object Periods extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
-    def dateSourceText(s: com.histmersion.api.catalogue.Place.Record.DateSourceTextS): com.histmersion.api.catalogue.Place.Record.DateSourceTextResult = s.trim.toLowerCase match
+    def dateSourceText(s: com.histmersion.api.catalogue.Place.Record.DateSourceTextS): com.histmersion.api.catalogue.Place.Record.DateSourceTextResult = (s).value.trim.toLowerCase match
       case "wikidata-p580"                    => _root_.com.histmersion.api.catalogue.Place.Record.DateSourceTextResult("Wikidata: its start and end time")
       case "wikidata-p571"                    => _root_.com.histmersion.api.catalogue.Place.Record.DateSourceTextResult("Wikidata: its inception")
       case "wikidata-p576"                    => _root_.com.histmersion.api.catalogue.Place.Record.DateSourceTextResult("Wikidata: when it was dissolved or destroyed")
       case p if p.startsWith("p2348-periodo") => _root_.com.histmersion.api.catalogue.Place.Record.DateSourceTextResult("Wikidata: its time period, dated by PeriodO")
-      case other                              => other
+      case other                              => _root_.com.histmersion.api.catalogue.Place.Record.DateSourceTextResult(other)
 
   final case class Register(property: Register.Property, id: Register.Id) derives KindlingsCodecAsObject, KindlingsSchema:
     def name: com.histmersion.api.catalogue.Place.Register.NameResult = Register.names.getOrElse(property, property)
@@ -1218,7 +1218,7 @@ object Place:
     type FindingsNote = FindingsNote.T
     object FindingsNote extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
-    def parse(s: com.histmersion.api.catalogue.Place.TimeBasis.ParseS): Option[TimeBasis] = values.find(_.wire == s.trim.toLowerCase(java.util.Locale.ROOT))
+    def parse(s: com.histmersion.api.catalogue.Place.TimeBasis.ParseS): Option[TimeBasis] = values.find(_.wire == (s).value.trim.toLowerCase(java.util.Locale.ROOT))
 
     given WireEnumValues[TimeBasis]:
       def all: Array[TimeBasis] = TimeBasis.values
@@ -1229,11 +1229,11 @@ object Place:
     given Schema[TimeBasis] = WireEnum.schema
 
     def of(kind: com.histmersion.api.catalogue.Place.TimeBasis.OfKind, modern: com.histmersion.api.catalogue.Place.TimeBasis.OfModern, imported: com.histmersion.api.catalogue.Place.TimeBasis.OfImported, undated: com.histmersion.api.catalogue.Place.TimeBasis.OfUndated, hasGeometry: com.histmersion.api.catalogue.Place.TimeBasis.OfHasGeometry): TimeBasis =
-      if !imported && (kind == com.histmersion.api.catalogue.Place.Kind.Feature || (modern && kind == com.histmersion.api.catalogue.Place.Kind.Region))
+      if !(imported).value && (kind == com.histmersion.api.catalogue.Place.Kind.Feature || (modern && kind == com.histmersion.api.catalogue.Place.Kind.Region))
       then Timeless
-      else if modern then Modern
-      else if undated && !hasGeometry then Grouping
-      else if undated then Findings
+      else if (modern).value then Modern
+      else if undated && !(hasGeometry).value then Grouping
+      else if (undated).value then Findings
       else Dated
 
     def visible(basis: TimeBasis, hi: com.histmersion.api.catalogue.Place.TimeBasis.VisibleHi, modernFrom: com.histmersion.api.catalogue.Place.TimeBasis.VisibleModernFrom, overlaps: => Boolean, evidence: => Boolean): com.histmersion.api.catalogue.Place.TimeBasis.VisibleResult =

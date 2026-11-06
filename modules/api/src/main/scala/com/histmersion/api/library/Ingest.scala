@@ -25,8 +25,8 @@ object Ingest:
   val KindReocr = com.histmersion.api.library.IngestJobKinds.Reocr.kind.value
 
   def originalDisposition(citekey: com.histmersion.api.library.Ingest.OriginalDispositionCitekey, storedName: com.histmersion.api.library.Ingest.OriginalDispositionStoredName): com.histmersion.api.library.Ingest.OriginalDispositionResult =
-    val ext = storedName.reverse.takeWhile(_ != '.').reverse
-    _root_.com.histmersion.api.library.Ingest.OriginalDispositionResult(s"""attachment; filename="$citekey.${if ext == storedName then "bin" else ext}"""")
+    val ext = (storedName).value.reverse.takeWhile(_ != '.').reverse
+    _root_.com.histmersion.api.library.Ingest.OriginalDispositionResult(s"""attachment; filename="$citekey.${if ext == (storedName).value then "bin" else ext}"""")
 
   def dispositionExtension(disposition: com.histmersion.api.library.Ingest.DispositionExtensionDisposition): Option[com.histmersion.api.library.Ingest.DispositionExtensionResult] =
     """filename="?([^";]+)"?""".r

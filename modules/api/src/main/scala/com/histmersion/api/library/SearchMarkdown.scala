@@ -108,10 +108,10 @@ object SearchMarkdown:
 
   def geoPage(p: GeoHitPage): com.histmersion.api.library.SearchMarkdown.GeoPageResult =
     if p.hits.isEmpty then
-      OffsetPage.markdown(p.page, _root_.com.histmersion.api.OffsetPage.MarkdownNoun("finding(s)"), _root_.com.histmersion.api.OffsetPage.MarkdownEmpty("_No findings match that place/time._"), Nil)(_ => "")
+      OffsetPage.markdown(p.page, _root_.com.histmersion.api.OffsetPage.MarkdownNoun("finding(s)"), _root_.com.histmersion.api.OffsetPage.MarkdownEmpty("_No findings match that place/time._"), Nil)(_ => _root_.com.histmersion.api.OffsetPage.MarkdownLineResult(""))
     else
       val body = geoResults(p.hits.toVector)
-      OffsetPage.header(p.page, _root_.com.histmersion.api.OffsetPage.HeaderNoun("finding(s)")) + body.dropWhile(_ != '\n') + OffsetPage.footer(p.page)
+      OffsetPage.header(p.page, _root_.com.histmersion.api.OffsetPage.HeaderNoun("finding(s)")) + (body).value.dropWhile(_ != '\n') + OffsetPage.footer(p.page)
 
   def geoResults(hits: Vector[GeoHit]): com.histmersion.api.library.SearchMarkdown.GeoResultsResult =
     if hits.isEmpty then _root_.com.histmersion.api.library.SearchMarkdown.GeoResultsResult("_No findings match that place/time._")
@@ -147,7 +147,7 @@ object SearchMarkdown:
       val starts = unit == Aggregate.UnitStarts
       val head = if starts then s"### sources starting per ${h.bucket} yrs · $span"
       else s"### $unit per ${h.bucket} yrs · $span"
-      val one = if unit.endsWith("s") then unit.dropRight(1) else unit
+      val one = if (unit).value.endsWith("s") then (unit).value.dropRight(1) else unit
       val note =
         if starts then
           s"_${h.buckets.count(_.count > 0)} non-empty bucket(s); each source is counted " +
@@ -189,14 +189,14 @@ object SearchMarkdown:
     val span = s"${fmtYear(h.from)} → ${fmtYear(h.to)}"
     if h.tree.isEmpty then _root_.com.histmersion.api.library.SearchMarkdown.TreeResult(s"_No $unit to group for $span._")
     else
-      val one = if unit.endsWith("s") then unit.dropRight(1) else unit
+      val one = if (unit).value.endsWith("s") then (unit).value.dropRight(1) else unit
       val head = s"### $unit by ${h.by} · $span" + asOfNote(h.asOf)
       val note = s"_Counts are non-additive: each $one is counted in every bucket it overlaps, so " +
         "children never sum to their parent — \"N in more than one …\" is how many are double-counted._"
       (List(head, "", treeLines(h.tree, unit, 0).mkString("\n"), "", note)).mkString("\n")
 
   private[api] def treeLines(buckets: List[Bucket], unit: com.histmersion.api.library.SearchMarkdown.TreeLinesUnit, depth: com.histmersion.api.library.SearchMarkdown.TreeLinesDepth): List[com.histmersion.api.library.SearchMarkdown.TreeLinesResult] =
-    val pad = "  " * depth
+    val pad = "  " * (depth).value
     buckets.flatMap { b =>
       val over = if b.overlap > 0 then s" · ${b.overlap} in more than one ${childNoun(b)}" else ""
       val when = if b.kind == Tree.KindTime then ""
@@ -204,7 +204,7 @@ object SearchMarkdown:
       val id = b.placeId.map(i => s" `$i`").getOrElse("")
       val line = s"$pad- **${b.label}**${contestedMark(b.contested, b.label)}$id — " +
         s"${b.count} $unit$over$when"
-      val kids = treeLines(b.children, unit, depth + 1)
+      val kids = treeLines(b.children, unit, _root_.com.histmersion.api.library.SearchMarkdown.TreeLinesDepth((depth).value + 1))
       val samps = b.samples.map(x => s"$pad  - ${x.citekey} — ${x.title}")
       line :: (kids ++ samps)
     }

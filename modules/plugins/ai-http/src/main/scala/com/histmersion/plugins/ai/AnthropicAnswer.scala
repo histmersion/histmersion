@@ -15,7 +15,7 @@ final case class AnthropicAnswer(status: AnthropicAnswer.Status, body: Anthropic
 
   /** The turn the answer says, or the failure's description. */
   def turn: Either[com.histmersion.plugins.ai.AnthropicAnswer.TurnResultPart1, AiTurn] =
-    if status / 100 != 2 then Left(body)
+    if (status).value / 100 != 2 then Left(body)
     else
       parse(body).flatMap(_.as(using AnthropicAnswer.message)) match
         case Right(turn) => Right(turn)

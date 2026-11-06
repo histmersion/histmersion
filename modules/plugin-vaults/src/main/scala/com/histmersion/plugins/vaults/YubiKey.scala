@@ -48,27 +48,27 @@ object YubiKey:
 
   /** Pure: `"2"` or `"2:12345678"`. */
   def parse(text: com.histmersion.plugins.vaults.YubiKey.ParseText): Either[com.histmersion.plugins.vaults.YubiKey.ParseResultPart1, Slot] =
-    val t = text.trim
+    val t = (text).value.trim
     def bad =
       s"yubikey '$t' is not <slot>[:<serial>] — the slot is 1 or 2, the serial the key's number (`ykman list --serials`)"
     t.split(":", -1).toList match
-      case List(s)    => s.toIntOption.filter(Set(1, 2)).map(Slot(_, None)).toRight(bad)
+      case List(s)    => s.toIntOption.filter(Set(1, 2)).map(Slot(_, None)).toRight(_root_.com.histmersion.plugins.vaults.YubiKey.ParseResultPart1(bad))
       case List(s, n) =>
-        for
+        (for
           slot <- s.toIntOption.filter(Set(1, 2)).toRight(bad)
           serial <- Option.when(n.nonEmpty && n.forall(_.isDigit))(n).flatMap(_.toLongOption).toRight(bad)
-        yield Slot(slot, Some(serial))
+        yield Slot(_root_.com.histmersion.plugins.vaults.YubiKey.Slot.Value(slot), Some(_root_.com.histmersion.plugins.vaults.YubiKey.Slot.Serial(serial)))).left.map(refactorError2 => _root_.com.histmersion.plugins.vaults.YubiKey.ParseResultPart1(refactorError2))
       case _ => Left(_root_.com.histmersion.plugins.vaults.YubiKey.ParseResultPart1(bad))
 
   /** Pure: every entry of the setting, in order, without repeats; the first malformed one fails it all. */
   def parseAll(entries: List[com.histmersion.plugins.vaults.YubiKey.ParseAllEntries]): Either[com.histmersion.plugins.vaults.YubiKey.ParseAllResultPart1, List[Slot]] =
-    entries.map(_.trim).filter(_.nonEmpty).foldLeft[Either[String, List[Slot]]](Right(Nil)) { (acc, e) =>
-      acc.flatMap(ok => parse(e).map(s => if ok.contains(s) then ok else ok :+ s))
+    entries.map((_).value.trim).filter(_.nonEmpty).foldLeft[Either[String, List[Slot]]](Right(Nil)) { (acc, e) =>
+      acc.flatMap(ok => (parse(e).map(s => if ok.contains(s) then ok else ok :+ s)).left.map(refactorError => (refactorError).value))
     }
 
   /** Pure: the serials `ykman list --serials` printed, one per line (anything else is ignored). */
   def serials(out: com.histmersion.plugins.vaults.YubiKey.SerialsOut): Set[com.histmersion.plugins.vaults.YubiKey.SerialsResult] =
-    out.linesIterator.map(_.trim).filter(l => l.nonEmpty && l.forall(_.isDigit)).flatMap(_.toLongOption).toSet
+    ((out).value.linesIterator.map(_.trim).filter(l => l.nonEmpty && l.forall(_.isDigit)).flatMap(_.toLongOption).toSet).map(refactorValue => _root_.com.histmersion.plugins.vaults.YubiKey.SerialsResult(refactorValue))
 
   /** Pure: which entries to try and which are absent. `connected = None` (no way to tell): all of them, in order.
     * Otherwise an entry with a serial only when that key is connected, one without when any key is. `first` (the entry
@@ -102,7 +102,7 @@ object YubiKey:
     * key is the same answer. Unknown messages stop too, so a failure is never retried blindly.
     */
   def failure(err: com.histmersion.plugins.vaults.YubiKey.FailureErr, entry: com.histmersion.plugins.vaults.YubiKey.FailureEntry): Failure =
-    def has(s: String*) = s.exists(err.contains)
+    def has(s: String*) = s.exists((err).value.contains)
     if has("invalid credentials", "wrong key", "unable to unlock") then
       Failure.Stop(_root_.com.histmersion.plugins.vaults.YubiKey.Failure.Stop.Why("invalid credentials (the password, key file or YubiKey is wrong)"))
     else if has("could not find entry") then Failure.Stop(_root_.com.histmersion.plugins.vaults.YubiKey.Failure.Stop.Why(s"no entry '$entry'"))
@@ -134,12 +134,12 @@ object YubiKey:
     */
   def problem(err: com.histmersion.plugins.vaults.YubiKey.ProblemErr): com.histmersion.plugins.vaults.YubiKey.ProblemResult =
     Subprocess.problem(
-      err.linesIterator
+      _root_.com.histmersion.plugins.vaults.Subprocess.ProblemErr((err).value.linesIterator
         .filterNot { l =>
           val low = l.toLowerCase(java.util.Locale.ROOT)
           low.contains("touch your yubikey") || low.contains("enter password")
         }
-        .mkString("\n")
+        .mkString("\n"))
     )
 
   /** The `yubikey` setting: one `"<slot>[:<serial>]"` string (commas or spaces may separate several), or a list of

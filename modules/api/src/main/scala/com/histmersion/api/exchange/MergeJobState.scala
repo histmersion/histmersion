@@ -18,7 +18,7 @@ object MergeJobState:
   given WireEnumValues[MergeJobState]:
     def all: Array[MergeJobState] = MergeJobState.values
     def wire(e: MergeJobState): com.histmersion.api.exchange.MergeJobState.WireResult = _root_.com.histmersion.api.exchange.MergeJobState.WireResult(e.toString.toLowerCase(java.util.Locale.ROOT))
-    def fromWire(s: com.histmersion.api.exchange.MergeJobState.FromWireS): Option[MergeJobState] = MergeJobState.values.find(_.toString.equalsIgnoreCase(s.trim))
+    def fromWire(s: com.histmersion.api.exchange.MergeJobState.FromWireS): Option[MergeJobState] = MergeJobState.values.find(_.toString.equalsIgnoreCase((s).value.trim))
   given Encoder[MergeJobState] = WireEnum.encoder
   given Decoder[MergeJobState] = WireEnum.decoder
   given Schema[MergeJobState] = WireEnum.schema

@@ -90,7 +90,7 @@ object SourcesMarkdown:
     // Normalised here as well as at import: older bodies still carry `/Users/…/figures/x.png` links, which a
     // browser resolves against the server root and draws 0×0.
     val body =
-      if !fullText then ""
+      if !(fullText).value then ""
       else
         s.ocrMarkdown
           .map(t => s"\n\n---\n\n${AssetLinks.normalizeBody(t, s.title.value)}")

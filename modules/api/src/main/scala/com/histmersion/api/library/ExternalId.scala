@@ -5,7 +5,7 @@ import com.histmersion.api.given
 final case class ExternalId(scheme: LinkScheme, id: ExternalId.Id):
   def key: com.histmersion.api.library.ExternalId.KeyResult = _root_.com.histmersion.api.library.ExternalId.KeyResult(s"${scheme.wire}:$id")
 
-  def placeId: com.histmersion.api.library.ExternalId.PlaceIdResult = s"${scheme.wire}_${id.toLowerCase(java.util.Locale.ROOT)}"
+  def placeId: com.histmersion.api.library.ExternalId.PlaceIdResult = _root_.com.histmersion.api.library.ExternalId.PlaceIdResult(s"${scheme.wire}_${(id).value.toLowerCase(java.util.Locale.ROOT)}")
 
 object ExternalId:
   type ParseMakeId = ParseMakeId.T
@@ -29,13 +29,13 @@ object ExternalId:
   private val WhgUri = """^https?://(?:www\.)?whgazetteer\.org/(?:api/)?(?:places?|db)/(?:\?id=)?(\d+)/?.*$""".r
 
   def parse(raw: com.histmersion.api.library.ExternalId.ParseRaw): Option[ExternalId] =
-    val s = raw.trim
+    val s = (raw).value.trim
     def make(scheme: LinkScheme, id: com.histmersion.api.library.ExternalId.ParseMakeId): Option[ExternalId] =
-      val v = id.trim.stripSuffix("/")
+      val v = (id).value.trim.stripSuffix("/")
       scheme match
         case LinkScheme.Wikidata =>
-          Option.when(v.matches("(?i)q\\d+"))(ExternalId(scheme, v.toUpperCase(java.util.Locale.ROOT)))
-        case _ => Option.when(v.matches("\\d+"))(ExternalId(scheme, v))
+          Option.when(v.matches("(?i)q\\d+"))(ExternalId(scheme, _root_.com.histmersion.api.library.ExternalId.Id(v.toUpperCase(java.util.Locale.ROOT))))
+        case _ => Option.when(v.matches("\\d+"))(ExternalId(scheme, _root_.com.histmersion.api.library.ExternalId.Id(v)))
     s match
       case Prefixed(p, id) =>
         val scheme = p.toLowerCase(java.util.Locale.ROOT) match
@@ -44,10 +44,10 @@ object ExternalId:
           case "pl" | "pleiades" => LinkScheme.Pleiades
           case "tgn"             => LinkScheme.Tgn
           case _                 => LinkScheme.Whg
-        make(scheme, id)
-      case WikidataUri(id) => make(LinkScheme.Wikidata, id)
-      case GeonamesUri(id) => make(LinkScheme.Geonames, id)
-      case PleiadesUri(id) => make(LinkScheme.Pleiades, id)
-      case TgnUri(id)      => make(LinkScheme.Tgn, id)
-      case WhgUri(id)      => make(LinkScheme.Whg, id)
+        make(scheme, _root_.com.histmersion.api.library.ExternalId.ParseMakeId(id))
+      case WikidataUri(id) => make(LinkScheme.Wikidata, _root_.com.histmersion.api.library.ExternalId.ParseMakeId(id))
+      case GeonamesUri(id) => make(LinkScheme.Geonames, _root_.com.histmersion.api.library.ExternalId.ParseMakeId(id))
+      case PleiadesUri(id) => make(LinkScheme.Pleiades, _root_.com.histmersion.api.library.ExternalId.ParseMakeId(id))
+      case TgnUri(id)      => make(LinkScheme.Tgn, _root_.com.histmersion.api.library.ExternalId.ParseMakeId(id))
+      case WhgUri(id)      => make(LinkScheme.Whg, _root_.com.histmersion.api.library.ExternalId.ParseMakeId(id))
       case _               => None

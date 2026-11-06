@@ -24,7 +24,7 @@ final class KeePassXcVault(
   /** The YubiKey that opened the database last, tried first next time (a resolve may run on any thread). */
   private val lastOpened = new java.util.concurrent.atomic.AtomicReference[Option[YubiKey.Slot]](None)
 
-  private def file = Path.of(db).getFileName.toString
+  private def file = Path.of((db).value).getFileName.toString
 
   def resolve(ref: com.histmersion.plugins.vaults.KeePassXcVault.ResolveRef): Either[com.histmersion.plugins.vaults.KeePassXcVault.ResolveResultPart1, com.histmersion.plugins.vaults.KeePassXcVault.ResolveResultPart2] =
     request(ref).flatMap { (entry, attr) =>
@@ -49,7 +49,7 @@ final class KeePassXcVault(
       case (r, Right((e, a))) if KeePassXcSession.sendable(e) && KeePassXcSession.sendable(a) => r -> (e, a)
     }
     val single = asked.filterNot(r => batched.exists(_._1 == r)).map(r => r -> resolve(r)).toMap
-    if batched.size <= 1 then single ++ batched.map((r, _) => r -> resolve(_root_.com.histmersion.plugins.vaults.KeePassXcVault.ResolveRef(r)))
+    if batched.size <= 1 then (single ++ batched.map((r, _) => r -> resolve(_root_.com.histmersion.plugins.vaults.KeePassXcVault.ResolveRef(r)))).iterator.map { case (refactorKey, refactorItem) => (refactorKey, ((refactorItem).left.map(refactorError => (refactorError).value)).map(refactorValue => (refactorValue).value)) }.toMap
     else single ++ session(batched)
 
   /** `<entry>#<attribute>` as two arguments that cannot read as options. */
@@ -57,10 +57,10 @@ final class KeePassXcVault(
     val (entry, attr) = Vaults.entryAndField(ref, attribute)
     for
       e <- Subprocess.plain(_root_.com.histmersion.plugins.vaults.Subprocess.PlainWhat("the entry"), entry)
-      a <- Subprocess.plain("the attribute", attr)
+      a <- Subprocess.plain(_root_.com.histmersion.plugins.vaults.Subprocess.PlainWhat("the attribute"), attr)
     yield (e, a)
 
-  private def stdin = password.map(_ + "\n")
+  private def stdin = password.map((_).value + "\n")
 
   private def unlocking(yk: Option[YubiKey.Slot]): List[com.histmersion.plugins.vaults.KeePassXcVault.UnlockingResult] =
     keyFile.toList.flatMap(k => List("-k", k)) ++ yk.toList.flatMap(y => List("-y", y.shown)) ++
@@ -204,7 +204,7 @@ final class KeePassXcVault(
           )
           attempt(yk) match
             case Left(why) =>
-              val what = if why.contains("did not answer") then s"not touched in time ($why)" else why
+              val what = if (why).value.contains("did not answer") then s"not touched in time ($why)" else why
               report(tried :+ s"${yk.shown}: $what", _root_.com.histmersion.plugins.vaults.KeePassXcVault.WithYubiKeyReportTail("; not trying further keys"))
             case Right(Right(a)) =>
               lastOpened.set(Some(yk))
@@ -219,10 +219,10 @@ final class KeePassXcVault(
       go(planned, Nil)
 
   private def classify(entry: com.histmersion.plugins.vaults.KeePassXcVault.ClassifyEntry)(err: com.histmersion.plugins.vaults.KeePassXcVault.ClassifyErr): Option[com.histmersion.plugins.vaults.KeePassXcVault.ClassifyResult] =
-    if err.contains("invalid credentials") || err.contains("wrong key") || err.contains("unable to unlock") ||
+    if (err).value.contains("invalid credentials") || (err).value.contains("wrong key") || (err).value.contains("unable to unlock") ||
       err.contains("enter password")
     then Some(_root_.com.histmersion.plugins.vaults.KeePassXcVault.ClassifyResult(s"$name: the database is locked — set password = \"env:<NAME>\" (or a key-file) for this vault"))
-    else if err.contains("could not find entry") || err.contains("not found") then Some(_root_.com.histmersion.plugins.vaults.KeePassXcVault.ClassifyResult(s"$name: no entry '$entry'"))
+    else if (err).value.contains("could not find entry") || (err).value.contains("not found") then Some(_root_.com.histmersion.plugins.vaults.KeePassXcVault.ClassifyResult(s"$name: no entry '$entry'"))
     else None
 
 object KeePassXcVault:

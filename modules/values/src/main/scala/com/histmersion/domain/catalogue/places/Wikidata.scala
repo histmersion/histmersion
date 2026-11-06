@@ -18,12 +18,12 @@ object Wikidata:
 
   val CommonsCategory = "P373"
 
-  def isQid(s: com.histmersion.domain.catalogue.places.Wikidata.IsQidS): com.histmersion.domain.catalogue.places.Wikidata.IsQidResult = s.matches("Q[1-9][0-9]*")
+  def isQid(s: com.histmersion.domain.catalogue.places.Wikidata.IsQidS): com.histmersion.domain.catalogue.places.Wikidata.IsQidResult = _root_.com.histmersion.domain.catalogue.places.Wikidata.IsQidResult((s).value.matches("Q[1-9][0-9]*"))
 
   /** Pure: the item a gazetteer place id names (`wikidata_q132564` → `Q132564`). */
   def qidOfPlaceId(id: com.histmersion.domain.catalogue.places.Wikidata.QidOfPlaceIdId): Option[com.histmersion.domain.catalogue.places.Wikidata.QidOfPlaceIdResult] =
-    val s = id.trim.toLowerCase(Locale.ROOT)
-    Option.when(s.startsWith("wikidata_q"))("Q" + s.drop("wikidata_q".length)).filter(isQid)
+    val s = (id).value.trim.toLowerCase(Locale.ROOT)
+    Option.when(s.startsWith("wikidata_q"))("Q" + s.drop("wikidata_q".length)).filter(_root_.com.histmersion.domain.catalogue.places.Wikidata.IsQidS(isQid))
 
   /** A Wikidata item: `Q` and its number (`Q12554`). */
   type Id = Id.T

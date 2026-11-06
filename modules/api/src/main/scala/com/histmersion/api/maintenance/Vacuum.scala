@@ -49,18 +49,18 @@ object Vacuum:
 
   def plan(in: Vacuum.Request, defaults: List[com.histmersion.api.maintenance.Vacuum.PlanDefaults], existing: Set[com.histmersion.api.maintenance.Vacuum.PlanExisting]): Either[Api.Error, VacuumPlan] =
     val asked = in.tables.flatMap(_.split(",").toList).map(_.trim.toLowerCase(java.util.Locale.ROOT)).filter(_.nonEmpty)
-    val tables = (if asked.isEmpty then defaults.map(_.trim.toLowerCase(java.util.Locale.ROOT)).filter(_.nonEmpty)
+    val tables = (if asked.isEmpty then defaults.map((_).value.trim.toLowerCase(java.util.Locale.ROOT)).filter(_.nonEmpty)
                   else asked).distinct
     val shape = tables.filterNot(TableShape.matches)
     val absent = tables.filterNot(existing.contains)
     if tables.isEmpty then Left(invalid(_root_.com.histmersion.api.maintenance.Vacuum.InvalidMsg("no table to vacuum: name one, or set maintenance.vacuum-tables")))
     else if shape.nonEmpty then Left(invalid(_root_.com.histmersion.api.maintenance.Vacuum.InvalidMsg(s"not a table name: ${shape.mkString(", ")}")))
     else if absent.nonEmpty then Left(invalid(_root_.com.histmersion.api.maintenance.Vacuum.InvalidMsg(s"no such table: ${absent.mkString(", ")}")))
-    else Right(VacuumPlan(in.analyze, tables))
+    else Right(VacuumPlan(in.analyze, (tables).map(refactorValue2 => _root_.com.histmersion.api.maintenance.VacuumPlan.Tables(refactorValue2))))
 
   def statement(table: com.histmersion.api.maintenance.Vacuum.StatementTable, analyze: com.histmersion.api.maintenance.Vacuum.StatementAnalyze): com.histmersion.api.maintenance.Vacuum.StatementResult =
-    val q = "\"" + table.replace("\"", "\"\"") + "\""
-    if analyze then _root_.com.histmersion.api.maintenance.Vacuum.StatementResult(s"VACUUM (ANALYZE) $q") else _root_.com.histmersion.api.maintenance.Vacuum.StatementResult(s"VACUUM $q")
+    val q = "\"" + (table).value.replace("\"", "\"\"") + "\""
+    if (analyze).value then _root_.com.histmersion.api.maintenance.Vacuum.StatementResult(s"VACUUM (ANALYZE) $q") else _root_.com.histmersion.api.maintenance.Vacuum.StatementResult(s"VACUUM $q")
 
   def describe(p: VacuumPlan): com.histmersion.api.maintenance.Vacuum.DescribeResult =
     s"${if p.analyze then "VACUUM (ANALYZE)" else "VACUUM"} of ${p.tables.mkString(", ")}"

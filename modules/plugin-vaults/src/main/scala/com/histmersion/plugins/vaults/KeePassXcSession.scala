@@ -49,16 +49,16 @@ object KeePassXcSession:
   object AnswerCommand extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
   def prompt(out: com.histmersion.plugins.vaults.KeePassXcSession.PromptOut): Option[com.histmersion.plugins.vaults.KeePassXcSession.PromptResult] =
-    Option.when(out.endsWith("> "))(out.substring(out.lastIndexOf('\n') + 1))
+    Option.when((out).value.endsWith("> "))(_root_.com.histmersion.plugins.vaults.KeePassXcSession.PromptResult((out).value.substring((out).value.lastIndexOf('\n') + 1)))
 
   /** Pure: can `s` be sent as one argument of an interactive line? A line break would end the line. */
-  def sendable(s: com.histmersion.plugins.vaults.KeePassXcSession.SendableS): com.histmersion.plugins.vaults.KeePassXcSession.SendableResult = !s.exists(_.isControl)
+  def sendable(s: com.histmersion.plugins.vaults.KeePassXcSession.SendableS): com.histmersion.plugins.vaults.KeePassXcSession.SendableResult = _root_.com.histmersion.plugins.vaults.KeePassXcSession.SendableResult(!(s).value.exists(_.isControl))
 
   /** Pure: an argument for the interactive mode's own splitting, which reads a backslash as "the next character as it
     * is": every space, tab, quote and backslash is escaped.
     */
   def escape(s: com.histmersion.plugins.vaults.KeePassXcSession.EscapeS): com.histmersion.plugins.vaults.KeePassXcSession.EscapeResult =
-    s.flatMap(c => if c == ' ' || c == '\t' || c == '"' || c == '\\' then s"\\$c" else c.toString)
+    _root_.com.histmersion.plugins.vaults.KeePassXcSession.EscapeResult((s).value.flatMap(c => if c == ' ' || c == '\t' || c == '"' || c == '\\' then s"\\$c" else c.toString))
 
   /** Pure: the line that asks for one attribute of one entry. */
   def command(attribute: com.histmersion.plugins.vaults.KeePassXcSession.CommandAttribute, entry: com.histmersion.plugins.vaults.KeePassXcSession.CommandEntry): com.histmersion.plugins.vaults.KeePassXcSession.CommandResult = s"show -q -a ${escape(attribute)} ${escape(entry)}"
@@ -68,12 +68,12 @@ object KeePassXcSession:
     */
   def segment(out: com.histmersion.plugins.vaults.KeePassXcSession.SegmentOut, from: com.histmersion.plugins.vaults.KeePassXcSession.SegmentFrom, prompt: com.histmersion.plugins.vaults.KeePassXcSession.SegmentPrompt): Option[com.histmersion.plugins.vaults.KeePassXcSession.SegmentResult] =
     Option
-      .when(out.length >= from + prompt.length && out.endsWith(prompt))(out.substring(from, out.length - prompt.length))
+      .when((out).value.length >= (from).value + (prompt).value.length && (out).value.endsWith(prompt))((out).value.substring((from).value, (out).value.length - (prompt).value.length))
 
   /** Pure: the value in a segment — without the echo of the request line (a session reading through readline prints it
     * back) and without the line break the value ends with.
     */
   def answer(segment: com.histmersion.plugins.vaults.KeePassXcSession.AnswerSegment, command: com.histmersion.plugins.vaults.KeePassXcSession.AnswerCommand): com.histmersion.plugins.vaults.KeePassXcSession.AnswerResult =
     val body =
-      List(command + "\r\n", command + "\n").find(segment.startsWith).fold(segment)(e => segment.drop(e.length))
+      List((command).value + "\r\n", (command).value + "\n").find((segment).value.startsWith).fold(segment)(e => (segment).value.drop(e.length))
     Subprocess.value(body)

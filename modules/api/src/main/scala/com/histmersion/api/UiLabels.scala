@@ -33,4 +33,4 @@ object UiLabels:
       JobState.values.map(s => s.wire -> Wording.jobState(s)) ++
       Run.State.values.map(s => s.wire -> Wording.runState(s))
 
-  def label(id: com.histmersion.api.UiLabels.LabelId): com.histmersion.api.UiLabels.LabelResult = known.getOrElse(id.trim, Wording.humanize(id))
+  def label(id: com.histmersion.api.UiLabels.LabelId): com.histmersion.api.UiLabels.LabelResult = known.getOrElse(_root_.com.histmersion.api.UiLabels.KnownPart1((id).value.trim), Wording.humanize(id))

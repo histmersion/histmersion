@@ -72,53 +72,53 @@ object EventImportReport:
     EventImportReport(
       b.provider,
       b.dryRun,
-      a.records + b.records,
-      a.kept + b.kept,
-      a.created + b.created,
-      a.merged + b.merged,
-      a.matched + b.matched,
-      a.updated + b.updated,
+      (a.records).value + (b.records).value,
+      (a.kept).value + (b.kept).value,
+      (a.created).value + (b.created).value,
+      (a.merged).value + (b.merged).value,
+      (a.matched).value + (b.matched).value,
+      (a.updated).value + (b.updated).value,
       EventCount.add(a.byKind, b.byKind),
       EventCount.add(a.skipped, b.skipped),
       (a.matchedEvents ++ b.matchedEvents).distinct.take(20),
-      a.parts + b.parts,
+      (a.parts).value + (b.parts).value,
       b.pending,
-      a.requests + b.requests,
+      (a.requests).value + (b.requests).value,
       a.failed ++ b.failed,
-      if b.licence.nonEmpty then b.licence else a.licence,
-      if b.citation.nonEmpty then b.citation else a.citation,
+      if (b.licence).value.nonEmpty then b.licence else a.licence,
+      if (b.citation).value.nonEmpty then b.citation else a.citation,
       a.corrections + b.corrections
     )
 
   def summary(r: EventImportReport): com.histmersion.api.catalogue.EventImportReport.SummaryResult =
-    val verb = if r.dryRun then "would create" else "created"
-    List(
+    val verb = if (r.dryRun).value then "would create" else "created"
+    _root_.com.histmersion.api.catalogue.EventImportReport.SummaryResult(List(
       Some(s"${r.provider}: ${r.records} record(s) read, ${r.kept} kept"),
       Some(
         s"$verb ${r.created} event(s), ${r.merged} merged with another record of the same thing, ${r.matched} matched to stored events"
       ),
       Option.when(r.byKind.nonEmpty)("kinds: " + r.byKind.map(c => s"${c.key} ${c.n}").mkString(", ")),
       Option.when(r.skipped.nonEmpty)("skipped: " + r.skipped.map(c => s"${c.key} ${c.n}").mkString(", ")),
-      Option.when(r.pending > 0)(s"${r.pending} part(s) not read yet"),
+      Option.when((r.pending).value > 0)(s"${r.pending} part(s) not read yet"),
       Option.when(r.failed.nonEmpty)(s"${r.failed.size} failed: ${r.failed.take(3).mkString("; ")}"),
       r.corrections.summary
-    ).flatten.mkString(" · ")
+    ).flatten.mkString(" · "))
 
   def markdown(r: EventImportReport): com.histmersion.api.catalogue.EventImportReport.MarkdownResult =
     def counts(cs: List[EventCount]) = if cs.isEmpty then "none" else cs.map(c => s"${c.key} ${c.n}").mkString(" · ")
-    val head = s"## Event import — ${r.provider}${if r.dryRun then " (dry run: nothing stored)" else ""}"
+    val head = s"## Event import — ${r.provider}${if (r.dryRun).value then " (dry run: nothing stored)" else ""}"
     val lines = List(
       s"- records read: ${r.records} (${r.parts} request part(s), ${r.requests} HTTP request(s))",
-      s"- kept: ${r.kept} — ${if r.dryRun then "would create" else "created"} ${r.created} event(s), " +
+      s"- kept: ${r.kept} — ${if (r.dryRun).value then "would create" else "created"} ${r.created} event(s), " +
         s"${r.merged} merged with another catalogue record, ${r.matched} matched to stored events" +
-        (if r.updated > 0 then s", ${r.updated} refreshed" else ""),
+        (if (r.updated).value > 0 then s", ${r.updated} refreshed" else ""),
       s"- by kind: ${counts(r.byKind)}",
       s"- skipped: ${counts(r.skipped)}"
     ) ++
       Option.when(r.matchedEvents.nonEmpty)(s"- matched: ${r.matchedEvents.mkString(", ")}").toList ++
-      Option.when(r.pending > 0)(s"- not read yet: ${r.pending} part(s) (the next run takes them)").toList ++
+      Option.when((r.pending).value > 0)(s"- not read yet: ${r.pending} part(s) (the next run takes them)").toList ++
       Option.when(r.failed.nonEmpty)(s"- failed: ${r.failed.mkString("; ")}").toList ++
       r.corrections.summary.map(c => s"- $c (`histmersion events corrections`)").toList ++
-      Option.when(r.licence.nonEmpty)(s"- licence: ${r.licence}").toList ++
-      Option.when(r.citation.nonEmpty)(s"- cite as: ${r.citation}").toList
+      Option.when((r.licence).value.nonEmpty)(s"- licence: ${r.licence}").toList ++
+      Option.when((r.citation).value.nonEmpty)(s"- cite as: ${r.citation}").toList
     _root_.com.histmersion.api.catalogue.EventImportReport.MarkdownResult((head :: "" :: lines).mkString("\n"))

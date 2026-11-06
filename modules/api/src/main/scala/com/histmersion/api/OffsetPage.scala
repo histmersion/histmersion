@@ -30,7 +30,7 @@ object OffsetPage:
   val FullSetMax: com.histmersion.api.OffsetPage.FullSetMax = _root_.com.histmersion.api.OffsetPage.FullSetMax(500)
 
   def header(p: OffsetPage, noun: com.histmersion.api.OffsetPage.HeaderNoun): com.histmersion.api.OffsetPage.HeaderResult =
-    if p.isAll then _root_.com.histmersion.api.OffsetPage.HeaderResult(s"### ${math.max(p.total.value, p.shown.value)} $noun")
+    if (p.isAll).value then _root_.com.histmersion.api.OffsetPage.HeaderResult(s"### ${math.max(p.total.value, p.shown.value)} $noun")
     else _root_.com.histmersion.api.OffsetPage.HeaderResult(s"### ${p.shown.value} of ${p.total.value} $noun")
 
   def footer(p: OffsetPage): com.histmersion.api.OffsetPage.FooterResult =

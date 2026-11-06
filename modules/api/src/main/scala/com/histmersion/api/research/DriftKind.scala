@@ -24,7 +24,7 @@ object DriftKind:
   given WireEnumValues[DriftKind]:
     def all: Array[DriftKind] = DriftKind.values
     def wire(e: DriftKind): com.histmersion.api.research.DriftKind.WireResult = e.wire
-    def fromWire(s: com.histmersion.api.research.DriftKind.FromWireS): Option[DriftKind] = DriftKind.values.find(_.wire == s.trim.toLowerCase)
+    def fromWire(s: com.histmersion.api.research.DriftKind.FromWireS): Option[DriftKind] = DriftKind.values.find(_.wire == (s).value.trim.toLowerCase)
   given Encoder[DriftKind] = WireEnum.encoder
   given Decoder[DriftKind] = WireEnum.decoder
   given Schema[DriftKind] = WireEnum.schema

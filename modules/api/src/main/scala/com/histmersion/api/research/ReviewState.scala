@@ -26,7 +26,7 @@ object ReviewState:
   type FromWireS = FromWireS.T
   object FromWireS extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
-  def parse(s: com.histmersion.api.research.ReviewState.ParseS): Option[ReviewState] = values.find(_.wire == s.trim.toLowerCase)
+  def parse(s: com.histmersion.api.research.ReviewState.ParseS): Option[ReviewState] = values.find(_.wire == (s).value.trim.toLowerCase)
   given WireEnumValues[ReviewState]:
     def all: Array[ReviewState] = ReviewState.values
     def wire(e: ReviewState): com.histmersion.api.research.ReviewState.WireResult = e.wire

@@ -125,7 +125,7 @@ object SiteTypes:
 
   private val byId: Map[com.histmersion.api.catalogue.SiteTypes.ByIdPart1, SiteType] = all.map(t => t.id -> t).toMap
 
-  def get(id: com.histmersion.api.catalogue.SiteTypes.GetId): Option[SiteType] = byId.get(id.trim.toLowerCase(java.util.Locale.ROOT))
+  def get(id: com.histmersion.api.catalogue.SiteTypes.GetId): Option[SiteType] = byId.get(_root_.com.histmersion.api.catalogue.SiteTypes.ByIdPart1((id).value.trim.toLowerCase(java.util.Locale.ROOT)))
   def icon(id: com.histmersion.api.catalogue.SiteTypes.IconId): Option[com.histmersion.api.catalogue.SiteTypes.IconResult] = get(id).map(_.icon)
 
   val pleiadesTypes: Map[com.histmersion.api.catalogue.SiteTypes.PleiadesTypesPart1, com.histmersion.api.catalogue.SiteTypes.PleiadesTypesPart2] = Map(
@@ -243,7 +243,7 @@ object SiteTypes:
   def pleiades(featureTypes: com.histmersion.api.catalogue.SiteTypes.PleiadesFeatureTypes): Option[com.histmersion.api.catalogue.SiteTypes.PleiadesResult] =
     best(
       Option(featureTypes).toList
-        .flatMap(_.split(","))
+        .flatMap((_).value.split(","))
         .map(_.trim.toLowerCase(java.util.Locale.ROOT))
         .filter(_.nonEmpty)
         .map(_.replaceAll("-\\d+$", ""))
@@ -297,7 +297,7 @@ object SiteTypes:
   )
 
   def geonames(fcode: com.histmersion.api.catalogue.SiteTypes.GeonamesFcode): Option[com.histmersion.api.catalogue.SiteTypes.GeonamesResult] =
-    Option(fcode).map(_.trim.toUpperCase(java.util.Locale.ROOT)).filter(_.nonEmpty).flatMap { c =>
+    Option(fcode).map((_).value.trim.toUpperCase(java.util.Locale.ROOT)).filter(_.nonEmpty).flatMap { c =>
       geonamesCodes.get(c).orElse(Option.when(c.startsWith("P."))(Settlement))
     }
 
@@ -389,7 +389,7 @@ object SiteTypes:
       .orElse(superclasses.flatMap(wikidataClasses.get).headOption)
       .orElse(importClass.flatMap(wikidataClasses.get))
 
-  def wikidataOwn(p31: List[com.histmersion.api.catalogue.SiteTypes.WikidataOwnP31]): Option[com.histmersion.api.catalogue.SiteTypes.WikidataOwnResult] = best(p31.map(_.trim).flatMap(wikidataClasses.get))
+  def wikidataOwn(p31: List[com.histmersion.api.catalogue.SiteTypes.WikidataOwnP31]): Option[com.histmersion.api.catalogue.SiteTypes.WikidataOwnResult] = best(p31.map((_).value.trim).flatMap(wikidataClasses.get))
 
   def p31Of(json: Option[com.histmersion.api.catalogue.SiteTypes.P31OfJson]): List[com.histmersion.api.catalogue.SiteTypes.P31OfResult] =
     json.toList.flatMap(s => "Q[0-9]+".r.findAllIn(s).toList)
@@ -442,7 +442,7 @@ object SiteTypes:
     object Failed extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
     def summary(r: Report): com.histmersion.api.catalogue.SiteTypes.Report.SummaryResult =
-      if r.dryRun then _root_.com.histmersion.api.catalogue.SiteTypes.Report.SummaryResult(s"${r.pending} Wikidata site(s) on the map would be asked about")
+      if (r.dryRun).value then _root_.com.histmersion.api.catalogue.SiteTypes.Report.SummaryResult(s"${r.pending} Wikidata site(s) on the map would be asked about")
       else
         _root_.com.histmersion.api.catalogue.SiteTypes.Report.SummaryResult((List(
           s"${r.asked} site(s) asked",

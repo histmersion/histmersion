@@ -11,7 +11,7 @@ final case class InitPlan(
     check: InitPlan.Check = _root_.com.histmersion.api.exchange.InitPlan.Check(false)
 ) derives KindlingsCodecAsObject,
       KindlingsSchema, com.histmersion.api.json.Schema:
-  def isEmpty: com.histmersion.api.exchange.InitPlan.IsEmptyResult = !gazetteer && !periodPresets && fetch.isEmpty
+  def isEmpty: com.histmersion.api.exchange.InitPlan.IsEmptyResult = _root_.com.histmersion.api.exchange.InitPlan.IsEmptyResult(!(gazetteer).value && !(periodPresets).value && fetch.isEmpty)
 
 object InitPlan:
 
@@ -42,7 +42,7 @@ object InitPlan:
       Option.when(p.periodPresets)("bundled period presets")
     ).flatten
     val fetched =
-      Option.when(p.fetch.nonEmpty)(s"${if p.check then "dry run of" else "fetch"} ${p.fetch.mkString(", ")}")
+      Option.when(p.fetch.nonEmpty)(s"${if (p.check).value then "dry run of" else "fetch"} ${p.fetch.mkString(", ")}")
     (bundled ++ fetched) match
       case Nil   => _root_.com.histmersion.api.exchange.InitPlan.DescribeResult("nothing to import")
       case parts => parts.mkString(", ")

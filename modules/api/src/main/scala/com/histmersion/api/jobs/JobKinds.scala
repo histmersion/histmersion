@@ -12,7 +12,7 @@ final class JobKinds(val entries: List[JobKindEntry], val details: List[JobDetai
   def get(kind: JobInfo.Kind): Option[JobKindEntry] = byWire.get(kind.value)
 
   /** The kind a stored or typed identifier names (case and surrounding space ignored). */
-  def parse(wire: com.histmersion.api.jobs.JobKinds.ParseWire): Option[JobKindEntry] = byWire.get(wire.trim.toLowerCase)
+  def parse(wire: com.histmersion.api.jobs.JobKinds.ParseWire): Option[JobKindEntry] = byWire.get(_root_.com.histmersion.api.jobs.JobKinds.ByWirePart1((wire).value.trim.toLowerCase))
 
   /** May a person pause and cancel a job of the kind `wire` names? */
   def stoppable(wire: com.histmersion.api.jobs.JobKinds.StoppableWire): com.histmersion.api.jobs.JobKinds.StoppableResult = byWire.get(wire).exists(_.stoppable)

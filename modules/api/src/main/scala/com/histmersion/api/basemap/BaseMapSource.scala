@@ -14,7 +14,7 @@ object BaseMapSource:
   val All: List[com.histmersion.api.basemap.BaseMapSource.All] = List(_root_.com.histmersion.api.basemap.BaseMapSource.All(Auto), _root_.com.histmersion.api.basemap.BaseMapSource.All(Local), _root_.com.histmersion.api.basemap.BaseMapSource.All(Online))
 
   def resolve(setting: com.histmersion.api.basemap.BaseMapSource.ResolveSetting, status: Basemap.Status): com.histmersion.api.basemap.BaseMapSource.ResolveResult =
-    setting.trim.toLowerCase(java.util.Locale.ROOT) match
+    (setting).value.trim.toLowerCase(java.util.Locale.ROOT) match
       case Local  => _root_.com.histmersion.api.basemap.BaseMapSource.ResolveResult(Local)
       case Online => _root_.com.histmersion.api.basemap.BaseMapSource.ResolveResult(Online)
       case _      =>

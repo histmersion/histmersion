@@ -87,15 +87,15 @@ object EventPrecision:
       case _           => None
 
   def note(central: Option[com.histmersion.api.catalogue.EventPrecision.NoteCentral], plusMinus: Option[com.histmersion.api.catalogue.EventPrecision.NotePlusMinus], method: Option[com.histmersion.api.catalogue.EventPrecision.NoteMethod]): Option[com.histmersion.api.catalogue.EventPrecision.NoteResult] =
-    val m = method.map(_.trim).filter(_.nonEmpty).map(lowerFirst)
+    val m = method.map((_).value.trim).filter(_.nonEmpty).map({ val refactorFunction = lowerFirst; (refactorValue2) => refactorFunction(_root_.com.histmersion.api.catalogue.EventPrecision.LowerFirstS(refactorValue2)) })
     central match
       case Some(c) => Some(YearFmt(c) + plusMinus.filter(_ > 0).fold("")(u => s" ± $u") + m.fold("")(x => s" ($x)"))
       case None    => m.map(x => _root_.com.histmersion.api.catalogue.EventPrecision.NoteResult(s"dated by $x"))
 
   private def lowerFirst(s: com.histmersion.api.catalogue.EventPrecision.LowerFirstS): com.histmersion.api.catalogue.EventPrecision.LowerFirstResult =
-    s.split(" ", -1)
+    _root_.com.histmersion.api.catalogue.EventPrecision.LowerFirstResult((s).value.split(" ", -1)
       .map(w =>
         if w.length >= 2 && w.charAt(0).isUpper && w.charAt(1).isLower then s"${w.charAt(0).toLower}${w.substring(1)}"
         else w
       )
-      .mkString(" ")
+      .mkString(" "))

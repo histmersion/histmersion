@@ -16,7 +16,7 @@ final class HelloAiProvider(replies: List[Reply], hasToken: HelloAiProvider.HasT
   override def doctor(online: Boolean, http: AiHttp): List[AiCheck] =
     List(
       AiCheck(_root_.com.histmersion.plugin.AiCheck.Name("script"), if replies.isEmpty then _root_.com.histmersion.plugin.AiCheck.Level("warn") else _root_.com.histmersion.plugin.AiCheck.Level("ok"), _root_.com.histmersion.plugin.AiCheck.Detail(s"${replies.size} scripted repl(ies)")),
-      AiCheck(_root_.com.histmersion.plugin.AiCheck.Name("token"), _root_.com.histmersion.plugin.AiCheck.Level("ok"), if hasToken then _root_.com.histmersion.plugin.AiCheck.Detail("given (never shown)") else _root_.com.histmersion.plugin.AiCheck.Detail("none asked"))
+      AiCheck(_root_.com.histmersion.plugin.AiCheck.Name("token"), _root_.com.histmersion.plugin.AiCheck.Level("ok"), if (hasToken).value then _root_.com.histmersion.plugin.AiCheck.Detail("given (never shown)") else _root_.com.histmersion.plugin.AiCheck.Detail("none asked"))
     )
 
   def turn(request: AiTurn.Request, http: AiHttp): Either[AiFailure, AiTurn] =
