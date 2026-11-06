@@ -20,4 +20,3 @@ object Timer:
     def reached: Boolean
     def exceeded: Boolean
 
-  object Deadline:

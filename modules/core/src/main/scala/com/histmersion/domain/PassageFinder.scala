@@ -196,7 +196,6 @@ object PassageFinder:
     def subSequence(a: com.histmersion.Offset, b: com.histmersion.Offset): CharSequence = new Bounded(s.subSequence(a, b), until)
     override def toString: String = s.toString
 
-  object Bounded:
 
   /** Every non-empty match as `[start, end)` in the ORIGINAL body, in order, up to `max`. */
   private def matches(p: Pattern, f: Folded, source: com.histmersion.domain.PassageFinder.SourceText, max: com.histmersion.domain.PassageFinder.MaxMatches, until: com.histmersion.util.time.Timer.Deadline): (Vector[(com.histmersion.domain.PassageFinder.MatchCount, com.histmersion.Offset)], Boolean) =

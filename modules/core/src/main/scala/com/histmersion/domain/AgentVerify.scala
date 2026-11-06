@@ -39,9 +39,7 @@ object AgentVerify:
 
   /** A tool call an LLM step made, as the engine records it ([[com.histmersion.domain.automation.agents.ToolUse]]). */
   type SimilarWordA = String
-  val SimilarWordA: String.type = String
   type SimilarWordB = String
-  val SimilarWordB: String.type = String
   type LinkProblemsText = _root_.com.histmersion.domain.AgentVerify.Text
   val LinkProblemsText: _root_.com.histmersion.domain.AgentVerify.Text.type = _root_.com.histmersion.domain.AgentVerify.Text
   type ToSignedYearValue = ToSignedYearValue.T

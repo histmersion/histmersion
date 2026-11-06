@@ -22,7 +22,6 @@ object VectorTileWriter:
   type MessagePayload = MessagePayload.T
   object MessagePayload extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Array[_root_.scala.Byte], _root_.io.github.iltotore.iron.constraint.any.Pure]
   type VarintFieldV = Long
-  val VarintFieldV: Long.type = Long
 
   def tile(layers: Seq[(com.histmersion.domain.catalogue.maptiles.VectorTileWriter.TileLayersPart1, Seq[TilePoint])]): com.histmersion.domain.catalogue.maptiles.VectorTileWriter.TileResult =
     val out = ByteArrayOutputStream()

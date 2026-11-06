@@ -53,7 +53,6 @@ object BundlePlan:
       case Insert | FastForward | Delete => true
       case _                             => false
 
-  object Decision:
 
   /** The ledger's foreign rev for a tombstone, which has no content to hash. */
   val DeletedRev = "deleted"
