@@ -37,7 +37,7 @@ class CatalogDatingSuite extends munit.FunSuite:
       Bound(CatalogDating.fromAstronomical(com.histmersion.upstreams.dating.CatalogDating.AstronomicalYear(-70)), CatalogDating.fromAstronomical(com.histmersion.upstreams.dating.CatalogDating.AstronomicalYear(-41)))
     )
     val c = CatalogDating.wikidata(com.histmersion.upstreams.dating.CatalogDating.AstronomicalYear(-450), com.histmersion.upstreams.dating.CatalogDating.WikidataPrecision(7))
-    assert(c.lo <= -551 && c.hi >= -450, c.toString)
+    assert(c.lo <= com.histmersion.upstreams.dating.CatalogDating.HistoricalYear(-551) && c.hi >= -450, c.toString)
 
   test("clamp: the present always, a floor where the catalogue has one; monotone"):
     val wide = Span(Some(com.histmersion.upstreams.dating.CatalogDating.HistoricalYear(-11000)), Some(com.histmersion.upstreams.dating.CatalogDating.HistoricalYear(-10000)), Some(com.histmersion.upstreams.dating.CatalogDating.HistoricalYear(1990)), Some(com.histmersion.upstreams.dating.CatalogDating.HistoricalYear(2100)))
