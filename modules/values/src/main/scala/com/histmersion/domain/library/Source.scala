@@ -10,7 +10,7 @@ object Source:
     case Foundational, Current, Contested, Superseded, Debunked, Retracted, Unassessed
 
     /** The wire / storage spelling (`current`), as the JSON codec writes it. */
-    def wire: com.histmersion.domain.library.Source.Status.Wire = Ascii.lower((toString))
+    def wire: com.histmersion.domain.library.Source.Status.Wire = com.histmersion.domain.library.Source.Status.Wire(Ascii.lower((toString)))
 
   object Status:
     type Wire = Wire.T
