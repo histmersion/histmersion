@@ -221,7 +221,7 @@ object CoreQuota:
   def observe(s: State, limits: Limits, code: com.histmersion.domain.CoreQuota.StatusCode, headers: Map[com.histmersion.domain.CoreQuota.HeaderName, com.histmersion.domain.CoreQuota.HeaderValue], now: Instant): State =
     def int(name: com.histmersion.domain.CoreQuota.HeaderName) = headers.get(name).flatMap(_.value.trim.toIntOption)
     val window = Window(int(com.histmersion.domain.CoreQuota.HeaderName("x-ratelimit-limit")).map(Window.Limit(_)), int(com.histmersion.domain.CoreQuota.HeaderName("x-ratelimit-remaining")).map(Window.Remaining(_)), now)
-    val retry = retryAt(headers.get(com.histmersion.domain.CoreQuota.HeaderName("x-ratelimit-retry-after")), now).orElse(retryAt(headers.get("retry-after"), now))
+    val retry = retryAt(headers.get(com.histmersion.domain.CoreQuota.HeaderName("x-ratelimit-retry-after")), now).orElse(retryAt(headers.get(com.histmersion.domain.CoreQuota.HeaderName("retry-after")), now))
     val pause = now.plusSeconds(limits.exhaustedPauseSeconds.value.toLong.max(1L))
     val until = retry.filter(_.isAfter(now)).getOrElse(pause)
     val why =
