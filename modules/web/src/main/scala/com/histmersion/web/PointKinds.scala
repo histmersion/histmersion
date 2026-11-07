@@ -36,15 +36,14 @@ object PointKinds:
     override def classes(s: Spot): String =
       val n = s.items.size
       val span = if n == 1 then for a <- s.items.head.periodStart; b <- s.items.head.periodEnd yield com.histmersion.api.Years.Astronomical(b.value - a.value) else None
-      val ring = MapView.ringOf(MapView.DotCount(n), span).value
+      val ring = MapView.ringOf(DotCluster.Total(n), span).value
       val unstated = Certainty.markerClass(confOf(s))
       "hd-find" + (if n > 1 then " hd-coincident" else "") + (if ring > 0 then s" ring-$ring" else "") +
         (if unstated.value.nonEmpty then s" ${unstated.value}" else "")
     def fill(s: Spot, span: (com.histmersion.api.Years.Astronomical, com.histmersion.api.Years.Astronomical)): String =
       val conf = confOf(s)
-      val period = (Period.Start(span._1.value), Period.End(span._2.value))
-      if s.items.size > 1 then MapView.gradientBg(s.items, period, conf).value
-      else MapView.colorFor(MapView.avgMid(s.items), period, conf).value
+      if s.items.size > 1 then MapView.gradientBg(s.items, span, conf).value
+      else MapView.colorFor(MapView.avgMid(s.items), span, conf).value
 
     /** The least certain finding's — a finding that states none is unstated, never high (#1946). */
     private[web] def confOf(s: Spot): Certainty = Certainty.ofAll(s.items.map(_.confidence))
@@ -93,7 +92,7 @@ object PointKinds:
       MapView
         .viridisAt(
           MapView.Mid(p.mid.fold((span._1.value + span._2.value).toDouble / 2)(_.value)),
-          (Period.Start(span._1.value), Period.End(span._2.value))
+          span
         )
         .value
     private def note(p: SitePoint): String =
@@ -224,7 +223,7 @@ object PointKinds:
     private def mid(h: MediaGeoHit): Option[Double] =
       DotCluster.mid(h.periodStart.map(y => Period.Start(y.value)), h.periodEnd.map(y => Period.End(y.value))).map(_.value)
     def fill(h: MediaGeoHit, span: (com.histmersion.api.Years.Astronomical, com.histmersion.api.Years.Astronomical)): String =
-      mid(h).fold(s"var(${Palette.media(h.kind.getOrElse(com.histmersion.api.media.MediaItem.Kind("scan")))})")(m => MapView.viridisAt(MapView.Mid(m), (Period.Start(span._1.value), Period.End(span._2.value))).value)
+      mid(h).fold(s"var(${Palette.media(h.kind.getOrElse(com.histmersion.api.media.MediaItem.Kind("scan")))})")(m => MapView.viridisAt(MapView.Mid(m), span).value)
     private def note(h: MediaGeoHit): String =
       List(Fmt.display(com.histmersion.api.UiLabels.Text(h.kind.fold("media")(_.value))).value, Fmt.periodStr(h.periodStart, h.periodEnd).value)
         .filter(_.nonEmpty)

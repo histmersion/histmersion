@@ -79,11 +79,11 @@ object LibraryTable:
   private def row(r: TableRow, sources: Boolean, chosen: Signal[Option[TableRow.Key]], choose: Choose): HtmlElement =
     val on = chosen.map(_.contains(r.key))
     val ref =
-      if sources then com.histmersion.web.marks.ItemRef.source(com.histmersion.api.library.Citekey(r.key.value), r.title)
-      else com.histmersion.web.marks.ItemRef.article(com.histmersion.api.research.Article.Slug(r.key.value), r.title)
+      if sources then com.histmersion.web.marks.ItemRef.source(com.histmersion.api.library.Citekey(r.key.value), com.histmersion.api.library.Title(r.title))
+      else com.histmersion.web.marks.ItemRef.article(com.histmersion.api.research.Article.Slug(r.key.value), com.histmersion.api.library.Title(r.title))
     val unread = com.histmersion.web.marks.MyItems.loaded.signal
       .combineWith(com.histmersion.web.marks.MyItems.isRead(ref))
-      .map((loaded, read) => loaded && !read)
+      .map((loaded, read) => loaded.value && !read)
     tr(
       cls := "lib-row",
       cls("is-chosen") <-- on,
@@ -94,7 +94,7 @@ object LibraryTable:
         if t.closest("a") == null && Router.plain(ev) then choose(r.key, Router.Push(true))
       },
       com.histmersion.web.ui.ContextMenu
-        .on(s"Actions: ${r.title}", () => com.histmersion.web.marks.ItemMenu.entries(ref, r.byline)),
+        .on(com.histmersion.web.ui.ContextMenu.OnTitle(s"Actions: ${r.title}"), () => com.histmersion.web.marks.ItemMenu.entries(ref, r.byline)),
       td(
         cls := "col-title",
         a(

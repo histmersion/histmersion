@@ -254,9 +254,9 @@ object MapLists:
       marks.RowActions(
         marks.ItemRef(
           com.histmersion.api.personal.Target.item(r.kind, com.histmersion.api.personal.ItemKey(r.key.value)),
-          marks.ItemRef.Title(r.label.value)
+          com.histmersion.api.library.Title(r.label.value)
         ),
         marks.ItemRef.Href(r.href.value),
-        library.TableRow.Byline(r.note.value)
+        r.note.value
       )
     )

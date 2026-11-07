@@ -310,11 +310,9 @@ object ResultsList:
         )
       else emptyNode,
       marks.RowActions(
-        marks.ItemRef.source(WindowKey.Source.Citekey(src.citekey.value), marks.ItemRef.Title(src.title.value)),
+        marks.ItemRef.source(src.citekey, com.histmersion.api.library.Title(src.title.value)),
         marks.ItemRef.Href(SourceLink.href(src.citekey)),
-        com.histmersion.web.library.TableRow.Byline(
-          List(src.authors.map(_.value).take(3).mkString(", "), src.year.map(_.value.toInt).fold("")(_.toString)).filter(_.nonEmpty).mkString(", ")
-        )
+        List(src.authors.map(_.value).take(3).mkString(", "), src.year.map(_.value.toInt).fold("")(_.toString)).filter(_.nonEmpty).mkString(", ")
       ),
       onClick --> { ev =>
         val inLink = Option(ev.target.asInstanceOf[dom.Element].closest("a, button")).isDefined

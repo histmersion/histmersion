@@ -49,7 +49,7 @@ object PeriodMarks:
       MyItems
         .add(
           target(from, to),
-          Some(name.value.trim).filter(_.nonEmpty).map(MyItems.AddLabel(_)),
+          Some(name.value.trim).filter(_.nonEmpty).map(Bookmark.Label(_)),
           com.histmersion.api.library.Title(name.value.trim)
         )
         .foreach(_ => Flash.say(Flash.Text(s"Kept “${name.value.trim}” in my periods.")))
@@ -100,7 +100,7 @@ object PeriodMarks:
             span(
               cls := "tl-preset-line",
               span(cls := "tl-preset-label", b.name.value),
-              span(cls := "tl-preset-years", Fmt.periodStr(a, z))
+              span(cls := "tl-preset-years", Fmt.periodStr(a, z).value)
             ),
             onClick --> (_ => choose(a, z))
           ),

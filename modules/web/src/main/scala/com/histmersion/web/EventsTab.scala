@@ -48,10 +48,10 @@ object EventsTab:
       marks.RowActions(
         marks.ItemRef(
           com.histmersion.api.personal.Target.item(com.histmersion.api.ItemKind.Event, com.histmersion.api.personal.ItemKey(evt.id.value)),
-          marks.ItemRef.Title(evt.label.value)
+          com.histmersion.api.library.Title(evt.label.value)
         ),
         marks.ItemRef.Href(Route.Event(Route.Event.Id(evt.id.value)).path),
-        library.TableRow.Byline(EventsTab.when(evt).value)
+        EventsTab.when(evt).value
       ),
       // its card on hover (Preview: the event's picture and credit, #1446); a plain click shows its detail
       a(

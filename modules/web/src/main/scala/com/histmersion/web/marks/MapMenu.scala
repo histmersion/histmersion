@@ -106,21 +106,21 @@ object MapMenu:
           e.preventDefault()
           val r = box.getBoundingClientRect()
           val at = surface.unproject(ScreenPt(ScreenPt.X(e.clientX - r.left), ScreenPt.Y(e.clientY - r.top)))
-          ContextMenu.show(com.histmersion.web.ui.ContextMenu.ShowTitle("Map actions"), entries(surface, at), ContextMenu.ShowX(e.clientX), ContextMenu.ShowY(e.clientY), Some(box))
+          ContextMenu.show(com.histmersion.web.ui.ContextMenu.ShowTitle("Map actions"), entries(surface, at), e.clientX, e.clientY, Some(box))
       }
     )
     box.addEventListener(
       "keydown",
       { (e: dom.KeyboardEvent) =>
         val t = e.target.asInstanceOf[dom.Element]
-        if ContextMenu.isMenuKey(ContextMenu.KeyName(e.key), e.shiftKey) && t.closest(".hd-marker") == null && !surface.isChrome(t) then
+        if ContextMenu.isMenuKey(e.key, e.shiftKey) && t.closest(".hd-marker") == null && !surface.isChrome(t) then
           e.preventDefault()
           val r = box.getBoundingClientRect()
           ContextMenu.show(
             com.histmersion.web.ui.ContextMenu.ShowTitle("Map actions"),
             entries(surface, surface.center),
-            ContextMenu.ShowX(r.left + r.width / 2),
-            ContextMenu.ShowY(r.top + r.height / 2),
+            r.left + r.width / 2,
+            r.top + r.height / 2,
             Option(e.target).collect { case h: dom.HTMLElement => h }
           )
       }

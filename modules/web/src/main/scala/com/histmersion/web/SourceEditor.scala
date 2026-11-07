@@ -180,7 +180,7 @@ object SourceEditor:
             notice.set(then0)
             WindowManager.retitle(
               WindowKey.EditSource(WindowKey.EditSource.Citekey(ck.value)),
-              WindowManager.WinState.Title(s"Edit · ${sw.source.title}")
+              com.histmersion.api.UiLabels.Text(s"Edit · ${sw.source.title}")
             )
         )
       }

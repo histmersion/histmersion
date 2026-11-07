@@ -11,7 +11,7 @@ import com.raquo.laminar.api.L.*
 object RowActions:
 
 
-  def apply(ref: ItemRef, href: com.histmersion.web.marks.ItemRef.Href, byline: com.histmersion.web.library.TableRow.Byline = com.histmersion.web.library.TableRow.Byline("")): Modifier[HtmlElement] =
+  def apply(ref: ItemRef, href: com.histmersion.web.marks.ItemRef.Href, byline: String = ""): Modifier[HtmlElement] =
     List(
       cls("has-actions") := true,
       ContextMenu.on(ContextMenu.OnTitle(s"Actions: ${ref.title}"), () => ItemMenu.entries(ref, byline)),

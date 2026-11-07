@@ -52,7 +52,7 @@ object FieldCodec:
 
   given windowKeys: FieldCodec[List[WindowKey]]:
     def encode(a: List[WindowKey]) = a.map(k => Token(k.wire.value))
-    def decode(vs: List[com.histmersion.web.FieldCodec.Token]) = Some(clean(vs).flatMap(t => WindowKey.parse(WindowKey.Route(t))).distinct)
+    def decode(vs: List[com.histmersion.web.FieldCodec.Token]) = Some(clean(vs).flatMap(t => WindowKey.parse(WindowKey.Wire(t))).distinct)
     override def multi = true
 
   given optJobState: FieldCodec[Option[JobState]]:

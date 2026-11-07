@@ -369,10 +369,10 @@ object UiState:
     )
     val p = f.period
     val corrected =
-      if p.exists(pp => pp.start > pp.end) then f.modify(_.period).setTo(p.map(pp => Period(pp.end, pp.start)))
+      if p.exists(pp => pp.start.value > pp.end.value) then f.modify(_.period).setTo(p.map(pp => Period(pp.end, pp.start)))
       else f
     val y = corrected.years
-    if y.exists(yy => yy.start > yy.end) then corrected.modify(_.years).setTo(y.map(yy => Period(yy.end, yy.start)))
+    if y.exists(yy => yy.start.value > yy.end.value) then corrected.modify(_.years).setTo(y.map(yy => Period(yy.end, yy.start)))
     else corrected
 
   /** What the Articles tab asks for: the global filter, title included — the server lists the articles citing the

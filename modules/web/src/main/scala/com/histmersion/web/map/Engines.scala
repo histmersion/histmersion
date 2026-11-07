@@ -17,7 +17,7 @@ object Engines:
     engine.unsupported(caps) match
       case Some(why) => NoMapSurface(el, NoMapSurface.Why(why.value), caps, maxZoom)
       case None      =>
-        try engine.create(el, maxZoom, pixelRatio(caps))
+        try engine.create(el, MapEngine.MaxZoom(maxZoom.value), pixelRatio(caps))
         catch
           case e: Throwable =>
             val msg = Option(e.getMessage).map(_.trim).filter(_.nonEmpty).getOrElse(e.getClass.getSimpleName)

@@ -78,15 +78,15 @@ object ResultDetail:
       ),
       // the item's own marks once its card says what it is called
       child.maybe <-- card.signal.map(_.flatMap(_.toOption).map { c =>
-        val ref = marks.ItemRef.of(t, marks.ItemRef.OfTitle(c.title.value))
+        val ref = marks.ItemRef.of(t, com.histmersion.api.library.Title(c.title.value))
         marks.MyItems.opened(ref)
         div(
           cls := "detail-marks",
           com.histmersion.web.ui.ContextMenu.on(
             com.histmersion.web.ui.ContextMenu.OnTitle(s"Actions: ${c.title}"),
-            () => marks.ItemMenu.entries(ref, marks.ItemMenu.EntriesByline(c.byline.value))
+            () => marks.ItemMenu.entries(ref, c.byline.value)
           ),
-          marks.ItemActions(ref, com.histmersion.web.library.TableRow.Byline(c.byline.value))
+          marks.ItemActions(ref, c.byline.value)
         )
       }),
       child <-- card.signal.map {
@@ -94,7 +94,7 @@ object ResultDetail:
         case Some(Left(m))  => p(cls := "form-error", role := "alert", s"Could not read it: $m")
         case Some(Right(c)) => div(cls := "cite-tooltip detail-card", Preview.cardView(c))
       },
-      child.maybe <-- card.signal.map(_.flatMap(_.toOption).map(c => marks.NoteList.on(marks.ItemRef.of(t, marks.ItemRef.OfTitle(c.title.value))))),
+      child.maybe <-- card.signal.map(_.flatMap(_.toOption).map(c => marks.NoteList.on(marks.ItemRef.of(t, com.histmersion.api.library.Title(c.title.value))))),
       child.maybe <-- record.signal.map(_.filterNot(_.isEmpty).map(recordView))
     )
 

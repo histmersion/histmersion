@@ -82,17 +82,15 @@ final class PointLayer[A](val kind: PointKind[A], set: () => PointSet[Dot], asOf
     val a = d.item.asInstanceOf[A]
     val (w, h) = kind.box
     val el = DomMarker.element(
-      DomMarker.ElementCls(s"hd-point-wrap hd-point-wrap--${kind.shape.cls}"),
-      DomMarker.ElementHtml(
-        PointMarker.html(
-          kind,
-          a,
-          kind.fill(a, (com.histmersion.api.Years.Astronomical(d.span._1.value), com.histmersion.api.Years.Astronomical(d.span._2.value)))
-        )
+      s"hd-point-wrap hd-point-wrap--${kind.shape.cls}",
+      PointMarker.html(
+        kind,
+        a,
+        kind.fill(a, (com.histmersion.api.Years.Astronomical(d.span._1.value), com.histmersion.api.Years.Astronomical(d.span._2.value)))
       )
     )
     kind.title(a).foreach(t => el.setAttribute("title", t.value))
-    if fadeIn.value then el.classList.add(FadingLayer.fadeIn.value.value)
+    if fadeIn.value then el.classList.add(FadingLayer.fadeIn.value)
     val m = DomMarker(at(d).lat, at(d).lon, el, Some((DomMarker.BoxSize(w.value), DomMarker.BoxSize(h.value))))
     val z = kind.zIndex(a)
     if z.value != 0 then m.setZ(DomMarker.ZIndex(z.value))

@@ -16,5 +16,5 @@ object FadingLayer:
   private[web] def plan(before: Set[com.histmersion.web.FadingLayer.Key], after: Set[com.histmersion.web.FadingLayer.Key]): Plan =
     Plan(entering = after -- before, staying = after & before, exiting = before -- after)
 
-  val fadeIn: CssClass = CssClass(com.histmersion.web.ui.CssClass.ApplyRaw("hd-fade-in"))
-  val fadeOut: CssClass = CssClass(com.histmersion.web.ui.CssClass.ApplyRaw("hd-fade-out"))
+  val fadeIn: CssClass = CssClass("hd-fade-in")
+  val fadeOut: CssClass = CssClass("hd-fade-out")

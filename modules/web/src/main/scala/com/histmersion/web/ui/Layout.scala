@@ -85,13 +85,13 @@ object Layout:
   type CountersRefreshMs = CountersRefreshMs.T
   object CountersRefreshMs extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
-  val sidebarMinWidth: Px = Px(com.histmersion.web.ui.Px.ApplyV(320))
-  val sidebarMaxWidth: Px = Px(com.histmersion.web.ui.Px.ApplyV(800))
-  val sidebarDefault: Px = Px(com.histmersion.web.ui.Px.ApplyV(480))
-  val overviewHeight: Px = Px(com.histmersion.web.ui.Px.ApplyV(44))
-  val overviewBase: Px = Px(com.histmersion.web.ui.Px.ApplyV(30))
-  val detailHeight: Px = Px(com.histmersion.web.ui.Px.ApplyV(58))
-  val detailBase: Px = Px(com.histmersion.web.ui.Px.ApplyV(40))
+  val sidebarMinWidth: Px = Px(320)
+  val sidebarMaxWidth: Px = Px(800)
+  val sidebarDefault: Px = Px(480)
+  val overviewHeight: Px = Px(44)
+  val overviewBase: Px = Px(30)
+  val detailHeight: Px = Px(58)
+  val detailBase: Px = Px(40)
   val handleWidth: com.histmersion.web.ui.Layout.HandleWidth = com.histmersion.web.ui.Layout.HandleWidth(6.0)
   val markerRadiusDefault: com.histmersion.web.ui.Layout.MarkerRadiusDefault = com.histmersion.web.ui.Layout.MarkerRadiusDefault(5)
   val maxBuckets: com.histmersion.web.ui.Layout.MaxBuckets = com.histmersion.web.ui.Layout.MaxBuckets(1500L)
@@ -99,8 +99,8 @@ object Layout:
   /** Quiet period after the last resize event before a curve is redrawn exactly. */
   val resizeSettleMs: com.histmersion.web.ui.Layout.ResizeSettleMs = com.histmersion.web.ui.Layout.ResizeSettleMs(120)
   val minSpan: com.histmersion.web.ui.Layout.MinSpan = com.histmersion.web.ui.Layout.MinSpan(10L)
-  val windowMinWidth: Px = Px(com.histmersion.web.ui.Px.ApplyV(300))
-  val windowMinHeight: Px = Px(com.histmersion.web.ui.Px.ApplyV(200))
+  val windowMinWidth: Px = Px(300)
+  val windowMinHeight: Px = Px(200)
   val windowMaxWidth: com.histmersion.web.ui.Layout.WindowMaxWidth = com.histmersion.web.ui.Layout.WindowMaxWidth(780.0)
   val windowMaxHeight: com.histmersion.web.ui.Layout.WindowMaxHeight = com.histmersion.web.ui.Layout.WindowMaxHeight(600.0)
 
@@ -112,7 +112,7 @@ object Layout:
   /** The least room under the map options' button for the panel to open there on a tablet; with less, and more above,
     * it opens over the button.
     */
-  val mapOptionsMinBelow: Px = Px(com.histmersion.web.ui.Px.ApplyV(280))
+  val mapOptionsMinBelow: Px = Px(280)
   val windowCascadeSlots: com.histmersion.web.ui.Layout.WindowCascadeSlots = com.histmersion.web.ui.Layout.WindowCascadeSlots(5)
   val pickerMax: com.histmersion.web.ui.Layout.PickerMax = com.histmersion.web.ui.Layout.PickerMax(15)
 
@@ -126,13 +126,13 @@ object Layout:
   val areaLabelMinZoom: com.histmersion.web.ui.Layout.AreaLabelMinZoom = com.histmersion.web.ui.Layout.AreaLabelMinZoom(5)
 
   /** A picture's marker: a landscape "photo print" badge (4:3), its white mat included. */
-  val mediaMarkerWidth: Px = Px(com.histmersion.web.ui.Px.ApplyV(32))
-  val mediaMarkerHeight: Px = Px(com.histmersion.web.ui.Px.ApplyV(24))
+  val mediaMarkerWidth: Px = Px(32)
+  val mediaMarkerHeight: Px = Px(24)
 
   /** A finding's diamond: its box is larger than a site's circle or an event's square, so the diamond inside (70 % of
     * the box, turned 45°) looks as big as they do and still holds a 15 px glyph.
     */
-  val findingMarkerSize: Px = Px(com.histmersion.web.ui.Px.ApplyV(34))
+  val findingMarkerSize: Px = Px(34)
   val overlayFetchLimit: com.histmersion.web.ui.Layout.OverlayFetchLimit = com.histmersion.web.ui.Layout.OverlayFetchLimit(400) // polities alive in one year: up to ~140 (1200 CE); after de-duplication
   /** The areas over a whole range ("All states in period"): every state alive in it — 551 in 1000..1500, 1 744 over
     * -3000..2000 (~7 MB of stored simplified outlines, V090); the server caps it at `places.geo-max-limit`.
@@ -141,7 +141,7 @@ object Layout:
 
   /** The events layer (#1449): its markers' size (a square: smaller than the circle's box, as big to the eye).
     */
-  val eventMarkerSize: Px = Px(com.histmersion.web.ui.Px.ApplyV(24))
+  val eventMarkerSize: Px = Px(24)
 
   /** The most markers (points drawn alone and bubbles, in view and its margin) the map's cluster layer draws before and
     * after a zoom and still animates it (bubbles splitting and merging): above it a zoom redraws them at once
@@ -151,7 +151,7 @@ object Layout:
   val clusterAnimateMax: com.histmersion.web.ui.Layout.ClusterAnimateMax = com.histmersion.web.ui.Layout.ClusterAnimateMax(1000)
 
   /** A site's badge (#1449): its type's icon, the exclamation mark when the type is unknown. */
-  val siteIconSize: Px = Px(com.histmersion.web.ui.Px.ApplyV(26))
+  val siteIconSize: Px = Px(26)
   val playbackWindowHalf: com.histmersion.web.ui.Layout.PlaybackWindowHalf = com.histmersion.web.ui.Layout.PlaybackWindowHalf(50L)
   val playbackDuration: com.histmersion.web.ui.Layout.PlaybackDuration = com.histmersion.web.ui.Layout.PlaybackDuration(30.0)
 

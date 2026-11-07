@@ -17,37 +17,11 @@ import com.histmersion.api.library.Ingest
   * job tick it off when it succeeds.
   */
 object UploadView:
-  type CheckboxChecked = CheckboxChecked.T
-  object CheckboxChecked extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type FieldLabel = FieldLabel.T
-  object FieldLabel extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type FieldText = FieldText.T
-  object FieldText extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type ItemLabel = ItemLabel.T
-  object ItemLabel extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type Problem = Problem.T
-  object Problem extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type SizeLabel = SizeLabel.T
-  object SizeLabel extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type SuggestedCitekey = SuggestedCitekey.T
-  object SuggestedCitekey extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-
   /** The form, as a person fills it in: text as typed, checked by [[validate]] before it is sent. `forItem` is the
     * acquisition item this upload fulfils (picked in the form, or "Upload…" on the item). It travels with the upload as
     * `acquireItem`, and the server's OCR job ticks it off as `ingested as [[citekey]]` when — and only when — the job
     * succeeds.
     */
-
-  type ItemLabelMax = ItemLabelMax.T
-  object ItemLabelMax extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type PickedItemTyped = PickedItemTyped.T
-  object PickedItemTyped extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type TextFieldHint = TextFieldHint.T
-  object TextFieldHint extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type CheckboxText = CheckboxText.T
-  object CheckboxText extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type SizeLabelBytes = SizeLabelBytes.T
-  object SizeLabelBytes extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
   final case class Draft(
       fileName: Option[Draft.FileName] = None,
@@ -88,9 +62,10 @@ object UploadView:
   /** A citekey suggested from a file name: `Anthony 2007 - The Horse.pdf` → `anthony_2007_the_horse`, or `None` (the
     * reader types one); the server judges it when the upload is sent.
     */
-  def suggestCitekey(fileName: com.histmersion.api.Api.FileName): Option[com.histmersion.web.UploadView.SuggestedCitekey] =
-    val stem = fileName.reverse.dropWhile(_ != '.').drop(1).reverse match
-      case "" => fileName
+  def suggestCitekey(fileName: com.histmersion.api.Api.FileName): Option[com.histmersion.api.library.Citekey] =
+    val name = fileName.value
+    val stem = name.reverse.dropWhile(_ != '.').drop(1).reverse match
+      case "" => name
       case s  => s
     val slug = stem.toLowerCase
       .map(c => if c.isLetterOrDigit && c < 128 then c else '_')
@@ -100,21 +75,21 @@ object UploadView:
       .dropWhile(!_.isLetter)
       .take(60)
       .stripSuffix("_")
-    Option(slug).filter(_.length >= 2)
+    Option(slug).filter(_.length >= 2).map(com.histmersion.api.library.Citekey(_))
 
   /** The parameters to send, or what is wrong, field by field. */
-  def validate(d: Draft): Either[List[(Field, com.histmersion.web.UploadView.Problem)], Ingest.Params] =
+  def validate(d: Draft): Either[List[(Field, String)], Ingest.Params] =
     val file = Option.when(d.fileName.isEmpty)(Field.File -> "choose a file to upload")
     // the key itself is the server's to judge (it answers why it refuses one)
-    val ck = Option.when(d.citekey.trim.isEmpty)(Field.Citekey -> "citekey is required")
-    val year = d.year.trim match
+    val ck = Option.when(d.citekey.value.trim.isEmpty)(Field.Citekey -> "citekey is required")
+    val year = d.year.value.trim match
       case "" => Right(None)
       case y  =>
         y.toIntOption
           .filter(v => v > 0 && v < 3000)
           .toRight(Field.Year -> s"'$y' is not a publication year (e.g. 2007)")
           .map(Some(_))
-    val doi = d.doi.trim match
+    val doi = d.doi.value.trim match
       case ""                                                                   => Right(None)
       case s if s.matches("(?i)^(https?://(dx\\.)?doi\\.org/)?10\\.\\S+/\\S+$") =>
         Right(Some(s.replaceFirst("(?i)^https?://(dx\\.)?doi\\.org/", "")))
@@ -124,15 +99,15 @@ object UploadView:
     else
       Right(
         Ingest.Params(
-          citekey = d.citekey.trim,
-          filename = d.fileName,
-          quality = d.quality,
-          force = d.force,
-          title = Some(d.title.trim).filter(_.nonEmpty),
-          authors = d.authors,
-          year = year.toOption.flatten,
-          doi = doi.toOption.flatten,
-          acquireItem = d.forItem.map(_.id)
+          citekey = com.histmersion.api.library.Citekey(d.citekey.value.trim),
+          filename = d.fileName.map(f => Ingest.Params.Filename(f.value)),
+          quality = Ingest.Params.Quality(d.quality.value),
+          force = Ingest.Params.Force(d.force.value),
+          title = Some(d.title.value.trim).filter(_.nonEmpty).map(com.histmersion.api.library.Title(_)),
+          authors = d.authors.map(a => com.histmersion.api.library.AuthorName(a.value)),
+          year = year.toOption.flatten.map(y => com.histmersion.api.catalogue.Year(y.toLong)),
+          doi = doi.toOption.flatten.map(com.histmersion.api.library.Doi(_)),
+          acquireItem = d.forItem.map(i => Ingest.Params.AcquireItem(i.id.value))
         )
       )
 
@@ -146,31 +121,31 @@ object UploadView:
     // the citekey suggested from the file's name was not typed either: the item's is better
     val suggested = d.fileName.flatMap(suggestCitekey)
     // a field is the reader's own when it is non-blank and not what a pick or the file name put there
-    def keep(get: Draft => com.histmersion.web.UploadView.FieldText): com.histmersion.web.UploadView.FieldText =
+    def keep(get: Draft => String): String =
       val mine = get(d)
-      if mine.trim.isEmpty || prev.exists(p => get(p) == mine) || suggested.contains(mine) then get(from)
+      if mine.trim.isEmpty || prev.exists(p => get(p) == mine) || suggested.exists(_.value == mine) then get(from)
       else mine
     val authors =
       if d.authors.isEmpty || prev.exists(_.authors == d.authors) then from.authors else d.authors
     d.modify(
-      _.citekey).setTo(keep(_.citekey)).modify(_.title).setTo(keep(_.title)).modify(_.authors).setTo(authors).modify(_.year).setTo(keep(_.year)).modify(_.doi).setTo(keep(_.doi)).modify(_.forItem).setTo(Some(item)
+      _.citekey).setTo(Draft.Citekey(keep(_.citekey.value))).modify(_.title).setTo(Draft.Title(keep(_.title.value))).modify(_.authors).setTo(authors).modify(_.year).setTo(Draft.Year(keep(_.year.value))).modify(_.doi).setTo(Draft.Doi(keep(_.doi.value))).modify(_.forItem).setTo(Some(item)
     )
 
   /** The picker's label for an item: its id and the first line of its text, shortened. */
-  def itemLabel(item: Queue.QueueItem, max: com.histmersion.web.UploadView.ItemLabelMax = com.histmersion.web.UploadView.ItemLabelMax(110)): com.histmersion.web.UploadView.ItemLabel =
-    val line = item.text.linesIterator.nextOption().getOrElse("").replace("**", "").trim
-    s"#${item.id} " + (if line.length > max then line.take(max - 1).trim + "…" else line)
+  def itemLabel(item: Queue.QueueItem, max: Int = 110): com.histmersion.api.UiLabels.Text =
+    val line = item.text.value.linesIterator.nextOption().getOrElse("").replace("**", "").trim
+    com.histmersion.api.UiLabels.Text(s"#${item.id} " + (if line.length > max then line.take(max - 1).trim + "…" else line))
 
   /** The item a picker entry names (`#42 …`), among the items offered. */
-  def pickedItem(typed: com.histmersion.web.UploadView.PickedItemTyped, items: List[Queue.QueueItem]): Option[Queue.QueueItem] =
+  def pickedItem(typed: String, items: List[Queue.QueueItem]): Option[Queue.QueueItem] =
     """^\s*#(\d+)\b""".r
       .findFirstMatchIn(typed)
       .flatMap(m => m.group(1).toIntOption)
-      .flatMap(id => items.find(_.id == id))
+      .flatMap(id => items.find(_.id.value == id))
 
   /** The server's refusal, placed next to the field it is about. */
   def fieldOf(f: ApiFailure): Field =
-    val m = f.error.message.toLowerCase
+    val m = f.error.message.value.toLowerCase
     if f.duplicate then Field.File
     else if m.contains("citekey") then Field.Citekey
     else Field.Form
@@ -185,7 +160,7 @@ object UploadView:
   private val progress = Var(Option.empty[Double])
 
   /** The accepted upload, and the acquisition item its job will tick off. */
-  private val accepted = Var(Option.empty[(Ingest.Accepted, Option[Int])])
+  private val accepted = Var(Option.empty[(Ingest.Accepted, Option[Queue.QueueItem.Id])])
   private val dragging = Var(false)
 
   /** The open acquisition items the picker offers; reloaded when the list changes elsewhere. */
@@ -193,7 +168,8 @@ object UploadView:
 
   /** What is typed in the picker, until it names an item. */
   private val pickText = Var("")
-  private val authors = draft.zoomLazy(_.authors)((d, a) => d.modify(_.authors).setTo(a))
+  private val authors =
+    draft.zoomLazy(_.authors.map(a => Chip.Choice(a.value)))((d, a) => d.modify(_.authors).setTo(a.map(c => Draft.Authors(c.value))))
 
   /** Open the window with this form filled in — from an acquisition item's "Upload…". A file chosen for an earlier form
     * is dropped: it belonged to that one.
@@ -212,7 +188,7 @@ object UploadView:
     errors.update(_.filterNot(_._1 == Field.File))
     draft.update(d =>
       d.modify(
-        _.fileName).setTo(Some(f.name)).modify(_.citekey).setTo(if d.citekey.trim.isEmpty then suggestCitekey(f.name).getOrElse("") else d.citekey
+        _.fileName).setTo(Some(Draft.FileName(f.name))).modify(_.citekey).setTo(if d.citekey.value.trim.isEmpty then Draft.Citekey(suggestCitekey(Draft.FileName(f.name)).map(_.value).getOrElse("")) else d.citekey
       )
     )
 
@@ -228,8 +204,8 @@ object UploadView:
             progress.set(None)
             r.fold(
               {
-                case af: ApiFailure if af.unauthorized => errors.set(List(Field.Form -> af.error.message))
-                case af: ApiFailure                    => errors.set(List(fieldOf(af) -> af.error.message))
+                case af: ApiFailure if af.unauthorized => errors.set(List(Field.Form -> af.error.message.value))
+                case af: ApiFailure                    => errors.set(List(fieldOf(af) -> af.error.message.value))
                 case e                                 => errors.set(List(Field.Form -> e.getMessage))
               },
               ok =>
@@ -244,17 +220,17 @@ object UploadView:
           }
         }
 
-  private def errorFor(f: Field): Signal[Option[com.histmersion.web.UploadView.Problem]] =
+  private def errorFor(f: Field): Signal[Option[String]] =
     errors.signal.map(_.collectFirst { case (`f`, m) => m })
 
   private def fieldError(f: Field): Modifier[HtmlElement] =
     child.maybe <-- errorFor(f).map(_.map(m => div(cls := "field-error", role := "alert", m)))
 
   private def textField(
-      label0: com.histmersion.web.UploadView.FieldLabel,
-      get: Draft => com.histmersion.web.UploadView.FieldText,
-      set: (Draft, com.histmersion.web.UploadView.FieldText) => Draft,
-      hint: com.histmersion.web.UploadView.TextFieldHint,
+      label0: String,
+      get: Draft => String,
+      set: (Draft, String) => Draft,
+      hint: String,
       err: Option[Field] = None
   ): HtmlElement =
     div(
@@ -304,7 +280,7 @@ object UploadView:
       ),
       htmlTag("datalist")(
         idAttr := optionsId,
-        children <-- openItems.signal.map(_.map(i => option(value := itemLabel(i))))
+        children <-- openItems.signal.map(_.map(i => option(value := itemLabel(i).value)))
       )
     )
 
@@ -359,13 +335,13 @@ object UploadView:
           )
         ),
       textField(
-        com.histmersion.web.UploadView.FieldLabel("citekey"),
-        _.citekey,
-        (d, v) => d.modify(_.citekey).setTo(v),
-        com.histmersion.web.UploadView.TextFieldHint("e.g. anthony2007_horse"),
+        "citekey",
+        _.citekey.value,
+        (d, v) => d.modify(_.citekey).setTo(Draft.Citekey(v)),
+        "e.g. anthony2007_horse",
         Some(Field.Citekey)
       ),
-      textField(com.histmersion.web.UploadView.FieldLabel("title"), _.title, (d, v) => d.modify(_.title).setTo(v), com.histmersion.web.UploadView.TextFieldHint("optional — read from the document otherwise")),
+      textField("title", _.title.value, (d, v) => d.modify(_.title).setTo(Draft.Title(v)), "optional — read from the document otherwise"),
       div(
         cls := "form-field",
         label("authors"),
@@ -383,16 +359,16 @@ object UploadView:
       ),
       div(
         cls := "form-pair",
-        textField(com.histmersion.web.UploadView.FieldLabel("year"), _.year, (d, v) => d.modify(_.year).setTo(v), com.histmersion.web.UploadView.TextFieldHint("e.g. 2007"), Some(Field.Year)),
-        textField(com.histmersion.web.UploadView.FieldLabel("DOI"), _.doi, (d, v) => d.modify(_.doi).setTo(v), com.histmersion.web.UploadView.TextFieldHint("10.…"), Some(Field.Doi))
+        textField("year", _.year.value, (d, v) => d.modify(_.year).setTo(Draft.Year(v)), "e.g. 2007", Some(Field.Year)),
+        textField("DOI", _.doi.value, (d, v) => d.modify(_.doi).setTo(Draft.Doi(v)), "10.…", Some(Field.Doi))
       ),
       div(
         cls := "form-checks",
-        checkbox(com.histmersion.web.UploadView.CheckboxText("slower, higher-quality OCR"), _.quality, (d, v) => d.modify(_.quality).setTo(v)),
+        checkbox("slower, higher-quality OCR", _.quality.value, (d, v) => d.modify(_.quality).setTo(Draft.Quality(v))),
         checkbox(
-          com.histmersion.web.UploadView.CheckboxText("store it even if the same file is already stored under another citekey"),
-          _.force,
-          (d, v) => d.modify(_.force).setTo(v)
+          "store it even if the same file is already stored under another citekey",
+          _.force.value,
+          (d, v) => d.modify(_.force).setTo(Draft.Force(v))
         )
       ),
       fieldError(Field.Form),
@@ -412,8 +388,8 @@ object UploadView:
         _.map((ok, item) =>
           p(
             cls := "form-ok",
-            s"Uploaded — OCR job ${ok.jobId.take(8)} is ${ok.status} for ",
-            code(ok.citekey),
+            s"Uploaded — OCR job ${ok.jobId.value.take(8)} is ${ok.status} for ",
+            code(ok.citekey.value),
             ". Follow it in ",
             a(href := "#", "background jobs", onClick.preventDefault --> (_ => WindowManager.open(WindowKey.Jobs))),
             ".",
@@ -437,7 +413,7 @@ object UploadView:
       )
     )
 
-  private def checkbox(text: com.histmersion.web.UploadView.CheckboxText, get: Draft => Boolean, set: (Draft, com.histmersion.web.UploadView.CheckboxChecked) => Draft): HtmlElement =
+  private def checkbox(text: String, get: Draft => Boolean, set: (Draft, Boolean) => Draft): HtmlElement =
     label(
       cls := "check",
       input(
@@ -448,5 +424,5 @@ object UploadView:
     )
 
   /** `1.4 MB`, `820 kB`. */
-  def sizeLabel(bytes: com.histmersion.web.UploadView.SizeLabelBytes): com.histmersion.web.UploadView.SizeLabel =
+  def sizeLabel(bytes: Double): String =
     if bytes >= 1e6 then f"${bytes / 1e6}%.1f MB" else f"${math.max(1.0, bytes / 1e3)}%.0f kB"

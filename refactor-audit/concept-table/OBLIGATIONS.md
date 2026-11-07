@@ -203,3 +203,9 @@ Reported by client and server agents; each is wrapped `X(v.value)` at the call s
 ## G2 correction (user, 2026-11-07): raw values only in the companion or at a boundary
 
 The rules let agents put primitives in private helpers, loops, renderers, binary codecs, tool inputs and web components. That was never agreed. A pass after compile: every `.value`, primitive constructor call and plain-typed parameter outside a newtype's companion and outside a boundary file is a finding (mechanical check: the G2 `unwrap` rule extended to src/test helpers and to plain-typed defs whose values come from or go to a newtype). Boundaries move to lifted type classes (Kindlings + Iron, NewtypeCodecs, NewtypeColumns, Tapir codecs, chimney-iron) so they need no hand `.value` either. Known areas: web components (JobsView, LayerToggle, Latest, LatestOnly, ListFilterBar, Fmt, MapLabels, ContextMenu, ModelsView helpers, MobileChrome), MarkdownLint, Vp8l/PmTiles/Png/GeoTiffGrid/Mvt parsers, AgentsTools/McpTools inputs, AgentGenerator/AgentTreeWriter, Pages, the table's 574 server + 19 plugin + client `native` decisions that were not predicates.
+
+## From client wave 5
+
+- G44: ApiClient `All` and `Runs` became plain Boolean (decision 2026-11-06: Boolean parameters keep their types); TimelineView bucketSizeFor/hoverAt/realign take Double; UploadView.validate returns (Field, String).
+- Years in web: MapView and TimelineView spans are (Years.Astronomical, Years.Astronomical); Year(a.value) bridges astronomical to Year without conversion at Fmt.yr, Period, GeoPick.resolve, UiState.from/to, ResultsPaging.span, PeriodMarks, EventMarkers.load: same numbers as master, but now the types claim a conversion that is not done. Settle in the years item.
+- ApiClient wraps slugs, queue names and ids inside because endpoint types are mislabelled (API-endpoint pass).

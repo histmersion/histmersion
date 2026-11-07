@@ -26,11 +26,6 @@ object PlaceGlyph:
   object ZoomLevel extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
   /** Pure: the glyph for a place of `kind` whose GeoJSON geometry type is `geometryType`. */
-  type LabelMarkerLabel = _root_.com.histmersion.api.UiLabels.Text
-  val LabelMarkerLabel: _root_.com.histmersion.api.UiLabels.Text.type = _root_.com.histmersion.api.UiLabels.Text
-  type LabelMarkerHidden = _root_.com.histmersion.web.PlaceGlyph.LabelHidden
-  val LabelMarkerHidden: _root_.com.histmersion.web.PlaceGlyph.LabelHidden.type = _root_.com.histmersion.web.PlaceGlyph.LabelHidden
-
   def of(kind: Place.Summary.Kind, geometryType: com.histmersion.web.PlaceGlyph.GeometryType): PlaceGlyph =
     val point = geometryType.value == "Point" || geometryType.value == "MultiPoint"
     if !point then Area
@@ -67,12 +62,12 @@ object PlaceGlyph:
   def labelMarker(
       lat: com.histmersion.api.Geo.Latitude,
       lon: com.histmersion.api.Geo.Longitude,
-      label: com.histmersion.web.PlaceGlyph.LabelMarkerLabel,
+      label: com.histmersion.api.UiLabels.Text,
       kind: Place.Summary.Kind = Place.Summary.Kind(Place.Kind.Region),
       wrapClass: String = "hd-area-point-wrap",
-      hidden: com.histmersion.web.PlaceGlyph.LabelMarkerHidden = com.histmersion.web.PlaceGlyph.LabelMarkerHidden(false)
+      hidden: LabelHidden = LabelHidden(false)
   ): DomMarker =
-    DomMarker(lat, lon, DomMarker.element(DomMarker.ElementCls(wrapClass), DomMarker.ElementHtml(labelHtml(label, kind, hidden))))
+    DomMarker(lat, lon, DomMarker.element(wrapClass, labelHtml(label, kind, hidden)))
 
   /** Keep the map container's `map-far` class equal to [[far]] of its zoom (the stylesheet hides point-only region
     * labels under it).

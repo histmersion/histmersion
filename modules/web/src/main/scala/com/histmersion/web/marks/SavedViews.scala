@@ -47,7 +47,7 @@ object SavedViews:
       MyItems
         .add(
           current(),
-          Some(name.value.trim).filter(_.nonEmpty).map(MyItems.AddLabel(_)),
+          Some(name.value.trim).filter(_.nonEmpty).map(com.histmersion.api.personal.Bookmark.Label(_)),
           com.histmersion.api.library.Title(name.value.trim)
         )
         .foreach(_ => com.histmersion.web.ui.Flash.say(com.histmersion.web.ui.Flash.Text(s"Saved the view “${name.value.trim}”.")))

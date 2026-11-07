@@ -67,7 +67,7 @@ object GraphPanel:
           .find(_.id == g.root)
           .flatMap(_.title)
           .filter(_.value.trim.nonEmpty)
-          .foreach(t => WindowManager.retitle(WindowKey.Graph(WindowKey.Graph.Citekey(citekey.value)), WindowManager.WinState.Title(s"Citation graph · ${t.value}")))
+          .foreach(t => WindowManager.retitle(WindowKey.Graph(WindowKey.Graph.Citekey(citekey.value)), com.histmersion.api.UiLabels.Text(s"Citation graph · ${t.value}")))
       case scala.util.Failure(e) => state.set(Load.Failed(Load.Failed.Message(e.getMessage)))
     }
     div(

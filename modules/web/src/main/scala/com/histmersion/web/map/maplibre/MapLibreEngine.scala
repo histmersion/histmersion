@@ -44,7 +44,7 @@ object MapLibreEngine extends MapEngine:
             // the probe's context is left to the garbage collector: losing it on purpose makes Firefox warn
             Capabilities(
               webgl = com.histmersion.web.map.Capabilities.Webgl(true),
-              software = Capabilities.isSoftware(renderer),
+              software = Capabilities.Software(Capabilities.isSoftware(renderer)),
               renderer = renderer,
               webgl2 = Capabilities.Webgl2(gl2.isDefined)
             )

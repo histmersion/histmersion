@@ -34,7 +34,7 @@ final class PointSet[D](
   private val items = mutable.LinkedHashMap.empty[PointSet.Key, D]
   // the drawn singles, by point key; the drawn bubbles, by their first point's key and size
   private val singles = mutable.HashMap.empty[PointSet.Key, (DomMarker, MarkerPane)]
-  private val bubbles = mutable.HashMap.empty[PointSet.Key, (DomMarker, Seq[PointSet.Key])]
+  private val bubbles = mutable.HashMap.empty[Clustering.GroupLabel, (DomMarker, Seq[PointSet.Key])]
   // the groups at `level`: each one's points, and its place
   private var groups: Vector[(Vector[PointSet.Key], LatLon)] = Vector.empty
   private var groupOf: collection.Map[PointSet.Key, Int] = Map.empty
@@ -47,7 +47,7 @@ final class PointSet[D](
   private val SliceMs = 6.0
 
   /** How far outside the view (px) a marker still counts as on screen: a box's half and a little more. */
-  private val OnScreenMargin = 40.0
+  private val OnScreenMargin = Clustering.InViewMargin(40.0)
   private var installed = false
   // the view of a zoom whose markers on screen are being made, its moves not started yet
   private var awaitingMoves: Option[(LatLon, MapSurface.Zoom)] = None
@@ -154,10 +154,10 @@ final class PointSet[D](
       val offsets = Spiderfy.offsets(Spiderfy.Count(ds.size), separation)
       val reach = offsets.map((x, y) => math.max(math.abs(x.value), math.abs(y.value))).maxOption.getOrElse(0.0)
       val side = (2 * math.ceil(reach) + 4).toInt
-      val legsEl = DomMarker.element(DomMarker.ElementCls(Spiderfy.Legs), DomMarker.ElementHtml(Spiderfy.legsSvg(offsets, Spiderfy.Side(side)).value))
+      val legsEl = DomMarker.element(Spiderfy.Legs, Spiderfy.legsSvg(offsets, Spiderfy.Side(side)).value)
       val legs = DomMarker(c.lat, c.lon, legsEl, Some((DomMarker.BoxSize(side), DomMarker.BoxSize(side))))
       pane().add(legs)
-      val bubble = bubbles.get(PointSet.Key(s"${ks.head}|${ks.size}")).filter(_._2 == ks).map(_._1)
+      val bubble = bubbles.get(Clustering.GroupLabel(s"${ks.head}|${ks.size}")).filter(_._2 == ks).map(_._1)
       bubble.foreach(_.el.classList.add(Spiderfy.Fanned))
       val members = ds.zip(offsets).map { (k, off) =>
         val m = single(items(k), PointSet.FadeIn(false))
@@ -165,7 +165,7 @@ final class PointSet[D](
         m.el.classList.add(Spiderfy.Member)
         m.el.style.setProperty("--sx", s"${off._1.value}px")
         m.el.style.setProperty("--sy", s"${off._2.value}px")
-        m.setZ(Spiderfy.Z)
+        m.setZ(DomMarker.ZIndex(Spiderfy.Z))
         val p = paneOf(items(k))
         p.add(m)
         k -> (m, p)
@@ -292,7 +292,7 @@ final class PointSet[D](
     groupOf = m
 
   private def draw(
-      wanted: (Set[PointSet.Key], Map[PointSet.Key, Vector[PointSet.Key]]),
+      wanted: (Set[PointSet.Key], Map[Clustering.GroupLabel, Vector[PointSet.Key]]),
       before: Option[Map[PointSet.Key, (ScreenPt.X, ScreenPt.Y)]]
   ): Unit =
     val s = surface()
@@ -318,8 +318,10 @@ final class PointSet[D](
     // hidden, and starts every move once they are all made, a few frames later (making them all in the zoom's
     // last frame held that frame long in a wide window); those in the margin around the view follow
     val fadeIn = before.isEmpty && singles.nonEmpty
-    val todo = (wantSingles.iterator.filterNot(singles.contains).map(k => (k, Vector(k), true)) ++
-      wantBubbles.iterator.filterNot((id, _) => bubbles.contains(id)).map((id, ks) => (id, ks, false))).toVector
+    type Drawn = Either[PointSet.Key, Clustering.GroupLabel]
+    type Todo = (Drawn, Vector[PointSet.Key])
+    val todo: Vector[Todo] = (wantSingles.iterator.filterNot(singles.contains).map(k => (Left(k): Drawn, Vector(k))) ++
+      wantBubbles.iterator.filterNot((id, _) => bubbles.contains(id)).map((id, ks) => (Right(id): Drawn, ks))).toVector
     val (w, h) = s.size
     val c = ScreenPt(ScreenPt.X(w.value / 2), ScreenPt.Y(h.value / 2))
     def dist(ks: Vector[PointSet.Key]): Double =
@@ -332,30 +334,31 @@ final class PointSet[D](
         LatLon(LatLon.Lat(pts.map(_.lat.value).sum / pts.size), LatLon.Lon(pts.map(_.lon.value).sum / pts.size)),
         OnScreenMargin
       )
-    def nearestFirst(v: Vector[(PointSet.Key, Vector[PointSet.Key], Boolean)]) =
+    def nearestFirst(v: Vector[Todo]) =
       if v.size > 32 then v.sortBy(t => dist(t._2)) else v
     val (first, later) = if before.isDefined then todo.partition(t => onScreen(t._2)) else (Vector.empty, todo)
     val queue = mutable.Queue.from(nearestFirst(first) ++ nearestFirst(later))
     // `var`s: the markers on screen still to make before the moves start, and whether they have started
     var firstLeft = first.size
     var started = false
-    def make(one: (PointSet.Key, Vector[PointSet.Key], Boolean)): Unit =
-      val (id, ks, alone) = one
-      val made =
-        if alone then
-          if !singles.contains(id) && items.contains(id) then
-            val m = single(items(id), PointSet.FadeIn(fadeIn))
-            val sp = paneOf(items(id))
-            singles(id) = (m, sp)
+    def make(one: Todo): Unit =
+      val (id, ks) = one
+      val made = id match
+        case Left(key) =>
+          if !singles.contains(key) && items.contains(key) then
+            val m = single(items(key), PointSet.FadeIn(fadeIn))
+            val sp = paneOf(items(key))
+            singles(key) = (m, sp)
             sp.add(m)
             Some(m)
           else None
-        else if !bubbles.contains(id) && ks.forall(items.contains) then
-          val m = bubble(ks.map(items))
-          bubbles(id) = (m, ks)
-          p.add(m)
-          Some(m)
-        else None
+        case Right(label) =>
+          if !bubbles.contains(label) && ks.forall(items.contains) then
+            val m = bubble(ks.map(items))
+            bubbles(label) = (m, ks)
+            p.add(m)
+            Some(m)
+          else None
       made.foreach { m =>
         if !started then m.el.classList.add(ClusterMotion.Pending)
         fresh += ((m, ks))
@@ -415,7 +418,7 @@ final class PointSet[D](
     }
     val (w, h) = surface().size
     def seen(at: (ScreenPt.X, ScreenPt.Y)): Boolean =
-      at._1.value >= -OnScreenMargin && at._2.value >= -OnScreenMargin && at._1.value <= w.value + OnScreenMargin && at._2.value <= h.value + OnScreenMargin
+      at._1.value >= -OnScreenMargin.value && at._2.value >= -OnScreenMargin.value && at._1.value <= w.value + OnScreenMargin.value && at._2.value <= h.value + OnScreenMargin.value
     // a marker merging off screen into a bubble off screen goes at once: nobody sees it fly
     gone.foreach { (m, mp, ks) =>
       ks.headOption.flatMap(drawnOf.get) match
@@ -430,8 +433,8 @@ final class PointSet[D](
     arriving.foreach(ClusterMotion.arrive)
 
 object PointSet:
-  type Key = Key.T
-  object Key extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type Key = Clustering.GroupKey
+  val Key: Clustering.GroupKey.type = Clustering.GroupKey
   type PointCount = PointCount.T
   object PointCount extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type FadeIn = FadeIn.T

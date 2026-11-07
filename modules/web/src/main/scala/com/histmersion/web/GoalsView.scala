@@ -426,7 +426,7 @@ object GoalsView:
       onMountCallback(_ => refresh()),
       ApprovalsView.changed.events --> (_ => refresh()),
       view.signal.changes.collect { case Some(v) if v.goal.title.value.trim.nonEmpty => v.goal.title } --> (t =>
-        WindowManager.retitle(WindowKey.Goal(WindowKey.Goal.Slug(slug.value)), WindowManager.WinState.Title(s"Goal · ${t.value}"))
+        WindowManager.retitle(WindowKey.Goal(WindowKey.Goal.Slug(slug.value)), com.histmersion.api.UiLabels.Text(s"Goal · ${t.value}"))
       ),
       child.maybe <-- failure.signal.map(_.map(m => p(cls := "form-error", role := "alert", m))),
       child.maybe <-- message.signal.map(_.map(m => p(cls := "form-ok", m))),

@@ -214,7 +214,7 @@ object MergeCmd:
           (),
           Cli.Error(Cli.Error.Message("aborted"), exitCode = ExitCode.Usage)
         )
-        job <- c.mergeApply(MergeApplyRequest(u.sha256, hash, res))
+        job <- c.mergeApply(MergeApplyRequest(Bundle.Name(u.sha256.value), hash, res))
         r <- follow(c, job)
         _ = Cli.out.println(MergeMarkdown.applied(r))
         _ <- Either.cond(r.applied, (), Cli.Error(Cli.Error.Message("the merge was not applied (see above)"), exitCode = ExitCode.Refused))
