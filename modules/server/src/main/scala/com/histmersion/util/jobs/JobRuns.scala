@@ -133,7 +133,7 @@ object JobRuns:
     def get(id: Run.Id): Option[JobRunState] = state.get.get(id)
 
     /** Every run, in the order they were made. */
-    def all: List[JobRunState] = state.get.values.toList.sortBy(_.created.value)
+    def all: List[JobRunState] = state.get.values.toList.sortBy[Long](_.created.value)
 
     /** A run's row changed by its owner's own tables (a step recorded): stamped as the database's `updated_at = now()`.
       */
@@ -188,7 +188,7 @@ object JobRuns:
     def due(kind: Job.Kind, paused: RunRow.Status, now: Instant): Vector[Run.Id] =
       mine(kind)
         .filter((_, r) => r.row.status == paused && r.resumeAt.exists(!_.isAfter(now)))
-        .sortBy((_, r) => (r.resumeAt.get, r.created.value))
+        .sortBy[(Instant, Long)]((_, r) => (r.resumeAt.get, r.created.value))
         .map(_._1)
         .toVector
     def pausedWith(
@@ -201,7 +201,7 @@ object JobRuns:
         .filter((_, r) =>
           r.row.status == paused && r.error.exists(_.value.startsWith(prefix.value)) && r.resumeAt.forall(_.isAfter(now))
         )
-        .sortBy((_, r) => (r.updated.value, r.created.value))
+        .sortBy[(Long, Long)]((_, r) => (r.updated.value, r.created.value))
         .map((id, r) => (id, Pipeline.Wire(r.row.pipeline.value), r.row.model, JobRepo.Problem(r.error.fold("")(_.value))))
         .toVector
     def progress(kind: Job.Kind, id: Run.Id, text: JobRow.Progress): Unit =
@@ -225,11 +225,11 @@ object JobRuns:
         queued: RunRow.Status,
         except: List[Run.Id]
     ): (Vector[(Run.Id, Option[RunRow.Origin])], Vector[Run.Id]) =
-      val moving = mine(kind).filter((id, r) => r.row.status == running && !except.contains(id)).sortBy((_, r) => r.created.value)
+      val moving = mine(kind).filter((id, r) => r.row.status == running && !except.contains(id)).sortBy[Long]((_, r) => r.created.value)
       moving.foreach((id, _) =>
         change(kind, id)(x => touched(x.modify(_.row.status).setTo(paused).modify(_.error).setTo(Some(JobRunState.Error(error.value))))): Unit
       )
-      val waiting = mine(kind).filter((id, r) => r.row.status == queued && !except.contains(id)).sortBy((_, r) => r.created.value)
+      val waiting = mine(kind).filter((id, r) => r.row.status == queued && !except.contains(id)).sortBy[Long]((_, r) => r.created.value)
       (moving.map((id, r) => (id, Some(r.row.origin))).toVector, waiting.map(_._1).toVector)
     def resumeAt(kind: Job.Kind, id: Run.Id, paused: RunRow.Status, at: Instant): Boolean =
       get(id).exists(_.row.status == paused) && change(kind, id)(r => touched(r.modify(_.resumeAt).setTo(Some(at))))

@@ -10,26 +10,21 @@ import sttp.tapir.Schema
   */
 final case class AgentGetSourceInput(
     citekey: com.histmersion.domain.library.Citekey,
-    section: Option[AgentGetSourceInput.Section] = None,
-    heading: Option[AgentGetSourceInput.Heading] = None,
-    offset: Option[AgentGetSourceInput.Offset] = None,
-    chars: Option[AgentGetSourceInput.Chars] = None
+    section: Option[com.histmersion.api.library.Source.Section.Wire] = None,
+    heading: Option[com.histmersion.domain.library.sources.SourceService.Heading] = None,
+    offset: Option[com.histmersion.Offset] = None,
+    chars: Option[com.histmersion.domain.library.sources.SourcesControllers.Chars] = None
 ) derives KindlingsCodecAsObject:
-  def sectionOrBody: Option[com.histmersion.domain.library.sources.SourceService.BodyText] =
+  def sectionOrBody: Option[com.histmersion.api.library.Source.Section.Wire] =
     section
-      .map(_.trim)
-      .filter(_.nonEmpty)
-      .orElse(Option.when(offset.isDefined || chars.isDefined || heading.isDefined)(com.histmersion.domain.library.sources.SourceService.BodyText("body")))
+      .map(s => com.histmersion.api.library.Source.Section.Wire(s.value.trim))
+      .filter(_.value.nonEmpty)
+      .orElse(
+        Option.when(offset.isDefined || chars.isDefined || heading.isDefined)(
+          com.histmersion.api.library.Source.Section.Wire(com.histmersion.api.library.Source.Section.Body)
+        )
+      )
 object AgentGetSourceInput:
-
-  type Section = Section.T
-  object Section extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type Heading = Heading.T
-  object Heading extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type Offset = com.histmersion.Offset
-  val Offset: _root_.com.histmersion.Offset.type = _root_.com.histmersion.Offset
-  type Chars = Chars.T
-  object Chars extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
   given Schema[AgentGetSourceInput] = KindlingsSchema
     .derived[AgentGetSourceInput]

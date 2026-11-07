@@ -17,13 +17,10 @@ trait SearchService:
   def count(filter: Filter, scope: PlaceScope): com.histmersion.RowCount
   def unlocated(filter: Filter, scope: PlaceScope): com.histmersion.RowCount
   def selectionCounts(filter: Filter, scope: PlaceScope): Place.Counts
-  def periods(unit: com.histmersion.domain.library.search.SearchService.Unit, filter: Filter, scope: PlaceScope): List[Period.Row]
-  def treeRows(unit: com.histmersion.domain.library.search.SearchService.Unit, filter: Filter, scope: PlaceScope): List[Tree.TreeRow]
+  def periods(unit: com.histmersion.domain.library.search.AggregateRepo.Unit, filter: Filter, scope: PlaceScope): List[Period.Row]
+  def treeRows(unit: com.histmersion.domain.library.search.AggregateRepo.Unit, filter: Filter, scope: PlaceScope): List[Tree.TreeRow]
 
 object SearchService:
-  type Unit = Unit.T
-  object Unit extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-
   def apply(db: Transactor): SearchService = Implementation(db)
 
   final private class Implementation(db: Transactor) extends SearchService:
@@ -33,8 +30,8 @@ object SearchService:
     def unlocated(filter: Filter, scope: PlaceScope): com.histmersion.RowCount = db.read(SearchRepo.unlocated(filter, scope))
     def selectionCounts(filter: Filter, scope: PlaceScope): Place.Counts =
       db.read(SearchRepo.selectionCounts(filter, scope))
-    def periods(unit: com.histmersion.domain.library.search.SearchService.Unit, filter: Filter, scope: PlaceScope): List[Period.Row] =
+    def periods(unit: com.histmersion.domain.library.search.AggregateRepo.Unit, filter: Filter, scope: PlaceScope): List[Period.Row] =
       db.read(AggregateRepo.periods(unit, filter, scope)).toList
-    def treeRows(unit: com.histmersion.domain.library.search.SearchService.Unit, filter: Filter, scope: PlaceScope): List[Tree.TreeRow] =
+    def treeRows(unit: com.histmersion.domain.library.search.AggregateRepo.Unit, filter: Filter, scope: PlaceScope): List[Tree.TreeRow] =
       db.read(AggregateRepo.treeRows(unit, filter, scope)).toList
 

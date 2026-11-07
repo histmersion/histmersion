@@ -28,11 +28,23 @@ final class AcquisitionRoutes(
     AcquireApi.retractionsStatus.serverLogicSuccess[Identity](_ => h.retractionsStatus),
     AcquireApi.followups.serverLogic[Identity](req => h.followups(req)),
     AcquireApi.ingest.serverLogic[Identity](req => h.ingest(req)),
-    AcquireApi.archiveSearch.serverLogic[Identity]((q, rows) => collections.archiveSearch(Caller.Local, q, rows)),
-    AcquireApi.archiveInfo.serverLogic[Identity](id => collections.archiveInfo(Caller.Local, id)),
+    AcquireApi.archiveSearch.serverLogic[Identity]((q, rows) => 
+      collections.archiveSearch(
+        Caller.Local,
+        com.histmersion.domain.library.search.Search.Query(q.value),
+        rows.map(r => com.histmersion.domain.library.collections.CollectionsService.Limit(r.value))
+      )
+    ),
+    AcquireApi.archiveInfo.serverLogic[Identity](id => collections.archiveInfo(Caller.Local, com.histmersion.domain.library.ArchiveId(id.value))),
     AcquireApi.archiveImport.serverLogic[Identity](req => collections.archiveImport(Caller.Local, req)),
-    AcquireApi.calibreGaps.serverLogicSuccess[Identity](limit => gaps.gaps(limit)),
-    AcquireApi.calibreMeta.serverLogic[Identity](ck => gaps.pushMeta(ck)),
+    AcquireApi.calibreGaps.serverLogicSuccess[Identity](limit => gaps.gaps(limit.map(l => com.histmersion.domain.library.collections.CalibreGapControllers.Limit(l.value)))),
+    AcquireApi.calibreMeta.serverLogic[Identity](ck =>
+      com.histmersion.domain.library.Citekey
+        .parse(ck.value)
+        .left
+        .map(p => com.histmersion.api.Write.invalid(com.histmersion.api.Api.Error.Message(p.value)))
+        .flatMap(gaps.pushMeta)
+    ),
     AcquireApi.calibrePushed.serverLogic[Identity](req => gaps.pushed(req)),
     AcquireApi.candidates.serverLogic[Identity]((g, st, limit, offset) => h.candidates(g, st, limit, offset)),
     AcquireApi.sweepCandidates.serverLogic[Identity](req => h.sweepCandidates(req)),

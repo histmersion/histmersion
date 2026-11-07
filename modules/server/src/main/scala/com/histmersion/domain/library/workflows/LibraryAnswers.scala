@@ -20,8 +20,8 @@ object LibraryAnswers:
 
   /** Its step schemas, by name. */
   val all: List[(com.histmersion.domain.library.workflows.LibraryAnswers.Name, ResponseSchema[?])] = List(
-    "classification" -> classification,
-    "findings" -> findings,
-    "notes" -> notes,
-    "ranking" -> ranking
+    Name("classification") -> classification,
+    Name("findings") -> findings,
+    Name("notes") -> notes,
+    Name("ranking") -> ranking
   )

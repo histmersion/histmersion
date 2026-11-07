@@ -34,83 +34,56 @@ import com.histmersion.api.Api
   */
 final class CollectionsControllers(service: CollectionsService, maintenance: WriteGate):
 
-  private def citekey(raw: com.histmersion.domain.library.Citekey): Either[Api.Error, com.histmersion.domain.library.Citekey] = Citekey.parse(raw).left.map(Write.invalid).map(_.value)
+  private def citekey(raw: com.histmersion.api.library.Citekey): Either[Api.Error, com.histmersion.domain.library.Citekey] =
+    Citekey.parse(raw.value).left.map(p => Write.invalid(Write.InvalidMessage(p.value)))
 
   def collections(caller: Caller): Either[Api.Error, List[CollectionInfo]] = Right(service.collections())
-  def collection(caller: Caller, name: com.histmersion.domain.library.collections.CollectionsControllers.CollectionName): Either[Api.Error, CollectionInfo] = service.collection(name)
+  def collection(caller: Caller, name: CollectionsService.CollectionName): Either[Api.Error, CollectionInfo] = service.collection(name)
 
   def search(
       caller: Caller,
-      name: com.histmersion.domain.library.collections.CollectionsControllers.SearchName,
+      name: CollectionsService.CollectionName,
       q: Option[com.histmersion.domain.library.search.Search.Query],
-      limit: Option[com.histmersion.domain.library.collections.CollectionsControllers.Limit],
-      unlinked: com.histmersion.domain.library.collections.CollectionsControllers.SearchUnlinked
+      limit: Option[CollectionsService.Limit],
+      unlinked: CollectionsService.SearchUnlinked
   ): Either[Api.Error, CollectionSearch] = service.search(name, q, limit, unlinked)
 
-  def importItem(caller: Caller, name: com.histmersion.domain.library.collections.CollectionsControllers.ImportItemName, req: CollectionImportRequest): Either[Api.Error, CollectionImported] =
+  def importItem(caller: Caller, name: CollectionsService.CollectionName, req: CollectionImportRequest): Either[Api.Error, CollectionImported] =
     maintenance.guard(com.histmersion.util.data.maintenance.WriteGate.OperationName("collections/import"))(service.importItem(caller, name, req))
 
-  def link(caller: Caller, name: com.histmersion.domain.library.collections.CollectionsControllers.LinkName, req: CollectionLinkRequest): Either[Api.Error, CollectionLinked] =
+  def link(caller: Caller, name: CollectionsService.CollectionName, req: CollectionLinkRequest): Either[Api.Error, CollectionLinked] =
     maintenance.guard(com.histmersion.util.data.maintenance.WriteGate.OperationName("collections/link"))(service.link(caller, name, req))
 
-  def push(caller: Caller, name: com.histmersion.domain.library.collections.CollectionsControllers.PushName, req: CollectionPushRequest): Either[Api.Error, CollectionPushed] =
+  def push(caller: Caller, name: CollectionsService.CollectionName, req: CollectionPushRequest): Either[Api.Error, CollectionPushed] =
     maintenance.guard(com.histmersion.util.data.maintenance.WriteGate.OperationName("collections/push"))(citekey(req.citekey).flatMap(_ => service.push(caller, name, req)))
 
-  def updateOne(caller: Caller, name: com.histmersion.domain.library.collections.CollectionsControllers.UpdateOneName, req: CollectionUpdateOne): Either[Api.Error, CollectionUpdatedOne] =
+  def updateOne(caller: Caller, name: CollectionsService.CollectionName, req: CollectionUpdateOne): Either[Api.Error, CollectionUpdatedOne] =
     maintenance.guard(com.histmersion.util.data.maintenance.WriteGate.OperationName("collections/update"))(citekey(req.citekey).flatMap(service.updateOne(caller, name, _)))
 
   def updateAll(
       caller: Caller,
-      name: com.histmersion.domain.library.collections.CollectionsControllers.UpdateAllName,
+      name: CollectionsService.CollectionName,
       req: CollectionUpdateAll.Request
   ): Either[Api.Error, CollectionUpdateAll] =
-    if req.apply then maintenance.guard(com.histmersion.util.data.maintenance.WriteGate.OperationName("collections/update"))(service.updateAll(caller, name, apply = com.histmersion.domain.library.collections.CollectionsService.UpdateAllApply(true)))
-    else service.updateAll(caller, name, apply = com.histmersion.domain.library.collections.CollectionsService.UpdateAllApply(false))
+    if req.apply.value then maintenance.guard(com.histmersion.util.data.maintenance.WriteGate.OperationName("collections/update"))(service.updateAll(caller, name, apply = CollectionsService.UpdateAllApply(true)))
+    else service.updateAll(caller, name, apply = CollectionsService.UpdateAllApply(false))
 
-  def set(caller: Caller, name: com.histmersion.domain.library.collections.CollectionsControllers.SetName, req: CollectionSetRequest): Either[Api.Error, CollectionSetDone] =
+  def set(caller: Caller, name: CollectionsService.CollectionName, req: CollectionSetRequest): Either[Api.Error, CollectionSetDone] =
     maintenance.guard(com.histmersion.util.data.maintenance.WriteGate.OperationName("collections/set"))(service.set(caller, name, req))
 
-  def audit(caller: Caller, name: com.histmersion.domain.library.collections.CollectionsControllers.AuditName): Either[Api.Error, CollectionAudit] = service.audit(name)
+  def audit(caller: Caller, name: CollectionsService.CollectionName): Either[Api.Error, CollectionAudit] = service.audit(name)
 
-  def gaps(caller: Caller, name: com.histmersion.domain.library.collections.CollectionsControllers.GapsName, limit: Option[com.histmersion.domain.library.collections.CollectionsControllers.Limit]): Either[Api.Error, CollectionGaps] =
+  def gaps(caller: Caller, name: CollectionsService.CollectionName, limit: Option[CollectionsService.Limit]): Either[Api.Error, CollectionGaps] =
     service.gaps(name, limit)
 
-  def sync(caller: Caller, name: com.histmersion.domain.library.collections.CollectionsControllers.SyncName, req: CollectionSync.Request): Either[Api.Error, CollectionSync] =
-    if req.apply then maintenance.guard(com.histmersion.util.data.maintenance.WriteGate.OperationName("collections/sync"))(service.sync(caller, name, req))
+  def sync(caller: Caller, name: CollectionsService.CollectionName, req: CollectionSync.Request): Either[Api.Error, CollectionSync] =
+    if req.apply.value then maintenance.guard(com.histmersion.util.data.maintenance.WriteGate.OperationName("collections/sync"))(service.sync(caller, name, req))
     else service.sync(caller, name, req)
 
-  def archiveSearch(caller: Caller, q: com.histmersion.domain.library.search.Search.Query, rows: Option[com.histmersion.domain.library.collections.CollectionsControllers.Limit]): Either[Api.Error, ArchiveSearchResult] =
+  def archiveSearch(caller: Caller, q: com.histmersion.domain.library.search.Search.Query, rows: Option[CollectionsService.Limit]): Either[Api.Error, ArchiveSearchResult] =
     service.archiveSearch(q, rows)
 
   def archiveInfo(caller: Caller, id: com.histmersion.domain.library.ArchiveId): Either[Api.Error, ArchiveItem] = service.archiveInfo(id)
 
   def archiveImport(caller: Caller, req: ArchiveImportRequest): Either[Api.Error, Ingest.Report] =
     service.archiveImport(caller, req)
-
-object CollectionsControllers:
-  type Limit = Limit.T
-  object Limit extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type CollectionName = CollectionName.T
-  object CollectionName extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type SearchName = SearchName.T
-  object SearchName extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type SearchUnlinked = SearchUnlinked.T
-  object SearchUnlinked extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type ImportItemName = ImportItemName.T
-  object ImportItemName extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type LinkName = LinkName.T
-  object LinkName extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type PushName = PushName.T
-  object PushName extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type UpdateOneName = UpdateOneName.T
-  object UpdateOneName extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type UpdateAllName = UpdateAllName.T
-  object UpdateAllName extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type SetName = SetName.T
-  object SetName extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type AuditName = AuditName.T
-  object AuditName extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type GapsName = GapsName.T
-  object GapsName extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type SyncName = SyncName.T
-  object SyncName extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]

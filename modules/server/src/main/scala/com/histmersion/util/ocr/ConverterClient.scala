@@ -24,7 +24,7 @@ trait ConverterClient:
     * image codec of its own). A converter that cannot make one says so; the picture is then shown from its own bytes.
     */
   def thumbnail(bytes: com.histmersion.util.ocr.ConverterClient.DocumentBytes, filename: com.histmersion.util.ocr.ConverterClient.Filename, maxPx: com.histmersion.util.ocr.Pixels): Either[com.histmersion.util.ocr.ConverterClient.Problem, ConverterClient.Thumb] =
-    Left(Problem("this converter makes no thumbnails"))
+    Left(ConverterClient.Problem("this converter makes no thumbnails"))
 
 object ConverterClient:
   type DocumentBytes = DocumentBytes.T

@@ -163,7 +163,7 @@ object Mvt:
     val keys = fs.filter(f => f.number == 3 && f.wireType == 2).map(string(b, _))
     val values = fs.filter(f => f.number == 4 && f.wireType == 2).map(v => stringValue(b, v))
     val kindKey = keys.indexOf("kind")
-    val geomKinds = rule.geoms.map(_.value)
+    val geomKinds = rule.geoms.map[Int](_.value)
     def kind(feature: Field): Option[Kind] =
       if kindKey < 0 then scala.None
       else

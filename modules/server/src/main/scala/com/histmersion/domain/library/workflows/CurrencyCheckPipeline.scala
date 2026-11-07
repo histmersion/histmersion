@@ -39,8 +39,8 @@ final class CurrencyCheckPipeline(
   val pipeline: Pipeline = Pipeline.CurrencyCheck
   import CurrencyCheckPipeline.*
 
-  def run(ctx: RunCtx): Either[Halt, com.histmersion.domain.library.workflows.CurrencyCheckPipeline.RunResultPart2] =
-    val goal = ctx.run.target
+  def run(ctx: RunCtx): Either[Halt, PipelineDef.RunResultPart2] =
+    val goal = goalOf(ctx)
     for
       targets <- ctx.code[List[Target]](com.histmersion.domain.automation.agents.AgentRepo.StepRecord.Name("load"))(Right(load(goal)))
       assessed <- ctx.code[Assessed]("assess")(Right(assess(ctx, targets)))
@@ -55,28 +55,33 @@ final class CurrencyCheckPipeline(
             s"${followed.queued} paper(s) queued for acquisition (agent run ${ctx.run.id.take(8)})"
         )
       )
-    yield line
+    yield PipelineDef.RunResultPart2(line)
 
   private def load(goal: com.histmersion.domain.automation.Goal.Slug): List[Target] =
-    goalSources(goal, cfg.scheduler.currencySources)
-      .flatMap(ck => site.sources.get(ck, body = false).toOption)
-      .map(s => Target(s.source.citekey, s.source.doi.filter(_.trim.nonEmpty)))
+    goalSources(goal, GoalSweep.Limit(cfg.scheduler.currencySources.value))
+      .map(site.sources.canonical)
+      .flatMap(ck =>
+        site.sources
+          .get(ck, body = com.histmersion.domain.library.sources.SourcesControllers.GetBody(false))
+          .toOption
+          .map(s => Target(ck, s.source.doi.filter(_.value.trim.nonEmpty).flatMap(d => com.histmersion.domain.library.Doi.option(d.value.trim))))
+      )
 
   private def assess(ctx: RunCtx, ts: List[Target]): Assessed =
     val results = ts.filter(_.doi.isDefined).map { t =>
-      upstream().assess(t.citekey, apply = !ctx.dryRun) match
+      upstream().assess(t.citekey, apply = AgentUpstream.AssessApply(!ctx.dryRun)) match
         case Left(m)  => ctx.warn(s"assess ${t.citekey}: $m"); None
         case Right(a) =>
           if a.isRetracted then ctx.warn(s"assess: [[${t.citekey}]] is RETRACTED — ${a.recommendation}")
           if ctx.dryRun then ctx.write(s"assess [[${t.citekey}]] applied: verdict ${a.verdict}", a.asJson)(())(())
           Some((t.citekey, a.isRetracted))
     }
-    Assessed(results.flatten.size, results.flatten.collect { case (ck, true) => ck })
+    Assessed(Assessed.Checked(results.flatten.size), results.flatten.collect { case (ck, true) => ck })
 
   private def followups(ctx: RunCtx, goal: com.histmersion.domain.automation.Goal.Slug, ts: List[Target]): Followed =
     val queued = queuedDois()
     val counts = ts.filter(_.doi.isDefined).map { t =>
-      upstream().followups(t.citekey, None, Some(cfg.scheduler.followupsPerSource)) match
+      upstream().followups(AgentUpstream.FollowupsId(t.citekey.value), None, Some(FollowupsInput.Limit(cfg.scheduler.followupsPerSource.value))) match
         case Left(m)  => ctx.warn(s"followups ${t.citekey}: $m"); (0, 0, 0)
         case Right(r) =>
           val acts = r.followups.map(CurrencyCheckRules.currencyAction(t.citekey, _))
@@ -94,19 +99,16 @@ final class CurrencyCheckPipeline(
           }
           val fetched = acts.collect { case CurrencyAction.Fetch(row) => row }.count { row =>
             row.doi.flatMap(Ident.doi).exists { doi =>
-              queueOnce(ctx, goal, doi, CurrencyCheckRules.acquireText(row, t.citekey, goal), queued) match
+              queueOnce(ctx, goal, doi, com.histmersion.api.automation.Queue.QueueItem.Text(CurrencyCheckRules.acquireText(row, t.citekey, goal).value), queued) match
                 case Left(m)      => ctx.warn(s"followups: $doi not queued — $m"); false
                 case Right(added) => added
             }
           }
           (r.followups.size, proposed, fetched)
     }
-    Followed(counts.map(_._1).sum, counts.map(_._2).sum, counts.map(_._3).sum)
+    Followed(Followed.Citing(counts.map(_._1).sum), Followed.Proposed(counts.map(_._2).sum), Followed.Queued(counts.map(_._3).sum))
 
 object CurrencyCheckPipeline:
-  type RunResultPart2 = RunResultPart2.T
-  object RunResultPart2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-
   final case class Target(citekey: com.histmersion.domain.library.Citekey, doi: Option[com.histmersion.domain.library.Doi]) derives KindlingsCodecAsObject
   final case class Assessed(checked: Assessed.Checked, retracted: List[Assessed.Retracted]) derives KindlingsCodecAsObject
 

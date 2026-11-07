@@ -33,12 +33,14 @@ import sttp.shared.Identity
 final class LibraryAgentTools(site: => LibrarySite, upstream: () => AgentUpstream, caps: => AgentToolsConfig):
   import ToolResultCap.cap
 
-  private def max = caps.resultMaxChars
+  private def max: ToolResultCap.CapMax = ToolResultCap.CapMax(caps.resultMaxChars.value)
 
   /** The body slice an agent reads: what it asked for, or `body-chars`, and never past the result cap. */
-  private def bodyChars(asked: Option[com.histmersion.domain.library.workflows.LibraryAgentTools.BodyChars]): Option[com.histmersion.domain.library.workflows.LibraryAgentTools.BodyChars] =
-    val want = asked.filter(_ > 0).orElse(Option.when(caps.bodyChars > 0)(caps.bodyChars))
-    if max <= 0 then want else Some(math.min(want.getOrElse(max), math.max(500, max - 300)))
+  private def bodyChars(asked: Option[com.histmersion.domain.library.sources.SourcesControllers.Chars]): Option[com.histmersion.domain.library.sources.SourcesControllers.Chars] =
+    val limit = max.value
+    val want = asked.map(_.value).filter(_ > 0).orElse(Option.when(caps.bodyChars.value > 0)(caps.bodyChars.value))
+    val chars = if limit <= 0 then want else Some(math.min(want.getOrElse(limit), math.max(500, limit - 300)))
+    chars.map(com.histmersion.domain.library.sources.SourcesControllers.Chars(_))
 
   private def contribution(n: ToolName)(t: => AgentTool[Identity, ?]): ToolContribution = new ToolContribution:
     val name: ToolName = n
@@ -57,12 +59,12 @@ final class LibraryAgentTools(site: => LibrarySite, upstream: () => AgentUpstrea
           .fold(
             e => s"No source '${in.citekey}': ${e.message}",
             md =>
-              section.map(_.toLowerCase) match
-                case None | Some("all") => ToolResultCap.source(ToolResultCap.compactSource(md), max)
+              section.map(_.value.toLowerCase) match
+                case None | Some("all") => ToolResultCap.source(ToolResultCap.Markdown(ToolResultCap.compactSource(ToolResultCap.Markdown(md.value))), max)
                 case Some("body")       =>
-                  cap(md, max, "read on with get_source section=\"body\" offset=… chars=…; a word: passages")
-                case Some("toc") => cap(md, max, "read one part with get_source heading=…")
-                case _           => cap(ToolResultCap.plainLinks(md), max, "a word in the source: passages")
+                  cap(md.value, max, "read on with get_source section=\"body\" offset=… chars=…; a word: passages")
+                case Some("toc") => cap(md.value, max, "read one part with get_source heading=…")
+                case _           => cap(ToolResultCap.plainLinks(ToolResultCap.Markdown(md.value)), max, "a word in the source: passages")
           )
       }
     },
@@ -74,7 +76,7 @@ final class LibraryAgentTools(site: => LibrarySite, upstream: () => AgentUpstrea
           "accent-insensitive."
       )(in =>
         cap(
-          com.histmersion.domain.library.LibraryTools.passagesMarkdown(site.sources, in),
+          com.histmersion.domain.library.LibraryTools.passagesMarkdown(site.sources, in).value,
           max,
           "ask for fewer passages (`limit`), less `context`, or a more specific query"
         )
@@ -87,7 +89,7 @@ final class LibraryAgentTools(site: => LibrarySite, upstream: () => AgentUpstrea
       ) { in =>
         val f = in.toFilter
         cap(
-          ToolResultCap.plainLinks(SearchMarkdown.briefResults(site.search.sources(f))),
+          ToolResultCap.plainLinks(ToolResultCap.Markdown(SearchMarkdown.briefResults(site.search.sources(f)))),
           max,
           "ask for fewer results (`limit`) or narrow the filters"
         )
@@ -98,9 +100,13 @@ final class LibraryAgentTools(site: => LibrarySite, upstream: () => AgentUpstrea
         LibraryAgentTools.Facets.value,
         "The existing values of one field, with source counts — pick from them instead of inventing new ones."
       ) { in =>
+        val facetsIn = FacetsInput(
+          com.histmersion.api.library.Facet.FieldText(in.field.value),
+          in.prefix.map(p => com.histmersion.api.Api.Facets.Prefix(p.value))
+        )
         site.labels
-          .facets(in.field, in.prefix, FacetsInput(in.field, in.prefix).toFilter)
-          .fold(e => e.message, fs => cap(SearchMarkdown.facets(in.field, fs.toVector), max, "narrow it with `prefix`"))
+          .facets(com.histmersion.domain.library.labels.LabelsControllers.FacetField(in.field.value), in.prefix, facetsIn.toFilter)
+          .fold(e => e.message.value, fs => cap(SearchMarkdown.facets(facetsIn.field, fs.toVector), max, "narrow it with `prefix`"))
       }
     },
     contribution(LibraryAgentTools.Neighbors) {
@@ -110,7 +116,7 @@ final class LibraryAgentTools(site: => LibrarySite, upstream: () => AgentUpstrea
       ) { in =>
         val rows = site.citations.neighbors(in.citekey, in.kinds)
         if rows.isEmpty then s"No edges recorded for ${in.citekey}. An empty result is not evidence of agreement."
-        else cap(SourcesMarkdown.neighbors(in.citekey, rows.toVector), max, "ask for one edge kind (`kinds`)")
+        else cap(SourcesMarkdown.neighbors(com.histmersion.api.library.Citekey(in.citekey.value), rows.toVector), max, "ask for one edge kind (`kinds`)")
       }
     },
     contribution(LibraryAgentTools.Query) {
@@ -119,8 +125,8 @@ final class LibraryAgentTools(site: => LibrarySite, upstream: () => AgentUpstrea
         "One read-only SQL SELECT on the corpus database (Postgres) — e.g. every cited source's status at once."
       ) { in =>
         site.query
-          .run(Query.QueryRequest(in.sql))
-          .fold(e => e.message, r => LibraryAgentTools.queryResult(r, caps.queryMaxRows, max))
+          .run(Query.QueryRequest(Query.QueryRequest.Sql(in.sql.value)))
+          .fold(e => e.message.value, r => LibraryAgentTools.queryResult(r, caps.queryMaxRows, max))
       }
     },
     contribution(LibraryAgentTools.Followups) {
@@ -130,7 +136,7 @@ final class LibraryAgentTools(site: => LibrarySite, upstream: () => AgentUpstrea
           "article may ignore."
       ) { in =>
         upstream()
-          .followups(in.id, in.since, in.limit)
+          .followups(AgentUpstream.FollowupsId(in.id.value), in.since, in.limit)
           .fold(
             m => s"followups unavailable: $m",
             r => cap(AcquireMarkdown.followups(r), max, "ask for fewer papers (`limit`) or recent ones (`since`)")
@@ -140,31 +146,23 @@ final class LibraryAgentTools(site: => LibrarySite, upstream: () => AgentUpstrea
   )
 
 object LibraryAgentTools:
-  type BodyChars = BodyChars.T
-  object BodyChars extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type QueryMax = QueryMax.T
-  object QueryMax extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type QueryMaxRows = QueryMaxRows.T
-  object QueryMaxRows extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type QueryText = QueryText.T
-  object QueryText extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-
   /** A `query` result as an agent sees it: at most `maxRows` rows, marked as cut (the row cap's own flag), then
     * [[cap]]ped like any result.
     */
 
-  def queryResult(r: com.histmersion.api.library.Query.QueryResult, maxRows: com.histmersion.domain.library.workflows.LibraryAgentTools.QueryMaxRows, max: com.histmersion.domain.library.workflows.LibraryAgentTools.QueryMax): com.histmersion.domain.library.workflows.LibraryAgentTools.QueryText =
-    val shown = if maxRows > 0 && r.rows.size > maxRows then
-      r.modify(_.rows).setTo(r.rows.take(maxRows)).modify(_.rowCount).setTo(maxRows).modify(_.truncated).setTo(true)
+  def queryResult(r: com.histmersion.api.library.Query.QueryResult, maxRows: AgentToolsConfig.QueryMaxRows, max: ToolResultCap.CapMax): String =
+    val rows = maxRows.value
+    val shown = if rows > 0 && r.rows.size > rows then
+      r.modify(_.rows).setTo(r.rows.take(rows)).modify(_.rowCount).setTo(com.histmersion.api.library.Query.QueryResult.RowCount(rows)).modify(_.truncated).setTo(com.histmersion.api.library.Query.QueryResult.Truncated(true))
     else r
     val more = if shown.rows.size < r.rows.size then
       s"\n\n_…${r.rows.size - shown.rows.size}${
-          if r.truncated then "+" else ""
+          if r.truncated.value then "+" else ""
         } more rows not shown — select only the rows you need " +
         "(`WHERE citekey IN (…)`, `LIMIT`), never a whole table_"
     else ""
     ToolResultCap.cap(
-      com.histmersion.api.library.Query.markdown(shown) + more,
+      com.histmersion.api.library.Query.markdown(shown).value + more,
       max,
       "select fewer columns or rows (`WHERE … IN (…)`, `LIMIT`)"
     )

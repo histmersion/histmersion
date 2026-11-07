@@ -29,7 +29,7 @@ final class QueuedIngest(ingest: IngestControllers, sources: SourceService, spoo
 
   private val skeleton = SkeletonIngest(sources)
 
-  def enqueue(copy: Option[FetchedCopy], citekey: com.histmersion.domain.library.Citekey, meta: IngestMeta): Either[com.histmersion.domain.library.ingest.QueuedIngest.Problem, IngestOutcome] =
+  def enqueue(copy: Option[FetchedCopy], citekey: com.histmersion.domain.library.Citekey, meta: IngestMeta): Either[IngestJobs.Problem, IngestOutcome] =
     for
       base <- skeleton.enqueue(None, citekey, meta) // metadata + edges, synchronously
       out <- copy match
@@ -38,8 +38,10 @@ final class QueuedIngest(ingest: IngestControllers, sources: SourceService, spoo
             base
               .modify(_.detail)
               .setTo(
-                s"${if base.created then "created" else "updated"} source from metadata — " +
-                  "no file was acquired, so there is nothing to convert"
+                IngestOutcome.Detail(
+                  s"${if base.created.value then "created" else "updated"} source from metadata — " +
+                    "no file was acquired, so there is nothing to convert"
+                )
               )
           )
         case Some(file) => convert(file, citekey, meta, base)
@@ -50,35 +52,33 @@ final class QueuedIngest(ingest: IngestControllers, sources: SourceService, spoo
       citekey: com.histmersion.domain.library.Citekey,
       meta: IngestMeta,
       base: IngestOutcome
-  ): Either[com.histmersion.domain.library.ingest.QueuedIngest.Problem, IngestOutcome] =
+  ): Either[IngestJobs.Problem, IngestOutcome] =
     // a copy gone from the spool reads as an empty upload, which the ingest refuses
-    val upload = spooled(file).getOrElse(Upload.inline(file.key.name, Array.emptyByteArray))
+    val upload = spooled(file).getOrElse(Upload.inline(Upload.Name(file.key.name.value), Upload.Bytes(Array.emptyByteArray)))
     ingest
       .ingest(
         Ingest.Params(
-          citekey = citekey,
-          filename = Some(file.key.name),
-          force = true, // the channel chose the citekey; the duplicate guard is for human uploads
-          title = Some(meta.title).filter(_.nonEmpty),
-          authors = meta.authors,
-          year = meta.year,
-          doi = meta.doi
+          citekey = com.histmersion.api.library.Citekey(citekey.value),
+          filename = Some(Ingest.Params.Filename(file.key.name.value)),
+          force = Ingest.Params.Force(true), // the channel chose the citekey; the duplicate guard is for human uploads
+          title = Some(meta.title).filter(_.value.nonEmpty).map(t => com.histmersion.api.library.Title(t.value)),
+          authors = meta.authors.map(a => com.histmersion.api.library.AuthorName(a.value)),
+          year = meta.year.map(y => com.histmersion.api.catalogue.Year(y.value.toLong)),
+          doi = meta.doi.map(d => com.histmersion.api.library.Doi(d.value))
         ),
         upload
       )
       .left
-      .map(_.message)
+      .map(e => IngestJobs.Problem(e.message.value))
       .map(a =>
         base
           .modify(_.jobId)
-          .setTo(Some(a.jobId))
+          .setTo(Some(com.histmersion.util.jobs.Job.Id.assume(a.jobId.value)))
           .modify(_.detail)
           .setTo(
-            s"${if base.created then "created" else "updated"} source from metadata; " +
-              s"queued OCR job ${a.jobId} for ${file.where} — poll `job_status`"
+            IngestOutcome.Detail(
+              s"${if base.created.value then "created" else "updated"} source from metadata; " +
+                s"queued OCR job ${a.jobId} for ${file.where} — poll `job_status`"
+            )
           )
       )
-
-object QueuedIngest:
-  type Problem = Problem.T
-  object Problem extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]

@@ -107,3 +107,12 @@ Also check: `ModelChains.headroom` returns `Option[LimitState.FreesAt]` for a to
 - BundleControllers.applyUploaded now refuses a malformed plan hash with 400; merges and mergeLedger: a non-positive limit falls back to the default: compare with master. `id.trim` dropped on Job.Id.
 - BundleImporter.apply's backup callback has Either sides swapped (BackupFile on the left, error on the right).
 - BackupService.restore returned elapsed ms as ByteCount, now RestoreDuration: check `Report` text.
+
+## From server, wave 2
+
+- Stored values now dropped or refused instead of carried: CurrencyCheckPipeline.load and IngestQueue.matchAcquisitions drop a stored DOI failing the pattern; StoredOriginals.hashes drops names with a non-Sha256 prefix; SourcesData.Check.report counts an invalid link target as not stored; CandidateSearch.plan drops invalid citekeys and slugs in goal links; CandidateSearch.sweep skips watches whose subject is not a valid DOI. Decide per case, on the stored-data check.
+- New refusals: LibraryRoutes neighbors, graph, contradictions give 400 for an invalid citekey (old: empty result); AcquisitionControllers.candidates 400 for an invalid goal slug; passages 404 for a bad key; CollectionsService.link/import 400 before touching the library; ImportTarget.citekeyFor errors on an invalid generated key; IngestQueue.decode errors on negative assetBytes. Compare with master.
+- `ByteCount.assume` on config assetBytes breaks the assume rule. CalibreGapControllers.pushed passes the trimmed citekey where old code passed raw. Spool.write lost Citekey.parse: type guarantees it, check callers. AcquireRecheckService.attempt: non-Fetch records a Failed check. SourcesData.reindex ignores a malformed slice.after.
+- api Year (Long) narrowed to domain Year (Int) with `.toInt`: domain and api differ.
+- db JobRepo positional types (GetId, ListStatus, ...) and config's private[config] ConfigLayers.Problem block util/jobs and SettingsService.
+- Api Acquire.Checks.RecheckStatus.Job is a job id type carrying a text line. OpenAlexIndex.authors turns author ids into AuthorName.

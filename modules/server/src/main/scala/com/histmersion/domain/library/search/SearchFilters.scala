@@ -15,7 +15,10 @@ final class SearchFilters(places: PlaceService, cfg: () => AppConfig):
     */
   def page(f: Filter): Filter =
     val c = cfg()
-    f.modify(_.limit).setTo(c.limits.page(Some(f.limit), c.limits.search)).modify(_.offset).setTo(f.offset.max(0))
+    f.modify(_.limit)
+      .setTo(Filter.Limit(c.limits.page(Some(com.histmersion.PageSize(f.limit.value)), com.histmersion.PageSize(c.limits.search.value)).value))
+      .modify(_.offset)
+      .setTo(Filter.Offset(f.offset.value.max(0)))
 
   /** How the gazetteer reads this filter's `places` values (plan §1.6a): the ids among them expand to themselves plus
     * their descendants as of `f.period`; the rest fall back to the name ILIKE. Resolved ONCE per request and threaded
@@ -23,4 +26,4 @@ final class SearchFilters(places: PlaceService, cfg: () => AppConfig):
     * at all.
     */
   def scope(f: Filter): PlaceScope =
-    if f.places.isEmpty then PlaceScope.empty else places.scopeFor(f.places, f.period)
+    if f.places.isEmpty then PlaceScope.empty else places.scopeFor(f.places.map(p => PlaceService.ScopeForValues(p.value)), f.period)

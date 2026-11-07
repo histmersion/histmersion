@@ -15,9 +15,9 @@ enum ConverterState:
 
   /** The `converter` line of [[Health]]. */
   def render: com.histmersion.util.ocr.ConverterState.Summary = this match
-    case Ok           => Summary("ok")
-    case Busy(id)     => Summary(s"converter busy: job $id")
-    case Down(reason) => Summary(reason.value)
+    case Ok           => ConverterState.Summary("ok")
+    case Busy(id)     => ConverterState.Summary(s"converter busy: job $id")
+    case Down(reason) => ConverterState.Summary(reason.value)
 
   /** Busy is healthy: the server is doing exactly what it is for. */
   def healthy: Boolean = this match

@@ -13,13 +13,13 @@ import com.histmersion.api.library.Source
   */
 final class CitationsControllers(citations: CitationService, sources: SourceService, maintenance: WriteGate):
 
-  private def canonical(id: com.histmersion.domain.library.Citekey): com.histmersion.domain.library.Citekey = sources.current(id).getOrElse(id)
+  private def canonical(id: com.histmersion.domain.library.Citekey): com.histmersion.domain.library.Citekey = sources.current(SourceService.Id(id.value)).fold(id)(canon => com.histmersion.domain.library.Citekey.assume(canon.value))
 
   def neighbors(citekey: com.histmersion.domain.library.Citekey, kinds: List[com.histmersion.domain.library.Edge.Kind.Wire] = Nil): List[NeighborRow] =
     citations.neighbors(canonical(citekey), kinds)
 
   def graph(citekey: com.histmersion.domain.library.Citekey, depth: Option[com.histmersion.domain.library.citations.CitationService.Depth]): Source.Graph =
-    citations.graph(canonical(citekey), depth.getOrElse(2).max(0).min(4))
+    citations.graph(canonical(citekey), CitationService.Depth(depth.fold(2)(_.value).max(0).min(4)))
 
   def contradictions(citekey: Option[com.histmersion.domain.library.Citekey], since: Option[com.histmersion.domain.library.citations.CitationService.Since]): ContradictionsResult =
     citations.contradictions(citekey.map(canonical), since)
@@ -27,5 +27,5 @@ final class CitationsControllers(citations: CitationService, sources: SourceServ
   /** `POST /api/edges/resolve`: the parked edges whose target now names one stored source, promoted. */
   def resolveEdges: Either[Api.Error, EdgesResolved] =
     maintenance.guard(com.histmersion.util.data.maintenance.WriteGate.OperationName("edges/resolve")):
-      Right(EdgesResolved(sources.resolveEdges(Caller.Local)))
+      Right(EdgesResolved(EdgesResolved.Resolved(sources.resolveEdges(Caller.Local).value)))
 

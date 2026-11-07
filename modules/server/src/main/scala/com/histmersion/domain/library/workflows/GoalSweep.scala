@@ -14,6 +14,7 @@ import com.histmersion.api.automation.Queue.QueueAdd
 import io.circe.syntax.*
 import com.histmersion.api.VocabularyCodecs.given
 import com.histmersion.api.automation.Queue
+import com.histmersion.domain.automation.goals.BGoalLinkRow
 
 /** What both goal sweeps share: the goal's sources, the DOIs already in the acquisition queue, and adding an item there
   * at most once.
@@ -22,17 +23,24 @@ private[workflows] trait GoalSweep:
   protected def site: LibrarySite
   protected def goals: GoalService
 
+  /** The goal a run is about (the run record is our own). */
+  protected def goalOf(ctx: RunCtx): com.histmersion.domain.automation.Goal.Slug =
+    com.histmersion.domain.automation.Goal.Slug.assume(ctx.run.target.value)
+
   /** The sources a goal is about: linked directly, and cited by the articles linked to it. */
-  protected def goalSources(goal: com.histmersion.domain.automation.Goal.Slug, max: com.histmersion.domain.library.workflows.GoalSweep.Limit): List[com.histmersion.domain.library.workflows.GoalSweep.GoalSourcesResult] =
-    val direct = goals.refs(goal, com.histmersion.domain.automation.Goal.LinkKind.Source)
-    val viaArts = goals.refs(goal, com.histmersion.domain.automation.Goal.LinkKind.Article).flatMap(site.citedSources)
-    (direct ++ viaArts).distinct.take(math.max(0, max))
+  protected def goalSources(goal: com.histmersion.domain.automation.Goal.Slug, max: com.histmersion.domain.library.workflows.GoalSweep.Limit): List[com.histmersion.domain.library.Citekey] =
+    val direct = goals.refs(goal, com.histmersion.domain.automation.Goal.LinkKind.Source).map(r => com.histmersion.domain.library.Citekey.assume(r.value))
+    val viaArts = goals
+      .refs(goal, com.histmersion.domain.automation.Goal.LinkKind.Article)
+      .flatMap(r => site.citedSources(com.histmersion.domain.research.Slug.assume(r.value)))
+      .map(c => com.histmersion.domain.library.Citekey.assume(c.value))
+    (direct ++ viaArts).distinct.take(math.max(0, max.value))
 
   /** Every DOI in the acquisition queue (open or done) → its item id. */
-  protected def queuedDois(): Map[com.histmersion.domain.library.Doi, com.histmersion.RowCount] =
+  protected def queuedDois(): Map[com.histmersion.domain.library.Doi, Queue.QueueItem.Id] =
     site.queues
       .list(Queue.Kind.Acquire, QueueScope.All)
-      .flatMap(i => Scheduling.dois(i.text).map(_ -> i.id))
+      .flatMap(i => Scheduling.dois(i.text.value).map(_ -> i.id))
       .toMap
 
   /** Queue `text` for acquisition unless `doi` is already queued — in the run's snapshot of the list, or added since
@@ -43,39 +51,33 @@ private[workflows] trait GoalSweep:
       ctx: RunCtx,
       goal: com.histmersion.domain.automation.Goal.Slug,
       doi: com.histmersion.domain.library.Doi,
-      text: com.histmersion.domain.library.workflows.GoalSweep.QueueOnceText,
-      queued: Map[com.histmersion.domain.library.workflows.GoalSweep.QueueOnceQueuedPart1, com.histmersion.RowCount]
-  ): Either[com.histmersion.domain.library.workflows.GoalSweep.Problem, Boolean] =
+      text: Queue.QueueItem.Text,
+      queued: Map[com.histmersion.domain.library.Doi, Queue.QueueItem.Id]
+  ): Either[String, Boolean] =
     queued.get(doi).orElse(site.queues.naming(Queue.Kind.Acquire, doi).headOption.map(_.id)) match
       case Some(id) =>
         ctx.write(
           s"link queue item $id to goal $goal",
-          io.circe.Json.obj("goal" -> goal.asJson, "item" -> id.asJson, "doi" -> doi.asJson)
-        ) { val _ = goals.link(goal, io.scalaland.chimney.Transformer.derive[com.histmersion.api.automation.Goal.LinkKind, com.histmersion.domain.automation.Goal.LinkKind].transform(LinkKind.QueueItem), id.toString, Some(doi)) }(())
+          io.circe.Json.obj("goal" -> goal.value.asJson, "item" -> id.value.asJson, "doi" -> doi.value.asJson)
+        ) { val _ = goals.link(goal, io.scalaland.chimney.Transformer.derive[com.histmersion.api.automation.Goal.LinkKind, com.histmersion.domain.automation.Goal.LinkKind].transform(LinkKind.QueueItem), BGoalLinkRow.Ref(id.value.toString), Some(BGoalLinkRow.Note(doi.value))) }(())
         Right(false)
       case None =>
-        val item = QueueAdd(text, topic = Some(s"goal $goal"), goal = Some(goal), job = Some(ctx.run.id))
+        val item = QueueAdd(
+          text,
+          topic = Some(Queue.QueueItem.Topic(s"goal $goal")),
+          goal = Some(com.histmersion.api.automation.Goal.Slug(goal.value)),
+          job = Some(com.histmersion.api.jobs.JobInfo.Id(ctx.run.id.value))
+        )
         ctx.write(s"acquire item for $doi, linked to goal $goal", item.asJson)(
-          site.workLists.add(com.histmersion.domain.automation.worklists.WorkListControllers.ListName("acquire"), item).left.map(_.message).map { added =>
-            val _ = goals.link(goal, io.scalaland.chimney.Transformer.derive[com.histmersion.api.automation.Goal.LinkKind, com.histmersion.domain.automation.Goal.LinkKind].transform(LinkKind.QueueItem), added.id.toString, Some(doi))
+          site.workLists.add(com.histmersion.domain.automation.worklists.WorkListControllers.ListName("acquire"), item).left.map(_.message.value).map { added =>
+            val _ = goals.link(goal, io.scalaland.chimney.Transformer.derive[com.histmersion.api.automation.Goal.LinkKind, com.histmersion.domain.automation.Goal.LinkKind].transform(LinkKind.QueueItem), BGoalLinkRow.Ref(added.id.value.toString), Some(BGoalLinkRow.Note(doi.value)))
             true
           }
         )(Right(true))
 
-  protected def log(ctx: RunCtx, line: com.histmersion.domain.library.workflows.GoalSweep.LogLine): Either[com.histmersion.domain.library.workflows.GoalSweep.Problem, com.histmersion.domain.library.workflows.GoalSweep.LogResultPart2] = Pipelines.log(site.workLists, ctx, line)
+  protected def log(ctx: RunCtx, line: String): Either[String, String] =
+    Pipelines.log(site.workLists, ctx, Pipelines.LogLine(line)).left.map(_.value).map(_.value)
 
 object GoalSweep:
   type Limit = Limit.T
   object Limit extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type Problem = Problem.T
-  object Problem extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type GoalSourcesResult = GoalSourcesResult.T
-  object GoalSourcesResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type QueueOnceText = QueueOnceText.T
-  object QueueOnceText extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type QueueOnceQueuedPart1 = QueueOnceQueuedPart1.T
-  object QueueOnceQueuedPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type LogResultPart2 = LogResultPart2.T
-  object LogResultPart2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type LogLine = LogLine.T
-  object LogLine extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]

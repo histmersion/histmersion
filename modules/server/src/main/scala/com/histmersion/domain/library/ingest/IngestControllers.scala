@@ -41,27 +41,32 @@ final class IngestControllers(
   def ingest(p: Ingest.Params, upload: Upload): Either[Api.Error, Ingest.Accepted] =
     maintenance.guard(com.histmersion.util.data.maintenance.WriteGate.OperationName("ingest"))(ingestNow(p, upload))
 
+  private def error(message: String, code: Option[Api.Error.Code] = None): Api.Error =
+    Api.Error(Api.Error.Message(message), code)
+
+  private def invalid(p: Citekey.Problem): Api.Error = Write.invalid(Write.InvalidMessage(p.value))
+
   private def ingestNow(p: Ingest.Params, upload: Upload): Either[Api.Error, Ingest.Accepted] =
     // VALIDATED, not merely non-empty: the citekey becomes part of a stored file's report below.
-    Citekey.parse(p.citekey).left.map(Write.invalid).flatMap { validated =>
-      val citekey: com.histmersion.domain.library.Citekey = validated.value
-      val size = upload.size
+    Citekey.parse(p.citekey.value).left.map(invalid).flatMap { validated =>
+      val citekey: com.histmersion.domain.library.Citekey = validated
+      val size = upload.size.value
       val limits = cfg().limits
-      if size <= 0 then Left(Api.Error("the upload is empty"))
-      else if size > limits.uploadBytes then
-        Left(Api.Error(s"upload is $size bytes, over the ${limits.uploadBytes}-byte limit (limits.upload-bytes)"))
+      if size <= 0 then Left(error("the upload is empty"))
+      else if size > limits.uploadBytes.value then
+        Left(error(s"upload is $size bytes, over the ${limits.uploadBytes}-byte limit (limits.upload-bytes)"))
       else
         for
           _ <- acquireItemOk(p.acquireItem)
           sha <- digest(upload)
           _ <- duplicate(sha, citekey, p.force)
-          stored <- store(upload, sha, p.filename.getOrElse(upload.name))
+          stored <- store(upload, sha, p.filename.fold(upload.name.value)(_.value))
         yield queue.enqueue(
-          Ingest.KindIngest,
+          IngestPending.IngestKind,
           citekey,
           sha,
           stored,
-          p.modify(_.citekey).setTo(citekey).modify(_.filename).setTo(Some(stored.name))
+          p.modify(_.citekey).setTo(com.histmersion.api.library.Citekey(citekey.value)).modify(_.filename).setTo(Some(Ingest.Params.Filename(stored.name.value)))
         )
     }
 
@@ -70,69 +75,79 @@ final class IngestControllers(
     */
   def fromTool(
       citekey: com.histmersion.domain.library.Citekey,
-      path: Option[com.histmersion.domain.library.ingest.IngestControllers.Path],
-      base64: Option[com.histmersion.domain.library.ingest.IngestControllers.Base64],
-      filename: Option[com.histmersion.domain.library.ingest.IngestControllers.Filename],
-      quality: com.histmersion.domain.library.ingest.IngestControllers.FromToolQuality,
-      force: com.histmersion.domain.library.ingest.IngestControllers.FromToolForce,
+      path: Option[ToolFiles.Path],
+      base64: Option[IngestControllers.Base64],
+      filename: Option[Ingest.Params.Filename],
+      quality: Ingest.Params.Quality,
+      force: Ingest.Params.Force,
       title: Option[com.histmersion.domain.Title],
       authors: List[com.histmersion.domain.library.ingest.IngestMeta.Authors],
       year: Option[com.histmersion.Year],
       doi: Option[com.histmersion.domain.library.Doi],
       acquireItem: Option[com.histmersion.domain.library.acquisition.AcquireCheckRow.Item] = None
   ): Either[Api.Error, Ingest.Accepted] =
-    def params(name: com.histmersion.domain.library.ingest.IngestControllers.ParamsName) =
-      Ingest.Params(citekey.trim, Some(name), quality, force, title, authors, year, doi, acquireItem = acquireItem)
-    (path.map(_.trim).filter(_.nonEmpty), base64.map(_.trim).filter(_.nonEmpty)) match
+    def params(name: Ingest.Params.Filename) =
+      Ingest.Params(
+        com.histmersion.api.library.Citekey(citekey.value.trim),
+        Some(name),
+        quality,
+        force,
+        title.map(t => com.histmersion.api.library.Title(t.value)),
+        authors.map(a => com.histmersion.api.library.AuthorName(a.value)),
+        year.map(y => com.histmersion.api.catalogue.Year(y.value.toLong)),
+        doi.map(d => com.histmersion.api.library.Doi(d.value)),
+        acquireItem = acquireItem.map(i => Ingest.Params.AcquireItem(i.value))
+      )
+    (path.map(_.value.trim).filter(_.nonEmpty), base64.map(_.value.trim).filter(_.nonEmpty)) match
       case (Some(p), _) =>
-        tools.file(p).left.map(Api.Error(_)).flatMap {
+        tools.file(ToolFiles.Path(p)).left.map(why => error(why.value)).flatMap {
           case None =>
             Left(
-              Api.Error(
+              error(
                 s"the server cannot see a file at '$p' (paths are resolved INSIDE the " +
                   "server, not on your machine) — use `base64`, or `histmersion ingest <file>` from the host"
               )
             )
-          case Some(f) => ingest(params(filename.getOrElse(f.name)), f)
+          case Some(f) => ingest(params(filename.getOrElse(Ingest.Params.Filename(f.name.value))), f)
         }
       case (None, Some(b64)) =>
         scala.util
           .Try(java.util.Base64.getDecoder.decode(b64))
           .toEither
           .left
-          .map(e => Api.Error(s"base64 payload is not decodable: ${e.getMessage}"))
+          .map(e => error(s"base64 payload is not decodable: ${e.getMessage}"))
           .flatMap { raw =>
-            val limit = cfg().limits.inlineBytes
+            val limit = cfg().limits.inlineBytes.value
             if raw.length > limit then
               Left(
-                Api.Error(
+                error(
                   s"payload is ${raw.length} bytes, over the $limit-byte " +
                     "limit (limits.inline-bytes) — pass `path` instead, or upload with `histmersion ingest`"
                 )
               )
             else
-              val name = AssetLinks.safeName(filename.getOrElse("upload.pdf"))
-              ingest(params(name), Upload.inline(name, raw))
+              val name = AssetLinks.safeName(filename.fold("upload.pdf")(_.value))
+              ingest(params(Ingest.Params.Filename(name.value)), Upload.inline(Upload.Name(name.value), Upload.Bytes(raw)))
           }
       case (None, None) =>
-        Left(Api.Error("give either `path` (a file the SERVER can see) or `base64` (the document itself)"))
+        Left(error("give either `path` (a file the SERVER can see) or `base64` (the document itself)"))
 
   /** `POST /api/sources/{ck}/reocr` — convert the stored original again (a scan first read on the fast path, re-run
     * under docling with `quality`).
     */
-  def reocr(citekey: com.histmersion.domain.library.Citekey, quality: com.histmersion.domain.library.ingest.IngestControllers.ReocrQuality): Either[Api.Error, Ingest.Accepted] =
+  def reocr(citekey: com.histmersion.domain.library.Citekey, quality: Ingest.Params.Quality): Either[Api.Error, Ingest.Accepted] =
     maintenance.guard(com.histmersion.util.data.maintenance.WriteGate.OperationName("reocr"))(
-      Citekey.parse(citekey).left.map(Write.invalid).flatMap(_ => reocrValid(citekey, quality))
+      Citekey.parse(citekey.value).left.map(invalid).flatMap(_ => reocrValid(citekey, quality))
     )
 
-  private def reocrValid(citekey: com.histmersion.domain.library.Citekey, quality: com.histmersion.domain.library.ingest.IngestControllers.ReocrValidQuality): Either[Api.Error, Ingest.Accepted] =
+  private def reocrValid(citekey: com.histmersion.domain.library.Citekey, quality: Ingest.Params.Quality): Either[Api.Error, Ingest.Accepted] =
     sources.load(citekey) match
-      case None    => Left(Write.notFound(citekey))
+      case None    => Left(Write.notFound(com.histmersion.api.library.Citekey(citekey.value)))
       case Some(_) =>
         sources.original(citekey).flatMap(sha => storedFor(sha).map(sha -> _)) match
           case None =>
             Left(
-              Api.Error(
+              error(
                 s"no original stored for '$citekey' — the server keeps uploads in " +
                   s"${cfg().converter.spoolDir}; re-run `histmersion ingest <file> --citekey $citekey --force`"
               )
@@ -140,32 +155,32 @@ final class IngestControllers(
           case Some((sha, file)) =>
             Right(
               queue.enqueue(
-                Ingest.KindReocr,
+                IngestPending.ReocrKind,
                 citekey,
                 sha,
                 file,
-                Ingest.Params(citekey, Some(file.name), quality = quality)
+                Ingest.Params(com.histmersion.api.library.Citekey(citekey.value), Some(Ingest.Params.Filename(file.name.value)), quality = quality)
               )
             )
 
   /** `GET /api/sources/{ck}/original` — the stored original and its download name. Read-only, so no maintenance guard;
     * 404 when the source or its stored file is missing.
     */
-  def original(citekey: com.histmersion.domain.library.Citekey): Either[Api.Error, (Blob, com.histmersion.domain.library.ingest.IngestControllers.OriginalResultPart2Part2)] =
-    Citekey.parse(citekey).left.map(Write.invalid).flatMap { _ =>
+  def original(citekey: com.histmersion.domain.library.Citekey): Either[Api.Error, (Blob, Ingest.Disposition)] =
+    Citekey.parse(citekey.value).left.map(invalid).flatMap { _ =>
       sources.load(citekey) match
-        case None    => Left(Write.notFound(citekey))
+        case None    => Left(Write.notFound(com.histmersion.api.library.Citekey(citekey.value)))
         case Some(s) =>
-          sources.original(s.citekey).flatMap(storedFor).flatMap(originals().get) match
+          sources.original(citekey).flatMap(storedFor).flatMap(originals().get) match
             case None =>
               Left(
-                Api.Error(
+                error(
                   s"no original stored for '${s.citekey}' — the server keeps uploads in " +
                     s"${cfg().converter.spoolDir}; pass the file yourself (--file)",
-                  Some(Write.CodeNotFound)
+                  Some(Api.Error.Code(Write.CodeNotFound))
                 )
               )
-            case Some(file) => Right(file -> Ingest.originalDisposition(s.citekey, file.key.name))
+            case Some(file) => Right(file -> Ingest.originalDisposition(s.citekey, Ingest.StoredName(file.key.name.value)))
     }
 
   // ── the acquisition item ───────────────────────────────────────────────────────────────────
@@ -173,20 +188,22 @@ final class IngestControllers(
   /** Refuse an upload that names an item it cannot fulfil — BEFORE the file is stored and a long OCR is started for
     * nothing.
     */
-  private def acquireItemOk(item: Option[com.histmersion.domain.library.acquisition.AcquireCheckRow.Item]): Either[Api.Error, Unit] =
-    item.fold(Right(()))(id => Queue.fulfillable(id, queues.get(QueueItemId(id))).map(_ => ()).left.map(Api.Error(_)))
+  private def acquireItemOk(item: Option[Ingest.Params.AcquireItem]): Either[Api.Error, Unit] =
+    item.fold(Right(()))(id =>
+      Queue.fulfillable(Queue.QueueItem.Id(id.value), queues.get(QueueItemId(id.value))).map(_ => ()).left.map(p => error(p.value))
+    )
 
   // ── the originals' store ───────────────────────────────────────────────────────────────────
 
   /** `<sha256>.<ext>` — content-addressed, so the same file uploaded twice is stored once and `reocr` can find the
     * original from `sources.sha256` alone.
     */
-  private def store(upload: Upload, sha: com.histmersion.Sha256, filename: com.histmersion.domain.library.ingest.IngestControllers.Filename): Either[Api.Error, Store.Key] =
-    val ext = AssetLinks.safeName(filename).reverse.takeWhile(_ != '.').reverse match
+  private def store(upload: Upload, sha: com.histmersion.Sha256, filename: String): Either[Api.Error, Store.Key] =
+    val ext = AssetLinks.safeName(filename).value.reverse.takeWhile(_ != '.').reverse match
       case e if e.nonEmpty && e.length <= 8 && e.forall(_.isLetterOrDigit) => e.toLowerCase
       case _                                                               => "bin"
-    val key = Store.Key.applyUnsafe(s"$sha.$ext")
-    def failed(why: com.histmersion.domain.library.ingest.IngestControllers.Problem) = Api.Error(s"cannot spool the upload into ${cfg().converter.spoolDir}: $why")
+    val key = Store.Key.applyUnsafe(s"${sha.value}.$ext")
+    def failed(why: String) = error(s"cannot spool the upload into ${cfg().converter.spoolDir}: $why")
     val store = originals()
     if store.exists(key) then Right(key)
     else
@@ -198,17 +215,17 @@ final class IngestControllers(
               .Try(upload.bytes.read(in => Using.resource(r.output())(out => in.transferTo(out))))
               .toEither
               .left
-              .map(e => com.histmersion.util.storage.Store.Error.Failed(e.getMessage))
+              .map(e => com.histmersion.util.storage.Store.Error.Failed(com.histmersion.util.storage.Store.Error.Failed.Reason(e.getMessage)))
               .flatMap(_ => r.commit())
           }
         }
         .left
-        .map(e => failed(e.message))
+        .map(e => failed(e.message.value))
         .map(_ => key)
 
   /** The stored original of content hash `sha`: `<sha>.<ext>`, if it is there. */
   private def storedFor(sha: com.histmersion.Sha256): Option[Store.Key] =
-    originals().names().find(_.startsWith(sha + ".")).map(Store.Key.applyUnsafe)
+    originals().names().find(_.value.startsWith(sha.value + ".")).map(n => Store.Key.applyUnsafe(n.value))
 
   private def digest(upload: Upload): Either[Api.Error, com.histmersion.Sha256] =
     scala.util
@@ -224,21 +241,21 @@ final class IngestControllers(
               loop()
           loop()
         }
-        md.digest().map(b => f"${b & 0xff}%02x").mkString
+        com.histmersion.Sha256.applyUnsafe(md.digest().map(b => f"${b & 0xff}%02x").mkString)
       }
       .toEither
       .left
-      .map(e => Api.Error(s"cannot read the upload: ${e.getMessage}"))
+      .map(e => error(s"cannot read the upload: ${e.getMessage}"))
 
   /** 409 unless `force`: the same bytes are already stored under another citekey. */
-  private def duplicate(sha: com.histmersion.Sha256, citekey: com.histmersion.domain.library.Citekey, force: com.histmersion.domain.library.ingest.IngestControllers.DuplicateForce): Either[Api.Error, Unit] =
+  private def duplicate(sha: com.histmersion.Sha256, citekey: com.histmersion.domain.library.Citekey, force: Ingest.Params.Force): Either[Api.Error, Unit] =
     sources.holderOf(sha) match
-      case Some(other) if other != citekey && !force =>
+      case Some(other) if other != citekey && !force.value =>
         Left(
-          Api.Error(
-            s"this file is already stored as '$other' (sha256 ${sha.take(12)}…) — " +
+          error(
+            s"this file is already stored as '$other' (sha256 ${sha.value.take(12)}…) — " +
               "pass force to ingest it again under a different citekey",
-            Some(Ingest.CodeConflict)
+            Some(Api.Error.Code(Ingest.CodeConflict))
           )
         )
       case _ => Right(())
@@ -246,24 +263,3 @@ final class IngestControllers(
 object IngestControllers:
   type Base64 = Base64.T
   object Base64 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type Filename = Filename.T
-  object Filename extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type ParamsName = ParamsName.T
-  object ParamsName extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type Path = Path.T
-  object Path extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type Problem = Problem.T
-  object Problem extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-
-  type FromToolQuality = FromToolQuality.T
-  object FromToolQuality extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type FromToolForce = FromToolForce.T
-  object FromToolForce extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type ReocrQuality = ReocrQuality.T
-  object ReocrQuality extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type ReocrValidQuality = ReocrValidQuality.T
-  object ReocrValidQuality extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type OriginalResultPart2Part2 = OriginalResultPart2Part2.T
-  object OriginalResultPart2Part2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type DuplicateForce = DuplicateForce.T
-  object DuplicateForce extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]

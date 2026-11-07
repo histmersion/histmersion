@@ -880,7 +880,7 @@ final class BasemapService(
         for x <- x0.value to x1.value; y <- y0.value to y1.value
         yield (PmTiles.tileId(PmTiles.Zoom(z), PmTiles.TileColumn(x), PmTiles.TileRow(y)), (z, x, y))
       }
-      .sortBy(_._1.value)
+      .sortBy[Long](_._1.value)
     val ids = tiles.map(_._1)
     val each = 80L * 1024 // a tile, about (measured: 2026-10-20)
     if a.dryRun then

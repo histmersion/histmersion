@@ -23,7 +23,7 @@ final case class Bookmark(
 ):
   /** Its name, its item's title and its item's key hold every word. */
   def matches(words: SearchWords): Boolean =
-    words.matches(label.fold("")(_.value), com.histmersion.api.library.Title(title.value), target.itemRef.fold("")(_.key.value))
+    words.matches(label.fold("")(_.value), title.value, target.itemRef.fold("")(_.key.value))
 
   def wire: WireBookmark = WireBookmark(id, target.wire, com.histmersion.api.library.Title(title.value), label, WireBookmark.CreatedAt(createdAt.iso.value), WireBookmark.UpdatedAt(updatedAt.iso.value))
 

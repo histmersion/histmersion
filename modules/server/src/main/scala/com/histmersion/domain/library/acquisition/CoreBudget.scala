@@ -2,6 +2,7 @@ package com.histmersion.domain.library.acquisition
 
 import com.histmersion.config.CoreServiceConfig
 import com.histmersion.domain.CoreQuota
+import com.histmersion.pluginhost.HostServices
 
 import java.time.Instant
 import java.util.concurrent.atomic.AtomicReference
@@ -12,7 +13,7 @@ import scala.util.control.NonFatal
   * reload does not reset it, and a restart reads it back from the store it was given ([[persistTo]]). `clock` and
   * `sleep` are parameters so a test does not wait.
   */
-final class CoreBudget(clock: () => Instant, sleep: CoreBudget.SleepArg1 => Unit = ms => Thread.sleep(ms)):
+final class CoreBudget(clock: () => Instant, sleep: CoreQuota.Grant.WaitMs => Unit = ms => Thread.sleep(ms.value)):
 
   private val lock = Object()
   private val current = AtomicReference(CoreQuota.State.fresh(CoreQuota.day(clock())))
@@ -30,12 +31,12 @@ final class CoreBudget(clock: () => Instant, sleep: CoreBudget.SleepArg1 => Unit
     */
   def persistTo(s: CoreQuotaStore): Unit = lock.synchronized {
     val now = clock()
-    val saved = attempt(com.histmersion.domain.library.acquisition.CoreBudget.AttemptWhat("read"))(s.load()).flatten.map(CoreQuota.onDay(_, now))
+    val saved = attempt("read")(s.load()).flatten.map(CoreQuota.onDay(_, now))
     val mine = CoreQuota.onDay(current.get, now)
     val merged = saved.fold(mine) { o =>
       mine.copy(
-        lookupTokens = mine.lookupTokens.max(o.lookupTokens),
-        searchTokens = mine.searchTokens.max(o.searchTokens),
+        lookupTokens = CoreQuota.State.LookupTokens(mine.lookupTokens.value.max(o.lookupTokens.value)),
+        searchTokens = CoreQuota.State.SearchTokens(mine.searchTokens.value.max(o.searchTokens.value)),
         block = (mine.block.toList ++ o.block.toList).maxByOption(_.until.toEpochMilli),
         window = mine.window.orElse(o.window)
       )
@@ -43,7 +44,7 @@ final class CoreBudget(clock: () => Instant, sleep: CoreBudget.SleepArg1 => Unit
     current.set(merged)
     store.set(Some(s))
     // nothing to keep until CORE was first asked: `about` shows the budget from then on
-    if saved.isDefined || merged.spent > 0 || merged.block.isDefined then save(merged)
+    if saved.isDefined || merged.spent.value > 0 || merged.block.isDefined then save(merged)
   }
 
   /** Why a call for `purpose` would not be made now — CORE asked to wait, or the day's budget is spent; `None` when it
@@ -67,10 +68,10 @@ final class CoreBudget(clock: () => Instant, sleep: CoreBudget.SleepArg1 => Unit
         g.waitMs
       }
     }
-    granted.map(waitMs => if waitMs > 0 then sleep(waitMs))
+    granted.map(waitMs => if waitMs.value > 0 then sleep(waitMs))
 
   /** What CORE answered a call taken: a 429 and its rate-limit headers (names in lower case) block or pace it. */
-  def observe(limits: CoreQuota.Limits, code: com.histmersion.domain.library.acquisition.CoreBudget.ObserveCode, headers: Map[com.histmersion.domain.library.acquisition.CoreBudget.ObserveHeadersPart1, com.histmersion.domain.library.acquisition.CoreBudget.ObserveHeadersPart2]): Unit =
+  def observe(limits: CoreQuota.Limits, code: CoreQuota.StatusCode, headers: Map[CoreQuota.HeaderName, CoreQuota.HeaderValue]): Unit =
     lock.synchronized {
       val next = CoreQuota.observe(current.get, limits, code, headers, clock())
       current.set(next)
@@ -78,9 +79,9 @@ final class CoreBudget(clock: () => Instant, sleep: CoreBudget.SleepArg1 => Unit
     }
 
   private def save(s: CoreQuota.State): Unit =
-    store.get.foreach(st => attempt(com.histmersion.domain.library.acquisition.CoreBudget.AttemptWhat("write"))(st.save(s)))
+    store.get.foreach(st => attempt("write")(st.save(s)))
 
-  private def attempt[A](what: com.histmersion.domain.library.acquisition.CoreBudget.AttemptWhat)(a: => A): Option[A] =
+  private def attempt[A](what: String)(a: => A): Option[A] =
     try Some(a)
     catch
       case NonFatal(e) =>
@@ -89,34 +90,20 @@ final class CoreBudget(clock: () => Instant, sleep: CoreBudget.SleepArg1 => Unit
 
 object CoreBudget:
   /** Its row in `upstream_quota`, and the upstream's name plugins ask the host's quota by. */
-  type SleepArg1 = SleepArg1.T
-  object SleepArg1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
-
-  type ObserveCode = ObserveCode.T
-  object ObserveCode extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type ObserveHeadersPart1 = ObserveHeadersPart1.T
-  object ObserveHeadersPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type ObserveHeadersPart2 = ObserveHeadersPart2.T
-  object ObserveHeadersPart2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type AttemptWhat = AttemptWhat.T
-  object AttemptWhat extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type QuotasResultArg1 = QuotasResultArg1.T
-  object QuotasResultArg1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-
-  val Upstream = "core"
+  val Upstream = UpstreamQuotaService.Upstream("core")
 
   /** The budgets the host lends plugins by upstream name: CORE's, `core` under `limits`; any other is unlimited. */
-  def quotas(core: CoreBudget, limits: CoreQuota.Limits): com.histmersion.domain.library.acquisition.CoreBudget.QuotasResultArg1 => com.histmersion.plugin.UpstreamQuota =
-    name => if name == Upstream then core.lend(limits) else com.histmersion.plugin.UpstreamQuota.Unlimited
+  def quotas(core: CoreBudget, limits: CoreQuota.Limits): HostServices.Quotas =
+    name => if name == Upstream.value then core.lend(limits) else com.histmersion.plugin.UpstreamQuota.Unlimited
 
   /** The limits `acquire.core.*` set. */
   def limits(c: CoreServiceConfig): CoreQuota.Limits =
     CoreQuota.Limits(
-      c.perMinute.value,
-      c.dailyTokens.value,
-      c.searchDailyTokens.value,
-      c.lookupCost.value,
-      c.searchCost.value,
-      c.exhaustedPauseSeconds.value,
-      c.maxWaitSeconds.value
+      CoreQuota.Limits.PerMinute(c.perMinute.value),
+      CoreQuota.Limits.DailyTokens(c.dailyTokens.value),
+      CoreQuota.Limits.SearchDailyTokens(c.searchDailyTokens.value),
+      CoreQuota.Limits.LookupCost(c.lookupCost.value),
+      CoreQuota.Limits.SearchCost(c.searchCost.value),
+      CoreQuota.Limits.ExhaustedPauseSeconds(c.exhaustedPauseSeconds.value),
+      CoreQuota.Limits.MaxWaitSeconds(c.maxWaitSeconds.value)
     )

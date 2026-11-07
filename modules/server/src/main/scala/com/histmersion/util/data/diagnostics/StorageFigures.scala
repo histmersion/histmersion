@@ -116,7 +116,7 @@ final class StorageFigures(registry: DataContributions):
         files = (Option.when(exists)(results.map(_.files.value).sum)).map(com.histmersion.api.maintenance.Storage.FileCount.apply),
         exists = StorageReports.Entry.Exists(exists),
         partial = StorageReports.Entry.Partial(results.exists(_.partial.value)),
-        detail = (spot.detail.toList ++ extra.toList).map(_.value).reduceOption(_ + " · " + _).map(StorageReports.Entry.Detail.apply),
+        detail = (spot.detail.toList ++ extra.toList).map[String](_.value).reduceOption(_ + " · " + _).map(StorageReports.Entry.Detail.apply),
         shrink = StorageReports.Advice
           .shrink(StorageReports.Entry.Key(spot.key.value), StorageReports.Advice.Keep(settings.backups.keep.value))
           .map(h => StorageReports.Entry.Shrink(h.value)),
@@ -180,7 +180,7 @@ final class StorageFigures(registry: DataContributions):
       tables = tables,
       volumes = volumes,
       backups = usage,
-      lowFreeBytes = com.histmersion.api.ByteCount(settings.storage.lowFreeBytes),
+      lowFreeBytes = com.histmersion.api.ByteCount(settings.storage.lowFreeBytes.value),
       problems = problems.result() ++
         Option
           .when(budget.exhausted)(

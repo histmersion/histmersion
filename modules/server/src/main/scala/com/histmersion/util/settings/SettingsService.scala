@@ -172,20 +172,20 @@ object SettingsService:
                       Left(SettingError.Invalid(SettingError.Invalid.Why(e.getMessage)))
                   )
                 _ <- ConfigTextEdit.verify(parsed, here, edited, ConfigTextEdit.intended(edits))
-                _ <- AppConfig.loadWithUserText(env, edited.text).left.map(e => SettingError.Invalid(SettingError.Invalid.Why(e.value)))
-              yield text.set(Some(ConfigFileState.Text(edited.text)))
+                _ <- AppConfig.loadWithUserText(env, edited.text.value).left.map(e => SettingError.Invalid(SettingError.Invalid.Why(e.value)))
+              yield text.set(Some(edited.text))
         yield
-          if edited.changed.isEmpty then WriteOutcome.of(path, schema, env, current.version, edited, None, notes)
+          if edited.changed.isEmpty then WriteOutcome.of(SettingsFile.Shown(path.value), schema, env, current.version, edited, None, notes)
           else
             WriteOutcome.of(
-              path,
+              SettingsFile.Shown(path.value),
               schema,
               env,
-              FileVersion.of(Some(ConfigFileState.Text(edited.text))),
+              FileVersion.of(Some(edited.text)),
               edited,
-              current.text.map(_ => s"$path.bak"),
+              current.text.map(_ => WriteOutcome.Backup(s"${path.value}.bak")),
               notes,
-              created = current.text.isEmpty
+              created = WriteOutcome.Created(current.text.isEmpty)
             )
       }
 

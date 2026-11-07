@@ -13,23 +13,21 @@ import java.time.LocalDate
 /** Crossref: what was DEPOSITED since (`from-created-date`), newest first — a watermark on deposits. */
 final class CrossrefIndex(cfg: AcquireConfig, http: Http) extends ScholarlyIndex:
   val name = com.histmersion.domain.library.acquisition.ScholarlyIndex.Name("crossref")
-  def search(query: com.histmersion.domain.library.search.Search.Query, since: LocalDate, limit: com.histmersion.domain.library.acquisition.CrossrefIndex.SearchLimit) =
+  def search(query: com.histmersion.domain.library.search.Search.Query, since: LocalDate, limit: ScholarlyIndex.Limit) =
     http
       .json(
         Url(
-          cfg.crossref.url,
+          Http.Url(cfg.crossref.url.value),
           com.histmersion.upstreams.http.Url.UrlPath("/works"),
-          "query" -> query,
-          "rows" -> math.max(1, math.min(limit, 50)).toString,
+          "query" -> query.value,
+          "rows" -> math.max(1, math.min(limit.value, 50)).toString,
           "sort" -> "created",
           "order" -> "desc",
           "filter" -> s"from-created-date:$since,type:journal-article,type:book,type:book-chapter,type:monograph,type:edited-book",
           "select" -> "DOI,title,author,issued,type,container-title,is-referenced-by-count,abstract",
-          "mailto" -> cfg.mailto
+          "mailto" -> cfg.mailto.value
         )
       )
+      .left
+      .map(p => ScholarlyIndex.Problem(p.value))
       .map(AcquireParse.crossrefWorks(_).map(_.wire))
-
-object CrossrefIndex:
-  type SearchLimit = SearchLimit.T
-  object SearchLimit extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]

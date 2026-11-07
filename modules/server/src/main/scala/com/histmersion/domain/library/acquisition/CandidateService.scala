@@ -19,7 +19,7 @@ trait CandidateService:
 
   /** A watch read: its new watermark (none on a failed read, which keeps the old one), what it found, or why it failed.
     */
-  def recordWatch(watch: CandidateWatch, watermark: Option[com.histmersion.domain.library.acquisition.CandidateService.RecordWatchWatermark], error: Option[com.histmersion.domain.library.acquisition.CandidateService.Problem], found: com.histmersion.RowCount): Unit
+  def recordWatch(watch: CandidateWatch, watermark: Option[CandidateWatch.Watermark], error: Option[CandidateWatch.LastError], found: CandidateWatch.LastFound): Unit
 
   /** Store a candidate: a new one (`true`), or one found again. */
   def upsert(candidate: Source.Candidate): Boolean
@@ -28,64 +28,53 @@ trait CandidateService:
   def dois(goal: com.histmersion.domain.automation.Goal.Slug): Set[com.histmersion.domain.library.Doi]
 
   /** A page of the candidates of one goal (every goal: `None`) in one state, oldest found first. */
-  def list(goal: Option[com.histmersion.domain.automation.Goal.Slug], state: com.histmersion.domain.library.acquisition.CandidateService.State, limit: com.histmersion.domain.library.acquisition.CandidateService.ListLimit, offset: com.histmersion.Offset): List[Source.Candidate]
+  def list(goal: Option[com.histmersion.domain.automation.Goal.Slug], state: Source.Candidate.State, limit: CandidateService.ListLimit, offset: com.histmersion.Offset): List[Source.Candidate]
 
   /** How many candidates there are in each state, in the states' order. */
   def counts(goal: Option[com.histmersion.domain.automation.Goal.Slug]): List[CandidateCount]
 
   /** Set the state of these candidates; how many there were. */
-  def mark(ids: List[com.histmersion.domain.library.acquisition.CandidateService.MarkIds], state: com.histmersion.domain.library.acquisition.CandidateService.State): com.histmersion.RowCount
+  def mark(ids: List[Source.Candidate.Id], state: Source.Candidate.State): com.histmersion.RowCount
 
   /** Set the state of a goal's candidates with these DOIs. */
-  def markDois(goal: com.histmersion.domain.automation.Goal.Slug, dois: List[com.histmersion.domain.library.Doi], state: com.histmersion.domain.library.acquisition.CandidateService.State): com.histmersion.RowCount
+  def markDois(goal: com.histmersion.domain.automation.Goal.Slug, dois: List[com.histmersion.domain.library.Doi], state: Source.Candidate.State): com.histmersion.RowCount
 
 object CandidateService:
-  type Problem = Problem.T
-  object Problem extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type State = State.T
-  object State extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type RecordWatchWatermark = RecordWatchWatermark.T
-  object RecordWatchWatermark extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type ListLimit = ListLimit.T
   object ListLimit extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type MarkIds = MarkIds.T
-  object MarkIds extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
   def apply(db: Transactor): CandidateService = Implementation(db)
 
   final private class Implementation(db: Transactor) extends CandidateService:
     def watches(goal: com.histmersion.domain.automation.Goal.Slug): List[CandidateWatch] = db.read(CandidateRepo.watches(goal))
-    def recordWatch(watch: CandidateWatch, watermark: Option[com.histmersion.domain.library.acquisition.CandidateService.Implementation.RecordWatchWatermark], error: Option[com.histmersion.domain.library.acquisition.CandidateService.Problem], found: com.histmersion.RowCount): Unit =
+    def recordWatch(watch: CandidateWatch, watermark: Option[CandidateWatch.Watermark], error: Option[CandidateWatch.LastError], found: CandidateWatch.LastFound): Unit =
       db.transact(CandidateRepo.recordWatch(watch, watermark, error, found))
     def upsert(candidate: Source.Candidate): Boolean = db.transact(CandidateRepo.upsert(candidate))
     def dois(goal: com.histmersion.domain.automation.Goal.Slug): Set[com.histmersion.domain.library.Doi] = db.read(CandidateRepo.dois(goal))
-    def list(goal: Option[com.histmersion.domain.automation.Goal.Slug], state: com.histmersion.domain.library.acquisition.CandidateService.State, limit: com.histmersion.domain.library.acquisition.CandidateService.Implementation.ListLimit, offset: com.histmersion.Offset): List[Source.Candidate] =
-      db.read(CandidateRepo.list(goal, state, limit, offset))
+    def list(goal: Option[com.histmersion.domain.automation.Goal.Slug], state: Source.Candidate.State, limit: ListLimit, offset: com.histmersion.Offset): List[Source.Candidate] =
+      db.read(CandidateRepo.list(goal, state, CandidateRepo.Limit(limit.value), offset))
     def counts(goal: Option[com.histmersion.domain.automation.Goal.Slug]): List[CandidateCount] = db.read(CandidateRepo.counts(goal))
-    def mark(ids: List[com.histmersion.domain.library.acquisition.CandidateService.Implementation.MarkIds], state: com.histmersion.domain.library.acquisition.CandidateService.State): com.histmersion.RowCount =
+    def mark(ids: List[Source.Candidate.Id], state: Source.Candidate.State): com.histmersion.RowCount =
       if ids.isEmpty then com.histmersion.RowCount(0) else db.transact(CandidateRepo.mark(ids, state))
-    def markDois(goal: com.histmersion.domain.automation.Goal.Slug, dois: List[com.histmersion.domain.library.Doi], state: com.histmersion.domain.library.acquisition.CandidateService.State): com.histmersion.RowCount =
+    def markDois(goal: com.histmersion.domain.automation.Goal.Slug, dois: List[com.histmersion.domain.library.Doi], state: Source.Candidate.State): com.histmersion.RowCount =
       if dois.isEmpty then com.histmersion.RowCount(0) else db.transact(CandidateRepo.markDois(goal, dois, state))
-
-  object Implementation:
-    type RecordWatchWatermark = RecordWatchWatermark.T
-    object RecordWatchWatermark extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-    type ListLimit = ListLimit.T
-    object ListLimit extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
-    type MarkIds = MarkIds.T
-    object MarkIds extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
   /** The candidates and watches in memory; `clock` stands in for the database's `now()`, ids count from 1. */
   final class InMemory(state: AtomicReference[AcquisitionState], clock: Clock) extends CandidateService:
     private val Stamp = DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ss'Z'").withZone(ZoneOffset.UTC)
     private def now: String = Stamp.format(clock.instant())
-    private val Order = List(Candidates.State.New, Candidates.State.Seen, Candidates.State.Queued).map(_.wire)
+    private val Order = List(Candidates.State.New, Candidates.State.Seen, Candidates.State.Queued).map(s => Source.Candidate.State(s.wire.value))
 
     def watches(goal: com.histmersion.domain.automation.Goal.Slug): List[CandidateWatch] =
-      state.get.watches.values.filter(_.goal == goal).toList.sortBy(w => (w.kind, w.subject, w.index))
+      state.get.watches.values.filter(_.goal.value == goal.value).toList.sortBy(w => (w.kind.value, w.subject.value, w.index.value))
 
-    def recordWatch(watch: CandidateWatch, watermark: Option[com.histmersion.domain.library.acquisition.CandidateService.InMemory.RecordWatchWatermark], error: Option[com.histmersion.domain.library.acquisition.CandidateService.Problem], found: com.histmersion.RowCount): Unit =
-      val key = (watch.goal, watch.kind, watch.subject, watch.index)
+    def recordWatch(watch: CandidateWatch, watermark: Option[CandidateWatch.Watermark], error: Option[CandidateWatch.LastError], found: CandidateWatch.LastFound): Unit =
+      val key = (
+        AcquisitionState.WatchesKeyPart1(watch.goal.value),
+        AcquisitionState.WatchesKeyPart2(watch.kind.value),
+        AcquisitionState.WatchesKeyPart3(watch.subject.value),
+        AcquisitionState.WatchesKeyPart4(watch.index.value)
+      )
       val at = now
       val _ = state.updateAndGet(
         _.modify(_.watches).using { ws =>
@@ -98,7 +87,7 @@ object CandidateService:
               watch.subject,
               watch.index,
               watermark.orElse(before),
-              Some(at),
+              Some(CandidateWatch.LastRun(at)),
               error,
               found
             )
@@ -110,21 +99,21 @@ object CandidateService:
       val at = now
       var created = false
       val _ = state.updateAndGet { st =>
-        st.candidates.indexWhere(c => c.goal == candidate.goal && c.doi == candidate.doi) match
+        st.candidates.indexWhere(c => c.goal.value == candidate.goal.value && c.doi.value == candidate.doi.value) match
           case -1 =>
             created = true
-            val id = st.candidates.map(_.id).maxOption.getOrElse(0L) + 1
+            val id = st.candidates.map(_.id.value).maxOption.getOrElse(0L) + 1
             st.modify(_.candidates)
               .using(
                 _ :+ candidate
                   .modify(_.id)
-                  .setTo(id)
+                  .setTo(Source.Candidate.Id(id))
                   .modify(_.state)
-                  .setTo(Candidates.State.New.wire)
+                  .setTo(Source.Candidate.State(Candidates.State.New.wire.value))
                   .modify(_.firstSeen)
-                  .setTo(at)
+                  .setTo(Source.Candidate.FirstSeen(at))
                   .modify(_.lastSeen)
-                  .setTo(at)
+                  .setTo(Source.Candidate.LastSeen(at))
               )
           case i =>
             created = false
@@ -134,51 +123,43 @@ object CandidateService:
                 _.updated(
                   i,
                   c.modify(_.lastSeen)
-                    .setTo(at)
+                    .setTo(Source.Candidate.LastSeen(at))
                     .modify(_.foundBy)
-                    .setTo((c.foundBy ++ candidate.foundBy).distinct.sorted)
+                    .setTo((c.foundBy ++ candidate.foundBy).distinct.sortBy(_.value))
                     .modify(_.abstractText)
                     .setTo(c.abstractText.orElse(candidate.abstractText))
                     .modify(_.isOa)
-                    .setTo(c.isOa || candidate.isOa)
+                    .setTo(Source.Candidate.IsOa(c.isOa.value || candidate.isOa.value))
                 )
               )
       }
       created
 
-    def dois(goal: com.histmersion.domain.automation.Goal.Slug): Set[com.histmersion.domain.library.Doi] = state.get.candidates.filter(_.goal == goal).map(_.doi.value.toString).toSet
+    def dois(goal: com.histmersion.domain.automation.Goal.Slug): Set[com.histmersion.domain.library.Doi] = state.get.candidates.filter(_.goal.value == goal.value).map(c => com.histmersion.domain.library.Doi.assume(c.doi.value)).toSet
 
-    def list(goal: Option[com.histmersion.domain.automation.Goal.Slug], st: com.histmersion.domain.library.acquisition.CandidateService.State, limit: com.histmersion.domain.library.acquisition.CandidateService.InMemory.ListLimit, offset: com.histmersion.Offset): List[Source.Candidate] =
+    def list(goal: Option[com.histmersion.domain.automation.Goal.Slug], st: Source.Candidate.State, limit: ListLimit, offset: com.histmersion.Offset): List[Source.Candidate] =
       state.get.candidates
-        .filter(c => goal.forall(_ == c.goal) && c.state == st)
-        .sortBy(_.id)
-        .slice(offset, offset + limit)
+        .filter(c => goal.forall(_.value == c.goal.value) && c.state == st)
+        .sortBy(_.id.value)
+        .slice(offset.value, offset.value + limit.value)
 
     def counts(goal: Option[com.histmersion.domain.automation.Goal.Slug]): List[CandidateCount] =
       state.get.candidates
-        .filter(c => goal.forall(_ == c.goal))
+        .filter(c => goal.forall(_.value == c.goal.value))
         .groupBy(_.state)
         .toList
         .sortBy((s, _) => Order.indexOf(s) match { case -1 => Order.size; case i => i })
-        .map((s, cs) => CandidateCount(s, cs.size))
+        .map((s, cs) => CandidateCount(s, CandidateCount.Count(cs.size)))
 
-    private def marked(pick: Source.Candidate => Boolean, to: com.histmersion.domain.library.acquisition.CandidateService.State): com.histmersion.RowCount =
+    private def marked(pick: Source.Candidate => Boolean, to: Source.Candidate.State): com.histmersion.RowCount =
       var n = 0
       val _ = state.updateAndGet { st =>
         n = st.candidates.count(pick)
         st.modify(_.candidates).using(_.map(c => if pick(c) then c.modify(_.state).setTo(to) else c))
       }
-      n
+      com.histmersion.RowCount(n)
 
-    def mark(ids: List[com.histmersion.domain.library.acquisition.CandidateService.InMemory.MarkIds], st: com.histmersion.domain.library.acquisition.CandidateService.State): com.histmersion.RowCount = if ids.isEmpty then com.histmersion.RowCount(0) else marked(c => ids.contains(c.id), st)
+    def mark(ids: List[Source.Candidate.Id], st: Source.Candidate.State): com.histmersion.RowCount = if ids.isEmpty then com.histmersion.RowCount(0) else marked(c => ids.contains(c.id), st)
 
-    def markDois(goal: com.histmersion.domain.automation.Goal.Slug, dois: List[com.histmersion.domain.library.Doi], st: com.histmersion.domain.library.acquisition.CandidateService.State): com.histmersion.RowCount =
-      if dois.isEmpty then com.histmersion.RowCount(0) else marked(c => c.goal == goal && dois.contains(c.doi), st)
-
-  object InMemory:
-    type RecordWatchWatermark = RecordWatchWatermark.T
-    object RecordWatchWatermark extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-    type ListLimit = ListLimit.T
-    object ListLimit extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
-    type MarkIds = MarkIds.T
-    object MarkIds extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    def markDois(goal: com.histmersion.domain.automation.Goal.Slug, dois: List[com.histmersion.domain.library.Doi], st: Source.Candidate.State): com.histmersion.RowCount =
+      if dois.isEmpty then com.histmersion.RowCount(0) else marked(c => c.goal.value == goal.value && dois.exists(_.value == c.doi.value), st)
