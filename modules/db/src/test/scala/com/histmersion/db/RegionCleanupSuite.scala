@@ -36,10 +36,10 @@ class RegionCleanupSuite extends RegionCleanupFixtures:
         .toMap
     )
     places.foreach { p =>
-      val c = """\[([-0-9.]+),([-0-9.]+)\]""".r.findFirstMatchIn(p.geometry.get).get
+      val c = """\[([-0-9.]+),([-0-9.]+)\]""".r.findFirstMatchIn(p.geometry.get.value).get
       val want = com.histmersion.api.catalogue.Place.Precision.of(p.id, com.histmersion.api.catalogue.Longitude(c.group(1).toDouble), com.histmersion.api.catalogue.Latitude(c.group(2).toDouble))
       assertEquals(
-        stored(p.id)
+        stored(p.id.value)
           .flatMap(com.histmersion.api.catalogue.Place.Precision.parse)
           .getOrElse(com.histmersion.api.catalogue.Place.Precision.Stated),
         want,
@@ -65,7 +65,7 @@ class RegionCleanupSuite extends RegionCleanupFixtures:
         com.histmersion.api.catalogue.Place.Id("pleiades_999100010"),
         com.histmersion.api.catalogue.Place.Label("Zzrc Thessalia"),
         Place.KindValue(com.histmersion.domain.catalogue.Place.Kind.Region),
-        pt(141.9, -47.1),
+        pt(com.histmersion.api.catalogue.Longitude(141.9), com.histmersion.api.catalogue.Latitude(-47.1)),
         properties = types("region")
       )
     val _ = PlaceFixtures.upsertPlaces(ds, List(Place.Input(precise, List(Place.Name(precise.label)))))
@@ -80,11 +80,11 @@ class RegionCleanupSuite extends RegionCleanupFixtures:
       )
     assertEquals(alone.map(r => (r.placeId, r.approximate)), Some((Achaia, List(Geocode.Approximation.GridSquare))))
     assertEquals(
-      PlaceFixtures.get(ds, Thess).map(_.locationPrecision),
+      PlaceFixtures.get(ds, com.histmersion.domain.catalogue.Place.Id.applyUnsafe(Thess)).map(_.locationPrecision),
       Some(com.histmersion.api.catalogue.Place.Precision.GridCell)
     )
     assertEquals(
-      PlaceFixtures.get(ds, Regio1).map(_.locationPrecision),
+      PlaceFixtures.get(ds, com.histmersion.domain.catalogue.Place.Id.applyUnsafe(Regio1)).map(_.locationPrecision),
       Some(com.histmersion.api.catalogue.Place.Precision.Stated)
     )
 

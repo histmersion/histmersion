@@ -28,7 +28,7 @@ class HostCollectionSuite extends munit.FunSuite:
   final private class ShelfPlugin(id: Plugin.Info.Id, name: Registry.AddId) extends Plugin:
     type Config = NoSettings
     val info = Plugin.Info(id, com.histmersion.plugin.Plugin.Info.Version("0.1.0"), Plugin.Info.SpiVersion(Spi.Version))
-    def register(c: NoSettings, ctx: Plugin.Context) = ctx.sourceCollections.add(name, Shelf)
+    def register(c: NoSettings, ctx: Plugin.Context) = ctx.sourceCollections.add(name, Shelf).left.map(e => Plugin.RegisterResultPart1(e.value))
 
   private def build(p: Plugin, firstParty: Plugin.Info.Id => Boolean = _ => false) =
     PluginHost.build(
@@ -54,7 +54,7 @@ class HostCollectionSuite extends munit.FunSuite:
 
   test("Histmersion's own collection names are kept for the first-party plugins"):
     val third = build(ShelfPlugin(Plugin.Info.Id("zq-shelf"), Registry.AddId("calibre")))
-    assert(third.report.plugins.head.error.exists(_.contains("Histmersion's own source collections")), third.report)
+    assert(third.report.plugins.head.error.exists(_.value.contains("Histmersion's own source collections")), third.report)
     val first = build(
       ShelfPlugin(Plugin.Info.Id("calibre"), Registry.AddId("calibre")),
       id => ReservedNames.firstPartyPlugins.contains(ReservedNames.Name(id.value))

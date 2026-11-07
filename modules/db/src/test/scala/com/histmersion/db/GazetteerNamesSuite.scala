@@ -46,10 +46,15 @@ class GazetteerNamesSuite extends com.histmersion.db.DbSuite with Bounded:
     Migrate.run(d)
     d
   private lazy val settings =
-    GeocodeSettings(cfg.places.geocodePlaceholderMin, cfg.places.geocodeRepairKm, cfg.places.pointToleranceKm)
+    GeocodeSettings(
+      GeocodeSettings.PlaceholderMin(cfg.places.geocodePlaceholderMin.value),
+      GeocodeSettings.RepairKm(cfg.places.geocodeRepairKm.value),
+      GeocodeSettings.ToleranceKm(cfg.places.pointToleranceKm.value)
+    )
 
   private val DeadSea = Set("ne_lake_1159126747", "ne_lake_1159126865")
   private val Galilee = "ne_lake_1159114879"
+  private val GalileeId = Place.Id.applyUnsafe(Galilee)
   private val Krakow = "ne_city_1159149709"
   private val Balkans = "ne_physical_1159104241"
   private val Levant = "levant"
@@ -96,8 +101,8 @@ class GazetteerNamesSuite extends com.histmersion.db.DbSuite with Bounded:
       val st = Files.list(dir)
       try
         st.iterator.asScala.toList
-          .map(p => PlaceSeed.Entry(p.getFileName.toString, Files.isDirectory(p), p))
-          .filter(e => e.directory || Files.isRegularFile(e.at))
+          .map(p => PlaceSeed.Entry(PlaceSeed.Entry.Name(p.getFileName.toString), PlaceSeed.Entry.Directory(Files.isDirectory(p)), p))
+          .filter(e => e.directory.value || Files.isRegularFile(e.at))
       finally st.close()
     PlaceSeed.files(entries(root.resolve("db/places")), entries).flatMap { (f, kind) =>
       val text = Files.readString(f)
@@ -105,9 +110,9 @@ class GazetteerNamesSuite extends com.histmersion.db.DbSuite with Bounded:
       if !Wanted.exists(id => text.contains(s"\"$id\"")) then Nil
       else
         Lpf
-          .parse(text, kind.getOrElse(Place.Kind.Region))
+          .parse(text, com.histmersion.api.catalogue.Place.KindValue(kind.fold(Place.Kind.Region)(_.value)))
           .fold(e => fail(s"$f: $e"), identity)
-          .filter(in => Wanted.contains(in.place.id))
+          .filter(in => Wanted.contains(in.place.id.value))
     }
 
   private def clean(): Unit = connect(ds):
@@ -124,11 +129,11 @@ class GazetteerNamesSuite extends com.histmersion.db.DbSuite with Bounded:
   override def afterSuite(): Unit = if testDb.isDefined then clean()
 
   private def resolve(name: String, at: Option[Period] = None) =
-    connect(ds)(PlaceFixtures.resolve(name, KindHint.Unknown, at, cfg.places.geocodePlaceholderMin))
+    connect(ds)(PlaceFixtures.resolve(Geocode.Attempt.Name(name), KindHint.Unknown, at, settings.placeholderMin))
 
   private def resolvesTo(name: String, ids: Set[String]): Geocode.Resolution =
     val r = resolve(name).getOrElse(fail(s"'$name' resolves to nothing"))
-    assert(ids.contains(r.placeId), s"'$name' → ${r.describe}, expected one of $ids")
+    assert(ids.contains(r.placeId.value), s"'$name' → ${r.describe}, expected one of $ids")
     r
 
   test("the plain English names the enrich agents write resolve in the seeded gazetteer"):
@@ -148,11 +153,11 @@ class GazetteerNamesSuite extends com.histmersion.db.DbSuite with Bounded:
     assert(!resolvesTo("southern Levant", Set(SLevant)).isApproximate)
     val lev = resolvesTo("northern Levant", Set(Levant))
     assertEquals(lev.approximate, List(Approximation.Qualifier(com.histmersion.api.catalogue.Geocode.Approximation.Qualifier.Dropped("northern"))))
-    assert(lev.lat > resolvesTo("Levant", Set(Levant)).lat, "the point moves into the northern half")
+    assert(lev.lat.value > resolvesTo("Levant", Set(Levant)).lat.value, "the point moves into the northern half")
     val east = resolvesTo("Eastern Mediterranean", Set(Med))
     assertEquals(east.approximate, List(Approximation.Qualifier(com.histmersion.api.catalogue.Geocode.Approximation.Qualifier.Dropped("Eastern"))))
     // the eastern half of the sea, not its point on the surface off Algeria
-    assert(east.lon > 17.0, east)
+    assert(east.lon.value > 17.0, east)
     assertEquals(
       resolvesTo("Western and Central Balkans", Set(Balkans)).approximate,
       List(Approximation.Qualifier(com.histmersion.api.catalogue.Geocode.Approximation.Qualifier.Dropped("Western and Central")))
@@ -162,7 +167,7 @@ class GazetteerNamesSuite extends com.histmersion.db.DbSuite with Bounded:
     resolvesTo("Dead Sea", DeadSea)
     assert(
       resolve("Dead Sea", Some(Period(com.histmersion.api.catalogue.Year(-1200), com.histmersion.api.catalogue.Year(-1100)))).exists(r =>
-        DeadSea.contains(r.placeId) || r.placeId == "pleiades_697709"
+        DeadSea.contains(r.placeId.value) || r.placeId.value == "pleiades_697709"
       )
     )
     // the Pleiades record carries the English name itself, undated, so `finding_places` can match it
@@ -181,13 +186,13 @@ class GazetteerNamesSuite extends com.histmersion.db.DbSuite with Bounded:
 
   test("a name added by hand survives a re-seed; an import never deletes it, and the seed's own are replaced"):
     val before = names(Galilee)
-    val r = PlaceFixtures.addName(ds, Galilee, com.histmersion.domain.catalogue.places.PlaceRepo.Name("Kinnereth"), com.histmersion.domain.catalogue.places.PlaceRepo.Lang("en")).fold(e => fail(e.message), identity)
+    val r = PlaceFixtures.addName(ds, GalileeId, PlaceFixtures.Name("Kinnereth"), PlaceFixtures.Lang("en")).fold(e => fail(e.message.value), identity)
     assertEquals((r.changed, r.wasImported, r.label), (true, false, "Sea of Galilee"))
     // a name the seed already gives becomes manual: kept even when a later seed drops it
-    val again = PlaceFixtures.addName(ds, Galilee, com.histmersion.domain.catalogue.places.PlaceRepo.Name("Sea of Tiberias"), com.histmersion.domain.catalogue.places.PlaceRepo.Lang("en")).fold(e => fail(e.message), identity)
+    val again = PlaceFixtures.addName(ds, GalileeId, PlaceFixtures.Name("Sea of Tiberias"), PlaceFixtures.Lang("en")).fold(e => fail(e.message.value), identity)
     assertEquals((again.changed, again.wasImported), (true, true))
     assertEquals(
-      PlaceFixtures.addName(ds, Galilee, com.histmersion.domain.catalogue.places.PlaceRepo.Name("Kinnereth"), com.histmersion.domain.catalogue.places.PlaceRepo.Lang("en")).map(_.changed),
+      PlaceFixtures.addName(ds, GalileeId, PlaceFixtures.Name("Kinnereth"), PlaceFixtures.Lang("en")).map(_.changed),
       Right(false),
       "adding twice changes nothing"
     )
@@ -196,30 +201,30 @@ class GazetteerNamesSuite extends com.histmersion.db.DbSuite with Bounded:
     val _ = PlaceFixtures.upsertPlaces(ds, seed)
     assert(names(Galilee).contains(("Kinnereth", "en", true)), names(Galilee))
     val newer = seed.map(in =>
-      if in.place.id == Galilee then in.modify(_.names).setTo(in.names.filterNot(_.name == "Sea of Tiberias")) else in
+      if in.place.id.value == Galilee then in.modify(_.names).setTo(in.names.filterNot(_.name.value == "Sea of Tiberias")) else in
     )
     val _ = PlaceFixtures.upsertPlaces(ds, newer)
     val after = names(Galilee)
     assert(after.contains(("Kinnereth", "en", true)) && after.contains(("Sea of Tiberias", "en", true)), after)
     assertEquals(after.filterNot(_._3).size, before.size - 1, "the seed's own names are still replaced by the seed")
-    assertEquals(PlaceFixtures.manualNames(ds, Some(Galilee)).map(_.name), List("Kinnereth", "Sea of Tiberias"))
+    assertEquals(PlaceFixtures.manualNames(ds, Some(GalileeId)).map(_.name), List("Kinnereth", "Sea of Tiberias"))
     resolvesTo("Kinnereth", Set(Galilee))
 
     // removal: only a name added by hand; an imported one is refused
     assertEquals(
-      PlaceFixtures.removeName(ds, Galilee, com.histmersion.domain.catalogue.places.PlaceRepo.Name("Lake Tiberias"), com.histmersion.domain.catalogue.places.PlaceRepo.Lang("en")).left.map(_.code),
+      PlaceFixtures.removeName(ds, GalileeId, PlaceFixtures.Name("Lake Tiberias"), PlaceFixtures.Lang("en")).left.map(_.code),
       Left(Some(Write.CodeInvalid))
     )
     assertEquals(
-      PlaceFixtures.removeName(ds, Galilee, com.histmersion.domain.catalogue.places.PlaceRepo.Name("Kinnereth"), com.histmersion.domain.catalogue.places.PlaceRepo.Lang("")).left.map(_.code),
+      PlaceFixtures.removeName(ds, GalileeId, PlaceFixtures.Name("Kinnereth"), PlaceFixtures.Lang("")).left.map(_.code),
       Left(Some(Write.CodeNotFound))
     )
-    assert(PlaceFixtures.removeName(ds, Galilee, com.histmersion.domain.catalogue.places.PlaceRepo.Name("Kinnereth"), com.histmersion.domain.catalogue.places.PlaceRepo.Lang("en")).isRight)
-    assert(PlaceFixtures.removeName(ds, Galilee, com.histmersion.domain.catalogue.places.PlaceRepo.Name("Sea of Tiberias"), com.histmersion.domain.catalogue.places.PlaceRepo.Lang("en")).isRight)
+    assert(PlaceFixtures.removeName(ds, GalileeId, PlaceFixtures.Name("Kinnereth"), PlaceFixtures.Lang("en")).isRight)
+    assert(PlaceFixtures.removeName(ds, GalileeId, PlaceFixtures.Name("Sea of Tiberias"), PlaceFixtures.Lang("en")).isRight)
     val _ = PlaceFixtures.upsertPlaces(ds, seed)
     assertEquals(names(Galilee), before, "after removing them, a re-seed restores exactly the seed's names")
     assertEquals(
-      PlaceFixtures.addName(ds, com.histmersion.domain.catalogue.Place.Id("zzgn_no_such_place"), com.histmersion.domain.catalogue.places.PlaceRepo.Name("X"), com.histmersion.domain.catalogue.places.PlaceRepo.Lang("")).left.map(_.code),
+      PlaceFixtures.addName(ds, com.histmersion.domain.catalogue.Place.Id("zzgn_no_such_place"), PlaceFixtures.Name("X"), PlaceFixtures.Lang("")).left.map(_.code),
       Left(Some(Write.CodeNotFound))
     )
 
@@ -228,21 +233,21 @@ class GazetteerNamesSuite extends com.histmersion.db.DbSuite with Bounded:
       .toInput(
         com.histmersion.api.catalogue.Place.Add(
           com.histmersion.api.catalogue.Place.Add.Label("Zzgn Gornji"),
-          Place.Kind.Site,
-          15.98,
-          45.81,
+          com.histmersion.api.catalogue.Place.Add.Kind(Place.Kind.Site),
+          com.histmersion.api.catalogue.Longitude(15.98),
+          com.histmersion.api.catalogue.Latitude(45.81),
           com.histmersion.api.catalogue.Place.Add.Source("fixture: a hand-checked map"),
-          names = List("Zzgn Gornij"),
-          lang = Some("hr")
+          names = List(com.histmersion.api.catalogue.Place.Add.Names("Zzgn Gornij")),
+          lang = Some(com.histmersion.api.catalogue.Place.Add.Lang("hr"))
         )
       )
       .fold(e => fail(e.message), identity)
-    val p = PlaceFixtures.addPlace(ds, in).fold(e => fail(e.message), identity)
+    val p = PlaceFixtures.addPlace(ds, in).fold(e => fail(e.message.value), identity)
     assertEquals((p.id, p.kind, p.source), ("local_zzgn_gornji", Place.Kind.Site, Some("fixture: a hand-checked map")))
     val dataset = connect(ds)(sql"SELECT dataset FROM places WHERE id = 'local_zzgn_gornji'".query[String].run().head)
     assertEquals(dataset, "local")
     assertEquals(PlaceFixtures.addPlace(ds, in).left.map(_.code), Left(Some(Write.CodeInvalid)), "the id is taken")
-    val seedId = in.modify(_.place).setTo(in.place.modify(_.id).setTo(Krakow))
+    val seedId = in.modify(_.place).setTo(in.place.modify(_.id).setTo(com.histmersion.api.catalogue.Place.Id(Krakow)))
     assertEquals(
       PlaceFixtures.addPlace(ds, seedId).left.map(_.code),
       Left(Some(Write.CodeInvalid)),
@@ -254,7 +259,7 @@ class GazetteerNamesSuite extends com.histmersion.db.DbSuite with Bounded:
   // ── the fill ───────────────────────────────────────────────────────────────────────────────
 
   private def finding(n: Int, region: String, at: Option[GeoPoint], period: Option[Period] = None) =
-    Finding(s"$Ck#$n", com.histmersion.api.library.Citekey(Ck), s"claim $n about $region", Some(region), at, period, None, Nil, Some(Confidence.High))
+    Finding(Finding.Id(s"$Ck#$n"), com.histmersion.api.library.Citekey(Ck), Finding.Claim(s"claim $n about $region"), Some(Finding.Region(region)), at, period, None, Nil, Some(Confidence.High))
 
   private def pointOf(n: Int): Option[(Double, Double)] = connect(ds):
     sql"SELECT ST_X(geom), ST_Y(geom) FROM findings WHERE id = ${s"$Ck#$n"} AND geom IS NOT NULL"
@@ -282,7 +287,7 @@ class GazetteerNamesSuite extends com.histmersion.db.DbSuite with Bounded:
       calibreId = None,
       findings = List(
         finding(0, "Dead Sea", None, Some(Period(com.histmersion.api.catalogue.Year(-1200), com.histmersion.api.catalogue.Year(-1100)))),
-        finding(1, "Balkans", Some(GeoPoint(-40.0, 10.0))), // placed by hand (in the Atlantic): never touched
+        finding(1, "Balkans", Some(GeoPoint(com.histmersion.api.catalogue.Longitude(-40.0), com.histmersion.api.catalogue.Latitude(10.0)))), // placed by hand (in the Atlantic): never touched
         finding(2, "Zzgn nowhere at all", None), // unknown: stays unplaced, never guessed
         finding(3, "northern Levant", None),
         finding(4, "Kraków", None)
@@ -290,17 +295,17 @@ class GazetteerNamesSuite extends com.histmersion.db.DbSuite with Bounded:
     )
     SourceFixtures.upsert(ds, src, cfg.limits.chunkChars)
 
-    val ps = connect(ds)(PlaceFixtures.placements(settings)).filter(_.citekey == Ck)
+    val ps = connect(ds)(PlaceFixtures.placements(settings)).filter(_.citekey.value == Ck)
     assertEquals(
-      ps.map(p => (p.findingId, p.region)).sorted,
+      ps.sortBy(p => (p.findingId.value, p.region.value)).map(p => (p.findingId, p.region)),
       List((s"$Ck#0", "Dead Sea"), (s"$Ck#3", "northern Levant"), (s"$Ck#4", "Kraków"))
     )
-    assert(ps.find(_.region == "northern Levant").exists(_.to.isApproximate))
+    assert(ps.find(_.region.value == "northern Levant").exists(_.to.isApproximate))
 
-    val rep = SourceCheckFixtures.run(ds, List(Lint.rule(Lint.FindingUnplaced).get), com.histmersion.api.checks.Lint.ItemLimit(500), com.histmersion.api.checks.Lint.ItemLimit(3), (_, _, _) => Nil, settings)
-    val items = rep.rules.head.items.filter(_.citekey == Ck)
+    val rep = SourceCheckFixtures.run(ds, List(Lint.rule(Lint.Rule.Name(Lint.FindingUnplaced)).get), com.histmersion.api.checks.Lint.ItemLimit(500), com.histmersion.api.checks.Lint.ItemLimit(3), (_, _, _) => Nil, settings)
+    val items = rep.rules.head.items.filter(_.citekey.value == Ck)
     assertEquals(items.size, 3, items)
-    assert(items.exists(_.detail.startsWith(s"$Ck#4: 'Kraków' → Kraków [$Krakow]")), items)
+    assert(items.exists(_.detail.value.startsWith(s"$Ck#4: 'Kraków' → Kraków [$Krakow]")), items)
 
     assertEquals(transact(ds)(PlaceFixtures.place(ps, settings.toleranceKm)), 3)
     val (lon0, lat0) = pointOf(0).getOrElse(fail("#0 has no point"))
@@ -321,5 +326,5 @@ class GazetteerNamesSuite extends com.histmersion.db.DbSuite with Bounded:
     assertEquals(inKrakow, 1L)
 
     // idempotent: nothing left to place, and a stale placement is not applied over a newer point
-    assertEquals(connect(ds)(PlaceFixtures.placements(settings)).filter(_.citekey == Ck), Nil)
+    assertEquals(connect(ds)(PlaceFixtures.placements(settings)).filter(_.citekey.value == Ck), Nil)
     assertEquals(transact(ds)(PlaceFixtures.place(ps, settings.toleranceKm)), 0)

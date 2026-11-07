@@ -113,7 +113,7 @@ class MergeExtrasDbSuite extends com.histmersion.db.DbSuite with Bounded:
         TestExchange.kinds,
         TestExchange.rules
       )
-      .fold(e => fail(e), identity)
+      .fold(e => fail(e.value), identity)
 
   private def importInto(ds: DataSource, bundle: Path, originals: Path): Bundle.ImportResult =
     com.histmersion.util.data.exchange.BundleImporter
@@ -258,7 +258,7 @@ class MergeExtrasDbSuite extends com.histmersion.db.DbSuite with Bounded:
         None,
         None
       ),
-      cfg.limits.chunkChars.value
+      cfg.limits.chunkChars
     )
     transact(work)(GoalRepo.put(com.histmersion.domain.automation.Goal.Slug("zz_goal"), Goal.Put(com.histmersion.api.automation.Goal.Title("A goal"))))
     transact(work)(GoalLinkRepo.setPlan(com.histmersion.domain.automation.Goal.Slug("zz_goal"), com.histmersion.domain.automation.goals.BGoalRow.Plan("""{"goal":"zz_goal","rationale":"work's plan"}""")))

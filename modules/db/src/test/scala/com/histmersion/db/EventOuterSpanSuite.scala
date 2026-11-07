@@ -39,7 +39,7 @@ class EventOuterSpanSuite extends com.histmersion.db.DbSuite:
   override def beforeAll(): Unit = if testDb.isDefined then clean()
   override def afterSuite(): Unit = if testDb.isDefined then clean()
 
-  private def put(id: String, ts: TimeSpan, kind: EventSummary.Kind = EventSummary.Kind("war")) =
+  private def put(id: BEventRow.Id, ts: TimeSpan, kind: EventSummary.Kind = EventSummary.Kind("war")) =
     EventFixtures.put(
       ds,
       id,
@@ -70,17 +70,17 @@ class EventOuterSpanSuite extends com.histmersion.db.DbSuite:
       TimeSpan()
     )
     spans.zipWithIndex.foreach { (ts, i) =>
-      put(s"zqos_s$i", ts)
+      put(BEventRow.Id(s"zqos_s$i"), ts)
       val expected = ts.outer.fold((None, None))((a, b) => (Some(a), Some(b)))
       assertEquals(span(s"zqos_s$i"), expected, ts.toString)
     }
 
   test("an event with only a start is in the views of its start, not of every later period"):
-    put("zqos_case_open", TimeSpan(notBefore = Some(com.histmersion.api.catalogue.Year(-1200))))
-    put("zqos_case_closed", TimeSpan(Some(com.histmersion.api.catalogue.Year(-1210)), None, None, Some(com.histmersion.api.catalogue.Year(-1190))))
+    put(BEventRow.Id("zqos_case_open"),TimeSpan(notBefore = Some(com.histmersion.api.catalogue.Year(-1200))))
+    put(BEventRow.Id("zqos_case_closed"),TimeSpan(Some(com.histmersion.api.catalogue.Year(-1210)), None, None, Some(com.histmersion.api.catalogue.Year(-1190))))
     def geoIds(p: Period) =
       EventFixtures
-        .geo(ds, Filter(period = Some(p)), PlaceScope.empty, Some(com.histmersion.domain.catalogue.events.EventSelection.Text("Zqos zqos_case_")), None, None, None, com.histmersion.PageSize(100), 0.01)
+        .geo(ds, Filter(period = Some(p)), PlaceScope.empty, Some(com.histmersion.domain.catalogue.events.EventSelection.Text("Zqos zqos_case_")), None, None, None, com.histmersion.PageSize(100), EventFixtures.GeoTolerance(0.01))
         .events
         .map(_.id)
         .toSet

@@ -158,7 +158,7 @@ class FtsSuite extends com.histmersion.db.DbSuite:
       after = Some(com.histmersion.domain.library.Citekey("zz_fts_a")),
       maxSources = Some(com.histmersion.domain.library.sources.SourceRepairs.MaxSources(3))
     )
-    assert(r.sources == 3 && r.chunks > r.sources, r)
+    assert(r.sources.value == 3 && r.chunks.value > r.sources.value, r)
     assert(search(Filter.Q("\"sea peoples\"")).exists(_.citekey.value == "zz_fts_big"))
 
 /** Planner/statistics upkeep against a real Postgres (HISTMERSION_TEST_DB_URL); skipped otherwise. */

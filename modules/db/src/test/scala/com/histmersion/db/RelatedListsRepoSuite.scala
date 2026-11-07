@@ -84,7 +84,7 @@ class RelatedListsRepoSuite extends com.histmersion.db.DbSuite:
     )
 
   private def event(
-      id: String,
+      id: BEventRow.Id,
       label: com.histmersion.api.catalogue.EventSummary.Label,
       year: com.histmersion.api.catalogue.Year,
       citekey: Option[com.histmersion.api.library.Citekey]
@@ -114,27 +114,27 @@ class RelatedListsRepoSuite extends com.histmersion.db.DbSuite:
       val _ = article(Article.Slug("zz_rel_cites_match"), Article.Title("Zz Rel Kadesh article"), Article.Body("# K\n\nSee [[zz_rel_match]]."))
       val _ = article(Article.Slug("zz_rel_cites_other"), Article.Title("Zz Rel other article"), Article.Body("# O\n\nSee [[zz_rel_other]]."))
       val _ = article(Article.Slug("zz_rel_cites_none"), Article.Title("Zz Rel lonely article"), Article.Body("# L\n\nNo citation at all."))
-      event("zz_rel_ev_match", EventSummary.Label("Zz Rel battle of Kadesh"), Year(-1274), Some(Citekey("zz_rel_match")))
-      event("zz_rel_ev_late", EventSummary.Label("Zz Rel late raid"), Year(-800), Some(Citekey("zz_rel_match")))
-      event("zz_rel_ev_other", EventSummary.Label("Zz Rel other battle"), Year(-1274), Some(Citekey("zz_rel_other")))
-      event("zz_rel_ev_nosrc", EventSummary.Label("Zz Rel unsourced flood"), Year(-1250), None)
+      event(BEventRow.Id("zz_rel_ev_match"), EventSummary.Label("Zz Rel battle of Kadesh"), Year(-1274), Some(Citekey("zz_rel_match")))
+      event(BEventRow.Id("zz_rel_ev_late"), EventSummary.Label("Zz Rel late raid"), Year(-800), Some(Citekey("zz_rel_match")))
+      event(BEventRow.Id("zz_rel_ev_other"), EventSummary.Label("Zz Rel other battle"), Year(-1274), Some(Citekey("zz_rel_other")))
+      event(BEventRow.Id("zz_rel_ev_nosrc"), EventSummary.Label("Zz Rel unsourced flood"), Year(-1250), None)
 
   override def afterSuite(): Unit =
     if testDb.isDefined then
-      List("zz_rel_cites_match", "zz_rel_cites_other", "zz_rel_cites_none").foreach(s => ArticleFixtures.delete(ds, s))
-      List("zz_rel_ev_match", "zz_rel_ev_late", "zz_rel_ev_other", "zz_rel_ev_nosrc").foreach(e =>
+      List(com.histmersion.domain.research.Slug("zz_rel_cites_match"), com.histmersion.domain.research.Slug("zz_rel_cites_other"), com.histmersion.domain.research.Slug("zz_rel_cites_none")).foreach(s => ArticleFixtures.delete(ds, s))
+      List(BEventRow.Id("zz_rel_ev_match"), BEventRow.Id("zz_rel_ev_late"), BEventRow.Id("zz_rel_ev_other"), BEventRow.Id("zz_rel_ev_nosrc")).foreach(e =>
         EventFixtures.delete(ds, e)
       )
 
   private def articles(f: Filter): Set[String] =
     ArticleFixtures
-      .list(ds, f, PlaceScope.empty, None, None, com.histmersion.domain.research.articles.ArticleRepo.Limit(500), com.histmersion.Offset(0))
+      .list(ds, f, PlaceScope.empty, None, None, ArticleFixtures.Limit(500), com.histmersion.Offset(0))
       .articles
       .map(_.slug.value)
       .filter(_.startsWith("zz_rel_"))
       .toSet
 
-  private def events(f: Filter, text: Option[String] = None): Set[String] =
+  private def events(f: Filter, text: Option[EventSelection.Text] = None): Set[String] =
     EventFixtures
       .list(ds, f, PlaceScope.empty, text, None, None, None, com.histmersion.PageSize(500), com.histmersion.Offset(0))
       .events
@@ -172,7 +172,7 @@ class RelatedListsRepoSuite extends com.histmersion.db.DbSuite:
   test("events: title narrows the label; text still searches label and description"):
     assertEquals(events(Filter(title = Some(com.histmersion.api.library.Filter.Title("KADESH")))), Set("zz_rel_ev_match"))
     assertEquals(events(Filter(title = Some(com.histmersion.api.library.Filter.Title("battle")), status = List(com.histmersion.api.library.Filter.Status("contested")))), Set("zz_rel_ev_other"))
-    assertEquals(events(Filter(), text = Some("unsourced")), Set("zz_rel_ev_nosrc"))
+    assertEquals(events(Filter(), text = Some(EventSelection.Text("unsourced"))), Set("zz_rel_ev_nosrc"))
 
   test("sources: title narrows the source list by its own title"):
     val r = SearchFixtures.sources(ds, Filter(title = Some(com.histmersion.api.library.Filter.Title("title zz_rel_m")), limit = com.histmersion.api.library.Filter.Limit(50)), com.histmersion.domain.library.search.Search.SnippetWords(20), PlaceScope.empty)

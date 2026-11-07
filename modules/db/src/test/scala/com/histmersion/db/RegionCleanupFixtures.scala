@@ -57,6 +57,11 @@ trait RegionCleanupFixtures extends com.histmersion.db.DbSuite with Bounded:
   protected val Into = "pleiades_999100008"
   protected val Peir = "pleiades_999100009"
 
+  protected val AiantisId = com.histmersion.domain.catalogue.Place.Id("pleiades_999100003")
+  protected val ThessId = com.histmersion.domain.catalogue.Place.Id("pleiades_999100004")
+  protected val DupId = com.histmersion.domain.catalogue.Place.Id("pleiades_999100007")
+  protected val PeirId = com.histmersion.domain.catalogue.Place.Id("pleiades_999100009")
+
   protected val places = List(
     Place(com.histmersion.api.catalogue.Place.Id(City), com.histmersion.api.catalogue.Place.Label("Zzrc City"), Place.KindValue(Place.Kind.Site), pt(Longitude(140.0), Latitude(-50.0))),
     Place(
@@ -168,7 +173,7 @@ trait RegionCleanupFixtures extends com.histmersion.db.DbSuite with Bounded:
   /** The fixture places finding `n` belongs to. */
   protected def at(n: Int): Set[Place.Id] =
     PlaceFixtures
-      .placesOf(ds, com.histmersion.domain.catalogue.evidence.EventMatcher.NearFinding.Id(s"zzrc_src#$n"))
+      .placesOf(ds, Finding.Id(s"zzrc_src#$n"))
       .map(_.id)
       .filter(id => id.value.startsWith("pleiades_99910") || id.value.startsWith("zzrc"))
       .toSet

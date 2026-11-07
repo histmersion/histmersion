@@ -240,7 +240,7 @@ class FilterRepoSuite extends com.histmersion.db.DbSuite:
   private def mine(r: SearchResult): List[Hit] = r.hits.filter(_.source.citekey.value.startsWith("zzf_"))
   private def keys(r: SearchResult): List[String] = mine(r).map(_.source.citekey.value)
   private def find(r: SearchResult, ck: String): Hit = mine(r).find(_.source.citekey.value == ck).get
-  private val words = AppConfig.load().limits.snippetWords
+  private val words = com.histmersion.domain.library.search.Search.SnippetWords(AppConfig.load().limits.snippetWords.value)
   private def run(f: Filter) =
     SearchFixtures.sources(
       ds,
@@ -401,10 +401,10 @@ class FilterRepoSuite extends com.histmersion.db.DbSuite:
 
   test("map feed: a wrapping bbox returns only findings east of 170 or west of -170"):
     val hits = feed(Filter(bbox = Some(BBox(Longitude(170.0), Latitude(-60.0), Longitude(-170.0), Latitude(60.0)))))
-    assertEquals(hits.map(_.claim).toList.sorted, List("Lapita site west of the line", "Site east of the line"))
-    assertEquals(hits.flatMap(_.lon).toList.sorted, List(-172.0, 178.0))
+    assertEquals(hits.map(_.claim).toList.sortBy(_.value), List("Lapita site west of the line", "Site east of the line"))
+    assertEquals(hits.flatMap(_.lon).toList.sortBy(_.value), List(-172.0, 178.0))
     // the Levantine/steppe findings (lon 35.78, 33.0, 40.0) are NOT in a box that wraps the Pacific
-    assert(!hits.exists(_.citekey == "zzf_alpha"), hits.toString)
+    assert(!hits.exists(_.citekey.value == "zzf_alpha"), hits.toString)
 
   test("map feed: tag= restricts it, over findings.tags ∪ sources.tags"):
     assertEquals(feed(Filter(tags = List(com.histmersion.api.library.Filter.Tags("destruction")))).map(_.claim).toList, List("Ugarit destroyed"))

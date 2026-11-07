@@ -140,7 +140,7 @@ class PlaceTimeSuite extends com.histmersion.db.DbSuite with Bounded:
   private def tree(asOf: Option[Long]): Set[String] =
     PlaceFixtures.hierarchy(ds, year(asOf), Some(PlaceId("zqtv_root")), PlaceFixtures.Depth(3), PlaceFixtures.Limit(100)).map(_.id.value).toSet
 
-  private val All = fixtures.map(_.place.id.value).toSet
+  private val All: Set[String] = fixtures.map(_.place.id.value).toSet
 
   test("the fixtures' findings and event are where the cases need them"):
     assertEquals(PlaceFixtures.placesOf(ds, Finding.Id("zqtv_src#0")).map(_.id).toSet, Set("zqtv_evid"))
@@ -209,7 +209,7 @@ class PlaceTimeSuite extends com.histmersion.db.DbSuite with Bounded:
     for id <- All do
       val (kind, modern, undated, geom) = attrs(id)
       val d = PlaceFixtures.get(ds, PlaceId.applyUnsafe(id), Some(DeepTime.SignedYear(-2500L))).get
-      assertEquals(d.timeBasis, Place.TimeBasis.of(kind, modern, imported = false, undated, geom), id)
+      assertEquals(d.timeBasis, Place.TimeBasis.of(Place.TimeBasis.OfKind(kind), modern, imported = false, undated, geom), id)
     assert(PlaceFixtures.get(ds, PlaceId("zqtv_evid"), Some(DeepTime.SignedYear(-2500L))).get.datedByFindings)
     assert(!PlaceFixtures.get(ds, PlaceId("zqtv_evid"), None).get.datedByFindings)
     assertEquals(

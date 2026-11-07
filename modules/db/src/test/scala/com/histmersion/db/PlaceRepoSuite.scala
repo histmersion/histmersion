@@ -293,7 +293,7 @@ class PlaceRepoSuite extends com.histmersion.db.DbSuite:
         period = Some(Period(com.histmersion.api.catalogue.Year(from), com.histmersion.api.catalogue.Year(to))),
         limit = Filter.Limit(50)
       )
-      val r = SearchFixtures.sources(ds, f, cfg.limits.snippetWords, PlaceFixtures.scopeFor(ds, f.places, f.period))
+      val r = SearchFixtures.sources(ds, f, com.histmersion.domain.library.search.Search.SnippetWords(cfg.limits.snippetWords.value), PlaceFixtures.scopeFor(ds, f.places, f.period))
       r.hits.map(_.source.citekey).toSet
     assert(found("zzp_asia", -1400, -1200).contains("zzp_src"), "Hattusa → Hatti → Turkey → Asia")
     assert(found("zzp_hatti", -1400, -1200).contains("zzp_src"))
@@ -302,7 +302,7 @@ class PlaceRepoSuite extends com.histmersion.db.DbSuite:
     // gazetteer id the filter carries (item 15: `place: pleiades_589831` explains nothing)
     val f = Filter(places = List(com.histmersion.api.library.Filter.Places("zzp_hattusa")), period = Some(Period(com.histmersion.api.catalogue.Year(-1400), com.histmersion.api.catalogue.Year(-1200))), limit = Filter.Limit(50))
     val hit = SearchFixtures
-      .sources(ds, f, cfg.limits.snippetWords, PlaceFixtures.scopeFor(ds, f.places, f.period))
+      .sources(ds, f, com.histmersion.domain.library.search.Search.SnippetWords(cfg.limits.snippetWords.value), PlaceFixtures.scopeFor(ds, f.places, f.period))
       .hits
       .find(_.source.citekey.value == "zzp_src")
       .get

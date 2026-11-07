@@ -34,7 +34,7 @@ object SourceCheckFixtures:
       val context = SourceCheckRepo.Context(suggestions, format, geocode)
       LintReport(rules.map { r =>
         if SourceCheckRepo.sqlOf(r.name.value).nonEmpty then SourceCheckRepo.report(r, context, maxItems)
-        else ArticleCheckFixtures.report(r, format, maxItems)
+        else ArticleCheckFixtures.report(r, format, ArticleCheckFixtures.ReportMaxItems(maxItems.value))
       })
 
-  def sqlOf(rule: String): List[String] = SourceCheckRepo.sqlOf(rule) ++ ArticleCheckFixtures.sqlOf(rule)
+  def sqlOf(rule: Rule.Name): List[String] = SourceCheckRepo.sqlOf(rule.value) ++ ArticleCheckFixtures.sqlOf(rule.value)

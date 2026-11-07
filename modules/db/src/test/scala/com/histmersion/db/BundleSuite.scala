@@ -584,8 +584,8 @@ class BundleSuite extends com.histmersion.db.DbSuite with Bounded:
     val out = java.io.ByteArrayOutputStream()
     val w = BundleTar.Writer(out)
     val _ =
-      w.bytes(Bundle.ManifestPath, BundleFormat.manifestBytes(m.modify(_.files).setTo(m.files.filterNot(f => gone(f.path)))))
-    entries(bundle).tail.filterNot(e => gone(e._1)).foreach((n, b) => w.bytes(n, b).fold(e => fail(e), identity))
+      w.bytes(BundleTar.Entry.Name(Bundle.ManifestPath), BundleFormat.manifestBytes(m.modify(_.files).setTo(m.files.filterNot(f => gone(f.path.value)))))
+    entries(bundle).tail.filterNot(e => gone(e._1)).foreach((n, b) => w.bytes(BundleTar.Entry.Name(n), b).fold(e => fail(e.value), identity))
     w.finish()
     out.toByteArray
 
