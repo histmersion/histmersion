@@ -2,6 +2,7 @@ package com.histmersion.domain.automation.goals
 import com.augustnagro.magnum.*
 import com.histmersion.util.database.Sql
 import com.histmersion.util.database.given
+import com.histmersion.util.database.NewtypeColumns.given
 
 /** The autopilot's focus (V098, docs/research-process-managers.md "As built: the focus"): one `goal_focus` row per goal
   * it touched or a person pinned (active now, since and why; when and why it last left; a person's pin and priority), a
@@ -175,7 +176,7 @@ object FocusRepo:
       .toMap
 
   /** The goals linked to each of `refs` by a link of `kind` (source: a citekey, article: a slug). */
-  def goalsOf(kind: com.histmersion.domain.automation.Goal.LinkKind.Wire, refs: List[com.histmersion.domain.automation.goals.GoalLinkRepo.LinkRow.Ref])(using DbCon): Map[com.histmersion.domain.automation.goals.GoalLinkRepo.LinkRow.Ref, List[com.histmersion.domain.automation.Goal.Slug]] =
+  def goalsOf(kind: com.histmersion.domain.automation.Goal.LinkKind.Wire, refs: List[com.histmersion.api.automation.Goal.Plans.GoalLink.Ref])(using DbCon): Map[com.histmersion.api.automation.Goal.Plans.GoalLink.Ref, List[com.histmersion.domain.automation.Goal.Slug]] =
     if refs.isEmpty then Map.empty
     else
       val texts: List[String] = refs.map(_.value)
@@ -183,7 +184,7 @@ object FocusRepo:
         .query[(String, String)]
         .run()
         .toList
-        .groupMap(row => com.histmersion.domain.automation.goals.GoalLinkRepo.LinkRow.Ref(row._1))(row => com.histmersion.domain.automation.Goal.Slug(row._2))
+        .groupMap(row => com.histmersion.api.automation.Goal.Plans.GoalLink.Ref(row._1))(row => com.histmersion.domain.automation.Goal.Slug(row._2))
 
   /** The targets of a manager's newest runs, newest first (what the fair order counts on from). */
   def recentTargets(managerId: com.histmersion.domain.automation.goals.FocusRepo.WorkRow.ManagerId, n: com.histmersion.PageSize)(using DbCon): List[com.histmersion.domain.automation.goals.FocusRepo.WorkRow.Target] =

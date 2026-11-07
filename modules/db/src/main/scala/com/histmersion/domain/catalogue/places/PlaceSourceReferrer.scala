@@ -4,6 +4,7 @@ import com.histmersion.api.library.{DeleteCount, DeletePart}
 import com.histmersion.domain.library.sources.referrers.*
 
 import com.histmersion.util.database.given
+import com.histmersion.util.database.NewtypeColumns.given
 
 import com.augustnagro.magnum.*
 import com.histmersion.api.library.Rename
@@ -20,12 +21,12 @@ final class PlaceSourceReferrer extends SourceReferrer:
         "place_types.citekey" -> sql"UPDATE place_types SET citekey = $to WHERE citekey = $from".update.run(),
         "place_footprints.citekey" -> sql"UPDATE place_footprints SET citekey = $to WHERE citekey = $from".update.run(),
         "places.source" -> sql"UPDATE places SET source = $to WHERE source = $from".update.run()
-      ).collect { case (t, n) if n > 0 => Rename.Count(t, n) }
+      ).collect { case (t, n) if n > 0 => Rename.Count(Rename.Count.Table(t), Rename.Count.Rows(n)) }
     )
 
   override def report(source: SourceKeys)(using DbCon): DeleteReport =
     val placed = sql"""SELECT count(*)::int FROM finding_places fp JOIN findings f ON f.id = fp.finding_id
                        WHERE f.citekey = ${source.citekey}""".query[Int].run().headOption.getOrElse(0)
     DeleteReport(counts = List(DeletePart.FindingPlaces -> placed).collect {
-      case (p, rows) if rows > 0 => DeleteCount(p, rows)
+      case (p, rows) if rows > 0 => DeleteCount(p, DeleteCount.Rows(rows))
     })

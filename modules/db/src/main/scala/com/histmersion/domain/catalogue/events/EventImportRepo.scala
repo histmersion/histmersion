@@ -1,10 +1,13 @@
 package com.histmersion.domain.catalogue.events
 
 import com.histmersion.api.TimeSpan
-import com.histmersion.api.catalogue.{CatalogRecord, Corrections, EventCatalogueRef, EventFields, EventTaxonomy}
+import com.histmersion.api.catalogue.{CatalogRecord, Corrections, EventCatalogueRef, EventEntry, EventFields, EventSummary, EventTaxonomy}
+import com.histmersion.api.catalogue.Year
+import com.histmersion.domain.catalogue.Event
 import com.histmersion.util.database.Jsonb
 
 import com.augustnagro.magnum.*
+import com.histmersion.util.database.NewtypeColumns.given
 import com.histmersion.util.database.given_DbCodec_List
 import com.histmersion.api.catalogue.Correction
 
@@ -14,8 +17,6 @@ import com.histmersion.api.catalogue.Correction
 private[events] object EventImportRepo:
   type PartName = PartName.T
   object PartName extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type TextField = TextField.T
-  object TextField extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
   /** Every stored event, as the merge sees it ([[CatalogMerge.place]]), in id order (the merge's choice never depends
     * on the order rows come in — it ranks candidates itself — but a stable order keeps every run reproducible).
@@ -36,15 +37,26 @@ private[events] object EventImportRepo:
       .toList
       .map { r =>
         StoredEvent(
-          r.id,
-          r.kind,
-          TimeSpan(r.notBefore, r.beginBy, r.endFrom, r.notAfter),
+          Event.Id.assume(r.id.value),
+          StoredEvent.Kind(r.kind.value),
+          TimeSpan(
+            r.notBefore.map(v => Year(v.value)),
+            r.beginBy.map(v => Year(v.value)),
+            r.endFrom.map(v => Year(v.value)),
+            r.notAfter.map(v => Year(v.value))
+          ),
           r.lat,
           r.lon,
-          r.wikidata,
-          r.keys.flatMap(k => k.split("\\|", 2) match { case Array(p, i) => Some(p -> i); case _ => None }).toSet,
-          r.catalogue.isDefined,
-          r.label
+          r.wikidata.map(w => EventEntry.Wikidata(w.value)),
+          r.keys
+            .flatMap(k =>
+              k.value.split("\\|", 2) match
+                case Array(p, i) => Some(CatalogRecord.Provider(p) -> EventCatalogueRef.ProviderId(i))
+                case _           => None
+            )
+            .toSet,
+          StoredEvent.Catalogue(r.catalogue.isDefined),
+          StoredEvent.Label(r.label.value)
         )
       }
 
@@ -60,23 +72,26 @@ private[events] object EventImportRepo:
     // `var`s: the counts of this write
     var created, updated = 0
     var counts = Correction.Counts()
-    placed.groupBy(_._2.eventId).toList.sortBy(_._1).foreach { (eventId, group) =>
-      val recs = group.map(_._1).sortBy(_.key)
-      val names = recs.flatMap(r => r.label :: r.names).map(_.trim).filter(_.nonEmpty).distinct
+    placed.groupBy(_._2.eventId).toList.sortBy(_._1.value).foreach { (eventId, group) =>
+      val recs = group.map(_._1).sortBy(r => (r.provider.value, r.providerId.value))
+      val names = recs.flatMap(r => r.label.value :: r.names.map(_.value)).map(_.trim).filter(_.nonEmpty).distinct
       val wd = recs.flatMap(_.wikidata).headOption
-      val catalogue = sql"SELECT catalogue FROM events WHERE id = $eventId".query[Option[String]].run().headOption
-      def ownerIn(p: com.histmersion.domain.catalogue.events.BEventRow.Id): Option[CatalogRecord] =
+      val catalogue =
+        sql"SELECT catalogue FROM events WHERE id = $eventId".query[Option[CatalogRecord.Provider]].run().headOption
+      def ownerIn(p: CatalogRecord.Provider): Option[CatalogRecord] =
         val storedKeys = sql"SELECT provider, provider_id FROM event_catalogue WHERE event_id = $eventId"
-          .query[(String, String)]
+          .query[(CatalogRecord.Provider, EventCatalogueRef.ProviderId)]
           .run()
           .toList
-        CatalogRecord.owner(eventId, p, storedKeys ++ recs.map(_.key)).flatMap(k => recs.find(_.key == k))
+        CatalogRecord
+          .owner(CatalogRecord.EventId(eventId.value), p, storedKeys ++ recs.map(_.key))
+          .flatMap(k => recs.find(_.key == k))
       def refreshFrom(r: CatalogRecord): Unit =
         counts = counts + refresh(eventId, r, names, wd)
         updated += 1
       group.head._2 match
         case CatalogMerge.Placement.New(_, _) =>
-          val creator = recs.find(r => CatalogRecord.eventId(r) == eventId).getOrElse(recs.head)
+          val creator = recs.find(r => CatalogRecord.eventId(r).value == eventId.value).getOrElse(recs.head)
           catalogue match
             case None =>
               insertEvent(eventId, creator, names, wd)
@@ -89,24 +104,29 @@ private[events] object EventImportRepo:
             case None    => fill(eventId, names, wd)
       recs.foreach(r => upsertRecord(eventId, r))
     }
-    EventSaved(created, updated, placed.size, counts)
+    EventSaved(EventSaved.Created(created), EventSaved.Updated(updated), EventSaved.Rows(placed.size), counts)
 
   /** Refresh an import's own event from its owner record `r`, its applied corrections over `r`'s values; a span kept by
     * hand drops the catalogue's stated year and ± (they do not explain it).
     */
-  private def refresh(id: com.histmersion.domain.catalogue.events.BEventRow.Id, r: CatalogRecord, names: List[com.histmersion.domain.catalogue.events.BEventRow.Names], wd: Option[com.histmersion.domain.catalogue.events.BEventRow.Wikidata])(using
+  private def refresh(id: Event.Id, r: CatalogRecord, names: List[String], wd: Option[EventEntry.Wikidata])(using
       DbCon
   ): Correction.Counts =
-    val (keep, outcomes) = CorrectionRepo.reconcile(Correction.Target.Event, id, EventFields.upstream(r))
-    def text(f: com.histmersion.domain.catalogue.events.EventImportRepo.TextField): Option[Option[com.histmersion.domain.catalogue.events.BEventRow.Description]] = keep.get(f).map(_.asString)
-    val label = text(EventFields.Label).flatten.getOrElse(r.label)
-    val kind = text(EventFields.Kind).flatten.getOrElse(EventTaxonomy.canonical(r.kind))
-    val hist = text(EventFields.Historicity).flatten.getOrElse(r.historicity)
-    val desc = text(EventFields.Description).getOrElse(r.description)
-    val spanKept = keep.contains(EventFields.Span)
-    val ts = keep.get(EventFields.Span).flatMap(_.as[TimeSpan].toOption).getOrElse(r.timeSpan)
+    val (keep, outcomes) = CorrectionRepo.reconcile(
+      Correction.TargetKind(Correction.Target.Event),
+      Correction.TargetId(id.value),
+      EventFields.upstream(r).map((f, v) => Correction.Field(f) -> v)
+    )
+    def text(f: String): Option[Option[String]] = keep.get(Correction.Field(f)).map(_.asString)
+    val label: String = text(EventFields.Label).flatten.getOrElse(r.label.value)
+    val kind: String =
+      text(EventFields.Kind).flatten.getOrElse(EventTaxonomy.canonical(EventSummary.Kind(r.kind.value)).value)
+    val hist: String = text(EventFields.Historicity).flatten.getOrElse(r.historicity.value)
+    val desc: Option[String] = text(EventFields.Description).getOrElse(r.description.map(_.value))
+    val spanKept = keep.contains(Correction.Field(EventFields.Span))
+    val ts = keep.get(Correction.Field(EventFields.Span)).flatMap(_.as[TimeSpan].toOption).getOrElse(r.timeSpan)
     val (central, pm, method) = if spanKept then (None, None, None) else (r.central, r.plusMinus, r.datingMethod)
-    val geom: Option[com.histmersion.domain.catalogue.events.BEventRow.Geom] = keep.get(EventFields.Geometry) match
+    val geom: Option[String] = keep.get(Correction.Field(EventFields.Geometry)) match
       case Some(g) => Option.when(!g.isNull)(g.noSpaces)
       case None    => for la <- r.lat; lo <- r.lon yield EventFields.point(la, lo).noSpaces
     sql"""UPDATE events SET label = $label, kind = $kind,
@@ -122,18 +142,18 @@ private[events] object EventImportRepo:
   private def pointSql(r: CatalogRecord): Option[String] =
     for la <- r.lat; lo <- r.lon yield s"SRID=4326;POINT($lo $la)"
 
-  private def insertEvent(id: com.histmersion.domain.catalogue.events.BEventRow.Id, r: CatalogRecord, names: List[com.histmersion.domain.catalogue.events.BEventRow.Names], wd: Option[com.histmersion.domain.catalogue.events.BEventRow.Wikidata])(using DbCon): Unit =
+  private def insertEvent(id: Event.Id, r: CatalogRecord, names: List[String], wd: Option[EventEntry.Wikidata])(using DbCon): Unit =
     val geom = pointSql(r)
     sql"""INSERT INTO events (id, label, kind, not_before, begin_by, end_from, not_after, historicity, geom,
                               description, wikidata, names, catalogue, central, plus_minus, dating_method)
-          VALUES ($id, ${r.label}, ${EventTaxonomy.canonical(r.kind)}, ${r.timeSpan.notBefore}, ${r.timeSpan.beginBy},
+          VALUES ($id, ${r.label}, ${EventTaxonomy.canonical(EventSummary.Kind(r.kind.value))}, ${r.timeSpan.notBefore}, ${r.timeSpan.beginBy},
                   ${r.timeSpan.endFrom}, ${r.timeSpan.notAfter}, ${r.historicity},
                   CASE WHEN $geom::text IS NULL THEN NULL ELSE ST_GeomFromEWKT($geom::text) END,
                   ${r.description}, $wd, $names::text[], ${r.provider}, ${r.central}, ${r.plusMinus},
                   ${r.datingMethod})""".update.run()
 
   /** An event the import does not own: its empty Wikidata item filled, its names added to. */
-  private def fill(id: com.histmersion.domain.catalogue.events.BEventRow.Id, names: List[com.histmersion.domain.catalogue.events.BEventRow.Names], wd: Option[com.histmersion.domain.catalogue.events.BEventRow.Wikidata])(using DbCon): Unit =
+  private def fill(id: Event.Id, names: List[String], wd: Option[EventEntry.Wikidata])(using DbCon): Unit =
     sql"""UPDATE events SET wikidata = coalesce(wikidata, $wd),
           names = (SELECT coalesce(array_agg(DISTINCT n), '{}') FROM unnest(names || $names::text[]) n)
         WHERE id = $id AND (wikidata IS DISTINCT FROM coalesce(wikidata, $wd)
@@ -142,15 +162,15 @@ private[events] object EventImportRepo:
   /** The catalogue an event was created from, with its OWNER record ([[CatalogRecord.owner]]) — what the event's fields
     * are compared with when a person corrects them. `None`: not an import's event.
     */
-  def upstreamOf(id: com.histmersion.domain.catalogue.events.BEventRow.Id)(using DbCon): Option[(com.histmersion.domain.catalogue.events.BCatalogueRow.ProviderId, CatalogRecord)] =
-    sql"SELECT catalogue FROM events WHERE id = $id".query[Option[String]].run().headOption.flatten.flatMap { cat =>
+  def upstreamOf(id: Event.Id)(using DbCon): Option[(CatalogRecord.Provider, CatalogRecord)] =
+    sql"SELECT catalogue FROM events WHERE id = $id".query[Option[CatalogRecord.Provider]].run().headOption.flatten.flatMap { cat =>
       val rows = sql"""SELECT provider, provider_id, record::text FROM event_catalogue
                        WHERE event_id = $id AND provider = $cat ORDER BY provider_id"""
-        .query[(String, String, String)]
+        .query[(CatalogRecord.Provider, EventCatalogueRef.ProviderId, Jsonb.JsonText)]
         .run()
         .toList
       CatalogRecord
-        .owner(id, cat, rows.map(r => (r._1, r._2)))
+        .owner(CatalogRecord.EventId(id.value), cat, rows.map(r => (r._1, r._2)))
         .flatMap(k => rows.find(r => (r._1, r._2) == k))
         .flatMap(r => Jsonb.read[CatalogRecord](r._3))
         .map(cat -> _)
@@ -160,29 +180,32 @@ private[events] object EventImportRepo:
     * event's kind, in key order — what `events rederive` computes again. A row whose record no longer decodes is
     * counted in the second value and left alone.
     */
-  def records(provider: Option[com.histmersion.domain.catalogue.events.BCatalogueRow.Provider])(using DbCon): (List[(com.histmersion.domain.catalogue.events.BCatalogueRow.Provider, com.histmersion.domain.catalogue.events.BCatalogueRow.ProviderId, CatalogRecord)], com.histmersion.RowCount) =
+  def records(provider: Option[CatalogRecord.Provider])(using DbCon): (List[(Event.Id, EventSummary.Kind, CatalogRecord)], com.histmersion.RowCount) =
     val rows =
       sql"""SELECT c.event_id, e.kind, c.record::text FROM event_catalogue c JOIN events e ON e.id = c.event_id
-                     WHERE ${provider.isEmpty} OR c.provider = ${provider.getOrElse("")}
+                     WHERE ${provider.isEmpty} OR c.provider = ${provider.fold("")(_.value)}
                      ORDER BY c.provider, c.provider_id""".query[(String, String, String)].run().toList
-    val decoded = rows.map((id, kind, j) => Jsonb.read[CatalogRecord](j).map((id, kind, _)))
-    (decoded.flatten, decoded.count(_.isEmpty))
+    val decoded =
+      rows.map((id, kind, j) =>
+        Jsonb.read[CatalogRecord](Jsonb.JsonText(j)).map((Event.Id.assume(id), EventSummary.Kind(kind), _))
+      )
+    (decoded.flatten, com.histmersion.RowCount(decoded.count(_.isEmpty)))
 
   /** The kind each stored record of `provider` has, by key — what an item read again in another class is compared with
     * ([[EventProviders.WikidataEvents.moreSpecific]]).
     */
-  def storedKinds(provider: com.histmersion.domain.catalogue.events.BCatalogueRow.Provider)(using DbCon): Map[(com.histmersion.domain.catalogue.events.BCatalogueRow.Provider, com.histmersion.domain.catalogue.events.BCatalogueRow.Kind), com.histmersion.domain.catalogue.events.BEventRow.Kind] =
+  def storedKinds(provider: CatalogRecord.Provider)(using DbCon): Map[(CatalogRecord.Provider, EventCatalogueRef.ProviderId), EventSummary.Kind] =
     sql"SELECT provider, provider_id, kind FROM event_catalogue WHERE provider = $provider"
-      .query[(String, String, String)]
+      .query[(CatalogRecord.Provider, EventCatalogueRef.ProviderId, EventSummary.Kind)]
       .run()
       .map((p, i, k) => (p, i) -> k)
       .toMap
 
-  private def upsertRecord(eventId: com.histmersion.domain.catalogue.Event.Id, r: CatalogRecord)(using DbCon): Unit =
+  private def upsertRecord(eventId: Event.Id, r: CatalogRecord)(using DbCon): Unit =
     val json = Jsonb.write(r)
     sql"""INSERT INTO event_catalogue (provider, provider_id, event_id, url, label, kind, not_before, begin_by,
                                        end_from, not_after, lat, lon, vei, magnitude, deaths, historicity, record)
-          VALUES (${r.provider}, ${r.providerId}, $eventId, ${r.url}, ${r.label}, ${EventTaxonomy.canonical(r.kind)},
+          VALUES (${r.provider}, ${r.providerId}, $eventId, ${r.url}, ${r.label}, ${EventTaxonomy.canonical(EventSummary.Kind(r.kind.value))},
                   ${r.timeSpan.notBefore}, ${r.timeSpan.beginBy}, ${r.timeSpan.endFrom}, ${r.timeSpan.notAfter},
                   ${r.lat}, ${r.lon}, ${r.vei}, ${r.magnitude}, ${r.deaths}, ${r.historicity}, $json::jsonb)
           ON CONFLICT (provider, provider_id) DO UPDATE SET
@@ -194,36 +217,37 @@ private[events] object EventImportRepo:
 
   // ── the parts of a catalogue read ───────────────────────────────────────────────────────────
 
-  def partsDone(provider: com.histmersion.domain.catalogue.events.BCatalogueRow.Provider)(using DbCon): Set[com.histmersion.domain.catalogue.events.EventImportRepo.PartName] =
-    sql"SELECT part FROM event_import_parts WHERE provider = $provider".query[String].run().toSet
+  def partsDone(provider: CatalogRecord.Provider)(using DbCon): Set[PartName] =
+    sql"SELECT part FROM event_import_parts WHERE provider = $provider".query[PartName].run().toSet
 
-  def markPart(provider: com.histmersion.domain.catalogue.events.BCatalogueRow.Provider, part: com.histmersion.domain.catalogue.events.EventImportRepo.PartName, records: com.histmersion.RowCount)(using DbCon): Unit =
+  def markPart(provider: CatalogRecord.Provider, part: PartName, records: com.histmersion.RowCount)(using DbCon): Unit =
     val _ =
       sql"""INSERT INTO event_import_parts (provider, part, records) VALUES ($provider, $part, $records)
             ON CONFLICT (provider, part) DO UPDATE SET records = EXCLUDED.records, done_at = now()""".update.run()
 
-  def clearParts(provider: com.histmersion.domain.catalogue.events.BCatalogueRow.Provider)(using DbCon): Unit =
+  def clearParts(provider: CatalogRecord.Provider)(using DbCon): Unit =
     val _ = sql"DELETE FROM event_import_parts WHERE provider = $provider".update.run()
 
   /** The catalogue rows of one event, with each provider's licence and citation. */
-  def catalogueRefs(id: com.histmersion.domain.catalogue.events.BEventRow.Id)(using DbCon): List[EventCatalogueRef] =
+  def catalogueRefs(id: Event.Id)(using DbCon): List[EventCatalogueRef] =
     sql"""SELECT provider, provider_id, url, vei, magnitude, deaths, retrieved_at::text
           FROM event_catalogue WHERE event_id = $id ORDER BY provider, provider_id"""
       .query[CatalogueRefRow]
       .run()
       .toList
       .map { r =>
-        val i = CatalogProvider.info(r.provider)
+        val provider = CatalogRecord.Provider(r.provider.value)
+        val i = CatalogProvider.info(provider)
         EventCatalogueRef(
-          r.provider,
-          r.providerId,
-          r.url.getOrElse(""),
-          i.fold(r.provider)(_.title),
-          i.fold("")(_.licence),
-          i.fold("")(_.citation),
-          r.vei,
-          r.magnitude,
-          r.deaths,
-          Some(r.retrievedAt)
+          provider,
+          EventCatalogueRef.ProviderId(r.providerId.value),
+          EventCatalogueRef.Url(r.url.fold("")(_.value)),
+          i.fold(EventCatalogueRef.Title(r.provider.value))(_.title),
+          i.fold(EventCatalogueRef.Licence(""))(_.licence),
+          i.fold(EventCatalogueRef.Citation(""))(_.citation),
+          r.vei.map(v => EventCatalogueRef.Vei(v.value)),
+          r.magnitude.map(m => EventCatalogueRef.Magnitude(m.value)),
+          r.deaths.map(d => EventCatalogueRef.Deaths(d.value)),
+          Some(EventCatalogueRef.RetrievedAt(r.retrievedAt.value))
         )
       }

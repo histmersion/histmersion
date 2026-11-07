@@ -20,19 +20,17 @@ given DbCodec[InstanceInfo] = DbCodec.derived
   * reference data and the schema version. The owners read their own lines (`<Kind>BundleRepo`).
   */
 object BundleRepo:
-  type Label = Label.T
-  object Label extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
   // ── this instance ──────────────────────────────────────────────────────────────────────────
 
 
 
   def instance(using DbCon): InstanceInfo =
-    Sql.raw(s"SELECT id, label, ${ts("created_at")} FROM instance").frag.query[InstanceInfo].run().head
+    Sql.raw(Sql.Text(s"SELECT id, label, ${ts("created_at")} FROM instance")).frag.query[InstanceInfo].run().head
 
   /** Name this instance; a blank label clears it. */
-  def setLabel(label: Option[com.histmersion.util.data.exchange.BundleRepo.Label])(using DbCon): InstanceInfo =
-    val l = label.map(_.trim).filter(_.nonEmpty)
+  def setLabel(label: Option[InstanceInfo.Label])(using DbCon): InstanceInfo =
+    val l = label.map(_.value.trim).filter(_.nonEmpty)
     sql"UPDATE instance SET label = $l".update.run()
     instance
 
@@ -41,21 +39,26 @@ object BundleRepo:
   /** The gazetteer and the named periods, fingerprinted: not carried, compared ([[BundleReference]]). */
   private[histmersion] def reference(using DbCon): com.histmersion.api.exchange.Bundle.Reference =
     // the SEED rows only: a place or period of this collection's own travels in the bundle itself
-    def digest(table: com.histmersion.util.data.TableName): (com.histmersion.RowCount, com.histmersion.Sha256) =
+    def digest(table: com.histmersion.util.data.TableName): (Int, String) =
       Sql
-        .raw(s"""SELECT count(*)::int, coalesce(md5(string_agg(id, ',' ORDER BY id COLLATE "C")), '')
-                  FROM $table WHERE dataset = 'seed'""")
+        .raw(Sql.Text(s"""SELECT count(*)::int, coalesce(md5(string_agg(id, ',' ORDER BY id COLLATE "C")), '')
+                  FROM $table WHERE dataset = 'seed'"""))
         .frag
         .query[(Int, String)]
         .run()
         .head
     val (np, dp) = digest(com.histmersion.util.data.TableName("places"))
     val (nq, dq) = digest(com.histmersion.util.data.TableName("periods"))
-    com.histmersion.api.exchange.Bundle.Reference(np, dp, nq, dq)
+    com.histmersion.api.exchange.Bundle.Reference(
+      com.histmersion.api.exchange.Bundle.Reference.Places(np),
+      com.histmersion.api.exchange.Bundle.Reference.PlacesDigest(dp),
+      com.histmersion.api.exchange.Bundle.Reference.Periods(nq),
+      com.histmersion.api.exchange.Bundle.Reference.PeriodsDigest(dq)
+    )
 
   // ── the schema ─────────────────────────────────────────────────────────────────────────────
 
   /** The Flyway version of this database, read in the caller's transaction ("33"). */
-  private[histmersion] def schemaVersion(using DbCon): Option[String] =
+  private[histmersion] def schemaVersion(using DbCon): Option[com.histmersion.api.exchange.Bundle.Manifest.SchemaVersion] =
     sql"""SELECT version FROM flyway_schema_history WHERE success AND version IS NOT NULL
-          ORDER BY installed_rank DESC LIMIT 1""".query[String].run().headOption
+          ORDER BY installed_rank DESC LIMIT 1""".query[String].run().headOption.map(v => com.histmersion.api.exchange.Bundle.Manifest.SchemaVersion(v))

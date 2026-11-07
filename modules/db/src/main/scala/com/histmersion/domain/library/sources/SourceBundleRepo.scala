@@ -12,8 +12,10 @@ import com.histmersion.util.data.exchange.BundleScope
 import com.histmersion.util.data.exchange.ImportAbort
 import com.histmersion.util.data.exchange.BundleSql.*
 import com.histmersion.util.storage.ContentStore
+import com.histmersion.domain.catalogue.places.GeocodeSettings
 
 import com.histmersion.util.database.given
+import com.histmersion.util.database.NewtypeColumns.given
 import com.augustnagro.magnum.*
 import java.nio.charset.StandardCharsets.UTF_8
 import java.util.UUID
@@ -53,17 +55,21 @@ private[sources] object SourceBundleRepo:
         r.uid,
         r.origin,
         r.sourceUid,
-        r.id,
-        r.claim,
-        r.region,
-        r.lon,
-        r.lat,
-        range(r.pNull, r.pLo, r.pHi),
-        r.periodName,
-        r.tags,
+        Bundle.Finding.Id(r.id.value),
+        Bundle.Finding.Claim(r.claim.value),
+        r.region.map(x => Bundle.Finding.Region(x.value)),
+        r.lon.map(x => com.histmersion.api.catalogue.Longitude(x.value)),
+        r.lat.map(x => com.histmersion.api.catalogue.Latitude(x.value)),
+        range(
+          com.histmersion.util.data.exchange.Bundle.RangeIsNull(r.pNull.value),
+          r.pLo.map(x => com.histmersion.util.data.exchange.Bundle.RangeLower(x.value)),
+          r.pHi.map(x => com.histmersion.util.data.exchange.Bundle.RangeUpper(x.value))
+        ),
+        r.periodName.map(x => Bundle.Finding.PeriodName(x.value)),
+        r.tags.map(t => Bundle.Finding.Tags(t.value)),
         r.confidence.transformInto[Option[com.histmersion.api.library.Confidence]],
-        r.significance,
-        r.updatedAt
+        r.significance.map(x => Bundle.Finding.Significance(x.value)),
+        Bundle.Finding.UpdatedAt(r.updatedAt.value)
       )
     }
 
@@ -91,12 +97,12 @@ private[sources] object SourceBundleRepo:
       where(scope, "s.uid", "a.checked_at") ++ " ORDER BY s.uid").frag.query[BAssessmentRow].run().map { r =>
       Bundle.Assessment(
         r.sourceUid,
-        r.checkedAt,
-        r.retracted,
-        Jsonb.read[io.circe.Json](r.notices).getOrElse(io.circe.Json.arr()),
-        r.citedBy,
-        r.influential,
-        r.verdict
+        Bundle.Assessment.CheckedAt(r.checkedAt.value),
+        Bundle.Assessment.Retracted(r.retracted.value),
+        Jsonb.read[io.circe.Json](Jsonb.JsonText(r.notices.value)).getOrElse(io.circe.Json.arr()),
+        r.citedBy.map(x => Bundle.Assessment.CitedBy(x.value)),
+        r.influential.map(x => Bundle.Assessment.Influential(x.value)),
+        Bundle.Assessment.Verdict(r.verdict.value)
       )
     }
 
@@ -157,7 +163,7 @@ private[sources] object SourceBundleRepo:
         SourceRepo
           .renameIn(com.histmersion.domain.library.Citekey.assume(from.value), com.histmersion.domain.library.Citekey.assume(to.value), referrers)
           .left
-          .foreach(e => throw ImportAbort(List(s"source $from → $to: ${e.message}")))
+          .foreach(e => throw ImportAbort(List(ImportAbort.Problem(s"source $from → $to: ${e.message}"))))
         sql"DELETE FROM source_aliases WHERE alias = $from".update.run(): Unit
       }
     }
@@ -170,7 +176,7 @@ private[sources] object SourceBundleRepo:
           SourceRepo
             .renameIn(com.histmersion.domain.library.Citekey.assume(old.value), com.histmersion.domain.library.Citekey.assume(s.citekey.value), referrers)
             .left
-            .foreach(e => throw ImportAbort(List(s"source $old → ${s.citekey}: ${e.message}")))
+            .foreach(e => throw ImportAbort(List(ImportAbort.Problem(s"source $old → ${s.citekey}: ${e.message}"))))
         }
       }
       if w.inserts(s.uid) then
@@ -296,11 +302,11 @@ private[sources] object SourceBundleRepo:
     given DbCon = w.transaction
     bodiesChanged(w).foreach { u =>
       val (ck, md) =
-        sql"SELECT citekey, ocr_markdown FROM sources WHERE uid = $u".query[(com.histmersion.domain.library.Citekey, Option[FullSourceRow.OcrMarkdown])].run().head
+        sql"SELECT citekey, ocr_markdown FROM sources WHERE uid = $u".query[(com.histmersion.domain.library.Citekey, Option[com.histmersion.util.ocr.Chunker.ChunkMarkdown])].run().head
       val _ = SourceRepo.replaceChunks(ck, md, com.histmersion.util.ocr.Chunker.ChunkMaxChars(w.opts.chunkChars.value))
     }
     w.touchedSources.foreach { u =>
-      val _ = SourceRepo.placeFindingsIn(w.citekeyOf(u), w.opts.toleranceKm)
+      val _ = SourceRepo.placeFindingsIn(w.citekeyOf(u), GeocodeSettings.ToleranceKm(w.opts.toleranceKm.value))
     }
     w.insertedSources.foreach(u => SourceRepo.promote(w.citekeyOf(u)))
 

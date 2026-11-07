@@ -11,6 +11,7 @@ import com.histmersion.domain.automation.agents.RunQuery
 import com.histmersion.domain.automation.approvals.ApprovalQuery
 import com.histmersion.util.database.{Jsonb, Keyset, ListSql, Param, Sql}
 import com.histmersion.util.database.given
+import com.histmersion.util.database.NewtypeColumns.given
 
 
 import com.histmersion.api.automation.Goal

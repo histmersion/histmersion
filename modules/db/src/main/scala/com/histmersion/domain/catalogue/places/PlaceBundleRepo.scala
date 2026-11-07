@@ -47,7 +47,7 @@ private[places] object PlaceBundleRepo:
                         WHERE place_id = ANY($ids::text[]) AND import_source = '' ORDER BY place_id, name COLLATE "C", lang COLLATE "C""""
         .query[BPlaceNameRow]
         .run()
-        .groupBy(_.placeId.value)
+        .groupBy(n => BPlaceRow.Id(n.placeId.value))
       val rels = sql"""SELECT child_id, parent_id, kind, ${SqlLiteral(rangeCols("period"))} FROM place_relations
                        WHERE child_id = ANY($ids::text[]) ORDER BY child_id, parent_id COLLATE "C", kind COLLATE "C""""
         .query[BPlaceRelRow]
@@ -63,7 +63,7 @@ private[places] object PlaceBundleRepo:
                         FROM place_types WHERE place_id = ANY($ids::text[]) ORDER BY place_id, type_label COLLATE "C""""
         .query[BPlaceTypeRow]
         .run()
-        .groupBy(_.placeId.value)
+        .groupBy(t => BPlaceRow.Id(t.placeId.value))
       rows.map { r =>
         Bundle.Place(
           r.uid,
@@ -76,7 +76,7 @@ private[places] object PlaceBundleRepo:
           r.source.map(s => Bundle.Place.Source(s.value)),
           r.properties.flatMap(p => Jsonb.read[io.circe.Json](Jsonb.JsonText(p.value))),
           names
-            .getOrElse(r.id.value, Vector.empty)
+            .getOrElse(r.id, Vector.empty)
             .toList
             .map(n =>
               Bundle.PlaceName(
@@ -102,7 +102,7 @@ private[places] object PlaceBundleRepo:
               Bundle.PlaceLink(Bundle.PlaceLink.Scheme(sc), Bundle.PlaceLink.ExternalId(ex), Bundle.PlaceLink.Relation(rel))
             ),
           types
-            .getOrElse(r.id.value, Vector.empty)
+            .getOrElse(r.id, Vector.empty)
             .toList
             .map(t =>
               Bundle.PlaceType(
@@ -218,7 +218,7 @@ private[places] object PlaceBundleRepo:
     val ours = w.local.places.map(p => p.uid -> p.id.value).toMap
     val kept =
       w.es.places
-        .filterNot(p => w.writes(p.uid))
+        .filterNot(p => w.writes(p.uid).value)
         .flatMap(p => ours.get(p.uid).filter(_ != p.id.value).map(p.id.value -> _))
         .toMap
     id => kept.get(id.value).fold(id)(BPlaceRow.Id(_))
@@ -228,7 +228,18 @@ private[places] object PlaceBundleRepo:
     */
   def placeRenames(w: BundleImport.Writer): Unit =
     given DbCon = w.transaction
-    w.followRenames(w.es.places, _.uid, _.id, w.local.places.map(p => p.uid -> p.id).toMap, com.histmersion.util.data.exchange.PlanQuestions.LabelTakenWhat("place"))(PlaceRepo.renameIn)
+    w.followRenames(
+      w.es.places,
+      _.uid,
+      p => BundleImport.Writer.Label(p.id.value),
+      w.local.places.map(p => p.uid -> BundleImport.Writer.Label(p.id.value)).toMap,
+      com.histmersion.util.data.exchange.PlanQuestions.LabelTakenWhat("place")
+    )((from, to) =>
+      PlaceRepo.renameIn(
+        com.histmersion.domain.catalogue.Place.Id.assume(from.value),
+        com.histmersion.domain.catalogue.Place.Id.assume(to.value)
+      )
+    )
 
   /** Places of the other collection's own (V052): before the events that point at them. Their sets (names, parents,
     * links, types) are replaced; a parent that is neither here nor in the bundle is left out.
@@ -236,7 +247,7 @@ private[places] object PlaceBundleRepo:
   def placesIn(w: BundleImport.Writer): Unit =
     given DbCon = w.transaction
     val placeHere = this.placeHere(w)
-    val places = w.es.places.filter(p => w.writes(p.uid))
+    val places = w.es.places.filter(p => w.writes(p.uid).value)
     places.foreach { p =>
       val range = rangeOrAll(p.period)
       val props = p.properties.map(BundleFormat.printer.print)

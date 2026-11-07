@@ -1,6 +1,7 @@
 package com.histmersion.domain.catalogue.places
 
 import com.histmersion.util.database.given
+import com.histmersion.util.database.NewtypeColumns.given
 
 import com.augustnagro.magnum.*
 
@@ -27,7 +28,7 @@ private[places] object LandRepo:
             SELECT ST_Subdivide(ST_CollectionExtract(ST_MakeValid(ST_SetSRID(ST_GeomFromGeoJSON($g), 4326)), 3),
                                 $PieceVertices)""".update
     }
-    sql"SELECT count(*)::int FROM land".query[Int].run().head
+    com.histmersion.RowCount(sql"SELECT count(*)::int FROM land".query[Int].run().head)
 
   /** Statistics for a freshly loaded `land`: clipping runs right after, so the planner uses the index rather than
     * guess.
@@ -46,17 +47,21 @@ private[places] object LandRepo:
     * 000 of them for the ~12 minutes a full re-clip takes, so an import running meanwhile stalled — or deadlocked
     * against it, taking rows in another order (seen as a flaky test when two suites ran together).
     */
-  def polities()(using DbCon): List[com.histmersion.domain.catalogue.places.BPlaceRow.Label] =
-    sql"SELECT id FROM places WHERE kind = 'polity' AND geom IS NOT NULL ORDER BY id".query[String].run().toList
+  def polities()(using DbCon): List[com.histmersion.domain.catalogue.Place.Id] =
+    sql"SELECT id FROM places WHERE kind = 'polity' AND geom IS NOT NULL ORDER BY id"
+      .query[String]
+      .run()
+      .toList
+      .map(id => com.histmersion.domain.catalogue.Place.Id.assume(id))
 
   /** One batch of [[polities]] clipped again. */
-  def reclip(batch: List[com.histmersion.domain.catalogue.places.BPlaceRow.Id])(using DbCon): Unit =
+  def reclip(batch: List[com.histmersion.domain.catalogue.Place.Id])(using DbCon): Unit =
     val list = batch.mkString(Sep)
     val _ = sql"""UPDATE places SET geom_clipped = clip_to_land(geom)
             WHERE id = ANY(string_to_array($list, $Sep))""".update.run()
 
   def clipped()(using DbCon): com.histmersion.RowCount =
-    sql"SELECT count(*)::int FROM places WHERE geom_clipped IS NOT NULL".query[Int].run().head
+    com.histmersion.RowCount(sql"SELECT count(*)::int FROM places WHERE geom_clipped IS NOT NULL".query[Int].run().head)
 
   def pieces()(using DbCon): com.histmersion.RowCount =
-    sql"SELECT count(*)::int FROM land".query[Int].run().head
+    com.histmersion.RowCount(sql"SELECT count(*)::int FROM land".query[Int].run().head)

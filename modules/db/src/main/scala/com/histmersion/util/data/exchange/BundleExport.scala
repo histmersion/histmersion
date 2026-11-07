@@ -49,8 +49,8 @@ object BundleExport:
       val manifest = Bundle.Manifest(
         format = Bundle.Manifest.Format(Bundle.Format),
         formatVersion = Bundle.Manifest.FormatVersion(Bundle.FormatVersion),
-        schemaVersion = Bundle.Manifest.SchemaVersion(schema.getOrElse("0")),
-        bundleId = BundleFormat.bundleId(inst.id, manifestSince, listed, shas),
+        schemaVersion = schema.getOrElse(Bundle.Manifest.SchemaVersion("0")),
+        bundleId = BundleFormat.bundleId(inst.id, manifestSince, listed, shas.map(s => com.histmersion.api.Sha256(s.value))),
         instance = Bundle.Instance(inst.id, inst.label.map(l => Bundle.Instance.Label(l.value))),
         since = manifestSince,
         asOf = carried.flatMap(_._2.asOf.map(_.value)).maxOption.map(Bundle.Manifest.AsOf(_)),

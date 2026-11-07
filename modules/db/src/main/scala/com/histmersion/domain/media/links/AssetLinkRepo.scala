@@ -1,6 +1,7 @@
 package com.histmersion.domain.media.links
 
 import com.histmersion.util.database.given
+import com.histmersion.util.database.NewtypeColumns.given
 import com.augustnagro.magnum.*
 import com.histmersion.api.media.AssetLink
 

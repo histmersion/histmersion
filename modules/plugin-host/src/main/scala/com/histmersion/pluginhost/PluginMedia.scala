@@ -36,7 +36,7 @@ object PluginMedia:
     Polite(
       http,
       media.modify(_.requestIntervalMs).setTo(MediaConfig.RequestIntervalMs(collection.requestIntervalMs.value)),
-      sleep = sleep,
+      sleep = ms => sleep(HttpPolicy.Step.Wait.Ms(ms.value)),
       log = log
     )
 

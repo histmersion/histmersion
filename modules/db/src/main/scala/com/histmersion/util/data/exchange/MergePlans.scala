@@ -36,7 +36,7 @@ object MergePlans:
   ): Either[com.histmersion.util.data.exchange.MergePlans.PlanFileText, MergePlan] =
     val loaded = bundle.read(BundleReader.read(_, hashBlobs = false))
     loaded.manifest match
-      case None    => Left(("not a readable bundle" :: loaded.problems).mkString("; "))
+      case None    => Left(PlanFileText(("not a readable bundle" :: loaded.problems).mkString("; ")))
       case Some(m) =>
         Right(transact(ds) {
           sql"SET TRANSACTION ISOLATION LEVEL REPEATABLE READ, READ ONLY".update.run()
@@ -57,9 +57,23 @@ object MergePlans:
       kinds: CarriedKinds,
       rules: MergeRuleSet
   )(using DbCon): (MergePlanner.Input, MergePlanner.Result) =
-    val input0 = MergeState.load(loaded.entities, m, loaded.problems, files, chunkChars, cfg, kinds, rules)
+    val input0 = MergeState.load(
+      loaded.entities,
+      m,
+      loaded.problems.map(MergePlanner.Input.ReadProblems(_)),
+      files,
+      chunkChars,
+      cfg,
+      kinds,
+      rules
+    )
     val sk =
-      MergeState.sketches(bundle, input0, MergePlanner.sketchesWanted(input0, cfg, rules.planning), cfg.minhashSize)
+      MergeState.sketches(
+        bundle,
+        input0,
+        MergePlanner.sketchesWanted(input0, cfg, rules.planning),
+        com.histmersion.util.text.MinHash.Size(cfg.minhashSize.value)
+      )
     val input =
       input0
         .modify(_.bodies)

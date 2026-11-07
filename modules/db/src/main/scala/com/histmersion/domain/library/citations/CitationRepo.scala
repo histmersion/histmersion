@@ -2,12 +2,14 @@ package com.histmersion.domain.library.citations
 
 import com.histmersion.util.database.Vocab
 import com.histmersion.util.database.given
+import com.histmersion.util.database.NewtypeColumns.given
 import com.histmersion.domain.library.sources.EdgeRow
 
 import com.augustnagro.magnum.*
 import com.histmersion.api.library.{
   ContradictionRow,
   ContradictionsResult,
+  Edge,
   GraphLink,
   GraphNode,
   NeighborRow,
@@ -20,16 +22,14 @@ import com.histmersion.api.library.SourceColumns.given
   * written with their source (`sources.SourceRepo`): an edge is stored on the source that makes it.
   */
 private[citations] object CitationRepo:
-  type Depth = Depth.T
-  object Depth extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type Since = Since.T
   object Since extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
 
 
   private given DbCodec[NeighborTarget] = Vocab.codec(
-    s => NeighborTarget.values.find(_.toString.equalsIgnoreCase(s)),
-    _.toString.toLowerCase,
+    s => NeighborTarget.values.find(_.toString.equalsIgnoreCase(s.value)),
+    e => com.histmersion.WireEnumValues.Wire(e.toString.toLowerCase),
     NeighborTarget.Unresolved
   )
   private given DbCodec[NeighborRow] = DbCodec.derived
@@ -60,12 +60,12 @@ private[citations] object CitationRepo:
     * joins two stored sources (V026's foreign keys), and a link is kept only when BOTH ends are nodes of the result —
     * the depth cut-off never leaves a dangling line.
     */
-  def graph(citekey: com.histmersion.domain.library.Citekey, maxDepth: com.histmersion.domain.library.citations.CitationRepo.Depth)(using DbCon): com.histmersion.api.library.Source.Graph =
-    val depth = maxDepth.max(0).min(4)
+  def graph(citekey: com.histmersion.domain.library.Citekey, maxDepth: Source.Graph.Depth)(using DbCon): com.histmersion.api.library.Source.Graph =
+    val depth = maxDepth.value.max(0).min(4)
     @annotation.tailrec
     def walk(
-        d: com.histmersion.domain.library.citations.CitationRepo.Depth,
-        frontier: List[com.histmersion.domain.library.Citekey],
+        d: Int,
+        frontier: List[com.histmersion.api.library.Citekey],
         nodes: Vector[GraphNode],
         links: Set[GraphLink]
     ): (Vector[GraphNode], Set[GraphLink]) =
@@ -75,7 +75,15 @@ private[citations] object CitationRepo:
                             WHERE citekey = ANY($frontier::text[]) ORDER BY citekey"""
           .query[(String, Option[String], Option[Int], Option[Source.Status])]
           .run()
-          .map((ck, t, y, st) => GraphNode(ck, t, y, st, d))
+          .map((ck, t, y, st) =>
+            GraphNode(
+              com.histmersion.api.library.Citekey(ck),
+              t.map(x => com.histmersion.api.library.Title(x)),
+              y.map(x => com.histmersion.api.catalogue.Year(x.toLong)),
+              st,
+              Source.Graph.Depth(d)
+            )
+          )
         val grown = nodes ++ found
         if d >= depth then (grown, links)
         else
@@ -83,17 +91,23 @@ private[citations] object CitationRepo:
                                  WHERE src = ANY($frontier::text[]) OR dst = ANY($frontier::text[])"""
             .query[EdgeRow]
             .run()
-            .map(e => GraphLink(e.src, e.dst, e.kind))
+            .flatMap(e =>
+              Edge.Kind
+                .fromWire(Edge.Kind.Wire(e.kind.value))
+                .map(k => GraphLink(com.histmersion.api.library.Citekey(e.src.value), com.histmersion.api.library.Citekey(e.dst.value), k))
+            )
           val seen = grown.iterator.map(_.id).toSet
           val next = touching.iterator.flatMap(l => List(l.source, l.target)).filterNot(seen).toList.distinct
           walk(d + 1, next, grown, links ++ touching)
-    val (nodes, links) = walk(com.histmersion.domain.library.citations.CitationRepo.Depth(0), List(citekey), Vector.empty, Set.empty)
+    val (nodes, links) = walk(0, List(com.histmersion.api.library.Citekey(citekey.value)), Vector.empty, Set.empty)
     val ids = nodes.iterator.map(_.id).toSet
     com.histmersion.api.library.Source.Graph(
-      citekey,
-      depth,
+      Source.Graph.Root(citekey.value),
+      Source.Graph.Depth(depth),
       nodes.toList,
-      links.toList.filter(l => ids(l.source) && ids(l.target)).sortBy(l => (l.source, l.target, l.kind))
+      links.toList
+        .filter(l => ids(l.source) && ids(l.target))
+        .sortBy(l => (l.source.value, l.target.value, Edge.Kind.wireOf(l.kind).value))
     )
 
   def contradictions(citekey: Option[com.histmersion.domain.library.Citekey], since: Option[com.histmersion.domain.library.citations.CitationRepo.Since])(using DbCon): ContradictionsResult =
@@ -116,7 +130,7 @@ private[citations] object CitationRepo:
                      ORDER BY e.direction, e.kind, o.citekey"""
       .query[ContradictionRow]
       .run()
-    ContradictionsResult(rows.toList, rows.size)
+    ContradictionsResult(rows.toList, ContradictionsResult.Total(rows.size))
 
   private def contradictionsAll(since: Option[com.histmersion.domain.library.citations.CitationRepo.Since])(using DbCon): ContradictionsResult =
     val byEdge =
@@ -163,4 +177,4 @@ private[citations] object CitationRepo:
       .query[ContradictionRow]
       .run()
     val all = (byEdge ++ byStatus).toList
-    ContradictionsResult(all, all.size)
+    ContradictionsResult(all, ContradictionsResult.Total(all.size))

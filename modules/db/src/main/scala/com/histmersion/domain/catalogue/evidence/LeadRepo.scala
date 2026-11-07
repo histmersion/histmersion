@@ -1,12 +1,14 @@
 package com.histmersion.domain.catalogue.evidence
 
 import com.histmersion.api.TimeSpan
-import com.histmersion.api.catalogue.{EventFindingRef, EventSourceRef, EventTier}
+import com.histmersion.api.catalogue.{ArticleEventLead, CatalogRecord, EventEntry, EventFindingRef, EventSourceRef, EventTier}
 import com.histmersion.util.database.{Param, Sql}
+import com.histmersion.domain.catalogue.Event
 import com.histmersion.domain.catalogue.events.EventSql
 import com.histmersion.util.database.RangeSql
 
 import com.augustnagro.magnum.*
+import com.histmersion.util.database.NewtypeColumns.given
 import com.histmersion.util.database.given_DbCodec_List
 
 /** What the events' leads and cards are computed from: the sources attesting an event, the findings near it, the facts
@@ -17,7 +19,7 @@ private[evidence] object LeadRepo:
 
   /** The sources attesting one event: its own citekey, then the attestations naming it. */
 
-  def attestingSources(id: com.histmersion.domain.catalogue.evidence.LeadRow.Id)(using DbCon): List[EventSourceRef] =
+  def attestingSources(id: Event.Id)(using DbCon): List[EventSourceRef] =
     val own = sql"""SELECT s.citekey, s.title, s.year FROM events e JOIN sources s ON s.citekey = e.citekey
                       WHERE e.id = $id"""
       .query[(com.histmersion.api.library.Citekey, Option[EventSourceRef.Title], Option[com.histmersion.api.catalogue.Year])]
@@ -36,7 +38,7 @@ private[evidence] object LeadRepo:
   /** The dated, placed findings within `km` of an event's anchor and `years` of its outer span, nearest in time then
     * space first: their distance and the years between (0 = overlapping).
     */
-  def nearFindings(id: com.histmersion.domain.catalogue.evidence.LeadRow.Id, km: com.histmersion.domain.catalogue.events.CatalogMerge.Tolerance.Km, years: com.histmersion.domain.catalogue.events.CatalogMerge.Tolerance.Years, limit: com.histmersion.PageSize)(using DbCon): List[EventFindingRef] =
+  def nearFindings(id: Event.Id, km: com.histmersion.domain.catalogue.events.CatalogMerge.Tolerance.Km, years: com.histmersion.domain.catalogue.events.CatalogMerge.Tolerance.Years, limit: com.histmersion.PageSize)(using DbCon): List[EventFindingRef] =
     sql"""WITH ev AS (
               SELECT ${SqlLiteral(EventSql.AnchorSql)} AS pt, e.outer_span AS span
               FROM events e LEFT JOIN places ep ON ep.id = e.place_id WHERE e.id = $id)
@@ -62,7 +64,17 @@ private[evidence] object LeadRepo:
       .query[NearFindingRow]
       .run()
       .toList
-      .map(r => EventFindingRef(r.id, r.citekey, r.claim, r.km, r.yearGap.max(0), r.periodStart, r.periodEnd))
+      .map(r =>
+        EventFindingRef(
+          EventFindingRef.Id(r.id.value),
+          com.histmersion.api.library.Citekey(r.citekey.value),
+          EventFindingRef.Claim(r.claim.value),
+          EventFindingRef.Km(r.km.value),
+          EventFindingRef.YearGap(r.yearGap.value.max(0)),
+          r.periodStart.map(y => com.histmersion.api.catalogue.Year(y.value.toLong)),
+          r.periodEnd.map(y => com.histmersion.api.catalogue.Year(y.value.toLong))
+        )
+      )
 
   /** The facts of the leads of the events `where` selects (over `events e`, `ep` its place): tier, size, findings near
     * (within `km`, `years`), proposed and confirmed sources. Catalogue events first, the largest first.
@@ -107,10 +119,10 @@ private[evidence] object LeadRepo:
       citekeys: List[com.histmersion.domain.library.Citekey],
       period: Option[(com.histmersion.domain.DeepTime.SignedYear, com.histmersion.domain.DeepTime.SignedYear)],
       km: com.histmersion.domain.catalogue.events.CatalogMerge.Tolerance.Km,
-      minVei: com.histmersion.domain.catalogue.events.BCatalogueRow.Vei,
-      minMagnitude: com.histmersion.domain.catalogue.events.BCatalogueRow.Magnitude,
+      minVei: CatalogRecord.Vei,
+      minMagnitude: CatalogRecord.Magnitude,
       limit: com.histmersion.PageSize
-  )(using DbCon): List[(com.histmersion.domain.catalogue.events.BEventRow.Id, com.histmersion.domain.library.Citekey, com.histmersion.domain.catalogue.events.BEventRow.Label, TimeSpan, List[com.histmersion.domain.catalogue.events.BEventRow.Label], Option[com.histmersion.domain.catalogue.evidence.LeadRow.Attesting], Option[com.histmersion.domain.catalogue.evidence.LeadRow.Magnitude], com.histmersion.domain.catalogue.evidence.LeadRow.FindingsNear, com.histmersion.domain.catalogue.evidence.LeadRow.Tier)] =
+  )(using DbCon): List[(Event.Id, CatalogRecord.Label, CatalogRecord.Kind, TimeSpan, List[EventEntry.Names], Option[CatalogRecord.Vei], Option[CatalogRecord.Magnitude], ArticleEventLead.FindingsNear, CatalogRecord.Provider)] =
     if citekeys.isEmpty then Nil
     else
       val (p0, p1) = period.map((a, b) => (a.value, b.value)).getOrElse((Long.MinValue / 4, Long.MaxValue / 4))
@@ -150,5 +162,20 @@ private[evidence] object LeadRepo:
         .run()
         .toList
         .map { case (id, label, kind, a, b, c, d, names, vei, mag, n, prov) =>
-          (id, label, kind, TimeSpan(a, b, c, d), names, vei, mag, n, prov)
+          (
+            Event.Id.assume(id),
+            CatalogRecord.Label(label),
+            CatalogRecord.Kind(kind),
+            TimeSpan(
+              a.map(y => com.histmersion.api.catalogue.Year(y)),
+              b.map(y => com.histmersion.api.catalogue.Year(y)),
+              c.map(y => com.histmersion.api.catalogue.Year(y)),
+              d.map(y => com.histmersion.api.catalogue.Year(y))
+            ),
+            names.map(x => EventEntry.Names(x)),
+            vei.map(v => CatalogRecord.Vei(v)),
+            mag.map(m => CatalogRecord.Magnitude(m)),
+            ArticleEventLead.FindingsNear(n),
+            CatalogRecord.Provider(prov)
+          )
         }

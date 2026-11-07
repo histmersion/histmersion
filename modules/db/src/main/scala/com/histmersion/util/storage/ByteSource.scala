@@ -23,9 +23,9 @@ object ByteSource:
 
 
   def file(path: Path): ByteSource = new ByteSource:
-    def size: com.histmersion.ByteCount = Files.size(path)
+    def size: com.histmersion.ByteCount = com.histmersion.ByteCount.assume(Files.size(path))
     def open(): InputStream = Files.newInputStream(path)
 
   def bytes(data: com.histmersion.util.storage.ByteSource.Content): ByteSource = new ByteSource:
-    def size: com.histmersion.ByteCount = data.length.toLong
-    def open(): InputStream = ByteArrayInputStream(data)
+    def size: com.histmersion.ByteCount = com.histmersion.ByteCount.assume(data.value.length.toLong)
+    def open(): InputStream = ByteArrayInputStream(data.value)

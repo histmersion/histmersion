@@ -357,11 +357,11 @@ object JobRepo:
       paused: com.histmersion.util.jobs.JobRepo.RunsPausedLikePaused,
       like: String,
       at: com.histmersion.util.jobs.JobRepo.DueAt
-  )(using DbCon): Vector[(com.histmersion.domain.automation.Run.Id, com.histmersion.domain.automation.Pipeline.Wire, Option[com.histmersion.domain.automation.agents.AgentRepo.RunRow.Model], com.histmersion.util.jobs.JobRepo.Problem)] =
+  )(using DbCon): Vector[(com.histmersion.domain.automation.Run.Id, com.histmersion.domain.automation.Pipeline.Wire, Option[com.histmersion.util.jobs.RunRow.Model], com.histmersion.util.jobs.JobRepo.Problem)] =
     sql"""SELECT id, coalesce(pipeline, ''), model, coalesce(error, '') FROM jobs
           WHERE kind = $kind AND status = $paused AND error LIKE $like
             AND (resume_at IS NULL OR resume_at > $at::timestamptz)
-          ORDER BY updated_at, created_at""".query[(com.histmersion.domain.automation.Run.Id, com.histmersion.domain.automation.Pipeline.Wire, Option[com.histmersion.domain.automation.agents.AgentRepo.RunRow.Model], com.histmersion.util.jobs.JobRepo.Problem)].run()
+          ORDER BY updated_at, created_at""".query[(com.histmersion.domain.automation.Run.Id, com.histmersion.domain.automation.Pipeline.Wire, Option[com.histmersion.util.jobs.RunRow.Model], com.histmersion.util.jobs.JobRepo.Problem)].run()
 
   def runProgress(kind: com.histmersion.util.jobs.JobRepo.RunProgressKind, id: com.histmersion.domain.automation.Run.Id, text: com.histmersion.util.jobs.JobRepo.RunProgressText)(using DbCon): Unit =
     val _ = sql"UPDATE jobs SET progress = $text, updated_at = now() WHERE id = $id AND kind = $kind".update.run()

@@ -362,7 +362,7 @@ private[places] object PlaceRepo:
         fps,
         lks,
         tps,
-        hasBoundary = r.hasBoundary,
+        hasBoundary = Place.Entry.HasBoundary(r.hasBoundary.value),
         descriptions = descriptionsOf(id),
         timeBasis = r.timeBasis,
         locationPrecision = r.precision.transformInto[com.histmersion.api.catalogue.Place.Precision],
@@ -401,7 +401,12 @@ private[places] object PlaceRepo:
         Param.S(Param.S.V(id.value))
       )
       .frag
-      .query[(String, Option[String], Option[String], Option[String])]
+      .query[(
+        com.histmersion.api.catalogue.Place.Designation.Id,
+        Option[com.histmersion.api.catalogue.Place.Designation.Label],
+        Option[com.histmersion.api.catalogue.Place.Designation.Start],
+        Option[com.histmersion.api.catalogue.Place.Designation.End]
+      )]
       .run()
       .toList
       .map(com.histmersion.api.catalogue.Place.Designation.apply)
@@ -420,7 +425,7 @@ private[places] object PlaceRepo:
       )
     com.histmersion.api.catalogue.Place.Record(
       dateSource.map(com.histmersion.api.catalogue.Place.Record.DateSource(_)),
-      periods,
+      periods.map(com.histmersion.api.catalogue.Place.Record.Periods(_)),
       designations,
       registers
     )
@@ -602,7 +607,7 @@ private[places] object PlaceRepo:
       Some(Sql.of(com.histmersion.util.database.Sql.OfText("p.label !~* ?"), S(Param.S.V(UninformativeLabel)))),
       // across all time a present-day place is never drawn; at a year, the time rule decides
       // (physical features always, present-day places from `modern-from`, undated ones by findings)
-      Some(raw(if window.isEmpty then s"NOT $ModernSql" else inWindowSql("p", window, k))),
+      Some(raw(if window.isEmpty then s"NOT $ModernSql" else inWindowSql("p", window, k.map(com.histmersion.domain.catalogue.Place.Kind.Wire(_))))),
       k.map(v => Sql.of(com.histmersion.util.database.Sql.OfText("p.kind = ?"), S(Param.S.V(v)))),
       // an undated import is never on a time-sliced map, findings or not (its open range is unknown)
       window.map(_ => raw(s"NOT $UndatedImportSql")),
@@ -671,7 +676,7 @@ private[places] object PlaceRepo:
           // over a range a layer of areas probes its few sketches and OHM shapes for partners through
           // `places_area_time_geom` (V090); a kindless or site layer keeps the plain pairing
           k.filterNot(_ == Place.Kind.Site)
-            .filter(_ => pairsByIndex)
+            .filter(_ => pairsByIndex.value)
             .fold(raw(rangeShadowedSql))(_ =>
               raw(", shadowed AS (SELECT DISTINCT pr.lid AS id FROM (") ++
                 rangePairsSql(rest, small = 3, partner = "c.tier < 3", smallIsLo = true) ++ raw(" UNION ALL ") ++
@@ -1065,6 +1070,25 @@ private[places] object PlaceRepo:
   private def labelOf(id: com.histmersion.domain.catalogue.Place.Id)(using DbCon): Option[com.histmersion.domain.catalogue.places.PlaceRepo.Label] =
     sql"SELECT label FROM places WHERE id = $id".query[String].run().headOption.map(Label(_))
 
+  private def nameChanged(
+      id: com.histmersion.domain.catalogue.Place.Id,
+      label: com.histmersion.domain.catalogue.places.PlaceRepo.Label,
+      name: com.histmersion.domain.catalogue.places.PlaceRepo.Name,
+      lang: com.histmersion.domain.catalogue.places.PlaceRepo.Lang,
+      added: Boolean,
+      changed: Boolean,
+      wasImported: Boolean
+  ): com.histmersion.api.catalogue.Place.NameChanged =
+    com.histmersion.api.catalogue.Place.NameChanged(
+      com.histmersion.api.catalogue.Place.Id(id.value),
+      com.histmersion.api.catalogue.Place.NameChanged.Label(label.value),
+      com.histmersion.api.catalogue.Place.NameChanged.Name(name.value),
+      com.histmersion.api.catalogue.Place.NameChanged.Lang(lang.value),
+      added = com.histmersion.api.catalogue.Place.NameChanged.Added(added),
+      changed = com.histmersion.api.catalogue.Place.NameChanged.Changed(changed),
+      wasImported = com.histmersion.api.catalogue.Place.NameChanged.WasImported(wasImported)
+    )
+
   /** Give place `id` the name `name` in `lang`, as a MANUAL name (V068): no import deletes it. A name the place already
     * has from an import becomes manual (so a later seed that drops it keeps it).
     */
@@ -1081,15 +1105,7 @@ private[places] object PlaceRepo:
         val _ = sql"""INSERT INTO place_names (place_id, name, lang, manual) VALUES ($id, $name, $lang, true)
                       ON CONFLICT (place_id, name, lang, import_source, import_ref) DO UPDATE SET manual = true""".update
           .run()
-      com.histmersion.api.catalogue.Place.NameChanged(
-        id,
-        label,
-        name,
-        lang,
-        added = com.histmersion.api.catalogue.Place.NameChanged.Added(true),
-        changed = !before.contains(true),
-        wasImported = before.contains(false)
-      )
+      nameChanged(id, label, name, lang, added = true, changed = !before.contains(true), wasImported = before.contains(false))
     }
 
   /** Remove a name a person added. An IMPORTED name is refused — the next seed would bring it back. */
@@ -1109,23 +1125,25 @@ private[places] object PlaceRepo:
           val hint = if langs.isEmpty then "" else s" (it has it with ${langs.mkString(", ")} — pass that language)"
           Left(
             Api.Error(
-              s"'$label' [$id] has no name '$name'${if lang.isEmpty then "" else s" in $lang"}$hint",
-              Some(Write.CodeNotFound)
+              Api.Error.Message(s"'$label' [$id] has no name '$name'${if lang.value.isEmpty then "" else s" in $lang"}$hint"),
+              Some(Api.Error.Code(Write.CodeNotFound))
             )
           )
         case Some(false) =>
           Left(
             Api.Error(
-              s"'$name' is a name the gazetteer seed or an imported source gives '$label' [$id], not one added by hand — " +
-                "removing it would last only until the next import",
-              Some(Write.CodeInvalid)
+              Api.Error.Message(
+                s"'$name' is a name the gazetteer seed or an imported source gives '$label' [$id], not one added by hand — " +
+                  "removing it would last only until the next import"
+              ),
+              Some(Api.Error.Code(Write.CodeInvalid))
             )
           )
         case Some(true) =>
           val _ =
             sql"DELETE FROM place_names WHERE place_id = $id AND name = $name AND lang = $lang AND manual".update
               .run()
-          Right(com.histmersion.api.catalogue.Place.NameChanged(id, label, name, lang, added = com.histmersion.api.catalogue.Place.NameChanged.Added(false), changed = com.histmersion.api.catalogue.Place.NameChanged.Changed(true)))
+          Right(nameChanged(id, label, name, lang, added = false, changed = true, wasImported = false))
     }
 
   /** The names people added, by place then name; `id` narrows to one place. */

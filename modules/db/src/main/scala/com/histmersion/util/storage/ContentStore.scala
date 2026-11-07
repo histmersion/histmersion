@@ -31,8 +31,8 @@ object ContentStore:
 
   /** An extension safe in a file name: short and alphanumeric, else `bin`. Pure. */
   def safeExt(ext: com.histmersion.util.storage.ContentStore.Ext): com.histmersion.util.storage.ContentStore.Ext =
-    val e = ext.trim.toLowerCase(java.util.Locale.ROOT)
-    if e.nonEmpty && e.length <= 8 && e.forall(_.isLetterOrDigit) then e else com.histmersion.util.storage.ContentStore.Ext("bin")
+    val e = ext.value.trim.toLowerCase(java.util.Locale.ROOT)
+    if e.nonEmpty && e.length <= 8 && e.forall(_.isLetterOrDigit) then com.histmersion.util.storage.ContentStore.Ext(e) else com.histmersion.util.storage.ContentStore.Ext("bin")
 
   /** The lower-case hex of a digest. Pure. */
-  def hex(digest: com.histmersion.util.storage.ContentStore.Digest): com.histmersion.Sha256 = java.util.HexFormat.of().formatHex(digest)
+  def hex(digest: com.histmersion.util.storage.ContentStore.Digest): com.histmersion.Sha256 = com.histmersion.Sha256.applyUnsafe(java.util.HexFormat.of().formatHex(digest.value))

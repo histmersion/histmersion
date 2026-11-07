@@ -323,9 +323,9 @@ private[places] object GazetteerRepo:
             "kind" -> Json.fromString(r.kind.value),
             "gjson" -> txt(r.geometry.collect { case GazGeometry.GeoJson(t) => t.value }),
             "gwkt" -> txt(r.geometry.collect { case GazGeometry.Wkt(t) => t.value }),
-            "lo" -> num(v.from),
-            "hi" -> num(v.to),
-            "su" -> Json.fromBoolean(v.startUnknown),
+            "lo" -> num(v.from.map(_.value)),
+            "hi" -> num(v.to.map(_.value)),
+            "su" -> Json.fromBoolean(v.startUnknown.value),
             "source" -> txt(r.source.map(_.value)),
             "props" -> txt(r.properties.map(_.value)),
             "ref" -> Json.fromString(r.ref.value)

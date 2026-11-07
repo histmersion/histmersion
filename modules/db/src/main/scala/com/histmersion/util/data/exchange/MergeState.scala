@@ -25,7 +25,11 @@ import com.histmersion.util.data.exchange.{
 import com.histmersion.util.storage.{ByteSource, ContentStore}
 import com.histmersion.util.database.{Param, Sql}
 import com.histmersion.util.database.given
-import com.histmersion.api.exchange.{Bundle, MergeDecision, MergePlan, MergeResolutions}
+import com.histmersion.api.exchange.{Bundle, IssuePlace, MergeDecision, MergeIssue, MergePlan, MergeResolutions}
+import com.histmersion.Sha256
+import com.histmersion.api.library.{Citekey, Finding}
+import com.histmersion.api.research.ReviewGoal
+import com.histmersion.domain.catalogue.evidence.TextAnchor
 
 /** What this collection knows that a merge plan needs (docs/research-merge-import.md §5–§6, milestone M3): the plan's
   * input stage — its rows, labels, ledger, redirects, article histories and OCR bodies, and what each kind's merge
@@ -33,11 +37,6 @@ import com.histmersion.api.exchange.{Bundle, MergeDecision, MergePlan, MergeReso
   * two together.
   */
 object MergeState:
-  type PlanFileText = PlanFileText.T
-  object PlanFileText extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type Problem = Problem.T
-  object Problem extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-
 
 
   private def ids(us: Iterable[UUID]): List[String] = us.iterator.map(_.toString).toList.distinct
@@ -45,7 +44,7 @@ object MergeState:
   def load(
       es: BundleEntities,
       m: Bundle.Manifest,
-      readProblems: List[com.histmersion.util.data.exchange.MergeState.Problem],
+      readProblems: List[Input.ReadProblems],
       originals: ContentStore,
       chunkChars: com.histmersion.util.data.exchange.ImportOptions.ChunkChars,
       cfg: MergeSettings,
@@ -62,37 +61,43 @@ object MergeState:
                        WHERE foreign_uid = ANY(${ids(foreignUids)}::uuid[])"""
       .query[(UUID, String, UUID, Option[String])]
       .run()
-      .map((f, r, l, a) => f -> LedgerEntry(r, l, a))
+      .map((f, r, l, a) =>
+        f -> LedgerEntry(BundlePlan.Ledger.ForeignRev(r), l, a.map(x => BundlePlan.Ledger.LocalRevAfter(x)))
+      )
       .toMap
     val idOf = MergePlanner.mapUid(uidAliases, ledger)
     val mapped = foreignUids.map(f => f -> idOf(f)).filter((f, l) => f != l).toMap
     val localUids = foreignUids.map(idOf)
 
     // who has the bundle's labels here (the owners that register their own merge rules add theirs to the input)
-    def owners(q: String, labels: List[com.histmersion.util.data.exchange.LedgerRow.Label]): Map[String, UUID] =
+    def owners(q: String, labels: List[String]): Map[String, UUID] =
       if labels.isEmpty then Map.empty
-      else Sql.of(q, Param.A(labels.distinct)).frag.query[(String, UUID)].run().toMap
+      else Sql.of(Sql.Text(q), Param.A(labels.distinct.map(l => Param.A.V(l)))).frag.query[(String, UUID)].run().toMap
+    def slugOwners(q: String, labels: List[ReviewGoal.Slug]): Map[ReviewGoal.Slug, UUID] =
+      owners(q, labels.map(_.value)).map((s, u) => ReviewGoal.Slug(s) -> u)
     val localized = MergePlanner.localize(es, mapped, Map.empty)
     val labels = Labels(
-      citekeys = sql"SELECT citekey, uid FROM sources".query[(String, UUID)].run().toMap,
+      citekeys = sql"SELECT citekey, uid FROM sources".query[(String, UUID)].run().map((c, u) => Citekey(c) -> u).toMap,
       aliases = sql"SELECT a.alias, s.uid FROM source_aliases a JOIN sources s ON s.citekey = a.citekey"
         .query[(String, UUID)]
         .run()
+        .map((c, u) => Citekey(c) -> u)
         .toMap,
-      findings = owners("SELECT id, uid FROM findings WHERE id = ANY(?::text[])", es.findings.map(_.id)),
-      slugs = owners(
+      findings = owners("SELECT id, uid FROM findings WHERE id = ANY(?::text[])", es.findings.map(_.id.value))
+        .map((f, u) => Finding.Id(f) -> u),
+      slugs = slugOwners(
         "SELECT slug, uid FROM articles WHERE slug = ANY(?::text[])",
         es.articles.map(_.slug) ++ es.articleAliases.map(_.alias)
       ),
-      goals = owners(
+      goals = slugOwners(
         "SELECT slug, uid FROM goals WHERE slug = ANY(?::text[])",
         es.goals.map(_.slug) ++ es.goalAliases.map(_.alias)
       ),
-      articleAliases = owners(
+      articleAliases = slugOwners(
         "SELECT x.alias, a.uid FROM article_aliases x JOIN articles a ON a.slug = x.slug WHERE x.alias = ANY(?::text[])",
         es.articles.map(_.slug) ++ es.articleAliases.map(_.alias)
       ),
-      goalAliases = owners(
+      goalAliases = slugOwners(
         "SELECT x.alias, g.uid FROM goal_aliases x JOIN goals g ON g.slug = x.goal_slug WHERE x.alias = ANY(?::text[])",
         es.goals.map(_.slug) ++ es.goalAliases.map(_.alias)
       )
@@ -115,16 +120,16 @@ object MergeState:
       .query[(UUID, String, String)]
       .run()
       .toList
-      .groupMap(_._1)((_, sha, body) => (sha, body))
+      .groupMap(_._1)((_, sha, body) => (Sha256.assume(sha), Bundle.Article.Body(body)))
     val remembered = sql"SELECT issue_id, decision FROM merge_decisions"
       .query[(String, String)]
       .run()
-      .flatMap((id, d) => MergeDecision.parse(d).toOption.map(id -> _))
+      .flatMap((id, d) => MergeDecision.parse(MergeDecision.Wire(d)).toOption.map(MergeIssue.Id(id) -> _))
       .toMap
     val known = Input(
       m,
-      Bundle.Instance(inst.id, inst.label),
-      BundleFormat.compatible(m, schema),
+      Bundle.Instance(inst.id, inst.label.map(l => Bundle.Instance.Label(l.value))),
+      BundleFormat.compatible(m, schema).map(c => Input.Compat(c)),
       readProblems,
       es,
       uidAliases,
@@ -138,10 +143,10 @@ object MergeState:
       BundleRepo.reference,
       // the same rendering as BundleSql.ts, so a bundle alias's createdAt compares as a string
       aliasTombstones = sql"""SELECT alias, to_char(deleted_at AT TIME ZONE 'UTC', 'YYYY-MM-DD"T"HH24:MI:SS.US"Z"')
-               FROM alias_tombstones""".query[(String, String)].run().toMap,
+               FROM alias_tombstones""".query[(String, String)].run().map((a, t) => Citekey(a) -> Input.AliasTombstonesValue(t)).toMap,
       articleHistory = history,
       remembered = remembered,
-      chunkChars = chunkChars
+      chunkChars = TextAnchor.ChunkChars(chunkChars.value)
     )
     rules.gather(es, localized, known, cfg)
 
@@ -149,14 +154,17 @@ object MergeState:
     * draws — one query for every geometry of the plan.
     */
   def withGeoJson(p: MergePlan)(using DbCon): MergePlan =
-    val hexes =
-      p.issues.flatMap(_.detail.flatMap(_.place)).flatMap(x => x.leftGeometry.toList ++ x.rightGeometry.toList).distinct
+    val hexes: List[String] =
+      p.issues
+        .flatMap(_.detail.flatMap(_.place))
+        .flatMap(x => x.leftGeometry.toList.map(_.value) ++ x.rightGeometry.toList.map(_.value))
+        .distinct
     if hexes.isEmpty then p
     else
       val json = Sql
         .of(
-          """SELECT h, ST_AsGeoJSON(ST_GeomFromEWKB(decode(h, 'hex')), 6) FROM unnest(?::text[]) AS h""",
-          Param.A(hexes)
+          Sql.Text("""SELECT h, ST_AsGeoJSON(ST_GeomFromEWKB(decode(h, 'hex')), 6) FROM unnest(?::text[]) AS h"""),
+          Param.A(hexes.map(h => Param.A.V(h)))
         )
         .frag
         .query[(String, Option[String])]
@@ -173,7 +181,12 @@ object MergeState:
                   d.modify(_.place)
                     .setTo(
                       d.place
-                        .map(x => x.modify(_.leftGeometry).setTo(conv(x.leftGeometry)).modify(_.rightGeometry).setTo(conv(x.rightGeometry)))
+                        .map(x =>
+                          x.modify(_.leftGeometry)
+                            .setTo(conv(x.leftGeometry.map(_.value)).map(g => IssuePlace.LeftGeometry(g)))
+                            .modify(_.rightGeometry)
+                            .setTo(conv(x.rightGeometry.map(_.value)).map(g => IssuePlace.RightGeometry(g)))
+                        )
                     )
                 )
               )
@@ -187,8 +200,8 @@ object MergeState:
       val us = ids(uids)
       Sql
         .of(
-          tables.map(t => s"SELECT uid FROM ${t.value} WHERE uid = ANY(?::uuid[])").mkString(" UNION ALL "),
-          tables.map(_ => Param.A(us))*
+          Sql.Text(tables.map(t => s"SELECT uid FROM ${t.value} WHERE uid = ANY(?::uuid[])").mkString(" UNION ALL ")),
+          tables.map(_ => Param.A(us.map(u => Param.A.V(u))))*
         )
         .frag
         .query[UUID]
@@ -199,7 +212,7 @@ object MergeState:
     * from one pass over its blobs. Only bodies of pairs whose score they can change are asked for
     * ([[MergePlanner.sketchesWanted]]).
     */
-  def sketches(bundle: ByteSource, in: Input, wanted: Set[String], size: com.histmersion.util.text.MinHash.Size)(using DbCon): Map[String, MinHash] =
+  def sketches(bundle: ByteSource, in: Input, wanted: Set[Bundle.Source.BodySha256], size: com.histmersion.util.text.MinHash.Size)(using DbCon): Map[Bundle.Source.BodySha256, MinHash] =
     if wanted.isEmpty then Map.empty
     else
       val here = in.sources
@@ -211,7 +224,7 @@ object MergeState:
             .run()
             .headOption
             .flatten
-            .map(b => s.bodySha256.get -> MinHash.of(b, size))
+            .map(b => s.bodySha256.get -> MinHash.of(MinHash.Text(b), size))
         }
         .toMap
       val there = wanted -- here.keySet
@@ -220,7 +233,7 @@ object MergeState:
   /** The OCR bodies `wanted` names (by sha256), as text: this collection's from the database, the bundle's from one
     * pass over its blobs ([[MergePlanner.bodiesWanted]]).
     */
-  def bodies(bundle: ByteSource, in: Input, wanted: Set[String])(using DbCon): Map[String, String] =
+  def bodies(bundle: ByteSource, in: Input, wanted: Set[Bundle.Source.BodySha256])(using DbCon): Map[Bundle.Source.BodySha256, TextAnchor.Text] =
     if wanted.isEmpty then Map.empty
     else
       val here = in.sources
@@ -232,42 +245,42 @@ object MergeState:
             .run()
             .headOption
             .flatten
-            .map(b => s.bodySha256.get -> b)
+            .map(b => s.bodySha256.get -> TextAnchor.Text(b))
         }
         .toMap
       val there = wanted -- here.keySet
       here ++ (if there.isEmpty then Map.empty else blobTexts(bundle, there))
 
-  private def blobTexts(bundle: ByteSource, wanted: Set[String]): Map[String, String] =
+  private def blobTexts(bundle: ByteSource, wanted: Set[Bundle.Source.BodySha256]): Map[Bundle.Source.BodySha256, TextAnchor.Text] =
     bundle.read { in =>
       val tar = BundleTar.Reader(in)
       // a bounded walk: one step per tar entry, and the reader ends (or fails) at the end of the file
       @annotation.tailrec
-      def loop(acc: Map[String, String]): Map[String, String] =
+      def loop(acc: Map[Bundle.Source.BodySha256, TextAnchor.Text]): Map[Bundle.Source.BodySha256, TextAnchor.Text] =
         if acc.size == wanted.size then acc
         else
           tar.next() match
             case Left(_) | Right(None) => acc
             case Right(Some(e))        =>
-              Bundle.blobSha(e.name).filter(wanted) match
-                case Some(sha) => loop(acc + (sha -> String(tar.readAll(), UTF_8)))
+              Bundle.blobSha(e.name.value).map(s => Bundle.Source.BodySha256(s.value)).filter(wanted) match
+                case Some(sha) => loop(acc + (sha -> TextAnchor.Text(String(tar.readAll(), UTF_8))))
                 case None      => loop(acc)
       loop(Map.empty)
     }
 
-  private def bundleSketches(bundle: ByteSource, wanted: Set[String], size: com.histmersion.util.text.MinHash.Size): Map[String, MinHash] =
+  private def bundleSketches(bundle: ByteSource, wanted: Set[Bundle.Source.BodySha256], size: com.histmersion.util.text.MinHash.Size): Map[Bundle.Source.BodySha256, MinHash] =
     bundle.read { in =>
       val tar = BundleTar.Reader(in)
       // a bounded walk: one step per tar entry, and the reader ends (or fails) at the end of the file
       @annotation.tailrec
-      def loop(acc: Map[String, MinHash]): Map[String, MinHash] =
+      def loop(acc: Map[Bundle.Source.BodySha256, MinHash]): Map[Bundle.Source.BodySha256, MinHash] =
         if acc.size == wanted.size then acc
         else
           tar.next() match
             case Left(_) | Right(None) => acc
             case Right(Some(e))        =>
-              Bundle.blobSha(e.name).filter(wanted) match
-                case Some(sha) => loop(acc + (sha -> MinHash.of(String(tar.readAll(), UTF_8), size)))
+              Bundle.blobSha(e.name.value).map(s => Bundle.Source.BodySha256(s.value)).filter(wanted) match
+                case Some(sha) => loop(acc + (sha -> MinHash.of(MinHash.Text(String(tar.readAll(), UTF_8)), size)))
                 case None      => loop(acc)
       loop(Map.empty)
     }
@@ -282,7 +295,7 @@ object MergeState:
       chunkChars: com.histmersion.util.data.exchange.ImportOptions.ChunkChars,
       kinds: CarriedKinds,
       rules: MergeRuleSet
-  ): Either[com.histmersion.util.data.exchange.MergeState.PlanFileText, MergePlan] =
+  ): Either[MergePlans.PlanFileText, MergePlan] =
     MergePlans.planFile(ds, ByteSource.file(file), resolutions, cfg, originals, chunkChars, kinds, rules)
 
   private[histmersion] def withFile[A](file: Path)(f: InputStream => A): A = ByteSource.file(file).read(f)

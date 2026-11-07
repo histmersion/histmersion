@@ -6,6 +6,7 @@ import com.histmersion.util.data.exchange.BundleScope
 import com.histmersion.util.data.exchange.BundleSql.*
 
 import com.augustnagro.magnum.*
+import com.histmersion.util.database.NewtypeColumns.given
 import java.util.UUID
 import com.histmersion.api.exchange.Bundle
 
@@ -22,14 +23,31 @@ private[links] object AssetLinkBundleRepo:
       where(scope, "l.uid", "l.updated_at") ++ " ORDER BY l.uid").frag
       .query[(UUID, UUID, UUID, String, String, String, Option[UUID], Option[String], Option[String], String)]
       .run()
-      .map(Bundle.AssetLink.apply(_, _, _, _, _, _, _, _, _, _))
+      .map((uid, origin, assetUid, relation, targetType, targetId, targetUid, xywh, notes, updatedAt) =>
+        Bundle.AssetLink(
+          uid,
+          origin,
+          assetUid,
+          Bundle.AssetLink.Relation(relation),
+          Bundle.AssetLink.TargetType(targetType),
+          Bundle.AssetLink.TargetId(targetId),
+          targetUid,
+          xywh.map(x => Bundle.AssetLink.Xywh(x)),
+          notes.map(x => Bundle.AssetLink.Notes(x)),
+          Bundle.AssetLink.UpdatedAt(updatedAt)
+        )
+      )
 
   def assetLinksIn(w: BundleImport.Writer): Unit =
     given DbCon = w.transaction
-    w.es.assetLinks.filter(l => w.writes(l.uid)).foreach { l =>
+    w.es.assetLinks.filter(l => w.writes(l.uid).value).foreach { l =>
       val (ck, name) =
         sql"""SELECT citekey, name FROM assets WHERE uid = ${l.assetUid}""".query[(String, String)].run().head
-      val target = w.targetLabel(l.targetType, l.targetId, l.targetUid)
+      val target = w.targetLabel(
+        BundleImport.Writer.TargetType(l.targetType.value),
+        BundleImport.Writer.TargetId(l.targetId.value),
+        l.targetUid
+      )
       sql"""INSERT INTO asset_links (uid, origin, citekey, asset_name, relation, target_type, target_id, xywh, notes, updated_at)
             VALUES (${l.uid}, ${l.origin}, $ck, $name, ${l.relation}, ${l.targetType}, $target, ${l.xywh},
               ${l.notes}, ${l.updatedAt}::timestamptz)

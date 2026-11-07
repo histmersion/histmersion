@@ -1,6 +1,7 @@
 package com.histmersion.domain.automation.goals
 
 import com.histmersion.util.database.given
+import com.histmersion.util.database.NewtypeColumns.given
 import com.histmersion.util.data.exchange.BundleImport
 import com.histmersion.domain.automation.goals.GoalRepo
 import com.histmersion.util.database.{Jsonb, Sql}
@@ -60,26 +61,49 @@ private[goals] object GoalBundleRepo:
       Bundle.Goal(
         r.uid,
         r.origin,
-        r.slug,
-        r.title,
-        r.status,
-        r.notes,
-        r.tags,
-        r.regions,
-        range(r.pNull, r.pLo, r.pHi),
+        Bundle.Goal.Slug(r.slug.value),
+        Bundle.Goal.Title(r.title.value),
+        Bundle.Goal.Status(r.status.value),
+        r.notes.map(n => Bundle.Goal.Notes(n.value)),
+        r.tags.map(t => Bundle.Goal.Tags(t.value)),
+        r.regions.map(g => Bundle.Goal.Regions(g.value)),
+        range(
+          com.histmersion.util.data.exchange.Bundle.RangeIsNull(r.pNull.value),
+          r.pLo.map(l => com.histmersion.util.data.exchange.Bundle.RangeLower(l.value)),
+          r.pHi.map(h => com.histmersion.util.data.exchange.Bundle.RangeUpper(h.value))
+        ),
         r.parentUid,
-        r.createdAt,
-        r.updatedAt,
-        plan = r.plan.flatMap(Jsonb.read[io.circe.Json]),
-        planApprovedAt = r.planApprovedAt,
-        budgetUsd = r.budgetUsd.map(_.toDouble),
+        Bundle.Goal.CreatedAt(r.createdAt.value),
+        Bundle.Goal.UpdatedAt(r.updatedAt.value),
+        plan = r.plan.flatMap(p => Jsonb.read[io.circe.Json](Jsonb.JsonText(p.value))),
+        planApprovedAt = r.planApprovedAt.map(a => Bundle.Goal.PlanApprovedAt(a.value)),
+        budgetUsd = r.budgetUsd.map(b => Bundle.Goal.BudgetUsd(b.toDouble)),
         links = links
           .get(r.uid)
-          .map(_.toList.map(l => Bundle.GoalLink(l.kind, l.ref, l.refUid, l.note, l.createdAt)))
+          .map(
+            _.toList.map(l =>
+              Bundle.GoalLink(
+                Bundle.GoalLink.Kind(l.kind.value),
+                Bundle.GoalLink.Ref(l.ref.value),
+                l.refUid,
+                l.note.map(n => Bundle.GoalLink.Note(n.value)),
+                Bundle.GoalLink.CreatedAt(l.createdAt.value)
+              )
+            )
+          )
           .filter(_.nonEmpty),
         schedules = schedules
           .get(r.uid)
-          .map(_.toList.map(x => Bundle.GoalSchedule(x.kind, x.cron, x.enabled, x.budgetUsd.map(_.toDouble))))
+          .map(
+            _.toList.map(x =>
+              Bundle.GoalSchedule(
+                Bundle.GoalSchedule.Kind(x.kind.value),
+                Bundle.GoalSchedule.Cron(x.cron.value),
+                Bundle.GoalSchedule.Enabled(x.enabled.value),
+                x.budgetUsd.map(b => Bundle.GoalSchedule.BudgetUsd(b.toDouble))
+              )
+            )
+          )
           .filter(_.nonEmpty)
       )
     }
@@ -96,7 +120,13 @@ private[goals] object GoalBundleRepo:
 
   def goalRenamesIn(w: BundleImport.Writer): Unit =
     given DbCon = w.transaction
-    w.followRenames(w.es.goals, _.uid, g => BundleImport.Writer.Label(g.slug.value), w.local.goals.map(g => g.uid -> BundleImport.Writer.Label(g.slug.value)).toMap, com.histmersion.util.data.exchange.PlanQuestions.LabelTakenWhat("goal"))(GoalRepo.renameIn)
+    w.followRenames(w.es.goals, _.uid, _.slug, w.local.goals.map(g => g.uid -> g.slug).toMap, com.histmersion.util.data.exchange.PlanQuestions.LabelTakenWhat("goal"))(
+      (old, now) =>
+        GoalRepo.renameIn(
+          com.histmersion.domain.automation.Goal.Slug.assume(old.value),
+          com.histmersion.domain.automation.Goal.Slug.assume(now.value)
+        )
+    )
 
   /** A goal's links (unioned with this collection's) and schedules (this collection's kept, #881). A linked record is
     * found by its uid, so the link follows a rename or a merge; a queue item that is not here is left out. A schedule
@@ -133,7 +163,7 @@ private[goals] object GoalBundleRepo:
     */
   def goalsIn(w: BundleImport.Writer): Unit =
     given DbCon = w.transaction
-    val goals = w.es.goals.filter(g => w.writes(g.uid).value)
+    val goals = w.es.goals.filter(g => w.writes(g.uid))
     goals.foreach { g =>
       val plan = g.plan.map(BundleFormat.printer.print)
       val usd = g.budgetUsd.map(b => BigDecimal(b.value))

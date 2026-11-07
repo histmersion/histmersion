@@ -18,33 +18,15 @@ private[acquisition] object CandidateRepo:
   private val ts = """'YYYY-MM-DD"T"HH24:MI:SS"Z"'"""
 
   final private case class WatchRow(
-      goal: WatchRow.Goal,
-      kind: WatchRow.Kind,
-      subject: WatchRow.Subject,
-      index: WatchRow.Index,
-      watermark: Option[WatchRow.Watermark],
-      lastRun: Option[WatchRow.LastRun],
-      lastError: Option[WatchRow.LastError],
-      lastFound: WatchRow.LastFound
+      goal: CandidateWatch.Goal,
+      kind: CandidateWatch.Kind,
+      subject: CandidateWatch.Subject,
+      index: CandidateWatch.Index,
+      watermark: Option[CandidateWatch.Watermark],
+      lastRun: Option[CandidateWatch.LastRun],
+      lastError: Option[CandidateWatch.LastError],
+      lastFound: CandidateWatch.LastFound
   ) derives DbCodec
-
-  object WatchRow:
-    type Goal = Goal.T
-    object Goal extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-    type Kind = Kind.T
-    object Kind extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-    type Subject = Subject.T
-    object Subject extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-    type Index = Index.T
-    object Index extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-    type Watermark = Watermark.T
-    object Watermark extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-    type LastRun = LastRun.T
-    object LastRun extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-    type LastError = LastError.T
-    object LastError extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-    type LastFound = LastFound.T
-    object LastFound extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
   /** A goal's watches as they were last read. */
   def watches(goal: com.histmersion.domain.automation.Goal.Slug)(using DbCon): List[CandidateWatch] =
@@ -61,9 +43,9 @@ private[acquisition] object CandidateRepo:
     */
   def recordWatch(
       w: CandidateWatch,
-      watermark: Option[com.histmersion.domain.library.acquisition.CandidateRepo.WatchRow.Watermark],
-      error: Option[com.histmersion.domain.library.acquisition.CandidateRepo.WatchRow.LastError],
-      found: com.histmersion.domain.library.acquisition.CandidateRepo.WatchRow.LastFound
+      watermark: Option[CandidateWatch.Watermark],
+      error: Option[CandidateWatch.LastError],
+      found: CandidateWatch.LastFound
   )(using DbCon): Unit =
     val _ =
       sql"""INSERT INTO candidate_watches (goal, kind, subject, index_name, watermark, last_run, last_error, last_found)
@@ -89,53 +71,27 @@ private[acquisition] object CandidateRepo:
 
   /** The DOIs a goal has candidates for already (any state): a sweep does not count them as new. */
   def dois(goal: com.histmersion.domain.automation.Goal.Slug)(using DbCon): Set[com.histmersion.domain.library.Doi] =
-    sql"SELECT doi FROM source_candidates WHERE goal = $goal".query[String].run().toSet
+    sql"SELECT doi FROM source_candidates WHERE goal = $goal".query[com.histmersion.domain.library.Doi].run().toSet
 
   final private case class Row(
-      id: Row.Id,
-      goal: Row.Goal,
+      id: Source.Candidate.Id,
+      goal: Source.Candidate.Goal,
       doi: com.histmersion.domain.library.Doi,
-      title: Row.Title,
+      title: com.histmersion.domain.Title,
       year: Option[com.histmersion.Year],
-      authors: List[Row.Authors],
-      venue: Option[Row.Venue],
-      abstractText: Option[Row.AbstractText],
-      isOa: Row.IsOa,
-      arxivId: Option[Row.ArxivId],
-      foundBy: List[Row.FoundBy],
-      state: Row.State,
-      firstSeen: Row.FirstSeen,
-      lastSeen: Row.LastSeen
+      authors: List[com.histmersion.domain.AuthorName],
+      venue: Option[Source.Venue],
+      abstractText: Option[Source.Candidate.AbstractText],
+      isOa: Source.Candidate.IsOa,
+      arxivId: Option[Source.Candidate.ArxivId],
+      foundBy: List[Source.Candidate.FoundBy],
+      state: Source.Candidate.State,
+      firstSeen: Source.Candidate.FirstSeen,
+      lastSeen: Source.Candidate.LastSeen
   ) derives DbCodec
 
-  object Row:
-    type Id = Id.T
-    object Id extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
-    type Goal = Goal.T
-    object Goal extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-    type Title = Title.T
-    object Title extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-    type Authors = Authors.T
-    object Authors extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-    type Venue = Venue.T
-    object Venue extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-    type AbstractText = AbstractText.T
-    object AbstractText extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-    type IsOa = IsOa.T
-    object IsOa extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
-    type ArxivId = ArxivId.T
-    object ArxivId extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-    type FoundBy = FoundBy.T
-    object FoundBy extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-    type State = State.T
-    object State extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-    type FirstSeen = FirstSeen.T
-    object FirstSeen extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-    type LastSeen = LastSeen.T
-    object LastSeen extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-
   /** A page of candidates of one goal (every goal: `None`) in one state, oldest found first. */
-  def list(goal: Option[com.histmersion.domain.automation.Goal.Slug], state: com.histmersion.domain.library.acquisition.CandidateRepo.Row.State, limit: com.histmersion.domain.library.acquisition.CandidateRepo.Limit, offset: com.histmersion.Offset)(using DbCon): List[Source.Candidate] =
+  def list(goal: Option[com.histmersion.domain.automation.Goal.Slug], state: Source.Candidate.State, limit: com.histmersion.domain.library.acquisition.CandidateRepo.Limit, offset: com.histmersion.Offset)(using DbCon): List[Source.Candidate] =
     sql"""SELECT id, goal, doi, title, year, authors, venue, abstract, is_oa, arxiv_id, found_by, state,
                    to_char(first_seen AT TIME ZONE 'UTC', ${SqlLiteral(
         ts
@@ -149,11 +105,11 @@ private[acquisition] object CandidateRepo:
         Source.Candidate(
           r.id,
           r.goal,
-          com.histmersion.api.library.Doi(r.doi),
-          com.histmersion.api.library.Title(r.title),
-          (r.year).map(com.histmersion.api.catalogue.Year.apply),
-          (r.authors).map(com.histmersion.api.library.AuthorName.apply),
-          (r.venue).map(com.histmersion.api.library.Source.Venue.apply),
+          com.histmersion.api.library.Doi(r.doi.value),
+          com.histmersion.api.library.Title(r.title.value),
+          r.year.map(y => com.histmersion.api.catalogue.Year(y.value.toLong)),
+          r.authors.map(a => com.histmersion.api.library.AuthorName(a.value)),
+          r.venue,
           r.abstractText,
           r.isOa,
           r.arxivId,
@@ -168,19 +124,22 @@ private[acquisition] object CandidateRepo:
   def counts(goal: Option[com.histmersion.domain.automation.Goal.Slug])(using DbCon): List[CandidateCount] =
     sql"""SELECT state, count(*)::int FROM source_candidates WHERE ($goal::text IS NULL OR goal = $goal)
             GROUP BY state ORDER BY CASE state WHEN 'new' THEN 0 WHEN 'seen' THEN 1 WHEN 'queued' THEN 2 ELSE 3 END"""
-      .query[(String, Int)]
+      .query[(Source.Candidate.State, CandidateCount.Count)]
       .run()
       .toList
       .map(CandidateCount(_, _))
 
   /** Set the state of these candidates; how many there were. */
-  def mark(ids: List[com.histmersion.domain.library.acquisition.CandidateRepo.Row.Id], state: com.histmersion.domain.library.acquisition.CandidateRepo.Row.State)(using DbCon): com.histmersion.RowCount =
+  def mark(ids: List[Source.Candidate.Id], state: Source.Candidate.State)(using DbCon): com.histmersion.RowCount =
     if ids.isEmpty then com.histmersion.RowCount(0)
     else
       val arr = ids.map(_.toString)
-      sql"UPDATE source_candidates SET state = $state WHERE id = ANY($arr::bigint[])".update.run()
+      com.histmersion.RowCount(sql"UPDATE source_candidates SET state = $state WHERE id = ANY($arr::bigint[])".update.run())
 
   /** Set the state of a goal's candidates with these DOIs (a ranking's picks). */
-  def markDois(goal: com.histmersion.domain.automation.Goal.Slug, dois: List[com.histmersion.domain.library.Doi], state: com.histmersion.domain.library.acquisition.CandidateRepo.Row.State)(using DbCon): com.histmersion.RowCount =
+  def markDois(goal: com.histmersion.domain.automation.Goal.Slug, dois: List[com.histmersion.domain.library.Doi], state: Source.Candidate.State)(using DbCon): com.histmersion.RowCount =
     if dois.isEmpty then com.histmersion.RowCount(0)
-    else sql"UPDATE source_candidates SET state = $state WHERE goal = $goal AND doi = ANY($dois::text[])".update.run()
+    else
+      com.histmersion.RowCount(
+        sql"UPDATE source_candidates SET state = $state WHERE goal = $goal AND doi = ANY($dois::text[])".update.run()
+      )

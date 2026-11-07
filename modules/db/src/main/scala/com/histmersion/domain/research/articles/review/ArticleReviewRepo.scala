@@ -5,6 +5,7 @@ import com.histmersion.domain.ArticleReviewStatus.{Facts, ItemFacts, LedgerFacts
 import com.histmersion.domain.automation.ItemStatus
 
 import com.histmersion.util.database.given
+import com.histmersion.util.database.NewtypeColumns.given
 
 import com.augustnagro.magnum.*
 
@@ -14,50 +15,30 @@ import com.augustnagro.magnum.*
   */
 private[review] object ArticleReviewRepo:
 
-  type WaitingKinds = WaitingKindsValue
-  type WaitingKindsValue = WaitingKindsValue.T
-  object WaitingKindsValue extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-
   final private case class FactsRow(
       slug: FactsRow.Slug,
-      itemStatus: Option[FactsRow.ItemStatus],
-      outcome: Option[FactsRow.Outcome],
-      attempts: Option[FactsRow.Attempts],
+      itemStatus: Option[com.histmersion.domain.automation.ItemStatus.Wire],
+      outcome: Option[ItemFacts.Outcome],
+      attempts: Option[ItemFacts.Attempts],
       updatedAt: Option[FactsRow.UpdatedAt],
-      findings: Option[FactsRow.Findings],
-      openMajors: Option[FactsRow.OpenMajors],
-      openMinors: Option[FactsRow.OpenMinors],
-      runs: Option[FactsRow.Runs],
-      round: Option[FactsRow.Round]
+      findings: Option[LedgerFacts.Findings],
+      openMajors: Option[LedgerFacts.OpenMajors],
+      openMinors: Option[LedgerFacts.OpenMinors],
+      runs: Option[LedgerFacts.Runs],
+      round: Option[Facts.Round]
   ) derives DbCodec
 
   object FactsRow:
     type Slug = com.histmersion.domain.research.Slug
     val Slug: _root_.com.histmersion.domain.research.Slug.type = _root_.com.histmersion.domain.research.Slug
-    type ItemStatus = ItemStatus.T
-    object ItemStatus extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-    type Outcome = Outcome.T
-    object Outcome extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-    type Attempts = Attempts.T
-    object Attempts extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
     type UpdatedAt = UpdatedAt.T
     object UpdatedAt extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-    type Findings = Findings.T
-    object Findings extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
-    type OpenMajors = OpenMajors.T
-    object OpenMajors extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
-    type OpenMinors = OpenMinors.T
-    object OpenMinors extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
-    type Runs = Runs.T
-    object Runs extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
-    type Round = Round.T
-    object Round extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
   final private case class ApprovalRow(subject: ApprovalRow.Subject, id: ApprovalRow.Id, kind: ApprovalRow.Kind) derives DbCodec
 
   object ApprovalRow:
-    type Subject = Subject.T
-    object Subject extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Subject = com.histmersion.domain.research.Slug
+    val Subject: _root_.com.histmersion.domain.research.Slug.type = _root_.com.histmersion.domain.research.Slug
     type Id = com.histmersion.domain.ManagerPolicy.ApprovalId
     val Id: _root_.com.histmersion.domain.ManagerPolicy.ApprovalId.type = _root_.com.histmersion.domain.ManagerPolicy.ApprovalId
     type Kind = Kind.T
@@ -74,14 +55,14 @@ private[review] object ArticleReviewRepo:
     val Status: _root_.com.histmersion.domain.automation.Goal.Status.Wire.type = _root_.com.histmersion.domain.automation.Goal.Status.Wire
 
   /** The approval kinds that leave an article waiting for a person. */
-  val WaitingKinds: List[com.histmersion.domain.research.articles.review.ArticleReviewRepo.WaitingKinds] = List(com.histmersion.domain.research.articles.review.ArticleReviewRepo.("article-filter"), com.histmersion.domain.research.articles.review.ArticleReviewRepo.("article-publish"))
+  val WaitingKinds: List[ApprovalRow.Kind] = List(ApprovalRow.Kind("article-filter"), ApprovalRow.Kind("article-publish"))
 
   private val ts = """'YYYY-MM-DD"T"HH24:MI:SS"Z"'"""
 
   /** The review facts of each of `slugs`, and the time of its item's last change (UTC). A slug the manager and the
     * ledgers know nothing of maps to empty facts.
     */
-  def facts(slugs: List[com.histmersion.domain.research.Slug])(using DbCon): Map[com.histmersion.domain.research.Slug, (Facts, Option[com.histmersion.domain.research.articles.review.ArticleReviewRepo.FactsRow.Outcome])] =
+  def facts(slugs: List[com.histmersion.domain.research.Slug])(using DbCon): Map[com.histmersion.domain.research.Slug, (Facts, Option[com.histmersion.domain.research.articles.review.ArticleReviewRepo.FactsRow.UpdatedAt])] =
     if slugs.isEmpty then Map.empty
     else
       val rows = sql"""
@@ -110,23 +91,32 @@ private[review] object ArticleReviewRepo:
         .run()
       val waiting = approvals(slugs)
       rows.map { r =>
-        val item = r.itemStatus.flatMap(ItemStatus.parse).map(s => ItemFacts(s, r.outcome, r.attempts.getOrElse(0)))
+        val item = r.itemStatus.flatMap(ItemStatus.parse).map(s => ItemFacts(s, r.outcome, r.attempts.getOrElse(ItemFacts.Attempts(0))))
         val ledger = r.findings
-          .filter(_ > 0)
-          .map(n => LedgerFacts(r.openMajors.getOrElse(0), r.openMinors.getOrElse(0), n, r.runs.getOrElse(0)))
+          .filter(_.value > 0)
+          .map(n =>
+            LedgerFacts(
+              r.openMajors.getOrElse(LedgerFacts.OpenMajors(0)),
+              r.openMinors.getOrElse(LedgerFacts.OpenMinors(0)),
+              n,
+              r.runs.getOrElse(LedgerFacts.Runs(0))
+            )
+          )
         r.slug -> (Facts(item, ledger, r.round, waiting.getOrElse(r.slug, Nil)), r.updatedAt)
       }.toMap
 
   private def approvals(slugs: List[com.histmersion.domain.research.Slug])(using DbCon): Map[com.histmersion.domain.research.Slug, List[ReviewApproval]] =
     sql"""SELECT subject, id, kind FROM approvals
           WHERE state = 'open' AND kind = ANY($WaitingKinds::text[]) AND subject = ANY(${slugs.distinct}::text[])
-          ORDER BY id""".query[ApprovalRow].run().toList.groupMap(_.subject)(r => ReviewApproval(r.id, r.kind))
+          ORDER BY id""".query[ApprovalRow].run().toList.groupMap(_.subject)(r =>
+      ReviewApproval(ReviewApproval.Id(r.id.value), ReviewApproval.Kind(r.kind.value))
+    )
 
   /** When each of `runs` started (UTC), for the runs still recorded. */
   def runStarts(runs: List[com.histmersion.domain.automation.Run.Id])(using DbCon): Map[com.histmersion.domain.automation.Run.Id, String] =
     if runs.isEmpty then Map.empty
     else sql"""SELECT id, to_char(created_at AT TIME ZONE 'UTC', ${SqlLiteral(ts)}) FROM jobs
-              WHERE id = ANY(${runs.distinct}::text[])""".query[(String, String)].run().toMap
+              WHERE id = ANY(${runs.distinct}::text[])""".query[(com.histmersion.domain.automation.Run.Id, String)].run().toMap
 
   /** The research goals that link the article (`goal_links` of kind `article`), by slug. */
   def goals(slug: com.histmersion.domain.research.Slug)(using DbCon): List[ReviewGoal] =
@@ -135,4 +125,4 @@ private[review] object ArticleReviewRepo:
       .query[GoalRow]
       .run()
       .toList
-      .map(r => ReviewGoal(r.slug, r.title, r.status))
+      .map(r => ReviewGoal(ReviewGoal.Slug(r.slug.value), ReviewGoal.Title(r.title.value), ReviewGoal.Status(r.status.value)))

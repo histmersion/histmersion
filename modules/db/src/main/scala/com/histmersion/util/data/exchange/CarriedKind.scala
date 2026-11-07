@@ -59,8 +59,8 @@ object CarriedKind:
       Some(table),
       steps,
       lines,
-      BundleFormat.stamp(_).line,
-      a => Some(clock(a)),
+      a => BundleFormat.stamp(a).line,
+      a => Some(CarriedOut.AsOf(clock(a).value)),
       set
     )
 
@@ -68,7 +68,7 @@ object CarriedKind:
   def owned[A: Encoder.AsObject](owner: DataOwner, entry: BundleEntry, steps: List[RowsIn])(
       lines: BundleScope => DbCon ?=> List[A]
   )(clock: A => Option[com.histmersion.util.data.exchange.CarriedKind.OwnedClock], set: (BundleEntities, List[A]) => BundleEntities): CarriedKind =
-    Lines(owner, entry, None, None, steps, lines, BundleFormat.line(_), clock, set)
+    Lines(owner, entry, None, None, steps, lines, a => BundleFormat.line(a), a => clock(a).map(c => CarriedOut.AsOf(c.value)), set)
 
   final private class Lines[A](
       val owner: DataOwner,
@@ -77,19 +77,13 @@ object CarriedKind:
       override val table: Option[TableName],
       override val rowsIn: List[RowsIn],
       lines: BundleScope => DbCon ?=> List[A],
-      line: A => Lines.LineResult,
-      clock: A => Option[Lines.ClockResult],
+      line: A => String,
+      clock: A => Option[CarriedOut.AsOf],
       set: (BundleEntities, List[A]) => BundleEntities
   ) extends CarriedKind:
     def out(scope: BundleScope, files: ContentStore)(using DbCon): CarriedOut =
       val as = lines(scope)
-      CarriedOut(BundleFormat.ndjson(as.map(line)), as.flatMap(clock).maxOption)
+      CarriedOut(CarriedOut.Payload(BundleFormat.ndjson(as.map(line))), as.flatMap(clock).maxByOption(_.value))
     def into(scope: BundleScope, files: ContentStore)(using DbCon): BundleEntities => BundleEntities =
       val as = lines(scope)
       es => set(es, as)
-
-  object Lines:
-    type LineResult = LineResult.T
-    object LineResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-    type ClockResult = ClockResult.T
-    object ClockResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]

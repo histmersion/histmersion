@@ -24,6 +24,7 @@ import com.histmersion.util.database.given_DbCodec_List
 import com.histmersion.api.Api
 import com.histmersion.api.catalogue.Correction
 import com.histmersion.api.catalogue.EventGeo
+import com.histmersion.api.catalogue.EventGeometry
 
 /** The events (`events`) with their datings, edges and participants (`event_datings`, `event_edges`,
   * `event_participants`) and the old ids of renamed ones (`event_aliases`). Every method runs on the connection it is
@@ -42,7 +43,7 @@ private[events] object EventRepo:
   type GeoTolerance = GeoTolerance.T
   object GeoTolerance extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
-  def count()(using DbCon): com.histmersion.domain.catalogue.events.EventRepo.EventCount = sql"SELECT count(*)::int FROM events".query[Int].run().head.toLong
+  def count()(using DbCon): com.histmersion.domain.catalogue.events.EventRepo.EventCount = EventCount(sql"SELECT count(*)::int FROM events".query[Int].run().head.toLong)
 
   private given DbCodec[EventEdge] = DbCodec.derived
   private given DbCodec[EventParticipant] = DbCodec.derived
@@ -62,15 +63,15 @@ private[events] object EventRepo:
 
   /** The events `where` selects ([[EventSql.listWhere]]), one page of them. */
   def list(where: Sql, limit: com.histmersion.PageSize, offset: com.histmersion.Offset)(using DbCon): EventList =
-    val total = (Sql.raw(s"SELECT count(*)::int FROM $fromEvents WHERE ") ++ where).frag.query[Int].run().head
-    val rows = (Sql.raw(s"SELECT $summaryCols FROM $fromEvents WHERE ") ++ where ++
+    val total = (Sql.raw(Sql.Text(s"SELECT count(*)::int FROM $fromEvents WHERE ")) ++ where).frag.query[Int].run().head
+    val rows = (Sql.raw(Sql.Text(s"SELECT $summaryCols FROM $fromEvents WHERE ")) ++ where ++
       Sql.raw(" ORDER BY coalesce(e.not_before, e.begin_by), e.label") ++
-      Sql.of(" LIMIT ? OFFSET ?", Param.I(limit.max(1)), Param.I(offset.max(0)))).frag
+      Sql.of(" LIMIT ? OFFSET ?", Param.I(Param.I.V(limit.value.max(1))), Param.I(Param.I.V(offset.value.max(0))))).frag
       .query[EventRow]
       .run()
       .toList
       .map(_.toSummary)
-    EventList.of(total, rows, offset.max(0))
+    EventList.of(EventList.Total(total), rows, com.histmersion.api.personal.UnreadPage.Offset(offset.value.max(0)))
 
   /** The events `listed` selects that have a position, for the map's playback. The anchor is the event's own geometry,
     * else its place's: the point itself, or the point-on-surface of an area (always inside it, unlike a centroid). A
@@ -81,30 +82,34 @@ private[events] object EventRepo:
   def geo(listed: Sql, limit: com.histmersion.PageSize, tolerance: com.histmersion.domain.catalogue.events.EventRepo.GeoTolerance)(using DbCon): EventGeo.List =
     // drawn at a year only when dated, and well enough (core.EventPrecision.mapped): the imprecise are
     // counted; an undated one (its outer span unbounded) would otherwise stand in every period
-    val where = listed ++ Sql.of(com.histmersion.util.database.Sql.OfText(" AND e.uncertainty <= ?"), Param.L(EventPrecision.ApproximateUpTo))
+    val where = listed ++ Sql.of(com.histmersion.util.database.Sql.OfText(" AND e.uncertainty <= ?"), Param.L(Param.L.V(EventPrecision.ApproximateUpTo.value)))
     val rows = (geoSelect ++ where ++
       Sql.raw(" ORDER BY coalesce(e.not_before, e.begin_by), e.label") ++
-      Sql.of(" LIMIT ?", Param.I(limit.max(1)))).frag.query[EventGeoRow].run().toList
+      Sql.of(" LIMIT ?", Param.I(Param.I.V(limit.value.max(1))))).frag.query[EventGeoRow].run().toList
     val unplaced = (Sql.raw(
-      s"SELECT count(*)::int FROM $fromEvents WHERE e.geom IS NULL AND ep.geom IS NULL AND "
+      Sql.Text(s"SELECT count(*)::int FROM $fromEvents WHERE e.geom IS NULL AND ep.geom IS NULL AND ")
     ) ++ where).frag.query[Int].run().head
     val imprecise = (Sql.raw(
-      s"SELECT count(*)::int FROM $fromEvents WHERE coalesce(e.geom, ep.geom) IS NOT NULL AND "
+      Sql.Text(s"SELECT count(*)::int FROM $fromEvents WHERE coalesce(e.geom, ep.geom) IS NOT NULL AND ")
     ) ++
-      listed ++ Sql.of(" AND e.uncertainty > ?", Param.L(EventPrecision.ApproximateUpTo))).frag.query[Int].run().head
+      listed ++ Sql.of(" AND e.uncertainty > ?", Param.L(Param.L.V(EventPrecision.ApproximateUpTo.value)))).frag.query[Int].run().head
     val items = rows.map(r => (r, r.toGeo))
-    val wanted = items.collect { case (r, g) if r.hasArea && g.scale == EventScale.Regional => g.id }
+    val wanted = items.collect { case (r, g) if r.hasArea && g.scale == EventScale.Regional => r.row.id }
     val outlines: Map[com.histmersion.domain.catalogue.events.BEventRow.Id, com.histmersion.domain.catalogue.events.BEventRow.Geom] =
       if wanted.isEmpty then Map.empty
       else
         sql"""SELECT e.id, ST_AsGeoJSON(ST_SimplifyPreserveTopology(
                        coalesce(e.geom, ep.geom_clipped, ep.geom), $tolerance), 4)
               FROM ${SqlLiteral(fromEvents)} WHERE e.id = ANY($wanted::text[])"""
-          .query[(String, Option[String])]
+          .query[(com.histmersion.domain.catalogue.events.BEventRow.Id, Option[com.histmersion.domain.catalogue.events.BEventRow.Geom])]
           .run()
           .collect { case (id, Some(g)) => id -> g }
           .toMap
-    EventGeo.List(items.map((_, g) => g.modify(_.outline).setTo(outlines.get(g.id.value))), unplaced, imprecise)
+    EventGeo.List(
+      items.map((r, g) => g.modify(_.outline).setTo(outlines.get(r.row.id).map(o => EventGeo.Outline(o.value)))),
+      EventGeo.List.Unplaced(unplaced),
+      EventGeo.List.Imprecise(imprecise)
+    )
 
   /** The events of `ids` as the map's tiles draw one ([[geo]]'s rows, without an outline), by id; an id with no
     * position, or dated too loosely, is left out as [[geo]] leaves it out.
@@ -114,17 +119,17 @@ private[events] object EventRepo:
     else
       (geoSelect ++ Sql.of(
         com.histmersion.util.database.Sql.OfText("e.id = ANY(?) AND e.uncertainty <= ?"),
-        Param.A(ids),
-        Param.L(EventPrecision.ApproximateUpTo)
+        Param.A(ids.map(i => Param.A.V(i.value))),
+        Param.L(Param.L.V(EventPrecision.ApproximateUpTo.value))
       )).frag.query[EventGeoRow].run().map(r => r.row.id -> r.toGeo).toMap
 
   /** The SELECT of the map's event rows ([[EventGeoRow]]), up to its WHERE (which the caller ends). */
-  private val geoSelect: Sql = Sql.raw(s"""SELECT $summaryCols,
+  private val geoSelect: Sql = Sql.raw(Sql.Text(s"""SELECT $summaryCols,
               ST_Y(a.pt), ST_X(a.pt), s.src, ep.label, GeometryType(s.g) IN ('POLYGON', 'MULTIPOLYGON'),
               (SELECT max(c.vei) FROM event_catalogue c WHERE c.event_id = e.id),
               (SELECT max(c.magnitude) FROM event_catalogue c WHERE c.event_id = e.id)
             FROM $fromEvents ${EventSql.anchorJoins}
-            WHERE s.g IS NOT NULL AND """)
+            WHERE s.g IS NOT NULL AND """))
 
   /** One event with its parent, parts, datings, edges, participants, Wikidata item and corrections by hand. */
   def get(id: com.histmersion.domain.catalogue.events.BEventRow.Id)(using DbCon): Option[EventEntry] =
@@ -162,24 +167,24 @@ private[events] object EventRepo:
         .query[EventParticipant]
         .run()
         .toList
-      val wikidata = sql"SELECT wikidata FROM events WHERE id = $id".query[Option[String]].run().headOption.flatten
+      val wikidata = sql"SELECT wikidata FROM events WHERE id = $id".query[Option[String]].run().headOption.flatten.map(EventEntry.Wikidata(_))
       EventEntry(
         r.toSummary,
-        r.geometry,
+        r.geometry.map(g => EventGeometry.Geojson(g.value)),
         parent,
         children,
         datings,
         edges,
         participants,
         wikidata,
-        corrections = CorrectionRepo.of(Correction.Target.Event, id).map(_.toDto())
+        corrections = CorrectionRepo.of(Correction.TargetKind(Correction.Target.Event), Correction.TargetId(id.value)).map(_.toDto())
       )
     }
 
   /** The tier, other names and catalogue of one event. */
   def tierAndNames(id: com.histmersion.domain.catalogue.events.BEventRow.Id)(using DbCon): Option[(com.histmersion.domain.catalogue.events.EventRepo.Tier, List[com.histmersion.domain.catalogue.events.BEventRow.Names], Option[com.histmersion.domain.catalogue.events.BEventRow.Label])] =
     sql"""SELECT ${SqlLiteral(EventSql.TierSql)}, e.names, e.catalogue FROM events e WHERE e.id = $id"""
-      .query[(String, List[String], Option[String])]
+      .query[(com.histmersion.domain.catalogue.events.EventRepo.Tier, List[com.histmersion.domain.catalogue.events.BEventRow.Names], Option[com.histmersion.domain.catalogue.events.BEventRow.Label])]
       .run()
       .headOption
 
@@ -197,12 +202,12 @@ private[events] object EventRepo:
     * says is recorded as a correction, so the next import keeps it; one set back to the catalogue's value drops its
     * correction. An event compiled from sources (no catalogue) is never refreshed by an import: nothing to record.
     */
-  private def recordCorrections(id: com.histmersion.domain.catalogue.events.BEventRow.Id, fields: Map[com.histmersion.domain.catalogue.events.CorrectionRow.Field, io.circe.Json])(using DbCon): Unit =
+  private def recordCorrections(id: com.histmersion.domain.catalogue.events.BEventRow.Id, fields: Map[String, io.circe.Json])(using DbCon): Unit =
     if fields.nonEmpty then
       EventImportRepo.upstreamOf(id).foreach { (provider, rec) =>
         val up = EventFields.upstream(rec)
         fields.foreach((f, v) =>
-          up.get(f).foreach(u => CorrectionRepo.record(Correction.Target.Event, id, f, v, u, Some(provider)))
+          up.get(f).foreach(u => CorrectionRepo.record(Correction.TargetKind(Correction.Target.Event), Correction.TargetId(id.value), Correction.Field(f), v, u, Some(com.histmersion.domain.catalogue.events.BCatalogueRow.Provider(provider.value))))
         )
       }
 
@@ -213,24 +218,26 @@ private[events] object EventRepo:
     try
       val st = con.connection.prepareStatement("SELECT ST_IsEmpty(ST_GeomFromGeoJSON(?))")
       try
-        st.setString(1, geojson)
+        st.setString(1, geojson.value)
         st.executeQuery().close()
         None
       finally st.close()
     catch
       case e: java.sql.SQLException =>
         Some(
-          Option(e.getMessage)
-            .map(_.linesIterator.next().trim)
-            .filter(_.nonEmpty)
-            .getOrElse(e.getClass.getSimpleName)
+          Problem(
+            Option(e.getMessage)
+              .map(_.linesIterator.next().trim)
+              .filter(_.nonEmpty)
+              .getOrElse(e.getClass.getSimpleName)
+          )
         )
 
   /** Create or replace one event. On an event an import created, the fields that differ from its catalogue's are
     * recorded as corrections ([[recordCorrections]]) — they survive a re-import.
     */
   def put(id: com.histmersion.domain.catalogue.events.BEventRow.Id, in: EventPut)(using DbCon): Unit =
-    val geom = in.geometry.map(_.trim).filter(_.nonEmpty)
+    val geom = in.geometry.map(_.value.trim).filter(_.nonEmpty)
     val scale = in.scale.flatMap(v => EventScale.parse(v).flatten)
     sql"""INSERT INTO events (id, label, kind, not_before, begin_by, end_from, not_after,
                               historicity, geom, place_id, parent_id, description, citekey, scale)
@@ -286,7 +293,7 @@ private[events] object EventRepo:
     * flags a conflict when the catalogue changes to something else).
     */
   def patch(id: com.histmersion.domain.catalogue.events.BEventRow.Id, p: EventPatch)(using DbCon): Either[Api.Error, Unit] =
-    if !exists(id) then Left(Api.Error(s"No event '$id'", Some(Write.CodeNotFound)))
+    if !exists(id) then Left(Api.Error(Api.Error.Message(s"No event '$id'"), Some(Api.Error.Code(Write.CodeNotFound))))
     else
       p.label.foreach(v => sql"UPDATE events SET label = $v WHERE id = $id".update.run())
       p.kind.foreach(v => sql"UPDATE events SET kind = $v WHERE id = $id".update.run())
@@ -298,12 +305,12 @@ private[events] object EventRepo:
       // `auto` clears the stated scale (derived again); a value the controller did not validate is skipped
       p.scale.flatMap(EventScale.parse).foreach(v => sql"UPDATE events SET scale = $v WHERE id = $id".update.run())
       // `""` clears the item; anything else the controller checked is a `Q…` id
-      p.wikidata.map(_.trim).foreach { q =>
+      p.wikidata.map(_.value.trim).foreach { q =>
         val v = Option(q).filter(_.nonEmpty)
         sql"UPDATE events SET wikidata = $v WHERE id = $id".update.run()
       }
       // `""` clears the geometry; anything else the controller checked with [[geometryError]]
-      p.geometry.map(_.trim).foreach { raw =>
+      p.geometry.map(_.value.trim).foreach { raw =>
         val g = Option(raw).filter(_.nonEmpty)
         sql"""UPDATE events SET geom = CASE WHEN $g::text IS NULL THEN NULL
               ELSE ST_SetSRID(ST_GeomFromGeoJSON($g::text), 4326) END WHERE id = $id""".update.run()
@@ -347,14 +354,14 @@ private[events] object EventRepo:
     * side.
     */
   def rename(oldId: com.histmersion.domain.catalogue.events.BEventRow.Id, newId: com.histmersion.domain.catalogue.events.BEventRow.Id)(using DbCon): Either[Api.Error, Unit] =
-    val aliasOf = sql"SELECT event_id FROM event_aliases WHERE alias = $newId".query[String].run().headOption
-    if !exists(oldId) then Left(Api.Error(s"No event '$oldId'", Some(Write.CodeNotFound)))
-    else if exists(newId) then Left(Api.Error(s"'$newId' is already the id of another event", Some(Write.CodeInvalid)))
+    val aliasOf = sql"SELECT event_id FROM event_aliases WHERE alias = $newId".query[com.histmersion.domain.catalogue.events.BEventRow.Id].run().headOption
+    if !exists(oldId) then Left(Api.Error(Api.Error.Message(s"No event '$oldId'"), Some(Api.Error.Code(Write.CodeNotFound))))
+    else if exists(newId) then Left(Api.Error(Api.Error.Message(s"'$newId' is already the id of another event"), Some(Api.Error.Code(Write.CodeInvalid))))
     else if aliasOf.exists(_ != oldId) then
       Left(
         Api.Error(
-          s"'$newId' is an old id of '${aliasOf.get}' and still resolves to it — pick another",
-          Some(Write.CodeInvalid)
+          Api.Error.Message(s"'$newId' is an old id of '${aliasOf.get}' and still resolves to it — pick another"),
+          Some(Api.Error.Code(Write.CodeInvalid))
         )
       )
     else
@@ -369,7 +376,9 @@ private[events] object EventRepo:
 
   /** The id an OLD id was renamed to — `None` when it is a live id, or nothing. */
   def renamedTo(id: com.histmersion.domain.catalogue.events.BEventRow.Id)(using DbCon): Option[com.histmersion.domain.catalogue.events.BEventRow.Id] =
-    EventAliasTable.table.renamedToIn(id)
+    EventAliasTable.table
+      .renamedToIn(com.histmersion.util.identity.AliasTable.Id(id.value))
+      .map(a => com.histmersion.domain.catalogue.events.BEventRow.Id(a.value))
 
   def delete(id: com.histmersion.domain.catalogue.events.BEventRow.Id)(using DbCon): Boolean =
     sql"DELETE FROM events WHERE id = $id".update.run() > 0 // its corrections go (a trigger)

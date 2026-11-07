@@ -18,14 +18,14 @@ object Politeness:
     * 200 with a `MediaWiki-API-Error: maxlag` header and `error.code = maxlag`.
     */
   def isMaxlag(a: HttpAnswer): Boolean =
-    a.header(com.histmersion.domain.CoreQuota.HeaderName("mediawiki-api-error")).exists(_.trim.equalsIgnoreCase("maxlag")) ||
-      (a.body.length < 4096 && a.text.contains("\"code\":\"maxlag\""))
+    a.header(com.histmersion.domain.CoreQuota.HeaderName("mediawiki-api-error")).exists(_.value.trim.equalsIgnoreCase("maxlag")) ||
+      (a.body.value.length < 4096 && a.text.value.contains("\"code\":\"maxlag\""))
 
   /** Pure: the next step after the `attempt`-th answer (0-based) — [[HttpPolicy.decide]]. */
   def decide(a: HttpAnswer, attempt: com.histmersion.domain.HttpPolicy.Attempt, maxRetries: com.histmersion.domain.HttpPolicy.MaxRetries, maxRetryAfterSeconds: com.histmersion.domain.HttpPolicy.MaxRetryAfterSeconds, now: Instant): Step =
     HttpPolicy.decide(
-      a.code,
-      a.header(com.histmersion.domain.CoreQuota.HeaderName("retry-after")),
+      HttpPolicy.StatusCode(a.code.value),
+      a.header(com.histmersion.domain.CoreQuota.HeaderName("retry-after")).map(v => HttpPolicy.RetryAfter(v.value)),
       attempt,
       maxRetries,
       maxRetryAfterSeconds,

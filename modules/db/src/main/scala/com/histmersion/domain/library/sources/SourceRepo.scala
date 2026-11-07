@@ -419,8 +419,8 @@ private[sources] object SourceRepo:
     Citekeys
       .renameTo(oldCk, newRaw)
       .left
-      .map(Write.invalid)
-      .flatMap(validated => renameIn(oldCk, validated.value, referrers))
+      .map(problem => Write.invalid(Write.InvalidMessage(problem.value)))
+      .flatMap(validated => renameIn(oldCk, validated, referrers))
 
   /** [[rename]] inside the caller's transaction, `newCk` already validated — also what a bundle import does when a
     * source was renamed on the other side (`BundleImport`).
@@ -492,11 +492,7 @@ private[sources] object SourceRepo:
     val findings =
       sql"""UPDATE findings SET id = $newCk || substr(id, $cut)
             WHERE citekey = $newCk AND left(id, $cut) = $oldHash""".update.run()
-    val rename = SourceRename(
-      SourceRename.From(oldCk.value),
-      SourceRename.To(newCk.value),
-      shorts.map(f => SourceRename.ShortForms(f.value))
-    )
+    val rename = SourceRename(oldCk, newCk, shorts.map(f => com.histmersion.domain.library.Citekey.assume(f.value)))
     val referred = referrers.renamed(rename)
 
     // parked edges that were waiting for the new name, exactly or by a short form now unique to it

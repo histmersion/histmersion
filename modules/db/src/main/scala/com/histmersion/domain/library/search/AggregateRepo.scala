@@ -3,6 +3,7 @@ package com.histmersion.domain.library.search
 import com.histmersion.api.library.Tree
 
 import com.histmersion.util.database.given
+import com.histmersion.util.database.NewtypeColumns.given
 
 import com.histmersion.domain.catalogue.places.PlaceScope
 
@@ -25,9 +26,6 @@ private[search] object AggregateRepo:
   type Unit = Unit.T
   object Unit extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
-  type PlacesOfFa = PlacesOfFa.T
-  object PlacesOfFa extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-
   private given DbCodec[Period.Row] = DbCodec.derived
 
   /** The SQL behind [[periods]] — a **pure** value (plan §1.0/§2.2), so the predicate can be asserted on without a
@@ -46,10 +44,12 @@ private[search] object AggregateRepo:
     *     as it always has for places).
     */
   def periodsQuery(unit: com.histmersion.domain.library.search.AggregateRepo.Unit, filter: Filter, scope: PlaceScope = PlaceScope.empty): Sql =
-    if unit == "findings" then
+    if unit.value == "findings" then
       Sql.raw(
-        s"SELECT ${RangeSql.cols("f.period")}" +
-          " FROM findings f JOIN sources s ON s.citekey = f.citekey WHERE "
+        Sql.Text(
+          s"SELECT ${RangeSql.cols("f.period")}" +
+            " FROM findings f JOIN sources s ON s.citekey = f.citekey WHERE "
+        )
       ) ++
         FilterSql.sourceWhere(filter) ++ Sql.raw(" AND ") ++ FilterSql.findingWhere(filter, scope = scope)
     else
@@ -57,10 +57,12 @@ private[search] object AggregateRepo:
         if FilterSql.hasFindingPlaceCriteria(filter) then Sql.raw(com.histmersion.util.database.Sql.RawText(" AND fp.matched > 0")) else Sql.empty
       val ownPeriod = filter.period.fold(Sql.raw(com.histmersion.util.database.Sql.RawText("TRUE")))(RangeSql.overlaps("s.period", _))
       Sql.raw(
-        s"SELECT COALESCE(${RangeSql.start("s.period")}, fp.min_start), COALESCE(${RangeSql.end("s.period")}, fp.max_end)" +
-          " FROM sources s LEFT JOIN LATERAL (" +
-          s"SELECT min(${RangeSql.start("f.period")}) AS min_start, max(${RangeSql.end("f.period")}) AS max_end," +
-          " count(*) AS matched, count(*) FILTER (WHERE "
+        Sql.Text(
+          s"SELECT COALESCE(${RangeSql.start("s.period")}, fp.min_start), COALESCE(${RangeSql.end("s.period")}, fp.max_end)" +
+            " FROM sources s LEFT JOIN LATERAL (" +
+            s"SELECT min(${RangeSql.start("f.period")}) AS min_start, max(${RangeSql.end("f.period")}) AS max_end," +
+            " count(*) AS matched, count(*) FILTER (WHERE "
+        )
       ) ++
         FilterSql.findingPeriodWhere(filter) ++
         Sql.raw(") AS in_window FROM findings f WHERE f.citekey = s.citekey AND ") ++
@@ -77,11 +79,19 @@ private[search] object AggregateRepo:
       key: TreeRowRaw.Key,
       citekey: com.histmersion.domain.library.Citekey,
       title: TreeRowRaw.Title,
-      periodStart: Option[com.histmersion.Year],
-      periodEnd: Option[com.histmersion.Year],
+      periodStart: Option[DeepTime.SignedYear],
+      periodEnd: Option[DeepTime.SignedYear],
       placeIds: List[TreeRowRaw.PlaceIds]
   ) derives DbCodec:
-    def toRow: Tree.TreeRow = Tree.TreeRow(key, citekey, title, periodStart, periodEnd, placeIds.distinct)
+    def toRow: Tree.TreeRow =
+      Tree.TreeRow(
+        Tree.TreeRow.Key(key.value),
+        com.histmersion.api.library.Citekey(citekey.value),
+        com.histmersion.api.library.Title(title.value),
+        periodStart.map(y => com.histmersion.api.catalogue.Year(y.value)),
+        periodEnd.map(y => com.histmersion.api.catalogue.Year(y.value)),
+        placeIds.distinct.map(p => com.histmersion.api.catalogue.RegionNode.Id(p.value))
+      )
 
   object TreeRowRaw:
     type Key = Key.T
@@ -94,7 +104,7 @@ private[search] object AggregateRepo:
   // ── the rows of the §1.6 aggregation tree ──────────────────────────────────────────────────────
 
   /** The gazetteer places one FINDING was materialised into, as an array (correlated on `fa`). */
-  private def placesOf(fa: com.histmersion.domain.library.search.AggregateRepo.PlacesOfFa): com.histmersion.domain.library.search.AggregateRepo.TreeRowRaw.PlaceIds =
+  private def placesOf(fa: String): String =
     s"ARRAY(SELECT fp.place_id FROM finding_places fp WHERE fp.finding_id = $fa.id ORDER BY fp.place_id)"
 
   /** The SQL behind [[treeRows]] — a **pure** value, so the predicate can be asserted on without a database (plan
@@ -110,10 +120,12 @@ private[search] object AggregateRepo:
     * rather than an arbitrary few.
     */
   def treeRowsQuery(unit: com.histmersion.domain.library.search.AggregateRepo.Unit, filter: Filter, scope: PlaceScope = PlaceScope.empty): Sql =
-    if unit == "findings" then
+    if unit.value == "findings" then
       Sql.raw(
-        s"SELECT f.id, f.citekey, s.title, ${RangeSql.cols("f.period")}, ${placesOf(com.histmersion.domain.library.search.AggregateRepo.PlacesOfFa("f"))}" +
-          " FROM findings f JOIN sources s ON s.citekey = f.citekey WHERE "
+        Sql.Text(
+          s"SELECT f.id, f.citekey, s.title, ${RangeSql.cols("f.period")}, ${placesOf("f")}" +
+            " FROM findings f JOIN sources s ON s.citekey = f.citekey WHERE "
+        )
       ) ++
         FilterSql.sourceWhere(filter) ++ Sql.raw(" AND ") ++ FilterSql.findingWhere(filter, scope = scope) ++
         Sql.raw(" ") ++ FilterSql.orderBySql(filter)
@@ -122,13 +134,15 @@ private[search] object AggregateRepo:
         if FilterSql.hasFindingPlaceCriteria(filter) then Sql.raw(com.histmersion.util.database.Sql.RawText(" AND fp.matched > 0")) else Sql.empty
       val ownPeriod = filter.period.fold(Sql.raw(com.histmersion.util.database.Sql.RawText("TRUE")))(RangeSql.overlaps("s.period", _))
       Sql.raw(
-        "SELECT s.citekey, s.citekey, s.title," +
-          s" COALESCE(${RangeSql.start("s.period")}, fp.min_start), COALESCE(${RangeSql.end("s.period")}, fp.max_end)," +
-          " coalesce(fp.place_ids, '{}'::text[])" +
-          " FROM sources s LEFT JOIN LATERAL (" +
-          s"SELECT min(${RangeSql.start("f.period")}) AS min_start, max(${RangeSql.end("f.period")}) AS max_end," +
-          " count(DISTINCT f.id) AS matched," +
-          " count(DISTINCT f.id) FILTER (WHERE "
+        Sql.Text(
+          "SELECT s.citekey, s.citekey, s.title," +
+            s" COALESCE(${RangeSql.start("s.period")}, fp.min_start), COALESCE(${RangeSql.end("s.period")}, fp.max_end)," +
+            " coalesce(fp.place_ids, '{}'::text[])" +
+            " FROM sources s LEFT JOIN LATERAL (" +
+            s"SELECT min(${RangeSql.start("f.period")}) AS min_start, max(${RangeSql.end("f.period")}) AS max_end," +
+            " count(DISTINCT f.id) AS matched," +
+            " count(DISTINCT f.id) FILTER (WHERE "
+        )
       ) ++
         FilterSql.findingPeriodWhere(filter) ++
         Sql.raw(

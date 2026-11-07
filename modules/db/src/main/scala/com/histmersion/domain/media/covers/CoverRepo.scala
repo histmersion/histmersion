@@ -4,6 +4,7 @@ import com.histmersion.api.media.MediaProvider
 import com.histmersion.domain.media.MediaRole
 
 import com.histmersion.util.database.given
+import com.histmersion.util.database.NewtypeColumns.given
 import com.augustnagro.magnum.*
 
 /** The sources a run of covers and illustrations looks at (#1446): those with figures and no illustration yet, those
@@ -42,7 +43,7 @@ private[covers] object CoverRepo:
             AND ($refresh OR $only::text IS NOT NULL OR NOT EXISTS (SELECT 1 FROM media_checks c
                   WHERE c.provider = ${MediaProvider.OpenLibrary} AND c.target_type = 'source' AND c.target_id = s.citekey))
           ORDER BY s.citekey LIMIT ${limit.value.max(1)}"""
-      .query[(String, Option[String], Option[String])]
+      .query[(com.histmersion.domain.library.Citekey, Option[CoverKeys.Isbn], Option[CoverKeys.Oclc])]
       .run()
       .toList
       .map(CoverKeys.apply)

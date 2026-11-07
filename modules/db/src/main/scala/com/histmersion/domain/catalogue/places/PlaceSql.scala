@@ -171,12 +171,12 @@ object PlaceSql:
   ): String =
     window.fold("true") { (lo, hi) =>
       val w = modernFrom.fold("(SELECT tw.w FROM tw)")(_ => s"int8range($lo::bigint, $hi::bigint, '[]')")
-      val modernOn = modernFrom.fold("(SELECT tw.modern_on FROM tw)")(m => if hi >= m then "true" else "false")
+      val modernOn = modernFrom.fold("(SELECT tw.modern_on FROM tw)")(m => if hi.value >= m.value then "true" else "false")
       val modern = modernSql(alias)
       val undated = undatedSql(alias)
       val timeless = timelessSql(alias)
       val overlap = RangeSql.overlaps(s"$alias.period", s"$lo::bigint", s"$hi::bigint")
-      val physicalKind = kind.forall(k => k == Place.Kind.Feature || k == Place.Kind.Region)
+      val physicalKind = kind.forall(k => k.value == Place.Kind.Feature || k.value == Place.Kind.Region)
       val lead = if physicalKind then s"($overlap OR $timeless)" else overlap
       s"($lead AND ($timeless" +
         s" OR ($modern AND $modernOn)" +

@@ -10,16 +10,10 @@ import scala.concurrent.duration.*
 object Challenge:
   type Body = Body.T
   object Body extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Array[_root_.scala.Byte], _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type IsChallengeBody = _root_.com.histmersion.pluginhost.Challenge.Body
-  val IsChallengeBody: _root_.com.histmersion.pluginhost.Challenge.Body.type = _root_.com.histmersion.pluginhost.Challenge.Body
-
-  type IsChallengeHeadersPart2 = IsChallengeHeadersPart2.T
-  object IsChallengeHeadersPart2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-
-  def isChallenge(code: com.histmersion.domain.HttpPolicy.StatusCode, headers: Map[com.histmersion.domain.CoreQuota.HeaderName, com.histmersion.pluginhost.Challenge.IsChallengeHeadersPart2], body: com.histmersion.pluginhost.Challenge.IsChallengeBody): Boolean =
-    val mitigated = headers.exists((k, v) => k.equalsIgnoreCase("cf-mitigated") && v.toLowerCase.contains("challenge"))
-    val page = new String(body.take(4096), "ISO-8859-1").toLowerCase
-    mitigated || isAnubis(body) || ((code == 403 || code == 429 || code == 503) &&
+  def isChallenge(code: com.histmersion.domain.HttpPolicy.StatusCode, headers: Map[com.histmersion.domain.CoreQuota.HeaderName, com.histmersion.domain.CoreQuota.HeaderValue], body: com.histmersion.pluginhost.Challenge.Body): Boolean =
+    val mitigated = headers.exists((k, v) => k.value.equalsIgnoreCase("cf-mitigated") && v.value.toLowerCase.contains("challenge"))
+    val page = new String(body.value.take(4096), "ISO-8859-1").toLowerCase
+    mitigated || isAnubis(body) || ((code.value == 403 || code.value == 429 || code.value == 503) &&
       (page.contains("<title>just a moment") || page.contains("challenge-platform") ||
         page.contains("<title>attention required")))
 
@@ -29,6 +23,6 @@ object Challenge:
     * as one.
     */
   private def isAnubis(body: com.histmersion.pluginhost.Challenge.Body): Boolean =
-    val head = new String(body.take(32768), "ISO-8859-1").toLowerCase
+    val head = new String(body.value.take(32768), "ISO-8859-1").toLowerCase
     !head.startsWith("%pdf") &&
     (head.contains("id=\"anubis_challenge\"") || (head.contains("/.within.website/x/") && head.contains("anubis")))

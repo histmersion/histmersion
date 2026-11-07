@@ -572,7 +572,7 @@ object FilterSql:
   /** Source-level reasons this source is in the result — "title matches 'collapse'", "tag: sea-peoples", … Pure:
     * everything comes from the row the SQL returned.
     */
-  def sourceWhy(f: Filter, r: SourceRow): List[String] =
+  def sourceWhy(f: Filter, r: SourceRow): List[com.histmersion.api.library.Hit.Why] =
     val b = List.newBuilder[String]
     text(f).foreach { q =>
       val terms = queryTerms(q)
@@ -591,7 +591,7 @@ object FilterSql:
       if overlaps(r.periodStart, r.periodEnd, p) then
         b += s"period: ${Markdown.periodLabel(r.periodStart, r.periodEnd)}"
     )
-    b.result()
+    b.result().map(com.histmersion.api.library.Hit.Why(_))
 
   /** Which of the filter's finding-level criteria this finding satisfies. Empty ⇒ it is NOT part of the evidence and is
     * dropped from `Hit.matched`.
@@ -601,7 +601,7 @@ object FilterSql:
       m: Finding.Match,
       placeIds: List[com.histmersion.domain.catalogue.Place.Id] = Nil,
       scope: PlaceScope = PlaceScope.empty
-  ): List[String] =
+  ): List[Finding.Match.Why] =
     val b = List.newBuilder[String]
     f.period.foreach(p => if overlaps(m.periodStart, m.periodEnd, p) then b += "period")
     f.bbox.foreach(box =>
@@ -612,8 +612,8 @@ object FilterSql:
     f.places.foreach { p =>
       val byGazetteer = scope.idsFor(PlaceScope.IdsForValue(p.value)).exists(ids => placeIds.exists(ids.contains))
       // named by its LABEL, not its gazetteer id: "place: pleiades_589831" explains nothing (item 15)
-      if byGazetteer || m.regionName.exists(_.toLowerCase.contains(p.value.toLowerCase)) then
+      if byGazetteer || m.regionName.exists(_.value.toLowerCase.contains(p.value.toLowerCase)) then
         b += s"place: ${scope.labelFor(PlaceScope.LabelForValue(p.value))}"
     }
     f.tags.foreach(t => if m.tags.exists(x => ci(x.value, t.value)) then b += s"tag: ${t.value}")
-    b.result()
+    b.result().map(Finding.Match.Why(_))

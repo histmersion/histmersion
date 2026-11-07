@@ -4,6 +4,7 @@ import com.histmersion.api.library.{DeleteCount, DeletePart}
 import com.histmersion.domain.library.sources.referrers.*
 
 import com.histmersion.util.database.given
+import com.histmersion.util.database.NewtypeColumns.given
 
 import com.augustnagro.magnum.*
 import com.histmersion.api.library.Rename
@@ -40,14 +41,13 @@ final class AssetLinkSourceReferrer extends SourceReferrer:
     if links.nonEmpty then sql"DELETE FROM asset_links WHERE id::text = ANY($links::text[])".update.run()
 
   /** Other figures' links to the source or one of its findings. */
-  private def linksTo(source: SourceKeys)(using DbCon): List[com.histmersion.domain.media.links.AssetLinkRepo.LinkId] =
+  private def linksTo(source: SourceKeys)(using DbCon): List[com.histmersion.api.media.AssetLink.Id] =
     val (ck, keys, hash) = (source.citekey, source.keys, source.findingPrefix)
     sql"""SELECT id FROM asset_links WHERE citekey <> $ck
             AND ((target_type = 'source' AND target_id = ANY($keys::text[]))
               OR (target_type = 'finding' AND left(target_id, ${hash.value.length}) = $hash))"""
-      .query[Long]
+      .query[com.histmersion.api.media.AssetLink.Id]
       .run()
       .toList
-      .map(com.histmersion.domain.media.links.AssetLinkRepo.LinkId(_))
 
 

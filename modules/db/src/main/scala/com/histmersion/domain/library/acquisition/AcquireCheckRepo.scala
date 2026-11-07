@@ -21,7 +21,7 @@ private[acquisition] object AcquireCheckRepo:
     "SELECT item_id, (extract(epoch FROM checked_at) * 1000)::bigint, generation, outcome, reason, checks FROM acquire_checks"
   )
 
-  private def row(t: (com.histmersion.domain.library.acquisition.AcquireCheckRow.Item, com.histmersion.domain.library.acquisition.AcquireCheckRepo.CheckedAtMs, com.histmersion.domain.library.acquisition.AcquireCheckRow.Generation, com.histmersion.domain.library.acquisition.AcquireCheckRow.Outcome, com.histmersion.domain.library.acquisition.AcquireCheckRow.Reason, com.histmersion.domain.library.acquisition.AcquireCheckRow.Checks)): AcquireCheckRow =
+  private def row(t: (com.histmersion.domain.library.acquisition.AcquireCheckRow.Item, com.histmersion.domain.library.acquisition.AcquireCheckRepo.CheckedAtMs, AcquireRecheck.LastCheck.Generation, AcquireRecheck.Outcome.Wire, com.histmersion.domain.library.acquisition.AcquireCheckRow.Reason, com.histmersion.domain.library.acquisition.AcquireCheckRow.Checks)): AcquireCheckRow =
     AcquireCheckRow(t._1, Instant.ofEpochMilli(t._2.value), t._3, t._4, t._5, t._6)
 
   /** The checks of these items (any that has none is absent). */
@@ -30,7 +30,7 @@ private[acquisition] object AcquireCheckRepo:
     else
       val ids = items.distinct.map(_.toString)
       sql"$Select WHERE item_id::text = ANY($ids::text[])"
-        .query[(com.histmersion.domain.library.acquisition.AcquireCheckRow.Item, com.histmersion.domain.library.acquisition.AcquireCheckRepo.CheckedAtMs, com.histmersion.domain.library.acquisition.AcquireCheckRow.Generation, com.histmersion.domain.library.acquisition.AcquireCheckRow.Outcome, com.histmersion.domain.library.acquisition.AcquireCheckRow.Reason, com.histmersion.domain.library.acquisition.AcquireCheckRow.Checks)]
+        .query[(com.histmersion.domain.library.acquisition.AcquireCheckRow.Item, com.histmersion.domain.library.acquisition.AcquireCheckRepo.CheckedAtMs, AcquireRecheck.LastCheck.Generation, AcquireRecheck.Outcome.Wire, com.histmersion.domain.library.acquisition.AcquireCheckRow.Reason, com.histmersion.domain.library.acquisition.AcquireCheckRow.Checks)]
         .run()
         .map(row)
         .map(r => r.item -> r)
@@ -39,14 +39,14 @@ private[acquisition] object AcquireCheckRepo:
   /** The checks of every OPEN acquisition item. */
   def open()(using DbCon): Map[com.histmersion.domain.library.acquisition.AcquireCheckRow.Item, AcquireCheckRow] =
     sql"""$Select WHERE item_id IN (SELECT id FROM queue_items WHERE list = 'acquire' AND status = 'open')"""
-      .query[(com.histmersion.domain.library.acquisition.AcquireCheckRow.Item, com.histmersion.domain.library.acquisition.AcquireCheckRepo.CheckedAtMs, com.histmersion.domain.library.acquisition.AcquireCheckRow.Generation, com.histmersion.domain.library.acquisition.AcquireCheckRow.Outcome, com.histmersion.domain.library.acquisition.AcquireCheckRow.Reason, com.histmersion.domain.library.acquisition.AcquireCheckRow.Checks)]
+      .query[(com.histmersion.domain.library.acquisition.AcquireCheckRow.Item, com.histmersion.domain.library.acquisition.AcquireCheckRepo.CheckedAtMs, AcquireRecheck.LastCheck.Generation, AcquireRecheck.Outcome.Wire, com.histmersion.domain.library.acquisition.AcquireCheckRow.Reason, com.histmersion.domain.library.acquisition.AcquireCheckRow.Checks)]
       .run()
       .map(row)
       .map(r => r.item -> r)
       .toMap
 
   /** Record one check of `item` (its previous one replaced, the count kept). */
-  def record(item: com.histmersion.domain.library.acquisition.AcquireCheckRow.Item, at: Instant, generation: com.histmersion.domain.library.acquisition.AcquireCheckRow.Generation, outcome: AcquireRecheck.Outcome, reason: com.histmersion.domain.library.acquisition.AcquireCheckRow.Reason)(using
+  def record(item: com.histmersion.domain.library.acquisition.AcquireCheckRow.Item, at: Instant, generation: AcquireRecheck.LastCheck.Generation, outcome: AcquireRecheck.Outcome, reason: com.histmersion.domain.library.acquisition.AcquireCheckRow.Reason)(using
       DbCon
   ): Unit =
     val ms = at.toEpochMilli.toDouble / 1000
@@ -58,10 +58,10 @@ private[acquisition] object AcquireCheckRepo:
               outcome = EXCLUDED.outcome, reason = EXCLUDED.reason, checks = acquire_checks.checks + 1""".update.run()
 
   /** How many checks since `since`, in all and per outcome. */
-  def countSince(since: Instant)(using DbCon): Map[com.histmersion.domain.library.acquisition.AcquireCheckRow.Outcome, com.histmersion.RowCount] =
+  def countSince(since: Instant)(using DbCon): Map[AcquireRecheck.Outcome.Wire, com.histmersion.RowCount] =
     val ms = since.toEpochMilli.toDouble / 1000
     sql"""SELECT outcome, count(*)::int FROM acquire_checks WHERE checked_at >= to_timestamp($ms::float8)
-          GROUP BY outcome""".query[(com.histmersion.domain.library.acquisition.AcquireCheckRow.Outcome, com.histmersion.RowCount)].run().toMap
+          GROUP BY outcome""".query[(AcquireRecheck.Outcome.Wire, com.histmersion.RowCount)].run().toMap
 
   /** The sources holding these DOIs (lower-cased): the citekey, and whether it has its original (a converted body or a
     * stored file). One per DOI — the first citekey.
