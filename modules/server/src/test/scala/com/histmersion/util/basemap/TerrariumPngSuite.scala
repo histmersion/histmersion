@@ -1,5 +1,7 @@
 package com.histmersion.util.basemap
 
+import com.histmersion.testsupport.ComparedByValue.given
+
 /** Terrarium PNGs: what the encoder writes is a PNG any reader takes, with the elevation in its pixels, and the decoder
   * reads it back.
   */

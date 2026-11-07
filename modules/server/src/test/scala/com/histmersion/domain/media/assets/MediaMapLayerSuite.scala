@@ -43,4 +43,4 @@ class MediaMapLayerSuite extends munit.FunSuite:
     assertEquals(props.get(P.Author), Some(TileValue.Text(com.histmersion.domain.catalogue.maptiles.TileValue.Text.Value("Ann"))))
     // the full size is the uid's own file: the map makes its URL, the tile does not carry one per picture
     assertEquals(props.get(P.ThumbUrl), Some(TileValue.Text(com.histmersion.domain.catalogue.maptiles.TileValue.Text.Value("/media/u1/thumb"))))
-    assert(!props.values.exists(_ == TileValue.Text("/media/u1/file")))
+    assert(!props.values.exists(_ == TileValue.Text(com.histmersion.domain.catalogue.maptiles.TileValue.Text.Value("/media/u1/file"))))

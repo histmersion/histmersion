@@ -644,7 +644,7 @@ class AgentEngineSuite extends com.histmersion.db.DbSuite with RunTranscripts:
     a.attach(up)
     val item = h.workLists.add(com.histmersion.domain.automation.worklists.WorkListControllers.ListName("acquire"), Queue.QueueAdd(com.histmersion.api.automation.Queue.QueueItem.Text("zzagent: buy the tin book"))).toOption.get
     val before = CorpusSnapshot.of(ds)
-    val run = startAndRun(a, RunRequest(com.histmersion.api.automation.Agents.RunRequest.Pipeline("enrich-source"), ApiTarget, acquireItem = Some(item.id), dryRun = Some(true)))
+    val run = startAndRun(a, RunRequest(com.histmersion.api.automation.Agents.RunRequest.Pipeline("enrich-source"), ApiTarget, acquireItem = Some(item.id), dryRun = Some(com.histmersion.api.automation.Agents.RunRequest.DryRun(true))))
     assertEquals(run.status, "done", run.error)
     assert(run.dryRun.value)
     assertEquals(CorpusSnapshot.of(ds), before, "a dry run writes nothing: source, findings, edges, queues, approvals")
@@ -684,7 +684,7 @@ class AgentEngineSuite extends com.histmersion.db.DbSuite with RunTranscripts:
         if first.scripts.isEmpty then throw java.net.ConnectException("provider down") else first.run(call)
     val (a, h) = handlersFor((_, _) => Right(flaky)); seed(h)
     val before = CorpusSnapshot.of(ds)
-    val paused = startAndRun(a, RunRequest(com.histmersion.api.automation.Agents.RunRequest.Pipeline("enrich-source"), ApiTarget, dryRun = Some(true)))
+    val paused = startAndRun(a, RunRequest(com.histmersion.api.automation.Agents.RunRequest.Pipeline("enrich-source"), ApiTarget, dryRun = Some(com.histmersion.api.automation.Agents.RunRequest.DryRun(true))))
     assertEquals(paused.status, "paused")
     assert(paused.dryRun.value)
     val second = ScriptedClient(Model)
@@ -821,10 +821,10 @@ class AgentEngineSuite extends com.histmersion.db.DbSuite with RunTranscripts:
     )
     val (a, h) = handlersFor(byModel(scripted, haiku)); seed(h)
     // two dry runs: neither changes what the other reads
-    val r1 = startAndRun(a, RunRequest(com.histmersion.api.automation.Agents.RunRequest.Pipeline("enrich-source"), ApiTarget, dryRun = Some(true)))
+    val r1 = startAndRun(a, RunRequest(com.histmersion.api.automation.Agents.RunRequest.Pipeline("enrich-source"), ApiTarget, dryRun = Some(com.histmersion.api.automation.Agents.RunRequest.DryRun(true))))
     val r2 = startAndRun(
       a,
-      RunRequest(com.histmersion.api.automation.Agents.RunRequest.Pipeline("enrich-source"), ApiTarget, dryRun = Some(true), modelFor = List(ModelOverride(ModelOverride.Role("extractor"), overrideModel(Haiku))))
+      RunRequest(com.histmersion.api.automation.Agents.RunRequest.Pipeline("enrich-source"), ApiTarget, dryRun = Some(com.histmersion.api.automation.Agents.RunRequest.DryRun(true)), modelFor = List(ModelOverride(ModelOverride.Role("extractor"), overrideModel(Haiku))))
     )
     assertEquals((r1.status, r2.status), ("done", "done"), s"${r1.error} ${r2.error}")
     val cmp = a.compare(List(runId(r1.id), runId(r2.id))).fold(e => fail(e.message.value), identity)

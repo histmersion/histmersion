@@ -1,5 +1,7 @@
 package com.histmersion.domain.activity
 
+import com.histmersion.testsupport.ComparedByValue.given
+
 import com.histmersion.api.automation.Activity
 import com.histmersion.api.automation.Activity.{Entry, Show}
 import com.histmersion.config.AppConfig

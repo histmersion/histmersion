@@ -152,8 +152,8 @@ class CandidateSearchSuite extends com.histmersion.db.DbSuite:
     assertEquals((s2.added, s2.again, s2.unseen), (0, 1, 1))
     assertEquals(oa.asked.toArray.toList.last, ("bronze age collapse", LocalDate.of(2026, 10, 1)))
     val ws = store.watches(Goal).map(w => w.index -> (w.watermark, w.lastError)).toMap
-    assertEquals(ws("openalex"), (Some("2026-10-24"), None))
-    assertEquals(ws("crossref"), (Some("2026-10-01"), Some("HTTP 503")), "a failed read skips nothing next time")
+    assertEquals(ws(com.histmersion.api.library.Candidates.Index("openalex")), (Some("2026-10-24"), None))
+    assertEquals(ws(com.histmersion.api.library.Candidates.Index("crossref")), (Some("2026-10-01"), Some("HTTP 503")), "a failed read skips nothing next time")
     // the supervisor: unseen candidates → an agent run; none → no run; the search not connected → as before
     assert(!WatchManagerKind.nothingNew(Right(s2)))
     assert(WatchManagerKind.nothingNew(Right(s2.modify(_.unseen).setTo(CandidateSweep.Unseen(0)))))

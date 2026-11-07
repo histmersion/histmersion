@@ -33,7 +33,7 @@ abstract class ReviewLedgerServiceContract extends ResearchStoreSuite:
     s =>
       val _ = s.articles.put(article(Walls), Me)
       assertEquals(s.ledgers.get(Walls), Right(None))
-      val l = Ledger(Walls, List(Entry(finding(R1, Severity.Major), com.histmersion.domain.ReviewLedger.Entry.Run("run-1"), com.histmersion.domain.ReviewLedger.Entry.Round(1))), task = Some(7))
+      val l = Ledger(Walls, List(Entry(finding(R1, Severity.Major), com.histmersion.domain.ReviewLedger.Entry.Run("run-1"), com.histmersion.domain.ReviewLedger.Entry.Round(1))), task = Some(com.histmersion.domain.ReviewLedger.Ledger.Task(7)))
       s.ledgers.put(l)
       assertEquals(s.ledgers.get(Walls), Right(Some(l)))
       val again = l.modify(_.task).setTo(None)

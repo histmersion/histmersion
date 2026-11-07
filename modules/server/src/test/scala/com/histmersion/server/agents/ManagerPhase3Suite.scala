@@ -537,13 +537,13 @@ class ManagerPhase3Suite extends com.histmersion.db.DbSuite with RunTranscripts:
         Goal,
         None,
         BigDecimal(1),
-        1000,
+        com.histmersion.domain.automation.agents.AgentsControllers.BudgetTokens(1000),
         RunParams(),
         None,
         Some(Goal),
         None,
         Origin.Manager,
-        dryRun = false,
+        dryRun = com.histmersion.domain.automation.agents.RunService.DryRun(false),
         Some(m.id),
         None
       )

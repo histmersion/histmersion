@@ -177,7 +177,7 @@ class AiProvidersSuite extends munit.FunSuite:
     )
     // an HTTP provider's own agents.providers.<name> rebuilds its plugin alone
     val keyed = Plugins.carried(g1, List(com.histmersion.config.ConfigReload.ChangedKey("histmersion.agents.providers.openai.api-key"))).keySet
-    assert(!keyed(com.histmersion.plugin.Plugin.Info.Id("ai-openai")) && keyed(com.histmersion.plugin.Plugin.Info.Id("ai-anthropic")) && keyed(com.histmersion.plugin.Plugin.Info.Id("ai-local")) && keyed("zq-ai"), keyed.toString)
+    assert(!keyed(com.histmersion.plugin.Plugin.Info.Id("ai-openai")) && keyed(com.histmersion.plugin.Plugin.Info.Id("ai-anthropic")) && keyed(com.histmersion.plugin.Plugin.Info.Id("ai-local")) && keyed(com.histmersion.plugin.Plugin.Info.Id("zq-ai")), keyed.toString)
 
   // ── the factory ────────────────────────────────────────────────────────────────────────────────
 

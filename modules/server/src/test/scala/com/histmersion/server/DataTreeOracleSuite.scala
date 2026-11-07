@@ -129,10 +129,10 @@ class DataTreeOracleSuite extends DbSuite:
   private def basemapRun(): Unit =
     val src = Files.createTempDirectory("histmersion-data-tree-src")
     val v = BasemapFixtures.LocalRange(
-      BasemapFixtures.vectorArchive(src.resolve("v.pmtiles"), 5),
+      BasemapFixtures.vectorArchive(src.resolve("v.pmtiles"), com.histmersion.util.basemap.PmTiles.Zoom(5)),
       builds = """[{"key":"20261018.pmtiles","size":1},{"key":"20261019.pmtiles","size":-1}]"""
     )
-    val t = BasemapFixtures.LocalRange(BasemapFixtures.terrainArchive(src.resolve("t.pmtiles"), 5))
+    val t = BasemapFixtures.LocalRange(BasemapFixtures.terrainArchive(src.resolve("t.pmtiles"), com.histmersion.util.basemap.PmTiles.Zoom(5)))
     val base = AppConfig.loadWithUserFile(env, Some(configFile)).fold(e => fail(e), identity).config
     val cfg = base.modify(
       _.basemap).setTo(base.basemap.modify(

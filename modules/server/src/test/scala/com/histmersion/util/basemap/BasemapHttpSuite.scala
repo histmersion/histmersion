@@ -62,8 +62,8 @@ class BasemapHttpSuite extends com.histmersion.db.DbSuite:
       assertEquals(s0.dir, dir.toString)
       assertEquals(get(s"$url/vector/0/0/0").statusCode, 404)
 
-      BasemapFixtures.vectorArchive(dir.resolve("vector.pmtiles"), maxZoom = 3)
-      BasemapFixtures.terrainArchive(dir.resolve("terrain.pmtiles"), maxZoom = 2)
+      BasemapFixtures.vectorArchive(dir.resolve("vector.pmtiles"), maxZoom = com.histmersion.util.basemap.PmTiles.Zoom(3))
+      BasemapFixtures.terrainArchive(dir.resolve("terrain.pmtiles"), maxZoom = com.histmersion.util.basemap.PmTiles.Zoom(2))
       val s1 = io.circe.parser.decode[Basemap.Status](String(get(url).body)).fold(e => fail(e.toString), identity)
       assert(s1.available.value, s1.toString)
       val v = s1.layers.find(_.layer == Basemap.Layer.Wire("vector")).get
@@ -110,7 +110,7 @@ class BasemapHttpSuite extends com.histmersion.db.DbSuite:
       assertEquals(source(), "online", "nothing downloaded")
       BasemapFixtures.vectorArchive(
         dir.resolve("vector.pmtiles"),
-        maxZoom = 3,
+        maxZoom = com.histmersion.util.basemap.PmTiles.Zoom(3),
         io.circe.Json.obj(
           "histmersion" -> io.circe.Json.obj("drop" -> io.circe.Json.fromString("roads; places; boundaries"))
         )
@@ -122,7 +122,7 @@ class BasemapHttpSuite extends com.histmersion.db.DbSuite:
       Thread.sleep(5) // a new stamp: the archive is opened again
       BasemapFixtures.vectorArchive(
         dir.resolve("vector.pmtiles"),
-        maxZoom = 3,
+        maxZoom = com.histmersion.util.basemap.PmTiles.Zoom(3),
         io.circe.Json.obj("histmersion" -> io.circe.Json.obj("keepAll" -> io.circe.Json.True))
       )
       assertEquals(source(), "local", "a --keep-all extract: the page asks no other host")
