@@ -27,4 +27,4 @@ object MapLayer:
   object Label extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
 
-  def fromWire(s: com.histmersion.web.MapLayer.Wire): Option[MapLayer] = values.find(_.wire == s.trim.toLowerCase)
+  def fromWire(s: com.histmersion.web.MapLayer.Wire): Option[MapLayer] = values.find(_.wire.value == s.value.trim.toLowerCase)

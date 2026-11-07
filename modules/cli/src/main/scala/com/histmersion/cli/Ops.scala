@@ -10,7 +10,8 @@ import com.histmersion.api.automation.Queue.{QueueAdd, QueueImport, QueuePatch}
 import java.nio.file.{Files, Path}
 import com.histmersion.api.automation.{GoalsExport, Queue}
 import com.histmersion.api.checks.{FormatCheck, FormatField, FormatMarkdown, FormatReport, Lint}
-import com.histmersion.api.library.{AcquireChecksMarkdown, Query}
+import com.histmersion.api.library.{AcquireChecksMarkdown, Citekey, Query}
+import com.histmersion.api.research.ReviewGoal
 import com.histmersion.api.library.Acquire
 import com.histmersion.util.console.Console
 
@@ -22,82 +23,31 @@ import com.histmersion.util.console.Console
   * dispatched by [[QueueArgs.parse]], a pure function with its own tests, rather than by a nest of subcommands.
   */
 object Ops:
-  type MetaFile = MetaFile.T
-  object MetaFile extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
   // ── queue argument grammar (pure) ────────────────────────────────────────────────────────────
 
   /** What `histmersion queue …` was asked to do. */
-
-
   enum QueueCmd:
-    case Show(list: QueueCmd.Show.List, all: QueueCmd.Show.All)
-    case Add(list: QueueCmd.Add.List, text: QueueCmd.Add.Text, topic: Option[QueueCmd.Add.Topic], reason: Option[QueueCmd.Add.Reason])
-    case Done(id: QueueCmd.Done.Id)
-    case Edit(id: QueueCmd.Edit.Id, text: QueueCmd.Edit.Text)
-    case Rm(id: QueueCmd.Rm.Id)
-    case Export(dir: QueueCmd.Export.Dir)
-    case Import(dir: QueueCmd.Import.Dir)
+    case Show(list: Queue.Kind.Label, all: Boolean)
+    case Add(
+        list: Queue.Kind.Label,
+        text: Queue.QueueItem.Text,
+        topic: Option[Queue.QueueItem.Topic],
+        reason: Option[Queue.QueueItem.Reason]
+    )
+    case Done(id: Queue.Id)
+    case Edit(id: Queue.Id, text: Queue.QueueItem.Text)
+    case Rm(id: Queue.Id)
+    case Export(dir: String)
+    case Import(dir: String)
 
     /** `queue acquire recheck`: the acquisition list's legal re-check now — of every open item (`all`) or the due ones
       * the caps allow; a pass of more than one item is a server job, followed unless `noWait`.
       */
-    case Recheck(dryRun: QueueCmd.Recheck.DryRun, limit: Option[QueueCmd.Recheck.Limit], id: Option[QueueCmd.Recheck.Id], all: QueueCmd.Recheck.All = false, noWait: QueueCmd.Recheck.NoWait = com.histmersion.cli.Ops.QueueCmd.Recheck.NoWait(false))
-
-  object QueueCmd:
-    object Show:
-      type List = com.histmersion.cli.Queue.Name
-      val List: _root_.com.histmersion.cli.Queue.Name.type = _root_.com.histmersion.cli.Queue.Name
-      type All = com.histmersion.cli.Queue.All
-      val All: _root_.com.histmersion.cli.Queue.All.type = _root_.com.histmersion.cli.Queue.All
-    object Add:
-      type List = com.histmersion.cli.Queue.Name
-      val List: _root_.com.histmersion.cli.Queue.Name.type = _root_.com.histmersion.cli.Queue.Name
-      type Text = com.histmersion.cli.Queue.Text
-      val Text: _root_.com.histmersion.cli.Queue.Text.type = _root_.com.histmersion.cli.Queue.Text
-      type Topic = com.histmersion.cli.Queue.Topic
-      val Topic: _root_.com.histmersion.cli.Queue.Topic.type = _root_.com.histmersion.cli.Queue.Topic
-      type Reason = com.histmersion.cli.Queue.Reason
-      val Reason: _root_.com.histmersion.cli.Queue.Reason.type = _root_.com.histmersion.cli.Queue.Reason
-    object Done:
-      type Id = com.histmersion.cli.Queue.ItemId
-      val Id: _root_.com.histmersion.cli.Queue.ItemId.type = _root_.com.histmersion.cli.Queue.ItemId
-    object Edit:
-      type Id = com.histmersion.cli.Queue.ItemId
-      val Id: _root_.com.histmersion.cli.Queue.ItemId.type = _root_.com.histmersion.cli.Queue.ItemId
-      type Text = com.histmersion.cli.Queue.Text
-      val Text: _root_.com.histmersion.cli.Queue.Text.type = _root_.com.histmersion.cli.Queue.Text
-    object Rm:
-      type Id = com.histmersion.cli.Queue.ItemId
-      val Id: _root_.com.histmersion.cli.Queue.ItemId.type = _root_.com.histmersion.cli.Queue.ItemId
-    object Export:
-      type Dir = com.histmersion.cli.Queue.Dir
-      val Dir: _root_.com.histmersion.cli.Queue.Dir.type = _root_.com.histmersion.cli.Queue.Dir
-    object Import:
-      type NoConvert = NoConvert.T
-      object NoConvert extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
-      type NoWait = NoWait.T
-      object NoWait extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
-      type Dir = com.histmersion.cli.Queue.Dir
-      val Dir: _root_.com.histmersion.cli.Queue.Dir.type = _root_.com.histmersion.cli.Queue.Dir
-    object Recheck:
-      type DryRun = com.histmersion.cli.Cli.DryRun
-      val DryRun: _root_.com.histmersion.cli.Cli.DryRun.type = _root_.com.histmersion.cli.Cli.DryRun
-      type Limit = com.histmersion.api.Paging.Limit
-      val Limit: _root_.com.histmersion.api.Paging.Limit.type = _root_.com.histmersion.api.Paging.Limit
-      type Id = com.histmersion.cli.Queue.ItemId
-      val Id: _root_.com.histmersion.cli.Queue.ItemId.type = _root_.com.histmersion.cli.Queue.ItemId
-      type All = com.histmersion.cli.Queue.All
-      val All: _root_.com.histmersion.cli.Queue.All.type = _root_.com.histmersion.cli.Queue.All
-      type NoWait = com.histmersion.cli.Cli.NoWait
-      val NoWait: _root_.com.histmersion.cli.Cli.NoWait.type = _root_.com.histmersion.cli.Cli.NoWait
+    case Recheck(dryRun: Boolean, limit: Option[Int], id: Option[Int], all: Boolean = false, noWait: Boolean = false)
 
   object QueueArgs:
-    type Problem = Problem.T
-    object Problem extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-
-
-    val usage: com.histmersion.cli.Ops.QueueArgs.Problem =
+    val usage: String =
       "usage: histmersion queue <acquire|tasks|log> [--all] | queue <list> add \"<text>\" [--topic t] | " +
         "queue done <id> | queue edit <id> \"<text>\" | queue rm <id> | queue export <dir> | queue import <dir> | " +
         "queue acquire recheck [--all] [--dry-run] [--limit n] [--id <item>] [--no-wait]"
@@ -107,16 +57,16 @@ object Ops:
       */
     def parse(
         args: List[String],
-        topic: Option[com.histmersion.cli.Queue.Topic],
-        reason: Option[com.histmersion.cli.Queue.Reason],
-        all: com.histmersion.cli.Queue.All,
-        dryRun: com.histmersion.cli.Cli.DryRun = com.histmersion.cli.Cli.DryRun(false),
-        limit: Option[com.histmersion.api.Paging.Limit] = None,
-        item: Option[com.histmersion.cli.Queue.ItemId] = None,
-        noWait: com.histmersion.cli.Cli.NoWait = com.histmersion.cli.Cli.NoWait(false)
-    ): Either[com.histmersion.cli.Ops.QueueArgs.Problem, QueueCmd] =
-      def id(s: String): Either[com.histmersion.cli.Ops.QueueArgs.Problem, com.histmersion.cli.Queue.ItemId] =
-        s.toIntOption.toRight(s"'$s' is not an item id — $usage")
+        topic: Option[String],
+        reason: Option[String],
+        all: Boolean,
+        dryRun: Boolean = false,
+        limit: Option[Int] = None,
+        item: Option[Int] = None,
+        noWait: Boolean = false
+    ): Either[String, QueueCmd] =
+      def id(s: String): Either[String, Queue.Id] =
+        s.toIntOption.map(Queue.Id(_)).toRight(s"'$s' is not an item id — $usage")
       val recheckFlags = dryRun || limit.isDefined || item.isDefined || noWait
       args match
         case "acquire" :: "recheck" :: Nil =>
@@ -130,17 +80,26 @@ object Ops:
           Left(s"--dry-run, --limit, --id and --no-wait go with `queue acquire recheck` — $usage")
         case "done" :: i :: Nil         => id(i).map(QueueCmd.Done.apply)
         case "edit" :: i :: text :: Nil =>
-          if text.trim.isEmpty then Left(s"edit needs the new text — $usage") else id(i).map(QueueCmd.Edit(_, text))
+          if text.trim.isEmpty then Left(s"edit needs the new text — $usage")
+          else id(i).map(QueueCmd.Edit(_, Queue.QueueItem.Text(text)))
         case "edit" :: _            => Left(s"edit takes an item id and the new text — $usage")
         case "rm" :: i :: Nil       => id(i).map(QueueCmd.Rm.apply)
         case "export" :: dir :: Nil => Right(QueueCmd.Export(dir))
         case "import" :: dir :: Nil => Right(QueueCmd.Import(dir))
-        case list :: rest if Queue.Kind.parse(list).isDefined =>
+        case list :: rest if Queue.Kind.parse(Queue.Kind.Label(list)).isDefined =>
           rest match
-            case Nil                  => Right(QueueCmd.Show(list, all))
-            case "add" :: text :: Nil => Right(QueueCmd.Add(list, text, topic, reason))
-            case "add" :: Nil         => Left(s"add needs the item text — $usage")
-            case _                    => Left(usage)
+            case Nil                  => Right(QueueCmd.Show(Queue.Kind.Label(list), all))
+            case "add" :: text :: Nil =>
+              Right(
+                QueueCmd.Add(
+                  Queue.Kind.Label(list),
+                  Queue.QueueItem.Text(text),
+                  topic.map(Queue.QueueItem.Topic(_)),
+                  reason.map(Queue.QueueItem.Reason(_))
+                )
+              )
+            case "add" :: Nil => Left(s"add needs the item text — $usage")
+            case _            => Left(usage)
         case list :: _ => Left(s"unknown list or verb '$list' — $usage")
         case Nil       => Left(usage)
 
@@ -149,11 +108,13 @@ object Ops:
   /** Write `ACQUIRE.md` / `TASKS.md` / `LOG.md` and `GOALS.md` into `dir`, rendered by the server from the rows. Used
     * by `queue export` and by `histmersion export`, so both produce identical files.
     */
-  def writeMeta(c: Client, dir: Path): Either[Cli.Error, List[com.histmersion.cli.Ops.MetaFile]] =
+  def writeMeta(c: Client, dir: Path): Either[Cli.Error, List[String]] =
     val _ = Files.createDirectories(dir)
-    val files: List[(com.histmersion.cli.Ops.MetaFile, () => Either[Cli.Error, com.histmersion.cli.Ops.MetaFile])] =
-      Queue.Kind.values.toList.map(k => k.file -> (() => c.queueExport(k.label))) :+
-        (GoalsExport.File -> (() => c.goalsExport))
+    val files: List[(String, () => Either[Cli.Error, String])] =
+      Queue.Kind.values.toList.map(k =>
+        k.file.value -> (() => c.queueExport(Queue.Wire(k.label.value)).map(_.value))
+      ) :+
+        (GoalsExport.File -> (() => c.goalsExport.map(_.value)))
     files.foldLeft[Either[Cli.Error, List[String]]](Right(Nil)) { case (acc, (file, fetch)) =>
       acc.flatMap { done =>
         fetch().map { text =>
@@ -166,15 +127,18 @@ object Ops:
   /** Read the three queue files back. A missing file is skipped, not an error: a workspace may only keep some of them.
     * `GOALS.md` is never read: it is an export only (see [[GoalsExport]]).
     */
-  def readMeta(c: Client, dir: Path, replace: com.histmersion.api.Api.Overwrite): Either[Cli.Error, List[com.histmersion.cli.Ops.MetaFile]] =
-    if !Files.isDirectory(dir) then Left(Cli.Error(s"not a directory: $dir", exitCode = ExitCode.Usage))
+  def readMeta(c: Client, dir: Path, replace: com.histmersion.api.Api.Overwrite): Either[Cli.Error, List[String]] =
+    if !Files.isDirectory(dir) then Left(Cli.Error(Cli.Error.Message(s"not a directory: $dir"), exitCode = ExitCode.Usage))
     else
       Queue.Kind.values.toList.foldLeft[Either[Cli.Error, List[String]]](Right(Nil)) { (acc, kind) =>
         acc.flatMap { done =>
-          val f = dir.resolve(kind.file)
+          val f = dir.resolve(kind.file.value)
           if !Files.isRegularFile(f) then Right(done :+ s"${kind.file}: absent, skipped")
           else
-            c.queueImport(kind.label, QueueImport(Files.readString(f), replace))
+            c.queueImport(
+              Queue.Wire(kind.label.value),
+              QueueImport(Queue.QueueItem.Text(Files.readString(f)), QueueImport.Replace(replace.value))
+            )
               .map(r => done :+ s"${kind.file}: ${r.items} item(s), ${r.notes} note block(s), ${r.replaced} replaced")
         }
       }
@@ -198,26 +162,31 @@ object Ops:
       places: Option[List[String]] = None,
       areas: Int = 0
   ): Either[Cli.Error, List[String]] =
-    c.lintFix(rules) match
+    c.lintFix(rules.map(Lint.Wire(_))) match
       case Left(e)  => Left(e)
       case Right(r) =>
-        val (s, ch, ed) = (sources + r.sourcesReindexed, chunks + r.chunksWritten, edges + r.edgesResolved)
+        val (s, ch, ed) =
+          (sources + r.sourcesReindexed.value, chunks + r.chunksWritten.value, edges + r.edgesResolved.value)
         // the geocode repair is not bounded: the first call made every move there was
         val mv =
-          moved.orElse(Option.when(rules.exists(_.trim.equalsIgnoreCase(Lint.FindingGeocode)))(r.findingsRegeocoded))
+          moved.orElse(Option.when(rules.exists(_.trim.equalsIgnoreCase(Lint.FindingGeocode)))(r.findingsRegeocoded.value))
         // …and neither is the fill of unplaced findings
         val pl =
-          placed.orElse(Option.when(rules.exists(_.trim.equalsIgnoreCase(Lint.FindingUnplaced)))(r.findingsPlaced))
+          placed.orElse(Option.when(rules.exists(_.trim.equalsIgnoreCase(Lint.FindingUnplaced)))(r.findingsPlaced.value))
         // …nor the gazetteer clean-up (place-kind, place-grid-point): its lines are the first call's
         val pc = places.orElse(
-          Some(r.applied.filter(l => l.startsWith(Lint.PlaceKindRule + ":") || l.startsWith(Lint.PlaceGridPoint + ":")))
+          Some(
+            r.applied
+              .map(_.value)
+              .filter(l => l.startsWith(Lint.PlaceKindRule + ":") || l.startsWith(Lint.PlaceGridPoint + ":"))
+          )
         )
-        val ar = areas + r.pointAreasRemoved
+        val ar = areas + r.pointAreasRemoved.value
         val asksAreas = rules.exists(_.trim.equalsIgnoreCase(Lint.PlaceImportedPointArea))
         // a call that removed nothing while some remain is not progress (they are being changed
         // under it): stop rather than loop
-        val moreAreas = asksAreas && r.pointAreasRemaining > 0 && r.pointAreasRemoved > 0
-        if r.remaining > 0 || moreAreas then
+        val moreAreas = asksAreas && r.pointAreasRemaining.value > 0 && r.pointAreasRemoved.value > 0
+        if r.remaining.value > 0 || moreAreas then
           Cli.err.print(if moreAreas then s"\rfixing… $ar point-only area(s) removed, ${r.pointAreasRemaining} to go"
           else s"\rfixing… $s source(s) reindexed, ${r.remaining} to go")
           fixLoop(c, rules, s, ch, ed, mv, pl, pc, ar)
@@ -232,7 +201,7 @@ object Ops:
               Option
                 .when(asksAreas)(
                   s"${Lint.PlaceImportedPointArea}: $ar point-only imported area(s) removed" +
-                    (if r.pointAreasRemaining > 0 then
+                    (if r.pointAreasRemaining.value > 0 then
                        s", ${r.pointAreasRemaining} left (named by evidence, or changing — run again)"
                      else "")
                 )
@@ -242,14 +211,17 @@ object Ops:
   /** `lint --file x.md`: the server checks the text (it has the renderer); with `--fix` the repaired text is written
     * back over the file. A note file's frontmatter is the note's own and is not sent.
     */
-  private def lintFile(c: Client, p: java.nio.file.Path, fix: com.histmersion.domain.EnrichSource.Closed.Lint.Fix): Either[Cli.Error, FormatReport] =
-    if !java.nio.file.Files.isRegularFile(p) then Left(Cli.Error(s"no such file: $p", exitCode = ExitCode.Usage))
+  private def lintFile(c: Client, p: java.nio.file.Path, fix: Boolean): Either[Cli.Error, FormatReport] =
+    if !java.nio.file.Files.isRegularFile(p) then Left(Cli.Error(Cli.Error.Message(s"no such file: $p"), exitCode = ExitCode.Usage))
     else
       val raw = java.nio.file.Files.readString(p)
       val (head, body) = FileFormat.splitFrontmatter(raw)
-      c.lintMarkdown(FormatCheck(body, FormatField.Body, fix)).map { r =>
-        r.text.filter(t => fix && t != body).foreach(t => java.nio.file.Files.writeString(p, head + t))
-        r.modify(_.subject).setTo(p.getFileName.toString).modify(_.text).setTo(None)
+      c.lintMarkdown(FormatCheck(FormatCheck.Text(body.value), FormatField.Body, FormatCheck.Fix(fix))).map { r =>
+        r.text
+          .map(_.value)
+          .filter(t => fix && t != body.value)
+          .foreach(t => java.nio.file.Files.writeString(p, head.value + t))
+        r.modify(_.subject).setTo(FormatReport.Subject(p.getFileName.toString)).modify(_.text).setTo(None)
       }
 
   def lint(using console: Console): Opts[Client => Either[Cli.Error, Unit]] =
@@ -276,30 +248,30 @@ object Ops:
       ).mapN { (rules, fix, article, source, file, json) => (c: Client) =>
         def show(r: FormatReport)(using console: Console) = Output.emit(json, r)(FormatMarkdown.report)
         (article, source, file) match
-          case (Some(slug), _, _) => (if fix then c.fixArticleFormat(slug) else c.lintArticle(slug)).map(show)
-          case (_, Some(ck), _)   => (if fix then c.fixSourceFormat(ck) else c.lintSource(ck)).map(show)
+          case (Some(slug), _, _) => (if fix then c.fixArticleFormat(ReviewGoal.Slug(slug)) else c.lintArticle(ReviewGoal.Slug(slug))).map(show)
+          case (_, Some(ck), _)   => (if fix then c.fixSourceFormat(Citekey(ck)) else c.lintSource(Citekey(ck))).map(show)
           case (_, _, Some(f))    => lintFile(c, java.nio.file.Path.of(f), fix).map(show)
           case _                  =>
             for
               fixed <- if fix then fixLoop(c, rules, 0, 0, 0) else Right(Nil)
-              rep <- c.lint(rules)
+              rep <- c.lint(rules.map(Lint.Wire(_)))
             yield
               val full = rep.modify(_.fixed).setTo(fixed)
-              Output.emit(json, full)(Lint.markdown)
+              Output.emit(json, full)(Lint.markdown(_).value)
       }
     }
 
   def query(using console: Console): Opts[Client => Either[Cli.Error, Unit]] =
     Opts.subcommand("query", "Run ONE read-only SQL statement (a write is refused by Postgres itself)") {
       (Opts.argument[String]("sql"), Output.jsonFlag).mapN { (sql, json) => (c: Client) =>
-        c.query(sql).map(r => Output.emit(json, r)(Query.markdown))
+        c.query(Query.Statement(sql)).map(r => Output.emit(json, r)(Query.markdown(_).value))
       }
     }
 
   def schema(using console: Console): Opts[Client => Either[Cli.Error, Unit]] =
     Opts.subcommand("schema", "List the tables and columns `query` can read (from information_schema)") {
       Output.jsonFlag.map { json => (c: Client) =>
-        c.schemaTables.map(s => Output.emit(json, s)(Query.schemaMarkdown))
+        c.schemaTables.map(s => Output.emit(json, s)(Query.schemaMarkdown(_).value))
       }
     }
 
@@ -331,21 +303,21 @@ object Ops:
         Output.jsonFlag
       ).mapN { (args, topic, reason, all, dryRun, limit, item, noWait, json) => (c: Client) =>
         QueueArgs.parse(args, topic, reason, all, dryRun, limit, item, noWait) match
-          case Left(msg)  => Left(Cli.Error(msg, exitCode = ExitCode.Usage))
+          case Left(msg)  => Left(Cli.Error(Cli.Error.Message(msg), exitCode = ExitCode.Usage))
           case Right(cmd) => run(c, cmd, json)
       }
     }
 
   private def run(c: Client, cmd: QueueCmd, json: com.histmersion.cli.Cli.JsonOutput)(using console: Console): Either[Cli.Error, Unit] = cmd match
     case QueueCmd.Show(list, all) =>
-      c.queueList(list, all)
-        .map(l => Output.emit(json, l)(l => l.markdown.getOrElse("")))
+      c.queueList(Queue.Wire(list.value), all)
+        .map(l => Output.emit(json, l)(l => l.markdown.fold("")(_.value)))
     case QueueCmd.Add(list, text, topic, reason) =>
-      c.queueAdd(list, QueueAdd(text, topic, reason = reason))
+      c.queueAdd(Queue.Wire(list.value), QueueAdd(text, topic, reason = reason))
         .map(i => Output.emit(json, i)(i => s"added #${i.id} to ${i.list}${i.topic.map(t => s" · $t").getOrElse("")}"))
     // the item as it now stands, with --json like `show` and `add` (it printed only the line before)
     case QueueCmd.Done(id) =>
-      c.queuePatch(id, QueuePatch(status = Some(Queue.Done)))
+      c.queuePatch(id, QueuePatch(status = Some(Queue.QueueItem.Status(Queue.Done))))
         .map(i => Output.emit(json, i)(i => s"done #${i.id}: ${i.text}"))
     case QueueCmd.Edit(id, text) =>
       c.queuePatch(id, QueuePatch(text = Some(text))).map(i => Output.emit(json, i)(i => s"edited #${i.id}: ${i.text}"))
@@ -357,10 +329,16 @@ object Ops:
       readMeta(c, Path.of(dir), replace = com.histmersion.api.Api.Overwrite(true)).map(_.foreach(l => Cli.out.println(s"  $l")))
     case QueueCmd.Recheck(dryRun, limit, id, all, noWait) =>
       c.call(com.histmersion.api.library.AcquisitionWorkApi.acquireRecheck)(
-        Acquire.Checks.RecheckRequest(dryRun, limit, id, Some(com.histmersion.api.library.Acquire.Checks.RecheckRequest.By("cli")), all)
+        Acquire.Checks.RecheckRequest(
+          Acquire.Checks.RecheckRequest.DryRun(dryRun),
+          limit.map(Acquire.Checks.RecheckRequest.Limit(_)),
+          id.map(Acquire.Checks.RecheckRequest.Id(_)),
+          Some(Acquire.Checks.RecheckRequest.By("cli")),
+          Acquire.Checks.RecheckRequest.All(all)
+        )
       ).flatMap { r =>
         Output.emit(json, r)(AcquireChecksMarkdown.result)
         r.job match
-          case Some(j) if !noWait && !json => IngestCmd.pollJob(c, j.id, 0)
+          case Some(j) if !noWait && !json.value => IngestCmd.pollJob(c, j.id, 0)
           case _                           => Right(())
       }

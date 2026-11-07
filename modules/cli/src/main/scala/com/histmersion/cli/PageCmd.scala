@@ -10,17 +10,13 @@ object PageCmd:
   /** `histmersion jobs --status failed --limit 20 --before 4f1c…` — `opts` in the order given, the ones left unset
     * dropped; a value with a space or quote is single-quoted for the shell.
     */
-  type OlderCommand = String
-  type OlderOptsPart1 = String
-  type OlderOptsPart2 = String
-
-  def next(command: String, opts: List[(String, Option[String])], cursor: com.histmersion.api.Paging.Cursor): com.histmersion.cli.Output.Text =
+  def next(command: String, opts: List[(String, Option[String])], cursor: Paging.Cursor): String =
     val set = opts.collect { case (k, Some(v)) => s"--$k ${quote(v)}" }
-    (List(s"histmersion $command") ++ set ++ List(s"--before ${quote(cursor)}")).mkString(" ")
+    (List(s"histmersion $command") ++ set ++ List(s"--before ${quote(cursor.value)}")).mkString(" ")
 
   /** The line under a listing, when an older page exists. */
-  def older(page: Paging.Page, command: com.histmersion.cli.PageCmd.OlderCommand, opts: List[(com.histmersion.cli.PageCmd.OlderOptsPart1, Option[com.histmersion.cli.PageCmd.OlderOptsPart2])]): Option[com.histmersion.cli.Output.Text] =
-    Paging.olderLine(page, c => s"`${next(command, opts, c)}`")
+  def older(page: Paging.Page, command: String, opts: List[(String, Option[String])]): Option[Paging.OlderLine.Text] =
+    Paging.olderLine(page, c => Paging.OlderLine.Text(s"`${next(command, opts, c)}`"))
 
   private def quote(v: String): String =
     if v.nonEmpty && v.forall(c => c.isLetterOrDigit || "-_.:/@".contains(c)) then v

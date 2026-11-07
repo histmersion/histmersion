@@ -13,17 +13,17 @@ import scala.collection.mutable
   */
 final class BoundedCache[K, V](
     val maxEntries: BoundedCache.MaxEntries,
-    val maxWeight: BoundedCache.MaxWeight = Long.MaxValue,
+    val maxWeight: BoundedCache.MaxWeight = BoundedCache.MaxWeight(Long.MaxValue),
     weigh: V => BoundedCache.WeighResult = (_: V) => com.histmersion.web.BoundedCache.WeighResult(0L)
 ):
-  require(maxEntries > 0, "a cache holds at least one entry")
+  require(maxEntries.value > 0, "a cache holds at least one entry")
   // insertion order is recency: an entry read or written moves to the end
   private val entries = mutable.LinkedHashMap.empty[K, (V, Long)]
   // `var`: the summed weight of `entries`, kept with every change
   private var total = 0L
 
-  def size: com.histmersion.web.BoundedCache.Stats.Entries = entries.size
-  def weight: com.histmersion.web.BoundedCache.Stats.Weight = total
+  def size: com.histmersion.web.BoundedCache.Stats.Entries = BoundedCache.Stats.Entries(entries.size)
+  def weight: com.histmersion.web.BoundedCache.Stats.Weight = BoundedCache.Stats.Weight(total)
   def keys: List[K] = entries.keys.toList
   def contains(k: K): Boolean = entries.contains(k)
 
@@ -39,7 +39,7 @@ final class BoundedCache[K, V](
 
   def put(k: K, v: V): Unit =
     drop(k)
-    val w = math.max(0L, weigh(v))
+    val w = math.max(0L, weigh(v).value)
     entries(k) = (v, w)
     total += w
     evict(k)
@@ -55,8 +55,8 @@ final class BoundedCache[K, V](
   /** `k`'s weight is now `w` (its value arrived); over budget, the least recently used others go. */
   def reweigh(k: K, w: com.histmersion.web.BoundedCache.ReweighW): Unit =
     entries.get(k).foreach { (v, old) =>
-      entries(k) = (v, math.max(0L, w))
-      total += math.max(0L, w) - old
+      entries(k) = (v, math.max(0L, w.value))
+      total += math.max(0L, w.value) - old
       evict(k)
     }
 
@@ -79,7 +79,7 @@ final class BoundedCache[K, V](
     // `var`s: what would be left once the victims so far are gone
     var n = entries.size
     var t = total
-    while (n > maxEntries || t > maxWeight) && it.hasNext do
+    while (n > maxEntries.value || t > maxWeight.value) && it.hasNext do
       val k = it.next()
       if k != keep then
         victims += k
@@ -111,4 +111,4 @@ object BoundedCache:
     type MaxWeight = MaxWeight.T
     object MaxWeight extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
-  def stats(c: BoundedCache[?, ?]): Stats = Stats(c.size, c.maxEntries, c.weight, c.maxWeight)
+  def stats(c: BoundedCache[?, ?]): Stats = Stats(c.size, Stats.MaxEntries(c.maxEntries.value), c.weight, Stats.MaxWeight(c.maxWeight.value))

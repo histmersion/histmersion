@@ -26,12 +26,12 @@ object ArticlesTab:
       ApiClient
         .articles(q.modify(_.filter.offset).setTo(offset))
         .map(r =>
-          TabPage(r.articles, r.total, kindCounts(r.kinds) :+ ResultsPaging.span(UiState.from.now(), UiState.to.now()))
+          TabPage(r.articles, r.total, kindCounts(r.kinds) :+ ResultsPaging.span(UiState.from.now().map(com.histmersion.api.catalogue.Year(_)), UiState.to.now().map(com.histmersion.api.catalogue.Year(_))).value)
         ),
     render = renderArticle(_, inPanel = true),
     empty = com.histmersion.web.FilterTab.Empty("No articles relate to the current filter."),
     page = Layout.tabPage,
-    debounceMs = () => UiState.reloadDelay(Layout.tabReloadMs)
+    debounceMs = () => UiState.reloadDelay(UiState.ReloadDelayNormalMs(Layout.tabReloadMs.value))
   )
 
   def pane: HtmlElement = tab.pane
@@ -45,31 +45,31 @@ object ArticlesTab:
   private[web] def renderArticle(art: Article.Summary, inPanel: Boolean = false): HtmlElement =
     li(
       cls := "article-row",
-      marks.RowActions(marks.ItemRef.article(art.slug, art.title), Route.Article(art.slug).path, Fmt.display(art.kind)),
+      marks.RowActions(marks.ItemRef.article(marks.ItemRef.ArticleSlug(art.slug.value), marks.ItemRef.ArticleTitle(art.title.value)), Route.Article(Route.Article.Slug(art.slug.value)).path, Fmt.display(com.histmersion.api.UiLabels.Text(art.kind.value))),
       a(
-        href := Route.Article(art.slug).path,
+        href := Route.Article(Route.Article.Slug(art.slug.value)).path,
         cls := "article-link",
         onClick --> { ev =>
           if Router.plain(ev) then
             ev.preventDefault()
-            if inPanel then ResultsPanel.show(Preview.Target.Article(art.slug)) else ArticleModal.openSlug(art.slug)
+            if inPanel then ResultsPanel.show(Preview.Target.Article(Preview.Target.Article.Slug(art.slug.value))) else ArticleModal.openSlug(art.slug)
         },
-        div(cls := "article-title", art.title),
+        div(cls := "article-title", art.title.value),
         div(
           cls := "article-meta",
-          span(cls := "article-kind", Fmt.display(art.kind)),
+          span(cls := "article-kind", Fmt.display(com.histmersion.api.UiLabels.Text(art.kind.value)).value),
           art.review.map(reviewBadge),
           Fmt.periodStr(art.periodStart, art.periodEnd) match
             case ""  => emptyNode
             case per => span(cls := "article-period", per)
         ),
         art.summary
-          .filter(_.nonEmpty)
+          .filter(_.value.nonEmpty)
           .map { s =>
-            div(cls := "article-summary", Fmt.clip(stripMd(s), com.histmersion.api.Markdown.CharLimit(120)))
+            div(cls := "article-summary", Fmt.clip(stripMd(s.value), com.histmersion.api.Markdown.CharLimit(120)))
           }
           .getOrElse(emptyNode),
-        if art.tags.nonEmpty then div(cls := "article-tags", art.tags.filter(_.nonEmpty).map(t => Chip.value(t)))
+        if art.tags.nonEmpty then div(cls := "article-tags", art.tags.filter(_.value.nonEmpty).map(t => Chip.value(Chip.Choice(t.value))))
         else emptyNode
       )
     )
@@ -78,11 +78,17 @@ object ArticlesTab:
   def kindCounts(kinds: List[Article.KindCount]): List[String] =
     Article.List
       .byKind(kinds)
-      .map(k => Plural.count(k.count.toLong, k.kind, if k.kind.endsWith("x") then k.kind + "es" else com.histmersion.api.Plural.CountPlural("")))
+      .map(k =>
+        Plural.count(
+          Plural.CountN(k.count.value.toLong),
+          Plural.CountSingular(k.kind.value),
+          Plural.CountPlural(if k.kind.value.endsWith("x") then k.kind.value + "es" else "")
+        ).value
+      )
 
   /** An article's review state as a coloured badge, what it means on hover. */
   def reviewBadge(b: ReviewBadge): HtmlElement =
-    span(cls := reviewClass(b.state), title := b.detail, Wording.capitalize(b.label))
+    span(cls := reviewClass(b.state), title := b.detail.value, Wording.capitalize(b.label.value))
 
   /** The badge's classes: the stylesheet colours each state (as the article page's badge). */
   def reviewClass(state: ReviewState): String = s"job-state review-state state-${state.wire}"

@@ -23,22 +23,25 @@ object Runner:
       scala.util
         .Try {
           val pb = new ProcessBuilder(cmd.asJava)
-          env.foreach((k, v) => pb.environment().put(k, v))
+          env.foreach((k, v) => pb.environment().put(k.value, v.value))
           val p = pb.start()
           // drain stderr beside stdout: a full stderr pipe would block the child
           val err =
             java.util.concurrent.CompletableFuture.supplyAsync(() => new String(p.getErrorStream.readAllBytes, UTF_8))
           val out = new String(p.getInputStream.readAllBytes, UTF_8)
           val rc = p.waitFor()
-          if rc == 0 then Right(out) else Left(rc -> err.get().trim.take(2000))
+          if rc == 0 then Right(out) else Left(Cli.Error.ExitCode(rc) -> err.get().trim.take(2000))
         }
-        .fold(e => Left(127 -> s"${cmd.headOption.getOrElse("command")} could not be run: ${e.getMessage}"), identity)
+        .fold[Either[(Cli.Error.ExitCode, String), String]](
+          e => Left(Cli.Error.ExitCode(127) -> s"${cmd.headOption.getOrElse("command")} could not be run: ${e.getMessage}"),
+          identity
+        )
 
     def interactive(cmd: List[String], env: Map[com.histmersion.cli.LocalInstall.EnvVariable, com.histmersion.cli.LocalInstall.EnvSetting]) =
       scala.util
         .Try {
           val pb = new ProcessBuilder(cmd.asJava).inheritIO()
-          env.foreach((k, v) => pb.environment().put(k, v))
-          pb.start().waitFor()
+          env.foreach((k, v) => pb.environment().put(k.value, v.value))
+          Cli.Error.ExitCode(pb.start().waitFor())
         }
-        .getOrElse(127)
+        .getOrElse(Cli.Error.ExitCode(127))

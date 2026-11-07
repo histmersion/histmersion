@@ -13,17 +13,15 @@ import com.histmersion.util.console.Console
 object JobFollow:
 
   /** How often a job is asked for. This process's own cadence, not a server tunable. */
-  type PollMs = PollMsValue
-  type PollMsValue = PollMsValue.T
-  object PollMsValue extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type BackupPollMs = BackupPollMsValue
-  type BackupPollMsValue = BackupPollMsValue.T
-  object BackupPollMsValue extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type PollMs = PollMs.T
+  object PollMs extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type BackupPollMs = BackupPollMs.T
+  object BackupPollMs extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
-  val PollMs: com.histmersion.cli.JobFollow.PollMs = com.histmersion.cli.JobFollow.PollMs(1000)
+  val Poll: com.histmersion.cli.JobFollow.PollMs = com.histmersion.cli.JobFollow.PollMs(1000)
 
   /** How often a backup is asked for: a dump runs for minutes, and each answer prints a line. */
-  val BackupPollMs: com.histmersion.cli.JobFollow.BackupPollMs = com.histmersion.cli.JobFollow.BackupPollMs(5000)
+  val BackupPoll: com.histmersion.cli.JobFollow.BackupPollMs = com.histmersion.cli.JobFollow.BackupPollMs(5000)
 
   /** One rewritten progress line on stderr, always the same width. */
   object Progress:
@@ -32,8 +30,8 @@ object JobFollow:
     def line(text: String)(using console: Console) : Unit = Cli.err.print(s"\r${" " * Width}\r$text")
     def clear()(using console: Console) : Unit = Cli.err.print("\r" + " " * Width + "\r")
 
-  def failed(what: com.histmersion.util.jobs.Job.Label, why: Option[com.histmersion.util.jobs.Job.Error]): Cli.Error =
-    Cli.Error(s"$what failed: ${why.filter(_.nonEmpty).getOrElse("unknown reason")}", ExitCode.Refused)
+  private def failed(what: String, why: Option[String]): Cli.Error =
+    Cli.Error(Cli.Error.Message(s"$what failed: ${why.filter(_.nonEmpty).getOrElse("unknown reason")}"), ExitCode.Refused)
 
   /** Poll job `id` until it is done or failed; `Right(job)` only when it succeeded. */
   @annotation.tailrec
@@ -51,11 +49,11 @@ object JobFollow:
         val detail = j.progress.orElse(j.error).map(t => s" — $t").getOrElse("")
         progress(s"job $id: ${j.status}$detail (${waited / 1000}s)")
         if !j.isTerminal then
-          sleep(PollMs)
-          job(fetch, id, waited + PollMs, sleep, progress, clear)
+          sleep(Poll.value)
+          job(fetch, id, waited + Poll.value, sleep, progress, clear)
         else
           clear()
-          if j.succeeded then Right(j) else Left(failed(s"job $id", j.error))
+          if j.succeeded then Right(j) else Left(failed(s"job $id", j.error.map(_.value)))
 
   /** Poll a backup the server answered `running` until its archive is written; a failure, or a "done" without a
     * checksum, is `ExitCode.Refused`.
@@ -64,17 +62,17 @@ object JobFollow:
   def backup(using console: Console)(
       fetch: () => Either[Cli.Error, Backup.Status],
       s: Backup.Status,
-      pollMs: com.histmersion.cli.JobFollow.BackupPollMs = BackupPollMs,
+      pollMs: com.histmersion.cli.JobFollow.BackupPollMs = BackupPoll,
       sleep: Long => Unit = Thread.sleep,
       progress: String => Unit = l => Cli.err.println(l)
   ) : Either[Cli.Error, Backup.Result] =
     s.stateOf match
       case Some(Backup.State.Running) =>
-        progress(s"backup ${s.file} running for ${s.durationMs / 1000} s…")
-        sleep(pollMs)
+        progress(s"backup ${s.file} running for ${s.durationMs.value / 1000} s…")
+        sleep(pollMs.value)
         fetch() match
           case Right(next) => backup(fetch, next, pollMs, sleep, progress)
           case Left(e)     => Left(e)
       case Some(Backup.State.Done) =>
-        s.result.toRight(Cli.Error(s"backup ${s.file} finished without a checksum", ExitCode.Refused))
-      case _ => Left(failed(s"backup ${s.file}", s.error))
+        s.result.toRight(Cli.Error(Cli.Error.Message(s"backup ${s.file} finished without a checksum"), ExitCode.Refused))
+      case _ => Left(failed(s"backup ${s.file}", s.error.map(_.value)))

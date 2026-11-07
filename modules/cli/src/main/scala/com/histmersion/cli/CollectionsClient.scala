@@ -22,32 +22,30 @@ import com.histmersion.api.library.{
 }
 
 /** The typed client for the library's source collections (`CollectionsApi`), over [[Client]]'s transport. */
-final class CollectionsClient(c: Client, name: CollectionsClient.Name):
+final class CollectionsClient(c: Client, name: Collection.Name):
   def info: Either[Cli.Error, CollectionInfo] = c.call(CollectionsApi.collection)(name)
   def search(q: Option[com.histmersion.api.Api.Search.Text], limit: Option[com.histmersion.api.Paging.Limit], unlinked: com.histmersion.cli.CalibreCmd.Unlinked): Either[Cli.Error, CollectionSearch] =
-    c.call(CollectionsApi.search)((name, q, limit, unlinked))
+    c.call(CollectionsApi.search)((name, q.map(t => CollectionsApi.Query(t.value)), limit.map(l => CollectionsApi.Limit(l.value)), unlinked.value))
   def importItem(req: CollectionImportRequest): Either[Cli.Error, CollectionImported] =
     c.call(CollectionsApi.importItem)((name, req))
   def link(req: CollectionLinkRequest): Either[Cli.Error, CollectionLinked] = c.call(CollectionsApi.link)((name, req))
   def push(req: CollectionPushRequest): Either[Cli.Error, CollectionPushed] = c.call(CollectionsApi.push)((name, req))
-  def updateOne(citekey: com.histmersion.plugin.FetchedFile.Source.Citekey): Either[Cli.Error, CollectionUpdatedOne] =
+  def updateOne(citekey: Citekey): Either[Cli.Error, CollectionUpdatedOne] =
     c.call(CollectionsApi.updateOne)((name, CollectionUpdateOne(citekey)))
   def updateAll(apply: com.histmersion.api.Api.Apply): Either[Cli.Error, CollectionUpdateAll] =
-    c.call(CollectionsApi.updateAll)((name, CollectionUpdateAll.Request(apply)))
+    c.call(CollectionsApi.updateAll)((name, CollectionUpdateAll.Request(CollectionUpdateAll.Request.Apply(apply.value))))
   def set(req: CollectionSetRequest): Either[Cli.Error, CollectionSetDone] = c.call(CollectionsApi.set)((name, req))
   def audit: Either[Cli.Error, CollectionAudit] = c.call(CollectionsApi.audit)(name)
-  def gaps(limit: Option[com.histmersion.api.Paging.Limit]): Either[Cli.Error, CollectionGaps] = c.call(CollectionsApi.gaps)((name, limit))
+  def gaps(limit: Option[com.histmersion.api.Paging.Limit]): Either[Cli.Error, CollectionGaps] = c.call(CollectionsApi.gaps)((name, limit.map(l => CollectionsApi.Limit(l.value))))
   def sync(req: CollectionSync.Request): Either[Cli.Error, CollectionSync] = c.call(CollectionsApi.sync)((name, req))
 
   /** Whether the server runs this collection: it has the collection and reaches it now. Anything else — an older server
     * without collections, the plugin off, a library the server cannot read, no server at all — leaves the command to
     * this machine's own Calibre code.
     */
-  def onServer: Boolean = info.exists(_.reachable)
+  def onServer: Boolean = info.exists(_.reachable.value)
 
 object CollectionsClient:
-  type CollectionName = CollectionName.T
-  object CollectionName extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type Name = com.histmersion.cli.CollectionsClient.CollectionName
-  val Name: _root_.com.histmersion.cli.CollectionsClient.CollectionName.type = _root_.com.histmersion.cli.CollectionsClient.CollectionName
+  type Name = com.histmersion.api.library.Collection.Name
+  val Name: _root_.com.histmersion.api.library.Collection.Name.type = _root_.com.histmersion.api.library.Collection.Name
 

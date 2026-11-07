@@ -18,7 +18,9 @@ object BookmarksCmd:
       Opts.option[Int]("limit", s"How many (default ${PersonalIds.DefaultLimit})").orNone,
       Output.jsonFlag
     ).mapN { (kind, q, limit, json) => (c: Client) =>
-      c.call(PersonalApi.bookmarks)((kind, q, limit)).map(bs => Output.emit(json, bs)(PersonalMarkdown.bookmarks))
+      c.call(PersonalApi.bookmarks)(
+        (kind.map(com.histmersion.api.ItemKind.Wire(_)), q.map(PersonalApi.Search(_)), limit)
+      ).map(bs => Output.emit(json, bs)(PersonalMarkdown.bookmarks))
     }
   }
 
@@ -37,7 +39,7 @@ object BookmarksCmd:
       TargetFlags
         .target(raw)
         .flatMap(t =>
-          c.call(PersonalApi.addBookmark)(Bookmark.New(t, label.map(Bookmark.Label(_)), title))
+          c.call(PersonalApi.addBookmark)(Bookmark.New(t, label.map(Bookmark.Label(_)), title.map(com.histmersion.api.library.Title(_))))
             .map(b => Output.emit(json, b)(b => s"Bookmarked: ${PersonalMarkdown.bookmarkLine(b).stripPrefix("- ")}"))
         )
     }
@@ -45,7 +47,7 @@ object BookmarksCmd:
 
   private def rm (using console: Console) = Opts.subcommand("rm", "Remove a bookmark (its id, from `bookmarks list`)") {
     (Opts.argument[String]("id"), Output.jsonFlag).mapN { (id, json) => (c: Client) =>
-      c.call(PersonalApi.removeBookmark)(id).map(b => Output.emit(json, b)(b => s"Removed the bookmark **${b.name}**."))
+      c.call(PersonalApi.removeBookmark)(Bookmark.Id(id)).map(b => Output.emit(json, b)(b => s"Removed the bookmark **${b.name}**."))
     }
   }
 

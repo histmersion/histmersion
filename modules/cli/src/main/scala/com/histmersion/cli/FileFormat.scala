@@ -18,11 +18,12 @@ object FileFormat:
     */
 
   def splitFrontmatter(text: com.histmersion.cli.FileFormat.Text): (com.histmersion.cli.FileFormat.Frontmatter, com.histmersion.cli.FileFormat.Body) =
-    val lines = text.split("\n", -1).toList
+    val raw = text.value
+    val lines = raw.split("\n", -1).toList
     if lines.headOption.map(_.trim).contains("---") then
       lines.drop(1).indexWhere(_.trim == "---") match
-        case -1 => (com.histmersion.cli.FileFormat.Frontmatter(""), text)
+        case -1 => (com.histmersion.cli.FileFormat.Frontmatter(""), com.histmersion.cli.FileFormat.Body(raw))
         case i  =>
           val head = lines.take(i + 2).mkString("\n") + "\n"
-          (head, text.drop(head.length))
-    else (com.histmersion.cli.FileFormat.Frontmatter(""), text)
+          (com.histmersion.cli.FileFormat.Frontmatter(head), com.histmersion.cli.FileFormat.Body(raw.drop(head.length)))
+    else (com.histmersion.cli.FileFormat.Frontmatter(""), com.histmersion.cli.FileFormat.Body(raw))

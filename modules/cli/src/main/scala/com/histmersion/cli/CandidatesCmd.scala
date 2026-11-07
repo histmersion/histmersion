@@ -22,7 +22,14 @@ object CandidatesCmd:
       Opts.option[Int]("offset", "Skip this many (the list's footer names the next offset)").orNone
     )
       .mapN { (goal, state, limit, offset) => (c: Client) =>
-        c.call(AcquireApi.candidates)((goal, state, limit, offset)).map(l => Cli.out.println(CandidatesMarkdown.list(l)))
+        c.call(AcquireApi.candidates)(
+          (
+            goal.map(com.histmersion.api.automation.Goal.Slug(_)),
+            state.map(Candidates.State.Wire(_)),
+            limit.map(AcquireApi.Limit(_)),
+            offset.map(com.histmersion.api.library.CandidateList.Offset(_))
+          )
+        ).map(l => Cli.out.println(CandidatesMarkdown.list(l)))
       }
 
   private def sweepCmd (using console: Console) = Opts.subcommand(
@@ -31,7 +38,7 @@ object CandidatesCmd:
   ) {
     (Opts.argument[String]("goal"), Opts.flag("dry-run", "Read, store nothing (no candidates, no watermarks)").orFalse)
       .mapN { (goal, dry) => (c: Client) =>
-        c.call(AcquireApi.sweepCandidates)(CandidateSweep.Request(goal, dry))
+        c.call(AcquireApi.sweepCandidates)(CandidateSweep.Request(CandidateSweep.Request.Goal(goal), CandidateSweep.Request.DryRun(dry)))
           .map(s => Cli.out.println(CandidatesMarkdown.sweep(s)))
       }
   }
@@ -40,10 +47,13 @@ object CandidatesCmd:
     Opts.subcommand("mark", "Record a decision on candidates by id: seen, queued, dismissed (or new again)") {
       (
         Opts.arguments[Long]("id"),
-        Opts.option[String]("as", "seen|queued|dismissed|new").withDefault(Candidates.State.Seen.wire)
+        Opts.option[String]("as", "seen|queued|dismissed|new").withDefault(Candidates.State.Seen.wire.value)
       )
         .mapN { (ids, as) => (c: Client) =>
-          c.call(AcquireApi.markCandidates)(CandidateMark(ids.toList, as))
+          c.call(AcquireApi.markCandidates)(CandidateMark(
+              ids.toList.map(com.histmersion.api.library.Source.Candidate.Id(_)),
+              com.histmersion.api.library.Source.Candidate.State(as)
+            ))
             .map(m => Cli.out.println(CandidatesMarkdown.marked(m)))
         }
     }

@@ -15,21 +15,29 @@ object PluginCmd:
   /** The install on this machine, wherever the CLI is pointed. */
 
   private[cli] def install(using console: Console) : Either[Cli.Error, LocalInstall] =
-    val env = (k: String) => Option(java.lang.System.getenv(k))
+    val env: UserPaths.Lookup = k => Option(java.lang.System.getenv(k.value)).map(Environment.VariablesValue(_))
     val exe =
       scala.util.Try(ProcessHandle.current().info().command().orElse(null)).toOption.flatMap(Option(_)).map(Path.of(_))
     val cfg = Settings.app
     LocalInstall
-      .locate(cfg.cli.plugins, cfg.runtime.dataDir, env, java.lang.System.getProperty("os.name", ""), exe)
+      .locate(
+        cfg.cli.plugins,
+        cfg.runtime.dataDir,
+        env,
+        UserPaths.OsName(java.lang.System.getProperty("os.name", "")),
+        exe
+      )
       .left
       .map(e => Cli.Error(e, exitCode = ExitCode.Usage))
 
   private[cli] def local(c: Client)(using console: Console) : Either[Cli.Error, PluginOps] =
-    if !PluginKit.isLoopback(c.serverUrl) then
+    if !PluginKit.isLoopback(c.serverUrl.value) then
       Left(
         Cli.Error(
-          s"histmersion plugin manages the install on THIS machine, but the CLI is pointed at ${c.serverUrl} — " +
-            "run the command on the machine the server runs on",
+          Cli.Error.Message(
+            s"histmersion plugin manages the install on THIS machine, but the CLI is pointed at ${c.serverUrl} — " +
+              "run the command on the machine the server runs on"
+          ),
           exitCode = ExitCode.Usage
         )
       )
@@ -60,9 +68,19 @@ object PluginCmd:
       val repos = repoArgs
         .traverse(r => PluginRepository.parse(r, Files.isDirectory(_)).map(_.value))
         .left
-        .map(Cli.Error(_, exitCode = ExitCode.Usage))
+        .map(e => Cli.Error(Cli.Error.Message(e), exitCode = ExitCode.Usage))
       repos.flatMap(rs => local(c).map(_ -> rs)).flatMap { (ops, rs) =>
-        ops.add(arg, AddOptions(yes, unsigned, verify, sha, rs)).flatMap { _ =>
+        ops
+          .add(
+            arg,
+            AddOptions(
+              AddOptions.Yes(yes),
+              AddOptions.Unsigned(unsigned),
+              AddOptions.Verify(verify),
+              sha.map(AddOptions.Sha256(_)),
+              rs.map(AddOptions.Repos(_))
+            )
+          ).flatMap { _ =>
           if rebuild then ops.rebuild(Nil)
           else Right(Cli.out.println("the running binary does not have it yet: histmersion plugin rebuild (or plugin status)"))
         }
@@ -149,7 +167,9 @@ object PluginCmd:
     ).mapN { (asUrl, m2) => (_: Client) =>
       if m2 then
         for
-          dir <- PluginAuthoring.mavenLocal(k => Option(java.lang.System.getenv(k)))
+          dir <- PluginAuthoring.mavenLocal(k =>
+              Option(java.lang.System.getenv(k.value)).map(LocalInstall.EnvSetting(_))
+            )
           copied <- PluginAuthoring.publishToMavenLocal(install, dir)
         yield
           Cli.out.println(if asUrl then dir.toUri.toString else dir.toString)
@@ -175,7 +195,7 @@ object PluginCmd:
           Either.cond(
             Files.isRegularFile(src),
             Cli.out.println(src),
-            Cli.Error(s"no sources jar beside $jar", exitCode = ExitCode.Refused)
+            Cli.Error(Cli.Error.Message(s"no sources jar beside $jar"), exitCode = ExitCode.Refused)
           )
       }
     }
@@ -189,7 +209,7 @@ object PluginCmd:
       Opts.argument[String]("id"),
       Opts
         .option[String]("kind", s"What it adds: ${PluginKind.names} (default ${PluginKind.SourceFetcher.name})")
-        .withDefault(PluginKind.SourceFetcher.name),
+        .withDefault(PluginKind.SourceFetcher.name.value),
       Opts.option[String]("dir", "Where to write it (default ./<id>; must not exist or be empty)").orNone,
       Opts.option[String]("package", "The Scala package (default: the id without dashes)").orNone,
       Opts
@@ -203,15 +223,17 @@ object PluginCmd:
       val result = for
         id <- PluginId.parse(rawId)
         kind <- PluginKind.parse(rawKind)
-        pkg <- ScalaPackage.parse(rawPackage.getOrElse(id.packageName))
+        pkg <- ScalaPackage.parse(rawPackage.getOrElse(id.packageName.value))
       yield (id, kind, pkg)
-      result.left.map(Cli.Error(_, exitCode = ExitCode.Usage)).flatMap { (id, kind, pkg) =>
+      result.left.map(e => Cli.Error(Cli.Error.Message(e), exitCode = ExitCode.Usage)).flatMap { (id, kind, pkg) =>
         val target = Path.of(dir.getOrElse(id.value)).toAbsolutePath.normalize
         for
           (repo, copied) <- PluginAuthoring.repository(
             repoArg,
             install,
-            PluginAuthoring.mavenLocal(k => Option(java.lang.System.getenv(k)))
+            PluginAuthoring.mavenLocal(k =>
+              Option(java.lang.System.getenv(k.value)).map(LocalInstall.EnvSetting(_))
+            )
           )
           written <- PluginAuthoring.write(
             target,

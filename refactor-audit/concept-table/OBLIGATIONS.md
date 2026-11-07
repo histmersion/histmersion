@@ -167,3 +167,15 @@ Master's `[a-z][a-z0-9]*_.+` refuses the seed's own bare ids (`anatolia`, `aegea
 - EventImports drops out-of-range lat/lon and EventImportService drops malformed Q-ids (accepted before); ServerAutomationHost.workLookup drops an invalid citekey; MarkTarget year conversions use toInt with no range check.
 - db changed after db tests passed: JobRepo, GeoTolerance, ArticleRepo.citing (PageSize). Rerun db tests.
 - Positional leftovers still to name: files TextFiles.ReadResult; AutomationHost LinkRefResultPart2 and siblings; plugin-api Plugin.RegisterResultPart1 and the rest.
+
+## API endpoints with mangled input types (a pass of their own, before install)
+
+Reported by client and server agents; each is wrapped `X(v.value)` at the call site so the wire is unchanged, and each must be retyped in api with its callers: Api.assets, putAssets, assetDetail, patchAsset, assetLinks, mediaShow, periods, importPeriods, importPlaces, places, jobs, mergeLedger, exportBundle; EventsApi.corrections (order too); ManagersApi.items (offset and limit swapped by type), action (ActionPart1Part2); AgentsApi runs and approvals before/upTo, removeAllowance, setFallthrough, removeGoalLink; AcquireApi meta and wikirefs (Title). Check every Tapir endpoint's input and output types mechanically against its query and path names.
+
+## From client wave 1
+
+- Client-side checks gone, as decided (server answers 400): TargetFlags lat, lon, zoom; RenameCmd new citekey; DeleteCmd citekey. RenameCmd.pruneRenamed uses a filename guard in place of Citekey.valid.
+- G24: cli PlacesCmd still imports the domain PlaceSeed. DirSize.Budget.of takes config types. NewtypeArguments has an asInstanceOf.
+- Found and fixed silently-false: ActivityView `e.by.contains(Writer.Agent.wire)`.
+- PluginOps.addFrom recomputes the index SHA because Installed.Sha256 is the constrained type, not api.Sha256.
+- Article slug has five types in web (Article.Slug, ReviewGoal.Slug, ApiClient.ArticleSlug, Preview.Item.Slug, WindowKey.Article.Slug); citekey three; job id three; year three (Years.Astronomical, catalogue.Year, Long). Merge in the split-concepts pass.

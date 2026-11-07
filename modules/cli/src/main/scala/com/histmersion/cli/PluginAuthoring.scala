@@ -12,10 +12,6 @@ import scala.jdk.CollectionConverters.*
   * read files only, and need no server.
   */
 object PluginAuthoring:
-  type Repository = Repository.T
-  object Repository extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type Step = Step.T
-  object Step extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
   /** The install's Maven repository, when it has one (an install older than plugin dependencies has `plugin-api/`
     * instead).
@@ -27,8 +23,10 @@ object PluginAuthoring:
         Files.isRegularFile(i.apiPom),
         i,
         Cli.Error(
-          s"the install at ${i.home} has no plugin Maven repository (${i.mavenRepo}): it predates plugin dependencies — " +
-            s"download histmersion-maven-<version>.zip from the release, unzip it and pass its maven/ directory with --repo",
+          Cli.Error.Message(
+            s"the install at ${i.home} has no plugin Maven repository (${i.mavenRepo}): it predates plugin dependencies — " +
+              s"download histmersion-maven-<version>.zip from the release, unzip it and pass its maven/ directory with --repo"
+          ),
           exitCode = ExitCode.Usage
         )
       )
@@ -39,11 +37,11 @@ object PluginAuthoring:
     */
   def mavenLocal(env: com.histmersion.cli.LocalInstall.EnvVariable => Option[com.histmersion.cli.LocalInstall.EnvSetting]): Either[Cli.Error, Path] =
     env(com.histmersion.cli.LocalInstall.EnvVariable("HOME"))
-      .map(_.trim)
+      .map(_.value.trim)
       .filter(_.nonEmpty)
       .map(h => Path.of(h, ".m2", "repository"))
       .toRight(
-        Cli.Error("HOME is unset: there is no local Maven repository (~/.m2/repository)", exitCode = ExitCode.Usage)
+        Cli.Error(Cli.Error.Message("HOME is unset: there is no local Maven repository (~/.m2/repository)"), exitCode = ExitCode.Usage)
       )
 
   /** Copy the install's Maven repository into the local one, so that a build naming `m2Local` finds the plugin API, the
@@ -69,7 +67,7 @@ object PluginAuthoring:
         }
         .toEither
         .left
-        .map(e => Cli.Error(s"could not copy ${i.mavenRepo} into $m2: ${e.getMessage}", exitCode = ExitCode.Refused))
+        .map(e => Cli.Error(Cli.Error.Message(s"could not copy ${i.mavenRepo} into $m2: ${e.getMessage}"), exitCode = ExitCode.Refused))
     }
 
   /** The repository a new project resolves the plugin API, platform and testkit from: the one named with `--repo` (a
@@ -77,7 +75,7 @@ object PluginAuthoring:
     * copied).
     */
   def repository(
-      named: Option[com.histmersion.cli.PluginAuthoring.Repository],
+      named: Option[String],
       install: => Either[Cli.Error, LocalInstall],
       m2: => Either[Cli.Error, Path]
   ): Either[Cli.Error, (TemplateRepository, List[Path])] =
@@ -86,7 +84,7 @@ object PluginAuthoring:
         PluginRepository
           .parse(raw, Files.isDirectory(_))
           .left
-          .map(Cli.Error(_, exitCode = ExitCode.Usage))
+          .map(e => Cli.Error(Cli.Error.Message(e), exitCode = ExitCode.Usage))
           .map(r => (TemplateRepository.Remote(r), Nil))
       case None =>
         m2.flatMap(dir => publishToMavenLocal(install, dir)).map(copied => (TemplateRepository.MavenLocal, copied))
@@ -102,16 +100,16 @@ object PluginAuthoring:
       try s.findAny().isPresent
       finally s.close()
     })
-    if occupied then Left(Cli.Error(s"$dir exists and is not empty — choose another --dir", exitCode = ExitCode.Usage))
+    if occupied then Left(Cli.Error(Cli.Error.Message(s"$dir exists and is not empty — choose another --dir"), exitCode = ExitCode.Usage))
     else
       Right(files.map { f =>
-        val target = dir.resolve(f.path)
+        val target = dir.resolve(f.path.value)
         Files.createDirectories(target.getParent)
-        Files.writeString(target, f.content, UTF_8)
+        Files.writeString(target, f.content.value, UTF_8)
       })
 
   /** What to do next, for the person who ran `plugin new`. */
-  def nextSteps(dir: Path, id: PluginId, pkg: ScalaPackage, written: List[Path]): List[com.histmersion.cli.PluginAuthoring.Step] =
+  def nextSteps(dir: Path, id: PluginId, pkg: ScalaPackage, written: List[Path]): List[String] =
     val publishDir = PluginTemplate.PublishDir
     (s"wrote a scala-cli project in $dir:" :: written.map(p => s"  ${dir.relativize(p)}")) ++ List(
       "",

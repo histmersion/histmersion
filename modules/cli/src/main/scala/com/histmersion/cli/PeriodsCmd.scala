@@ -2,7 +2,8 @@ package com.histmersion.cli
 
 import cats.syntax.all.*
 import com.monovore.decline.*
-import com.histmersion.api.Dataset
+import com.histmersion.api.{Api, Dataset}
+import com.histmersion.api.catalogue.Period
 import com.histmersion.config.*
 
 import java.nio.file.{Files, Path}
@@ -26,7 +27,7 @@ object PeriodsCmd:
       Opts.option[Long]("to", "Signed year the period must start by").orNone
     )
       .mapN { (q, region, from, to) => (c: Client) =>
-        c.periods(q.map(_.trim).filter(_.nonEmpty), region, from, to)
+        c.periods(q.map(_.trim).filter(_.nonEmpty).map(Api.Search.Text(_)), region, from, to)
           .map(ps => Cli.out.println(PeriodsMarkdown.list(ps.toVector)))
       }
   }
@@ -34,7 +35,7 @@ object PeriodsCmd:
   private def showCmd (using console: Console) =
     Opts.subcommand("show", "One period: its span, authority, what it is part of and its divisions") {
       Opts.argument[String]("id").map { id => (c: Client) =>
-        c.period(id).map(d => Cli.out.println(PeriodsMarkdown.detail(d)))
+        c.period(Period.Id(id)).map(d => Cli.out.println(PeriodsMarkdown.detail(d)))
       }
     }
 
@@ -51,10 +52,10 @@ object PeriodsCmd:
       )
         .mapN { (file, replace) => (c: Client) =>
           val r = file.map(Path.of(_)) match
-            case None               => c.seedPeriods(replace)
+            case None               => c.seedPeriods(Api.Overwrite(replace))
             case Some(_) if replace =>
-              Left(Cli.Error(com.histmersion.cli.Cli.Error.Message("--replace applies to the bundled seed, not to --file"), exitCode = ExitCode.Usage))
-            case Some(f) if !Files.isRegularFile(f) => Left(Cli.Error(s"no such file: $f", exitCode = ExitCode.Usage))
+              Left(Cli.Error(Cli.Error.Message("--replace applies to the bundled seed, not to --file"), exitCode = ExitCode.Usage))
+            case Some(f) if !Files.isRegularFile(f) => Left(Cli.Error(Cli.Error.Message(s"no such file: $f"), exitCode = ExitCode.Usage))
             case Some(f)                            => c.importPeriods(Nil, Files.readString(f), Dataset.Seed)
           r.map(x => Cli.out.println(PeriodsMarkdown.imported(x)))
         }
@@ -71,7 +72,7 @@ object PeriodsCmd:
     )
       .mapN { (file, cols, dataset) => (c: Client) =>
         val f = Path.of(file)
-        if !Files.isRegularFile(f) then Left(Cli.Error(s"no such file: $file", exitCode = ExitCode.Usage))
+        if !Files.isRegularFile(f) then Left(Cli.Error(Cli.Error.Message(s"no such file: $file"), exitCode = ExitCode.Usage))
         else c.importPeriods(cols, Files.readString(f), dataset).map(x => Cli.out.println(PeriodsMarkdown.imported(x)))
       }
   }

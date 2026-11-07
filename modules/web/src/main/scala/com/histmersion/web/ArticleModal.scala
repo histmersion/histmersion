@@ -7,10 +7,6 @@ import scala.scalajs.js
 import scala.scalajs.concurrent.JSExecutionContext.Implicits.queue
 
 object ArticleModal:
-  type Id = Id.T
-  object Id extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-
-
   val element: HtmlElement =
     div(
       WindowManager.element,
@@ -32,11 +28,11 @@ object ArticleModal:
       }
     )
 
-  def open(id: com.histmersion.web.ArticleModal.Id, opts: Map[String, String] = Map.empty): Unit =
-    WindowManager.open(WindowKey.Source(id))
+  def open(id: com.histmersion.api.library.Citekey, opts: Map[String, String] = Map.empty): Unit =
+    WindowManager.open(WindowKey.Source(WindowKey.Source.Citekey(id.value)))
 
-  def openSlug(slug: com.histmersion.web.ApiClient.ArticleSlug, opts: Map[String, String] = Map.empty): Unit =
-    WindowManager.open(WindowKey.Article(slug))
+  def openSlug(slug: com.histmersion.api.research.Article.Slug, opts: Map[String, String] = Map.empty): Unit =
+    WindowManager.open(WindowKey.Article(WindowKey.Article.Slug(slug.value)))
 
   def close(): Unit = ()
 

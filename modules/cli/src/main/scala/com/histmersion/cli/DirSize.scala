@@ -33,44 +33,42 @@ object DirSize:
   object Result:
     type Bytes = com.histmersion.api.ByteCount
     val Bytes: _root_.com.histmersion.api.ByteCount.type = _root_.com.histmersion.api.ByteCount
-    type Files = Files.T
-    object Files extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
-    type Exists = Exists.T
-    object Exists extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
-    type Partial = Partial.T
-    object Partial extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Files = com.histmersion.api.maintenance.Storage.FileCount
+    val Files: _root_.com.histmersion.api.maintenance.Storage.FileCount.type = _root_.com.histmersion.api.maintenance.Storage.FileCount
+    type Exists = com.histmersion.api.maintenance.Storage.Entry.Exists
+    val Exists: _root_.com.histmersion.api.maintenance.Storage.Entry.Exists.type = _root_.com.histmersion.api.maintenance.Storage.Entry.Exists
+    type Partial = com.histmersion.api.maintenance.Storage.Entry.Partial
+    val Partial: _root_.com.histmersion.api.maintenance.Storage.Entry.Partial.type = _root_.com.histmersion.api.maintenance.Storage.Entry.Partial
     type Unreadable = Unreadable.T
     object Unreadable extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
   /** The caps of one measurement: at most `maxEntries` visited entries over all its walks, and no walk past
     * `deadlineNanos` (on `clock`'s scale). Thread-safe; one per measurement.
     */
-  final class Budget(val maxEntries: Budget.MaxEntries, val deadlineNanos: Budget.DeadlineNanos, val clock: () => Budget.ClockResult = () => System.nanoTime()):
+  final class Budget(val maxEntries: Budget.MaxEntries, val deadlineNanos: Budget.DeadlineNanos, val clock: () => Long = () => System.nanoTime()):
     private val used = AtomicLong(0L)
 
     /** Count one entry; false once either cap is reached. */
-    def take(): Boolean = used.incrementAndGet() <= maxEntries && clock() < deadlineNanos
+    def take(): Boolean = used.incrementAndGet() <= maxEntries.value && clock() < deadlineNanos.value
     def spent: Long = used.get
-    def exhausted: Boolean = used.get >= maxEntries || clock() >= deadlineNanos
+    def exhausted: Boolean = used.get >= maxEntries.value || clock() >= deadlineNanos.value
 
   object Budget:
     type MaxEntries = MaxEntries.T
     object MaxEntries extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
     type DeadlineNanos = DeadlineNanos.T
     object DeadlineNanos extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
-    type ClockResult = ClockResult.T
-    object ClockResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
 
-    def of(maxEntries: Long, maxMillis: Long): Budget =
-      Budget(maxEntries, System.nanoTime() + maxMillis * 1_000_000L)
-    val unlimited: Budget = Budget(Long.MaxValue, Long.MaxValue)
+    def of(maxEntries: com.histmersion.config.StorageConfig.MaxEntries, maxMillis: com.histmersion.config.StorageConfig.MaxMillis): Budget =
+      Budget(MaxEntries(maxEntries.value.toLong), DeadlineNanos(System.nanoTime() + maxMillis.value.toLong * 1_000_000L))
+    val unlimited: Budget = Budget(MaxEntries(Long.MaxValue), DeadlineNanos(Long.MaxValue))
 
   def measure(root: Path, budget: Budget): Result =
     if !Files.exists(root) then Result(com.histmersion.cli.DirSize.Result.Bytes(0L), com.histmersion.cli.DirSize.Result.Files(0L), exists = com.histmersion.cli.DirSize.Result.Exists(false))
     else if Files.isRegularFile(root) then
       val _ = budget.take()
-      Result(scala.util.Try(Files.size(root)).getOrElse(0L), com.histmersion.cli.DirSize.Result.Files(1L), exists = com.histmersion.cli.DirSize.Result.Exists(true))
+      Result(com.histmersion.cli.DirSize.Result.Bytes(scala.util.Try(Files.size(root)).getOrElse(0L)), com.histmersion.cli.DirSize.Result.Files(1L), exists = com.histmersion.cli.DirSize.Result.Exists(true))
     else if budget.exhausted then Result(com.histmersion.cli.DirSize.Result.Bytes(0L), com.histmersion.cli.DirSize.Result.Files(0L), exists = com.histmersion.cli.DirSize.Result.Exists(true), partial = com.histmersion.cli.DirSize.Result.Partial(true))
     else
       // the walk's running sums: a visitor is callback-shaped, so it accumulates into locals
@@ -96,7 +94,7 @@ object DirSize:
       try
         val _ = Files.walkFileTree(start, java.util.EnumSet.noneOf(classOf[FileVisitOption]), Int.MaxValue, visitor)
       catch case _: IOException => unreadable += 1
-      Result(bytes, files, exists = com.histmersion.cli.DirSize.Result.Exists(true), partial, unreadable)
+      Result(com.histmersion.cli.DirSize.Result.Bytes(bytes), com.histmersion.cli.DirSize.Result.Files(files), exists = com.histmersion.cli.DirSize.Result.Exists(true), com.histmersion.cli.DirSize.Result.Partial(partial), com.histmersion.cli.DirSize.Result.Unreadable(unreadable))
 
   /** `p`, or the nearest of its parents that exists (a directory not made yet is on its parent's volume). */
   def existing(p: Path): Option[Path] =
@@ -107,7 +105,7 @@ object DirSize:
     existing(p).flatMap { e =>
       scala.util.Try {
         val s = Files.getFileStore(e)
-        Storage.Volume(s.toString, com.histmersion.api.ByteCount(s.getTotalSpace), com.histmersion.api.ByteCount(s.getUsableSpace))
+        Storage.Volume(Storage.Volume.Id(s.toString), com.histmersion.api.ByteCount(s.getTotalSpace), com.histmersion.api.ByteCount(s.getUsableSpace))
       }.toOption
     }
 

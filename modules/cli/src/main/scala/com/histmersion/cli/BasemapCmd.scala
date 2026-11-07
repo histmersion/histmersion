@@ -64,7 +64,15 @@ object BasemapCmd:
     )
       .mapN { (layer, z, tz, bbox, focus, dry, keepAll, noWait) => (c: Client) =>
         c.basemapFetch(
-          Basemap.FetchQuery(if focus.isDefined then com.histmersion.api.basemap.Basemap.FetchQuery.Layer("terrain") else layer, z, tz, bbox, dry, keepAll, focus)
+          Basemap.FetchQuery(
+            Basemap.FetchQuery.Layer(if focus.isDefined then "terrain" else layer),
+            z.map(Basemap.FetchQuery.MaxZoom(_)),
+            tz.map(Basemap.FetchQuery.TerrainMaxZoom(_)),
+            bbox.map(Basemap.FetchQuery.Bbox(_)),
+            Basemap.FetchQuery.DryRun(dry),
+            Basemap.FetchQuery.KeepAll(keepAll),
+            focus.map(Basemap.FetchQuery.Focus(_))
+          )
         ).flatMap { j =>
           Cli.out.println(
             s"base-map job `${j.id}` started: ${j.detail.flatMap(JobDetail.Purpose.of).getOrElse("")} (`histmersion jobs` lists it)"
@@ -95,7 +103,11 @@ object BasemapCmd:
         .orFalse
     ).mapN { (layer, focus, cache) => (c: Client) =>
       val l = layer.getOrElse(if focus.isDefined || cache then "none" else "all")
-      c.basemapRemove(Basemap.RemoveQuery(l, focus, cache)).map(r => Cli.out.println(BasemapMarkdown.removed(r)))
+      c.basemapRemove(Basemap.RemoveQuery(
+        Basemap.RemoveQuery.Layer(l),
+        focus.map(Basemap.RemoveQuery.Focus(_)),
+        Basemap.RemoveQuery.Cache(cache)
+      )).map(r => Cli.out.println(BasemapMarkdown.removed(r)))
     }
   }
 

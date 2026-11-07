@@ -39,7 +39,7 @@ object SettingsCmd:
   ): Either[Cli.Error, A] =
     viaServer match
       case Left(e) if e.exitCode == ExitCode.Unreachable =>
-        Cli.err.println(s"(${e.message.takeWhile(_ != '(').trim}: the settings file on this machine instead)")
+        Cli.err.println(s"(${e.message.value.takeWhile(_ != '(').trim}: the settings file on this machine instead)")
         viaFile
       case other => other
 
@@ -55,11 +55,13 @@ object SettingsCmd:
       Output.jsonFlag
     ).mapN { (key, prefix, onlyLocal, json) => (c: Client) =>
       val asked = key.orElse(prefix)
-      val page = if onlyLocal then Local.page(asked) else orLocal(c.settings(asked), Local.page(asked))
+      val askedPrefix = asked.map(Settings.Prefix(_))
+      val page =
+        if onlyLocal then Local.page(askedPrefix) else orLocal(c.settings(askedPrefix), Local.page(askedPrefix))
       page.flatMap { p =>
         key match
           case Some(k) =>
-            p.field(k).toRight(Cli.Error(s"There is no setting called $k.", ExitCode.Usage)).map { f =>
+            p.field(ConfigEdit.Field.Key(k)).toRight(Cli.Error(Cli.Error.Message(s"There is no setting called $k."), ExitCode.Usage)).map { f =>
               Output.emit(json, f)(ConfigEditMarkdown.field)
             }
           case None => Right(Output.emit(json, p)(ConfigEditMarkdown.page))
@@ -68,15 +70,19 @@ object SettingsCmd:
   }
 
   private def change(
-      key: com.histmersion.cli.Settings.Key,
-      value: Option[com.histmersion.cli.Settings.Setting],
-      onlyLocal: com.histmersion.cli.Settings.OnlyLocal,
-      reload: com.histmersion.cli.Settings.Reload,
-      consent: com.histmersion.cli.Settings.Consent,
+      key: String,
+      value: Option[String],
+      onlyLocal: Boolean,
+      reload: Boolean,
+      consent: Boolean,
       json: com.histmersion.cli.Cli.JsonOutput,
       c: Client
   )(using console: Console): Either[Cli.Error, Unit] =
-    val w = ConfigEdit.Write(List(ConfigEdit.Change(key, value)), literalConsent = consent, reload = reload)
+    val w = ConfigEdit.Write(
+      List(ConfigEdit.Change(ConfigEdit.Change.Key(key), value.map(ConfigEdit.Change.Value(_)))),
+      literalConsent = ConfigEdit.Write.LiteralConsent(consent),
+      reload = ConfigEdit.Write.Reload(reload)
+    )
     val viaFile = Local.write(w).map(out => if reload then out.modify(_.reload).setTo(c.configReload.toOption) else out)
     val done = if onlyLocal then viaFile else orLocal(c.writeSettings(w), viaFile)
     done.map(out => Output.emit(json, out)(ConfigEditMarkdown.written))
@@ -97,7 +103,7 @@ object SettingsCmd:
     "Take a setting out of the settings file (back to its default), in place; then the server applies it"
   ) {
     (Opts.argument[String]("key"), local, noReload, Output.jsonFlag).mapN { (key, onlyLocal, nr, json) => (c: Client) =>
-      change(key, None, onlyLocal, !nr, consent = com.histmersion.cli.Settings.Consent(false), json, c)
+      change(key, None, onlyLocal, !nr, consent = false, json, c)
     }
   }
 
@@ -117,19 +123,27 @@ object SettingsCmd:
 
     private def file: Either[Cli.Error, LocalSettingsFile] =
       UserPaths
-        .configFile(AppConfig.lookup(env))
-        .toRight(Cli.Error(s"no settings file location: HOME is unset (set ${UserPaths.ConfigEnv})", ExitCode.Usage))
+        .configFile(k => AppConfig.lookup(env)(k.value).map(Environment.VariablesValue(_)))
+        .toRight(
+          Cli.Error(
+            Cli.Error.Message(s"no settings file location: HOME is unset (set ${UserPaths.ConfigEnv})"),
+            ExitCode.Usage
+          )
+        )
         .map(LocalSettingsFile(_))
 
     private def writer: Either[Cli.Error, ConfigFileWriter] =
       file.map(ConfigFileWriter(_, env, ConfigSchema.reference))
 
-    private def failed(e: SettingError) = Cli.Error(e.message, ExitCode.Refused)
+    private def failed(e: SettingError) = Cli.Error(Cli.Error.Message(e.message.value), ExitCode.Refused)
 
-    def page(prefix: Option[com.histmersion.cli.Settings.Prefix]): Either[Cli.Error, ConfigEdit.Page] =
+    def page(prefix: Option[Settings.Prefix]): Either[Cli.Error, ConfigEdit.Page] =
       for
         f <- file
-        p <- prefix.fold(Right(None))(k => SettingKey.parse(k).map(Some(_))).left.map(Cli.Error(_, ExitCode.Usage))
+        p <- prefix
+          .fold(Right(None))(k => SettingKey.parse(SettingKey.ParseRaw(k.value)).map(Some(_)))
+          .left
+          .map(p => Cli.Error(Cli.Error.Message(p.value), ExitCode.Usage))
         state <- f.read().left.map(failed)
       yield
         val loaded = AppConfig.loadWithUserFile(env, Some(f.path))
@@ -137,42 +151,49 @@ object SettingsCmd:
         val shown = SettingsReader.read(ConfigSchema.reference, state, merged, env, p).map(SettingShown.of)
         val fields = shown.map(s =>
           ConfigEdit.Field(
-            s.key,
-            s.section,
-            s.kind,
-            s.doc,
-            s.default,
-            s.value,
-            s.effective,
-            s.source,
-            s.envVar,
-            s.restart,
+            ConfigEdit.Field.Key(s.key.value),
+            ConfigEdit.Field.Section(s.section.value),
+            ConfigEdit.Field.Kind(s.kind.value),
+            ConfigEdit.Field.Doc(s.doc.value),
+            s.default.map(v => ConfigEdit.Field.Default(v.value)),
+            s.value.map(v => ConfigEdit.Field.Value(v.value)),
+            s.effective.map(v => ConfigEdit.Field.Effective(v.value)),
+            ConfigEdit.Field.Source(s.source.value),
+            s.envVar.map(v => ConfigEdit.Field.EnvVar(v.value)),
+            s.restart.map(v => ConfigEdit.Field.Restart(v.value)),
             s.credentialForm.map(f =>
-              ConfigEdit.Credential(s.credentialRule.getOrElse("reference"), f, s.credentialShown)
+              ConfigEdit.Credential(
+                ConfigEdit.Credential.Rule(s.credentialRule.fold("reference")(_.value)),
+                ConfigEdit.Credential.Form(f.value),
+                s.credentialShown.map(v => ConfigEdit.Credential.Shown(v.value))
+              )
             ),
-            s.locked
+            s.locked.map(v => ConfigEdit.Field.Locked(v.value))
           )
         )
         ConfigEdit.Page(
-          Some(f.shown),
-          state.text.isDefined,
-          state.version.value,
+          Some(ConfigEdit.Page.File(f.shown.value)),
+          ConfigEdit.Page.Exists(state.text.isDefined),
+          ConfigEdit.Page.Version(state.version.value),
           fields.map(_.section).distinct.map(id => ConfigEdit.Section(id, fields = fields.filter(_.section == id))),
-          loaded.fold(List(_), _.file.warnings)
+          loaded.fold(l => List(ConfigEdit.Page.Problems(l.value)), _.file.warnings.map(w => ConfigEdit.Page.Problems(w.value)))
         )
 
     def write(w: ConfigEdit.Write): Either[Cli.Error, ConfigEdit.Written] =
       for
         fw <- writer
-        edits <- SettingEdit.parseAll(w.changes.map(c => c.key -> c.value), ConfigSchema.reference).left.map(failed)
-        out <- fw.write(edits, None, w.literalConsent).left.map(failed)
+        edits <- SettingEdit.parseAll(
+          w.changes.map(c => SettingKey.ParseRaw(c.key.value) -> c.value.map(v => SettingValue.Typed(v.value))),
+          ConfigSchema.reference
+        ).left.map(failed)
+        out <- fw.write(edits, None, SettingPolicy.LiteralConsent(w.literalConsent.value)).left.map(failed)
       yield ConfigEdit.Written(
-        out.file,
-        out.changed.map(_.value),
-        out.unchanged.map(_.value),
-        out.backup,
-        out.version.value,
-        out.created,
-        out.restart.map((k, why) => ConfigEdit.RestartNote(k.value, why)),
-        out.warnings
+        ConfigEdit.Written.File(out.file.value),
+        out.changed.map(k => ConfigEdit.Written.Changed(k.value)),
+        out.unchanged.map(k => ConfigEdit.Written.Unchanged(k.value)),
+        out.backup.map(b => ConfigEdit.Written.Backup(b.value)),
+        ConfigEdit.Written.Version(out.version.value),
+        ConfigEdit.Written.Created(out.created.value),
+        out.restart.map((k, why) => ConfigEdit.RestartNote(ConfigEdit.RestartNote.Key(k.value), ConfigEdit.RestartNote.Why(why.value))),
+        out.warnings.map(n => ConfigEdit.Written.Warnings(n.value))
       )

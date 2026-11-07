@@ -16,19 +16,19 @@ import com.histmersion.util.console.Console
 object BundleCmd:
 
 
-  private def existing(file: com.histmersion.domain.HttpPolicy.Trust.Bundle.File): Either[Cli.Error, java.io.File] =
+  private def existing(file: String): Either[Cli.Error, java.io.File] =
     val p = Path.of(file)
     if Files.isRegularFile(p) then Right(p.toFile)
-    else Left(Cli.Error(s"no such file: $file", exitCode = ExitCode.Usage))
+    else Left(Cli.Error(Cli.Error.Message(s"no such file: $file"), exitCode = ExitCode.Usage))
 
   /** The manifest of a bundle on disk — its first entry. */
-  private[cli] def manifestOf(p: Path): Either[com.histmersion.domain.HttpPolicy.Trust.Bundle.Problem, Bundle.Manifest] =
+  private[cli] def manifestOf(p: Path): Either[BundleTar.Problem, Bundle.Manifest] =
     val in = Files.newInputStream(p)
     try
       val r = BundleTar.Reader(java.io.BufferedInputStream(in))
       r.next().flatMap {
-        case Some(e) if e.name == Bundle.ManifestPath => BundleFormat.parseManifest(r.readAll())
-        case _                                        => Left(s"$p does not start with ${Bundle.ManifestPath}")
+        case Some(e) if e.name.value == Bundle.ManifestPath => BundleFormat.parseManifest(r.readAll())
+        case _                                        => Left(BundleTar.Problem(s"$p does not start with ${Bundle.ManifestPath}"))
       }
     finally in.close()
 
@@ -45,14 +45,14 @@ object BundleCmd:
       val dest = Path.of(file).toAbsolutePath
       val part = dest.resolveSibling(dest.getFileName.toString + ".part")
       Option(dest.getParent).foreach(d => Files.createDirectories(d))
-      c.exportBundle(since, part.toFile) match
+      c.exportBundle(since.map(Bundle.Name(_)), part.toFile) match
         case Left(e) =>
           val _ = Files.deleteIfExists(part)
           Left(e)
         case Right(_) =>
           val _ = Files.move(part, dest, StandardCopyOption.REPLACE_EXISTING)
           manifestOf(dest).fold(
-            e => Left(Cli.Error(s"the server sent something that is not a bundle: $e", exitCode = ExitCode.Refused)),
+            e => Left(Cli.Error(Cli.Error.Message(s"the server sent something that is not a bundle: $e"), exitCode = ExitCode.Refused)),
             m => Right(Cli.out.println(s"${BundleMarkdown.manifest(m)}\n\n→ $dest (${Files.size(dest)} bytes)"))
           )
     }
@@ -65,7 +65,7 @@ object BundleCmd:
     (Opts.argument[String]("file.hmx"), Output.jsonFlag).mapN { (file, json) => (c: Client) =>
       existing(file).flatMap(c.verifyBundle).flatMap { r =>
         Output.emit(json, r)(BundleMarkdown.verify)
-        if r.ok then Right(()) else Left(Cli.Error(com.histmersion.cli.Cli.Error.Message("the bundle did not verify"), exitCode = ExitCode.Refused))
+        if r.ok.value then Right(()) else Left(Cli.Error(com.histmersion.cli.Cli.Error.Message("the bundle did not verify"), exitCode = ExitCode.Refused))
       }
     }
   }
@@ -81,13 +81,13 @@ object BundleCmd:
       Output.jsonFlag
     ).mapN { (file, dryRun, res, json) => (c: Client) =>
       val run: Either[Cli.Error, Bundle.ImportResult] =
-        if res.isEmpty then existing(file).flatMap(c.importBundle(dryRun, _))
+        if res.isEmpty then existing(file).flatMap(c.importBundle(Cli.DryRun(dryRun), _))
         else
           for
             f <- existing(file)
             r <- MergeCmd.resolutions(res)
             u <- MergeCmd.upload(c, f)
-            x <- c.mergeImport(MergeImportRequest(u.sha256, r, dryRun))
+            x <- c.mergeImport(MergeImportRequest(MergeImportRequest.Bundle(u.sha256.value), r, MergeImportRequest.DryRun(dryRun)))
           yield x
       run.flatMap { r =>
         Output.emit(json, r)(BundleMarkdown.importResult)
@@ -102,7 +102,7 @@ object BundleCmd:
   ) {
     Opts.option[String]("label", "Name this instance; an empty string clears the name").orNone.map {
       label => (c: Client) =>
-        label.fold(c.instance)(l => c.setInstance(Some(l))).map(i => Cli.out.println(BundleMarkdown.instance(i)))
+        label.fold(c.instance)(l => c.setInstance(Some(com.histmersion.api.library.InstanceLabel.Label(l)))).map(i => Cli.out.println(BundleMarkdown.instance(i)))
     }
   }
 

@@ -20,7 +20,12 @@ object AssetLinksCmd:
       Opts.option[String]("target-id", "Filter by target id").orNone
     )
       .mapN { (ck, asset, tt, ti) => (c: Client) =>
-        c.assetLinks(ck, asset, tt, ti).map(r => Cli.out.println(MediaMarkdown.assetLinkList(r)))
+        c.assetLinks(
+          ck.map(com.histmersion.api.library.Citekey(_)),
+          asset.map(com.histmersion.api.exchange.Bundle.Asset.FileName(_)),
+          tt.map(com.histmersion.api.catalogue.Attestation.TargetType(_)),
+          ti.map(com.histmersion.api.catalogue.Attestation.TargetId(_))
+        ).map(r => Cli.out.println(MediaMarkdown.assetLinkList(r)))
       }
   }
 
@@ -35,14 +40,24 @@ object AssetLinksCmd:
       Opts.option[String]("notes", "Free-text notes").orNone
     )
       .mapN { (ck, asset, rel, tt, ti, xywh, notes) => (c: Client) =>
-        c.createAssetLink(AssetLink.Put(ck, asset, rel, tt, ti, xywh, notes))
+        c.createAssetLink(
+          AssetLink.Put(
+            com.histmersion.api.library.Citekey(ck),
+            com.histmersion.api.exchange.Bundle.Asset.FileName(asset),
+            AssetRelation.Wire(rel),
+            com.histmersion.api.media.MediaTarget.TargetType(tt),
+            com.histmersion.api.media.MediaTarget.TargetId(ti),
+            xywh.map(AssetLink.Xywh(_)),
+            notes.map(AssetLink.Notes(_))
+          )
+        )
           .map(l => Cli.out.println(MediaMarkdown.assetLink(l)))
       }
   }
 
   private def rmCmd (using console: Console) = Opts.subcommand("rm", "Delete an asset link by id") {
     Opts.argument[Long]("id").map { id => (c: Client) =>
-      c.deleteAssetLink(id).map(d => Cli.out.println(s"Deleted asset link #${d.id}."))
+      c.deleteAssetLink(AssetLink.Id(id)).map(d => Cli.out.println(s"Deleted asset link #${d.id}."))
     }
   }
 

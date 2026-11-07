@@ -6,7 +6,7 @@ import com.histmersion.api.aliases.AliasKinds
 
 import com.histmersion.api.library.SourcesMarkdown
 
-import com.histmersion.domain.library.Citekey
+import com.histmersion.api.library.Citekey
 
 import cats.syntax.all.*
 import com.monovore.decline.*
@@ -22,24 +22,12 @@ import com.histmersion.util.console.Console
   * judges the new key and answers why it refuses one.
   */
 object RenameCmd:
-  type Message = Message.T
-  object Message extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type Problem = Problem.T
-  object Problem extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-
-
-  final case class Args(oldCitekey: Args.OldCitekey, newCitekey: Args.NewCitekey, json: Args.Json)
-
-  object Args:
-    type OldCitekey = com.histmersion.plugin.FetchedFile.Source.Citekey
-    val OldCitekey: _root_.com.histmersion.plugin.FetchedFile.Source.Citekey.type = _root_.com.histmersion.plugin.FetchedFile.Source.Citekey
-    type NewCitekey = com.histmersion.plugin.FetchedFile.Source.Citekey
-    val NewCitekey: _root_.com.histmersion.plugin.FetchedFile.Source.Citekey.type = _root_.com.histmersion.plugin.FetchedFile.Source.Citekey
-    type Json = com.histmersion.cli.Cli.JsonOutput
-    val Json: _root_.com.histmersion.cli.Cli.JsonOutput.type = _root_.com.histmersion.cli.Cli.JsonOutput
+  final case class Args(oldCitekey: Citekey, newCitekey: Citekey, json: Cli.JsonOutput)
 
   val args: Opts[Args] =
-    (Opts.argument[String]("old"), Opts.argument[String]("new"), Output.jsonFlag).mapN(Args.apply).map(a => a.modify(_.oldCitekey).setTo(a.oldCitekey.trim).modify(_.newCitekey).setTo(a.newCitekey.trim))
+    (Opts.argument[String]("old"), Opts.argument[String]("new"), Output.jsonFlag).mapN((old, new_, json) =>
+      Args(Citekey(old.trim), Citekey(new_.trim), json)
+    )
 
   def command(using console: Console) : Opts[Client => Either[Cli.Error, Unit]] =
     Opts.subcommand(
@@ -51,12 +39,15 @@ object RenameCmd:
       }
     }
 
+  private def plainName(name: String): Boolean =
+    name.nonEmpty && !name.exists(c => c == '/' || c == '\\') && !name.startsWith(".")
+
   /** Remove `<sources>/<alias>.md` for every old citekey — the mirror file a renamed source leaves behind.
     * `Right("old → new")` per file removed, `Left(reason)` per file that could not be; an alias with no file is
     * neither. Only ever touches `<alias>.md` directly inside `sources`.
     */
-  def pruneRenamed(sources: Path, aliases: List[Source.Alias]): List[Either[com.histmersion.cli.RenameCmd.Problem, com.histmersion.cli.RenameCmd.Message]] =
-    aliases.filter(a => Citekey.valid(a.alias)).flatMap { a =>
+  def pruneRenamed(sources: Path, aliases: List[Source.Alias]): List[Either[String, String]] =
+    aliases.filter(a => plainName(a.alias.value)).flatMap { a =>
       val f = sources.resolve(s"${a.alias}.md")
       scala.util
         .Try(Files.deleteIfExists(f))

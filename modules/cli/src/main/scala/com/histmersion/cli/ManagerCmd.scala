@@ -16,7 +16,9 @@ import com.histmersion.api.automation.{
   ManagersMarkdown,
   StallsMarkdown
 }
+import com.histmersion.api.automation.{Goal, ItemStatus}
 import com.histmersion.api.library.RepairAcquire
+import com.histmersion.api.personal.UnreadPage
 import com.histmersion.api.views.{AutopilotApi, AutopilotStatus}
 import com.histmersion.util.console.Console
 
@@ -24,11 +26,6 @@ import com.histmersion.util.console.Console
   * (docs/research-process-managers.md). The server runs them; this reads and steers them over HTTP.
   */
 object ManagerCmd:
-  type Problem = Problem.T
-  object Problem extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-
-
-
   def managers(using console: Console) : Opts[Client => Either[Cli.Error, Unit]] = Opts.subcommand(
     "managers",
     "The process managers: each one's state, items, runs in flight, status line and last event"
@@ -38,8 +35,11 @@ object ManagerCmd:
     )
   }
 
-  private def config(kvs: List[com.histmersion.domain.automation.Manager.ConfigEntry]): Either[Cli.Error, ManagerConfig] =
-    ManagerConfig.parse(kvs).left.map(m => Cli.Error(m, exitCode = ExitCode.Usage))
+  private def config(kvs: List[String]): Either[Cli.Error, ManagerConfig] =
+    ManagerConfig
+      .parse(kvs.map(ManagerConfig.Spec(_)))
+      .left
+      .map(m => Cli.Error(Cli.Error.Message(m.value), exitCode = ExitCode.Usage))
 
   /** The settings `--config` and `config` take. */
   private val SettingKeys =
@@ -69,7 +69,7 @@ object ManagerCmd:
     )
       .mapN { (kind, goal, kvs, cron, active, json) => (c: Client) =>
         config(kvs)
-          .flatMap(cfg => c.call(ManagersApi.create)(ManagerCreate(kind, goal, cfg, Some(!active), cron)))
+          .flatMap(cfg => c.call(ManagersApi.create)(ManagerCreate(ManagerCreate.Kind(kind), goal.map(Goal.Slug(_)), cfg, Some(ManagerCreate.Paused(!active)), cron.map(ManagerCreate.Cron(_)))))
           .map(m => Output.emit(json, m)(ManagersMarkdown.line))
       }
   }
@@ -86,7 +86,7 @@ object ManagerCmd:
       Opts.option[Int]("priority", "Its priority (default 10: first)").orNone,
       Output.jsonFlag
     ).mapN { (kind, t, p, json) => (c: Client) =>
-      c.call(ManagersApi.enqueue)(EnqueueRequest(kind, t, p)).map(r => Output.emit(json, r)(ManagersMarkdown.enqueued))
+      c.call(ManagersApi.enqueue)(EnqueueRequest(EnqueueRequest.Kind(kind), EnqueueRequest.Target(t), p.map(EnqueueRequest.Priority(_)))).map(r => Output.emit(json, r)(ManagersMarkdown.enqueued))
     }
   }
 
@@ -119,11 +119,11 @@ object ManagerCmd:
       verb.trim.toLowerCase match
         case "mode" =>
           rest match
-            case List(m) => status(c.call(AutopilotApi.setMode)(AgentMode.ModeSet(m, Some(com.histmersion.api.automation.AgentMode.ModeSet.By("cli")))))
+            case List(m) => status(c.call(AutopilotApi.setMode)(AgentMode.ModeSet(AgentMode.ModeSet.Mode(m), Some(com.histmersion.api.automation.AgentMode.ModeSet.By("cli")))))
             case _ => Left(Cli.Error(com.histmersion.cli.Cli.Error.Message("autopilot mode takes one of: working, finish, pause"), exitCode = ExitCode.Usage))
         case _ if rest.nonEmpty && verb.trim.toLowerCase != "focus" =>
           Left(
-            Cli.Error(s"autopilot $verb takes no further arguments (${rest.mkString(" ")})", exitCode = ExitCode.Usage)
+            Cli.Error(Cli.Error.Message(s"autopilot $verb takes no further arguments (${rest.mkString(" ")})"), exitCode = ExitCode.Usage)
           )
         case "status"  => status(c.call(AutopilotApi.autopilot)(()))
         case "on"      => status(c.call(AutopilotApi.setAutopilot)(Autopilot.AutopilotSet(on = com.histmersion.api.automation.Autopilot.AutopilotSet.On(true), Some(com.histmersion.api.automation.Autopilot.AutopilotSet.By("cli")))))
@@ -132,7 +132,7 @@ object ManagerCmd:
         case "undrain" => status(c.call(AutopilotApi.drain)(Autopilot.DrainSet(on = com.histmersion.api.automation.Autopilot.DrainSet.On(false), Some(com.histmersion.api.automation.Autopilot.DrainSet.By("cli")))))
         case "repair-acquire" =>
           c.call(com.histmersion.api.library.AcquisitionWorkApi.repairAcquire)(
-            RepairAcquire.RepairRequest(dry, Some(com.histmersion.api.automation.Activity.Actor("cli")))
+            RepairAcquire.RepairRequest(RepairAcquire.RepairRequest.DryRun(dry), Some(com.histmersion.api.automation.Activity.Actor("cli")))
           ).map(r => Output.emit(json, r)(RepairAcquire.markdown))
         case "focus" =>
           focusRequest(rest)
@@ -144,7 +144,7 @@ object ManagerCmd:
         case other =>
           Left(
             Cli.Error(
-              s"unknown autopilot verb '$other' (status, on, off, drain, undrain, repair-acquire, focus, mode)",
+              Cli.Error.Message(s"unknown autopilot verb '$other' (status, on, off, drain, undrain, repair-acquire, focus, mode)"),
               exitCode = ExitCode.Usage
             )
           )
@@ -168,12 +168,12 @@ object ManagerCmd:
       Opts.option[Int]("limit", "How many waiting items to show (status: 50, queue: 200)").orNone,
       Output.jsonFlag
     ).mapN { (verb, rest, limit, json) => (c: Client) =>
-      def usage(m: com.histmersion.cli.ManagerCmd.Problem) = Left(Cli.Error(m, exitCode = ExitCode.Usage))
+      def usage(m: String) = Left(Cli.Error(Cli.Error.Message(m), exitCode = ExitCode.Usage))
       (verb.trim.toLowerCase, rest.map(_.trim).filter(_.nonEmpty)) match
         case ("status", Nil) =>
-          c.call(ManagersApi.scheduler)(limit).map(s => Output.emit(json, s)(AgentSchedulerMarkdown.status))
+          c.call(ManagersApi.scheduler)(limit.map(Scheduler.Limit(_))).map(s => Output.emit(json, s)(AgentSchedulerMarkdown.status))
         case ("queue", Nil) =>
-          c.call(ManagersApi.scheduler)(limit.orElse(Some(200)))
+          c.call(ManagersApi.scheduler)(limit.orElse(Some(200)).map(Scheduler.Limit(_)))
             .map(s =>
               Output.emit(json, s.waiting)(ws =>
                 if ws.isEmpty then "_Nothing waits._"
@@ -183,12 +183,12 @@ object ManagerCmd:
               )
             )
         case ("why", List(item)) =>
-          c.call(ManagersApi.schedulerWhy)(item).map(w => Output.emit(json, w)(AgentSchedulerMarkdown.why))
+          c.call(ManagersApi.schedulerWhy)(ManagerInfo.Id(item)).map(w => Output.emit(json, w)(AgentSchedulerMarkdown.why))
         case ("strategy", List(name)) =>
-          c.call(ManagersApi.setScheduler)(AgentScheduler.SchedulerSet(name, Some(com.histmersion.api.automation.AgentScheduler.SchedulerSet.By("cli"))))
+          c.call(ManagersApi.setScheduler)(AgentScheduler.SchedulerSet(AgentScheduler.SchedulerSet.Strategy(name), Some(com.histmersion.api.automation.AgentScheduler.SchedulerSet.By("cli"))))
             .map(s => Output.emit(json, s)(AgentSchedulerMarkdown.status))
-        case ("why", _)      => usage(com.histmersion.cli.ManagerCmd.Problem("scheduler why takes one item: its id, or the target of an open item"))
-        case ("strategy", _) => usage(com.histmersion.cli.ManagerCmd.Problem("scheduler strategy takes one name: type-balanced, goal-first or default"))
+        case ("why", _)      => usage("scheduler why takes one item: its id, or the target of an open item")
+        case ("strategy", _) => usage("scheduler strategy takes one name: type-balanced, goal-first or default")
         case (v, _) if Set("status", "queue")(v) => usage(s"scheduler $v takes no further arguments")
         case (other, _) => usage(s"unknown scheduler verb '$other' (status, queue, why, strategy)")
     }
@@ -203,7 +203,7 @@ object ManagerCmd:
   ) {
     (Opts.option[Int]("days", "No progress in this many days").orNone, Output.jsonFlag).mapN {
       (days, json) => (c: Client) =>
-        c.call(ManagersApi.stalls)(days).map(r => Output.emit(json, r)(StallsMarkdown.report))
+        c.call(ManagersApi.stalls)(days.map(com.histmersion.api.automation.Stalls.Limit(_))).map(r => Output.emit(json, r)(StallsMarkdown.report))
     }
   }
 
@@ -235,7 +235,15 @@ object ManagerCmd:
       Opts.flag("dry-run", "List what it would decide; decide nothing").orFalse,
       Output.jsonFlag
     ).mapN { (d, kind, subject, ids, note, limit, dry, json) => (c: Client) =>
-      c.call(ManagersApi.decideAll)(ApprovalDigest.BulkDecide(d, kind, subject, ids, note, dry, limit, Some(com.histmersion.api.automation.ApprovalDigest.BulkDecide.By("cli"))))
+      c.call(ManagersApi.decideAll)(ApprovalDigest.BulkDecide(
+          ApprovalDigest.BulkDecide.Decision(d),
+          kind.map(ApprovalDigest.BulkDecide.Kind(_)),
+          subject.map(ApprovalDigest.BulkDecide.Subject(_)),
+          ids.map(ApprovalDigest.BulkDecide.Ids(_)),
+          note.map(ApprovalDigest.BulkDecide.Note(_)),
+          ApprovalDigest.BulkDecide.DryRun(dry),
+          limit.map(ApprovalDigest.BulkDecide.Limit(_)),
+          Some(com.histmersion.api.automation.ApprovalDigest.BulkDecide.By("cli"))))
         .map(r => Output.emit(json, r)(ApprovalDigestMarkdown.bulk))
     }
   }
@@ -243,19 +251,24 @@ object ManagerCmd:
   /** `focus` [list | pin <goal> | unpin <goal> | priority <goal> <n> | max <n|default>] → the request (None: just show
     * it); a malformed one is a usage error before anything is sent.
     */
-  def focusRequest(args: List[com.histmersion.domain.automation.Manager.FocusArg]): Either[Cli.Error, Option[Autopilot.FocusSet]] =
-    def usage(m: com.histmersion.cli.ManagerCmd.Problem) = Left(Cli.Error(m, exitCode = ExitCode.Usage))
-    def num(s: String) = s.trim.toIntOption.toRight(Cli.Error(s"'$s' is not a whole number", exitCode = ExitCode.Usage))
+  def focusRequest(args: List[String]): Either[Cli.Error, Option[Autopilot.FocusSet]] =
+    def usage(m: String) = Left(Cli.Error(Cli.Error.Message(m), exitCode = ExitCode.Usage))
+    def num(s: String) =
+      s.trim.toIntOption.toRight(Cli.Error(Cli.Error.Message(s"'$s' is not a whole number"), exitCode = ExitCode.Usage))
+    def by = Some(Autopilot.FocusSet.By("cli"))
     args.map(_.trim) match
       case Nil | List("list")             => Right(None)
-      case List(v @ ("pin" | "unpin"), g) => Right(Some(Autopilot.FocusSet(v, Some(g), by = Some("cli"))))
-      case List("priority", g, n)         =>
-        num(n).map(p => Some(Autopilot.FocusSet("priority", Some(g), Some(p), Some("cli"))))
-      case List("max", "default") => Right(Some(Autopilot.FocusSet(com.histmersion.api.automation.Autopilot.FocusSet.Action("max"), by = Some("cli"))))
+      case List(v @ ("pin" | "unpin"), g) =>
+        Right(Some(Autopilot.FocusSet(Autopilot.FocusSet.Action(v), Some(Goal.Slug(g)), by = by)))
+      case List("priority", g, n) =>
+        num(n).map(p =>
+          Some(Autopilot.FocusSet(Autopilot.FocusSet.Action("priority"), Some(Goal.Slug(g)), Some(Autopilot.FocusSet.Value(p)), by))
+        )
+      case List("max", "default") => Right(Some(Autopilot.FocusSet(Autopilot.FocusSet.Action("max"), by = by)))
       case List("max", n)         =>
         num(n).flatMap(m =>
           if m < 0 then usage("focus max takes 0 (no cap) or more, or `default`")
-          else Right(Some(Autopilot.FocusSet("max", value = Some(m), by = Some("cli"))))
+          else Right(Some(Autopilot.FocusSet(Autopilot.FocusSet.Action("max"), value = Some(Autopilot.FocusSet.Value(m)), by = by)))
         )
       case other =>
         usage(
@@ -268,13 +281,13 @@ object ManagerCmd:
 
   private val target = Opts.argument[String]("target")
 
-  private def itemPatch(c: Client, id: com.histmersion.domain.automation.Manager.ItemId, t: com.histmersion.api.automation.Managers.ItemPatch.Action, p: ItemPatch) (using console: Console) =
+  private def itemPatch(c: Client, id: ManagerInfo.Id, t: ManagerItem.Ref, p: ItemPatch) (using console: Console) =
     c.call(ManagersApi.patchItem)((id, t, p)).map(i => Cli.out.println(ManagersMarkdown.item(i)))
 
   private def verbs(using console: Console) : Opts[(Client, String) => Either[Cli.Error, Unit]] =
     verb("status", "The manager: items in flight with their runs, hints, newest events")(
       Output.jsonFlag.map(json =>
-        (c, id) => c.call(ManagersApi.get)(id).map(d => Output.emit(json, d)(ManagersMarkdown.detail))
+        (c, id) => c.call(ManagersApi.get)(ManagerInfo.Id(id)).map(d => Output.emit(json, d)(ManagersMarkdown.detail))
       )
     ) orElse
       verb("items", "Its items, the most urgent first")(
@@ -286,7 +299,7 @@ object ManagerCmd:
           Opts.option[Int]("limit", "How many").orNone,
           Output.jsonFlag
         ).mapN { (st, off, lim, json) => (c, id) =>
-          c.call(ManagersApi.items)((id, st, off, lim)).map(p => Output.emit(json, p)(ManagersMarkdown.items))
+          c.call(ManagersApi.items)((ManagerInfo.Id(id), st.map(ItemStatus.Wire(_)), off.map(ItemPage.Limit(_)), lim.map(UnreadPage.Offset(_)))).map(p => Output.emit(json, p)(ManagersMarkdown.items))
         }
       ) orElse
       verb("events", "Its events, newest first")(
@@ -294,7 +307,7 @@ object ManagerCmd:
           Opts.option[Long]("before", "Only events older than this id").orNone,
           Opts.option[Int]("limit", "How many").orNone
         ).mapN { (b, lim) => (c, id) =>
-          c.call(ManagersApi.events)((id, b, lim)).map(p => Cli.out.println(ManagersMarkdown.events(p)))
+          c.call(ManagersApi.events)((ManagerInfo.Id(id), b.map(EventPage.Before(_)), lim.map(EventPage.Limit(_)))).map(p => Cli.out.println(ManagersMarkdown.events(p)))
         }
       ) orElse
       verb("pause", "Start no new runs (its runs in flight go on, unless --runs)")(
@@ -302,17 +315,17 @@ object ManagerCmd:
           .flag("runs", "Pause its runs in flight too")
           .orFalse
           .map(r =>
-            (c, id) => c.call(ManagersApi.action)((id, com.histmersion.api.automation.ManagersApi.ActionPart1Part2("pause"), Some(r))).map(m => Cli.out.println(ManagersMarkdown.line(m)))
+            (c, id) => c.call(ManagersApi.action)((ManagerInfo.Id(id), com.histmersion.api.automation.ManagersApi.ActionPart1Part2("pause"), Some(r))).map(m => Cli.out.println(ManagersMarkdown.line(m)))
           )
       ) orElse
       verb("resume", "Start runs again (and resume the runs a pause --runs paused)")(
         Opts.unit.map(_ =>
-          (c, id) => c.call(ManagersApi.action)((id, com.histmersion.api.automation.ManagersApi.ActionPart1Part2("resume"), None)).map(m => Cli.out.println(ManagersMarkdown.line(m)))
+          (c, id) => c.call(ManagersApi.action)((ManagerInfo.Id(id), com.histmersion.api.automation.ManagersApi.ActionPart1Part2("resume"), None)).map(m => Cli.out.println(ManagersMarkdown.line(m)))
         )
       ) orElse
       verb("stop", "Cancel its runs in flight and its open items")(
         Opts.unit.map(_ =>
-          (c, id) => c.call(ManagersApi.action)((id, com.histmersion.api.automation.ManagersApi.ActionPart1Part2("stop"), None)).map(m => Cli.out.println(ManagersMarkdown.line(m)))
+          (c, id) => c.call(ManagersApi.action)((ManagerInfo.Id(id), com.histmersion.api.automation.ManagersApi.ActionPart1Part2("stop"), None)).map(m => Cli.out.println(ManagersMarkdown.line(m)))
         )
       ) orElse
       verb(
@@ -330,7 +343,17 @@ object ManagerCmd:
         )
           .mapN { (text, item, once, suggest) => (c, id) =>
             c.call(ManagersApi.addHint)(
-              (id, HintAdd(text, item, Some(once), None, Some(com.histmersion.api.automation.Managers.HintAdd.Author("cli")), suggest = Some(suggest)))
+              (
+                ManagerInfo.Id(id),
+                HintAdd(
+                  HintAdd.Text(text),
+                  item.map(HintAdd.Item(_)),
+                  Some(HintAdd.Once(once)),
+                  None,
+                  Some(HintAdd.Author("cli")),
+                  suggest = Some(HintAdd.Suggest(suggest))
+                )
+              )
             ).map(h => Cli.out.println(ManagersMarkdown.hint(h)))
           }
       ) orElse
@@ -341,7 +364,7 @@ object ManagerCmd:
       )(
         (Opts.argument[String]("kind"), target, Opts.option[Int]("priority", "Its priority (default 10: first)").orNone)
           .mapN { (kind, t, p) => (c, id) =>
-            c.call(ManagersApi.addItem)((id, EnqueueRequest(kind, t, p))).map(i => Cli.out.println(ManagersMarkdown.item(i)))
+            c.call(ManagersApi.addItem)((ManagerInfo.Id(id), EnqueueRequest(EnqueueRequest.Kind(kind), EnqueueRequest.Target(t), p.map(EnqueueRequest.Priority(_))))).map(i => Cli.out.println(ManagersMarkdown.item(i)))
           }
       ) orElse
       verb("hold", "Hold an item: until a date, until a source (DOI or citekey) is in the corpus, or until released")(
@@ -351,22 +374,32 @@ object ManagerCmd:
           Opts.option[String]("until-source", "A DOI or citekey").orNone,
           Opts.option[String]("reason", "Why").orNone
         ).mapN { (t, u, s, r) => (c, id) =>
-          itemPatch(c, id, t, ItemPatch(com.histmersion.api.automation.Managers.ItemPatch.Action("hold"), until = u, untilSource = s, reason = r))
+          itemPatch(
+            c,
+            ManagerInfo.Id(id),
+            ManagerItem.Ref(t),
+            ItemPatch(
+              ItemPatch.Action("hold"),
+              until = u.map(ItemPatch.Until(_)),
+              untilSource = s.map(ItemPatch.UntilSource(_)),
+              reason = r.map(ItemPatch.Reason(_))
+            )
+          )
         }
       ) orElse
       verb("release", "Release a held item")(
-        target.map(t => (c, id) => itemPatch(c, id, t, ItemPatch(com.histmersion.api.automation.Managers.ItemPatch.Action("release"))))
+        target.map(t => (c, id) => itemPatch(c, ManagerInfo.Id(id), ManagerItem.Ref(t), ItemPatch(ItemPatch.Action("release"))))
       ) orElse
       verb("skip", "Stop an item as skipped (its run, if any, is cancelled)")(
         (target, Opts.option[String]("reason", "Why").orNone)
-          .mapN((t, r) => (c, id) => itemPatch(c, id, t, ItemPatch(com.histmersion.api.automation.Managers.ItemPatch.Action("skip"), reason = r)))
+          .mapN((t, r) => (c, id) => itemPatch(c, ManagerInfo.Id(id), ManagerItem.Ref(t), ItemPatch(ItemPatch.Action("skip"), reason = r.map(ItemPatch.Reason(_)))))
       ) orElse
       verb("reopen", "Bring a settled item back (its runs counted from zero)")(
-        target.map(t => (c, id) => itemPatch(c, id, t, ItemPatch(com.histmersion.api.automation.Managers.ItemPatch.Action("reopen"))))
+        target.map(t => (c, id) => itemPatch(c, ManagerInfo.Id(id), ManagerItem.Ref(t), ItemPatch(ItemPatch.Action("reopen"))))
       ) orElse
       verb("priority", "Set an item's priority (higher first)")(
         (target, Opts.argument[Int]("priority")).mapN((t, p) =>
-          (c, id) => itemPatch(c, id, t, ItemPatch(com.histmersion.api.automation.Managers.ItemPatch.Action("priority"), priority = Some(p)))
+          (c, id) => itemPatch(c, ManagerInfo.Id(id), ManagerItem.Ref(t), ItemPatch(ItemPatch.Action("priority"), priority = Some(ItemPatch.Priority(p))))
         )
       ) orElse
       verb(
@@ -378,7 +411,7 @@ object ManagerCmd:
           .argument[String]("cron")
           .map(t =>
             (c, id) =>
-              c.call(ManagersApi.update)((id, ManagerUpdate(cron = Some(t))))
+              c.call(ManagersApi.update)((ManagerInfo.Id(id), ManagerUpdate(cron = Some(ManagerUpdate.Cron(t)))))
                 .map(m => Cli.out.println(ManagersMarkdown.line(m)))
           )
       ) orElse
@@ -389,7 +422,7 @@ object ManagerCmd:
           .map(kvs =>
             (c, id) =>
               config(kvs)
-                .flatMap(cfg => c.call(ManagersApi.update)((id, ManagerUpdate(Some(cfg)))))
+                .flatMap(cfg => c.call(ManagersApi.update)((ManagerInfo.Id(id), ManagerUpdate(Some(cfg)))))
                 .map(m => Cli.out.println(ManagersMarkdown.line(m)))
           )
       )
@@ -401,7 +434,7 @@ object ManagerCmd:
     create orElse (
       Opts.argument[String]("id"),
       verbs.orElse(
-        Opts((c: Client, id: String) => c.call(ManagersApi.get)(id).map(d => Cli.out.println(ManagersMarkdown.detail(d))))
+        Opts((c: Client, id: String) => c.call(ManagersApi.get)(ManagerInfo.Id(id)).map(d => Cli.out.println(ManagersMarkdown.detail(d))))
       )
     ).mapN((id, f) => (c: Client) => f(c, id))
   }

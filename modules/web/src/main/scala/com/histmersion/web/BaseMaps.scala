@@ -25,165 +25,55 @@ import com.histmersion.api.instance.UiConfig
   * cheapest drawing — and a line of the notice says so.
   */
 object BaseMaps:
-  type ButtonBottom = ButtonBottom.T
-  object ButtonBottom extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type ButtonLeft = ButtonLeft.T
-  object ButtonLeft extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type ButtonRight = ButtonRight.T
-  object ButtonRight extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type ButtonTop = ButtonTop.T
-  object ButtonTop extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type ContoursNote = ContoursNote.T
-  object ContoursNote extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type ContoursWhy = ContoursWhy.T
-  object ContoursWhy extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type CreditsHeight = CreditsHeight.T
-  object CreditsHeight extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type CreditsHtml = CreditsHtml.T
-  object CreditsHtml extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type CreditsLeft = CreditsLeft.T
-  object CreditsLeft extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type CreditsPageUrl = CreditsPageUrl.T
-  object CreditsPageUrl extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type CreditsRight = CreditsRight.T
-  object CreditsRight extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type DocsLink = DocsLink.T
-  object DocsLink extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type DocsPage = DocsPage.T
-  object DocsPage extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type DocsUrl = DocsUrl.T
-  object DocsUrl extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type FootChosen = FootChosen.T
-  object FootChosen extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type LackingNotice = LackingNotice.T
-  object LackingNotice extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type LanguageLabel = LanguageLabel.T
-  object LanguageLabel extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type MapLanguage = MapLanguage.T
-  object MapLanguage extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type MapMoved = MapMoved.T
-  object MapMoved extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type MapZoom = MapZoom.T
-  object MapZoom extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type MissingLayer = MissingLayer.T
-  object MissingLayer extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type MissingNotice = MissingNotice.T
-  object MissingNotice extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type NoticeLacking = NoticeLacking.T
-  object NoticeLacking extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type NoticeLeft = NoticeLeft.T
-  object NoticeLeft extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type NoticeLift = NoticeLift.T
-  object NoticeLift extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type NoticeRight = NoticeRight.T
-  object NoticeRight extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type NoticeRoom = NoticeRoom.T
-  object NoticeRoom extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type NoticeText = NoticeText.T
-  object NoticeText extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type NoticeWarns = NoticeWarns.T
-  object NoticeWarns extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type OptionLabel = OptionLabel.T
-  object OptionLabel extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type PanelBottom = PanelBottom.T
-  object PanelBottom extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type PanelMinBelow = PanelMinBelow.T
-  object PanelMinBelow extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type PanelTop = PanelTop.T
-  object PanelTop extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type PanelWidth = PanelWidth.T
-  object PanelWidth extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type PlacementLeft = PlacementLeft.T
-  object PlacementLeft extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type PlacementTop = PlacementTop.T
-  object PlacementTop extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type PlanNote = PlanNote.T
-  object PlanNote extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type SeaDepthWhy = SeaDepthWhy.T
-  object SeaDepthWhy extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type SoftFallback = SoftFallback.T
-  object SoftFallback extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type VectorShown = VectorShown.T
-  object VectorShown extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type WindowHeight = WindowHeight.T
-  object WindowHeight extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type WindowWidth = WindowWidth.T
-  object WindowWidth extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
-
-  /** What the server reports (`GET /api/basemap`); `None` until asked. */
-  type LocalOnly = LocalOnly.T
-  object LocalOnly extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type Software = Software.T
-  object Software extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type EffectiveLocal = EffectiveLocal.T
-  object EffectiveLocal extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type ChoicesLocal = ChoicesLocal.T
-  object ChoicesLocal extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type PastNotice = PastNoticeValue
-  type PastNoticeValue = PastNoticeValue.T
-  object PastNoticeValue extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type SoftwareNotice = SoftwareNoticeValue
-  type SoftwareNoticeValue = SoftwareNoticeValue.T
-  object SoftwareNoticeValue extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type PlanLocal = PlanLocal.T
-  object PlanLocal extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type FootOpen = FootOpen.T
-  object FootOpen extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type Open = Open.T
-  object Open extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type ContoursFromZoom = ContoursFromZoomValue
-  type ContoursFromZoomValue = ContoursFromZoomValue.T
-  object ContoursFromZoomValue extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
-
   val status: Var[Option[Basemap.Status]] = Var(None)
 
   /** Whether the page has only the local maps (`ui.base-map-source` resolved to `local`). */
-  val localOnly: Var[com.histmersion.web.BaseMaps.LocalOnly] = Var(com.histmersion.web.BaseMaps.LocalOnly(false))
+  val localOnly: Var[Boolean] = Var(false)
 
   /** The base map drawn — the choice as [[effective]] maps it: what the names' tone follows. */
   val shown: Var[BaseMap] = Var(BaseMap.Standard)
 
   /** The browser draws its WebGL in software: the cheapest drawing of every map. */
-  val software: Var[com.histmersion.web.BaseMaps.Software] = Var(com.histmersion.web.BaseMaps.Software(false))
+  val software: Var[Boolean] = Var(false)
 
   /** The map's view, once it is still (its zoom and region): what the contours' line follows. */
-  val view: Var[Option[(com.histmersion.web.BaseMaps.MapZoom, GeoBounds)]] = Var(None)
+  val view: Var[Option[(Double, GeoBounds)]] = Var(None)
 
   // ── pure parts ──────────────────────────────────────────────────────────────────────────────────
 
   /** The local style an extract draws best: Readable when it can draw it whole, else Physical. Pure. */
   def defaultLocal(s: Option[Basemap.Status]): BaseMap =
-    if s.exists(st => st.available && st.missing(BaseStyles.Readable.id).isEmpty) || s.isEmpty then BaseMap.Readable
+    if s.exists(st => st.available.value && st.missing(BaseStyles.Readable.id).isEmpty) || s.isEmpty then BaseMap.Readable
     else BaseMap.Physical
 
   /** The base map drawn for the kept choice `b`: on a `local` page an online choice is the default local style, so a
     * browser's earlier choice never reaches another host. Pure.
     */
-  def effective(b: BaseMap, local: com.histmersion.web.BaseMaps.EffectiveLocal, s: Option[Basemap.Status]): BaseMap =
+  def effective(b: BaseMap, local: Boolean, s: Option[Basemap.Status]): BaseMap =
     if local && b.online then defaultLocal(s) else b
 
   /** The choices the menu offers: the two styles, and the online maps unless the page is `local`. Pure. */
-  def choices(local: com.histmersion.web.BaseMaps.ChoicesLocal): List[BaseMap] = if local then BaseMap.vectors else BaseMap.values.toList
+  def choices(local: Boolean): List[BaseMap] = if local then BaseMap.vectors else BaseMap.values.toList
 
   /** A choice's label: a vector style says when the data is missing, or when the download left out layers it draws.
     * Pure.
     */
-  def optionLabel(b: BaseMap, s: Option[Basemap.Status]): com.histmersion.web.BaseMaps.OptionLabel =
-    if b.online then b.label
-    else if !s.forall(_.available) then s"${b.label} — not downloaded"
-    else if s.exists(st => st.missing(b.wire).nonEmpty) then s"${b.label} — needs the full download"
-    else b.label
+  def optionLabel(b: BaseMap, s: Option[Basemap.Status]): String =
+    if b.online then b.label.value
+    else if !s.forall(_.available.value) then s"${b.label} — not downloaded"
+    else if s.exists(st => st.missing(Basemap.StyleState.Id(b.wire.value)).nonEmpty) then s"${b.label} — needs the full download"
+    else b.label.value
 
   /** The notice over a vector style. */
-  val PastNotice: com.histmersion.web.BaseMaps.PastNotice =
+  val PastNotice: String =
     "Today's terrain. Coastlines, rivers, lakes and vegetation were different in the past."
 
   /** The line added without a GPU. */
-  val SoftwareNotice: com.histmersion.web.BaseMaps.SoftwareNotice =
+  val SoftwareNotice: BooleanNotice =
     "This browser draws maps without a GPU: the relief is left out to keep the map quick."
 
   /** The docs section the notice links to, under `ui.docs-url`. */
-  def docsLink(docsUrl: com.histmersion.web.BaseMaps.DocsUrl, page: com.histmersion.web.BaseMaps.DocsPage = com.histmersion.web.BaseMaps.DocsPage("exploring/web-ui.md#the-base-map")): com.histmersion.web.BaseMaps.DocsLink =
+  def docsLink(docsUrl: String, page: String = "exploring/web-ui.md#the-base-map"): String =
     val base = if docsUrl.isEmpty || docsUrl.endsWith("/") then docsUrl else docsUrl + "/"
     s"$base$page"
 
@@ -191,44 +81,44 @@ object BaseMaps:
   val OfflinePage = "how-to/offline.md#the-one-time-download"
 
   /** The notice when the extracts are not on the server: what to run. */
-  def missingNotice(s: Option[Basemap.Status]): com.histmersion.web.BaseMaps.MissingNotice =
+  def missingNotice(s: Option[Basemap.Status]): String =
     val cmd = s.map(_.fetchCommand).getOrElse(Basemap.FetchCommand)
     s"This map is not downloaded on this server. Run `$cmd` on the machine that runs it (a few hundred MB to a few GB), " +
       "then choose it again."
 
   /** The notice over a style drawn without some of its layers: which, and what to run. Pure. */
-  def lackingNotice(missing: List[com.histmersion.web.BaseMaps.MissingLayer]): com.histmersion.web.BaseMaps.LackingNotice =
+  def lackingNotice(missing: List[String]): String =
     s"This map also draws ${missing.mkString(", ")}, which the download on this server left out. Run " +
       s"`${Basemap.KeepAllCommand}` on the machine that runs it, then choose the map again."
 
   /** The credit line's link to every dataset's credit (Settings › Credits): the places, boundaries and events drawn
     * over the base map are credited there.
     */
-  val allCreditsLink: com.histmersion.web.BaseMaps.CreditsPageUrl =
+  val allCreditsLink: String =
     s"""<a class="map-credits-all" href="${Route.Settings(SettingsSection.Credits).path}">Data sources</a>"""
 
   /** Pure: the credits line — each source's credit once, in order, separated by a middle dot. */
-  def creditsHtml(credits: Seq[com.histmersion.api.basemap.Basemap.LayerInfo.Attribution]): com.histmersion.web.BaseMaps.CreditsHtml = credits.map(_.trim).filter(_.nonEmpty).distinct.mkString(" · ")
+  def creditsHtml(credits: Seq[BaseMapSpec.Raster.Attribution]): String = credits.map(_.value.trim).filter(_.nonEmpty).distinct.mkString(" · ")
 
   /** How far the notice's corner rises so it clears the right-hand corner's controls: their height and a gap when the
     * two would overlap side by side, else nothing — and nothing when that would take it past the `room` above it in the
     * map (an opened legend as tall as the map lies over it instead). Pure.
     */
   def noticeLift(
-      noticeLeft: com.histmersion.web.BaseMaps.NoticeLeft,
-      noticeRight: com.histmersion.web.BaseMaps.NoticeRight,
-      creditsLeft: com.histmersion.web.BaseMaps.CreditsLeft,
-      creditsRight: com.histmersion.web.BaseMaps.CreditsRight,
-      creditsHeight: com.histmersion.web.BaseMaps.CreditsHeight,
-      room: com.histmersion.web.BaseMaps.NoticeRoom = Double.MaxValue
-  ): com.histmersion.web.BaseMaps.NoticeLift =
+      noticeLeft: Double,
+      noticeRight: Double,
+      creditsLeft: Double,
+      creditsRight: Double,
+      creditsHeight: Double,
+      room: Double = Double.MaxValue
+  ): Double =
     val lift = if noticeRight > creditsLeft && creditsRight > noticeLeft then creditsHeight + 4 else 0
-    if lift > room then com.histmersion.web.BaseMaps.NoticeLift(0) else lift
+    if lift > room then 0.0 else lift
 
   /** The languages offered for the names: English, each place's own, and those both the map's data and Natural Earth's
     * names carry.
     */
-  val Languages: List[(com.histmersion.web.BaseMaps.MapLanguage, com.histmersion.web.BaseMaps.LanguageLabel)] = List(
+  val Languages: List[(String, String)] = List(
     "en" -> "English",
     "local" -> "Local (own script)",
     "de" -> "Deutsch",
@@ -247,10 +137,10 @@ object BaseMaps:
   /** The online raster map of `b` (`ui.tiles` for Standard and Dark). Pure. */
   def raster(b: BaseMap, ui: UiConfig): BaseMapSpec.Raster =
     val osm = "© <a href=\"https://www.openstreetmap.org/copyright\">OpenStreetMap</a> contributors (ODbL)"
-    val url = b.url.getOrElse(ui.tiles)
+    val url = b.url.map(_.value).getOrElse(ui.tiles.value)
     val credit =
       if url.contains("openstreetmap.fr/hot") then s"$osm · tiles © Humanitarian OSM Team, OSM France" else osm
-    BaseMapSpec.Raster(url, ui.tilesMaxZoom, credit, dark = BaseMap.darkened(b, MapTone.parse(ui.tilesTone)))
+    BaseMapSpec.Raster(BaseMapSpec.Raster.Template(url), BaseMapSpec.Raster.MaxZoom(ui.tilesMaxZoom.value), BaseMapSpec.Raster.Attribution(credit), dark = BaseMap.darkened(b, MapTone.parse(MapTone.Wire(ui.tilesTone.value))))
 
   /** What is drawn for base map `b` (already [[effective]]), the server's status and the viewer's options: the spec,
     * the notice, and how deep the map zooms. Pure.
@@ -260,33 +150,33 @@ object BaseMaps:
       s: Option[Basemap.Status],
       prefs: MapPrefs,
       ui: UiConfig,
-      local: com.histmersion.web.BaseMaps.PlanLocal,
-      soft: com.histmersion.web.BaseMaps.SoftFallback
-  ): (BaseMapSpec, Option[(com.histmersion.web.BaseMaps.PlanNote, Boolean)], com.histmersion.api.basemap.Basemap.Zoom) =
+      local: Boolean,
+      soft: Boolean
+  ): (BaseMapSpec, Option[(String, Boolean)], com.histmersion.api.basemap.Basemap.Zoom) =
     b.vector match
-      case None    => (raster(b, ui), None, ui.tilesMaxZoom)
+      case None    => (raster(b, ui), None, Basemap.Zoom(ui.tilesMaxZoom.value))
       case Some(v) =>
-        s.filter(_.available) match
+        s.filter(_.available.value) match
           case Some(st) =>
-            val lang = prefs.language.getOrElse(ui.mapLanguage)
+            val lang = prefs.language.map(_.value).getOrElse(ui.mapLanguage.value)
             val spec = BaseMapSpec.Vector(
               v,
               st,
-              lang,
-              prefs.names.getOrElse(true),
-              prefs.contours.getOrElse(true),
-              prefs.seaDepth(v),
-              reduced = soft
+              BaseMapSpec.Vector.Lang(lang),
+              BaseMapSpec.Vector.Names(prefs.names.map(_.value).getOrElse(true)),
+              BaseMapSpec.Vector.Contours(prefs.contours.map(_.value).getOrElse(true)),
+              BaseMapSpec.Vector.SeaDepth(prefs.seaDepth(v)),
+              reduced = BaseMapSpec.Vector.Reduced(soft)
             )
-            val lacking = st.missing(b.wire)
-            val notice = if lacking.nonEmpty then (lackingNotice(lacking), true) else (PastNotice, false)
-            (spec, Some(notice), st.mapMaxZoom)
+            val lacking = st.missing(Basemap.StyleState.Id(b.wire.value))
+            val notice = if lacking.nonEmpty then (lackingNotice(lacking.map(_.value)), true) else (PastNotice, false)
+            (spec, Some(notice), Basemap.Zoom(st.mapMaxZoom.value))
           case None =>
             // not downloaded: the online Standard stands in (none on a local page), and the notice says what to run
             (
               if local then BaseMapSpec.Blank else raster(BaseMap.Standard, ui),
               Some((missingNotice(s), true)),
-              if local then ui.tilesMaxZoom else ui.tilesMaxZoom
+              Basemap.Zoom(if local then ui.tilesMaxZoom.value else ui.tilesMaxZoom.value)
             )
 
   // ── on the map ──────────────────────────────────────────────────────────────────────────────────
@@ -303,7 +193,7 @@ object BaseMaps:
   /** Before the map is made: the page's `ui.base-map-source`. */
   def configure(config: UiConfig): Unit =
     ui = config
-    localOnly.set(config.baseMapSource == BaseMapSource.Local)
+    localOnly.set(config.baseMapSource.value == BaseMapSource.Local)
 
   /** Ask the server again (on start, and when a vector style is chosen). */
   def refresh(): Unit =
@@ -314,9 +204,9 @@ object BaseMaps:
   def install(m: MapSurface, config: UiConfig)(using Owner): Unit =
     surface = m
     ui = config
-    software.set(m.capabilities.software)
-    view.set(Some((m.zoom, m.bounds)))
-    val _ = m.on(MapEventKind.MoveEnd)(_ => view.set(Some((m.zoom, m.bounds))))
+    software.set(m.capabilities.software.value)
+    view.set(Some((m.zoom.value, m.bounds)))
+    val _ = m.on(MapEventKind.MoveEnd)(_ => view.set(Some((m.zoom.value, m.bounds))))
     // the credits are shown at first; the reader's first pan or zoom folds them to their (i) button
     val _ = m.on(MapEventKind.MoveStart)(e => if e.native.isDefined && !moved then { moved = true; foldAfterMove() })
     // a base map drawn: its credits are known (they follow its sources and the layers drawn)
@@ -331,7 +221,7 @@ object BaseMaps:
       val eb = effective(b, localOnly.now(), s)
       shown.set(eb)
       val (spec, notice, maxZoom) = plan(eb, s, prefs, config, localOnly.now(), software.now())
-      m.setMaxZoom(maxZoom.toDouble)
+      m.setMaxZoom(maxZoom.value.toDouble)
       m.setBaseMap(spec)
       current = spec
       setNotice(
@@ -345,24 +235,24 @@ object BaseMaps:
     * credits — one box, where MapLibre's ⓘ button and its folded credits used to sit in the right-hand corner under the
     * legend. Without a notice (an online map) the box holds the credits alone; without either it is gone.
     */
-  private def setNotice(n: Option[(com.histmersion.web.BaseMaps.NoticeText, com.histmersion.web.BaseMaps.NoticeWarns)], lacking: com.histmersion.web.BaseMaps.NoticeLacking): Unit =
+  private def setNotice(n: Option[(String, Boolean)], lacking: Boolean): Unit =
     notice = n.map((t, w) => (t, w, lacking))
     drawFoot()
 
   // `var`s: the notice drawn now (its text, whether it warns, whether it is the lacking-layers one), and the
   // credits drawn with it
-  private var notice: Option[(com.histmersion.web.BaseMaps.NoticeText, com.histmersion.web.BaseMaps.NoticeWarns, com.histmersion.web.BaseMaps.NoticeLacking)] = None
-  private var drawnCredits: Seq[com.histmersion.api.basemap.Basemap.LayerInfo.Attribution] = Nil
+  private var notice: Option[(String, Boolean, Boolean)] = None
+  private var drawnCredits: Seq[BaseMapSpec.Raster.Attribution] = Nil
   // whether the reader opened (or closed) the foot with its (i) button: kept when it is drawn again; whether the
   // reader has moved the map yet; how far the foot's corner is lifted now
-  private var footOpen: Option[com.histmersion.web.BaseMaps.FootOpen] = None
+  private var footOpen: Option[Boolean] = None
   private var moved = false
   private var noticeLifted = 0.0
 
   /** Pure: is the foot open — the reader's choice, else open until the first pan or zoom, and open whenever it says the
     * map is not (wholly) downloaded.
     */
-  def footOpenNow(chosen: Option[com.histmersion.web.BaseMaps.FootChosen], moved: com.histmersion.web.BaseMaps.MapMoved, warns: com.histmersion.web.BaseMaps.NoticeWarns): Boolean = chosen.getOrElse(warns || !moved)
+  def footOpenNow(chosen: Option[Boolean], moved: Boolean, warns: Boolean): Boolean = chosen.getOrElse(warns || !moved)
 
   /** Pure: does the folded foot keep a credit in sight? The online OpenStreetMap tiles (and OSM France's) require
     * theirs to stay visible on the map.
@@ -392,10 +282,10 @@ object BaseMaps:
         com.histmersion.web.MapFold.ClassName("btn--icon map-foot-toggle"),
         com.histmersion.web.MapFold.ControlsId("map-foot-body"),
         if notice.nonEmpty then com.histmersion.web.MapFold.Label("about this map: its terrain and credits") else com.histmersion.web.MapFold.Label("map credits"),
-        Icon.html(Icon.Info),
-        open
+        com.histmersion.web.MapFold.InnerHtml(Icon.html(Icon.Info).value),
+        com.histmersion.web.MapFold.Open(open)
       )
-      MapFold.set(box, open)
+      MapFold.set(box, com.histmersion.web.MapFold.Open(open))
       box.classList.toggle("is-expanded", footOpen.contains(true))
       // the online OpenStreetMap tiles' credit stays in sight, folded or not
       if keepsOsmCredit(shown.now()) then
@@ -403,7 +293,7 @@ object BaseMaps:
         osm.className = "map-credits-keep"
         osm.innerHTML = "© <a href=\"https://www.openstreetmap.org/copyright\">OpenStreetMap</a>"
         box.appendChild(osm)
-      MapFold.wire(box, o => { footOpen = Some(o); box.classList.toggle("is-expanded", o); fitNotice() })
+      MapFold.wire(box, o => { footOpen = Some(o.value); box.classList.toggle("is-expanded", o.value); fitNotice() })
       val body = dom.document.createElement("div").asInstanceOf[dom.HTMLElement]
       body.className = "map-foot-body"
       body.id = "map-foot-body"
@@ -415,9 +305,9 @@ object BaseMaps:
         val p = dom.document.createElement("span")
         p.textContent = text
         val a = dom.document.createElement("a").asInstanceOf[dom.HTMLAnchorElement]
-        a.href = if lacking then docsLink(ui.docsUrl, OfflinePage)
-        else if warn then docsLink(ui.docsUrl, com.histmersion.web.BaseMaps.DocsPage("how-to/offline.md"))
-        else docsLink(ui.docsUrl)
+        a.href = if lacking then docsLink(ui.docsUrl.value, OfflinePage)
+        else if warn then docsLink(ui.docsUrl.value, "how-to/offline.md")
+        else docsLink(ui.docsUrl.value)
         a.target = "_blank"
         a.rel = "noopener"
         a.textContent = if warn then "How to download it" else "Why?"
@@ -496,9 +386,9 @@ object BaseMaps:
 
   // ── the controls ────────────────────────────────────────────────────────────────────────────────
 
-  private val open: Var[com.histmersion.web.BaseMaps.Open] = Var(com.histmersion.web.BaseMaps.Open(false))
+  private val open: Var[Boolean] = Var(false)
 
-  private val onVector: Signal[com.histmersion.web.BaseMaps.VectorShown] = shown.signal.map(_.vector.isDefined)
+  private val onVector: Signal[Boolean] = shown.signal.map(_.vector.isDefined)
 
   private def baseSelect: HtmlElement =
     select(
@@ -510,17 +400,17 @@ object BaseMaps:
         .map((l, s) =>
           choices(l).map(b =>
             option(
-              value := b.wire,
+              value := b.wire.value,
               optionLabel(b, s),
               title := (if b.online then "Tiles from the internet"
-                        else s.map(_.missing(b.wire)).filter(_.nonEmpty).fold(PastNotice)(lackingNotice))
+                        else s.map(_.missing(Basemap.StyleState.Id(b.wire.value)).map(_.value)).filter(_.nonEmpty).fold(PastNotice)(lackingNotice))
             )
           )
         ),
       controlled(
-        value <-- shown.signal.map(_.wire).composeChanges(_.delay(0)),
+        value <-- shown.signal.map(_.wire.value).composeChanges(_.delay(0)),
         onChange.mapToValue --> { v =>
-          BaseMap.fromWire(v).foreach { b =>
+          BaseMap.fromWire(BaseMap.Wire(v)).foreach { b =>
             if b.vector.isDefined then refresh()
             UiState.set(UiState.baseMap := b)()
           }
@@ -547,10 +437,10 @@ object BaseMaps:
     )
 
   /** The names' language unless the viewer chose one: `basemap.labels.language`, as the server reports it. */
-  private def defaultLanguage: com.histmersion.web.BaseMaps.MapLanguage = if ui == null || ui.mapLanguage.isEmpty then com.histmersion.web.BaseMaps.MapLanguage("en") else ui.mapLanguage
+  private def defaultLanguage: String = if ui == null || ui.mapLanguage.value.isEmpty then "en" else ui.mapLanguage.value
 
   /** The languages the menu offers: [[Languages]], and the configured default when it is not among them. Pure. */
-  def languageChoices(default: com.histmersion.web.BaseMaps.MapLanguage): List[(com.histmersion.web.BaseMaps.MapLanguage, com.histmersion.web.BaseMaps.LanguageLabel)] =
+  def languageChoices(default: String): List[(String, String)] =
     if Languages.exists(_._1 == default) then Languages else Languages :+ (default -> default)
 
   private def label_(mods: Modifier[HtmlElement]*): HtmlElement = htmlTag("label")(mods*)
@@ -559,21 +449,21 @@ object BaseMaps:
 
   /** The relief as the server has it, when it can be drawn. */
   private def relief(s: Option[Basemap.Status]): Option[Basemap.LayerInfo] =
-    s.flatMap(_.layers.find(l => l.layer == Basemap.Layer.Terrain.wire && l.present && l.error.isEmpty))
+    s.flatMap(_.layers.find(l => l.layer == Basemap.Layer.Terrain.wire && l.present.value && l.error.isEmpty))
 
   /** Relief deeper than the extract: a focus region downloaded, or the on-demand relief on. Pure. */
-  def deeperRelief(i: Basemap.LayerInfo): Boolean = i.focus.nonEmpty || i.onDemand.exists(_.enabled)
+  def deeperRelief(i: Basemap.LayerInfo): Boolean = i.focus.nonEmpty || i.onDemand.exists(_.enabled.value)
 
   /** The app zoom from which Physical draws its contours (its style's `contours` layer: MapLibre zoom 10). */
-  val ContoursFromZoom: com.histmersion.web.BaseMaps.ContoursFromZoom = 11.0
+  val ContoursFromZoom: Double = 11.0
 
   /** Why the contours cannot be drawn anywhere, if they cannot: only Physical draws them, with a GPU, from relief
     * deeper than the extract — a focus region (`basemap fetch --layer terrain --focus`) or the on-demand relief
     * (`basemap.terrain.on-demand`). Pure.
     */
-  def contoursWhy(b: BaseMap, s: Option[Basemap.Status], soft: com.histmersion.web.BaseMaps.SoftFallback): Option[com.histmersion.web.BaseMaps.ContoursWhy] =
-    if b != BaseMap.Physical then Some(com.histmersion.web.BaseMaps.ContoursWhy("Physical draws contours"))
-    else if soft then Some(com.histmersion.web.BaseMaps.ContoursWhy("not drawn without a GPU"))
+  def contoursWhy(b: BaseMap, s: Option[Basemap.Status], soft: Boolean): Option[String] =
+    if b != BaseMap.Physical then Some("Physical draws contours")
+    else if soft then Some("not drawn without a GPU")
     else
       relief(s) match
         case None                        => Some(s"no relief downloaded — `${Basemap.FetchCommand} --layer terrain`")
@@ -586,17 +476,17 @@ object BaseMaps:
 
   /** Do a region of the view and a focus region's box meet? Pure. */
   def meets(v: GeoBounds, b: BBox): Boolean =
-    v.south <= b.maxLat && v.north >= b.minLat && v.west <= b.maxLon && v.east >= b.minLon
+    v.south.value <= b.maxLat.value && v.north.value >= b.minLat.value && v.west.value <= b.maxLon.value && v.east.value >= b.minLon.value
 
   /** Why the contours, possible on this map, are not drawn in this view (zoom `z`, region `v`): zoomed out too far, or
     * outside every focus region with the on-demand relief off (the contours there follow the extract's coarse relief).
     * `None`: they are drawn. Pure.
     */
-  def contoursNote(s: Option[Basemap.Status], z: com.histmersion.web.BaseMaps.MapZoom, v: GeoBounds): Option[com.histmersion.web.BaseMaps.ContoursNote] =
+  def contoursNote(s: Option[Basemap.Status], z: Double, v: GeoBounds): Option[String] =
     relief(s).flatMap { i =>
       val inFocus = i.focus.exists(f => BBox.parse(f.bbox).exists(meets(v, _)))
       if z < ContoursFromZoom then Some(f"zoom in to see contours (from zoom ${ContoursFromZoom.toInt}%d)")
-      else if !inFocus && !i.onDemand.exists(_.enabled) then
+      else if !inFocus && !i.onDemand.exists(_.enabled.value) then
         Some(
           s"outside the detailed relief (${i.focus.map(_.name).mkString(", ")}) and on-demand relief is off: " +
             "contours here follow the coarse relief"
@@ -607,10 +497,10 @@ object BaseMaps:
   /** Why the sea cannot be coloured by its depth, if it cannot: with a GPU, from the sea floor (`basemap fetch --layer
     * bathymetry`). Pure.
     */
-  def seaDepthWhy(b: BaseMap, s: Option[Basemap.Status], soft: com.histmersion.web.BaseMaps.SoftFallback): Option[com.histmersion.web.BaseMaps.SeaDepthWhy] =
+  def seaDepthWhy(b: BaseMap, s: Option[Basemap.Status], soft: Boolean): Option[String] =
     if b.vector.isEmpty then Some("Readable and Physical draw the sea's depth")
-    else if soft then Some(com.histmersion.web.BaseMaps.SeaDepthWhy("not drawn without a GPU"))
-    else if !s.exists(_.layers.exists(l => l.layer == Basemap.Layer.Bathymetry.wire && l.present && l.error.isEmpty))
+    else if soft then Some("not drawn without a GPU")
+    else if !s.exists(_.layers.exists(l => l.layer == Basemap.Layer.Bathymetry.wire && l.present.value && l.error.isEmpty))
     then Some(s"no sea floor downloaded — `${Basemap.FetchCommand} --layer bathymetry`")
     else None
 
@@ -636,8 +526,8 @@ object BaseMaps:
             input(
               typ := "checkbox",
               cls := "map-option-names",
-              checked <-- UiState.mapOptions.signal.map(_.names.getOrElse(true)),
-              onInput.mapToChecked --> (on => setPrefs(_.modify(_.names).setTo(Option.when(!on)(false))))
+              checked <-- UiState.mapOptions.signal.map(_.names.map(_.value).getOrElse(true)),
+              onInput.mapToChecked --> (on => setPrefs(_.modify(_.names).setTo(Option.when(!on)(MapPrefs.Names(false)))))
             ),
             span("Names")
           )
@@ -649,12 +539,12 @@ object BaseMaps:
             select(
               cls := "field map-language-select",
               aria.label := "names' language",
-              disabled <-- UiState.mapOptions.signal.map(_.names.contains(false)),
+              disabled <-- UiState.mapOptions.signal.map(_.names.exists(!_.value)),
               languageChoices(defaultLanguage).map((code, name) => option(value := code, name)),
               controlled(
-                value <-- UiState.mapOptions.signal.map(_.language.getOrElse(defaultLanguage)),
+                value <-- UiState.mapOptions.signal.map(_.language.map(_.value).getOrElse(defaultLanguage)),
                 onChange.mapToValue --> (v =>
-                  setPrefs(_.modify(_.language).setTo(Option.when(v != defaultLanguage)(v)))
+                  setPrefs(_.modify(_.language).setTo(Option.when(v != defaultLanguage)(MapPrefs.Language(v))))
                 )
               )
             )
@@ -670,8 +560,8 @@ object BaseMaps:
               disabled <-- why.map(_.isDefined),
               checked <-- UiState.mapOptions.signal
                 .combineWith(why)
-                .map((p, w) => w.isEmpty && p.contours.getOrElse(true)),
-              onInput.mapToChecked --> (on => setPrefs(_.modify(_.contours).setTo(Option.when(!on)(false))))
+                .map((p, w) => w.isEmpty && p.contours.map(_.value).getOrElse(true)),
+              onInput.mapToChecked --> (on => setPrefs(_.modify(_.contours).setTo(Option.when(!on)(MapPrefs.Contours(false)))))
             ),
             span("Contour lines")
           ),
@@ -690,7 +580,7 @@ object BaseMaps:
               checked <-- UiState.mapOptions.signal
                 .combineWith(shown.signal, depthWhy)
                 .map((p, b, w) => w.isEmpty && b.vector.exists(p.seaDepth)),
-              onInput.mapToChecked --> (on => shown.now().vector.foreach(v => setPrefs(_.withSeaDepth(v, on))))
+              onInput.mapToChecked --> (on => shown.now().vector.foreach(v => setPrefs(_.withSeaDepth(v, MapPrefs.SeaDepth(on)))))
             ),
             span("Sea depth")
           ),
@@ -734,16 +624,16 @@ object BaseMaps:
           cls := "field map-motion-select",
           idAttr := "map-motion-select",
           aria.label := "map motion",
-          aria.describedBy <-- MotionPref.heldBySystem.map(h => if h then "map-motion-note" else ""),
-          MapMotion.values.toList.map(m => option(value := m.wire, m.label)),
+          aria.describedBy <-- MotionPref.heldBySystem.map(h => if h.value then "map-motion-note" else ""),
+          MapMotion.values.toList.map(m => option(value := m.wire.value, m.label.value)),
           controlled(
-            value <-- UiState.mapMotion.signal.map(_.wire),
-            onChange.mapToValue --> (v => MapMotion.fromWire(v).foreach(m => UiState.set(UiState.mapMotion := m)()))
+            value <-- UiState.mapMotion.signal.map(_.wire.value),
+            onChange.mapToValue --> (v => MapMotion.fromWire(MapMotion.Wire(v)).foreach(m => UiState.set(UiState.mapMotion := m)()))
           )
         )
       ),
       child.maybe <-- MotionPref.heldBySystem.map(h =>
-        Option.when(h)(
+        Option.when(h.value)(
           div(idAttr := "map-motion-note", cls := "map-option-why map-motion-note", role := "note", MotionNote)
         )
       )
@@ -764,12 +654,12 @@ object BaseMaps:
     * window. Pure.
     */
   def placement(
-      buttonLeft: com.histmersion.web.BaseMaps.ButtonLeft,
-      buttonRight: com.histmersion.web.BaseMaps.ButtonRight,
-      buttonBottom: com.histmersion.web.BaseMaps.ButtonBottom,
-      width: com.histmersion.web.BaseMaps.PanelWidth,
-      windowWidth: com.histmersion.web.BaseMaps.WindowWidth
-  ): (com.histmersion.web.BaseMaps.PlacementLeft, com.histmersion.web.BaseMaps.PlacementTop) =
+      buttonLeft: Double,
+      buttonRight: Double,
+      buttonBottom: Double,
+      width: Double,
+      windowWidth: Double
+  ): (Double, Double) =
     val x = math.max(8.0, math.min(windowWidth - width - 8, buttonRight - width))
     (if buttonLeft < 0 then 8.0 else x, buttonBottom + 4)
 
@@ -777,21 +667,13 @@ object BaseMaps:
     * bottom `bottom` px from the window's bottom.
     */
   enum PanelSide:
-    case Below(top: PanelSide.Below.Top)
-    case Above(bottom: PanelSide.Above.Bottom)
-
-  object PanelSide:
-    object Below:
-      type Top = com.histmersion.web.BaseMaps.PanelTop
-      val Top: _root_.com.histmersion.web.BaseMaps.PanelTop.type = _root_.com.histmersion.web.BaseMaps.PanelTop
-    object Above:
-      type Bottom = com.histmersion.web.BaseMaps.PanelBottom
-      val Bottom: _root_.com.histmersion.web.BaseMaps.PanelBottom.type = _root_.com.histmersion.web.BaseMaps.PanelBottom
+    case Below(top: Double)
+    case Above(bottom: Double)
 
   /** Pure: under the button, unless less than `minBelow` px is left under it and more is above — the button low in a
     * tablet's map & tools drawer, where the panel would be squeezed into a strip.
     */
-  def panelSide(buttonTop: com.histmersion.web.BaseMaps.ButtonTop, buttonBottom: com.histmersion.web.BaseMaps.ButtonBottom, windowHeight: com.histmersion.web.BaseMaps.WindowHeight, minBelow: com.histmersion.web.BaseMaps.PanelMinBelow): PanelSide =
+  def panelSide(buttonTop: Double, buttonBottom: Double, windowHeight: Double, minBelow: Double): PanelSide =
     val below = windowHeight - buttonBottom - 4
     if below < minBelow && buttonTop - 4 > below then PanelSide.Above(windowHeight - buttonTop + 4)
     else PanelSide.Below(buttonBottom + 4)
@@ -806,7 +688,7 @@ object BaseMaps:
         placement(r.left, r.right, r.bottom, math.min(300.0, dom.window.innerWidth * 0.92), dom.window.innerWidth)
       p.style.setProperty("--map-options-x", s"${x}px")
       p.style.setProperty("--map-options-y", s"${y}px")
-      val minBelow = if Viewport.tabletNow then Layout.mapOptionsMinBelow.value.toDouble else 0.0
+      val minBelow = if Viewport.tabletNow then Layout.mapOptionsMinBelow.value.value.toDouble else 0.0
       panelSide(r.top, r.bottom, dom.window.innerHeight, minBelow) match
         case PanelSide.Above(bottom) =>
           p.classList.add("is-above")
@@ -814,7 +696,7 @@ object BaseMaps:
         case PanelSide.Below(_) => p.classList.remove("is-above")
 
   private def close(): Unit =
-    open.set(com.histmersion.web.BaseMaps.Open(false))
+    open.set(false)
     Option(dom.document.getElementById("map-options-button")).foreach(_.asInstanceOf[dom.HTMLElement].focus())
 
   /** The base-map controls of the map's toolbar: the menu and the options. */
@@ -828,7 +710,7 @@ object BaseMaps:
       documentEvents(_.onKeyDown) --> { e => if e.key == "Escape" && open.now() then close() },
       documentEvents(_.onPointerDown) --> { e =>
         val t = e.target.asInstanceOf[dom.Element]
-        if open.now() && t != null && t.closest(".map-options-anchor") == null then open.set(com.histmersion.web.BaseMaps.Open(false))
+        if open.now() && t != null && t.closest(".map-options-anchor") == null then open.set(false)
       },
       open.signal.changes.filter(identity) --> { _ =>
         place()

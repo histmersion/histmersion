@@ -8,7 +8,10 @@ import cats.syntax.all.*
 import com.monovore.decline.*
 import com.histmersion.api.Api
 import com.histmersion.config.*
-import com.histmersion.domain.catalogue.Historicity
+import com.histmersion.api.catalogue.Historicity
+import com.histmersion.api.catalogue.{Event, EventCorrection, EventSummary}
+import com.histmersion.api.library.Citekey
+import com.histmersion.api.personal.UnreadPage
 import com.histmersion.api.catalogue.{
   Corrections,
   EventCandidatesRequest,
@@ -58,14 +61,22 @@ object EventsCmd:
     )
       .mapN { (q, kind, hist, place, tier, ctx, f, json) => (c: Client) =>
         c.listEvents(
-          Api.EventQuery(f, q.map(_.trim).filter(_.nonEmpty), kind, hist, place, tier, Option.when(ctx)(com.histmersion.api.Api.EventQuery.Context(true)))
+          Api.EventQuery(
+            f,
+            q.map(_.trim).filter(_.nonEmpty).map(Api.EventQuery.Text(_)),
+            kind.map(Api.EventQuery.Kind(_)),
+            hist.map(Api.EventQuery.Historicity(_)),
+            place.map(Api.EventQuery.PlaceId(_)),
+            tier.map(Api.EventQuery.Tier(_)),
+            Option.when(ctx)(com.histmersion.api.Api.EventQuery.Context(true))
+          )
         ).map(r => Output.emit(json, r)(EventsMarkdown.eventList))
       }
   }
 
   private def showCmd (using console: Console) = Opts.subcommand("show", "One event: datings, edges, participants") {
     (Opts.argument[String]("id"), Output.jsonFlag).mapN { (id, json) => (c: Client) =>
-      c.getEvent(id).map(d => Output.emit(json, d)(_.markdown))
+      c.getEvent(Event.Uid(id)).map(d => Output.emit(json, d)(_.markdown))
     }
   }
 
@@ -98,28 +109,35 @@ object EventsCmd:
     )
       .mapN { (id, scale, place, lat, lon, geometry, kind, hist, label, parent, desc, ck, wd) =>
         val patch = for
-          geom <- EventGeometry.of(geometry, lat, lon).left.map(m => Cli.Error(m, exitCode = ExitCode.Usage))
+          geom <- EventGeometry
+            .of(
+              geometry.map(EventGeometry.Geojson(_)),
+              lat.map(com.histmersion.api.catalogue.Latitude(_)),
+              lon.map(com.histmersion.api.catalogue.Longitude(_))
+            )
+            .left
+            .map(m => Cli.Error(Cli.Error.Message(m.value), exitCode = ExitCode.Usage))
           _ <- scale
-            .filter(EventScale.parse(_).isEmpty)
+            .filter(v => EventScale.parse(EventSummary.Scale(v)).isEmpty)
             .fold(Right(()))(v =>
-              Left(Cli.Error(s"--scale: '$v' is not local, regional or auto", exitCode = ExitCode.Usage))
+              Left(Cli.Error(Cli.Error.Message(s"--scale: '$v' is not local, regional or auto"), exitCode = ExitCode.Usage))
             )
           p = EventPatch(
-            label = label,
-            kind = kind,
-            historicity = hist,
-            geometry = geom,
-            placeId = place,
-            parentId = parent,
-            description = desc,
-            citekey = ck,
-            scale = scale,
-            wikidata = wd
+            label = label.map(EventSummary.Label(_)),
+            kind = kind.map(EventSummary.Kind(_)),
+            historicity = hist.map(EventSummary.Historicity(_)),
+            geometry = geom.map(g => EventPatch.Geometry(g.value)),
+            placeId = place.map(com.histmersion.api.catalogue.Place.Id(_)),
+            parentId = parent.map(Event.Id(_)),
+            description = desc.map(EventSummary.Description(_)),
+            citekey = ck.map(Citekey(_)),
+            scale = scale.map(EventSummary.Scale(_)),
+            wikidata = wd.map(EventPatch.Wikidata(_))
           )
           _ <- Either.cond(
             p != EventPatch(),
             (),
-            Cli.Error("nothing to change: give at least one field", exitCode = ExitCode.Usage)
+            Cli.Error(Cli.Error.Message("nothing to change: give at least one field"), exitCode = ExitCode.Usage)
           )
         yield p
         (id, patch)
@@ -134,7 +152,7 @@ object EventsCmd:
     patchOpts.map { (id, patch) => (c: Client) =>
       for
         p <- patch
-        d <- c.patchEvent(id, p)
+        d <- c.patchEvent(Event.Uid(id), p)
       yield Cli.out.println(d.markdown)
     }
   }
@@ -146,7 +164,7 @@ object EventsCmd:
     Cli.out.println(
       s"job `${j.id}` started: ${j.detail.flatMap(com.histmersion.api.catalogue.EventsJobKinds.Catalogue.of).getOrElse(j.kind)} (`histmersion jobs` lists it)"
     )
-    if noWait then Right(())
+    if noWait.value then Right(())
     else
       IngestCmd.pollJob(c, j.id, 0).flatMap(_ => c.job(j.id)).map { done =>
         done.detail.flatMap(EventImportReport.Detail.of).foreach(r => Cli.out.println(EventImportReport.markdown(r)))
@@ -180,8 +198,20 @@ object EventsCmd:
       Opts.flag("no-wait", "Print the job id and return").orFalse
     )
       .mapN { (p, dry, limit, bbox, from, to, vei, mag, refresh, noWait) => (c: Client) =>
-        c.call(EventsApi.importEvents)(EventImportRequest(p, dry, limit, bbox, from, to, vei, mag, refresh))
-          .flatMap(follow(c, _, noWait))
+        c.call(EventsApi.importEvents)(
+          EventImportRequest(
+            EventImportRequest.Provider(p),
+            EventImportRequest.DryRun(dry),
+            limit.map(EventImportRequest.Limit(_)),
+            bbox.map(EventImportRequest.Bbox(_)),
+            from.map(EventImportRequest.From(_)),
+            to.map(EventImportRequest.To(_)),
+            vei.map(EventImportRequest.MinVei(_)),
+            mag.map(EventImportRequest.MinMagnitude(_)),
+            EventImportRequest.Refresh(refresh)
+          )
+        )
+          .flatMap(follow(c, _, Cli.NoWait(noWait)))
       }
   }
 
@@ -197,7 +227,7 @@ object EventsCmd:
       Opts.flag("no-wait", "Print the job id and return").orFalse
     )
       .mapN { (p, dry, noWait) => (c: Client) =>
-        c.call(EventsApi.rederive)(EventRederiveRequest(p, dry)).flatMap { j =>
+        c.call(EventsApi.rederive)(EventRederiveRequest(p.map(EventRederiveRequest.Provider(_)), EventRederiveRequest.DryRun(dry))).flatMap { j =>
           Cli.out.println(
             s"job `${j.id}` started: ${j.detail.flatMap(com.histmersion.api.catalogue.EventsJobKinds.Catalogue.of).getOrElse(j.kind)} (`histmersion jobs` lists it)"
           )
@@ -221,7 +251,7 @@ object EventsCmd:
       Opts.option[Int]("limit", "At most this many").orNone
     )
       .mapN { (st, ev, limit) => (c: Client) =>
-        c.call(EventsApi.corrections)((st, ev, limit, None)).map(l => Cli.out.println(Corrections.markdown(l)))
+        c.call(EventsApi.corrections)((st.map(Event.Id(_)), ev.map(EventCorrection.Status(_)), limit.map(UnreadPage.Offset(_)), None)).map(l => Cli.out.println(Corrections.markdown(l)))
       }
   }
 
@@ -254,9 +284,18 @@ object EventsCmd:
     )
       .mapN { (id, re, confirm, reject) => (c: Client) =>
         if re || confirm.nonEmpty || reject.nonEmpty then
-          c.call(EventsApi.applyLinks)((id, EventLinksRequest(re, confirm, reject)))
+          c.call(EventsApi.applyLinks)(
+            (
+              Event.Id(id),
+              EventLinksRequest(
+                EventLinksRequest.Recompute(re),
+                confirm.map(EventLinksRequest.Confirm(_)),
+                reject.map(EventLinksRequest.Reject(_))
+              )
+            )
+          )
             .map(r => Cli.out.println(EventLinksMarkdown.result(r)))
-        else c.call(EventsApi.links)(id).map(l => Cli.out.println(EventLinksMarkdown.list(l)))
+        else c.call(EventsApi.links)(Event.Id(id)).map(l => Cli.out.println(EventLinksMarkdown.list(l)))
       }
   }
 
@@ -271,7 +310,9 @@ object EventsCmd:
       Opts.flag("no-wait", "Print the job id and return").orFalse
     )
       .mapN { (all, ev, limit, noWait) => (c: Client) =>
-        c.call(EventsApi.candidatesJob)(EventCandidatesRequest(all, ev, limit)).flatMap(follow(c, _, noWait))
+        c.call(EventsApi.candidatesJob)(
+          EventCandidatesRequest(EventCandidatesRequest.All(all), ev.map(Event.Id(_)), limit.map(EventCandidatesRequest.Limit(_)))
+        ).flatMap(follow(c, _, Cli.NoWait(noWait)))
       }
   }
 
@@ -287,7 +328,7 @@ object EventsCmd:
       FilterFlags.opts
     )
       .mapN { (kind, tier, area, f) => (c: Client) =>
-        c.call(EventsApi.leads)(Api.EventQuery(f, kind = kind, tier = tier, area = area))
+        c.call(EventsApi.leads)(Api.EventQuery(f, kind = kind.map(Api.EventQuery.Kind(_)), tier = tier.map(Api.EventQuery.Tier(_)), area = area.map(Api.EventQuery.Area(_))))
           .map(l => Cli.out.println(EventLeads.markdown(l)))
       }
   }

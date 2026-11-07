@@ -11,14 +11,10 @@ import java.nio.file.Path
 type PluginRepository = PluginRepository.T
 
 object PluginRepository extends RefinedType[String, Match["(https?|file):.+"]]:
-  type Problem = Problem.T
-  object Problem extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type Text = Text.T
-  object Text extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   /** An `https://`, `http://` or `file:` URL as given, or a local directory as its `file:` URL; a directory must exist.
     */
 
-  def parse(raw: com.histmersion.cli.PluginRepository.Text, isDirectory: Path => Boolean): Either[com.histmersion.cli.PluginRepository.Problem, PluginRepository] =
+  def parse(raw: String, isDirectory: Path => Boolean): Either[String, PluginRepository] =
     val trimmed = raw.trim
     option(trimmed) match
       case Some(url) => Right(url)

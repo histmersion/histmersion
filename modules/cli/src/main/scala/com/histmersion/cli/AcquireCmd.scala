@@ -6,12 +6,16 @@ import com.histmersion.config.*
 
 import java.nio.file.{Files, Path}
 import com.histmersion.api.library.{
+  AcquireApi,
   AcquireMarkdown,
+  ArchiveId,
   ArchiveImportRequest,
   AssessRequest,
+  Citekey,
   FollowupsRequest,
   RefsRequest,
-  RetractionsUpdate
+  RetractionsUpdate,
+  Title
 }
 import com.histmersion.api.library.Ingest
 import com.histmersion.util.console.Console
@@ -35,21 +39,27 @@ object AcquireCmd:
       Output.jsonFlag
     ).mapN { (q, since, sort, limit, notInDb, json) => (c: Client) =>
       AcquireClient(c)
-        .discover(q, since, sort, limit, notInDb)
+        .discover(
+          AcquireApi.Query(q),
+          since.map(y => com.histmersion.api.catalogue.Year(y.toLong)),
+          sort.map(AcquireApi.Filter(_)),
+          limit.map(AcquireApi.Limit(_)),
+          notInDb
+        )
         .map(r => Output.emit(json, r)(AcquireMarkdown.discover))
     }
   }
 
   private def discoverMeta (using console: Console) = Opts.subcommand("meta", "Normalised metadata for one DOI") {
     (Opts.argument[String]("doi"), Output.jsonFlag).mapN { (doi, json) => (c: Client) =>
-      AcquireClient(c).meta(doi).map(w => Output.emit(json, w)(AcquireMarkdown.work))
+      AcquireClient(c).meta(AcquireApi.Identifier(doi)).map(w => Output.emit(json, w)(AcquireMarkdown.work))
     }
   }
 
   private def discoverWikirefs (using console: Console) =
     Opts.subcommand("wikirefs", "Harvest the DOIs a Wikipedia article cites (the trailhead)") {
       (Opts.argument[String]("wikipedia-url"), Output.jsonFlag).mapN { (url, json) => (c: Client) =>
-        AcquireClient(c).wikirefs(url).map(r => Output.emit(json, r)(AcquireMarkdown.wikirefs))
+        AcquireClient(c).wikirefs(Title(url)).map(r => Output.emit(json, r)(AcquireMarkdown.wikirefs))
       }
     }
 
@@ -65,7 +75,7 @@ object AcquireCmd:
       Opts.flag("apply", "Write the resolved references as `references` edges").orFalse,
       Output.jsonFlag
     ).mapN { (id, apply, json) => (c: Client) =>
-      AcquireClient(c).refs(RefsRequest(id, apply)).map(r => Output.emit(json, r)(AcquireMarkdown.refs))
+      AcquireClient(c).refs(RefsRequest(RefsRequest.Id(id), RefsRequest.Apply(apply))).map(r => Output.emit(json, r)(AcquireMarkdown.refs))
     }
   }
 
@@ -74,7 +84,7 @@ object AcquireCmd:
       Output.jsonFlag.map { json => (c: Client) =>
         val client = AcquireClient(c)
         client.updateRetractions.flatMap { started =>
-          if json then Right(Output.emit(json, started)(AcquireMarkdown.retractionsUpdate))
+          if json.value then Right(Output.emit(json, started)(AcquireMarkdown.retractionsUpdate))
           else
             Cli.err.println("refreshing the Retraction Watch mirror (~30 MB)…")
             pollRetractions(client, 0).map(r => Cli.out.println(AcquireMarkdown.retractionsUpdate(r)))
@@ -89,13 +99,13 @@ object AcquireCmd:
   private def pollRetractions(c: AcquireClient, waited: Int)(using console: Console) : Either[Cli.Error, RetractionsUpdate] =
     c.retractionsStatus match
       case Left(e)                => Left(e)
-      case Right(r) if !r.running =>
+      case Right(r) if !r.running.value =>
         r.error match
-          case Some(msg) => Left(Cli.Error(s"the refresh failed: $msg", exitCode = ExitCode.Refused))
+          case Some(msg) => Left(Cli.Error(Cli.Error.Message(s"the refresh failed: $msg"), exitCode = ExitCode.Refused))
           case None      => Right(r)
       case Right(_) if waited > 600 =>
         Left(
-          Cli.Error("the refresh is still running after 10 minutes — check the server log", exitCode = ExitCode.Refused)
+          Cli.Error(Cli.Error.Message("the refresh is still running after 10 minutes — check the server log"), exitCode = ExitCode.Refused)
         )
       case Right(_) =>
         Thread.sleep(2000)
@@ -112,7 +122,7 @@ object AcquireCmd:
       Output.jsonFlag
     ).mapN { (id, apply, force, json) => (c: Client) =>
       AcquireClient(c)
-        .assess(AssessRequest(id, apply, force))
+        .assess(AssessRequest(AssessRequest.Id(id), AssessRequest.Apply(apply), AssessRequest.ForceStatus(force)))
         .map(a => Output.emit(json, a)(AcquireMarkdown.assessment))
     }
 
@@ -135,7 +145,12 @@ object AcquireCmd:
       Output.jsonFlag
     ).mapN { (id, since, limit, apply, json) => (c: Client) =>
       AcquireClient(c)
-        .followups(FollowupsRequest(id, since, limit, apply))
+        .followups(FollowupsRequest(
+            FollowupsRequest.Id(id),
+            since.map(FollowupsRequest.Since(_)),
+            limit.map(FollowupsRequest.Limit(_)),
+            FollowupsRequest.Apply(apply)
+          ))
         .map(r => Output.emit(json, r)(AcquireMarkdown.followups))
     }
   }
@@ -207,26 +222,34 @@ object AcquireCmd:
               path,
               citekey.getOrElse(""),
               quality,
-              force,
+              com.histmersion.api.Api.Overwrite(force),
               title,
               authors,
               year,
               doi,
-              noWait,
+              Cli.NoWait(noWait),
               prov,
               item
             )
           else if item.isDefined then
             Left(
               Cli.Error(
-                "--acquire-item applies to a file upload; for an identifier, tick the item off with " +
-                  "`histmersion queue done <id>` once the source is in",
+                Cli.Error.Message(
+                  "--acquire-item applies to a file upload; for an identifier, tick the item off with " +
+                    "`histmersion queue done <id>` once the source is in"
+                ),
                 exitCode = ExitCode.Usage
               )
             )
           else
             AcquireClient(c)
-              .ingest(Ingest.Request(id, citekey, arxiv, refetch, legalOnly))
+              .ingest(Ingest.Request(
+                Ingest.Request.Id(id),
+                citekey.map(Citekey(_)),
+                arxiv.map(Ingest.Request.Arxiv(_)),
+                Ingest.Request.Refetch(refetch),
+                Ingest.Request.LegalOnly(legalOnly)
+              ))
               .map(r => Output.emit(json, r)(AcquireMarkdown.ingest))
     }
   }
@@ -236,13 +259,13 @@ object AcquireCmd:
   private def archiveSearch (using console: Console) = Opts.subcommand("search", "Search archive.org texts") {
     (Opts.argument[String]("query"), Opts.option[Int]("rows", "Max results").orNone, Output.jsonFlag)
       .mapN { (q, rows, json) => (c: Client) =>
-        AcquireClient(c).archiveSearch(q, rows).map(r => Output.emit(json, r)(AcquireMarkdown.archiveSearch))
+        AcquireClient(c).archiveSearch(AcquireApi.Query(q), rows.map(AcquireApi.Limit(_))).map(r => Output.emit(json, r)(AcquireMarkdown.archiveSearch))
       }
   }
 
   private def archiveInfo (using console: Console) = Opts.subcommand("info", "One archive.org item: files and lending restriction") {
     (Opts.argument[String]("identifier"), Output.jsonFlag).mapN { (id, json) => (c: Client) =>
-      AcquireClient(c).archiveInfo(id).map(i => Output.emit(json, i)(AcquireMarkdown.archiveItem))
+      AcquireClient(c).archiveInfo(ArchiveId(id)).map(i => Output.emit(json, i)(AcquireMarkdown.archiveItem))
     }
   }
 
@@ -254,7 +277,7 @@ object AcquireCmd:
       Output.jsonFlag
     ).mapN { (id, citekey, format, json) => (c: Client) =>
       AcquireClient(c)
-        .archiveImport(ArchiveImportRequest(id, citekey, format))
+        .archiveImport(ArchiveImportRequest(ArchiveImportRequest.Id(id), citekey.map(Citekey(_)), format.map(ArchiveImportRequest.Format(_))))
         .map(r => Output.emit(json, r)(AcquireMarkdown.ingest))
     }
   }

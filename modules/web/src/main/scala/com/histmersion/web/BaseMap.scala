@@ -39,8 +39,8 @@ object BaseMap:
 
 
   def fromWire(s: com.histmersion.web.BaseMap.Wire): Option[BaseMap] =
-    val w = s.trim.toLowerCase
-    if w == "terrain" then Some(Readable) else values.find(_.wire == w)
+    val w = s.value.trim.toLowerCase
+    if w == "terrain" then Some(Readable) else values.find(_.wire.value == w)
 
   val online: List[BaseMap] = values.toList.filter(_.online)
   val vectors: List[BaseMap] = values.toList.filterNot(_.online)

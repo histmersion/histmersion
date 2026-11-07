@@ -20,54 +20,56 @@ import com.histmersion.api.research.Coverage
   * stays absent (= leave alone).
   */
 object ArticlePatches:
-  type AppendFile = AppendFile.T
-  object AppendFile extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type BodyFile = BodyFile.T
-  object BodyFile extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type CsvText = CsvText.T
   object CsvText extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type FileContent = FileContent.T
-  object FileContent extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type PatchJson = PatchJson.T
+  object PatchJson extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type ReasonText = ReasonText.T
+  object ReasonText extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type TextFile = TextFile.T
   object TextFile extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
-  type BuildJson = _root_.com.histmersion.domain.research.Article.PatchJson
-  val BuildJson: _root_.com.histmersion.domain.research.Article.PatchJson.type = _root_.com.histmersion.domain.research.Article.PatchJson
-
   def build(
-      json: Option[com.histmersion.cli.ArticlePatches.BuildJson],
-      title: Option[com.histmersion.domain.research.Article.Title],
-      summary: Option[com.histmersion.domain.research.Article.Summary],
-      kind: Option[com.histmersion.domain.research.Article.KindText],
-      bodyFile: Option[com.histmersion.cli.ArticlePatches.BodyFile],
-      appendFile: Option[com.histmersion.cli.ArticlePatches.AppendFile],
-      tagsAdd: Option[com.histmersion.domain.research.Article.TagsAdd],
-      tagsRemove: Option[com.histmersion.domain.research.Article.TagsRemove],
-      tagsReplace: Option[com.histmersion.domain.research.Article.TagsReplace],
-      regions: Option[com.histmersion.domain.research.Article.Regions],
-      period: Option[com.histmersion.domain.research.Article.Period],
-      ifUpdatedAt: Option[com.histmersion.domain.research.Article.UpdatedAt]
+      json: Option[PatchJson],
+      title: Option[Article.Title],
+      summary: Option[Article.SummaryText],
+      kind: Option[Article.Kind.Wire],
+      bodyFile: Option[TextFile],
+      appendFile: Option[TextFile],
+      tagsAdd: Option[CsvText],
+      tagsRemove: Option[CsvText],
+      tagsReplace: Option[CsvText],
+      regions: Option[CsvText],
+      period: Option[FilterFlags.Period],
+      ifUpdatedAt: Option[Article.UpdatedAt]
   ): Either[Cli.Error, Article.Patch] =
     for
       base <- parse(json)
-      body <- read(bodyFile)
-      app <- read(appendFile)
+      body <- read(bodyFile)(Article.Body(_))
+      app <- read(appendFile)(Article.Patch.Append(_))
       per <- periodOf(period)
     yield
       val tags =
         if tagsAdd.isEmpty && tagsRemove.isEmpty && tagsReplace.isEmpty then base.tags
-        else Some(ListPatch(csv(tagsAdd), csv(tagsRemove), tagsReplace.map(csv1)))
+        else
+          Some(
+            ListPatch(
+              csv(tagsAdd).map(ListPatch.Add(_)),
+              csv(tagsRemove).map(ListPatch.Remove(_)),
+              tagsReplace.map(t => csv1(t).map(ListPatch.Replace(_)))
+            )
+          )
       base.modify(
-        _.title).setTo(title.orElse(base.title)).modify(_.summary).setTo(summary.orElse(base.summary)).modify(_.kind).setTo(kind.orElse(base.kind)).modify(_.body).setTo(body.orElse(base.body)).modify(_.append).setTo(app.orElse(base.append)).modify(_.tags).setTo(tags).modify(_.regions).setTo(regions.map(csv1).orElse(base.regions)).modify(_.period).setTo(per.orElse(base.period)).modify(_.ifUpdatedAt).setTo(ifUpdatedAt.orElse(base.ifUpdatedAt)
+        _.title).setTo(title.orElse(base.title)).modify(_.summary).setTo(summary.orElse(base.summary)).modify(_.kind).setTo(kind.orElse(base.kind)).modify(_.body).setTo(body.orElse(base.body)).modify(_.append).setTo(app.orElse(base.append)).modify(_.tags).setTo(tags).modify(_.regions).setTo(regions.map(r => csv1(r).map(Article.Patch.Regions(_))).orElse(base.regions)).modify(_.period).setTo(per.orElse(base.period)).modify(_.ifUpdatedAt).setTo(ifUpdatedAt.orElse(base.ifUpdatedAt)
       )
 
   /** The `--filter-*` flags as given; [[withCoverage]] turns them into the patch's `filter`. */
   final case class FilterFlags(
       query: Option[FilterFlags.Query] = None,
-      topics: Option[FilterFlags.Topics] = None,
-      tags: Option[FilterFlags.Tags] = None,
-      status: Option[FilterFlags.Status] = None,
-      places: Option[FilterFlags.Places] = None,
+      topics: Option[CsvText] = None,
+      tags: Option[CsvText] = None,
+      status: Option[CsvText] = None,
+      places: Option[CsvText] = None,
       period: Option[FilterFlags.Period] = None,
       extraQueries: List[FilterFlags.ExtraQueries] = Nil,
       clear: FilterFlags.Clear = com.histmersion.cli.ArticlePatches.FilterFlags.Clear(false)
@@ -79,14 +81,6 @@ object ArticlePatches:
 
     type Query = com.histmersion.api.Api.ArticleQuery.Text
     val Query: _root_.com.histmersion.api.Api.ArticleQuery.Text.type = _root_.com.histmersion.api.Api.ArticleQuery.Text
-    type Topics = Topics.T
-    object Topics extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-    type Tags = Tags.T
-    object Tags extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-    type Status = Status.T
-    object Status extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-    type Places = Places.T
-    object Places extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
     type Period = Period.T
     object Period extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
     type ExtraQueries = ExtraQueries.T
@@ -98,34 +92,41 @@ object ArticlePatches:
     * spell (the server validates it); `--clear-filter` sends the empty filter that clears it; each `--reason ck=text`
     * sets one reason, `ck=` removes it. Both override `--json`.
     */
-  def withCoverage(p: Article.Patch, f: FilterFlags, reasons: List[com.histmersion.cli.ArticleCoverage.Reason]): Either[Cli.Error, Article.Patch] =
+  def withCoverage(p: Article.Patch, f: FilterFlags, reasons: List[ReasonText]): Either[Cli.Error, Article.Patch] =
     for
       period <- periodOf(f.period)
       _ <- Either.cond(
-        !(f.clear && f.anyGiven),
+        !(f.clear.value && f.anyGiven),
         (),
-        Cli.Error("--clear-filter with --filter-* flags: give one or the other", exitCode = ExitCode.Usage)
+        Cli.Error(Cli.Error.Message("--clear-filter with --filter-* flags: give one or the other"), exitCode = ExitCode.Usage)
       )
       rs <- reasons.traverse { r =>
-        r.indexOf('=') match
-          case i if i > 0 => Right(Coverage.Reason(r.take(i).trim, r.drop(i + 1).trim))
-          case _          => Left(Cli.Error(s"--reason: '$r' is not <citekey>=<reason>", exitCode = ExitCode.Usage))
+        r.value.indexOf('=') match
+          case i if i > 0 =>
+            Right(
+              Coverage.Reason(
+                com.histmersion.api.library.Citekey(r.value.take(i).trim),
+                Coverage.Entry.Reason(r.value.drop(i + 1).trim)
+              )
+            )
+          case _ =>
+            Left(Cli.Error(Cli.Error.Message(s"--reason: '$r' is not <citekey>=<reason>"), exitCode = ExitCode.Usage))
       }
     yield
       val filter =
-        if f.clear then Some(Article.Filter())
+        if f.clear.value then Some(Article.Filter())
         else if f.anyGiven then
           Some(
             Article.Filter(
-              f.query.map(_.trim).filter(_.nonEmpty),
-              csv(f.topics),
-              csv(f.tags),
-              csv(f.status),
-              csv(f.places),
+              f.query.map(q => Article.Filter.Query(q.value.trim)).filter(_.value.nonEmpty),
+              csv(f.topics).map(Article.Filter.Topics(_)),
+              csv(f.tags).map(Article.Filter.Tags(_)),
+              csv(f.status).map(Article.Filter.Status(_)),
+              csv(f.places).map(Article.Filter.Places(_)),
               Nil,
               period.map(_.start),
               period.map(_.end),
-              f.extraQueries.map(_.trim).filter(_.nonEmpty)
+              f.extraQueries.map(_.value.trim).filter(_.nonEmpty).map(Article.Filter.ExtraQueries(_))
             )
           )
         else p.filter
@@ -134,37 +135,38 @@ object ArticlePatches:
   /** Each `--critique-reason src>dst=text` sets the reason of one critique-checklist pair, `src>dst=` removes it; added
     * to those of `--json`.
     */
-  def withCritiques(p: Article.Patch, reasons: List[com.histmersion.cli.ArticleCritiques.Reason]): Either[Cli.Error, Article.Patch] =
+  def withCritiques(p: Article.Patch, reasons: List[CritiqueReason.Reason]): Either[Cli.Error, Article.Patch] =
     reasons
       .traverse(r =>
-        CritiqueReason.parse(r).left.map(m => Cli.Error(s"--critique-reason: $m", exitCode = ExitCode.Usage))
+        CritiqueReason.parse(r).left.map(m => Cli.Error(Cli.Error.Message(s"--critique-reason: $m"), exitCode = ExitCode.Usage))
       )
       .map(rs => if rs.isEmpty then p else p.modify(_.critiqueReasons).setTo(p.critiqueReasons ++ rs))
 
-  private def parse(json: Option[com.histmersion.domain.research.Article.PatchJson]): Either[Cli.Error, Article.Patch] = json match
+  private def parse(json: Option[PatchJson]): Either[Cli.Error, Article.Patch] = json match
     case None    => Right(Article.Patch())
     case Some(s) =>
       io.circe.parser
-        .decode[Article.Patch](s)
+        .decode[Article.Patch](s.value)
         .left
-        .map(e => Cli.Error(s"--json: ${e.getMessage}", exitCode = ExitCode.Usage))
+        .map(e => Cli.Error(Cli.Error.Message(s"--json: ${e.getMessage}"), exitCode = ExitCode.Usage))
 
-  private def read(file: Option[com.histmersion.cli.ArticlePatches.TextFile]): Either[Cli.Error, Option[com.histmersion.cli.ArticlePatches.FileContent]] = file match
+  private def read[A](file: Option[TextFile])(wrap: String => A): Either[Cli.Error, Option[A]] = file match
     case None    => Right(None)
     case Some(f) =>
-      val p = java.nio.file.Path.of(f)
-      if java.nio.file.Files.isRegularFile(p) then Right(Some(java.nio.file.Files.readString(p)))
-      else Left(Cli.Error(s"no such file: $f", exitCode = ExitCode.Usage))
+      val p = java.nio.file.Path.of(f.value)
+      if java.nio.file.Files.isRegularFile(p) then Right(Some(wrap(java.nio.file.Files.readString(p))))
+      else Left(Cli.Error(Cli.Error.Message(s"no such file: $f"), exitCode = ExitCode.Usage))
 
-  private def periodOf(s: Option[com.histmersion.domain.research.Article.Period]): Either[Cli.Error, Option[Period.Input]] = s match
+  private def periodOf(s: Option[FilterFlags.Period]): Either[Cli.Error, Option[Period.Input]] = s match
     case None    => Right(None)
     case Some(v) =>
-      v.split(",").map(_.trim).toList match
+      v.value.split(",").map(_.trim).toList match
         case a :: b :: Nil =>
           (a.toLongOption, b.toLongOption) match
-            case (Some(x), Some(y)) => Right(Some(Period.Input(x, y)))
-            case _                  => Left(Cli.Error(s"--period: '$v' is not start,end", exitCode = ExitCode.Usage))
-        case _ => Left(Cli.Error(s"--period: '$v' is not start,end", exitCode = ExitCode.Usage))
+            case (Some(x), Some(y)) =>
+              Right(Some(Period.Input(com.histmersion.api.catalogue.Year(x), com.histmersion.api.catalogue.Year(y))))
+            case _ => Left(Cli.Error(Cli.Error.Message(s"--period: '$v' is not start,end"), exitCode = ExitCode.Usage))
+        case _ => Left(Cli.Error(Cli.Error.Message(s"--period: '$v' is not start,end"), exitCode = ExitCode.Usage))
 
-  private def csv(s: Option[com.histmersion.cli.ArticlePatches.CsvText]): List[com.histmersion.api.Write.ListItem] = s.map(csv1).getOrElse(Nil)
-  private def csv1(s: com.histmersion.cli.ArticlePatches.CsvText): List[com.histmersion.api.Write.ListItem] = s.split(",").toList.map(_.trim).filter(_.nonEmpty)
+  private def csv(s: Option[CsvText]): List[String] = s.map(csv1).getOrElse(Nil)
+  private def csv1(s: CsvText): List[String] = s.value.split(",").toList.map(_.trim).filter(_.nonEmpty)

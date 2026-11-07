@@ -30,27 +30,27 @@ import com.histmersion.api.library.Ingest
   */
 final class AcquireClient(c: Client):
   def discover(
-      q: com.histmersion.api.Api.Search.Text,
-      since: Option[com.histmersion.cli.Discover.PublishedSince],
-      sort: Option[com.histmersion.cli.Discover.SortOrder],
-      limit: Option[com.histmersion.api.Paging.Limit],
-      notInDb: com.histmersion.cli.Discover.NewOnly
+      q: AcquireApi.Query,
+      since: Option[com.histmersion.api.catalogue.Year],
+      sort: Option[AcquireApi.Filter],
+      limit: Option[AcquireApi.Limit],
+      notInDb: Boolean
   ): Either[Cli.Error, DiscoverResult] = c.call(AcquireApi.discover)((q, since, sort, limit, notInDb))
-  def meta(id: com.histmersion.domain.library.acquisition.WorkRef.Id): Either[Cli.Error, WorkRef] = c.call(AcquireApi.meta)(id)
-  def wikirefs(url: com.histmersion.cli.Wikirefs.PageUrl): Either[Cli.Error, WikirefsResult] = c.call(AcquireApi.wikirefs)(url)
+  def meta(id: AcquireApi.Identifier): Either[Cli.Error, WorkRef] = c.call(AcquireApi.meta)(id)
+  def wikirefs(url: com.histmersion.api.library.Title): Either[Cli.Error, WikirefsResult] = c.call(AcquireApi.wikirefs)(url)
   def refs(req: RefsRequest): Either[Cli.Error, RefsResult] = c.call(AcquireApi.refs)(req)
   def assess(req: AssessRequest): Either[Cli.Error, Assessment] = c.call(AcquireApi.assess)(req)
   def updateRetractions: Either[Cli.Error, RetractionsUpdate] = c.call(AcquireApi.updateRetractions)(())
   def retractionsStatus: Either[Cli.Error, RetractionsUpdate] = c.call(AcquireApi.retractionsStatus)(())
   def followups(req: FollowupsRequest): Either[Cli.Error, FollowupsResult] = c.call(AcquireApi.followups)(req)
   def ingest(req: Ingest.Request): Either[Cli.Error, Ingest.Report] = c.call(AcquireApi.ingest)(req)
-  def archiveSearch(q: com.histmersion.cli.ArchiveSearch.Query, rows: Option[com.histmersion.api.Paging.Limit]): Either[Cli.Error, ArchiveSearchResult] =
+  def archiveSearch(q: AcquireApi.Query, rows: Option[AcquireApi.Limit]): Either[Cli.Error, ArchiveSearchResult] =
     c.call(AcquireApi.archiveSearch)((q, rows))
-  def archiveInfo(id: com.histmersion.upstreams.archiveorg.ArchiveItem.IdentifierText): Either[Cli.Error, ArchiveItem] = c.call(AcquireApi.archiveInfo)(id)
+  def archiveInfo(id: com.histmersion.api.library.ArchiveId): Either[Cli.Error, ArchiveItem] = c.call(AcquireApi.archiveInfo)(id)
   def archiveImport(req: ArchiveImportRequest): Either[Cli.Error, Ingest.Report] =
     c.call(AcquireApi.archiveImport)(req)
-  def calibreGaps(limit: Option[com.histmersion.api.Paging.Limit]): Either[Cli.Error, CalibreGaps] = c.call(AcquireApi.calibreGaps)(limit)
-  def calibreMeta(citekey: com.histmersion.plugin.FetchedFile.Source.Citekey): Either[Cli.Error, CalibreGap] = c.call(AcquireApi.calibreMeta)(citekey)
+  def calibreGaps(limit: Option[AcquireApi.Limit]): Either[Cli.Error, CalibreGaps] = c.call(AcquireApi.calibreGaps)(limit)
+  def calibreMeta(citekey: com.histmersion.api.library.Citekey): Either[Cli.Error, CalibreGap] = c.call(AcquireApi.calibreMeta)(citekey)
   def calibrePushed(req: CalibrePushRequest): Either[Cli.Error, CalibrePushResult] =
     c.call(AcquireApi.calibrePushed)(req)
 
