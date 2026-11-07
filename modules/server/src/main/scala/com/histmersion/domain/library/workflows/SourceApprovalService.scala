@@ -48,7 +48,7 @@ object SourceApprovalService:
         result: Option[ApprovalRecord.Result]
     ): Option[ApprovalInfo] =
       db.transact(
-        SourceApprovalRepo.record(jobId, kind, citekey, status, current, edgeKind, target, payload.value, state, result.map(_.value), now).flatMap(approvals.approvalIn(_))
+        SourceApprovalRepo.record(jobId, kind, citekey, status, current, edgeKind, target, payload.value, state, result.map(_.value), now).flatMap(id => approvals.approvalIn(com.histmersion.domain.automation.Approval.Id(id.value)))
       )
 
     def proposedBefore(

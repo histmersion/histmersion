@@ -214,7 +214,7 @@ object GazetteerLoad:
     def add(r: Either[Gazetteer.Problem, GazRecord]): Unit = r match
       case Left(e)    => total = total.copy(skipped = (total.skipped :+ Gazetteer.LoadCounts.Skipped(e.value)).take(20))
       case Right(rec) =>
-        span = Span((span.from ++ rec.span.from).minByOption(_.value), (span.to ++ rec.span.to).maxByOption(_.value))
+        span = Span((span.from ++ rec.span.from).minByOption(_.value: Long), (span.to ++ rec.span.to).maxByOption(_.value: Long))
         buf += rec
         n += 1
         if n >= size then flush()
@@ -358,7 +358,7 @@ object GazetteerLoad:
   private def sidecar(dir: Store, f: Blob): Option[JsonObject] =
     val name = f.key.name.value.replaceAll("(?i)\\.(jsonld|json|geojson|ndjson|jsonl|tsv)(\\.gz)?$", "")
     dir
-      .get(f.key.parent.child(name + ".meta.json"))
+      .get(f.key.parent.child(com.histmersion.util.storage.Store.EntryName(name + ".meta.json")))
       .flatMap(m => io.circe.parser.parse(m.text().value).toOption.flatMap(_.asObject))
 
   private def loadLpf(

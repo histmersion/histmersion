@@ -3,6 +3,7 @@ package com.histmersion.domain.media.links
 import com.histmersion.api.aliases.AliasKinds
 
 import com.histmersion.api.Write
+import com.histmersion.util.identity.AliasTable
 import com.histmersion.util.data.maintenance.WriteGate
 import com.histmersion.api.aliases.AliasKind
 
@@ -15,13 +16,14 @@ import com.histmersion.api.Api
   */
 final class AssetLinksControllers(
     links: AssetLinkService,
-    current: (AliasKind, AssetLinksControllers.CurrentArg2) => AssetLinksControllers.CurrentResult,
+    current: (AliasKind, AliasTable.Id) => AliasTable.Id,
     maintenance: WriteGate
 ):
 
   /** The identifier a target of `targetType` answers to now. */
-  private def refId(targetType: com.histmersion.domain.media.assets.AssetService.TargetType, id: com.histmersion.domain.media.links.AssetLinksControllers.RefId): com.histmersion.domain.media.links.AssetLinksControllers.RefId =
-    AliasKinds.ofTarget(targetType).fold(id)(current(_, id))
+  private def refId(targetType: String, id: String): String =
+    AliasKinds.ofTarget(com.histmersion.api.automation.Activity.Entry.TargetKind(targetType))
+      .fold(id)(kind => current(kind, AliasTable.Id(id)).value)
 
   def list(
       citekey: Option[com.histmersion.domain.library.Citekey],
@@ -29,31 +31,30 @@ final class AssetLinksControllers(
       targetType: Option[com.histmersion.domain.media.assets.AssetService.TargetType],
       targetId: Option[com.histmersion.domain.media.assets.AssetService.TargetId]
   ): AssetLink.List =
-    val target = for t <- targetType; i <- targetId yield refId(t, i)
-    links.list(citekey.map(current(AliasKinds.SourceRecords, _)), asset, targetType, target.orElse(targetId))
+    val target = for t <- targetType; i <- targetId yield refId(t.value, i.value)
+    citekey.map(k =>
+      com.histmersion.domain.library.Citekey.option(current(AliasKinds.SourceRecords, AliasTable.Id(k.value)).value)
+    ) match
+      case Some(None) => AssetLink.List.of(com.histmersion.api.RowCount(0), Nil, com.histmersion.api.personal.UnreadPage.Offset(0))
+      case keys =>
+        links.list(
+          keys.flatten,
+          asset,
+          targetType,
+          target.map(com.histmersion.domain.media.assets.AssetService.TargetId(_)).orElse(targetId)
+        )
 
   def create(in: AssetLink.Put): Either[Api.Error, AssetLink] =
     maintenance.guard(com.histmersion.util.data.maintenance.WriteGate.OperationName("create_asset_link"))(
       links.create(
         in.modify(_.citekey)
-          .setTo(current(AliasKinds.SourceRecords, in.citekey))
+          .setTo(com.histmersion.api.library.Citekey(current(AliasKinds.SourceRecords, AliasTable.Id(in.citekey.value)).value))
           .modify(_.targetId)
-          .setTo(refId(in.targetType, in.targetId))
+          .setTo(com.histmersion.api.media.MediaTarget.TargetId(refId(in.targetType.value, in.targetId.value)))
       )
     )
 
   def delete(id: com.histmersion.domain.media.links.AssetLinkService.LinkId): Either[Api.Error, AssetLink.Deleted] =
     maintenance.guard(com.histmersion.util.data.maintenance.WriteGate.OperationName("delete_asset_link")):
-      if links.delete(id) then Right(AssetLink.Deleted(id, com.histmersion.api.media.AssetLink.Deleted.Value(true)))
-      else Left(Api.Error(s"No asset link #$id", Some(Write.CodeNotFound)))
-
-object AssetLinksControllers:
-  type Current = Current.T
-  object Current extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type RefId = RefId.T
-  object RefId extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type CurrentArg2 = com.histmersion.domain.media.links.AssetLinksControllers.Current
-  val CurrentArg2: _root_.com.histmersion.domain.media.links.AssetLinksControllers.Current.type = _root_.com.histmersion.domain.media.links.AssetLinksControllers.Current
-  type CurrentResult = com.histmersion.domain.media.links.AssetLinksControllers.Current
-  val CurrentResult: _root_.com.histmersion.domain.media.links.AssetLinksControllers.Current.type = _root_.com.histmersion.domain.media.links.AssetLinksControllers.Current
-
+      if links.delete(id) then Right(AssetLink.Deleted(AssetLink.Id(id.value), com.histmersion.api.media.AssetLink.Deleted.Value(true)))
+      else Left(Api.Error(Api.Error.Message(s"No asset link #$id"), Some(Api.Error.Code(Write.CodeNotFound))))

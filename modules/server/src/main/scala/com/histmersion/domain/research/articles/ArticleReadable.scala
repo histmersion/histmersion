@@ -15,15 +15,15 @@ final class ArticleReadable(db: Transactor) extends Readable:
 
   private def notRead(read: Set[ItemRef]): Sql =
     Sql.of(
-      " FROM articles i WHERE NOT (i.slug = ANY(?::text[]) OR i.uid = ANY(?::uuid[]))",
-      Param.A(read.toList.map(_.key.value)),
-      Param.A(read.toList.flatMap(_.uid).map(_.value.toString))
+      Sql.Text(" FROM articles i WHERE NOT (i.slug = ANY(?::text[]) OR i.uid = ANY(?::uuid[]))"),
+      Param.A(read.toList.map(r => Param.A.V(r.key.value))),
+      Param.A(read.toList.flatMap(_.uid).map(u => Param.A.V(u.value.toString)))
     )
 
   def unread(read: Set[ItemRef], size: PageSize, from: Offset): UnreadItems =
     db.read:
       val rows = (Sql.raw(com.histmersion.util.database.Sql.Text("SELECT i.slug, i.title, lower(i.period), upper(i.period) - 1")) ++ notRead(read) ++
-        Sql.of(com.histmersion.util.database.Sql.Text(" ORDER BY lower(i.title), i.slug LIMIT ? OFFSET ?"), Param.I(size.value), Param.I(from.value))).frag
+        Sql.of(com.histmersion.util.database.Sql.Text(" ORDER BY lower(i.title), i.slug LIMIT ? OFFSET ?"), Param.I(Param.I.V(size.value)), Param.I(Param.I.V(from.value)))).frag
         .query[(String, String, Option[Long], Option[Long])]
         .run()
         .toList
@@ -37,5 +37,5 @@ final class ArticleReadable(db: Transactor) extends Readable:
             periodEnd = end.map(y => Year(y.toInt))
           )
         ),
-        total
+        UnreadItems.Total(total)
       )

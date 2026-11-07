@@ -29,7 +29,7 @@ trait PeriodService:
   def presetCount(): com.histmersion.RowCount
 
   /** Where each of `ids` sits now: every stored id → its parent (`None` = top level); ids with no row are absent. */
-  def placement(ids: List[HistoricalPeriod.Id]): Map[HistoricalPeriod.Id, Option[HistoricalPeriod.ParentId]]
+  def placement(ids: List[HistoricalPeriod.Id]): Map[HistoricalPeriod.Id, Option[HistoricalPeriod.Id]]
 
   /** Upsert in the order given, parents first, in one transaction; a row with no preset keeps a stored one. */
   def write(rows: List[HistoricalPeriod], dataset: Dataset): com.histmersion.RowCount
@@ -66,7 +66,10 @@ object PeriodService:
       ).toList
     def count(): com.histmersion.RowCount = db.read(PeriodRepo.count)
     def presetCount(): com.histmersion.RowCount = db.read(PeriodRepo.presetCount)
-    def placement(ids: List[HistoricalPeriod.Id]): Map[HistoricalPeriod.Id, Option[HistoricalPeriod.ParentId]] = db.read(PeriodRepo.placement(ids))
+    def placement(ids: List[HistoricalPeriod.Id]): Map[HistoricalPeriod.Id, Option[HistoricalPeriod.Id]] =
+      db.read(PeriodRepo.placement(ids.map(i => com.histmersion.domain.catalogue.periods.PeriodRow.Id(i.value)))).map((k, v) =>
+        HistoricalPeriod.Id(k.value) -> v.map(p => HistoricalPeriod.Id(p.value))
+      )
     def write(rows: List[HistoricalPeriod], dataset: Dataset): com.histmersion.RowCount = db.transact(PeriodRepo.upsert(rows, dataset))
     def retainPresets(ids: List[HistoricalPeriod.Id]): com.histmersion.RowCount = db.transact(PeriodRepo.retainPresets(ids))
     def deleteSeedExcept(ids: List[HistoricalPeriod.Id]): com.histmersion.RowCount = db.transact(PeriodRepo.deleteSeedExcept(ids))
@@ -82,7 +85,7 @@ object PeriodService:
   final class InMemory(state: AtomicReference[CatalogueState]) extends PeriodService:
     private def all: Vector[HistoricalPeriod] = state.get.periods.map(_.period)
     private def ordered(ps: Vector[HistoricalPeriod]): List[HistoricalPeriod] =
-      ps.sortBy(p => (p.period.start.value, p.label.value)).toList
+      ps.sortBy(p => (p.period.start.value: Long, p.label.value: String)).toList
 
     def get(id: HistoricalPeriod.Id): Option[HistoricalPeriod] = all.find(_.id == id)
     def children(id: HistoricalPeriod.Id): List[HistoricalPeriod] = ordered(all.filter(_.parentId.exists(_.value == id.value)))
@@ -100,8 +103,8 @@ object PeriodService:
     def count(): com.histmersion.RowCount = com.histmersion.RowCount(all.size)
     def presetCount(): com.histmersion.RowCount = com.histmersion.RowCount(all.count(_.preset.isDefined))
 
-    def placement(ids: List[HistoricalPeriod.Id]): Map[HistoricalPeriod.Id, Option[HistoricalPeriod.ParentId]] =
-      all.filter(p => ids.contains(p.id)).map(p => p.id -> p.parentId).toMap
+    def placement(ids: List[HistoricalPeriod.Id]): Map[HistoricalPeriod.Id, Option[HistoricalPeriod.Id]] =
+      all.filter(p => ids.contains(p.id)).map(p => p.id -> p.parentId.map(x => HistoricalPeriod.Id(x.value))).toMap
 
     def write(rows: List[HistoricalPeriod], dataset: Dataset): com.histmersion.RowCount =
       @tailrec def upsert(rest: List[HistoricalPeriod], held: Vector[StoredPeriod]): Vector[StoredPeriod] =

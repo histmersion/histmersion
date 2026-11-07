@@ -1,7 +1,10 @@
 package com.histmersion.domain.media.covers
 
 import com.histmersion.api.Write
+import com.histmersion.api.jobs.JobKinds
 import com.histmersion.domain.media.MediaJobs
+import com.histmersion.util.data.maintenance.WriteGate
+import com.histmersion.util.jobs.BackgroundJob
 
 import hearth.kindlings.optics.syntax.*
 import com.histmersion.api.jobs.JobInfo
@@ -18,36 +21,32 @@ final class CoversControllers(pictures: SourcePictures, jobs: MediaJobs):
     * over every source is [[coversJob]].
     */
   def covers(req: MediaCoversRequest): Either[Api.Error, MediaCoversReport] =
-    if req.dryRun then Right(pictures.run(req))
-    else if req.citekey.forall(_.trim.isEmpty) then
-      Left(Api.Error(com.histmersion.api.Api.Error.Message("a run over every source is a job: POST /api/media/covers/job"), Some(Write.CodeInvalid)))
-    else jobs.guarded(com.histmersion.domain.media.MediaJobs.JobWhat("media_covers"))(jobs.exclusive(com.histmersion.domain.media.MediaJobs.JobWhat("media covers"))(Right(pictures.run(req))))
+    if req.dryRun.value then Right(pictures.run(req))
+    else if req.citekey.forall(_.value.trim.isEmpty) then
+      Left(Api.Error(com.histmersion.api.Api.Error.Message("a run over every source is a job: POST /api/media/covers/job"), Some(Api.Error.Code(Write.CodeInvalid))))
+    else jobs.guarded(WriteGate.OperationName("media_covers"))(jobs.exclusive(BackgroundJob.Work("media covers"))(Right(pictures.run(req))))
 
   def coversJob(req: MediaCoversRequest): Either[Api.Error, JobInfo] =
     val what =
-      List(Option.when(req.covers)("Open Library covers"), Option.when(req.illustrations)("illustrations")).flatten
+      List(Option.when(req.covers.value)("Open Library covers"), Option.when(req.illustrations.value)("illustrations")).flatten
         .mkString(" and ") + req.citekey.fold(" of every source")(c => s" of $c") +
-        (if req.refresh then " (refresh)" else "")
-    jobs.start(CoversControllers.CoversJobKind, what) { progress =>
-      val r = pictures.run(req.modify(_.dryRun).setTo(false), progress)
+        (if req.refresh.value then " (refresh)" else "")
+    jobs.start(CoversControllers.CoversJobKind, JobKinds.Subject(what)) { progress =>
+      val r = pictures.run(req.modify(_.dryRun).setTo(com.histmersion.api.library.RepairAcquire.RepairRequest.DryRun(false)), progress)
       Right(
-        s"${r.sources} source(s) · ${r.covers} cover(s) · ${r.illustrations} illustration(s)" +
-          (if r.failed.isEmpty then "" else s" · ${r.failed.size} failed: ${r.failed.take(3).mkString("; ")}")
+        BackgroundJob.Outcome.Summary(
+          s"${r.sources} source(s) · ${r.covers} cover(s) · ${r.illustrations} illustration(s)" +
+            (if r.failed.isEmpty then "" else s" · ${r.failed.size} failed: ${r.failed.take(3).mkString("; ")}")
+        )
       )
     }
 
   /** A cover the CLI read from the local Calibre library. */
   def putCover(p: SourceCoverParams, bytes: com.histmersion.domain.media.assets.AssetService.Bytes): Either[Api.Error, MediaItem] =
-    jobs.guarded(com.histmersion.domain.media.MediaJobs.JobWhat("media_cover"))(pictures.storeCover(p, bytes))
+    jobs.guarded(WriteGate.OperationName("media_cover"))(pictures.storeCover(p, bytes))
 
   /** After a conversion stored a source's figures (the OCR job's hook). */
-  def afterIngest(citekey: com.histmersion.domain.library.Citekey): Option[com.histmersion.domain.media.covers.CoversControllers.AfterIngestText] = pictures.afterIngest(citekey)
+  def afterIngest(citekey: com.histmersion.domain.library.Citekey): Option[com.histmersion.domain.media.covers.SourcePictures.AfterIngestText] = pictures.afterIngest(citekey)
 
 object CoversControllers:
-  type AfterIngestText = AfterIngestText.T
-  object AfterIngestText extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type CoversJobKind = CoversJobKindValue
-  type CoversJobKindValue = CoversJobKindValue.T
-  object CoversJobKindValue extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-
-  val CoversJobKind: com.histmersion.domain.media.covers.CoversControllers.CoversJobKind = com.histmersion.api.media.CoversJobKinds.MediaCovers.kind.value
+  val CoversJobKind: com.histmersion.util.jobs.Job.Kind = com.histmersion.util.jobs.Job.Kind.assume(com.histmersion.api.media.CoversJobKinds.MediaCovers.kind.value)

@@ -67,7 +67,7 @@ object CorrectionsTools:
                   None
                 )
               )
-              .fold(McpOut.refusal, Corrections.markdown)
+              .fold(McpOut.refusal, c => Corrections.markdown(c).value)
           )
         }
     List(corrections)

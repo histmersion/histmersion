@@ -24,6 +24,8 @@ import com.histmersion.api.media.{
   SourceCoverParams
 }
 import com.histmersion.api.Api
+import com.histmersion.api.jobs.JobInfo
+import com.histmersion.domain.library.Citekey
 
 /** A source's picture on its hover card (#1446): a book's COVER — the local Calibre library's own (the CLI reads it
   * host-side and uploads it, [[storeCover]]) or the Open Library Covers API's by ISBN/OCLC ([[openLibrary]]) — and a
@@ -48,12 +50,12 @@ final class SourcePictures(
   private def rules = cfg.illustrations.figureRules
 
   /** The thumbnail of `bytes`, or `None` (logged) when the sidecar makes none. */
-  private def thumbnail(bytes: com.histmersion.domain.media.assets.AssetService.Bytes, name: com.histmersion.domain.media.assets.AssetService.AssetName): Option[ConverterClient.Thumb] =
-    converter.thumbnail(bytes, name, cfg.thumbPx) match
-      case Right(t) if t.bytes.nonEmpty => Some(t)
-      case Right(_)                     => None
-      case Left(why)                    =>
-        scribe.info(s"media: no thumbnail for $name ($why) — the card shows the picture itself")
+  private def thumbnail(bytes: com.histmersion.domain.media.assets.AssetService.Bytes, name: String): Option[ConverterClient.Thumb] =
+    converter.thumbnail(ConverterClient.DocumentBytes(bytes.value), ConverterClient.Filename(name), com.histmersion.util.ocr.Pixels(cfg.thumbPx.value)) match
+      case Right(t) if t.bytes.value.nonEmpty => Some(t)
+      case Right(_)                           => None
+      case Left(why)                          =>
+        scribe.info(s"media: no thumbnail for $name (${why.value}) — the card shows the picture itself")
         None
 
   // ── illustrations ─────────────────────────────────────────────────────────────────────────────
@@ -65,21 +67,33 @@ final class SourcePictures(
     val figs = assets.sourceFigures(citekey)
     if figs.isEmpty then Left(com.histmersion.domain.media.covers.SourcePictures.IllustrateText("no figures"))
     else
-      val weighed = FigurePick.withRefs(figs.map(SourcePictures.toFigure), sources.markdown(citekey))
+      val weighed = FigurePick.withRefs(figs.map(SourcePictures.toFigure), FigurePick.ConvertedText(sources.markdown(citekey).value))
       FigurePick.choose(weighed, rules) match
         case None       => Left(com.histmersion.domain.media.covers.SourcePictures.IllustrateText("no figure fit to illustrate it"))
         case Some(pick) =>
-          val row = figs.find(_.name == pick.name).get
-          val line = MediaSourceLine(citekey, MediaRole.Illustration, MediaProvider.Source, pick.name)
-          if !dryRun then
-            if !row.hasThumb then
+          val row = figs.find(_.name.value == pick.name.value).get
+          val uid = AssetService.AssetUid(row.uid.value)
+          val line = MediaSourceLine(
+            com.histmersion.api.library.Citekey(citekey.value),
+            MediaSourceLine.Role(MediaRole.Illustration),
+            MediaItem.Provider(MediaProvider.Source),
+            MediaSourceLine.Detail(pick.name.value)
+          )
+          if !dryRun.value then
+            if !row.hasThumb.value then
               assets
-                .file(row.uid)
-                .flatMap((_, b) => thumbnail(b, row.name))
+                .file(uid)
+                .flatMap((_, b) => thumbnail(b, row.name.value))
                 .foreach(t =>
-                  assets.setThumb(row.uid, t.bytes, t.mime, Some(t.width).filter(_ > 0), Some(t.height).filter(_ > 0))
+                  assets.setThumb(
+                    uid,
+                    ProviderAsset.Thumb(t.bytes.value),
+                    ProviderAsset.ThumbMime(t.mime.value),
+                    Some(t.width.value).filter(_ > 0).map(ProviderAsset.ThumbWidth(_)),
+                    Some(t.height.value).filter(_ > 0).map(ProviderAsset.ThumbHeight(_))
+                  )
                 )
-            assets.setSourcePicture(citekey, row.uid, MediaRole.Illustration, None)
+            assets.setSourcePicture(citekey, uid, MediaRole.Wire(MediaRole.Illustration), None)
           Right(line)
 
   // ── covers ────────────────────────────────────────────────────────────────────────────────────
@@ -93,55 +107,61 @@ final class SourcePictures(
       dryRun: com.histmersion.domain.media.covers.SourcePictures.DryRun,
       fetch: Polite
   ): Either[com.histmersion.domain.media.covers.SourcePictures.OpenLibraryText, MediaSourceLine] =
-    OpenLibrary.key(keys.isbn, keys.oclc) match
-      case None             => Left(com.histmersion.domain.media.covers.SourcePictures.OpenLibraryText("no usable ISBN or OCLC number"))
+    def refused(why: String) = Left(com.histmersion.domain.media.covers.SourcePictures.OpenLibraryText(why))
+    OpenLibrary.key(keys.isbn.map(i => com.histmersion.domain.library.Isbn(i.value)), keys.oclc.map(o => OpenLibrary.Oclc(o.value))) match
+      case None             => refused("no usable ISBN or OCLC number")
       case Some((kind, id)) =>
-        val line = MediaSourceLine(keys.citekey, MediaRole.Cover, MediaProvider.OpenLibrary, s"$kind:$id")
-        if dryRun then Right(line)
+        val line = MediaSourceLine(
+          com.histmersion.api.library.Citekey(keys.citekey.value),
+          MediaSourceLine.Role(MediaRole.Cover),
+          MediaItem.Provider(MediaProvider.OpenLibrary),
+          MediaSourceLine.Detail(s"${kind.value}:${id.value}")
+        )
+        if dryRun.value then Right(line)
         else
           val c = cfg.covers
-          val url = OpenLibrary.coverUrl(c.openLibraryUrl, kind, id, c.size)
-          val got = fetch.file(url, com.histmersion.pluginhost.Polite.Mime("image/jpeg")) match
-            case Left(why) if why.contains("HTTP 404")            => Left("Open Library has no cover")
-            case Left(why)                                        => Left(s"Open Library: $why")
-            case Right((bytes, _)) if bytes.length > cfg.maxBytes =>
-              Left(s"cover of ${bytes.length} bytes is larger than media.max-bytes")
-            case Right((bytes, mime)) if !mime.startsWith("image/") =>
-              Left(s"Open Library answered $mime, not an image")
+          val url = OpenLibrary.coverUrl(OpenLibrary.BaseUrl(c.openLibraryUrl.value), kind, id, OpenLibrary.CoverSize(c.size.value))
+          val got = fetch.file(HttpTransport.Url(url.value), com.histmersion.pluginhost.Polite.Mime("image/jpeg")) match
+            case Left(why) if why.value.contains("HTTP 404")             => refused("Open Library has no cover")
+            case Left(why)                                               => refused(s"Open Library: ${why.value}")
+            case Right((bytes, _)) if bytes.value.length > cfg.maxBytes.value =>
+              refused(s"cover of ${bytes.value.length} bytes is larger than media.max-bytes")
+            case Right((bytes, mime)) if !mime.value.startsWith("image/") =>
+              refused(s"Open Library answered $mime, not an image")
             case Right((bytes, mime)) =>
               val thumb = fetch
-                .file(OpenLibrary.coverUrl(c.openLibraryUrl, kind, id, c.thumbSize), mime)
+                .file(HttpTransport.Url(OpenLibrary.coverUrl(OpenLibrary.BaseUrl(c.openLibraryUrl.value), kind, id, OpenLibrary.CoverSize(c.thumbSize.value)).value), mime)
                 .toOption
-                .filter((b, m) => b.nonEmpty && m.startsWith("image/"))
-              val size = ImageSize.of(bytes)
-              val tsize = thumb.flatMap((b, _) => ImageSize.of(b))
+                .filter((b, m) => b.value.nonEmpty && m.value.startsWith("image/"))
+              val size = ImageSize.of(ImageSize.Bytes(bytes.value))
+              val tsize = thumb.flatMap((b, _) => ImageSize.of(ImageSize.Bytes(b.value)))
               val a = ProviderAsset(
-                MediaProvider.OpenLibrary,
-                s"$kind:$id",
-                s"cover-$kind-$id.jpg",
-                mime,
-                bytes,
-                size.map(_._1),
-                size.map(_._2),
-                thumb.map(_._1),
-                thumb.map(_._2),
-                tsize.map(_._1),
-                tsize.map(_._2),
+                ProviderAsset.Provider(MediaProvider.OpenLibrary),
+                ProviderAsset.Key(s"${kind.value}:${id.value}"),
+                ProviderAsset.Name(s"cover-${kind.value}-${id.value}.jpg"),
+                ProviderAsset.Mime(mime.value),
+                ProviderAsset.Bytes(bytes.value),
+                size.map(s => ProviderAsset.Width(s._1.value)),
+                size.map(s => ProviderAsset.Height(s._2.value)),
+                thumb.map((b, _) => ProviderAsset.Thumb(b.value)),
+                thumb.map((_, m) => ProviderAsset.ThumbMime(m.value)),
+                tsize.map(s => ProviderAsset.ThumbWidth(s._1.value)),
+                tsize.map(s => ProviderAsset.ThumbHeight(s._2.value)),
                 license = com.histmersion.domain.media.assets.ProviderAsset.License(""),
                 licenseUrl = None,
                 author = None,
                 credit = com.histmersion.domain.media.assets.ProviderAsset.Credit("Cover: Open Library"),
-                sourceUrl = OpenLibrary.pageUrl(c.openLibraryPage, kind, id),
-                originalUrl = Some(url.stripSuffix("?default=false")),
-                kind = Some(AssetKind.Photo)
+                sourceUrl = ProviderAsset.SourceUrl(OpenLibrary.pageUrl(OpenLibrary.BaseUrl(c.openLibraryPage.value), kind, id).value),
+                originalUrl = Some(ProviderAsset.OriginalUrl(url.value.stripSuffix("?default=false"))),
+                kind = Some(ProviderAsset.Kind(AssetKind.Photo))
               )
-              val (uid, _) = assets.save(a, (PictureTarget.Source.wire, keys.citekey))
-              assets.setSourcePicture(keys.citekey, uid, MediaRole.Cover, Some(kind))
+              val (uid, _) = assets.save(a, (AssetService.TargetType(PictureTarget.Source.wire.value), AssetService.TargetId(keys.citekey.value)))
+              assets.setSourcePicture(keys.citekey, uid, MediaRole.Wire(MediaRole.Cover), Some(AssetService.LinkProperty(kind.value)))
               Right(line)
           imports.checked(
-            MediaProvider.OpenLibrary,
-            PictureTarget.Source.wire,
-            keys.citekey,
+            ImportService.Provider(MediaProvider.OpenLibrary),
+            ImportService.TargetType(PictureTarget.Source.wire.value),
+            ImportService.TargetId(keys.citekey.value),
             if got.isRight then com.histmersion.domain.media.imports.ImportService.FoundCount(1) else com.histmersion.domain.media.imports.ImportService.FoundCount(0),
             None
           )
@@ -150,99 +170,108 @@ final class SourcePictures(
   /** The polite client every Open Library call goes through — ONE per server, so its own, slower pace holds across runs
     * and the OCR jobs' covers alike (calls are serialised on it).
     */
-  lazy val openLibraryClient: Polite = Polite(http, cfg.copy(requestIntervalMs = cfg.covers.requestIntervalMs))
+  lazy val openLibraryClient: Polite = Polite(http, cfg.copy(requestIntervalMs = MediaConfig.RequestIntervalMs(cfg.covers.requestIntervalMs.value)))
 
   /** Pure: an image's type from its first bytes (`None` unless JPEG, PNG, GIF or WebP). */
   private[covers] def sniff(b: com.histmersion.domain.media.assets.AssetService.Bytes): Option[com.histmersion.domain.media.assets.AssetService.Mime] =
-    def at(i: com.histmersion.domain.media.covers.SourcePictures.SniffOffset) = if b.length > i then b(i) & 0xff else -1
-    if at(com.histmersion.domain.media.covers.SourcePictures.SniffOffset(0)) == 0xff && at(1) == 0xd8 then Some(com.histmersion.domain.media.assets.AssetService.Mime("image/jpeg"))
-    else if at(com.histmersion.domain.media.covers.SourcePictures.SniffOffset(0)) == 0x89 && at(1) == 'P' && at(2) == 'N' && at(3) == 'G' then Some(com.histmersion.domain.media.assets.AssetService.Mime("image/png"))
-    else if at(com.histmersion.domain.media.covers.SourcePictures.SniffOffset(0)) == 'G' && at(1) == 'I' && at(2) == 'F' then Some(com.histmersion.domain.media.assets.AssetService.Mime("image/gif"))
-    else if b.length >= 12 && new String(b.slice(8, 12), "US-ASCII") == "WEBP" then Some(com.histmersion.domain.media.assets.AssetService.Mime("image/webp"))
+    def at(i: Int) = if b.value.length > i then b.value(i) & 0xff else -1
+    if at(0) == 0xff && at(1) == 0xd8 then Some(com.histmersion.domain.media.assets.AssetService.Mime("image/jpeg"))
+    else if at(0) == 0x89 && at(1) == 'P' && at(2) == 'N' && at(3) == 'G' then Some(com.histmersion.domain.media.assets.AssetService.Mime("image/png"))
+    else if at(0) == 'G' && at(1) == 'I' && at(2) == 'F' then Some(com.histmersion.domain.media.assets.AssetService.Mime("image/gif"))
+    else if b.value.length >= 12 && new String(b.value.slice(8, 12), "US-ASCII") == "WEBP" then Some(com.histmersion.domain.media.assets.AssetService.Mime("image/webp"))
     else None
 
   /** Store `bytes` (read from the local Calibre library by the CLI) as the source's cover. */
   def storeCover(p: SourceCoverParams, bytes: com.histmersion.domain.media.assets.AssetService.Bytes): Either[Api.Error, MediaItem] =
-    val bad = (m: String) => Left(Api.Error(m, Some(Write.CodeInvalid)))
-    if p.provider != MediaProvider.Calibre then
+    val bad = (m: String) => Left(Api.Error(Api.Error.Message(m), Some(Api.Error.Code(Write.CodeInvalid))))
+    if p.provider.value != MediaProvider.Calibre then
       bad(s"a cover is uploaded from ${MediaProvider.Calibre} only (Open Library's come through `media covers`)")
-    else if p.key.trim.isEmpty then bad("the cover's key (its Calibre id) is missing")
-    else if bytes.isEmpty then bad("the cover is empty")
-    else if bytes.length > cfg.maxBytes then bad(s"the cover is ${bytes.length} bytes, more than media.max-bytes")
+    else if p.key.value.trim.isEmpty then bad("the cover's key (its Calibre id) is missing")
+    else if bytes.value.isEmpty then bad("the cover is empty")
+    else if bytes.value.length > cfg.maxBytes.value then bad(s"the cover is ${bytes.value.length} bytes, more than media.max-bytes")
     else
       sniff(bytes) match
         case None       => bad("the cover is not a JPEG, PNG, GIF or WebP image")
         case Some(mime) =>
-          sources.current(p.citekey.trim) match
-            case None     => Left(Api.Error(s"No source '${p.citekey}'", Some(Write.CodeNotFound)))
-            case Some(ck) =>
-              val key = p.key.trim
-              val size = ImageSize.of(bytes)
+          Citekey.option(p.citekey.value.trim).flatMap(sources.current) match
+            case None     => Left(Api.Error(Api.Error.Message(s"No source '${p.citekey}'"), Some(Api.Error.Code(Write.CodeNotFound))))
+            case Some(current) =>
+              val ck = Citekey.assume(current.value)
+              val key = p.key.value.trim
+              val size = ImageSize.of(ImageSize.Bytes(bytes.value))
               val thumb = thumbnail(bytes, s"cover-$key")
               val a = ProviderAsset(
-                MediaProvider.Calibre,
-                key,
-                MediaText.safeName(s"cover-calibre-$key.${mime.drop(6)}"),
-                mime,
-                bytes,
-                size.map(_._1),
-                size.map(_._2),
-                thumb.map(_.bytes),
-                thumb.map(_.mime),
-                thumb.map(_.width).filter(_ > 0),
-                thumb.map(_.height).filter(_ > 0),
+                ProviderAsset.Provider(MediaProvider.Calibre),
+                ProviderAsset.Key(key),
+                ProviderAsset.Name(MediaText.safeName(com.histmersion.plugin.WorkKey.Title(s"cover-calibre-$key.${mime.value.drop(6)}")).value),
+                ProviderAsset.Mime(mime.value),
+                ProviderAsset.Bytes(bytes.value),
+                size.map(s => ProviderAsset.Width(s._1.value)),
+                size.map(s => ProviderAsset.Height(s._2.value)),
+                thumb.map(t => ProviderAsset.Thumb(t.bytes.value)),
+                thumb.map(t => ProviderAsset.ThumbMime(t.mime.value)),
+                thumb.map(_.width.value).filter(_ > 0).map(ProviderAsset.ThumbWidth(_)),
+                thumb.map(_.height.value).filter(_ > 0).map(ProviderAsset.ThumbHeight(_)),
                 license = com.histmersion.domain.media.assets.ProviderAsset.License(""),
                 licenseUrl = None,
                 author = None,
                 credit = com.histmersion.domain.media.assets.ProviderAsset.Credit("Cover: the local Calibre library"),
-                sourceUrl = s"calibre:book/$key",
+                sourceUrl = ProviderAsset.SourceUrl(s"calibre:book/$key"),
                 originalUrl = None,
-                kind = Some(AssetKind.Photo)
+                kind = Some(ProviderAsset.Kind(AssetKind.Photo))
               )
-              val (uid, _) = assets.save(a, (PictureTarget.Source.wire, ck))
-              assets.setSourcePicture(ck, uid, MediaRole.Cover, Some(MediaProvider.Calibre))
-              assets.show(uid).toRight(Api.Error(s"cover of '$ck' not stored"))
+              val (uid, _) = assets.save(a, (AssetService.TargetType(PictureTarget.Source.wire.value), AssetService.TargetId(ck.value)))
+              assets.setSourcePicture(ck, uid, MediaRole.Wire(MediaRole.Cover), Some(AssetService.LinkProperty(MediaProvider.Calibre)))
+              assets.show(uid).toRight(Api.Error(Api.Error.Message(s"cover of '$ck' not stored")))
 
   // ── a run over the corpus ─────────────────────────────────────────────────────────────────────
 
   /** Covers (Open Library) and illustrations for the sources a request names; `progress` hears how far it got. A dry
     * run reads the database only.
     */
-  def run(req: MediaCoversRequest, progress: com.histmersion.domain.media.covers.SourcePictures.Progress => Unit = _ => ()): MediaCoversReport =
-    val only = req.citekey.map(_.trim).filter(_.nonEmpty).map(c => sources.current(c).getOrElse(c))
-    val limit = req.limit.filter(_ > 0).getOrElse(Int.MaxValue)
+  def run(req: MediaCoversRequest, progress: JobInfo.Progress => Unit = _ => ()): MediaCoversReport =
+    val dryRun = SourcePictures.DryRun(req.dryRun.value)
+    val refresh = CoverService.CandidatesRefresh(req.refresh.value)
+    val named = req.citekey.map(_.value.trim).filter(_.nonEmpty)
+    val only = named.flatMap(c => Citekey.option(c).map(k => sources.current(k).map(cur => Citekey.assume(cur.value)).getOrElse(k)))
+    // a citekey that cannot be one names no source
+    val nobody = named.isDefined && only.isEmpty
+    val limit = CoverService.CandidatesLimit(req.limit.map(_.value).filter(_ > 0).getOrElse(Int.MaxValue))
     val skipped = List.newBuilder[String]
     val failed = List.newBuilder[String]
     val lines = List.newBuilder[MediaSourceLine]
     // `var`: the sources looked at so far
     var seen = Set.empty[String]
 
-    if req.covers then
-      val hinted = for ck <- only; i <- req.isbn.map(_.trim).filter(_.nonEmpty)
-      yield CoverKeys(ck, Some(i), None)
-      val cands = covers.coverCandidates(only, req.refresh, limit) match
-        case Nil =>
-          hinted.filter(k => req.refresh || assets.sourcePicture(k.citekey, MediaRole.Cover).isEmpty).toList
-        case cs => cs
+    if req.covers.value then
+      val hinted = for ck <- only; i <- req.isbn.map(_.value.trim).filter(_.nonEmpty)
+      yield CoverKeys(ck, Some(CoverKeys.Isbn(i)), None)
+      val cands =
+        if nobody then Nil
+        else
+          covers.coverCandidates(only, refresh, limit) match
+            case Nil =>
+              hinted.filter(k => refresh.value || assets.sourcePicture(k.citekey, MediaRole.Wire(MediaRole.Cover)).isEmpty).toList
+            case cs => cs
       val fetch = openLibraryClient
       cands.zipWithIndex.foreach { (k, i) =>
-        seen += k.citekey
-        progress(s"Open Library covers: ${i + 1}/${cands.size} (${k.citekey})")
-        openLibrary(k, req.dryRun, fetch) match
-          case Right(l)                                     => lines += l
-          case Left(why) if why.startsWith("Open Library:") => failed += s"${k.citekey}: $why"
-          case Left(why)                                    => skipped += s"cover: $why"
+        seen += k.citekey.value
+        progress(JobInfo.Progress(s"Open Library covers: ${i + 1}/${cands.size} (${k.citekey})"))
+        openLibrary(k, dryRun, fetch) match
+          case Right(l)                                           => lines += l
+          case Left(why) if why.value.startsWith("Open Library:") => failed += s"${k.citekey}: ${why.value}"
+          case Left(why)                                          => skipped += s"cover: ${why.value}"
       }
 
-    if req.illustrations then
-      val cands = covers.illustrationCandidates(only, req.refresh, limit)
+    if req.illustrations.value then
+      val cands = if nobody then Nil else covers.illustrationCandidates(only, refresh, limit)
       cands.zipWithIndex.foreach { (ck, i) =>
-        seen += ck
-        if i % 10 == 0 then progress(s"illustrations: ${i + 1}/${cands.size}")
+        seen += ck.value
+        if i % 10 == 0 then progress(JobInfo.Progress(s"illustrations: ${i + 1}/${cands.size}"))
         try
-          illustrate(ck, req.dryRun) match
+          illustrate(ck, dryRun) match
             case Right(l)  => lines += l
-            case Left(why) => skipped += s"illustration: $why"
+            case Left(why) => skipped += s"illustration: ${why.value}"
         catch
           case e: InterruptedException => throw e
           case e: Exception            => failed += s"$ck: ${e.getClass.getSimpleName}: ${e.getMessage}"
@@ -251,12 +280,12 @@ final class SourcePictures(
     val ls = lines.result()
     MediaCoversReport(
       req.dryRun,
-      seen.size,
-      ls.count(_.role == MediaRole.Cover),
-      ls.count(_.role == MediaRole.Illustration),
+      MediaCoversReport.Sources(seen.size),
+      MediaCoversReport.Covers(ls.count(_.role.value == MediaRole.Cover)),
+      MediaCoversReport.Illustrations(ls.count(_.role.value == MediaRole.Illustration)),
       ls,
-      MediaCount.of(skipped.result()),
-      failed.result()
+      MediaCount.of(skipped.result().map(MediaCount.Key(_))),
+      failed.result().map(MediaCoversReport.Failed(_))
     )
 
   /** After a conversion stored a source's figures: its illustration, and — when its record holds an ISBN or OCLC number
@@ -266,11 +295,11 @@ final class SourcePictures(
     try
       val ill = illustrate(citekey, dryRun = com.histmersion.domain.media.covers.SourcePictures.DryRun(false)).toOption.map(l => s"illustration ${l.detail}")
       val cover = covers
-        .coverCandidates(Some(citekey), refresh = com.histmersion.domain.media.covers.CoverService.CandidatesRefresh(false), com.histmersion.domain.media.covers.CoverService.CandidatesLimit(1))
+        .coverCandidates(Some(citekey), com.histmersion.domain.media.covers.CoverService.CandidatesRefresh(false), com.histmersion.domain.media.covers.CoverService.CandidatesLimit(1))
         .headOption
-        .flatMap(k => openLibrary(k, dryRun = false, openLibraryClient).toOption)
+        .flatMap(k => openLibrary(k, SourcePictures.DryRun(false), openLibraryClient).toOption)
         .map(l => s"cover ${l.detail}")
-      Option(List(ill, cover).flatten).filter(_.nonEmpty).map(_.mkString(" · "))
+      Option(List(ill, cover).flatten).filter(_.nonEmpty).map(l => SourcePictures.AfterIngestText(l.mkString(" · ")))
     catch
       case e: InterruptedException => throw e
       case e: Exception            =>
@@ -286,10 +315,6 @@ object SourcePictures:
   object IllustrateText extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type OpenLibraryText = OpenLibraryText.T
   object OpenLibraryText extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type Progress = Progress.T
-  object Progress extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type SniffOffset = SniffOffset.T
-  object SniffOffset extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
   /** Pure: a figure row as [[FigurePick]] weighs it, before the text's links to it are counted. */
 
 

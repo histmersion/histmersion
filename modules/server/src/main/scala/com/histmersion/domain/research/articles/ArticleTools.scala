@@ -13,28 +13,22 @@ import sttp.tapir.Schema
 import com.histmersion.api.aliases.Aliases
 import com.histmersion.api.library.Filter
 import com.histmersion.api.research.ArticleMarkdown
-import com.histmersion.api.research.Article
+import com.histmersion.api.research.{Article, Articles}
+import com.histmersion.api.Write
+import com.histmersion.domain.research.Slug
 
 /** The articles' MCP tools, in their place among `/mcp`'s: the list, one article read, its writes, a draft checked, its
   * coverage and review, its note and its versions. The delete is deliberately not a tool: dropping compiled knowledge
   * is a person's decision, made with `histmersion article delete`.
   */
 object ArticleTools:
-  type CoverageMarkdown = CoverageMarkdown.T
-  object CoverageMarkdown extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type EditCheckMarkdown = EditCheckMarkdown.T
-  object EditCheckMarkdown extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type ReviewMarkdown = ReviewMarkdown.T
-  object ReviewMarkdown extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type ArticleCoverageDoc = ArticleCoverageDocValue
-  type ArticleCoverageDocValue = com.histmersion.domain.research.articles.ArticleTools.CoverageMarkdown
-  val ArticleCoverageDocValue: _root_.com.histmersion.domain.research.articles.ArticleTools.CoverageMarkdown.type = _root_.com.histmersion.domain.research.articles.ArticleTools.CoverageMarkdown
-  type ArticleReviewDoc = ArticleReviewDocValue
-  type ArticleReviewDocValue = com.histmersion.domain.research.articles.ArticleTools.ReviewMarkdown
-  val ArticleReviewDocValue: _root_.com.histmersion.domain.research.articles.ArticleTools.ReviewMarkdown.type = _root_.com.histmersion.domain.research.articles.ArticleTools.ReviewMarkdown
-  type CheckEditsDoc = CheckEditsDocValue
-  type CheckEditsDocValue = com.histmersion.domain.research.articles.ArticleTools.EditCheckMarkdown
-  val CheckEditsDocValue: _root_.com.histmersion.domain.research.articles.ArticleTools.EditCheckMarkdown.type = _root_.com.histmersion.domain.research.articles.ArticleTools.EditCheckMarkdown
+  /** A slug a tool reads: one that is no slug names no article. */
+  private def readSlug(slug: Article.Slug): Either[Api.Error, Slug] =
+    Slug.parse(slug.value).left.map(_ => Articles.notFound(slug))
+
+  /** A slug a tool writes: one that is no slug is refused. */
+  private def writeSlug(slug: Article.Slug): Either[Api.Error, Slug] =
+    Slug.parse(slug.value).left.map(p => Api.Error(Api.Error.Message(p.value), Some(Api.Error.Code(Write.CodeInvalid))))
 
   import com.histmersion.util.mcp.ToolInputs.given
 
@@ -92,9 +86,9 @@ object ArticleTools:
         )
         .input[GetArticleInput]
         .handle { in =>
-          articles.get(in.slug) match
+          readSlug(in.slug).flatMap(articles.get(_)) match
             case Right(v) =>
-              val parts = in.parts.map(_.split(',').map(_.trim.toLowerCase).toList).getOrElse(Nil)
+              val parts = in.parts.map(_.value.split(',').map(_.trim.toLowerCase).toList).getOrElse(Nil)
               ToolResult.text(ArticleMarkdown.article(v, parts))
             case Left(e) => ToolResult.text(s"_No article '${in.slug}' — find a slug with list_articles._")
         }
@@ -112,12 +106,16 @@ object ArticleTools:
         )
         .input[PutArticleInput]
         .handle { in =>
-          articles.put(in.slug, in.article, in.strict) match
+          writeSlug(in.slug).flatMap(articles.put(_, in.article, in.strict)) match
             case Right(v) =>
               ToolResult.text(
-                Aliases.note(AliasKinds.ArticleRecords, in.slug.toLowerCase, v.article.slug)(
-                  ArticleMarkdown.article(v)
-                )
+                Aliases
+                  .note(
+                    AliasKinds.ArticleRecords,
+                    Aliases.Id(in.slug.value.toLowerCase),
+                    Aliases.Id(v.article.slug.value)
+                  )(Aliases.Note(ArticleMarkdown.article(v)))
+                  .value
               )
             case Left(e) => McpOut.error(e)
         }
@@ -141,12 +139,16 @@ object ArticleTools:
         )
         .input[PatchArticleInput]
         .handle { in =>
-          articles.patch(in.slug, in.patch, in.strict) match
+          writeSlug(in.slug).flatMap(articles.patch(_, in.patch, in.strict)) match
             case Right(v) =>
               ToolResult.text(
-                Aliases.note(AliasKinds.ArticleRecords, in.slug.toLowerCase, v.article.slug)(
-                  ArticleMarkdown.article(v)
-                )
+                Aliases
+                  .note(
+                    AliasKinds.ArticleRecords,
+                    Aliases.Id(in.slug.value.toLowerCase),
+                    Aliases.Id(v.article.slug.value)
+                  )(Aliases.Note(ArticleMarkdown.article(v)))
+                  .value
               )
             case Left(e) => McpOut.error(e)
         }
@@ -180,8 +182,8 @@ object ArticleTools:
         )
         .input[ExportArticleInput]
         .handle { in =>
-          articles.exportNote(in.slug) match
-            case Right(text) => ToolResult.text(text)
+          readSlug(in.slug).flatMap(articles.exportNote) match
+            case Right(text) => ToolResult.text(text.value)
             case Left(e)     => McpOut.error(e)
         }
 
@@ -194,7 +196,7 @@ object ArticleTools:
         )
         .input[ArticleVersionsInput]
         .handle { in =>
-          articles.versions(in.slug) match
+          readSlug(in.slug).flatMap(articles.versions) match
             case Right(vs) => ToolResult.text(ArticleMarkdown.versions(in.slug, vs))
             case Left(e)   => McpOut.error(e)
         }
@@ -207,7 +209,7 @@ object ArticleTools:
         )
         .input[ArticleVersionInput]
         .handle { in =>
-          articles.version(in.slug, in.versionId) match
+          readSlug(in.slug).flatMap(s => articles.version(s, ArticleRepo.VersionId(in.versionId.value))) match
             case Right(v) => ToolResult.text(ArticleMarkdown.version(v))
             case Left(e)  => McpOut.error(e)
         }
@@ -239,7 +241,11 @@ object ArticleTools:
       * text — see [[Api.ArticleQuery]].
       */
     def toQuery: Api.ArticleQuery =
-      Api.ArticleQuery(Filter.of(tags = tag.toList, limit = limit, offset = offset, title = title), kind, query)
+      Api.ArticleQuery(
+        Filter.of(tags = tag.toList.map(t => Filter.Tags(t.value)), limit = limit, offset = offset, title = title),
+        kind.map(k => Api.ArticleQuery.Kind(k.value)),
+        query.map(q => Api.ArticleQuery.Text(q.value))
+      )
   object ListArticlesInput:
     type Kind = com.histmersion.domain.research.Article.Kind
     val Kind: _root_.com.histmersion.domain.research.Article.Kind.type = _root_.com.histmersion.domain.research.Article.Kind
@@ -264,8 +270,8 @@ object ArticleTools:
 
   final case class GetArticleInput(slug: GetArticleInput.Slug, parts: Option[GetArticleInput.Parts] = None) derives KindlingsCodecAsObject
   object GetArticleInput:
-    type Slug = com.histmersion.domain.research.Slug
-    val Slug: _root_.com.histmersion.domain.research.Slug.type = _root_.com.histmersion.domain.research.Slug
+    type Slug = com.histmersion.api.research.Article.Slug
+    val Slug: _root_.com.histmersion.api.research.Article.Slug.type = _root_.com.histmersion.api.research.Article.Slug
     type Parts = Parts.T
     object Parts extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
@@ -278,7 +284,7 @@ object ArticleTools:
       )
 
   /** `article_coverage` as `/mcp` and an agent step both describe it. */
-  val ArticleCoverageDoc: com.histmersion.domain.research.articles.ArticleTools.ArticleCoverageDoc =
+  val ArticleCoverageDoc: String =
     "The coverage of one article, computed by code from the filter it records: how many sources the filter " +
       "returns, which of them the body cites, every other one with its stored reason (or 'not yet assessed'), " +
       "the status breakdown, the disagreement edges (challenges, refutes, updates, superseded_by) touching the " +
@@ -289,11 +295,11 @@ object ArticleTools:
       "that records no filter has none (set it with patch_article `filter`)."
 
   /** `article_coverage`: the one handler, rendered. */
-  def articleCoverageMarkdown(articles: ArticlesControllers, in: ArticleCoverageInput): com.histmersion.domain.research.articles.ArticleTools.CoverageMarkdown =
-    articles.coverage(in.slug).fold(McpOut.refusal, Article.Coverage.markdown)
+  def articleCoverageMarkdown(articles: ArticlesControllers, in: ArticleCoverageInput): McpOut.Markdown =
+    readSlug(in.slug).flatMap(articles.coverage).fold(e => McpOut.refusal(e), c => Article.Coverage.markdown(c).value)
 
   /** `article_review` as `/mcp` describes it. */
-  val ArticleReviewDoc: com.histmersion.domain.research.articles.ArticleTools.ArticleReviewDoc =
+  val ArticleReviewDoc: String =
     "Where one article stands with the review panel (rules reviewer, cold reader, skeptic, mechanical checks): " +
       "its state (unreviewed, queued, in-review with the round, passed, majors-open, stopped) with what it means, " +
       "the review manager's last outcome, the research goals that link the article with their stage, the approvals " +
@@ -302,13 +308,13 @@ object ArticleTools:
       "won't fix, still open). CLI: histmersion article review."
 
   /** `article_review`: the one handler, rendered. */
-  def articleReviewMarkdown(articles: ArticlesControllers, in: ArticleReviewInput): com.histmersion.domain.research.articles.ArticleTools.ReviewMarkdown =
-    articles.review(in.slug).fold(McpOut.refusal, Article.ReviewView.markdown)
+  def articleReviewMarkdown(articles: ArticlesControllers, in: ArticleReviewInput): McpOut.Markdown =
+    readSlug(in.slug).flatMap(articles.review).fold(e => McpOut.refusal(e), v => Article.ReviewView.markdown(v).value)
 
   final case class ArticleReviewInput(slug: ArticleReviewInput.Slug) derives KindlingsCodecAsObject
   object ArticleReviewInput:
-    type Slug = com.histmersion.domain.research.Slug
-    val Slug: _root_.com.histmersion.domain.research.Slug.type = _root_.com.histmersion.domain.research.Slug
+    type Slug = com.histmersion.api.research.Article.Slug
+    val Slug: _root_.com.histmersion.api.research.Article.Slug.type = _root_.com.histmersion.api.research.Article.Slug
 
     given Schema[ArticleReviewInput] = KindlingsSchema
       .derived[ArticleReviewInput]
@@ -317,8 +323,8 @@ object ArticleTools:
 
   final case class ArticleCoverageInput(slug: ArticleCoverageInput.Slug) derives KindlingsCodecAsObject
   object ArticleCoverageInput:
-    type Slug = com.histmersion.domain.research.Slug
-    val Slug: _root_.com.histmersion.domain.research.Slug.type = _root_.com.histmersion.domain.research.Slug
+    type Slug = com.histmersion.api.research.Article.Slug
+    val Slug: _root_.com.histmersion.api.research.Article.Slug.type = _root_.com.histmersion.api.research.Article.Slug
 
     given Schema[ArticleCoverageInput] = KindlingsSchema
       .derived[ArticleCoverageInput]
@@ -326,7 +332,7 @@ object ArticleTools:
       .modify(_.slug)(_.description("The article's slug"))
 
   /** `check_edits` as `/mcp` and an agent step both describe it. */
-  val CheckEditsDoc: com.histmersion.domain.research.articles.ArticleTools.CheckEditsDoc =
+  val CheckEditsDoc: String =
     "Dry-run a change to an article and see what the review checks would say — nothing is written. `edits` " +
       "are applied in order to the CURRENT stored body: each is {op: replace|insertAfter|insertBefore|delete, " +
       "anchor: text copied exactly from the body (it must occur once; whitespace is normalised), text}. Or pass " +
@@ -336,10 +342,19 @@ object ArticleTools:
       "checks code runs on a review fixer's answer."
 
   /** `check_edits`: the one handler, rendered. */
-  def checkEdits(articles: ArticlesControllers, in: CheckEditsInput): com.histmersion.domain.research.articles.ArticleTools.EditCheckMarkdown =
-    articles
-      .check(in.slug, Article.Edits.ArticleCheckRequest(in.edits, in.body, in.kind))
-      .fold(McpOut.refusal, Article.Edits.markdown)
+  def checkEdits(articles: ArticlesControllers, in: CheckEditsInput): McpOut.Markdown =
+    writeSlug(in.slug)
+      .flatMap(
+        articles.check(
+          _,
+          Article.Edits.ArticleCheckRequest(
+            in.edits,
+            in.body.map(b => Article.Body(b.value)),
+            in.kind.map(k => Article.Kind.Wire(k.value))
+          )
+        )
+      )
+      .fold(e => McpOut.refusal(e), c => Article.Edits.markdown(c).value)
 
   final case class CheckEditsInput(
       slug: CheckEditsInput.Slug,
@@ -348,8 +363,8 @@ object ArticleTools:
       kind: Option[CheckEditsInput.Kind] = None
   ) derives KindlingsCodecAsObject
   object CheckEditsInput:
-    type Slug = com.histmersion.domain.research.Slug
-    val Slug: _root_.com.histmersion.domain.research.Slug.type = _root_.com.histmersion.domain.research.Slug
+    type Slug = com.histmersion.api.research.Article.Slug
+    val Slug: _root_.com.histmersion.api.research.Article.Slug.type = _root_.com.histmersion.api.research.Article.Slug
     type Body = com.histmersion.domain.research.Article.Body
     val Body: _root_.com.histmersion.domain.research.Article.Body.type = _root_.com.histmersion.domain.research.Article.Body
     type Kind = com.histmersion.domain.research.Article.Kind
@@ -369,8 +384,8 @@ object ArticleTools:
 
   final case class PutArticleInput(slug: PutArticleInput.Slug, article: Article.Put, strict: PutArticleInput.Strict = com.histmersion.domain.research.articles.ArticleTools.PutArticleInput.Strict(false))
   object PutArticleInput:
-    type Slug = com.histmersion.domain.research.Slug
-    val Slug: _root_.com.histmersion.domain.research.Slug.type = _root_.com.histmersion.domain.research.Slug
+    type Slug = com.histmersion.api.research.Article.Slug
+    val Slug: _root_.com.histmersion.api.research.Article.Slug.type = _root_.com.histmersion.api.research.Article.Slug
     type Strict = com.histmersion.domain.research.Article.StrictMode
     val Strict: _root_.com.histmersion.domain.research.Article.StrictMode.type = _root_.com.histmersion.domain.research.Article.StrictMode
 
@@ -382,8 +397,8 @@ object ArticleTools:
 
   final case class PatchArticleInput(slug: PatchArticleInput.Slug, patch: Article.Patch, strict: PatchArticleInput.Strict = com.histmersion.domain.research.articles.ArticleTools.PatchArticleInput.Strict(false))
   object PatchArticleInput:
-    type Slug = com.histmersion.domain.research.Slug
-    val Slug: _root_.com.histmersion.domain.research.Slug.type = _root_.com.histmersion.domain.research.Slug
+    type Slug = com.histmersion.api.research.Article.Slug
+    val Slug: _root_.com.histmersion.api.research.Article.Slug.type = _root_.com.histmersion.api.research.Article.Slug
     type Strict = com.histmersion.domain.research.Article.StrictMode
     val Strict: _root_.com.histmersion.domain.research.Article.StrictMode.type = _root_.com.histmersion.domain.research.Article.StrictMode
 
@@ -397,14 +412,14 @@ object ArticleTools:
   final case class ExportArticleInput(slug: ExportArticleInput.Slug) derives KindlingsCodecAsObject, KindlingsSchema, com.histmersion.api.json.Schema
 
   object ExportArticleInput:
-    type Slug = com.histmersion.domain.research.Slug
-    val Slug: _root_.com.histmersion.domain.research.Slug.type = _root_.com.histmersion.domain.research.Slug
+    type Slug = com.histmersion.api.research.Article.Slug
+    val Slug: _root_.com.histmersion.api.research.Article.Slug.type = _root_.com.histmersion.api.research.Article.Slug
 
 
   final case class ArticleVersionsInput(slug: ArticleVersionsInput.Slug) derives KindlingsCodecAsObject
   object ArticleVersionsInput:
-    type Slug = com.histmersion.domain.research.Slug
-    val Slug: _root_.com.histmersion.domain.research.Slug.type = _root_.com.histmersion.domain.research.Slug
+    type Slug = com.histmersion.api.research.Article.Slug
+    val Slug: _root_.com.histmersion.api.research.Article.Slug.type = _root_.com.histmersion.api.research.Article.Slug
 
     given Schema[ArticleVersionsInput] = KindlingsSchema
       .derived[ArticleVersionsInput]
@@ -413,8 +428,8 @@ object ArticleTools:
 
   final case class ArticleVersionInput(slug: ArticleVersionInput.Slug, versionId: ArticleVersionInput.VersionId) derives KindlingsCodecAsObject
   object ArticleVersionInput:
-    type Slug = com.histmersion.domain.research.Slug
-    val Slug: _root_.com.histmersion.domain.research.Slug.type = _root_.com.histmersion.domain.research.Slug
+    type Slug = com.histmersion.api.research.Article.Slug
+    val Slug: _root_.com.histmersion.api.research.Article.Slug.type = _root_.com.histmersion.api.research.Article.Slug
     type VersionId = VersionId.T
     object VersionId extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
 

@@ -71,7 +71,7 @@ final class EventImports(
     if CatalogProvider.all.contains(n) then Right(n) else resolve(asked)
 
   /** One catalogue part read: its key and the records (or why not). */
-  private type Fetched = Either[String, List[CatalogRecord]]
+  private type Fetched = Either[com.histmersion.pluginhost.PluginEvents.Problem, List[CatalogRecord]]
 
   /** The import itself — blocking; the job runs it. Part by part: read, keep what passes the thresholds and the years,
     * place each record ([[CatalogMerge.place]]) against what is stored and what this run placed before, and (not a dry

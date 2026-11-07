@@ -28,10 +28,7 @@ object AgentRuntime:
   type Wire = Wire.T
   object Wire extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
-  type ParseS = ParseS.T
-  object ParseS extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-
-  def parse(s: com.histmersion.domain.automation.agents.AgentRuntime.ParseS): Option[AgentRuntime] = values.find(_.wire == s.trim.toLowerCase(java.util.Locale.ROOT))
+  def parse(s: Wire): Option[AgentRuntime] = values.find(_.wire.value == s.value.trim.toLowerCase(java.util.Locale.ROOT))
 
   /** The runtimes the generator writes a tree for (the API reads the definitions in process). */
   val Generated: List[AgentRuntime] = List(ClaudeCode, Codex, Opencode)

@@ -28,7 +28,7 @@ object OaFetch:
       ),
       cfg.chainIds.map(c => com.histmersion.util.plugins.Plugin.Id(c.value)),
       FetchChain.AllowUnauthorised(cfg.allowUnauthorised.value),
-      plugins = g.registered
+      plugins = g.registered.map(p => com.histmersion.util.plugins.Plugin.Id.assume(p.value))
     )._1
 
   /** Hex MD5 of a download, to compare with the one a PMC dataset record or a Zenodo record states; `None` when the

@@ -31,11 +31,11 @@ final class AssetsControllers(
 
   private val Uuid = "^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$"
 
-  private def notFound(uid: com.histmersion.domain.media.assets.AssetService.AssetUid) = Api.Error(s"No picture '$uid'", Some(Write.CodeNotFound))
+  private def notFound(uid: com.histmersion.domain.media.assets.AssetService.AssetUid) = Api.Error(Api.Error.Message(s"No picture '$uid'"), Some(Api.Error.Code(Write.CodeNotFound)))
 
-  private def canonical(citekey: com.histmersion.domain.library.Citekey): com.histmersion.domain.media.assets.AssetService.AssetUid = sources.current(citekey).getOrElse(citekey)
+  private def canonical(citekey: com.histmersion.domain.library.Citekey): com.histmersion.domain.library.Citekey = sources.current(citekey).map(c => com.histmersion.domain.library.Citekey.assume(c.value)).getOrElse(citekey)
 
-  private def uuid(uid: com.histmersion.domain.media.assets.AssetService.AssetUid): Option[com.histmersion.domain.media.assets.AssetService.AssetUid] = Option(uid.trim).filter(_.matches(Uuid))
+  private def uuid(uid: com.histmersion.domain.media.assets.AssetService.AssetUid): Option[com.histmersion.domain.media.assets.AssetService.AssetUid] = Option(uid.value.trim).filter(_.matches(Uuid)).map(com.histmersion.domain.media.assets.AssetService.AssetUid(_))
 
   // ── a source's figures ──
 
@@ -43,38 +43,38 @@ final class AssetsControllers(
 
   def figure(citekey: com.histmersion.domain.library.Citekey, name: com.histmersion.domain.media.assets.AssetService.AssetName): Either[Api.Error, (com.histmersion.domain.media.assets.AssetService.Bytes, com.histmersion.domain.media.assets.AssetService.Mime)] =
     assets
-      .figure(canonical(citekey), AssetLinks.safeName(name))
+      .figure(canonical(citekey), AssetService.AssetName(AssetLinks.safeName(name.value).value))
       .map((mime, bytes) => (bytes, mime))
-      .toRight(Api.Error(s"No asset '$name' for '$citekey'", Some(Write.CodeNotFound)))
+      .toRight(Api.Error(Api.Error.Message(s"No asset '$name' for '$citekey'"), Some(Api.Error.Code(Write.CodeNotFound))))
 
   /** Add figures to an existing source (the host-side seed path). */
   def putFigures(citekey: com.histmersion.domain.library.Citekey, in: List[AssetInput]): Either[Api.Error, AssetsStored] =
     maintenance.guard(com.histmersion.util.data.maintenance.WriteGate.OperationName("put_assets"))(
       sources.lookup(citekey).left.map {
-        case MediaSources.Error.Invalid(message) => Write.invalid(message)
-        case MediaSources.Error.NotFound => Write.notFound(citekey)
-      }.flatMap { key =>
-        decode(in).map(stored => AssetsStored(key.value, assets.addFigures(key.value, stored)))
+        case MediaSources.Error.Invalid(message) => Write.invalid(Write.InvalidMessage(message.value))
+        case MediaSources.Error.NotFound => Write.notFound(com.histmersion.api.library.Citekey(citekey.value))
+      }.flatMap { _ =>
+        decode(in).map(stored => AssetsStored(com.histmersion.api.library.Citekey(citekey.value), AssetsStored.Stored(assets.addFigures(citekey, stored).value)))
       }
     )
 
   /** Wire figures → storable ones, failing the whole batch on the first unusable payload. */
   def decode(in: List[AssetInput]): Either[Api.Error, List[NewFigure]] =
     in.foldLeft[Either[Api.Error, List[NewFigure]]](Right(Nil)) { (acc, a) =>
-      acc.flatMap(xs => NewFigure.of(a, cfg().limits.assetBytes).left.map(Api.Error(_)).map(xs :+ _))
+      acc.flatMap(xs => NewFigure.of(a, com.histmersion.ByteCount.option(cfg().limits.assetBytes.value).getOrElse(com.histmersion.ByteCount(0L))).left.map(p => Api.Error(Api.Error.Message(p.value))).map(xs :+ _))
     }
 
   def detail(citekey: com.histmersion.domain.library.Citekey, name: com.histmersion.domain.media.assets.AssetService.AssetName): Either[Api.Error, AssetDetail] =
-    assets.detail(citekey, name).toRight(Api.Error(s"No asset '$citekey/$name'", Some(Write.CodeNotFound)))
+    assets.detail(citekey, name).toRight(Api.Error(Api.Error.Message(s"No asset '$citekey/$name'"), Some(Api.Error.Code(Write.CodeNotFound))))
 
   def patch(citekey: com.histmersion.domain.library.Citekey, name: com.histmersion.domain.media.assets.AssetService.AssetName, p: AssetPatch): Either[Api.Error, AssetDetail] =
     maintenance.guard(com.histmersion.util.data.maintenance.WriteGate.OperationName("patch_asset"))(assets.patch(citekey, name, p))
 
   // ── the pictures ──
 
-  def mediaGeo(q: Api.MediaGeoQuery): List[MediaGeoHit] = assets.geo(q, cfg().limits.page(q.limit, com.histmersion.PageSize(200)))
+  def mediaGeo(q: Api.MediaGeoQuery): List[MediaGeoHit] = assets.geo(q, MediaRepo.Limit(cfg().limits.page(q.limit.flatMap(l => com.histmersion.PageSize.option(l.value)), com.histmersion.PageSize(200)).value))
 
-  def list(q: Api.MediaQuery): MediaList = assets.list(q, cfg().limits.page(q.limit, com.histmersion.PageSize(50)))
+  def list(q: Api.MediaQuery): MediaList = assets.list(q, MediaRepo.Limit(cfg().limits.page(q.limit.flatMap(l => com.histmersion.PageSize.option(l.value)), com.histmersion.PageSize(50)).value))
 
   def facets: MediaFacets = assets.facets
 
@@ -90,15 +90,15 @@ final class AssetsControllers(
 
   /** A place's pictures for its card, through its equivalents. */
   def placeThumbs(placeId: com.histmersion.domain.catalogue.Place.Id): List[MediaThumb] =
-    assets.placeThumbs(placeId, cfg().media.sameSiteKm, AssetsControllers.CardPictures)
+    assets.placeThumbs(placeId, com.histmersion.domain.catalogue.evidence.EventMatcher.NearFinding.Km(cfg().media.sameSiteKm.value), MediaRepo.Limit(AssetsControllers.CardPictures))
 
   /** An event's pictures for its card. */
   def eventThumbs(eventId: com.histmersion.domain.catalogue.Event.Id): List[MediaThumb] =
-    assets.thumbs(PictureTarget.Event.wire, eventId, AssetsControllers.CardPictures)
+    assets.thumbs(AssetService.TargetType(PictureTarget.Event.wire.value), AssetService.TargetId(eventId.value), MediaRepo.Limit(AssetsControllers.CardPictures))
 
   /** A source's picture for its hover card: its cover, else its illustration. */
   def sourceThumb(citekey: com.histmersion.domain.library.Citekey): Option[MediaThumb] =
-    assets.thumbs(PictureTarget.Source.wire, citekey, com.histmersion.domain.media.assets.AssetService.ThumbsLimit(1)).headOption
+    assets.thumbs(AssetService.TargetType(PictureTarget.Source.wire.value), AssetService.TargetId(citekey.value), MediaRepo.Limit(1)).headOption
 
 object AssetsControllers:
   /** How many pictures a card shows. */

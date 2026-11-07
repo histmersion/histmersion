@@ -9,23 +9,6 @@ import io.circe.syntax.*
   * (docs/research-agent-runtimes.md §2.2). Nothing here touches the disk; [[AgentTrees]] writes.
   */
 object AgentGenerator:
-  type Headless = Headless.T
-  object Headless extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type KeepAllowedTools = KeepAllowedTools.T
-  object KeepAllowedTools extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type MarketplaceName = MarketplaceName.T
-  object MarketplaceName extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type PermissionRule = PermissionRule.T
-  object PermissionRule extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type PluginDescription = PluginDescription.T
-  object PluginDescription extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type Problem = Problem.T
-  object Problem extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type ServerUrl = ServerUrl.T
-  object ServerUrl extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type SkillsKeepAllowedTools = _root_.com.histmersion.domain.automation.agents.AgentGenerator.KeepAllowedTools
-  val SkillsKeepAllowedTools: _root_.com.histmersion.domain.automation.agents.AgentGenerator.KeepAllowedTools.type = _root_.com.histmersion.domain.automation.agents.AgentGenerator.KeepAllowedTools
-
   import AgentDefinitions.render
 
   val PluginVersion = "0.3.0"
@@ -40,37 +23,32 @@ object AgentGenerator:
   val QuotaUrlEnv = "HISTMERSION_QUOTA_URL"
 
   /** The canonical inputs, loaded and checked. */
-  final case class Defs(agents: List[AgentDef], fragments: Map[Defs.FragmentsKey, Defs.FragmentsValue], skills: Map[Defs.SkillsKey, SkillDef]):
+  final case class Defs(
+      agents: List[AgentDef],
+      fragments: Map[AgentDefinitions.FragmentName, AgentDefinitions.FragmentBody],
+      skills: Map[SkillDef.Name, SkillDef]
+  ):
     def system(d: AgentDef, style: ToolStyle): String =
       AgentDefinitions.system(d, fragments, skills, style).fold(m => throw IllegalStateException(m), identity)
-
-  object Defs:
-
-    type FragmentsKey = FragmentsKey.T
-    object FragmentsKey extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-    type FragmentsValue = FragmentsValue.T
-    object FragmentsValue extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-    type SkillsKey = SkillsKey.T
-    object SkillsKey extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
   /** Problems that would make a generated tree lie: an include or skill that does not exist, a placeholder naming no
     * MCP tool (`known`), a skill whose name or description runtimes reject.
     */
-  def check(d: Defs, known: Set[com.histmersion.util.storage.SafePath.Candidate]): List[com.histmersion.domain.automation.agents.AgentGenerator.Problem] =
+  def check(d: Defs, known: Set[String]): List[String] =
     val markerProblems =
       (d.agents.map(a => s"agents/${a.name}.md" -> a.body) ++ d.fragments.toList
-        .sortBy(_._1)
-        .map((n, t) => s"agents/_shared/$n.md" -> t))
+        .sortBy(_._1.value)
+        .map((n, t) => s"agents/_shared/$n.md" -> AgentDef.Body(t.value)))
         .flatMap((where, text) => AgentDefinitions.markerProblems(text).map(p => s"$where: $p"))
     val agentProblems = markerProblems ++ d.agents.flatMap { a =>
       AgentDefinitions.system(a, d.fragments, d.skills, ToolStyle.Bare).left.toOption.toList ++
-        (AgentDefinitions.placeholders(a.body) ++ a.include.flatMap(i =>
-          d.fragments.get(i).toList.flatMap(AgentDefinitions.placeholders)
+        (AgentDefinitions.placeholders(a.body.value) ++ a.include.flatMap(i =>
+          d.fragments.get(AgentDefinitions.FragmentName(i.value)).toList.flatMap(f => AgentDefinitions.placeholders(f.value))
         ))
           .filterNot(known)
           .map(t => s"agents/${a.name}.md names {{tool:$t}}, which is not an MCP tool")
     }
-    val skillProblems = d.skills.values.toList.sortBy(_.name).flatMap { s =>
+    val skillProblems = d.skills.values.toList.sortBy(_.name.value).flatMap { s =>
       AgentDefinitions
         .placeholders(s.header.mkString("\n") + "\n" + s.body)
         .filterNot(known)
@@ -90,11 +68,11 @@ object AgentGenerator:
   /** A skill as a runtime reads it: placeholders rendered; `allowed-tools` kept only for the person's own Claude Code
     * (permissions belong to the agent role everywhere else).
     */
-  def skillFile(s: SkillDef, style: ToolStyle, keepAllowedTools: com.histmersion.domain.automation.agents.AgentGenerator.KeepAllowedTools): String =
-    val header = s.header.filter(l => keepAllowedTools || !l.startsWith("allowed-tools:"))
+  def skillFile(s: SkillDef, style: ToolStyle, keepAllowedTools: Boolean): String =
+    val header = s.header.filter(l => keepAllowedTools || !l.value.startsWith("allowed-tools:"))
     render(s"---\n${header.mkString("\n")}\n---\n${s.body}", style)
 
-  private def skills(d: Defs, prefix: String, style: ToolStyle, keepAllowedTools: com.histmersion.domain.automation.agents.AgentGenerator.SkillsKeepAllowedTools): Map[com.histmersion.util.storage.SafePath.Candidate, String] =
+  private def skills(d: Defs, prefix: String, style: ToolStyle, keepAllowedTools: Boolean): Map[String, String] =
     d.skills.values.map(s => s"$prefix/${s.name}/SKILL.md" -> skillFile(s, style, keepAllowedTools)).toMap
 
   private def yamlString(s: String): String = s.asJson.noSpaces
@@ -113,22 +91,23 @@ object AgentGenerator:
   val ClaudeAnswerTool = "StructuredOutput"
 
   /** Claude Code's turns for an agent's `max-turns`: one more for the [[ClaudeAnswerTool]] call. */
-  def claudeTurns(maxTurns: com.histmersion.domain.automation.agents.AgentDef.MaxTurns): com.histmersion.domain.automation.agents.AgentDef.MaxTurns = math.max(1, maxTurns) + 1
+  def claudeTurns(maxTurns: com.histmersion.domain.automation.agents.AgentDef.MaxTurns): com.histmersion.domain.automation.agents.AgentDef.MaxTurns =
+    AgentDef.MaxTurns(math.max(1, maxTurns.value) + 1)
 
   /** A headless agent: the role's MCP tools and the answer tool, nothing else; the prompt with its includes and skills
     * inlined (a main-thread `--agent` gets no `skills:` preload, §3a).
     */
   def claudeAgent(d: Defs, a: AgentDef): String =
-    val tools = a.tools.map(t => ToolStyle.Claude.tool(t.value)) ++ claudeWebTools(a.web) :+ ClaudeAnswerTool
+    val tools = a.tools.map(t => ToolStyle.Claude.tool(ToolUse.Tool(t.value))) ++ claudeWebTools(a.web) :+ ClaudeAnswerTool
     // no stripMargin around the prompt: a Markdown table row starts with `|`
-    s"---\nname: ${a.name}\ndescription: ${yamlString(a.description)}\ntools: ${tools.mkString(", ")}\n" +
+    s"---\nname: ${a.name}\ndescription: ${yamlString(a.description.value)}\ntools: ${tools.mkString(", ")}\n" +
       s"maxTurns: ${claudeTurns(a.maxTurns)}\n---\n${d.system(a, ToolStyle.Claude)}\n"
 
   /** The settings layer of one role's run: deny-by-default permissions. NOT `disableAllHooks` — it also turns the
     * quota-guard mod off (§3a P5); the person's own hooks stay out through `--setting-sources ""` instead.
     */
   def claudeSettings(a: AgentDef): String =
-    val allow = a.tools.map(t => ToolStyle.Claude.tool(t.value)) ++ claudeWebTools(a.web) :+ ClaudeAnswerTool
+    val allow = a.tools.map(t => ToolStyle.Claude.tool(ToolUse.Tool(t.value))) ++ claudeWebTools(a.web) :+ ClaudeAnswerTool
     val deny = List("Bash", "Edit", "Write", "NotebookEdit", "Agent") ++
       List("WebFetch", "WebSearch").filterNot(claudeWebTools(a.web).contains)
     pretty(
@@ -138,7 +117,7 @@ object AgentGenerator:
       )
     )
 
-  def pluginJson(name: com.histmersion.util.plugins.Plugin.Id, version: com.histmersion.util.plugins.PluginKit.Coordinates.Version, description: com.histmersion.domain.automation.agents.AgentGenerator.PluginDescription): String =
+  def pluginJson(name: String, version: String, description: String): String =
     pretty(
       Json.obj(
         "name" -> name.asJson,
@@ -154,7 +133,7 @@ object AgentGenerator:
     "Query and enrich the Histmersion research corpus (comparative mythology, folklore, Bronze-Age history, " +
       "Indo-European origins) over MCP and the histmersion CLI, instead of grepping markdown files."
 
-  def marketplaceJson(name: com.histmersion.domain.automation.agents.AgentGenerator.MarketplaceName, source: String, version: com.histmersion.util.plugins.PluginKit.Coordinates.Version): String =
+  def marketplaceJson(name: String, source: String, version: String): String =
     pretty(
       Json.obj(
         "name" -> name.asJson,
@@ -174,7 +153,7 @@ object AgentGenerator:
       )
     )
 
-  def mcpJson(url: com.histmersion.domain.automation.agents.AgentGenerator.ServerUrl): String =
+  def mcpJson(url: String): String =
     pretty(
       Json.obj(
         "mcpServers" -> Json.obj(AgentDefinitions.McpServer -> Json.obj("type" -> "http".asJson, "url" -> url.asJson))
@@ -188,47 +167,47 @@ object AgentGenerator:
   def interactiveAgent(a: AgentDef): Option[String] =
     a.interactive.filter(_ => a.runsOn(AgentRuntime.Interactive)).map { i =>
       s"---\nname: ${a.name}\ndescription: ${a.description}\nmodel: ${i.model}\ntools: ${i.tools.mkString(", ")}\n---\n" +
-        render(AgentDefinitions.forAudience(a.body, Set(Audience.Interactive)), ToolStyle.Claude)
+        render(AgentDefinitions.forAudience(a.body, Set(Audience.Interactive)).value, ToolStyle.Claude)
     }
 
   /** The interactive plugin (the repo's `plugin/`, and `claude-code/histmersion/` under the data dir). */
-  def interactivePlugin(d: Defs, s: GenSettings): Map[com.histmersion.util.storage.SafePath.Candidate, String] =
-    Map(".claude-plugin/plugin.json" -> pluginJson(InteractivePlugin, s.version, InteractiveDescription)) ++
+  def interactivePlugin(d: Defs, s: GenSettings): Map[String, String] =
+    Map(".claude-plugin/plugin.json" -> pluginJson(InteractivePlugin, s.version.value, InteractiveDescription)) ++
       d.agents.flatMap(a => interactiveAgent(a).map(t => s"agents/${a.name}.md" -> t)) ++
       skills(d, "skills", ToolStyle.Claude, keepAllowedTools = true) ++
-      s.mcpUrl.map(u => ".mcp.json" -> mcpJson(u)) ++
-      (if s.interactiveMod then modFiles(QuotaMod.Reporting) else Map.empty)
+      s.mcpUrl.map(u => ".mcp.json" -> mcpJson(u.value)) ++
+      (if s.interactiveMod.value then modFiles(QuotaMod.Reporting) else Map.empty)
 
   /** The checked-in tree of the repository: `plugin/` and the root marketplace. */
-  def repoPlugin(d: Defs): Map[com.histmersion.util.storage.SafePath.Candidate, String] =
-    val s = GenSettings(com.histmersion.domain.automation.agents.GenSettings.AgentMcpUrl(""), None, com.histmersion.domain.automation.agents.GenSettings.QuotaUrl(""), claudeMod = com.histmersion.domain.automation.agents.GenSettings.ClaudeMod(false), interactiveMod = com.histmersion.domain.automation.agents.GenSettings.InteractiveMod(false), PluginVersion)
+  def repoPlugin(d: Defs): Map[String, String] =
+    val s = GenSettings(com.histmersion.domain.automation.agents.GenSettings.AgentMcpUrl(""), None, com.histmersion.domain.automation.agents.GenSettings.QuotaUrl(""), claudeMod = com.histmersion.domain.automation.agents.GenSettings.ClaudeMod(false), interactiveMod = com.histmersion.domain.automation.agents.GenSettings.InteractiveMod(false), com.histmersion.domain.automation.agents.GenSettings.Version(PluginVersion))
     interactivePlugin(d, s).map((k, v) => s"plugin/$k" -> v) +
       (".claude-plugin/marketplace.json" -> marketplaceJson(InteractivePlugin, "./plugin", PluginVersion))
 
   enum QuotaMod:
     case Guard, Reporting
 
-  private def modFiles(m: QuotaMod): Map[com.histmersion.util.storage.SafePath.Candidate, String] =
+  private def modFiles(m: QuotaMod): Map[String, String] =
     Map(
       "hooks/hooks.json" -> "{ \"modules\": [\"./quota-guard.ts\"] }\n",
-      "hooks/quota-guard.ts" -> QuotaGuard.source(m)
+      "hooks/quota-guard.ts" -> QuotaGuard.source(m).value
     )
 
-  def claudeCode(d: Defs, s: GenSettings): Map[com.histmersion.util.storage.SafePath.Candidate, String] =
+  def claudeCode(d: Defs, s: GenSettings): Map[String, String] =
     val headless = d.agents.filter(_.runsOn(AgentRuntime.ClaudeCode))
     val hl = Map(
       "headless/.claude-plugin/plugin.json" -> pluginJson(
         HeadlessPlugin,
-        s.version,
+        s.version.value,
         "Generated by Histmersion from agents/*.md and skills/*: the embedded agents' roles, MCP-only."
       )
     ) ++
       headless.map(a => s"headless/agents/${a.name}.md" -> claudeAgent(d, a)) ++
       skills(d, "headless/skills", ToolStyle.Claude, keepAllowedTools = false) ++
-      (if s.claudeMod then modFiles(QuotaMod.Guard).map((k, v) => s"headless/$k" -> v) else Map.empty)
+      (if s.claudeMod.value then modFiles(QuotaMod.Guard).map((k, v) => s"headless/$k" -> v) else Map.empty)
     val roles = headless.map(a => s"roles/${a.name}/settings.json" -> claudeSettings(a))
     val market =
-      Map(".claude-plugin/marketplace.json" -> marketplaceJson(LocalMarketplace, s"./$InteractivePlugin", s.version)) ++
+      Map(".claude-plugin/marketplace.json" -> marketplaceJson(LocalMarketplace, s"./$InteractivePlugin", s.version.value)) ++
         interactivePlugin(d, s).map((k, v) => s"$InteractivePlugin/$k" -> v)
     (hl ++ roles ++ market).map((k, v) => s"claude-code/$k" -> v)
 
@@ -263,9 +242,9 @@ object AgentGenerator:
     */
   def codexBase(s: GenSettings): String =
     val outputLimit =
-      if s.codexToolOutputTokens > 0 then s"tool_output_token_limit = ${s.codexToolOutputTokens}\n" else ""
+      if s.codexToolOutputTokens.value > 0 then s"tool_output_token_limit = ${s.codexToolOutputTokens}\n" else ""
     // relative to CODEX_HOME (checked: a missing file there fails `codex debug prompt-input` naming <home>/<file>)
-    val instructions = if s.codexLeanBase then s"model_instructions_file = ${tomlString(CodexBaseFile)}\n" else ""
+    val instructions = if s.codexLeanBase.value then s"model_instructions_file = ${tomlString(CodexBaseFile)}\n" else ""
     s"""# Generated by Histmersion — the CODEX_HOME of its agent runs. Do not edit: regenerated on start.
        |web_search = "disabled"
        |sandbox_mode = "read-only"
@@ -298,7 +277,7 @@ object AgentGenerator:
        |tool_suggest = false
        |
        |[mcp_servers.${AgentDefinitions.McpServer}]
-       |url = ${tomlString(s.agentMcpUrl)}
+       |url = ${tomlString(s.agentMcpUrl.value)}
        |bearer_token_env_var = "$TokenEnv"
        |required = true
        |enabled_tools = []
@@ -325,7 +304,7 @@ object AgentGenerator:
 
   /** The same role as a Codex custom agent, for interactive multi-agent use in a home that has it. */
   def codexAgent(d: Defs, a: AgentDef): String =
-    s"name = ${tomlString(a.name)}\ndescription = ${tomlString(a.description)}\n" +
+    s"name = ${tomlString(a.name.value)}\ndescription = ${tomlString(a.description.value)}\n" +
       s"developer_instructions = ${tomlString(d.system(a, ToolStyle.Bare))}\n"
 
   /** The file `model_instructions_file` names, in the Codex home. */
@@ -344,32 +323,32 @@ object AgentGenerator:
     */
   def codexBaseInstructions(d: Defs, s: GenSettings): String =
     val text = d.fragments.getOrElse(
-      CodexBaseFragment,
+      AgentDefinitions.FragmentName(CodexBaseFragment),
       throw IllegalStateException(s"agents/_shared/$CodexBaseFragment.md is missing")
     )
-    val base = render(text.trim, ToolStyle.Bare)
-    if s.codexToolOutputTokens <= 0 then base + "\n"
+    val base = render(text.value.trim, ToolStyle.Bare)
+    if s.codexToolOutputTokens.value <= 0 then base + "\n"
     else
       // a bullet of "# Working", just before "# Answer" (or at the end if the fragment has no such heading)
       val budget = s"- Start every script with `// @exec: {\"max_output_tokens\": ${s.codexToolOutputTokens}}`."
       val at = base.indexOf("\n\n# Answer")
       (if at < 0 then s"$base\n\n$budget" else base.substring(0, at) + "\n" + budget + base.substring(at)) + "\n"
 
-  def codex(d: Defs, s: GenSettings): Map[com.histmersion.util.storage.SafePath.Candidate, String] =
+  def codex(d: Defs, s: GenSettings): Map[String, String] =
     val roles = d.agents.filter(_.runsOn(AgentRuntime.Codex))
     val home = Map("home/config.toml" -> codexBase(s)) ++
-      (if s.codexLeanBase then Map(s"home/$CodexBaseFile" -> codexBaseInstructions(d, s)) else Map.empty) ++
+      (if s.codexLeanBase.value then Map(s"home/$CodexBaseFile" -> codexBaseInstructions(d, s)) else Map.empty) ++
       roles.map(a => s"home/${a.name}.config.toml" -> codexProfile(d, a)) ++
       roles.map(a => s"home/agents/${a.name}.toml" -> codexAgent(d, a)) ++
-      skills(d, "home/skills", ToolStyle.Bare, keepAllowedTools = com.histmersion.domain.automation.agents.AgentGenerator.SkillsKeepAllowedTools(false))
+      skills(d, "home/skills", ToolStyle.Bare, keepAllowedTools = false)
     val plugin = Map(
       "plugin/.codex-plugin/plugin.json" -> pretty(
         Json.obj(
           "name" -> InteractivePlugin.asJson,
-          "version" -> s.version.asJson,
+          "version" -> s.version.value.asJson,
           "description" -> InteractiveDescription.asJson,
           "skills" -> "./skills".asJson
-        ) deepMerge s.mcpUrl.fold(Json.obj())(_ => Json.obj("mcpServers" -> "./.mcp.json".asJson))
+        ).deepMerge(s.mcpUrl.fold(Json.obj())(_ => Json.obj("mcpServers" -> "./.mcp.json".asJson)))
       )
     ) ++
       skills(d, "plugin/skills", ToolStyle.Bare, keepAllowedTools = false) ++
@@ -379,45 +358,47 @@ object AgentGenerator:
   // ── opencode ───────────────────────────────────────────────────────────────────────────────────
 
   /** The permission map of a role: deny everything, allow its tools (last match wins). */
-  def opencodePermissions(a: AgentDef): List[(com.histmersion.domain.automation.agents.AgentGenerator.PermissionRule, String)] =
-    ("*" -> "deny") :: a.tools.map(t => ToolStyle.Opencode.tool(t.value) -> "allow") ++ (a.web match
+  def opencodePermissions(a: AgentDef): List[(String, String)] =
+    ("*" -> "deny") :: a.tools.map(t => ToolStyle.Opencode.tool(ToolUse.Tool(t.value)) -> "allow") ++ (a.web match
       case WebAccess.WebSearch => List("webfetch" -> "allow", "websearch" -> "allow")
       case WebAccess.Fetch     => List("webfetch" -> "allow")
       case _                   => Nil)
 
   def opencodeAgent(d: Defs, a: AgentDef): String =
     val perms = opencodePermissions(a).map((k, v) => s"  ${yamlString(k)}: $v").mkString("\n")
-    s"---\ndescription: ${yamlString(a.description)}\nmode: primary\nsteps: ${a.maxTurns}\npermission:\n$perms\n---\n" +
+    s"---\ndescription: ${yamlString(a.description.value)}\nmode: primary\nsteps: ${a.maxTurns}\npermission:\n$perms\n---\n" +
       d.system(a, ToolStyle.Opencode) + "\n"
 
-  def opencodeConfig(url: com.histmersion.domain.automation.agents.AgentGenerator.ServerUrl, headless: com.histmersion.domain.automation.agents.AgentGenerator.Headless): String =
-    val server = Json.obj("type" -> "remote".asJson, "url" -> url.asJson, "enabled" -> Json.True) deepMerge
-      (if headless then Json.obj("headers" -> Json.obj("Authorization" -> s"Bearer {env:$TokenEnv}".asJson))
-       else Json.obj())
+  def opencodeConfig(url: String, headless: Boolean): String =
+    val server = Json
+      .obj("type" -> "remote".asJson, "url" -> url.asJson, "enabled" -> Json.True)
+      .deepMerge(
+        if headless then Json.obj("headers" -> Json.obj("Authorization" -> s"Bearer {env:$TokenEnv}".asJson))
+        else Json.obj()
+      )
     pretty(
       Json.obj(
         "$schema" -> "https://opencode.ai/config.json".asJson,
         "autoupdate" -> Json.False,
         "share" -> "disabled".asJson,
         "mcp" -> Json.obj(AgentDefinitions.McpServer -> server)
-      ) deepMerge
-        (if headless then Json.obj("permission" -> Json.obj("*" -> "deny".asJson)) else Json.obj())
+      ).deepMerge(if headless then Json.obj("permission" -> Json.obj("*" -> "deny".asJson)) else Json.obj())
     )
 
-  def opencode(d: Defs, s: GenSettings): Map[com.histmersion.util.storage.SafePath.Candidate, String] =
+  def opencode(d: Defs, s: GenSettings): Map[String, String] =
     val roles = d.agents.filter(_.runsOn(AgentRuntime.Opencode))
     val runs = Map(
       "xdg/opencode/opencode.json" -> pretty(Json.obj("$schema" -> "https://opencode.ai/config.json".asJson)),
-      "config/opencode.json" -> opencodeConfig(s.agentMcpUrl, headless = com.histmersion.domain.automation.agents.AgentGenerator.Headless(true))
+      "config/opencode.json" -> opencodeConfig(s.agentMcpUrl.value, headless = true)
     ) ++
       roles.map(a => s"config/agents/${a.name}.md" -> opencodeAgent(d, a)) ++
       skills(d, "config/skills", ToolStyle.Opencode, keepAllowedTools = false)
-    val interactive = s.mcpUrl.map(u => "interactive/opencode.json" -> opencodeConfig(u, headless = com.histmersion.domain.automation.agents.AgentGenerator.Headless(false))).toMap ++
-      skills(d, "interactive/skills", ToolStyle.Opencode, keepAllowedTools = com.histmersion.domain.automation.agents.AgentGenerator.SkillsKeepAllowedTools(false))
+    val interactive = s.mcpUrl.map(u => "interactive/opencode.json" -> opencodeConfig(u.value, headless = false)).toMap ++
+      skills(d, "interactive/skills", ToolStyle.Opencode, keepAllowedTools = false)
     (runs ++ interactive).map((k, v) => s"opencode/$k" -> v)
 
   /** Every tree for `runtimes`. */
-  def tree(d: Defs, s: GenSettings, runtimes: List[AgentRuntime]): Map[com.histmersion.util.storage.SafePath.Candidate, String] =
+  def tree(d: Defs, s: GenSettings, runtimes: List[AgentRuntime]): Map[String, String] =
     runtimes.distinct
       .map {
         case AgentRuntime.ClaudeCode => claudeCode(d, s)

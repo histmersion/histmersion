@@ -37,13 +37,13 @@ object EventLinkService:
 
   final private class Implementation(db: Transactor) extends EventLinkService:
     def candidates(id: com.histmersion.domain.catalogue.Event.Id, withRejected: Boolean): List[EventLinkCandidate] =
-      db.read(EventLinkRepo.candidates(id, withRejected))
+      db.read(EventLinkRepo.candidates(com.histmersion.domain.catalogue.events.BEventRow.Id(id.value), withRejected))
     def saveCandidates(id: com.histmersion.domain.catalogue.Event.Id, cs: List[EventLinkCandidate]): Unit =
-      db.transact(EventLinkRepo.saveCandidates(id, cs))
+      db.transact(EventLinkRepo.saveCandidates(com.histmersion.domain.catalogue.events.BEventRow.Id(id.value), cs))
     def setStatus(id: com.histmersion.domain.catalogue.Event.Id, citekey: com.histmersion.domain.library.Citekey, status: com.histmersion.domain.catalogue.Event.LinkStatus.Wire): Boolean =
-      db.transact(EventLinkRepo.setStatus(id, citekey, status))
-    def isChecked(id: com.histmersion.domain.catalogue.Event.Id): Boolean = db.read(EventLinkRepo.isChecked(id))
-    def eventsToCheck(all: Boolean, limit: com.histmersion.PageSize): List[com.histmersion.domain.catalogue.Event.Id] = db.read(EventLinkRepo.eventsToCheck(all, limit))
+      db.transact(EventLinkRepo.setStatus(com.histmersion.domain.catalogue.events.BEventRow.Id(id.value), citekey, BCandidateRow.Status(status.value)))
+    def isChecked(id: com.histmersion.domain.catalogue.Event.Id): Boolean = db.read(EventLinkRepo.isChecked(com.histmersion.domain.catalogue.events.BEventRow.Id(id.value)))
+    def eventsToCheck(all: Boolean, limit: com.histmersion.PageSize): List[com.histmersion.domain.catalogue.Event.Id] = db.read(EventLinkRepo.eventsToCheck(all, limit)).map(i => com.histmersion.domain.catalogue.Event.Id.assume(i.value))
 
 
   /** The same rules over the shared in-memory state; `title` names a source by its citekey (the library's), `None` for
@@ -95,7 +95,7 @@ object EventLinkService:
               loop(tail, next)
             case Nil => acc
         val written = loop(cs, kept)
-        s.modify(_.candidates).setTo(written).modify(_.checked).using(_ + id)
+        s.modify(_.candidates).setTo(written).modify(_.checked).using(_ + CatalogueState.Checked(id.value))
       }
 
     def setStatus(id: com.histmersion.domain.catalogue.Event.Id, citekey: com.histmersion.domain.library.Citekey, status: com.histmersion.domain.catalogue.Event.LinkStatus.Wire): Boolean =
@@ -114,12 +114,12 @@ object EventLinkService:
       )
       had
 
-    def isChecked(id: com.histmersion.domain.catalogue.Event.Id): Boolean = state.get.checked(id)
+    def isChecked(id: com.histmersion.domain.catalogue.Event.Id): Boolean = state.get.checked(CatalogueState.Checked(id.value))
 
     def eventsToCheck(all: Boolean, limit: com.histmersion.PageSize): List[com.histmersion.domain.catalogue.Event.Id] =
       val s = state.get
       s.events
-        .filter(e => all || !s.checked(e.id))
+        .filter(e => all || !s.checked(CatalogueState.Checked(e.id.value)))
         .sortBy(e => (e.catalogue.isEmpty, e.id.value))
         .take(limit.value.max(0))
         .map(_.id)

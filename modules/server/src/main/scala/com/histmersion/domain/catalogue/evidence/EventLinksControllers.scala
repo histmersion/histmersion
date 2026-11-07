@@ -120,7 +120,7 @@ final class EventLinksControllers(
           }
       }
       .distinctBy(_.start.value)
-      .sortBy(_.start.value)
+      .sortBy(_.start.value: Int)
 
   private def listOf(d: EventEntry): EventLinkList =
     EventLinkList(d.event.id, EventLinkList.Label(d.event.label.value), links.candidates(idOf(d)))
@@ -253,7 +253,7 @@ final class EventLinksControllers(
     req.event.map(_.value.trim).filter(_.nonEmpty) match
       case Some(one) =>
         Event.Id.option(one).toRight(notFound(s"No event '$one'")).flatMap(eventOrFail).flatMap(_ =>
-          jobs.start(EventLinksControllers.CandidatesJobKind, s"candidates of $one", write = true) { (_, _) =>
+          jobs.start(EventLinksControllers.CandidatesJobKind, com.histmersion.api.jobs.JobKinds.Subject(s"candidates of $one"), write = true) { (_, _) =>
             Event.Id.option(one).toRight(notFound(s"No event '$one'")).flatMap(eventOrFail)
               .map(d => s"${compute(d).candidates.size} candidate(s) for ${d.event.id}")
               .left
@@ -263,7 +263,9 @@ final class EventLinksControllers(
       case None =>
         jobs.start(
           EventLinksControllers.CandidatesJobKind,
-          s"candidate links of ${if req.all.value then "every event" else "the events not checked yet"}",
+          com.histmersion.api.jobs.JobKinds.Subject(
+            s"candidate links of ${if req.all.value then "every event" else "the events not checked yet"}"
+          ),
           write = true
         ) { (_, progress) =>
           val ids = links.eventsToCheck(
@@ -334,7 +336,7 @@ final class EventLinksControllers(
           settings().limits.page(PageSize.option(f.limit.value), com.histmersion.PageSize(50)),
           Offset.option(f.offset.value).getOrElse(Offset.Start)
         )
-      EventLead.List(total.value, rows.flatMap(leadOf))
+      EventLead.List(com.histmersion.api.catalogue.EventLead.List.Total(total.value), rows.flatMap(leadOf))
     }
 
   // ── an event's card ─────────────────────────────────────────────────────────────────────────

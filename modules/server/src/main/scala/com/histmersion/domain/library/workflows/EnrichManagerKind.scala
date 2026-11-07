@@ -67,7 +67,7 @@ final class EnrichManagerKind(site: LibrarySite, a: AgentsControllers) extends M
           a.host.goal(slug).map(g => c.goalLinks(com.histmersion.domain.automation.Goal.Slug.assume(g.slug.value), Goal.Plans.LinkKind.Source).map(x => Citekey.assume(x.value)))
         )
       )
-      cited.left.map(_ => Api.Error(Api.Error.Message(s"'$text' is no source, article or goal"), Some(Write.CodeNotFound))).map { cks =>
+      cited.left.map(_ => Api.Error(Api.Error.Message(s"'$text' is no source, article or goal"), Some(Api.Error.Code(Write.CodeNotFound)))).map { cks =>
         val (todo, done) = cks.distinct.map(ck => ck -> enrichedWhy(c, ck)).partition(_._2.isEmpty)
         (todo.map(t => ManagerKindDefinition.ExpandResultPart2Part1(t._1.value)), done.map((ck, why) => ManagerKindDefinition.ExpandResultPart2Part2(s"[[$ck]]: ${why.fold("")(_.value)}")))
       }
@@ -198,7 +198,7 @@ final class EnrichManagerKind(site: LibrarySite, a: AgentsControllers) extends M
                     RunRequest(
                       RunRequest.Pipeline(Pipeline.EnrichSource.wire.value),
                       RunRequest.Target(src.source.citekey.value),
-                      budgetUsd = m.config.budgetUsd
+                      budgetUsd = m.config.budgetUsd.map(b => RunRequest.BudgetUsd(b.value))
                     ),
                     identity,
                     item.state,

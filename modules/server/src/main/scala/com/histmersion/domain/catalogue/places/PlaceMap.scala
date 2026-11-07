@@ -16,4 +16,4 @@ object PlaceMap:
 
   final private class Implementation(db: Transactor) extends PlaceMap:
     def shapes(kind: Option[com.histmersion.domain.catalogue.Place.Kind.Wire], time: GeoTime, limit: com.histmersion.PageSize, modernFrom: DeepTime.SignedYear): PlaceDetailRow.Geometry =
-      db.read(PlaceRepo.geoJsonAt(kind, time, PlaceRepo.Limit(limit.value), modernFrom))
+      PlaceDetailRow.Geometry(db.read(PlaceRepo.geoJsonAt(kind, time, PlaceRepo.Limit(limit.value), modernFrom)).value)
