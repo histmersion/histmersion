@@ -98,7 +98,7 @@ object MapView:
     bubble = ds => bubbleMarker(ds),
     animateMax = PointSet.AnimateMax(Layout.clusterAnimateMax.value),
     exitMs = PointSet.ExitMs(Layout.exitAnimMs.value),
-    fadeOut = PointSet.FadeOut(FadingLayer.fadeOut.value.value),
+    fadeOut = PointSet.FadeOut(FadingLayer.fadeOut.value),
     repaint = (m, ds) => repaintBubble(m, ds)
   )
 

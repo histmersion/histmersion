@@ -74,7 +74,7 @@ object PlaceHover:
         useCapture = true
       )
       m.on(MapEventKind.PointerMove) { e =>
-        e.clientXY.foreach { (x, y) => lastX = Preview.ScreenPixels(x.value); lastY = Preview.ScreenPixels(y.value) }
+        e.clientXY.foreach { (x, y) => lastX = Preview.ScreenPixels(x); lastY = Preview.ScreenPixels(y) }
         val hit = if e.overMarker || isTouch(lastPointer) then None else e.point.flatMap(placeAt)
         if hit.map(_._1) != hoveredShape then
           hoveredShape.foreach(_ => dropHover())
@@ -92,7 +92,7 @@ object PlaceHover:
       }
       m.on(MapEventKind.Click) { e =>
         if !e.overMarker then
-          e.clientXY.foreach { (x, y) => lastX = Preview.ScreenPixels(x.value); lastY = Preview.ScreenPixels(y.value) }
+          e.clientXY.foreach { (x, y) => lastX = Preview.ScreenPixels(x); lastY = Preview.ScreenPixels(y) }
           e.point.flatMap(placeAt) match
             case Some((_, (id, label, kind), ps)) =>
               val on = PlacesInput.toggleFromMap(id, label, kind)
