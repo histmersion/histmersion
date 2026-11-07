@@ -309,7 +309,7 @@ object AgentRepo:
       .query[(StepInfo.Name, Option[Jsonb.JsonText])]
       .run()
       .headOption
-      .map((n, o) => (n, o.getOrElse("null")))
+      .map((n, o) => (n, o.getOrElse(com.histmersion.util.database.Jsonb.JsonText("null"))))
 
   /** How many attempts step `seq` already has (failed ones included) — a resumed step continues the count rather than
     * restarting it, so `max-retries` holds across a restart.
