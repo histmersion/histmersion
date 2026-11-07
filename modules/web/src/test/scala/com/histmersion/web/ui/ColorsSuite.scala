@@ -36,7 +36,7 @@ class ColorsSuite extends munit.FunSuite:
 
   test("a token's value is read once and cached until a refresh"):
     var reads = 0
-    ThemeTokens.lookup = n => { reads += 1; TestTokens.values.get(n) }
+    ThemeTokens.lookup = n => { reads += 1; TestTokens.values.get(n.value).map(ThemeTokens.CssText(_)) }
     ThemeTokens.refresh()
     assertEquals(ThemeTokens(com.histmersion.web.ui.ThemeTokens.Name("--edge-references")), "#6ea8fe")
     assertEquals(ThemeTokens(com.histmersion.web.ui.ThemeTokens.Name("--edge-references")), "#6ea8fe")
@@ -58,5 +58,5 @@ class ColorsSuite extends munit.FunSuite:
     assertEquals(ThemeTokens.ramp.last, (253, 231, 37))
 
   test("a ramp with no stops (no stylesheet) gives no colour rather than a wrong one"):
-    assertEquals(Fmt.colorOn(Vector.empty, 0.5), "")
-    assertEquals(Fmt.colorOn(Vector((com.histmersion.api.Wcag.Channel(0), com.histmersion.api.Wcag.Channel(0), com.histmersion.api.Wcag.Channel(0)), (com.histmersion.api.Wcag.Channel(100), com.histmersion.api.Wcag.Channel(200), com.histmersion.api.Wcag.Channel(50))), 0.5), "rgb(50,100,25)")
+    assertEquals(Fmt.colorOn(Vector.empty, Fmt.RampPosition(0.5)), "")
+    assertEquals(Fmt.colorOn(Vector((com.histmersion.api.Wcag.Channel(0), com.histmersion.api.Wcag.Channel(0), com.histmersion.api.Wcag.Channel(0)), (com.histmersion.api.Wcag.Channel(100), com.histmersion.api.Wcag.Channel(200), com.histmersion.api.Wcag.Channel(50))), Fmt.RampPosition(0.5)), "rgb(50,100,25)")

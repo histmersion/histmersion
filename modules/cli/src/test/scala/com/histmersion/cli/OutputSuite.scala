@@ -1,7 +1,5 @@
 package com.histmersion.cli
 
-import com.histmersion.testsupport.ComparedByValue.given
-
 import com.monovore.decline.Command
 import com.histmersion.config.*
 
@@ -22,8 +20,8 @@ class OutputSuite extends munit.FunSuite:
 
   test("the one --json flag parses, and defaults to Markdown"):
     val cmd = Command("t", "t")(Output.jsonFlag)
-    assertEquals(cmd.parse(List("--json")), Right(true))
-    assertEquals(cmd.parse(Nil), Right(false))
+    assertEquals(cmd.parse(List("--json")), Right(Cli.JsonOutput(true)))
+    assertEquals(cmd.parse(Nil), Right(Cli.JsonOutput(false)))
 
   test("calibre search --json keeps the field names it always printed"):
     val b =
@@ -35,7 +33,7 @@ class OutputSuite extends munit.FunSuite:
         None,
         List(com.histmersion.api.library.CollectionEntry.Tags("t")),
         None,
-        Map("doi" -> "10.1/x"),
+        Map(Calibre.Book.IdentifiersKey("doi") -> Calibre.Book.IdentifiersValue("10.1/x")),
         List(com.histmersion.api.library.CollectionEntry.Formats("PDF"))
       )
     val js = Output.json(List(Calibre.Json.Book.of(b)))
@@ -48,8 +46,14 @@ class OutputSuite extends munit.FunSuite:
   test("calibre update --all --json names each outcome as before"):
     val ch = Calibre.Change(Calibre.Field.values.head, com.histmersion.cli.Calibre.Change.From("a"), com.histmersion.cli.Calibre.Change.To("b"))
     val r = Calibre.Json.UpdateRow.of(UpdateEntry(com.histmersion.cli.UpdateEntry.CalibreId(3), List(com.histmersion.cli.UpdateEntry.Citekeys("ck")), UpdateOutcome.Failed(List(ch), com.histmersion.cli.UpdateOutcome.Failed.Reason("locked"))))
-    assertEquals((r.state, r.reason, r.changes.map(_.from)), ("failed", Some("locked"), List("a")))
-    assertEquals(Calibre.Json.UpdateRow.of(UpdateEntry(com.histmersion.cli.UpdateEntry.CalibreId(3), Nil, UpdateOutcome.UpToDate)).state, "up-to-date")
+    assertEquals(
+      (r.state, r.reason, r.changes.map(_.from)),
+      (Calibre.Json.UpdateRow.State("failed"), Some(Calibre.Json.UpdateRow.Reason("locked")), List(Calibre.Change.From("a")))
+    )
+    assertEquals(
+      Calibre.Json.UpdateRow.of(UpdateEntry(com.histmersion.cli.UpdateEntry.CalibreId(3), Nil, UpdateOutcome.UpToDate)).state,
+      Calibre.Json.UpdateRow.State("up-to-date")
+    )
 
   test("no command prints JSON or declares --json its own way"):
     val root = Path.of(sys.props.getOrElse("histmersion.repoRoot", ".")).resolve("modules/cli/src/main/scala")
@@ -139,8 +143,8 @@ class OutputSuite extends munit.FunSuite:
     answer("again")(using first)
     Cli.err(using first).println("problem")
     JobFollow.Progress.line("working")(using first)
-    assertEquals(first.readLine(), "yes")
-    assertEquals(second.readLine(), "no")
+    assertEquals(first.readLine(), com.histmersion.util.console.Console.Line("yes"))
+    assertEquals(second.readLine(), com.histmersion.util.console.Console.Line("no"))
     val nl = System.lineSeparator()
     assertEquals(a.toString("UTF-8"), s"first${nl}again${nl}")
     assertEquals(b.toString("UTF-8"), s"second${nl}")
@@ -151,7 +155,7 @@ class OutputSuite extends munit.FunSuite:
     val out = new java.io.ByteArrayOutputStream
     val err = new java.io.ByteArrayOutputStream
     val console = com.histmersion.util.console.Console.streams(new java.io.PrintStream(out), new java.io.PrintStream(err), () => com.histmersion.util.console.Console.StreamsInputResult("yes"))
-    assertEquals(console.readTerminalLine(com.histmersion.util.console.Console.Prompt("Proceed? ")), Some("yes"))
+    assertEquals(console.readTerminalLine(com.histmersion.util.console.Console.Prompt("Proceed? ")), Some(com.histmersion.util.console.Console.ReadTerminalLineResult("yes")))
     assertEquals(out.toString("UTF-8"), "")
     assertEquals(err.toString("UTF-8"), "Proceed? ")
   }

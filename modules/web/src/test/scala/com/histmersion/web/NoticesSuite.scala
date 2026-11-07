@@ -9,11 +9,13 @@ import com.histmersion.api.instance.UiNotices.{Board, Counter}
   */
 class NoticesSuite extends munit.FunSuite:
 
-  private val t1 = "2026-10-11T08:00:00.000000Z"
-  private val t2 = "2026-10-11T09:00:00.000000Z"
+  private val t1Latest = Counter.Latest("2026-10-11T08:00:00.000000Z")
+  private val t2Latest = Counter.Latest("2026-10-11T09:00:00.000000Z")
+  private val t1Seen = Counter.Seen("2026-10-11T08:00:00.000000Z")
+  private val t2Seen = Counter.Seen("2026-10-11T09:00:00.000000Z")
 
-  private def c(key: String, latest: Option[String], seen: Option[String], count: Option[Int] = None) =
-    Counter(key, count, latest, seen, com.histmersion.api.instance.UiNotices.fresh(latest, seen))
+  private def c(key: Board.Wire, latest: Option[Counter.Latest], seen: Option[Counter.Seen], count: Option[Counter.Count] = None) =
+    Counter(key, count, latest, seen, Counter.Fresh(com.histmersion.api.instance.UiNotices.fresh(latest, seen)))
 
   test("each watched window is its own board; the others watch none"):
     assertEquals(Notices.boardOf(WindowKey.Goals), Some(Board.Goals))
@@ -38,33 +40,33 @@ class NoticesSuite extends munit.FunSuite:
 
   test("an open window with news is marked read at the latest change it showed"):
     val cs = Map(
-      "tasks" -> c("tasks", Some(t2), Some(t1)),
-      "goals" -> c("goals", Some(t2), Some(t1)),
-      "log" -> c("log", Some(t1), Some(t1))
+      Board.Wire("tasks") -> c(Board.Wire("tasks"), Some(t2Latest), Some(t1Seen)),
+      Board.Wire("goals") -> c(Board.Wire("goals"), Some(t2Latest), Some(t1Seen)),
+      Board.Wire("log") -> c(Board.Wire("log"), Some(t1Latest), Some(t1Seen))
     )
-    assertEquals(Notices.toMark(List(WindowKey.Tasks, WindowKey.Jobs), cs), List(Board.Tasks -> t2))
+    assertEquals(Notices.toMark(List(WindowKey.Tasks, WindowKey.Jobs), cs), List(Board.Tasks -> t2Latest))
     assertEquals(Notices.toMark(List(WindowKey.Log), cs), Nil, "nothing new: nothing to send")
     assertEquals(Notices.toMark(Nil, cs), Nil, "a closed window stays bold")
     assertEquals(Notices.toMark(List(WindowKey.Goal(com.histmersion.web.WindowKey.Goal.Slug("x"))), cs), Nil)
-    assertEquals(Notices.toMark(List(WindowKey.Tasks, WindowKey.Tasks), cs), List(Board.Tasks -> t2))
+    assertEquals(Notices.toMark(List(WindowKey.Tasks, WindowKey.Tasks), cs), List(Board.Tasks -> t2Latest))
 
   test("once marked, a board is not new, and an older mark never moves it back"):
-    val marked = Notices.seenAt(c("tasks", Some(t2), Some(t1)), t2)
-    assertEquals(marked.seen, Some(t2))
-    assert(!marked.fresh)
-    val kept = Notices.seenAt(c("tasks", Some(t2), Some(t2)), t1)
-    assertEquals(kept.seen, Some(t2))
-    assert(!kept.fresh)
+    val marked = Notices.seenAt(c(Board.Wire("tasks"), Some(t2Latest), Some(t1Seen)), t2Seen)
+    assertEquals(marked.seen, Some(t2Seen))
+    assert(!marked.fresh.value)
+    val kept = Notices.seenAt(c(Board.Wire("tasks"), Some(t2Latest), Some(t2Seen)), t1Seen)
+    assertEquals(kept.seen, Some(t2Seen))
+    assert(!kept.fresh.value)
     // a change after the mark is news again
-    assert(Notices.seenAt(c("tasks", Some(t2), None), t1).fresh)
+    assert(Notices.seenAt(c(Board.Wire("tasks"), Some(t2Latest), None), t1Seen).fresh.value)
 
   test("the phone's tools button marks news among the boards it shows"):
-    val cs = Map("approvals" -> c("approvals", Some(t2), Some(t1)), "log" -> c("log", Some(t1), Some(t1)))
+    val cs = Map(Board.Wire("approvals") -> c(Board.Wire("approvals"), Some(t2Latest), Some(t1Seen)), Board.Wire("log") -> c(Board.Wire("log"), Some(t1Latest), Some(t1Seen)))
     assert(Notices.anyFresh(cs, _ => true))
     assert(!Notices.anyFresh(cs, _ != Board.Approvals), "approvals hidden (no agents): no mark")
 
   test("what a screen reader hears beside the label"):
     assertEquals(Notices.spoken(None), "")
-    assertEquals(Notices.spoken(Some(c("tasks", Some(t1), Some(t1), Some(0)))), "")
-    assertEquals(Notices.spoken(Some(c("tasks", Some(t2), Some(t1), Some(12)))), "12 open, something new")
-    assertEquals(Notices.spoken(Some(c("goals", Some(t2), Some(t1)))), "something new")
+    assertEquals(Notices.spoken(Some(c(Board.Wire("tasks"), Some(t1Latest), Some(t1Seen), Some(Counter.Count(0))))), "")
+    assertEquals(Notices.spoken(Some(c(Board.Wire("tasks"), Some(t2Latest), Some(t1Seen), Some(Counter.Count(12))))), "12 open, something new")
+    assertEquals(Notices.spoken(Some(c(Board.Wire("goals"), Some(t2Latest), Some(t1Seen)))), "something new")

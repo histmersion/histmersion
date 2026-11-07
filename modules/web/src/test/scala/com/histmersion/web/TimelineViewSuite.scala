@@ -2,6 +2,9 @@ package com.histmersion.web
 
 import com.histmersion.testsupport.ComparedByValue.given
 
+import com.histmersion.api.Years
+import com.histmersion.api.library.TimeBucket
+
 class TimelineViewSuite extends munit.FunSuite:
 
   // ── bucketSizeFor ─────────────────────────────────────────────────────────────
@@ -16,7 +19,7 @@ class TimelineViewSuite extends munit.FunSuite:
 
   test("wide span with wide screen stays under MAX_BUCKETS") {
     val size = TimelineView.bucketSizeFor(com.histmersion.api.Years.Shift(14026L), 3392.0)
-    val buckets = Math.ceil(14026.0 / size).toLong
+    val buckets = Math.ceil(14026.0 / size.value).toLong
     assert(
       buckets <= TimelineView.MAX_BUCKETS,
       s"$buckets buckets (size=$size) exceeds MAX_BUCKETS=${TimelineView.MAX_BUCKETS}"
@@ -25,7 +28,7 @@ class TimelineViewSuite extends munit.FunSuite:
 
   test("wide span with narrow screen stays under MAX_BUCKETS") {
     val size = TimelineView.bucketSizeFor(com.histmersion.api.Years.Shift(14026L), 400.0)
-    val buckets = Math.ceil(14026.0 / size).toLong
+    val buckets = Math.ceil(14026.0 / size.value).toLong
     assert(
       buckets <= TimelineView.MAX_BUCKETS,
       s"$buckets buckets (size=$size) exceeds MAX_BUCKETS=${TimelineView.MAX_BUCKETS}"
@@ -39,8 +42,8 @@ class TimelineViewSuite extends munit.FunSuite:
 
   test("medium span with medium screen produces reasonable buckets") {
     val size = TimelineView.bucketSizeFor(com.histmersion.api.Years.Shift(3000L), 800.0)
-    assert(size >= 1L, "size must be positive")
-    val buckets = Math.ceil(3000.0 / size).toLong
+    assert(size.value >= 1L, "size must be positive")
+    val buckets = Math.ceil(3000.0 / size.value).toLong
     assert(buckets <= TimelineView.MAX_BUCKETS, s"$buckets buckets (size=$size) exceeds limit")
     assert(buckets >= 100, s"only $buckets buckets for 3000-year span on 800px is too coarse")
   }
@@ -57,8 +60,8 @@ class TimelineViewSuite extends munit.FunSuite:
       (100000L, 100.0)
     )
     for (span, px) <- cases do
-      val size = TimelineView.bucketSizeFor(span, px)
-      val buckets = Math.ceil(span.toDouble / size).toLong
+      val size = TimelineView.bucketSizeFor(Years.Shift(span), px)
+      val buckets = Math.ceil(span.toDouble / size.value).toLong
       assert(
         buckets <= TimelineView.MAX_BUCKETS,
         s"span=$span px=$px → size=$size → $buckets buckets (limit=${TimelineView.MAX_BUCKETS})"
@@ -92,7 +95,7 @@ class TimelineViewSuite extends munit.FunSuite:
 
   // ── underlayBuckets: the overview slice drawn beneath a stale detail curve ─────────────────
 
-  private val ov = (0 until 10).toList.map(i => com.histmersion.api.library.TimeBucket(i * 100L, i * 100L + 99, i))
+  private val ov = (0 until 10).toList.map(i => TimeBucket(TimeBucket.Start(i * 100L), TimeBucket.End(i * 100L + 99), TimeBucket.Count(i)))
 
   test("underlayBuckets keeps the overlapping buckets plus one neighbour each side") {
     assertEquals(TimelineView.underlayBuckets(ov, com.histmersion.api.Years.Astronomical(300), com.histmersion.api.Years.Astronomical(450)).map(_.start), List(200L, 300L, 400L, 500L))

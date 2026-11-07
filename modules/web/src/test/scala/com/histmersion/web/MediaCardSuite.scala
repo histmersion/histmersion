@@ -19,7 +19,7 @@ class MediaCardSuite extends munit.FunSuite:
 
   private val thumb = MediaThumb(
     com.histmersion.api.media.MediaItem.Uid("0190a0b0-0000-7000-8000-000000000001"),
-    MediaRole.Image,
+    MediaThumb.Role(MediaRole.Image),
     com.histmersion.api.media.MediaThumb.Url("/media/0190a0b0-0000-7000-8000-000000000001/thumb"),
     com.histmersion.api.media.MediaItem.Credit("Andreas Trepte, CC BY-SA 2.5, via Wikimedia Commons"),
     Some(com.histmersion.api.media.MediaItem.License("CC-BY-SA-2.5")),
@@ -31,21 +31,21 @@ class MediaCardSuite extends munit.FunSuite:
 
   private val mycenae = PlaceDetail(
     com.histmersion.api.catalogue.Place
-      .Summary(com.histmersion.api.catalogue.Place.Id("pleiades_570491"), com.histmersion.api.catalogue.Place.Summary.Label("Mycenae"), Place.Kind.Site, Some(com.histmersion.api.catalogue.Year(-1600L)), Some(com.histmersion.api.catalogue.Year(-1100L)), None, com.histmersion.api.catalogue.Place.Summary.Names("Mycenae")),
-    geometry = Some("""{"type":"Point","coordinates":[22.75,37.73]}"""),
+      .Summary(com.histmersion.api.catalogue.Place.Id("pleiades_570491"), com.histmersion.api.catalogue.Place.Summary.Label("Mycenae"), Place.Summary.Kind(Place.Kind.Site), Some(com.histmersion.api.catalogue.Year(-1600L)), Some(com.histmersion.api.catalogue.Year(-1100L)), None, com.histmersion.api.catalogue.Place.Summary.Names("Mycenae")),
+    geometry = Some(Place.Geometry("""{"type":"Point","coordinates":[22.75,37.73]}""")),
     parents = Nil,
     children = Nil,
     findings = com.histmersion.api.catalogue.Place.Counts.Findings(3),
     asOf = None,
-    links = List(com.histmersion.api.catalogue.Place.Link(com.histmersion.api.catalogue.Place.Id("pleiades_570491"), "commons", "Mycenae", "see_also")),
-    media = List(thumb, thumb.modify(_.uid).setTo("x").modify(_.role).setTo(MediaRole.LocatorMap))
+    links = List(com.histmersion.api.catalogue.Place.Link(com.histmersion.api.catalogue.Place.Id("pleiades_570491"), Place.Link.Scheme("commons"), Place.Link.ExternalId("Mycenae"), Place.Link.Relation("see_also"))),
+    media = List(thumb, thumb.modify(_.uid).setTo(com.histmersion.api.media.MediaItem.Uid("x")).modify(_.role).setTo(MediaThumb.Role(MediaRole.LocatorMap)))
   )
 
   test("a place card shows its first picture; its Commons category is a link"):
     val c = Preview.card(mycenae)
     assertEquals(c.media, Some(thumb))
     assert(
-      c.links.contains("Commons category Mycenae" -> "https://commons.wikimedia.org/wiki/Category:Mycenae"),
+      c.links.map((label, href) => label.value -> href.value).contains("Commons category Mycenae" -> "https://commons.wikimedia.org/wiki/Category:Mycenae"),
       c.links.toString
     )
     assertEquals(Preview.card(mycenae.modify(_.media).setTo(Nil)).media, None)
@@ -67,7 +67,7 @@ class MediaCardSuite extends munit.FunSuite:
       None,
       None
     )
-    val cover = MediaThumb(com.histmersion.api.media.MediaItem.Uid("u1"), MediaRole.Cover, com.histmersion.api.media.MediaThumb.Url("/media/u1/thumb"), com.histmersion.api.media.MediaItem.Credit("Cover: the local Calibre library"))
+    val cover = MediaThumb(com.histmersion.api.media.MediaItem.Uid("u1"), MediaThumb.Role(MediaRole.Cover),com.histmersion.api.media.MediaThumb.Url("/media/u1/thumb"), com.histmersion.api.media.MediaItem.Credit("Cover: the local Calibre library"))
     assertEquals(
       Preview.card(com.histmersion.api.library.Source.WithFindings(src, Nil, illustration = Some(cover))).media,
       Some(cover)
@@ -92,7 +92,7 @@ class MediaCardSuite extends munit.FunSuite:
       )
     )
     assertEquals(
-      Preview.creditLine(thumb.modify(_.license).setTo(Some("public-domain")).modify(_.licenseUrl).setTo(None))._2,
+      Preview.creditLine(thumb.modify(_.license).setTo(Some(com.histmersion.api.media.MediaItem.License("public-domain"))).modify(_.licenseUrl).setTo(None))._2,
       Some("public-domain" -> "https://commons.wikimedia.org/wiki/File:Lions-Gate-Mycenae.jpg")
     )
     assertEquals(Preview.creditLine(thumb.modify(_.license).setTo(None))._2, None)
@@ -100,7 +100,7 @@ class MediaCardSuite extends munit.FunSuite:
   test("the picture's stored size reserves its space; an unknown size none"):
     assertEquals(Preview.sizeOf(thumb), Some((330, 267)))
     assertEquals(Preview.sizeOf(thumb.modify(_.height).setTo(None)), None)
-    assertEquals(Preview.sizeOf(thumb.modify(_.width).setTo(Some(0))), None)
+    assertEquals(Preview.sizeOf(thumb.modify(_.width).setTo(Some(com.histmersion.api.media.ImageSize.Width(0)))), None)
 
   test("an element with data-event previews the event (sources, articles and places first)"):
     assertEquals(
@@ -120,72 +120,72 @@ class MediaCardSuite extends munit.FunSuite:
         com.histmersion.api.catalogue.EventSummary.Historicity("attested"),
         description = Some(com.histmersion.api.catalogue.EventSummary.Description("Burnt level."))
       ),
-      parent = Some(EventSummary("collapse", "Late Bronze Age collapse", "cultural_shift", TimeSpan(), "attested")),
-      wikidata = Some("Q123"),
+      parent = Some(EventSummary(com.histmersion.api.catalogue.Event.Id("collapse"), EventSummary.Label("Late Bronze Age collapse"), EventSummary.Kind("cultural_shift"), TimeSpan(), EventSummary.Historicity("attested"))),
+      wikidata = Some(com.histmersion.api.catalogue.EventEntry.Wikidata("Q123")),
       media = List(thumb)
     )
     val c = Preview.card(e)
     assertEquals(c.title, "Destruction of Troy VIIa")
-    assert(c.byline.startsWith("Destruction · "), c.byline)
-    assert(c.byline.endsWith(" · attested"), c.byline)
+    assert(c.byline.value.startsWith("Destruction · "), c.byline.value)
+    assert(c.byline.value.endsWith(" · attested"), c.byline.value)
     assertEquals(c.where, "part of Late Bronze Age collapse")
     assertEquals(c.summary, Some("Burnt level."))
     assertEquals(c.links, List("Wikidata Q123" -> "https://www.wikidata.org/wiki/Q123"))
     assertEquals(c.media, Some(thumb))
 
   test("the media filters: all, then each value with its count; a chosen value no longer counted is kept"):
-    val counts = List(MediaCount(MediaProvider.Commons, com.histmersion.api.media.MediaCount.N(4)), MediaCount(MediaProvider.Source, com.histmersion.api.media.MediaCount.N(9)))
+    val counts = List(MediaCount(MediaCount.Key(MediaProvider.Commons), com.histmersion.api.media.MediaCount.N(4)), MediaCount(MediaCount.Key(MediaProvider.Source), com.histmersion.api.media.MediaCount.N(9)))
     assertEquals(
-      MediaFilters.options(counts, None, MediaProvider.title),
+      MediaFilters.options(counts, None, k => MediaFilters.ChoiceLabel(MediaProvider.title(MediaProvider.Id(k.value)).value)),
       List("" -> "all", MediaProvider.Commons -> "Wikimedia Commons (4)", MediaProvider.Source -> "source figures (9)")
     )
-    assertEquals(MediaFilters.options(Nil, Some(com.histmersion.api.media.MediaCount.Key("CC0-1.0")), identity), List("" -> "all", "CC0-1.0" -> "CC0-1.0"))
+    assertEquals(MediaFilters.options(Nil, Some(com.histmersion.api.media.MediaCount.Key("CC0-1.0")), k => MediaFilters.ChoiceLabel(k.value)),List("" -> "all", "CC0-1.0" -> "CC0-1.0"))
 
   test("the media layer's popup: a figure names its source; a provider's picture shows thumbnail, credit, licence"):
-    val fig = MediaGeoHit(Some(com.histmersion.api.library.Citekey("cline2014_year")), com.histmersion.api.exchange.Bundle.Asset.FileName("fig1.png"), Some(com.histmersion.api.media.MediaItem.Kind("figure")), 37.0, 22.0, None, None, None, com.histmersion.api.media.MediaItem.Uid("u1"))
+    val fig = MediaGeoHit(Some(com.histmersion.api.library.Citekey("cline2014_year")), com.histmersion.api.exchange.Bundle.Asset.FileName("fig1.png"), Some(com.histmersion.api.media.MediaItem.Kind("figure")), com.histmersion.api.catalogue.Latitude(37.0), com.histmersion.api.catalogue.Longitude(22.0), None, None, None, com.histmersion.api.media.MediaItem.Uid("u1"))
     // the source is the app's source link (its card on hover), not a bare bold citekey
     val f = MediaPopup.html(fig, com.histmersion.web.MediaPopup.PeriodText("1200 BCE"), com.histmersion.web.MediaPopup.Caption(""))
     assert(
-      f.startsWith(
+      f.value.startsWith(
         s"""<div class="cite-tip-title media-popup-title">${CardIcons.html(com.histmersion.web.Glyphs.Name("image"))}""" +
-          com.histmersion.api.HtmlAtoms.sourceLink("cline2014_year", None, "cline2014_year") + " / fig1.png</div>"
+          com.histmersion.api.HtmlAtoms.sourceLink(com.histmersion.api.library.Citekey("cline2014_year"), None, "cline2014_year") + " / fig1.png</div>"
       ),
-      f
+      f.value
     )
     val pic = MediaGeoHit(
       None,
       com.histmersion.api.exchange.Bundle.Asset.FileName("Lions-Gate-Mycenae.jpg"),
       Some(com.histmersion.api.media.MediaItem.Kind("photo")),
-      37.0,
-      22.0,
+      com.histmersion.api.catalogue.Latitude(37.0),
+      com.histmersion.api.catalogue.Longitude(22.0),
       None,
       None,
       None,
       thumb.uid,
-      Some(MediaProvider.Commons),
+      Some(com.histmersion.api.media.MediaItem.Provider(MediaProvider.Commons)),
       Some(com.histmersion.api.media.MediaItem.License("CC-BY-SA-2.5")),
       Some(com.histmersion.api.media.MediaItem.Credit("A <b>&</b> B")),
-      Some(thumb.url)
+      Some(com.histmersion.api.media.MediaItem.ThumbUrl(thumb.url.value))
     )
     val h = MediaPopup.html(pic, com.histmersion.web.MediaPopup.PeriodText(""), com.histmersion.web.MediaPopup.Caption(""))
-    assert(h.contains(s"""src="${thumb.url}""""), h)
-    assert(h.contains("A &lt;b&gt;&amp;&lt;/b&gt; B"), "the credit is escaped: " + h)
+    assert(h.value.contains(s"""src="${thumb.url}""""), h.value)
+    assert(h.value.contains("A &lt;b&gt;&amp;&lt;/b&gt; B"), "the credit is escaped: " + h.value)
     // the licence by its name, linked to its text — never the stored id as a code token
-    assert(!h.contains("<code>"), h)
+    assert(!h.value.contains("<code>"), h.value)
     assert(
-      h.contains(
+      h.value.contains(
         """<a class="media-license" href="https://creativecommons.org/licenses/by-sa/2.5/" target="_blank" rel="noopener license">CC BY-SA 2.5</a>"""
       )
-        && h.contains("Wikimedia Commons"),
-      h
+        && h.value.contains("Wikimedia Commons"),
+      h.value
     )
     // no full-size URL known: the thumbnail opens nothing
-    assert(!h.contains("data-full"), h)
+    assert(!h.value.contains("data-full"), h.value)
     assert(
-      h.startsWith(
+      h.value.startsWith(
         s"""<div class="cite-tip-title media-popup-title">${CardIcons.html(com.histmersion.web.Glyphs.Name("image"))}Lions-Gate-Mycenae.jpg</div>"""
       ),
-      "a picture's popup leads with the picture icon: " + h
+      "a picture's popup leads with the picture icon: " + h.value
     )
 
   test("the media layer's popup: a picture with its full size opens it, with title, credit, licence and provider page"):
@@ -193,25 +193,25 @@ class MediaCardSuite extends munit.FunSuite:
       None,
       com.histmersion.api.exchange.Bundle.Asset.FileName("Lions_Gate_of_Mycenae_seen_from_the_ramp_in_the_morning_light.jpg"),
       Some(com.histmersion.api.media.MediaItem.Kind("photo")),
-      37.0,
-      22.0,
+      com.histmersion.api.catalogue.Latitude(37.0),
+      com.histmersion.api.catalogue.Longitude(22.0),
       None,
       None,
       None,
       thumb.uid,
-      Some(MediaProvider.Commons),
+      Some(com.histmersion.api.media.MediaItem.Provider(MediaProvider.Commons)),
       Some(com.histmersion.api.media.MediaItem.License("CC-BY-SA-3.0")),
       Some(com.histmersion.api.media.MediaItem.Credit("Photo: A. Author")),
-      Some(thumb.url),
-      fileUrl = Some(s"/media/${thumb.uid}/file"),
+      Some(com.histmersion.api.media.MediaItem.ThumbUrl(thumb.url.value)),
+      fileUrl = Some(com.histmersion.api.media.MediaItem.FileUrl(s"/media/${thumb.uid}/file")),
       sourceUrl = Some(com.histmersion.api.media.MediaItem.SourceUrl("https://commons.wikimedia.org/wiki/File:Lions.jpg")),
       licenseUrl = None,
       author = Some(com.histmersion.api.media.MediaItem.Author("A. Author"))
     )
     val h = MediaPopup.html(pic, com.histmersion.web.MediaPopup.PeriodText(""), com.histmersion.web.MediaPopup.Caption(""))
-    assert(h.contains(s"""data-full="/media/${thumb.uid}/file""""), h)
-    assert(h.contains("is-zoomable"), h)
-    assert(h.contains("""data-lb-source-url="https://commons.wikimedia.org/wiki/File:Lions.jpg""""), h)
+    assert(h.value.contains(s"""data-full="/media/${thumb.uid}/file""""), h.value)
+    assert(h.value.contains("is-zoomable"), h.value)
+    assert(h.value.contains("""data-lb-source-url="https://commons.wikimedia.org/wiki/File:Lions.jpg""""), h.value)
     val item = MediaPopup.full(pic).get
     assertEquals(item.src, s"/media/${thumb.uid}/file")
     assertEquals(item.title, Some(pic.assetName))

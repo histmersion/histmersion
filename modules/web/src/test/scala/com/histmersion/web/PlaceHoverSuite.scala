@@ -13,7 +13,7 @@ import com.histmersion.api.plugins.{PluginSetting, PluginsReport, PluginStatus}
 import com.histmersion.api.settings.ConfigFileInfo
 import com.histmersion.api.views.PlaceDetail
 import com.histmersion.api.backup.Backup
-import com.histmersion.api.catalogue.Place
+import com.histmersion.api.catalogue.{Place, Year}
 
 /** #716/#717/#718 — the map's place card, click-to-filter and the About window, in their pure parts. */
 class PlaceHoverSuite extends munit.FunSuite:
@@ -26,11 +26,14 @@ class PlaceHoverSuite extends munit.FunSuite:
   /** A fake clock, as in ThrottleSuite: `later` queues, `advance` runs what is due. */
   final private class Clock:
     var t: Double = 0
-    private val queue = mutable.ListBuffer.empty[(Double, Int, () => Unit)]
+    private val queue = mutable.ListBuffer.empty[(Double, HoverIntent.TimerId, () => Unit)]
     private var ids = 0
-    def later(ms: Double, g: () => Unit): Int =
-      ids += 1; queue += ((t + ms, ids, g)); ids
-    def cancel(id: Int): Unit = queue.filterInPlace(_._2 != id)
+    def later(ms: HoverIntent.DelayMs, g: () => Unit): HoverIntent.TimerId =
+      ids += 1
+      val id = HoverIntent.TimerId(ids)
+      queue += ((t + ms.value, id, g))
+      id
+    def cancel(id: HoverIntent.TimerId): Unit = queue.filterInPlace(_._2 != id)
     def advance(ms: Double): Unit =
       t += ms
       val due = queue.filter(_._1 <= t).toList
@@ -65,12 +68,14 @@ class PlaceHoverSuite extends munit.FunSuite:
   }
 
   test("#716: a place card shows kind, validity in BCE/CE, the parents and the counts") {
-    def summary(id: String, label: String, kind: String, ps: Option[Long] = None, pe: Option[Long] = None) =
-      Place.Summary(com.histmersion.api.catalogue.Place.Id(id), label, kind, ps, pe, None, com.histmersion.api.catalogue.Place.Summary.Names(""))
+    def summary(id: Place.Id, label: Place.Summary.Label, kind: Place.Summary.Kind, ps: Option[Year] = None, pe: Option[Year] = None) =
+      Place.Summary(id, label, kind, ps, pe, None, com.histmersion.api.catalogue.Place.Summary.Names(""))
+    def named(id: String, label: String, kind: String, ps: Option[Year] = None, pe: Option[Year] = None) =
+      summary(Place.Id(id), Place.Summary.Label(label), Place.Summary.Kind(kind), ps, pe)
     val d = PlaceDetail(
-      place = summary("hatti", "Hittite Empire", "polity", Some(-1650), Some(-1180)),
+      place = named("hatti", "Hittite Empire", "polity", Some(Year(-1650)), Some(Year(-1180))),
       geometry = None,
-      parents = List(summary("anatolia", "Anatolia", "region"), summary("near_east", "Near East", "region")),
+      parents = List(named("anatolia", "Anatolia", "region"), named("near_east", "Near East", "region")),
       children = Nil,
       findings = com.histmersion.api.catalogue.Place.Counts.Findings(3),
       asOf = Some(com.histmersion.api.catalogue.Year(-1300)),
@@ -84,13 +89,13 @@ class PlaceHoverSuite extends munit.FunSuite:
     assertEquals(c.identifier, "hatti")
     // a disputed shape says so; no counts asked for, none shown; a site with no parents and no period
     val bare =
-      Preview.card(d.copy(place = summary("troy", "Troy", "site"), parents = Nil, counts = None, contested = true))
+      Preview.card(d.copy(place = named("troy", "Troy", "site"), parents = Nil, counts = None, contested = true))
     assertEquals(bare.byline, "Site · contested extent")
     assertEquals(bare.where, "")
     assertEquals(bare.facts, Nil)
     // CE years too
     assertEquals(
-      Preview.card(d.modify(_.place).setTo(summary("x", "X", "polity", Some(-30), Some(476)))).byline,
+      Preview.card(d.modify(_.place).setTo(named("x", "X", "polity", Some(Year(-30)), Some(Year(476))))).byline,
       "Polity · 30 BCE–476 CE"
     )
   }
@@ -108,25 +113,25 @@ class PlaceHoverSuite extends munit.FunSuite:
   test("a card never leaves the viewport: flipped, shifted, else capped so it scrolls") {
     import Preview.Fit
     // fits below: placed there, allowed the whole room below
-    assertEquals(Preview.pointFit(com.histmersion.web.Preview.ScreenPixels(100), com.histmersion.web.Preview.ScreenPixels(100), com.histmersion.web.Preview.ElementSize(200), com.histmersion.web.Preview.PointFitH(300), com.histmersion.web.Preview.ViewportWidth(1200), com.histmersion.web.Preview.PointFitVh(800)), Fit(com.histmersion.web.Preview.Fit.X(114), com.histmersion.web.Preview.Fit.Y(114), 800 - 10 - 114))
+    assertEquals(Preview.pointFit(com.histmersion.web.Preview.ScreenPixels(100), com.histmersion.web.Preview.ScreenPixels(100), com.histmersion.web.Preview.ElementSize(200), com.histmersion.web.Preview.PointFitH(300), com.histmersion.web.Preview.ViewportWidth(1200), com.histmersion.web.Preview.PointFitVh(800)), Fit(com.histmersion.web.Preview.Fit.X(114), com.histmersion.web.Preview.Fit.Y(114), com.histmersion.web.Preview.Fit.MaxH(800 - 10 - 114)))
     // too tall below, fits above: above the pointer, never over its top edge
     val up = Preview.pointFit(com.histmersion.web.Preview.ScreenPixels(100), com.histmersion.web.Preview.ScreenPixels(700), com.histmersion.web.Preview.ElementSize(200), com.histmersion.web.Preview.PointFitH(500), com.histmersion.web.Preview.ViewportWidth(1200), com.histmersion.web.Preview.PointFitVh(800))
-    assertEquals(up, Fit(com.histmersion.web.Preview.Fit.X(114), 700 - 14 - 500, 700 - 14 - 10))
-    assert(up.y >= 10)
+    assertEquals(up, Fit(Fit.X(114), Fit.Y(700 - 14 - 500), Fit.MaxH(700 - 14 - 10)))
+    assert(up.y.value >= 10)
     // too tall for either side: the roomier side, capped to it (the content scrolls)
     val big = Preview.pointFit(com.histmersion.web.Preview.ScreenPixels(100), com.histmersion.web.Preview.ScreenPixels(300), com.histmersion.web.Preview.ElementSize(200), com.histmersion.web.Preview.PointFitH(1000), com.histmersion.web.Preview.ViewportWidth(1200), com.histmersion.web.Preview.PointFitVh(800))
-    assertEquals(big, Fit(com.histmersion.web.Preview.Fit.X(114), com.histmersion.web.Preview.Fit.Y(314), 800 - 10 - 314))
-    assert(big.y + big.maxH <= 790)
+    assertEquals(big, Fit(com.histmersion.web.Preview.Fit.X(114), com.histmersion.web.Preview.Fit.Y(314), Fit.MaxH(800 - 10 - 314)))
+    assert(big.y.value + big.maxH.value <= 790)
     val bigUp = Preview.pointFit(com.histmersion.web.Preview.ScreenPixels(100), com.histmersion.web.Preview.ScreenPixels(600), com.histmersion.web.Preview.ElementSize(200), com.histmersion.web.Preview.PointFitH(1000), com.histmersion.web.Preview.ViewportWidth(1200), com.histmersion.web.Preview.PointFitVh(800))
-    assertEquals(bigUp, Fit(com.histmersion.web.Preview.Fit.X(114), com.histmersion.web.Preview.Fit.Y(10), 600 - 14 - 10))
+    assertEquals(bigUp, Fit(com.histmersion.web.Preview.Fit.X(114), com.histmersion.web.Preview.Fit.Y(10), Fit.MaxH(600 - 14 - 10)))
     // a short window with the pointer in the middle: the full height, over the pointer
     assertEquals(Preview.pointFit(com.histmersion.web.Preview.ScreenPixels(100), com.histmersion.web.Preview.ScreenPixels(150), com.histmersion.web.Preview.ElementSize(200), com.histmersion.web.Preview.PointFitH(1000), com.histmersion.web.Preview.ViewportWidth(1200), com.histmersion.web.Preview.PointFitVh(300)), Fit(com.histmersion.web.Preview.Fit.X(114), com.histmersion.web.Preview.Fit.Y(10), com.histmersion.web.Preview.Fit.MaxH(280)))
     // under a link: the same rules
-    assertEquals(Preview.underFit(com.histmersion.web.Preview.ScreenPixels(500), com.histmersion.web.Preview.UnderFitTop(700), com.histmersion.web.Preview.UnderFitBottom(720), com.histmersion.web.Preview.ElementSize(60), com.histmersion.web.Preview.ElementSize(300), com.histmersion.web.Preview.UnderFitH(900), com.histmersion.web.Preview.ViewportWidth(1200), com.histmersion.web.Preview.UnderFitVh(800)), Fit(com.histmersion.web.Preview.Fit.X(380), com.histmersion.web.Preview.Fit.Y(10), 700 - 6 - 10))
+    assertEquals(Preview.underFit(com.histmersion.web.Preview.ScreenPixels(500), com.histmersion.web.Preview.UnderFitTop(700), com.histmersion.web.Preview.UnderFitBottom(720), com.histmersion.web.Preview.ElementSize(60), com.histmersion.web.Preview.ElementSize(300), com.histmersion.web.Preview.UnderFitH(900), com.histmersion.web.Preview.ViewportWidth(1200), com.histmersion.web.Preview.UnderFitVh(800)), Fit(com.histmersion.web.Preview.Fit.X(380), com.histmersion.web.Preview.Fit.Y(10), Fit.MaxH(700 - 6 - 10)))
     // every fit stays inside, for any pointer and size
     for x <- 0 to 1200 by 150; y <- 0 to 800 by 100; h <- List(50, 400, 790, 2000) do
-      val f = Preview.pointFit(x, y, com.histmersion.web.Preview.ElementSize(300), h, com.histmersion.web.Preview.ViewportWidth(1200), com.histmersion.web.Preview.PointFitVh(800))
-      assert(f.x >= 10 && f.x + 300 <= 1190 && f.y >= 10 && f.y + math.min(h.toDouble, f.maxH) <= 790, s"$x,$y,$h → $f")
+      val f = Preview.pointFit(Preview.ScreenPixels(x), Preview.ScreenPixels(y), com.histmersion.web.Preview.ElementSize(300), Preview.PointFitH(h), com.histmersion.web.Preview.ViewportWidth(1200), com.histmersion.web.Preview.PointFitVh(800))
+      assert(f.x.value >= 10 && f.x.value + 300 <= 1190 && f.y.value >= 10 && f.y.value + math.min(h.toDouble, f.maxH.value) <= 790, s"$x,$y,$h → $f")
   }
 
   test("#717: a click makes a place THE place filter; a second click on it clears it") {
@@ -140,12 +145,12 @@ class PlaceHoverSuite extends munit.FunSuite:
     assert(UiState.togglePlace(com.histmersion.web.UiState.TogglePlaceId("hatti")))
     assertEquals(UiState.placeIds.now(), List("hatti"))
     assertEquals(UiState.toFilter().places, List("hatti"))
-    assert(UiState.activeChips().exists(c => c.key == "placeIds" && c.value == "hatti"))
-    assert(UiState.hashString.contains("placeId=hatti"), UiState.hashString)
+    assert(UiState.activeChips().exists(c => c.key.value == "placeIds" && c.value.value == "hatti"))
+    assert(UiState.hashString.value.contains("placeId=hatti"), UiState.hashString.value)
     // the same place again: cleared, and gone from the hash
     assert(!UiState.togglePlace(com.histmersion.web.UiState.TogglePlaceId("hatti")))
     assertEquals(UiState.placeIds.now(), Nil)
-    assert(!UiState.hashString.contains("placeId"), UiState.hashString)
+    assert(!UiState.hashString.value.contains("placeId"), UiState.hashString.value)
     // the chip's ✕ is the same field
     UiState.togglePlace(com.histmersion.web.UiState.TogglePlaceId("troy"))
     UiState.removeChip(com.histmersion.web.UiState.RemoveChipKey("placeIds"), com.histmersion.web.UiState.FilterTerm("troy"))
@@ -164,7 +169,7 @@ class PlaceHoverSuite extends munit.FunSuite:
     health = Health(com.histmersion.api.instance.Health.Status("degraded"), com.histmersion.api.instance.Health.Db("ok"), Some(com.histmersion.api.instance.Health.SchemaVersion("28")), Some(com.histmersion.api.instance.Health.Converter("busy: converting 2 documents"))),
     jobs = JobCounts(com.histmersion.api.jobs.JobCounts.Queued(1), com.histmersion.api.jobs.JobCounts.Running(2), com.histmersion.api.jobs.JobCounts.Done(3), com.histmersion.api.jobs.JobCounts.Failed(4)),
     counts = Some(CorpusCounts(com.histmersion.api.instance.CorpusCounts.Sources(10), com.histmersion.api.instance.CorpusCounts.Findings(200), com.histmersion.api.instance.CorpusCounts.Articles(5), com.histmersion.api.instance.CorpusCounts.Events(7), com.histmersion.api.instance.CorpusCounts.Places(15000), com.histmersion.api.instance.CorpusCounts.Periods(40), com.histmersion.api.instance.CorpusCounts.Presets(12))),
-    lastBackup = Some(Backup.Info(com.histmersion.api.backup.Backup.Info.File("histmersion-20261001.dump"), 2_500_000, com.histmersion.api.backup.Backup.Info.CreatedAt("2026-10-01T08:00:00Z"))),
+    lastBackup = Some(Backup.Info(com.histmersion.api.backup.Backup.Info.File("histmersion-20261001.dump"), com.histmersion.api.ByteCount(2_500_000L),com.histmersion.api.backup.Backup.Info.CreatedAt("2026-10-01T08:00:00Z"))),
     lastBackupAgeSeconds = Some(com.histmersion.api.instance.About.LastBackupAgeSeconds(90000))
   )
 
@@ -186,7 +191,7 @@ class PlaceHoverSuite extends munit.FunSuite:
     assertEquals(row("Store", "period presets").value, "12") // #904: presets counted apart from all periods
     assertEquals(row("Server", "config file").value, "none")
     val withFile =
-      AboutView.sections(about.modify(_.configFile).setTo(ConfigFileInfo(Some("/c/histmersion.conf"), loaded = true)))
+      AboutView.sections(about.modify(_.configFile).setTo(ConfigFileInfo(Some(ConfigFileInfo.Path("/c/histmersion.conf")), loaded = ConfigFileInfo.Loaded(true))))
     val cf = withFile.head.rows.find(_.label == "config file").get
     assertEquals((cf.value, cf.detail), ("read", Some("/c/histmersion.conf")))
   }
@@ -236,7 +241,7 @@ class PlaceHoverSuite extends munit.FunSuite:
 
   test("#718: an unknown converter wording renders as unknown with its text; missing parts are said") {
     val odd = about.modify(
-      _.health).setTo(about.health.modify(_.converter).setTo(Some("calibrating flux"))).modify(_.counts).setTo(None).modify(_.lastBackup).setTo(None).modify(_.lastBackupAgeSeconds).setTo((None: _root_.scala.Option[_root_.scala.Long])).modify(_.build).setTo(BuildStamp("1.2.3")).modify(_.problems).setTo(List("store counts: connection refused")
+      _.health).setTo(about.health.modify(_.converter).setTo(Some(com.histmersion.api.instance.Health.Converter("calibrating flux")))).modify(_.counts).setTo(None).modify(_.lastBackup).setTo(None).modify(_.lastBackupAgeSeconds).setTo(None).modify(_.build).setTo(BuildStamp(BuildStamp.Version("1.2.3"))).modify(_.problems).setTo(List(About.Problems("store counts: connection refused"))
     )
     val s = AboutView.sections(odd)
     val conv = s.find(_.title == "Health").get.rows.find(_.label == "converter").get

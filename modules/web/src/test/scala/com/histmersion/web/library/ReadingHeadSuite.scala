@@ -8,6 +8,7 @@ import com.histmersion.api.media.MediaRole
 import com.histmersion.web.map.GeoBounds
 import com.histmersion.api.library.Source
 import com.histmersion.api.library.Finding
+import com.histmersion.api.catalogue.{Latitude, Longitude}
 
 class ReadingHeadSuite extends munit.FunSuite:
 
@@ -66,16 +67,16 @@ class ReadingHeadSuite extends munit.FunSuite:
   test("an unknown type is left out, not called unknown"):
     val paperless = detail.modify(_.provenance).setTo(None).modify(_.venue).setTo(None)
     assertEquals(ReadingHead.of(com.histmersion.api.library.Source.WithFindings(paperless, Nil)).what, "2014")
-    val cover = MediaThumb(com.histmersion.api.media.MediaItem.Uid("u"), MediaRole.Cover, com.histmersion.api.media.MediaThumb.Url("/x.jpg"), com.histmersion.api.media.MediaItem.Credit("credit"))
+    val cover = MediaThumb(com.histmersion.api.media.MediaItem.Uid("u"), MediaThumb.Role(MediaRole.Cover), com.histmersion.api.media.MediaThumb.Url("/x.jpg"), com.histmersion.api.media.MediaItem.Credit("credit"))
     assertEquals(
       ReadingHead.of(com.histmersion.api.library.Source.WithFindings(paperless, Nil, illustration = Some(cover))).what,
       "Book · 2014"
     )
 
   test("the map shows the box around a source's located findings; none when none is located"):
-    def f(lat: Option[Double], lon: Option[Double]) = Finding.Row(com.histmersion.api.library.Finding.Claim("c"), None, lon, lat, None, None, None, Nil, None)
+    def f(lat: Option[Latitude], lon: Option[Longitude]) = Finding.Row(com.histmersion.api.library.Finding.Claim("c"), None, lon, lat, None, None, None, Nil, None)
     assertEquals(
-      ReadingPane.bounds(List(f(Some(35.6), Some(35.8)), f(Some(40.0), Some(34.6)), f(None, None))),
-      Some(GeoBounds(35.6, 34.6, 40.0, 35.8))
+      ReadingPane.bounds(List(f(Some(Latitude(35.6)), Some(Longitude(35.8))), f(Some(Latitude(40.0)), Some(Longitude(34.6))), f(None, None))),
+      Some(GeoBounds(GeoBounds.South(35.6), GeoBounds.West(34.6), GeoBounds.North(40.0), GeoBounds.East(35.8)))
     )
     assertEquals(ReadingPane.bounds(List(f(None, None))), None)

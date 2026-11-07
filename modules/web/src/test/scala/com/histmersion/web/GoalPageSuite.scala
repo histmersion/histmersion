@@ -1,33 +1,32 @@
 package com.histmersion.web
 
-import com.histmersion.testsupport.ComparedByValue.given
-
 import hearth.kindlings.optics.syntax.*
 
 import com.histmersion.api.automation.{Goal, Managers}
 import com.histmersion.api.automation.Goal.Plans.{GoalSchedule, GoalView, ScheduleKind}
+import com.histmersion.api.automation.Managers.ManagerItem
 
 /** A goal page's pure parts: the plan's steps and marks, the schedule line, pausing, its filtered lists. */
 class GoalPageSuite extends munit.FunSuite:
 
   private def item(
-      id: Long,
-      status: String,
-      at: String,
-      kind: String = "compile-article",
-      target: String = "sea-peoples"
+      id: ManagerItem.Id,
+      status: ManagerItem.Status,
+      at: ManagerItem.UpdatedAt,
+      kind: ManagerItem.Kind = ManagerItem.Kind("compile-article"),
+      target: ManagerItem.Target = ManagerItem.Target("sea-peoples")
   ) =
-    Managers.ManagerItem(id, com.histmersion.api.automation.Managers.ManagerInfo.Id("seed:g"), kind, target, status, updatedAt = at, createdAt = at)
+    Managers.ManagerItem(id, com.histmersion.api.automation.Managers.ManagerInfo.Id("seed:g"), kind, target, status, updatedAt = at, createdAt = ManagerItem.CreatedAt(at.value))
 
   test("the plan: what runs now first, then what is to do, then what was done, newest first in each"):
     val is = List(
-      item(1, "done", "2026-10-01T00:00:00Z"),
-      item(2, "pending", "2026-10-02T00:00:00Z"),
-      item(3, "active", "2026-10-03T00:00:00Z"),
-      item(4, "done", "2026-10-04T00:00:00Z"),
-      item(5, "failed", "2026-10-05T00:00:00Z")
+      item(ManagerItem.Id(1), ManagerItem.Status("done"), ManagerItem.UpdatedAt("2026-10-01T00:00:00Z")),
+      item(ManagerItem.Id(2), ManagerItem.Status("pending"), ManagerItem.UpdatedAt("2026-10-02T00:00:00Z")),
+      item(ManagerItem.Id(3), ManagerItem.Status("active"), ManagerItem.UpdatedAt("2026-10-03T00:00:00Z")),
+      item(ManagerItem.Id(4), ManagerItem.Status("done"), ManagerItem.UpdatedAt("2026-10-04T00:00:00Z")),
+      item(ManagerItem.Id(5), ManagerItem.Status("failed"), ManagerItem.UpdatedAt("2026-10-05T00:00:00Z"))
     )
-    assertEquals(GoalPage.steps(is).map(_.id), List(3L, 2L, 5L, 4L, 1L))
+    assertEquals(GoalPage.steps(is).map(_.id.value), List(3L, 2L, 5L, 4L, 1L))
     assertEquals(
       is.map(GoalPage.markOf),
       List(GoalPage.Mark.Done, GoalPage.Mark.Todo, GoalPage.Mark.Going, GoalPage.Mark.Done, GoalPage.Mark.Stopped)
@@ -35,22 +34,22 @@ class GoalPageSuite extends munit.FunSuite:
 
   test("a step's name is its kind of work and what it is on"):
     assertEquals(
-      GoalPage.stepName(item(1, "done", "t", kind = "review-article", target = "sea-peoples")),
+      GoalPage.stepName(item(ManagerItem.Id(1), ManagerItem.Status("done"), ManagerItem.UpdatedAt("t"), kind = ManagerItem.Kind("review-article"), target = ManagerItem.Target("sea-peoples"))).value,
       "Review an article — sea-peoples"
     )
     assertEquals(
-      GoalPage.stepName(item(1, "done", "t", kind = "currency-check", target = "seed:g")),
+      GoalPage.stepName(item(ManagerItem.Id(1), ManagerItem.Status("done"), ManagerItem.UpdatedAt("t"), kind = ManagerItem.Kind("currency-check"), target = ManagerItem.Target("seed:g"))).value,
       "Check sources are current"
     )
 
   test("days, as the state line says them"):
-    def at(iso: String) = scala.scalajs.js.Date.parse(iso)
+    def at(iso: String) = GoalPage.Millis(scala.scalajs.js.Date.parse(iso))
     val now = at("2026-10-30T12:00:00")
-    assertEquals(GoalPage.days(at("2026-10-27T09:00:00"), now), "3 days ago")
-    assertEquals(GoalPage.days(at("2026-10-30T08:00:00"), now), "today")
-    assertEquals(GoalPage.days(at("2026-10-29T23:00:00"), now), "yesterday")
-    assertEquals(GoalPage.days(at("2026-10-31T01:00:00"), now), "tomorrow")
-    assertEquals(GoalPage.days(at("2026-11-01T20:00:00"), now), "in 2 days")
+    assertEquals(GoalPage.days(at("2026-10-27T09:00:00"), now).value, "3 days ago")
+    assertEquals(GoalPage.days(at("2026-10-30T08:00:00"), now).value, "today")
+    assertEquals(GoalPage.days(at("2026-10-29T23:00:00"), now).value, "yesterday")
+    assertEquals(GoalPage.days(at("2026-10-31T01:00:00"), now).value, "tomorrow")
+    assertEquals(GoalPage.days(at("2026-11-01T20:00:00"), now).value, "in 2 days")
 
   test("the schedule: the currency check's last and next run, else the watcher's next tick"):
     val v = GoalView(
@@ -61,18 +60,18 @@ class GoalPageSuite extends munit.FunSuite:
           ScheduleKind.Currency,
           com.histmersion.api.automation.Goal.Plans.GoalSchedule.Cron("@weekly"),
           enabled = com.histmersion.api.automation.Goal.Plans.GoalSchedule.Enabled(true),
-          lastRunAt = Some("2026-10-27T09:00:00"),
-          nextRunAt = Some("2026-11-03T09:00:00")
+          lastRunAt = Some(GoalSchedule.LastRunAt("2026-10-27T09:00:00")),
+          nextRunAt = Some(GoalSchedule.NextRunAt("2026-11-03T09:00:00"))
         )
       )
     )
-    val now = scala.scalajs.js.Date.parse("2026-10-30T12:00:00")
+    val now = GoalPage.ScheduleNowMs(scala.scalajs.js.Date.parse("2026-10-30T12:00:00"))
     assertEquals(
-      GoalPage.schedule(v, None, None, now),
+      GoalPage.schedule(v, None, None, now).map(_.value),
       Some("checked for new publications 3 days ago · next check in 4 days")
     )
     val watcher = Managers.ManagerInfo(com.histmersion.api.automation.Managers.ManagerInfo.Id("watch:g"), com.histmersion.api.automation.Managers.ManagerInfo.Kind("watch"), goal = Some(com.histmersion.api.automation.Goal.Slug("g")), nextTickAt = Some(com.histmersion.api.automation.Managers.ManagerInfo.NextTickAt("2026-10-31T13:00:00")))
-    assertEquals(GoalPage.schedule(v.modify(_.schedules).setTo(Nil), Some(watcher), None, now), Some("next check tomorrow"))
+    assertEquals(GoalPage.schedule(v.modify(_.schedules).setTo(Nil), Some(watcher), None, now).map(_.value), Some("next check tomorrow"))
     assertEquals(GoalPage.schedule(v.modify(_.schedules).setTo(Nil), None, None, now), None)
 
   test("a goal is paused when every agent working for it is; its lists and sources are filtered to it"):
@@ -81,8 +80,8 @@ class GoalPageSuite extends munit.FunSuite:
       Managers.ManagerInfo(com.histmersion.api.automation.Managers.ManagerInfo.Id("watch:g"), com.histmersion.api.automation.Managers.ManagerInfo.Kind("watch"), state = com.histmersion.api.automation.Managers.ManagerInfo.State("paused"))
     )
     assert(GoalPage.paused(ms))
-    assert(!GoalPage.paused(ms.updated(0, ms.head.copy(state = "active"))))
+    assert(!GoalPage.paused(ms.updated(0, ms.head.copy(state = Managers.ManagerInfo.State("active")))))
     assert(!GoalPage.paused(Nil))
-    assertEquals(GoalPage.listOf(ResearchSection.Backlog, com.histmersion.api.automation.Goal.Slug("bronze age")), "/research/backlog?goal=bronze%20age")
-    assertEquals(GoalPage.libraryOf(com.histmersion.api.automation.Goal.Slug("g")), "/library#goal=g")
-    assertEquals(GoalPage.mapOf(com.histmersion.api.automation.Goal.Slug("g")), "/explore#goal=g")
+    assertEquals(GoalPage.listOf(ResearchSection.Backlog, com.histmersion.api.automation.Goal.Slug("bronze age")).value, "/research/backlog?goal=bronze%20age")
+    assertEquals(GoalPage.libraryOf(com.histmersion.api.automation.Goal.Slug("g")).value, "/library#goal=g")
+    assertEquals(GoalPage.mapOf(com.histmersion.api.automation.Goal.Slug("g")).value, "/explore#goal=g")

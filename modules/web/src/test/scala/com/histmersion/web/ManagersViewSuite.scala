@@ -14,7 +14,7 @@ class ManagersViewSuite extends munit.FunSuite:
 
   test("badge: the person's state, else what the supervisor derived"):
     assertEquals(
-      ManagersView.badge(ManagerInfo(com.histmersion.api.automation.Managers.ManagerInfo.Id("review"), com.histmersion.api.automation.Managers.ManagerInfo.Kind("review"), state = com.histmersion.api.automation.Managers.ManagerInfo.State("paused"), statusNote = Some("paused"))),
+      ManagersView.badge(ManagerInfo(com.histmersion.api.automation.Managers.ManagerInfo.Id("review"), com.histmersion.api.automation.Managers.ManagerInfo.Kind("review"), state = com.histmersion.api.automation.Managers.ManagerInfo.State("paused"), statusNote = Some(ManagerInfo.StatusNote("paused")))),
       "paused"
     )
     assertEquals(
@@ -47,14 +47,14 @@ class ManagersViewSuite extends munit.FunSuite:
     val focus = ManagerItem(
       com.histmersion.api.automation.Managers.ManagerItem.Id(1),
       com.histmersion.api.automation.Managers.ManagerInfo.Id("seed:g"),
-      ProposeArticles,
+      ManagerItem.Kind(ProposeArticles),
       com.histmersion.api.automation.Managers.ManagerItem.Target("g"),
       com.histmersion.api.automation.Managers.ManagerItem.Status("held"),
       hold = Some(Hold(reason = com.histmersion.api.automation.Managers.Hold.Reason("focus: waits"), focus = Some(com.histmersion.api.automation.Managers.Hold.Focus("g"))))
     )
     assertEquals(ManagersView.itemActionsFor(focus), List("priority", "skip"))
     assertEquals(
-      ManagersView.itemActionsFor(focus.modify(_.hold).setTo(Some(Hold(reason = "held by a person")))),
+      ManagersView.itemActionsFor(focus.modify(_.hold).setTo(Some(Hold(reason = Hold.Reason("held by a person"))))),
       List("release", "priority", "skip")
     )
 
@@ -87,9 +87,9 @@ class ManagersViewSuite extends munit.FunSuite:
     )
     assertEquals(ManagersView.config(ManagersView.fields(c)), Right(c))
     assertEquals(ManagersView.config(Map.empty), Right(ManagerConfig()))
-    assert(ManagersView.config(Map("rounds" -> "x")).isLeft)
-    assert(ManagersView.config(Map("models" -> "fixer")).isLeft)
-    assert(ManagersView.config(Map("budgetUsd" -> "-1")).isLeft)
+    assert(ManagersView.config(Map(ManagersView.ConfigKey("rounds") -> ManagersView.ConfigText("x"))).isLeft)
+    assert(ManagersView.config(Map(ManagersView.ConfigKey("models") -> ManagersView.ConfigText("fixer"))).isLeft)
+    assert(ManagersView.config(Map(ManagersView.ConfigKey("budgetUsd") -> ManagersView.ConfigText("-1"))).isLeft)
 
   test("hint box: text alone, scoped, with an action; a hold needs a date or a source"):
     assertEquals(
@@ -130,32 +130,32 @@ class ManagersViewSuite extends munit.FunSuite:
       ManagersView.config(f).map(c => (c.staleAfterDays, c.inferFilter, c.minSources, c.maxArticles)),
       Right((Some(30), Some(false), Some(4), Some(3)))
     )
-    assert(ManagersView.config(Map("inferFilter" -> "maybe")).isLeft)
-    assert(ManagersView.config(Map("minSources" -> "x")).isLeft)
+    assert(ManagersView.config(Map(ManagersView.ConfigKey("inferFilter") -> ManagersView.ConfigText("maybe"))).isLeft)
+    assert(ManagersView.config(Map(ManagersView.ConfigKey("minSources") -> ManagersView.ConfigText("x"))).isLeft)
 
   test("daily cap: a number of USD (0 = none) round-trips through the form; the day's spend reads with it"):
-    assertEquals(ManagersView.config(Map("dailyUsd" -> "2.5")).map(_.dailyUsd), Right(Some(2.5)))
-    assertEquals(ManagersView.fields(ManagerConfig(dailyUsd = Some(2.5)))("dailyUsd"), "2.5")
-    assert(ManagersView.config(Map("dailyUsd" -> "-1")).isLeft)
+    assertEquals(ManagersView.config(Map(ManagersView.ConfigKey("dailyUsd") -> ManagersView.ConfigText("2.5"))).map(_.dailyUsd), Right(Some(2.5)))
+    assertEquals(ManagersView.fields(ManagerConfig(dailyUsd = Some(ManagerConfig.DailyUsd(2.5))))(ManagersView.ConfigKey("dailyUsd")), "2.5")
+    assert(ManagersView.config(Map(ManagersView.ConfigKey("dailyUsd") -> ManagersView.ConfigText("-1"))).isLeft)
     val m = ManagerInfo(
       com.histmersion.api.automation.Managers.ManagerInfo.Id("review"),
       com.histmersion.api.automation.Managers.ManagerInfo.Kind("review"),
-      effective = ManagerConfig(dailyUsd = Some(2.0)),
-      spentTodayUsd = 0.5,
-      tokensToday = 12345
+      effective = ManagerConfig(dailyUsd = Some(ManagerConfig.DailyUsd(2.0))),
+      spentTodayUsd = ManagerInfo.SpentTodayUsd(0.5),
+      tokensToday = ManagerInfo.TokensToday(12345L)
     )
     assertEquals(ManagersMarkdown.today(m), "today 0.50 of 2.00 USD, 12.3k tokens")
-    assertEquals(ManagersMarkdown.today(ManagerInfo(com.histmersion.api.automation.Managers.ManagerInfo.Id("enrich"), com.histmersion.api.automation.Managers.ManagerInfo.Kind("enrich"), spentTodayUsd = 0.012)), "today 0.0120 USD")
+    assertEquals(ManagersMarkdown.today(ManagerInfo(com.histmersion.api.automation.Managers.ManagerInfo.Id("enrich"), com.histmersion.api.automation.Managers.ManagerInfo.Kind("enrich"), spentTodayUsd = ManagerInfo.SpentTodayUsd(0.012))), "today 0.0120 USD")
 
   test("the page buttons' line: one item, several, nothing to enrich"):
-    val i = ManagerItem(com.histmersion.api.automation.Managers.ManagerItem.Id(7), com.histmersion.api.automation.Managers.ManagerInfo.Id("review"), ArticleReview, com.histmersion.api.automation.Managers.ManagerItem.Target("tin"), com.histmersion.api.automation.Managers.ManagerItem.Status("pending"))
+    val i = ManagerItem(com.histmersion.api.automation.Managers.ManagerItem.Id(7), com.histmersion.api.automation.Managers.ManagerInfo.Id("review"), ManagerItem.Kind(ArticleReview), com.histmersion.api.automation.Managers.ManagerItem.Target("tin"), com.histmersion.api.automation.Managers.ManagerItem.Status("pending"))
     assertEquals(
       ManagersView.enqueuedNote(EnqueueKind.Review, EnqueueResult(com.histmersion.api.automation.Managers.ManagerInfo.Id("review"), List(i))),
       "queued for review (item #7, pending)"
     )
     assertEquals(
       ManagersView
-        .enqueuedNote(EnqueueKind.Enrich, EnqueueResult(com.histmersion.api.automation.Managers.ManagerInfo.Id("enrich"), List(i, i.modify(_.id).setTo((8: _root_.scala.Long))), List(com.histmersion.api.automation.Managers.EnqueueResult.Skipped("[[x]]: notes")))),
+        .enqueuedNote(EnqueueKind.Enrich, EnqueueResult(com.histmersion.api.automation.Managers.ManagerInfo.Id("enrich"), List(i, i.modify(_.id).setTo(ManagerItem.Id(8))), List(com.histmersion.api.automation.Managers.EnqueueResult.Skipped("[[x]]: notes")))),
       "2 items queued for enrichment; 1 source enriched already"
     )
     assertEquals(
@@ -177,7 +177,7 @@ class ManagersViewSuite extends munit.FunSuite:
     assertEquals(GoalsView.newArea(com.histmersion.api.automation.Goal.Title("x"), com.histmersion.api.automation.Goal.Slug("Not A Slug"), com.histmersion.api.automation.Goal.Notes(""), com.histmersion.web.GoalsView.TagsText(""), com.histmersion.web.GoalsView.NewAreaPlan(true), com.histmersion.web.GoalsView.NewAreaSeed(true)).map(_.slug), Right("Not A Slug"))
     assertEquals(GoalsView.newArea(com.histmersion.api.automation.Goal.Title("x"), com.histmersion.api.automation.Goal.Slug("my-area"), com.histmersion.api.automation.Goal.Notes(""), com.histmersion.web.GoalsView.TagsText(""), com.histmersion.web.GoalsView.NewAreaPlan(false), com.histmersion.web.GoalsView.NewAreaSeed(true)).map(_.slug), Right("my-area"))
     val note = GoalsView.createdNote(a.toOption.get, planned = com.histmersion.web.GoalsView.Planned(true), seeded = Some(com.histmersion.api.automation.Managers.ManagerInfo.Id("seed:bronze-age-tin-where-from")))
-    assert(note.contains("planner is running") && note.contains("created paused"), note)
+    assert(note.value.contains("planner is running") && note.value.contains("created paused"), note.value)
 
   test("hint box: suggest lets the model propose the action (none chosen here); both at once is refused"):
     assertEquals(
@@ -200,8 +200,8 @@ class ManagersViewSuite extends munit.FunSuite:
     assertEquals(GoalsView.newArea(com.histmersion.api.automation.Goal.Title("Zz tin"), com.histmersion.api.automation.Goal.Slug(""), com.histmersion.api.automation.Goal.Notes(""), com.histmersion.web.GoalsView.TagsText(""), com.histmersion.web.GoalsView.NewAreaPlan(false), com.histmersion.web.GoalsView.NewAreaSeed(false)).map(_.watch), Right(None))
     val note = GoalsView.createdNote(on.toOption.get, planned = com.histmersion.web.GoalsView.Planned(false), seeded = None, watched = Some(com.histmersion.api.automation.Managers.ManagerInfo.Id("watch:zz-tin")))
     assert(
-      note.contains("watcher watch:zz-tin created paused") && note.contains("ingests legal open-access finds"),
-      note
+      note.value.contains("watcher watch:zz-tin created paused") && note.value.contains("ingests legal open-access finds"),
+      note.value
     )
     val auto = GoalsView.createdNote(
       on.toOption.get,
@@ -210,25 +210,25 @@ class ManagersViewSuite extends munit.FunSuite:
       watched = Some(com.histmersion.api.automation.Managers.ManagerInfo.Id("watch:zz-tin")),
       active = Set(com.histmersion.api.automation.Managers.ManagerInfo.Id("watch:zz-tin"))
     )
-    assert(auto.contains("watcher watch:zz-tin created active (the autopilot is on)"), auto)
+    assert(auto.value.contains("watcher watch:zz-tin created active (the autopilot is on)"), auto.value)
 
   test("watcher settings: sweeps, auto-ingest and its cap round-trip; a watcher's form leaves out the review settings"):
     val c = ManagersView.config(
-      Map("sweeps" -> "currency, acquisition-sweep", "autoIngest" -> "on", "autoIngestPerDay" -> "2")
+      Map(ManagersView.ConfigKey("sweeps") -> ManagersView.ConfigText("currency, acquisition-sweep"), ManagersView.ConfigKey("autoIngest") -> ManagersView.ConfigText("on"), ManagersView.ConfigKey("autoIngestPerDay") -> ManagersView.ConfigText("2"))
     )
     assertEquals(
       c.map(x => (x.sweeps, x.autoIngest, x.autoIngestPerDay)),
       Right((Some(List("currency", "acquisition")), Some(true), Some(2)))
     )
-    assert(ManagersView.config(Map("sweeps" -> "weekly")).isLeft)
-    assert(ManagersView.config(Map("autoIngest" -> "maybe")).isLeft)
+    assert(ManagersView.config(Map(ManagersView.ConfigKey("sweeps") -> ManagersView.ConfigText("weekly"))).isLeft)
+    assert(ManagersView.config(Map(ManagersView.ConfigKey("autoIngest") -> ManagersView.ConfigText("maybe"))).isLeft)
     assertEquals(
       ManagersView.fields(ManagerConfig(autoIngest = Some(com.histmersion.api.automation.Managers.ManagerConfig.AutoIngest(false)), sweeps = Some(List(com.histmersion.api.automation.Managers.Sweep.Wire("currency")))))(com.histmersion.web.ManagersView.ConfigKey("autoIngest")),
       "off"
     )
     val watch = ManagersView.settingsFor(com.histmersion.api.automation.Manager.Kind.Wire("watch")).map(_._1)
-    assert(watch.contains("autoIngest") && !watch.contains("rounds"), watch)
-    assert(!ManagersView.settingsFor(com.histmersion.api.automation.Manager.Kind.Wire("review")).map(_._1).contains("sweeps"))
+    assert(watch.contains(ManagersView.ConfigKey("autoIngest")) && !watch.contains(ManagersView.ConfigKey("rounds")), watch)
+    assert(!ManagersView.settingsFor(com.histmersion.api.automation.Manager.Kind.Wire("review")).map(_._1).contains(ManagersView.ConfigKey("sweeps")))
     val es = List(
       ManagerEvent(com.histmersion.api.automation.Managers.ManagerEvent.Id(3), com.histmersion.api.automation.Managers.ManagerInfo.Id("watch:t"), kind = com.histmersion.api.automation.Managers.ManagerEvent.Kind("ingested"), text = com.histmersion.api.automation.Managers.ManagerEvent.Text("[[a]] ingested")),
       ManagerEvent(com.histmersion.api.automation.Managers.ManagerEvent.Id(2), com.histmersion.api.automation.Managers.ManagerInfo.Id("watch:t"), kind = com.histmersion.api.automation.Managers.ManagerEvent.Kind("started")),
@@ -237,12 +237,12 @@ class ManagersViewSuite extends munit.FunSuite:
     assertEquals(ManagersView.sweepEvents(es).map(_.id), List(3L, 1L))
 
   test("autopilot settings: auto-approve and extend-min-new round-trip; extend is the review manager's"):
-    val c = ManagersView.config(Map("autoApprove" -> "on", "extendMinNew" -> "3"))
+    val c = ManagersView.config(Map(ManagersView.ConfigKey("autoApprove") -> ManagersView.ConfigText("on"), ManagersView.ConfigKey("extendMinNew") -> ManagersView.ConfigText("3")))
     assertEquals(c.map(x => (x.autoApprove, x.extendMinNew)), Right((Some(true), Some(3))))
-    assert(ManagersView.config(Map("autoApprove" -> "sometimes")).isLeft)
+    assert(ManagersView.config(Map(ManagersView.ConfigKey("autoApprove") -> ManagersView.ConfigText("sometimes"))).isLeft)
     assertEquals(ManagersView.fields(ManagerConfig(autoApprove = Some(com.histmersion.api.automation.Managers.ManagerConfig.AutoApprove(false))))(com.histmersion.web.ManagersView.ConfigKey("autoApprove")), "off")
-    assert(ManagersView.settingsFor(com.histmersion.api.automation.Manager.Kind.Wire("review")).map(_._1).contains("extendMinNew"))
-    assert(!ManagersView.settingsFor(com.histmersion.api.automation.Manager.Kind.Wire("watch")).map(_._1).contains("extendMinNew"))
+    assert(ManagersView.settingsFor(com.histmersion.api.automation.Manager.Kind.Wire("review")).map(_._1).contains(ManagersView.ConfigKey("extendMinNew")))
+    assert(!ManagersView.settingsFor(com.histmersion.api.automation.Manager.Kind.Wire("watch")).map(_._1).contains(ManagersView.ConfigKey("extendMinNew")))
 
   test("autopilot status: a goal's line and the stages count"):
     import com.histmersion.api.automation.Autopilot.GoalProgress
@@ -254,9 +254,9 @@ class ManagersViewSuite extends munit.FunSuite:
         sources = com.histmersion.api.automation.Autopilot.GoalProgress.Sources(3),
         articles = com.histmersion.api.automation.Autopilot.GoalProgress.Articles(1),
         openApprovals = com.histmersion.api.automation.Autopilot.GoalProgress.OpenApprovals(2),
-        doneLast7 = 7,
-        open = 4,
-        etaDays = Some(4)
+        doneLast7 = GoalProgress.DoneLast7(7),
+        open = GoalProgress.Open(4),
+        etaDays = Some(GoalProgress.EtaDays(4))
       ),
       GoalProgress(com.histmersion.api.automation.Autopilot.GoalProgress.Slug("b"), com.histmersion.api.automation.Autopilot.GoalProgress.Title("B"), com.histmersion.api.automation.Autopilot.GoalProgress.Status("planned")),
       GoalProgress(com.histmersion.api.automation.Autopilot.GoalProgress.Slug("c"), com.histmersion.api.automation.Autopilot.GoalProgress.Title("C"), com.histmersion.api.automation.Autopilot.GoalProgress.Status("seeding"))
@@ -270,11 +270,24 @@ class ManagersViewSuite extends munit.FunSuite:
 /** The scheduler panel's pure parts: the queue's filters and facets, and its heading. */
 class SchedulerPanelSuite extends munit.FunSuite:
   import com.histmersion.api.automation.AgentScheduler.*
+  import com.histmersion.api.automation.Goal
+  import com.histmersion.api.jobs.JobKinds
+  import com.histmersion.api.library.Facet
 
-  private def w(id: Long, t: String, code: String, target: String = "", goal: Option[String] = None) =
-    Waiting(id, com.histmersion.api.automation.AgentScheduler.Waiting.Manager("m"), com.histmersion.api.automation.AgentScheduler.Waiting.Kind("k"), t, if target.isEmpty then s"t$id" else target, goal, code = code)
+  private def w(
+      id: Waiting.Item,
+      t: Waiting.JobType,
+      code: Waiting.Code,
+      target: Waiting.Target = Waiting.Target(""),
+      goal: Option[Goal.Slug] = None
+  ) =
+    Waiting(id, Waiting.Manager("m"), Waiting.Kind("k"), t, if target.value.isEmpty then Waiting.Target(s"t${id.value}") else target, goal, code = code)
   private val ws =
-    List(w(1, "review", "capacity", goal = Some("tin")), w(2, "sweep", "pool"), w(3, "review", "blocked", "copper"))
+    List(
+      w(Waiting.Item(1), JobKinds.Wire("review"), Waiting.Code("capacity"), goal = Some(Goal.Slug("tin"))),
+      w(Waiting.Item(2), JobKinds.Wire("sweep"), Waiting.Code("pool")),
+      w(Waiting.Item(3), JobKinds.Wire("review"), Waiting.Code("blocked"), Waiting.Target("copper"))
+    )
 
   test("the queue's filters: any of the types, any of the reasons, the text in the target, goal or manager"):
     assertEquals(ManagersView.visibleWaiting(ws, Nil, Nil, None).map(_.item), List(1L, 2L, 3L))
@@ -283,14 +296,14 @@ class SchedulerPanelSuite extends munit.FunSuite:
     assertEquals(ManagersView.visibleWaiting(ws, Nil, Nil, Some(com.histmersion.api.automation.Activity.Subject(" TIN "))).map(_.item), List(1L))
 
   test("facets count the queue, the most first; the heading says the strategy and the room"):
-    assertEquals(ManagersView.facet(ws, _.jobType), List("review" -> 2, "sweep" -> 1))
+    assertEquals(ManagersView.facet(ws, w => Facet.Value(w.jobType.value)), List("review" -> 2, "sweep" -> 1))
     val s = SchedulerStatus(
       com.histmersion.api.automation.AgentScheduler.SchedulerStatus.Strategy("goal-first"),
       com.histmersion.api.automation.AgentScheduler.SchedulerStatus.StrategyFrom("person"),
       maxRuns = com.histmersion.api.automation.AgentScheduler.SchedulerStatus.MaxRuns(4),
       occupied = com.histmersion.api.automation.AgentScheduler.SchedulerStatus.Occupied(3),
       pools = List(PoolUse(com.histmersion.api.automation.AgentScheduler.PoolUse.Pool("chatgpt-plan"), com.histmersion.api.automation.AgentScheduler.PoolUse.Used(1), com.histmersion.api.automation.AgentScheduler.PoolUse.Cap(2))),
-      forPerson = 2
+      forPerson = SchedulerStatus.ForPerson(2)
     )
     assertEquals(
       ManagersView.schedulerHead(s),

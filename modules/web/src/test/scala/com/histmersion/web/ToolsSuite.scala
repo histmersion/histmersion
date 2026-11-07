@@ -16,6 +16,7 @@ import com.histmersion.api.maintenance.Vacuum
 import com.histmersion.api.automation.Approval
 import com.histmersion.api.automation.Manager
 import com.histmersion.api.automation.Run
+import com.histmersion.api.automation.Queue.QueueItem
 import com.histmersion.api.Api
 import com.histmersion.api.catalogue.Period
 
@@ -107,8 +108,8 @@ class ToolsSuite extends munit.FunSuite:
       UiState.open := List(WindowKey.Jobs)
     )()
     val h = UiState.hashString
-    assert(!h.contains("s3cret") && !h.contains("apiKey"), h)
-    assert(h.contains("jobs=failed"), h)
+    assert(!h.value.contains("s3cret") && !h.value.contains("apiKey"), h)
+    assert(h.value.contains("jobs=failed"), h)
     assertEquals(UiState.store.get("histmersion.ui.apiKey"), Some("""["s3cret"]"""))
     UiState.set(UiState.apiKey := None)()
     UiState.restoreLocal()
@@ -149,7 +150,7 @@ class ToolsSuite extends munit.FunSuite:
     assertEquals(RunsView.originLabel(com.histmersion.api.automation.Agents.Origin.Wire("ingest")), "by an ingest (before the enrich manager)")
     assert(Approval.Kind.values.forall(k => ApprovalsView.kindMeaning(k.wire).nonEmpty))
     assert(ApprovalsView.kindMeaning(com.histmersion.api.automation.Approval.Kind.Wire("article-publish")).exists(_.contains("unblocks its review")))
-    assert(com.histmersion.api.automation.Pipeline.values.forall(p => RunsView.pipelineMeaning(p.wire).nonEmpty))
+    assert(com.histmersion.api.automation.Pipeline.values.forall(p => RunsView.pipelineMeaning(Agents.RunInfo.Pipeline(p.wire.value)).nonEmpty))
   }
 
   test("every value a filter button, chip or menu offers has a meaning on hover") {
@@ -174,7 +175,7 @@ class ToolsSuite extends munit.FunSuite:
     )
     assertEquals(jobKinds.filter(JobsView.kindMeaning(_).isEmpty), Nil)
     assertEquals(JobsView.kindMeaning("something-new"), None)
-    assert(Run.State.values.forall(s => RunsView.stateMeaning(s).nonEmpty))
+    assert(Run.State.values.forall(s => RunsView.stateMeaning(s).value.nonEmpty))
     assert(Agents.Origin.values.forall(o => RunsView.originMeaning(o.wire).nonEmpty))
     assertEquals(RunsView.originLabel(com.histmersion.api.automation.Agents.Origin.Wire("scheduler")), "by a goal's schedule")
     val providers = List(
@@ -185,16 +186,16 @@ class ToolsSuite extends munit.FunSuite:
       ProviderKind.Codex,
       ProviderKind.Opencode
     )
-    assert(providers.forall(p => RunsView.providerMeaning(p.wire).nonEmpty))
+    assert(providers.forall(p => RunsView.providerMeaning(Agents.ProviderDoctor.Provider(p.wire.value)).nonEmpty))
     assertEquals(RunsView.providerMeaning(com.histmersion.api.automation.Agents.ProviderDoctor.Provider("some-plugin")), None)
     assert(ApprovalsView.States.forall(s => ApprovalsView.stateMeaning(s).nonEmpty))
     assert(Approval.State.values.forall(s => ApprovalsView.States.contains(s.wire)))
     assert(ListFilters.DecidedBy.values.forall(d => ApprovalsView.decidedByMeaning(d.wire).nonEmpty))
-    assert(ItemStatus.values.forall(s => ManagersView.itemStatusMeaning(s).nonEmpty))
-    assert(Manager.Kind.values.forall(k => ManagersView.managerMeaning(k.wire).nonEmpty))
-    assert(ManagersView.managerMeaning(Managers.seedId(com.histmersion.api.automation.Goal.Ref("sea-peoples"))).exists(_.contains("sea-peoples")))
+    assert(ItemStatus.values.forall(s => ManagersView.itemStatusMeaning(s).value.nonEmpty))
+    assert(Manager.Kind.values.forall(k => ManagersView.managerMeaning(Managers.ManagerInfo.Id(k.wire.value)).nonEmpty))
+    assert(ManagersView.managerMeaning(Managers.seedId(com.histmersion.api.automation.Goal.Ref("sea-peoples"))).exists(_.value.contains("sea-peoples")))
     assertEquals(ManagersView.managerMeaning(com.histmersion.api.automation.Managers.ManagerInfo.Id("nobody")), None)
-    val jobTypes = List("goal-plan", "propose", "sweep", "currency", "enrich", "compile", "extend", "filter", "review")
+    val jobTypes = List("goal-plan", "propose", "sweep", "currency", "enrich", "compile", "extend", "filter", "review").map(com.histmersion.api.jobs.JobKinds.Wire(_))
     assertEquals(jobTypes.filter(ManagersView.jobTypeMeaning(_).isEmpty), Nil)
     val codes = List(
       "capacity",
@@ -210,7 +211,7 @@ class ToolsSuite extends munit.FunSuite:
       AgentScheduler.Code.Running,
       AgentScheduler.Code.Settled,
       AgentScheduler.Code.Paused
-    )
+    ).map(AgentScheduler.Waiting.Code(_))
     assertEquals(codes.filter(ManagersView.waitMeaning(_).isEmpty), Nil)
     assert(EventTier.all.forall(t => LayerFilters.tierMeaning(t).nonEmpty))
     assert(LayerFilters.tiers.forall(_.hint.nonEmpty))
@@ -250,7 +251,7 @@ class ToolsSuite extends munit.FunSuite:
     assertEquals(UploadView.suggestCitekey(com.histmersion.api.Api.FileName("2019_Olalde.PDF")), Some("olalde"))
     assertEquals(UploadView.suggestCitekey(com.histmersion.api.Api.FileName("Çatalhöyük.pdf")), Some("atalh_y_k"))
     assertEquals(UploadView.suggestCitekey(com.histmersion.api.Api.FileName("1234.pdf")), None)
-    UploadView.suggestCitekey("x" * 300 + ".pdf").foreach(ck => assert(ck.matches(CitekeyShape), ck))
+    UploadView.suggestCitekey(Api.FileName("x" * 300 + ".pdf")).foreach(ck => assert(ck.value.matches(CitekeyShape), ck))
   }
 
   test("the upload form is validated field by field before anything is sent; the citekey only for being given") {
@@ -292,10 +293,10 @@ class ToolsSuite extends munit.FunSuite:
 
   test("an upload refusal lands next to the field it is about") {
     assertEquals(
-      UploadView.fieldOf(ApiFailure(com.histmersion.web.ApiFailure.Status(409), Api.Error(com.histmersion.api.Api.Error.Message("already stored as x"), Some(Ingest.CodeConflict)))),
+      UploadView.fieldOf(ApiFailure(com.histmersion.web.ApiFailure.Status(409), Api.Error(com.histmersion.api.Api.Error.Message("already stored as x"), Some(Api.Error.Code(Ingest.CodeConflict))))),
       UploadView.Field.File
     )
-    assertEquals(UploadView.fieldOf(ApiFailure(com.histmersion.web.ApiFailure.Status(400), Api.Error("invalid citekey 'X'"))), UploadView.Field.Citekey)
+    assertEquals(UploadView.fieldOf(ApiFailure(com.histmersion.web.ApiFailure.Status(400), Api.Error(Api.Error.Message("invalid citekey 'X'")))), UploadView.Field.Citekey)
     assertEquals(UploadView.fieldOf(ApiFailure(com.histmersion.web.ApiFailure.Status(400), Api.Error(com.histmersion.api.Api.Error.Message("upload too large")))), UploadView.Field.Form)
   }
 
@@ -305,7 +306,7 @@ class ToolsSuite extends munit.FunSuite:
     import QueueView.Seg.*
     assertEquals(
       QueueView.segments(
-        "**Anthony 2007**, *The Horse* (doi 10.1515/9781400831104). See [[anthony2007_horse]] or https://x.org/a."
+        com.histmersion.api.UiLabels.Text("**Anthony 2007**, *The Horse* (doi 10.1515/9781400831104). See [[anthony2007_horse]] or https://x.org/a.")
       ),
       List(
         Bold(com.histmersion.web.QueueView.Seg.Bold.S("Anthony 2007")),
@@ -333,21 +334,26 @@ class ToolsSuite extends munit.FunSuite:
   }
 
   test("items are grouped by topic, groups in the order they were first added") {
-    def item(id: Int, t: Option[String]) = Queue.QueueItem(id, com.histmersion.api.automation.Queue.QueueItem.List("acquire"), s"i$id", t, Queue.Open)
+    def item(id: Queue.QueueItem.Id, t: Option[Queue.QueueItem.Topic]) = Queue.QueueItem(id, com.histmersion.api.automation.Queue.QueueItem.List("acquire"), Queue.QueueItem.Text(s"i$id"), t, Queue.QueueItem.Status(Queue.Open))
     val gs = QueueView.groups(
       Queue.Kind.Acquire,
-      List(item(5, Some("b")), item(2, Some("a")), item(9, Some("b")), item(1, Some("b")))
+      List(
+        item(Queue.QueueItem.Id(5), Some(Queue.QueueItem.Topic("b"))),
+        item(Queue.QueueItem.Id(2), Some(Queue.QueueItem.Topic("a"))),
+        item(Queue.QueueItem.Id(9), Some(Queue.QueueItem.Topic("b"))),
+        item(Queue.QueueItem.Id(1), Some(Queue.QueueItem.Topic("b")))
+      )
     )
     assertEquals(gs.map((t, is) => t -> is.map(_.id)), List(Some("b") -> List(1, 5, 9), Some("a") -> List(2)))
   }
 
   private def qi(
-      id: Int,
-      list: String,
-      topic: Option[String],
-      status: String = Queue.Open,
-      createdAt: Option[String] = None
-  ) = Queue.QueueItem(id, list, s"i$id", topic, status, createdAt = createdAt)
+      id: Queue.QueueItem.Id,
+      list: Queue.QueueItem.List,
+      topic: Option[Queue.QueueItem.Topic],
+      status: Queue.QueueItem.Status = Queue.QueueItem.Status(Queue.Open),
+      createdAt: Option[Queue.QueueItem.CreatedAt] = None
+  ) = Queue.QueueItem(id, list, Queue.QueueItem.Text(s"i$id"), topic, status, createdAt = createdAt)
 
   test("the new windows round-trip their wire names and titles read plainly") {
     assertEquals(WindowKey.Tasks.wire, "tasks")
@@ -357,7 +363,7 @@ class ToolsSuite extends munit.FunSuite:
     assertEquals(WindowKey.parse(com.histmersion.web.WindowKey.Wire("logs")), None)
     assertEquals(WindowKey.Tasks.initialTitle, "Backlog")
     assertEquals(WindowKey.Log.initialTitle, "Worklog")
-    List(WindowKey.Acquire, WindowKey.Tasks, WindowKey.Log).foreach(k => assert(!k.initialTitle.contains("_"), k))
+    List(WindowKey.Acquire, WindowKey.Tasks, WindowKey.Log).foreach(k => assert(!k.initialTitle.value.contains("_"), k))
     assertEquals(WindowKey.Tasks.pageHref, None)
     import FieldCodec.given
     assertEquals(
@@ -377,10 +383,10 @@ class ToolsSuite extends munit.FunSuite:
 
   test("the backlog groups by topic like the acquisition queue: groups in first-added order, items by id") {
     val its = List(
-      qi(40, "tasks", Some("Histmersion")),
-      qi(12, "tasks", Some("Corpus hygiene")),
-      qi(7, "tasks", Some("Histmersion"), Queue.Done),
-      qi(30, "tasks", None)
+      qi(QueueItem.Id(40), QueueItem.List("tasks"), Some(QueueItem.Topic("Histmersion"))),
+      qi(QueueItem.Id(12), QueueItem.List("tasks"), Some(QueueItem.Topic("Corpus hygiene"))),
+      qi(QueueItem.Id(7), QueueItem.List("tasks"), Some(QueueItem.Topic("Histmersion")), QueueItem.Status(Queue.Done)),
+      qi(QueueItem.Id(30), QueueItem.List("tasks"), None)
     )
     assertEquals(
       QueueView.groups(Queue.Kind.Tasks, its).map((t, is) => t -> is.map(_.id)),
@@ -390,14 +396,14 @@ class ToolsSuite extends munit.FunSuite:
 
   test("the worklog groups by date, newest date first, entries of a day in file order") {
     val its = List(
-      qi(217, "log", Some("2026-08-28"), createdAt = Some("2026-08-28T08:39:24Z")),
-      qi(597, "log", Some("2026-09-27"), createdAt = Some("2026-09-27T08:09:36Z")),
-      qi(218, "log", Some("2026-08-28"), createdAt = Some("2026-08-28T11:26:04Z")),
-      qi(426, "log", Some("2026-09-26"), createdAt = Some("2026-09-26T22:58:35Z")),
-      qi(90, "log", Some("2026-06-24/25 — a range"), createdAt = Some("2026-06-24T00:00:00Z")),
+      qi(QueueItem.Id(217), QueueItem.List("log"), Some(QueueItem.Topic("2026-08-28")), createdAt = Some(QueueItem.CreatedAt("2026-08-28T08:39:24Z"))),
+      qi(QueueItem.Id(597), QueueItem.List("log"), Some(QueueItem.Topic("2026-09-27")), createdAt = Some(QueueItem.CreatedAt("2026-09-27T08:09:36Z"))),
+      qi(QueueItem.Id(218), QueueItem.List("log"), Some(QueueItem.Topic("2026-08-28")), createdAt = Some(QueueItem.CreatedAt("2026-08-28T11:26:04Z"))),
+      qi(QueueItem.Id(426), QueueItem.List("log"), Some(QueueItem.Topic("2026-09-26")), createdAt = Some(QueueItem.CreatedAt("2026-09-26T22:58:35Z"))),
+      qi(QueueItem.Id(90), QueueItem.List("log"), Some(QueueItem.Topic("2026-06-24/25 — a range")), createdAt = Some(QueueItem.CreatedAt("2026-06-24T00:00:00Z"))),
       // added later but dated earlier: its date decides, not its id
-      qi(700, "log", Some("2026-01-02"), createdAt = Some("2026-09-27T12:00:00Z")),
-      qi(605, "log", Some("2026-09-27"), createdAt = Some("2026-09-27T08:13:11Z"))
+      qi(QueueItem.Id(700), QueueItem.List("log"), Some(QueueItem.Topic("2026-01-02")), createdAt = Some(QueueItem.CreatedAt("2026-09-27T12:00:00Z"))),
+      qi(QueueItem.Id(605), QueueItem.List("log"), Some(QueueItem.Topic("2026-09-27")), createdAt = Some(QueueItem.CreatedAt("2026-09-27T08:13:11Z")))
     )
     assertEquals(
       QueueView.groups(Queue.Kind.Log, its).map((t, is) => t -> is.map(_.id)),
@@ -417,20 +423,20 @@ class ToolsSuite extends munit.FunSuite:
       QueueView.logDate(
         Some(com.histmersion.api.automation.Queue.QueueItem.Topic("Session notes")),
         List(
-          qi(1, "log", None, createdAt = Some("2026-05-01T10:00:00Z")),
-          qi(2, "log", None, createdAt = Some("2026-05-03T10:00:00Z"))
+          qi(QueueItem.Id(1), QueueItem.List("log"), None, createdAt = Some(QueueItem.CreatedAt("2026-05-01T10:00:00Z"))),
+          qi(QueueItem.Id(2), QueueItem.List("log"), None, createdAt = Some(QueueItem.CreatedAt("2026-05-03T10:00:00Z")))
         )
       ),
       "2026-05-03"
     )
-    assertEquals(QueueView.logDate(None, List(qi(3, "log", None))), "")
+    assertEquals(QueueView.logDate(None, List(qi(QueueItem.Id(3), QueueItem.List("log"), None))), "")
     val its = List(
-      qi(1, "log", None),
-      qi(2, "log", Some("Notes"), createdAt = Some("2026-07-01T00:00:00Z")),
-      qi(3, "log", Some("2026-07-02"))
+      qi(QueueItem.Id(1), QueueItem.List("log"), None),
+      qi(QueueItem.Id(2), QueueItem.List("log"), Some(QueueItem.Topic("Notes")), createdAt = Some(QueueItem.CreatedAt("2026-07-01T00:00:00Z"))),
+      qi(QueueItem.Id(3), QueueItem.List("log"), Some(QueueItem.Topic("2026-07-02")))
     )
     assertEquals(QueueView.groups(Queue.Kind.Log, its).map(_._1), List(Some("2026-07-02"), Some("Notes"), None))
-    assertEquals(QueueView.heading(None, QueueView.spec(Queue.Kind.Log).untitled), ("Undated", Nil))
+    assertEquals(QueueView.heading(None, com.histmersion.api.UiLabels.Text(QueueView.spec(Queue.Kind.Log).untitled.value)), ("Undated", Nil))
   }
 
   test("each list's window: checkboxes and a show-done switch for acquire and tasks, neither for the log") {
@@ -440,31 +446,39 @@ class ToolsSuite extends munit.FunSuite:
     assertEquals(acq.showDone, Some(UiState.acquireDone))
     assertEquals(tasks.showDone, Some(UiState.tasksDone))
     assertEquals(log.showDone, None)
-    List(acq, tasks, log).foreach(s => assert(!s.empty.contains("_") && !s.untitled.contains("_"), s.kind))
+    List(acq, tasks, log).foreach(s => assert(!s.empty.value.contains("_") && !s.untitled.value.contains("_"), s.kind))
   }
 
   test("the count line reads per list") {
     val acq = QueueView.spec(Queue.Kind.Acquire); val tasks = QueueView.spec(Queue.Kind.Tasks)
     val log = QueueView.spec(Queue.Kind.Log)
-    val mixed = List(qi(1, "x", None), qi(2, "x", None, Queue.Done), qi(3, "x", None))
+    val mixed = List(
+      qi(QueueItem.Id(1), QueueItem.List("x"), None),
+      qi(QueueItem.Id(2), QueueItem.List("x"), None, QueueItem.Status(Queue.Done)),
+      qi(QueueItem.Id(3), QueueItem.List("x"), None)
+    )
     assertEquals(QueueView.summary(acq, mixed), "2 to get · 1 done")
     assertEquals(QueueView.summary(tasks, mixed), "2 open · 1 done")
     assertEquals(QueueView.summary(tasks, mixed.take(1)), "1 open")
     assertEquals(
       QueueView.summary(
         log,
-        List(qi(1, "log", Some("2026-09-27")), qi(2, "log", Some("2026-09-27")), qi(3, "log", Some("2026-09-26")))
+        List(
+          qi(QueueItem.Id(1), QueueItem.List("log"), Some(QueueItem.Topic("2026-09-27"))),
+          qi(QueueItem.Id(2), QueueItem.List("log"), Some(QueueItem.Topic("2026-09-27"))),
+          qi(QueueItem.Id(3), QueueItem.List("log"), Some(QueueItem.Topic("2026-09-26")))
+        )
       ),
       "3 entries · 2 days"
     )
-    assertEquals(QueueView.summary(log, List(qi(1, "log", Some("2026-09-27")))), "1 entry · 1 day")
+    assertEquals(QueueView.summary(log, List(qi(QueueItem.Id(1), QueueItem.List("log"), Some(QueueItem.Topic("2026-09-27"))))), "1 entry · 1 day")
   }
 
   test("the backlog's show-done switch lives in the URL, separately from the acquisition queue's") {
     UiState.set(UiState.tasksDone := true)()
     val h = UiState.hashString
-    assert(h.contains("tasksDone=true"), h)
-    assert(!h.contains("acqDone"), h)
+    assert(h.value.contains("tasksDone=true"), h)
+    assert(!h.value.contains("acqDone"), h)
     UiState.loadHash(com.histmersion.web.UiState.UrlHash(""))
     assertEquals(UiState.tasksDone.now(), false)
     UiState.loadHash(h)
@@ -494,7 +508,7 @@ class ToolsSuite extends munit.FunSuite:
   }
 
   test("an edit sends only what changed; a blank topic clears it; blank text is refused") {
-    val item = qi(3, "tasks", Some("Chores")).modify(_.text).setTo("tidy up")
+    val item = qi(QueueItem.Id(3), QueueItem.List("tasks"), Some(QueueItem.Topic("Chores"))).modify(_.text).setTo(QueueItem.Text("tidy up"))
     assertEquals(QueueView.editPatch(item, com.histmersion.api.automation.Queue.QueueItem.Text("tidy up"), com.histmersion.api.automation.Queue.QueueItem.Topic("Chores")), Right(None))
     assertEquals(QueueView.editPatch(item, com.histmersion.api.automation.Queue.QueueItem.Text(" tidy up \n"), com.histmersion.api.automation.Queue.QueueItem.Topic(" Chores ")), Right(None))
     assertEquals(
@@ -509,11 +523,11 @@ class ToolsSuite extends munit.FunSuite:
 
   test("topic suggestions: the list's own topics, first-used first, matching what is typed") {
     val its = List(
-      qi(9, "acquire", Some("linear_b")),
-      qi(2, "acquire", Some("**Highest value** > greek_god_origins")),
-      qi(5, "acquire", Some("bronze_age_collapse")),
-      qi(7, "acquire", Some("linear_b")),
-      qi(8, "acquire", None)
+      qi(QueueItem.Id(9), QueueItem.List("acquire"), Some(QueueItem.Topic("linear_b"))),
+      qi(QueueItem.Id(2), QueueItem.List("acquire"), Some(QueueItem.Topic("**Highest value** > greek_god_origins"))),
+      qi(QueueItem.Id(5), QueueItem.List("acquire"), Some(QueueItem.Topic("bronze_age_collapse"))),
+      qi(QueueItem.Id(7), QueueItem.List("acquire"), Some(QueueItem.Topic("linear_b"))),
+      qi(QueueItem.Id(8), QueueItem.List("acquire"), None)
     )
     assertEquals(
       QueueView.topicSuggestions(its, com.histmersion.api.Api.Search.Text("")),
@@ -531,17 +545,17 @@ class ToolsSuite extends munit.FunSuite:
 
   test("Link existing source… ticks the item off with the core rule, addressed to the item") {
     // the rule itself (reason kept, no duplicate tag) is tested in core's QueueSuite
-    val item = qi(567, "acquire", Some("mesopotamian_religion"))
+    val item = qi(QueueItem.Id(567), QueueItem.List("acquire"), Some(QueueItem.Topic("mesopotamian_religion")))
     assertEquals(
       QueueView.fulfil(item, com.histmersion.web.Preview.Target.Source.Citekey("lambert2013_babylonian")),
-      567 -> Queue.QueuePatch(status = Some(Queue.Done), reason = Some("ingested as [[lambert2013_babylonian]]"))
+      QueueItem.Id(567) -> Queue.QueuePatch(status = Some(QueueItem.Status(Queue.Done)), reason = Some(QueueItem.Reason("ingested as [[lambert2013_babylonian]]")))
     )
     // the reason renders the citekey as a source link
-    assert(QueueView.segments(Queue.fulfilledReason(None, com.histmersion.api.library.Citekey("a2020_b"))).contains(QueueView.Seg.Cite("a2020_b")))
+    assert(QueueView.segments(com.histmersion.api.UiLabels.Text(Queue.fulfilledReason(None, com.histmersion.api.library.Citekey("a2020_b")).value)).contains(QueueView.Seg.Cite(QueueView.Seg.Cite.Citekey("a2020_b"))))
   }
 
   test("an upload started from an item names it as acquireItem; a plain upload names none") {
-    val item = qi(515, "acquire", Some("linear_b"))
+    val item = qi(QueueItem.Id(515), QueueItem.List("acquire"), Some(QueueItem.Topic("linear_b")))
     val d = UploadView.Draft(fileName = Some(com.histmersion.api.Api.FileName("a.pdf")), citekey = com.histmersion.web.UploadView.Draft.Citekey("killen2024_new"), year = com.histmersion.web.UploadView.Draft.Year("2024"))
     assertEquals(UploadView.validate(d.modify(_.forItem).setTo(Some(item))).map(_.acquireItem), Right(Some(515)))
     assertEquals(UploadView.validate(d).map(_.acquireItem), Right(None))
@@ -553,43 +567,43 @@ class ToolsSuite extends munit.FunSuite:
   }
 
   test("a finished job that ticks an item off is noticed once; other jobs are not") {
-    def job(id: String, st: JobState, item: Option[Int]) =
+    def job(id: String, st: JobState, item: Option[QueueItem.Id]) =
       JobInfo(com.histmersion.api.SpatialHierarchyResult.Job.Id(id), com.histmersion.api.jobs.JobKinds.Wire("ingest"), st.wire, (Some("ck")).map(com.histmersion.api.library.Citekey.apply), acquireItem = item)
-    val running = List(job("a", JobState.Running, Some(7)), job("b", JobState.Running, None))
-    assert(JobsView.ticksOff(running, List(job("a", JobState.Done, Some(7)), running(1))))
+    val running = List(job("a", JobState.Running, Some(QueueItem.Id(7))), job("b", JobState.Running, None))
+    assert(JobsView.ticksOff(running, List(job("a", JobState.Done, Some(QueueItem.Id(7))), running(1))))
     assert(!JobsView.ticksOff(running, List(running(0), job("b", JobState.Done, None))), "no item, nothing to reload")
     assert(
-      !JobsView.ticksOff(running, List(job("a", JobState.Failed, Some(7)), running(1))),
+      !JobsView.ticksOff(running, List(job("a", JobState.Failed, Some(QueueItem.Id(7))), running(1))),
       "a failed job ticks nothing"
     )
-    val done = List(job("a", JobState.Done, Some(7)))
+    val done = List(job("a", JobState.Done, Some(QueueItem.Id(7))))
     assert(!JobsView.ticksOff(done, done), "already seen done")
   }
 
   // the texts are real items of the acquisition queue (their ids in `histmersion queue acquire`)
-  private val Killen = "John T. Killen (ed.), The New Documents in Mycenaean Greek (Cambridge UP, 2024; " +
+  private val Killen = QueueItem.Text("John T. Killen (ed.), The New Documents in Mycenaean Greek (Cambridge UP, 2024; " +
     "10.1017/9781139029049, chapters on writing system, language, society, economy, Mycenaean religion, Mycenaean " +
     "and Classical Greek religion) — the modern replacement for Ventris & Chadwick's Documents; the synthesis that " +
-    "should replace ventris1953_evidence / webster1955_tablets citations flagged in #427"
-  private val Lambert = "Lambert, W.G., Babylonian Creation Myths (Eisenbrauns, 2013; 10.1515/9781575068619) — the " +
+    "should replace ventris1953_evidence / webster1955_tablets citations flagged in #427")
+  private val Lambert = QueueItem.Text("Lambert, W.G., Babylonian Creation Myths (Eisenbrauns, 2013; 10.1515/9781575068619) — the " +
     "critical edition/study of Enuma Elish and other cosmogonies (63 cites); creation_cosmogony and succession_myth " +
-    "rely on Enuma Elish with no edition in the corpus"
-  private val Finkelberg = "Finkelberg, M. 2000. 'The Cypria, the Iliad, and the Problem of Multiformity in Oral " +
-    "and Written Tradition', Classical Philology 95: 1-11"
-  private val Becks = "Ralf Becks, Troia VI und VII. Stratigraphie, Architektur, Befunde (final publication of the " +
+    "rely on Enuma Elish with no edition in the corpus")
+  private val Finkelberg = QueueItem.Text("Finkelberg, M. 2000. 'The Cypria, the Iliad, and the Problem of Multiformity in Oral " +
+    "and Written Tradition', Classical Philology 95: 1-11")
+  private val Becks = QueueItem.Text("Ralf Becks, Troia VI und VII. Stratigraphie, Architektur, Befunde (final publication of the " +
     "Troy VI/VII levels; known here only from Franković's Gnomon review 2025, 10.17104/0017-1417-2025-2-378 — get " +
-    "full bibliographic details from the review) — addresses trojan_war open question 'Troy VIh vs VIIa'"
-  private val Beckman = "Beckman, Bryce & Cline, The Ahhiyawa Texts (2025 edition; JSTOR 10.2307/jj.25577267) — new " +
+    "full bibliographic details from the review) — addresses trojan_war open question 'Troy VIh vs VIIa'")
+  private val Beckman = QueueItem.Text("Beckman, Bryce & Cline, The Ahhiyawa Texts (2025 edition; JSTOR 10.2307/jj.25577267) — new " +
     "edition of beckman2011_ahhiyawa (corpus 'foundational'); check what it updates before citing the 2011 " +
-    "translations in hittite_anatolia, trojan_war, achilles_origins"
-  private val Kristiansen = "Kristiansen, Kroonen & Willerslev (eds.), The Indo-European Puzzle Revisited: " +
+    "translations in hittite_anatolia, trojan_war, achilles_origins")
+  private val Kristiansen = QueueItem.Text("Kristiansen, Kroonen & Willerslev (eds.), The Indo-European Puzzle Revisited: " +
     "Integrating Archaeology, Genetics, and Linguistics (Cambridge UP, 2023; 10.1017/9781009261753; discover found " +
     "no OA copy — check CUP open access first) — the 2023 steppe-synthesis volume (Lubotsky on wagon terms & " +
-    "Indo-Iranian split, Olander on metals, Pronk on kinship/marriage, Olsen on wool)"
-  private val AyaliDarshan = "Ayali-Darshan & Darshan, Philo of Byblos' Version of the Storm God's Combat Against " +
-    "the Sea (Journal of Near Eastern Studies, 2025; 10.1086/736959) — cites guterbock1948_kumarbi; new 2025 work"
-  private val Bailey = "Bailey, D., Prehistoric Figurines: Representation and Corporeality in the Neolithic " +
-    "(Routledge, 2005; 10.4324/9780203392454) — the leading post-goddess theory of figurines (120 cites)"
+    "Indo-Iranian split, Olander on metals, Pronk on kinship/marriage, Olsen on wool)")
+  private val AyaliDarshan = QueueItem.Text("Ayali-Darshan & Darshan, Philo of Byblos' Version of the Storm God's Combat Against " +
+    "the Sea (Journal of Near Eastern Studies, 2025; 10.1086/736959) — cites guterbock1948_kumarbi; new 2025 work")
+  private val Bailey = QueueItem.Text("Bailey, D., Prehistoric Figurines: Representation and Corporeality in the Neolithic " +
+    "(Routledge, 2005; 10.4324/9780203392454) — the leading post-goddess theory of figurines (120 cites)")
 
   test("an acquisition item's reference is read from its text: authors, title, year, DOI") {
     import QueueItemRef.{Ref, parse}
@@ -610,7 +624,7 @@ class ToolsSuite extends munit.FunSuite:
       parse(Finkelberg),
       Ref(
         List(com.histmersion.web.QueueItemRef.Ref.Authors("M. Finkelberg")),
-        Some("The Cypria, the Iliad, and the Problem of Multiformity in Oral and Written Tradition"),
+        Some(Ref.Title("The Cypria, the Iliad, and the Problem of Multiformity in Oral and Written Tradition")),
         Some(com.histmersion.web.QueueItemRef.Ref.Year(2000)),
         None
       )
@@ -623,7 +637,7 @@ class ToolsSuite extends munit.FunSuite:
       parse(Kristiansen),
       Ref(
         List(com.histmersion.web.QueueItemRef.Ref.Authors("Kristiansen"), com.histmersion.web.QueueItemRef.Ref.Authors("Kroonen"), com.histmersion.web.QueueItemRef.Ref.Authors("Willerslev")),
-        Some("The Indo-European Puzzle Revisited: Integrating Archaeology, Genetics, and Linguistics"),
+        Some(Ref.Title("The Indo-European Puzzle Revisited: Integrating Archaeology, Genetics, and Linguistics")),
         Some(com.histmersion.web.QueueItemRef.Ref.Year(2023)),
         Some(com.histmersion.web.QueueItemRef.Ref.Doi("10.1017/9781009261753"))
       )
@@ -632,7 +646,7 @@ class ToolsSuite extends munit.FunSuite:
       parse(AyaliDarshan),
       Ref(
         List(com.histmersion.web.QueueItemRef.Ref.Authors("Ayali-Darshan"), com.histmersion.web.QueueItemRef.Ref.Authors("Darshan")),
-        Some("Philo of Byblos' Version of the Storm God's Combat Against the Sea"),
+        Some(Ref.Title("Philo of Byblos' Version of the Storm God's Combat Against the Sea")),
         Some(com.histmersion.web.QueueItemRef.Ref.Year(2025)),
         Some(com.histmersion.web.QueueItemRef.Ref.Doi("10.1086/736959"))
       )
@@ -663,25 +677,25 @@ class ToolsSuite extends munit.FunSuite:
     )
     assertEquals(QueueItemRef.parse(com.histmersion.api.automation.Queue.QueueItem.Text("")), QueueItemRef.Ref(Nil, None, None, None))
     // only the first line is the reference
-    assertEquals(QueueItemRef.parse(Lambert + "\n  (2019 reprint; 10.1/x)").doi, Some("10.1515/9781575068619"))
+    assertEquals(QueueItemRef.parse(QueueItem.Text(Lambert.value + "\n  (2019 reprint; 10.1/x)")).doi, Some("10.1515/9781575068619"))
   }
 
   test("the citekey suggested for an item follows the corpus's surnameYEAR_word shape and is always valid") {
-    def ck(t: String) = QueueItemRef.citekey(QueueItemRef.parse(t))
+    def ck(t: QueueItem.Text) = QueueItemRef.citekey(QueueItemRef.parse(t))
     assertEquals(ck(Lambert), Some("lambert2013_babylonian"))
     assertEquals(ck(Finkelberg), Some("finkelberg2000_cypria"))
     assertEquals(ck(Killen), Some("killen2024_new"))
     assertEquals(ck(Becks), Some("becks_troia"))
     assertEquals(ck(AyaliDarshan), Some("ayali_darshan2025_philo"))
     assertEquals(ck(Bailey), Some("bailey2005_prehistoric"))
-    assertEquals(ck(""), None)
+    assertEquals(ck(QueueItem.Text("")), None)
     List(Killen, Lambert, Finkelberg, Becks, Beckman, Kristiansen, AyaliDarshan, Bailey)
       .flatMap(ck)
-      .foreach(k => assert(k.matches(CitekeyShape), k))
+      .foreach(k => assert(k.value.matches(CitekeyShape), k))
   }
 
   test("Upload… fills the form from the item and links the upload to it") {
-    val item = Queue.QueueItem(com.histmersion.api.automation.Queue.QueueItem.Id(567), com.histmersion.api.automation.Queue.QueueItem.List("acquire"), Lambert, Some(com.histmersion.api.automation.Queue.QueueItem.Topic("mesopotamian_religion")), Queue.Open)
+    val item = Queue.QueueItem(com.histmersion.api.automation.Queue.QueueItem.Id(567), com.histmersion.api.automation.Queue.QueueItem.List("acquire"), Lambert, Some(com.histmersion.api.automation.Queue.QueueItem.Topic("mesopotamian_religion")), QueueItem.Status(Queue.Open))
     assertEquals(
       QueueItemRef.uploadDraft(item),
       UploadView.Draft(
@@ -693,7 +707,7 @@ class ToolsSuite extends munit.FunSuite:
         forItem = Some(item)
       )
     )
-    val becks = QueueItemRef.uploadDraft(item.modify(_.id).setTo(528).modify(_.text).setTo(Becks))
+    val becks = QueueItemRef.uploadDraft(item.modify(_.id).setTo(QueueItem.Id(528)).modify(_.text).setTo(Becks))
     assertEquals((becks.year, becks.doi, becks.citekey), ("", "", "becks_troia"))
     // a filled-in form still needs its file, and nothing else
     assertEquals(
@@ -703,8 +717,8 @@ class ToolsSuite extends munit.FunSuite:
   }
 
   test("picking an item in the upload form fills only what the reader has not typed, and keeps the file") {
-    val lambert = Queue.QueueItem(com.histmersion.api.automation.Queue.QueueItem.Id(567), com.histmersion.api.automation.Queue.QueueItem.List("acquire"), Lambert, Some(com.histmersion.api.automation.Queue.QueueItem.Topic("mesopotamian_religion")), Queue.Open)
-    val becks = Queue.QueueItem(com.histmersion.api.automation.Queue.QueueItem.Id(528), com.histmersion.api.automation.Queue.QueueItem.List("acquire"), Becks, None, Queue.Open)
+    val lambert = Queue.QueueItem(com.histmersion.api.automation.Queue.QueueItem.Id(567), com.histmersion.api.automation.Queue.QueueItem.List("acquire"), Lambert, Some(com.histmersion.api.automation.Queue.QueueItem.Topic("mesopotamian_religion")), QueueItem.Status(Queue.Open))
+    val becks = Queue.QueueItem(com.histmersion.api.automation.Queue.QueueItem.Id(528), com.histmersion.api.automation.Queue.QueueItem.List("acquire"), Becks, None, QueueItem.Status(Queue.Open))
     // a file dropped first, with the citekey suggested from its name and a title typed
     val typed = UploadView.Draft(fileName = Some(com.histmersion.api.Api.FileName("scan.pdf")), citekey = com.histmersion.web.UploadView.Draft.Citekey("my_own_key"), title = com.histmersion.web.UploadView.Draft.Title("My title"))
     val d1 = UploadView.withItem(typed, lambert)
@@ -727,21 +741,21 @@ class ToolsSuite extends munit.FunSuite:
 
   test("the picker names an item by its id, and only an item it offers") {
     val items = List(
-      Queue.QueueItem(com.histmersion.api.automation.Queue.QueueItem.Id(567), com.histmersion.api.automation.Queue.QueueItem.List("acquire"), Lambert, None, Queue.Open),
-      Queue.QueueItem(com.histmersion.api.automation.Queue.QueueItem.Id(9), com.histmersion.api.automation.Queue.QueueItem.List("acquire"), com.histmersion.api.automation.Queue.QueueItem.Text("**A**, B"), None, Queue.Open)
+      Queue.QueueItem(com.histmersion.api.automation.Queue.QueueItem.Id(567), com.histmersion.api.automation.Queue.QueueItem.List("acquire"), Lambert, None, QueueItem.Status(Queue.Open)),
+      Queue.QueueItem(com.histmersion.api.automation.Queue.QueueItem.Id(9), com.histmersion.api.automation.Queue.QueueItem.List("acquire"), com.histmersion.api.automation.Queue.QueueItem.Text("**A**, B"), None, QueueItem.Status(Queue.Open))
     )
     val label = UploadView.itemLabel(items.head)
-    assert(label.startsWith("#567 Lambert, W.G., Babylonian Creation Myths"), label)
-    assert(label.length <= 115 && label.endsWith("…"), label)
+    assert(label.value.startsWith("#567 Lambert, W.G., Babylonian Creation Myths"), label)
+    assert(label.value.length <= 115 && label.value.endsWith("…"), label)
     assertEquals(UploadView.itemLabel(items(1)), "#9 A, B")
-    assertEquals(UploadView.pickedItem(label, items), Some(items.head))
+    assertEquals(UploadView.pickedItem(label.value, items), Some(items.head))
     assertEquals(UploadView.pickedItem("#9", items), Some(items(1)))
     assertEquals(UploadView.pickedItem("#95 x", items), None)
     assertEquals(UploadView.pickedItem("Lambert", items), None)
   }
 
   test("Link existing source… starts the corpus search from the item's title") {
-    def q(t: String) = QueueItemRef.searchQuery(Queue.QueueItem(com.histmersion.api.automation.Queue.QueueItem.Id(1), com.histmersion.api.automation.Queue.QueueItem.List("acquire"), t, None, Queue.Open))
+    def q(t: QueueItem.Text) = QueueItemRef.searchQuery(Queue.QueueItem(com.histmersion.api.automation.Queue.QueueItem.Id(1), com.histmersion.api.automation.Queue.QueueItem.List("acquire"), t, None, QueueItem.Status(Queue.Open)))
     assertEquals(q(Lambert), "Babylonian Creation Myths")
     assertEquals(q(Bailey), "Prehistoric Figurines")
     assertEquals(q(Becks), "Troia VI und VII")
@@ -751,12 +765,12 @@ class ToolsSuite extends munit.FunSuite:
   test("bare corpus identifiers in item text become Ident segments; DOIs and URLs keep precedence") {
     import QueueView.Seg
     val segs =
-      QueueView.segments("cited by cline2014_year, see https://x.org/a_b and 10.1000/a_b. For achilles_origins.")
-    assert(segs.contains(Seg.Ident("cline2014_year")), segs.toString)
-    assert(segs.contains(Seg.Ident("achilles_origins")), segs.toString)
-    assert(segs.contains(Seg.Url("https://x.org/a_b")), segs.toString)
-    assert(segs.contains(Seg.Doi("10.1000/a_b")), segs.toString)
-    assert(!segs.exists { case Seg.Ident(i) => i == "a_b"; case _ => false }, segs.toString)
+      QueueView.segments(com.histmersion.api.UiLabels.Text("cited by cline2014_year, see https://x.org/a_b and 10.1000/a_b. For achilles_origins."))
+    assert(segs.contains(Seg.Ident(Seg.Ident.Id("cline2014_year"))), segs.toString)
+    assert(segs.contains(Seg.Ident(Seg.Ident.Id("achilles_origins"))), segs.toString)
+    assert(segs.contains(Seg.Url(Seg.Url.Value("https://x.org/a_b"))), segs.toString)
+    assert(segs.contains(Seg.Doi(Seg.Doi.Value("10.1000/a_b"))), segs.toString)
+    assert(!segs.exists { case Seg.Ident(i) => i.value == "a_b"; case _ => false }, segs.toString)
   }
 
   test("a link to a list item names it in the address; the list marks and scrolls to it"):

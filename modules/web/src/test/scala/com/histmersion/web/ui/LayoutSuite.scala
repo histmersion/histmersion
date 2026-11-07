@@ -19,13 +19,13 @@ class LayoutSuite extends munit.FunSuite:
     assert(Layout.detailBase.value < Layout.detailHeight.value)
 
   test("Layout.maxBuckets is positive"):
-    assert(Layout.maxBuckets > 0)
+    assert(Layout.maxBuckets.value > 0)
 
   test("Layout.minSpan is positive"):
-    assert(Layout.minSpan > 0)
+    assert(Layout.minSpan.value > 0)
 
   test("Layout.handleWidth is positive"):
-    assert(Layout.handleWidth > 0)
+    assert(Layout.handleWidth.value > 0)
 
   test("Layout.markerRadiusDefault is positive"):
-    assert(Layout.markerRadiusDefault > 0)
+    assert(Layout.markerRadiusDefault.value > 0)

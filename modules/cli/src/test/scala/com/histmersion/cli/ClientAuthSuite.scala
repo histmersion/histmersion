@@ -10,10 +10,10 @@ import java.nio.file.Files
   */
 class ClientAuthSuite extends munit.FunSuite:
 
-  private val key = "s3cret"
+  private val key = Client.Token("s3cret")
 
   /** Serves `/api/backups/<file>` and `/api/sources/<ck>/original`, both only to `Bearer s3cret`. */
-  private def withServer[A](body: String => A): A =
+  private def withServer[A](body: Client.ServerUrl => A): A =
     val srv = HttpServer.create(new InetSocketAddress("127.0.0.1", 0), 0)
     srv.createContext(
       "/",
@@ -34,14 +34,14 @@ class ClientAuthSuite extends munit.FunSuite:
         ex.close()
     )
     srv.start()
-    try body(s"http://127.0.0.1:${srv.getAddress.getPort}")
+    try body(Client.ServerUrl(s"http://127.0.0.1:${srv.getAddress.getPort}"))
     finally srv.stop(0)
 
   test("downloadBackup sends the bearer token"):
     withServer { url =>
       val dest = Files.createTempFile("zz-backup", ".dump").toFile
       try
-        val got = Client(url, Some(key)).downloadBackup("histmersion-20260101T000000Z.dump", dest)
+        val got = Client(url, Some(key)).downloadBackup(com.histmersion.api.backup.Backup.Name("histmersion-20260101T000000Z.dump"), dest)
         assert(got.isRight, got.toString)
         assertEquals(Files.readString(dest.toPath), "DUMP")
       finally dest.delete()
@@ -51,7 +51,7 @@ class ClientAuthSuite extends munit.FunSuite:
     withServer { url =>
       val dest = Files.createTempFile("zz-original", ".bin").toFile
       try
-        val got = Client(url, Some(key)).original("zz_ck", dest)
+        val got = Client(url, Some(key)).original(com.histmersion.api.library.Citekey("zz_ck"), dest)
         assert(got.isRight, got.toString)
         assertEquals(Files.readString(dest.toPath), "%PDF")
       finally dest.delete()
@@ -61,7 +61,7 @@ class ClientAuthSuite extends munit.FunSuite:
     withServer { url =>
       val dest = Files.createTempFile("zz-backup", ".dump").toFile
       try
-        val got = Client(url).downloadBackup("x.dump", dest)
-        assert(got.left.exists(_.message.contains("API key")), got.toString)
+        val got = Client(url).downloadBackup(com.histmersion.api.backup.Backup.Name("x.dump"), dest)
+        assert(got.left.exists(_.message.value.contains("API key")), got.toString)
       finally dest.delete()
     }

@@ -29,7 +29,7 @@ class BundleCmdSuite extends munit.FunSuite:
 
   test("the manifest of a bundle on disk is its first entry; anything else is refused"):
     val m = Bundle.Manifest(
-      Bundle.Format,
+      Bundle.Manifest.Format(Bundle.Format),
       com.histmersion.api.exchange.Bundle.Manifest.FormatVersion(1),
       com.histmersion.api.exchange.Bundle.Manifest.SchemaVersion("33"),
       UUID.randomUUID(),
@@ -44,7 +44,7 @@ class BundleCmdSuite extends munit.FunSuite:
     val out = Files.newOutputStream(f)
     try
       val w = BundleTar.Writer(out)
-      val _ = w.bytes(Bundle.ManifestPath, BundleFormat.manifestBytes(m))
+      val _ = w.bytes(BundleTar.Entry.Name(Bundle.ManifestPath),BundleFormat.manifestBytes(m))
       w.finish()
     finally out.close()
     assertEquals(BundleCmd.manifestOf(f), Right(m))

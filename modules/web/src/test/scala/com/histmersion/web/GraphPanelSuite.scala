@@ -1,7 +1,5 @@
 package com.histmersion.web
 
-import com.histmersion.testsupport.ComparedByValue.given
-
 import hearth.kindlings.optics.syntax.*
 
 import com.histmersion.api.library.{GraphLink, GraphNode}
@@ -22,11 +20,11 @@ class GraphPanelSuite extends munit.FunSuite:
   )
 
   test("every link between the graph's nodes is drawn, as index pairs") {
-    assertEquals(GraphPanel.indexLinks(g), List((0, 1, "references"), (2, 0, "superseded_by")))
+    assertEquals(GraphPanel.indexLinks(g).map((s, t, k) => (s, t, Edge.Kind.wireOf(k).value)), List((0, 1, "references"), (2, 0, "superseded_by")))
   }
 
   test("a link to a node the graph does not carry is dropped, not drawn to nowhere") {
-    val broken = g.modify(_.links).setTo(g.links :+ GraphLink("a2020_x", "bronze_age_collapse", "references"))
+    val broken = g.modify(_.links).setTo(g.links :+ GraphLink(com.histmersion.api.library.Citekey("a2020_x"), com.histmersion.api.library.Citekey("bronze_age_collapse"), Edge.Kind.References))
     assertEquals(GraphPanel.indexLinks(broken).size, 2)
   }
 

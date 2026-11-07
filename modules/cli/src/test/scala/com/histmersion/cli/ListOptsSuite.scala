@@ -1,7 +1,5 @@
 package com.histmersion.cli
 
-import com.histmersion.testsupport.ComparedByValue.given
-
 import com.histmersion.api.automation.ListFilters.{ApprovalFilter, JobFilter, RunFilter}
 import com.monovore.decline.Command
 
@@ -46,7 +44,7 @@ class ListOptsSuite extends munit.FunSuite:
     // the server reads the comma-separated and repeated values as one list
     assertEquals(
       parse(ListOpts.approvals, "--kind", "goal-plan,edge").map(_.normalized.kind),
-      Right(List("goal-plan", "edge"))
+      Right(List(com.histmersion.api.automation.Approval.Kind.Wire("goal-plan"), com.histmersion.api.automation.Approval.Kind.Wire("edge")))
     )
 
   test("runs: every filter, and the dates as typed (the server reads them)"):

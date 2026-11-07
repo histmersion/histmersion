@@ -1,7 +1,5 @@
 package com.histmersion.cli
 
-import com.histmersion.testsupport.ComparedByValue.given
-
 import hearth.kindlings.optics.syntax.*
 
 import com.histmersion.api.Paging
@@ -34,6 +32,6 @@ class PageCmdSuite extends munit.FunSuite:
     val more = Paging.Page(com.histmersion.api.Paging.Page.Total(40), Some(com.histmersion.api.Paging.Cursor("j20")), Nil)
     assertEquals(
       PageCmd.older(more, "jobs", List("limit" -> Some("20"))),
-      Some("Older: `histmersion jobs --limit 20 --before j20`")
+      Some(Paging.OlderLine.Text("Older: `histmersion jobs --limit 20 --before j20`"))
     )
     assertEquals(PageCmd.older(more.modify(_.next).setTo(None), "jobs", Nil), None)

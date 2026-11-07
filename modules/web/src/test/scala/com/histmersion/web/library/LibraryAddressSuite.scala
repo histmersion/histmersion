@@ -7,7 +7,7 @@ import com.histmersion.web.LibrarySection
 class LibraryAddressSuite extends munit.FunSuite:
 
   test("the chosen item reads back from its query, encoded or not"):
-    List("cline2014_year", "a b/c?d&e=f", "ζeus").foreach { k =>
+    List("cline2014_year", "a b/c?d&e=f", "ζeus").map(com.histmersion.api.personal.ItemKey(_)).foreach { k =>
       assertEquals(LibraryAddress.item(LibraryAddress.search(Some(k))), Some(k), k)
     }
 

@@ -28,8 +28,8 @@ class NoMapSuite extends munit.FunSuite:
     val (head, body) = NoMap.message(com.histmersion.web.map.NoMapSurface.Why("this browser draws WebGL 1 only, not WebGL 2"))
     assertEquals(head, "The map cannot be drawn here: this browser draws WebGL 1 only, not WebGL 2.")
     assert(
-      body.contains("online ones and the local ones") && body.contains("hardware") && body.contains(
+      body.value.contains("online ones and the local ones") && body.value.contains("hardware") && body.value.contains(
         "work without the map"
       )
     )
-    assert(NoMap.html(com.histmersion.web.map.NoMapSurface.Why("the map engine did not start (<b>x</b>)")).contains("(&lt;b&gt;x&lt;/b&gt;)"))
+    assert(NoMap.html(com.histmersion.web.map.NoMapSurface.Why("the map engine did not start (<b>x</b>)")).value.contains("(&lt;b&gt;x&lt;/b&gt;)"))

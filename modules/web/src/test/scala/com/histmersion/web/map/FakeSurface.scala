@@ -1,7 +1,5 @@
 package com.histmersion.web.map
 
-import com.histmersion.testsupport.ComparedByValue.given
-
 import hearth.kindlings.optics.syntax.*
 
 import org.scalajs.dom
@@ -12,47 +10,47 @@ import scala.collection.mutable
   * kept as data, its base maps recorded. The test double of the map engine — the view-model's logic (clustering, what
   * is drawn, base-map decisions) runs on it without a browser.
   */
-final class FakeSurface(w: Double = 1000, h: Double = 600, caps: Capabilities = Capabilities(com.histmersion.web.map.Capabilities.Webgl(true), com.histmersion.web.map.Capabilities.Software(false), com.histmersion.web.map.Capabilities.Renderer("fake")))
+final class FakeSurface(w: MapSurface.Dimension = MapSurface.Dimension(1000), h: MapSurface.Dimension = MapSurface.Dimension(600), caps: Capabilities = Capabilities(com.histmersion.web.map.Capabilities.Webgl(true), com.histmersion.web.map.Capabilities.Software(false), com.histmersion.web.map.Capabilities.Renderer("fake")))
     extends MapSurface:
   // `var`s: the view, as a map holds it
   private var c = LatLon(com.histmersion.web.map.LatLon.Lat(37), com.histmersion.web.map.LatLon.Lon(30))
-  private var z = 5.0
-  private var zmax = 18.0
+  private var z = MapSurface.Zoom(5.0)
+  private var zmax = MapSurface.MaxZoom(18.0)
   val baseMaps: mutable.ListBuffer[BaseMapSpec] = mutable.ListBuffer.empty
   val sets: mutable.LinkedHashMap[String, FakeShapes] = mutable.LinkedHashMap.empty
   private val handlers = mutable.HashMap.empty[MapEventKind, mutable.ListBuffer[MapEvent => Unit]]
 
-  private def world(p: LatLon): (Double, Double) = Clustering.world(p.lat, p.lon, z)
+  private def world(p: LatLon): (Double, Double) = Clustering.world(p.lat, p.lon, z.value)
 
-  def zoom: Double = z
-  def maxZoom: Double = zmax
-  def setMaxZoom(m: Double): Unit = zmax = m
+  def zoom: MapSurface.Zoom = z
+  def maxZoom: MapSurface.MaxZoom = zmax
+  def setMaxZoom(m: MapSurface.MaxZoom): Unit = zmax = m
   def center: LatLon = c
   def bounds: GeoBounds =
     val nw = unproject(ScreenPt(com.histmersion.web.map.ScreenPt.X(0), com.histmersion.web.map.ScreenPt.Y(0)))
-    val se = unproject(ScreenPt(w, h))
-    GeoBounds(se.lat, nw.lon, nw.lat, se.lon)
-  def size: (Double, Double) = (w, h)
-  def setView(at: LatLon, zoom: Double, animate: Boolean): Unit =
+    val se = unproject(ScreenPt(ScreenPt.X(w.value), ScreenPt.Y(h.value)))
+    GeoBounds(GeoBounds.South(se.lat.value), GeoBounds.West(nw.lon.value), GeoBounds.North(nw.lat.value), GeoBounds.East(se.lon.value))
+  def size: (MapSurface.Dimension, MapSurface.Dimension) = (w, h)
+  def setView(at: LatLon, zoom: MapSurface.Zoom, animate: MapSurface.SetViewAnimate = MapSurface.SetViewAnimate(false)): Unit =
     c = at
-    z = math.min(zoom, zmax)
+    z = MapSurface.Zoom(math.min(zoom.value, zmax.value))
     fire(MapEventKind.Move); fire(MapEventKind.MoveEnd); fire(MapEventKind.ZoomEnd)
-  def fitBounds(b: GeoBounds, padding: Int, maxZoom: Double, animate: Boolean): Unit =
-    setView(LatLon((b.south + b.north) / 2, (b.west + b.east) / 2), math.min(maxZoom, z + 1), animate)
-  def panBy(dx: Double, dy: Double, animate: Boolean): Unit =
-    setView(unproject(ScreenPt(w / 2 + dx, h / 2 + dy)), z, animate)
+  def fitBounds(b: GeoBounds, padding: MapSurface.FitBoundsPadding, maxZoom: MapSurface.MaxZoom, animate: MapSurface.FitBoundsAnimate = MapSurface.FitBoundsAnimate(true)): Unit =
+    setView(LatLon(LatLon.Lat((b.south.value + b.north.value) / 2), LatLon.Lon((b.west.value + b.east.value) / 2)), MapSurface.Zoom(math.min(maxZoom.value, z.value + 1)))
+  def panBy(dx: MapSurface.PanByDx, dy: MapSurface.PanByDy, animate: MapSurface.PanByAnimate = MapSurface.PanByAnimate(false)): Unit =
+    setView(unproject(ScreenPt(ScreenPt.X(w.value / 2 + dx.value), ScreenPt.Y(h.value / 2 + dy.value))), z)
   def project(p: LatLon): ScreenPt =
     val (x, y) = world(p)
     val (cx, cy) = world(c)
-    ScreenPt(x - cx + w / 2, y - cy + h / 2)
+    ScreenPt(ScreenPt.X(x - cx + w.value / 2), ScreenPt.Y(y - cy + h.value / 2))
   def unproject(p: ScreenPt): LatLon =
-    val scale = 256.0 * math.pow(2, z)
+    val scale = 256.0 * math.pow(2, z.value)
     val (cx, cy) = world(c)
-    val x = cx + p.x - w / 2
-    val y = cy + p.y - h / 2
+    val x = cx + p.x.value - w.value / 2
+    val y = cy + p.y.value - h.value / 2
     val lon = x / scale * 360 - 180
     val lat = math.toDegrees(math.atan(math.sinh(math.Pi * (1 - 2 * y / scale))))
-    LatLon(lat, lon)
+    LatLon(LatLon.Lat(lat), LatLon.Lon(lon))
   def resize(): Unit = fire(MapEventKind.Resize)
   def isMoving: Boolean = false
   def isDrawn: Boolean = true
@@ -65,33 +63,33 @@ final class FakeSurface(w: Double = 1000, h: Double = 600, caps: Capabilities = 
   def overlayRoot: dom.HTMLElement = null
   def corner(c: Corner): dom.HTMLElement = null
   def setBaseMap(b: BaseMapSpec): Unit = baseMaps += b
-  def shapes(id: String, style: ShapeStyle): ShapeSet = sets.getOrElseUpdate(id, FakeShapes(id))
-  def shapeSet(id: String): Option[ShapeSet] = sets.get(id)
+  def shapes(id: MapSurface.ShapesId, style: ShapeStyle): ShapeSet = sets.getOrElseUpdate(id.value, FakeShapes(NoMap.Shapes.Id(id.value)))
+  def shapeSet(id: MapSurface.ShapeSetId): Option[ShapeSet] = sets.get(id.value)
   def shapesAt(p: ScreenPt): Seq[ShapeHit] = Nil
-  def pointTiles(id: String, layer: String, maxZoom: Int): PointTiles = NoMap.Tiles
-  def popup(at: LatLon, html: String, cls: String): Popup = new Popup:
+  def pointTiles(id: MapSurface.LayerId, layer: MapSurface.LayerId, maxZoom: MapSurface.PointTilesMaxZoom): PointTiles = NoMap.Tiles
+  def popup(at: LatLon, html: MapSurface.PopupHtml, cls: MapSurface.PopupCls = MapSurface.PopupCls("")): Popup = new Popup:
     def close(): Unit = ()
     def isOpen: Boolean = true
     def element: Option[dom.HTMLElement] = None
   def closePopups(): Unit = ()
   def capabilities: Capabilities = caps
-  def drawnNames: Seq[String] = Nil
-  def baseMapAreasAt(p: ScreenPt): Seq[String] = Nil
-  def baseMapLabels: Seq[(String, String, ScreenPt)] = Nil
-  def baseMapLayer(id: String): Option[String] = None
-  def baseMapDrawn(id: String): Int = 0
+  def drawnNames: Seq[MapSurface.LabelText] = Nil
+  def baseMapAreasAt(p: ScreenPt): Seq[MapSurface.LayerId] = Nil
+  def baseMapLabels: Seq[(MapSurface.LabelText, MapSurface.LabelText, ScreenPt)] = Nil
+  def baseMapLayer(id: MapSurface.LayerId): Option[MapSurface.LayerId] = None
+  def baseMapDrawn(id: MapSurface.LayerId): MapSurface.DrawnCount = MapSurface.DrawnCount(0)
   def destroy(): Unit = ()
 
 /** The shapes of a [[FakeSurface]]: what is drawn, and how often the geometry was sent again. */
-final class FakeShapes(val id: String) extends ShapeSet:
+final class FakeShapes(val id: NoMap.Shapes.Id) extends ShapeSet:
   val drawn: mutable.LinkedHashMap[String, ShapeFeature] = mutable.LinkedHashMap.empty
   // `var`: how many times the whole set was sent again (a membership change), not restyled in place
   var rebuilt = 0
   def set(shapes: Seq[ShapeFeature]): Unit =
-    if shapes.map(_.id).toSet != drawn.keySet then
+    if shapes.map(_.id.value).toSet != drawn.keySet then
       rebuilt += 1
       drawn.clear()
-    shapes.foreach(s => drawn(s.id) = s)
-  def restyle(id: String, colour: String, alpha: Double): Unit =
-    drawn.get(id).foreach(s => drawn(id) = s.modify(_.colour).setTo(colour).modify(_.alpha).setTo((alpha: _root_.scala.Double)))
-  def ids: Seq[String] = drawn.keys.toSeq
+    shapes.foreach(s => drawn(s.id.value) = s)
+  def restyle(id: ShapeFeature.Id, colour: ShapeFeature.Colour, alpha: ShapeFeature.Alpha): Unit =
+    drawn.get(id.value).foreach(s => drawn(id.value) = s.modify(_.colour).setTo(colour).modify(_.alpha).setTo(alpha))
+  def ids: Seq[ShapeFeature.Id] = drawn.keys.toSeq.map(ShapeFeature.Id(_))

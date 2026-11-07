@@ -35,7 +35,7 @@ class MotionPrefSuite extends munit.FunSuite:
     assertEquals(MapMotion.attribute(true), "animate")
     assertEquals(MapMotion.attribute(false), "still")
     assertEquals(MapMotion.values.toList.map(_.wire), List("system", "always", "never"))
-    MapMotion.values.foreach(m => assertEquals(MapMotion.fromWire(s" ${m.wire.toUpperCase} "), Some(m)))
+    MapMotion.values.foreach(m => assertEquals(MapMotion.fromWire(MapMotion.Wire(s" ${m.wire.value.toUpperCase} ")), Some(m)))
     assertEquals(MapMotion.fromWire(com.histmersion.web.map.MapMotion.Wire("sometimes")), None)
 
   test("MotionPref follows the choice and a change of the system's setting, live"):
@@ -78,5 +78,5 @@ class MotionPrefSuite extends munit.FunSuite:
     UiState.store.put("histmersion.ui.mapMotion", """["sometimes"]""")
     UiState.restoreLocal()
     assertEquals(UiState.mapMotion.now(), MapMotion.System)
-    assert(!UiState.hashString.contains("mapMotion"), "never in a link")
+    assert(!UiState.hashString.value.contains("mapMotion"), "never in a link")
     UiState.mapMotion.clear()

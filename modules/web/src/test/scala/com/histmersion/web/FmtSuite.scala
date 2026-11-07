@@ -1,7 +1,7 @@
 package com.histmersion.web
 
-import com.histmersion.testsupport.ComparedByValue.given
-
+import com.histmersion.api.Wcag
+import com.histmersion.api.catalogue.Year
 import com.histmersion.api.library.Confidence
 
 class FmtSuite extends munit.FunSuite:
@@ -11,86 +11,86 @@ class FmtSuite extends munit.FunSuite:
   // ── yr ────────────────────────────────────────────────────────────────────────
 
   test("yr formats BCE years") {
-    assertEquals(Fmt.yr(-3300L), "3300 BCE")
-    assertEquals(Fmt.yr(-1L), "1 BCE")
+    assertEquals(Fmt.yr(Year(-3300L)).value, "3300 BCE")
+    assertEquals(Fmt.yr(Year(-1L)).value, "1 BCE")
   }
 
   test("yr formats CE years") {
-    assertEquals(Fmt.yr(1L), "1 CE")
-    assertEquals(Fmt.yr(2026L), "2026 CE")
+    assertEquals(Fmt.yr(Year(1L)).value, "1 CE")
+    assertEquals(Fmt.yr(Year(2026L)).value, "2026 CE")
   }
 
   test("yr formats year zero as 1 BCE (no year zero in historical reckoning)") {
-    assertEquals(Fmt.yr(0L), "1 BCE")
+    assertEquals(Fmt.yr(Year(0L)).value, "1 BCE")
   }
 
   test("yr formats Option[Long]") {
-    assertEquals(Fmt.yr(Some(-3300L)), "3300 BCE")
-    assertEquals(Fmt.yr(None: Option[Long]), "?")
+    assertEquals(Fmt.yr(Some(Year(-3300L))).value, "3300 BCE")
+    assertEquals(Fmt.yr(None: Option[Year]).value, "?")
   }
 
   // ── periodStr ─────────────────────────────────────────────────────────────────
 
   test("periodStr renders a range") {
-    assertEquals(Fmt.periodStr(Some(-3300L), Some(-1200L)), "3300 BCE–1200 BCE")
+    assertEquals(Fmt.periodStr(Some(Year(-3300L)), Some(Year(-1200L))).value, "3300 BCE–1200 BCE")
   }
 
   test("periodStr renders a point") {
-    assertEquals(Fmt.periodStr(Some(-776L), Some(-776L)), "776 BCE")
+    assertEquals(Fmt.periodStr(Some(Year(-776L)), Some(Year(-776L))).value, "776 BCE")
   }
 
   test("periodStr returns empty for missing bounds") {
-    assertEquals(Fmt.periodStr(None, Some(-1200L)), "")
-    assertEquals(Fmt.periodStr(None, None), "")
+    assertEquals(Fmt.periodStr(None, Some(Year(-1200L))).value, "")
+    assertEquals(Fmt.periodStr(None, None).value, "")
   }
 
   // ── color ─────────────────────────────────────────────────────────────────────
 
   test("color at 0 returns the first viridis stop") {
-    assertEquals(Fmt.color(0.0), "rgb(68,1,84)")
+    assertEquals(Fmt.color(Fmt.ColorT(0.0)).value, "rgb(68,1,84)")
   }
 
   test("color at 1 returns the last viridis stop") {
-    assertEquals(Fmt.color(1.0), "rgb(253,231,37)")
+    assertEquals(Fmt.color(Fmt.ColorT(1.0)).value, "rgb(253,231,37)")
   }
 
   test("color clamps values below 0") {
-    assertEquals(Fmt.color(-5.0), Fmt.color(0.0))
+    assertEquals(Fmt.color(Fmt.ColorT(-5.0)), Fmt.color(Fmt.ColorT(0.0)))
   }
 
   test("color clamps values above 1") {
-    assertEquals(Fmt.color(10.0), Fmt.color(1.0))
+    assertEquals(Fmt.color(Fmt.ColorT(10.0)), Fmt.color(Fmt.ColorT(1.0)))
   }
 
   test("color at 0.5 is the middle viridis stop") {
-    assertEquals(Fmt.color(0.5), "rgb(33,145,140)")
+    assertEquals(Fmt.color(Fmt.ColorT(0.5)).value, "rgb(33,145,140)")
   }
 
   test("color interpolates between stops") {
-    val c = Fmt.color(0.25)
-    assert(c.startsWith("rgb("), s"expected rgb(...) but got $c")
-    assert(c != Fmt.color(0.0) && c != Fmt.color(0.5), "should be between stops")
+    val c = Fmt.color(Fmt.ColorT(0.25))
+    assert(c.value.startsWith("rgb("), s"expected rgb(...) but got $c")
+    assert(c != Fmt.color(Fmt.ColorT(0.0)) && c != Fmt.color(Fmt.ColorT(0.5)), "should be between stops")
   }
 
   // ── desaturate ────────────────────────────────────────────────────────────────
 
   test("desaturate at high confidence returns the input color") {
-    val c = "rgb(33,145,140)"
+    val c = Wcag.Hex("rgb(33,145,140)")
     assertEquals(Fmt.desaturate(c, Confidence.High), c)
   }
 
   test("desaturate at contested confidence shifts toward grey") {
-    val original = Fmt.color(0.5) // rgb(33,145,140)
+    val original = Fmt.color(Fmt.ColorT(0.5)) // rgb(33,145,140)
     val desat = Fmt.desaturate(original, Confidence.Contested)
     assert(desat != original, "contested should desaturate")
-    assert(desat.startsWith("rgb("), s"expected rgb format but got $desat")
+    assert(desat.value.startsWith("rgb("), s"expected rgb format but got $desat")
   }
 
   test("desaturate at medium confidence desaturates partially") {
-    val c = "rgb(100,200,50)"
+    val c = Wcag.Hex("rgb(100,200,50)")
     val desat = Fmt.desaturate(c, Confidence.Medium)
     assert(desat != c, "medium should desaturate")
-    assert(desat.startsWith("rgb("), s"expected rgb format but got $desat")
+    assert(desat.value.startsWith("rgb("), s"expected rgb format but got $desat")
   }
 
   // ── worstConf ─────────────────────────────────────────────────────────────────
@@ -111,24 +111,24 @@ class FmtSuite extends munit.FunSuite:
   // ── parseYear ─────────────────────────────────────────────────────────────────
 
   test("parseYear handles BCE") {
-    assertEquals(Fmt.parseYear(com.histmersion.api.Years.Text("3300 BCE")), Some(-3300L))
-    assertEquals(Fmt.parseYear(com.histmersion.api.Years.Text("3300 BC")), Some(-3300L))
-    assertEquals(Fmt.parseYear(com.histmersion.api.Years.Text("3300bce")), Some(-3300L))
+    assertEquals(Fmt.parseYear(com.histmersion.api.Years.Text("3300 BCE")).map(_.value), Some(-3300L))
+    assertEquals(Fmt.parseYear(com.histmersion.api.Years.Text("3300 BC")).map(_.value), Some(-3300L))
+    assertEquals(Fmt.parseYear(com.histmersion.api.Years.Text("3300bce")).map(_.value), Some(-3300L))
   }
 
   test("parseYear handles CE") {
-    assertEquals(Fmt.parseYear(com.histmersion.api.Years.Text("500 CE")), Some(500L))
-    assertEquals(Fmt.parseYear(com.histmersion.api.Years.Text("500 AD")), Some(500L))
+    assertEquals(Fmt.parseYear(com.histmersion.api.Years.Text("500 CE")).map(_.value), Some(500L))
+    assertEquals(Fmt.parseYear(com.histmersion.api.Years.Text("500 AD")).map(_.value), Some(500L))
   }
 
   test("parseYear handles plain numbers") {
-    assertEquals(Fmt.parseYear(com.histmersion.api.Years.Text("-3300")), Some(-3300L))
-    assertEquals(Fmt.parseYear(com.histmersion.api.Years.Text("2026")), Some(2026L))
+    assertEquals(Fmt.parseYear(com.histmersion.api.Years.Text("-3300")).map(_.value), Some(-3300L))
+    assertEquals(Fmt.parseYear(com.histmersion.api.Years.Text("2026")).map(_.value), Some(2026L))
   }
 
   test("parseYear handles circa") {
-    assertEquals(Fmt.parseYear(com.histmersion.api.Years.Text("circa 3300 BCE")), Some(-3300L))
-    assertEquals(Fmt.parseYear(com.histmersion.api.Years.Text("c. 1200 BCE")), Some(-1200L))
+    assertEquals(Fmt.parseYear(com.histmersion.api.Years.Text("circa 3300 BCE")).map(_.value), Some(-3300L))
+    assertEquals(Fmt.parseYear(com.histmersion.api.Years.Text("c. 1200 BCE")).map(_.value), Some(-1200L))
   }
 
   test("parseYear rejects garbage") {
@@ -161,19 +161,19 @@ class FmtSuite extends munit.FunSuite:
   // ── display ──────────────────────────────────────────────────────────────────
 
   test("display replaces underscores with spaces") {
-    assertEquals(Fmt.display(com.histmersion.api.UiLabels.Text("bronze_age_collapse")), "bronze age collapse")
+    assertEquals(Fmt.display(com.histmersion.api.UiLabels.Text("bronze_age_collapse")).value, "bronze age collapse")
   }
 
   test("display leaves human-readable strings unchanged") {
-    assertEquals(Fmt.display(com.histmersion.api.UiLabels.Text("already nice")), "already nice")
+    assertEquals(Fmt.display(com.histmersion.api.UiLabels.Text("already nice")).value, "already nice")
   }
 
   test("display handles empty string") {
-    assertEquals(Fmt.display(com.histmersion.api.UiLabels.Text("")), "")
+    assertEquals(Fmt.display(com.histmersion.api.UiLabels.Text("")).value, "")
   }
 
   test("display handles multiple underscores") {
-    assertEquals(Fmt.display(com.histmersion.api.UiLabels.Text("a_b_c_d")), "a b c d")
+    assertEquals(Fmt.display(com.histmersion.api.UiLabels.Text("a_b_c_d")).value, "a b c d")
   }
 
   test("displayTag delegates to display") {
