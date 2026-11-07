@@ -14,27 +14,27 @@ class CalibreSuite extends munit.FunSuite:
 
   private given com.histmersion.plugin.LocalFiles = new com.histmersion.pluginhost.DiskLocalFiles
   private given com.histmersion.plugin.Processes = new com.histmersion.pluginhost.SystemProcesses
-  private def fixture(name: String) = scala.io.Source.fromResource(s"acquire/$name").mkString
+  private def fixture(name: String) = com.histmersion.plugin.Processes.Result.Out(scala.io.Source.fromResource(s"acquire/$name").mkString)
 
-  private val lib = "/Users/example/Calibre Library"
+  private val lib = Calibre.Library.Value("/Users/example/Calibre Library")
 
   // ── the two readers agree ───────────────────────────────────────────────────────────────────
   test("calibredb --for-machine JSON → CalibreBook"):
-    val b = Calibre.parseMachineJson(fixture("calibredb_machine.json")).fold(fail(_), _.head)
+    val b = Calibre.parseMachineJson(fixture("calibredb_machine.json")).fold(e => fail(e.value), _.head)
     assertEquals(b.id, 1691)
-    assertEquals(b.title.take(22), "Likelihood calculation")
+    assertEquals(b.title.value.take(22), "Likelihood calculation")
     assertEquals(b.authors, List("Philipp Rönchen", "Tilo Wiklund", "Harald Hammarström"))
     assertEquals(b.year, Some(2024))
     assertEquals(b.publisher, Some("Language Dynamics and Change"))
     assertEquals(b.doi, Some("10.1163/22105832-bja10032"))
-    assert(b.tags.contains("phylogenetics"))
-    assert(b.comments.exists(_.contains("likelihood algorithm")))
+    assert(b.tags.exists(_.value == "phylogenetics"))
+    assert(b.comments.exists(_.value.contains("likelihood algorithm")))
     assertEquals(b.formats.size, 1)
-    assert(b.formats.head.startsWith(lib), b.formats.head)
+    assert(b.formats.head.value.startsWith(lib.value), b.formats.head)
 
   test("the sqlite3 fallback yields the SAME book (it is the path used while the GUI is open)"):
-    val viaDb = Calibre.parseMachineJson(fixture("calibredb_machine.json")).fold(fail(_), _.head)
-    val viaFile = Calibre.parseSqliteJson(fixture("calibre_sqlite.json"), lib).fold(fail(_), _.head)
+    val viaDb = Calibre.parseMachineJson(fixture("calibredb_machine.json")).fold(e => fail(e.value), _.head)
+    val viaFile = Calibre.parseSqliteJson(fixture("calibre_sqlite.json"), lib).fold(e => fail(e.value), _.head)
     assertEquals(viaFile.id, viaDb.id)
     assertEquals(viaFile.title, viaDb.title)
     assertEquals(viaFile.authors, viaDb.authors)
@@ -53,11 +53,11 @@ class CalibreSuite extends munit.FunSuite:
   test("format choice: requested, else pdf, else epub"):
     val b = Calibre
       .parseMachineJson(fixture("calibredb_machine.json"))
-      .fold(fail(_), _.head)
-      .copy(formats = List("/lib/x.epub", "/lib/x.pdf"))
-    assertEquals(b.pick(None).map(_.takeRight(4)), Some(".pdf"))
-    assertEquals(b.pick(Some("epub")).map(_.takeRight(5)), Some(".epub"))
-    assertEquals(b.copy(formats = List("/lib/x.mobi")).pick(None), None)
+      .fold(e => fail(e.value), _.head)
+      .copy(formats = List(Calibre.Book.Formats("/lib/x.epub"), Calibre.Book.Formats("/lib/x.pdf")))
+    assertEquals(b.pick(None).map(_.value.takeRight(4)), Some(".pdf"))
+    assertEquals(b.pick(Some(com.histmersion.plugin.CollectionFile.Format("epub"))).map(_.value.takeRight(5)), Some(".epub"))
+    assertEquals(b.copy(formats = List(Calibre.Book.Formats("/lib/x.mobi"))).pick(None), None)
 
   // ── the metadata guard ──────────────────────────────────────────────────────────────────────
   test("the metadata guard refuses empty and Unknown title/author"):
@@ -66,8 +66,8 @@ class CalibreSuite extends munit.FunSuite:
     assert(Calibre.guard(com.histmersion.plugins.calibre.Calibre.Push.Title("Untitled"), List(com.histmersion.plugins.calibre.Calibre.Author("Author"))).isLeft)
     assert(Calibre.guard(com.histmersion.plugins.calibre.Calibre.Push.Title("Title"), Nil).isLeft)
     assert(Calibre.guard(com.histmersion.plugins.calibre.Calibre.Push.Title("Title"), List(com.histmersion.plugins.calibre.Calibre.Author("Unknown Author"))).isLeft)
-    val both = Calibre.guard(com.histmersion.plugins.calibre.Calibre.Push.Title("unknown"), List(com.histmersion.plugins.calibre.Calibre.Author("  "))).left.getOrElse("")
-    assert(both.contains("title") && both.contains("author"), both)
+    val both = Calibre.guard(com.histmersion.plugins.calibre.Calibre.Push.Title("unknown"), List(com.histmersion.plugins.calibre.Calibre.Author("  "))).left.getOrElse(Calibre.Problem(""))
+    assert(both.value.contains("title") && both.value.contains("author"), both)
 
   test("blankness is case- and whitespace-insensitive"):
     assert(Calibre.isBlank("  UNKNOWN  "))
@@ -81,29 +81,29 @@ class CalibreSuite extends munit.FunSuite:
     assertEquals(Calibre.parseAddedId(com.histmersion.plugin.Processes.Result.Out("nothing happened")), None)
 
   test("SQL literals are escaped, so a quote in a search term cannot break the query"):
-    assertEquals(Calibre.sqlLiteral("O'Brien"), "'O''Brien'")
-    val q = Calibre.sqliteQuery(s"b.title LIKE ${Calibre.sqlLiteral("%O'Brien%")}", com.histmersion.plugins.calibre.Calibre.SqliteQueryLimit(5))
-    assert(q.contains("'%O''Brien%'"), q)
-    assert(q.contains("LIMIT 5"))
-    assert(!q.contains("\n"))
+    assertEquals(Calibre.sqlLiteral(com.histmersion.plugin.CollectionQuery.Text("O'Brien")), "'O''Brien'")
+    val q = Calibre.sqliteQuery(Calibre.SqlWhere(s"b.title LIKE ${Calibre.sqlLiteral(com.histmersion.plugin.CollectionQuery.Text("%O'Brien%")).value}"), com.histmersion.plugins.calibre.Calibre.SqliteQueryLimit(5))
+    assert(q.value.contains("'%O''Brien%'"), q)
+    assert(q.value.contains("LIMIT 5"))
+    assert(!q.value.contains("\n"))
 
   test("push refuses junk metadata and never reaches calibredb"):
     val shell = RecordingShell()
     val c = Calibre(cfg(), shell)
-    val bad = c.add(Path.of("/tmp/whatever.pdf"), Calibre.Push("Unknown", List("Unknown Author")))
+    val bad = c.add(Path.of("/tmp/whatever.pdf"), Calibre.Push(Calibre.Push.Title("Unknown"), List(Calibre.Author("Unknown Author"))))
     assert(bad.isLeft, bad)
     assertEquals(shell.commands, Nil, "the guard must fire before anything is executed")
 
   test("push refuses while the Calibre GUI holds the library"):
     val shell = RecordingShell(running = true)
-    val r = Calibre(cfg(), shell).add(Path.of("/tmp/x.pdf"), Calibre.Push("T", List("A")))
-    assert(r.left.exists(_.contains("GUI is running")), r)
+    val r = Calibre(cfg(), shell).add(Path.of("/tmp/x.pdf"), Calibre.Push(Calibre.Push.Title("T"), List(Calibre.Author("A"))))
+    assert(r.left.exists(_.value.contains("GUI is running")), r)
 
   /** A shell whose `calibredb list` answers with one book (the entry being updated). */
   private class LibraryShell(onShelf: String) extends RecordingShell():
-    override def run(cmd: List[String]) =
+    override def run(cmd: List[com.histmersion.plugin.Processes.RunArgv]): Either[Shell.Problem, com.histmersion.plugin.Processes.Result.Out] =
       commands = commands :+ cmd
-      if cmd.contains("list") then Right(onShelf) else Right("")
+      if cmd.exists(_.value == "list") then Right(com.histmersion.plugin.Processes.Result.Out(onShelf)) else Right(com.histmersion.plugin.Processes.Result.Out(""))
 
   private val meta = Calibre.Push(
     com.histmersion.plugins.calibre.Calibre.Push.Title("Perspectives on Hittite Civilization"),
@@ -127,15 +127,15 @@ class CalibreSuite extends munit.FunSuite:
       s""""comments":"$comments","tags":$tags,"identifiers":$identifiers,"formats":[]}]"""
 
   private def fields(shell: RecordingShell) =
-    val cmd = shell.commands.find(_.contains("set_metadata")).getOrElse(fail("no set_metadata ran"))
-    assertEquals(cmd.take(5), List("calibredb", "set_metadata", "--with-library", lib, "1567"))
-    cmd.drop(5).grouped(2).map { case List("--field", f) => f; case o => fail(s"not a field: $o") }.toList
+    val cmd = shell.commands.find(_.exists(_.value == "set_metadata")).getOrElse(fail("no set_metadata ran"))
+    assertEquals(cmd.take(5), List("calibredb", "set_metadata", "--with-library", lib.value, "1567"))
+    cmd.drop(5).map(_.value).grouped(2).map { case List("--field", f) => f; case o => fail(s"not a field: $o") }.toList
 
   test(
     "update writes title, First-Last authors, the record's year, merged identifiers and the topics as tags, and fills publisher and description where Calibre has none"
   ):
     val bare = LibraryShell(shelf("0101-01-01T00:00:00+00:00", "", "-"))
-    val changed = Calibre(cfg(), bare).update(1567, meta).map(_.map(_.field))
+    val changed = Calibre(cfg(), bare).update(Calibre.Book.Id(1567), meta).map(_.map(_.field))
     assertEquals(
       changed,
       Right(
@@ -165,7 +165,7 @@ class CalibreSuite extends munit.FunSuite:
 
   test("update writes the record's year over the edition's, but never its publisher or a store description"):
     val held = LibraryShell(shelf("1986-06-01T00:00:00+00:00", "Gallimard", "The publisher's own blurb"))
-    assertEquals(Calibre(cfg(), held).update(1567, meta).map(_.size), Right(5))
+    assertEquals(Calibre(cfg(), held).update(Calibre.Book.Id(1567), meta).map(_.size), Right(5))
     val fs = fields(held)
     assert(fs.contains("pubdate:1997-01-01"), fs)
     assert(!fs.exists(f => f.startsWith("publisher:") || f.startsWith("comments:")), fs)
@@ -173,10 +173,10 @@ class CalibreSuite extends munit.FunSuite:
   test("update MERGES identifiers: the record's DOI is set, Calibre's ISBN and every other scheme are kept"):
     val ids = """{"isbn":"9780918986672","google":"abcDEF","asin":"B000X","doi":"10.9/old"}"""
     val held = LibraryShell(shelf("1997-01-01T00:00:00+00:00", "Oriental Institute", "x", identifiers = ids))
-    val _ = Calibre(cfg(), held).update(1567, meta.copy(isbn = Some("9999999999999")))
+    val _ = Calibre(cfg(), held).update(Calibre.Book.Id(1567), meta.copy(isbn = Some(Calibre.Push.Isbn("9999999999999"))))
     assert(fields(held).contains("identifiers:asin:B000X,doi:10.1/x,google:abcDEF,isbn:9780918986672"), fields(held))
     assertEquals(
-      Calibre.mergeIdentifiers(Map("google" -> "g"), Some(com.histmersion.plugins.calibre.Calibre.Push.Doi("10.1/x")), Some(com.histmersion.plugins.calibre.Calibre.Push.Isbn("978"))),
+      Calibre.mergeIdentifiers(Map(Calibre.Book.IdentifiersKey("google") -> Calibre.Book.IdentifiersValue("g")), Some(com.histmersion.plugins.calibre.Calibre.Push.Doi("10.1/x")), Some(com.histmersion.plugins.calibre.Calibre.Push.Isbn("978"))),
       Map("google" -> "g", "doi" -> "10.1/x", "isbn" -> "978")
     )
     assertEquals(
@@ -196,8 +196,8 @@ class CalibreSuite extends munit.FunSuite:
         authors = "Hans G. Güterbock & Harry A. Hoffner"
       ).replace("Kumarbi", "Perspectives on Hittite Civilization")
     )
-    assertEquals(Calibre(cfg(), same).update(1567, meta), Right(Nil))
-    assert(!same.commands.exists(_.contains("set_metadata")), same.commands)
+    assertEquals(Calibre(cfg(), same).update(Calibre.Book.Id(1567), meta), Right(Nil))
+    assert(!same.commands.exists(_.exists(_.value == "set_metadata")), same.commands)
 
   // a title differing only by surrounding spaces, or a DOI only by case, is not a change
   test("update compares titles trimmed and DOIs case-insensitively, and writes a title trimmed"):
@@ -212,11 +212,11 @@ class CalibreSuite extends munit.FunSuite:
       ).replace("Kumarbi", "Perspectives on Hittite Civilization ")
     )
     assertEquals(
-      Calibre(cfg(), same).update(1567, meta.copy(title = " Perspectives on Hittite Civilization")),
+      Calibre(cfg(), same).update(Calibre.Book.Id(1567), meta.copy(title = Calibre.Push.Title(" Perspectives on Hittite Civilization"))),
       Right(Nil)
     )
-    assert(!same.commands.exists(_.contains("set_metadata")), same.commands)
-    assertEquals(Calibre.mergeIdentifiers(Map("doi" -> "10.1/ABC"), Some(com.histmersion.plugins.calibre.Calibre.Push.Doi("10.1/abc")), None), Map("doi" -> "10.1/ABC"))
+    assert(!same.commands.exists(_.exists(_.value == "set_metadata")), same.commands)
+    assertEquals(Calibre.mergeIdentifiers(Map(Calibre.Book.IdentifiersKey("doi") -> Calibre.Book.IdentifiersValue("10.1/ABC")), Some(com.histmersion.plugins.calibre.Calibre.Push.Doi("10.1/abc")), None), Map("doi" -> "10.1/ABC"))
     val renamed = LibraryShell(
       shelf(
         "1997-01-01T00:00:00+00:00",
@@ -227,11 +227,11 @@ class CalibreSuite extends munit.FunSuite:
         authors = "Hans G. Güterbock & Harry A. Hoffner"
       )
     )
-    val _ = Calibre(cfg(), renamed).update(1567, meta.copy(title = "  Perspectives on Hittite Civilization  "))
+    val _ = Calibre(cfg(), renamed).update(Calibre.Book.Id(1567), meta.copy(title = Calibre.Push.Title("  Perspectives on Hittite Civilization  ")))
     assertEquals(fields(renamed), List("title:Perspectives on Hittite Civilization"))
 
   test("authors: First Last, without role words, brackets or library life dates"):
-    def n(a: String) = Calibre.normaliseAuthor(a)
+    def n(a: String) = Calibre.normaliseAuthor(Calibre.Author(a))
     assertEquals(n("Güterbock, Hans G."), "Hans G. Güterbock")
     assertEquals(n("Clunies Ross, Margaret (ed.)"), "Margaret Clunies Ross")
     assertEquals(n("Ken Dowden (ed.)"), "Ken Dowden")
@@ -254,12 +254,12 @@ class CalibreSuite extends munit.FunSuite:
     LinkedRecord(
       com.histmersion.plugins.calibre.LinkedRecord.Citekey("burkert1985_greek"),
       com.histmersion.plugins.calibre.LinkedRecord.CalibreId(10),
-      Calibre.Push(com.histmersion.plugins.calibre.Calibre.Push.Title("Greek Religion"), List(com.histmersion.plugins.calibre.Calibre.Author("Burkert, Walter")), year = Some(com.histmersion.plugins.calibre.Calibre.Book.Year(1985)), tags = List("t"))
+      Calibre.Push(com.histmersion.plugins.calibre.Calibre.Push.Title("Greek Religion"), List(com.histmersion.plugins.calibre.Calibre.Author("Burkert, Walter")), year = Some(com.histmersion.plugins.calibre.Calibre.Book.Year(1985)), tags = List(com.histmersion.plugins.calibre.Calibre.Push.Tags("t")))
     ),
     LinkedRecord(
       com.histmersion.plugins.calibre.LinkedRecord.Citekey("page1959_history"),
       com.histmersion.plugins.calibre.LinkedRecord.CalibreId(11),
-      Calibre.Push(com.histmersion.plugins.calibre.Calibre.Push.Title("History and the Homeric Iliad"), List(com.histmersion.plugins.calibre.Calibre.Author("Page, Denys")), year = Some(com.histmersion.plugins.calibre.Calibre.Book.Year(1959)), tags = List("t"))
+      Calibre.Push(com.histmersion.plugins.calibre.Calibre.Push.Title("History and the Homeric Iliad"), List(com.histmersion.plugins.calibre.Calibre.Author("Page, Denys")), year = Some(com.histmersion.plugins.calibre.Calibre.Book.Year(1959)), tags = List(com.histmersion.plugins.calibre.Calibre.Push.Tags("t")))
     ),
     LinkedRecord(com.histmersion.plugins.calibre.LinkedRecord.Citekey("guterbock1948_kumarbi"), com.histmersion.plugins.calibre.LinkedRecord.CalibreId(12), Calibre.Push(com.histmersion.plugins.calibre.Calibre.Push.Title("Kumarbi"), List(com.histmersion.plugins.calibre.Calibre.Author("Güterbock, Hans G.")), tags = List(com.histmersion.plugins.calibre.Calibre.Push.Tags("t")))),
     LinkedRecord(
@@ -279,7 +279,7 @@ class CalibreSuite extends munit.FunSuite:
     "update --all is a dry run by default: it lists the changes, leaves shared and missing entries alone, writes nothing"
   ):
     val shell = libraryOf(shelfAll*)
-    val out = Calibre(cfg(), shell).updateAll(linked, apply = false).fold(fail(_), identity)
+    val out = Calibre(cfg(), shell).updateAll(linked, apply = Calibre.UpdateAllApply(false)).fold(e => fail(e.value), identity)
     assertEquals(
       out.map(e => e.calibreId -> e.outcome),
       List(
@@ -289,67 +289,67 @@ class CalibreSuite extends munit.FunSuite:
         13 -> UpdateOutcome.Missing
       )
     )
-    assertEquals(shell.commands.count(_.contains("list")), 1, "one listing of the library, not one per entry")
-    assert(!shell.commands.exists(_.contains("set_metadata")), shell.commands)
+    assertEquals(shell.commands.count(_.exists(_.value == "list")), 1, "one listing of the library, not one per entry")
+    assert(!shell.commands.exists(_.exists(_.value == "set_metadata")), shell.commands)
 
   test("update --all --apply writes only the entries that change, and refuses while the GUI runs"):
     val shell = libraryOf(shelfAll*)
-    val out = Calibre(cfg(), shell).updateAll(linked, apply = true).fold(fail(_), identity)
+    val out = Calibre(cfg(), shell).updateAll(linked, apply = Calibre.UpdateAllApply(true)).fold(e => fail(e.value), identity)
     assertEquals(
-      out.find(_.calibreId == 11).map(_.outcome),
+      out.find(_.calibreId.value == 11).map(_.outcome),
       Some(UpdateOutcome.Applied(List(Calibre.Change(Calibre.Field.Pubdate, com.histmersion.plugins.calibre.Calibre.Change.From("1963"), com.histmersion.plugins.calibre.Calibre.Change.To("1959-01-01")))))
     )
     assertEquals(
-      shell.commands.filter(_.contains("set_metadata")),
-      List(List("calibredb", "set_metadata", "--with-library", lib, "11", "--field", "pubdate:1959-01-01"))
+      shell.commands.filter(_.exists(_.value == "set_metadata")),
+      List(List("calibredb", "set_metadata", "--with-library", lib.value, "11", "--field", "pubdate:1959-01-01"))
     )
     val gui = RecordingShell(running = true)
-    assert(Calibre(cfg(), gui).updateAll(linked, apply = true).left.exists(_.contains("GUI is running")))
+    assert(Calibre(cfg(), gui).updateAll(linked, apply = Calibre.UpdateAllApply(true)).left.exists(_.value.contains("GUI is running")))
     assertEquals(gui.commands, Nil)
 
   test("update of an id Calibre does not have is an error, and nothing is written"):
     val none = LibraryShell("[]")
-    assert(Calibre(cfg(), none).update(1567, meta).isLeft)
-    assert(!none.commands.exists(_.contains("set_metadata")))
+    assert(Calibre(cfg(), none).update(Calibre.Book.Id(1567), meta).isLeft)
+    assert(!none.commands.exists(_.exists(_.value == "set_metadata")))
 
   test("set writes only the named, settable fields, and refuses junk before running anything"):
     val shell = LibraryShell(shelf("1986-06-01T00:00:00+00:00", "Gallimard", "blurb"))
-    assertEquals(Calibre(cfg(), shell).set(1567, List("languages" -> "fra", "pubdate" -> "1968-01-01")), Right(()))
+    assertEquals(Calibre(cfg(), shell).set(Calibre.Book.Id(1567), List(Calibre.Field.Name("languages") -> Calibre.Field.Value("fra"), Calibre.Field.Name("pubdate") -> Calibre.Field.Value("1968-01-01"))), Right(()))
     assertEquals(fields(shell), List("languages:fra", "pubdate:1968-01-01"))
     val quiet = RecordingShell()
-    assert(Calibre(cfg(), quiet).set(1, List("formats" -> "x")).left.exists(_.contains("cannot set formats")))
-    assert(Calibre(cfg(), quiet).set(1, List("authors" -> "Walter Burkert & Unknown")).isLeft)
-    assert(Calibre(cfg(), quiet).set(1, Nil).isLeft)
+    assert(Calibre(cfg(), quiet).set(Calibre.Book.Id(1), List(Calibre.Field.Name("formats") -> Calibre.Field.Value("x"))).left.exists(_.value.contains("cannot set formats")))
+    assert(Calibre(cfg(), quiet).set(Calibre.Book.Id(1), List(Calibre.Field.Name("authors") -> Calibre.Field.Value("Walter Burkert & Unknown"))).isLeft)
+    assert(Calibre(cfg(), quiet).set(Calibre.Book.Id(1), Nil).isLeft)
     assertEquals(quiet.commands, Nil)
 
   test("update refuses junk metadata and a running GUI before running anything"):
     assert(
-      Calibre(cfg(), RecordingShell()).update(1, Calibre.Push("T", List("(ed.)"))).isLeft,
+      Calibre(cfg(), RecordingShell()).update(Calibre.Book.Id(1), Calibre.Push(Calibre.Push.Title("T"), List(Calibre.Author("(ed.)")))).isLeft,
       "a name that is nothing but a role is no author"
     )
     val shell = RecordingShell()
-    assert(Calibre(cfg(), shell).update(1, Calibre.Push("Unknown", List("A"))).isLeft)
+    assert(Calibre(cfg(), shell).update(Calibre.Book.Id(1), Calibre.Push(Calibre.Push.Title("Unknown"), List(Calibre.Author("A")))).isLeft)
     assertEquals(shell.commands, Nil)
     val gui = RecordingShell(running = true)
-    assert(Calibre(cfg(), gui).update(1, Calibre.Push("T", List("A"))).left.exists(_.contains("GUI is running")))
+    assert(Calibre(cfg(), gui).update(Calibre.Book.Id(1), Calibre.Push(Calibre.Push.Title("T"), List(Calibre.Author("A")))).left.exists(_.value.contains("GUI is running")))
     assertEquals(gui.commands, Nil)
 
   test("reading falls back to sqlite3 when calibredb refuses (the GUI case)"):
     val shell = new RecordingShell():
-      override def run(cmd: List[String]) =
+      override def run(cmd: List[com.histmersion.plugin.Processes.RunArgv]): Either[Shell.Problem, com.histmersion.plugin.Processes.Result.Out] =
         commands = commands :+ cmd
-        if cmd.head.endsWith("calibredb") then Left("Another calibre program is running")
-        else Right(scala.io.Source.fromResource("acquire/calibre_sqlite.json").mkString)
-    val books = Calibre(cfg(), shell).search("likelihood")
+        if cmd.head.value.endsWith("calibredb") then Left(Calibre.Problem("Another calibre program is running"))
+        else Right(fixture("calibre_sqlite.json"))
+    val books = Calibre(cfg(), shell).search(com.histmersion.plugin.CollectionQuery.Text("likelihood"))
     assertEquals(books.map(_.map(_.id)), Right(List(1691)))
     assertEquals(shell.commands.size, 2, "calibredb first, then sqlite3")
-    assert(shell.commands(1).contains("-readonly"), "the metadata.db must be opened READ-ONLY")
+    assert(shell.commands(1).exists(_.value == "-readonly"), "the metadata.db must be opened READ-ONLY")
 
-  private def book(id: Int, title: String, authors: List[String], pubdate: String) =
+  private def book(id: Calibre.Book.Id, title: Calibre.Book.Title, authors: List[Calibre.Author], pubdate: Calibre.Book.Pubdate) =
     Calibre.Book(id, title, authors, Some(pubdate), None, Nil, None, Map.empty, Nil)
 
   test("Calibre's 0101 'no date' is no year at all"):
-    val b = book(1, "Twilight of the Gods", List("Ian Young"), "0101-01-01T00:00:00+00:00")
+    val b = book(Calibre.Book.Id(1), Calibre.Book.Title("Twilight of the Gods"), List(Calibre.Author("Ian Young")), Calibre.Book.Pubdate("0101-01-01T00:00:00+00:00"))
     assertEquals(b.year, None)
 
   private def tmpFile(ext: String) =
@@ -359,32 +359,32 @@ class CalibreSuite extends munit.FunSuite:
   test("replace swaps the format on the linked entry with add_format — never a new entry"):
     val shell = LibraryShell(shelf("1986-06-01T00:00:00+00:00", "", ""))
     val f = tmpFile("pdf")
-    assertEquals(Calibre(cfg(), shell).replaceFormat(1567, f), Right("pdf"))
-    val cmd = shell.commands.find(_.contains("add_format")).getOrElse(fail("no add_format ran"))
-    assertEquals(cmd, List("calibredb", "add_format", "--with-library", lib, "1567", f.toString))
-    assert(!shell.commands.exists(c => c.contains("add") && !c.contains("add_format") && c(1) == "add"))
+    assertEquals(Calibre(cfg(), shell).replaceFormat(Calibre.Book.Id(1567), f), Right("pdf"))
+    val cmd = shell.commands.find(_.exists(_.value == "add_format")).getOrElse(fail("no add_format ran"))
+    assertEquals(cmd, List("calibredb", "add_format", "--with-library", lib.value, "1567", f.toString))
+    assert(!shell.commands.exists(c => c.exists(_.value == "add") && !c.exists(_.value == "add_format") && c(1).value == "add"))
 
   test("replace refuses a running GUI, a missing entry, and a non-pdf/epub file before writing"):
     val f = tmpFile("pdf")
     val gui = RecordingShell(running = true)
-    assert(Calibre(cfg(), gui).replaceFormat(1, f).left.exists(_.contains("GUI is running")))
+    assert(Calibre(cfg(), gui).replaceFormat(Calibre.Book.Id(1), f).left.exists(_.value.contains("GUI is running")))
     assertEquals(gui.commands, Nil)
     val none = LibraryShell("[]")
-    assert(Calibre(cfg(), none).replaceFormat(1567, f).left.exists(_.contains("no Calibre entry 1567")))
-    assert(!none.commands.exists(_.contains("add_format")))
+    assert(Calibre(cfg(), none).replaceFormat(Calibre.Book.Id(1567), f).left.exists(_.value.contains("no Calibre entry 1567")))
+    assert(!none.commands.exists(_.exists(_.value == "add_format")))
     val quiet = RecordingShell()
-    assert(Calibre(cfg(), quiet).replaceFormat(1, tmpFile("mobi")).isLeft)
+    assert(Calibre(cfg(), quiet).replaceFormat(Calibre.Book.Id(1), tmpFile("mobi")).isLeft)
     assertEquals(quiet.commands, Nil)
 
   private def cfg() = Calibre.Library(lib, com.histmersion.plugins.calibre.Calibre.Settings.ExecutablePath("calibredb"), com.histmersion.plugins.calibre.Calibre.Settings.Sqlite("sqlite3"), com.histmersion.plugins.calibre.Shell.ProcessMatch("/Applications/calibre.app/Contents/MacOS/calibre"))
 
   /** A [[Shell]] that records instead of executing. */
   private class RecordingShell(running: Boolean = false) extends Shell:
-    var commands: List[List[String]] = Nil // a test double is the one place a var is the simplest thing
-    def run(cmd: List[String]): Either[String, String] =
+    var commands: List[List[com.histmersion.plugin.Processes.RunArgv]] = Nil // a test double is the one place a var is the simplest thing
+    def run(cmd: List[com.histmersion.plugin.Processes.RunArgv]): Either[Shell.Problem, com.histmersion.plugin.Processes.Result.Out] =
       commands = commands :+ cmd
-      Right("")
-    def isRunning(processMatch: String): Boolean = running
+      Right(com.histmersion.plugin.Processes.Result.Out(""))
+    def isRunning(processMatch: Shell.ProcessMatch): Boolean = running
 
   // ── search: no matches, and the unlinked entries ─────────────────────────────────────
   test("a search with no match is an empty list, not 'unparseable JSON' — on both readers"):
@@ -394,25 +394,25 @@ class CalibreSuite extends munit.FunSuite:
     assertEquals(Calibre.parseMachineJson(com.histmersion.plugin.Processes.Result.Out("[]")), Right(Nil))
     // the GUI case: calibredb refuses, sqlite3 -json prints nothing at all for an empty result
     val shell = new RecordingShell():
-      override def run(cmd: List[String]) =
+      override def run(cmd: List[com.histmersion.plugin.Processes.RunArgv]): Either[Shell.Problem, com.histmersion.plugin.Processes.Result.Out] =
         commands = commands :+ cmd
-        if cmd.head.endsWith("calibredb") then Left("Another calibre program is running") else Right("")
-    assertEquals(Calibre(cfg(), shell).search("no such book"), Right(Nil))
+        if cmd.head.value.endsWith("calibredb") then Left(Calibre.Problem("Another calibre program is running")) else Right(com.histmersion.plugin.Processes.Result.Out(""))
+    assertEquals(Calibre(cfg(), shell).search(com.histmersion.plugin.CollectionQuery.Text("no such book")), Right(Nil))
 
   test("a book's cover file — calibredb's `cover` field, the sqlite fallback's `has_cover`"):
     val b = Calibre
-      .parseMachineJson("""[{"id":7,"title":"T","authors":"A","cover":"/lib/A/T (7)/cover.jpg"}]""")
-      .fold(fail(_), _.head)
+      .parseMachineJson(com.histmersion.plugin.Processes.Result.Out("""[{"id":7,"title":"T","authors":"A","cover":"/lib/A/T (7)/cover.jpg"}]"""))
+      .fold(e => fail(e.value), _.head)
     assertEquals(b.cover, Some("/lib/A/T (7)/cover.jpg"))
     val s = Calibre
-      .parseSqliteJson("""[{"id":7,"title":"T","authors":"A","cover":"A/T (7)/cover.jpg"}]""", com.histmersion.plugins.calibre.Calibre.Library.Value("/lib"))
-      .fold(fail(_), _.head)
+      .parseSqliteJson(com.histmersion.plugin.Processes.Result.Out("""[{"id":7,"title":"T","authors":"A","cover":"A/T (7)/cover.jpg"}]"""),com.histmersion.plugins.calibre.Calibre.Library.Value("/lib"))
+      .fold(e => fail(e.value), _.head)
     assertEquals(s.cover, Some("/lib/A/T (7)/cover.jpg"))
     assertEquals(
       Calibre
-        .parseSqliteJson("""[{"id":7,"title":"T","authors":"A","cover":null}]""", com.histmersion.plugins.calibre.Calibre.Library.Value("/lib"))
-        .fold(fail(_), _.head)
+        .parseSqliteJson(com.histmersion.plugin.Processes.Result.Out("""[{"id":7,"title":"T","authors":"A","cover":null}]"""),com.histmersion.plugins.calibre.Calibre.Library.Value("/lib"))
+        .fold(e => fail(e.value), _.head)
         .cover,
       None
     )
-    assert(Calibre.sqliteQuery(com.histmersion.plugins.calibre.Calibre.SqlWhere("1=1"), com.histmersion.plugins.calibre.Calibre.SqliteQueryLimit(1)).contains("has_cover"))
+    assert(Calibre.sqliteQuery(com.histmersion.plugins.calibre.Calibre.SqlWhere("1=1"), com.histmersion.plugins.calibre.Calibre.SqliteQueryLimit(1)).value.contains("has_cover"))

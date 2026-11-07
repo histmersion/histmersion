@@ -11,15 +11,19 @@ import com.histmersion.plugin.testkit.{HttpMode, PluginHarness, StubAnswer}
   */
 class CataloguePluginsKitSuite extends munit.FunSuite:
 
-  private def fixture(name: String): String =
-    scala.io.Source.fromResource(s"events/$name")(using scala.io.Codec.UTF8).mkString
+  private def fixture(name: String): com.histmersion.pluginhost.HttpAnswer.Text =
+    com.histmersion.pluginhost.HttpAnswer.Text(scala.io.Source.fromResource(s"events/$name")(using scala.io.Codec.UTF8).mkString)
 
-  private def load(id: String, stubs: Map[String, StubAnswer] = Map.empty, config: String = "") =
-    PluginHarness.load(id, config, http = HttpMode.Stub(stubs), env = Map.empty).fold(e => fail(e), identity)
+  private def load(
+      id: com.histmersion.plugin.Plugin.Info.Id,
+      stubs: Map[com.histmersion.pluginhost.HttpTransport.Url, StubAnswer] = Map.empty,
+      config: String = ""
+  ) =
+    PluginHarness.load(id, config, http = HttpMode.Stub(stubs), env = Map.empty).fold(e => fail(e.value), identity)
 
   test("each plugin loads from the class path with its defaults and the host's settings, and registers its catalogue"):
     List("events-gvp" -> "gvp", "events-noaa" -> "noaa", "events-wikidata" -> "wikidata").foreach { (id, catalogue) =>
-      val h = load(id)
+      val h = load(com.histmersion.plugin.Plugin.Info.Id(id))
       assertEquals(h.contributions.eventCatalogues, List(catalogue), id)
       assertEquals(h.plugin.info.version, "0.1.0", id)
       assertEquals(h.requests, Nil, s"$id asked an upstream while registering")
@@ -28,16 +32,16 @@ class CataloguePluginsKitSuite extends munit.FunSuite:
   test("a catalogue plugin has no setting the host owns: an endpoint in its block is refused"):
     val refused =
       PluginHarness.load(com.histmersion.plugin.Plugin.Info.Id("events-gvp"), "url = \"https://elsewhere.example\"", http = HttpMode.Offline, env = Map.empty)
-    assert(refused.left.exists(_.contains("unknown setting")), refused.toString)
+    assert(refused.left.exists(_.value.contains("unknown setting")), refused.toString)
 
   test("events-gvp: a window of years at the host's endpoint, each record checked and dated as the server stores it"):
     val url = GvpCatalogue.url(com.histmersion.plugins.events.GvpSettings.Url("https://webservices.volcano.si.edu/geoserver/GVP-VOTW/ows"), com.histmersion.plugins.events.GvpCatalogue.Year(-2000), com.histmersion.plugins.events.GvpCatalogue.Year(-1001), com.histmersion.plugins.events.GvpSettings.PageSize(5000))
-    val h = load("events-gvp", Map(url -> StubAnswer.text(fixture("gvp.json"), com.histmersion.domain.CoreQuota.HeaderValue("application/json"))))
-    val r = h.readCatalogue("gvp", CatalogueQuery(Some(Year(-2000)), Year(-1001)))
+    val h = load(com.histmersion.plugin.Plugin.Info.Id("events-gvp"), Map(com.histmersion.pluginhost.HttpTransport.Url(url.value) -> StubAnswer.text(fixture("gvp.json"), com.histmersion.domain.CoreQuota.HeaderValue("application/json"))))
+    val r = h.readCatalogue(com.histmersion.pluginhost.Registries.EventCataloguesKey("gvp"),CatalogueQuery(Some(Year(-2000)), Year(-1001)))
     assertEquals(r.parts, List("years:-2000..-1001"))
     assertEquals(r.requests, List(s"GET $url"))
     assertEquals((r.failure, r.refused), (None, Nil))
-    val thera = r.accepted.find(_.event.id == "13879").get
+    val thera = r.accepted.find(_.event.id == com.histmersion.plugin.CatalogueEvent.Id("13879")).get
     assertEquals(
       (thera.notBefore.map(_.value.toLong), thera.notAfter.map(_.value.toLong)),
       (Some(-1624L), Some(-1596L))
@@ -50,21 +54,21 @@ class CataloguePluginsKitSuite extends munit.FunSuite:
     val h = PluginHarness
       .load(
         com.histmersion.plugin.Plugin.Info.Id("events-gvp"),
-        http = HttpMode.Stub(Map(url -> StubAnswer.text(fixture("gvp.json"), com.histmersion.domain.CoreQuota.HeaderValue("application/json")))),
+        http = HttpMode.Stub(Map(com.histmersion.pluginhost.HttpTransport.Url(url.value) -> StubAnswer.text(fixture("gvp.json"), com.histmersion.domain.CoreQuota.HeaderValue("application/json")))),
         env = Map("HISTMERSION_EVENTS_GVP_URL" -> "https://gvp.example/ows")
       )
-      .fold(e => fail(e), identity)
-    val r = h.readCatalogue("gvp", CatalogueQuery(Some(Year(-2000)), Year(-1001)))
+      .fold(e => fail(e.value), identity)
+    val r = h.readCatalogue(com.histmersion.pluginhost.Registries.EventCataloguesKey("gvp"),CatalogueQuery(Some(Year(-2000)), Year(-1001)))
     assertEquals(r.requests, List(s"GET $url"))
     assertEquals(r.accepted.size, 3)
     assertEquals(
-      h.readCatalogue("gvp", CatalogueQuery(Some(Year(-3000)), Year(-1))).parts,
+      h.readCatalogue(com.histmersion.pluginhost.Registries.EventCataloguesKey("gvp"), CatalogueQuery(Some(Year(-3000)), Year(-1))).parts,
       List("years:-3000..-2001", "years:-2000..-1001", "years:-1000..-1")
     )
 
   test("events-noaa and events-wikidata: their parts from the host's settings, every NOAA dataset from page 1"):
     assertEquals(
-      load("events-noaa").readCatalogue("noaa", CatalogueQuery(None, Year(-2000))).parts,
+      load(com.histmersion.plugin.Plugin.Info.Id("events-noaa")).readCatalogue(com.histmersion.pluginhost.Registries.EventCataloguesKey("noaa"),CatalogueQuery(None, Year(-2000))).parts,
       List("earthquakes:1", "volcanoes:1", "tsunamis:1")
     )
     val wd = PluginHarness
@@ -73,5 +77,5 @@ class CataloguePluginsKitSuite extends munit.FunSuite:
         http = HttpMode.Offline,
         env = Map("HISTMERSION_EVENTS_WIKIDATA_CLASSES" -> "Q188055:siege")
       )
-      .fold(e => fail(e), identity)
+      .fold(e => fail(e.value), identity)
     assertEquals(wd.readCatalogue(com.histmersion.pluginhost.Registries.EventCataloguesKey("wikidata"), CatalogueQuery(None, Year(-2000))).parts, List("class:Q188055"))

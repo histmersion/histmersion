@@ -6,8 +6,9 @@ import com.histmersion.plugin.*
 
 class CliopatriaSuite extends munit.FunSuite:
 
-  private val fixture =
+  private val fixture = com.histmersion.plugins.gazetteers.DownloadedGazetteer.Text(
     scala.io.Source.fromResource("gazetteers/cliopatria.geojson")(using scala.io.Codec.UTF8).mkString
+  )
 
   private def period(a: Int, b: Int): Option[Period] = Period.from(Year(a), Year(b)).toOption
 
@@ -33,49 +34,49 @@ class CliopatriaSuite extends munit.FunSuite:
     val places = Cliopatria.read(fixture).toOption.get
     val hittite1 = places.find(_.id.contains("-1650_-1401")).get
     assert(hittite1.geometry.isDefined)
-    assert(hittite1.geometry.get.contains("Polygon"))
+    assert(hittite1.geometry.get.value.contains("Polygon"))
 
   // the host stores the dataset's credit with every place that states no source of its own
   test("source is set to Cliopatria attribution"):
     val places = Cliopatria.read(fixture).toOption.get
-    assert(Cliopatria.rights.credit.contains("Cliopatria"))
+    assert(Cliopatria.rights.credit.value.contains("Cliopatria"))
     assert(places.forall(_.source.isEmpty))
 
   test("kind is polity"):
     val places = Cliopatria.read(fixture).toOption.get
-    assert(places.forall(_.kind == "polity"))
+    assert(places.forall(_.kind.value == "polity"))
 
   test("names include the display name"):
     val places = Cliopatria.read(fixture).toOption.get
     val elam = places.find(_.id.contains("kingdom_of_elam")).get
-    assert(elam.names.exists(_.name == "Kingdom of Elam"))
+    assert(elam.names.exists(_.name.value == "Kingdom of Elam"))
 
   test("same polity with different time slices gets a part_of relation to parent concept"):
     val places = Cliopatria.read(fixture).toOption.get
     val hittite1 = places.find(_.id.contains("-1650_-1401")).get
     assert(
-      hittite1.relations.exists(r => r.parentId == "cliopatria_hittite_empire" && r.kind == GazetteerRelation.PartOf)
+      hittite1.relations.exists(r => r.parentId.value == "cliopatria_hittite_empire" && r.kind.value == GazetteerRelation.PartOf)
     )
 
   test("MemberOf creates an additional relation"):
     val places = Cliopatria.read(fixture).toOption.get
     val elam = places.find(_.id.contains("kingdom_of_elam")).get
     assert(
-      elam.relations.exists(_.parentId == "cliopatria_sumerian_city_states"),
+      elam.relations.exists(_.parentId.value == "cliopatria_sumerian_city_states"),
       elam.relations.map(_.parentId).mkString(", ")
     )
 
   test("parentConcepts generates grouping nodes for each distinct polity"):
     val places = Cliopatria.read(fixture).toOption.get
     val parents = Cliopatria.parentConcepts(places)
-    assert(parents.exists(_.id == "cliopatria_hittite_empire"))
-    assert(parents.exists(_.id == "cliopatria_kingdom_of_elam"))
+    assert(parents.exists(_.id.value == "cliopatria_hittite_empire"))
+    assert(parents.exists(_.id.value == "cliopatria_kingdom_of_elam"))
     assert(parents.forall(_.geometry.isEmpty))
 
   test("parentConcepts labels replace underscores with spaces"):
     val places = Cliopatria.read(fixture).toOption.get
     val parents = Cliopatria.parentConcepts(places)
-    val h = parents.find(_.id == "cliopatria_hittite_empire").get
+    val h = parents.find(_.id.value == "cliopatria_hittite_empire").get
     assertEquals(h.label, "hittite empire")
 
   // 2026-10-09: every concept was imported with no period — 1 604 polities "valid at every year",
@@ -107,19 +108,19 @@ class CliopatriaSuite extends munit.FunSuite:
     assert(result.isLeft)
 
   test("transform returns Left for empty features"):
-    val result = Cliopatria.read("""{"type":"FeatureCollection","features":[]}""")
+    val result = Cliopatria.read(com.histmersion.plugins.gazetteers.DownloadedGazetteer.Text("""{"type":"FeatureCollection","features":[]}"""))
     assert(result.isRight)
     assertEquals(result.toOption.get.length, 0)
 
   test("wikidata stored in properties"):
     val places = Cliopatria.read(fixture).toOption.get
     val hittite1 = places.find(_.id.contains("-1650_-1401")).get
-    assert(hittite1.properties.exists(_.contains("Q170494")))
+    assert(hittite1.properties.exists(_.value.contains("Q170494")))
 
   test("the gazetteer-cliopatria plugin registers the source cliopatria"):
     val h = com.histmersion.plugin.testkit.PluginHarness
       .load(com.histmersion.plugin.Plugin.Info.Id("gazetteer-cliopatria"), http = com.histmersion.plugin.testkit.HttpMode.Offline, env = Map.empty)
-      .fold(e => fail(e), identity)
+      .fold(e => fail(e.value), identity)
     assertEquals(h.gazetteerSources, List("cliopatria"))
 
   // the host's runner names no source: the parents come with the slices, first, as the runner stored them before
@@ -127,7 +128,7 @@ class CliopatriaSuite extends munit.FunSuite:
     val zip =
       val out = java.io.ByteArrayOutputStream()
       val z = java.util.zip.ZipOutputStream(out)
-      List("__MACOSX/._c" -> "mac", "dir/" -> "", "cliopatria.geojson" -> fixture, "later.txt" -> "x").foreach {
+      List("__MACOSX/._c" -> "mac", "dir/" -> "", "cliopatria.geojson" -> fixture.value, "later.txt" -> "x").foreach {
         (n, s) =>
           z.putNextEntry(java.util.zip.ZipEntry(n))
           if !n.endsWith("/") then z.write(s.getBytes("UTF-8"))
@@ -135,13 +136,14 @@ class CliopatriaSuite extends munit.FunSuite:
       }
       z.close()
       out.toByteArray
-    val asked = scala.collection.mutable.ListBuffer.empty[String]
+    val asked = scala.collection.mutable.ListBuffer.empty[Plugin.Http.FetchUrl]
     val http = new Plugin.Http:
-      def get(url: String, headers: Map[String, String]) = Left("get is not used")
-      override def fetch(url: String, headers: Map[String, String]) =
+      def get(url: Plugin.Http.GetUrl, headers: Map[Plugin.Http.GetHeadersPart1, Plugin.Http.GetHeadersPart2]) =
+        Left(Plugin.Http.GetResultPart1("get is not used"))
+      override def fetch(url: Plugin.Http.FetchUrl, headers: Map[Plugin.Http.FetchHeadersPart1, Plugin.Http.FetchHeadersPart2]) =
         asked += url
-        Right(Plugin.HttpResponse(com.histmersion.plugin.Plugin.HttpResponse.Status(200), Map.empty, zip))
-    val all = Cliopatria.fetch(http).fold(e => fail(e), identity)
+        Right(Plugin.HttpResponse(Plugin.HttpResponse.Status(200), Map.empty, Plugin.HttpResponse.Body(zip)))
+    val all = Cliopatria.fetch(http).fold(e => fail(e.value), identity)
     assertEquals(asked.toList, List(Cliopatria.url))
     assertEquals(
       all.map(_.id),
@@ -154,11 +156,12 @@ class CliopatriaSuite extends munit.FunSuite:
     )
 
   test("an error answer, a zip without a usable file: the download says which"):
-    def answering(status: Int, body: Array[Byte]) = new Plugin.Http:
-      def get(url: String, headers: Map[String, String]) = Left("get is not used")
-      override def fetch(url: String, headers: Map[String, String]) =
+    def answering(status: Plugin.HttpResponse.Status, body: Plugin.HttpResponse.Body) = new Plugin.Http:
+      def get(url: Plugin.Http.GetUrl, headers: Map[Plugin.Http.GetHeadersPart1, Plugin.Http.GetHeadersPart2]) =
+        Left(Plugin.Http.GetResultPart1("get is not used"))
+      override def fetch(url: Plugin.Http.FetchUrl, headers: Map[Plugin.Http.FetchHeadersPart1, Plugin.Http.FetchHeadersPart2]) =
         Right(Plugin.HttpResponse(status, Map.empty, body))
-    assertEquals(Cliopatria.fetch(answering(404, Array.emptyByteArray)), Left(s"HTTP 404 from ${Cliopatria.url}"))
+    assertEquals(Cliopatria.fetch(answering(Plugin.HttpResponse.Status(404), Plugin.HttpResponse.Body(Array.emptyByteArray))), Left(s"HTTP 404 from ${Cliopatria.url}"))
     val empty =
       val out = java.io.ByteArrayOutputStream()
       val z = java.util.zip.ZipOutputStream(out)
@@ -166,7 +169,7 @@ class CliopatriaSuite extends munit.FunSuite:
       z.closeEntry()
       z.close()
       out.toByteArray
-    assertEquals(Cliopatria.fetch(answering(200, empty)), Left("zip contains no usable file"))
+    assertEquals(Cliopatria.fetch(answering(Plugin.HttpResponse.Status(200), Plugin.HttpResponse.Body(empty))), Left("zip contains no usable file"))
 
   test("years in either order make one span; a year beyond what a Year holds leaves the slice undated"):
     val swapped = io.circe.parser

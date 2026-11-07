@@ -1,15 +1,16 @@
 package com.histmersion.plugins.ai
 
 import com.histmersion.plugin.*
+import com.histmersion.testsupport.ComparedByValue.given
 
 /** The Anthropic Messages API's request and answer, as pure functions: what is sent for a turn, what an answer says. */
 class AnthropicWireSuite extends munit.FunSuite:
 
   private val tool =
-    AiTool(com.histmersion.plugin.AiTool.Name("facets"), com.histmersion.plugin.AiTool.Description("The values of one field"), """{"type":"object","properties":{"field":{"type":"string"}}}""")
+    AiTool(com.histmersion.plugin.AiTool.Name("facets"), com.histmersion.plugin.AiTool.Description("The values of one field"), AiTool.InputSchema("""{"type":"object","properties":{"field":{"type":"string"}}}"""))
 
-  private def request(messages: List[AiMessage], tools: List[AiTool] = Nil, maxTokens: Int = 50) =
-    AiTurn.Request("claude-x", "SYS", messages, tools, None, maxTokens, 1, 3)
+  private def request(messages: List[AiMessage], tools: List[AiTool] = Nil, maxTokens: AiTurn.Request.MaxTokens = AiTurn.Request.MaxTokens(50)) =
+    AiTurn.Request(AiTurn.Request.Model("claude-x"), AiTurn.Request.System("SYS"), messages, tools, None, maxTokens, AiTurn.Request.Iteration(1), AiTurn.Request.MaxIterations(3))
 
   test("a turn's body: the conversation as content blocks, the system prompt, the cap, the tools, nulls dropped"):
     val body = AnthropicRequest
@@ -17,7 +18,7 @@ class AnthropicWireSuite extends munit.FunSuite:
         request(
           List(
             AiMessage.User(com.histmersion.plugin.AiMessage.User.Text("u")),
-            AiMessage.Assistant(com.histmersion.plugin.AiMessage.Assistant.Text(""), List(AiTool.Call(com.histmersion.plugin.AiTool.Call.Id("t1"), com.histmersion.plugin.AiTool.Call.Tool("facets"), """{"field":"tags","prefix":null}"""))),
+            AiMessage.Assistant(com.histmersion.plugin.AiMessage.Assistant.Text(""), List(AiTool.Call(com.histmersion.plugin.AiTool.Call.Id("t1"), com.histmersion.plugin.AiTool.Call.Tool("facets"), AiTool.Call.Input("""{"field":"tags","prefix":null}""")))),
             AiMessage.ToolResult(com.histmersion.plugin.AiMessage.ToolResult.CallId("t1"), com.histmersion.plugin.AiMessage.ToolResult.Tool("facets"), com.histmersion.plugin.AiMessage.ToolResult.Output("ok")),
             AiMessage.User(com.histmersion.plugin.AiMessage.User.Text("[Iteration 2 of 3]"))
           ),
@@ -37,11 +38,11 @@ class AnthropicWireSuite extends munit.FunSuite:
     )
 
   test("the answer's schema as output_config, closed; the default cap when the step names none"):
-    val r = request(List(AiMessage.User(com.histmersion.plugin.AiMessage.User.Text("u"))), maxTokens = 0).copy(
-      answerSchema = Some("""{"type":"object","properties":{"w":{"type":"string"}}}"""),
-      answerSchemaRendered = Some("""{"$schema":"s","type":"object","properties":{"w":{"type":"string"}}}""")
+    val r = request(List(AiMessage.User(com.histmersion.plugin.AiMessage.User.Text("u"))), maxTokens = AiTurn.Request.MaxTokens(0)).copy(
+      answerSchema = Some(AiTurn.Request.AnswerSchema("""{"type":"object","properties":{"w":{"type":"string"}}}""")),
+      answerSchemaRendered = Some(AiTurn.Request.AnswerSchemaRendered("""{"$schema":"s","type":"object","properties":{"w":{"type":"string"}}}"""))
     )
-    val body = AnthropicRequest.of(r).map(_.body).getOrElse("")
+    val body = AnthropicRequest.of(r).map(_.body.value).getOrElse("")
     assert(body.contains(""""max_tokens":4096"""), body)
     assert(
       body.endsWith(
@@ -52,7 +53,7 @@ class AnthropicWireSuite extends munit.FunSuite:
 
   test("a tool call whose input is not an object cannot be sent, and says why"):
     val r = request(List(AiMessage.Assistant(com.histmersion.plugin.AiMessage.Assistant.Text(""), List(AiTool.Call(com.histmersion.plugin.AiTool.Call.Id("t"), com.histmersion.plugin.AiTool.Call.Tool("x"), com.histmersion.plugin.AiTool.Call.Input("[1]"))))))
-    assert(AnthropicRequest.of(r).left.exists(_.startsWith("DecodingFailure")), AnthropicRequest.of(r).toString)
+    assert(AnthropicRequest.of(r).left.exists(_.value.startsWith("DecodingFailure")), AnthropicRequest.of(r).toString)
 
   private val ok =
     """{"id":"m","type":"message","role":"assistant","model":"claude-y","content":[{"type":"thinking","thinking":"…"},""" +
@@ -60,21 +61,21 @@ class AnthropicWireSuite extends munit.FunSuite:
 
   test("an answer: its first text block, its stop reason, its usage, the model that served it"):
     assertEquals(
-      AnthropicAnswer(com.histmersion.plugins.ai.AnthropicAnswer.Status(200), ok).turn,
+      AnthropicAnswer(com.histmersion.plugins.ai.AnthropicAnswer.Status(200), com.histmersion.plugins.ai.AnthropicAnswer.Body(ok)).turn,
       Right(AiTurn(com.histmersion.plugin.AiTurn.Text("first"), Nil, AiStop.MaxTokens, Some(AiUsage(com.histmersion.plugin.AiUsage.Input(10), com.histmersion.plugin.AiUsage.Output(2))), Some(com.histmersion.plugin.AiTurn.ServedBy("claude-y"))))
     )
 
   test("a failure: an error status's body as it came; an error in a success answer by its message; else why"):
-    assertEquals(AnthropicAnswer(com.histmersion.plugins.ai.AnthropicAnswer.Status(529), """{"type":"error"}""").turn, Left("""{"type":"error"}"""))
+    assertEquals(AnthropicAnswer(com.histmersion.plugins.ai.AnthropicAnswer.Status(529), com.histmersion.plugins.ai.AnthropicAnswer.Body("""{"type":"error"}""")).turn, Left("""{"type":"error"}"""))
     assertEquals(
-      AnthropicAnswer(com.histmersion.plugins.ai.AnthropicAnswer.Status(200), """{"type":"error","error":{"type":"overloaded_error","message":"Overloaded"}}""").turn,
+      AnthropicAnswer(com.histmersion.plugins.ai.AnthropicAnswer.Status(200), com.histmersion.plugins.ai.AnthropicAnswer.Body("""{"type":"error","error":{"type":"overloaded_error","message":"Overloaded"}}""")).turn,
       Left("Overloaded")
     )
-    assertEquals(AnthropicAnswer(com.histmersion.plugins.ai.AnthropicAnswer.Status(200), """{"id":"m"""").turn, Left("exhausted input"))
-    assertEquals(AnthropicAnswer(com.histmersion.plugins.ai.AnthropicAnswer.Status(200), """{"id":"m"}""").turn, Left("DecodingFailure at .error: Missing required field"))
+    assertEquals(AnthropicAnswer(com.histmersion.plugins.ai.AnthropicAnswer.Status(200), com.histmersion.plugins.ai.AnthropicAnswer.Body("""{"id":"m"""")).turn, Left("exhausted input"))
+    assertEquals(AnthropicAnswer(com.histmersion.plugins.ai.AnthropicAnswer.Status(200), com.histmersion.plugins.ai.AnthropicAnswer.Body("""{"id":"m"}""")).turn, Left("DecodingFailure at .error: Missing required field"))
     // a content block of an unknown type is not a message
     assertEquals(
-      AnthropicAnswer(com.histmersion.plugins.ai.AnthropicAnswer.Status(200), ok.replace("thinking\",\"thinking", "unknown\",\"thinking")).turn,
+      AnthropicAnswer(com.histmersion.plugins.ai.AnthropicAnswer.Status(200), com.histmersion.plugins.ai.AnthropicAnswer.Body(ok.replace("thinking\",\"thinking", "unknown\",\"thinking"))).turn,
       Left("DecodingFailure at .error: Missing required field")
     )
 

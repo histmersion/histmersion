@@ -24,17 +24,24 @@ class ArchiveOrgCollectionSuite extends munit.FunSuite:
   private val asked = scala.collection.mutable.ListBuffer.empty[String]
 
   private object Canned extends Plugin.Http:
-    def get(url: String, headers: Map[String, String]) =
-      asked += url
-      if url.contains("/advancedsearch.php") then
-        Right("""{"response":{"docs":[{"identifier":"zqbook"},{"identifier":"zqlent"}]}}""".getBytes(UTF_8))
-      else if url.contains("/download/zqbook/") then Right(("PK " + "e" * 20480).getBytes(UTF_8))
-      else answers.get(url).map(_.getBytes(UTF_8)).toRight(s"$url: HTTP 404 not found")
+    def get(
+        url: Plugin.Http.GetUrl,
+        headers: Map[Plugin.Http.GetHeadersPart1, Plugin.Http.GetHeadersPart2]
+    ): Either[Plugin.Http.GetResultPart1, Plugin.Http.GetResultPart2] =
+      asked += url.value
+      if url.value.contains("/advancedsearch.php") then
+        Right(Plugin.HttpResponse.Body("""{"response":{"docs":[{"identifier":"zqbook"},{"identifier":"zqlent"}]}}""".getBytes(UTF_8)))
+      else if url.value.contains("/download/zqbook/") then Right(Plugin.HttpResponse.Body(("PK " + "e" * 20480).getBytes(UTF_8)))
+      else
+        answers
+          .get(url.value)
+          .map(a => Plugin.HttpResponse.Body(a.getBytes(UTF_8)))
+          .toRight(Plugin.Http.GetResultPart1(s"${url.value}: HTTP 404 not found"))
 
   private val collection = ArchiveOrgCollection(() => ArchiveOrg(Endpoint(com.histmersion.domain.library.acquisition.Endpoint.Url("https://archive.org")), Canned))
 
   test("search: each hit's own metadata, the lending-only one marked restricted"):
-    val hits = collection.search(CollectionQuery(Some(com.histmersion.plugin.CollectionQuery.Text("bronze")), Some(com.histmersion.plugin.CollectionQuery.Limit(2)))).fold(fail(_), identity)
+    val hits = collection.search(CollectionQuery(Some(com.histmersion.plugin.CollectionQuery.Text("bronze")), Some(com.histmersion.plugin.CollectionQuery.Limit(2)))).fold(e => fail(e.value), identity)
     assertEquals(
       hits.map(h => (h.id.value: String, h.title, h.restricted)),
       List(("zqbook", Option("A Book"), false), ("zqlent", Option("Lent"), true))
@@ -42,20 +49,20 @@ class ArchiveOrgCollectionSuite extends munit.FunSuite:
     assert(asked.head.contains("rows=2"), asked.head)
 
   test("an item, the file an import takes, and its download; a lending-only one is never downloaded"):
-    val book = collection.item(CollectionId("zqbook")).fold(fail(_), identity).getOrElse(fail("no item"))
+    val book = collection.item(CollectionId("zqbook")).fold(e => fail(e.value), identity).getOrElse(fail("no item"))
     assertEquals((book.authors, book.year.map(y => y.value: Int)), (List("An Author"), Option(1901)))
     assertEquals(collection.file(book, None).map(_.name), Right("zqbook.epub"))
     assertEquals(collection.file(book, Some(com.histmersion.plugin.SourceCollection.FileFormat("pdf"))).map(_.name), Right("zqbook.pdf"))
-    val epub = collection.file(book, None).fold(fail(_), identity)
+    val epub = collection.file(book, None).fold(e => fail(e.value), identity)
     assertEquals(collection.original(book, epub).map(_.extension), Right("epub"))
-    val lent = collection.item(CollectionId("zqlent")).fold(fail(_), identity).getOrElse(fail("no item"))
+    val lent = collection.item(CollectionId("zqlent")).fold(e => fail(e.value), identity).getOrElse(fail("no item"))
     asked.clear()
-    assert(collection.original(lent, CollectionFile(com.histmersion.plugin.CollectionFile.Name("zqlent.pdf"))).left.exists(_.contains("lending-only")))
+    assert(collection.original(lent, CollectionFile(com.histmersion.plugin.CollectionFile.Name("zqlent.pdf"))).left.exists(_.value.contains("lending-only")))
     assertEquals(asked.toList, Nil)
-    assert(collection.item(CollectionId("zqgone")).left.exists(_.contains("404")))
+    assert(collection.item(CollectionId("zqgone")).left.exists(_.value.contains("404")))
 
   test("read-only: it declares reading alone and refuses every write"):
     assertEquals(collection.capabilities, Set(CollectionCapability.Read))
     assert(
-      collection.add(CollectionMetadata(com.histmersion.plugin.CollectionMetadata.Key("k"), com.histmersion.plugin.CollectionMetadata.Title("T"), List(com.histmersion.plugin.CollectionMetadata.Authors("A"))), FetchedFile(com.histmersion.plugin.FetchedFile.Source("x"), None, Array[Byte](1), com.histmersion.plugin.FetchedFile.Extension("pdf"))).isLeft
+      collection.add(CollectionMetadata(com.histmersion.plugin.CollectionMetadata.Key("k"), com.histmersion.plugin.CollectionMetadata.Title("T"), List(com.histmersion.plugin.CollectionMetadata.Authors("A"))), FetchedFile(com.histmersion.plugin.FetchedFile.Source("x"), None, FetchedFile.Bytes(Array[Byte](1)),com.histmersion.plugin.FetchedFile.Extension("pdf"))).isLeft
     )

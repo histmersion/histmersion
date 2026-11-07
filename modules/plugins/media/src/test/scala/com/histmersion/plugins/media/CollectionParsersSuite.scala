@@ -41,16 +41,16 @@ class CollectionParsersSuite extends munit.FunSuite:
   test(
     "Met: an object's licence from isPublicDomain, astronomical years moved one back, place fields most specific first"
   ):
-    val r = MetCollection.record(fixture("met-object.json")).fold(fail(_), identity)
+    val r = MetCollection.record(fixture("met-object.json")).fold(e => fail(e.value), identity)
     assertEquals(r.key, "252448")
     assertEquals(r.period, Period.span(-1400L, -1201L), "-1399..-1200 astronomical = 1400–1201 BCE")
     assertEquals(r.geography, List("excavation" -> "Mycenae", "country" -> "Greece"))
     assertEquals(r.imageUrl, Some("https://images.metmuseum.org/CRDImages/gr/web-large/DP121403.jpg"))
     assertEquals(r.originalUrl, Some("https://images.metmuseum.org/CRDImages/gr/original/DP121403.jpg"))
     assertEquals((r.role, r.rendition), (None, None), "the collection's role; the host measures the file")
-    val rights = r.rights.fold(fail(_), identity)
+    val rights = r.rights.fold(e => fail(e.value), identity)
     assertEquals((rights.licence, rights.licenceUrl), (Licence("CC0-1.0"), Some(Cc0Url)))
-    assertEquals(HostLicences.readName(rights.licence.value), Licence.Read(com.histmersion.plugin.Licence.Read.Id("CC0-1.0"), Licence.Read.Cc0))
+    assertEquals(HostLicences.readName(LicenceReader.ReadNameName(rights.licence.value)), Licence.Read(com.histmersion.plugin.Licence.Read.Id("CC0-1.0"), Licence.Read.Family(Licence.Read.Cc0)))
     assertEquals(rights.credit, "Terracotta animal figurine, The Metropolitan Museum of Art, CC0")
     val closed = fixture("met-object.json").mapObject(_.add("isPublicDomain", Json.False))
     assert(MetCollection.record(closed).toOption.get.rights.isLeft, "not public domain: refused, never assumed")
@@ -63,7 +63,7 @@ class CollectionParsersSuite extends munit.FunSuite:
     "Cleveland: records from the search, CC0 from share_license_status, find_spot before culture, web rendition stored"
   ):
     val rs =
-      ClevelandCollection.records(fixture("cma-search.json")).fold(fail(_), identity).map(_.fold(fail(_), identity))
+      ClevelandCollection.records(fixture("cma-search.json")).fold(e => fail(e.value), identity).map(_.fold(e => fail(e.value), identity))
     assertEquals(rs.size, 4)
     val earring = rs.head
     assertEquals(earring.key, "1916.131")
@@ -81,6 +81,7 @@ class CollectionParsersSuite extends munit.FunSuite:
     assert(
       ClevelandCollection
         .searchUrl(com.histmersion.plugin.Plugin.Http.GetUrl("https://openaccess-api.clevelandart.org/api"), com.histmersion.plugin.CollectionQuery.Text("Cyprus"), com.histmersion.plugins.media.CollectionSettings.Candidates(20))
+        .value
         .startsWith("https://openaccess-api.clevelandart.org/api/artworks/?q=Cyprus&cc0=1&has_image=1&limit=20&fields=")
     )
 
@@ -89,8 +90,8 @@ class CollectionParsersSuite extends munit.FunSuite:
   test("Chicago: is_public_domain decides; IIIF renditions at the display and thumbnail widths"):
     val rs = ArtInstituteCollection
       .records(fixture("aic-search.json"), com.histmersion.plugin.Plugin.Http.GetUrl("https://www.artic.edu/iiif/2"), com.histmersion.plugins.media.CollectionSettings.DisplayPx(843), com.histmersion.plugins.media.ArtInstituteCollection.ThumbPx(330))
-      .fold(fail(_), identity)
-      .map(_.fold(fail(_), identity))
+      .fold(e => fail(e.value), identity)
+      .map(_.fold(e => fail(e.value), identity))
     val coin = rs.head
     assertEquals(coin.key, "4441")
     assertEquals(coin.geography, List("place_of_origin" -> "Cyprus"))
@@ -105,7 +106,7 @@ class CollectionParsersSuite extends munit.FunSuite:
     )
     assertEquals(coin.pageUrl, "https://www.artic.edu/artworks/4441")
     assert(coin.rights.isRight)
-    assertEquals(coin.rights.map(r => HostLicences.readName(r.licence.value).family), Right(Licence.Read.Cc0))
+    assertEquals(coin.rights.map(r => HostLicences.readName(LicenceReader.ReadNameName(r.licence.value)).family), Right(Licence.Read.Cc0))
     assert(rs(1).rights.isLeft, "the fixture's second work is marked not public domain")
 
   // ── the Library of Congress ──────────────────────────────────────────────────────────────────
@@ -114,15 +115,15 @@ class CollectionParsersSuite extends munit.FunSuite:
     assertEquals(LocCollection.results(fixture("loc-search.json")), Right(List("2007627513", "2010593001")))
     assertEquals(LocCollection.itemId(com.histmersion.plugin.Plugin.Http.GetUrl("http://www.loc.gov/item/2007627513/")), Some("2007627513"))
     val r =
-      LocCollection.record(fixture("loc-item.json"), com.histmersion.plugins.media.CollectionSettings.ApiUrl("https://www.loc.gov"), com.histmersion.plugins.media.CollectionSettings.MaxYear(1928), com.histmersion.plugins.media.CollectionSettings.DisplayPx(1280), com.histmersion.plugins.media.MediaSettings.ThumbPx(330)).fold(fail(_), identity)
+      LocCollection.record(fixture("loc-item.json"), com.histmersion.plugins.media.CollectionSettings.ApiUrl("https://www.loc.gov"), com.histmersion.plugins.media.CollectionSettings.MaxYear(1928), com.histmersion.plugins.media.CollectionSettings.DisplayPx(1280), com.histmersion.plugins.media.MediaSettings.ThumbPx(330)).fold(e => fail(e.value), identity)
     assertEquals(r.key, "2007627513")
     assertEquals(r.period, Period.span(1880L, 1880L))
-    assertEquals(r.imageUrl.map(_.split('/').last), Some("1024.jpg"), "the largest JPEG no wider than display-px")
-    assertEquals(r.thumbUrl.map(_.split('/').last), Some("1024.jpg"), "the smallest JPEG no narrower than thumb-px")
-    assertEquals(r.originalUrl.map(_.split('/').last), Some("4000.jpg"))
+    assertEquals(r.imageUrl.map(_.value.split('/').last), Some("1024.jpg"), "the largest JPEG no wider than display-px")
+    assertEquals(r.thumbUrl.map(_.value.split('/').last), Some("1024.jpg"), "the smallest JPEG no narrower than thumb-px")
+    assertEquals(r.originalUrl.map(_.value.split('/').last), Some("4000.jpg"))
     assertEquals(r.rights.map(_.licence), Right(Licence("public-domain")))
     assertEquals(
-      r.rights.map(rr => HostLicences.readName(rr.licence.value).family),
+      r.rights.map(rr => HostLicences.readName(LicenceReader.ReadNameName(rr.licence.value)).family),
       Right(Licence.Read.PublicDomain)
     )
     assertEquals(
@@ -148,9 +149,9 @@ class CollectionParsersSuite extends munit.FunSuite:
       "https://commons.wikimedia.org/w/api.php?action=query&format=json&formatversion=2&list=search" +
         "&srnamespace=6&srlimit=10&srsearch=haswbstatement%3AP180%3DQ203729&maxlag=5"
     )
-    val ts = Commons.Depicts.titles(fixture("commons-depicts.json")).fold(fail(_), identity)
+    val ts = Commons.Depicts.titles(fixture("commons-depicts.json")).fold(e => fail(e.value), identity)
     assertEquals(ts.size, 3)
-    assert(ts.head.startsWith("File:Museum Hattusa"))
+    assert(ts.head.value.startsWith("File:Museum Hattusa"))
     assertEquals(
       Commons.Depicts.depictedBy(fixture("wd-depicted-by.json")),
       Map("Q203729" -> List("Q5002", "Q5001"), "Q404" -> Nil)

@@ -32,7 +32,7 @@ class PortalParsersSuite extends munit.FunSuite:
     assertEquals(GazetteerUri.of(com.histmersion.plugin.GazetteerPlace.Id("http://sws.geonames.org/310858/")), Some("geonames" -> "310858"))
     assertEquals(GazetteerUri.of(com.histmersion.plugin.GazetteerPlace.Id("http://www.wikidata.org/entity/Q5788")), Some("wikidata" -> "Q5788"))
     assertEquals(GazetteerUri.of(com.histmersion.plugin.GazetteerPlace.Id("https://opencontext.org/subjects/x")), None)
-    assertEquals(GazetteerUri.of(null), None)
+    assertEquals(GazetteerUri.of(com.histmersion.plugin.GazetteerPlace.Id(null)), None)
 
   // ── Open Context ─────────────────────────────────────────────────────────────────────────────
 
@@ -52,7 +52,7 @@ class PortalParsersSuite extends munit.FunSuite:
     "Open Context: a record's own licence and credit form, its context most specific first, its place ids, its dates"
   ):
     val recs =
-      OpenContext.records(fixture("oc-search.json"), licences).fold(fail(_), identity).map(_.fold(fail(_), identity))
+      OpenContext.records(fixture("oc-search.json"), licences).fold(e => fail(e.value), identity).map(_.fold(e => fail(e.value), identity))
     assertEquals(recs.size, 4)
     val bowls = recs(1)
     assertEquals(bowls.key, "f589a368-62ed-43df-5738-4c84d2f5f765")
@@ -61,15 +61,15 @@ class PortalParsersSuite extends munit.FunSuite:
     // the excavation units (Pottery 248, Locus none provided, Trench 94) name no place (#2571)
     assertEquals(bowls.geography.take(2), List("context" -> "Upper Temenos", "context" -> "Petra Great Temple"))
     assertEquals(
-      bowls.geography.filter(_._1 != "context"),
+      bowls.geography.filter(_._1.value != "context"),
       List("region" -> "Jordan", "region" -> "Asia", "dc-terms:spatial" -> "al-Wuʿaira"),
       "Open Context's label for Pleiades 697725 (Petra): the id, not the label, is the key"
     )
     assert(bowls.geography.contains("context" -> "Petra Great Temple"))
-    val r = bowls.rights.fold(fail(_), identity)
+    val r = bowls.rights.fold(e => fail(e.value), identity)
     assertEquals(r.licence, Licence("https://creativecommons.org/licenses/by/4.0"), "stated as the record states it")
     assertEquals(
-      licences.readUrl(r.licence.value),
+      licences.readUrl(com.histmersion.plugin.LicenceReader.ReadUrlUrl(r.licence.value)),
       Licence.Read(com.histmersion.plugin.Licence.Read.Id("CC-BY-4.0"), com.histmersion.plugin.Licence.Read.Family("cc-by"), needsAttribution = com.histmersion.plugin.Licence.Read.NeedsAttribution(true)),
       "the host reads it as CC BY 4.0"
     )
@@ -81,20 +81,20 @@ class PortalParsersSuite extends munit.FunSuite:
         "Upper Temenos/Trench 94/Locus none provided/Pottery 248\". In Petra Great Temple Excavations. Open Context. " +
         "https://n2t.net/ark:/28722/k2xk8d17p. CC BY 4.0"
     )
-    assert(bowls.imageUrl.exists(_.contains("ia-thumbnails")), "the search names only the thumbnail")
+    assert(bowls.imageUrl.exists(_.value.contains("ia-thumbnails")), "the search names only the thumbnail")
     assertEquals(bowls.withheld, None)
     assertEquals(recs(3).withheld, Some("human remains (Open Context flags them; not shown)"))
     assertEquals(OpenContext.records(parse("""{"totalResults":0}""").toOption.get, licences), Right(Nil))
 
   test("Open Context: a record without a licence, or with an unreadable one, cannot be used"):
     val row = fixture("oc-search.json").hcursor.downField("oc-api:has-results").downArray.focus.get
-    val none = OpenContext.record(row.mapObject(_.remove("License [URI]")), licences).fold(fail(_), identity)
+    val none = OpenContext.record(row.mapObject(_.remove("License [URI]")), licences).fold(e => fail(e.value), identity)
     assertEquals(none.rights, Left("no licence on the record"))
     val odd = OpenContext.record(
       row.mapObject(_.add("License [URI]", Json.arr(Json.fromString("https://example.org/t")))),
       licences
     )
-    assert(odd.toOption.get.rights.left.exists(_.startsWith("licence not readable")))
+    assert(odd.toOption.get.rights.left.exists(_.value.startsWith("licence not readable")))
     assert(
       OpenContext
         .record(row, LicenceReader.Unread)
@@ -102,14 +102,14 @@ class PortalParsersSuite extends munit.FunSuite:
         .get
         .rights
         .left
-        .exists(_.startsWith("licence not readable")),
+        .exists(_.value.startsWith("licence not readable")),
       "a host that lends no reading: no licence is readable, so none is stated"
     )
 
   test("Open Context: the media item gives the files and its licence is read again; a different one refuses it"):
     val rec = OpenContext.records(fixture("oc-search.json"), licences).toOption.get(1).toOption.get
     val item = fixture("oc-media.json")
-    val done = OpenContext.item(item, rec, licences).fold(fail(_), identity)
+    val done = OpenContext.item(item, rec, licences).fold(e => fail(e.value), identity)
     assertEquals(
       done.imageUrl,
       Some("https://storage.googleapis.com/opencontext-media/internet-archive/ia-previews/10-bowls-7-30-38jpg.jpg")
@@ -123,15 +123,15 @@ class PortalParsersSuite extends munit.FunSuite:
       Some("https://archive.org/download/opencontext-10-bowls-7-30-38jpg/10-bowls-7-30-38jpg.jpg")
     )
     val nc = parse(item.noSpaces.replace("licenses/by/4.0", "licenses/by-nc/4.0")).toOption.get
-    assert(OpenContext.item(nc, rec, licences).left.exists(_.contains("differs")))
+    assert(OpenContext.item(nc, rec, licences).left.exists(_.value.contains("differs")))
     assert(
       OpenContext
         .item(item.mapObject(_.remove("dc-terms:license")), rec, licences)
         .left
-        .exists(_.contains("no licence"))
+        .exists(_.value.contains("no licence"))
     )
     val bones = parse(item.noSpaces.replace("\"Religion\"", "\"Human remains (Archaeology)\"")).toOption.get
-    assert(OpenContext.item(bones, rec, licences).left.exists(_.contains("human remains")))
+    assert(OpenContext.item(bones, rec, licences).left.exists(_.value.contains("human remains")))
 
   test("Open Context: the short licence name of a label"):
     assertEquals(OpenContext.shortLicence(com.histmersion.plugin.Licence("Attribution 4.0 International (CC BY 4.0)"), com.histmersion.plugin.Licence.Read.Id("CC-BY-4.0")), "CC BY 4.0")
@@ -156,13 +156,13 @@ class PortalParsersSuite extends munit.FunSuite:
         "Area",
         "Pottery 248"
       )
-    do assert(OpenContext.unitSegment(u), u)
+    do assert(OpenContext.unitSegment(OpenContext.Segment(u)), u)
     for p <- List("Domuztepe", "Petra Great Temple", "Upper Temenos", "Lower Town", "Ishtar Gate") do
-      assert(!OpenContext.unitSegment(p), p)
+      assert(!OpenContext.unitSegment(OpenContext.Segment(p)), p)
     val recs = OpenContext
       .records(fixture("oc-search-domuztepe.json"), licences)
-      .fold(fail(_), identity)
-      .map(_.fold(fail(_), identity))
+      .fold(e => fail(e.value), identity)
+      .map(_.fold(e => fail(e.value), identity))
     assertEquals(
       recs.map(_.geography.filter(_._1 == OpenContext.Context)),
       List.fill(4)(List("context" -> "Domuztepe"))
@@ -175,39 +175,45 @@ class PortalParsersSuite extends munit.FunSuite:
   private def domuztepeRecords =
     OpenContext
       .records(fixture("oc-search-domuztepe.json"), licences)
-      .fold(fail(_), identity)
-      .map(_.fold(fail(_), identity))
+      .fold(e => fail(e.value), identity)
+      .map(_.fold(e => fail(e.value), identity))
       .map(PluginMedia.record)
 
   private val domuztepe =
     MediaMatch.PlaceInfo(com.histmersion.domain.media.imports.MediaMatch.PlaceInfo.Id("wikidata_q4165990"), com.histmersion.domain.media.imports.MediaMatch.PlaceInfo.Label("Domuztepe"), Set(com.histmersion.domain.media.imports.MediaMatch.PlaceInfo.Keys("domuztepe")), DeepTime.span(com.histmersion.domain.DeepTime.SignedYear(-6500L), com.histmersion.domain.DeepTime.SignedYear(-5400L)))
   // the live map (2026-10-23) has a place called "I" and Kahramanmaraş; the record's ids name the province
   private val domNames: MediaMatch.Resolve = Map(
-    "domuztepe" -> Set("wikidata_q4165990"),
-    "i" -> Set("wikidata_q103776406"),
-    "turkey" -> Set("ne_country_tur"),
-    "asia" -> Set("asia")
+    MediaMatch.PlaceInfo.Keys("domuztepe") -> Set(MediaMatch.PlaceInfo.Id("wikidata_q4165990")),
+    MediaMatch.PlaceInfo.Keys("i") -> Set(MediaMatch.PlaceInfo.Id("wikidata_q103776406")),
+    MediaMatch.PlaceInfo.Keys("turkey") -> Set(MediaMatch.PlaceInfo.Id("ne_country_tur")),
+    MediaMatch.PlaceInfo.Keys("asia") -> Set(MediaMatch.PlaceInfo.Id("asia"))
   ).withDefaultValue(Set.empty)
   private val domIds: MediaMatch.ResolveId =
-    Map(("geonames", "310858") -> Set("ne_city_1159127453")).withDefaultValue(Set.empty)
+    Map(
+      (
+        com.histmersion.domain.catalogue.places.ExternalIds.Scheme("geonames"),
+        com.histmersion.domain.catalogue.places.ExternalIds.ExternalId("310858")
+      ) -> Set(MediaMatch.PlaceInfo.Id("ne_city_1159127453"))
+    ).withDefaultValue(Set.empty)
+  private val deeper = Set(com.histmersion.domain.media.imports.MediaRecord.GeographyPart1(OpenContext.Context.value))
 
   test("a context naming the site ties the record although its ids name only its province (#2571)"):
     val recs = domuztepeRecords
     assertEquals(
-      recs.map(MediaMatch.withIds(_, domuztepe, domIds, domNames, Set(OpenContext.Context))).distinct,
+      recs.map(MediaMatch.withIds(_, domuztepe, domIds, domNames, deeper)).distinct,
       List(Right("context = Domuztepe; 6500–5500 BCE within 6500–5400 BCE"))
     )
     // the province's own place is not given the site's finds: the finer context names another place
     val kahramanmaras =
       MediaMatch.PlaceInfo(com.histmersion.domain.media.imports.MediaMatch.PlaceInfo.Id("ne_city_1159127453"), com.histmersion.domain.media.imports.MediaMatch.PlaceInfo.Label("Kahramanmaraş"), Set(com.histmersion.domain.media.imports.MediaMatch.PlaceInfo.Keys("kahramanmaras")), DeepTime.span(com.histmersion.domain.DeepTime.SignedYear(-8000L), com.histmersion.domain.DeepTime.SignedYear(2000L)))
     assertEquals(
-      MediaMatch.withIds(recs.head, kahramanmaras, domIds, domNames, Set(OpenContext.Context)),
+      MediaMatch.withIds(recs.head, kahramanmaras, domIds, domNames, deeper),
       Left("its context names another place on the map")
     )
     // the unit "I" kept as a context field (as before #2571) refused it: the map's "I" is another place
-    val before = recs.head.copy(geography = ("context" -> "I") :: recs.head.geography)
+    val before = recs.head.copy(geography = (com.histmersion.domain.media.imports.MediaRecord.GeographyPart1("context") -> com.histmersion.domain.media.imports.MediaRecord.GeographyPart2("I")) :: recs.head.geography)
     assertEquals(
-      MediaMatch.withIds(before, domuztepe, domIds, domNames, Set(OpenContext.Context)),
+      MediaMatch.withIds(before, domuztepe, domIds, domNames, deeper),
       Left("its context names another place on the map")
     )
 
@@ -222,11 +228,11 @@ class PortalParsersSuite extends munit.FunSuite:
   test("Pleiades: a referenced URL is a Commons file, a picture not taken (and why), or not a picture"):
     import PleiadesLinks.classify
     assertEquals(
-      classify("https://commons.wikimedia.org/wiki/File:Temple_d%27Apollon,_Oppidum_de_Gaujac.JPG"),
+      classify(com.histmersion.plugin.Plugin.Http.GetUrl("https://commons.wikimedia.org/wiki/File:Temple_d%27Apollon,_Oppidum_de_Gaujac.JPG")),
       Some(Right("File:Temple d'Apollon, Oppidum de Gaujac.JPG"))
     )
     assertEquals(
-      classify("https://upload.wikimedia.org/wikipedia/commons/thumb/a/ab/Lions_Gate.jpg/330px-Lions_Gate.jpg"),
+      classify(com.histmersion.plugin.Plugin.Http.GetUrl("https://upload.wikimedia.org/wikipedia/commons/thumb/a/ab/Lions_Gate.jpg/330px-Lions_Gate.jpg")),
       Some(Right("File:Lions Gate.jpg"))
     )
     assertEquals(
@@ -255,7 +261,7 @@ class PortalParsersSuite extends munit.FunSuite:
     assertEquals(classify(com.histmersion.plugin.Plugin.Http.GetUrl("https://www.wikidata.org/wiki/Q87276897")), None)
 
   test("Pleiades: a place record's picture links, in its order, with their citation type"):
-    val ls = PleiadesLinks.links(fixture("pleiades-place.json")).fold(fail(_), identity)
+    val ls = PleiadesLinks.links(fixture("pleiades-place.json")).fold(e => fail(e.value), identity)
     assertEquals(
       ls.map(l => (l.citation, l.file)),
       List(

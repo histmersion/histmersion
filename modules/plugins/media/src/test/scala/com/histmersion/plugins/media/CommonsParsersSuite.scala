@@ -21,7 +21,7 @@ class CommonsParsersSuite extends munit.FunSuite:
 
   /** Histmersion's own `media.*` defaults, as the host supplies them to a media plugin. */
   private lazy val media: MediaSettings =
-    val loaded = AppConfig.loadWithUserText(ConfigFactory.empty, "").fold(e => fail(e), identity)
+    val loaded = AppConfig.loadWithUserText(ConfigFactory.empty, "").fold(e => fail(e.value), identity)
     val supplied = FirstPartySettings.fallback(com.histmersion.plugin.Plugin.Info.Id("media-wikidata"), loaded.merged)
     summon[ConfigReader[MediaPlugin.Config]].from(supplied.root).fold(e => fail(e.toString), _.media)
 
@@ -34,10 +34,10 @@ class CommonsParsersSuite extends munit.FunSuite:
 
   test("the imageinfo URL asks for the rendition width and, with meta, only the licence fields"):
     val u = Commons.imageInfoUrl(com.histmersion.plugins.media.Commons.Settings.ApiUrl("https://c/w/api.php"), List(com.histmersion.plugins.media.Commons.File.Title("File:A b.jpg")), com.histmersion.plugins.media.Commons.File.Width(1280), com.histmersion.plugins.media.Commons.Settings.Maxlag(5), meta = com.histmersion.plugins.media.Commons.ImageInfoUrlMeta(true))
-    assert(u.contains("iiurlwidth=1280") && u.contains("iiextmetadatafilter=LicenseShortName%7CLicense%7C"), u)
-    assert(u.contains("titles=File%3AA+b.jpg") && u.endsWith("&maxlag=5"), u)
+    assert(u.value.contains("iiurlwidth=1280") && u.value.contains("iiextmetadatafilter=LicenseShortName%7CLicense%7C"), u)
+    assert(u.value.contains("titles=File%3AA+b.jpg") && u.value.endsWith("&maxlag=5"), u)
     val t = Commons.imageInfoUrl(com.histmersion.plugins.media.Commons.Settings.ApiUrl("https://c/w/api.php"), List(com.histmersion.plugins.media.Commons.File.Title("File:A.jpg")), com.histmersion.plugins.media.Commons.File.Width(330), com.histmersion.plugins.media.Commons.Settings.Maxlag(0), meta = com.histmersion.plugins.media.Commons.ImageInfoUrlMeta(false))
-    assert(!t.contains("extmetadata") && !t.contains("maxlag"), t)
+    assert(!t.value.contains("extmetadata") && !t.value.contains("maxlag"), t)
 
   private val imageinfo = json(
     """{"query":{
@@ -63,22 +63,22 @@ class CommonsParsersSuite extends munit.FunSuite:
 
   test("imageinfo: an API error is a Left for the whole answer"):
     val err = json("""{"error":{"code":"maxlag","info":"Waiting: 6 seconds lagged."}}""").toOption.get
-    assertEquals(Commons.imageInfo(err).left.toOption.map(_.takeWhile(_ != ':')), Some("maxlag"))
+    assertEquals(Commons.imageInfo(err).left.toOption.map(_.value.takeWhile(_ != ':')), Some("maxlag"))
 
   // ── rights ───────────────────────────────────────────────────────────────────────────────────
 
   /** Commons' answer for one file, `File:X.jpg`, with this `extmetadata`; every request recorded. */
   final private class OneFile(meta: Map[String, String]) extends Plugin.Http:
     val asked = scala.collection.mutable.ListBuffer.empty[String]
-    def get(url: String, headers: Map[String, String]) =
-      asked += url
+    def get(url: Plugin.Http.GetUrl, headers: Map[Plugin.Http.GetHeadersPart1, Plugin.Http.GetHeadersPart2]) =
+      asked += url.value
       val ext = Json.fromFields(meta.toList.map((k, v) => k -> Json.obj("value" -> Json.fromString(v))))
       val body =
         s"""{"query":{"pages":[{"title":"File:X.jpg","imageinfo":[{"size":100,"width":2000,"height":1000,
            "thumburl":"https://up/t/1280px-X.jpg","thumbwidth":1280,"thumbheight":640,
            "url":"https://up/X.jpg","descriptionurl":"https://commons/wiki/File:X.jpg","mime":"image/jpeg",
            "extmetadata":${ext.noSpaces}}]}]}}"""
-      Right(body.getBytes(UTF_8))
+      Right(Plugin.HttpResponse.Body(body.getBytes(UTF_8)))
 
   private def file(meta: (String, String)*): MediaItem =
     val http = OneFile(meta.toMap)
@@ -87,7 +87,7 @@ class CommonsParsersSuite extends munit.FunSuite:
     assertEquals(http.asked.size, 1, "one imageinfo call for the batch")
     items(com.histmersion.plugins.media.Commons.File.Title("File:X.jpg"))
 
-  private def refusal(meta: (String, String)*): Option[String] = file(meta*).withheld
+  private def refusal(meta: (String, String)*): Option[MediaItem.Withheld] = file(meta*).withheld
 
   test("rights: licence, author and Commons' credit form read from extmetadata; the files as Commons gives them"):
     val it = file(
@@ -98,9 +98,9 @@ class CommonsParsersSuite extends munit.FunSuite:
       "AttributionRequired" -> "true"
     )
     assertEquals(it.withheld, None)
-    val r = it.rights.fold(fail(_), identity)
+    val r = it.rights.fold(e => fail(e.value), identity)
     assertEquals(r.licence, Licence("CC-BY-SA-3.0"))
-    assertEquals(HostLicences.readName(r.licence.value).family, "cc-by-sa")
+    assertEquals(HostLicences.readName(LicenceReader.ReadNameName(r.licence.value)).family, "cc-by-sa")
     assertEquals(r.credit, "David Monniaux, CC BY-SA 3.0, via Wikimedia Commons")
     assertEquals(r.licenceUrl, Some("https://creativecommons.org/licenses/by-sa/3.0/"))
     assertEquals(r.author, Some("David Monniaux"))
@@ -127,7 +127,7 @@ class CommonsParsersSuite extends munit.FunSuite:
     )
     assertEquals(refusal("Artist" -> "x"), Some("no licence stated"))
     assert(
-      refusal("LicenseShortName" -> "Some custom terms", "Artist" -> "x").exists(_.contains("not recognised")),
+      refusal("LicenseShortName" -> "Some custom terms", "Artist" -> "x").exists(_.value.contains("not recognised")),
       "an unreadable licence"
     )
     assertEquals(refusal("LicenseShortName" -> "Copyrighted", "Artist" -> "x"), Some("all rights reserved"))
@@ -136,13 +136,13 @@ class CommonsParsersSuite extends munit.FunSuite:
 
   test("a file Commons does not answer for, or does not have, is stated with the reason it cannot be used"):
     val http = new Plugin.Http:
-      def get(url: String, headers: Map[String, String]) =
-        Right("""{"query":{"pages":[{"title":"File:Gone.jpg","missing":true}]}}""".getBytes(UTF_8))
+      def get(url: Plugin.Http.GetUrl, headers: Map[Plugin.Http.GetHeadersPart1, Plugin.Http.GetHeadersPart2]) =
+        Right(Plugin.HttpResponse.Body("""{"query":{"pages":[{"title":"File:Gone.jpg","missing":true}]}}""".getBytes(UTF_8)))
     val (items, failed) = Commons.Files(http, media, HostLicences).items(List(com.histmersion.plugins.media.Commons.File.Title("File:Gone.jpg"), com.histmersion.plugins.media.Commons.File.Title("File:Other.jpg")))
     assertEquals(failed, Nil)
     assertEquals(items(com.histmersion.plugins.media.Commons.File.Title("File:Gone.jpg")).rights, Left("missing on Commons"))
     assertEquals(items(com.histmersion.plugins.media.Commons.File.Title("File:Other.jpg")).rights, Left("no answer from Commons"))
-    val down = new Plugin.Http { def get(url: String, headers: Map[String, String]) = Left("HTTP 503") }
+    val down = new Plugin.Http { def get(url: Plugin.Http.GetUrl, headers: Map[Plugin.Http.GetHeadersPart1, Plugin.Http.GetHeadersPart2]) = Left(Plugin.Http.GetResultPart1("HTTP 503")) }
     val (none, lines) = Commons.Files(down, media, HostLicences).items(List(com.histmersion.plugins.media.Commons.File.Title("File:A.jpg")))
     assertEquals(none(com.histmersion.plugins.media.Commons.File.Title("File:A.jpg")).rights, Left("no answer from Commons"))
     assertEquals(lines, List("Commons File:A.jpg…: HTTP 503"))
