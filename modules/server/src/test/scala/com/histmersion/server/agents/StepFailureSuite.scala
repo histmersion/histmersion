@@ -1,5 +1,7 @@
 package com.histmersion.server.agents
 
+import com.histmersion.testsupport.ComparedByValue.given
+
 import com.histmersion.domain.library.workflows.*
 
 import com.histmersion.domain.automation.agents.{AnswerSchemas, Engine, Prompt}
@@ -23,15 +25,15 @@ class StepFailureSuite extends munit.FunSuite:
       """"usage":{"input_tokens":70000,"output_tokens":16384}}"""
 
   private def claudeResult(lines: String*) =
-    ClaudeCode.result(ClaudeCode.parse(lines.toList), "u", LibraryAnswers.notes).toOption.get
+    ClaudeCode.result(ClaudeCode.parse(lines.toList), com.histmersion.domain.automation.agents.LlmCall.User("u"), LibraryAnswers.notes).toOption.get
 
   test("#1450 Claude Code's output-cap error is recognised, with the cap it names"):
     val r = claudeResult(ClaudeStreams.Init, OverCap)
     assert(r.finalAnswer.isLeft)
     assertEquals(Engine.outputCapHit(r), Some(4096))
-    val msg = Engine.outputCapMessage("cold-reader-1", 4096, 4096, "claude-code:haiku", Engine.capKey(false))
+    val msg = Engine.outputCapMessage("cold-reader-1", com.histmersion.domain.automation.agents.Engine.OutputCapLimit(4096), com.histmersion.domain.automation.agents.Engine.Count(4096), com.histmersion.domain.automation.agents.AgentsControllers.ModelName("claude-code:haiku"), Engine.capKey(com.histmersion.domain.automation.agents.Engine.CapKeyOverridden(false)))
     assert(msg.contains("agents.step.max-tokens (HISTMERSION_AGENTS_MAX_TOKENS)") && msg.contains("resume"), msg)
-    assert(Engine.capKey(true).contains("fixer-max-tokens"))
+    assert(Engine.capKey(com.histmersion.domain.automation.agents.Engine.CapKeyOverridden(true)).contains("fixer-max-tokens"))
 
   test("#1450 an ordinary error, a usage limit or a good answer is not an output-cap hit"):
     val ok =
@@ -101,10 +103,10 @@ class StepFailureSuite extends munit.FunSuite:
   test("#941 a text answer that is not JSON keeps the parser's error: recorded, and the text goes back to amend"):
     // a truncated object (the answer ran out mid-string), prose, a JSON array; a well-formed object is no problem
     assert(CliOutcomes.textProblem("""{"notes": "abc""").exists(_.message.nonEmpty))
-    assert(CliOutcomes.textProblem("I could not find it.").exists(_.message.contains("no JSON object")))
-    assert(CliOutcomes.textProblem("[1, 2]").exists(_.message.contains("not an object")))
+    assert(CliOutcomes.textProblem(com.histmersion.server.agents.CliOutcomes.TextProblemText("I could not find it.")).exists(_.message.contains("no JSON object")))
+    assert(CliOutcomes.textProblem(com.histmersion.server.agents.CliOutcomes.TextProblemText("[1, 2]")).exists(_.message.contains("not an object")))
     assertEquals(CliOutcomes.textProblem("""```json\n{"notes":"x"}\n```"""), None)
-    assertEquals(CliOutcomes.textProblem("  "), None)
+    assertEquals(CliOutcomes.textProblem(com.histmersion.server.agents.CliOutcomes.TextProblemText("  ")), None)
     val text = """Here it is: {"notes": "abc"""
     val ok = """{"type":"result","subtype":"success","is_error":false,"num_turns":2,"result":""" +
       io.circe.Json.fromString(text).noSpaces + ""","usage":{}}"""
@@ -121,8 +123,8 @@ class StepFailureSuite extends munit.FunSuite:
     assertEquals(Engine.undecoded(r.finalAnswer), Some(text))
     // Codex / opencode: the final text is the answer
     val cli = CliOutcomes.result(
-      CliOutcome(Vector.empty, Vector.empty, Some("no json"), TokenUsage.Zero, None, 1),
-      "u",
+      CliOutcome(Vector.empty, Vector.empty, Some(com.histmersion.server.agents.CliOutcome.FinalText("no json")), TokenUsage.Zero, None, com.histmersion.server.agents.CliOutcome.Turns(1)),
+      com.histmersion.domain.automation.agents.LlmCall.User("u"),
       LibraryAnswers.notes,
       None
     )
@@ -133,8 +135,8 @@ class StepFailureSuite extends munit.FunSuite:
     )
     // an error result is not a parse problem: no cause, as before
     val failed = CliOutcomes.result(
-      CliOutcome(Vector.empty, Vector.empty, Some("boom"), TokenUsage.Zero, Some("crash"), 1),
-      "u",
+      CliOutcome(Vector.empty, Vector.empty, Some(com.histmersion.server.agents.CliOutcome.FinalText("boom")), TokenUsage.Zero, Some(com.histmersion.server.agents.CliOutcome.Error("crash")), com.histmersion.server.agents.CliOutcome.Turns(1)),
+      com.histmersion.domain.automation.agents.LlmCall.User("u"),
       LibraryAnswers.notes,
       None
     )

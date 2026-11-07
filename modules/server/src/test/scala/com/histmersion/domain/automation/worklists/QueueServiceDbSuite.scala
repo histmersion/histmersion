@@ -1,5 +1,7 @@
 package com.histmersion.domain.automation.worklists
 
+import com.histmersion.testsupport.ComparedByValue.given
+
 import com.histmersion.config.AppConfig
 import com.histmersion.util.database.Transactor
 

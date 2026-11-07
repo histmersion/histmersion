@@ -1,5 +1,7 @@
 package com.histmersion.domain.catalogue.places
 
+import com.histmersion.testsupport.ComparedByValue.given
+
 import hearth.kindlings.optics.syntax.*
 
 import com.histmersion.domain.library.sources.SourceFixtures
@@ -63,20 +65,20 @@ class PointAreaRepoSuite extends com.histmersion.db.DbSuite with com.histmersion
         Place.Input(
           Place(
             com.histmersion.api.catalogue.Place.Id(Site),
-            "Zzpa Site",
+            com.histmersion.api.catalogue.Place.Label("Zzpa Site"),
             com.histmersion.domain.catalogue.Place.Kind.Site,
             Some("""{"type":"Point","coordinates":[150.0,-60.0]}""")
           ),
-          List(Place.Name("Zzpa Site"))
+          List(Place.Name(com.histmersion.api.catalogue.Place.Name.Value("Zzpa Site")))
         ),
         Place.Input(
           Place(
             com.histmersion.api.catalogue.Place.Id(Thracia),
-            "Zzpa Thracia",
+            com.histmersion.api.catalogue.Place.Label("Zzpa Thracia"),
             com.histmersion.domain.catalogue.Place.Kind.Region,
             Some("""{"type":"Point","coordinates":[150.8,-60.2]}""")
           ),
-          List(Place.Name("Zzpa Thracia"), Place.Name("Zzpa Thrace"))
+          List(Place.Name(com.histmersion.api.catalogue.Place.Name.Value("Zzpa Thracia")), Place.Name(com.histmersion.api.catalogue.Place.Name.Value("Zzpa Thrace")))
         )
       )
     )
@@ -214,7 +216,7 @@ class PointAreaRepoSuite extends com.histmersion.db.DbSuite with com.histmersion
       groups.exists(g => g.source == "wikidata" && g.kind == "polity" && g.dating == Dating.Dated && g.places >= 1),
       groups.toString
     )
-    val r = connect(ds)(PointAreaRepo.reportIn(rule, kinds, 50))
+    val r = connect(ds)(PointAreaRepo.reportIn(rule, kinds, com.histmersion.domain.catalogue.places.PointAreas.ReportMaxItems(50)))
     assert(r.count >= 4, r.toString)
     assert(
       r.items.exists(i => i.citekey == Polity && i.detail.contains("1 finding, at no other place")),
@@ -224,7 +226,7 @@ class PointAreaRepoSuite extends com.histmersion.db.DbSuite with com.histmersion
       !r.items.exists(i => i.citekey == Shaped || i.citekey == GnSite || i.citekey == Site),
       "a shape, a site and the seed are no point areas"
     )
-    assertEquals(connect(ds)(PointAreaRepo.reportIn(rule, Nil, 50)).count, 0, "no kinds, no rule")
+    assertEquals(connect(ds)(PointAreaRepo.reportIn(rule, Nil, com.histmersion.domain.catalogue.places.PointAreas.ReportMaxItems(50))).count, 0, "no kinds, no rule")
     assert(Mine.forall(exists), "a listing writes nothing")
 
   test(
@@ -274,12 +276,12 @@ class PointAreaRepoSuite extends com.histmersion.db.DbSuite with com.histmersion
     assertEquals((1 to 4).map(at).toList, fixed)
     assertEquals(
       geometry.removePointAreas(settings(batch = 10, budgetMs = 1000)),
-      PointAreaRepo.Removal(0, 0, 0, 0),
+      PointAreaRepo.Removal(com.histmersion.domain.catalogue.places.PointAreaRepo.Removal.Removed(0), com.histmersion.domain.catalogue.places.PointAreaRepo.Removal.Remaining(0), com.histmersion.domain.catalogue.places.PointAreaRepo.Removal.Findings(0), com.histmersion.domain.catalogue.places.PointAreaRepo.Removal.Sources(0)),
       "nothing left to do"
     )
 
   test("the importer's prune passes over a place a person curated (place_overrides), as over evidence"):
     seed()
-    val ids = connect(ds)(PointAreaRepo.ofSourceIn("wikidata", kinds)).toSet
+    val ids = connect(ds)(PointAreaRepo.ofSourceIn(com.histmersion.domain.catalogue.places.PointAreas.Group.Source("wikidata"), kinds)).toSet
     assert(ids.contains(Region) && ids.contains(Polity), ids.toString)
     assert(!ids.contains(Curated) && !ids.contains(Pinned), ids.toString)

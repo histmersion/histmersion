@@ -1,5 +1,7 @@
 package com.histmersion.util.basemap
 
+import com.histmersion.testsupport.ComparedByValue.given
+
 import com.histmersion.util.storage.{Location, Reservation, Storage, Store}
 import io.circe.Json
 
@@ -39,57 +41,57 @@ object BasemapFixtures:
   def vectorTile(z: Int, x: Long, y: Long): Array[Byte] =
     Mvt.tile(
       List(
-        Mvt.layer("earth", List((3, square, Map("kind" -> "earth")))),
+        Mvt.layer(com.histmersion.util.basemap.Mvt.LayerName("earth"), List((com.histmersion.util.basemap.Mvt.GeomType(3), square, Map("kind" -> "earth")))),
         Mvt.layer(
-          "water",
+          com.histmersion.util.basemap.Mvt.LayerName("water"),
           List(
-            (3, square, Map("kind" -> "ocean")),
-            (2, line, Map("kind" -> "river")),
-            (2, line, Map("kind" -> "canal")),
-            (1, Vector(9, 40, 40), Map("kind" -> "sea", "name" -> "Aegean Sea", "name:en" -> "Aegean Sea"))
+            (com.histmersion.util.basemap.Mvt.GeomType(3), square, Map("kind" -> "ocean")),
+            (com.histmersion.util.basemap.Mvt.GeomType(2), line, Map("kind" -> "river")),
+            (com.histmersion.util.basemap.Mvt.GeomType(2), line, Map("kind" -> "canal")),
+            (com.histmersion.util.basemap.Mvt.GeomType(1), Vector(com.histmersion.util.basemap.Mvt.GeometryCommand(9), com.histmersion.util.basemap.Mvt.GeometryCommand(40), com.histmersion.util.basemap.Mvt.GeometryCommand(40)), Map("kind" -> "sea", "name" -> "Aegean Sea", "name:en" -> "Aegean Sea"))
           )
         ),
-        Mvt.layer("landcover", List((3, square, Map("kind" -> "forest")), (3, square, Map("kind" -> "farmland")))),
-        Mvt.layer("landuse", List((3, square, Map("kind" -> "residential")))),
+        Mvt.layer(com.histmersion.util.basemap.Mvt.LayerName("landcover"), List((com.histmersion.util.basemap.Mvt.GeomType(3), square, Map("kind" -> "forest")), (com.histmersion.util.basemap.Mvt.GeomType(3), square, Map("kind" -> "farmland")))),
+        Mvt.layer(com.histmersion.util.basemap.Mvt.LayerName("landuse"), List((com.histmersion.util.basemap.Mvt.GeomType(3), square, Map("kind" -> "residential")))),
         Mvt.layer(
-          "pois",
+          com.histmersion.util.basemap.Mvt.LayerName("pois"),
           List(
-            (1, Vector(9, 60, 60), Map("kind" -> "peak", "name" -> "Olympus")),
-            (1, Vector(9, 70, 70), Map("kind" -> "restaurant"))
+            (com.histmersion.util.basemap.Mvt.GeomType(1), Vector(com.histmersion.util.basemap.Mvt.GeometryCommand(9), com.histmersion.util.basemap.Mvt.GeometryCommand(60), com.histmersion.util.basemap.Mvt.GeometryCommand(60)), Map("kind" -> "peak", "name" -> "Olympus")),
+            (com.histmersion.util.basemap.Mvt.GeomType(1), Vector(com.histmersion.util.basemap.Mvt.GeometryCommand(9), com.histmersion.util.basemap.Mvt.GeometryCommand(70), com.histmersion.util.basemap.Mvt.GeometryCommand(70)), Map("kind" -> "restaurant"))
           )
         ),
-        Mvt.layer("roads", List((2, line, Map("kind" -> "highway", "name" -> s"A$z-$x-$y")))),
-        Mvt.layer("places", List((1, Vector(9, 50, 50), Map("kind" -> "locality", "name" -> "Zzville")))),
-        Mvt.layer("physical_point", List((1, Vector(9, 80, 80), Map("kind" -> "mountain_range", "name" -> "Pindus"))))
+        Mvt.layer(com.histmersion.util.basemap.Mvt.LayerName("roads"), List((com.histmersion.util.basemap.Mvt.GeomType(2), line, Map("kind" -> "highway", "name" -> s"A$z-$x-$y")))),
+        Mvt.layer(com.histmersion.util.basemap.Mvt.LayerName("places"), List((com.histmersion.util.basemap.Mvt.GeomType(1), Vector(com.histmersion.util.basemap.Mvt.GeometryCommand(9), com.histmersion.util.basemap.Mvt.GeometryCommand(50), com.histmersion.util.basemap.Mvt.GeometryCommand(50)), Map("kind" -> "locality", "name" -> "Zzville")))),
+        Mvt.layer(com.histmersion.util.basemap.Mvt.LayerName("physical_point"), List((com.histmersion.util.basemap.Mvt.GeomType(1), Vector(com.histmersion.util.basemap.Mvt.GeometryCommand(9), com.histmersion.util.basemap.Mvt.GeometryCommand(80), com.histmersion.util.basemap.Mvt.GeometryCommand(80)), Map("kind" -> "mountain_range", "name" -> "Pindus"))))
       )
     )
 
   private def header(t: PmTiles.TileType, c: PmTiles.Compression, maxZoom: Int) =
     PmTiles.Header(
-      0,
-      0,
-      0,
-      0,
-      0,
-      0,
-      0,
-      0,
-      0,
-      0,
-      0,
-      true,
+      com.histmersion.util.basemap.PmTiles.Header.MetadataOffset(0),
+      com.histmersion.util.basemap.PmTiles.Header.MetadataLength(0),
+      com.histmersion.util.basemap.PmTiles.Header.LeafOffset(0),
+      com.histmersion.util.basemap.PmTiles.Header.LeafLength(0),
+      com.histmersion.util.basemap.PmTiles.Header.DataOffset(0),
+      com.histmersion.util.basemap.PmTiles.Header.DataLength(0),
+      com.histmersion.util.basemap.PmTiles.Header.AddressedTiles(0),
+      com.histmersion.util.basemap.PmTiles.Header.TileEntries(0),
+      com.histmersion.util.basemap.PmTiles.Header.TileContents(0),
+      com.histmersion.util.basemap.PmTiles.Header.TileEntries(0),
+      com.histmersion.util.basemap.PmTiles.Header.TileContents(0),
+      com.histmersion.util.basemap.PmTiles.Header.Clustered(true),
       PmTiles.Compression.Gzip,
       c,
       t,
-      0,
+      com.histmersion.util.basemap.PmTiles.Header.MinZoom(0),
       maxZoom,
-      -180,
+      com.histmersion.util.basemap.PmTiles.Header.MinLon(-180),
       -85.05,
-      180,
+      com.histmersion.util.basemap.PmTiles.Header.MaxLon(180),
       85.05,
-      0,
-      0,
-      0
+      com.histmersion.util.basemap.PmTiles.Header.CenterLat(0),
+      com.histmersion.util.basemap.PmTiles.Header.CenterLon(0),
+      com.histmersion.util.basemap.PmTiles.Header.CenterLat(0)
     )
 
   /** A world archive of zooms 0…`maxZoom`, every tile from `tile` (stored with `compression`). */

@@ -1,5 +1,7 @@
 package com.histmersion.domain.catalogue.periods
 
+import com.histmersion.testsupport.ComparedByValue.given
+
 import com.histmersion.domain.Caller
 import com.histmersion.domain.catalogue.CatalogueState
 import com.histmersion.util.data.maintenance.WriteGate
@@ -20,42 +22,42 @@ class PeriodsControllersSuite extends munit.FunSuite:
   ): PeriodsControllers =
     val periods = PeriodService.InMemory(AtomicReference(CatalogueState.empty))
     val imports =
-      PeriodImports(periods, () => PeriodSources("https://periodo.test/dump", List("zzqauth")), seed, download)
+      PeriodImports(periods, () => PeriodSources(com.histmersion.domain.catalogue.periods.PeriodSources.PeriodoUrl("https://periodo.test/dump"), List(com.histmersion.domain.catalogue.periods.PeriodSources.Collections("zzqauth"))), seed, download)
     PeriodsControllers(periods, imports, gate)
 
   test("a sent dump is grouped under its authorities; a period shows its parent and its parts"):
     val c = controllers()
-    val r = c.importDataset(Caller.Local, Nil, Some("local"), dump).fold(e => fail(e.message), identity)
+    val r = c.importDataset(Caller.Local, Nil, Some(com.histmersion.domain.catalogue.periods.PeriodImports.Dataset("local")), dump).fold(e => fail(e.message), identity)
     assertEquals(r.roots, 2)
-    val lba = c.period("zzqauthlba").fold(e => fail(e.message), identity)
+    val lba = c.period(com.histmersion.api.catalogue.HistoricalPeriod.Id("zzqauthlba")).fold(e => fail(e.message), identity)
     assertEquals(lba.parent.map(_.id), Some("zzqauthbronze"))
-    val node = c.period("zzqauth").fold(e => fail(e.message), identity)
+    val node = c.period(com.histmersion.api.catalogue.HistoricalPeriod.Id("zzqauth")).fold(e => fail(e.message), identity)
     assertEquals(node.children.map(_.id).toSet, Set("zzqauthbronze", "zzqauthiron"))
-    assertEquals(c.search(Some("Zzq Late"), None, None, None).map(_.id), List("zzqauthlba"))
-    assertEquals(c.period("zz_none").left.map(_.message), Left("No period 'zz_none'"))
+    assertEquals(c.search(Some(com.histmersion.domain.catalogue.periods.PeriodSearch.Text("Zzq Late")), None, None, None).map(_.id), List("zzqauthlba"))
+    assertEquals(c.period(com.histmersion.api.catalogue.HistoricalPeriod.Id("zz_none")).left.map(_.message), Left("No period 'zz_none'"))
 
   test("a fetch takes the configured collections; an unknown source, dataset or collection is refused"):
     val c = controllers()
-    val r = c.fetch(Caller.Local, "PeriodO", Nil).fold(e => fail(e.message), identity)
+    val r = c.fetch(Caller.Local, com.histmersion.domain.catalogue.periods.PeriodSources.PeriodoUrl("PeriodO"), Nil).fold(e => fail(e.message), identity)
     assertEquals(r.roots, 1)
     assertEquals(r.periods, 4)
-    assert(c.period("zzqother01").isLeft)
-    assert(c.fetch(Caller.Local, "chronontology", Nil).left.exists(_.message.contains("unknown period source")))
-    assert(c.fetch(Caller.Local, "periodo", List("zzqnope")).left.exists(_.message.contains("zzqnope")))
-    assert(c.importDataset(Caller.Local, Nil, Some("other"), dump).left.exists(_.message.contains("seed or local")))
+    assert(c.period(com.histmersion.api.catalogue.HistoricalPeriod.Id("zzqother01")).isLeft)
+    assert(c.fetch(Caller.Local, com.histmersion.domain.catalogue.periods.PeriodSources.PeriodoUrl("chronontology"), Nil).left.exists(_.message.contains("unknown period source")))
+    assert(c.fetch(Caller.Local, com.histmersion.domain.catalogue.periods.PeriodSources.PeriodoUrl("periodo"), List(com.histmersion.domain.catalogue.periods.PeriodSources.Collections("zzqnope"))).left.exists(_.message.contains("zzqnope")))
+    assert(c.importDataset(Caller.Local, Nil, Some(com.histmersion.domain.catalogue.periods.PeriodImports.Dataset("other")), dump).left.exists(_.message.contains("seed or local")))
     val dead = controllers(download = _ => Left("HTTP 503 from https://periodo.test/dump"))
-    assert(dead.fetch(Caller.Local, "periodo", Nil).left.exists(_.message.contains("503")))
+    assert(dead.fetch(Caller.Local, com.histmersion.domain.catalogue.periods.PeriodSources.PeriodoUrl("periodo"), Nil).left.exists(_.message.contains("503")))
 
   test("the seed's absence is the answer of a seed; a held lock refuses every write"):
-    assertEquals(controllers().seed(Caller.Local, replace = false).left.map(_.message), Left("no period seed here"))
+    assertEquals(controllers().seed(Caller.Local, replace = com.histmersion.domain.catalogue.periods.PeriodImports.Replace(false)).left.map(_.message), Left("no period seed here"))
     val gate = WriteGate()
     val c = controllers(gate = gate)
-    val held = gate.exclusively("restore") {
+    val held = gate.exclusively(com.histmersion.util.data.maintenance.WriteGate.OperationName("restore")) {
       Right(
         (
-          c.seed(Caller.Local, replace = false),
+          c.seed(Caller.Local, replace = com.histmersion.domain.catalogue.periods.PeriodImports.Replace(false)),
           c.importDataset(Caller.Local, Nil, None, dump),
-          c.fetch(Caller.Local, "periodo", Nil)
+          c.fetch(Caller.Local, com.histmersion.domain.catalogue.periods.PeriodSources.PeriodoUrl("periodo"), Nil)
         )
       )
     }

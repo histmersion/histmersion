@@ -65,7 +65,7 @@ object MediaWire:
       case "252448" => json(obj)
       case "248284" => json(obj.replace("\"isPublicDomain\": true", "\"isPublicDomain\": false"))
       case "252447" => json(obj.replace("\"excavation\": \"Mycenae\"", "\"excavation\": \"Argos\""))
-      case _        => Right(HttpAnswer(404, Map.empty, Array.emptyByteArray))
+      case _        => Right(HttpAnswer(com.histmersion.pluginhost.HttpAnswer.Code(404), Map.empty, Array.emptyByteArray))
 
   /** Every provider's answers, by the URL's host and path; anything else is a picture (its bytes name its URL). */
   def route(url: String): Either[String, HttpAnswer] =
@@ -123,7 +123,7 @@ object MediaWire:
       Left("not used")
     def health: Either[String, String] = Right("ok")
     override def thumbnail(bytes: Array[Byte], filename: String, maxPx: Int): Either[String, ConverterClient.Thumb] =
-      Right(ConverterClient.Thumb(jpeg(s"thumb:$filename:$maxPx"), "image/jpeg", maxPx, maxPx * 3 / 4))
+      Right(ConverterClient.Thumb(jpeg(s"thumb:$filename:$maxPx"), com.histmersion.util.ocr.ConverterClient.Thumb.Mime("image/jpeg"), maxPx, maxPx * 3 / 4))
 
   val env: Map[String, String] = Map("ZQMT_SI_KEY" -> "si-fixture-key", "ZQMT_EU_KEY" -> "eu-fixture-key")
 

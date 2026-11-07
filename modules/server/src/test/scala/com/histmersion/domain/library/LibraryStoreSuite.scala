@@ -21,7 +21,7 @@ abstract class LibraryStoreSuite extends com.histmersion.db.DbSuite:
 
 object LibraryStoreSuite:
 
-  val Settings: SourceSettings = SourceSettings(4000, 25.0)
+  val Settings: SourceSettings = SourceSettings(com.histmersion.domain.library.sources.SourceSettings.ChunkChars(4000), 25.0)
 
   /** A clock that moves a millisecond each read, as the database's `now()` differs between transactions. */
   final class Ticking extends Clock:

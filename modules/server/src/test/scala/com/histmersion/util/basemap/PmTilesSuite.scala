@@ -1,5 +1,7 @@
 package com.histmersion.util.basemap
 
+import com.histmersion.testsupport.ComparedByValue.given
+
 import io.circe.Json
 
 import java.nio.file.Files
@@ -8,13 +10,13 @@ import java.nio.file.Files
 class PmTilesSuite extends munit.FunSuite:
 
   test("tile ids follow the spec's Hilbert numbering (its own examples)"):
-    assertEquals(PmTiles.tileId(0, 0, 0), 0L)
-    assertEquals(PmTiles.tileId(1, 0, 0), 1L)
-    assertEquals(PmTiles.tileId(1, 0, 1), 2L)
-    assertEquals(PmTiles.tileId(1, 1, 1), 3L)
-    assertEquals(PmTiles.tileId(1, 1, 0), 4L)
-    assertEquals(PmTiles.tileId(2, 0, 0), 5L)
-    assertEquals(PmTiles.zoomBase(12), 5592405L)
+    assertEquals(PmTiles.tileId(com.histmersion.util.basemap.PmTiles.Zoom(0), com.histmersion.util.basemap.PmTiles.TileColumn(0), com.histmersion.util.basemap.PmTiles.TileRow(0)), 0L)
+    assertEquals(PmTiles.tileId(com.histmersion.util.basemap.PmTiles.Zoom(1), com.histmersion.util.basemap.PmTiles.TileColumn(0), com.histmersion.util.basemap.PmTiles.TileRow(0)), 1L)
+    assertEquals(PmTiles.tileId(com.histmersion.util.basemap.PmTiles.Zoom(1), com.histmersion.util.basemap.PmTiles.TileColumn(0), com.histmersion.util.basemap.PmTiles.TileRow(1)), 2L)
+    assertEquals(PmTiles.tileId(com.histmersion.util.basemap.PmTiles.Zoom(1), com.histmersion.util.basemap.PmTiles.TileColumn(1), com.histmersion.util.basemap.PmTiles.TileRow(1)), 3L)
+    assertEquals(PmTiles.tileId(com.histmersion.util.basemap.PmTiles.Zoom(1), com.histmersion.util.basemap.PmTiles.TileColumn(1), com.histmersion.util.basemap.PmTiles.TileRow(0)), 4L)
+    assertEquals(PmTiles.tileId(com.histmersion.util.basemap.PmTiles.Zoom(2), com.histmersion.util.basemap.PmTiles.TileColumn(0), com.histmersion.util.basemap.PmTiles.TileRow(0)), 5L)
+    assertEquals(PmTiles.zoomBase(com.histmersion.util.basemap.PmTiles.Zoom(12)), 5592405L)
     // go-pmtiles: ZxyToID(3, 3, 3) = 31… check by the inverse instead, over whole zooms
     for z <- 0 to 6; x <- 0L until (1L << z); y <- 0L until (1L << z) do
       assertEquals(PmTiles.zxy(PmTiles.tileId(z, x, y)), (z, x, y))
@@ -22,32 +24,32 @@ class PmTilesSuite extends munit.FunSuite:
   test("ids at one zoom are a permutation of its range"):
     val z = 4
     val ids = for x <- 0L until 16L; y <- 0L until 16L yield PmTiles.tileId(z, x, y)
-    assertEquals(ids.sorted, (PmTiles.zoomBase(4) until PmTiles.zoomBase(5)).toVector)
+    assertEquals(ids.sorted, (PmTiles.zoomBase(com.histmersion.util.basemap.PmTiles.Zoom(4)) until PmTiles.zoomBase(com.histmersion.util.basemap.PmTiles.Zoom(5))).toVector)
 
   test("the header round-trips"):
     val h = PmTiles.Header(
-      127,
-      300,
-      427,
-      50,
-      477,
-      0,
-      477,
-      9999,
-      10,
-      8,
-      7,
-      true,
+      com.histmersion.util.basemap.PmTiles.Header.RootOffset(127),
+      com.histmersion.util.basemap.PmTiles.Header.RootLength(300),
+      com.histmersion.util.basemap.PmTiles.Header.MetadataOffset(427),
+      com.histmersion.util.basemap.PmTiles.Header.MetadataLength(50),
+      com.histmersion.util.basemap.PmTiles.Header.DataOffset(477),
+      com.histmersion.util.basemap.PmTiles.Header.LeafLength(0),
+      com.histmersion.util.basemap.PmTiles.Header.DataOffset(477),
+      com.histmersion.util.basemap.PmTiles.Header.DataLength(9999),
+      com.histmersion.util.basemap.PmTiles.Header.AddressedTiles(10),
+      com.histmersion.util.basemap.PmTiles.Header.TileEntries(8),
+      com.histmersion.util.basemap.PmTiles.Header.TileContents(7),
+      com.histmersion.util.basemap.PmTiles.Header.Clustered(true),
       PmTiles.Compression.Gzip,
       PmTiles.Compression.Gzip,
       PmTiles.TileType.Mvt,
-      0,
-      10,
+      com.histmersion.util.basemap.PmTiles.Header.MinZoom(0),
+      com.histmersion.util.basemap.PmTiles.Header.MaxZoom(10),
       -12.5,
       20.25,
       90.0,
       62.0,
-      5,
+      com.histmersion.util.basemap.PmTiles.Header.CenterZoom(5),
       30.0,
       38.0
     )
@@ -58,42 +60,42 @@ class PmTilesSuite extends munit.FunSuite:
 
   test("a directory round-trips, contiguous offsets stored as 0"):
     val es = Vector(
-      PmTiles.Entry(0, 0, 10, 1),
-      PmTiles.Entry(1, 10, 20, 3),
-      PmTiles.Entry(9, 0, 10, 1),
-      PmTiles.Entry(20, 500, 7, 0)
+      PmTiles.Entry(com.histmersion.util.basemap.PmTiles.Entry.TileId(0), com.histmersion.util.basemap.PmTiles.Entry.Offset(0), com.histmersion.util.basemap.PmTiles.Entry.Length(10), com.histmersion.util.basemap.PmTiles.Entry.RunLength(1)),
+      PmTiles.Entry(com.histmersion.util.basemap.PmTiles.Entry.TileId(1), com.histmersion.util.basemap.PmTiles.Entry.Offset(10), com.histmersion.util.basemap.PmTiles.Entry.Length(20), com.histmersion.util.basemap.PmTiles.Entry.RunLength(3)),
+      PmTiles.Entry(com.histmersion.util.basemap.PmTiles.Entry.TileId(9), com.histmersion.util.basemap.PmTiles.Entry.Offset(0), com.histmersion.util.basemap.PmTiles.Entry.Length(10), com.histmersion.util.basemap.PmTiles.Entry.RunLength(1)),
+      PmTiles.Entry(com.histmersion.util.basemap.PmTiles.Entry.TileId(20), com.histmersion.util.basemap.PmTiles.Entry.Offset(500), com.histmersion.util.basemap.PmTiles.Entry.Length(7), com.histmersion.util.basemap.PmTiles.Entry.RunLength(0))
     )
     assertEquals(PmTiles.decodeDirectory(PmTiles.encodeDirectory(es)), Right(es))
     assert(PmTiles.decodeDirectory(Array(5.toByte)).isLeft)
 
   test("find: a run covers its ids, a leaf is returned to look further"):
-    val es = Vector(PmTiles.Entry(1, 0, 10, 3), PmTiles.Entry(10, 10, 5, 0))
-    assertEquals(PmTiles.find(es, 0), None)
-    assertEquals(PmTiles.find(es, 3).map(_.offset), Some(0L))
-    assertEquals(PmTiles.find(es, 4), None)
-    assertEquals(PmTiles.find(es, 99).map(_.isLeaf), Some(true))
+    val es = Vector(PmTiles.Entry(com.histmersion.util.basemap.PmTiles.Entry.TileId(1), com.histmersion.util.basemap.PmTiles.Entry.Offset(0), com.histmersion.util.basemap.PmTiles.Entry.Length(10), com.histmersion.util.basemap.PmTiles.Entry.RunLength(3)), PmTiles.Entry(com.histmersion.util.basemap.PmTiles.Entry.TileId(10), com.histmersion.util.basemap.PmTiles.Entry.Offset(10), com.histmersion.util.basemap.PmTiles.Entry.Length(5), com.histmersion.util.basemap.PmTiles.Entry.RunLength(0)))
+    assertEquals(PmTiles.find(es, com.histmersion.util.basemap.PmTiles.Entry.TileId(0)), None)
+    assertEquals(PmTiles.find(es, com.histmersion.util.basemap.PmTiles.Entry.TileId(3)).map(_.offset), Some(0L))
+    assertEquals(PmTiles.find(es, com.histmersion.util.basemap.PmTiles.Entry.TileId(4)), None)
+    assertEquals(PmTiles.find(es, com.histmersion.util.basemap.PmTiles.Entry.TileId(99)).map(_.isLeaf), Some(true))
 
   private def template(maxZoom: Int) = PmTiles.Header(
-    0,
-    0,
-    0,
-    0,
-    0,
-    0,
-    0,
-    0,
-    0,
-    0,
-    0,
-    true,
+    com.histmersion.util.basemap.PmTiles.Header.MetadataOffset(0),
+    com.histmersion.util.basemap.PmTiles.Header.MetadataLength(0),
+    com.histmersion.util.basemap.PmTiles.Header.LeafOffset(0),
+    com.histmersion.util.basemap.PmTiles.Header.LeafLength(0),
+    com.histmersion.util.basemap.PmTiles.Header.DataOffset(0),
+    com.histmersion.util.basemap.PmTiles.Header.DataLength(0),
+    com.histmersion.util.basemap.PmTiles.Header.AddressedTiles(0),
+    com.histmersion.util.basemap.PmTiles.Header.TileEntries(0),
+    com.histmersion.util.basemap.PmTiles.Header.TileContents(0),
+    com.histmersion.util.basemap.PmTiles.Header.TileEntries(0),
+    com.histmersion.util.basemap.PmTiles.Header.TileContents(0),
+    com.histmersion.util.basemap.PmTiles.Header.Clustered(true),
     PmTiles.Compression.Gzip,
     PmTiles.Compression.None,
     PmTiles.TileType.Png,
-    0,
+    com.histmersion.util.basemap.PmTiles.Header.MinZoom(0),
     maxZoom,
-    20,
-    34,
-    30,
+    com.histmersion.util.basemap.PmTiles.Header.MinLon(20),
+    com.histmersion.util.basemap.PmTiles.Header.MinLat(34),
+    com.histmersion.util.basemap.PmTiles.Header.CenterZoom(3)0,
     42,
     3,
     25,
@@ -114,9 +116,9 @@ class PmTilesSuite extends munit.FunSuite:
       assertEquals(r.header.addressedTiles, 85L)
       assert(r.header.tileContents < 85L, "the identical tiles are stored once")
       assertEquals(r.metadata.hcursor.get[String]("name"), Right("test"))
-      assertEquals(r.tile(2, 1, 3).map(_.map(String(_))), Right(Some("2/1/3")))
-      assertEquals(r.tile(3, 5, 0).map(_.map(_.toList)), Right(Some(List[Byte](9, 9))))
-      assertEquals(r.tile(4, 0, 0), Right(None))
+      assertEquals(r.tile(com.histmersion.util.basemap.PmTiles.Zoom(2), com.histmersion.util.basemap.PmTiles.TileColumn(1), com.histmersion.util.basemap.PmTiles.TileRow(3)).map(_.map(String(_))), Right(Some("2/1/3")))
+      assertEquals(r.tile(com.histmersion.util.basemap.PmTiles.Zoom(3), com.histmersion.util.basemap.PmTiles.TileColumn(5), com.histmersion.util.basemap.PmTiles.TileRow(0)).map(_.map(_.toList)), Right(Some(List[Byte](9, 9))))
+      assertEquals(r.tile(com.histmersion.util.basemap.PmTiles.Zoom(4), com.histmersion.util.basemap.PmTiles.TileColumn(0), com.histmersion.util.basemap.PmTiles.TileRow(0)), Right(None))
       assert(!Files.exists(dir.resolve("t.pmtiles.data")))
     finally r.close()
 
@@ -145,11 +147,11 @@ class PmTilesSuite extends munit.FunSuite:
     val p = BasemapFixtures.vectorArchive(dir.resolve("v.pmtiles"), maxZoom = 3)
     val f = BasemapFixtures.open(p).fold(fail(_), identity)
     try
-      val before = f.tile(2, 1, 1).fold(fail(_), identity).get
+      val before = f.tile(com.histmersion.util.basemap.PmTiles.Zoom(2), com.histmersion.util.basemap.PmTiles.TileColumn(1), com.histmersion.util.basemap.PmTiles.TileRow(1)).fold(fail(_), identity).get
       // an interrupted thread reading: the JDK closes the shared channel
-      val t = Thread.ofVirtual().unstarted { () => Thread.currentThread().interrupt(); scala.util.Try(f.tile(3, 2, 2)) }
+      val t = Thread.ofVirtual().unstarted { () => Thread.currentThread().interrupt(); scala.util.Try(f.tile(com.histmersion.util.basemap.PmTiles.Zoom(3), com.histmersion.util.basemap.PmTiles.TileColumn(2), com.histmersion.util.basemap.PmTiles.TileRow(2))) }
       t.start(); t.join()
-      assertEquals(f.tile(2, 1, 1).map(_.map(_.toList)), Right(Some(before.toList)), "read again on a reopened channel")
+      assertEquals(f.tile(com.histmersion.util.basemap.PmTiles.Zoom(2), com.histmersion.util.basemap.PmTiles.TileColumn(1), com.histmersion.util.basemap.PmTiles.TileRow(1)).map(_.map(_.toList)), Right(Some(before.toList)), "read again on a reopened channel")
       assert(f.size > 0)
     finally f.close()
-    intercept[java.nio.channels.ClosedChannelException](f.tile(2, 1, 1))
+    intercept[java.nio.channels.ClosedChannelException](f.tile(com.histmersion.util.basemap.PmTiles.Zoom(2), com.histmersion.util.basemap.PmTiles.TileColumn(1), com.histmersion.util.basemap.PmTiles.TileRow(1)))

@@ -1,5 +1,7 @@
 package com.histmersion.server.agents
 
+import com.histmersion.testsupport.ComparedByValue.given
+
 import hearth.kindlings.optics.syntax.*
 
 import com.histmersion.domain.automation.agents.ToolResultCap
@@ -13,10 +15,10 @@ import com.histmersion.api.library.Query.QueryResult
 class ToolResultCapSuite extends munit.FunSuite:
 
   test("a result within the cap is untouched; a longer one is cut at a line and says so"):
-    assertEquals(ToolResultCap.cap("short", 100, "x"), "short")
-    assertEquals(ToolResultCap.cap("anything", 0, "x"), "anything", "0 = no cap")
+    assertEquals(ToolResultCap.cap("short", com.histmersion.domain.automation.agents.ToolResultCap.CapMax(100), "x"), "short")
+    assertEquals(ToolResultCap.cap("anything", com.histmersion.domain.automation.agents.ToolResultCap.CapMax(0), "x"), "anything", "0 = no cap")
     val text = (1 to 400).map(i => s"line $i of the result").mkString("\n")
-    val cut = ToolResultCap.cap(text, 2000, "ask for less")
+    val cut = ToolResultCap.cap(text, com.histmersion.domain.automation.agents.ToolResultCap.CapMax(2000), "ask for less")
     assert(cut.length <= 2000, cut.length)
     assert(cut.endsWith("characters — ask for less_"), cut.takeRight(120))
     assert(cut.contains(s"of ${text.length} characters"), cut.takeRight(120))
@@ -24,7 +26,7 @@ class ToolResultCapSuite extends munit.FunSuite:
     assert(text.startsWith(kept) && kept.endsWith("of the result"), "cut at a line break: " + kept.takeRight(40))
 
   test("a line longer than the cap is cut mid-line rather than shown empty"):
-    val cut = ToolResultCap.cap("x" * 5000, 1000, "h")
+    val cut = ToolResultCap.cap("x" * 5000, com.histmersion.domain.automation.agents.ToolResultCap.CapMax(1000), "h")
     assert(cut.startsWith("x" * 500) && cut.length <= 1000, cut.length)
 
   test("chip links lose their targets; article links and wikilinks stay"):
@@ -53,7 +55,7 @@ class ToolResultCapSuite extends munit.FunSuite:
 
   test("a record over the cap shortens its notes first: summary and findings arrive whole"):
     val c = ToolResultCap.compactSource(Record)
-    val r = ToolResultCap.source(c, 4000)
+    val r = ToolResultCap.source(c, com.histmersion.domain.automation.agents.ToolResultCap.SourceMax(4000))
     assert(r.length <= 4000, r.length)
     assert(
       r.contains("The summary.") && r.contains(
@@ -68,37 +70,37 @@ class ToolResultCapSuite extends munit.FunSuite:
 
   test("with no room for the notes they are left out, then the mentions, then the rest is cut"):
     val c = ToolResultCap.compactSource(Record)
-    val tight = ToolResultCap.source(c, 700)
+    val tight = ToolResultCap.source(c, com.histmersion.domain.automation.agents.ToolResultCap.SourceMax(700))
     assert(tight.length <= 700, tight.length)
     assert(tight.contains("characters of notes left out") || tight.contains("…cut at"), tight)
-    val noNotes = ToolResultCap.source(c.replace("## Notes", "## Elsewhere"), 300)
+    val noNotes = ToolResultCap.source(c.replace("## Notes", "## Elsewhere"), com.histmersion.domain.automation.agents.ToolResultCap.SourceMax(300))
     assert(noNotes.length <= 300 && noNotes.contains("section=\"findings\""), noNotes)
 
   test("a query shows at most its row cap, marked, with how to ask for less"):
     val r = QueryResult(
-      List("citekey", "status"),
-      (1 to 120).toList.map(i => List(Some(s"ck$i"), Some("current"))),
-      120,
-      false,
-      3
+      List(com.histmersion.api.library.Query.QueryResult.Columns("citekey"), com.histmersion.api.library.Query.QueryResult.Columns("status")),
+      (1 to 120).toList.map(i => List(Some(s"ck$i"), Some(com.histmersion.api.library.Query.QueryResult.Rows("current")))),
+      com.histmersion.api.library.Query.QueryResult.RowCount(120),
+      com.histmersion.api.library.Query.QueryResult.Truncated(false),
+      com.histmersion.api.library.Query.QueryResult.ElapsedMs(3)
     )
-    val md = com.histmersion.domain.library.workflows.LibraryAgentTools.queryResult(r, 50, 100000)
+    val md = com.histmersion.domain.library.workflows.LibraryAgentTools.queryResult(r, com.histmersion.config.AgentToolsConfig.QueryMaxRows(50), com.histmersion.domain.automation.agents.ToolResultCap.CapMax(100000))
     assert(md.startsWith("### 50 row(s) (truncated by the row cap)"), md.take(80))
     assert(md.contains("| ck50 |") && !md.contains("| ck51 |"), "50 rows")
     assert(md.contains("70 more rows not shown") && md.contains("never a whole table"), md.takeRight(200))
-    val capped = QueryResult(List("c"), (1 to 500).toList.map(i => List(Some(s"r$i"))), 500, true, 3)
+    val capped = QueryResult(List(com.histmersion.api.library.Query.QueryResult.Columns("c")), (1 to 500).toList.map(i => List(Some(s"r$i"))), com.histmersion.api.library.Query.QueryResult.RowCount(500), com.histmersion.api.library.Query.QueryResult.Truncated(true), com.histmersion.api.library.Query.QueryResult.ElapsedMs(3))
     assert(
       com.histmersion.domain.library.workflows.LibraryAgentTools
-        .queryResult(capped, 50, 100000)
+        .queryResult(capped, com.histmersion.config.AgentToolsConfig.QueryMaxRows(50), com.histmersion.domain.automation.agents.ToolResultCap.CapMax(100000))
         .contains("450+ more rows"),
       "the server's row cap hid more"
     )
     val few = r.modify(_.rows).setTo(r.rows.take(3)).modify(_.rowCount).setTo(3)
     assertEquals(
-      com.histmersion.domain.library.workflows.LibraryAgentTools.queryResult(few, 50, 100000),
+      com.histmersion.domain.library.workflows.LibraryAgentTools.queryResult(few, com.histmersion.config.AgentToolsConfig.QueryMaxRows(50), com.histmersion.domain.automation.agents.ToolResultCap.CapMax(100000)),
       com.histmersion.api.library.Query.markdown(few)
     )
     assert(
-      com.histmersion.domain.library.workflows.LibraryAgentTools.queryResult(r, 0, 600).length <= 600,
+      com.histmersion.domain.library.workflows.LibraryAgentTools.queryResult(r, com.histmersion.config.AgentToolsConfig.QueryMaxRows(0), com.histmersion.domain.automation.agents.ToolResultCap.CapMax(600)).length <= 600,
       "no row cap: the character cap still holds"
     )

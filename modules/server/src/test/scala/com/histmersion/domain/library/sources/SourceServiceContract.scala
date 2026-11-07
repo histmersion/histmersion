@@ -1,5 +1,7 @@
 package com.histmersion.domain.library.sources
 
+import com.histmersion.testsupport.ComparedByValue.given
+
 import hearth.kindlings.optics.syntax.*
 
 import com.histmersion.api.{GeoPoint, ListPatch, Write}
@@ -31,11 +33,11 @@ abstract class SourceServiceContract extends LibraryStoreSuite:
       s"$ck#$n",
       com.histmersion.api.library.Citekey(ck),
       claim,
-      Some("Zqland"),
+      Some(com.histmersion.api.library.Finding.Region("Zqland")),
       at,
-      Some(Period(-1500, -1400)),
+      Some(Period(com.histmersion.api.catalogue.Year(-1500), com.histmersion.api.catalogue.Year(-1400))),
       None,
-      List("zq"),
+      List(com.histmersion.api.library.Finding.Tags("zq")),
       Some(Confidence.High)
     )
 
@@ -48,10 +50,10 @@ abstract class SourceServiceContract extends LibraryStoreSuite:
       (Some(1990)).map(com.histmersion.api.catalogue.Year.apply),
       (Some("Zq Review")).map(com.histmersion.api.library.Source.Venue.apply),
       com.histmersion.api.library.Source.Status.Current,
-      List("bronze age"),
-      List("Zqland"),
-      List("zq-oracle"),
-      Some(Period(-1700, -1100)),
+      List(com.histmersion.api.library.Source.Topics("bronze age")),
+      List(com.histmersion.api.library.Source.Regions("Zqland")),
+      List(com.histmersion.api.library.Source.Tags("zq-oracle")),
+      Some(Period(com.histmersion.api.catalogue.Year(-1700), com.histmersion.api.catalogue.Year(-1100))),
       Some(s"A study of $title."),
       None,
       None,
@@ -73,7 +75,7 @@ abstract class SourceServiceContract extends LibraryStoreSuite:
         A,
         "Walls",
         List(finding(A, 1, "the walls"), finding(A, 0, "a gate", Some(GeoPoint(34.6, 40.0)))),
-        List(Edge(com.histmersion.api.library.Citekey(A), com.histmersion.api.library.Citekey(B), "references"), Edge(com.histmersion.api.library.Citekey(A), com.histmersion.api.library.Citekey("zq_article"), "references"))
+        List(Edge(com.histmersion.api.library.Citekey(A), com.histmersion.api.library.Citekey(B), com.histmersion.api.library.Edge.Kind("references")), Edge(com.histmersion.api.library.Citekey(A), com.histmersion.api.library.Citekey("zq_article"), com.histmersion.api.library.Edge.Kind("references")))
       ),
       Me
     )
@@ -85,7 +87,7 @@ abstract class SourceServiceContract extends LibraryStoreSuite:
     )
     assertEquals(rows.map(_.claim), List("a gate", "the walls"))
     assertEquals(rows.map(r => (r.lon, r.lat)), List((Some(34.6), Some(40.0)), (None, None)))
-    assertEquals(s.sources.load(A).get.edges, List(Edge(com.histmersion.api.library.Citekey(A), com.histmersion.api.library.Citekey("zq_article"), "references"), Edge(com.histmersion.api.library.Citekey(A), com.histmersion.api.library.Citekey(B), "references")))
+    assertEquals(s.sources.load(A).get.edges, List(Edge(com.histmersion.api.library.Citekey(A), com.histmersion.api.library.Citekey("zq_article"), com.histmersion.api.library.Edge.Kind("references")), Edge(com.histmersion.api.library.Citekey(A), com.histmersion.api.library.Citekey(B), com.histmersion.api.library.Edge.Kind("references"))))
     assertEquals(
       s.citations.neighbors(A, Nil).map(r => (r.citekey, r.target)),
       List(("zq_article", NeighborTarget.Unresolved), (B, NeighborTarget.Unresolved))
@@ -102,8 +104,8 @@ abstract class SourceServiceContract extends LibraryStoreSuite:
     val _ = s.sources.put(source(A, "Walls", List(finding(A, 0, "a gate, again"))), Me)
     assertEquals(s.sources.get(A).get._2.map(r => (r.claim, r.uid)), List(("a gate, again", uid0)))
     assertEquals(s.sources.citekeys, List(A, B))
-    assertEquals(s.sources.refs(List(B, A, "zqnone2000_x")).map(_.citekey), List(A, B))
-    assertEquals(s.sources.get("zqnone2000_x"), None)
+    assertEquals(s.sources.refs(List(B, A, com.histmersion.domain.library.Citekey("zqnone2000_x"))).map(_.citekey), List(A, B))
+    assertEquals(s.sources.get(com.histmersion.domain.library.Citekey("zqnone2000_x")), None)
   }
 
   stest("a patch: what it names changes, the rest stays; a stale token and an unknown source are refused") { s =>
@@ -112,8 +114,8 @@ abstract class SourceServiceContract extends LibraryStoreSuite:
       A,
       Source.Patch(
         metadata = Some(MetadataPatch(title = (Some("Walls, revised")).map(com.histmersion.api.library.Title.apply), clear = List(MetadataField.Venue))),
-        tags = Some(ListPatch(add = List("zq-new"), remove = List("zq-oracle"))),
-        findings = Some(FindingsPatch(add = List(Finding.Input("a tower")), remove = List(s"$A#0"))),
+        tags = Some(ListPatch(add = List(com.histmersion.api.Write.ListItem("zq-new")), remove = List(com.histmersion.api.Write.ListItem("zq-oracle")))),
+        findings = Some(FindingsPatch(add = List(Finding.Input(com.histmersion.api.library.Finding.Claim("a tower"))), remove = List(s"$A#0"))),
         ifUpdatedAt = Some(token)
       ),
       Me
@@ -127,11 +129,11 @@ abstract class SourceServiceContract extends LibraryStoreSuite:
     )
     assertEquals(rows.size, 2)
     assertEquals(
-      s.sources.patch(A, Source.Patch(summary = Some("x"), ifUpdatedAt = Some(token)), Me).left.map(_.code),
+      s.sources.patch(A, Source.Patch(summary = Some(com.histmersion.api.library.Source.Summary("x")), ifUpdatedAt = Some(token)), Me).left.map(_.code),
       Left(Some(Write.CodePrecondition))
     )
     assertEquals(
-      s.sources.patch("zqnone2000_x", Source.Patch(summary = Some("x")), Me).left.map(_.code),
+      s.sources.patch(com.histmersion.domain.library.Citekey("zqnone2000_x"), Source.Patch(summary = Some(com.histmersion.api.library.Source.Summary("x"))), Me).left.map(_.code),
       Left(Some(Write.CodeNotFound))
     )
   }
@@ -146,25 +148,25 @@ abstract class SourceServiceContract extends LibraryStoreSuite:
     assert(s.sources.bodyUnderHeading(A, last.take(4).toUpperCase).contains("The harbour of Walls."), last)
     assertEquals(s.sources.bodyChunks(A).map(_.ord), s.sources.bodyChunks(A).map(_.ord).sorted)
     assert(s.sources.markdown(A).startsWith("# Walls"))
-    assertEquals(s.sources.bodyText("zqnone2000_x"), "")
-    assertEquals(s.sources.bodyChunks("zqnone2000_x"), Nil)
+    assertEquals(s.sources.bodyText(com.histmersion.domain.library.Citekey("zqnone2000_x")), "")
+    assertEquals(s.sources.bodyChunks(com.histmersion.domain.library.Citekey("zqnone2000_x")), Nil)
   }
 
   stest("a rename: the findings renumbered, the old citekey kept, links in other sources' notes and edges followed") {
     s =>
       val _ = s.sources.put(source(B, "Cove"), Me)
-      val _ = s.sources.put(source(A, "Walls", List(finding(A, 0, "a gate")), List(Edge(com.histmersion.api.library.Citekey(A), com.histmersion.api.library.Citekey(B), "refutes"))), Me)
+      val _ = s.sources.put(source(A, "Walls", List(finding(A, 0, "a gate")), List(Edge(com.histmersion.api.library.Citekey(A), com.histmersion.api.library.Citekey(B), com.histmersion.api.library.Edge.Kind("refutes")))), Me)
       val _ =
-        s.sources.put(source(C, "Kings", edges = List(Edge(com.histmersion.api.library.Citekey(C), com.histmersion.api.library.Citekey(A), "challenges"), Edge(com.histmersion.api.library.Citekey(C), com.histmersion.api.library.Citekey("zqa1991_walls"), "cites"))), Me)
+        s.sources.put(source(C, "Kings", edges = List(Edge(com.histmersion.api.library.Citekey(C), com.histmersion.api.library.Citekey(A), com.histmersion.api.library.Edge.Kind("challenges")), Edge(com.histmersion.api.library.Citekey(C), com.histmersion.api.library.Citekey("zqa1991_walls"), com.histmersion.api.library.Edge.Kind("cites")))), Me)
       val _ = s.sources.patch(B, Source.Patch(notes = Some(s"See [[$A|the walls]] and [[zqa1990]].")), Me)
-      assertEquals(s.sources.rename(A, "zqa1990_walls", Me).left.map(_.code), Left(Some(Write.CodeInvalid)))
+      assertEquals(s.sources.rename(A, com.histmersion.domain.library.Citekey("zqa1990_walls"), Me).left.map(_.code), Left(Some(Write.CodeInvalid)))
       assertEquals(s.sources.rename(A, B, Me).left.map(_.code), Left(Some(Write.CodeInvalid)))
-      assertEquals(s.sources.rename(A, "zqwalls", Me).left.map(_.code), Left(Some(Write.CodeInvalid)))
+      assertEquals(s.sources.rename(A, com.histmersion.domain.library.Citekey("zqwalls"), Me).left.map(_.code), Left(Some(Write.CodeInvalid)))
       assertEquals(
-        s.sources.rename("zqnone2000_x", "zqnone2001_x", Me).left.map(_.code),
+        s.sources.rename(com.histmersion.domain.library.Citekey("zqnone2000_x"), com.histmersion.domain.library.Citekey("zqnone2001_x"), Me).left.map(_.code),
         Left(Some(Write.CodeNotFound))
       )
-      val counts = s.sources.rename(A, "zqa1991_walls", Me).toOption.get
+      val counts = s.sources.rename(A, com.histmersion.domain.library.Citekey("zqa1991_walls"), Me).toOption.get
       assertEquals(
         (counts.findings, counts.sources, counts.links, counts.columns, counts.edgesPromoted),
         (1, List(B), 2, Nil, 1)
@@ -172,49 +174,49 @@ abstract class SourceServiceContract extends LibraryStoreSuite:
       assertEquals(s.sources.current(A), Some("zqa1991_walls"))
       assertEquals(s.sources.aliasOf(A), Some("zqa1991_walls"))
       assertEquals(s.sources.aliases, List(Source.Alias(A, com.histmersion.api.library.Citekey("zqa1991_walls"))))
-      assertEquals(s.sources.load("zqa1991_walls").get.findings.map(_.id), List("zqa1991_walls#0"))
+      assertEquals(s.sources.load(com.histmersion.domain.library.Citekey("zqa1991_walls")).get.findings.map(_.id), List("zqa1991_walls#0"))
       assertEquals(s.sources.load(B).get.notes, Some("See [[zqa1991_walls|the walls]] and [[zqa1991_walls]]."))
       assertEquals(
-        s.citations.neighbors("zqa1991_walls", Nil).map(r => (r.direction, r.kind, r.citekey)),
+        s.citations.neighbors(com.histmersion.domain.library.Citekey("zqa1991_walls"), Nil).map(r => (r.direction, r.kind, r.citekey)),
         List(("in", "challenges", C), ("in", "cites", C), ("out", "refutes", B))
       )
-      assertEquals(s.sources.rename(A, "zqx2000_x", Me).left.map(_.code), Left(Some(Write.CodeInvalid)))
+      assertEquals(s.sources.rename(A, com.histmersion.domain.library.Citekey("zqx2000_x"), Me).left.map(_.code), Left(Some(Write.CodeInvalid)))
       // renamed back: the alias goes
-      assert(s.sources.rename("zqa1991_walls", A, Me).isRight)
-      assertEquals(s.sources.aliases, List(Source.Alias("zqa1991_walls", com.histmersion.api.library.Citekey(A))))
+      assert(s.sources.rename(com.histmersion.domain.library.Citekey("zqa1991_walls"), A, Me).isRight)
+      assertEquals(s.sources.aliases, List(Source.Alias(com.histmersion.api.library.Source.Alias.Value("zqa1991_walls"), com.histmersion.api.library.Citekey(A))))
   }
 
   stest("a delete: refused for an old citekey and an unknown source; what goes counted, the edges to it parked") { s =>
-    val _ = s.sources.put(source(B, "Cove", edges = List(Edge(com.histmersion.api.library.Citekey(B), com.histmersion.api.library.Citekey(A), "references"))), Me)
+    val _ = s.sources.put(source(B, "Cove", edges = List(Edge(com.histmersion.api.library.Citekey(B), com.histmersion.api.library.Citekey(A), com.histmersion.api.library.Edge.Kind("references")))), Me)
     val _ =
-      s.sources.put(source(A, "Walls", List(finding(A, 0, "a gate")), List(Edge(com.histmersion.api.library.Citekey(A), com.histmersion.api.library.Citekey("zqnot2020_yet"), "cites"))), Me)
-    val _ = s.sources.rename(A, "zqa1991_walls", Me)
+      s.sources.put(source(A, "Walls", List(finding(A, 0, "a gate")), List(Edge(com.histmersion.api.library.Citekey(A), com.histmersion.api.library.Citekey("zqnot2020_yet"), com.histmersion.api.library.Edge.Kind("cites")))), Me)
+    val _ = s.sources.rename(A, com.histmersion.domain.library.Citekey("zqa1991_walls"), Me)
     assertEquals(s.sources.deletion(A).left.map(_.code), Left(Some(Write.CodeInvalid)))
-    assertEquals(s.sources.deletion("zqnone2000_x").left.map(_.code), Left(Some(Write.CodeNotFound)))
-    val plan = s.sources.deletion("zqa1991_walls").toOption.get
+    assertEquals(s.sources.deletion(com.histmersion.domain.library.Citekey("zqnone2000_x")).left.map(_.code), Left(Some(Write.CodeNotFound)))
+    val plan = s.sources.deletion(com.histmersion.domain.library.Citekey("zqa1991_walls")).toOption.get
     assertEquals(
       plan.deletion.counts.map(c => (c.part, c.rows)),
       List(
         DeletePart.Findings -> 1,
         DeletePart.ParkedOut -> 1,
         DeletePart.EdgesIn -> 1,
-        DeletePart.Chunks -> s.sources.bodyChunks("zqa1991_walls").size,
+        DeletePart.Chunks -> s.sources.bodyChunks(com.histmersion.domain.library.Citekey("zqa1991_walls")).size,
         DeletePart.Aliases -> 1
       )
     )
     assertEquals(
       (plan.deletion.aliases, plan.deletion.edgesIn, plan.keys),
-      (List(A), List(Edge(com.histmersion.api.library.Citekey(B), com.histmersion.api.library.Citekey("zqa1991_walls"), "references")), List("zqa1991_walls", A))
+      (List(A), List(Edge(com.histmersion.api.library.Citekey(B), com.histmersion.api.library.Citekey("zqa1991_walls"), com.histmersion.api.library.Edge.Kind("references"))), List("zqa1991_walls", A))
     )
     val done =
-      s.sources.delete("zqa1991_walls", "2026-11-01", p => List(s"file-of-${p.deletion.citekey}"), Me).toOption.get
+      s.sources.delete(com.histmersion.domain.library.Citekey("zqa1991_walls"), com.histmersion.domain.library.sources.referrers.SourceReferrers.Day("2026-11-01"), p => List(s"file-of-${p.deletion.citekey}"), Me).toOption.get
     assertEquals(
       (done.deletion.applied, done.deletion.files, done.deletion.logEntry),
       (true, List("file-of-zqa1991_walls"), None)
     )
-    assertEquals(s.sources.load("zqa1991_walls"), None)
+    assertEquals(s.sources.load(com.histmersion.domain.library.Citekey("zqa1991_walls")), None)
     assertEquals(s.sources.current(A), None)
-    assertEquals(s.sources.load(B).get.edges, List(Edge(com.histmersion.api.library.Citekey(B), com.histmersion.api.library.Citekey("zqa1991_walls"), "references")))
+    assertEquals(s.sources.load(B).get.edges, List(Edge(com.histmersion.api.library.Citekey(B), com.histmersion.api.library.Citekey("zqa1991_walls"), com.histmersion.api.library.Edge.Kind("references"))))
     assertEquals(s.citations.neighbors(B, Nil).map(_.target), List(NeighborTarget.Unresolved))
   }
 
@@ -222,18 +224,18 @@ abstract class SourceServiceContract extends LibraryStoreSuite:
     val _ = s.sources.put(source(A, "Walls"), Me)
     val _ = s.sources.put(source("zqa1990_gates", "Gates"), Me)
     val _ =
-      s.sources.put(source(B, "Cove", edges = List(Edge(com.histmersion.api.library.Citekey(B), com.histmersion.api.library.Citekey("zqb2001"), "references"), Edge(com.histmersion.api.library.Citekey(B), com.histmersion.api.library.Citekey("zqa1990"), "cites"))), Me)
+      s.sources.put(source(B, "Cove", edges = List(Edge(com.histmersion.api.library.Citekey(B), com.histmersion.api.library.Citekey("zqb2001"), com.histmersion.api.library.Edge.Kind("references")), Edge(com.histmersion.api.library.Citekey(B), com.histmersion.api.library.Citekey("zqa1990"), com.histmersion.api.library.Edge.Kind("cites")))), Me)
     val _ = s.sources.put(source(C, "Kings"), Me)
-    val _ = s.sources.rename(C, "zqc1976_kings", Me)
+    val _ = s.sources.rename(C, com.histmersion.domain.library.Citekey("zqc1976_kings"), Me)
     assertEquals(
-      s.sources.resolveLinks(List(A, "ZQA1990_WALLS ", "zqa1990", "zqb2001", C, "zqnone", "")),
+      s.sources.resolveLinks(List(A, com.histmersion.api.text.WikiLinks.Occurrence.Target("ZQA1990_WALLS "), com.histmersion.api.text.WikiLinks.Occurrence.Target("zqa1990"), com.histmersion.api.text.WikiLinks.Occurrence.Target("zqb2001"), C, com.histmersion.api.text.WikiLinks.Occurrence.Target("zqnone"), com.histmersion.api.text.WikiLinks.Occurrence.Target(""))),
       Map(A -> A, "zqa1990_walls" -> A, "zqb2001" -> B, C -> "zqc1976_kings")
     )
     assertEquals(s.sources.resolveEdges(Me), 0) // a self-edge by a short form stays parked, an ambiguous one too
-    val _ = s.sources.put(source("zqd2005_new", "New", edges = List(Edge(com.histmersion.api.library.Citekey("zqd2005_new"), com.histmersion.api.library.Citekey("zqc1976"), "references"))), Me)
+    val _ = s.sources.put(source("zqd2005_new", "New", edges = List(Edge(com.histmersion.api.library.Citekey("zqd2005_new"), com.histmersion.api.library.Citekey("zqc1976"), com.histmersion.api.library.Edge.Kind("references")))), Me)
     assertEquals(s.sources.resolveEdges(Me), 1)
     assertEquals(
-      s.citations.neighbors("zqc1976_kings", Nil).map(r => (r.direction, r.citekey)),
+      s.citations.neighbors(com.histmersion.domain.library.Citekey("zqc1976_kings"), Nil).map(r => (r.direction, r.citekey)),
       List(("in", "zqd2005_new"))
     )
   }
@@ -242,9 +244,9 @@ abstract class SourceServiceContract extends LibraryStoreSuite:
     val _ = s.sources.put(source(A, "Walls").modify(_.doi).setTo(Some("10.5555/ZQ.Walls")), Me)
     val _ = s.sources.put(source(B, "Cove"), Me)
     assert(s.sources.exists(A))
-    assert(!s.sources.exists("zqnone"))
+    assert(!s.sources.exists(com.histmersion.domain.library.Citekey("zqnone")))
     assertEquals(s.sources.doiIndex, Map("10.5555/zq.walls" -> A))
-    val edges = List(Edge(com.histmersion.api.library.Citekey(A), com.histmersion.api.library.Citekey(B), "references"), Edge(com.histmersion.api.library.Citekey(A), com.histmersion.api.library.Citekey("zq_not_yet"), "references"), Edge(com.histmersion.api.library.Citekey(A), com.histmersion.api.library.Citekey(B), "references"))
+    val edges = List(Edge(com.histmersion.api.library.Citekey(A), com.histmersion.api.library.Citekey(B), com.histmersion.api.library.Edge.Kind("references")), Edge(com.histmersion.api.library.Citekey(A), com.histmersion.api.library.Citekey("zq_not_yet"), com.histmersion.api.library.Edge.Kind("references")), Edge(com.histmersion.api.library.Citekey(A), com.histmersion.api.library.Citekey(B), com.histmersion.api.library.Edge.Kind("references")))
     assertEquals(s.sources.addEdges(edges, Me), 2)
     assertEquals(s.sources.addEdges(edges, Me), 0, "an edge stored already is not new")
     assertEquals(s.sources.addEdges(Nil, Me), 0)
@@ -255,8 +257,8 @@ abstract class SourceServiceContract extends LibraryStoreSuite:
     s =>
       val _ = s.sources.put(source(B, "Cove").modify(_.doi).setTo(Some("10.5555/ZQ.Both")), Me)
       val _ = s.sources.put(source(A, "Walls").modify(_.doi).setTo(Some("10.5555/zq.both")), Me)
-      assertEquals(s.sources.citekeyOfDoi(" 10.5555/zq.BOTH "), Some(List(A, B).min))
-      assertEquals(s.sources.citekeyOfDoi("10.5555/zq.none"), None)
+      assertEquals(s.sources.citekeyOfDoi(com.histmersion.domain.library.Doi(" 10.5555/zq.BOTH ")), Some(List(A, B).min))
+      assertEquals(s.sources.citekeyOfDoi(com.histmersion.domain.library.Doi("10.5555/zq.none")), None)
   }
 
   stest("a source's stored original: its digest, who holds one, set once a conversion is written") { s =>
@@ -264,11 +266,11 @@ abstract class SourceServiceContract extends LibraryStoreSuite:
     val _ = s.sources.put(source(B, "Cove"), Me)
     assertEquals(s.sources.original(A), None)
     s.sources.setOriginal(A, "a" * 64, Me)
-    s.sources.setOriginal("zqnone", "b" * 64, Me)
+    s.sources.setOriginal(com.histmersion.domain.library.Citekey("zqnone"), "b" * 64, Me)
     assertEquals(s.sources.original(A), Some("a" * 64))
     assertEquals(s.sources.holderOf("a" * 64), Some(A))
     assertEquals(s.sources.holderOf("b" * 64), None)
-    assertEquals(s.sources.originals(List(A, B, "zqnone")), Map(A -> "a" * 64))
+    assertEquals(s.sources.originals(List(A, B, com.histmersion.domain.library.Citekey("zqnone"))), Map(A -> "a" * 64))
     assertEquals(s.sources.originals(Nil), Map.empty)
     val _ = s.sources.put(source(A, "Walls again"), Me)
     assertEquals(s.sources.original(A), Some("a" * 64), "a put keeps the original")
@@ -280,8 +282,8 @@ abstract class SourceServiceContract extends LibraryStoreSuite:
     assert(!s.sources.recordLicence(A, com.histmersion.domain.Licence.Id("  "), Me), "a blank licence is never written")
     assert(s.sources.recordLicence(A, com.histmersion.domain.Licence.Id(" CC BY 4.0 "), Me))
     assert(!s.sources.recordLicence(A, com.histmersion.domain.Licence.Id("CC0-1.0"), Me), "the first one is kept")
-    assertEquals(s.sources.licence(A), Some(com.histmersion.domain.Licence.classify("CC BY 4.0")))
-    assert(!s.sources.recordLicence("zqnone", com.histmersion.domain.Licence.Id("CC0-1.0"), Me))
+    assertEquals(s.sources.licence(A), Some(com.histmersion.domain.Licence.classify(com.histmersion.domain.Licence.Id("CC BY 4.0"))))
+    assert(!s.sources.recordLicence(com.histmersion.domain.library.Citekey("zqnone"), com.histmersion.domain.Licence.Id("CC0-1.0"), Me))
   }
 
   stest("the sources not in Calibre yet, a push's metadata, the Calibre id written back") { s =>
@@ -289,11 +291,11 @@ abstract class SourceServiceContract extends LibraryStoreSuite:
     val _ = s.sources.put(source(B, "Cove").modify(_.provenance).setTo(Some("calibre")), Me)
     val _ = s.sources.put(source(C, "Kings"), Me)
     assertEquals(s.sources.calibreGaps(None).map(_.citekey), List(A, C))
-    assertEquals(s.sources.calibreGaps(Some(1)).map(_.citekey), List(A))
+    assertEquals(s.sources.calibreGaps(Some(com.histmersion.PageSize(1))).map(_.citekey), List(A))
     assertEquals(s.sources.calibrePushMeta(B).map(g => (g.citekey, g.provenance)), Some((B, Some("calibre"))))
-    assertEquals(s.sources.calibrePushMeta("zqnone"), None)
-    assertEquals(s.sources.setCalibreId(A, "17", Me), Right(()))
-    assert(s.sources.setCalibreId("zqnone", "18", Me).isLeft)
+    assertEquals(s.sources.calibrePushMeta(com.histmersion.domain.library.Citekey("zqnone")), None)
+    assertEquals(s.sources.setCalibreId(A, com.histmersion.domain.library.sources.FullSourceRow.CalibreId("17"), Me), Right(()))
+    assert(s.sources.setCalibreId(com.histmersion.domain.library.Citekey("zqnone"), com.histmersion.domain.library.sources.FullSourceRow.CalibreId("18"), Me).isLeft)
     assertEquals(s.sources.calibreGaps(None).map(_.citekey), List(C))
     assertEquals(s.sources.calibrePushMeta(A).flatMap(_.calibreId), Some("17"))
   }

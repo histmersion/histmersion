@@ -1,5 +1,7 @@
 package com.histmersion.server.media
 
+import com.histmersion.testsupport.ComparedByValue.given
+
 import hearth.kindlings.optics.syntax.*
 
 import com.histmersion.domain.media.imports.SearchedCollection
@@ -40,24 +42,24 @@ class KeyedCollectionsSuite extends munit.FunSuite:
   private val cfg = FakeMediaHttp.cfg
 
   private val egypt =
-    PlaceFacts("geonames_357994", "Egypt", Set("egypt"), Some((-3100L, -30L)), Some("Q79"), Some(26.0), Some(30.0))
+    PlaceFacts(com.histmersion.domain.media.imports.PlaceFacts.Id("geonames_357994"), com.histmersion.domain.media.imports.PlaceFacts.Label("Egypt"), Set(com.histmersion.domain.media.imports.PlaceFacts.Keys("egypt")), Some((com.histmersion.domain.DeepTime.SignedYear(-3100L), com.histmersion.domain.DeepTime.SignedYear(-30L))), Some(com.histmersion.domain.media.imports.Target.Qid("Q79")), Some(26.0), Some(30.0))
   private val syria =
-    PlaceFacts("geonames_163843", "Syria", Set("syria"), Some((-3000L, 1500L)), Some("Q858"), Some(35.0), Some(38.0))
+    PlaceFacts(com.histmersion.domain.media.imports.PlaceFacts.Id("geonames_163843"), com.histmersion.domain.media.imports.PlaceFacts.Label("Syria"), Set(com.histmersion.domain.media.imports.PlaceFacts.Keys("syria")), Some((com.histmersion.domain.DeepTime.SignedYear(-3000L), com.histmersion.domain.DeepTime.SignedYear(1500L))), Some(com.histmersion.domain.media.imports.Target.Qid("Q858")), Some(35.0), Some(38.0))
   private val mycenae = PlaceFacts(
-    "pleiades_570491",
-    "Mycenae",
-    Set("mycenae"),
-    Some((-1600L, -1100L)),
-    Some("Q132564"),
+    com.histmersion.domain.media.imports.PlaceFacts.Id("pleiades_570491"),
+    com.histmersion.domain.media.imports.PlaceFacts.Label("Mycenae"),
+    Set(com.histmersion.domain.media.imports.PlaceFacts.Keys("mycenae")),
+    Some((com.histmersion.domain.DeepTime.SignedYear(-1600L), com.histmersion.domain.DeepTime.SignedYear(-1100L))),
+    Some(com.histmersion.domain.media.imports.Target.Qid("Q132564")),
     Some(37.73),
     Some(22.756)
   )
   private val greece =
-    PlaceFacts("geonames_390903", "Greece", Set("greece"), Some((-3000L, -100L)), Some("Q41"), Some(39.0), Some(22.0))
+    PlaceFacts(com.histmersion.domain.media.imports.PlaceFacts.Id("geonames_390903"), com.histmersion.domain.media.imports.PlaceFacts.Label("Greece"), Set(com.histmersion.domain.media.imports.PlaceFacts.Keys("greece")), Some((com.histmersion.domain.DeepTime.SignedYear(-3000L), com.histmersion.domain.DeepTime.SignedYear(-100L))), Some(com.histmersion.domain.media.imports.Target.Qid("Q41")), Some(39.0), Some(22.0))
   private val facts = List(egypt, syria, mycenae, greece).map(f => f.id -> f).toMap
   private val named =
     Map("egypt" -> List(egypt), "syria" -> List(syria), "mycenae" -> List(mycenae), "greece" -> List(greece))
-  private def target(f: PlaceFacts) = Target("place", f.id, "", f.label)
+  private def target(f: PlaceFacts) = Target(com.histmersion.domain.media.imports.Target.TargetType("place"), f.id, com.histmersion.domain.media.imports.Target.Qid(""), f.label)
 
   private def run(
       col: SearchedCollection,
@@ -67,7 +69,7 @@ class KeyedCollectionsSuite extends munit.FunSuite:
       store: CollStore = CollStore(facts, named)
   ): MediaImportReport =
     val (polite, _) = FakeMediaHttp.polite(http, cfg.modify(_.requestIntervalMs).setTo(0))
-    CollectionImport(col, polite, cfg, NoConverter()).run(targets, dryRun, refresh = false, store)
+    CollectionImport(col, polite, cfg, NoConverter()).run(targets, dryRun, refresh = com.histmersion.domain.media.imports.CollectionImport.Refresh(false), store)
 
   /** The two key-gated plugins switched on, each with the fixture key as a secret reference. */
   private val keyed =
@@ -238,10 +240,10 @@ class KeyedCollectionsSuite extends munit.FunSuite:
   // ── relevance: the default exclusions and max-year ──────────────────────────────────────────
 
   private val orkney = PlaceFacts(
-    "ne_physical_1159102959",
-    "Orkney Islands",
-    Set("orkney islands", "orkney"),
-    Some((-7000L, 2100L)),
+    com.histmersion.domain.media.imports.PlaceFacts.Id("ne_physical_1159102959"),
+    com.histmersion.domain.media.imports.PlaceFacts.Label("Orkney Islands"),
+    Set(com.histmersion.domain.media.imports.PlaceFacts.Keys("orkney islands"), com.histmersion.domain.media.imports.PlaceFacts.Keys("orkney")),
+    Some((com.histmersion.domain.DeepTime.SignedYear(-7000L), com.histmersion.domain.DeepTime.SignedYear(2100L))),
     None,
     Some(59.0),
     Some(-3.0)

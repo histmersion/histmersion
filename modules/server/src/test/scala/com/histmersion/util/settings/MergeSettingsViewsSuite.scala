@@ -1,5 +1,7 @@
 package com.histmersion.util.settings
 
+import com.histmersion.testsupport.ComparedByValue.given
+
 import com.histmersion.config.AppConfig
 
 class MergeSettingsViewsSuite extends munit.FunSuite:

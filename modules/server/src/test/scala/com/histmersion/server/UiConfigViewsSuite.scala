@@ -11,12 +11,12 @@ class UiConfigViewsSuite extends munit.FunSuite:
     val ui = AppConfig.load().ui
     val page = UiConfigViews.page(
       ui,
-      writeKeyRequired = true,
-      agentsEnabled = true,
+      writeKeyRequired = com.histmersion.api.instance.UiConfig.WriteKeyRequired(true),
+      agentsEnabled = com.histmersion.api.instance.UiConfig.AgentsEnabled(true),
       plugins = PluginsReport(),
-      baseMapSource = "local",
-      mapLanguage = "de",
-      setupDue = true
+      baseMapSource = com.histmersion.api.instance.UiConfig.BaseMapSource("local"),
+      mapLanguage = com.histmersion.api.instance.UiConfig.MapLanguage("de"),
+      setupDue = com.histmersion.api.instance.UiConfig.SetupDue(true)
     )
     assertEquals(
       page,
@@ -44,15 +44,15 @@ class UiConfigViewsSuite extends munit.FunSuite:
         MapTilesUiConfig(ui.mapTiles.maxZoom, ui.mapTiles.playbackBucketSeconds),
         ui.countersPollSeconds,
         ui.jobPollMs,
-        writeKeyRequired = true,
-        agentsEnabled = true,
+        writeKeyRequired = com.histmersion.api.instance.UiConfig.WriteKeyRequired(true),
+        agentsEnabled = com.histmersion.api.instance.UiConfig.AgentsEnabled(true),
         ui.tilesTone,
         PluginsReport(),
         ui.docsUrl,
-        baseMapSource = "local",
-        mapLanguage = "de",
+        baseMapSource = com.histmersion.api.instance.UiConfig.BaseMapSource("local"),
+        mapLanguage = com.histmersion.api.instance.UiConfig.MapLanguage("de"),
         com.histmersion.api.instance
           .MapStartConfig(ui.mapStart.mode, ui.mapStart.lat, ui.mapStart.lon, ui.mapStart.zoom, ui.mapStart.label),
-        setupDue = true
+        setupDue = com.histmersion.api.instance.UiConfig.SetupDue(true)
       )
     )

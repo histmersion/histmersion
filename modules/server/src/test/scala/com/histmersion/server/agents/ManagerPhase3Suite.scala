@@ -1,5 +1,7 @@
 package com.histmersion.server.agents
 
+import com.histmersion.testsupport.ComparedByValue.given
+
 import hearth.kindlings.optics.syntax.*
 
 import com.histmersion.domain.automation.agents.ScriptedClient
@@ -44,7 +46,7 @@ class ManagerPhase3Suite extends com.histmersion.db.DbSuite with RunTranscripts:
 
   private val Goal = "zzagent-watch"
   private val Query = "zzagent tin trade"
-  private val Model = ModelRef(ProviderKind.Local, "scripted")
+  private val Model = ModelRef(ProviderKind.Local, com.histmersion.api.automation.Agents.ModelRef.Model("scripted"))
   private val Usage1 = Some(TokenUsage(Tokens(1000), Tokens(100), Tokens.Zero, Tokens.Zero))
 
   private lazy val baseCfg =
@@ -89,7 +91,7 @@ class ManagerPhase3Suite extends com.histmersion.db.DbSuite with RunTranscripts:
   private def seed(a: AgentsControllers, h: ServerWiring): Unit =
     assert(
       h.goals
-        .put(Goal, com.histmersion.api.automation.Goal.Put("Zz tin watched", notes = Some("where the tin came from")))
+        .put(Goal, com.histmersion.api.automation.Goal.Put(com.histmersion.api.automation.Goal.Title("Zz tin watched"), notes = Some(com.histmersion.api.automation.Goal.Notes("where the tin came from"))))
         .isRight
     )
     assert(a.addGoalLink(Goal, LinkAdd(LinkKind.Query, Query)).isRight)
@@ -110,9 +112,9 @@ class ManagerPhase3Suite extends com.histmersion.db.DbSuite with RunTranscripts:
           ck,
           Some(doi),
           Some(s"Ingested $doi"),
-          created = true,
-          Some(PdfInfo("unpaywall", Some(s"https://example.invalid/$doi.pdf"), 2048, None)),
-          0,
+          created = com.histmersion.api.library.Ingest.Report.Created(true),
+          Some(PdfInfo(com.histmersion.api.library.PdfInfo.Source("unpaywall"), Some(s"https://example.invalid/$doi.pdf"), com.histmersion.api.ByteCount(2048), None)),
+          com.histmersion.api.library.Ingest.Report.EdgesAdded(0),
           None,
           Nil
         )
@@ -121,15 +123,15 @@ class ManagerPhase3Suite extends com.histmersion.db.DbSuite with RunTranscripts:
   private def item(mid: String, kind: String): ManagerItem = connect(ds)(ManagerRepo.itemFor(mid, kind, Goal)).get
 
   private def events(mid: String, kind: String): List[ManagerEvent] =
-    connect(ds)(ManagerRepo.events(mid, None, 200)).filter(_.kind == kind)
+    connect(ds)(ManagerRepo.events(mid, None, com.histmersion.PageSize(200))).filter(_.kind == kind)
 
   private def acquire(h: ServerWiring): List[Queue.QueueItem] =
-    h.workListView.list("acquire", all = true).toOption.get.items.filter(_.text.contains("zzagent"))
+    h.workListView.list(com.histmersion.domain.automation.worklists.WorkListControllers.KindOfList("acquire"), all = com.histmersion.server.views.WorkListView.IncludeAll(true)).toOption.get.items.filter(_.text.contains("zzagent"))
 
   test("watch: created paused with its cron and one item per sweep; nothing starts before it is resumed"):
     val (a, h, _) = handlers(ScriptedClient(Model)); seed(a, h)
     val now = Instant.parse("2026-10-17T12:00:00Z")
-    val m = a.managing.create(ManagerCreate("watch", Some(Goal)), now).fold(e => fail(e.message), identity)
+    val m = a.managing.create(ManagerCreate(com.histmersion.api.automation.Managers.ManagerCreate.Kind("watch"), Some(Goal)), now).fold(e => fail(e.message), identity)
     assertEquals(
       (m.id, m.kind, m.goal, m.state, m.cron),
       (watchId(Goal), "watch", Some(Goal), "paused", Some("@weekly"))
@@ -138,14 +140,14 @@ class ManagerPhase3Suite extends com.histmersion.db.DbSuite with RunTranscripts:
     assertEquals(m.effective.autoIngest, Some(false), "auto-ingest is opt-in")
     assertEquals(
       Transactor(ds)
-        .read(ManagerRepo.itemPage(m.id, None, 0, 10))
+        .read(ManagerRepo.itemPage(m.id, None, com.histmersion.Offset(0), com.histmersion.PageSize(10)))
         ._1
         .map(i => (i.kind, i.target, i.status))
         .sortBy(_._1),
       List((AcquisitionSweep, Goal, "pending"), (CurrencyCheck, Goal, "pending"))
     )
-    assert(a.managing.create(ManagerCreate("watch", Some(Goal))).left.exists(_.message.contains("exists already")))
-    assert(a.managing.create(ManagerCreate("watch")).left.exists(_.message.contains("give its goal")))
+    assert(a.managing.create(ManagerCreate(com.histmersion.api.automation.Managers.ManagerCreate.Kind("watch"), Some(Goal))).left.exists(_.message.contains("exists already")))
+    assert(a.managing.create(ManagerCreate(com.histmersion.api.automation.Managers.ManagerCreate.Kind("watch"))).left.exists(_.message.contains("give its goal")))
     assertEquals(a.managers.tick(now).filter(_.contains("started")), Nil, "paused: nothing starts")
     assertEquals(connect(ds)(AgentRepo.forManager(m.id)), Vector.empty)
 
@@ -173,11 +175,11 @@ class ManagerPhase3Suite extends com.histmersion.db.DbSuite with RunTranscripts:
     val now = Instant.now()
     val m = a.managing
       .create(
-        ManagerCreate("watch", Some(Goal), ManagerConfig(autoIngest = Some(true), autoIngestPerDay = Some(2))),
+        ManagerCreate(com.histmersion.api.automation.Managers.ManagerCreate.Kind("watch"), Some(Goal), ManagerConfig(autoIngest = Some(com.histmersion.api.automation.Managers.ManagerConfig.AutoIngest(true)), autoIngestPerDay = Some(com.histmersion.api.automation.Managers.ManagerConfig.AutoIngestPerDay(2)))),
         now
       )
       .fold(e => fail(e.message), identity)
-    a.managing.action(m.id, "resume", None).fold(e => fail(e.message), identity)
+    a.managing.action(m.id, com.histmersion.domain.automation.managers.ManagersControllers.Action("resume"), None).fold(e => fail(e.message), identity)
     val out = a.managers.tick(now)
     val sweep = item(m.id, AcquisitionSweep)
     assertEquals(sweep.status, "active", out.mkString("\n"))
@@ -203,7 +205,7 @@ class ManagerPhase3Suite extends com.histmersion.db.DbSuite with RunTranscripts:
       "only open-access picks, until two were ingested"
     )
     assertEquals(
-      h.library.sources.get("zzagent105555zzagenta", body = false).map(_.source.title),
+      h.library.sources.get(com.histmersion.domain.library.Citekey("zzagent105555zzagenta"), body = com.histmersion.domain.library.sources.SourcesControllers.GetBody(false)).map(_.source.title),
       Right("Ingested 10.5555/zzagent.a")
     )
     assert(
@@ -249,7 +251,7 @@ class ManagerPhase3Suite extends com.histmersion.db.DbSuite with RunTranscripts:
     // the same day, the next sweep has nothing left of the cap: it ingests nothing
     c.scripts += Seq(text("""{"picks":[{"doi":"10.5555/zzagent.f","why":"open"}]}"""))
     up.found = Map(Query -> List(work("10.5555/zzagent.f", "F", oa = true)))
-    a.managing.patchItem(m.id, sweep.id.toString, ItemPatch("reopen")).fold(e => fail(e.message), identity)
+    a.managing.patchItem(m.id, sweep.id.toString, ItemPatch(com.histmersion.api.automation.Managers.ItemPatch.Action("reopen"))).fold(e => fail(e.message), identity)
     a.managers.tick(now)
     val again = connect(ds)(AgentRepo.get(item(m.id, AcquisitionSweep).runId.get)).get
     assertEquals(again.params.autoIngest, None, "the daily cap is spent")
@@ -272,14 +274,14 @@ class ManagerPhase3Suite extends com.histmersion.db.DbSuite with RunTranscripts:
     up.found = Map(Query -> List(work("10.5555/zzagent.a", "A", oa = true)))
     up.onIngest = legalIngest(h, Set.empty)
     val m = a.managing
-      .create(ManagerCreate("watch", Some(Goal), ManagerConfig(sweeps = Some(List("acquisition")))))
+      .create(ManagerCreate(com.histmersion.api.automation.Managers.ManagerCreate.Kind("watch"), Some(Goal), ManagerConfig(sweeps = Some(List(com.histmersion.api.automation.Managers.Sweep.Wire("acquisition"))))))
       .fold(e => fail(e.message), identity)
     assertEquals(
-      Transactor(ds).read(ManagerRepo.itemPage(m.id, None, 0, 10))._1.map(_.kind),
+      Transactor(ds).read(ManagerRepo.itemPage(m.id, None, com.histmersion.Offset(0), com.histmersion.PageSize(10)))._1.map(_.kind),
       List(AcquisitionSweep),
       "only the sweeps it names"
     )
-    a.managing.action(m.id, "resume", None).fold(e => fail(e.message), identity)
+    a.managing.action(m.id, com.histmersion.domain.automation.managers.ManagersControllers.Action("resume"), None).fold(e => fail(e.message), identity)
     a.managers.tick(Instant.now())
     val run = connect(ds)(AgentRepo.get(item(m.id, AcquisitionSweep).runId.get)).get
     assertEquals(run.params.autoIngest, None)
@@ -288,7 +290,7 @@ class ManagerPhase3Suite extends com.histmersion.db.DbSuite with RunTranscripts:
     import scala.jdk.CollectionConverters.*
     assertEquals(up.calls.asScala.count(_.startsWith("ingest")), 0)
     assertEquals(acquire(h).count(_.text.contains("zzagent.a")), 1)
-    assert(connect(ds)(AgentRepo.steps(run.id, 1000)).forall(_.name != "ingest"), "no ingest step without auto-ingest")
+    assert(connect(ds)(AgentRepo.steps(run.id, com.histmersion.domain.automation.agents.AgentRepo.OutputChars(1000))).forall(_.name != "ingest"), "no ingest step without auto-ingest")
     assertEquals(events(m.id, Feed.Ingested), Nil)
 
   test(
@@ -297,15 +299,15 @@ class ManagerPhase3Suite extends com.histmersion.db.DbSuite with RunTranscripts:
     val (a, h, _) = handlers(ScriptedClient(Model)); seed(a, h)
     val t0 = Instant.parse("2026-10-17T12:00:00Z")
     val m = a.managing
-      .create(ManagerCreate("watch", Some(Goal), ManagerConfig(maxRuns = Some(0))), t0)
+      .create(ManagerCreate(com.histmersion.api.automation.Managers.ManagerCreate.Kind("watch"), Some(Goal), ManagerConfig(maxRuns = Some(com.histmersion.api.automation.Managers.ManagerConfig.MaxRuns(0)))), t0)
       .fold(e => fail(e.message), identity)
     // settle both items by hand (skip), as if they ran
     List(AcquisitionSweep, CurrencyCheck).foreach(k =>
-      a.managing.patchItem(m.id, item(m.id, k).id.toString, ItemPatch("skip")).fold(e => fail(e.message), identity)
+      a.managing.patchItem(m.id, item(m.id, k).id.toString, ItemPatch(com.histmersion.api.automation.Managers.ItemPatch.Action("skip"))).fold(e => fail(e.message), identity)
     )
     val sunday = Instant.parse("2026-10-18T00:00:30Z")
     assertEquals(a.managers.tick(sunday).filter(_.contains("cron")), Nil, "paused: its cron does not fire")
-    a.managing.action(m.id, "resume", None).fold(e => fail(e.message), identity)
+    a.managing.action(m.id, com.histmersion.domain.automation.managers.ManagersControllers.Action("resume"), None).fold(e => fail(e.message), identity)
     assertEquals(a.managers.tick(Instant.parse("2026-10-17T13:00:00Z")).filter(_.contains("cron")), Nil, "not due yet")
     val out = a.managers.tick(sunday)
     assert(out.contains(s"${m.id}: cron fired"), out)
@@ -339,26 +341,26 @@ class ManagerPhase3Suite extends com.histmersion.db.DbSuite with RunTranscripts:
     val t0 = Instant.parse("2026-10-17T12:00:00Z")
     assert(
       a.managing
-        .update(ReviewId, ManagerUpdate(cron = Some("*/5 * * * *")), t0)
+        .update(ReviewId, ManagerUpdate(cron = Some(com.histmersion.api.automation.Managers.ManagerUpdate.Cron("*/5 * * * *"))), t0)
         .left
         .exists(_.message.contains("min-interval"))
     )
     assert(
-      a.managing.update(ReviewId, ManagerUpdate(cron = Some("nope")), t0).left.exists(_.message.contains("five fields"))
+      a.managing.update(ReviewId, ManagerUpdate(cron = Some(com.histmersion.api.automation.Managers.ManagerUpdate.Cron("nope"))), t0).left.exists(_.message.contains("five fields"))
     )
     assert(
-      a.managing.update(EnrichId, ManagerUpdate(cron = Some("@daily")), t0).left.exists(_.message.contains("no cron"))
+      a.managing.update(EnrichId, ManagerUpdate(cron = Some(com.histmersion.api.automation.Managers.ManagerUpdate.Cron("@daily"))), t0).left.exists(_.message.contains("no cron"))
     )
     val r = a.managing
-      .update(ReviewId, ManagerUpdate(Some(ManagerConfig(lowWater = Some(0), maxRuns = Some(0))), Some("@daily")), t0)
+      .update(ReviewId, ManagerUpdate(Some(ManagerConfig(lowWater = Some(com.histmersion.api.automation.Managers.ManagerConfig.LowWater(0)), maxRuns = Some(com.histmersion.api.automation.Managers.ManagerConfig.MaxRuns(0)))), Some(com.histmersion.api.automation.Managers.ManagerUpdate.Cron("@daily"))), t0)
       .fold(e => fail(e.message), identity)
     assertEquals((r.cron, r.nextTickAt), (Some("@daily"), Some("2026-10-18T00:00:00Z")))
-    a.managing.action(ReviewId, "resume", None).fold(e => fail(e.message), identity)
+    a.managing.action(ReviewId, com.histmersion.domain.automation.managers.ManagersControllers.Action("resume"), None).fold(e => fail(e.message), identity)
     val out = a.managers.tick(Instant.parse("2026-10-18T00:01:00Z"))
     assert(out.contains("review: cron fired"), out)
     assert(events(ReviewId, Feed.Cron).head.text.contains("selection refilled"))
     // cleared: no cron, no next firing
-    val cleared = a.managing.update(ReviewId, ManagerUpdate(cron = Some("")), t0).fold(e => fail(e.message), identity)
+    val cleared = a.managing.update(ReviewId, ManagerUpdate(cron = Some(com.histmersion.api.automation.Managers.ManagerUpdate.Cron(""))), t0).fold(e => fail(e.message), identity)
     assertEquals((cleared.cron, cleared.nextTickAt), (None, None))
 
   // ── LLM-proposed hint effects, person-confirmed ────────────────────────────────────────────────
@@ -372,7 +374,7 @@ class ManagerPhase3Suite extends com.histmersion.db.DbSuite with RunTranscripts:
     assert(h.library.sources.put(CkB, Source.Put(title = com.histmersion.api.library.Title("Hint B"), year = (Some(2021)).map(com.histmersion.api.catalogue.Year.apply))).isRight)
     a.managers.ensureDefaults()
     List(CkA, CkB).foreach(ck =>
-      a.managing.addItem(EnrichId, EnqueueRequest("enrich", ck, Some(0))).fold(e => fail(e.message), identity)
+      a.managing.addItem(EnrichId, EnqueueRequest(com.histmersion.api.automation.Managers.EnqueueRequest.Kind("enrich"), ck, Some(com.histmersion.api.automation.Managers.EnqueueRequest.Priority(0)))).fold(e => fail(e.message), identity)
     )
 
   private def enrichItem(ck: String): ManagerItem = connect(ds)(ManagerRepo.itemFor(EnrichId, SourceEnrich, ck)).get
@@ -384,11 +386,11 @@ class ManagerPhase3Suite extends com.histmersion.db.DbSuite with RunTranscripts:
     "a model's effect (MCP: propose) waits for a person: nothing changes until approved; approve applies it, reject leaves it"
   ):
     val (a, h, _) = handlers(ScriptedClient(Model)); enrichItems(a, h)
-    val hold = HintEffect("hold", List(CkA), until = Some("2026-12-01"))
+    val hold = HintEffect(com.histmersion.api.automation.Managers.HintEffect.Action("hold"), List(CkA), until = Some("2026-12-01"))
     val hint = a.managing
       .addHint(
         EnrichId,
-        HintAdd("wait with A until December", effect = Some(hold), author = Some("mcp"), propose = Some(true))
+        HintAdd(com.histmersion.api.automation.Managers.HintAdd.Text("wait with A until December"), effect = Some(hold), author = Some(com.histmersion.api.automation.Managers.HintAdd.Author("mcp")), propose = Some(com.histmersion.api.automation.Managers.HintAdd.Propose(true)))
       )
       .fold(e => fail(e.message), identity)
     assertEquals(hint.effect, None, "not applied")
@@ -405,7 +407,7 @@ class ManagerPhase3Suite extends com.histmersion.db.DbSuite with RunTranscripts:
       ManagersMarkdown.hint(hint)
     )
     // approve: applied through the same path as a person's own hold, and recorded on the hint
-    val decided = a.decide(ap.head.id, "approve", DecisionRequest()).fold(e => fail(e.message), identity)
+    val decided = a.decide(ap.head.id, com.histmersion.domain.automation.Approval.Outcome("approve"), DecisionRequest()).fold(e => fail(e.message), identity)
     assertEquals(decided.state, "approved")
     assert(decided.result.exists(_.contains("hold")), decided.result)
     assertEquals((enrichItem(CkA).status, enrichItem(CkA).hold.flatMap(_.until)), ("held", Some("2026-12-01")))
@@ -414,10 +416,10 @@ class ManagerPhase3Suite extends com.histmersion.db.DbSuite with RunTranscripts:
     assertEquals((after.effect.map(_.action), after.proposal), (Some("hold"), None))
     // a rejected one changes nothing
     val skip = a.managing
-      .addHint(EnrichId, HintAdd("drop B", effect = Some(HintEffect("skip", List(CkB))), propose = Some(true)))
+      .addHint(EnrichId, HintAdd(com.histmersion.api.automation.Managers.HintAdd.Text("drop B"), effect = Some(HintEffect(com.histmersion.api.automation.Managers.HintEffect.Action("skip"), List(CkB))), propose = Some(true)))
       .fold(e => fail(e.message), identity)
     val ap2 = openHintApprovals(a).head
-    assertEquals(a.decide(ap2.id, "reject", DecisionRequest()).map(_.state), Right("rejected"))
+    assertEquals(a.decide(ap2.id, com.histmersion.domain.automation.Approval.Outcome("reject"), DecisionRequest()).map(_.state), Right("rejected"))
     assertEquals(enrichItem(CkB).status, "pending")
     assertEquals(Transactor(ds).read(ManagerRepo.hint(skip.id)).get.effect, None)
 
@@ -429,7 +431,7 @@ class ManagerPhase3Suite extends com.histmersion.db.DbSuite with RunTranscripts:
       a.managing
         .addHint(
           EnrichId,
-          HintAdd("slower", effect = Some(HintEffect("config", config = Some(ManagerConfig(maxRuns = Some(1))))))
+          HintAdd(com.histmersion.api.automation.Managers.HintAdd.Text("slower"), effect = Some(HintEffect(com.histmersion.api.automation.Managers.HintEffect.Action("config"), config = Some(ManagerConfig(maxRuns = Some(com.histmersion.api.automation.Managers.ManagerConfig.MaxRuns(1)))))))
         )
         .left
         .exists(_.message.contains("config instead"))
@@ -439,9 +441,9 @@ class ManagerPhase3Suite extends com.histmersion.db.DbSuite with RunTranscripts:
         .addHint(
           EnrichId,
           HintAdd(
-            "x",
-            effect = Some(HintEffect("config", config = Some(ManagerConfig(rounds = Some(99))))),
-            propose = Some(true)
+            com.histmersion.api.automation.Managers.HintAdd.Text("x"),
+            effect = Some(HintEffect(com.histmersion.api.automation.Managers.HintEffect.Action("config"), config = Some(ManagerConfig(rounds = Some(com.histmersion.api.automation.Managers.ManagerConfig.Rounds(99)))))),
+            propose = Some(com.histmersion.api.automation.Managers.HintAdd.Propose(true))
           )
         )
         .left
@@ -451,16 +453,16 @@ class ManagerPhase3Suite extends com.histmersion.db.DbSuite with RunTranscripts:
       .addHint(
         EnrichId,
         HintAdd(
-          "one at a time please",
-          effect = Some(HintEffect("config", config = Some(ManagerConfig(maxRuns = Some(1))))),
-          propose = Some(true)
+          com.histmersion.api.automation.Managers.HintAdd.Text("one at a time please"),
+          effect = Some(HintEffect(com.histmersion.api.automation.Managers.HintEffect.Action("config"), config = Some(ManagerConfig(maxRuns = Some(com.histmersion.api.automation.Managers.ManagerConfig.MaxRuns(1)))))),
+          propose = Some(com.histmersion.api.automation.Managers.HintAdd.Propose(true))
         )
       )
       .fold(e => fail(e.message), identity)
     assertEquals(a.managing.get(EnrichId).toOption.get.manager.config.maxRuns, None, "not before approval")
     val ap = openHintApprovals(a).head
     assert(AgentsMarkdown.change(ap).contains("settings: maxRuns=1"), AgentsMarkdown.change(ap))
-    assertEquals(a.decide(ap.id, "approve", DecisionRequest()).map(_.state), Right("approved"))
+    assertEquals(a.decide(ap.id, com.histmersion.domain.automation.Approval.Outcome("approve"), DecisionRequest()).map(_.state), Right("approved"))
     assertEquals(a.managing.get(EnrichId).toOption.get.manager.config.maxRuns, Some(1))
 
   test(
@@ -481,9 +483,9 @@ class ManagerPhase3Suite extends com.histmersion.db.DbSuite with RunTranscripts:
     )
     val (a, h, _) = handlers(c); enrichItems(a, h)
     val hint = a.managing
-      .addHint(EnrichId, HintAdd("please leave A alone until December", suggest = Some(true)))
+      .addHint(EnrichId, HintAdd(com.histmersion.api.automation.Managers.HintAdd.Text("please leave A alone until December"), suggest = Some(com.histmersion.api.automation.Managers.HintAdd.Suggest(true))))
       .fold(e => fail(e.message), identity)
-    val run = connect(ds)(AgentRepo.list(None, 20)).find(_.pipeline == "hint-effect").get
+    val run = connect(ds)(AgentRepo.list(None, com.histmersion.PageSize(20))).find(_.pipeline == "hint-effect").get
     assertEquals((run.target, run.origin, run.params.hint), (EnrichId, Some("person"), Some(hint.id)))
     a.engine.execute(run.id)
     val done = connect(ds)(AgentRepo.get(run.id)).get
@@ -499,22 +501,22 @@ class ManagerPhase3Suite extends com.histmersion.db.DbSuite with RunTranscripts:
     )
     assertEquals(ap.head.runId, Some(run.id))
     assert(
-      connect(ds)(ManagerRepo.events(EnrichId, None, 20))
+      connect(ds)(ManagerRepo.events(EnrichId, None, com.histmersion.PageSize(20)))
         .exists(e => e.kind == Feed.Hint && e.text.contains("a model proposed hold"))
     )
-    assertEquals(a.decide(ap.head.id, "approve", DecisionRequest()).map(_.state), Right("approved"))
+    assertEquals(a.decide(ap.head.id, com.histmersion.domain.automation.Approval.Outcome("approve"), DecisionRequest()).map(_.state), Right("approved"))
     assertEquals(enrichItem(CkA).status, "held")
     // a suggestion and an effect together are refused; with agents off a suggestion is refused before the hint is kept
     assert(
       a.managing
-        .addHint(EnrichId, HintAdd("x", effect = Some(HintEffect("skip", List(CkB))), suggest = Some(true)))
+        .addHint(EnrichId, HintAdd(com.histmersion.api.automation.Managers.HintAdd.Text("x"), effect = Some(HintEffect(com.histmersion.api.automation.Managers.HintEffect.Action("skip"), List(CkB))), suggest = Some(true)))
         .isLeft
     )
     val off = baseCfg.modify(_.agents).setTo(baseCfg.agents.modify(_.enabled).setTo(false))
     val (b, _, _) = handlers(ScriptedClient(Model), off)
     val before = Transactor(ds).read(ManagerRepo.hints(EnrichId, live = false)).size
     assert(
-      b.managing.addHint(EnrichId, HintAdd("x", suggest = Some(true))).left.exists(_.message.contains("agents are off"))
+      b.managing.addHint(EnrichId, HintAdd(com.histmersion.api.automation.Managers.HintAdd.Text("x"), suggest = Some(com.histmersion.api.automation.Managers.HintAdd.Suggest(true)))).left.exists(_.message.contains("agents are off"))
     )
     assertEquals(Transactor(ds).read(ManagerRepo.hints(EnrichId, live = false)).size, before)
 
@@ -525,7 +527,7 @@ class ManagerPhase3Suite extends com.histmersion.db.DbSuite with RunTranscripts:
   ):
     val (a, h, _) = handlers(ScriptedClient(Model)); seed(a, h)
     val m = a.managing
-      .create(ManagerCreate("watch", Some(Goal), ManagerConfig(sweeps = Some(List("currency")), dailyUsd = Some(0.01))))
+      .create(ManagerCreate(com.histmersion.api.automation.Managers.ManagerCreate.Kind("watch"), Some(Goal), ManagerConfig(sweeps = Some(List(com.histmersion.api.automation.Managers.Sweep.Wire("currency"))), dailyUsd = Some(0.01))))
       .fold(e => fail(e.message), identity)
     // a run of this manager that already cost 0.02 USD today (and one plan-billed step: 0 USD, tokens only)
     val spent = com.augustnagro.magnum.transact(ds)(
@@ -554,7 +556,7 @@ class ManagerPhase3Suite extends com.histmersion.db.DbSuite with RunTranscripts:
     val info = a.managing.get(m.id).toOption.get.manager
     assertEquals((info.spentTodayUsd, info.tokensToday), (0.02, 6500L))
     assert(ManagersMarkdown.line(info).contains("today 0.0200 of 0.0100 USD, 6.5k tokens"), ManagersMarkdown.line(info))
-    a.managing.action(m.id, "resume", None).fold(e => fail(e.message), identity)
+    a.managing.action(m.id, com.histmersion.domain.automation.managers.ManagersControllers.Action("resume"), None).fold(e => fail(e.message), identity)
     val now = Instant.now()
     assertEquals(a.managers.tick(now).filter(_.contains("started")), Nil)
     assertEquals(item(m.id, CurrencyCheck).status, "pending")
@@ -571,7 +573,7 @@ class ManagerPhase3Suite extends com.histmersion.db.DbSuite with RunTranscripts:
     )
     // the cap raised: it starts
     a.managing
-      .update(m.id, ManagerUpdate(Some(ManagerConfig(sweeps = Some(List("currency")), dailyUsd = Some(1.0)))))
+      .update(m.id, ManagerUpdate(Some(ManagerConfig(sweeps = Some(List(com.histmersion.api.automation.Managers.Sweep.Wire("currency"))), dailyUsd = Some(1.0)))))
       .fold(e => fail(e.message), identity)
     a.managers.tick(now)
     assertEquals(item(m.id, CurrencyCheck).status, "active")

@@ -1,5 +1,7 @@
 package com.histmersion.server
 
+import com.histmersion.testsupport.ComparedByValue.given
+
 import hearth.kindlings.optics.syntax.*
 
 import ox.supervised
@@ -87,7 +89,7 @@ class ArticleCoverageHttpSuite extends com.histmersion.db.DbSuite:
     val base = AppConfig.load()
     val cfg = base.modify(_.db).setTo(base.db.modify(_.url).setTo(testDb.get))
     supervised {
-      val b = Composition.server(cfg, "127.0.0.1", 0).start()
+      val b = Composition.server(cfg, com.histmersion.config.ServerConfig.Host("127.0.0.1"), com.histmersion.config.ServerConfig.Port(0)).start()
       val url = s"http://127.0.0.1:${b.port}"
       try
         clean(url, cfg)
@@ -132,8 +134,8 @@ class ArticleCoverageHttpSuite extends com.histmersion.db.DbSuite:
           List(Why -> Some("About Egypt, not the Aegean"), NoWhy -> None, Dispute -> None).sortBy(_._1)
         )
         assertEquals(c.citedOutside, List(Outside))
-        assertEquals(c.statuses, List(StatusCount(Source.Status.Current, 4), StatusCount(Source.Status.Contested, 1)))
-        assertEquals(c.edges, List(Coverage.Edge(Critic, "challenges", Cited2)))
+        assertEquals(c.statuses, List(StatusCount(Source.Status.Current, com.histmersion.api.StatusCount.Count(4)), StatusCount(Source.Status.Contested, com.histmersion.api.StatusCount.Count(1))))
+        assertEquals(c.edges, List(Coverage.Edge(Critic, com.histmersion.api.research.Coverage.Edge.Kind("challenges"), Cited2)))
         assertEquals(c.searches.map(s => (s.query, s.cited)), List(("synoikism", List(Outside))))
         assertEquals(
           c.drift,
@@ -155,7 +157,7 @@ class ArticleCoverageHttpSuite extends com.histmersion.db.DbSuite:
         assert(md.contains(s"- [[$NoWhy]], [[$Dispute]] (contested) — not yet assessed"), md)
         assert(md.contains("The filter returns 5 sources. 2 of them are cited above; the other 3 are listed"), md)
         assert(md.contains(s"[[$Critic]] challenges [[$Cited2]]"), md)
-        assertEquals(ArticleMarkdown.article(view, List("coverage")), Article.Coverage.sections(c))
+        assertEquals(ArticleMarkdown.article(view, List(com.histmersion.api.research.Article.Part("coverage"))), Article.Coverage.sections(c))
         // the "Sources cited" footer lists what the body cites — not the generated list
         assert(!view.sourcesCited.exists(_.citekey == NoWhy), view.sourcesCited)
 

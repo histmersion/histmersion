@@ -1,5 +1,7 @@
 package com.histmersion.domain.library.acquisition
 
+import com.histmersion.testsupport.ComparedByValue.given
+
 import com.histmersion.api.automation.Queue
 import com.histmersion.api.library.Source
 import com.histmersion.domain.{AcquireRecheck, Caller}
@@ -35,11 +37,11 @@ abstract class AcquireCheckServiceContract extends AcquisitionStoreSuite:
       .copy(ocrMarkdown = body)
 
   stest("a check is replaced with its count kept; the open items' checks; counted since a time") { s =>
-    val open = s.queues.add(Queue.Kind.Acquire, Queue.QueueAdd("Get 10.5555/zq.a")).id
-    val done = s.queues.add(Queue.Kind.Acquire, Queue.QueueAdd("Get 10.5555/zq.b")).id
-    s.checks.record(open, T0, "g1", AcquireRecheck.Outcome.NoCopy, "no copy")
-    s.checks.record(open, T0.plusSeconds(60), "g2", AcquireRecheck.Outcome.Fetched, "fetched")
-    s.checks.record(done, T0.plusSeconds(120), "g2", AcquireRecheck.Outcome.Closed, "held")
+    val open = s.queues.add(Queue.Kind.Acquire, Queue.QueueAdd(com.histmersion.api.automation.Queue.QueueItem.Text("Get 10.5555/zq.a"))).id
+    val done = s.queues.add(Queue.Kind.Acquire, Queue.QueueAdd(com.histmersion.api.automation.Queue.QueueItem.Text("Get 10.5555/zq.b"))).id
+    s.checks.record(open, T0, com.histmersion.domain.AcquireRecheck.LastCheck.Generation("g1"), AcquireRecheck.Outcome.NoCopy, com.histmersion.domain.library.acquisition.AcquireCheckRow.Reason("no copy"))
+    s.checks.record(open, T0.plusSeconds(60), com.histmersion.domain.AcquireRecheck.LastCheck.Generation("g2"), AcquireRecheck.Outcome.Fetched, com.histmersion.domain.library.acquisition.AcquireCheckRow.Reason("fetched"))
+    s.checks.record(done, T0.plusSeconds(120), com.histmersion.domain.AcquireRecheck.LastCheck.Generation("g2"), AcquireRecheck.Outcome.Closed, com.histmersion.domain.library.acquisition.AcquireCheckRow.Reason("held"))
     val _ = s.queues.patch(
       com.histmersion.domain.automation.worklists.QueueItemId(done),
       Queue.QueuePatch(status = Some(Queue.Done))
@@ -61,12 +63,12 @@ abstract class AcquireCheckServiceContract extends AcquisitionStoreSuite:
     val _ = s.sources.put(source("zqa_one", Some("10.5555/ZQ.A"), Some("# body")), Caller.Local)
     val _ = s.sources.put(source("zqa_two", Some("10.5555/zq.b"), None), Caller.Local)
     val _ = s.sources.put(source("zqa_zwei", Some("10.5555/zq.b"), None), Caller.Local)
-    s.sources.setOriginal("zqa_zwei", "f" * 64, Caller.Local)
+    s.sources.setOriginal(com.histmersion.domain.library.Citekey("zqa_zwei"), "f" * 64, Caller.Local)
     assertEquals(
-      s.checks.heldByDoi(List(" 10.5555/zq.a", "10.5555/zq.b", "10.5555/zq.none", "")),
+      s.checks.heldByDoi(List(com.histmersion.domain.library.Doi(" 10.5555/zq.a"), com.histmersion.domain.library.Doi("10.5555/zq.b"), com.histmersion.domain.library.Doi("10.5555/zq.none"), com.histmersion.domain.library.Doi(""))),
       Map(
-        "10.5555/zq.a" -> AcquireRecheck.Held("zqa_one", true),
-        "10.5555/zq.b" -> AcquireRecheck.Held("zqa_two", false)
+        "10.5555/zq.a" -> AcquireRecheck.Held(com.histmersion.domain.library.Citekey("zqa_one"), com.histmersion.domain.AcquireRecheck.Held.HasOriginal(true)),
+        "10.5555/zq.b" -> AcquireRecheck.Held(com.histmersion.domain.library.Citekey("zqa_two"), com.histmersion.domain.AcquireRecheck.Held.HasOriginal(false))
       )
     )
     assertEquals(s.checks.heldByDoi(Nil), Map.empty)

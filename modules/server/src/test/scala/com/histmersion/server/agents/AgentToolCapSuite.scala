@@ -35,7 +35,7 @@ class AgentToolCapSuite extends com.histmersion.db.DbSuite:
   override def munitIgnore: Boolean = testDb.isEmpty
 
   private val Ck = "zztool2020_dragon"
-  private val Caps = AgentToolsConfig(resultMaxChars = 3000, bodyChars = 1200, queryMaxRows = 5)
+  private val Caps = AgentToolsConfig(resultMaxChars = com.histmersion.config.AgentToolsConfig.ResultMaxChars(3000), bodyChars = com.histmersion.config.AgentToolsConfig.BodyChars(1200), queryMaxRows = com.histmersion.config.AgentToolsConfig.QueryMaxRows(5))
 
   private lazy val cfg =
     val b = AppConfig.load()
@@ -70,8 +70,8 @@ class AgentToolCapSuite extends com.histmersion.db.DbSuite:
       authors = (List("Calvert Watkins")).map(com.histmersion.api.library.AuthorName.apply),
       year = (Some(1995)).map(com.histmersion.api.catalogue.Year.apply),
       status = Some(Source.Status.Foundational),
-      topics = List("dragon_slaying_myth", "pie_religion"),
-      summary = Some("The book reconstructs the dragon-slaying formula."),
+      topics = List(com.histmersion.api.library.Source.Topics("dragon_slaying_myth"), com.histmersion.api.library.Source.Topics("pie_religion")),
+      summary = Some(com.histmersion.api.library.Source.Summary("The book reconstructs the dragon-slaying formula.")),
       body = Some(Body),
       notes = Some(Notes),
       findings = List(

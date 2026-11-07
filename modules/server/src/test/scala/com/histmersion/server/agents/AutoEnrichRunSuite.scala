@@ -1,5 +1,7 @@
 package com.histmersion.server.agents
 
+import com.histmersion.testsupport.ComparedByValue.given
+
 import hearth.kindlings.optics.syntax.*
 
 import com.histmersion.util.ocr.ConverterClient
@@ -36,12 +38,12 @@ class AutoEnrichRunSuite extends com.histmersion.db.DbSuite with RunTranscripts:
   private val Ck = "zzautoenrich2020_tin"
 
   private object Stub extends ConverterClient:
-    def health = Right("ok")
+    def health = Right(com.histmersion.util.ocr.ConverterClient.HealthSummary("ok"))
     def convert(file: com.histmersion.util.storage.Blob, filename: String, quality: Boolean) =
       Right(
         ConvertedDoc(
-          markdown = "# Tin\n\nThe Uluburun ship carried ten tons of copper.\n",
-          pages = 1,
+          markdown = com.histmersion.api.ocr.ConvertedDoc.Markdown("# Tin\n\nThe Uluburun ship carried ten tons of copper.\n"),
+          pages = com.histmersion.api.ocr.ConvertedDoc.Pages(1),
           filename = Some(filename)
         )
       )
@@ -50,9 +52,9 @@ class AutoEnrichRunSuite extends com.histmersion.db.DbSuite with RunTranscripts:
     val b = AppConfig.load()
     b.modify(
       _.db).setTo(b.db.modify(_.url).setTo(testDb.get)).modify(_.server).setTo(b.server.modify(_.host).setTo("127.0.0.1")).modify(_.converter).setTo(b.converter.modify(_.spoolDir).setTo(Files.createTempDirectory("histmersion-autoenrich").toString)).modify(_.agents).setTo(b.agents.copy(
-        enabled = true,
-        autoEnrich = true,
-        prices = "zzautoenrich=0/0",
+        enabled = com.histmersion.config.AgentsConfig.Enabled(true),
+        autoEnrich = com.histmersion.config.AgentsConfig.AutoEnrich(true),
+        prices = com.histmersion.config.AgentsConfig.Prices("zzautoenrich=0/0"),
         roles = b.agents.roles.modify(_.extractor).setTo("local:zzautoenrich"),
         // the direct run: auto-enrich as it was before the managers' phase 2 (still what managers off does)
         managers = b.agents.managers.modify(_.enabled).setTo(false)
@@ -90,7 +92,7 @@ class AutoEnrichRunSuite extends com.histmersion.db.DbSuite with RunTranscripts:
   /** Ingest the fixture file and wait for its job to settle. */
   private def ingest(h: ServerWiring): JobInfo =
     val accepted = h.ingest.controllers
-      .ingest(Ingest.Params(Ck, Some("tin.pdf")), com.histmersion.domain.library.ingest.Upload.handed(com.histmersion.util.storage.HandedFile.snapshot(pdf.toFile)))
+      .ingest(Ingest.Params(Ck, Some(com.histmersion.api.exchange.Bundle.Asset.FileName("tin.pdf"))), com.histmersion.domain.library.ingest.Upload.handed(com.histmersion.util.storage.HandedFile.snapshot(pdf.toFile)))
       .fold(e => fail(e.message), identity)
     def go(n: Int): JobInfo =
       val j = h.jobs.job(accepted.jobId).fold(e => fail(e.message), identity)
@@ -168,7 +170,7 @@ class AutoEnrichRunSuite extends com.histmersion.db.DbSuite with RunTranscripts:
             Source.Put(
               title = com.histmersion.api.library.Title("Bronze Age tin"),
               year = (Some(2020)).map(com.histmersion.api.catalogue.Year.apply),
-              findings = List(Finding.Input("The Uluburun ship carried copper."))
+              findings = List(Finding.Input(com.histmersion.api.library.Finding.Claim("The Uluburun ship carried copper.")))
             )
           )
           .isRight

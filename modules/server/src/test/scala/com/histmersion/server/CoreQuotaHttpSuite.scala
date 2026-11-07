@@ -1,5 +1,7 @@
 package com.histmersion.server
 
+import com.histmersion.testsupport.ComparedByValue.given
+
 import hearth.kindlings.optics.syntax.*
 
 import com.histmersion.config.AppConfig
@@ -36,7 +38,7 @@ class CoreQuotaHttpSuite extends munit.FunSuite:
     val limits = CoreBudget.limits(cfg.acquire.core)
     val first = CoreBudget(() => now.get, _ => ())
     supervised {
-      val s = Composition.server(cfg, "127.0.0.1", 0, OfflineConverter(), core = Some(first)).start()
+      val s = Composition.server(cfg, com.histmersion.config.ServerConfig.Host("127.0.0.1"), com.histmersion.config.ServerConfig.Port(0), OfflineConverter(), core = Some(first)).start()
       try
         val url = s"http://127.0.0.1:${s.port}"
         assert(!get(s"$url/api/about").contains("\"upstreams\":[{"), "nothing shown before CORE was asked")
@@ -44,7 +46,7 @@ class CoreQuotaHttpSuite extends munit.FunSuite:
         assert(first.take(limits, CoreQuota.Purpose.Search).isRight)
         first.observe(
           limits,
-          429,
+          com.histmersion.domain.CoreQuota.StatusCode(429),
           Map(
             "x-ratelimit-limit" -> "25",
             "x-ratelimit-remaining" -> "0",
@@ -59,7 +61,7 @@ class CoreQuotaHttpSuite extends munit.FunSuite:
     // a restart: a fresh budget, the same database
     val second = CoreBudget(() => now.get, _ => ())
     supervised {
-      val s = Composition.server(cfg, "127.0.0.1", 0, OfflineConverter(), core = Some(second)).start()
+      val s = Composition.server(cfg, com.histmersion.config.ServerConfig.Host("127.0.0.1"), com.histmersion.config.ServerConfig.Port(0), OfflineConverter(), core = Some(second)).start()
       try
         assertEquals(second.state.searchTokens, 1)
         assert(second.unavailable(limits, CoreQuota.Purpose.Lookup).exists(_.isInstanceOf[CoreQuota.Refusal.Blocked]))

@@ -35,14 +35,14 @@ class RegistriesOracleSuite extends munit.FunSuite:
 
   private val details: List[(String, JobDetail)] = List(
     "none" -> JobDetail.empty,
-    "init" -> InitPlan.Detail(Some(InitPlan(gazetteer = true, periodPresets = true, fetch = List("land")))),
-    "plan" -> com.histmersion.api.exchange.ExchangeJobKinds.PlanHash(Some("abc123")),
-    "vacuum" -> VacuumPlan.Detail(Some(VacuumPlan(analyze = true, tables = List("sources", "places")))),
-    "media" -> com.histmersion.api.media.ImportJobKinds.Media(Some("pictures of 3 places")),
-    "events" -> com.histmersion.api.catalogue.EventsJobKinds.Catalogue(Some("gvp: 10 parts")),
-    "about" -> JobDetail.Purpose(Some("the vector map of crete")),
+    "init" -> InitPlan.Detail(Some(InitPlan(gazetteer = com.histmersion.api.exchange.InitPlan.Gazetteer(true), periodPresets = com.histmersion.api.exchange.InitPlan.PeriodPresets(true), fetch = List(com.histmersion.api.exchange.InitPlan.Fetch("land"))))),
+    "plan" -> com.histmersion.api.exchange.ExchangeJobKinds.PlanHash(Some(com.histmersion.api.exchange.MergePlan.PlanHash("abc123"))),
+    "vacuum" -> VacuumPlan.Detail(Some(VacuumPlan(analyze = com.histmersion.api.maintenance.VacuumPlan.Analyze(true), tables = List(com.histmersion.api.maintenance.Vacuum.Request.Tables("sources"), com.histmersion.api.maintenance.Vacuum.Request.Tables("places"))))),
+    "media" -> com.histmersion.api.media.ImportJobKinds.Media(Some(com.histmersion.api.jobs.JobKinds.Subject("pictures of 3 places"))),
+    "events" -> com.histmersion.api.catalogue.EventsJobKinds.Catalogue(Some(com.histmersion.api.jobs.JobKinds.Subject("gvp: 10 parts"))),
+    "about" -> JobDetail.Purpose(Some(com.histmersion.api.jobs.JobKinds.Subject("the vector map of crete"))),
     "recheck" -> Acquire.Checks.RecheckJob.Detail(
-      Some(Acquire.Checks.RecheckJob(all = true, upTo = 7, since = "2026-10-01"))
+      Some(Acquire.Checks.RecheckJob(all = com.histmersion.api.library.Acquire.Checks.RecheckJob.All(true), upTo = com.histmersion.api.library.Acquire.Checks.RecheckJob.UpTo(7), since = com.histmersion.api.library.Acquire.Checks.RecheckJob.Since("2026-10-01")))
     )
   )
 
@@ -50,21 +50,21 @@ class RegistriesOracleSuite extends munit.FunSuite:
     val lines = com.histmersion.api.RegisteredJobKinds.all.kinds.flatMap { k =>
       val head = s"${k.value}\t${Wording.jobKindOf(k.value)}\tstoppable=${JobActions.Stoppable.contains(k.value)}"
       val subjects = details.map { (name, d) =>
-        val j = JobInfo(id = com.histmersion.api.SpatialHierarchyResult.Job.Id("j"), kind = com.histmersion.api.jobs.JobKinds.Wire(k.value), status = "done", detail = Some(d))
+        val j = JobInfo(id = com.histmersion.api.SpatialHierarchyResult.Job.Id("j"), kind = com.histmersion.api.jobs.JobKinds.Wire(k.value), status = com.histmersion.api.jobs.JobInfo.Status("done"), detail = Some(d))
         s"  $name\t${JobDetail.subject(j).getOrElse("-")}"
       }
-      val withCitekey = JobInfo(id = com.histmersion.api.SpatialHierarchyResult.Job.Id("j"), kind = com.histmersion.api.jobs.JobKinds.Wire(k.value), status = "done", citekey = (Some("hattusa_1990")).map(com.histmersion.api.library.Citekey.apply))
+      val withCitekey = JobInfo(id = com.histmersion.api.SpatialHierarchyResult.Job.Id("j"), kind = com.histmersion.api.jobs.JobKinds.Wire(k.value), status = com.histmersion.api.jobs.JobInfo.Status("done"), citekey = (Some("hattusa_1990")).map(com.histmersion.api.library.Citekey.apply))
       head :: subjects ::: List(s"  citekey\t${JobDetail.subject(withCitekey).getOrElse("-")}")
     }
-    val unknown = s"unknown\t${Wording.jobKindOf("some-new-kind")}\tstoppable=${JobActions.Stoppable
-        .contains("some-new-kind")}"
+    val unknown = s"unknown\t${Wording.jobKindOf(com.histmersion.api.jobs.JobKinds.Wire("some-new-kind"))}\tstoppable=${JobActions.Stoppable
+        .contains(com.histmersion.api.jobs.JobKinds.Wire("some-new-kind"))}"
     check("job-kinds.txt", (lines :+ unknown).mkString("", "\n", "\n"))
 
   test("alias-tables.txt: every alias table, its words and its columns"):
     val lines = Deps.aliasTables.tables.map { t =>
       val k = t.kind
       s"${k.noun}\t${k.idWord}\t${t.table}.${t.idColumn}\t${t.aliasTable}.alias -> ${t.targetColumn}\n" +
-        s"  rule\t${Aliases.rule(k)}\n  followed\t${Aliases.followed(k, "old_one", "new_one").getOrElse("-")}"
+        s"  rule\t${Aliases.rule(k)}\n  followed\t${Aliases.followed(k, com.histmersion.api.aliases.Aliases.Id("old_one"), com.histmersion.api.aliases.Aliases.Id("new_one")).getOrElse("-")}"
     }
     val bundles =
       com.histmersion.api.exchange.Bundle.Kind.values.toList.map(b =>

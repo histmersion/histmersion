@@ -202,7 +202,7 @@ class CalibreCommandsSuite extends com.histmersion.db.DbSuite:
     seed(ds, spool, cfg.limits.chunkChars)
     val transcript = supervised {
       val b = Composition
-        .server(cfg, "127.0.0.1", 0, OfflineConverter(), plugins = CalibreCommandsSuite.plugins(lib))
+        .server(cfg, com.histmersion.config.ServerConfig.Host("127.0.0.1"), com.histmersion.config.ServerConfig.Port(0), OfflineConverter(), plugins = CalibreCommandsSuite.plugins(lib))
         .start()
       val url = s"http://127.0.0.1:${b.port}"
       try
@@ -290,7 +290,7 @@ class CalibreCommandsSuite extends com.histmersion.db.DbSuite:
         tools: Map[String, String]
     ): List[(Int, String, String)] =
       supervised {
-        val b = Composition.server(cfg, "127.0.0.1", 0, OfflineConverter(), plugins = plugins).start()
+        val b = Composition.server(cfg, com.histmersion.config.ServerConfig.Host("127.0.0.1"), com.histmersion.config.ServerConfig.Port(0), OfflineConverter(), plugins = plugins).start()
         val url = s"http://127.0.0.1:${b.port}"
         try
           commands.map { args =>
@@ -332,7 +332,7 @@ object CalibreCommandsSuite:
            |}""".stripMargin
       )
     )
-    assert(g.registries.sourceCollections.contains("calibre"), g.report.toString)
+    assert(g.registries.sourceCollections.contains(com.histmersion.pluginhost.Registries.SourceCollectionsKey("calibre")), g.report.toString)
     g
 
   /** The CLI's own Calibre tools: the fixture's where the command runs on this machine (a host-side original), else

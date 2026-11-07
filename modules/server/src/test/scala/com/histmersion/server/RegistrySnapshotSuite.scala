@@ -107,7 +107,7 @@ class RegistrySnapshotSuite extends munit.FunSuite:
         java.util.concurrent.atomic.AtomicReference(Nil),
         com.histmersion.domain.library.collections.RefusingCollectionLibrary(),
         () => scala.collection.immutable.ListMap.empty,
-        8
+        com.histmersion.domain.library.collections.CollectionsService.Limit(8)
       ),
       deps.maintenance
     )

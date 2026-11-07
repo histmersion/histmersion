@@ -1,5 +1,7 @@
 package com.histmersion.domain.automation
 
+import com.histmersion.testsupport.ComparedByValue.given
+
 import com.histmersion.config.AppConfig
 import com.histmersion.domain.automation.agents.{ApprovalService, RunService}
 import com.histmersion.domain.automation.autopilot.AutopilotRowService

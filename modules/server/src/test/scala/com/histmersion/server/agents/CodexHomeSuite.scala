@@ -46,7 +46,7 @@ class CodexHomeSuite extends munit.FunSuite:
     val h = home()
     try
       val ran = scala.collection.mutable.ListBuffer.empty[List[String]]
-      val r = Codex.Home.retain(h, cfg, now, argv => { ran += argv; Right(0) })
+      val r = Codex.Home.retain(h, cfg, now, argv => { ran += argv; Right(com.histmersion.server.agents.Codex.Home.ExitCode(0)) })
       assertEquals(r.skipped, None)
       assertEquals((r.deleted, r.freedBytes), (2, 200L))
       assert(!Files.exists(h.resolve("sessions/2026/08")), "the emptied month folder is gone")
@@ -78,7 +78,7 @@ class CodexHomeSuite extends munit.FunSuite:
       assert(busy.skipped.exists(_.contains("using the home")), busy.toString)
       assert(Files.exists(h.resolve("sessions/2026/08/01/rollout-old.jsonl")))
       done.countDown(); t.join()
-      assertEquals(Codex.Home.retain(h, cfg, now, _ => Right(0)).deleted, 2)
+      assertEquals(Codex.Home.retain(h, cfg, now, _ => Right(com.histmersion.server.agents.Codex.Home.ExitCode(0))).deleted, 2)
     finally cleanup(h)
 
   test("keep-sessions-days 0 and vacuum off change nothing; a failing vacuum is reported, not thrown"):
@@ -86,7 +86,7 @@ class CodexHomeSuite extends munit.FunSuite:
     try
       val off = Codex.Home.retain(h, cfg.modify(_.keepSessionsDays).setTo(0).modify(_.vacuum).setTo(false), now, _ => fail("vacuum is off"))
       assertEquals((off.deleted, off.vacuumed), (0, Nil))
-      val bad = Codex.Home.retain(h, cfg.modify(_.keepSessionsDays).setTo(0), now, _ => Left("sqlite3: not found"))
+      val bad = Codex.Home.retain(h, cfg.modify(_.keepSessionsDays).setTo(0), now, _ => Left(com.histmersion.server.agents.Codex.Home.Problem("sqlite3: not found")))
       assertEquals(bad.problems.size, 2, bad.toString)
       assert(Codex.Home.retain(h.resolve("missing"), cfg, now).skipped.exists(_.contains("no Codex home")))
     finally cleanup(h)

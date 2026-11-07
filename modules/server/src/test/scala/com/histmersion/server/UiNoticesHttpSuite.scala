@@ -1,5 +1,7 @@
 package com.histmersion.server
 
+import com.histmersion.testsupport.ComparedByValue.given
+
 import hearth.kindlings.optics.syntax.*
 
 import ox.supervised
@@ -55,7 +57,7 @@ class UiNoticesHttpSuite extends com.histmersion.db.DbSuite:
     val base = AppConfig.load()
     val cfg = base.modify(_.db).setTo(base.db.modify(_.url).setTo(testDb.get)).modify(_.auth).setTo(base.auth.modify(_.apiKey).setTo("s3cret"))
     supervised {
-      val b = Composition.server(cfg, "127.0.0.1", 0).start()
+      val b = Composition.server(cfg, com.histmersion.config.ServerConfig.Host("127.0.0.1"), com.histmersion.config.ServerConfig.Port(0)).start()
       val url = s"http://127.0.0.1:${b.port}/api"
       // `var`: the fixture's row, removed whatever the assertions did
       var added = Option.empty[Int]

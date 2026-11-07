@@ -144,11 +144,11 @@ class HotReloadSuite extends DbSuite:
   final private class GatedConverter extends ConverterClient:
     val entered = java.util.concurrent.Semaphore(0)
     val gate = CountDownLatch(1)
-    def health = Right("ok")
+    def health = Right(com.histmersion.util.ocr.ConverterClient.HealthSummary("ok"))
     def convert(file: com.histmersion.util.storage.Blob, filename: String, quality: Boolean) =
       entered.release()
       gate.await(60, TimeUnit.SECONDS)
-      Right(ConvertedDoc(markdown = s"# Converted\n\n$filename\n", pages = 1, images = Nil, filename = Some(filename)))
+      Right(ConvertedDoc(markdown = s"# Converted\n\n$filename\n", pages = com.histmersion.api.ocr.ConvertedDoc.Pages(1), images = Nil, filename = Some(filename)))
 
   private def pdf(marker: String): Path =
     val p = Files.createTempFile(dir, "hot-", ".pdf")
@@ -170,7 +170,7 @@ class HotReloadSuite extends DbSuite:
     val conv = GatedConverter()
     val l = loaded
     supervised {
-      val b = Composition.server(l.config, "127.0.0.1", 0, conv, source = Some((l, source))).start()
+      val b = Composition.server(l.config, com.histmersion.config.ServerConfig.Host("127.0.0.1"), com.histmersion.config.ServerConfig.Port(0), conv, source = Some((l, source))).start()
       val url = s"http://127.0.0.1:${b.port}"
       assertEquals(database(url), DbA)
 
@@ -231,7 +231,7 @@ class HotReloadSuite extends DbSuite:
     write(DbB)
     val l = loaded
     supervised {
-      val b = Composition.server(l.config, "127.0.0.1", 0, OfflineConverter(), source = Some((l, source))).start()
+      val b = Composition.server(l.config, com.histmersion.config.ServerConfig.Host("127.0.0.1"), com.histmersion.config.ServerConfig.Port(0), OfflineConverter(), source = Some((l, source))).start()
       val url = s"http://127.0.0.1:${b.port}"
       assertEquals(database(url), DbB)
 
@@ -266,7 +266,7 @@ class HotReloadSuite extends DbSuite:
     supervised {
       val b =
         Composition
-          .server(l.config, "127.0.0.1", 0, OfflineConverter(), plugins = gen, source = Some((l, source)))
+          .server(l.config, com.histmersion.config.ServerConfig.Host("127.0.0.1"), com.histmersion.config.ServerConfig.Port(0), OfflineConverter(), plugins = gen, source = Some((l, source)))
           .start()
       val url = s"http://127.0.0.1:${b.port}"
       write(DbB, "plugins.pmc.enabled = false\n  limits.search = 7\n  server.port = 1")
@@ -296,7 +296,7 @@ class HotReloadSuite extends DbSuite:
     supervised {
       val b =
         Composition
-          .server(l.config, "127.0.0.1", 0, OfflineConverter(), plugins = gen, source = Some((l, source)))
+          .server(l.config, com.histmersion.config.ServerConfig.Host("127.0.0.1"), com.histmersion.config.ServerConfig.Port(0), OfflineConverter(), plugins = gen, source = Some((l, source)))
           .start()
       val url = s"http://127.0.0.1:${b.port}"
       val Off = "switched off (histmersion.plugins.ai-local.enabled = false)"

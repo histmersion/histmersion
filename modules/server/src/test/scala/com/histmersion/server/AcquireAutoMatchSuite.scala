@@ -53,9 +53,9 @@ class AcquireAutoMatchSuite extends com.histmersion.db.DbSuite:
   private def enc(s: String) = java.net.URLEncoder.encode(s, "UTF-8")
 
   private object Stub extends ConverterClient:
-    def health = Right("ok")
+    def health = Right(com.histmersion.util.ocr.ConverterClient.HealthSummary("ok"))
     def convert(file: com.histmersion.util.storage.Blob, filename: String, quality: Boolean) =
-      Right(ConvertedDoc(markdown = "# Converted\n\nBody.\n", pages = 1, filename = Some(filename)))
+      Right(ConvertedDoc(markdown = com.histmersion.api.ocr.ConvertedDoc.Markdown("# Converted\n\nBody.\n"), pages = com.histmersion.api.ocr.ConvertedDoc.Pages(1), filename = Some(filename)))
 
   private lazy val cfg =
     val base = AppConfig.load()
@@ -107,7 +107,7 @@ class AcquireAutoMatchSuite extends com.histmersion.db.DbSuite:
 
   test("the DOI closes; a similar title — even the published version of a preprint — is only proposed"):
     supervised {
-      val b = Composition.server(cfg, "127.0.0.1", 0, Stub).start()
+      val b = Composition.server(cfg, com.histmersion.config.ServerConfig.Host("127.0.0.1"), com.histmersion.config.ServerConfig.Port(0), Stub).start()
       val url = s"http://127.0.0.1:${b.port}"
       try
         val exact = addItem(
@@ -156,7 +156,7 @@ class AcquireAutoMatchSuite extends com.histmersion.db.DbSuite:
 
   test("an explicit acquireItem is the one ticked off; DOI matching is not run on top of it"):
     supervised {
-      val b = Composition.server(cfg, "127.0.0.1", 0, Stub).start()
+      val b = Composition.server(cfg, com.histmersion.config.ServerConfig.Host("127.0.0.1"), com.histmersion.config.ServerConfig.Port(0), Stub).start()
       val url = s"http://127.0.0.1:${b.port}"
       try
         val named = addItem(url, "zzauto the item the import names")

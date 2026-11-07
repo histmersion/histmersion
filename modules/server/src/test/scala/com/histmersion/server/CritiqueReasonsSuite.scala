@@ -1,5 +1,7 @@
 package com.histmersion.server
 
+import com.histmersion.testsupport.ComparedByValue.given
+
 import hearth.kindlings.optics.syntax.*
 
 import com.histmersion.domain.research.articles.ArticleFixtures
@@ -83,7 +85,7 @@ class CritiqueReasonsSuite extends com.histmersion.db.DbSuite:
     )
     val body =
       s"The dying god [[$Frazer]] is a type; [[$Smith]] refutes it.\n\n## Disagreements\n\nRites differ [[$Frazer]]."
-    assert(h.research.articles.put(Slug, Article.Put("The golden bough", "concept", body)).isRight)
+    assert(h.research.articles.put(Slug, Article.Put(com.histmersion.api.research.Article.Title("The golden bough"), com.histmersion.api.research.Article.Kind.Wire("concept"), body)).isRight)
 
   private def patch(rs: CritiqueReason*) = h.research.articles.patch(Slug, Article.Patch(critiqueReasons = rs.toList))
   private def stored = ArticleFixtures.critiques(ds, Slug).map(r => (r.src, r.dst, r.reason, r.by))
@@ -101,8 +103,8 @@ class CritiqueReasonsSuite extends com.histmersion.db.DbSuite:
     )
     val token = h.research.articles.get(Slug).toOption.get.article.updatedAt
     // the pair named the other way round is kept under the edge's direction; an explicit setter is kept
-    assert(patch(CritiqueReason(Frazer, Brown, " Cited for the\nrites only. ")).isRight)
-    assert(patch(CritiqueReason(Smith, Frazer, "x", Some("skeptic (agent run abcd1234)"))).isRight)
+    assert(patch(CritiqueReason(Frazer, Brown, com.histmersion.api.research.CritiqueReason.Reason(" Cited for the\nrites only. "))).isRight)
+    assert(patch(CritiqueReason(Smith, Frazer, com.histmersion.api.research.CritiqueReason.Reason("x"), Some(com.histmersion.api.automation.Activity.Actor("skeptic (agent run abcd1234)")))).isRight)
     assertEquals(
       stored,
       List(
@@ -115,16 +117,16 @@ class CritiqueReasonsSuite extends com.histmersion.db.DbSuite:
     assertEquals(h.research.articles.openCritiques(Slug), Some(0))
     // refused, nothing written: no edge, an unknown citekey, a reason too long — and the whole patch with them
     assert(
-      patch(CritiqueReason(Lone, Frazer, "y")).left
+      patch(CritiqueReason(Lone, Frazer, com.histmersion.api.research.CritiqueReason.Reason("y"))).left
         .exists(_.message.contains("no challenges/refutes/updates/superseded_by edge"))
     )
-    assert(patch(CritiqueReason("zzcrit0000_ghost", Frazer, "y")).left.exists(_.message.contains("is not a citekey")))
+    assert(patch(CritiqueReason(com.histmersion.api.library.Citekey("zzcrit0000_ghost"), Frazer, com.histmersion.api.research.CritiqueReason.Reason("y"))).left.exists(_.message.contains("is not a citekey")))
     assert(patch(CritiqueReason(Brown, Frazer, "z" * 501)).isLeft)
     assert(
       h.research.articles
         .patch(
           Slug,
-          Article.Patch(title = Some("Changed"), critiqueReasons = List(CritiqueReason(Lone, Frazer, "y")))
+          Article.Patch(title = Some(com.histmersion.api.research.Article.Title("Changed")), critiqueReasons = List(CritiqueReason(Lone, Frazer, com.histmersion.api.research.CritiqueReason.Reason("y"))))
         )
         .isLeft
     )
@@ -143,26 +145,26 @@ class CritiqueReasonsSuite extends com.histmersion.db.DbSuite:
 
   test("the reasons follow the article (rename, delete) and both sources (citekey rename, delete)"):
     seed()
-    assert(patch(CritiqueReason(Brown, Frazer, "Cited for the rites only.")).isRight)
+    assert(patch(CritiqueReason(Brown, Frazer, com.histmersion.api.research.CritiqueReason.Reason("Cited for the rites only."))).isRight)
     // a citekey rename carries it; the old citekey still names the pair
-    assert(h.library.sources.rename(Brown, Rename.Request("zzcrit1999_ritesb")).isRight)
+    assert(h.library.sources.rename(Brown, Rename.Request(com.histmersion.api.library.Citekey("zzcrit1999_ritesb"))).isRight)
     assertEquals(stored.map(_._1), List("zzcrit1999_ritesb"))
-    assert(patch(CritiqueReason(Brown, Frazer, "Renamed, still the same.")).isRight)
+    assert(patch(CritiqueReason(Brown, Frazer, com.histmersion.api.research.CritiqueReason.Reason("Renamed, still the same."))).isRight)
     assertEquals(stored.map(r => (r._1, r._3)), List(("zzcrit1999_ritesb", "Renamed, still the same.")))
     // the article's rename carries it
-    assert(h.research.articles.rename(Slug, LabelRename("zzcrit_bough2")).isRight)
-    assertEquals(ArticleFixtures.critiques(ds, "zzcrit_bough2").size, 1)
-    assertEquals(h.research.articles.openCritiques("zzcrit_bough2"), Some(0))
+    assert(h.research.articles.rename(Slug, LabelRename(com.histmersion.api.aliases.LabelRename.To("zzcrit_bough2"))).isRight)
+    assertEquals(ArticleFixtures.critiques(ds, com.histmersion.domain.research.Slug("zzcrit_bough2")).size, 1)
+    assertEquals(h.research.articles.openCritiques(com.histmersion.domain.research.Slug("zzcrit_bough2")), Some(0))
     // the source's delete drops it
-    assert(h.library.sources.delete("zzcrit1999_ritesb", Source.DeleteRequest(apply = true)).isRight)
-    assertEquals(ArticleFixtures.critiques(ds, "zzcrit_bough2"), Nil)
+    assert(h.library.sources.delete(com.histmersion.domain.library.Citekey("zzcrit1999_ritesb"), Source.DeleteRequest(apply = com.histmersion.api.library.Source.DeleteRequest.Apply(true))).isRight)
+    assertEquals(ArticleFixtures.critiques(ds, com.histmersion.domain.research.Slug("zzcrit_bough2")), Nil)
     // and the article's delete drops the rest
     assert(
       h.research.articles
-        .patch("zzcrit_bough2", Article.Patch(critiqueReasons = List(CritiqueReason(Smith, Frazer, "x"))))
+        .patch(com.histmersion.domain.research.Slug("zzcrit_bough2"), Article.Patch(critiqueReasons = List(CritiqueReason(Smith, Frazer, com.histmersion.api.research.CritiqueReason.Reason("x")))))
         .isRight
     )
-    assert(h.research.articles.delete("zzcrit_bough2").isRight)
+    assert(h.research.articles.delete(com.histmersion.domain.research.Slug("zzcrit_bough2")).isRight)
     assertEquals(
       connect(ds)(
         sql"SELECT count(*)::int FROM article_critique_reasons WHERE slug LIKE 'zzcrit%'".query[Int].run().head
@@ -172,7 +174,7 @@ class CritiqueReasonsSuite extends com.histmersion.db.DbSuite:
 
   test("the checklist resolves an old citekey and a short form in the body as the page does"):
     seed()
-    assert(h.library.sources.rename(Smith, Rename.Request("zzcrit1987_dyingb")).isRight)
+    assert(h.library.sources.rename(Smith, Rename.Request(com.histmersion.api.library.Citekey("zzcrit1987_dyingb"))).isRight)
     // the body still says [[zzcrit1987_dying]] (an alias now) and the short form [[zzcrit1922]]
     val body = s"The type [[zzcrit1922]] and its critic [[$Smith]].\n\nRites [[$Brown]]."
     assertEquals(

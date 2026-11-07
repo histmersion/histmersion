@@ -1,5 +1,7 @@
 package com.histmersion.util.process
 
+import com.histmersion.testsupport.ComparedByValue.given
+
 import com.histmersion.util.storage.{Location, Storage}
 
 import java.nio.file.Files
@@ -12,7 +14,7 @@ class ProcessesSuite extends munit.FunSuite:
     val r = Processes()
       .run(
         ProcessLaunch(
-          List("/bin/sh", "-c", "echo \"$GREETING\"; pwd; echo oops >&2; exit 3"),
+          List(com.histmersion.util.process.ProcessLaunch.Command("/bin/sh"), com.histmersion.util.process.ProcessLaunch.Command("-c"), com.histmersion.util.process.ProcessLaunch.Command("echo \"$GREETING\"; pwd; echo oops >&2; exit 3")),
           workingStore = Some(Storage.at(Location.Scratch, dir)),
           environment = Map("GREETING" -> "hello")
         )
@@ -30,7 +32,7 @@ class ProcessesSuite extends munit.FunSuite:
     val p = Processes()
       .start(
         ProcessLaunch(
-          List("/bin/sh", "-c", "echo after"),
+          List(com.histmersion.util.process.ProcessLaunch.Command("/bin/sh"), com.histmersion.util.process.ProcessLaunch.Command("-c"), com.histmersion.util.process.ProcessLaunch.Command("echo after")),
           output = ProcessOutput.AppendTo(logs, Store.Key("child.log"))
         )
       )
@@ -39,10 +41,10 @@ class ProcessesSuite extends munit.FunSuite:
     assertEquals(logs.get(Store.Key("child.log")).map(_.text()), Some("before\nafter\n"))
 
   test("a program that is not there is refused, not thrown"):
-    assert(Processes().run(ProcessLaunch(List("/nonexistent/histmersion-no-such-program"))).isLeft)
+    assert(Processes().run(ProcessLaunch(List(com.histmersion.util.process.ProcessLaunch.Command("/nonexistent/histmersion-no-such-program")))).isLeft)
 
   test("in memory: nothing starts, each launch is recorded and answered"):
-    val mem = Processes.InMemory(l => ProcessResult(if l.command.head == "ok" then 0 else 1, List("out")))
-    assertEquals(mem.run(ProcessLaunch(List("ok"))), Right(ProcessResult(0, List("out"))))
-    assertEquals(mem.run(ProcessLaunch(List("no"))).map(_.succeeded), Right(false))
+    val mem = Processes.InMemory(l => ProcessResult(if l.command.head == "ok" then com.histmersion.util.process.ProcessResult.ExitCode(0) else com.histmersion.util.process.ProcessResult.ExitCode(1), List(com.histmersion.util.process.ProcessResult.Lines("out"))))
+    assertEquals(mem.run(ProcessLaunch(List(com.histmersion.util.process.ProcessLaunch.Command("ok")))), Right(ProcessResult(com.histmersion.util.process.ProcessResult.ExitCode(0), List(com.histmersion.util.process.ProcessResult.Lines("out")))))
+    assertEquals(mem.run(ProcessLaunch(List(com.histmersion.util.process.ProcessLaunch.Command("no")))).map(_.succeeded), Right(false))
     assertEquals(mem.launches.map(_.command.head), List("ok", "no"))

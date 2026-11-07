@@ -1,5 +1,7 @@
 package com.histmersion.server
 
+import com.histmersion.testsupport.ComparedByValue.given
+
 import hearth.kindlings.optics.syntax.*
 
 import com.histmersion.pluginhost.OutboundTls
@@ -39,7 +41,7 @@ class OutboundTlsSuite extends munit.FunSuite:
       cs.map(subject).map(_.takeWhile(_ != ',')),
       List("CN=HARICA TLS RSA Root CA 2021", "CN=GEANT TLS RSA 1")
     )
-    assertEquals(OutboundTls.certificates("-----BEGIN CERTIFICATE-----\nnot base64!\n-----END CERTIFICATE-----"), Nil)
+    assertEquals(OutboundTls.certificates(com.histmersion.domain.HttpPolicy.PemText("-----BEGIN CERTIFICATE-----\nnot base64!\n-----END CERTIFICATE-----")), Nil)
 
   test("the merged store keeps every JDK root and adds the extra one; the chain then validates"):
     val root = OutboundTls.certificates(rootPem).head
@@ -59,7 +61,7 @@ class OutboundTlsSuite extends munit.FunSuite:
 
   test("system trust on macOS reads the system keychains with `security`"):
     val seen = collection.mutable.Buffer.empty[List[String]]
-    val got = OutboundTls.configure(TlsConfig(systemTrust = true, extraCaFile = ""), "Mac OS X", fakeRun(seen))
+    val got = OutboundTls.configure(TlsConfig(systemTrust = com.histmersion.config.TlsConfig.SystemTrust(true), extraCaFile = com.histmersion.config.TlsConfig.ExtraCaFile("")), com.histmersion.domain.HttpPolicy.OsName("Mac OS X"), fakeRun(seen))
     val (_, line) = got.getOrElse(fail("configured"))
     assertEquals(seen.headOption.map(_.take(4)), Some(List("/usr/bin/security", "find-certificate", "-a", "-p")))
     assert(line.contains("macOS system keychains: 1 root(s)"), line)
@@ -68,14 +70,14 @@ class OutboundTlsSuite extends munit.FunSuite:
     val dir = Files.createTempDirectory("tls")
     val pem = dir.resolve("extra.pem")
     Files.writeString(pem, rootPem)
-    val (_, ok) = OutboundTls.configure(TlsConfig(false, pem.toString), "Linux").getOrElse(fail("configured"))
+    val (_, ok) = OutboundTls.configure(TlsConfig(com.histmersion.config.TlsConfig.SystemTrust(false), pem.toString), com.histmersion.domain.HttpPolicy.OsName("Linux")).getOrElse(fail("configured"))
     assert(ok.contains(s"$pem: 1 root(s)"), ok)
     val missing = dir.resolve("nope.pem").toString
-    val (_, bad) = OutboundTls.configure(TlsConfig(false, missing), "Linux").getOrElse(fail("configured"))
+    val (_, bad) = OutboundTls.configure(TlsConfig(com.histmersion.config.TlsConfig.SystemTrust(false), missing), com.histmersion.domain.HttpPolicy.OsName("Linux")).getOrElse(fail("configured"))
     assert(bad.contains(s"$missing: NOT used"), bad)
     val empty = dir.resolve("empty.pem")
     Files.writeString(empty, "nothing here")
-    val (_, none) = OutboundTls.configure(TlsConfig(false, empty.toString), "Linux").getOrElse(fail("configured"))
+    val (_, none) = OutboundTls.configure(TlsConfig(com.histmersion.config.TlsConfig.SystemTrust(false), empty.toString), com.histmersion.domain.HttpPolicy.OsName("Linux")).getOrElse(fail("configured"))
     assert(none.contains("holds no PEM certificate"), none)
 
   test("off by default: no custom context, the HTTP client keeps its own"):
@@ -84,7 +86,7 @@ class OutboundTlsSuite extends munit.FunSuite:
     assertEquals(OutboundTls.configure(cfg), None)
 
   test("a Linux bundle that is missing is reported, not fatal"):
-    val got = OutboundTls.roots(HttpPolicy.Trust.Bundle(List("/nonexistent/ca.crt")))
+    val got = OutboundTls.roots(HttpPolicy.Trust.Bundle(List(com.histmersion.domain.HttpPolicy.Trust.Bundle.Paths("/nonexistent/ca.crt"))))
     assert(got.isLeft)
 
   test("live: archiv.ub.uni-heidelberg.de with the system's roots (HISTMERSION_LIVE_APIS=1, macOS)"):
@@ -94,8 +96,8 @@ class OutboundTlsSuite extends munit.FunSuite:
       "live, macOS only"
     )
     val cfg = AppConfig.load().acquire
-    val plain = SttpHttp(cfg, tries = 1, clock = () => java.time.Instant.now(java.time.Clock.systemUTC())).bytes("https://archiv.ub.uni-heidelberg.de/", Map.empty)
+    val plain = SttpHttp(cfg, tries = com.histmersion.pluginhost.PolicyHttp.Tries(1), clock = () => java.time.Instant.now(java.time.Clock.systemUTC())).bytes(com.histmersion.domain.library.acquisition.Http.Url("https://archiv.ub.uni-heidelberg.de/"), Map.empty)
     assert(plain.isLeft, s"premise: with the JDK's roots alone the handshake fails, got $plain")
     val tls = OutboundTls.configure(cfg.tls.modify(_.systemTrust).setTo(true)).map(_._1)
-    val fixed = SttpHttp(cfg, tries = 1, tls = tls, clock = () => java.time.Instant.now(java.time.Clock.systemUTC())).bytes("https://archiv.ub.uni-heidelberg.de/", Map.empty)
+    val fixed = SttpHttp(cfg, tries = com.histmersion.pluginhost.PolicyHttp.Tries(1), tls = tls, clock = () => java.time.Instant.now(java.time.Clock.systemUTC())).bytes(com.histmersion.domain.library.acquisition.Http.Url("https://archiv.ub.uni-heidelberg.de/"), Map.empty)
     assert(fixed.isRight, s"with the system's roots: $fixed")

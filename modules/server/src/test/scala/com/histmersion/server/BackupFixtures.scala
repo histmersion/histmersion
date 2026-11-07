@@ -12,9 +12,9 @@ object BackupFixtures:
       () => cfg,
       StorageLocations.storage(
         () => cfg,
-        () => LoadedConfig(cfg, UserConfigFile(None, loaded = false)),
+        () => LoadedConfig(cfg, UserConfigFile(None, loaded = com.histmersion.config.UserConfigFile.Loaded(false))),
         Environment.empty,
-        UserPaths(Environment.empty, "")
+        UserPaths(Environment.empty, com.histmersion.config.UserPaths.OsName(""))
       ),
       Processes(),
       () => StorageLocations.searchPath(Option(System.getenv("PATH"))),

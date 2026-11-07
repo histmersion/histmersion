@@ -1,5 +1,7 @@
 package com.histmersion.util.basemap
 
+import com.histmersion.testsupport.ComparedByValue.given
+
 import hearth.kindlings.optics.syntax.*
 
 import com.histmersion.api.BBox
@@ -44,7 +46,7 @@ class BasemapHttpSuite extends com.histmersion.db.DbSuite:
       )
     )
     supervised {
-      val b = Composition.server(cfg, "127.0.0.1", 0).start()
+      val b = Composition.server(cfg, com.histmersion.config.ServerConfig.Host("127.0.0.1"), com.histmersion.config.ServerConfig.Port(0)).start()
       try body(s"http://127.0.0.1:${b.port}/api/basemap")
       finally b.stop()
     }
@@ -113,8 +115,8 @@ class BasemapHttpSuite extends com.histmersion.db.DbSuite:
         )
       )
       val st = io.circe.parser.decode[Basemap.Status](String(get(url).body)).fold(e => fail(e.toString), identity)
-      assertEquals(st.missing("readable"), List("boundaries", "places", "roads"))
-      assertEquals(st.missing("physical"), Nil)
+      assertEquals(st.missing(com.histmersion.api.basemap.Basemap.StyleState.Id("readable")), List("boundaries", "places", "roads"))
+      assertEquals(st.missing(com.histmersion.api.basemap.Basemap.StyleState.Id("physical")), Nil)
       assertEquals(source(), "local", "Physical draws nothing the default drop list leaves out")
       Thread.sleep(5) // a new stamp: the archive is opened again
       BasemapFixtures.vectorArchive(
@@ -129,7 +131,7 @@ class BasemapHttpSuite extends com.histmersion.db.DbSuite:
       val fs = Mvt.features(PmTiles.gunzip(t.body).toOption.get).fold(fail(_), identity)
       assert(
         fs.nonEmpty && fs.forall((l, g, p) =>
-          l == "water" && g == 1 && p.get("kind").contains("sea") && p.keySet.subsetOf(Set("kind", "name"))
+          l == "water" && g == 1 && p.get(com.histmersion.util.basemap.Mvt.PropKey("kind")).contains("sea") && p.keySet.subsetOf(Set(com.histmersion.util.basemap.Mvt.PropKey("kind"), com.histmersion.util.basemap.Mvt.PropKey("name")))
         ),
         fs.toString
       )

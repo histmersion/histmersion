@@ -1,5 +1,7 @@
 package com.histmersion.domain.library.acquisition
 
+import com.histmersion.testsupport.ComparedByValue.given
+
 import com.histmersion.api.library.{CandidateCount, CandidateWatch}
 import com.histmersion.api.library.Source
 
@@ -10,20 +12,20 @@ import com.histmersion.api.library.Source
 abstract class CandidateServiceContract extends AcquisitionStoreSuite:
 
   private def candidate(goal: String, doi: String, by: String) =
-    Source.Candidate(0, goal, com.histmersion.api.library.Doi(doi), com.histmersion.api.library.Title(s"Work $doi"), (Some(2025)).map(com.histmersion.api.catalogue.Year.apply), (List("Zq Author")).map(com.histmersion.api.library.AuthorName.apply), None, None, false, None, List(by))
+    Source.Candidate(com.histmersion.api.library.Source.Candidate.Id(0), goal, com.histmersion.api.library.Doi(doi), com.histmersion.api.library.Title(s"Work $doi"), (Some(2025)).map(com.histmersion.api.catalogue.Year.apply), (List("Zq Author")).map(com.histmersion.api.library.AuthorName.apply), None, None, com.histmersion.api.library.Source.Candidate.IsOa(false), None, List(by))
 
   stest("a watch keeps its watermark when a read fails, and is listed by kind, subject and index") { s =>
     s.goal("zq-goal")
-    val w = CandidateWatch("zq-goal", "query", "zq tin", "openalex")
-    s.candidates.recordWatch(w, Some("2026-10-01"), None, 3)
-    s.candidates.recordWatch(w, None, Some("HTTP 503"), 0)
+    val w = CandidateWatch(com.histmersion.api.library.CandidateWatch.Goal("zq-goal"), com.histmersion.api.library.CandidateWatch.Kind("query"), com.histmersion.api.library.CandidateWatch.Subject("zq tin"), com.histmersion.api.library.CandidateWatch.Index("openalex"))
+    s.candidates.recordWatch(w, Some(com.histmersion.api.library.CandidateWatch.Watermark("2026-10-01")), None, com.histmersion.api.library.CandidateWatch.LastFound(3))
+    s.candidates.recordWatch(w, None, Some(com.histmersion.api.library.CandidateWatch.LastError("HTTP 503")), com.histmersion.api.library.CandidateWatch.LastFound(0))
     s.candidates.recordWatch(
-      CandidateWatch("zq-goal", "citing", "10.5555/zq.x", "openalex"),
-      Some("2026-10-02"),
+      CandidateWatch(com.histmersion.api.library.CandidateWatch.Goal("zq-goal"), com.histmersion.api.library.CandidateWatch.Kind("citing"), com.histmersion.api.library.CandidateWatch.Subject("10.5555/zq.x"), com.histmersion.api.library.CandidateWatch.Index("openalex")),
+      Some(com.histmersion.api.library.CandidateWatch.Watermark("2026-10-02")),
       None,
-      1
+      com.histmersion.api.library.CandidateWatch.LastFound(1)
     )
-    val got = s.candidates.watches("zq-goal")
+    val got = s.candidates.watches(com.histmersion.domain.automation.Goal.Slug("zq-goal"))
     assertEquals(
       got.map(w => (w.kind, w.subject, w.watermark, w.lastError, w.lastFound)),
       List(
@@ -32,7 +34,7 @@ abstract class CandidateServiceContract extends AcquisitionStoreSuite:
       )
     )
     assert(got.forall(_.lastRun.isDefined))
-    assertEquals(s.candidates.watches("zq-other"), Nil)
+    assertEquals(s.candidates.watches(com.histmersion.domain.automation.Goal.Slug("zq-other")), Nil)
   }
 
   stest("a candidate found again keeps its state, gathers its watches; pages, counts and marks") { s =>
@@ -42,25 +44,25 @@ abstract class CandidateServiceContract extends AcquisitionStoreSuite:
     assert(s.candidates.upsert(candidate("zq-goal", "10.5555/zq.b", "crossref query")))
     assert(s.candidates.upsert(candidate("zq-two", "10.5555/zq.a", "openalex query")))
     assert(!s.candidates.upsert(candidate("zq-goal", "10.5555/zq.a", "crossref query")))
-    assertEquals(s.candidates.dois("zq-goal"), Set("10.5555/zq.a", "10.5555/zq.b"))
-    val page = s.candidates.list(Some("zq-goal"), "new", 10, 0)
+    assertEquals(s.candidates.dois(com.histmersion.domain.automation.Goal.Slug("zq-goal")), Set("10.5555/zq.a", "10.5555/zq.b"))
+    val page = s.candidates.list(Some(com.histmersion.domain.automation.Goal.Slug("zq-goal")), com.histmersion.api.library.Source.Candidate.State("new"), com.histmersion.domain.library.acquisition.CandidateService.ListLimit(10), com.histmersion.Offset(0))
     assertEquals(page.map(_.doi), List("10.5555/zq.a", "10.5555/zq.b"))
     assertEquals(page.head.foundBy.sorted, List("crossref query", "openalex query"))
-    assertEquals(s.candidates.list(Some("zq-goal"), "new", 1, 1).map(_.doi), List("10.5555/zq.b"))
-    assertEquals(s.candidates.list(None, "new", 10, 0).size, 3)
-    assertEquals(s.candidates.mark(List(page.head.id), "seen"), 1)
-    assertEquals(s.candidates.mark(Nil, "seen"), 0)
-    assertEquals(s.candidates.markDois("zq-goal", List("10.5555/zq.b"), "dismissed"), 1)
+    assertEquals(s.candidates.list(Some(com.histmersion.domain.automation.Goal.Slug("zq-goal")), com.histmersion.api.library.Source.Candidate.State("new"), com.histmersion.domain.library.acquisition.CandidateService.ListLimit(1), com.histmersion.Offset(1)).map(_.doi), List("10.5555/zq.b"))
+    assertEquals(s.candidates.list(None, com.histmersion.api.library.Source.Candidate.State("new"), com.histmersion.domain.library.acquisition.CandidateService.ListLimit(10), com.histmersion.Offset(0)).size, 3)
+    assertEquals(s.candidates.mark(List(page.head.id), com.histmersion.api.library.Source.Candidate.State("seen")), 1)
+    assertEquals(s.candidates.mark(Nil, com.histmersion.api.library.Source.Candidate.State("seen")), 0)
+    assertEquals(s.candidates.markDois(com.histmersion.domain.automation.Goal.Slug("zq-goal"), List(com.histmersion.domain.library.Doi("10.5555/zq.b")), com.histmersion.api.library.Source.Candidate.State("dismissed")), 1)
     assertEquals(
-      s.candidates.counts(Some("zq-goal")),
-      List(CandidateCount("seen", 1), CandidateCount("dismissed", 1))
+      s.candidates.counts(Some(com.histmersion.domain.automation.Goal.Slug("zq-goal"))),
+      List(CandidateCount(com.histmersion.api.library.Source.Candidate.State("seen"), com.histmersion.api.library.CandidateCount.Count(1)), CandidateCount(com.histmersion.api.library.Source.Candidate.State("dismissed"), com.histmersion.api.library.CandidateCount.Count(1)))
     )
     assertEquals(
       s.candidates.counts(None),
-      List(CandidateCount("new", 1), CandidateCount("seen", 1), CandidateCount("dismissed", 1))
+      List(CandidateCount(com.histmersion.api.library.Source.Candidate.State("new"), com.histmersion.api.library.CandidateCount.Count(1)), CandidateCount(com.histmersion.api.library.Source.Candidate.State("seen"), com.histmersion.api.library.CandidateCount.Count(1)), CandidateCount(com.histmersion.api.library.Source.Candidate.State("dismissed"), com.histmersion.api.library.CandidateCount.Count(1)))
     )
     assert(!s.candidates.upsert(candidate("zq-goal", "10.5555/zq.a", "europepmc query")))
-    assertEquals(s.candidates.list(Some("zq-goal"), "seen", 10, 0).map(_.doi), List("10.5555/zq.a"))
+    assertEquals(s.candidates.list(Some(com.histmersion.domain.automation.Goal.Slug("zq-goal")), com.histmersion.api.library.Source.Candidate.State("seen"), com.histmersion.domain.library.acquisition.CandidateService.ListLimit(10), com.histmersion.Offset(0)).map(_.doi), List("10.5555/zq.a"))
   }
 
 class CandidateServiceInMemorySuite extends CandidateServiceContract with AcquisitionStoreSuite.InMemory

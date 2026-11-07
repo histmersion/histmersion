@@ -1,5 +1,7 @@
 package com.histmersion.server.media
 
+import com.histmersion.testsupport.ComparedByValue.given
+
 import hearth.kindlings.optics.syntax.*
 
 import com.histmersion.domain.media.imports.MediaStore
@@ -89,18 +91,18 @@ class PortalsSuite extends munit.FunSuite:
     def health: Either[String, String] = Right("ok")
     override def thumbnail(bytes: Array[Byte], filename: String, maxPx: Int): Either[String, ConverterClient.Thumb] =
       calls += filename
-      Right(ConverterClient.Thumb(jpeg, "image/jpeg", 330, 250))
+      Right(ConverterClient.Thumb(jpeg, com.histmersion.util.ocr.ConverterClient.Thumb.Mime("image/jpeg"), com.histmersion.util.ocr.ConverterClient.Thumb.Width(330), com.histmersion.util.ocr.ConverterClient.Thumb.Height(250)))
 
   // ── Open Context ─────────────────────────────────────────────────────────────────────────────
 
   private val petra =
-    PlaceFacts("pleiades_697725", "Petra", Set("petra"), Some((-300L, 100L)), Some("Q5788"), Some(30.33), Some(35.44))
+    PlaceFacts(com.histmersion.domain.media.imports.PlaceFacts.Id("pleiades_697725"), com.histmersion.domain.media.imports.PlaceFacts.Label("Petra"), Set(com.histmersion.domain.media.imports.PlaceFacts.Keys("petra")), Some((com.histmersion.domain.DeepTime.SignedYear(-300L), com.histmersion.domain.DeepTime.SignedYear(100L))), Some(com.histmersion.domain.media.imports.Target.Qid("Q5788")), Some(30.33), Some(35.44))
   private val jordan =
-    PlaceFacts("geonames_248816", "Jordan", Set("jordan"), Some((-3000L, 2000L)), Some("Q810"), Some(31.0), Some(36.0))
+    PlaceFacts(com.histmersion.domain.media.imports.PlaceFacts.Id("geonames_248816"), com.histmersion.domain.media.imports.PlaceFacts.Label("Jordan"), Set(com.histmersion.domain.media.imports.PlaceFacts.Keys("jordan")), Some((com.histmersion.domain.DeepTime.SignedYear(-3000L), com.histmersion.domain.DeepTime.SignedYear(2000L))), Some(com.histmersion.domain.media.imports.Target.Qid("Q810")), Some(31.0), Some(36.0))
   private val facts = List(petra, jordan).map(f => f.id -> f).toMap
   private val named = Map("jordan" -> List(jordan), "petra" -> List(petra))
   private val byId = Map(("pleiades", "697725") -> List(petra))
-  private def target(f: PlaceFacts) = Target("place", f.id, "", f.label)
+  private def target(f: PlaceFacts) = Target(com.histmersion.domain.media.imports.Target.TargetType("place"), f.id, com.histmersion.domain.media.imports.Target.Qid(""), f.label)
 
   private val Bowls7 = "f589a368-62ed-43df-5738-4c84d2f5f765"
   private val Bowls6 = "d9feb4e7-3ec6-444f-6a85-2b6873c8822a"
@@ -124,7 +126,7 @@ class PortalsSuite extends munit.FunSuite:
   ): MediaImportReport =
     val col = FakeMediaHttp.builtin("opencontext")
     val (polite, _) = FakeMediaHttp.polite(http, cfg.modify(_.requestIntervalMs).setTo(col.conf.requestIntervalMs))
-    CollectionImport(col, polite, cfg, conv).run(List(target(t)), dryRun, refresh = false, store)
+    CollectionImport(col, polite, cfg, conv).run(List(target(t)), dryRun, refresh = com.histmersion.domain.media.imports.CollectionImport.Refresh(false), store)
 
   test(
     "Open Context dry run: tied by the record's own Pleiades id and its dates; human remains and other dates refused; one request"
@@ -145,7 +147,7 @@ class PortalsSuite extends munit.FunSuite:
       r.rejected.map(_.key).sorted,
       List("human remains (Open Context flags them; not shown)", "its dates do not overlap the place's")
     )
-    assertEquals(r.byLicence, List(MediaCount("CC-BY-4.0", 4)))
+    assertEquals(r.byLicence, List(MediaCount(com.histmersion.api.media.MediaCount.Key("CC-BY-4.0"), com.histmersion.api.media.MediaCount.N(4))))
     assert(store.saved.isEmpty && store.links.isEmpty && store.checks.isEmpty)
     assertEquals(http.requests.size, 1, "one search answers the records; no item is read for a dry run")
     assert(http.requests.forall(_._2.get("User-Agent").exists(ua => !ua.contains("@"))), "no personal data")
@@ -156,18 +158,18 @@ class PortalsSuite extends munit.FunSuite:
     // the map as it was when the full run stored 0: a place called "I" (the records' operation "I"),
     // Kahramanmaraş carrying the province's GeoNames id the records give
     val dom = PlaceFacts(
-      "wikidata_q4165990",
-      "Domuztepe",
-      Set("domuztepe"),
-      Some((-6500L, -5400L)),
-      Some("Q4165990"),
+      com.histmersion.domain.media.imports.PlaceFacts.Id("wikidata_q4165990"),
+      com.histmersion.domain.media.imports.PlaceFacts.Label("Domuztepe"),
+      Set(com.histmersion.domain.media.imports.PlaceFacts.Keys("domuztepe")),
+      Some((com.histmersion.domain.DeepTime.SignedYear(-6500L), com.histmersion.domain.DeepTime.SignedYear(-5400L))),
+      Some(com.histmersion.domain.media.imports.Target.Qid("Q4165990")),
       Some(37.33),
       Some(36.87)
     )
-    val placeI = PlaceFacts("wikidata_q103776406", "I", Set("i"), None, Some("Q103776406"), Some(50.0), Some(10.0))
+    val placeI = PlaceFacts(com.histmersion.domain.media.imports.PlaceFacts.Id("wikidata_q103776406"), com.histmersion.domain.media.imports.PlaceFacts.Label("I"), Set(com.histmersion.domain.media.imports.PlaceFacts.Keys("i")), None, Some(com.histmersion.domain.media.imports.Target.Qid("Q103776406")), Some(50.0), Some(10.0))
     val kahr =
-      PlaceFacts("ne_city_1159127453", "Kahramanmaraş", Set("kahramanmaras"), None, None, Some(37.58), Some(36.93))
-    val turkey = PlaceFacts("ne_country_tur", "Turkey", Set("turkey"), None, Some("Q43"), Some(39.0), Some(35.0))
+      PlaceFacts(com.histmersion.domain.media.imports.PlaceFacts.Id("ne_city_1159127453"), com.histmersion.domain.media.imports.PlaceFacts.Label("Kahramanmaraş"), Set(com.histmersion.domain.media.imports.PlaceFacts.Keys("kahramanmaras")), None, None, Some(37.58), Some(36.93))
+    val turkey = PlaceFacts(com.histmersion.domain.media.imports.PlaceFacts.Id("ne_country_tur"), com.histmersion.domain.media.imports.PlaceFacts.Label("Turkey"), Set(com.histmersion.domain.media.imports.PlaceFacts.Keys("turkey")), None, Some(com.histmersion.domain.media.imports.Target.Qid("Q43")), Some(39.0), Some(35.0))
     val store = PortalStore(
       Map(dom.id -> dom),
       Map("domuztepe" -> List(dom), "i" -> List(placeI), "turkey" -> List(turkey), "kahramanmaras" -> List(kahr)),
@@ -246,7 +248,7 @@ class PortalsSuite extends munit.FunSuite:
 
   // ── Pleiades ─────────────────────────────────────────────────────────────────────────────────
 
-  private val zygouries = Target("place", "pleiades_757208100", "", "Zygouries")
+  private val zygouries = Target(com.histmersion.domain.media.imports.Target.TargetType("place"), com.histmersion.domain.media.imports.Target.Id("pleiades_757208100"), com.histmersion.domain.media.imports.Target.Qid(""), com.histmersion.domain.media.imports.Target.Label("Zygouries"))
 
   private def param(url: String, name: String): Option[String] =
     url.split("[?&]").toList.map(_.split("=", 2)).collectFirst {
@@ -281,8 +283,8 @@ class PortalsSuite extends munit.FunSuite:
 
   private def runPl(http: FakeMediaHttp, dryRun: Boolean, store: PortalStore): MediaImportReport =
     val (polite, _) = FakeMediaHttp.polite(http, cfg)
-    OwnImport("pleiades", FakeMediaHttp.collection("pleiades"), polite, cfg)
-      .run(List(zygouries), dryRun, refresh = false, store)
+    OwnImport(com.histmersion.domain.media.imports.MediaImporter.ImporterName("pleiades"), FakeMediaHttp.collection("pleiades"), polite, cfg)
+      .run(List(zygouries), dryRun, refresh = com.histmersion.domain.media.imports.ImportService.Refresh(false), store)
 
   private def plStore() = PortalStore(Map.empty, Map.empty, pleiades = Map("pleiades_757208100" -> List("757208100")))
 
@@ -346,8 +348,8 @@ class PortalsSuite extends munit.FunSuite:
   test("Pleiades: a record that does not answer leaves the place not asked (the next run asks again)"):
     val store = plStore()
     val c = cfg.modify(_.maxRetries).setTo(0)
-    val (polite, _) = FakeMediaHttp.polite(pleiades(Right(HttpAnswer(503, Map.empty, Array.emptyByteArray))), c)
-    val r = OwnImport("pleiades", FakeMediaHttp.collection("pleiades"), polite, c)
-      .run(List(zygouries), dryRun = false, refresh = false, store)
+    val (polite, _) = FakeMediaHttp.polite(pleiades(Right(HttpAnswer(com.histmersion.pluginhost.HttpAnswer.Code(503), Map.empty, Array.emptyByteArray))), c)
+    val r = OwnImport(com.histmersion.domain.media.imports.MediaImporter.ImporterName("pleiades"), FakeMediaHttp.collection("pleiades"), polite, c)
+      .run(List(zygouries), dryRun = com.histmersion.domain.media.imports.MediaImporter.DryRun(false), refresh = com.histmersion.domain.media.imports.ImportService.Refresh(false), store)
     assert(r.failed.exists(_.contains("Pleiades place 757208100")), r.failed.toString)
     assert(store.checks.isEmpty)

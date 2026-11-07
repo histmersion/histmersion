@@ -1,5 +1,7 @@
 package com.histmersion.server.plugins
 
+import com.histmersion.testsupport.ComparedByValue.given
+
 import com.histmersion.server.ServerPlugins
 import com.histmersion.util.plugins.HostProvided
 
@@ -31,5 +33,5 @@ class ReservedNamesSuite extends munit.FunSuite:
   test("the settings table names every first-party plugin but the vaults, which are rebuilt as any plugin is"):
     assertEquals(
       FirstPartySettings.all.map(_.plugin).toSet,
-      ReservedNames.firstPartyPlugins -- Set("keepassxc", "1password", "bitwarden")
+      ReservedNames.firstPartyPlugins -- Set(com.histmersion.pluginhost.ReservedNames.Name("keepassxc"), com.histmersion.pluginhost.ReservedNames.Name("1password"), com.histmersion.pluginhost.ReservedNames.Name("bitwarden"))
     )

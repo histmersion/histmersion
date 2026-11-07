@@ -12,7 +12,7 @@ import com.histmersion.api.research.ReviewState
   */
 class CssTokensSuite extends munit.FunSuite:
 
-  private val css = Static.read("web/style.css")
+  private val css = Static.read(com.histmersion.server.Static.ReadPath("web/style.css"))
 
   /** `--name: value` declarations in the `:root` blocks. */
   private val rootTokens: Map[String, String] =
@@ -394,16 +394,16 @@ class CssTokensSuite extends munit.FunSuite:
     val looks = Palette.goalStages.map(s => s -> stageLook(s)).toMap
     assertEquals(looks.values.map(_._1).toSet.size, Palette.goalStages.size, s"grounds: $looks")
     assertEquals(looks.values.map(_._2).toSet.size, Palette.goalStages.size, s"words: $looks")
-    assertNotEquals(looks("seeding"), looks("compiled"))
+    assertNotEquals(looks(com.histmersion.api.automation.Goal.Status.All("seeding")), looks(com.histmersion.api.automation.Goal.Status.All("compiled")))
     // the shape: a dashed ring, a half-filled circle, a square, a diamond, a dot
-    assert(looks("planned")._3.contains("dashed"), looks("planned")._3)
-    assert(looks("seeding")._3.contains("linear-gradient"), looks("seeding")._3)
+    assert(looks(com.histmersion.api.automation.Goal.Status.All("planned"))._3.contains("dashed"), looks(com.histmersion.api.automation.Goal.Status.All("planned"))._3)
+    assert(looks(com.histmersion.api.automation.Goal.Status.All("seeding"))._3.contains("linear-gradient"), looks(com.histmersion.api.automation.Goal.Status.All("seeding"))._3)
     assert(
-      looks("compiled")._3.contains("border-radius:1px") && !looks("compiled")._3.contains("rotate"),
-      looks("compiled")._3
+      looks(com.histmersion.api.automation.Goal.Status.All("compiled"))._3.contains("border-radius:1px") && !looks(com.histmersion.api.automation.Goal.Status.All("compiled"))._3.contains("rotate"),
+      looks(com.histmersion.api.automation.Goal.Status.All("compiled"))._3
     )
-    assert(looks("reviewed")._3.contains("rotate(45deg)"), looks("reviewed")._3)
-    assert(looks("done")._3.contains("var(--stage-done)"), looks("done")._3)
+    assert(looks(com.histmersion.api.automation.Goal.Status.All("reviewed"))._3.contains("rotate(45deg)"), looks(com.histmersion.api.automation.Goal.Status.All("reviewed"))._3)
+    assert(looks(com.histmersion.api.automation.Goal.Status.All("done"))._3.contains("var(--stage-done)"), looks(com.histmersion.api.automation.Goal.Status.All("done"))._3)
     for (name, theme) <- List("light" -> light, "dark" -> dark); s <- Palette.goalStages do
       val (bg, fg, _) = looks(s)
       def tokenOf(v: String) = v.stripPrefix("var(").stripSuffix(")")

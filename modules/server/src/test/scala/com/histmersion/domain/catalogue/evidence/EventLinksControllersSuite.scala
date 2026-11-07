@@ -1,5 +1,7 @@
 package com.histmersion.domain.catalogue.evidence
 
+import com.histmersion.testsupport.ComparedByValue.given
+
 import com.histmersion.domain.catalogue.places.PlaceScope
 
 import com.histmersion.api.{TimeSpan, Write}
@@ -31,12 +33,12 @@ class EventLinksControllersSuite extends munit.FunSuite:
     def reader(citekey: String): PassageReader = (query, _, _, _, _, _) =>
       val text = texts.getOrElse(citekey, "")
       val at = text.indexOf("Siege of Zzaria")
-      Right(Option.when(query.contains("Zzaria") && at >= 0)(Passage(0, text, List(MatchSpan(at, at + 15)))).toList)
+      Right(Option.when(query.contains("Zzaria") && at >= 0)(Passage(com.histmersion.domain.catalogue.evidence.passages.Passage.Offset(0), text, List(MatchSpan(at, at + 15)))).toList)
 
   private def controllers() =
     val state = AtomicReference(CatalogueState.empty)
     val events = EventService.InMemory(state)
-    events.put("zz_siege", EventPut("Siege of Zzaria", "siege", TimeSpan(Some(-500), None, None, Some(-499))))
+    events.put(com.histmersion.domain.catalogue.Event.Id("zz_siege"), EventPut(com.histmersion.api.catalogue.EventSummary.Label("Siege of Zzaria"), com.histmersion.api.catalogue.EventSummary.Kind("siege"), TimeSpan(Some(com.histmersion.api.catalogue.Year(-500)), None, None, Some(com.histmersion.api.catalogue.Year(-499)))))
     val links = EventLinkService.InMemory(state, ck => Option.when(texts.contains(ck))(Some(ck)))
     val attestations = AttestationService.InMemory(state)
     val c = EventLinksControllers(
@@ -56,13 +58,13 @@ class EventLinksControllersSuite extends munit.FunSuite:
 
   test("proposed from the text that names it; confirmed only from a passage; refused with why; rejected"):
     val (c, links, attestations, events) = controllers()
-    val first = c.links("zz_siege").toOption.get
+    val first = c.links(com.histmersion.domain.catalogue.Event.Id("zz_siege")).toOption.get
     assertEquals(first.candidates.map(_.citekey), List("zzln2020_names"))
     val r = c
       .applyLinks(
         Caller.Local,
-        "zz_siege",
-        EventLinksRequest(confirm = List("zzln2020_names", "zzln2021_silent", "zzgone"))
+        com.histmersion.domain.catalogue.Event.Id("zz_siege"),
+        EventLinksRequest(confirm = List(com.histmersion.api.catalogue.EventLinksRequest.Confirm("zzln2020_names"), com.histmersion.api.catalogue.EventLinksRequest.Confirm("zzln2021_silent"), com.histmersion.api.catalogue.EventLinksRequest.Confirm("zzgone")))
       )
       .toOption
       .get
@@ -72,10 +74,10 @@ class EventLinksControllersSuite extends munit.FunSuite:
     )
     assertEquals(r.refused.size, 2)
     assert(r.refused.exists(_.startsWith("zzgone: no such source")))
-    assertEquals((attestations.list(None, Some("event"), Some("zz_siege"), 10, 0).total.value: Int), 1)
-    assertEquals(links.candidates("zz_siege").map(c => (c.citekey, c.status)), List("zzln2020_names" -> "confirmed"))
-    val again = c.applyLinks(Caller.Local, "zz_siege", EventLinksRequest(confirm = List("zzln2020_names"))).toOption.get
+    assertEquals((attestations.list(None, Some(com.histmersion.api.catalogue.Attestation.TargetType("event")), Some(com.histmersion.api.catalogue.Attestation.TargetId("zz_siege")), com.histmersion.PageSize(10), com.histmersion.Offset(0)).total.value: Int), 1)
+    assertEquals(links.candidates(com.histmersion.domain.catalogue.Event.Id("zz_siege")).map(c => (c.citekey, c.status)), List("zzln2020_names" -> "confirmed"))
+    val again = c.applyLinks(Caller.Local, com.histmersion.domain.catalogue.Event.Id("zz_siege"), EventLinksRequest(confirm = List(com.histmersion.api.catalogue.EventLinksRequest.Confirm("zzln2020_names")))).toOption.get
     assertEquals(again.refused, List("zzln2020_names: already attests it"))
-    val card = c.context(events.get("zz_siege").get)
+    val card = c.context(events.get(com.histmersion.domain.catalogue.Event.Id("zz_siege")).get)
     assertEquals((card.tier, card.candidates, card.sources.map(_.via)), ("attested", Nil, List("attestation")))
-    assertEquals(c.links("zz_none").left.map(_.code), Left(Some(Write.CodeNotFound)))
+    assertEquals(c.links(com.histmersion.domain.catalogue.Event.Id("zz_none")).left.map(_.code), Left(Some(Write.CodeNotFound)))

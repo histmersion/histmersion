@@ -1,5 +1,7 @@
 package com.histmersion.domain.catalogue
 
+import com.histmersion.testsupport.ComparedByValue.given
+
 import com.histmersion.api.Dataset
 import com.histmersion.config.AppConfig
 import com.histmersion.domain.catalogue.events.{CorrectionService, EventImportService, EventService}

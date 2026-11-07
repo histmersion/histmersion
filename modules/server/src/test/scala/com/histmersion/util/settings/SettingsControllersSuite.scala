@@ -1,5 +1,7 @@
 package com.histmersion.util.settings
 
+import com.histmersion.testsupport.ComparedByValue.given
+
 import com.histmersion.api.settings.{ConfigEdit, ReloadReport}
 import org.ekrich.config.ConfigFactory
 
@@ -16,7 +18,7 @@ class SettingsControllersSuite extends munit.FunSuite:
     val c = SettingsControllers(
       settings,
       restarts,
-      () => { reloads.incrementAndGet(); ReloadReport(published = true, generation = 2) }
+      () => { reloads.incrementAndGet(); ReloadReport(published = com.histmersion.api.settings.ReloadReport.Published(true), generation = com.histmersion.api.settings.ReloadReport.Generation(2)) }
     )
 
   private val Commented = "# mine\nhistmersion {\n  backups.keep = 3   # three\n}\n"
@@ -30,15 +32,15 @@ class SettingsControllersSuite extends munit.FunSuite:
   test("the page: every setting with what the file says, what applies and from where"):
     val f = Fixture(Some(Commented), env = Map("HISTMERSION_TREE_DEPTH" -> "3"))
     val p = f.c.page(None).fold(e => fail(e.message), identity)
-    assertEquals(p.field("backups.keep").flatMap(_.value), Some("3"))
-    assertEquals(p.field("backups.keep").map(_.source), Some("file"))
-    assertEquals(p.field("ui.tree-depth").map(_.source), Some("environment"))
-    assertEquals(p.field("ui.tree-depth").flatMap(_.effective), Some("\"3\""))
-    assertEquals(p.field("lint.max-items").map(_.source), Some("default"))
+    assertEquals(p.field(com.histmersion.api.settings.ConfigEdit.Field.Key("backups.keep")).flatMap(_.value), Some("3"))
+    assertEquals(p.field(com.histmersion.api.settings.ConfigEdit.Field.Key("backups.keep")).map(_.source), Some("file"))
+    assertEquals(p.field(com.histmersion.api.settings.ConfigEdit.Field.Key("ui.tree-depth")).map(_.source), Some("environment"))
+    assertEquals(p.field(com.histmersion.api.settings.ConfigEdit.Field.Key("ui.tree-depth")).flatMap(_.effective), Some("\"3\""))
+    assertEquals(p.field(com.histmersion.api.settings.ConfigEdit.Field.Key("lint.max-items")).map(_.source), Some("default"))
     assert(p.sections.map(_.id).contains("backups"))
     assert(p.sections.find(_.id == "config").exists(_.doc.nonEmpty), "a section carries reference.conf's words")
-    assertEquals(f.c.page(Some("backups")).map(_.sections.map(_.id)), Right(List("backups")))
-    assert(f.c.page(Some("not a key!")).isLeft)
+    assertEquals(f.c.page(Some(com.histmersion.util.settings.SettingsService.ConfigPath("backups"))).map(_.sections.map(_.id)), Right(List("backups")))
+    assert(f.c.page(Some(com.histmersion.util.settings.SettingsService.ConfigPath("not a key!"))).isLeft)
 
   test("a credential's value never crosses: not what the file writes, not what applies, not the default"):
     val f = Fixture(
@@ -46,10 +48,10 @@ class SettingsControllersSuite extends munit.FunSuite:
       env = Map("HISTMERSION_API_KEY" -> "s3cret-key")
     )
     val p = f.c.page(None).fold(e => fail(e.message), identity)
-    val europeana = p.field("plugins.media-europeana.api-key").get
-    assertEquals(europeana.credential, Some(ConfigEdit.Credential("reference", "value", Some("value:***"))))
+    val europeana = p.field(com.histmersion.api.settings.ConfigEdit.Field.Key("plugins.media-europeana.api-key")).get
+    assertEquals(europeana.credential, Some(ConfigEdit.Credential(com.histmersion.api.settings.ConfigEdit.Credential.Rule("reference"), com.histmersion.api.settings.ConfigEdit.Credential.Form("value"), Some(com.histmersion.api.settings.ConfigEdit.Credential.Shown("value:***")))))
     assertEquals((europeana.value, europeana.effective, europeana.default), (None, None, None))
-    val auth = p.field("auth.api-key").get
+    val auth = p.field(com.histmersion.api.settings.ConfigEdit.Field.Key("auth.api-key")).get
     assertEquals(auth.credential.map(_.form), Some("plain"))
     assertEquals((auth.value, auth.effective), (None, None))
     val json = io.circe.syntax.EncoderOps(p).asJson.noSpaces
@@ -77,7 +79,7 @@ class SettingsControllersSuite extends munit.FunSuite:
     assert(cred.message.contains("HISTMERSION_API_KEY") && !cred.message.contains("s3cret"), cred.message)
     val before = f.c.page(None).toOption.get.version
     f.file.set(Some(Commented + "# edited by hand\n"))
-    val stale = f.c.write(ConfigEdit.Write(List(ConfigEdit.Change("backups.keep", Some("4"))), version = Some(before)))
+    val stale = f.c.write(ConfigEdit.Write(List(ConfigEdit.Change(com.histmersion.api.settings.ConfigEdit.Change.Key("backups.keep"), Some(com.histmersion.api.settings.ConfigEdit.Change.Value("4")))), version = Some(before)))
     assertEquals(stale.left.toOption.flatMap(_.code), Some(ConfigEdit.CodeChanged))
     assertEquals(f.reloads.get, 0)
     assert(write(f).isLeft, "no change at all")
@@ -87,7 +89,7 @@ class SettingsControllersSuite extends munit.FunSuite:
     assert(write(f, "plugins.oa-core.api-key" -> Some("value:x")).isLeft)
     val w = f.c
       .write(
-        ConfigEdit.Write(List(ConfigEdit.Change("plugins.oa-core.api-key", Some("value:x"))), literalConsent = true)
+        ConfigEdit.Write(List(ConfigEdit.Change(com.histmersion.api.settings.ConfigEdit.Change.Key("plugins.oa-core.api-key"), Some(com.histmersion.api.settings.ConfigEdit.Change.Value("value:x")))), literalConsent = com.histmersion.api.settings.ConfigEdit.Write.LiteralConsent(true))
       )
       .fold(e => fail(e.message), identity)
     assert(w.warnings.exists(_.contains("anyone who can read")), s"${w.warnings}")

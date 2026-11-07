@@ -1,5 +1,7 @@
 package com.histmersion.server
 
+import com.histmersion.testsupport.ComparedByValue.given
+
 import hearth.kindlings.optics.syntax.*
 
 import com.histmersion.config.*
@@ -17,7 +19,7 @@ import com.histmersion.api.research.Coverage
   */
 class MarkdownLintSuite extends munit.FunSuite:
 
-  private val article = Context(article = true)
+  private val article = Context(article = com.histmersion.server.MarkdownLint.Context.Article(true))
   private def body(md: String, ctx: Context = article) = MarkdownLint.issues(md, FormatField.Body, ctx)
   private def rules(md: String, ctx: Context = article): List[FormatRule] = body(md, ctx).map(_.rule)
   private def fixed(md: String, ctx: Context = article): String = MarkdownLint.fix(md, FormatField.Body, ctx)._1
@@ -322,7 +324,7 @@ class MarkdownLintSuite extends munit.FunSuite:
       rules("![map]() and ![map](/Users/me/map.png) [[cline2014_year]].\n"),
       List(FormatRule.Image, FormatRule.Image)
     )
-    assertEquals(MarkdownLint.issues("![Fig. 1](figures/fig1.png)\n", FormatField.Notes), Nil)
+    assertEquals(MarkdownLint.issues(com.histmersion.server.MarkdownLint.Scan.Text("![Fig. 1](figures/fig1.png)\n"), FormatField.Notes), Nil)
 
   test("bare URLs are not clickable — wrapped by --fix; autolinks and links are fine"):
     val md = "Data at https://doi.org/10.1038/nature14317. and <https://example.org> [x](https://e.org).\n"
@@ -351,10 +353,10 @@ class MarkdownLintSuite extends munit.FunSuite:
     assertEquals(MarkdownLint.fix(out, FormatField.Body, article), (out, Nil))
 
   test("the summary and notes fields are checked the same way and say so"):
-    val is = MarkdownLint.issues("A ** bad** summary.", FormatField.Summary)
+    val is = MarkdownLint.issues(com.histmersion.server.MarkdownLint.Scan.Text("A ** bad** summary."), FormatField.Summary)
     assertEquals(is.map(i => (i.rule, i.field)), List((FormatRule.Emphasis, FormatField.Summary)))
     // a source's notes have no generated Sources cited footer: the heading is fine there
-    assertEquals(MarkdownLint.issues("## Sources cited\n\n- x\n", FormatField.Notes), Nil)
+    assertEquals(MarkdownLint.issues(com.histmersion.server.MarkdownLint.Scan.Text("## Sources cited\n\n- x\n"), FormatField.Notes), Nil)
 
   test("the wire spellings round-trip and every rule is documented"):
     FormatRule.values.foreach { r =>
@@ -362,7 +364,7 @@ class MarkdownLintSuite extends munit.FunSuite:
       assert(r.description.nonEmpty && !r.wire.contains("_"), r.wire)
     }
     val i =
-      FormatIssue(FormatRule.TableNotRendered, FormatSeverity.Error, FormatField.Body, 3, 1, "| a |", "m", Some("f"))
+      FormatIssue(FormatRule.TableNotRendered, FormatSeverity.Error, FormatField.Body, com.histmersion.api.checks.FormatIssue.Line(3), com.histmersion.api.checks.FormatIssue.Column(1), com.histmersion.api.checks.FormatIssue.Excerpt("| a |"), com.histmersion.api.checks.FormatIssue.Message("m"), Some(com.histmersion.api.checks.FormatIssue.Fix("f")))
     val j = io.circe.parser.decode[FormatIssue](io.circe.syntax.EncoderOps(i).asJson.noSpaces)
     assertEquals(j, Right(i))
     assert(io.circe.syntax.EncoderOps(i).asJson.noSpaces.contains("\"rule\":\"table-not-rendered\""))
@@ -371,7 +373,7 @@ class MarkdownLintSuite extends munit.FunSuite:
 
   test("the page notice: folded, counted, one line per problem, escaped; nothing when clean"):
     val is = body("Intro [[cline2014_year]]:\n| A | B |\n|---|---|\n| 1 | 2 |\n\nThe ** x** <b>bold</b> here.\n")
-    val html = Pages.formatNotice(is, "This article", Some("sea_peoples"))
+    val html = Pages.formatNotice(is, "This article", Some(com.histmersion.api.research.Article.Slug("sea_peoples")))
     assert(
       html.startsWith(
         """<details class="format-notice has-errors"><summary>This article may not display correctly: 2 formatting problems</summary>"""
@@ -389,10 +391,10 @@ class MarkdownLintSuite extends munit.FunSuite:
     assertEquals(Pages.formatNotice(Nil, "This article", None), "")
     // on the article page it sits under the meta line, above the prose
     val row = Article.Row(
-      "sea_peoples",
-      "Sea Peoples",
-      "concept",
-      "# Sea Peoples\n\nThe ** x** here.",
+      com.histmersion.api.research.Article.Slug("sea_peoples"),
+      com.histmersion.api.research.Article.Title("Sea Peoples"),
+      com.histmersion.api.research.Article.Kind.Wire("concept"),
+      com.histmersion.api.research.Article.Body("# Sea Peoples\n\nThe ** x** here."),
       None,
       Nil,
       Nil,
@@ -409,27 +411,27 @@ class MarkdownLintSuite extends munit.FunSuite:
   test(
     "#958: the generated coverage sections have no formatting problem, and the page renders them as a list and one note"
   ):
-    val src = (ck: String, st: Source.Status) => Coverage.Source(ck, ck, Some(2000), st)
+    val src = (ck: String, st: Source.Status) => Coverage.Source(ck, ck, Some(com.histmersion.api.catalogue.Year(2000)), st)
     val c = Article.Coverage.compute(
-      "tin",
-      Article.Filter(query = Some("tin_trade *x*"), topics = List("bronze_age")),
-      812,
+      com.histmersion.api.research.Article.Coverage.ComputeSlug("tin"),
+      Article.Filter(query = Some(com.histmersion.api.library.Filter.Q("tin_trade *x*")), topics = List(com.histmersion.api.library.Filter.Topics("bronze_age"))),
+      com.histmersion.api.research.Article.Coverage.ComputeTotal(812),
       List(
         src("knapp2016_tin", Source.Status.Current),
         src("egypt2001_old", Source.Status.Contested),
         src("iso2024_new", Source.Status.Current)
       ),
-      Set("knapp2016_tin"),
-      List("knapp2016_tin", "other2020_x"),
+      Set(com.histmersion.api.library.Citekey("knapp2016_tin")),
+      List(com.histmersion.api.library.Citekey("knapp2016_tin"), com.histmersion.api.library.Citekey("other2020_x")),
       Map("egypt2001_old" -> "About Egypt, not the Aegean"),
-      List(Coverage.Edge("crit2022_x", "superseded_by", "knapp2016_tin")),
-      List(CoverageSearch("synoikism", 3, Nil))
+      List(Coverage.Edge(com.histmersion.api.library.Citekey("crit2022_x"), com.histmersion.api.research.Coverage.Edge.Kind("superseded_by"), com.histmersion.api.library.Citekey("knapp2016_tin"))),
+      List(CoverageSearch(com.histmersion.api.research.CoverageSearch.Query("synoikism"), com.histmersion.api.research.CoverageSearch.Total(3), Nil))
     )
     val md = "# Tin\n\nTin moved [[knapp2016_tin]].\n\n" + Article.Coverage.sections(c)
     assertEquals(body(md), Nil)
     val page = Pages.article(
       ArticlePage(
-        Article.Row("tin", "Tin", "concept", "# Tin\n\nTin moved [[knapp2016_tin]].", None, Nil, Nil, None, None),
+        Article.Row(com.histmersion.api.research.Article.Slug("tin"), com.histmersion.api.research.Article.Title("Tin"), com.histmersion.api.research.Article.Kind.Wire("concept"), com.histmersion.api.research.Article.Body("# Tin\n\nTin moved [[knapp2016_tin]]."), None, Nil, Nil, None, None),
         Nil,
         Nil,
         Nil,

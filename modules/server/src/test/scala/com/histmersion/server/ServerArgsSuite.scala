@@ -1,5 +1,7 @@
 package com.histmersion.server
 
+import com.histmersion.testsupport.ComparedByValue.given
+
 class ServerArgsSuite extends munit.FunSuite:
 
   test("no arguments serves; --self-check and --help are the only flags"):

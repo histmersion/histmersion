@@ -57,10 +57,10 @@ class CandidateSearchSuite extends com.histmersion.db.DbSuite:
       sql"DELETE FROM queue_items WHERE text LIKE '%zzcand%'".update.run()
     assert(
       transact(ds)(
-        GoalRepo.put(Goal, com.histmersion.api.automation.Goal.Put("Bronze Age collapse", status = "seeding"))
+        GoalRepo.put(Goal, com.histmersion.api.automation.Goal.Put(com.histmersion.api.automation.Goal.Title("Bronze Age collapse"), status = com.histmersion.api.automation.Goal.StatusValue("seeding")))
       ).isRight
     )
-    assert(transact(ds)(GoalLinkRepo.link(Goal, LinkKind.Query, "bronze age collapse", None)))
+    assert(transact(ds)(GoalLinkRepo.link(Goal, LinkKind.Query, com.histmersion.api.automation.Goal.Plans.GoalLink.Ref("bronze age collapse"), None)))
 
   private lazy val db = com.histmersion.util.database.Transactor(ds)
   private lazy val store = CandidateService(db)
@@ -105,7 +105,7 @@ class CandidateSearchSuite extends com.histmersion.db.DbSuite:
       ),
       cfg.limits.chunkChars
     )
-    QueueRows.add(ds, Queue.Kind.Acquire, Queue.QueueAdd("zzcand queued https://doi.org/10.5555/zzcand.queued"))
+    QueueRows.add(ds, Queue.Kind.Acquire, Queue.QueueAdd(com.histmersion.api.automation.Queue.QueueItem.Text("zzcand queued https://doi.org/10.5555/zzcand.queued")))
     val oa = FakeIndex(
       "openalex",
       Right(List(work("10.5555/zzcand.a"), work("10.5555/zzcand.have"), work("10.5555/zzcand.queued")))
@@ -115,7 +115,7 @@ class CandidateSearchSuite extends com.histmersion.db.DbSuite:
       Right(List(work("https://doi.org/10.5555/ZZCAND.A", "Same, other record"), work("10.5555/zzcand.b")))
     )
     val day = LocalDate.of(2026, 10, 24)
-    val s = search(List(oa, cr), FakeAlerts(), day).sweep(Goal, dryRun = false).fold(e => fail(e.message), identity)
+    val s = search(List(oa, cr), FakeAlerts(), day).sweep(Goal, dryRun = com.histmersion.domain.library.acquisition.CandidateSearch.SweepDryRun(false)).fold(e => fail(e.message), identity)
     assertEquals((s.found, s.added, s.again, s.unseen), (5, 2, 0, 2))
     assertEquals(s.skipped, Map("in the corpus or queued" -> 2))
     // the first read looks back acquire.candidates.lookback-days; the watermark is today's after it
@@ -127,7 +127,7 @@ class CandidateSearchSuite extends com.histmersion.db.DbSuite:
       store.watches(Goal).map(w => (w.index, w.watermark, w.lastFound)),
       List(("crossref", Some("2026-10-24"), 2), ("openalex", Some("2026-10-24"), 3))
     )
-    val list = store.list(Some(Goal), "new", 10, 0)
+    val list = store.list(Some(Goal), com.histmersion.api.library.Source.Candidate.State("new"), com.histmersion.domain.library.acquisition.CandidateService.ListLimit(10), com.histmersion.Offset(0))
     assertEquals(
       list.map(c => (c.doi, c.foundBy)),
       List(
@@ -142,10 +142,10 @@ class CandidateSearchSuite extends com.histmersion.db.DbSuite:
     // `var`: the second sweep finds Crossref down
     var crFails = false
     val cr = FakeIndex("crossref", if crFails then Left("HTTP 503") else Right(Nil))
-    val s1 = search(List(oa, cr), FakeAlerts(), LocalDate.of(2026, 10, 1)).sweep(Goal, dryRun = false).toOption.get
+    val s1 = search(List(oa, cr), FakeAlerts(), LocalDate.of(2026, 10, 1)).sweep(Goal, dryRun = com.histmersion.domain.library.acquisition.CandidateSearch.SweepDryRun(false)).toOption.get
     assertEquals(s1.added, 1)
     crFails = true
-    val s2 = search(List(oa, cr), FakeAlerts(), LocalDate.of(2026, 10, 24)).sweep(Goal, dryRun = false).toOption.get
+    val s2 = search(List(oa, cr), FakeAlerts(), LocalDate.of(2026, 10, 24)).sweep(Goal, dryRun = com.histmersion.domain.library.acquisition.CandidateSearch.SweepDryRun(false)).toOption.get
     assertEquals((s2.added, s2.again, s2.unseen), (0, 1, 1))
     assertEquals(oa.asked.toArray.toList.last, ("bronze age collapse", LocalDate.of(2026, 10, 1)))
     val ws = store.watches(Goal).map(w => w.index -> (w.watermark, w.lastError)).toMap
@@ -154,25 +154,25 @@ class CandidateSearchSuite extends com.histmersion.db.DbSuite:
     // the supervisor: unseen candidates → an agent run; none → no run; the search not connected → as before
     assert(!WatchManagerKind.nothingNew(Right(s2)))
     assert(WatchManagerKind.nothingNew(Right(s2.modify(_.unseen).setTo(0))))
-    assert(!WatchManagerKind.nothingNew(Left("not connected")))
+    assert(!WatchManagerKind.nothingNew(Left(com.histmersion.domain.library.workflows.AgentUpstream.Problem("not connected"))))
 
   test("a dry run reads but stores nothing; marking moves candidates out of the unseen"):
     fresh()
     val oa = FakeIndex("openalex", Right(List(work("10.5555/zzcand.a"), work("10.5555/zzcand.b"))))
-    val dry = search(List(oa), FakeAlerts(), LocalDate.of(2026, 10, 24)).sweep(Goal, dryRun = true).toOption.get
+    val dry = search(List(oa), FakeAlerts(), LocalDate.of(2026, 10, 24)).sweep(Goal, dryRun = com.histmersion.domain.library.acquisition.CandidateSearch.SweepDryRun(true)).toOption.get
     assertEquals((dry.added, dry.unseen, dry.dryRun), (2, 0, true))
     assertEquals(store.watches(Goal), Nil)
-    val s = search(List(oa), FakeAlerts(), LocalDate.of(2026, 10, 24)).sweep(Goal, dryRun = false).toOption.get
+    val s = search(List(oa), FakeAlerts(), LocalDate.of(2026, 10, 24)).sweep(Goal, dryRun = com.histmersion.domain.library.acquisition.CandidateSearch.SweepDryRun(false)).toOption.get
     assertEquals(s.unseen, 2)
-    val ids = store.list(Some(Goal), "new", 10, 0).map(_.id)
-    assertEquals(store.mark(ids.take(1), "dismissed"), 1)
-    assertEquals(store.markDois(Goal, List("10.5555/zzcand.b"), "queued"), 1)
+    val ids = store.list(Some(Goal), com.histmersion.api.library.Source.Candidate.State("new"), com.histmersion.domain.library.acquisition.CandidateService.ListLimit(10), com.histmersion.Offset(0)).map(_.id)
+    assertEquals(store.mark(ids.take(1), com.histmersion.api.library.Source.Candidate.State("dismissed")), 1)
+    assertEquals(store.markDois(Goal, List(com.histmersion.domain.library.Doi("10.5555/zzcand.b")), com.histmersion.api.library.Source.Candidate.State("queued")), 1)
     assertEquals(
       store.counts(Some(Goal)).map(c => c.state -> c.count).toMap,
       Map("queued" -> 1, "dismissed" -> 1)
     )
     // found again later: still decided, not new
-    val again = search(List(oa), FakeAlerts(), LocalDate.of(2026, 10, 25)).sweep(Goal, dryRun = false).toOption.get
+    val again = search(List(oa), FakeAlerts(), LocalDate.of(2026, 10, 25)).sweep(Goal, dryRun = com.histmersion.domain.library.acquisition.CandidateSearch.SweepDryRun(false)).toOption.get
     assertEquals((again.added, again.again, again.unseen), (0, 2, 0))
 
   test("the goal's sources: the works citing them and their first and last authors' newer works"):
@@ -199,35 +199,35 @@ class CandidateSearchSuite extends com.histmersion.db.DbSuite:
       ),
       cfg.limits.chunkChars
     )
-    assert(transact(ds)(GoalLinkRepo.link(Goal, LinkKind.Source, "zzcand_src", None)))
+    assert(transact(ds)(GoalLinkRepo.link(Goal, LinkKind.Source, com.histmersion.api.automation.Goal.Plans.GoalLink.Ref("zzcand_src"), None)))
     val alerts = FakeAlerts()
-    val s = search(Nil, alerts, LocalDate.of(2026, 10, 24)).sweep(Goal, dryRun = false).toOption.get
+    val s = search(Nil, alerts, LocalDate.of(2026, 10, 24)).sweep(Goal, dryRun = com.histmersion.domain.library.acquisition.CandidateSearch.SweepDryRun(false)).toOption.get
     assertEquals(alerts.asked.toArray.toList, List("citing 10.5555/zzcand.src", "author A1", "author A3"))
     assertEquals(
       s.watches.map(w => (w.kind, w.subject)),
       List(("citing", "10.5555/zzcand.src"), ("author", "A1"), ("author", "A3"))
     )
     assertEquals(
-      store.list(Some(Goal), "new", 10, 0).map(c => (c.doi, c.foundBy)),
+      store.list(Some(Goal), com.histmersion.api.library.Source.Candidate.State("new"), com.histmersion.domain.library.acquisition.CandidateService.ListLimit(10), com.histmersion.Offset(0)).map(c => (c.doi, c.foundBy)),
       List("10.5555/zzcand.citing" -> List("openalex citing 10.5555/zzcand.src"))
     )
-    assert(search(Nil, alerts, LocalDate.of(2026, 10, 24)).sweep("zzcand-nowhere", dryRun = false).isLeft)
+    assert(search(Nil, alerts, LocalDate.of(2026, 10, 24)).sweep(com.histmersion.domain.automation.Goal.Slug("zzcand-nowhere"), dryRun = com.histmersion.domain.library.acquisition.CandidateSearch.SweepDryRun(false)).isLeft)
 
   test("an index that may not be asked (CORE's budget, CORE's block) is left out of the sweep, which says so"):
     fresh()
-    assert(transact(ds)(GoalLinkRepo.link(Goal, LinkKind.Query, "late bronze age", None)))
-    assert(transact(ds)(GoalLinkRepo.link(Goal, LinkKind.Query, "sea peoples", None)))
+    assert(transact(ds)(GoalLinkRepo.link(Goal, LinkKind.Query, com.histmersion.api.automation.Goal.Plans.GoalLink.Ref("late bronze age"), None)))
+    assert(transact(ds)(GoalLinkRepo.link(Goal, LinkKind.Query, com.histmersion.api.automation.Goal.Plans.GoalLink.Ref("sea peoples"), None)))
     val oa = FakeIndex("openalex", Right(List(work("10.5555/zzcand.a"))))
     // the first CORE search answers 429: from then on CORE says to wait
     final class Throttled extends ScholarlyIndex:
-      val name = "core"
+      val name = com.histmersion.domain.library.acquisition.ScholarlyIndex.Name("core")
       val asked = ConcurrentLinkedQueue[String]()
-      override def unavailable = Option.when(!asked.isEmpty)("CORE asked to wait until 2026-10-24T12:00:00Z (HTTP 429)")
+      override def unavailable = Option.when(!asked.isEmpty)(com.histmersion.domain.library.acquisition.ScholarlyIndex.Problem("CORE asked to wait until 2026-10-24T12:00:00Z (HTTP 429)"))
       def search(query: String, since: LocalDate, limit: Int) = {
         asked.add(query); Left("CORE not asked: CORE answered HTTP 429")
       }
     val core = Throttled()
-    val s = search(List(oa, core), FakeAlerts(), LocalDate.of(2026, 10, 24)).sweep(Goal, dryRun = false).toOption.get
+    val s = search(List(oa, core), FakeAlerts(), LocalDate.of(2026, 10, 24)).sweep(Goal, dryRun = com.histmersion.domain.library.acquisition.CandidateSearch.SweepDryRun(false)).toOption.get
     assertEquals(core.asked.size, 1, "asked once, then left out")
     assertEquals(oa.asked.size, 3, "the other indexes are read as usual")
     assertEquals(
@@ -241,10 +241,10 @@ class CandidateSearchSuite extends com.histmersion.db.DbSuite:
     assertEquals(s.added, 1)
     // a budget spent before the sweep: CORE is not asked at all
     val spent = new ScholarlyIndex:
-      val name = "core"
+      val name = com.histmersion.domain.library.acquisition.ScholarlyIndex.Name("core")
       override def unavailable = Some("CORE's daily budget for searches is spent")
       def search(query: String, since: LocalDate, limit: Int) = fail("asked")
-    val s2 = search(List(spent), FakeAlerts(), LocalDate.of(2026, 10, 24)).sweep(Goal, dryRun = true).toOption.get
+    val s2 = search(List(spent), FakeAlerts(), LocalDate.of(2026, 10, 24)).sweep(Goal, dryRun = com.histmersion.domain.library.acquisition.CandidateSearch.SweepDryRun(true)).toOption.get
     assert(
       s2.notes.size == 1 && s2.notes.head
         .startsWith("core not asked this sweep: CORE's daily budget for searches is spent — 3 watches"),

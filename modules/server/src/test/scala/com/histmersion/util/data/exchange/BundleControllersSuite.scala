@@ -1,5 +1,7 @@
 package com.histmersion.util.data.exchange
 
+import com.histmersion.testsupport.ComparedByValue.given
+
 import hearth.kindlings.optics.syntax.*
 
 import com.histmersion.config.*
@@ -16,26 +18,26 @@ class BundleControllersSuite extends munit.FunSuite:
 
   test("since: an ISO-8601 moment with its offset, or nothing; anything else is a readable 400"):
     assertEquals(BundleControllers.since(None), Right(None))
-    assertEquals(BundleControllers.since(Some("  ")), Right(None))
+    assertEquals(BundleControllers.since(Some(com.histmersion.util.data.exchange.BundleScope.Since.At("  "))), Right(None))
     assertEquals(
-      BundleControllers.since(Some("2026-10-03T09:12:00.123456Z")),
+      BundleControllers.since(Some(com.histmersion.util.data.exchange.BundleScope.Since.At("2026-10-03T09:12:00.123456Z"))),
       Right(Some("2026-10-03T09:12:00.123456Z"))
     )
-    assert(BundleControllers.since(Some("yesterday")).left.exists(_.message.contains("ISO-8601")))
-    assert(BundleControllers.since(Some("2026-10-03")).isLeft)
+    assert(BundleControllers.since(Some(com.histmersion.util.data.exchange.BundleScope.Since.At("yesterday"))).left.exists(_.message.contains("ISO-8601")))
+    assert(BundleControllers.since(Some(com.histmersion.util.data.exchange.BundleScope.Since.At("2026-10-03"))).isLeft)
 
   test("the download is named after the instance and the moment it is as of"):
     val m = Bundle.Manifest(
       Bundle.Format,
-      1,
-      "33",
+      com.histmersion.api.exchange.Bundle.Manifest.FormatVersion(1),
+      com.histmersion.api.exchange.Bundle.Manifest.SchemaVersion("33"),
       UUID.randomUUID(),
-      Bundle.Instance(UUID.fromString("01910000-0000-7000-8000-0000000000aa"), Some("my work")),
+      Bundle.Instance(UUID.fromString("01910000-0000-7000-8000-0000000000aa"), Some(com.histmersion.api.exchange.Bundle.Instance.Label("my work"))),
       None,
-      Some("2026-10-03T09:12:00.123456Z"),
+      Some(com.histmersion.api.exchange.Bundle.Manifest.AsOf("2026-10-03T09:12:00.123456Z")),
       Nil,
-      Bundle.Blobs(0, 0),
-      Bundle.Reference(0, "", 0, "")
+      Bundle.Blobs(com.histmersion.api.exchange.Bundle.Blobs.Count(0), com.histmersion.api.ByteCount(0)),
+      Bundle.Reference(com.histmersion.api.exchange.Bundle.Reference.Places(0), com.histmersion.api.exchange.Bundle.Reference.PlacesDigest(""), com.histmersion.api.exchange.Bundle.Reference.Periods(0), com.histmersion.api.exchange.Bundle.Reference.PeriodsDigest(""))
     )
     assertEquals(BundleControllers.disposition(m), """attachment; filename="histmersion-my-work-20261003091200.hmx"""")
     assertEquals(
@@ -56,10 +58,10 @@ class BundleControllersSuite extends munit.FunSuite:
     val data = "an original".getBytes(UTF_8)
     val sha = BundleFormat.sha256Hex(data)
     assertEquals(o.find(sha), None)
-    assert(o.store(sha, "pdf", java.io.ByteArrayInputStream("not it".getBytes(UTF_8))).isLeft)
+    assert(o.store(sha, com.histmersion.util.storage.ContentStore.Ext("pdf"), java.io.ByteArrayInputStream("not it".getBytes(UTF_8))).isLeft)
     assertEquals(o.find(sha), None)
-    assertEquals(o.store(sha, "../evil", java.io.ByteArrayInputStream(data)), Right(()))
+    assertEquals(o.store(sha, com.histmersion.util.storage.ContentStore.Ext("../evil"), java.io.ByteArrayInputStream(data)), Right(()))
     assertEquals(o.find(sha).map(_._2), Some("bin")) // an unsafe extension is not used
-    assertEquals(o.store(sha, "pdf", java.io.ByteArrayInputStream(data)), Right(())) // already there
+    assertEquals(o.store(sha, com.histmersion.util.storage.ContentStore.Ext("pdf"), java.io.ByteArrayInputStream(data)), Right(())) // already there
     assertEquals(Files.list(dir).count(), 1L)
-    assertEquals(ContentStore.safeExt("PDF"), "pdf")
+    assertEquals(ContentStore.safeExt(com.histmersion.util.storage.ContentStore.Ext("PDF")), "pdf")

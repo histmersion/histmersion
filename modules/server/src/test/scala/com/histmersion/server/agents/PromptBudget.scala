@@ -1,5 +1,7 @@
 package com.histmersion.server.agents
 
+import com.histmersion.testsupport.ComparedByValue.given
+
 import com.histmersion.domain.research.workflows.*
 
 import com.histmersion.domain.library.workflows.*
@@ -102,11 +104,11 @@ object PromptBudget:
   /** The files `export` writes, relative to its directory. */
   def exportTree(d: AgentGenerator.Defs): Map[String, String] =
     val settings = GenSettings(
-      "http://127.0.0.1:9/mcp/agent",
+      com.histmersion.domain.automation.agents.GenSettings.AgentMcpUrl("http://127.0.0.1:9/mcp/agent"),
       None,
-      "http://127.0.0.1:9/quota",
-      claudeMod = false,
-      interactiveMod = false,
+      com.histmersion.domain.automation.agents.GenSettings.QuotaUrl("http://127.0.0.1:9/quota"),
+      claudeMod = com.histmersion.domain.automation.agents.GenSettings.ClaudeMod(false),
+      interactiveMod = com.histmersion.domain.automation.agents.GenSettings.InteractiveMod(false),
       AgentGenerator.PluginVersion
     )
     val runs = d.agents.filter(_.runsOn(AgentRuntime.ClaudeCode))
@@ -120,14 +122,14 @@ object PromptBudget:
       case "codex" :: dir :: Nil => // the generated Codex home (lean base prompt, 6000-token outputs), for `codex debug prompt-input`
         val root = Path.of(dir).toAbsolutePath
         val s = GenSettings(
-          "http://127.0.0.1:9/mcp/agent",
+          com.histmersion.domain.automation.agents.GenSettings.AgentMcpUrl("http://127.0.0.1:9/mcp/agent"),
           None,
-          "http://127.0.0.1:9/quota",
-          claudeMod = false,
-          interactiveMod = false,
+          com.histmersion.domain.automation.agents.GenSettings.QuotaUrl("http://127.0.0.1:9/quota"),
+          claudeMod = com.histmersion.domain.automation.agents.GenSettings.ClaudeMod(false),
+          interactiveMod = com.histmersion.domain.automation.agents.GenSettings.InteractiveMod(false),
           AgentGenerator.PluginVersion,
-          codexToolOutputTokens = 6000,
-          codexLeanBase = true
+          codexToolOutputTokens = com.histmersion.domain.automation.agents.GenSettings.CodexToolOutputTokens(6000),
+          codexLeanBase = com.histmersion.domain.automation.agents.GenSettings.CodexLeanBase(true)
         )
         AgentGenerator.codex(d, s).foreach { (rel, text) =>
           val p = root.resolve(rel)

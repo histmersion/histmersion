@@ -51,13 +51,13 @@ class TreeHttpSuite extends munit.FunSuite:
   private val places = Lpf.render(
     List(
       Place.Input(
-        Place(com.histmersion.api.catalogue.Place.Id("zzg_world"), "Zzg World", com.histmersion.domain.catalogue.Place.Kind.Region),
-        List(Place.Name("Zzg World"))
+        Place(com.histmersion.api.catalogue.Place.Id("zzg_world"), com.histmersion.api.catalogue.Place.Label("Zzg World"), com.histmersion.domain.catalogue.Place.Kind.Region),
+        List(Place.Name(com.histmersion.api.catalogue.Place.Name.Value("Zzg World")))
       ),
       Place.Input(
-        Place(com.histmersion.api.catalogue.Place.Id("zzg_land"), "Zzg Land", com.histmersion.domain.catalogue.Place.Kind.Region),
-        List(Place.Name("Zzg Land")),
-        List(Place.Relation("zzg_land", "zzg_world"))
+        Place(com.histmersion.api.catalogue.Place.Id("zzg_land"), com.histmersion.api.catalogue.Place.Label("Zzg Land"), com.histmersion.domain.catalogue.Place.Kind.Region),
+        List(Place.Name(com.histmersion.api.catalogue.Place.Name.Value("Zzg Land"))),
+        List(Place.Relation(com.histmersion.api.catalogue.Place.Relation.ChildId("zzg_land"), com.histmersion.api.catalogue.Place.Relation.ParentId("zzg_world")))
       )
     )
   )
@@ -73,7 +73,7 @@ class TreeHttpSuite extends munit.FunSuite:
     val base = AppConfig.load()
     val cfg = base.modify(_.db).setTo(base.db.modify(_.url).setTo(testDb.get))
     supervised {
-      val b = Composition.server(cfg, "127.0.0.1", 0).start()
+      val b = Composition.server(cfg, com.histmersion.config.ServerConfig.Host("127.0.0.1"), com.histmersion.config.ServerConfig.Port(0)).start()
       val url = s"http://127.0.0.1:${b.port}"
       val filter = "tag=zzg-tree&from=-1600&to=-1200"
 

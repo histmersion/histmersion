@@ -1,32 +1,34 @@
 package com.histmersion.server
 
+import com.histmersion.testsupport.ComparedByValue.given
+
 import java.time.{Instant, ZoneOffset}
 
 class TimeZoneCheckSuite extends munit.FunSuite:
 
-  private val probe = TimeZoneCheck.Probe("Europe/Warsaw", Instant.parse("2026-01-15T12:00:00Z"), ZoneOffset.ofHours(1))
+  private val probe = TimeZoneCheck.Probe(com.histmersion.server.TimeZoneCheck.Probe.Zone("Europe/Warsaw"), Instant.parse("2026-01-15T12:00:00Z"), ZoneOffset.ofHours(1))
 
   test("every probe at its offset and a default zone: ok, with the count, the tzdb version and the default"):
     val (ok, line) = TimeZoneCheck.report(
       List(probe),
       (_, _) => Right(ZoneOffset.ofHours(1)),
-      600,
-      Some("2026a"),
-      Right("Europe/Warsaw")
+      com.histmersion.server.TimeZoneCheck.ZoneCount(600),
+      Some(com.histmersion.server.TimeZoneCheck.TzdbVersion("2026a")),
+      Right(com.histmersion.server.TimeZoneCheck.Probe.Zone("Europe/Warsaw"))
     )
     assert(ok, line)
     assertEquals(line, "time zones: 600 from the JDK's tzdb 2026a · default Europe/Warsaw · 1 offsets checked")
 
   test("a wrong offset, an unknown zone, no zone ids or no default zone: BROKEN, naming each"):
-    val (ok1, wrong) = TimeZoneCheck.report(List(probe), (_, _) => Right(ZoneOffset.UTC), 600, None, Right("UTC"))
+    val (ok1, wrong) = TimeZoneCheck.report(List(probe), (_, _) => Right(ZoneOffset.UTC), com.histmersion.server.TimeZoneCheck.ZoneCount(600), None, Right(com.histmersion.server.TimeZoneCheck.Probe.Zone("UTC")))
     assert(!ok1)
     assertEquals(wrong, "time zones: BROKEN — Europe/Warsaw at 2026-01-15T12:00:00Z: Z, expected +01:00")
     val (ok2, unknown) = TimeZoneCheck.report(
       List(probe),
-      (_, _) => Left("ZoneRulesException: Unknown time-zone ID"),
-      0,
+      (_, _) => Left(com.histmersion.server.TimeZoneCheck.Problem("ZoneRulesException: Unknown time-zone ID")),
+      com.histmersion.server.TimeZoneCheck.ZoneCount(0),
       None,
-      Left("no default")
+      Left(com.histmersion.server.TimeZoneCheck.Problem("no default"))
     )
     assert(!ok2)
     assertEquals(

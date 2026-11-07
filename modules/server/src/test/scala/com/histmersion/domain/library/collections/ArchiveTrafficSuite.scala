@@ -37,9 +37,9 @@ class ArchiveTrafficSuite extends com.histmersion.db.DbSuite:
   override protected def afterSuite(): Unit = if testDb.isDefined then scratch.dropAll()
 
   private def json(s: String): Either[String, HttpAnswer] =
-    Right(HttpAnswer(200, Map("content-type" -> "application/json"), s.getBytes(UTF_8)))
+    Right(HttpAnswer(com.histmersion.pluginhost.HttpAnswer.Code(200), Map("content-type" -> "application/json"), s.getBytes(UTF_8)))
   private val notFound: Either[String, HttpAnswer] =
-    Right(HttpAnswer(404, Map("content-type" -> "text/plain"), "not found".getBytes(UTF_8)))
+    Right(HttpAnswer(com.histmersion.pluginhost.HttpAnswer.Code(404), Map("content-type" -> "text/plain"), "not found".getBytes(UTF_8)))
 
   final private class Wire(routes: PartialFunction[String, Either[String, HttpAnswer]]) extends HttpTransport:
     val out = StringBuilder()
@@ -74,10 +74,10 @@ class ArchiveTrafficSuite extends com.histmersion.db.DbSuite:
         )
       case u if u.startsWith(s"$base/download/zqbook/zqbook.epub") =>
         Right(
-          HttpAnswer(200, Map("content-type" -> "application/epub+zip"), ("PK epub " + ("e" * 20480)).getBytes(UTF_8))
+          HttpAnswer(com.histmersion.pluginhost.HttpAnswer.Code(200), Map("content-type" -> "application/epub+zip"), ("PK epub " + ("e" * 20480)).getBytes(UTF_8))
         )
       case u if u.startsWith(s"$base/download/zqbook/zqbook.pdf") =>
-        Right(HttpAnswer(200, Map("content-type" -> "application/pdf"), ("%PDF-1.4\n" + ("p" * 20480)).getBytes(UTF_8)))
+        Right(HttpAnswer(com.histmersion.pluginhost.HttpAnswer.Code(200), Map("content-type" -> "application/pdf"), ("%PDF-1.4\n" + ("p" * 20480)).getBytes(UTF_8)))
     }
 
   private val Text =
@@ -112,12 +112,12 @@ class ArchiveTrafficSuite extends com.histmersion.db.DbSuite:
       show(surface.info("https://archive.org/details/zqbook/page/2"))
     )
     step("archive info zqgone")(show(surface.info("zqgone")))
-    step("archive import zqlent")(show(surface.importItem(ArchiveImportRequest("zqlent"))))
-    step("archive import zqnofile")(show(surface.importItem(ArchiveImportRequest("zqnofile"))))
+    step("archive import zqlent")(show(surface.importItem(ArchiveImportRequest(com.histmersion.api.library.ArchiveImportRequest.Id("zqlent")))))
+    step("archive import zqnofile")(show(surface.importItem(ArchiveImportRequest(com.histmersion.api.library.ArchiveImportRequest.Id("zqnofile")))))
     step("archive import zqbook --format pdf --citekey zqarch_book")(
-      show(surface.importItem(ArchiveImportRequest("zqbook", Some("zqarch_book"), Some("pdf"))))
+      show(surface.importItem(ArchiveImportRequest(com.histmersion.api.library.ArchiveImportRequest.Id("zqbook"), Some(com.histmersion.api.library.Citekey("zqarch_book")), Some(com.histmersion.api.library.ArchiveImportRequest.Format("pdf")))))
     )
-    step("archive import zqbook")(show(surface.importItem(ArchiveImportRequest("zqbook"))))
+    step("archive import zqbook")(show(surface.importItem(ArchiveImportRequest(com.histmersion.api.library.ArchiveImportRequest.Id("zqbook")))))
     sb ++= "## stored\n"
     com.augustnagro.magnum.connect(ds):
       import com.augustnagro.magnum.*
@@ -161,7 +161,7 @@ object ArchiveTrafficSuite:
       new CitationsClient { def citing(w: WorkRef, s: Option[Int], l: Int) = Left("not used") },
       chain,
       new WikiClient { def refs(url: String) = Left("not used") },
-      new RetractionWatchClient { def csv() = Left("not used") },
+      new RetractionWatchClient { def csv() = Left(com.histmersion.domain.library.acquisition.RetractionWatchClient.Problem("not used")) },
       com.histmersion.server.AcquisitionTesting.skeleton(deps)
     )
     val library = new RefusingCollectionLibrary:

@@ -36,7 +36,7 @@ class ProbeRetrySuite extends com.histmersion.db.DbSuite with RunTranscripts:
   override val munitTimeout = scala.concurrent.duration.Duration(60, "s")
 
   private val Ck = "zzprobe1956_catalogue"
-  private val Model = ModelRef(ProviderKind.Local, "zzProbe")
+  private val Model = ModelRef(ProviderKind.Local, com.histmersion.api.automation.Agents.ModelRef.Model("zzProbe"))
   private val Usage1 = Some(TokenUsage(Tokens(100), Tokens(10), Tokens.Zero, Tokens.Zero))
 
   private lazy val cfg =
@@ -88,7 +88,7 @@ class ProbeRetrySuite extends com.histmersion.db.DbSuite with RunTranscripts:
 
   // ── #915: claude-code answering in prose ─────────────────────────────────────────────────────────
 
-  private val Haiku = ModelRef(ProviderKind.ClaudeCode, "haiku")
+  private val Haiku = ModelRef(ProviderKind.ClaudeCode, com.histmersion.api.automation.Agents.ModelRef.Model("haiku"))
   private def result(text: String, structured: String) =
     s"""{"type":"result","subtype":"success","is_error":false,"num_turns":2,"result":${io.circe.Json
         .fromString(text)

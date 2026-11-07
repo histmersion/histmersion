@@ -1,5 +1,7 @@
 package com.histmersion.domain.catalogue.evidence
 
+import com.histmersion.testsupport.ComparedByValue.given
+
 import com.histmersion.api.aliases.AliasKinds
 
 import com.histmersion.domain.Caller
@@ -26,7 +28,7 @@ class AttestationsControllersSuite extends munit.FunSuite:
   private val sources = new Passage.Source:
     def canonical(citekey: String): Option[String] = Option.when(citekey == "zznew1990_x")(citekey)
     def naming(name: String, limit: Int): List[String] = Nil
-    def reader(citekey: String): PassageReader = (_, _, _, _, _, _) => Left("no text")
+    def reader(citekey: String): PassageReader = (_, _, _, _, _, _) => Left(com.histmersion.domain.catalogue.evidence.passages.Passage.Text("no text"))
 
   private def controllers(gate: WriteGate = WriteGate()) =
     AttestationsControllers(
@@ -39,30 +41,30 @@ class AttestationsControllersSuite extends munit.FunSuite:
 
   test("old identifiers resolve before they are stored; a kind is normalised; a finding id is kept"):
     val c = controllers()
-    val a = c.create(Caller.Local, Attestation.Put("zzold1990_x", " Place ", "zz_old_hill")).toOption.get
+    val a = c.create(Caller.Local, Attestation.Put(com.histmersion.api.library.Citekey("zzold1990_x"), com.histmersion.api.catalogue.Attestation.TargetType(" Place "), com.histmersion.api.catalogue.Attestation.TargetId("zz_old_hill"))).toOption.get
     assertEquals((a.citekey, a.targetType, a.targetId), ("zznew1990_x", "place", "zz_hill"))
-    val f = c.create(Caller.Local, Attestation.Put("zznew1990_x", "finding", "zz_old_hill")).toOption.get
+    val f = c.create(Caller.Local, Attestation.Put(com.histmersion.api.library.Citekey("zznew1990_x"), com.histmersion.api.catalogue.Attestation.TargetType("finding"), com.histmersion.api.catalogue.Attestation.TargetId("zz_old_hill"))).toOption.get
     assertEquals(f.targetId, "zz_old_hill")
-    assertEquals(c.list(Some("zzold1990_x"), Some("place"), Some("zz_old_hill"), None, None).attestations, List(a))
-    assertEquals(c.list(None, None, None, Some(1), None).attestations, List(a))
+    assertEquals(c.list(Some(com.histmersion.api.library.Citekey("zzold1990_x")), Some(com.histmersion.api.catalogue.Attestation.TargetType("place")), Some(com.histmersion.api.catalogue.Attestation.TargetId("zz_old_hill")), None, None).attestations, List(a))
+    assertEquals(c.list(None, None, None, Some(com.histmersion.PageSize(1)), None).attestations, List(a))
     assertEquals(c.get(f.id).map(_.id), Right(f.id))
-    assert(c.get(999).left.exists(_.message == "No attestation 999"))
+    assert(c.get(com.histmersion.api.catalogue.Attestation.Id(999)).left.exists(_.message == "No attestation 999"))
 
   test("an unknown kind is invalid, a missing source not found; a held lock refuses every write"):
     val c = controllers()
-    val bad = c.create(Caller.Local, Attestation.Put("zznew1990_x", "planet", "x"))
+    val bad = c.create(Caller.Local, Attestation.Put(com.histmersion.api.library.Citekey("zznew1990_x"), com.histmersion.api.catalogue.Attestation.TargetType("planet"), com.histmersion.api.catalogue.Attestation.TargetId("x")))
     assert(bad.left.exists(e => e.message.startsWith("unknown target type 'planet'") && e.code.contains("invalid")))
-    val none = c.create(Caller.Local, Attestation.Put("zzgone1900_y", "place", "zz_hill"))
+    val none = c.create(Caller.Local, Attestation.Put(com.histmersion.api.library.Citekey("zzgone1900_y"), com.histmersion.api.catalogue.Attestation.TargetType("place"), com.histmersion.api.catalogue.Attestation.TargetId("zz_hill")))
     assertEquals(none.left.map(_.message), Left("No source 'zzgone1900_y'"))
-    assert(c.delete(Caller.Local, 5).left.exists(_.message == "No attestation 5"))
+    assert(c.delete(Caller.Local, com.histmersion.api.catalogue.Attestation.Id(5)).left.exists(_.message == "No attestation 5"))
     val gate = WriteGate()
     val locked = controllers(gate)
-    val held = gate.exclusively("restore")(
+    val held = gate.exclusively(com.histmersion.util.data.maintenance.WriteGate.OperationName("restore"))(
       Right(
         List(
-          locked.create(Caller.Local, Attestation.Put("zznew1990_x", "place", "zz_hill")).isLeft,
-          locked.patch(Caller.Local, 1, com.histmersion.api.catalogue.Attestation.Patch()).isLeft,
-          locked.delete(Caller.Local, 1).isLeft
+          locked.create(Caller.Local, Attestation.Put(com.histmersion.api.library.Citekey("zznew1990_x"), com.histmersion.api.catalogue.Attestation.TargetType("place"), com.histmersion.api.catalogue.Attestation.TargetId("zz_hill"))).isLeft,
+          locked.patch(Caller.Local, com.histmersion.api.catalogue.Attestation.Id(1), com.histmersion.api.catalogue.Attestation.Patch()).isLeft,
+          locked.delete(Caller.Local, com.histmersion.api.catalogue.Attestation.Id(1)).isLeft
         )
       )
     )

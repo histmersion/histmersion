@@ -1,5 +1,7 @@
 package com.histmersion.domain.research.workflows
 
+import com.histmersion.testsupport.ComparedByValue.given
+
 import hearth.kindlings.optics.syntax.*
 
 import com.histmersion.domain.Caller
@@ -17,10 +19,10 @@ abstract class ReviewLedgerServiceContract extends ResearchStoreSuite:
   private val Me = Caller.Local
 
   private def article(slug: String): Article =
-    Article(slug, "Walls", "concept", "## Overview\n\nThe walls.\n", None, Nil, Nil, None, None, None, Map.empty)
+    Article(slug, com.histmersion.api.research.Article.Title("Walls"), com.histmersion.api.research.Article.KindValue("concept"), com.histmersion.api.research.Article.Body("## Overview\n\nThe walls.\n"), None, Nil, Nil, None, None, None, Map.empty)
 
   private def finding(id: String, severity: Severity) =
-    Finding(id, Reviewer.Rules, severity, "synth", s"where $id", s"quote $id", s"problem $id", "fix")
+    Finding(id, Reviewer.Rules, severity, com.histmersion.domain.ReviewArticle.Finding.Kind("synth"), s"where $id", s"quote $id", s"problem $id", com.histmersion.domain.ReviewArticle.Finding.Fix("fix"))
 
   private val Walls = "zr_walls"
   private val Gate = "zr_gate"
@@ -29,41 +31,41 @@ abstract class ReviewLedgerServiceContract extends ResearchStoreSuite:
     s =>
       val _ = s.articles.put(article(Walls), Me)
       assertEquals(s.ledgers.get(Walls), Right(None))
-      val l = Ledger(Walls, List(Entry(finding("R1", Severity.Major), "run-1", 1)), task = Some(7))
+      val l = Ledger(Walls, List(Entry(finding("R1", Severity.Major), com.histmersion.domain.ReviewLedger.Entry.Run("run-1"), com.histmersion.domain.ReviewLedger.Entry.Round(1))), task = Some(7))
       s.ledgers.put(l)
       assertEquals(s.ledgers.get(Walls), Right(Some(l)))
       val again = l.modify(_.task).setTo(None)
       s.ledgers.put(again)
       assertEquals(s.ledgers.get(Walls), Right(Some(again)))
-      intercept[Exception](s.ledgers.put(Ledger("zr_nothing")))
-      assertEquals(s.ledgers.get("zr_nothing"), Right(None))
+      intercept[Exception](s.ledgers.put(Ledger(com.histmersion.domain.ReviewLedger.Ledger.Slug("zr_nothing"))))
+      assertEquals(s.ledgers.get(com.histmersion.domain.research.Slug("zr_nothing")), Right(None))
   }
 
   stest("an article passed its review once its ledger holds no open MAJOR") { s =>
     val _ = s.articles.put(article(Walls), Me)
     val _ = s.articles.put(article(Gate), Me)
-    s.ledgers.put(Ledger(Walls, List(Entry(finding("R1", Severity.Major), "run-1", 1))))
+    s.ledgers.put(Ledger(Walls, List(Entry(finding("R1", Severity.Major), com.histmersion.domain.ReviewLedger.Entry.Run("run-1"), com.histmersion.domain.ReviewLedger.Entry.Round(1)))))
     s.ledgers.put(
       Ledger(
         Gate,
         List(
-          Entry(finding("R1", Severity.Major), "run-1", 1, status = Status.Fixed),
-          Entry(finding("R2", Severity.Minor), "run-1", 1)
+          Entry(finding("R1", Severity.Major), com.histmersion.domain.ReviewLedger.Entry.Run("run-1"), com.histmersion.domain.ReviewLedger.Entry.Round(1), status = Status.Fixed),
+          Entry(finding("R2", Severity.Minor), com.histmersion.domain.ReviewLedger.Entry.Run("run-1"), com.histmersion.domain.ReviewLedger.Entry.Round(1))
         )
       )
     )
-    assertEquals(s.ledgers.passedReview("review"), Set(Gate))
+    assertEquals(s.ledgers.passedReview(com.histmersion.domain.research.workflows.ReviewLedgerService.ReviewId("review")), Set(Gate))
   }
 
   stest("a ledger follows its article's rename and goes with its delete") { s =>
     val _ = s.articles.put(article(Walls), Me)
-    val l = Ledger(Walls, List(Entry(finding("R1", Severity.Major), "run-1", 1)))
+    val l = Ledger(Walls, List(Entry(finding("R1", Severity.Major), com.histmersion.domain.ReviewLedger.Entry.Run("run-1"), com.histmersion.domain.ReviewLedger.Entry.Round(1))))
     s.ledgers.put(l)
-    assert(s.articles.rename(Walls, "zr_city_walls", Me).isRight)
-    assertEquals(s.ledgers.get("zr_city_walls"), Right(Some(l)))
+    assert(s.articles.rename(Walls, com.histmersion.domain.research.Slug("zr_city_walls"), Me).isRight)
+    assertEquals(s.ledgers.get(com.histmersion.domain.research.Slug("zr_city_walls")), Right(Some(l)))
     assertEquals(s.ledgers.get(Walls), Right(None))
-    assert(s.articles.delete("zr_city_walls", Me))
-    assertEquals(s.ledgers.get("zr_city_walls"), Right(None))
+    assert(s.articles.delete(com.histmersion.domain.research.Slug("zr_city_walls"), Me))
+    assertEquals(s.ledgers.get(com.histmersion.domain.research.Slug("zr_city_walls")), Right(None))
   }
 
 class ReviewLedgerServiceInMemorySuite extends ReviewLedgerServiceContract with ResearchStoreSuite.InMemory

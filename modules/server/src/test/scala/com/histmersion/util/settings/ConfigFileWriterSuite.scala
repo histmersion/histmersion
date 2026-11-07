@@ -32,10 +32,10 @@ abstract class ConfigFileWriterSuite(fileAt: Path => SettingsFile) extends munit
   private def writer(f: Path, env: Config = noEnv) = ConfigFileWriter(fileAt(f), env, ConfigSchema.reference)
 
   private def ok(f: Path, edits: SettingEdit*): WriteOutcome =
-    writer(f).write(edits.toList, None, literalConsent = false).fold(e => fail(e.message), identity)
+    writer(f).write(edits.toList, None, literalConsent = com.histmersion.config.edit.SettingPolicy.LiteralConsent(false)).fold(e => fail(e.message), identity)
 
   private def refused(f: Path, edits: SettingEdit*): SettingError =
-    writer(f).write(edits.toList, None, literalConsent = false).fold(identity, o => fail(s"written: $o"))
+    writer(f).write(edits.toList, None, literalConsent = com.histmersion.config.edit.SettingPolicy.LiteralConsent(false)).fold(identity, o => fail(s"written: $o"))
 
   private def read(f: Path) = Files.readString(f)
 
@@ -97,7 +97,7 @@ abstract class ConfigFileWriterSuite(fileAt: Path => SettingsFile) extends munit
     val d = dir().resolve("deeper")
     val f = d.resolve("histmersion.conf")
     val o = writer(f)
-      .write(List(set("backups.keep", num(9))), None, literalConsent = false)
+      .write(List(set("backups.keep", num(9))), None, literalConsent = com.histmersion.config.edit.SettingPolicy.LiteralConsent(false))
       .fold(e => fail(e.message), identity)
     assert(o.created)
     assertEquals(o.backup, None)
@@ -107,7 +107,7 @@ abstract class ConfigFileWriterSuite(fileAt: Path => SettingsFile) extends munit
   test("an all-comment template (the installer's) gets its first setting; the comments stay"):
     val template = "# Histmersion settings\n#\n# histmersion {\n#   backups.keep = 10\n# }\n"
     val f = fileWith(template)
-    ok(f, set("setup.completed", SettingValue.Flag(true)))
+    ok(f, set("setup.completed", SettingValue.Flag(com.histmersion.config.edit.SettingValue.Flag.Value(true))))
     assert(read(f).startsWith(template))
     assert(ConfigFactory.parseFile(f.toFile).getBoolean("histmersion.setup.completed"))
 
@@ -188,11 +188,11 @@ abstract class ConfigFileWriterSuite(fileAt: Path => SettingsFile) extends munit
     val v = w.read().toOption.get.version
     Files.writeString(f, Commented + "\n# edited by hand\n")
     assertEquals(
-      w.write(List(set("backups.keep", num(8))), Some(v), literalConsent = false),
+      w.write(List(set("backups.keep", num(8))), Some(v), literalConsent = com.histmersion.config.edit.SettingPolicy.LiteralConsent(false)),
       Left(SettingError.Changed)
     )
     val now = w.read().toOption.get.version
-    assert(w.write(List(set("backups.keep", num(8))), Some(now), literalConsent = false).isRight)
+    assert(w.write(List(set("backups.keep", num(8))), Some(now), literalConsent = com.histmersion.config.edit.SettingPolicy.LiteralConsent(false)).isRight)
 
   test("credentials: the value itself never goes in the file; a plugin's is a reference, value: only when confirmed"):
     val f = fileWith(Commented)
@@ -208,7 +208,7 @@ abstract class ConfigFileWriterSuite(fileAt: Path => SettingsFile) extends munit
       "keepassxc:Histmersion/CORE#password"
     )
     val lit = writer(f)
-      .write(List(set("plugins.oa-core.api-key", text("value:s3cret"))), None, literalConsent = true)
+      .write(List(set("plugins.oa-core.api-key", text("value:s3cret"))), None, literalConsent = com.histmersion.config.edit.SettingPolicy.LiteralConsent(true))
       .fold(e => fail(e.message), identity)
     assert(lit.warnings.exists(_.contains("anyone who can read")), s"${lit.warnings}")
 
@@ -222,7 +222,7 @@ abstract class ConfigFileWriterSuite(fileAt: Path => SettingsFile) extends munit
     val f = fileWith(Commented)
     val env = ConfigFactory.parseMap(java.util.Map.of("HISTMERSION_BACKUPS_KEEP", "1"))
     val o = writer(f, env)
-      .write(List(set("server.port", num(8123)), set("backups.keep", num(6))), None, literalConsent = false)
+      .write(List(set("server.port", num(8123)), set("backups.keep", num(6))), None, literalConsent = com.histmersion.config.edit.SettingPolicy.LiteralConsent(false))
       .fold(e => fail(e.message), identity)
     assertEquals(o.restart.map(_._1.relative), List("server.port"))
     assert(o.warnings.exists(_.contains("HISTMERSION_BACKUPS_KEEP")), s"${o.warnings}")
@@ -231,8 +231,8 @@ abstract class ConfigFileWriterSuite(fileAt: Path => SettingsFile) extends munit
     val f = fileWith(Commented)
     ok(
       f,
-      set("plugins.1password.enabled", SettingValue.Flag(true)),
-      set("plugins.media-europeana.enabled", SettingValue.Flag(false))
+      set("plugins.1password.enabled", SettingValue.Flag(com.histmersion.config.edit.SettingValue.Flag.Value(true))),
+      set("plugins.media-europeana.enabled", SettingValue.Flag(com.histmersion.config.edit.SettingValue.Flag.Value(false)))
     )
     val c = ConfigFactory.parseFile(f.toFile)
     assert(c.getBoolean("histmersion.plugins.\"1password\".enabled"))
@@ -243,7 +243,7 @@ abstract class ConfigFileWriterSuite(fileAt: Path => SettingsFile) extends munit
     val real = fileWith(Commented, Files.createDirectories(d.resolve("real")))
     val link = Files.createSymbolicLink(d.resolve("histmersion.conf"), real)
     writer(link)
-      .write(List(set("backups.keep", num(12))), None, literalConsent = false)
+      .write(List(set("backups.keep", num(12))), None, literalConsent = com.histmersion.config.edit.SettingPolicy.LiteralConsent(false))
       .fold(e => fail(e.message), identity)
     assert(Files.isSymbolicLink(link))
     assert(read(real).contains("keep = 12"))

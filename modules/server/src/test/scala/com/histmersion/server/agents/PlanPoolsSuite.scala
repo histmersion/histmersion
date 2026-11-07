@@ -1,5 +1,7 @@
 package com.histmersion.server.agents
 
+import com.histmersion.testsupport.ComparedByValue.given
+
 import com.histmersion.api.automation.PlanQuota.*
 import io.circe.parser
 
@@ -36,7 +38,7 @@ class PlanPoolsSuite extends munit.FunSuite:
       | "rateLimitUpsell":{"cta":"reset_usage"}}""".stripMargin
 
   test("codex: windows keyed by LENGTH and bucket; a reached limit refused; ordinaryUsageAllowed false is a refusal"):
-    val (rs, refusal, plan) = PlanPools.codexReadings(parser.parse(Captured).toOption.get, 1000L)
+    val (rs, refusal, plan) = PlanPools.codexReadings(parser.parse(Captured).toOption.get, com.histmersion.api.automation.PlanQuota.Now(1000L))
     val got = rs.map(r => s"${r.limit} ${r.kind} ${r.usedPct} ${r.rejected} ${r.model.getOrElse("-")}").toSet
     assertEquals(got, Set("codex 10080m 100.0 true -", "gpt-reserve 10080m 0.0 false gpt-5.6-luna"))
     assertEquals(rs.find(_.limit == "codex").flatMap(_.resetsAt), Some(1791625500000L))
@@ -46,7 +48,7 @@ class PlanPoolsSuite extends munit.FunSuite:
   test("codex: a plan whose primary is the 5-hour window and secondary the week"):
     val j = """{"rateLimits":{"limitId":"codex","primary":{"usedPercent":2,"windowDurationMins":300,"resetsAt":1790552145},
               |"secondary":{"usedPercent":0,"windowDurationMins":10080,"resetsAt":1791138940},"planType":"plus","rateLimitReachedType":null}}""".stripMargin
-    val (rs, refusal, _) = PlanPools.codexReadings(parser.parse(j).toOption.get, 0L)
+    val (rs, refusal, _) = PlanPools.codexReadings(parser.parse(j).toOption.get, com.histmersion.api.automation.PlanQuota.Now(0L))
     assertEquals(rs.map(_.kind).toSet, Set("300m", "10080m"))
     assertEquals(refusal, None)
 
@@ -72,7 +74,7 @@ class PlanPoolsSuite extends munit.FunSuite:
     )
     script.toFile.setExecutable(true)
     val home = Files.createDirectories(dir.resolve("home"))
-    val r = PlanPools.readCodex(script.toString, home, 10)
+    val r = PlanPools.readCodex(script.toString, home, com.histmersion.config.AgentsConfig.DoctorTimeoutSeconds(10))
     assert(r.isRight, r)
     assertEquals(r.toOption.get.hcursor.downField("ordinaryUsageAllowed").as[Boolean], Right(false))
     val sent = Files.readString(log)
@@ -86,15 +88,15 @@ class PlanPoolsSuite extends munit.FunSuite:
     Files.writeString(script, "#!/bin/bash\nsleep 30\n")
     script.toFile.setExecutable(true)
     val t0 = System.nanoTime()
-    val r = PlanPools.readCodex(script.toString, dir, 2)
+    val r = PlanPools.readCodex(script.toString, dir, com.histmersion.config.AgentsConfig.DoctorTimeoutSeconds(2))
     assert(r.left.exists(_.contains("did not answer")), r)
     assert((System.nanoTime() - t0) / 1000000000L < 15)
 
   test("a mod's report: percentUsed and the ISO reset"):
     val rs = PlanPools.modReadings(
-      List(ModWindow("five_hour", 12, Some("2026-10-05T21:40:00.000Z")), ModWindow("seven_day", 42, None)),
+      List(ModWindow(com.histmersion.api.automation.PlanQuota.ModWindow.Kind("five_hour"), com.histmersion.api.automation.PlanQuota.ModWindow.PercentUsed(12), Some(com.histmersion.api.automation.PlanQuota.ModWindow.ResetsAt("2026-10-05T21:40:00.000Z"))), ModWindow(com.histmersion.api.automation.PlanQuota.ModWindow.Kind("seven_day"), com.histmersion.api.automation.PlanQuota.ModWindow.PercentUsed(42), None)),
       Source.Mod,
-      5L
+      com.histmersion.api.automation.PlanQuota.Now(5L)
     )
     assertEquals(
       rs.map(r => (r.kind, r.usedPct, r.resetsAt, r.source)),

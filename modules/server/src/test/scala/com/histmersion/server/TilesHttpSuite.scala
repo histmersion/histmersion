@@ -43,7 +43,7 @@ class TilesHttpSuite extends munit.FunSuite:
                       ('zztilehttp_a', 'Zztilehttp A', 'site', int8range(-2000, -1500, '[]'), ST_SetSRID(ST_MakePoint($lon, $lat), 4326))""".update
           .run()
       supervised {
-        val b = Composition.server(cfg, "127.0.0.1", 0).start()
+        val b = Composition.server(cfg, com.histmersion.config.ServerConfig.Host("127.0.0.1"), com.histmersion.config.ServerConfig.Port(0)).start()
         try f(s"http://127.0.0.1:${b.port}", ds)
         finally b.stop()
       }

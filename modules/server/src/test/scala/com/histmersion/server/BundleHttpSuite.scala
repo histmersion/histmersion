@@ -1,5 +1,7 @@
 package com.histmersion.server
 
+import com.histmersion.testsupport.ComparedByValue.given
+
 import hearth.kindlings.optics.syntax.*
 
 import ox.supervised
@@ -49,7 +51,7 @@ class BundleHttpSuite extends com.histmersion.db.DbSuite with com.histmersion.db
   private def withServer(body: String => Unit): Unit =
     Migrate.run(testPool(cfg.db))
     supervised {
-      val b = Composition.server(cfg, "127.0.0.1", 0).start()
+      val b = Composition.server(cfg, com.histmersion.config.ServerConfig.Host("127.0.0.1"), com.histmersion.config.ServerConfig.Port(0)).start()
       try body(s"http://127.0.0.1:${b.port}")
       finally b.stop()
     }
@@ -103,7 +105,7 @@ class BundleHttpSuite extends com.histmersion.db.DbSuite with com.histmersion.db
         .filter(_.name == Bundle.ManifestPath)
         .flatMap(_ => BundleFormat.parseManifest(r.readAll()).toOption)
         .getOrElse(fail("no manifest"))
-      assertEquals(m.instance, Bundle.Instance(inst.id, Some("zz-work")))
+      assertEquals(m.instance, Bundle.Instance(inst.id, Some(com.histmersion.api.exchange.Bundle.Instance.Label("zz-work"))))
       // the same bytes again: the export is deterministic
       assert(java.util.Arrays.equals(get(s"$url/api/bundle").body, exp.body))
 
@@ -210,7 +212,7 @@ class BundleHttpSuite extends com.histmersion.db.DbSuite with com.histmersion.db
       val yaml = "bundle: 0192f6c4-0000-7000-8000-000000000000\nresolve:\n  S-1234abcd: keep-right\n"
       val parsed = post(s"$url/api/merge/resolutions", yaml.getBytes("UTF-8"))
       assertEquals(parsed.statusCode, 200, parsed.body)
-      assertEquals(decode[MergeResolutions](parsed.body).resolve, List(MergeResolution("S-1234abcd", "keep-right")))
+      assertEquals(decode[MergeResolutions](parsed.body).resolve, List(MergeResolution(com.histmersion.api.exchange.MergeResolution.Issue("S-1234abcd"), com.histmersion.api.exchange.MergeResolution.Decision("keep-right"))))
       val bad = post(s"$url/api/merge/resolutions", "resolve: [1, 2]\nwhat: x\n".getBytes("UTF-8"))
       assertEquals(bad.statusCode, 400, bad.body)
       assert(bad.body.contains("unknown key 'what'") && bad.body.contains("resolve:"), bad.body)
@@ -263,7 +265,7 @@ class BundleHttpSuite extends com.histmersion.db.DbSuite with com.histmersion.db
       assertEquals(rg.statusCode, 200, rg.body)
       assertEquals(
         decode[LabelRenamed](rg.body),
-        LabelRenamed(com.histmersion.api.exchange.Bundle.Kind.Goal, "zz-goal-a", "zz-goal-b")
+        LabelRenamed(com.histmersion.api.exchange.Bundle.Kind.Goal, com.histmersion.api.aliases.LabelRenamed.From("zz-goal-a"), com.histmersion.api.aliases.LabelRenamed.To("zz-goal-b"))
       )
       assertEquals(decode[Goal](String(get(s"$url/api/goals/zz-goal-a").body, "UTF-8")).slug, "zz-goal-b")
       val w = put(s"$url/api/goals/zz-goal-a", """{"title":"again"}""", Some(Key))
@@ -307,7 +309,7 @@ class BundleHttpSuite extends com.histmersion.db.DbSuite with com.histmersion.db
     val own = cfg.modify(_.db).setTo(cfg.db.modify(_.url).setTo(testDb.get.replaceFirst("/[^/?]+(\\?|$)", s"/$name$$1")))
     def serve(body: String => Unit): Unit =
       supervised {
-        val b = Composition.server(own, "127.0.0.1", 0).start()
+        val b = Composition.server(own, com.histmersion.config.ServerConfig.Host("127.0.0.1"), com.histmersion.config.ServerConfig.Port(0)).start()
         try body(s"http://127.0.0.1:${b.port}")
         finally b.stop()
       }
@@ -323,7 +325,7 @@ class BundleHttpSuite extends com.histmersion.db.DbSuite with com.histmersion.db
       // the server stopped while an apply ran (its row still says running)
       val cut = com.histmersion.util.database
         .Transactor(testPool(own.db))
-        .transact(com.histmersion.util.jobs.JobRepo.startMergeApply("c" * 64, "feedbeef"))
+        .transact(com.histmersion.util.jobs.JobRepo.startMergeApply("c" * 64, com.histmersion.util.data.exchange.MergeRow.PlanHash("feedbeef")))
       serve { url =>
         val done = get(s"$url/api/merge/apply/$job")
         assertEquals(done.statusCode, 200, String(done.body, "UTF-8"))

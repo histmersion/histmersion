@@ -35,22 +35,22 @@ trait EngineStores:
   ): String =
     runs.create(
       RunRow(
-        "agent",
-        "queued",
+        com.histmersion.util.jobs.RunRow.Kind("agent"),
+        com.histmersion.util.jobs.RunRow.Status("queued"),
         pipeline,
-        1,
-        "source",
+        com.histmersion.util.jobs.RunRow.PipelineVersion(1),
+        com.histmersion.util.jobs.RunRow.TargetKind("source"),
         target,
         None,
-        Some("local:scripted"),
+        Some(com.histmersion.util.jobs.RunRow.Model("local:scripted")),
         BigDecimal(1),
-        1000L,
-        "{}",
+        com.histmersion.util.jobs.RunRow.BudgetTokens(1000L),
+        com.histmersion.util.jobs.RunRow.Params("{}"),
         None,
         goal,
         None,
-        "person",
-        false,
+        com.histmersion.util.jobs.RunRow.Origin("person"),
+        com.histmersion.util.jobs.RunRow.DryRun(false),
         manager,
         item
       )

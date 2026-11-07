@@ -1,5 +1,7 @@
 package com.histmersion.util.storage
 
+import com.histmersion.testsupport.ComparedByValue.given
+
 import com.histmersion.{ByteCount, ByteOffset}
 
 import java.nio.charset.StandardCharsets.UTF_8
@@ -60,11 +62,11 @@ abstract class StoreContractSuite extends munit.FunSuite:
     val s = fresh()
     s.put(key("f"), utf("hello world")): Unit
     val b = s.get(key("f")).get
-    assertEquals(String(b.readAt(ByteOffset.applyUnsafe(6L), 5), UTF_8), "world")
+    assertEquals(String(b.readAt(ByteOffset.applyUnsafe(6L), com.histmersion.util.basemap.PmTiles.ByteLength(5)), UTF_8), "world")
     Using.resource(b.reader()) { r =>
       assertEquals(r.size.value: Long, 11L)
-      assertEquals(String(r.readUpTo(ByteOffset.applyUnsafe(6L), 100), UTF_8), "world")
-      intercept[java.io.EOFException](r.read(ByteOffset.applyUnsafe(6L), 100))
+      assertEquals(String(r.readUpTo(ByteOffset.applyUnsafe(6L), com.histmersion.util.basemap.PmTiles.ByteLength(100)), UTF_8), "world")
+      intercept[java.io.EOFException](r.read(ByteOffset.applyUnsafe(6L), com.histmersion.util.basemap.PmTiles.ByteLength(100)))
     }
     assertEquals(Using.resource(b.open())(in => String(in.readAllBytes(), UTF_8)), "hello world")
     assertEquals(b.sha256().value: String, "b94d27b9934d3e08a52e52d7da7dabfac484efe37a5380ee9088f7ace2efcde9")
@@ -131,7 +133,7 @@ abstract class StoreContractSuite extends munit.FunSuite:
   test("measure: a budget that runs out stops the walk, partial, and is shared by the next walk"):
     val s = fresh()
     (1 to 30).foreach(i => s.put(key(f"f$i%02d.bin"), Array.fill[Byte](10)(1)): Unit)
-    val b = MeasureBudget(10, Long.MaxValue)
+    val b = MeasureBudget(com.histmersion.util.storage.MeasureBudget.MaxEntries(10), Long.MaxValue)
     val r = s.measure(b)
     assert(r.partial && r.files < 30L && r.bytes.value < 300L, r)
     assert(b.exhausted)
@@ -147,7 +149,7 @@ abstract class StoreContractSuite extends munit.FunSuite:
 
   test("a reservation with a suffixed temporary name commits over its key"):
     val s = fresh()
-    val r = s.reserve(key("d/x.dump"), TempName.Suffixed(".part")).toOption.get
+    val r = s.reserve(key("d/x.dump"), TempName.Suffixed(com.histmersion.util.storage.TempName.Suffixed.Suffix(".part"))).toOption.get
     Using.resource(r.output())(_.write(utf("dump")))
     assert(!s.isFile(key("d/x.dump")))
     assertEquals(r.commit().map(_.size.value: Long), Right(4L))
@@ -165,17 +167,17 @@ class DiskStoreSuite extends StoreContractSuite:
     assertEquals(s.where(Store.Key.applyUnsafe("x/y")), dir.resolve("x/y").toString)
     val real = Files.writeString(dir.resolve("real.conf"), "old")
     Files.createSymbolicLink(dir.resolve("link.conf"), real)
-    val r = s.reserve(Store.Key.applyUnsafe("link.conf"), TempName.Unique, throughLink = true).toOption.get
+    val r = s.reserve(Store.Key.applyUnsafe("link.conf"), TempName.Unique, throughLink = com.histmersion.util.storage.Store.ThroughLink(true)).toOption.get
     Using.resource(r.output())(_.write("new".getBytes(UTF_8)))
     assert(r.onDisk.exists(p => p.getFileName.toString.startsWith(".link.conf.")))
-    assert(r.commit(keepPermissions = true).isRight)
+    assert(r.commit(keepPermissions = com.histmersion.util.storage.Store.KeepPermissions(true)).isRight)
     assert(Files.isSymbolicLink(dir.resolve("link.conf")))
     assertEquals(Files.readString(real), "new")
     assert(s.usableSpace.value > 0)
 
   test("on disk: a reservation's suffixed file is the key's name and the suffix, beside it"):
     val dir = Files.createTempDirectory("histmersion-store")
-    val r = Storage.at(Location.Backups, dir).reserve(Store.Key.applyUnsafe("a.dump"), TempName.Suffixed(".part"))
+    val r = Storage.at(Location.Backups, dir).reserve(Store.Key.applyUnsafe("a.dump"), TempName.Suffixed(com.histmersion.util.storage.TempName.Suffixed.Suffix(".part")))
     assertEquals(r.flatMap(_.onDisk).map(_.toString), Right(dir.resolve("a.dump.part").toString))
     r.foreach(_.close())
 
@@ -190,7 +192,7 @@ class DiskStoreSuite extends StoreContractSuite:
   test("a scratch store is removed when it closes"):
     val base = Files.createTempDirectory("histmersion-scratch")
     val storage = Storage(_ => None, () => base)
-    val scratch = storage.scratch("histmersion-test-")
+    val scratch = storage.scratch(com.histmersion.util.storage.Storage.ScratchPurpose("histmersion-test-"))
     scratch.store.put(Store.Key.applyUnsafe("a/b"), Array[Byte](1)): Unit
     assertEquals(Files.list(base).count(), 1L)
     scratch.close()

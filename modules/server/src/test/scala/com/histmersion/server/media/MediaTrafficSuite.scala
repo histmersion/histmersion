@@ -84,35 +84,35 @@ class MediaTrafficSuite extends com.histmersion.db.DbSuite:
       "smithsonian",
       "europeana"
     )
-    all.foreach(p => run(s"$p (dry run)", MediaImportRequest(p, dryRun = true, limit = Some(20))))
+    all.foreach(p => run(s"$p (dry run)", MediaImportRequest(p, dryRun = com.histmersion.api.media.MediaImportRequest.DryRun(true), limit = Some(com.histmersion.api.media.MediaImportRequest.Limit(20)))))
 
-    run("wikidata, one place", MediaImportRequest("wikidata", dryRun = false, place = Some("pleiades_570491")))
-    run("wikidata, one event", MediaImportRequest("wikidata", dryRun = false, event = Some("fall_of_x")))
-    run("depicts, one event", MediaImportRequest("depicts", dryRun = false, event = Some("battle_of_kadesh")))
-    run("met, one place", MediaImportRequest("met", dryRun = false, place = Some("pleiades_570491")))
-    run("cleveland, one place", MediaImportRequest("cleveland", dryRun = false, place = Some("geonames_146669")))
-    run("aic, one place", MediaImportRequest("aic", dryRun = false, place = Some("geonames_146669")))
-    run("loc, one place", MediaImportRequest("loc", dryRun = false, place = Some("pleiades_570491")))
-    run("pleiades, one place", MediaImportRequest("pleiades", dryRun = false, place = Some("pleiades_757208100")))
-    run("opencontext, one place", MediaImportRequest("opencontext", dryRun = false, place = Some("pleiades_697725")))
-    run("smithsonian, one place", MediaImportRequest("smithsonian", dryRun = false, place = Some("geonames_357994")))
-    run("europeana, one place", MediaImportRequest("europeana", dryRun = false, place = Some("pleiades_570491")))
+    run("wikidata, one place", MediaImportRequest(com.histmersion.api.media.MediaItem.Provider("wikidata"), dryRun = com.histmersion.api.media.MediaImportRequest.DryRun(false), place = Some(com.histmersion.api.catalogue.Place.Id("pleiades_570491"))))
+    run("wikidata, one event", MediaImportRequest(com.histmersion.api.media.MediaItem.Provider("wikidata"), dryRun = com.histmersion.api.media.MediaImportRequest.DryRun(false), event = Some(com.histmersion.api.catalogue.Event.Id("fall_of_x"))))
+    run("depicts, one event", MediaImportRequest(com.histmersion.api.media.MediaItem.Provider("depicts"), dryRun = com.histmersion.api.media.MediaImportRequest.DryRun(false), event = Some(com.histmersion.api.catalogue.Event.Id("battle_of_kadesh"))))
+    run("met, one place", MediaImportRequest(com.histmersion.api.media.MediaItem.Provider("met"), dryRun = com.histmersion.api.media.MediaImportRequest.DryRun(false), place = Some(com.histmersion.api.catalogue.Place.Id("pleiades_570491"))))
+    run("cleveland, one place", MediaImportRequest(com.histmersion.api.media.MediaItem.Provider("cleveland"), dryRun = com.histmersion.api.media.MediaImportRequest.DryRun(false), place = Some(com.histmersion.api.catalogue.Place.Id("geonames_146669"))))
+    run("aic, one place", MediaImportRequest(com.histmersion.api.media.MediaItem.Provider("aic"), dryRun = com.histmersion.api.media.MediaImportRequest.DryRun(false), place = Some(com.histmersion.api.catalogue.Place.Id("geonames_146669"))))
+    run("loc, one place", MediaImportRequest(com.histmersion.api.media.MediaItem.Provider("loc"), dryRun = com.histmersion.api.media.MediaImportRequest.DryRun(false), place = Some(com.histmersion.api.catalogue.Place.Id("pleiades_570491"))))
+    run("pleiades, one place", MediaImportRequest(com.histmersion.api.media.MediaItem.Provider("pleiades"), dryRun = com.histmersion.api.media.MediaImportRequest.DryRun(false), place = Some(com.histmersion.api.catalogue.Place.Id("pleiades_757208100"))))
+    run("opencontext, one place", MediaImportRequest(com.histmersion.api.media.MediaItem.Provider("opencontext"), dryRun = com.histmersion.api.media.MediaImportRequest.DryRun(false), place = Some(com.histmersion.api.catalogue.Place.Id("pleiades_697725"))))
+    run("smithsonian, one place", MediaImportRequest(com.histmersion.api.media.MediaItem.Provider("smithsonian"), dryRun = com.histmersion.api.media.MediaImportRequest.DryRun(false), place = Some(com.histmersion.api.catalogue.Place.Id("geonames_357994"))))
+    run("europeana, one place", MediaImportRequest(com.histmersion.api.media.MediaItem.Provider("europeana"), dryRun = com.histmersion.api.media.MediaImportRequest.DryRun(false), place = Some(com.histmersion.api.catalogue.Place.Id("pleiades_570491"))))
 
     run(
       "wikidata, one place again, --refresh",
-      MediaImportRequest("wikidata", dryRun = false, place = Some("pleiades_570491"), refresh = true)
+      MediaImportRequest(com.histmersion.api.media.MediaItem.Provider("wikidata"), dryRun = com.histmersion.api.media.MediaImportRequest.DryRun(false), place = Some(com.histmersion.api.catalogue.Place.Id("pleiades_570491")), refresh = com.histmersion.api.media.MediaImportRequest.Refresh(true))
     )
     run(
       "met, one place again, --refresh",
-      MediaImportRequest("met", dryRun = false, place = Some("pleiades_570491"), refresh = true)
+      MediaImportRequest(com.histmersion.api.media.MediaItem.Provider("met"), dryRun = com.histmersion.api.media.MediaImportRequest.DryRun(false), place = Some(com.histmersion.api.catalogue.Place.Id("pleiades_570491")), refresh = com.histmersion.api.media.MediaImportRequest.Refresh(true))
     )
 
-    all.foreach(p => job(p, MediaImportRequest(p, dryRun = false)))
+    all.foreach(p => job(p, MediaImportRequest(p, dryRun = com.histmersion.api.media.MediaImportRequest.DryRun(false))))
 
     // the names an import is refused under
-    run("an unknown provider", MediaImportRequest("rijks"))
-    run("an alias", MediaImportRequest("commons", dryRun = true, limit = Some(2)))
-    run("a collection asked about an event", MediaImportRequest("met", event = Some("fall_of_x")))
+    run("an unknown provider", MediaImportRequest(com.histmersion.api.media.MediaItem.Provider("rijks")))
+    run("an alias", MediaImportRequest(com.histmersion.api.media.MediaItem.Provider("commons"), dryRun = com.histmersion.api.media.MediaImportRequest.DryRun(true), limit = Some(com.histmersion.api.media.MediaImportRequest.Limit(2))))
+    run("a collection asked about an event", MediaImportRequest(com.histmersion.api.media.MediaItem.Provider("met"), event = Some(com.histmersion.api.catalogue.Event.Id("fall_of_x"))))
     val off = load(
       """histmersion.plugins.media-cleveland.enabled = false
         |histmersion.media.met.enabled = false

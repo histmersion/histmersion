@@ -1,5 +1,7 @@
 package com.histmersion.util.data.exchange
 
+import com.histmersion.testsupport.ComparedByValue.given
+
 import com.histmersion.api.exchange.{MergeApplyResult, MergeJobState}
 import com.histmersion.util.jobs.MergeApplyRuns
 
@@ -15,13 +17,13 @@ class MergeApplyJobsSuite extends munit.FunSuite:
     MergeApplyResult(
       UUID.randomUUID(),
       com.histmersion.api.exchange.Bundle.Instance(UUID.randomUUID(), None),
-      applied = true,
-      "abc"
+      applied = com.histmersion.api.exchange.MergeApplyResult.Applied(true),
+      com.histmersion.api.exchange.MergeApplyResult.PlanHash("abc")
     )
 
   test("done within the wait: the answer is its report"):
     val jobs = MergeApplyJobs(MergeApplyRuns.InMemory(), 5)
-    val j = jobs.start("b" * 64, "abc")(() => Right(result)).fold(e => fail(e.message), identity)
+    val j = jobs.start("b" * 64, com.histmersion.Sha256("abc"))(() => Right(result)).fold(e => fail(e.message), identity)
     assertEquals(j.state, MergeJobState.Done)
     assertEquals(j.result, Some(result))
     assertEquals(jobs.status(j.job).map(_.state), Some(MergeJobState.Done))
@@ -30,13 +32,13 @@ class MergeApplyJobsSuite extends munit.FunSuite:
     val jobs = MergeApplyJobs(MergeApplyRuns.InMemory(), 0)
     val release = CountDownLatch(1)
     val j = jobs
-      .start("b" * 64, "abc") { () =>
+      .start("b" * 64, com.histmersion.Sha256("abc")) { () =>
         release.await()
         Left("nothing to apply")
       }
       .fold(e => fail(e.message), identity)
     assertEquals(j.state, MergeJobState.Running)
-    assert(jobs.start("c" * 64, "def")(() => Right(result)).left.exists(_.message.contains("still running")))
+    assert(jobs.start("c" * 64, com.histmersion.Sha256("def"))(() => Right(result)).left.exists(_.message.contains("still running")))
     release.countDown()
     val ended = Iterator
       .continually { Thread.sleep(10); jobs.status(j.job) }
@@ -46,7 +48,7 @@ class MergeApplyJobsSuite extends munit.FunSuite:
 
   test("a run that throws ends failed, with why"):
     val jobs = MergeApplyJobs(MergeApplyRuns.InMemory(), 5)
-    val j = jobs.start("b" * 64, "abc")(() => throw IllegalStateException("boom")).fold(e => fail(e.message), identity)
+    val j = jobs.start("b" * 64, com.histmersion.Sha256("abc"))(() => throw IllegalStateException("boom")).fold(e => fail(e.message), identity)
     assertEquals(j.state, MergeJobState.Failed)
     assert(j.error.exists(_.contains("boom")), j.toString)
-    assertEquals(jobs.status("nope"), None)
+    assertEquals(jobs.status(com.histmersion.util.jobs.Job.Id("nope")), None)

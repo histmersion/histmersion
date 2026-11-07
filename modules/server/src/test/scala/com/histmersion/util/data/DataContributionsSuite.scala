@@ -1,5 +1,7 @@
 package com.histmersion.util.data
 
+import com.histmersion.testsupport.ComparedByValue.given
+
 import com.histmersion.config.AppConfig
 import com.histmersion.db.{DbSuite, TestDb}
 import com.histmersion.server.Deps

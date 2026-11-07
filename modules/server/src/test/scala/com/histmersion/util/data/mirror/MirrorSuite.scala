@@ -1,5 +1,7 @@
 package com.histmersion.util.data.mirror
 
+import com.histmersion.testsupport.ComparedByValue.given
+
 import com.histmersion.domain.research.ResearchData
 import com.histmersion.server.Deps
 import com.histmersion.domain.library.LibraryData
@@ -18,7 +20,7 @@ class MirrorSuite extends munit.FunSuite:
   private val articles = new Mirror.Note:
     val records: Mirror.Records = ResearchData.ArticleNotes
     def note(slug: String): Either[Api.Error, String] =
-      if slug == "gone" then Left(Api.Error("no such article")) else Right(s"article $slug")
+      if slug == "gone" then Left(Api.Error(com.histmersion.api.Api.Error.Message("no such article"))) else Right(s"article $slug")
 
   private val mirror = Mirror(Deps.data.mirror, List(sources, articles))
 
@@ -32,10 +34,10 @@ class MirrorSuite extends munit.FunSuite:
     )
 
   test("a note from the registered member of its kind"):
-    assertEquals(mirror.note(LibraryData.SourceNotes, "anthony2007_horse"), Right("source anthony2007_horse"))
-    assertEquals(mirror.note(ResearchData.ArticleNotes, "zz"), Right("article zz"))
-    assertEquals(mirror.note(ResearchData.ArticleNotes, "gone").left.map(_.message), Left("no such article"))
+    assertEquals(mirror.note(LibraryData.SourceNotes, com.histmersion.util.data.mirror.MirrorPlacement.RecordId("anthony2007_horse")), Right("source anthony2007_horse"))
+    assertEquals(mirror.note(ResearchData.ArticleNotes, com.histmersion.util.data.mirror.MirrorPlacement.RecordId("zz")), Right("article zz"))
+    assertEquals(mirror.note(ResearchData.ArticleNotes, com.histmersion.util.data.mirror.MirrorPlacement.RecordId("gone")).left.map(_.message), Left("no such article"))
 
   test("a kind nobody registered is refused"):
-    assert(mirror.note(Mirror.Records("events"), "x").isLeft)
+    assert(mirror.note(Mirror.Records("events"), com.histmersion.util.data.mirror.MirrorPlacement.RecordId("x")).isLeft)
     assertEquals(mirror.kinds, List(LibraryData.SourceNotes, ResearchData.ArticleNotes))

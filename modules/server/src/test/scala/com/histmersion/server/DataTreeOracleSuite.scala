@@ -99,8 +99,8 @@ class DataTreeOracleSuite extends DbSuite:
       val b = Composition
         .server(
           l.config,
-          "127.0.0.1",
-          0,
+          com.histmersion.config.ServerConfig.Host("127.0.0.1"),
+          com.histmersion.config.ServerConfig.Port(0),
           OfflineConverter(),
           source = Some((l, ConfigSource(() => AppConfig.loadWithUserFile(env, Some(configFile)))))
         )
@@ -169,8 +169,8 @@ class DataTreeOracleSuite extends DbSuite:
       val j = await(svc.fetch(q).fold(e => fail(e.message), _.id))
       assert(j.succeeded, j.toString)
     fetched(Basemap.FetchQuery())
-    fetched(Basemap.FetchQuery(focus = Some("crete")))
-    fetched(Basemap.FetchQuery(layer = "terrain", maxZoom = Some(4), bbox = Some("22.5,37.4,23.2,37.9")))
+    fetched(Basemap.FetchQuery(focus = Some(com.histmersion.api.basemap.Basemap.Focus.Name("crete"))))
+    fetched(Basemap.FetchQuery(layer = com.histmersion.api.basemap.Basemap.FetchQuery.Layer("terrain"), maxZoom = Some(com.histmersion.api.basemap.Basemap.Focus.MaxZoom(4)), bbox = Some(com.histmersion.api.BBox.Text("22.5,37.4,23.2,37.9"))))
     List(
       ("vector", 4, 9L, 6L),
       ("vector", 4, 0L, 0L),
@@ -180,7 +180,7 @@ class DataTreeOracleSuite extends DbSuite:
     )
       .foreach((layer, z, x, y) => assert(svc.tile(layer, z, x, y).isRight, s"$layer $z/$x/$y"))
     assert(svc.status.available)
-    assert(svc.remove(Basemap.RemoveQuery("none", focus = Some("crete"))).isRight)
+    assert(svc.remove(Basemap.RemoveQuery(com.histmersion.api.basemap.Basemap.RemoveQuery.Layer("none"), focus = Some(com.histmersion.api.basemap.Basemap.Focus.Name("crete")))).isRight)
 
   /** A file the acquisition spools for the converter. */
   private def spoolRun(): Unit =
@@ -190,7 +190,7 @@ class DataTreeOracleSuite extends DbSuite:
           com.histmersion.util.storage.Storage
             .at(com.histmersion.util.storage.Location.Spool, StorageLocations.spool(base.acquire.spoolDir))
         )
-        .write("zz_data_tree", "pdf", "%PDF-1.4 spooled".getBytes(UTF_8))
+        .write(com.histmersion.domain.library.Citekey("zz_data_tree"), com.histmersion.domain.library.acquisition.Spool.Extension("pdf"), "%PDF-1.4 spooled".getBytes(UTF_8))
         .isRight
     )
 

@@ -1,5 +1,7 @@
 package com.histmersion.domain.personal
 
+import com.histmersion.testsupport.ComparedByValue.given
+
 import hearth.kindlings.optics.syntax.*
 
 import com.histmersion.api.personal.{MapZoom, Target, ViewState}
@@ -18,7 +20,7 @@ class PersonalTypesSuite extends munit.FunSuite:
   test("times are kept and written to the microsecond, as Postgres keeps them"):
     assertEquals(MarkTime.at(Instant.parse("2026-10-30T12:00:00.123456789Z")).iso, "2026-10-30T12:00:00.123456Z")
     assertEquals(MarkTime.at(Instant.parse("2026-10-30T12:00:00Z")).iso, "2026-10-30T12:00:00.000000Z")
-    assertEquals(MarkTime.parse("2026-10-30T12:00:00.123456Z").iso, "2026-10-30T12:00:00.123456Z")
+    assertEquals(MarkTime.parse(com.histmersion.domain.personal.MarkTime.Iso("2026-10-30T12:00:00.123456Z")).iso, "2026-10-30T12:00:00.123456Z")
 
   private val ref = ItemRef(MarkTarget.itemKind(MarkKind.Source), ItemKey("zz"), Some(ItemUid(UUID.randomUUID())))
 
@@ -48,7 +50,7 @@ class PersonalTypesSuite extends munit.FunSuite:
     assertEquals(TargetLabel.tidy(Some("   ")), None)
 
   test("search: every word, case ignored"):
-    val ws = SearchWords.of(Some("  Bronze  AGE "))
+    val ws = SearchWords.of(Some(com.histmersion.domain.personal.SearchWords.Query("  Bronze  AGE ")))
     assertEquals(ws.words, List("bronze", "age"))
     assert(ws.matches("The Bronze", "Age"))
     assert(!ws.matches("bronze only"))
@@ -72,12 +74,12 @@ class PersonalTypesSuite extends munit.FunSuite:
       val c = TargetColumns.of(t)
       assertEquals(MarkTarget.ofColumns(c.kind, c.key, c.uid, c.lat, c.lon, c.zoom, c.from, c.to, c.view), Some(t))
     }
-    assertEquals(MarkTarget.fromWire(Target.item(MarkKind.Goal, "g")).map(_.kind), Some(MarkKind.Goal))
+    assertEquals(MarkTarget.fromWire(Target.item(MarkKind.Goal, com.histmersion.api.personal.ItemKey("g"))).map(_.kind), Some(MarkKind.Goal))
 
   test("a stored row read back: an unknown kind or a point without its position is dropped, not guessed"):
-    assertEquals(MarkTarget.ofColumns("nonsense", None, None, None, None, None, None, None, None), None)
-    assertEquals(MarkTarget.ofColumns("point", None, None, None, Some(Longitude(22.0)), None, None, None, None), None)
-    assertEquals(MarkTarget.ofColumns("source", None, None, None, None, None, None, None, None), None)
+    assertEquals(MarkTarget.ofColumns(com.histmersion.api.ItemKind.Wire("nonsense"), None, None, None, None, None, None, None, None), None)
+    assertEquals(MarkTarget.ofColumns(com.histmersion.api.ItemKind.Wire("point"), None, None, None, Some(Longitude(22.0)), None, None, None, None), None)
+    assertEquals(MarkTarget.ofColumns(com.histmersion.api.ItemKind.Wire("source"), None, None, None, None, None, None, None, None), None)
 
   test("wire coordinates are checked before becoming domain coordinates"):
     def point(lat: Double, lon: Double) = Target(

@@ -58,7 +58,7 @@ class GazetteerTrafficSuite extends munit.FunSuite:
     ImportRunner.places(sources(name), http).map(_._1)
 
   private def dryRun(name: String): Either[String, Place.ImportResult] =
-    ImportRunner.fetchAndImport(sources(name), http, null, null, dryRun = true, 0.0)
+    ImportRunner.fetchAndImport(sources(name), http, null, null, dryRun = com.histmersion.domain.catalogue.places.GazetteerControllers.DryRun(true), 0.0)
 
   // ── the transcript ──────────────────────────────────────────────────────────────────────────
 

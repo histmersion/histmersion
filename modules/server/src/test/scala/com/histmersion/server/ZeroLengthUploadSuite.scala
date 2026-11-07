@@ -79,7 +79,7 @@ class ZeroLengthUploadSuite extends munit.FunSuite:
       _.db).setTo(base.db.modify(_.url).setTo(testDb.get)).modify(_.converter).setTo(base.converter.modify(_.spoolDir).setTo(Files.createTempDirectory("histmersion-spool0").toString)
     )
     supervised {
-      val b = Composition.server(cfg, "127.0.0.1", 0, NoConverter).start()
+      val b = Composition.server(cfg, com.histmersion.config.ServerConfig.Host("127.0.0.1"), com.histmersion.config.ServerConfig.Port(0), NoConverter).start()
       try f(s"http://127.0.0.1:${b.port}/api/ingest")
       finally b.stop()
     }
@@ -125,5 +125,5 @@ class ZeroLengthUploadSuite extends munit.FunSuite:
 
   /** No sidecar is needed: the jobs never get to run in this suite. */
   private object NoConverter extends ConverterClient:
-    def health = Right("ok")
+    def health = Right(com.histmersion.util.ocr.ConverterClient.HealthSummary("ok"))
     def convert(file: com.histmersion.util.storage.Blob, filename: String, quality: Boolean) = Left("not used")

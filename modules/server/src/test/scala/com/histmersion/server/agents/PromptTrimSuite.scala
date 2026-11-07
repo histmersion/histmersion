@@ -1,5 +1,7 @@
 package com.histmersion.server.agents
 
+import com.histmersion.testsupport.ComparedByValue.given
+
 import com.histmersion.domain.automation.agents.{
   AgentDefinitions,
   AgentGenerator,
@@ -36,21 +38,21 @@ class PromptTrimSuite extends munit.FunSuite:
     assertEquals(AgentDefinitions.forAudience(t, Set(Audience.Headless)), "a\n\nb\ncall the tool\nc\n")
     assertEquals(AgentDefinitions.forAudience(t, Set(Audience.Interactive)), "a\n\nrun it in Bash\n\nb\nc\n")
     assertEquals(
-      AgentDefinitions.forAudience("no markers\n\n\n", Set()),
+      AgentDefinitions.forAudience(com.histmersion.domain.automation.agents.AgentDef.Body("no markers\n\n\n"), Set()),
       "no markers\n\n\n",
       "unmarked text is untouched"
     )
 
   test("markers that do not pair up, nest or name an audience are reported"):
-    assertEquals(AgentDefinitions.markerProblems("<!-- only:writer -->x<!-- /only:writer -->"), Nil)
-    assert(AgentDefinitions.markerProblems("<!-- only:writer -->x").exists(_.contains("never closed")))
-    assert(AgentDefinitions.markerProblems("x<!-- /only:writer -->").exists(_.contains("closes nothing")))
+    assertEquals(AgentDefinitions.markerProblems(com.histmersion.domain.automation.agents.AgentDef.Body("<!-- only:writer -->x<!-- /only:writer -->")), Nil)
+    assert(AgentDefinitions.markerProblems(com.histmersion.domain.automation.agents.AgentDef.Body("<!-- only:writer -->x")).exists(_.contains("never closed")))
+    assert(AgentDefinitions.markerProblems(com.histmersion.domain.automation.agents.AgentDef.Body("x<!-- /only:writer -->")).exists(_.contains("closes nothing")))
     assert(
-      AgentDefinitions.markerProblems("<!-- only:writer --><!-- only:headless -->").exists(_.contains("opens inside"))
+      AgentDefinitions.markerProblems(com.histmersion.domain.automation.agents.AgentDef.Body("<!-- only:writer --><!-- only:headless -->")).exists(_.contains("opens inside"))
     )
     assert(
       AgentDefinitions
-        .markerProblems("<!-- only:people -->x<!-- /only:people -->")
+        .markerProblems(com.histmersion.domain.automation.agents.AgentDef.Body("<!-- only:people -->x<!-- /only:people -->"))
         .exists(_.contains("names no audience"))
     )
     assertEquals(

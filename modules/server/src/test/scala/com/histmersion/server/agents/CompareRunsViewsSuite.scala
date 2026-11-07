@@ -1,5 +1,7 @@
 package com.histmersion.server.agents
 
+import com.histmersion.testsupport.ComparedByValue.given
+
 import hearth.kindlings.optics.syntax.*
 
 import com.histmersion.domain.research.workflows.ReviewComparison
@@ -36,7 +38,7 @@ class CompareRunsViewsSuite extends munit.FunSuite:
     StepInfo(
       seq,
       name,
-      if model.isDefined then "llm" else "code",
+      if model.isDefined then com.histmersion.api.automation.Agents.StepInfo.Kind("llm") else com.histmersion.api.automation.Agents.StepInfo.Kind("code"),
       attempt,
       status,
       model,
@@ -94,41 +96,41 @@ class CompareRunsViewsSuite extends munit.FunSuite:
       model = Some("anthropic:x"),
       actual = Some("x-2026"),
       error = Some("bad"),
-      usage = Usage(20, 4, 5, 1),
+      usage = Usage(com.histmersion.api.automation.Agents.Usage.Input(20), com.histmersion.api.automation.Agents.Usage.Output(4), com.histmersion.api.automation.Agents.Usage.CacheRead(5), com.histmersion.api.automation.Agents.Usage.CacheWrite(1)),
       cost = 0.01,
       attempt = 2
     ).modify(_.firstCallTokens).setTo((Some(6200): _root_.scala.Option[_root_.scala.Long])).modify(_.turns).setTo(Some(7)).modify(_.output).setTo(Some("{}"))
     val r = CompareRunsViews.run(
-      run("a", "enrich-source", "x2020", List(s), dry = true, overrides = List(ModelOverride("writer", "anthropic:y")))
+      run("a", "enrich-source", "x2020", List(s), dry = true, overrides = List(ModelOverride(com.histmersion.api.automation.Agents.ModelOverride.Role("writer"), com.histmersion.api.automation.Agents.ModelOverride.Model("anthropic:y"))))
     )
     assertEquals(
       r.run,
       CompareRuns.RunHead(
-        "a",
-        "enrich-source",
-        "x2020",
-        "done",
-        true,
-        Some("anthropic:x"),
-        List(CompareRuns.ModelChoice("writer", "anthropic:y"))
+        com.histmersion.domain.CompareRuns.RunHead.Id("a"),
+        com.histmersion.domain.CompareRuns.RunHead.Pipeline("enrich-source"),
+        com.histmersion.domain.CompareRuns.RunHead.Target("x2020"),
+        com.histmersion.domain.CompareRuns.RunHead.Status("done"),
+        com.histmersion.domain.CompareRuns.RunHead.DryRun(true),
+        Some(com.histmersion.domain.CompareRuns.RunHead.Model("anthropic:x")),
+        List(CompareRuns.ModelChoice(com.histmersion.domain.CompareRuns.ModelChoice.Role("writer"), com.histmersion.domain.CompareRuns.ModelChoice.Model("anthropic:y")))
       )
     )
     assertEquals(
       r.steps,
       List(
         CompareRuns.Step(
-          "classify",
-          "failed",
-          Some("anthropic:x"),
-          Some("x-2026"),
-          CompareRuns.Tokens(20, 4, 5, 1),
+          com.histmersion.domain.CompareRuns.Step.Name("classify"),
+          com.histmersion.domain.CompareRuns.Step.Status("failed"),
+          Some(com.histmersion.domain.CompareRuns.Step.Model("anthropic:x")),
+          Some(com.histmersion.domain.CompareRuns.Step.ActualModel("x-2026")),
+          CompareRuns.Tokens(com.histmersion.domain.CompareRuns.Tokens.Input(20), com.histmersion.domain.CompareRuns.Tokens.Output(4), com.histmersion.domain.CompareRuns.Tokens.CacheRead(5), com.histmersion.domain.CompareRuns.Tokens.CacheWrite(1)),
           0.01,
-          "2026-10-08T10:00:00Z",
-          "2026-10-08T10:00:03Z",
-          Some(6200L),
-          Some(7),
-          Some("{}"),
-          Some("bad")
+          com.histmersion.domain.CompareRuns.Step.StartedAt("2026-10-08T10:00:00Z"),
+          com.histmersion.domain.CompareRuns.Step.FinishedAt("2026-10-08T10:00:03Z"),
+          Some(com.histmersion.domain.CompareRuns.Step.FirstCallTokens(6200L)),
+          Some(com.histmersion.domain.CompareRuns.Step.Turns(7)),
+          Some(com.histmersion.domain.CompareRuns.Step.Output("{}")),
+          Some(com.histmersion.domain.CompareRuns.Step.Error("bad"))
         )
       )
     )
@@ -138,15 +140,15 @@ class CompareRunsViewsSuite extends munit.FunSuite:
       "a",
       "enrich-source",
       "x2020",
-      List(step(1, "load"), step(2, "classify", model = Some("anthropic:x"), usage = Usage(10, 2))),
-      overrides = List(ModelOverride("writer", "anthropic:y"))
+      List(step(1, "load"), step(2, "classify", model = Some("anthropic:x"), usage = Usage(com.histmersion.api.automation.Agents.Usage.Input(10), com.histmersion.api.automation.Agents.Usage.Output(2)))),
+      overrides = List(ModelOverride(com.histmersion.api.automation.Agents.ModelOverride.Role("writer"), com.histmersion.api.automation.Agents.ModelOverride.Model("anthropic:y")))
     )
     val b = run("b", "enrich-source", "x2020", List(step(1, "load")), status = "paused")
     val cmp = compare(a, b)
     assertEquals(
       cmp.runs.map(r => (r.id, r.status, r.modelFor, r.usage, r.seconds, r.attempts)),
       List(
-        ("a", "done", List(ModelOverride("writer", "anthropic:y")), Usage(10, 2), 6L, 2),
+        ("a", "done", List(ModelOverride(com.histmersion.api.automation.Agents.ModelOverride.Role("writer"), com.histmersion.api.automation.Agents.ModelOverride.Model("anthropic:y"))), Usage(com.histmersion.api.automation.Agents.Usage.Input(10), com.histmersion.api.automation.Agents.Usage.Output(2)), 6L, 2),
         ("b", "paused", Nil, Usage.Zero, 3L, 1)
       )
     )
@@ -154,15 +156,15 @@ class CompareRunsViewsSuite extends munit.FunSuite:
       cmp.steps,
       List(
         RunCompare.StepRow(
-          "load",
+          com.histmersion.api.automation.RunCompare.StepRow.Name("load"),
           List(
-            Some(RunCompare.StepSide(Nil, Nil, Nil, Usage.Zero, 0, 3, 1, 0)),
-            Some(RunCompare.StepSide(Nil, Nil, Nil, Usage.Zero, 0, 3, 1, 0))
+            Some(RunCompare.StepSide(Nil, Nil, Nil, Usage.Zero, com.histmersion.api.automation.RunCompare.StepSide.CostUsd(0), com.histmersion.api.automation.RunCompare.StepSide.Seconds(3), com.histmersion.api.automation.RunCompare.StepSide.Attempts(1), com.histmersion.api.automation.RunCompare.StepSide.Failures(0))),
+            Some(RunCompare.StepSide(Nil, Nil, Nil, Usage.Zero, com.histmersion.api.automation.RunCompare.StepSide.CostUsd(0), com.histmersion.api.automation.RunCompare.StepSide.Seconds(3), com.histmersion.api.automation.RunCompare.StepSide.Attempts(1), com.histmersion.api.automation.RunCompare.StepSide.Failures(0)))
           )
         ),
         RunCompare.StepRow(
-          "classify",
-          List(Some(RunCompare.StepSide(List("anthropic:x"), Nil, Nil, Usage(10, 2), 0, 3, 1, 0)), None)
+          com.histmersion.api.automation.RunCompare.StepRow.Name("classify"),
+          List(Some(RunCompare.StepSide(List(com.histmersion.api.automation.RunCompare.StepSide.Models("anthropic:x")), Nil, Nil, Usage(com.histmersion.api.automation.Agents.Usage.Input(10), com.histmersion.api.automation.Agents.Usage.Output(2)), com.histmersion.api.automation.RunCompare.StepSide.CostUsd(0), com.histmersion.api.automation.RunCompare.StepSide.Seconds(3), com.histmersion.api.automation.RunCompare.StepSide.Attempts(1), com.histmersion.api.automation.RunCompare.StepSide.Failures(0))), None)
         )
       )
     )
@@ -189,7 +191,7 @@ class CompareRunsViewsSuite extends munit.FunSuite:
 
   test("review-article in Markdown: last verdict and rounds, round 1 by kind, the majors two runs share"):
     def f(id: String, sev: Severity, where: String, problem: String, kind: String = "term") =
-      Finding(id, if id.startsWith("R") then Reviewer.Rules else Reviewer.Skeptic, sev, kind, where, "", problem, "")
+      Finding(id, if id.startsWith("R") then Reviewer.Rules else Reviewer.Skeptic, sev, kind, where, com.histmersion.domain.ReviewArticle.Finding.Quote(""), problem, com.histmersion.domain.ReviewArticle.Finding.Fix(""))
     def review(id: String, rounds: List[Merged], reports: List[Report]) = run(
       id,
       "review-article",
@@ -203,18 +205,18 @@ class CompareRunsViewsSuite extends munit.FunSuite:
     val s1 = f("S1", Severity.Major, "Dates", "the date is wrong", kind = "date")
     val a = review(
       "a",
-      List(Merged(1, Verdict.Major, List(r1, s1), None, Nil, Nil), Merged(2, Verdict.Pass, Nil, None, Nil, Nil)),
+      List(Merged(com.histmersion.domain.ReviewArticle.Merged.Round(1), Verdict.Major, List(r1, s1), None, Nil, Nil), Merged(com.histmersion.domain.ReviewArticle.Merged.Round(2), Verdict.Pass, Nil, None, Nil, Nil)),
       List(Report(Reviewer.Rules, Verdict.Major, List(r1)), Report(Reviewer.Skeptic, Verdict.Major, List(s1)))
     )
     val r1b = f("R1", Severity.Major, "intro", "Tin is never defined, tin is not defined")
     val b = review(
       "b",
-      List(Merged(1, Verdict.Major, List(r1b), None, Nil, Nil)),
+      List(Merged(com.histmersion.domain.ReviewArticle.Merged.Round(1), Verdict.Major, List(r1b), None, Nil, Nil)),
       List(Report(Reviewer.Rules, Verdict.Major, List(r1b)))
     )
     val cmp = compare(a, b)
-    assertEquals(cmp.overlaps, List(RunCompare.MajorOverlap("a", "b", 2, 1, 1, List("R1 ↔ R1"))))
-    assertEquals(cmp.review.head.kinds, List(RunCompare.KindCount("date", 1), RunCompare.KindCount("term", 1)))
+    assertEquals(cmp.overlaps, List(RunCompare.MajorOverlap(com.histmersion.api.automation.RunCompare.MajorOverlap.A("a"), com.histmersion.api.automation.RunCompare.MajorOverlap.B("b"), com.histmersion.api.automation.RunCompare.MajorOverlap.AMajors(2), com.histmersion.api.automation.RunCompare.MajorOverlap.BMajors(1), com.histmersion.api.automation.RunCompare.MajorOverlap.Shared(1), List(com.histmersion.api.automation.RunCompare.MajorOverlap.Pairs("R1 ↔ R1")))))
+    assertEquals(cmp.review.head.kinds, List(RunCompare.KindCount(com.histmersion.api.automation.RunCompare.KindCount.Kind("date"), com.histmersion.api.automation.RunCompare.KindCount.Count(1)), RunCompare.KindCount(com.histmersion.api.automation.RunCompare.KindCount.Kind("term"), com.histmersion.api.automation.RunCompare.KindCount.Count(1))))
     val md = AgentsMarkdown.compare(cmp)
     assert(
       md.contains("| verdict (last round) | PASS | MAJOR |") && md.contains("| rounds | 2 | 1 |") &&

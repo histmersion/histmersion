@@ -29,7 +29,7 @@ class SourcesControllersSuite extends munit.FunSuite:
       (summary.toList ++ notes.toList)
         .filter(_.contains("<div>"))
         .map(_ =>
-          FormatIssue(FormatRule.HtmlTag, FormatSeverity.Error, FormatField.Notes, 1, 1, "<div>", "never closed")
+          FormatIssue(FormatRule.HtmlTag, FormatSeverity.Error, FormatField.Notes, com.histmersion.api.checks.FormatIssue.Line(1), com.histmersion.api.checks.FormatIssue.Column(1), com.histmersion.api.checks.FormatIssue.Excerpt("<div>"), com.histmersion.api.checks.FormatIssue.Message("never closed"))
         )
     def fix(text: String, field: FormatField): (String, List[String]) =
       if text.contains("  ") then (text.replace("  ", " "), List("double space")) else (text, Nil)
@@ -69,7 +69,7 @@ class SourcesControllersSuite extends munit.FunSuite:
     )(using new com.histmersion.util.time.SystemTimer)
 
   private val put =
-    Source.Put(title = com.histmersion.api.library.Title("Walls"), body = Some("# Walls\n\n## Gate\n\nThe gate of Zqtell.\n"), notes = Some("ok"))
+    Source.Put(title = com.histmersion.api.library.Title("Walls"), body = Some(com.histmersion.api.library.Source.OcrMarkdown("# Walls\n\n## Gate\n\nThe gate of Zqtell.\n")), notes = Some(com.histmersion.api.library.Source.Notes("ok")))
 
   test("a put under a citekey that is not one is refused; a strict put with a formatting error too"):
     val c = controllers()
@@ -93,7 +93,7 @@ class SourcesControllersSuite extends munit.FunSuite:
     assert(c.markdown("zqa1990_walls", false, Some("nonsense")).left.exists(_.message.startsWith("unknown section")))
     assertEquals(c.passages(Api.PassagesQuery("zqa1990_walls", "gate")).map(_.matches), Right(1))
     assertEquals(c.passages(Api.PassagesQuery("zqnone2000_x", "gate")).left.map(_.code), Left(Some(Write.CodeNotFound)))
-    assertEquals(c.aliases, List(Source.Alias("zqa1990_walls", com.histmersion.api.library.Citekey("zqa1991_walls"))))
+    assertEquals(c.aliases, List(Source.Alias(com.histmersion.api.library.Source.Alias.Value("zqa1990_walls"), com.histmersion.api.library.Citekey("zqa1991_walls"))))
 
   test("formatting repaired as one guarded patch; a delete's dry run names the originals, its apply removes them"):
     val c = controllers()
@@ -113,7 +113,7 @@ class SourcesControllersSuite extends munit.FunSuite:
     val gate = WriteGate()
     val c = controllers(gate)
     val _ = c.put("zqa1990_walls", put)
-    val held = gate.exclusively("restore")(
+    val held = gate.exclusively(com.histmersion.util.data.maintenance.WriteGate.OperationName("restore"))(
       Right(
         List(
           c.put("zqb2001_cove", put).isLeft,

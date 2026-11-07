@@ -1,5 +1,7 @@
 package com.histmersion.domain.automation.agents
 
+import com.histmersion.testsupport.ComparedByValue.given
+
 import hearth.kindlings.optics.syntax.*
 
 import com.histmersion.server.agents.*
@@ -143,7 +145,7 @@ class PluginAiRunSuite extends com.histmersion.db.DbSuite with RunTranscripts:
     assert(
       h.library.sources.put(Ck, Source.Put(title = com.histmersion.api.library.Title("Bronze Age tin"), year = (Some(2019)).map(com.histmersion.api.catalogue.Year.apply), body = Some(Body))).isRight
     )
-    val run = a.startRun(RunRequest("enrich-source", Ck)).fold(e => fail(e.message), identity)
+    val run = a.startRun(RunRequest(com.histmersion.api.automation.Agents.RunRequest.Pipeline("enrich-source"), Ck)).fold(e => fail(e.message), identity)
     a.engine.execute(run.id)
     connect(ds)(AgentRepo.get(run.id)).get
 
@@ -156,21 +158,21 @@ class PluginAiRunSuite extends com.histmersion.db.DbSuite with RunTranscripts:
     assertEquals(BuiltinAi.known(g.registries.aiProviders), Set("hello-ai"))
     // switched off, it is gone and the six built-ins are untouched
     val off = generation(pluginConf.replace("enabled = true", "enabled = false"))
-    assert(!off.registries.aiProviders.contains("hello-ai"))
+    assert(!off.registries.aiProviders.contains(com.histmersion.pluginhost.Registries.AiProvidersKey("hello-ai")))
     assertEquals(off.registries.aiProviders.keySet, ProviderKind.values.map(_.wire).toSet)
 
   test("enrich-source runs on the third-party provider through the server's own factory and the host's tool loop"):
     val (a, h) = handlers(generation())
     val run = startAndRun(a, h)
     assertEquals(run.status, "done", run.error.toString)
-    val llm = connect(ds)(AgentRepo.steps(run.id, 200)).filter(_.kind == "llm")
+    val llm = connect(ds)(AgentRepo.steps(run.id, com.histmersion.domain.automation.agents.AgentRepo.OutputChars(200))).filter(_.kind == "llm")
     assertEquals(llm.map(_.name), List("classify", "findings-1", "notes"))
     assert(llm.forall(s => s.status == "done" && s.model.contains("hello-ai:echo")), llm.toString)
     assertEquals(llm.flatMap(_.actualModel).distinct, List("echo-scripted"), "the model the provider said served")
     // classify: the facets call ran in the host, then the answer — two turns, each counted
-    assertEquals(llm.head.usage, Usage(200, 40))
+    assertEquals(llm.head.usage, Usage(com.histmersion.api.automation.Agents.Usage.Input(200), com.histmersion.api.automation.Agents.Usage.Output(40)))
     assert(connect(ds)(AgentRepo.messages(run.id)).exists(m => m.toolName.contains("facets") && m.role == "tool"))
-    val got = h.library.sources.get(Ck, body = false).toOption.get
+    val got = h.library.sources.get(Ck, body = com.histmersion.domain.library.sources.SourcesControllers.GetBody(false)).toOption.get
     assertEquals(got.source.summary, Some("Tin reached the Aegean by sea."))
     assert(got.findings.exists(_.claim.contains("Uluburun")), got.findings.toString)
     assert(got.source.notes.exists(_.contains("tin by sea")), got.source.notes.toString)
@@ -181,7 +183,7 @@ class PluginAiRunSuite extends com.histmersion.db.DbSuite with RunTranscripts:
     val (a, h) = handlers(generation(), cfg)
     val run = startAndRun(a, h)
     assertEquals(run.status, "done", run.error.toString)
-    val done = connect(ds)(AgentRepo.steps(run.id, 200)).filter(s => s.kind == "llm" && s.status == "done")
+    val done = connect(ds)(AgentRepo.steps(run.id, com.histmersion.domain.automation.agents.AgentRepo.OutputChars(200))).filter(s => s.kind == "llm" && s.status == "done")
     assert(done.nonEmpty && done.forall(_.model.contains("hello-ai:echo")), done.toString)
     assert(a.picker.cooldowns().exists(_._1 == "hello-ai:limited"), a.picker.cooldowns().toString)
 
@@ -191,21 +193,21 @@ class PluginAiRunSuite extends com.histmersion.db.DbSuite with RunTranscripts:
     val (a, _) = handlers(generation())
     val chain = a.picker.roleChains(System.currentTimeMillis()).find(_.role == "extractor").get
     assertEquals(chain.active, Some("hello-ai:echo"))
-    val d = a.doctor(offline = true)
+    val d = a.doctor(offline = com.histmersion.domain.automation.agents.AgentsControllers.Offline(true))
     val sec = d.providers.find(_.provider == "hello-ai").get
     assert(sec.used, sec.toString)
     assert(sec.checks.exists(c => c.name == "plugin" && c.detail.contains("Hello AI")), sec.checks)
     assert(sec.checks.exists(c => c.name == "token" && c.detail.contains("never shown")), sec.checks)
     assert(sec.checks.exists(c => c.name == "model hello-ai:echo" && c.level == CheckLevel.Ok), sec.checks)
     assert(!AgentsMarkdown.doctor(d).contains(Secret))
-    assert(a.setChain("extractor", ModelChains.ChainSet(List("hello-ai:echo", "local:x"))).isRight)
+    assert(a.setChain(com.histmersion.api.automation.Agents.Role.Wire("extractor"), ModelChains.ChainSet(List(com.histmersion.api.automation.ModelChains.ChainEntry.Model("hello-ai:echo"), com.histmersion.api.automation.ModelChains.ChainEntry.Model("local:x")))).isRight)
     // the same database, the plugin switched off: the saved chain no longer reads, a new one is refused
     val (gone, _) = handlers(generation(pluginConf.replace("enabled = true", "enabled = false")))
     assert(
       gone
-        .setChain("extractor", ModelChains.ChainSet(List("hello-ai:echo")))
+        .setChain(com.histmersion.api.automation.Agents.Role.Wire("extractor"), ModelChains.ChainSet(List(com.histmersion.api.automation.ModelChains.ChainEntry.Model("hello-ai:echo"))))
         .left
         .exists(_.message.contains("unknown provider 'hello-ai'"))
     )
     assert(gone.picker.chain(Role.Extractor).left.exists(_.contains("unknown provider 'hello-ai'")))
-    assert(!gone.doctor(offline = true).providers.exists(_.provider == "hello-ai"))
+    assert(!gone.doctor(offline = com.histmersion.domain.automation.agents.AgentsControllers.Offline(true)).providers.exists(_.provider == "hello-ai"))
