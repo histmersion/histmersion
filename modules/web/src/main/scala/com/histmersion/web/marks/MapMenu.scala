@@ -76,7 +76,7 @@ object MapMenu:
       ContextMenu.Entry(
         com.histmersion.web.ui.ContextMenu.Entry.Label("Start the map here"),
         () => writing(startHere(surface, at)),
-        hint = Some("Where the map opens, for everyone who opens Histmersion from this server")
+        hint = Some(com.histmersion.web.ui.ContextMenu.Entry.Hint("Where the map opens, for everyone who opens Histmersion from this server"))
       ),
       ContextMenu.Entry(
         com.histmersion.web.ui.ContextMenu.Entry.Label("Bookmark this view of the map"),

@@ -246,7 +246,7 @@ object ActivityView:
     navTag(
       cls := "activity-chips",
       aria.label := "Show",
-      ActivityTab.values.toList.filter(t => t.isChip && (ui.agentsEnabled.value || !t.agents.value)).map { t =>
+      ActivityTab.values.toList.filter(t => t.isChip && (ui.agentsEnabled.value || !t.agents)).map { t =>
         val selected = on.contains(t)
         a(
           cls := "fchip",
@@ -256,7 +256,7 @@ object ActivityView:
           onClick --> { ev =>
             if Router.plain(ev) then { ev.preventDefault(); Router.go(Route.Activity(t), search = search(goal)) }
           },
-          t.label.value,
+          t.label,
           child.text <-- counts.map(c =>
             t match
               case ActivityTab.Running  => s" · ${c.running}"
@@ -293,8 +293,8 @@ object ActivityView:
       cls := "muted activity-details",
       "In detail: ",
       ActivityTab.values.toList
-        .filter(t => !t.isChip && (ui.agentsEnabled.value || !t.agents.value))
-        .flatMap(t => List(span(" · "), RouteLink(Route.Activity(t), t.label.value)))
+        .filter(t => !t.isChip && (ui.agentsEnabled.value || !t.agents))
+        .flatMap(t => List(span(" · "), RouteLink(Route.Activity(t), t.label)))
         .drop(1)
     )
 

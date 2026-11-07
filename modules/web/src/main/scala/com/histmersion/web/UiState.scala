@@ -371,7 +371,7 @@ object UiState:
     */
   def togglePlace(id: com.histmersion.web.UiState.TogglePlaceId): Boolean =
     val next = toggledPlace(placeIds.now(), id)
-    set(placeIds := next)(push = true)
+    set(placeIds := next)(push = com.histmersion.web.UiState.SetPush(true))
     next.contains(id)
 
   /** Both search boxes share the raw draft, including a space just typed between words. Filter.of normalizes it at the

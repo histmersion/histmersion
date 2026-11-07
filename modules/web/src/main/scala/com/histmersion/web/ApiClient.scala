@@ -250,7 +250,7 @@ object ApiClient:
   def places(q: Option[com.histmersion.api.Api.Search.Text], asOf: Option[com.histmersion.api.Api.AggregateQuery.AsOf], limit: Option[com.histmersion.api.Paging.Limit]): Future[List[Place.Hit]] =
     call(Api.places)((q.map(t => com.histmersion.api.catalogue.Place.Kind.Wire(t.value)), asOf, limit.map(l => Api.PlacesGeoQuery.Limit(l.value))))
   def place(id: com.histmersion.api.catalogue.Place.Id, asOf: Option[com.histmersion.api.Api.AggregateQuery.AsOf], counts: com.histmersion.web.ApiClient.Counts = com.histmersion.web.ApiClient.Counts(false)): Future[PlaceDetail] =
-    call(Api.place)((id, asOf, Option.when(counts.value)(true)))
+    call(Api.place)((id, asOf, Option.when(counts.value)(com.histmersion.api.catalogue.Place.Detail(true))))
   def about(): Future[About] = call(Api.about)(())
   def basemap(): Future[Basemap.Status] = call(BasemapApi.status)(())
   def basemapFetch(q: Basemap.FetchQuery): Future[JobInfo] = call(BasemapApi.fetch)(q)

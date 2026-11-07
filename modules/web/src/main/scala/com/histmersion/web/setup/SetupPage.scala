@@ -60,8 +60,8 @@ object SetupPage:
       finders = FindersSection.finders(ui).map(f => f.id -> f.enabled).toMap,
       area = text(com.histmersion.web.setup.SetupPage.ChoicesOfTextK("basemap.bbox")).orElse(Some("world")),
       start = ui.mapStart,
-      agents = text("agents.enabled").exists(Draft.isOn),
-      calibre = text("cli.calibre.library-dir").getOrElse("")
+      agents = text(com.histmersion.web.setup.SetupPage.ChoicesOfTextK("agents.enabled")).exists(Draft.isOn),
+      calibre = text(com.histmersion.web.setup.SetupPage.ChoicesOfTextK("cli.calibre.library-dir")).getOrElse("")
     )
 
   /** The areas offered (`basemap.setup-areas`). */
@@ -240,7 +240,7 @@ object SetupPage:
 
   private def startDownload(d: SetupDownload): Future[com.histmersion.web.setup.SetupPage.Message] = d match
     case SetupDownload.Map(area)  => ApiClient.basemapFetch(Basemap.FetchQuery(bbox = Some(area))).map(_ => "started")
-    case SetupDownload.Boundaries => ApiClient.initData(fetch = com.histmersion.web.ApiClient.Fetch(true)).map(_ => "started")
+    case SetupDownload.Boundaries => ApiClient.initData(fetch = com.histmersion.web.ApiClient.Fetch(true)).map(_ => com.histmersion.web.setup.SetupPage.Message("started"))
     case SetupDownload.Events     =>
       ApiClient
         .eventCatalogues()
@@ -249,7 +249,7 @@ object SetupPage:
             .sequence(cs.map(_.id).filter(Set("gvp", "noaa")).map(ApiClient.importEvents))
             .map(js => s"${js.size} started")
         )
-    case SetupDownload.Pictures   => ApiClient.importMedia(com.histmersion.web.ApiClient.Provider("wikidata")).map(_ => "started")
+    case SetupDownload.Pictures   => ApiClient.importMedia(com.histmersion.web.ApiClient.Provider("wikidata")).map(_ => com.histmersion.web.setup.SetupPage.Message("started"))
     case SetupDownload.MorePlaces =>
       Future.sequence(List("geonames", "wikidata").map(ApiClient.loadPlaces)).map(_ => "started")
 
