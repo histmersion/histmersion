@@ -26,11 +26,11 @@ final case class GenSettings(
     version: GenSettings.Version,
     /** The Codex home's `tool_output_token_limit` (`agents.providers.codex.tool-output-tokens`); 0 = the model's own.
       */
-    codexToolOutputTokens: GenSettings.CodexToolOutputTokens = 0,
+    codexToolOutputTokens: GenSettings.CodexToolOutputTokens = com.histmersion.domain.automation.agents.GenSettings.CodexToolOutputTokens(0),
     /** The Codex home carries Histmersion's own base prompt ([[AgentGenerator.CodexBaseFile]]) instead of Codex's
       * built-in one (`agents.providers.codex.base-instructions = lean`).
       */
-    codexLeanBase: GenSettings.CodexLeanBase = false
+    codexLeanBase: GenSettings.CodexLeanBase = com.histmersion.domain.automation.agents.GenSettings.CodexLeanBase(false)
 )
 
 object GenSettings:

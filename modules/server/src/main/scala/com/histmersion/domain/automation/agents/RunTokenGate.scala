@@ -38,10 +38,10 @@ final class RunTokenGate(tokens: RunTokens) extends ChannelInboundHandlerAdapter
           tokens.bearer(req.headers().get(HttpHeaderNames.AUTHORIZATION)) match
             case None =>
               scribe.warn(s"agent MCP: refused a request to $path without a live run token")
-              refuse(ctx, req, HttpResponseStatus.UNAUTHORIZED, "a live run token is required")
+              refuse(ctx, req, HttpResponseStatus.UNAUTHORIZED, com.histmersion.domain.automation.agents.RunTokenGate.Problem("a live run token is required"))
             case Some(g) if path != RunTokens.Path && path != s"${RunTokens.Path}/${g.agent}" =>
               scribe.warn(s"agent MCP: a token of ${g.agent} (run ${g.run.getOrElse("-")}) asked for $path — refused")
-              refuse(ctx, req, HttpResponseStatus.FORBIDDEN, "this run token is not for that agent")
+              refuse(ctx, req, HttpResponseStatus.FORBIDDEN, com.histmersion.domain.automation.agents.RunTokenGate.Problem("this run token is not for that agent"))
             case Some(g) =>
               if path == RunTokens.Path then
                 req.setUri(s"${RunTokens.Path}/${g.agent}" + (if q < 0 then "" else uri.substring(q)))

@@ -201,7 +201,7 @@ object AgentGenerator:
 
   /** The checked-in tree of the repository: `plugin/` and the root marketplace. */
   def repoPlugin(d: Defs): Map[com.histmersion.util.storage.SafePath.Candidate, String] =
-    val s = GenSettings("", None, "", claudeMod = false, interactiveMod = false, PluginVersion)
+    val s = GenSettings(com.histmersion.domain.automation.agents.GenSettings.AgentMcpUrl(""), None, com.histmersion.domain.automation.agents.GenSettings.QuotaUrl(""), claudeMod = com.histmersion.domain.automation.agents.GenSettings.ClaudeMod(false), interactiveMod = com.histmersion.domain.automation.agents.GenSettings.InteractiveMod(false), PluginVersion)
     interactivePlugin(d, s).map((k, v) => s"plugin/$k" -> v) +
       (".claude-plugin/marketplace.json" -> marketplaceJson(InteractivePlugin, "./plugin", PluginVersion))
 
@@ -361,7 +361,7 @@ object AgentGenerator:
       (if s.codexLeanBase then Map(s"home/$CodexBaseFile" -> codexBaseInstructions(d, s)) else Map.empty) ++
       roles.map(a => s"home/${a.name}.config.toml" -> codexProfile(d, a)) ++
       roles.map(a => s"home/agents/${a.name}.toml" -> codexAgent(d, a)) ++
-      skills(d, "home/skills", ToolStyle.Bare, keepAllowedTools = false)
+      skills(d, "home/skills", ToolStyle.Bare, keepAllowedTools = com.histmersion.domain.automation.agents.AgentGenerator.SkillsKeepAllowedTools(false))
     val plugin = Map(
       "plugin/.codex-plugin/plugin.json" -> pretty(
         Json.obj(
@@ -408,12 +408,12 @@ object AgentGenerator:
     val roles = d.agents.filter(_.runsOn(AgentRuntime.Opencode))
     val runs = Map(
       "xdg/opencode/opencode.json" -> pretty(Json.obj("$schema" -> "https://opencode.ai/config.json".asJson)),
-      "config/opencode.json" -> opencodeConfig(s.agentMcpUrl, headless = true)
+      "config/opencode.json" -> opencodeConfig(s.agentMcpUrl, headless = com.histmersion.domain.automation.agents.AgentGenerator.Headless(true))
     ) ++
       roles.map(a => s"config/agents/${a.name}.md" -> opencodeAgent(d, a)) ++
       skills(d, "config/skills", ToolStyle.Opencode, keepAllowedTools = false)
-    val interactive = s.mcpUrl.map(u => "interactive/opencode.json" -> opencodeConfig(u, headless = false)).toMap ++
-      skills(d, "interactive/skills", ToolStyle.Opencode, keepAllowedTools = false)
+    val interactive = s.mcpUrl.map(u => "interactive/opencode.json" -> opencodeConfig(u, headless = com.histmersion.domain.automation.agents.AgentGenerator.Headless(false))).toMap ++
+      skills(d, "interactive/skills", ToolStyle.Opencode, keepAllowedTools = com.histmersion.domain.automation.agents.AgentGenerator.SkillsKeepAllowedTools(false))
     (runs ++ interactive).map((k, v) => s"opencode/$k" -> v)
 
   /** Every tree for `runtimes`. */

@@ -149,7 +149,7 @@ final class IngestQueue(
           error = Some(s"${JobState.Interrupted}: the upload is no longer held by this process")
         )
       case Some(job) =>
-        jobs.transition(id, JobState.Queued, JobState.Running, Some("converting")) match
+        jobs.transition(id, JobState.Queued, JobState.Running, Some(com.histmersion.util.jobs.JobRepo.ProgressText("converting"))) match
           case None    => () // someone else claimed it, or it was cancelled — leave the row alone
           case Some(_) =>
             val converted =
@@ -196,7 +196,7 @@ final class IngestQueue(
     * the digest of the original. Returns how many assets were kept.
     */
   private def store(jobId: com.histmersion.util.jobs.Job.Id, job: IngestPending, doc: ConvertedDoc): Either[com.histmersion.domain.library.ingest.IngestQueue.Problem, com.histmersion.RowCount] =
-    if maintenance.active then Left("a restore is in progress; this job was not written")
+    if maintenance.active then Left(com.histmersion.domain.library.ingest.IngestQueue.Problem("a restore is in progress; this job was not written"))
     else storeNow(jobId, job, doc)
 
   private def storeNow(jobId: com.histmersion.util.jobs.Job.Id, job: IngestPending, doc: ConvertedDoc): Either[com.histmersion.domain.library.ingest.IngestQueue.Problem, com.histmersion.RowCount] =

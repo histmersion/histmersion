@@ -31,7 +31,7 @@ object ListQueries:
             .parse(s)
             .map(Some(_))
             .toRight(bad(s"unknown state '$s' (one of: ${(ApprovalState.values.map(_.wire) :+ "all").mkString(", ")})"))
-      kinds <- ListFilters.known("kind", n.kind, ApprovalKind.values.map(_.wire).toSeq).left.map(bad)
+      kinds <- ListFilters.known(com.histmersion.api.automation.ListFilters.FacetName("kind"), n.kind, ApprovalKind.values.map(_.wire).toSeq).left.map(bad)
       by <- ListFilters.known("decidedBy", n.decidedBy, DecidedBy.values.map(_.wire).toSeq).left.map(bad)
     yield com.histmersion.domain.automation.approvals.ApprovalQuery(
       state,
@@ -44,7 +44,7 @@ object ListQueries:
   def runs(f: RunFilter, now: Instant): Either[Api.Error, com.histmersion.domain.automation.agents.RunQuery] =
     val n = f.normalized
     for
-      st <- ListFilters.known("status", n.status, RunState.values.map(_.wire).toSeq).left.map(bad)
+      st <- ListFilters.known(com.histmersion.api.automation.ListFilters.FacetName("status"), n.status, RunState.values.map(_.wire).toSeq).left.map(bad)
       ps <- ListFilters.known("pipeline", n.pipeline, Pipeline.values.map(_.wire).toSeq).left.map(bad)
       os <- ListFilters.known("origin", n.origin, Origin.values.map(_.wire).toSeq).left.map(bad)
       tr <- ListFilters.range(n.since, n.until, now).left.map(bad)

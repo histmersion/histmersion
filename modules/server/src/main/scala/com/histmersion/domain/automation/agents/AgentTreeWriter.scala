@@ -36,7 +36,7 @@ private[agents] object AgentTreeWriter:
       val gone = previous.filter(p => runtimes.exists(r => p.startsWith(s"$r/")) && !tree.contains(p))
       gone.foreach(name => { val _ = store.delete(key(name)) })
       if runtimes.contains(AgentRuntime.ClaudeCode.wire) then
-        store.makeDirectory(key("claude-code/login")).fold(error => throw java.io.IOException(error.message), identity)
+        store.makeDirectory(key(com.histmersion.domain.automation.agents.AgentTreeWriter.StoreKeyName("claude-code/login"))).fold(error => throw java.io.IOException(error.message), identity)
       val keep = previous.filterNot(p => runtimes.exists(r => p.startsWith(s"$r/")))
       val files = (keep.flatMap(name => store.get(key(name)).map(blob => name -> Prompt.sha256(blob.text()))) ++
         tree.toList.map((name, text) => name -> Prompt.sha256(text))).sortBy(_._1)

@@ -115,7 +115,7 @@ trait ManagerKindDefinition:
   def status(st: EngineStatus, now: Instant): EngineStatus = st
 
   /** What this kind's domain ingested today outside the managers' own events (the shared ingest cap counts it). */
-  def ingestedToday(now: Instant): com.histmersion.domain.automation.managers.ManagerKindDefinition.IngestedTodayResult = 0
+  def ingestedToday(now: Instant): com.histmersion.domain.automation.managers.ManagerKindDefinition.IngestedTodayResult = com.histmersion.domain.automation.managers.ManagerKindDefinition.(0)
 
   /** The autopilot's checks of an approval this kind's items wait for (None: not one of its kinds). */
   def judge(

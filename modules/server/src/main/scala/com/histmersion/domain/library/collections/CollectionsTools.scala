@@ -32,10 +32,10 @@ object CollectionsTools:
       citekey: Option[com.histmersion.domain.library.Citekey] = None,
       format: Option[CollectionInput.Format] = None,
       limit: Option[CollectionInput.Limit] = None,
-      unlinked: CollectionInput.Unlinked = false,
-      convert: CollectionInput.Convert = true,
-      replace: CollectionInput.Replace = false,
-      apply: CollectionInput.Apply = false,
+      unlinked: CollectionInput.Unlinked = com.histmersion.domain.library.collections.CollectionsTools.CollectionInput.(false),
+      convert: CollectionInput.Convert = com.histmersion.domain.library.collections.CollectionsTools.CollectionInput.(true),
+      replace: CollectionInput.Replace = com.histmersion.domain.library.collections.CollectionsTools.CollectionInput.(false),
+      apply: CollectionInput.Apply = com.histmersion.domain.library.collections.CollectionsTools.CollectionInput.(false),
       fields: List[CollectionInput.Fields] = Nil
   ) derives KindlingsCodecAsObject,
         KindlingsSchema, com.histmersion.api.json.Schema

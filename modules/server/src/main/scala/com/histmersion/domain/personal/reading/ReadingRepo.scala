@@ -17,8 +17,8 @@ private[reading] object ReadingRepo:
   private def iso(col: com.histmersion.domain.personal.reading.ReadingRepo.Column): com.histmersion.domain.personal.MarkTime.Iso = s"""to_char($col AT TIME ZONE 'UTC', 'YYYY-MM-DD"T"HH24:MI:SS.US"Z"')"""
 
   private val Projection =
-    s"""SELECT m.target_kind, m.target_id, m.target_uid, m.target_label, ${iso("m.read_at")}, ${iso("m.opened_at")},
-               ${iso("m.created_at")}, ${iso("m.updated_at")}
+    s"""SELECT m.target_kind, m.target_id, m.target_uid, m.target_label, ${iso(com.histmersion.domain.personal.reading.ReadingRepo.Column("m.read_at"))}, ${iso(com.histmersion.domain.personal.reading.ReadingRepo.Column("m.opened_at"))},
+               ${iso(com.histmersion.domain.personal.reading.ReadingRepo.Column("m.created_at"))}, ${iso(com.histmersion.domain.personal.reading.ReadingRepo.Column("m.updated_at"))}
           FROM read_marks m"""
 
   def list(user: UserId, kind: Option[ItemKind], show: ReadingShow, size: PageSize)(using DbCon): List[MarkRow] =

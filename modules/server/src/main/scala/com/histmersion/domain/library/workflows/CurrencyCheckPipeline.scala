@@ -42,7 +42,7 @@ final class CurrencyCheckPipeline(
   def run(ctx: RunCtx): Either[Halt, com.histmersion.domain.library.workflows.CurrencyCheckPipeline.RunResultPart2] =
     val goal = ctx.run.target
     for
-      targets <- ctx.code[List[Target]]("load")(Right(load(goal)))
+      targets <- ctx.code[List[Target]](com.histmersion.domain.automation.agents.AgentRepo.StepRecord.Name("load"))(Right(load(goal)))
       assessed <- ctx.code[Assessed]("assess")(Right(assess(ctx, targets)))
       followed <- ctx.code[Followed]("followups")(Right(followups(ctx, goal, targets)))
       line <- ctx.code[String]("close")(

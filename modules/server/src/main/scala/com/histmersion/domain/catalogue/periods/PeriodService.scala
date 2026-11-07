@@ -105,7 +105,7 @@ object PeriodService:
             else
               val kept = p.modify(_.preset).using(_.orElse(held(i).period.preset))
               upsert(tail, held.updated(i, StoredPeriod(kept, dataset)))
-      if rows.isEmpty then 0
+      if rows.isEmpty then com.histmersion.RowCount(0)
       else
         val _ = state.updateAndGet(_.modify(_.periods).using(upsert(rows, _)))
         rows.size

@@ -5,13 +5,13 @@ package com.histmersion.domain.library.acquisition
   */
 enum IngestPath(val legalChain: IngestPath.LegalChain, val needsFile: IngestPath.NeedsFile):
   /** `histmersion ingest <doi>`. */
-  case Person extends IngestPath(false, false)
+  case Person extends IngestPath(com.histmersion.domain.library.acquisition.IngestPath.LegalChain(false), com.histmersion.domain.library.acquisition.IngestPath.NeedsFile(false))
 
   /** `histmersion ingest <doi> --legal-only`. */
-  case PersonLegal extends IngestPath(true, false)
+  case PersonLegal extends IngestPath(com.histmersion.domain.library.acquisition.IngestPath.LegalChain(true), com.histmersion.domain.library.acquisition.IngestPath.NeedsFile(false))
 
   /** A watcher's auto-ingest, the acquisition list's re-check. */
-  case Watcher extends IngestPath(true, true)
+  case Watcher extends IngestPath(com.histmersion.domain.library.acquisition.IngestPath.LegalChain(true), com.histmersion.domain.library.acquisition.IngestPath.NeedsFile(true))
 
 object IngestPath:
   type LegalChain = LegalChain.T

@@ -151,7 +151,7 @@ object ImportService:
         refresh: com.histmersion.domain.media.imports.ImportService.Refresh,
         since: Option[com.histmersion.domain.media.imports.ImportService.Since]
     ): Either[com.histmersion.domain.media.imports.ImportService.TargetsText, List[Target]] = one(place, event).toLeft(Nil)
-    def pending(provider: com.histmersion.domain.media.imports.ImportService.Provider, since: Option[com.histmersion.domain.media.imports.ImportService.Since]): com.histmersion.domain.media.imports.ImportService.PendingCount = 0
+    def pending(provider: com.histmersion.domain.media.imports.ImportService.Provider, since: Option[com.histmersion.domain.media.imports.ImportService.Since]): com.histmersion.domain.media.imports.ImportService.PendingCount = com.histmersion.domain.media.imports.ImportService.PendingCount(0)
     def collectionTargets(
         check: com.histmersion.domain.media.imports.ImportService.CheckName,
         places: com.histmersion.domain.media.imports.ImportService.Places,
@@ -163,10 +163,10 @@ object ImportService:
         pleiadesOnly: com.histmersion.domain.media.imports.ImportService.PleiadesOnly
     ): Either[com.histmersion.domain.media.imports.ImportService.TargetsText, List[Target]] =
       (place.map(_.trim).filter(_.nonEmpty), event.map(_.trim).filter(_.nonEmpty)) match
-        case (Some(_), _) if !places   => Left("this import is about events: name one with --event")
-        case (None, Some(_)) if places => Left("this import is about places: name one with --place")
+        case (Some(_), _) if !places   => Left(com.histmersion.domain.media.imports.ImportService.TargetsText("this import is about events: name one with --event"))
+        case (None, Some(_)) if places => Left(com.histmersion.domain.media.imports.ImportService.TargetsText("this import is about places: name one with --place"))
         case _                         => one(place, event).toLeft(Nil)
-    def collectionPending(check: com.histmersion.domain.media.imports.ImportService.CheckName, places: com.histmersion.domain.media.imports.ImportService.Places, since: Option[com.histmersion.domain.media.imports.ImportService.Since], pleiadesOnly: com.histmersion.domain.media.imports.ImportService.PleiadesOnly): com.histmersion.domain.media.imports.ImportService.PendingCount = 0
+    def collectionPending(check: com.histmersion.domain.media.imports.ImportService.CheckName, places: com.histmersion.domain.media.imports.ImportService.Places, since: Option[com.histmersion.domain.media.imports.ImportService.Since], pleiadesOnly: com.histmersion.domain.media.imports.ImportService.PleiadesOnly): com.histmersion.domain.media.imports.ImportService.PendingCount = com.histmersion.domain.media.imports.ImportService.PendingCount(0)
     def placeFacts(ids: List[com.histmersion.domain.catalogue.Place.Id]): Map[com.histmersion.domain.catalogue.Place.Id, PlaceFacts] = Map.empty
     def mapPlacesNamed(keys: List[com.histmersion.domain.media.imports.ImportService.PlaceKey]): Map[com.histmersion.domain.media.imports.ImportService.PlaceKey, List[PlaceFacts]] = Map.empty
     def placeExternalIds(ids: List[com.histmersion.domain.catalogue.Place.Id]): Map[com.histmersion.domain.catalogue.Place.Id, Set[(com.histmersion.domain.media.imports.ImportService.Provider, com.histmersion.domain.media.imports.ImportService.ExternalId)]] = Map.empty

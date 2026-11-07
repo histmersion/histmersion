@@ -55,7 +55,7 @@ final class AcquisitionSweepPipeline(
   def run(ctx: RunCtx): Either[Halt, com.histmersion.domain.library.workflows.AcquisitionSweepPipeline.RunResultPart2] =
     val goal = ctx.run.target
     for
-      found <- ctx.code[Found]("discover")(discover(ctx, goal))
+      found <- ctx.code[Found](com.histmersion.domain.automation.agents.AgentRepo.StepRecord.Name("discover"))(discover(ctx, goal))
       line <-
         if found.candidates.isEmpty then
           ctx.code[String]("close")(
@@ -99,7 +99,7 @@ final class AcquisitionSweepPipeline(
   ): Either[Halt, com.histmersion.domain.library.workflows.AcquisitionSweepPipeline.WithoutBacklogResultPart2] =
     for
       took <-
-        if allowed > 0 then ctx.code[List[Ingested]]("ingest")(Right(ingest(ctx, goal, picks, allowed)))
+        if allowed > 0 then ctx.code[List[Ingested]](com.histmersion.domain.automation.agents.AgentRepo.StepRecord.Name("ingest"))(Right(ingest(ctx, goal, picks, allowed)))
         else Right(Nil)
       added <- ctx.code[Int]("queue")(
         Right(queue(ctx, goal, picks.filterNot(p => took.exists(_.doi == p.candidate.doi))))
@@ -130,7 +130,7 @@ final class AcquisitionSweepPipeline(
   ): Either[Halt, com.histmersion.domain.library.workflows.AcquisitionSweepPipeline.WithBacklogResultPart2] =
     for
       tried <-
-        if allowed > 0 then ctx.code[Tried]("ingest")(Right(ingestOa(ctx, goal, picks, allowed))) else Right(Tried())
+        if allowed > 0 then ctx.code[Tried](com.histmersion.domain.automation.agents.AgentRepo.StepRecord.Name("ingest"))(Right(ingestOa(ctx, goal, picks, allowed))) else Right(Tried())
       noCopy = tried.failed.filter(_.noCopy).map(_.doi).toSet
       waiting = picks.filter(p =>
         p.candidate.isOa && !tried.ingested.exists(_.doi == p.candidate.doi) && !noCopy(p.candidate.doi)
@@ -153,7 +153,7 @@ final class AcquisitionSweepPipeline(
     yield line
 
   private def skippedText(m: Map[com.histmersion.domain.library.workflows.AcquisitionSweepPipeline.SkippedTextMPart1, com.histmersion.RowCount]): com.histmersion.domain.library.workflows.AcquisitionSweepPipeline.SkippedTextResult =
-    if m.isEmpty then "none left out" else m.toList.sortBy(_._1).map((k, n) => s"$n $k").mkString(", ")
+    if m.isEmpty then com.histmersion.domain.library.workflows.AcquisitionSweepPipeline.("none left out") else m.toList.sortBy(_._1).map((k, n) => s"$n $k").mkString(", ")
 
   /** The DOIs in a watcher's ingest backlog that this goal found already (a pick another goal found joins that entry,
     * so it is offered to this goal's ranking too).
@@ -345,7 +345,7 @@ object AcquisitionSweepPipeline:
   object RankInputResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
   def picked(c: com.histmersion.domain.automation.managers.ManagerContext, run: com.histmersion.domain.automation.Run.Id): List[Picked] =
-    c.stepOutput(run, "rank").flatMap(o => io.circe.parser.decode[List[Picked]](o).toOption).getOrElse(Nil)
+    c.stepOutput(run, com.histmersion.domain.automation.managers.ManagerContext.StepOutputStep("rank")).flatMap(o => io.circe.parser.decode[List[Picked]](o).toOption).getOrElse(Nil)
 
   /** `stored`: the candidates' ids in the store (#3761), by DOI — none when the live search found them. */
   final case class Found(

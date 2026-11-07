@@ -20,4 +20,4 @@ object MediaState:
   type LastAssetLinkId = LastAssetLinkId.T
   object LastAssetLinkId extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
-  val empty: MediaState = MediaState(Vector.empty, Vector.empty, Vector.empty, 0L, Vector.empty)
+  val empty: MediaState = MediaState(Vector.empty, Vector.empty, Vector.empty, com.histmersion.domain.media.MediaState.LastAssetLinkId(0L), Vector.empty)

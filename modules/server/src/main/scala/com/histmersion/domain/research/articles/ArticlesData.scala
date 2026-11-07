@@ -17,7 +17,7 @@ object ArticlesData:
   type FixedRank = FixedRank.T
   object FixedRank extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
-  def figures(using DbCon): List[DataCount] = List(DataCount("articles", ArticleRepo.count()))
+  def figures(using DbCon): List[DataCount] = List(DataCount(com.histmersion.util.data.diagnostics.DataCount.Noun("articles"), ArticleRepo.count()))
 
   final private class Check(val owner: DataOwner, name: Check.Name, override val fix: Option[SafeFix]) extends CheckRule:
     val rule: Rule = Lint.rule(name).getOrElse(Rule(name, name))
@@ -52,14 +52,14 @@ object ArticlesData:
       List(
         s"$ArticleCritiquePairing: $citations citation(s) added to the paragraphs that name them, in ${written.size} article(s)"
       ),
-      0,
-      0,
-      0,
-      0
+      com.histmersion.api.checks.Lint.LintFixResult.EdgesResolved(0),
+      com.histmersion.api.checks.Lint.LintFixResult.SourcesReindexed(0),
+      com.histmersion.api.checks.Lint.LintFixResult.ChunksWritten(0),
+      com.histmersion.api.checks.Lint.LintFixResult.Remaining(0)
     )
 
   /** Research's rules, in the order the report has always listed them. */
   def checks(owner: DataOwner): List[CheckRule] =
     listed(owner, DanglingArticleLinks, ArticleFiller, ArticleUncitedParagraph, ArticleThinSummary) ++
-      List(fixed(owner, ArticleCritiquePairing, FixWhen.WhenNamed, 80)(pairCritiques)) ++
+      List(fixed(owner, ArticleCritiquePairing, FixWhen.WhenNamed, com.histmersion.domain.research.articles.ArticlesData.FixedRank(80))(pairCritiques)) ++
       listed(owner, ArticleFormat)

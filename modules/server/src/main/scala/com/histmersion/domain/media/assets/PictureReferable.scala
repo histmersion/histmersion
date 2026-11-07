@@ -10,4 +10,4 @@ final class PictureReferable(db: Transactor) extends TableReferable(db, List(Pic
 object PictureReferable:
   val Kind: ItemKind = ItemKind("picture")
 
-  val Table: RecordTable = RecordTable(Kind, "assets", "t.uid::text", "t.caption", Some("t.uid"), None)
+  val Table: RecordTable = RecordTable(Kind, com.histmersion.util.identity.RecordTable.Table("assets"), com.histmersion.util.identity.RecordTable.Key("t.uid::text"), com.histmersion.util.identity.RecordTable.Title("t.caption"), Some(com.histmersion.util.identity.RecordTable.Uid("t.uid")), None)

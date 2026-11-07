@@ -94,11 +94,11 @@ final class SchedulerService(
   def budgetBlock(): Option[Block] =
     val (day, month) = agents.runs.spendDayMonth()
     if day >= BigDecimal(cfg.budgets.dailyUsd) then
-      Some(Block("budget", s"budget: today's agent spend reached agents.budgets.daily-usd (${cfg.budgets.dailyUsd})"))
+      Some(Block(com.histmersion.domain.SchedulerPolicy.Block.Code("budget"), s"budget: today's agent spend reached agents.budgets.daily-usd (${cfg.budgets.dailyUsd})"))
     else if month >= BigDecimal(cfg.budgets.monthlyUsd) then
       Some(
         Block(
-          "budget",
+          com.histmersion.domain.SchedulerPolicy.Block.Code("budget"),
           s"budget: this month's agent spend reached agents.budgets.monthly-usd (${cfg.budgets.monthlyUsd})"
         )
       )
@@ -322,7 +322,7 @@ final class SchedulerService(
     val res = snap.in.res
     SchedulerStatus(
       s.strategy.name,
-      if chosen.isDefined then "person" else "config",
+      if chosen.isDefined then com.histmersion.api.automation.AgentScheduler.SchedulerStatus.StrategyFrom("person") else com.histmersion.api.automation.AgentScheduler.SchedulerStatus.StrategyFrom("config"),
       Strategies.all.map(x => StrategyLine(x.name, x.describe)),
       Some(snap.at.toString),
       snap.dry,
@@ -528,7 +528,7 @@ final class SchedulerService(
             Right(s"strategy ${st.name} (by $by)")
     done.map { line =>
       last = None
-      val _ = agents.workLists.add("log", QueueAdd(s"agent scheduler: $line".take(1000)))
+      val _ = agents.workLists.add(com.histmersion.domain.automation.worklists.WorkListControllers.ListName("log"), QueueAdd(s"agent scheduler: $line".take(1000)))
       scribe.info(s"agent scheduler: $line")
       agents.managers.nudge()
       status(None, now, List(line))

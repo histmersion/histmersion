@@ -69,7 +69,7 @@ object Composition:
       host: com.histmersion.server.Composition.Host,
       port: com.histmersion.server.Composition.Port,
       converter: ConverterClient,
-      autoInit: com.histmersion.server.Composition.ServerAutoInit = false,
+      autoInit: com.histmersion.server.Composition.ServerAutoInit = com.histmersion.server.Composition.ServerAutoInit(false),
       onWiring: ServerWiring => Unit = _ => (),
       configFile: ConfigFileInfo = ConfigFileInfo(),
       plugins: Generation = ServerPlugins.offline,
@@ -126,7 +126,7 @@ object Composition:
       host: com.histmersion.server.Composition.Host,
       port: com.histmersion.server.Composition.Port,
       converter: Option[ConverterClient],
-      autoInit: com.histmersion.server.Composition.BuildAutoInit = false,
+      autoInit: com.histmersion.server.Composition.BuildAutoInit = com.histmersion.server.Composition.BuildAutoInit(false),
       onWiring: ServerWiring => Unit = _ => (),
       plugins: Generation = ServerPlugins.offline,
       core: Option[CoreBudget] = None,
@@ -251,7 +251,7 @@ object Composition:
       .node[AcquireClients](
         ServerGraph.Acquisition,
         deps = List(sg.plugins),
-        keys = List("histmersion.acquire", "histmersion.media.max-retry-after-seconds")
+        keys = List(com.histmersion.server.hot.Hot.Graph.Def.Keys("histmersion.acquire"), com.histmersion.server.hot.Hot.Graph.Def.Keys("histmersion.media.max-retry-after-seconds"))
       ) { ctx =>
         Right(acquireClients(ctx.config.app, ctx(sg.plugins), sg.core)(using deps.clock))
       }
@@ -270,7 +270,7 @@ object Composition:
     import com.histmersion.api.*
     import com.histmersion.domain.library.collections.*
     val library = new CollectionLibrary:
-      def source(citekey: com.histmersion.domain.library.Citekey) = h.library.sources.get(citekey, body = false)
+      def source(citekey: com.histmersion.domain.library.Citekey) = h.library.sources.get(citekey, body = com.histmersion.domain.library.sources.SourcesControllers.GetBody(false))
       def create(citekey: com.histmersion.domain.library.Citekey, put: Source.Put) = h.library.sources.put(citekey, put)
       def patch(citekey: com.histmersion.domain.library.Citekey, patch: Source.Patch) = h.library.sources.patch(citekey, patch)
       def pushMeta(citekey: com.histmersion.domain.library.Citekey) = h.calibreGaps.pushMeta(citekey)
@@ -285,7 +285,7 @@ object Composition:
             .map(e => Api.Error(s"cannot read the original of '$citekey': ${e.getMessage}"))
             .map(StoredOriginal(_, disposition))
         }
-      def queueItem(id: com.histmersion.server.Composition.CollectionsControllersQueueItemId) = h.workListView.list(Queue.Kind.Acquire.label, all = true).map(_.items.find(_.id == id))
+      def queueItem(id: com.histmersion.server.Composition.CollectionsControllersQueueItemId) = h.workListView.list(Queue.Kind.Acquire.label, all = com.histmersion.server.views.WorkListView.IncludeAll(true)).map(_.items.find(_.id == id))
       def ingest(params: Ingest.Params, bytes: com.histmersion.server.Composition.CollectionsControllersIngestBytes) =
         h.ingest.controllers.ingest(
           params,

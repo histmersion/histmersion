@@ -75,74 +75,74 @@ object BuiltinMedia:
   /** In the order `media import`'s list names them. */
   val entries: List[Entry] = List(
     Entry(
-      "media-wikidata",
-      "wikidata",
-      "Wikidata pictures",
+      com.histmersion.domain.media.imports.BuiltinMedia.Entry.Plugin("media-wikidata"),
+      com.histmersion.domain.media.imports.BuiltinMedia.Entry.Name("wikidata"),
+      com.histmersion.domain.media.imports.BuiltinMedia.Entry.Title("Wikidata pictures"),
       MediaProvider.Commons,
       MediaProvider.Commons,
       _.commons.licences
     ),
     Entry(
-      "media-depicts",
-      "depicts",
-      "Commons depictions",
+      com.histmersion.domain.media.imports.BuiltinMedia.Entry.Plugin("media-depicts"),
+      com.histmersion.domain.media.imports.BuiltinMedia.Entry.Name("depicts"),
+      com.histmersion.domain.media.imports.BuiltinMedia.Entry.Title("Commons depictions"),
       MediaProvider.CommonsDepicts,
       MediaProvider.Commons,
       _.depicts.licences
     ),
-    Entry("media-met", "met", "Met objects", MediaProvider.Met, MediaProvider.Met, _.met.licences),
+    Entry(com.histmersion.domain.media.imports.BuiltinMedia.Entry.Plugin("media-met"), com.histmersion.domain.media.imports.BuiltinMedia.Entry.Name("met"), com.histmersion.domain.media.imports.BuiltinMedia.Entry.Title("Met objects"), MediaProvider.Met, MediaProvider.Met, _.met.licences),
     Entry(
-      "media-cleveland",
-      "cleveland",
-      "Cleveland Museum of Art objects",
+      com.histmersion.domain.media.imports.BuiltinMedia.Entry.Plugin("media-cleveland"),
+      com.histmersion.domain.media.imports.BuiltinMedia.Entry.Name("cleveland"),
+      com.histmersion.domain.media.imports.BuiltinMedia.Entry.Title("Cleveland Museum of Art objects"),
       MediaProvider.Cleveland,
       MediaProvider.Cleveland,
       _.cleveland.licences
     ),
     Entry(
-      "media-aic",
-      "aic",
-      "Art Institute of Chicago objects",
+      com.histmersion.domain.media.imports.BuiltinMedia.Entry.Plugin("media-aic"),
+      com.histmersion.domain.media.imports.BuiltinMedia.Entry.Name("aic"),
+      com.histmersion.domain.media.imports.BuiltinMedia.Entry.Title("Art Institute of Chicago objects"),
       MediaProvider.ArtInstitute,
       MediaProvider.ArtInstitute,
       _.aic.licences
     ),
     Entry(
-      "media-loc",
-      "loc",
-      "Library of Congress maps",
+      com.histmersion.domain.media.imports.BuiltinMedia.Entry.Plugin("media-loc"),
+      com.histmersion.domain.media.imports.BuiltinMedia.Entry.Name("loc"),
+      com.histmersion.domain.media.imports.BuiltinMedia.Entry.Title("Library of Congress maps"),
       MediaProvider.LibraryOfCongress,
       MediaProvider.LibraryOfCongress,
       _.loc.licences
     ),
     Entry(
-      "media-pleiades",
-      "pleiades",
-      "Pleiades-linked pictures",
+      com.histmersion.domain.media.imports.BuiltinMedia.Entry.Plugin("media-pleiades"),
+      com.histmersion.domain.media.imports.BuiltinMedia.Entry.Name("pleiades"),
+      com.histmersion.domain.media.imports.BuiltinMedia.Entry.Title("Pleiades-linked pictures"),
       MediaProvider.Pleiades,
       MediaProvider.Commons,
       _.pleiades.licences
     ),
     Entry(
-      "media-opencontext",
-      "opencontext",
-      "Open Context media",
+      com.histmersion.domain.media.imports.BuiltinMedia.Entry.Plugin("media-opencontext"),
+      com.histmersion.domain.media.imports.BuiltinMedia.Entry.Name("opencontext"),
+      com.histmersion.domain.media.imports.BuiltinMedia.Entry.Title("Open Context media"),
       MediaProvider.OpenContext,
       MediaProvider.OpenContext,
       _.openContext.licences
     ),
     Entry(
-      "media-smithsonian",
-      "smithsonian",
-      "Smithsonian Open Access objects",
+      com.histmersion.domain.media.imports.BuiltinMedia.Entry.Plugin("media-smithsonian"),
+      com.histmersion.domain.media.imports.BuiltinMedia.Entry.Name("smithsonian"),
+      com.histmersion.domain.media.imports.BuiltinMedia.Entry.Title("Smithsonian Open Access objects"),
       MediaProvider.Smithsonian,
       MediaProvider.Smithsonian,
       _.smithsonian.licences
     ),
     Entry(
-      "media-europeana",
-      "europeana",
-      "Europeana images",
+      com.histmersion.domain.media.imports.BuiltinMedia.Entry.Plugin("media-europeana"),
+      com.histmersion.domain.media.imports.BuiltinMedia.Entry.Name("europeana"),
+      com.histmersion.domain.media.imports.BuiltinMedia.Entry.Title("Europeana images"),
       MediaProvider.Europeana,
       MediaProvider.Europeana,
       _.europeana.licences
@@ -190,7 +190,7 @@ object BuiltinMedia:
     */
   def canonical(asked: com.histmersion.domain.media.imports.BuiltinMedia.CanonicalAsked): com.histmersion.domain.media.imports.BuiltinMedia.CanonicalResult =
     val s = asked.trim.toLowerCase(java.util.Locale.ROOT)
-    if s.isEmpty then "wikidata" else aliases.getOrElse(s, s)
+    if s.isEmpty then com.histmersion.domain.media.imports.BuiltinMedia.CanonicalResult("wikidata") else aliases.getOrElse(s, s)
 
   /** Pure: the registered names in the order lists show them — the built-ins in their order, then the plugins'
     * collections in registration order.

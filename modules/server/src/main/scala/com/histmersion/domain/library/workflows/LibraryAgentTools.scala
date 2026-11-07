@@ -53,7 +53,7 @@ final class LibraryAgentTools(site: => LibrarySite, upstream: () => AgentUpstrea
       ) { in =>
         val section = in.sectionOrBody
         site.sources
-          .markdown(in.citekey, fullText = false, section, in.heading, in.offset, bodyChars(in.chars))
+          .markdown(in.citekey, fullText = com.histmersion.domain.library.sources.SourcesControllers.MarkdownFullText(false), section, in.heading, in.offset, bodyChars(in.chars))
           .fold(
             e => s"No source '${in.citekey}': ${e.message}",
             md =>

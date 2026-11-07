@@ -12,13 +12,13 @@ import com.histmersion.api.library.Candidates
   * here (the stored candidates keep a work found twice from counting as new).
   */
 final class ArxivIndex(cfg: AcquireConfig, http: Http) extends ScholarlyIndex:
-  val name = "arxiv"
+  val name = com.histmersion.domain.library.acquisition.ScholarlyIndex.Name("arxiv")
   def search(query: com.histmersion.domain.library.search.Search.Query, since: LocalDate, limit: com.histmersion.domain.library.acquisition.ArxivIndex.SearchLimit) =
     http
       .text(
         Url(
           cfg.candidates.arxivApiUrl.value,
-          "",
+          com.histmersion.upstreams.http.Url.UrlPath(""),
           "search_query" -> s"all:\"$query\"",
           "sortBy" -> "submittedDate",
           "sortOrder" -> "descending",

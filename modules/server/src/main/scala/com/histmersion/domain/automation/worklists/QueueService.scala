@@ -99,5 +99,5 @@ object QueueService:
         val start = if mode == ImportMode.Replace then s.emptied(list) else s
         start.addedAll(list, items, at)
       }
-      ImportCounts(items.size, if mode == ImportMode.Replace then before.listed(list, QueueScope.All).size else 0)
+      ImportCounts(items.size, if mode == ImportMode.Replace then before.listed(list, QueueScope.All).size else com.histmersion.domain.automation.worklists.ImportCounts.Removed(0))
 

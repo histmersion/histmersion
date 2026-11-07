@@ -37,7 +37,7 @@ final class InferFilterPipeline(site: ResearchSite, cfg: => AgentsConfig, resear
   def run(ctx: RunCtx): Either[Halt, com.histmersion.domain.research.workflows.InferFilterPipeline.Outcome] =
     val slug = ctx.run.target
     for
-      loaded <- ctx.code[Loaded]("load")(load(slug))
+      loaded <- ctx.code[Loaded](com.histmersion.domain.automation.agents.AgentRepo.StepRecord.Name("load"))(load(slug))
       line <-
         if loaded.hasFilter then
           ctx.code[String]("close")(
@@ -120,10 +120,10 @@ final class InferFilterPipeline(site: ResearchSite, cfg: => AgentsConfig, resear
   private def record(ctx: RunCtx, slug: com.histmersion.domain.research.Slug, inf: Inferred): Either[com.histmersion.domain.research.workflows.InferFilterPipeline.Problem, Recorded] =
     inf.proposal match
       case None =>
-        Right(Recorded(None, applied = false, s"no filter passed the checks: ${inf.problems.mkString("; ").take(600)}"))
+        Right(Recorded(None, applied = com.histmersion.domain.research.workflows.InferFilterPipeline.Recorded.Applied(false), s"no filter passed the checks: ${inf.problems.mkString("; ").take(600)}"))
       case Some(p) =>
         val json = p.asJson.noSpaces
-        val what = s"${p.filter.line} → ${Plural.count(p.total, "source")}, ${p.citedIn} of ${p.cited} cited"
+        val what = s"${p.filter.line} → ${Plural.count(p.total, com.histmersion.api.Plural.CountSingular("source"))}, ${p.citedIn} of ${p.cited} cited"
         cfg.approvals.filterMode match
           case com.histmersion.domain.automation.Approval.Mode.Auto =>
             ctx.write(s"record the coverage filter of [[$slug]]", p.asJson)(
@@ -136,14 +136,14 @@ final class InferFilterPipeline(site: ResearchSite, cfg: => AgentsConfig, resear
                   ApprovalState.Approved,
                   Some(s"applied automatically (agents.approvals.article-filter): ${p.filter.line}")
                 )
-                Recorded(Some(a.id), applied = true, s"filter recorded: $what")
+                Recorded(Some(a.id), applied = com.histmersion.domain.research.workflows.InferFilterPipeline.Recorded.Applied(true), s"filter recorded: $what")
               }
-            )(Right(Recorded(None, applied = false, s"filter not recorded (${AgentsMarkdown.DryRunNote}): $what")))
+            )(Right(Recorded(None, applied = com.histmersion.domain.research.workflows.InferFilterPipeline.Recorded.Applied(false), s"filter not recorded (${AgentsMarkdown.DryRunNote}): $what")))
           case com.histmersion.domain.automation.Approval.Mode.Manual =>
             ctx.write(s"${ApprovalKind.ArticleFilter.wire} approval for [[$slug]]", p.asJson)(
               Right(ctx.approvalStore.openSubject(Some(ctx.run.id), ApprovalKind.ArticleFilter, slug, json))
                 .map(a => Recorded(Some(a.id), applied = false, s"approval ${a.id} waits for a person: $what"))
-            )(Right(Recorded(None, applied = false, s"no approval opened (${AgentsMarkdown.DryRunNote}): $what")))
+            )(Right(Recorded(None, applied = com.histmersion.domain.research.workflows.InferFilterPipeline.Recorded.Applied(false), s"no approval opened (${AgentsMarkdown.DryRunNote}): $what")))
 
   private def log(ctx: RunCtx, line: com.histmersion.domain.research.workflows.InferFilterPipeline.LogLine): Either[com.histmersion.domain.research.workflows.InferFilterPipeline.Problem, String] = Pipelines.log(site.workLists, ctx, line)
 

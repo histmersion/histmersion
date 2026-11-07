@@ -28,9 +28,9 @@ object BuiltinGazetteers:
     object Title extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
   val entries: List[Entry] = List(
-    Entry("gazetteer-cliopatria", "cliopatria", "Seshat Cliopatria polity polygons"),
-    Entry("gazetteer-awmc", "awmc", "AWMC classical-world regional names and features"),
-    Entry("gazetteer-chronontology", "chronontology", "ChronOntology named periods")
+    Entry(com.histmersion.domain.catalogue.places.BuiltinGazetteers.Entry.Plugin("gazetteer-cliopatria"), com.histmersion.domain.catalogue.places.BuiltinGazetteers.Entry.Name("cliopatria"), com.histmersion.domain.catalogue.places.BuiltinGazetteers.Entry.Title("Seshat Cliopatria polity polygons")),
+    Entry(com.histmersion.domain.catalogue.places.BuiltinGazetteers.Entry.Plugin("gazetteer-awmc"), com.histmersion.domain.catalogue.places.BuiltinGazetteers.Entry.Name("awmc"), com.histmersion.domain.catalogue.places.BuiltinGazetteers.Entry.Title("AWMC classical-world regional names and features")),
+    Entry(com.histmersion.domain.catalogue.places.BuiltinGazetteers.Entry.Plugin("gazetteer-chronontology"), com.histmersion.domain.catalogue.places.BuiltinGazetteers.Entry.Name("chronontology"), com.histmersion.domain.catalogue.places.BuiltinGazetteers.Entry.Title("ChronOntology named periods"))
   )
 
   val pluginIds: Set[com.histmersion.util.plugins.Plugin.Id] = entries.map(_.plugin).toSet

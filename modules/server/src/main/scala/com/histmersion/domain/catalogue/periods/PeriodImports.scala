@@ -62,7 +62,7 @@ final class PeriodImports(
     val n = periods.write(rows, dataset)
     Period.ImportResult(
       n,
-      if roots then d.authorities.count(_.periods.nonEmpty) else 0,
+      if roots then d.authorities.count(_.periods.nonEmpty) else com.histmersion.api.catalogue.Period.ImportResult.Roots(0),
       periods.presetCount(),
       d.skipped.take(PeriodImports.SkippedListed),
       d.skipped.size

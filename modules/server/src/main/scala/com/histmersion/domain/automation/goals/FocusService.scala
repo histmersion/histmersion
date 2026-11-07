@@ -146,7 +146,7 @@ object FocusService:
         .goals
         .contains(slug) || !mustExist
     def joined(slug: com.histmersion.domain.automation.Goal.Slug, why: com.histmersion.domain.automation.goals.FocusRepo.JoinWhy, now: Instant): Unit =
-      val _ = changeFocus(slug, mustExist = false)(
+      val _ = changeFocus(slug, mustExist = com.histmersion.domain.automation.goals.FocusService.ChangeFocusMustExist(false))(
         _.modify(_.active).setTo(true).modify(_.since).setTo(Some(now)).modify(_.why).setTo(Some(why))
       )
     def left(slug: com.histmersion.domain.automation.Goal.Slug, why: com.histmersion.domain.automation.goals.FocusRepo.GoalRow.LeftWhy, now: Instant): Unit =
@@ -162,8 +162,8 @@ object FocusService:
         )
       )
     def pin(slug: com.histmersion.domain.automation.Goal.Slug, pinned: com.histmersion.domain.automation.goals.FocusRepo.GoalRow.Pinned): Boolean =
-      changeFocus(slug, mustExist = true)(_.modify(_.pinned).setTo(pinned))
-    def priority(slug: com.histmersion.domain.automation.Goal.Slug, n: com.histmersion.domain.automation.goals.FocusRepo.GoalRow.Priority): Boolean = changeFocus(slug, mustExist = true)(_.modify(_.priority).setTo(n))
+      changeFocus(slug, mustExist = com.histmersion.domain.automation.goals.FocusService.ChangeFocusMustExist(true))(_.modify(_.pinned).setTo(pinned))
+    def priority(slug: com.histmersion.domain.automation.Goal.Slug, n: com.histmersion.domain.automation.goals.FocusRepo.GoalRow.Priority): Boolean = changeFocus(slug, mustExist = com.histmersion.domain.automation.goals.FocusService.ChangeFocusMustExist(true))(_.modify(_.priority).setTo(n))
 
   object InMemory:
     type GoalsOfResultPart1 = GoalsOfResultPart1.T

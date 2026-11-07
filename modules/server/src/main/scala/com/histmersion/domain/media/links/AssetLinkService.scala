@@ -46,7 +46,7 @@ object AssetLinkService:
         targetId: Option[com.histmersion.domain.media.assets.AssetService.TargetId]
     ): AssetLink.List =
       val rows = db.read(AssetLinkRepo.list(named(citekey), named(asset), named(targetType), named(targetId)))
-      AssetLink.List.of(rows.size, rows, 0)
+      AssetLink.List.of(rows.size, rows, com.histmersion.api.personal.UnreadPage.Offset(0))
 
     def create(in: AssetLink.Put): Either[Api.Error, AssetLink] =
       db.transact:
@@ -72,7 +72,7 @@ object AssetLinkService:
         )
         .sortBy(_.id)
         .toList
-      AssetLink.List.of(rows.size, rows, 0)
+      AssetLink.List.of(rows.size, rows, com.histmersion.api.personal.UnreadPage.Offset(0))
 
     def create(in: AssetLink.Put): Either[Api.Error, AssetLink] =
       if !state.get.assets.exists(a => a.citekey.contains(in.citekey) && a.name == in.assetName) then Left(noFigure(in))

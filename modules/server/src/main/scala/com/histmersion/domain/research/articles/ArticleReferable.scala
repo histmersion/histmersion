@@ -13,9 +13,9 @@ object ArticleReferable:
   val Table: RecordTable =
     RecordTable(
       Kind,
-      "articles",
-      "t.slug",
-      "t.title",
-      Some("t.uid"),
-      Some(AliasColumns("article_aliases", "alias", "slug"))
+      com.histmersion.util.identity.RecordTable.Table("articles"),
+      com.histmersion.util.identity.RecordTable.Key("t.slug"),
+      com.histmersion.util.identity.RecordTable.Title("t.title"),
+      Some(com.histmersion.util.identity.RecordTable.Uid("t.uid")),
+      Some(AliasColumns(com.histmersion.util.identity.AliasColumns.Table("article_aliases"), com.histmersion.util.identity.AliasColumns.Alias("alias"), com.histmersion.util.identity.AliasColumns.Target("slug")))
     )

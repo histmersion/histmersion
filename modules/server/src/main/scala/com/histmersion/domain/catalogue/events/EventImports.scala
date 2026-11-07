@@ -160,7 +160,7 @@ final class EventImports(
                 rs.head._2.lon,
                 rs.head._2.wikidata,
                 rs.map(_._2.key).toSet,
-                catalogue = true,
+                catalogue = com.histmersion.domain.catalogue.events.StoredEvent.Catalogue(true),
                 rs.head._2.label
               )
             )
@@ -185,7 +185,7 @@ final class EventImports(
               EventCount.of(kept.map(r => EventTaxonomy.canonical(r.kind))),
               EventCount.of(skipped),
               matchedIds.result().take(20),
-              parts = 1,
+              parts = com.histmersion.api.catalogue.EventImportReport.Parts(1),
               corrections = saved.fold(Correction.Counts())(_.corrections)
             )
           )

@@ -98,5 +98,5 @@ object MediaWiring:
         filename: com.histmersion.server.MediaWiring.NoThumbnails.ConvertFilename,
         quality: com.histmersion.server.MediaWiring.NoThumbnails.ConvertQuality
     ): Either[com.histmersion.server.MediaWiring.NoThumbnails.Problem, com.histmersion.api.ocr.ConvertedDoc] =
-      Left("no converter")
-    def health: Either[com.histmersion.server.MediaWiring.NoThumbnails.Problem, com.histmersion.server.MediaWiring.NoThumbnails.Health] = Left("no converter")
+      Left(com.histmersion.server.MediaWiring.NoThumbnails.Problem("no converter"))
+    def health: Either[com.histmersion.server.MediaWiring.NoThumbnails.Problem, com.histmersion.server.MediaWiring.NoThumbnails.Health] = Left(com.histmersion.server.MediaWiring.NoThumbnails.Problem("no converter"))

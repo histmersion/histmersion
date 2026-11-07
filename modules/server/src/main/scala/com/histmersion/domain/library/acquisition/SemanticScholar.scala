@@ -25,12 +25,12 @@ final class SemanticScholar(cfg: AcquireConfig, http: Http) extends CitationsCli
     work.doi match
       case Some(doi) =>
         s2(doi.value, since, limit) match
-          case Right(rows) if rows.nonEmpty => Right(("semantic-scholar", rows))
-          case Right(_)                     => openalexCiting(work, since, limit).map(("openalex", _))
+          case Right(rows) if rows.nonEmpty => Right((com.histmersion.domain.library.acquisition.SemanticScholar.("semantic-scholar"), rows))
+          case Right(_)                     => openalexCiting(work, since, limit).map((com.histmersion.domain.library.acquisition.SemanticScholar.("openalex"), _))
           case Left(err)                    =>
             scribe.warn(s"acquire: Semantic Scholar unavailable ($err) — using OpenAlex citations")
-            openalexCiting(work, since, limit).map(("openalex", _))
-      case None => openalexCiting(work, since, limit).map(("openalex", _))
+            openalexCiting(work, since, limit).map((com.histmersion.domain.library.acquisition.SemanticScholar.("openalex"), _))
+      case None => openalexCiting(work, since, limit).map((com.histmersion.domain.library.acquisition.SemanticScholar.("openalex"), _))
 
   private def s2(doi: com.histmersion.domain.library.Doi, since: Option[com.histmersion.Year], limit: com.histmersion.domain.library.acquisition.SemanticScholar.Limit): Either[com.histmersion.domain.library.acquisition.SemanticScholar.Problem, List[FollowupRow]] =
     def page(offset: com.histmersion.Offset, acc: List[FollowupRow]): Either[com.histmersion.domain.library.acquisition.SemanticScholar.Problem, List[FollowupRow]] =
@@ -54,7 +54,7 @@ final class SemanticScholar(cfg: AcquireConfig, http: Http) extends CitationsCli
               case Some(next) if rows.nonEmpty && next > offset => page(next, kept)
               case _                                            => Right(kept)
           }
-    page(0, Nil)
+    page(com.histmersion.Offset(0), Nil)
 
   private def openalexCiting(work: WorkRef, since: Option[com.histmersion.Year], limit: com.histmersion.domain.library.acquisition.SemanticScholar.Limit): Either[com.histmersion.domain.library.acquisition.SemanticScholar.Problem, List[FollowupRow]] =
     work.openalexId match
@@ -65,7 +65,7 @@ final class SemanticScholar(cfg: AcquireConfig, http: Http) extends CitationsCli
           .json(
             Url(
               cfg.openalex.url,
-              "/works",
+              com.histmersion.upstreams.http.Url.UrlPath("/works"),
               "filter" -> filter,
               "per-page" -> math.max(1, math.min(limit, 50)).toString,
               "sort" -> "cited_by_count:desc",

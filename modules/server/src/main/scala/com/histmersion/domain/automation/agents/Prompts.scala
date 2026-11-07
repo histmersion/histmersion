@@ -28,4 +28,4 @@ object Prompts:
   object OverrideDir extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
 
-  def bundled(using Stores, Resources): List[com.histmersion.domain.automation.agents.AgentDefinitions.ResourcePath] = AgentDefinitions(Prompts(""), AgentRoster.none).index
+  def bundled(using Stores, Resources): List[com.histmersion.domain.automation.agents.AgentDefinitions.ResourcePath] = AgentDefinitions(Prompts(com.histmersion.domain.automation.agents.Prompts.OverrideDir("")), AgentRoster.none).index

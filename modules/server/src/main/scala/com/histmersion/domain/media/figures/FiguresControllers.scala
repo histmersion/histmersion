@@ -7,6 +7,6 @@ import com.histmersion.api.Api
 /** `media fill-licences`: the figures with no licence take their source's — counted, and written with `apply`. */
 final class FiguresControllers(figures: FigureService, maintenance: WriteGate):
   def fillLicences(apply: com.histmersion.domain.media.figures.FigureService.Apply): Either[Api.Error, FigureLicenceFill] =
-    if apply then maintenance.guard("media_fill_licences")(Right(figures.fillLicences(apply = true)))
-    else Right(figures.fillLicences(apply = false))
+    if apply then maintenance.guard(com.histmersion.util.data.maintenance.WriteGate.OperationName("media_fill_licences"))(Right(figures.fillLicences(apply = com.histmersion.domain.media.figures.FigureService.Apply(true))))
+    else Right(figures.fillLicences(apply = com.histmersion.domain.media.figures.FigureService.Apply(false)))
 

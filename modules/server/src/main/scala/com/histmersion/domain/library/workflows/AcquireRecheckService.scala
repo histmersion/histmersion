@@ -154,7 +154,7 @@ final class AcquireRecheckService(
     then Nil
     else
       lastPass.set(now.toEpochMilli)
-      pass(RecheckRequest(by = Some("managers")), now).toList.flatMap(r =>
+      pass(RecheckRequest(by = Some(com.histmersion.api.library.Acquire.Checks.RecheckRequest.By("managers"))), now).toList.flatMap(r =>
         Option.when(r.closed + r.fetched + r.noCopy + r.failed > 0)(summary(r))
       )
 
@@ -168,9 +168,9 @@ final class AcquireRecheckService(
       !site.queues.get(QueueItemId(id)).exists(i => i.list == Queue.Kind.Acquire.label && i.status == Queue.Open)
     ) match
       case Some(id)                       => Left(Api.Error(s"no open acquisition item #$id", Some(Write.CodeNotFound)))
-      case None if in.limit.exists(_ < 0) => Left(Api.Error("--limit is 0 or more", Some(Write.CodeInvalid)))
+      case None if in.limit.exists(_ < 0) => Left(Api.Error(com.histmersion.api.Api.Error.Message("--limit is 0 or more"), Some(Write.CodeInvalid)))
       case None if in.all && in.id.isDefined =>
-        Left(Api.Error("--all re-checks every open item; --id one of them — not both", Some(Write.CodeInvalid)))
+        Left(Api.Error(com.histmersion.api.Api.Error.Message("--all re-checks every open item; --id one of them — not both"), Some(Write.CodeInvalid)))
       case None if in.all && in.limit.isDefined =>
         Left(
           Api.Error(
@@ -183,7 +183,7 @@ final class AcquireRecheckService(
         if !in.dryRun && agents.drain.draining then
           Right(
             RecheckResult(
-              dryRun = false,
+              dryRun = com.histmersion.api.library.Acquire.Checks.RecheckResult.DryRun(false),
               note = Some(
                 "the autopilot is draining: nothing runs until it is lifted " +
                   "(histmersion agent autopilot undrain); --dry-run lists what a pass would do"
@@ -191,13 +191,13 @@ final class AcquireRecheckService(
             )
           )
         else if in.dryRun || in.id.isDefined then pass(in, now).toRight(passBusy)
-        else site.maintenance.guard("queue/acquire/recheck")(byHand(in, now))
+        else site.maintenance.guard(com.histmersion.util.data.maintenance.WriteGate.OperationName("queue/acquire/recheck"))(byHand(in, now))
 
   private def busy: Api.Error =
-    BackgroundJob.busy("an acquisition list re-check job", jobSlot.current, Some(AgentsApi.CodeConflict))
+    BackgroundJob.busy(com.histmersion.util.jobs.BackgroundJob.Work("an acquisition list re-check job"), jobSlot.current, Some(AgentsApi.CodeConflict))
 
   private def passBusy: Api.Error =
-    if jobSlot.isRunning then busy else Api.Error("a re-check pass is running already; try again in a moment")
+    if jobSlot.isRunning then busy else Api.Error(com.histmersion.api.Api.Error.Message("a re-check pass is running already; try again in a moment"))
 
   /** A pass by hand, not a dry run, not one item: a job over every item (`all`, resuming the `all` job that was
     * stopped) or over the due ones the caps allow — or, when that is at most one, the pass at once.
@@ -205,7 +205,7 @@ final class AcquireRecheckService(
   private def byHand(in: RecheckRequest, now: Instant): Either[Api.Error, RecheckResult] =
     val by = in.by.map(_.trim).filter(_.nonEmpty).getOrElse("person")
     val fs = facts(None)
-    val base = RecheckResult(dryRun = false, fs.size, fs.count(_.action != Action.NoDoi))
+    val base = RecheckResult(dryRun = com.histmersion.api.library.Acquire.Checks.RecheckResult.DryRun(false), fs.size, fs.count(_.action != Action.NoDoi))
     if in.all then
       val stopped = latestJob()
         .filter(j => AcquireRecheck.resumable(j.status, j.error))
@@ -219,7 +219,7 @@ final class AcquireRecheckService(
             )
           )
         case None =>
-          startJob(JobPlan(all = true, 0, now), by, None).map(job =>
+          startJob(JobPlan(all = com.histmersion.domain.AcquireRecheck.JobPlan.All(true), com.histmersion.domain.AcquireRecheck.JobPlan.UpTo(0), now), by, None).map(job =>
             base.modify(_.due).setTo(todo.size).modify(_.allowance).setTo(todo.size).modify(_.job).setTo(Some(job))
           )
     else
@@ -237,7 +237,7 @@ final class AcquireRecheckService(
       )
       if upTo <= 1 then pass(in, now).toRight(passBusy)
       else
-        startJob(JobPlan(all = false, upTo, now), by, None).map(job =>
+        startJob(JobPlan(all = com.histmersion.domain.AcquireRecheck.JobPlan.All(false), upTo, now), by, None).map(job =>
           base.modify(_.due).setTo(dueNow.size).modify(_.allowance).setTo(upTo).modify(_.job).setTo(Some(job))
         )
 
@@ -274,7 +274,7 @@ final class AcquireRecheckService(
       RecheckJob.JobKind,
       Some(Acquire.Checks.RecheckJob.Detail(Some(detail))),
       jobSlot,
-      "an acquisition list re-check job",
+      com.histmersion.util.jobs.BackgroundJob.Work("an acquisition list re-check job"),
       Some(AgentsApi.CodeConflict),
       agents.pins,
       Some(agents.jobStops)
@@ -289,10 +289,10 @@ final class AcquireRecheckService(
     passing.lock()
     try
       val up = upstream()
-      if !up.connected then BackgroundJob.Outcome.failed("the acquisition toolset is not connected: nothing tried")
+      if !up.connected then BackgroundJob.Outcome.failed(com.histmersion.util.jobs.BackgroundJob.Outcome.Error("the acquisition toolset is not connected: nothing tried"))
       else
         val gen = up.fetcherGeneration
-        progress("closing the items the corpus holds with their text")
+        progress(com.histmersion.domain.library.workflows.AcquireRecheckService.("closing the items the corpus holds with their text"))
         val fs = facts(None)
         val closed = fs
           .collect { case f @ Facts(_, Action.Close(ck), _) => f -> ck }
@@ -319,7 +319,7 @@ final class AcquireRecheckService(
           left match
             case Nil                          => (t, rows, None)
             case _ if agents.drain.draining   => (t, rows, Some(AcquireRecheck.StoppedDraining))
-            case _ if site.maintenance.active => (t, rows, Some("a restore started; stopped"))
+            case _ if site.maintenance.active => (t, rows, Some(com.histmersion.domain.library.workflows.AcquireRecheckService.("a restore started; stopped")))
             case f :: rest                    =>
               if Thread.interrupted() then throw InterruptedException()
               if !site.queues.get(QueueItemId(f.item.id)).exists(_.status == Queue.Open) then
@@ -332,7 +332,7 @@ final class AcquireRecheckService(
         val (end, rows, stop) = loop(picks, start, Nil)
         val line = AcquireRecheck.progressLine(end)
         val r = RecheckResult(
-          dryRun = false,
+          dryRun = com.histmersion.api.library.Acquire.Checks.RecheckResult.DryRun(false),
           due = end.total - start.tried,
           closed = closed.size,
           fetched = rows.count(_.action == Fetched),
@@ -342,7 +342,7 @@ final class AcquireRecheckService(
         )
         if r.closed + r.fetched + r.noCopy + r.failed > 0 || stop.isDefined then
           val _ = site.workLists.add(
-            "log",
+            com.histmersion.domain.automation.worklists.WorkListControllers.ListName("log"),
             QueueAdd(
               (s"${summary(r)} (by $by, job $jobId" +
                 stop.fold(")")(why => s"; $why)")).take(1000),
@@ -415,7 +415,7 @@ final class AcquireRecheckService(
       )
       if r.closed + r.fetched + r.noCopy + r.failed > 0 then
         val by = in.by.map(_.trim).filter(_.nonEmpty).getOrElse("person")
-        val _ = site.workLists.add("log", QueueAdd(s"${summary(r)} (by $by)".take(1000)))
+        val _ = site.workLists.add(com.histmersion.domain.automation.worklists.WorkListControllers.ListName("log"), QueueAdd(s"${summary(r)} (by $by)".take(1000)))
       r
 
   /** The item ticked off as fulfilled by `citekey` (the one write every import makes), and its check. */
@@ -438,7 +438,7 @@ final class AcquireRecheckService(
           Outcome.Closed,
           AcquireRecheck.reason(now, Outcome.Closed, citekey)
         )
-        Some(RecheckRow(f.item.id, doiOf(f), Closed, "in the corpus with its original", Some(citekey)))
+        Some(RecheckRow(f.item.id, doiOf(f), Closed, com.histmersion.api.library.Acquire.Checks.RecheckRow.Detail("in the corpus with its original"), Some(citekey)))
 
   /** One item tried: its row, what it found, and the fetcher's or the chain's own words. */
   final private case class Tried(row: RecheckRow, outcome: Outcome, detail: Tried.Detail)
@@ -482,7 +482,7 @@ final class AcquireRecheckService(
   /** The status line's facts (`agent autopilot status`, `about`); readable with agents off. */
   def status(now: Instant = Instant.now(agents.clock)): RecheckStatus =
     val s = settings
-    if !s.enabled then RecheckStatus(enabled = false, job = jobLine())
+    if !s.enabled then RecheckStatus(enabled = com.histmersion.api.library.Acquire.Checks.RecheckStatus.Enabled(false), job = jobLine())
     else
       val gen = upstream().fetcherGeneration
       val fs = facts(None)
@@ -514,7 +514,7 @@ final class AcquireRecheckService(
         else if !agents.managers.running then Some("it runs on the managers' tick, which is not running on this server")
         else None
       RecheckStatus(
-        enabled = true,
+        enabled = com.histmersion.api.library.Acquire.Checks.RecheckStatus.Enabled(true),
         fs.count(_.action != Action.NoDoi),
         dueNow.size,
         tried,

@@ -42,7 +42,7 @@ final class HintEffectPipeline(
   def run(ctx: RunCtx): Either[Halt, com.histmersion.domain.automation.managers.HintEffectPipeline.RunResultPart2] =
     val mid = ctx.run.target
     for
-      loaded <- ctx.code[Loaded]("load")(load(mid, ctx.run.params.hint))
+      loaded <- ctx.code[Loaded](com.histmersion.domain.automation.agents.AgentRepo.StepRecord.Name("load"))(load(mid, ctx.run.params.hint))
       proposed <- ctx.llm[HintAnswer, Proposed](
         "propose",
         StepAgent.HintReader,
@@ -73,7 +73,7 @@ final class HintEffectPipeline(
         .filter(_.managerId == m.id)
         .toRight(s"manager $mid has no hint #$id")
     yield
-      val (items, _) = Transactor(ds).read(ManagerRepo.itemPage(m.id, None, 0, ItemsShown))
+      val (items, _) = Transactor(ds).read(ManagerRepo.itemPage(m.id, None, com.histmersion.Offset(0), ItemsShown))
       val lines = items.map(i => s"${i.target} (${i.kind}, ${i.status}, priority ${i.priority})")
       val itemTarget = ht.itemId.flatMap(connect(ds)(ManagerRepo.item(_))).map(_.target)
       Loaded(
@@ -102,7 +102,7 @@ final class HintEffectPipeline(
   private def record(ctx: RunCtx, l: Loaded, p: Proposed): Either[com.histmersion.domain.automation.managers.HintEffectPipeline.RecordResultPart1, com.histmersion.domain.automation.managers.HintEffectPipeline.RecordResultPart2] =
     p.effect match
       case None =>
-        Right(if p.problems.isEmpty then "the hint asks for no structured action"
+        Right(if p.problems.isEmpty then com.histmersion.domain.automation.managers.HintEffectPipeline.RecordResultPart2.("the hint asks for no structured action")
         else s"nothing proposed: ${p.problems.mkString("; ").take(600)}")
       case Some(e) =>
         val by = s"model (hint-effect run ${ctx.run.id.take(8)})"

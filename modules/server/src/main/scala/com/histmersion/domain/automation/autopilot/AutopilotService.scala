@@ -59,11 +59,11 @@ final class AutopilotService(
     * `ingest-backlog-share` is above 0 (at most `ingest-ceiling`).
     */
   def ingestCap: com.histmersion.domain.automation.autopilot.AutopilotService.IngestCapResult =
-    if acfg.ingestPerDay <= 0 then 0
+    if acfg.ingestPerDay <= 0 then com.histmersion.domain.automation.autopilot.AutopilotService.IngestCapResult(0)
     else AutopilotPolicy.scaledCap(acfg.ingestPerDay, backlogPending, acfg.ingestBacklogShare, acfg.ingestCeiling)
 
   private def backlogPending: com.histmersion.domain.automation.autopilot.AutopilotService.BacklogPendingResult =
-    if acfg.ingestBacklogShare <= 0 then 0 else agents.managerStore.backlogCounts().values.map(_._1).sum
+    if acfg.ingestBacklogShare <= 0 then com.histmersion.domain.automation.autopilot.AutopilotService.(0) else agents.managerStore.backlogCounts().values.map(_._1).sum
 
   /** What is left today of the legal open-access ingests all watchers share — the acquisition list's re-check's finds
     * counted too (None: off, or no shared cap).
@@ -90,9 +90,9 @@ final class AutopilotService(
     val row = agents.autopilotRow.row()
     val changes =
       if in.on then
-        val turned = agents.autopilotRow.set(enabled = true, by, row.paused)
+        val turned = agents.autopilotRow.set(enabled = com.histmersion.domain.automation.autopilot.AutopilotRepo.Row.Enabled(true), by, row.paused)
         // turning it on lifts a drain: the person wants it running
-        val undrained = Option.when(agents.autopilotRow.setDrain(on = false, by))(s"drain lifted by $by")
+        val undrained = Option.when(agents.autopilotRow.setDrain(on = com.histmersion.domain.automation.autopilot.AutopilotRowService.SetDrainOn(false), by))(s"drain lifted by $by")
         (if turned then List(s"turned on by $by") else List("already on")) ++ undrained ++ ensureNow(now) ++ advance(
           now
         )
@@ -100,7 +100,7 @@ final class AutopilotService(
       else
         val ids = AutopilotPolicy.toPause(rows())
         ids.foreach { id =>
-          val _ = agents.managerStore.setState(id, State.Paused, pauseRuns = false)
+          val _ = agents.managerStore.setState(id, State.Paused, pauseRuns = com.histmersion.domain.automation.managers.ManagerService.SetStatePauseRuns(false))
           agents.managerStore.event(
             id,
             None,
@@ -109,8 +109,8 @@ final class AutopilotService(
             s"paused: the autopilot was turned off by $by (its runs in flight go on)"
           )
         }
-        val _ = agents.autopilotRow.set(enabled = false, by, ids)
-        List(s"turned off by $by", s"paused ${Plural.count(ids.size, "manager")} it ran (turning it on resumes them)")
+        val _ = agents.autopilotRow.set(enabled = com.histmersion.domain.automation.autopilot.AutopilotRepo.Row.Enabled(false), by, ids)
+        List(s"turned off by $by", s"paused ${Plural.count(ids.size, com.histmersion.api.Plural.CountSingular("manager"))} it ran (turning it on resumes them)")
     log(s"autopilot ${if in.on then "on" else "off"} (by $by): ${changes.mkString("; ")}")
     agents.managers.nudge()
     status(now).modify(_.changes).setTo(changes)
@@ -179,8 +179,8 @@ final class AutopilotService(
             .create(id, Kind.Seed, Some(goal), State.Active, ManagerConfig(), Some(cron), next(cron, now))
         ) {
           if planFirst then
-            val _ = agents.managerStore.upsert(id, PlanGoalItem, goal, ItemOrigin.Selection, 1, reopen = false)
-          val _ = agents.managerStore.upsert(id, ProposeArticles, goal, ItemOrigin.Selection, 0, reopen = false)
+            val _ = agents.managerStore.upsert(id, PlanGoalItem, goal, ItemOrigin.Selection, com.histmersion.domain.automation.managers.ManagerContext.Priority(1), reopen = com.histmersion.domain.automation.managers.ManagerService.UpsertReopen(false))
+          val _ = agents.managerStore.upsert(id, ProposeArticles, goal, ItemOrigin.Selection, com.histmersion.domain.automation.managers.ManagerContext.Priority(0), reopen = com.histmersion.domain.automation.managers.ManagerService.UpsertReopen(false))
           event(
             id,
             s"created active by the autopilot, cron `$cron` (UTC)" +
@@ -191,13 +191,13 @@ final class AutopilotService(
         }
       case Step.CreateWatch(goal, cron, perDay) =>
         val id = watchId(goal)
-        val c = ManagerConfig(autoIngest = Some(true), autoIngestPerDay = Some(perDay))
+        val c = ManagerConfig(autoIngest = Some(com.histmersion.api.automation.Managers.ManagerConfig.AutoIngest(true)), autoIngestPerDay = Some(perDay))
         Option.when(
           agents.managerStore.create(id, Kind.Watch, Some(goal), State.Active, c, Some(cron), next(cron, now))
         ) {
           Sweep
             .of(c)
-            .foreach(sw => agents.managerStore.upsert(id, sw.itemKind, goal, ItemOrigin.Selection, 0, reopen = false))
+            .foreach(sw => agents.managerStore.upsert(id, sw.itemKind, goal, ItemOrigin.Selection, com.histmersion.domain.automation.managers.ManagerContext.Priority(0), reopen = com.histmersion.domain.automation.managers.ManagerService.UpsertReopen(false)))
           event(
             id,
             s"created active by the autopilot, cron `$cron` (UTC), auto-ingest of legal open access on (at most $perDay a day)"
@@ -205,9 +205,9 @@ final class AutopilotService(
           s"$id created"
         }
       case Step.Resume(id) =>
-        Option.when(agents.managerStore.setState(id, State.Active, pauseRuns = false)) {
+        Option.when(agents.managerStore.setState(id, State.Active, pauseRuns = com.histmersion.domain.automation.managers.ManagerService.SetStatePauseRuns(false))) {
           agents.autopilotRow.unpaused(id)
-          event(id, "resumed by the autopilot")
+          event(id, com.histmersion.domain.automation.autopilot.AutopilotService.EventText("resumed by the autopilot"))
           s"$id resumed"
         }
       case Step.SetCron(id, cron) =>
@@ -230,7 +230,7 @@ final class AutopilotService(
           }
         }
       case Step.AddPlanItem(id, goal) =>
-        val (item, isNew) = agents.managerStore.upsert(id, PlanGoalItem, goal, ItemOrigin.Selection, 1, reopen = false)
+        val (item, isNew) = agents.managerStore.upsert(id, PlanGoalItem, goal, ItemOrigin.Selection, com.histmersion.domain.automation.managers.ManagerContext.Priority(1), reopen = com.histmersion.domain.automation.managers.ManagerService.UpsertReopen(false))
         Option.when(isNew) {
           agents.managerStore.event(
             id,
@@ -389,7 +389,7 @@ final class AutopilotService(
     log(line)
 
   private def log(line: com.histmersion.domain.automation.autopilot.AutopilotService.LogLine): Unit =
-    val _ = agents.workLists.add("log", QueueAdd(line.take(1000)))
+    val _ = agents.workLists.add(com.histmersion.domain.automation.worklists.WorkListControllers.ListName("log"), QueueAdd(line.take(1000)))
     scribe.info(line)
 
   // ── status ─────────────────────────────────────────────────────────────────────────────────────
@@ -429,8 +429,8 @@ final class AutopilotService(
     def rule(k: Agents.ApprovalKind, cap: com.histmersion.domain.automation.autopilot.AutopilotService.StatusRuleCap) =
       ApprovalRule(
         k.wire,
-        if cfg.approvals.checked(k.transformInto[com.histmersion.domain.automation.Approval.Kind]) then "checked"
-        else "person",
+        if cfg.approvals.checked(k.transformInto[com.histmersion.domain.automation.Approval.Kind]) then com.histmersion.api.automation.Autopilot.ApprovalRule.Mode("checked")
+        else com.histmersion.api.automation.Autopilot.ApprovalRule.Mode("person"),
         cap
       ) match
         case r if k == Agents.ApprovalKind.ArticlePublish && cfg.approvals.publishMode == Agents.ApprovalMode.Auto =>
@@ -466,7 +466,7 @@ final class AutopilotService(
         )
       ),
       ingestedToday(now),
-      if row.enabled then ingestCap else 0,
+      if row.enabled then ingestCap else com.histmersion.api.automation.Autopilot.EngineStatus.IngestCap(0),
       cfg.maxConcurrentRuns,
       row.lastBackupAt,
       row.lastLintAt,

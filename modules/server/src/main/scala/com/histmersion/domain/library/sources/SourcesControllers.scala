@@ -47,7 +47,7 @@ final class SourcesControllers(
     */
   def canonical(id: com.histmersion.domain.library.Citekey): com.histmersion.domain.library.Citekey = sources.current(id).getOrElse(id)
 
-  def get(citekey: com.histmersion.domain.library.Citekey, body: com.histmersion.domain.library.sources.SourcesControllers.GetBody = true): Either[Api.Error, Source.WithFindings] =
+  def get(citekey: com.histmersion.domain.library.Citekey, body: com.histmersion.domain.library.sources.SourcesControllers.GetBody = com.histmersion.domain.library.sources.SourcesControllers.GetBody(true)): Either[Api.Error, Source.WithFindings] =
     sources
       .get(canonical(citekey))
       .map((s, fs) =>
@@ -73,8 +73,8 @@ final class SourcesControllers(
   /** Create or REPLACE everything under one citekey. An OLD citekey follows the alias (#1799): the put replaces the
     * source it was renamed to — it never creates a second source under the old name, which the alias would then shadow.
     */
-  def put(citekey: com.histmersion.domain.library.Citekey, in: Source.Put, strict: com.histmersion.domain.library.sources.SourcesControllers.PutStrict = false): Either[Api.Error, Source.WithFindings] =
-    maintenance.guard("put_source"):
+  def put(citekey: com.histmersion.domain.library.Citekey, in: Source.Put, strict: com.histmersion.domain.library.sources.SourcesControllers.PutStrict = com.histmersion.domain.library.sources.SourcesControllers.PutStrict(false)): Either[Api.Error, Source.WithFindings] =
+    maintenance.guard(com.histmersion.util.data.maintenance.WriteGate.OperationName("put_source")):
       Citekey.parse(citekey).left.map(Write.invalid).map(_ => current(AliasKinds.SourceRecords, citekey)).flatMap { ck =>
         Source.Write
           .applyPut(com.histmersion.api.library.Citekey(ck), in, (sources.aliasesOf(ck)).map(com.histmersion.api.library.Citekey.apply))
@@ -87,8 +87,8 @@ final class SourcesControllers(
       }
 
   /** Merge only the parts present in the patch (read + merge + write in one transaction). */
-  def patch(citekey: com.histmersion.domain.library.Citekey, p: Source.Patch, strict: com.histmersion.domain.library.sources.SourcesControllers.PatchStrict = false): Either[Api.Error, Source.WithFindings] =
-    maintenance.guard("patch_source"):
+  def patch(citekey: com.histmersion.domain.library.Citekey, p: Source.Patch, strict: com.histmersion.domain.library.sources.SourcesControllers.PatchStrict = com.histmersion.domain.library.sources.SourcesControllers.PatchStrict(false)): Either[Api.Error, Source.WithFindings] =
+    maintenance.guard(com.histmersion.util.data.maintenance.WriteGate.OperationName("patch_source")):
       Citekey.parse(citekey).left.map(Api.Error(_)).flatMap(_ => strictGate(strict, formatting.issues(p.summary, p.notes)))
         .flatMap(_ => sources.patch(citekey, p, Caller.Local))
         .flatMap(_ => get(citekey))
@@ -96,7 +96,7 @@ final class SourcesControllers(
 
   /** `POST /api/sources/{ck}/rename` — everything the rename touches is the service's and the referrers'. */
   def rename(citekey: com.histmersion.domain.library.Citekey, req: Rename.Request): Either[Api.Error, Source.Renamed] =
-    maintenance.guard("rename_source"):
+    maintenance.guard(com.histmersion.util.data.maintenance.WriteGate.OperationName("rename_source")):
       val from = current(AliasKinds.SourceRecords, citekey)
       sources.rename(from, req.newCitekey, Caller.Local).flatMap { counts =>
         val now = req.newCitekey.trim
@@ -111,7 +111,7 @@ final class SourcesControllers(
     val ck = current(AliasKinds.SourceRecords, citekey)
     if !req.apply then sources.deletion(ck).map(p => p.deletion.modify(_.files).setTo(originals.find(p)))
     else
-      maintenance.guard("delete_source"):
+      maintenance.guard(com.histmersion.util.data.maintenance.WriteGate.OperationName("delete_source")):
         val today = LocalDate.now(clock.withZone(ZoneOffset.UTC)).toString
         // the files are named inside the transaction (they are in its log line) and go only after it committed
         sources
@@ -134,17 +134,17 @@ final class SourcesControllers(
   /** Seed ONE note from raw text (the host-side path of `histmersion seed`, for a corpus dir the SERVER cannot see).
     * Applies the seed's "stored row is newer than the file" guard whenever the client sends the file's mtime.
     */
-  def importNote(req: NoteImport): Either[Api.Error, SeedResult] = maintenance.guard("import"):
-    SourceNote.parseNote(req.text, req.citekey.getOrElse("")) match
-      case None         => Left(Api.Error("no YAML frontmatter in the note"))
+  def importNote(req: NoteImport): Either[Api.Error, SeedResult] = maintenance.guard(com.histmersion.util.data.maintenance.WriteGate.OperationName("import")):
+    SourceNote.parseNote(req.text, req.citekey.getOrElse(com.histmersion.api.library.Citekey(""))) match
+      case None         => Left(Api.Error(com.histmersion.api.Api.Error.Message("no YAML frontmatter in the note")))
       case Some(parsed) =>
         val ck = parsed.citekey
-        if ck.isEmpty then Left(Api.Error("note has no citekey (none in the frontmatter, none supplied)"))
+        if ck.isEmpty then Left(Api.Error(com.histmersion.api.Api.Error.Message("note has no citekey (none in the frontmatter, none supplied)")))
         else if Citekey.parse(ck).isLeft then
           Citekey.parse(ck).left.map(Write.invalid).map(_ => SeedResult(0, Nil, 0, Nil))
-        else if sources.aliasOf(ck).isDefined then notAnAlias(ck).map(_ => SeedResult(0, Nil, 0, Nil))
+        else if sources.aliasOf(ck).isDefined then notAnAlias(ck).map(_ => SeedResult(com.histmersion.api.library.SeedResult.Imported(0), Nil, com.histmersion.api.library.SeedResult.EdgesResolved(0), Nil))
         else if !req.force && req.mtime.exists(m => SeedImport.isStale(sources.updatedAtMillis, ck, m))
-        then Right(SeedResult(0, Nil, 0, List(ck)))
+        then Right(SeedResult(com.histmersion.api.library.SeedResult.Imported(0), Nil, com.histmersion.api.library.SeedResult.EdgesResolved(0), List(ck)))
         else
           // `body` is the converted paper text the client read from `md_path`; NUL bytes occur in some
           // OCR output and Postgres `text` rejects them.
@@ -157,8 +157,8 @@ final class SourcesControllers(
           val normalised =
             withBody.modify(_.ocrMarkdown).using(_.map(AssetLinks.normalizeBody(_, withBody.title.value)))
           val _ = sources.put(normalised, Caller.Local)
-          if req.assets.isEmpty then Right(SeedResult(1, Nil, 0, Nil))
-          else figures.putFigures(ck, req.assets).map(_ => SeedResult(1, Nil, 0, Nil))
+          if req.assets.isEmpty then Right(SeedResult(com.histmersion.api.library.SeedResult.Imported(1), Nil, com.histmersion.api.library.SeedResult.EdgesResolved(0), Nil))
+          else figures.putFigures(ck, req.assets).map(_ => SeedResult(com.histmersion.api.library.SeedResult.Imported(1), Nil, com.histmersion.api.library.SeedResult.EdgesResolved(0), Nil))
 
   // ── formatting: what in the agent-written Markdown will not display as meant ─────────────────
 
@@ -178,7 +178,7 @@ final class SourcesControllers(
 
   /** `GET /api/sources/{citekey}/lint`. */
   def lint(citekey: com.histmersion.domain.library.Citekey): Either[Api.Error, FormatReport] =
-    get(citekey, body = false).map(sw =>
+    get(citekey, body = com.histmersion.domain.library.sources.SourcesControllers.GetBody(false)).map(sw =>
       FormatReport(sw.source.citekey, formatIssues(sw.source.summary, sw.source.notes))
     )
 
@@ -186,7 +186,7 @@ final class SourcesControllers(
     * guarded by the `updatedAt` just read, then the report of what is left.
     */
   def fix(citekey: com.histmersion.domain.library.Citekey): Either[Api.Error, FormatReport] =
-    maintenance.guard("fix_source_format"):
+    maintenance.guard(com.histmersion.util.data.maintenance.WriteGate.OperationName("fix_source_format")):
       sources.load(canonical(citekey)).toRight(Write.notFound(citekey)).flatMap { s =>
         val (summary, fs) =
           s.summary.map(t => formatting.fix(t, FormatField.Summary)).fold((None, Nil))((t, f) => (Some(t), f))

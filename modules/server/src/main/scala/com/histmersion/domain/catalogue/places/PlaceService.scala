@@ -96,7 +96,7 @@ object PlaceService:
   final private class Implementation(db: Transactor) extends PlaceService:
     def count(): com.histmersion.RowCount = db.read(PlaceRepo.count())
     def importPlaces(batch: List[Place.Input], dataset: Dataset): Place.ImportResult =
-      if batch.isEmpty then Place.ImportResult(0, 0, 0, Nil) else db.transact(PlaceRepo.upsertPlaces(batch, dataset))
+      if batch.isEmpty then Place.ImportResult(com.histmersion.api.catalogue.Place.ImportResult.Places(0), com.histmersion.api.catalogue.Place.ImportResult.Names(0), com.histmersion.api.catalogue.Place.ImportResult.Relations(0), Nil) else db.transact(PlaceRepo.upsertPlaces(batch, dataset))
     def search(q: Option[com.histmersion.domain.catalogue.places.PlaceService.Implementation.SearchQ], asOf: Option[com.histmersion.domain.catalogue.places.HeldPlace.AsOf], limit: com.histmersion.PageSize, modernFrom: com.histmersion.domain.catalogue.places.PlaceService.Implementation.SearchModernFrom): List[Place.Hit] =
       db.read(PlaceRepo.search(q, asOf, limit, modernFrom)).toList
     def get(id: com.histmersion.domain.catalogue.Place.Id, asOf: Option[com.histmersion.domain.catalogue.places.HeldPlace.AsOf], modernFrom: com.histmersion.domain.catalogue.places.PlaceService.Implementation.GetModernFrom): Option[Place.Entry] =
@@ -165,7 +165,7 @@ object PlaceService:
     def count(): com.histmersion.RowCount = places.size
 
     def importPlaces(batch: List[Place.Input], dataset: Dataset): Place.ImportResult =
-      if batch.isEmpty then Place.ImportResult(0, 0, 0, Nil)
+      if batch.isEmpty then Place.ImportResult(com.histmersion.api.catalogue.Place.ImportResult.Places(0), com.histmersion.api.catalogue.Place.ImportResult.Names(0), com.histmersion.api.catalogue.Place.ImportResult.Relations(0), Nil)
       else
         val s0 = state.get
         val skip = batch.map(_.place.id).filter(id => s0.placeRemovals(id.value) || s0.placeAliases.contains(id.value)).toSet
@@ -273,7 +273,7 @@ object PlaceService:
           p.place.geometry,
           parentsOf(p, asOf),
           kidsOf(id, asOf).toList.map(_.summary),
-          0,
+          com.histmersion.api.catalogue.Place.Counts.Findings(0),
           asOf,
           p.contested,
           links = p.links.sortBy(l => (l.scheme, l.externalId)).toList
@@ -299,7 +299,7 @@ object PlaceService:
             InMemory.RootKinds(p.place.kind) && !places.exists(_.id == p.id && p.parents.nonEmpty) &&
               places.exists(_.parents.exists(_.parentId == p.id))
           )
-      def row(p: HeldPlace, d: Int) = Place.TreeRow(com.histmersion.api.catalogue.Place.Id(p.id), p.place.label, p.place.kind, d, 0, p.contested)
+      def row(p: HeldPlace, d: Int) = Place.TreeRow(com.histmersion.api.catalogue.Place.Id(p.id), p.place.label, p.place.kind, d, com.histmersion.api.catalogue.Place.TreeRow.Findings(0), p.contested)
       def walk(p: HeldPlace, d: Int, seen: Set[com.histmersion.domain.catalogue.Place.Id]): List[Place.TreeRow] =
         row(p, d) :: (if d >= depth then Nil
                       else
@@ -345,7 +345,7 @@ object PlaceService:
       val nodes = ids
         .flatMap(find)
         .toList
-        .map(p => RegionNode(p.id, p.place.label, p.place.kind, p.place.period, p.contested, withdrawn = false))
+        .map(p => RegionNode(p.id, p.place.label, p.place.kind, p.place.period, p.contested, withdrawn = com.histmersion.api.catalogue.RegionNode.Withdrawn(false)))
       val edges = ids.flatMap(find).flatMap(_.parents).filter(r => ids.contains(r.parentId)).toList
       (nodes, edges)
 
@@ -385,9 +385,9 @@ object PlaceService:
             else if before.isDefined then
               q.modify(_.names)
                 .using(_.map(n => if n.name == name && n.lang == lang then n.modify(_.manual).setTo(true) else n))
-            else q.modify(_.names).using(_ :+ HeldPlace.Name(name, lang, None, manual = true))
+            else q.modify(_.names).using(_ :+ HeldPlace.Name(name, lang, None, manual = com.histmersion.domain.catalogue.places.HeldPlace.Name.Manual(true)))
           }))
-        Place.NameChanged(id, p.place.label, name, lang, true, !before.contains(true), before.contains(false))
+        Place.NameChanged(id, p.place.label, name, lang, com.histmersion.api.catalogue.Place.NameChanged.Added(true), !before.contains(true), before.contains(false))
       }
 
     def removeName(id: com.histmersion.domain.catalogue.Place.Id, name: com.histmersion.domain.catalogue.places.BPlaceNameRow.Name, lang: com.histmersion.domain.catalogue.places.BPlaceNameRow.Lang): Either[Api.Error, Place.NameChanged] =
@@ -416,7 +416,7 @@ object PlaceService:
             if q.id != id then q
             else q.modify(_.names).using(_.filterNot(n => n.name == name && n.lang == lang && n.manual))
           }))
-          Right(Place.NameChanged(id, p.place.label, name, lang, added = false, changed = true))
+          Right(Place.NameChanged(id, p.place.label, name, lang, added = com.histmersion.api.catalogue.Place.NameChanged.Added(false), changed = com.histmersion.api.catalogue.Place.NameChanged.Changed(true)))
       }
 
     def manualNames(id: Option[com.histmersion.domain.catalogue.Place.Id]): List[ManualPlaceName] =
@@ -542,9 +542,9 @@ object PlaceService:
             after.place.kind,
             Place.Overrides.periodText(before.place.period.map(_.start), before.place.period.map(_.end)),
             Place.Overrides.periodText(after.place.period.map(_.start), after.place.period.map(_.end)),
-            0,
-            0,
-            0
+            com.histmersion.api.catalogue.Place.OverrideChanged.FindingsBefore(0),
+            com.histmersion.api.catalogue.Place.OverrideChanged.FindingsAfter(0),
+            com.histmersion.api.catalogue.Place.OverrideChanged.Unlocated(0)
           )
         }
       }
@@ -553,7 +553,7 @@ object PlaceService:
       (find(from), find(into)) match
         case (None, _)          => Left(notFound(from))
         case (_, None)          => Left(notFound(into))
-        case _ if from == into  => Left(Api.Error("a place cannot be merged into itself", Some(Write.CodeInvalid)))
+        case _ if from == into  => Left(Api.Error(com.histmersion.api.Api.Error.Message("a place cannot be merged into itself"), Some(Write.CodeInvalid)))
         case (Some(f), Some(i)) =>
           val _ = state.updateAndGet(s =>
             s.modify(_.places)
@@ -568,7 +568,7 @@ object PlaceService:
               .modify(_.placeOverrides)
               .using(_.filterNot(_.placeId == from))
           )
-          Right(Place.Gone(from, f.place.label, Some(into), Some(i.place.label), 0, 0, 0))
+          Right(Place.Gone(from, f.place.label, Some(into), Some(i.place.label), com.histmersion.api.catalogue.Place.Gone.FindingsBefore(0), com.histmersion.api.catalogue.Place.Gone.FindingsAfter(0), com.histmersion.api.catalogue.Place.Gone.Unlocated(0)))
 
     def remove(id: com.histmersion.domain.catalogue.Place.Id, reason: Option[com.histmersion.domain.catalogue.places.HeldOverride.Reason]): Either[Api.Error, Place.Gone] =
       find(id).toRight(notFound(id)).flatMap { p =>
@@ -591,7 +591,7 @@ object PlaceService:
           val _ = state.updateAndGet(
             _.modify(_.places).using(_.filterNot(_.id == id)).modify(_.placeRemovals).using(_ + id)
           )
-          Right(Place.Gone(id, p.place.label, None, None, 0, 0, 0))
+          Right(Place.Gone(id, p.place.label, None, None, com.histmersion.api.catalogue.Place.Gone.FindingsBefore(0), com.histmersion.api.catalogue.Place.Gone.FindingsAfter(0), com.histmersion.api.catalogue.Place.Gone.Unlocated(0)))
       }
 
   object InMemory:
@@ -617,7 +617,7 @@ object PlaceService:
     type RootKindsValue = com.histmersion.domain.catalogue.Place.Kind.Wire
     val RootKindsValue: _root_.com.histmersion.domain.catalogue.Place.Kind.Wire.type = _root_.com.histmersion.domain.catalogue.Place.Kind.Wire
 
-    val RootKinds: Set[com.histmersion.domain.catalogue.places.PlaceService.InMemory.RootKinds] = Set("region", "polity", "continent")
+    val RootKinds: Set[com.histmersion.domain.catalogue.places.PlaceService.InMemory.RootKinds] = Set(com.histmersion.domain.catalogue.Place.Kind.Wire("region"), com.histmersion.domain.catalogue.Place.Kind.Wire("polity"), com.histmersion.domain.catalogue.Place.Kind.Wire("continent"))
 
     /** An override's sides as a closed period (an open side reads as the widest year). */
     def periodOf(sides: (Option[com.histmersion.domain.catalogue.periods.BPeriodRow.PLo], Option[com.histmersion.domain.catalogue.periods.BPeriodRow.PHi])): Option[Period] =

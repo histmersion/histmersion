@@ -12,9 +12,9 @@ import scala.jdk.CollectionConverters.*
   * step re-sends its prompt, so what a role does not act on is left out of it (docs/research-agent-runtimes.md §4).
   */
 enum Audience(val wire: Audience.Wire):
-  case Interactive extends Audience("interactive")
-  case Headless extends Audience("headless")
-  case Writer extends Audience("writer")
+  case Interactive extends Audience(com.histmersion.domain.automation.agents.Audience.Wire("interactive"))
+  case Headless extends Audience(com.histmersion.domain.automation.agents.Audience.Wire("headless"))
+  case Writer extends Audience(com.histmersion.domain.automation.agents.Audience.Wire("writer"))
 
 object Audience:
   type Wire = Wire.T

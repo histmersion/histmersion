@@ -13,9 +13,9 @@ object SourceReferable:
   val Table: RecordTable =
     RecordTable(
       Kind,
-      "sources",
-      "t.citekey",
-      "t.title",
-      Some("t.uid"),
-      Some(AliasColumns("source_aliases", "alias", "citekey"))
+      com.histmersion.util.identity.RecordTable.Table("sources"),
+      com.histmersion.util.identity.RecordTable.Key("t.citekey"),
+      com.histmersion.util.identity.RecordTable.Title("t.title"),
+      Some(com.histmersion.util.identity.RecordTable.Uid("t.uid")),
+      Some(AliasColumns(com.histmersion.util.identity.AliasColumns.Table("source_aliases"), com.histmersion.util.identity.AliasColumns.Alias("alias"), com.histmersion.util.identity.AliasColumns.Target("citekey")))
     )

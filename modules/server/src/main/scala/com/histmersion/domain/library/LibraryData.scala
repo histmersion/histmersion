@@ -40,7 +40,7 @@ final class LibraryData(referrers: com.histmersion.domain.library.sources.referr
   override val stores: List[Location] = List(Location.IngestOriginals, Location.Spool, Location.CorpusFolder)
 
   /** A restore that would drop sources is refused unless asked. */
-  override val backup: BackupShare = BackupShare(guarded = List(GuardedTable(TableName("sources"), "source")))
+  override val backup: BackupShare = BackupShare(guarded = List(GuardedTable(TableName("sources"), com.histmersion.util.data.backup.GuardedTable.Noun("source"))))
 
   /** The sources and what they own. */
   override val carried: List[CarriedKind] = LibraryExchange.carried(referrers)

@@ -145,7 +145,7 @@ final class ReviewArticlePipeline(
     val fix = ctx.run.params.fixes
     val rounds = ReviewArticle.rounds(ctx.run.params.rounds, cfg.review.maxRounds, cfg.review.roundsCap, fix)
     for
-      ledger <- ctx.code[Ledger]("ledger")(load(slug))
+      ledger <- ctx.code[Ledger](com.histmersion.domain.automation.agents.AgentRepo.StepRecord.Name("ledger"))(load(slug))
       first <- full(ctx, slug, 1, Carry(ledger, 0, 0, fixed = false), None, fixable = fix)
       end <- loop(ctx, slug, 1, rounds, fix, first, first.snap)
       line <- ctx.code[String]("record")(record(ctx, slug, end))
@@ -200,7 +200,7 @@ final class ReviewArticlePipeline(
       case FinalPanel.Never  => false)
     if !confirm then Right(End(st, r, confirmed = false))
     else
-      full(ctx, slug, r + 1, st.carry, st.unwritten, fixable = false, confirming = Some(start))
+      full(ctx, slug, r + 1, st.carry, st.unwritten, fixable = com.histmersion.domain.research.workflows.ReviewArticlePipeline.FullFixable(false), confirming = Some(start))
         .map(f => End(f, r + 1, confirmed = true, f.merged.deferred))
 
   /** A full panel: every reviewer over the whole article, with the ledger. `fixable`: the fixer still works in this run
@@ -348,7 +348,7 @@ final class ReviewArticlePipeline(
     val t = ReviewLedger.promptText(l, ReviewLedger.OpenStyle.Full, cfg.review.ledgerClosedLines, only)
     val full = if lookups then "every check of your instructions, the database look-ups included"
     else "every check of your instructions"
-    if t.isEmpty then ""
+    if t.isEmpty then com.histmersion.domain.research.workflows.ReviewArticlePipeline.LedgerText("")
     else
       "\n\nThis article has been reviewed before. Its review ledger follows: give a check for each OPEN finding " +
         "of yours, and do not raise again what it shows as closed unless the text has regressed. The ledger adds to " +
@@ -365,13 +365,13 @@ final class ReviewArticlePipeline(
     reports
       .filter(_.reviewer == Reviewer.Skeptic)
       .flatMap(_.notMaterial)
-      .map(_.modify(_.by).setTo(Some(by(ctx, "skeptic"))))
+      .map(_.modify(_.by).setTo(Some(by(ctx, com.histmersion.domain.research.workflows.ReviewArticlePipeline.Reviewer("skeptic")))))
 
   /** The fixer's set-asides (of a finding, or of a pair alone), as the reasons its patch stores. */
   private def setAsideReasons(ctx: RunCtx, f: Fix): List[CritiqueReason] =
     (f.setAside.map(a => CritiqueReason(a.pair.src, a.pair.dst, a.reason)) ++ f.pairsAside)
       .distinctBy(r => (r.src, r.dst))
-      .map(_.modify(_.by).setTo(Some(by(ctx, "fixer"))))
+      .map(_.modify(_.by).setTo(Some(by(ctx, com.histmersion.domain.research.workflows.ReviewArticlePipeline.Reviewer("fixer")))))
 
   /** Store reasons through the run's gate (a dry run records them; its snapshots count them from the carry). A refusal
     * — the edge went meanwhile — is a warning, never a failed run.
@@ -395,7 +395,7 @@ final class ReviewArticlePipeline(
         "This is the run's FINAL pass: it verifies. No ruling is owed; raise a missing-critique MAJOR only " +
           "for a pair the revision left open or broke, and only when the article states the criticised claim unqualified."
       else "Rule on every open pair shown in full."
-    if t.isEmpty then ("", Nil)
+    if t.isEmpty then (com.histmersion.domain.research.workflows.ReviewArticlePipeline.Checklist(""), Nil)
     else
       (
         "\n\nThe article's critique checklist, built by code from the typed edges (a pair is addressed when both sources " +
@@ -407,7 +407,7 @@ final class ReviewArticlePipeline(
   /** The rules reviewer's part: the stored critique reasons, so a wrong one can be challenged. */
   private def reasonsText(s: Snapshot): com.histmersion.domain.research.workflows.ReviewArticlePipeline.ReasonsText =
     val reasoned = s.critiques.filter(_.state == CritiqueState.Reasoned).take(cfg.review.critiqueReasoned)
-    if reasoned.isEmpty then ""
+    if reasoned.isEmpty then com.histmersion.domain.research.workflows.ReviewArticlePipeline.ReasonsText("")
     else
       "\n\nCritiques the article sets aside with a stored reason (the generated Method note counts them; check a " +
         "reason against the records like a Not used reason):\n\n" +
@@ -461,11 +461,11 @@ final class ReviewArticlePipeline(
           s"M${body.size + drift.size + i + 1}",
           Reviewer.Mechanical,
           Severity.Minor,
-          "formatting",
-          "body",
-          "",
+          com.histmersion.domain.ReviewArticle.Finding.Kind("formatting"),
+          com.histmersion.domain.ReviewArticle.Finding.Where("body"),
+          com.histmersion.domain.ReviewArticle.Finding.Quote(""),
           s"a formatting error the last edits introduced: $e",
-          "repair the markup"
+          com.histmersion.domain.ReviewArticle.Finding.Fix("repair the markup")
         )
       }
     body ++ drift ++ formatting
@@ -477,12 +477,12 @@ final class ReviewArticlePipeline(
     val resolve = site.articles.pageLinks(AgentVerify.wikilinks(body))
     t => resolve(t).isDefined
 
-  private def isCitekey(ck: com.histmersion.domain.library.Citekey): Boolean = site.sources.get(ck, body = false).isRight
+  private def isCitekey(ck: com.histmersion.domain.library.Citekey): Boolean = site.sources.get(ck, body = com.histmersion.domain.library.sources.SourcesControllers.GetBody(false)).isRight
 
   /** What a quote may be checked against: a source's summary, findings, notes and body — what `get_source` shows.
     */
   private def recordText(ck: com.histmersion.domain.library.Citekey): Option[com.histmersion.domain.library.Citekey] =
-    site.sources.get(ck, body = true).toOption.map { s =>
+    site.sources.get(ck, body = com.histmersion.domain.library.sources.SourcesControllers.GetBody(true)).toOption.map { s =>
       (s.source.summary.toList ++ s.findings.map(_.claim) ++ s.source.notes.toList ++ s.source.ocrMarkdown.toList)
         .mkString("\n\n")
     }
@@ -508,7 +508,7 @@ final class ReviewArticlePipeline(
     * query for (the cold reader, who reads the article alone, never gets it).
     */
   private def citedText(s: Snapshot): com.histmersion.domain.research.workflows.ReviewArticlePipeline.CitedText =
-    if s.cited.isEmpty then ""
+    if s.cited.isEmpty then com.histmersion.domain.research.workflows.ReviewArticlePipeline.CitedText("")
     else
       "\n\nThe sources the article cites, each with the status the database records for it (code read them):\n\n" +
         Prompt.data("cited-sources", citedLines(s.cited))
@@ -539,7 +539,7 @@ final class ReviewArticlePipeline(
     val (checklist, shown) = checklistText(s, confirming)
     // the final pass owes no rulings: it verifies the checklist, it does not work through it (§6.9)
     val critique =
-      CritiqueRule(s.critiques, if confirming then Nil else shown, full = true, s.body, lib.verify.quoteMinRatio)
+      CritiqueRule(s.critiques, if confirming then Nil else shown, full = com.histmersion.domain.ReviewArticle.CritiqueRule.Full(true), s.body, lib.verify.quoteMinRatio)
     val seqs = ctx.reserve(3)
     def prior(rv: Reviewer) = Some(
       Prior(l.open.filter(_.reviewer == rv).map(_.finding), s.body, lib.verify.quoteMinRatio)
@@ -656,7 +656,7 @@ final class ReviewArticlePipeline(
       edited: ReviewLedger.Edited
   ): com.histmersion.domain.research.workflows.ReviewArticlePipeline.ReviewInput =
     val ids = asked.map(_.id).mkString(", ")
-    val toCheck = findingsText(ReviewLedger.merged(l.modify(_.entries).setTo(asked), 0), ReviewLedger.notes(l))
+    val toCheck = findingsText(ReviewLedger.merged(l.modify(_.entries).setTo(asked), com.histmersion.domain.ReviewLedger.Closure.Round(0)), ReviewLedger.notes(l))
     val rest = ReviewLedger.promptText(
       l.modify(_.entries).setTo(l.entries.filterNot(e => asked.exists(_.id == e.id))),
       ReviewLedger.OpenStyle.Lines,
@@ -792,7 +792,7 @@ final class ReviewArticlePipeline(
           )
       }
     val named = hits.filterNot(_.mechanical).map(x => s"- ${x.line}")
-    if critiques.isEmpty && named.isEmpty then ""
+    if critiques.isEmpty && named.isEmpty then com.histmersion.domain.research.workflows.ReviewArticlePipeline.CritiqueWork("")
     else
       "\n\nThe critique work, worked out by code from the checklist (a pair is answered when both sources are cited in one " +
         "paragraph, or set aside with a reason; code checks it after your edits, and appends a citekey itself where a paragraph " +
@@ -806,7 +806,7 @@ final class ReviewArticlePipeline(
     val bodyChanged = f.body.trim != s.body.trim
     if !bodyChanged && f.reasons.isEmpty && f.setAside.isEmpty && f.pairsAside.isEmpty then
       persist(ctx, after)
-      Right(ReviewArticle.Patched(written = false, None, conflict = false))
+      Right(ReviewArticle.Patched(written = com.histmersion.domain.ReviewArticle.Patched.Written(false), None, conflict = com.histmersion.domain.ReviewArticle.Patched.Conflict(false)))
     else
       val p = Article.Patch(
         body = Option.when(bodyChanged)(f.body),
@@ -824,15 +824,15 @@ final class ReviewArticlePipeline(
       )(site.articles.patch(s.slug, p).map(_ => true))(Right(false)) match
         case Right(false) =>
           persist(ctx, after)
-          Right(ReviewArticle.Patched(written = false, None, conflict = false))
+          Right(ReviewArticle.Patched(written = com.histmersion.domain.ReviewArticle.Patched.Written(false), None, conflict = com.histmersion.domain.ReviewArticle.Patched.Conflict(false)))
         case Right(_) =>
           persist(ctx, after)
           Right(
-            ReviewArticle.Patched(written = true, site.articleStore.latestVersion(s.slug), conflict = false)
+            ReviewArticle.Patched(written = com.histmersion.domain.ReviewArticle.Patched.Written(true), site.articleStore.latestVersion(s.slug), conflict = com.histmersion.domain.ReviewArticle.Patched.Conflict(false))
           )
         case Left(e) if e.code.contains(Write.CodePrecondition) =>
           ctx.warn(s"round $r: the article changed while the fixer worked; the fix was not written")
-          Right(ReviewArticle.Patched(written = false, None, conflict = true))
+          Right(ReviewArticle.Patched(written = com.histmersion.domain.ReviewArticle.Patched.Written(false), None, conflict = com.histmersion.domain.ReviewArticle.Patched.Conflict(true)))
         case Left(e) => Left(e.message)
 
   /** Bookkeeping: one `log` line, the article's ONE backlog item listing its open MAJORs (#934) — created, rewritten,
@@ -849,7 +849,7 @@ final class ReviewArticlePipeline(
     val ledger = persist(ctx, backlog(ctx, slug, c.ledger))
     // the checklist as the run leaves it: the stored body (a dry run's revision held in memory)
     val body =
-      st.unwritten.orElse(site.articles.get(slug, brief = true).toOption.map(_.article.body)).getOrElse(st.snap.body)
+      st.unwritten.orElse(site.articles.get(slug, brief = com.histmersion.domain.research.articles.ArticlesControllers.GetBrief(true)).toOption.map(_.article.body)).getOrElse(st.snap.body)
     val pairs = site.articles.critiques(slug, body, if ctx.dryRun then c.reasons else Nil)
     val line = logLine(outcome, last, ctx.run.id) +
       (if end.confirmed then ", confirmed by a full panel" else "") +
@@ -879,7 +879,7 @@ final class ReviewArticlePipeline(
               Some(item.id)
             )
           case None =>
-            val add = Pipelines.entry(ctx, text, Some("agent review"))
+            val add = Pipelines.entry(ctx, text, Some(com.histmersion.domain.automation.workflows.Pipelines.EntryTopic("agent review")))
             ctx.write("tasks item", add.asJson)(site.workLists.add(tasks, add).toOption.map(_.id))(None)
       case None =>
         current.foreach { item =>

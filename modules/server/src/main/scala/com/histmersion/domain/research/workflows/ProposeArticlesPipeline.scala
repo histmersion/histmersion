@@ -53,7 +53,7 @@ final class ProposeArticlesPipeline(
   def run(ctx: RunCtx): Either[Halt, com.histmersion.domain.research.workflows.ProposeArticlesPipeline.Outcome] =
     val goal = ctx.run.target
     for
-      loaded <- ctx.code[Loaded]("load")(load(goal))
+      loaded <- ctx.code[Loaded](com.histmersion.domain.automation.agents.AgentRepo.StepRecord.Name("load"))(load(goal))
       plan <- ctx.llm[ArticlesAnswer, ArticlePlan](
         "propose",
         StepAgent.ArticlePlanner,
@@ -187,7 +187,7 @@ final class ProposeArticlesPipeline(
     if plan.isEmpty then Right(Recorded(None, s"nothing survived the checks; no approval was opened"))
     else
       ctx.write(
-        s"${ApprovalKind.ArticlePlan.wire} approval for goal $goal: ${Plural.count(plan.articles.size, "article")}",
+        s"${ApprovalKind.ArticlePlan.wire} approval for goal $goal: ${Plural.count(plan.articles.size, com.histmersion.api.Plural.CountSingular("article"))}",
         plan.asJson
       )(
         Right(ctx.approvalStore.openSubject(Some(ctx.run.id), ApprovalKind.ArticlePlan, goal, plan.asJson.noSpaces))

@@ -10,13 +10,13 @@ import com.histmersion.api.library.Candidates
 
 /** Europe PMC: first publication since, newest first. */
 final class EuropePmcIndex(cfg: AcquireConfig, http: Http) extends ScholarlyIndex:
-  val name = "europepmc"
+  val name = com.histmersion.domain.library.acquisition.ScholarlyIndex.Name("europepmc")
   def search(query: com.histmersion.domain.library.search.Search.Query, since: LocalDate, limit: com.histmersion.domain.library.acquisition.EuropePmcIndex.SearchLimit) =
     http
       .json(
         Url(
           cfg.europepmc.url,
-          "/search",
+          com.histmersion.upstreams.http.Url.UrlPath("/search"),
           "query" -> s"($query) AND FIRST_PDATE:[$since TO 3000-12-31]",
           "format" -> "json",
           "resultType" -> "core",

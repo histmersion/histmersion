@@ -25,7 +25,7 @@ final class GazetteerControllers(
 
   /** A places job: `about` says what it does (the jobs list shows it), `run` answers its summary or why it failed. */
   private def job(kind: com.histmersion.util.jobs.Job.Kind, about: com.histmersion.domain.catalogue.places.GazetteerSourceRow.Key)(run: => Either[String, String]): Either[Api.Error, JobInfo] =
-    BackgroundJob.start(ds, kind, Some(JobDetail.Purpose(Some(about))), slot, "a places job", pins = pins)(
+    BackgroundJob.start(ds, kind, Some(JobDetail.Purpose(Some(about))), slot, com.histmersion.util.jobs.BackgroundJob.Work("a places job"), pins = pins)(
       (_, progress) =>
         progress(about)
         scribe.info(s"[import] $about…")
@@ -39,7 +39,7 @@ final class GazetteerControllers(
     * reasonable HTTP timeout).
     */
   def fetch(caller: Caller, source: com.histmersion.domain.catalogue.places.GazetteerSourceRow.Key, dryRun: com.histmersion.domain.catalogue.places.GazetteerControllers.DryRun): Either[Api.Error, Place.ImportResult] =
-    maintenance.guard("places/fetch"):
+    maintenance.guard(com.histmersion.util.data.maintenance.WriteGate.OperationName("places/fetch")):
       if source.trim.toLowerCase == NaturalEarthLand.name then land(dryRun)
       else
         val name = source.trim.toLowerCase
@@ -67,11 +67,11 @@ final class GazetteerControllers(
     * is a background job — two downloads and a re-clip of every polity.
     */
   private def land(dryRun: com.histmersion.domain.catalogue.places.GazetteerControllers.DryRun): Either[Api.Error, Place.ImportResult] =
-    if dryRun then imports.land(dryRun = true).left.map(Api.Error(_))
+    if dryRun then imports.land(dryRun = com.histmersion.domain.catalogue.places.GazetteerControllers.DryRun(true)).left.map(Api.Error(_))
     else
-      job(com.histmersion.api.catalogue.PlacesJobKinds.PlacesFetch.kind.value, "fetch land")(
+      job(com.histmersion.api.catalogue.PlacesJobKinds.PlacesFetch.kind.value, com.histmersion.domain.catalogue.places.GazetteerSourceRow.Key("fetch land"))(
         imports
-          .land(dryRun = false)
+          .land(dryRun = com.histmersion.domain.catalogue.places.GazetteerControllers.DryRun(false))
           .map(r => s"${r.places} polities clipped${r.failed.mkString(" ", "; ", "")}".trim)
       ).map(j => Place.ImportResult(0, 0, 0, job = Some(j.id.value)))
 
@@ -79,10 +79,10 @@ final class GazetteerControllers(
     * across thousands of polygons is slow): the answer carries its id, the finished job's summary the counts.
     */
   def buildHierarchy(caller: Caller): Either[Api.Error, SpatialHierarchyResult] =
-    maintenance.guard("places/build-hierarchy"):
+    maintenance.guard(com.histmersion.util.data.maintenance.WriteGate.OperationName("places/build-hierarchy")):
       job(
         com.histmersion.api.catalogue.PlacesJobKinds.PlacesHierarchy.kind.value,
-        "build the spatial hierarchy"
+        com.histmersion.domain.catalogue.places.GazetteerSourceRow.Key("build the spatial hierarchy")
       ) {
         val r = geometry.buildHierarchy()
         Right(s"${r.edgesCreated} edges from ${r.polygonPlaces} polygons × ${r.pointPlaces} points")

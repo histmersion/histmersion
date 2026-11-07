@@ -54,7 +54,7 @@ object ArticleRoutes:
               val body = s"<p>No article <code>${ArticleHtml.esc(slug)}</code>.</p>"
               (
                 sttp.model.StatusCode.NotFound,
-                if fragment then body else ArticleHtml.page("Not found", body, PageKind.Article)
+                if fragment then body else ArticleHtml.page(com.histmersion.domain.Title("Not found"), body, PageKind.Article)
               )
         }
 

@@ -26,6 +26,6 @@ final class CitationsControllers(citations: CitationService, sources: SourceServ
 
   /** `POST /api/edges/resolve`: the parked edges whose target now names one stored source, promoted. */
   def resolveEdges: Either[Api.Error, EdgesResolved] =
-    maintenance.guard("edges/resolve"):
+    maintenance.guard(com.histmersion.util.data.maintenance.WriteGate.OperationName("edges/resolve")):
       Right(EdgesResolved(sources.resolveEdges(Caller.Local)))
 

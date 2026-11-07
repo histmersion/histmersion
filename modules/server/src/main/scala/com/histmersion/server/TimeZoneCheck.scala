@@ -31,13 +31,13 @@ object TimeZoneCheck:
   private val Summer = Instant.parse("2026-07-15T12:00:00Z")
 
   val Probes: List[Probe] = List(
-    Probe("Europe/Warsaw", Winter, ZoneOffset.ofHours(1)),
-    Probe("Europe/Warsaw", Summer, ZoneOffset.ofHours(2)),
-    Probe("America/New_York", Winter, ZoneOffset.ofHours(-5)),
-    Probe("America/New_York", Summer, ZoneOffset.ofHours(-4)),
-    Probe("Asia/Kolkata", Summer, ZoneOffset.ofHoursMinutes(5, 30)),
-    Probe("Australia/Lord_Howe", Winter, ZoneOffset.ofHours(11)),
-    Probe("Australia/Lord_Howe", Summer, ZoneOffset.ofHoursMinutes(10, 30))
+    Probe(com.histmersion.server.TimeZoneCheck.Probe.Zone("Europe/Warsaw"), Winter, ZoneOffset.ofHours(1)),
+    Probe(com.histmersion.server.TimeZoneCheck.Probe.Zone("Europe/Warsaw"), Summer, ZoneOffset.ofHours(2)),
+    Probe(com.histmersion.server.TimeZoneCheck.Probe.Zone("America/New_York"), Winter, ZoneOffset.ofHours(-5)),
+    Probe(com.histmersion.server.TimeZoneCheck.Probe.Zone("America/New_York"), Summer, ZoneOffset.ofHours(-4)),
+    Probe(com.histmersion.server.TimeZoneCheck.Probe.Zone("Asia/Kolkata"), Summer, ZoneOffset.ofHoursMinutes(5, 30)),
+    Probe(com.histmersion.server.TimeZoneCheck.Probe.Zone("Australia/Lord_Howe"), Winter, ZoneOffset.ofHours(11)),
+    Probe(com.histmersion.server.TimeZoneCheck.Probe.Zone("Australia/Lord_Howe"), Summer, ZoneOffset.ofHoursMinutes(10, 30))
   )
 
   /** Pure over the lookups: (ok, the self-check line). `offset` resolves a zone at an instant, `zones` is how many

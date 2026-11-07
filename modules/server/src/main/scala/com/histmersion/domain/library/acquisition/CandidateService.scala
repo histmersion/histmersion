@@ -63,9 +63,9 @@ object CandidateService:
       db.read(CandidateRepo.list(goal, state, limit, offset))
     def counts(goal: Option[com.histmersion.domain.automation.Goal.Slug]): List[CandidateCount] = db.read(CandidateRepo.counts(goal))
     def mark(ids: List[com.histmersion.domain.library.acquisition.CandidateService.Implementation.MarkIds], state: com.histmersion.domain.library.acquisition.CandidateService.State): com.histmersion.RowCount =
-      if ids.isEmpty then 0 else db.transact(CandidateRepo.mark(ids, state))
+      if ids.isEmpty then com.histmersion.RowCount(0) else db.transact(CandidateRepo.mark(ids, state))
     def markDois(goal: com.histmersion.domain.automation.Goal.Slug, dois: List[com.histmersion.domain.library.Doi], state: com.histmersion.domain.library.acquisition.CandidateService.State): com.histmersion.RowCount =
-      if dois.isEmpty then 0 else db.transact(CandidateRepo.markDois(goal, dois, state))
+      if dois.isEmpty then com.histmersion.RowCount(0) else db.transact(CandidateRepo.markDois(goal, dois, state))
 
   object Implementation:
     type RecordWatchWatermark = RecordWatchWatermark.T
@@ -170,10 +170,10 @@ object CandidateService:
       }
       n
 
-    def mark(ids: List[com.histmersion.domain.library.acquisition.CandidateService.InMemory.MarkIds], st: com.histmersion.domain.library.acquisition.CandidateService.State): com.histmersion.RowCount = if ids.isEmpty then 0 else marked(c => ids.contains(c.id), st)
+    def mark(ids: List[com.histmersion.domain.library.acquisition.CandidateService.InMemory.MarkIds], st: com.histmersion.domain.library.acquisition.CandidateService.State): com.histmersion.RowCount = if ids.isEmpty then com.histmersion.RowCount(0) else marked(c => ids.contains(c.id), st)
 
     def markDois(goal: com.histmersion.domain.automation.Goal.Slug, dois: List[com.histmersion.domain.library.Doi], st: com.histmersion.domain.library.acquisition.CandidateService.State): com.histmersion.RowCount =
-      if dois.isEmpty then 0 else marked(c => c.goal == goal && dois.contains(c.doi), st)
+      if dois.isEmpty then com.histmersion.RowCount(0) else marked(c => c.goal == goal && dois.contains(c.doi), st)
 
   object InMemory:
     type RecordWatchWatermark = RecordWatchWatermark.T

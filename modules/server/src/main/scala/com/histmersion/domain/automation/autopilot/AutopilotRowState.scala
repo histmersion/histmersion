@@ -38,4 +38,4 @@ object AutopilotRowState:
   object DrainBy extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
   def made(now: Instant): AutopilotRowState =
-    AutopilotRowState(false, now, "", Nil, None, None, None, None, None, None, None, None, None, None)
+    AutopilotRowState(com.histmersion.domain.automation.autopilot.AutopilotRowState.Enabled(false), now, com.histmersion.domain.automation.autopilot.AutopilotRowState.ChangedBy(""), Nil, None, None, None, None, None, None, None, None, None, None)

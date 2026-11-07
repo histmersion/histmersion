@@ -455,7 +455,7 @@ final class McpTools(
               com.histmersion.server.agents.EngineContributions
                 .work(h.agents)
                 .oaBacklog
-                .repair(RepairAcquire.RepairRequest(dry, Some("mcp")))
+                .repair(RepairAcquire.RepairRequest(dry, Some(com.histmersion.api.automation.Activity.Actor("mcp"))))
             )
           ),
         st => h.autopilot.page(st).markdown
@@ -525,8 +525,8 @@ object McpTools:
       path: Option[IngestInput.Path] = None,
       base64: Option[IngestInput.Base64] = None,
       filename: Option[IngestInput.Filename] = None,
-      quality: IngestInput.Quality = false,
-      force: IngestInput.Force = false,
+      quality: IngestInput.Quality = com.histmersion.server.McpTools.IngestInput.Quality(false),
+      force: IngestInput.Force = com.histmersion.server.McpTools.IngestInput.Force(false),
       title: Option[IngestInput.Title] = None,
       authors: List[IngestInput.Authors] = Nil,
       year: Option[IngestInput.Year] = None,
@@ -677,7 +677,7 @@ object McpTools:
   final case class GoalPutInput(
       slug: GoalPutInput.Slug,
       title: GoalPutInput.Title,
-      status: GoalPutInput.Status = "planned",
+      status: GoalPutInput.Status = com.histmersion.server.McpTools.GoalPutInput.Status("planned"),
       notes: Option[GoalPutInput.Notes] = None,
       tags: List[GoalPutInput.Tags] = Nil,
       regions: List[GoalPutInput.Regions] = Nil,
@@ -792,7 +792,7 @@ object McpTools:
       bundle: MergePlanInput.Bundle,
       resolve: Map[MergePlanInput.ResolveKey, MergePlanInput.ResolveValue] = Map.empty,
       editions: Option[MergePlanInput.Editions] = None,
-      all: MergePlanInput.All = false
+      all: MergePlanInput.All = com.histmersion.server.McpTools.MergePlanInput.All(false)
   )
   object MergePlanInput:
     type Bundle = Bundle.T

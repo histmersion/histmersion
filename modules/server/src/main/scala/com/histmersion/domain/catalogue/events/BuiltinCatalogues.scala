@@ -57,9 +57,9 @@ object BuiltinCatalogues:
     object Name extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
   val entries: List[Entry] = List(
-    Entry("events-gvp", CatalogProvider.Gvp),
-    Entry("events-noaa", CatalogProvider.Noaa),
-    Entry("events-wikidata", CatalogProvider.Wikidata)
+    Entry(com.histmersion.domain.catalogue.events.BuiltinCatalogues.Entry.Plugin("events-gvp"), CatalogProvider.Gvp),
+    Entry(com.histmersion.domain.catalogue.events.BuiltinCatalogues.Entry.Plugin("events-noaa"), CatalogProvider.Noaa),
+    Entry(com.histmersion.domain.catalogue.events.BuiltinCatalogues.Entry.Plugin("events-wikidata"), CatalogProvider.Wikidata)
   )
 
   val pluginIds: Set[com.histmersion.util.plugins.Plugin.Id] = entries.map(_.plugin).toSet

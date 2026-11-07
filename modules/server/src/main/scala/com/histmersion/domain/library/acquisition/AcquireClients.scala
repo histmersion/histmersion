@@ -18,7 +18,7 @@ final case class AcquireClients(
     indexes: List[ScholarlyIndex] = Nil,
     alerts: CitationAlerts = NoAlerts,
     /** The legal chain's generation ([[FetcherGeneration]]): what makes the acquisition list due again. */
-    generation: AcquireClients.Generation = ""
+    generation: AcquireClients.Generation = com.histmersion.domain.library.acquisition.AcquireClients.Generation("")
 )
 
 object AcquireClients:

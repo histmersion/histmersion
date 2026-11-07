@@ -22,7 +22,7 @@ private[notes] object NoteRepo:
 
   private val Projection =
     s"""SELECT n.id::text, n.target_kind, n.target_id, n.target_uid, n.lat, n.lon, n.period_start, n.period_end, n.body,
-               n.target_label, ${iso("n.created_at")}, ${iso("n.updated_at")}
+               n.target_label, ${iso(com.histmersion.domain.personal.notes.NoteRepo.Column("n.created_at"))}, ${iso(com.histmersion.domain.personal.notes.NoteRepo.Column("n.updated_at"))}
           FROM notes n"""
 
   /** Last changed first; every one when no `size` is given. */

@@ -87,7 +87,7 @@ object MarkdownLint:
   object MetaKeysValue extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
   final case class Context(
-      article: Context.Article = false,
+      article: Context.Article = com.histmersion.server.MarkdownLint.Context.Article(false),
       resolves: Option[Context.ResolvesArg1 => Context.ResolvesResult] = None,
       isCitekey: Option[Context.IsCitekeyArg1 => Context.IsCitekeyResult] = None
   )
@@ -141,19 +141,19 @@ object MarkdownLint:
     * summary.
     */
   def ofArticle(body: com.histmersion.server.MarkdownLint.Scan.Text, summary: Option[com.histmersion.domain.research.articles.ArticleSummaryRow.Summary], links: com.histmersion.domain.library.Citekey => Option[LinkTarget]): List[FormatIssue] =
-    issues(body, FormatField.Body, resolving(links, article = true)) ++
+    issues(body, FormatField.Body, resolving(links, article = com.histmersion.server.MarkdownLint.ResolvingArticle(true))) ++
       summary.toList.flatMap(issues(_, FormatField.Summary, resolving(links, article = false)))
 
   /** A source's summary and notes — the two texts an agent writes about one source. */
   def ofSource(summary: Option[com.histmersion.domain.library.Source.Summary], notes: Option[com.histmersion.domain.library.sources.SourceNote.Text], links: com.histmersion.domain.library.Citekey => Option[LinkTarget]): List[FormatIssue] =
-    summary.toList.flatMap(issues(_, FormatField.Summary, resolving(links, article = false))) ++
-      notes.toList.flatMap(issues(_, FormatField.Notes, resolving(links, article = false)))
+    summary.toList.flatMap(issues(_, FormatField.Summary, resolving(links, article = com.histmersion.server.MarkdownLint.ResolvingArticle(false)))) ++
+      notes.toList.flatMap(issues(_, FormatField.Notes, resolving(links, article = com.histmersion.server.MarkdownLint.ResolvingArticle(false))))
 
   /** The `--strict` gate: the ERRORS among `issues`, as the refusal message, or `None` to write. */
   def refusal(issues: List[FormatIssue]): Option[com.histmersion.server.MarkdownLint.Problem] =
     val errs = issues.filter(_.severity == FormatSeverity.Error)
     Option.when(errs.nonEmpty)(
-      s"refused (strict): ${Plural.count(errs.size, "formatting error")} — " +
+      s"refused (strict): ${Plural.count(errs.size, com.histmersion.api.Plural.CountSingular("formatting error"))} — " +
         errs.take(5).map(FormatMarkdown.line).mkString("; ") +
         (if errs.sizeIs > 5 then s"; … and ${errs.size - 5} more" else "")
     )
@@ -176,7 +176,7 @@ object MarkdownLint:
               val lo = f.edits.map(_.start).min
               if lo < reach then nonOverlapping(tail, acc, reach)
               else nonOverlapping(tail, f :: acc, f.edits.map(_.end).max.max(lo + 1))
-        val chosen = nonOverlapping(fixable.sortBy(f => f.edits.map(_.start).min), Nil, -1)
+        val chosen = nonOverlapping(fixable.sortBy(f => f.edits.map(_.start).min), Nil, com.histmersion.Offset(-1))
         val edits = chosen.flatMap(_.edits).sortBy(e => (-e.start, -e.end))
         val next = edits.foldLeft(t)((s, e) => s.substring(0, e.start) + e.replacement + s.substring(e.end))
         val lines =
@@ -197,135 +197,135 @@ object MarkdownLint:
 
   /** HTML elements a browser knows. Anything else (`<etal>`, `<insert>`) is dropped by it. */
   private val KnownTags: Set[com.histmersion.server.MarkdownLint.KnownTags] = Set(
-    "a",
-    "abbr",
-    "b",
-    "bdi",
-    "bdo",
-    "blockquote",
-    "br",
-    "caption",
-    "cite",
-    "code",
-    "col",
-    "colgroup",
-    "dd",
-    "del",
-    "details",
-    "dfn",
-    "div",
-    "dl",
-    "dt",
-    "em",
-    "figcaption",
-    "figure",
-    "h1",
-    "h2",
-    "h3",
-    "h4",
-    "h5",
-    "h6",
-    "hr",
-    "i",
-    "img",
-    "ins",
-    "kbd",
-    "li",
-    "mark",
-    "ol",
-    "p",
-    "pre",
-    "q",
-    "s",
-    "samp",
-    "section",
-    "small",
-    "span",
-    "strong",
-    "sub",
-    "summary",
-    "sup",
-    "table",
-    "tbody",
-    "td",
-    "tfoot",
-    "th",
-    "thead",
-    "time",
-    "tr",
-    "u",
-    "ul",
-    "var",
-    "wbr",
-    "figure",
-    "aside",
-    "nav",
-    "header",
-    "footer",
-    "article",
-    "main",
-    "center",
-    "font",
-    "tt",
-    "big",
-    "strike"
+    com.histmersion.server.MarkdownLint.KnownTagsValue("a"),
+    com.histmersion.server.MarkdownLint.KnownTagsValue("abbr"),
+    com.histmersion.server.MarkdownLint.KnownTagsValue("b"),
+    com.histmersion.server.MarkdownLint.KnownTagsValue("bdi"),
+    com.histmersion.server.MarkdownLint.KnownTagsValue("bdo"),
+    com.histmersion.server.MarkdownLint.KnownTagsValue("blockquote"),
+    com.histmersion.server.MarkdownLint.KnownTagsValue("br"),
+    com.histmersion.server.MarkdownLint.KnownTagsValue("caption"),
+    com.histmersion.server.MarkdownLint.KnownTagsValue("cite"),
+    com.histmersion.server.MarkdownLint.KnownTagsValue("code"),
+    com.histmersion.server.MarkdownLint.KnownTagsValue("col"),
+    com.histmersion.server.MarkdownLint.KnownTagsValue("colgroup"),
+    com.histmersion.server.MarkdownLint.KnownTagsValue("dd"),
+    com.histmersion.server.MarkdownLint.KnownTagsValue("del"),
+    com.histmersion.server.MarkdownLint.KnownTagsValue("details"),
+    com.histmersion.server.MarkdownLint.KnownTagsValue("dfn"),
+    com.histmersion.server.MarkdownLint.KnownTagsValue("div"),
+    com.histmersion.server.MarkdownLint.KnownTagsValue("dl"),
+    com.histmersion.server.MarkdownLint.KnownTagsValue("dt"),
+    com.histmersion.server.MarkdownLint.KnownTagsValue("em"),
+    com.histmersion.server.MarkdownLint.KnownTagsValue("figcaption"),
+    com.histmersion.server.MarkdownLint.KnownTagsValue("figure"),
+    com.histmersion.server.MarkdownLint.KnownTagsValue("h1"),
+    com.histmersion.server.MarkdownLint.KnownTagsValue("h2"),
+    com.histmersion.server.MarkdownLint.KnownTagsValue("h3"),
+    com.histmersion.server.MarkdownLint.KnownTagsValue("h4"),
+    com.histmersion.server.MarkdownLint.KnownTagsValue("h5"),
+    com.histmersion.server.MarkdownLint.KnownTagsValue("h6"),
+    com.histmersion.server.MarkdownLint.KnownTagsValue("hr"),
+    com.histmersion.server.MarkdownLint.KnownTagsValue("i"),
+    com.histmersion.server.MarkdownLint.KnownTagsValue("img"),
+    com.histmersion.server.MarkdownLint.KnownTagsValue("ins"),
+    com.histmersion.server.MarkdownLint.KnownTagsValue("kbd"),
+    com.histmersion.server.MarkdownLint.KnownTagsValue("li"),
+    com.histmersion.server.MarkdownLint.KnownTagsValue("mark"),
+    com.histmersion.server.MarkdownLint.KnownTagsValue("ol"),
+    com.histmersion.server.MarkdownLint.KnownTagsValue("p"),
+    com.histmersion.server.MarkdownLint.KnownTagsValue("pre"),
+    com.histmersion.server.MarkdownLint.KnownTagsValue("q"),
+    com.histmersion.server.MarkdownLint.KnownTagsValue("s"),
+    com.histmersion.server.MarkdownLint.KnownTagsValue("samp"),
+    com.histmersion.server.MarkdownLint.KnownTagsValue("section"),
+    com.histmersion.server.MarkdownLint.KnownTagsValue("small"),
+    com.histmersion.server.MarkdownLint.KnownTagsValue("span"),
+    com.histmersion.server.MarkdownLint.KnownTagsValue("strong"),
+    com.histmersion.server.MarkdownLint.KnownTagsValue("sub"),
+    com.histmersion.server.MarkdownLint.KnownTagsValue("summary"),
+    com.histmersion.server.MarkdownLint.KnownTagsValue("sup"),
+    com.histmersion.server.MarkdownLint.KnownTagsValue("table"),
+    com.histmersion.server.MarkdownLint.KnownTagsValue("tbody"),
+    com.histmersion.server.MarkdownLint.KnownTagsValue("td"),
+    com.histmersion.server.MarkdownLint.KnownTagsValue("tfoot"),
+    com.histmersion.server.MarkdownLint.KnownTagsValue("th"),
+    com.histmersion.server.MarkdownLint.KnownTagsValue("thead"),
+    com.histmersion.server.MarkdownLint.KnownTagsValue("time"),
+    com.histmersion.server.MarkdownLint.KnownTagsValue("tr"),
+    com.histmersion.server.MarkdownLint.KnownTagsValue("u"),
+    com.histmersion.server.MarkdownLint.KnownTagsValue("ul"),
+    com.histmersion.server.MarkdownLint.KnownTagsValue("var"),
+    com.histmersion.server.MarkdownLint.KnownTagsValue("wbr"),
+    com.histmersion.server.MarkdownLint.KnownTagsValue("figure"),
+    com.histmersion.server.MarkdownLint.KnownTagsValue("aside"),
+    com.histmersion.server.MarkdownLint.KnownTagsValue("nav"),
+    com.histmersion.server.MarkdownLint.KnownTagsValue("header"),
+    com.histmersion.server.MarkdownLint.KnownTagsValue("footer"),
+    com.histmersion.server.MarkdownLint.KnownTagsValue("article"),
+    com.histmersion.server.MarkdownLint.KnownTagsValue("main"),
+    com.histmersion.server.MarkdownLint.KnownTagsValue("center"),
+    com.histmersion.server.MarkdownLint.KnownTagsValue("font"),
+    com.histmersion.server.MarkdownLint.KnownTagsValue("tt"),
+    com.histmersion.server.MarkdownLint.KnownTagsValue("big"),
+    com.histmersion.server.MarkdownLint.KnownTagsValue("strike")
   )
-  private val VoidTags: Set[com.histmersion.server.MarkdownLint.VoidTags] = Set("br", "hr", "img", "wbr", "col")
+  private val VoidTags: Set[com.histmersion.server.MarkdownLint.VoidTags] = Set(com.histmersion.server.MarkdownLint.VoidTagsValue("br"), com.histmersion.server.MarkdownLint.VoidTagsValue("hr"), com.histmersion.server.MarkdownLint.VoidTagsValue("img"), com.histmersion.server.MarkdownLint.VoidTagsValue("wbr"), com.histmersion.server.MarkdownLint.VoidTagsValue("col"))
 
   /** An unclosed one of these swallows everything after it, not just the rest of a paragraph. */
   private val BlockTags: Set[com.histmersion.server.MarkdownLint.BlockTags] = Set(
-    "div",
-    "details",
-    "table",
-    "blockquote",
-    "pre",
-    "ul",
-    "ol",
-    "section",
-    "figure",
-    "aside",
-    "nav",
-    "header",
-    "footer",
-    "article",
-    "main",
-    "center"
+    com.histmersion.server.MarkdownLint.BlockTagsValue("div"),
+    com.histmersion.server.MarkdownLint.BlockTagsValue("details"),
+    com.histmersion.server.MarkdownLint.BlockTagsValue("table"),
+    com.histmersion.server.MarkdownLint.BlockTagsValue("blockquote"),
+    com.histmersion.server.MarkdownLint.BlockTagsValue("pre"),
+    com.histmersion.server.MarkdownLint.BlockTagsValue("ul"),
+    com.histmersion.server.MarkdownLint.BlockTagsValue("ol"),
+    com.histmersion.server.MarkdownLint.BlockTagsValue("section"),
+    com.histmersion.server.MarkdownLint.BlockTagsValue("figure"),
+    com.histmersion.server.MarkdownLint.BlockTagsValue("aside"),
+    com.histmersion.server.MarkdownLint.BlockTagsValue("nav"),
+    com.histmersion.server.MarkdownLint.BlockTagsValue("header"),
+    com.histmersion.server.MarkdownLint.BlockTagsValue("footer"),
+    com.histmersion.server.MarkdownLint.BlockTagsValue("article"),
+    com.histmersion.server.MarkdownLint.BlockTagsValue("main"),
+    com.histmersion.server.MarkdownLint.BlockTagsValue("center")
   )
 
   /** Keys a pasted frontmatter block uses — the article's and the source's own metadata fields. */
   private val MetaKeys: Set[com.histmersion.server.MarkdownLint.MetaKeys] = Set(
-    "title",
-    "slug",
-    "type",
-    "kind",
-    "summary",
-    "tags",
-    "regions",
-    "period",
-    "period_start",
-    "period_end",
-    "periodstart",
-    "periodend",
-    "citekey",
-    "doi",
-    "authors",
-    "author",
-    "year",
-    "status",
-    "date",
-    "topics",
-    "venue",
-    "aliases",
-    "created",
-    "updated",
-    "source",
-    "sources",
-    "description",
-    "lang",
-    "language",
-    "cssclass",
-    "cssclasses",
-    "publish"
+    com.histmersion.server.MarkdownLint.MetaKeysValue("title"),
+    com.histmersion.server.MarkdownLint.MetaKeysValue("slug"),
+    com.histmersion.server.MarkdownLint.MetaKeysValue("type"),
+    com.histmersion.server.MarkdownLint.MetaKeysValue("kind"),
+    com.histmersion.server.MarkdownLint.MetaKeysValue("summary"),
+    com.histmersion.server.MarkdownLint.MetaKeysValue("tags"),
+    com.histmersion.server.MarkdownLint.MetaKeysValue("regions"),
+    com.histmersion.server.MarkdownLint.MetaKeysValue("period"),
+    com.histmersion.server.MarkdownLint.MetaKeysValue("period_start"),
+    com.histmersion.server.MarkdownLint.MetaKeysValue("period_end"),
+    com.histmersion.server.MarkdownLint.MetaKeysValue("periodstart"),
+    com.histmersion.server.MarkdownLint.MetaKeysValue("periodend"),
+    com.histmersion.server.MarkdownLint.MetaKeysValue("citekey"),
+    com.histmersion.server.MarkdownLint.MetaKeysValue("doi"),
+    com.histmersion.server.MarkdownLint.MetaKeysValue("authors"),
+    com.histmersion.server.MarkdownLint.MetaKeysValue("author"),
+    com.histmersion.server.MarkdownLint.MetaKeysValue("year"),
+    com.histmersion.server.MarkdownLint.MetaKeysValue("status"),
+    com.histmersion.server.MarkdownLint.MetaKeysValue("date"),
+    com.histmersion.server.MarkdownLint.MetaKeysValue("topics"),
+    com.histmersion.server.MarkdownLint.MetaKeysValue("venue"),
+    com.histmersion.server.MarkdownLint.MetaKeysValue("aliases"),
+    com.histmersion.server.MarkdownLint.MetaKeysValue("created"),
+    com.histmersion.server.MarkdownLint.MetaKeysValue("updated"),
+    com.histmersion.server.MarkdownLint.MetaKeysValue("source"),
+    com.histmersion.server.MarkdownLint.MetaKeysValue("sources"),
+    com.histmersion.server.MarkdownLint.MetaKeysValue("description"),
+    com.histmersion.server.MarkdownLint.MetaKeysValue("lang"),
+    com.histmersion.server.MarkdownLint.MetaKeysValue("language"),
+    com.histmersion.server.MarkdownLint.MetaKeysValue("cssclass"),
+    com.histmersion.server.MarkdownLint.MetaKeysValue("cssclasses"),
+    com.histmersion.server.MarkdownLint.MetaKeysValue("publish")
   )
 
   private val ChatterLine =
@@ -476,7 +476,7 @@ object MarkdownLint:
           val looksMd = inner.linesIterator.exists(l => l.startsWith("#") || l.contains("[[") || l.startsWith("- "))
           if (info == "markdown" || info == "md" || (info.isEmpty && closes)) && looksMd then
             wrapped = Some(lineStarts(f))
-            val openEdit = Edit(lineStarts(f), math.min(text.length, lineStarts(f) + l0.length + 1), "")
+            val openEdit = Edit(lineStarts(f), math.min(text.length, lineStarts(f) + l0.length + 1), com.histmersion.server.MarkdownLint.Edit.Replacement(""))
             val closeEdit = last
               .filter(_ => closes)
               .map(l => Edit(lineStarts(l), math.min(text.length, lineStarts(l) + lineText(l).length + 1), ""))
@@ -486,7 +486,7 @@ object MarkdownLint:
               l0.length,
               "the whole text is inside a code fence, so the page shows it as one grey block of raw Markdown",
               openEdit :: closeEdit.toList,
-              Some("remove the wrapping fence lines")
+              Some(com.histmersion.server.MarkdownLint.Edit.Replacement("remove the wrapping fence lines"))
             )
         }
         // a YAML block: `---` … `---` at the very top
@@ -536,7 +536,7 @@ object MarkdownLint:
               lineStarts(f),
               lineText(f).length,
               s"${run.size} metadata lines (`${lineText(f).takeWhile(_ != ':')}: …`) pasted at the top: they show as a paragraph of text",
-              List(Edit(lineStarts(f), after, "")),
+              List(Edit(lineStarts(f), after, com.histmersion.server.MarkdownLint.Edit.Replacement(""))),
               Some("remove the metadata lines (they are the record's own fields)")
             )
       }
@@ -578,10 +578,10 @@ object MarkdownLint:
         add(
           FormatRule.IndentedCode,
           c.getStartOffset,
-          20,
+          com.histmersion.server.MarkdownLint.Scan.AddLen(20),
           "text indented by four or more spaces after a blank line renders as a grey code block, not prose",
           edits,
-          Some("remove the indentation")
+          Some(com.histmersion.server.MarkdownLint.Edit.Replacement("remove the indentation"))
         )
       case _ => ()
     }
@@ -660,15 +660,15 @@ object MarkdownLint:
           off,
           header.length,
           "no blank line between the paragraph above and the table — the renderer folds the table into the paragraph as text",
-          List(Edit(off, off, "\n")),
-          Some("insert a blank line before the table")
+          List(Edit(off, off, com.histmersion.server.MarkdownLint.Edit.Replacement("\n"))),
+          Some(com.histmersion.server.MarkdownLint.Edit.Replacement("insert a blank line before the table"))
         )
       else
         add(
           FormatRule.TableNotRendered,
           off,
           header.length,
-          "these rows of pipes do not parse as a table — they show as text"
+          com.histmersion.server.MarkdownLint.Message("these rows of pipes do not parse as a table — they show as text")
         )
 
     private def renderedTable(a: com.histmersion.server.MarkdownLint.Scan.RenderedTableA, b: com.histmersion.server.MarkdownLint.Scan.RenderedTableB): Unit =
@@ -720,19 +720,19 @@ object MarkdownLint:
                 add(
                   FormatRule.Emphasis,
                   i,
-                  1,
+                  com.histmersion.server.MarkdownLint.Scan.AddLen(1),
                   "a stray `*` next to bold/italic text: the asterisks do not balance (`***a**`, or a starred form " +
                     "inside bold), so one shows outside the bold — for a bold starred form write `**\\*a**`"
                 )
-            case '_' if !intraword(i, 1) && underscoreFlank(i) =>
+            case '_' if !intraword(i, com.histmersion.server.MarkdownLint.Scan.IntrawordRun(1)) && underscoreFlank(i) =>
               val l = lineOf(i)
               if !reported(l) && !inUrl(i) then
                 reported += l
                 add(
                   FormatRule.Emphasis,
                   i,
-                  1,
-                  "an `_` that opens or closes italics but has no partner — it shows literally"
+                  com.histmersion.server.MarkdownLint.Scan.AddLen(1),
+                  com.histmersion.server.MarkdownLint.Message("an `_` that opens or closes italics but has no partner — it shows literally")
                 )
             case '`' =>
               val ln = lineText(lineOf(i))
@@ -740,9 +740,9 @@ object MarkdownLint:
               add(
                 FormatRule.CodeSpan,
                 i,
-                1,
+                com.histmersion.server.MarkdownLint.Scan.AddLen(1),
                 if curly then "a code span opened with ` but closed with a curly quote — the backtick shows literally"
-                else "an unpaired backtick — it shows literally and the code span never starts"
+                else com.histmersion.server.MarkdownLint.Message("an unpaired backtick — it shows literally and the code span never starts")
               )
             case '~' if i + 1 < text.length && text.charAt(i + 1) == '~' && isLiteral(i + 1) =>
               val close = text.indexOf("~~", i + 2)
@@ -763,7 +763,7 @@ object MarkdownLint:
               add(
                 FormatRule.LiteralEscape,
                 i,
-                2,
+                com.histmersion.server.MarkdownLint.Scan.AddLen(2),
                 s"a literal `\\$c` (an escaped $what from JSON) — it shows as backslash-$c",
                 List(Edit(i, i + 2, rep)),
                 Some(s"replace `\\$c` with a real $what")
@@ -847,7 +847,7 @@ object MarkdownLint:
             m.end - m.start,
             s"`${mark.take(2)}` with a space just inside it does not make bold/italic text — it shows literally",
             List(Edit(st, lineStarts(l) + m.end, s"${mark.take(2)}$inner${mark.take(2)}")),
-            Some("remove the spaces inside the markers")
+            Some(com.histmersion.server.MarkdownLint.Edit.Replacement("remove the spaces inside the markers"))
           )
         case None =>
           val count = java.util.regex.Pattern.compile(q).matcher(ln).results().count()
@@ -893,8 +893,8 @@ object MarkdownLint:
                     r.getStartOffset,
                     r.getEndOffset - r.getStartOffset + m.end,
                     "a space between `]` and `(` — this is not a link; the brackets and the URL show as text",
-                    List(Edit(t.getStartOffset, t.getStartOffset + m.group(1).length, "")),
-                    Some("remove the space between ] and (")
+                    List(Edit(t.getStartOffset, t.getStartOffset + m.group(1).length, com.histmersion.server.MarkdownLint.Edit.Replacement(""))),
+                    Some(com.histmersion.server.MarkdownLint.Edit.Replacement("remove the space between ] and ("))
                   )
                 case None =>
                   if open.findFirstIn(after).isDefined || (after.startsWith("(") && !after.contains(")")) then
@@ -912,14 +912,14 @@ object MarkdownLint:
             FormatRule.LinkEmpty,
             lk.getStartOffset,
             lk.getEndOffset - lk.getStartOffset,
-            "a link with no text — nothing to click shows on the page"
+            com.histmersion.server.MarkdownLint.Message("a link with no text — nothing to click shows on the page")
           )
         else if url.trim.isEmpty then
           add(
             FormatRule.LinkEmpty,
             lk.getStartOffset,
             lk.getEndOffset - lk.getStartOffset,
-            "a link with an empty `()` target — it goes nowhere"
+            com.histmersion.server.MarkdownLint.Message("a link with an empty `()` target — it goes nowhere")
           )
         else
           WikiPathUrl.findFirstMatchIn(url).foreach { m =>
@@ -946,7 +946,7 @@ object MarkdownLint:
             FormatRule.Image,
             im.getStartOffset,
             im.getEndOffset - im.getStartOffset,
-            "an image with no source — it renders as a broken image"
+            com.histmersion.server.MarkdownLint.Message("an image with no source — it renders as a broken image")
           )
         else if LocalPath.findFirstIn(url).isDefined && !(field == FormatField.Notes && url.contains("figures/")) then
           add(
@@ -1040,8 +1040,8 @@ object MarkdownLint:
               lineStarts(l),
               lineText(l).length,
               s"`$under` right under a line of text turns that text (\"${txt.take(40)}\") into a heading instead of drawing a rule",
-              List(Edit(lineStarts(l), lineStarts(l), "\n")),
-              Some("insert a blank line before the rule")
+              List(Edit(lineStarts(l), lineStarts(l), com.histmersion.server.MarkdownLint.Edit.Replacement("\n"))),
+              Some(com.histmersion.server.MarkdownLint.Edit.Replacement("insert a blank line before the rule"))
             )
           else
             add(
@@ -1058,16 +1058,16 @@ object MarkdownLint:
             FormatRule.HeadingSyntax,
             h.getStartOffset,
             h.getEndOffset - h.getStartOffset,
-            "a `#` stuck to the end of the heading text shows as part of the heading",
+            com.histmersion.server.MarkdownLint.Message("a `#` stuck to the end of the heading text shows as part of the heading"),
             List(Edit(st, h.getText.getEndOffset, trimmed)),
-            Some("remove the trailing #")
+            Some(com.histmersion.server.MarkdownLint.Edit.Replacement("remove the trailing #"))
           )
         if txt.trim.isEmpty then
           add(
             FormatRule.HeadingLevel,
             h.getStartOffset,
             h.getEndOffset - h.getStartOffset,
-            "an empty heading",
+            com.histmersion.server.MarkdownLint.Message("an empty heading"),
             severity = Some(FormatSeverity.Warning)
           )
         if h.getAncestorOfType(classOf[ListItem]) != null then
@@ -1075,7 +1075,7 @@ object MarkdownLint:
             FormatRule.HeadingLevel,
             h.getStartOffset,
             h.getEndOffset - h.getStartOffset,
-            "a heading inside a list item — it renders inside the bullet, not as a section"
+            com.histmersion.server.MarkdownLint.Message("a heading inside a list item — it renders inside the bullet, not as a section")
           )
       }
       // levels, H1s, duplicates — over the top-level structure
@@ -1089,7 +1089,7 @@ object MarkdownLint:
           h.getEndOffset - h.getStartOffset,
           if ctx.article then
             "a second `#` title: the page shows the first as the title and this one as a second, equally large title — use `##`"
-          else "a second `#` heading — use `##` for sections"
+          else com.histmersion.server.MarkdownLint.Message("a second `#` heading — use `##` for sections")
         )
       }
       top.sliding(2).foreach {
@@ -1165,7 +1165,7 @@ object MarkdownLint:
               add(
                 FormatRule.ListMarkers,
                 n.getStartOffset,
-                2,
+                com.histmersion.server.MarkdownLint.Scan.AddLen(2),
                 s"the bullet changes from `${b.getOpeningMarker}` to `${n.getOpeningMarker}` — the renderer starts a second list here, with a gap"
               )
             case _ => ()
@@ -1205,7 +1205,7 @@ object MarkdownLint:
               FormatRule.AgentChatter,
               st,
               t.length,
-              "a line addressed to whoever asked for the text, not part of it — delete it"
+              com.histmersion.server.MarkdownLint.Message("a line addressed to whoever asked for the text, not part of it — delete it")
             )
           }
           Placeholders.findAllMatchIn(t).filterNot(m => code.get(st + m.start)).foreach { m =>
@@ -1254,9 +1254,9 @@ object MarkdownLint:
                 FormatRule.BareUrl,
                 o,
                 url.length,
-                "a bare URL — the renderer does not make it a link, so it cannot be clicked",
+                com.histmersion.server.MarkdownLint.Message("a bare URL — the renderer does not make it a link, so it cannot be clicked"),
                 List(Edit(o, o + url.length, s"<$url>")),
-                Some("wrap it in <…>")
+                Some(com.histmersion.server.MarkdownLint.Edit.Replacement("wrap it in <…>"))
               )
           }
           """<(https?://[^>\s]+)(?=\s|$)""".r.findAllMatchIn(mt).filter(m => isLiteral(st + m.start)).foreach { m =>
@@ -1265,8 +1265,8 @@ object MarkdownLint:
               st + m.start,
               m.end - m.start,
               "`<url` without its closing `>` — it is not a link; the bracket and URL show as text",
-              List(Edit(st + m.end, st + m.end, ">")),
-              Some("close it with >")
+              List(Edit(st + m.end, st + m.end, com.histmersion.server.MarkdownLint.Edit.Replacement(">"))),
+              Some(com.histmersion.server.MarkdownLint.Edit.Replacement("close it with >"))
             )
           }
           // the `_Method:_` line lists the filter's citekeys on purpose — the writing guide's convention
@@ -1294,10 +1294,10 @@ object MarkdownLint:
         add(
           FormatRule.Math,
           dollars.head,
-          2,
+          com.histmersion.server.MarkdownLint.Scan.AddLen(2),
           if dollars.size % 2 == 1 then
             s"${dollars.size} `$$$$` math delimiter(s) — an odd number, and the renderer does not typeset math anyway"
-          else "`$$…$$` math — the renderer does not typeset it; the TeX shows raw"
+          else com.histmersion.server.MarkdownLint.Message("`$$…$$` math — the renderer does not typeset it; the TeX shows raw")
         )
 
     // ── wikilinks ──────────────────────────────────────────────────────────────────────────────

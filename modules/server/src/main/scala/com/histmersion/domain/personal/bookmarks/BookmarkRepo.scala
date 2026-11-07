@@ -23,7 +23,7 @@ private[bookmarks] object BookmarkRepo:
 
   private val Projection =
     s"""SELECT b.id::text, b.target_kind, b.target_id, b.target_uid, b.lat, b.lon, b.zoom, b.period_start, b.period_end,
-               b.view, b.label, b.target_label, ${iso("b.created_at")}, ${iso("b.updated_at")}
+               b.view, b.label, b.target_label, ${iso(com.histmersion.domain.personal.bookmarks.BookmarkRepo.Column("b.created_at"))}, ${iso(com.histmersion.domain.personal.bookmarks.BookmarkRepo.Column("b.updated_at"))}
           FROM bookmarks b"""
 
   /** Newest first; every one when no `size` is given. */

@@ -27,7 +27,7 @@ object UiConfigViews:
       plugins: PluginsReport,
       baseMapSource: com.histmersion.server.UiConfigViews.PageBaseMapSource,
       mapLanguage: com.histmersion.server.UiConfigViews.PageMapLanguage,
-      setupDue: com.histmersion.server.UiConfigViews.PageSetupDue = false
+      setupDue: com.histmersion.server.UiConfigViews.PageSetupDue = com.histmersion.server.UiConfigViews.PageSetupDue(false)
   ): UiConfig =
     ui.into[UiConfig]
       .withFieldConst(_.setupDue, setupDue)

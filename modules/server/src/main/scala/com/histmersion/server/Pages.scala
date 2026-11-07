@@ -77,7 +77,7 @@ object Pages:
     * when the text is clean.
     */
   def formatNotice(issues: List[FormatIssue], what: com.histmersion.server.Pages.FormatNoticeWhat, slug: Option[com.histmersion.domain.research.Slug]): com.histmersion.server.HtmlRender.Html =
-    if issues.isEmpty then ""
+    if issues.isEmpty then com.histmersion.server.HtmlRender.Html("")
     else
       val errs = issues.count(_.severity == FormatSeverity.Error)
       val level = if errs > 0 then "has-errors" else "has-warnings"
@@ -156,7 +156,7 @@ object Pages:
     def block(anchor: com.histmersion.server.Pages.Anchor, title: com.histmersion.domain.Title, cs: List[Citation]) =
       if cs.isEmpty then ""
       else s"""<h2 id="$anchor">$title (${cs.size})</h2><ul class="citations">${cs.map(citation).mkString}</ul>"""
-    block("cites", "Cites", cites) + block("cited-by", "Cited by", citedBy)
+    block(com.histmersion.server.Pages.Anchor("cites"), com.histmersion.domain.Title("Cites"), cites) + block("cited-by", "Cited by", citedBy)
 
   private def kindLabel(kind: com.histmersion.domain.library.Edge.Kind.Wire): com.histmersion.server.HtmlRender.Html = s"""<span class="edge-kind">${esc(Label.display(kind))}</span> """
 
@@ -167,7 +167,7 @@ object Pages:
             r.status.transformInto[com.histmersion.api.library.Source.Status]
           )} <span class="ident">${identifier(r)}</span></li>"""
     case Citation.ToArticle(a, kind) =>
-      s"""<li>${kindLabel(kind.getOrElse("article"))}${articleRef(a)}</li>"""
+      s"""<li>${kindLabel(kind.getOrElse(com.histmersion.domain.library.Edge.Kind.Wire("article")))}${articleRef(a)}</li>"""
     case Citation.Unresolved(id, kind) =>
       s"""<li>${kindLabel(kind)}${dangling(id)} <span class="muted">not in the corpus yet</span></li>"""
 
@@ -239,13 +239,13 @@ object Pages:
     * summary saying how many there were and how many are open.
     */
   def reviewHistory(r: Article.ReviewView): com.histmersion.server.HtmlRender.Html =
-    if r.rounds.isEmpty then ""
+    if r.rounds.isEmpty then com.histmersion.server.HtmlRender.Html("")
     else
       val all = r.rounds.flatMap(_.findings)
       val runs = r.rounds.map(_.run).distinct.size
       val open = all.count(_.outcome == "open")
       val summary =
-        s"Review history: ${Plural.count(all.size.toLong, "finding")} over ${Plural.count(runs.toLong, "run")}" +
+        s"Review history: ${Plural.count(all.size.toLong, com.histmersion.api.Plural.CountSingular("finding"))} over ${Plural.count(runs.toLong, com.histmersion.api.Plural.CountSingular("run"))}" +
           (if open > 0 then s", $open still open" else ", none open")
       val rounds = r.rounds.map { rd =>
         val when = rd.startedAt.fold("")(t => s""" <span class="muted">· run started ${esc(readableUtc(t))}</span>""")
@@ -314,7 +314,7 @@ object Pages:
     numbered ++ rest
 
   def sourcesCited(entries: List[CitedEntry]): com.histmersion.server.HtmlRender.Html =
-    if entries.isEmpty then ""
+    if entries.isEmpty then com.histmersion.server.HtmlRender.Html("")
     else
       val items = entries.map { e =>
         val id = e.number.fold("")(n => s""" id="cite-$n"""")
@@ -333,7 +333,7 @@ object Pages:
       s"""<h2 id="sources-cited">Sources cited (${entries.size})</h2><ol class="sources-cited">${items.mkString}</ol>"""
 
   def backlinks(rows: List[Backlink]): com.histmersion.server.HtmlRender.Html =
-    if rows.isEmpty then ""
+    if rows.isEmpty then com.histmersion.server.HtmlRender.Html("")
     else
       val items = rows.map { b =>
         val label = b.title.filter(_.trim.nonEmpty).getOrElse(Label.display(b.id))

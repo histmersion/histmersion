@@ -23,9 +23,9 @@ object BuiltinAi:
   val runtimes: List[ProviderKind] = List(ProviderKind.ClaudeCode, ProviderKind.Codex, ProviderKind.Opencode)
 
   val titles: Map[ProviderKind, com.histmersion.domain.Title] = Map(
-    ProviderKind.ClaudeCode -> "Claude Code (claude -p on your login)",
-    ProviderKind.Codex -> "Codex CLI (codex exec on your login)",
-    ProviderKind.Opencode -> "opencode (opencode run)"
+    ProviderKind.ClaudeCode -> com.histmersion.domain.Title("Claude Code (claude -p on your login)"),
+    ProviderKind.Codex -> com.histmersion.domain.Title("Codex CLI (codex exec on your login)"),
+    ProviderKind.Opencode -> com.histmersion.domain.Title("opencode (opencode run)")
   )
 
   /** One entry per host-run provider, in [[ProviderKind.values]]' order. */

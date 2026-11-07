@@ -12,8 +12,8 @@ import com.histmersion.api.research.Article
   * that page's behaviour (link previews, match navigation).
   */
 enum PageKind(val wire: PageKind.Wire):
-  case Source extends PageKind("source")
-  case Article extends PageKind("article")
+  case Source extends PageKind(com.histmersion.server.PageKind.Wire("source"))
+  case Article extends PageKind(com.histmersion.server.PageKind.Wire("article"))
 
 object PageKind:
   type Wire = Wire.T

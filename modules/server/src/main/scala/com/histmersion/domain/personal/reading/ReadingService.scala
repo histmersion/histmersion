@@ -47,7 +47,7 @@ object ReadingService:
     ItemRef(kind, key, items.resolve(kind, key).toOption.flatMap(_.uid))
 
   private def unreadOf(readables: List[Readable], kind: ItemKind)(read: => Set[ItemRef], size: PageSize, from: Offset) =
-    readables.find(_.kind == kind).fold(UnreadItems(Nil, 0))(_.unread(read, size, from))
+    readables.find(_.kind == kind).fold(UnreadItems(Nil, com.histmersion.domain.personal.marks.UnreadItems.Total(0)))(_.unread(read, size, from))
 
   final private class Implementation(db: Transactor, items: Referables, readables: List[Readable])
       extends ReadingService:

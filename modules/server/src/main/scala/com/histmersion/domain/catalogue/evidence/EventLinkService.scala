@@ -16,7 +16,7 @@ trait EventLinkService:
   /** One event's candidates, the confirmed first, then by score; `withRejected` includes the rejected ones. A candidate
     * whose source is gone is not listed.
     */
-  def candidates(id: com.histmersion.domain.catalogue.Event.Id, withRejected: com.histmersion.domain.catalogue.evidence.EventLinkService.WithRejected = false): List[EventLinkCandidate]
+  def candidates(id: com.histmersion.domain.catalogue.Event.Id, withRejected: com.histmersion.domain.catalogue.evidence.EventLinkService.WithRejected = com.histmersion.domain.catalogue.evidence.EventLinkService.WithRejected(false)): List[EventLinkCandidate]
 
   /** Replace the event's proposed candidates with `cs` (one confirmed or rejected before keeps its status) and record
     * the check.

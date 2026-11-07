@@ -49,7 +49,7 @@ final class AssetsControllers(
 
   /** Add figures to an existing source (the host-side seed path). */
   def putFigures(citekey: com.histmersion.domain.library.Citekey, in: List[AssetInput]): Either[Api.Error, AssetsStored] =
-    maintenance.guard("put_assets")(
+    maintenance.guard(com.histmersion.util.data.maintenance.WriteGate.OperationName("put_assets"))(
       sources.lookup(citekey).left.map {
         case MediaSources.Error.Invalid(message) => Write.invalid(message)
         case MediaSources.Error.NotFound => Write.notFound(citekey)
@@ -68,13 +68,13 @@ final class AssetsControllers(
     assets.detail(citekey, name).toRight(Api.Error(s"No asset '$citekey/$name'", Some(Write.CodeNotFound)))
 
   def patch(citekey: com.histmersion.domain.library.Citekey, name: com.histmersion.domain.media.assets.AssetService.AssetName, p: AssetPatch): Either[Api.Error, AssetDetail] =
-    maintenance.guard("patch_asset")(assets.patch(citekey, name, p))
+    maintenance.guard(com.histmersion.util.data.maintenance.WriteGate.OperationName("patch_asset"))(assets.patch(citekey, name, p))
 
   // ── the pictures ──
 
-  def mediaGeo(q: Api.MediaGeoQuery): List[MediaGeoHit] = assets.geo(q, cfg().limits.page(q.limit, 200))
+  def mediaGeo(q: Api.MediaGeoQuery): List[MediaGeoHit] = assets.geo(q, cfg().limits.page(q.limit, com.histmersion.PageSize(200)))
 
-  def list(q: Api.MediaQuery): MediaList = assets.list(q, cfg().limits.page(q.limit, 50))
+  def list(q: Api.MediaQuery): MediaList = assets.list(q, cfg().limits.page(q.limit, com.histmersion.PageSize(50)))
 
   def facets: MediaFacets = assets.facets
 
@@ -98,7 +98,7 @@ final class AssetsControllers(
 
   /** A source's picture for its hover card: its cover, else its illustration. */
   def sourceThumb(citekey: com.histmersion.domain.library.Citekey): Option[MediaThumb] =
-    assets.thumbs(PictureTarget.Source.wire, citekey, 1).headOption
+    assets.thumbs(PictureTarget.Source.wire, citekey, com.histmersion.domain.media.assets.AssetService.ThumbsLimit(1)).headOption
 
 object AssetsControllers:
   /** How many pictures a card shows. */

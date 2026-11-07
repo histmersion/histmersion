@@ -182,7 +182,7 @@ object AgentsTools:
                 a.managing
                   .decideAll(
                     ApprovalDigest
-                      .BulkDecide(in.decision, in.kind, in.subject, in.ids, in.note, in.dryRun, in.limit, Some("mcp"))
+                      .BulkDecide(in.decision, in.kind, in.subject, in.ids, in.note, in.dryRun, in.limit, Some(com.histmersion.api.automation.ApprovalDigest.BulkDecide.By("mcp")))
                   )
                   .fold(McpOut.refusal, ApprovalDigestMarkdown.bulk)
               )
@@ -224,13 +224,13 @@ object AgentsTools:
               a.removeSchedule(g, k).map(_ => AgentsMarkdown.schedules(a.schedules))
             case (Some(g), Some(k)) =>
               in.cron
-                .toRight(Api.Error("give `cron` to set a schedule (or `remove: true`)"))
+                .toRight(Api.Error(com.histmersion.api.Api.Error.Message("give `cron` to set a schedule (or `remove: true`)")))
                 .flatMap(c =>
                   a.setSchedule(g, k, Goal.Plans.ScheduleSet(c, in.enabled, in.budgetUsd))
                     .map(s => AgentsMarkdown.scheduleLine(s))
                 )
             case (None, None) => Right(AgentsMarkdown.schedules(a.schedules))
-            case _            => Left(Api.Error("give both `goal` and `kind`, or neither to list the schedules"))
+            case _            => Left(Api.Error(com.histmersion.api.Api.Error.Message("give both `goal` and `kind`, or neither to list the schedules")))
           ToolResult.text(out.fold(McpOut.refusal, identity))
         }
 
@@ -270,7 +270,7 @@ object AgentsTools:
           val out = (in.role.map(_.trim).filter(_.nonEmpty), in.target.map(_.trim).filter(_.nonEmpty)) match
             case _ if in.refresh => a.refreshQuota(PlanQuota.QuotaRefresh(in.pool)).map(AgentsMarkdown.refreshed)
             case _ if in.pool.exists(_.trim.nonEmpty) =>
-              if in.hold.isEmpty && in.floors.isEmpty then Left(Api.Error("with `pool`, give `hold` and/or `floors`"))
+              if in.hold.isEmpty && in.floors.isEmpty then Left(Api.Error(com.histmersion.api.Api.Error.Message("with `pool`, give `hold` and/or `floors`")))
               else a.setPool(in.pool.get.trim, PlanQuota.PoolSet(in.hold, in.floors)).map(AgentsMarkdown.pool)
             case (Some(r), None) if in.fallthrough.isDefined =>
               a.setFallthrough(r, PlanQuota.FallthroughSet(in.fallthrough.get)).map(AgentsMarkdown.quota)
@@ -285,7 +285,7 @@ object AgentsTools:
                   a.setAllowance(ModelChains.AllowanceSet(t, ls.map(_.spec), in.reservePct))
                     .map(AgentsMarkdown.allowance)
                 case (errs, _) => Left(Api.Error(errs.mkString("; ")))
-            case _ => Left(Api.Error("give `role` (with `models`) or `target` (with `limits`), not both"))
+            case _ => Left(Api.Error(com.histmersion.api.Api.Error.Message("give `role` (with `models`) or `target` (with `limits`), not both")))
           ToolResult.text(out.fold(McpOut.refusal, identity))
         }
 
@@ -331,8 +331,8 @@ object AgentsTools:
           val out: Either[Api.Error, String] = in.action.trim.toLowerCase match
             case "list"   => Right(ManagersMarkdown.list(m.list))
             case "show"   => m.get(id).map(ManagersMarkdown.detail)
-            case "pause"  => m.action(id, "pause", Some(in.runs)).map(ManagersMarkdown.line)
-            case "resume" => m.action(id, "resume", None).map(ManagersMarkdown.line)
+            case "pause"  => m.action(id, com.histmersion.domain.automation.managers.ManagersControllers.ActionAction("pause"), Some(in.runs)).map(ManagersMarkdown.line)
+            case "resume" => m.action(id, com.histmersion.domain.automation.managers.ManagersControllers.ActionAction("resume"), None).map(ManagersMarkdown.line)
             case "create" =>
               m.create(Managers.ManagerCreate(in.kind.getOrElse(""), in.goal, cron = in.cron))
                 .map(ManagersMarkdown.line)
@@ -359,7 +359,7 @@ object AgentsTools:
               in.text
                 .map(_.trim)
                 .filter(_.nonEmpty)
-                .toRight(Api.Error("`hint` needs `text`"))
+                .toRight(Api.Error(com.histmersion.api.Api.Error.Message("`hint` needs `text`")))
                 .flatMap(t =>
                   m.addHint(
                     id,
@@ -378,23 +378,23 @@ object AgentsTools:
             case "autopilot" =>
               in.on match
                 case None    => Right(autopilotPage(m.autopilot))
-                case Some(b) => m.setAutopilot(Autopilot.AutopilotSet(b, Some("mcp"))).map(autopilotPage)
+                case Some(b) => m.setAutopilot(Autopilot.AutopilotSet(b, Some(com.histmersion.api.automation.Autopilot.AutopilotSet.By("mcp")))).map(autopilotPage)
             case "repair-acquire" =>
               repairAcquire(in.dryRun)
             case "drain" =>
-              m.drain(Autopilot.DrainSet(in.on.getOrElse(true), Some("mcp"))).map(autopilotPage)
+              m.drain(Autopilot.DrainSet(in.on.getOrElse(true), Some(com.histmersion.api.automation.Autopilot.DrainSet.By("mcp")))).map(autopilotPage)
             case "mode" =>
               in.mode
                 .map(_.trim)
                 .filter(_.nonEmpty)
-                .toRight(Api.Error("`mode` needs `mode`: working, finish or pause"))
+                .toRight(Api.Error(com.histmersion.api.Api.Error.Message("`mode` needs `mode`: working, finish or pause")))
                 .flatMap(md => m.setMode(AgentMode.ModeSet(md, Some("mcp"))))
                 .map(autopilotPage)
             case "focus" =>
               in.focus.map(_.trim.toLowerCase).filter(v => v.nonEmpty && v != "list") match
                 case None    => Right(AutopilotMarkdown.focus(m.focus))
                 case Some(v) =>
-                  m.setFocus(Autopilot.FocusSet(v, in.goal, in.value, Some("mcp"))).map(AutopilotMarkdown.focus)
+                  m.setFocus(Autopilot.FocusSet(v, in.goal, in.value, Some(com.histmersion.api.automation.Autopilot.FocusSet.By("mcp")))).map(AutopilotMarkdown.focus)
             case other =>
               Left(
                 Api.Error(
@@ -436,14 +436,14 @@ object AgentsTools:
               in.item
                 .map(_.trim)
                 .filter(_.nonEmpty)
-                .toRight(Api.Error("`why` needs `item`"))
+                .toRight(Api.Error(com.histmersion.api.Api.Error.Message("`why` needs `item`")))
                 .flatMap(m.schedulerWhy)
                 .map(AgentSchedulerMarkdown.why)
             case "strategy" =>
               in.strategy
                 .map(_.trim)
                 .filter(_.nonEmpty)
-                .toRight(Api.Error("`strategy` needs `strategy`"))
+                .toRight(Api.Error(com.histmersion.api.Api.Error.Message("`strategy` needs `strategy`")))
                 .flatMap(n => m.setScheduler(AgentScheduler.SchedulerSet(n, Some("mcp"))))
                 .map(AgentSchedulerMarkdown.status)
             case "stalls" => Right(StallsMarkdown.report(m.stalls(in.days)))
@@ -482,7 +482,7 @@ object AgentsTools:
         )
     }
 
-  final case class ModelsInput(doctor: ModelsInput.Doctor = false, offline: ModelsInput.Offline = false, quota: ModelsInput.Quota = false)
+  final case class ModelsInput(doctor: ModelsInput.Doctor = com.histmersion.domain.automation.agents.AgentsTools.ModelsInput.Doctor(false), offline: ModelsInput.Offline = com.histmersion.domain.automation.agents.AgentsTools.ModelsInput.Offline(false), quota: ModelsInput.Quota = com.histmersion.domain.automation.agents.AgentsTools.ModelsInput.Quota(false))
       derives KindlingsCodecAsObject
   object ModelsInput:
     type Doctor = Doctor.T
@@ -506,13 +506,13 @@ object AgentsTools:
       models: List[SetModelsInput.Models] = Nil,
       target: Option[SetModelsInput.Target] = None,
       limits: List[SetModelsInput.Limits] = Nil,
-      reservePct: SetModelsInput.ReservePct = 0,
-      reset: SetModelsInput.Reset = false,
+      reservePct: SetModelsInput.ReservePct = com.histmersion.domain.automation.agents.AgentsTools.SetModelsInput.ReservePct(0),
+      reset: SetModelsInput.Reset = com.histmersion.domain.automation.agents.AgentsTools.SetModelsInput.Reset(false),
       pool: Option[SetModelsInput.Pool] = None,
       hold: Option[SetModelsInput.Hold] = None,
       floors: Option[SetModelsInput.Floors] = None,
       fallthrough: Option[SetModelsInput.Fallthrough] = None,
-      refresh: SetModelsInput.Refresh = false
+      refresh: SetModelsInput.Refresh = com.histmersion.domain.automation.agents.AgentsTools.SetModelsInput.Refresh(false)
   ) derives KindlingsCodecAsObject
   object SetModelsInput:
     type Role = Role.T
@@ -574,7 +574,7 @@ object AgentsTools:
       target: RunInput.Target,
       model: Option[RunInput.Model] = None,
       budgetUsd: Option[RunInput.BudgetUsd] = None,
-      fix: RunInput.Fix = false,
+      fix: RunInput.Fix = com.histmersion.domain.automation.agents.AgentsTools.RunInput.Fix(false),
       rounds: Option[RunInput.Rounds] = None,
       acquireItem: Option[RunInput.AcquireItem] = None,
       title: Option[RunInput.Title] = None,
@@ -583,7 +583,7 @@ object AgentsTools:
       topics: List[RunInput.Topics] = Nil,
       tags: List[RunInput.Tags] = Nil,
       goal: Option[RunInput.Goal] = None,
-      dryRun: RunInput.DryRun = false,
+      dryRun: RunInput.DryRun = com.histmersion.domain.automation.agents.AgentsTools.RunInput.DryRun(false),
       modelFor: List[RunInput.ModelFor] = Nil
   ) derives KindlingsCodecAsObject
   object RunInput:
@@ -670,7 +670,7 @@ object AgentsTools:
       id: Option[RunsInput.Id] = None,
       status: Option[RunsInput.Status] = None,
       limit: Option[RunsInput.Limit] = None,
-      messages: RunsInput.Messages = false,
+      messages: RunsInput.Messages = com.histmersion.domain.automation.agents.AgentsTools.RunsInput.Messages(false),
       goal: Option[RunsInput.Goal] = None,
       compare: List[RunsInput.Compare] = Nil,
       before: Option[RunsInput.Before] = None,
@@ -762,7 +762,7 @@ object AgentsTools:
       kind: GoalLinkInput.Kind,
       ref: GoalLinkInput.Ref,
       note: Option[GoalLinkInput.Note] = None,
-      remove: GoalLinkInput.Remove = false
+      remove: GoalLinkInput.Remove = com.histmersion.domain.automation.agents.AgentsTools.GoalLinkInput.Remove(false)
   ) derives KindlingsCodecAsObject
   object GoalLinkInput:
     type Goal = Goal.T
@@ -789,9 +789,9 @@ object AgentsTools:
       goal: Option[ScheduleInput.Goal] = None,
       kind: Option[ScheduleInput.Kind] = None,
       cron: Option[ScheduleInput.Cron] = None,
-      enabled: ScheduleInput.Enabled = true,
+      enabled: ScheduleInput.Enabled = com.histmersion.domain.automation.agents.AgentsTools.ScheduleInput.Enabled(true),
       budgetUsd: Option[ScheduleInput.BudgetUsd] = None,
-      remove: ScheduleInput.Remove = false
+      remove: ScheduleInput.Remove = com.histmersion.domain.automation.agents.AgentsTools.ScheduleInput.Remove(false)
   ) derives KindlingsCodecAsObject
   object ScheduleInput:
     type Goal = Goal.T
@@ -829,7 +829,7 @@ object AgentsTools:
       subject: Option[ApprovalsInput.Subject] = None,
       goal: Option[ApprovalsInput.Goal] = None,
       decidedBy: List[ApprovalsInput.DecidedBy] = Nil,
-      digest: ApprovalsInput.Digest = false
+      digest: ApprovalsInput.Digest = com.histmersion.domain.automation.agents.AgentsTools.ApprovalsInput.Digest(false)
   ) derives KindlingsCodecAsObject:
     def filter: ListFilters.ApprovalFilter = ListFilters.ApprovalFilter(state, kind, subject, goal, decidedBy)
   object ApprovalsInput:
@@ -876,7 +876,7 @@ object AgentsTools:
       kind: Option[DecideInput.Kind] = None,
       subject: Option[DecideInput.Subject] = None,
       ids: List[DecideInput.Ids] = Nil,
-      dryRun: DecideInput.DryRun = false,
+      dryRun: DecideInput.DryRun = com.histmersion.domain.automation.agents.AgentsTools.DecideInput.DryRun(false),
       limit: Option[DecideInput.Limit] = None
   ) derives KindlingsCodecAsObject
   object DecideInput:
@@ -912,7 +912,7 @@ object AgentsTools:
       .modify(_.limit)(_.description("A group: at most this many, the oldest first"))
 
   final case class SchedulerInput(
-      action: SchedulerInput.Action = "status",
+      action: SchedulerInput.Action = com.histmersion.domain.automation.agents.AgentsTools.SchedulerInput.Action("status"),
       item: Option[SchedulerInput.Item] = None,
       strategy: Option[SchedulerInput.Strategy] = None,
       limit: Option[SchedulerInput.Limit] = None,
@@ -942,13 +942,13 @@ object AgentsTools:
       .modify(_.limit)(_.description("status, queue: how many waiting items to show (default 50; queue 200)"))
 
   final case class ManagerInput(
-      action: ManagerInput.Action = "list",
+      action: ManagerInput.Action = com.histmersion.domain.automation.agents.AgentsTools.ManagerInput.Action("list"),
       id: Option[ManagerInput.Id] = None,
       target: Option[ManagerInput.Target] = None,
       text: Option[ManagerInput.Text] = None,
       item: Option[ManagerInput.Item] = None,
-      once: ManagerInput.Once = false,
-      runs: ManagerInput.Runs = false,
+      once: ManagerInput.Once = com.histmersion.domain.automation.agents.AgentsTools.ManagerInput.Once(false),
+      runs: ManagerInput.Runs = com.histmersion.domain.automation.agents.AgentsTools.ManagerInput.Runs(false),
       priority: Option[ManagerInput.Priority] = None,
       until: Option[ManagerInput.Until] = None,
       untilSource: Option[ManagerInput.UntilSource] = None,
@@ -956,9 +956,9 @@ object AgentsTools:
       goal: Option[ManagerInput.Goal] = None,
       cron: Option[ManagerInput.Cron] = None,
       effect: Option[Managers.HintEffect] = None,
-      suggest: ManagerInput.Suggest = false,
+      suggest: ManagerInput.Suggest = com.histmersion.domain.automation.agents.AgentsTools.ManagerInput.Suggest(false),
       on: Option[ManagerInput.On] = None,
-      dryRun: ManagerInput.DryRun = false,
+      dryRun: ManagerInput.DryRun = com.histmersion.domain.automation.agents.AgentsTools.ManagerInput.DryRun(false),
       focus: Option[ManagerInput.Focus] = None,
       value: Option[ManagerInput.Value] = None,
       mode: Option[ManagerInput.Mode] = None

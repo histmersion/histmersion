@@ -27,7 +27,7 @@ final class HttpDownload(userAgent: HttpDownload.UserAgent):
   /** `url`'s text; a `.zip` is opened and its first file read. */
   def text(url: com.histmersion.server.HttpDownload.Url): Either[com.histmersion.server.HttpDownload.Problem, com.histmersion.server.HttpDownload.Text] =
     try
-      val conn = open(url, 120000)
+      val conn = open(url, com.histmersion.server.HttpDownload.OpenReadTimeoutMs(120000))
       val code = conn.getResponseCode
       if code != 200 then Left(s"HTTP $code from $url")
       else
@@ -88,6 +88,6 @@ object HttpDownload:
         else if e.isDirectory || e.getName.startsWith("__MACOSX") then usable(zis.getNextEntry)
         else Some(e)
       usable(zis.getNextEntry) match
-        case None    => Left("zip contains no usable file")
+        case None    => Left(com.histmersion.server.HttpDownload.Problem("zip contains no usable file"))
         case Some(_) => Right(new String(readAll(zis), "UTF-8"))
     catch case e: Exception => Left(s"unzip failed: ${e.getMessage}")

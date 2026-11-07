@@ -449,7 +449,7 @@ final class RunCtx private[automation] (val run: RunInfo, engine: Engine):
                     use,
                     billing,
                     None,
-                    Some("budget exhausted"),
+                    Some(com.histmersion.domain.automation.agents.AgentRepo.StepRecord.Error("budget exhausted")),
                     started,
                     msgs,
                     served

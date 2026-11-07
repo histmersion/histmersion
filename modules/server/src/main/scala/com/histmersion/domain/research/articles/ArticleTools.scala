@@ -367,7 +367,7 @@ object ArticleTools:
         )
       )
 
-  final case class PutArticleInput(slug: PutArticleInput.Slug, article: Article.Put, strict: PutArticleInput.Strict = false)
+  final case class PutArticleInput(slug: PutArticleInput.Slug, article: Article.Put, strict: PutArticleInput.Strict = com.histmersion.domain.research.articles.ArticleTools.PutArticleInput.Strict(false))
   object PutArticleInput:
     type Slug = com.histmersion.domain.research.Slug
     val Slug: _root_.com.histmersion.domain.research.Slug.type = _root_.com.histmersion.domain.research.Slug
@@ -380,7 +380,7 @@ object ArticleTools:
       .modify(_.strict)(_.description(com.histmersion.domain.library.LibraryTools.StrictDoc))
     given Codec.AsObject[PutArticleInput] = StrictJson.codec(KindlingsCodecAsObject.derived[PutArticleInput]) // #813
 
-  final case class PatchArticleInput(slug: PatchArticleInput.Slug, patch: Article.Patch, strict: PatchArticleInput.Strict = false)
+  final case class PatchArticleInput(slug: PatchArticleInput.Slug, patch: Article.Patch, strict: PatchArticleInput.Strict = com.histmersion.domain.research.articles.ArticleTools.PatchArticleInput.Strict(false))
   object PatchArticleInput:
     type Slug = com.histmersion.domain.research.Slug
     val Slug: _root_.com.histmersion.domain.research.Slug.type = _root_.com.histmersion.domain.research.Slug

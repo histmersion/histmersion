@@ -228,7 +228,7 @@ object CollectionsService:
         unlinked: com.histmersion.domain.library.collections.CollectionsService.Implementation.SearchUnlinked
     ): Either[Api.Error, CollectionSearch] =
       val max = limit.getOrElse(SearchLimit)
-      if q.isEmpty && !unlinked then Left(usage("give a query, or --unlinked"))
+      if q.isEmpty && !unlinked then Left(usage(com.histmersion.domain.library.collections.CollectionsService.Problem("give a query, or --unlinked")))
       else if !unlinked then
         lookup(name).flatMap(
           _.search(CollectionQuery(Some(q.getOrElse("")), Some(max))).left
@@ -298,7 +298,7 @@ object CollectionsService:
       */
     private def upsert(ck: com.histmersion.domain.library.Citekey, item: CollectionItem, target: ImportTarget): Either[Api.Error, Source.WithFindings] =
       val summary = item.description.map(stripHtml).filter(_.nonEmpty).map(_.take(500))
-      val doi = item.identifiers.get("doi")
+      val doi = item.identifiers.get(com.histmersion.plugin.CollectionItem.IdentifiersKey("doi"))
       target match
         case ImportTarget.Update(_) =>
           for
@@ -345,21 +345,21 @@ object CollectionsService:
       */
     private def coverOf(c: HostCollection, ck: com.histmersion.domain.library.Citekey, item: CollectionItem): CollectionCover =
       c.cover(item) match
-        case Left(why)       => CollectionCover(s"$ck: $why", warning = true)
+        case Left(why)       => CollectionCover(s"$ck: $why", warning = com.histmersion.api.library.CollectionCover.Warning(true))
         case Right(Some(fc)) =>
           library.putCover(SourceCoverParams(ck, MediaProvider.Calibre, item.id.value, None), fc.bytes) match
-            case Right(_) => CollectionCover("Cover: from the Calibre library")
-            case Left(e)  => CollectionCover(s"$ck: ${e.message}", warning = true)
+            case Right(_) => CollectionCover(com.histmersion.api.library.CollectionCover.Line("Cover: from the Calibre library"))
+            case Left(e)  => CollectionCover(s"$ck: ${e.message}", warning = com.histmersion.api.library.CollectionCover.Warning(true))
         case Right(None) =>
-          CoverChoice.choose(None, _ => false, item.identifiers.get("isbn").toList, item.identifiers.get("oclc")) match
+          CoverChoice.choose(None, _ => false, item.identifiers.get(com.histmersion.plugin.CollectionItem.IdentifiersKey("isbn")).toList, item.identifiers.get(com.histmersion.plugin.CollectionItem.IdentifiersKey("oclc"))) match
             case Some(CoverChoice.Pick.OpenLibrary("isbn", isbn)) =>
               library.openLibraryCover(
-                MediaCoversRequest(dryRun = false, citekey = Some(ck), illustrations = false, isbn = Some(isbn))
+                MediaCoversRequest(dryRun = com.histmersion.api.library.RepairAcquire.RepairRequest.DryRun(false), citekey = Some(ck), illustrations = false, isbn = Some(isbn))
               ) match
                 case Right(r) if r.covers > 0 => CollectionCover(s"Cover: from Open Library (ISBN $isbn)")
-                case _ => CollectionCover("Cover: none (no cover file in Calibre, none at Open Library)")
-            case Some(_) => CollectionCover("Cover: none (no cover file in Calibre)")
-            case None    => CollectionCover("Cover: none (no cover file in Calibre, no ISBN)")
+                case _ => CollectionCover(com.histmersion.api.library.CollectionCover.Line("Cover: none (no cover file in Calibre, none at Open Library)"))
+            case Some(_) => CollectionCover(com.histmersion.api.library.CollectionCover.Line("Cover: none (no cover file in Calibre)"))
+            case None    => CollectionCover(com.histmersion.api.library.CollectionCover.Line("Cover: none (no cover file in Calibre, no ISBN)"))
 
     /** The conversion: the same upload `histmersion ingest <file>` makes, marked as Calibre's. */
     private def convert(
@@ -550,7 +550,7 @@ object CollectionsService:
 
     def archiveSearch(q: com.histmersion.domain.library.search.Search.Query, rows: Option[com.histmersion.domain.library.collections.CollectionsService.Limit]): Either[Api.Error, ArchiveSearchResult] =
       val query = q.trim
-      if query.isEmpty then Left(fail("give a search query"))
+      if query.isEmpty then Left(fail(com.histmersion.domain.library.collections.CollectionsService.Problem("give a search query")))
       else
         for
           c <- lookup(ArchiveOrg)
@@ -631,4 +631,4 @@ object CollectionsService:
     object SyncName extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
   /** The most entries a search shows when not told. */
-  val SearchLimit: com.histmersion.domain.library.collections.CollectionsService.SearchLimit = 20
+  val SearchLimit: com.histmersion.domain.library.collections.CollectionsService.SearchLimit = com.histmersion.domain.library.collections.CollectionsService.SearchLimit(20)

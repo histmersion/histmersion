@@ -177,7 +177,7 @@ final class GoalFocusService(
       val cleared = Transactor(ds).transact(FocusRepo.clearActive(notInForce, now))
       if released + cleared == 0 then Nil
       else
-        val line = s"autopilot focus: not in force ($notInForce): ${Plural.count(released, "item")} released, " +
+        val line = s"autopilot focus: not in force ($notInForce): ${Plural.count(released, com.histmersion.api.Plural.CountSingular("item"))} released, " +
           s"${Plural.count(cleared, "goal")} no longer active"
         log(line)
         List(line)
@@ -190,7 +190,7 @@ final class GoalFocusService(
       if changes.nonEmpty then log(s"autopilot focus: ${changes.mkString("; ")}".take(1000))
       changes
 
-  private def notInForce: com.histmersion.domain.automation.goals.GoalFocusService.NotInForceResult = "the central scheduler admits the work (agents.scheduler.strategy)"
+  private def notInForce: com.histmersion.domain.automation.goals.GoalFocusService.NotInForceResult = com.histmersion.domain.automation.goals.GoalFocusService.NotInForceResult("the central scheduler admits the work (agents.scheduler.strategy)")
 
   /** The goal's manager an event about it goes to: its seeding manager, else its watcher. */
   private def managerOf(goal: com.histmersion.domain.automation.Goal.Slug): Option[com.histmersion.domain.automation.goals.GoalFocusService.ManagerOfResult] =
@@ -240,7 +240,7 @@ final class GoalFocusService(
         s"focus: ${Plural.count(xs.size, "item")} released — its goal is active"
       )
     }
-    (if held.isEmpty then Nil else List(s"${Plural.count(held.size, "item")} held")) ++
+    (if held.isEmpty then Nil else List(s"${Plural.count(held.size, com.histmersion.api.Plural.CountSingular("item"))} held")) ++
       (if released == 0 then Nil else List(s"${Plural.count(released, "item")} released"))
 
   // ── the library-wide managers ──────────────────────────────────────────────────────────────────
@@ -375,7 +375,7 @@ final class GoalFocusService(
           s"$g priority $n (by $by)"
       case "max" =>
         in.value match
-          case Some(n) if n < 0 => Left(Api.Error("`max` is 0 (no cap) or more"))
+          case Some(n) if n < 0 => Left(Api.Error(com.histmersion.api.Api.Error.Message("`max` is 0 (no cap) or more")))
           case v                =>
             Transactor(ds).transact(FocusRepo.setMaxOverride(v))
             Right(
@@ -391,7 +391,7 @@ final class GoalFocusService(
     }
 
   private def log(line: com.histmersion.domain.automation.goals.GoalFocusService.LogLine): Unit =
-    val _ = agents.workLists.add("log", QueueAdd(line.take(1000)))
+    val _ = agents.workLists.add(com.histmersion.domain.automation.worklists.WorkListControllers.ListName("log"), QueueAdd(line.take(1000)))
     scribe.info(line)
 
 object GoalFocusService:

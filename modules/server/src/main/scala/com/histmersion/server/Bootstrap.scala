@@ -83,7 +83,7 @@ final class Bootstrap(
     * seed is newer than the one applied — or nothing.
     */
   def autoStart(): Option[JobInfo] =
-    val p = plan(fetch = false, onlyEmpty = true)
+    val p = plan(fetch = com.histmersion.server.Bootstrap.PlanFetch(false), onlyEmpty = com.histmersion.server.Bootstrap.PlanOnlyEmpty(true))
     if p.isEmpty then None
     else
       scribe.info(
@@ -95,7 +95,7 @@ final class Bootstrap(
     * `fetch`, the network sources in `init.fetch-sources`.
     */
   def init(fetch: com.histmersion.server.Bootstrap.InitFetch): Either[Api.Error, JobInfo] =
-    maintenance.guard("init")(start(plan(fetch, onlyEmpty = false)))
+    maintenance.guard(com.histmersion.util.data.maintenance.WriteGate.OperationName("init"))(start(plan(fetch, onlyEmpty = com.histmersion.server.Bootstrap.PlanOnlyEmpty(false))))
 
   // ── the external gazetteer sources (#1064) ─────────────────────────────────────────────────────
 
@@ -107,7 +107,7 @@ final class Bootstrap(
     * do (the default), or the import itself.
     */
   def loadGazetteer(source: com.histmersion.server.Bootstrap.Name, apply: com.histmersion.server.Bootstrap.LoadGazetteerApply): Either[Api.Error, JobInfo] =
-    maintenance.guard("places/load"):
+    maintenance.guard(com.histmersion.util.data.maintenance.WriteGate.OperationName("places/load")):
       Gazetteer.Kind
         .parse(source)
         .toRight(
@@ -134,7 +134,7 @@ final class Bootstrap(
       Bootstrap.JobKind,
       Some(InitPlan.Detail(Some(p))),
       slot,
-      "an init job",
+      com.histmersion.util.jobs.BackgroundJob.Work("an init job"),
       pins = deps.pins,
       stops = Some(deps.jobStops)
     )((job, note) => run(job.id, p, note))
@@ -155,7 +155,7 @@ final class Bootstrap(
         Option.when(p.periodPresets)(
           "period presets" -> (() =>
             periodImports
-              .applySeed(replace = false)
+              .applySeed(replace = com.histmersion.domain.catalogue.periods.PeriodImports.Replace(false))
               .map(withSkipped)
               .map(r => s"${Plural.count(r.periods, "period")}, ${Plural.count(r.presets, "preset")}" + skippedNote(r))
           )
@@ -183,12 +183,12 @@ final class Bootstrap(
     gazetteerImports.seed(deps.storage.store(Location.GazetteerSeed), note)
 
   private def skippedNote(r: Period.ImportResult): com.histmersion.server.Bootstrap.Note =
-    if r.skippedCount == 0 then "" else s", ${r.skippedCount} skipped"
+    if r.skippedCount == 0 then com.histmersion.server.Bootstrap.Note("") else s", ${r.skippedCount} skipped"
 
   private def fetchSource(
       name: com.histmersion.server.Bootstrap.Name,
       periods: Period.ImportResult => Period.ImportResult,
-      check: com.histmersion.server.Bootstrap.FetchSourceCheck = false,
+      check: com.histmersion.server.Bootstrap.FetchSourceCheck = com.histmersion.server.Bootstrap.FetchSourceCheck(false),
       note: com.histmersion.server.Bootstrap.Note => Unit = _ => ()
   ): Either[com.histmersion.server.Bootstrap.Problem, com.histmersion.server.Bootstrap.Summary] =
     val gazetteer = Gazetteer.Kind.parse(name)
@@ -202,9 +202,9 @@ final class Bootstrap(
   private def fetchNetwork(name: com.histmersion.server.Bootstrap.Name, periods: Period.ImportResult => Period.ImportResult): Either[com.histmersion.server.Bootstrap.Problem, com.histmersion.server.Bootstrap.Summary] =
     name.trim.toLowerCase match
       case PeriodOFetch.name =>
-        periodImports.fetch(Nil).map(periods).map(r => Plural.count(r.periods, "period") + skippedNote(r))
+        periodImports.fetch(Nil).map(periods).map(r => Plural.count(r.periods, com.histmersion.api.Plural.CountSingular("period")) + skippedNote(r))
       case NaturalEarthLand.name =>
-        gazetteerImports.land(dryRun = false).map(r => s"${r.places} polit(y/ies) clipped")
+        gazetteerImports.land(dryRun = com.histmersion.domain.catalogue.places.GazetteerControllers.DryRun(false)).map(r => s"${r.places} polit(y/ies) clipped")
       case other =>
         val available = Bootstrap.sources ++ gazetteerImports.thirdParty
         gazetteerImports

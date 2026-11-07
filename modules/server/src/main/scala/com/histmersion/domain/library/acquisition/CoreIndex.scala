@@ -11,7 +11,7 @@ import com.histmersion.api.library.Candidates
   */
 final class CoreIndex(api: CoreApi, key: Option[CoreIndex.Key], budget: CoreBudget, limits: CoreQuota.Limits)
     extends ScholarlyIndex:
-  val name = "core"
+  val name = com.histmersion.domain.library.acquisition.ScholarlyIndex.Name("core")
   override def unavailable: Option[String] = budget.unavailable(limits, CoreQuota.Purpose.Search).map(_.describe)
   def search(query: com.histmersion.domain.library.search.Search.Query, since: LocalDate, limit: com.histmersion.domain.library.acquisition.CoreIndex.SearchLimit) =
     key match

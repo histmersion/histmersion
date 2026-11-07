@@ -238,13 +238,13 @@ final class CollectionImport(col: SearchedCollection, fetch: Polite, cfg: MediaC
   private def download(
       rec: MediaRecord
   ): Either[com.histmersion.domain.media.imports.CollectionImport.DownloadOutcome, (com.histmersion.domain.media.assets.AssetService.Bytes, com.histmersion.domain.media.assets.AssetService.Mime, Option[(com.histmersion.domain.media.assets.AssetService.Bytes, com.histmersion.domain.media.assets.AssetService.Mime, Option[com.histmersion.domain.media.assets.AssetService.ThumbWidth], Option[com.histmersion.domain.media.assets.AssetService.ThumbHeight])])] =
-    rec.imageUrl.toRight("no image").flatMap(u => fetch.file(u, "image/jpeg")).flatMap { (bytes, mime) =>
+    rec.imageUrl.toRight("no image").flatMap(u => fetch.file(u, com.histmersion.pluginhost.Polite.Mime("image/jpeg"))).flatMap { (bytes, mime) =>
       if bytes.length.toLong > cfg.maxBytes then
         Left(s"rendition of ${bytes.length} bytes is larger than media.max-bytes")
       else if !mime.startsWith("image/") then Left(s"not an image ($mime)")
       else
         val own = rec.thumbUrl.flatMap { u =>
-          fetch.file(u, "image/jpeg") match
+          fetch.file(u, com.histmersion.pluginhost.Polite.Mime("image/jpeg")) match
             case Right((tb, tm)) if tm.startsWith("image/") =>
               val s = ImageSize.of(tb)
               Some((tb, tm, s.map(_._1), s.map(_._2)))

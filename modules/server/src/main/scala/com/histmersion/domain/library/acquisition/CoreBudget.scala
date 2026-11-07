@@ -30,7 +30,7 @@ final class CoreBudget(clock: () => Instant, sleep: CoreBudget.SleepArg1 => Unit
     */
   def persistTo(s: CoreQuotaStore): Unit = lock.synchronized {
     val now = clock()
-    val saved = attempt("read")(s.load()).flatten.map(CoreQuota.onDay(_, now))
+    val saved = attempt(com.histmersion.domain.library.acquisition.CoreBudget.AttemptWhat("read"))(s.load()).flatten.map(CoreQuota.onDay(_, now))
     val mine = CoreQuota.onDay(current.get, now)
     val merged = saved.fold(mine) { o =>
       mine.copy(
@@ -78,7 +78,7 @@ final class CoreBudget(clock: () => Instant, sleep: CoreBudget.SleepArg1 => Unit
     }
 
   private def save(s: CoreQuota.State): Unit =
-    store.get.foreach(st => attempt("write")(st.save(s)))
+    store.get.foreach(st => attempt(com.histmersion.domain.library.acquisition.CoreBudget.AttemptWhat("write"))(st.save(s)))
 
   private def attempt[A](what: com.histmersion.domain.library.acquisition.CoreBudget.AttemptWhat)(a: => A): Option[A] =
     try Some(a)

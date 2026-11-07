@@ -80,7 +80,7 @@ final class ImportsControllers(
           Some(Write.CodeInvalid)
         )
       )
-    else jobs.guarded("media_import")(go)
+    else jobs.guarded(com.histmersion.domain.media.MediaJobs.JobWhat("media_import"))(go)
 
   /** The import as a job: `media.import-batch` items at a time, most-cited sites first, each batch recorded before the
     * next (so a stopped job resumes after the last one), until none is left, `limit` targets are done, or a batch gets
@@ -146,7 +146,7 @@ final class ImportsControllers(
               .modify(_.failed)
               .using(_ :+ s"${targets.size} place(s)/event(s) came back unrecorded (${targets.head.id}…); stopped")
           case Right(targets) =>
-            scala.util.Try(run.run(targets, dryRun = false, req.refresh)) match
+            scala.util.Try(run.run(targets, dryRun = com.histmersion.domain.media.imports.MediaImporter.DryRun(false), req.refresh)) match
               case scala.util.Failure(e: InterruptedException) => throw e
               case scala.util.Failure(e)                       =>
                 scribe.error(s"media import job: batch ${acc.batches + 1} failed: ${e.getMessage}", e)
@@ -162,7 +162,7 @@ final class ImportsControllers(
                 // a batch the provider did not answer at all ends the job (the next one resumes) rather than spin
                 if single || (r.items == 0 && r.failed.nonEmpty) then next
                 else loop(next, seen ++ targets.map(t => s"${t.targetType}:${t.id}"))
-    val out = loop(MediaImportReport(imp.check, dryRun = false), Set.empty)
+    val out = loop(MediaImportReport(imp.check, dryRun = com.histmersion.api.library.RepairAcquire.RepairRequest.DryRun(false)), Set.empty)
     scribe.info(
       s"media import job ${imp.check}: ${out.targets} target(s) in ${out.batches} batch(es), ${out.stored} stored, " +
         s"${run.requests} request(s), ${out.failed.size} failed"

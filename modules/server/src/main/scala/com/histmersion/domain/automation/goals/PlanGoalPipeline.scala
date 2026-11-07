@@ -57,7 +57,7 @@ final class PlanGoalPipeline(
   def run(ctx: RunCtx): Either[Halt, com.histmersion.domain.automation.goals.PlanGoalPipeline.RunResultPart2] =
     val slug = ctx.run.target
     for
-      loaded <- ctx.code[Loaded]("load")(load(slug))
+      loaded <- ctx.code[Loaded](com.histmersion.domain.automation.agents.AgentRepo.StepRecord.Name("load"))(load(slug))
       proposed <- ctx.llm[PlanAnswer, Proposed](
         "propose",
         StepAgent.GoalPlanner,
@@ -147,7 +147,7 @@ final class PlanGoalPipeline(
     */
   private def apply(ctx: RunCtx, slug: com.histmersion.domain.automation.Goal.Slug, plan: Plan, d: Decided): Either[com.histmersion.domain.automation.goals.PlanGoalPipeline.ApplyResultPart1, Applied] =
     if !d.approved then
-      log(ctx, PlanGoal.logLine(slug, plan, approved = false, 0, 0, 0, ctx.run.id)).map(Applied(_, 0, 0, 0))
+      log(ctx, PlanGoal.logLine(slug, plan, approved = com.histmersion.domain.PlanGoal.Approved(false), com.histmersion.domain.PlanGoal.CreatedCount(0), com.histmersion.domain.PlanGoal.LinkedCount(0), com.histmersion.domain.PlanGoal.QueuedCount(0), ctx.run.id)).map(Applied(_, 0, 0, 0))
     else
       ctx.write(
         s"apply the plan of goal $slug: ${plan.subGoals.size} sub-goal(s), ${plan.queries.size} query(ies), " +
@@ -157,9 +157,9 @@ final class PlanGoalPipeline(
         Right(
           Applied(
             s"plan-goal $slug: plan not applied (${AgentsMarkdown.DryRunNote}) (agent run ${ctx.run.id.take(8)})",
-            0,
-            0,
-            0
+            com.histmersion.domain.automation.goals.PlanGoalPipeline.Applied.Created(0),
+            com.histmersion.domain.automation.goals.PlanGoalPipeline.Applied.Linked(0),
+            com.histmersion.domain.automation.goals.PlanGoalPipeline.Applied.Queued(0)
           )
         )
       )
@@ -186,9 +186,9 @@ final class PlanGoalPipeline(
           case Right(_) => true
           case Left(e)  => ctx.warn(s"apply: sub-goal '${g.slug}' not created — ${e.message}"); false
     }
-    plan.queries.foreach(q => goals.link(slug, io.scalaland.chimney.Transformer.derive[com.histmersion.api.automation.Goal.LinkKind, com.histmersion.domain.automation.Goal.LinkKind].transform(LinkKind.SearchQuery), q, Some("from the approved plan")))
+    plan.queries.foreach(q => goals.link(slug, io.scalaland.chimney.Transformer.derive[com.histmersion.api.automation.Goal.LinkKind, com.histmersion.domain.automation.Goal.LinkKind].transform(LinkKind.SearchQuery), q, Some(com.histmersion.domain.automation.goals.BGoalLinkRow.Note("from the approved plan"))))
     val queued = workLists
-      .kindOf("acquire")
+      .kindOf(com.histmersion.domain.automation.worklists.WorkListControllers.KindOfList("acquire"))
       .toOption
       .toList
       .flatMap(queues.list(_, QueueScope.All))
@@ -218,7 +218,7 @@ final class PlanGoalPipeline(
         case Left(e) => ctx.warn(s"apply: ${w.doi} not queued — ${e.message}"); None
     }
     goals.setPlan(slug, plan.asJson.noSpaces)
-    log(ctx, PlanGoal.logLine(slug, plan, approved = true, created.size, inCorpus.size, items.size, ctx.run.id))
+    log(ctx, PlanGoal.logLine(slug, plan, approved = com.histmersion.domain.PlanGoal.Approved(true), created.size, inCorpus.size, items.size, ctx.run.id))
       .map(Applied(_, created.size, inCorpus.size, items.size))
 
 object PlanGoalPipeline:

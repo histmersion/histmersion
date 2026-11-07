@@ -20,13 +20,13 @@ final class PluginCollection(val provider: PluginCollection.Provider, col: Media
   private val latest = col.latestYear.map(_.value)
   val conf: MediaCollectionConfig =
     MediaCollectionConfig(
-      enabled = true,
-      apiUrl = "",
-      imageUrl = "",
-      candidates = 0,
+      enabled = com.histmersion.config.MediaCollectionConfig.Enabled(true),
+      apiUrl = com.histmersion.config.MediaCollectionConfig.ApiUrl(""),
+      imageUrl = com.histmersion.config.MediaCollectionConfig.ImageUrl(""),
+      candidates = com.histmersion.config.MediaCollectionConfig.Candidates(0),
       perPlace = col.perPlace,
       requestIntervalMs = col.requestIntervalMs,
-      displayPx = 0,
+      displayPx = com.histmersion.config.MediaCollectionConfig.DisplayPx(0),
       maxYear = PluginCollection.maxYear(col.matchRule),
       licences = allowed
     )
@@ -78,7 +78,7 @@ object PluginCollection:
 
   def maxYear(rule: MediaMatchRule): com.histmersion.Year = rule match
     case MediaMatchRule.Map(y) => y.value
-    case _                     => 0
+    case _                     => com.histmersion.Year(0)
 
   /** The place as a plugin sees it: what the store holds, each value as its type (one that is not left out). Pure. */
   def place(p: PlaceFacts): MediaPlace =

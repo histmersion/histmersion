@@ -59,7 +59,7 @@ trait Store:
   def reserve(
       key: com.histmersion.util.storage.Store.Key,
       temp: TempName = TempName.Fixed,
-      throughLink: com.histmersion.util.storage.Store.ThroughLink = false
+      throughLink: com.histmersion.util.storage.Store.ThroughLink = com.histmersion.util.storage.Store.ThroughLink(false)
   ): Either[com.histmersion.util.storage.Store.Error, Reservation]
 
   /** `from` moved to `to`, replacing it. */

@@ -45,7 +45,7 @@ final class SeedManagerKind(site: ResearchSite, lib: => LibraryAgentsConfig) ext
   /** A firing proposes the goal's next articles. */
   def fire(c: ManagerContext, m: ManagerInfo, now: Instant): List[com.histmersion.domain.research.workflows.SeedManagerKind.Event] =
     m.goal.toList.map { g =>
-      val (_, isNew) = c.upsert(m.id, ProposeArticles, g, ItemOrigin.Cron, 0, reopen = true)
+      val (_, isNew) = c.upsert(m.id, ProposeArticles, g, ItemOrigin.Cron, com.histmersion.domain.automation.managers.ManagerContext.Priority(0), reopen = com.histmersion.domain.automation.managers.ManagerContext.UpsertReopen(true))
       s"$ProposeArticles ${if isNew then "added" else "due"}"
     }
 
@@ -83,7 +83,7 @@ final class SeedManagerKind(site: ResearchSite, lib: => LibraryAgentsConfig) ext
             StepFacts.Finished(
               s"plan #${a.id} " + ManagerPolicy.decided(a.state, a.result.orElse(a.note)).getOrElse(a.state)
             )
-      case _ => StepFacts.Finished("enriched")
+      case _ => StepFacts.Finished(com.histmersion.domain.ManagerPolicy.ItemOutcome("enriched"))
 
   /** A compiled article is linked to its research area and queued for the review manager; an approved plan becomes
     * compile items; an approved goal plan may have created sub-goals.
@@ -149,7 +149,7 @@ final class SeedManagerKind(site: ResearchSite, lib: => LibraryAgentsConfig) ext
       a.approvalKind match
         case Some(ApprovalKind.ArticlePlan) =>
           a.articles match
-            case None       => Verdict.Leave("the approval carries no readable plan")
+            case None       => Verdict.Leave(com.histmersion.domain.AutopilotPolicy.Verdict.Leave.Why("the approval carries no readable plan"))
             case Some(plan) =>
               val goal = a.subject.getOrElse(plan.goal)
               val min =
@@ -159,7 +159,7 @@ final class SeedManagerKind(site: ResearchSite, lib: => LibraryAgentsConfig) ext
                   .getOrElse(lib.seed.minSources)
               val facts = plan.articles.map { p =>
                 val free = !c.slugExists(p.slug) && site.articles.get(p.slug).isLeft
-                PlannedFacts(p.slug, free, site.articles.filterReach(p.filter, Nil, 0)._1)
+                PlannedFacts(p.slug, free, site.articles.filterReach(p.filter, Nil, com.histmersion.domain.research.articles.ArticlesControllers.FilterReachCap(0))._1)
               }
               val today = c
                 .autoApprovedSince(com.histmersion.domain.automation.Approval.Kind.ArticlePlan, day)
@@ -171,10 +171,10 @@ final class SeedManagerKind(site: ResearchSite, lib: => LibraryAgentsConfig) ext
           (a.article, run) match
             case (Some(d), Some(r)) =>
               val snap = c
-                .checkpoint(r.id, "snapshot")
+                .checkpoint(r.id, com.histmersion.domain.automation.agents.AgentRepo.StepRecord.Name("snapshot"))
                 .flatMap(o => io.circe.parser.decode[CompileArticlePipeline.Snap](o).toOption)
               val found = c
-                .checkpoint(r.id, "filter")
+                .checkpoint(r.id, com.histmersion.domain.automation.agents.AgentRepo.StepRecord.Name("filter"))
                 .flatMap(o => io.circe.parser.decode[CompileArticlePipeline.Found](o).toOption)
               val facts = DraftFacts(
                 d.slug,
@@ -191,9 +191,9 @@ final class SeedManagerKind(site: ResearchSite, lib: => LibraryAgentsConfig) ext
                 c.autoApprovedSince(com.histmersion.domain.automation.Approval.Kind.ArticlePublish, day).size,
                 c.publishCap
               )
-            case (None, _) => Verdict.Leave("the approval carries no readable draft")
-            case (_, None) => Verdict.Leave("the run that drafted it is gone")
-        case _ => Verdict.Leave("not a kind the autopilot decides")
+            case (None, _) => Verdict.Leave(com.histmersion.domain.AutopilotPolicy.Verdict.Leave.Why("the approval carries no readable draft"))
+            case (_, None) => Verdict.Leave(com.histmersion.domain.AutopilotPolicy.Verdict.Leave.Why("the run that drafted it is gone"))
+        case _ => Verdict.Leave(com.histmersion.domain.AutopilotPolicy.Verdict.Leave.Why("not a kind the autopilot decides"))
     }
 
   def dispatch(
@@ -207,7 +207,7 @@ final class SeedManagerKind(site: ResearchSite, lib: => LibraryAgentsConfig) ext
     item.kind match
       case ProposeArticles =>
         site.goal(item.target) match
-          case Left(_)  => c.settleNow(m, item, ItemStatus.Cancelled, "the goal no longer exists")
+          case Left(_)  => c.settleNow(m, item, ItemStatus.Cancelled, com.histmersion.domain.automation.managers.ManagerContext.SettleNowWhy("the goal no longer exists"))
           case Right(g) =>
             c.start(
               m,
@@ -215,14 +215,14 @@ final class SeedManagerKind(site: ResearchSite, lib: => LibraryAgentsConfig) ext
               RunRequest(Pipeline.ProposeArticles.wire, g.slug, budgetUsd = m.config.budgetUsd),
               _.modify(_.minSources).setTo(m.config.minSources).modify(_.maxArticles).setTo(m.config.maxArticles),
               item.state,
-              "propose-articles",
+              com.histmersion.domain.automation.managers.ManagerContext.StartWhat("propose-articles"),
               out
             )
       case ArticleCompile =>
         item.state.spec match
-          case None => c.settleNow(m, item, ItemStatus.Cancelled, "no approved article to compile")
+          case None => c.settleNow(m, item, ItemStatus.Cancelled, com.histmersion.domain.automation.managers.ManagerContext.SettleNowWhy("no approved article to compile"))
           case Some(_) if c.slugExists(item.target) =>
-            c.settleNow(m, item, ItemStatus.Cancelled, "an article with this slug was created meanwhile")
+            c.settleNow(m, item, ItemStatus.Cancelled, com.histmersion.domain.automation.managers.ManagerContext.SettleNowWhy("an article with this slug was created meanwhile"))
           case Some(sp) =>
             c.start(
               m,
@@ -240,12 +240,12 @@ final class SeedManagerKind(site: ResearchSite, lib: => LibraryAgentsConfig) ext
               ),
               _.modify(_.chainReview).setTo(Some(false)),
               item.state,
-              "compile-article (new; its review follows as an item)",
+              com.histmersion.domain.automation.managers.ManagerContext.StartWhat("compile-article (new; its review follows as an item)"),
               out
             )
       case PlanGoalItem =>
         site.goal(item.target) match
-          case Left(_)  => c.settleNow(m, item, ItemStatus.Cancelled, "the goal no longer exists")
+          case Left(_)  => c.settleNow(m, item, ItemStatus.Cancelled, com.histmersion.domain.automation.managers.ManagerContext.SettleNowWhy("the goal no longer exists"))
           case Right(g) =>
             // sub-goals only above the depth limit (a goal there gets queries and works, no children)
             val depth = AutopilotPolicy.depth(g.slug, c.parentOf)

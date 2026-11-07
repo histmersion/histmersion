@@ -48,10 +48,10 @@ object CitationService:
   type DisagreeingStatusesValue = com.histmersion.domain.library.citations.CitationService.DisagreeingStatusesText
   val DisagreeingStatusesValue: _root_.com.histmersion.domain.library.citations.CitationService.DisagreeingStatusesText.type = _root_.com.histmersion.domain.library.citations.CitationService.DisagreeingStatusesText
 
-  val Disagreeing: Set[com.histmersion.domain.library.citations.CitationService.Disagreeing] = Set("challenges", "refutes", "updates", "superseded_by")
+  val Disagreeing: Set[com.histmersion.domain.library.citations.CitationService.Disagreeing] = Set(com.histmersion.domain.library.citations.CitationService.Disagreement("challenges"), com.histmersion.domain.library.citations.CitationService.Disagreement("refutes"), com.histmersion.domain.library.citations.CitationService.Disagreement("updates"), com.histmersion.domain.library.citations.CitationService.Disagreement("superseded_by"))
 
   /** The statuses that disagree on their own. */
-  val DisagreeingStatuses: Set[com.histmersion.domain.library.citations.CitationService.DisagreeingStatuses] = Set("contested", "superseded", "debunked", "retracted")
+  val DisagreeingStatuses: Set[com.histmersion.domain.library.citations.CitationService.DisagreeingStatuses] = Set(com.histmersion.domain.library.citations.CitationService.DisagreeingStatusesText("contested"), com.histmersion.domain.library.citations.CitationService.DisagreeingStatusesText("superseded"), com.histmersion.domain.library.citations.CitationService.DisagreeingStatusesText("debunked"), com.histmersion.domain.library.citations.CitationService.DisagreeingStatusesText("retracted"))
 
   def apply(db: Transactor): CitationService = Implementation(db)
 
@@ -78,7 +78,7 @@ object CitationService:
       }
       val parked = st.parked.toList
         .filter(e => e.src == com.histmersion.api.library.Citekey(citekey) && wanted(e.kind))
-        .map(e => NeighborRow("out", e.kind, e.dst.value, None, None, NeighborTarget.Unresolved))
+        .map(e => NeighborRow(com.histmersion.api.library.NeighborRow.Direction("out"), e.kind, e.dst.value, None, None, NeighborTarget.Unresolved))
       val in = st.edges.toList.filter(e => e.dst == com.histmersion.api.library.Citekey(citekey) && wanted(e.kind)).flatMap { e =>
         source(e.src).map(s => NeighborRow("in", e.kind, e.src.value, Some(s.title.value), Some(s.status), NeighborTarget.Source))
       }
@@ -107,7 +107,7 @@ object CitationService:
             val seen = grown.iterator.map(_.id).toSet
             val next = touching.flatMap(l => List(l.source, l.target)).filterNot(seen).distinct
             walk(d + 1, next, grown, links ++ touching)
-      val (nodes, links) = walk(0, List(citekey), Vector.empty, Set.empty)
+      val (nodes, links) = walk(com.histmersion.domain.library.citations.CitationService.Depth(0), List(citekey), Vector.empty, Set.empty)
       val ids = nodes.iterator.map(_.id).toSet
       com.histmersion.api.library.Source.Graph(
         citekey,

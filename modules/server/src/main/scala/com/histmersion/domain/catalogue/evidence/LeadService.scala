@@ -51,7 +51,7 @@ object LeadService:
     def leads(selection: EventSelection, km: com.histmersion.domain.catalogue.events.CatalogMerge.Tolerance.Km, years: com.histmersion.domain.catalogue.events.CatalogMerge.Tolerance.Years, limit: com.histmersion.PageSize, offset: com.histmersion.Offset): (com.histmersion.RowCount, List[LeadRow]) =
       db.read(LeadRepo.leadRows(selection.sql(related), km, years, limit, offset))
     def leadOf(id: com.histmersion.domain.catalogue.Event.Id, km: com.histmersion.domain.catalogue.events.CatalogMerge.Tolerance.Km, years: com.histmersion.domain.catalogue.events.CatalogMerge.Tolerance.Years): List[LeadRow] =
-      db.read(LeadRepo.leadRows(Sql.of("e.id = ?", Param.S(id)), km, years, 1, 0))._2
+      db.read(LeadRepo.leadRows(Sql.of(com.histmersion.util.database.Sql.Text("e.id = ?"), Param.S(id)), km, years, com.histmersion.PageSize(1), com.histmersion.Offset(0)))._2
     def articleCandidates(
         citekeys: List[com.histmersion.domain.library.Citekey],
         period: Option[(com.histmersion.domain.catalogue.periods.BPeriodRow.PLo, com.histmersion.domain.catalogue.periods.BPeriodRow.PHi)],
@@ -78,7 +78,7 @@ object LeadService:
       val own = s.events
         .find(_.id == id)
         .flatMap(_.citekey)
-        .flatMap(ck => source(ck).map((t, y) => EventSourceRef(ck, t, y, "citekey")))
+        .flatMap(ck => source(ck).map((t, y) => EventSourceRef(ck, t, y, com.histmersion.api.catalogue.EventSourceRef.Via("citekey"))))
       val att = s.attestations
         .filter(a => a.targetType == "event" && a.targetId == id)
         .sortBy(a => (a.citekey, a.id))
@@ -108,7 +108,7 @@ object LeadService:
           tier,
           recs.flatMap(_.vei).maxOption,
           recs.flatMap(_.magnitude).maxOption,
-          0,
+          com.histmersion.domain.catalogue.evidence.LeadRow.FindingsNear(0),
           cs.count(_.status == com.histmersion.domain.catalogue.Event.LinkStatus.Proposed),
           cs.count(_.status == com.histmersion.domain.catalogue.Event.LinkStatus.Confirmed)
         )
@@ -116,7 +116,7 @@ object LeadService:
 
     def leads(selection: EventSelection, km: com.histmersion.domain.catalogue.events.CatalogMerge.Tolerance.Km, years: com.histmersion.domain.catalogue.events.CatalogMerge.Tolerance.Years, limit: com.histmersion.PageSize, offset: com.histmersion.Offset): (com.histmersion.RowCount, List[LeadRow]) =
       val s = state.get
-      val listed = events.list(selection, Int.MaxValue, 0)
+      val listed = events.list(selection, Int.MaxValue, com.histmersion.Offset(0))
       val rows = listed.events.flatMap(e => factsOf(s, e.id)).sortBy { r =>
         val size = r.vei.fold(0.0)(_.toDouble) + r.magnitude.getOrElse(0.0)
         (r.tier != EventTier.Catalogue, -size, r.notBefore.orElse(r.beginBy).fold((1, 0L))(y => (0, y)), r.id)

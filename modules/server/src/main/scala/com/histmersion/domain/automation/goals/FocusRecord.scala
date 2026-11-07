@@ -25,4 +25,4 @@ object FocusRecord:
   type LeftWhy = LeftWhy.T
   object LeftWhy extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
-  val none: FocusRecord = FocusRecord(false, false, 0, None, None, None, None)
+  val none: FocusRecord = FocusRecord(com.histmersion.domain.automation.goals.FocusRecord.Active(false), com.histmersion.domain.automation.goals.FocusRecord.Pinned(false), com.histmersion.domain.automation.goals.FocusRecord.Priority(0), None, None, None, None)

@@ -12,13 +12,13 @@ import java.time.LocalDate
 
 /** Crossref: what was DEPOSITED since (`from-created-date`), newest first — a watermark on deposits. */
 final class CrossrefIndex(cfg: AcquireConfig, http: Http) extends ScholarlyIndex:
-  val name = "crossref"
+  val name = com.histmersion.domain.library.acquisition.ScholarlyIndex.Name("crossref")
   def search(query: com.histmersion.domain.library.search.Search.Query, since: LocalDate, limit: com.histmersion.domain.library.acquisition.CrossrefIndex.SearchLimit) =
     http
       .json(
         Url(
           cfg.crossref.url,
-          "/works",
+          com.histmersion.upstreams.http.Url.UrlPath("/works"),
           "query" -> query,
           "rows" -> math.max(1, math.min(limit, 50)).toString,
           "sort" -> "created",

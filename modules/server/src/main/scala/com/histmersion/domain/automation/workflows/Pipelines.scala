@@ -36,4 +36,4 @@ private[histmersion] object Pipelines:
   /** Add `line` to the worklog; answers the line. */
   def log(workLists: WorkListControllers, ctx: RunCtx, line: com.histmersion.domain.automation.workflows.Pipelines.LogLine): Either[com.histmersion.domain.automation.workflows.Pipelines.LogResultPart1, com.histmersion.domain.automation.workflows.Pipelines.LogResultPart2] =
     val entry = Pipelines.entry(ctx, line)
-    ctx.write("log line", entry.asJson)(workLists.add("log", entry).left.map(_.message).map(_ => line))(Right(line))
+    ctx.write("log line", entry.asJson)(workLists.add(com.histmersion.domain.automation.worklists.WorkListControllers.ListName("log"), entry).left.map(_.message).map(_ => line))(Right(line))
