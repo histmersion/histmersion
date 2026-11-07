@@ -28,7 +28,7 @@ final case class AutomationState(
     events: Vector[ManagerEventRecord],
     lastEventId: AutomationState.LastEventId,
     goalAliases: Map[AutomationState.GoalAliasesKey, AutomationState.GoalAliasesValue] = Map.empty,
-    agentState: Map[AutomationState.AgentStateKey, com.histmersion.domain.automation.agents.AgentStateRecord] = Map.empty
+    agentState: Map[com.histmersion.domain.automation.agents.AgentStateRecord.Key, com.histmersion.domain.automation.agents.AgentStateRecord] = Map.empty
 )
 
 object AutomationState:
@@ -50,8 +50,6 @@ object AutomationState:
   object GoalAliasesKey extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type GoalAliasesValue = GoalAliasesValue.T
   object GoalAliasesValue extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type AgentStateKey = AgentStateKey.T
-  object AgentStateKey extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
   import hearth.kindlings.optics.syntax.*
 
@@ -60,9 +58,9 @@ object AutomationState:
     val _ = state.updateAndGet { s =>
       if s.approvals.exists(conflicts) then { made = None; s }
       else
-        val id = s.lastApprovalId + 1
+        val id = com.histmersion.domain.automation.Approval.Id(s.lastApprovalId.value + 1)
         made = Some(id)
-        s.modify(_.approvals).using(_ :+ make(id)).modify(_.lastApprovalId).setTo(id)
+        s.modify(_.approvals).using(_ :+ make(id)).modify(_.lastApprovalId).setTo(LastApprovalId(id.value))
     }
     made
 
@@ -85,4 +83,4 @@ object AutomationState:
     )
 
   /** An instant as the repositories read one back (`to_char` to the second, UTC). */
-  def text(at: Instant): com.histmersion.domain.automation.AutomationState.Timestamp = at.truncatedTo(ChronoUnit.SECONDS).toString
+  def text(at: Instant): com.histmersion.domain.automation.AutomationState.Timestamp = Timestamp(at.truncatedTo(ChronoUnit.SECONDS).toString)

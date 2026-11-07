@@ -40,8 +40,8 @@ final class SourceReadable(db: Transactor) extends Readable:
             authors.map(a => FullSourceRow.Authors(a)),
             year.map(Year(_)),
             status.map(w => Source.Status.Wire(w)),
-            start.map(RowStart(_)),
-            end.map(RowEnd(_))
+            start.map(SourceReadable.RowStart(_)),
+            end.map(SourceReadable.RowEnd(_))
           )
         ),
         UnreadItems.Total(total)

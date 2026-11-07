@@ -33,14 +33,16 @@ final case class AgentDef(
     * from the same definitions is not rewritten.
     */
   def fingerprint: com.histmersion.domain.automation.agents.AgentDef.Fingerprint =
-    productIterator.zipWithIndex
-      .map((v, i) =>
-        productElementName(i) match
-          case "tools" => tools.map(AgentDef.enumerated).toString
-          case "web"   => AgentDef.enumerated(web)
-          case _       => String.valueOf(v)
-      )
-      .mkString(productPrefix + "(", ",", ")")
+    AgentDef.Fingerprint(
+      productIterator.zipWithIndex
+        .map((v, i) =>
+          productElementName(i) match
+            case "tools" => tools.map(AgentDef.enumerated).toString
+            case "web"   => AgentDef.enumerated(web)
+            case _       => String.valueOf(v)
+        )
+        .mkString(productPrefix + "(", ",", ")")
+    )
 
 object AgentDef:
   type Fingerprint = Fingerprint.T

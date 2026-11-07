@@ -1,52 +1,55 @@
 package com.histmersion.domain.automation.agents
 
 import com.histmersion.api.automation.Agents.GenerateResult
-import com.histmersion.util.storage.Store
+import com.histmersion.util.storage.{ByteSource, Store}
 import java.nio.charset.StandardCharsets.UTF_8
 import java.time.Clock
 import io.circe.Json
 import io.circe.syntax.*
 
 private[agents] object AgentTreeWriter:
-  type Problem = Problem.T
-  object Problem extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type StoreKeyName = StoreKeyName.T
-  object StoreKeyName extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  private val Manifest = Store.Key.of("manifest.json").fold(error => throw IllegalArgumentException(error.value), identity)
 
-
-  private val Manifest = Store.Key.of("manifest.json").fold(error => throw IllegalArgumentException(error), identity)
-
-  def write(store: Store, tree: Map[com.histmersion.util.storage.SafePath.Candidate, String], runtimes: List[String], sha: com.histmersion.Sha256)(using clock: Clock): Either[com.histmersion.domain.automation.agents.AgentTreeWriter.Problem, GenerateResult] =
+  def write(store: Store, tree: Map[String, String], runtimes: List[String], sha: com.histmersion.Sha256)(using clock: Clock): Either[String, GenerateResult] =
     try
-      def key(name: com.histmersion.domain.automation.agents.AgentTreeWriter.StoreKeyName): Store.Key = Store.Key.of(name).fold(error => throw IllegalArgumentException(error), identity)
-      store.makeDirectory().fold(error => throw java.io.IOException(error.message), identity)
+      def key(name: String): Store.Key = Store.Key.of(name).fold(error => throw IllegalArgumentException(error.value), identity)
+      store.makeDirectory().fold(error => throw java.io.IOException(error.message.value), identity)
       val previous = store.get(Manifest).toList.flatMap { blob =>
-        io.circe.parser.parse(blob.text()).toOption
+        io.circe.parser.parse(blob.text().value).toOption
           .flatMap(_.hcursor.downField("files").as[Map[String, String]].toOption)
           .map(_.keys.toList).getOrElse(Nil)
       }
       val entries = tree.toList.sortBy(_._1).map((name, text) => (key(name), text))
       var written = 0
       entries.foreach { (target, text) =>
-        val same = store.get(target).exists(_.text() == text)
+        val same = store.get(target).exists(_.text().value == text)
         if !same then
-          store.put(target, text.getBytes(UTF_8)).fold(error => throw java.io.IOException(error.message), _ => ())
+          store.put(target, ByteSource.Content(text.getBytes(UTF_8))).fold(error => throw java.io.IOException(error.message.value), _ => ())
           written += 1
       }
       val gone = previous.filter(p => runtimes.exists(r => p.startsWith(s"$r/")) && !tree.contains(p))
       gone.foreach(name => { val _ = store.delete(key(name)) })
-      if runtimes.contains(AgentRuntime.ClaudeCode.wire) then
-        store.makeDirectory(key(com.histmersion.domain.automation.agents.AgentTreeWriter.StoreKeyName("claude-code/login"))).fold(error => throw java.io.IOException(error.message), identity)
+      if runtimes.contains(AgentRuntime.ClaudeCode.wire.value) then
+        store.makeDirectory(key("claude-code/login")).fold(error => throw java.io.IOException(error.message.value), identity)
       val keep = previous.filterNot(p => runtimes.exists(r => p.startsWith(s"$r/")))
-      val files = (keep.flatMap(name => store.get(key(name)).map(blob => name -> Prompt.sha256(blob.text()))) ++
+      val files = (keep.flatMap(name => store.get(key(name)).map(blob => name -> Prompt.sha256(blob.text().value))) ++
         tree.toList.map((name, text) => name -> Prompt.sha256(text))).sortBy(_._1)
       val manifest = Json.obj(
         "generator" -> AgentGenerator.PluginVersion.asJson,
-        "definitions" -> sha.asJson,
+        "definitions" -> sha.value.asJson,
         "generatedAt" -> java.time.Instant.now(clock).toString.asJson,
         "runtimes" -> runtimes.asJson,
-        "files" -> Json.obj(files.map((name, sha) => name -> sha.asJson)*)
+        "files" -> Json.obj(files.map((name, sha) => name -> sha.value.asJson)*)
       )
-      store.write(Manifest, AgentGenerator.pretty(manifest).getBytes(UTF_8)).fold(error => throw java.io.IOException(error.message), _ => ())
-      Right(GenerateResult(store.where(), runtimes, tree.size, written, gone.size, sha))
+      store.write(Manifest, ByteSource.Content(AgentGenerator.pretty(manifest).getBytes(UTF_8))).fold(error => throw java.io.IOException(error.message.value), _ => ())
+      Right(
+        GenerateResult(
+          GenerateResult.Dir(store.where().value),
+          runtimes.map(GenerateResult.Runtimes(_)),
+          GenerateResult.Files(tree.size),
+          GenerateResult.Written(written),
+          GenerateResult.Removed(gone.size),
+          GenerateResult.Definitions(sha.value)
+        )
+      )
     catch case error: Exception => Left(s"generating into ${store.where()} failed: ${error.getClass.getSimpleName}: ${error.getMessage}")

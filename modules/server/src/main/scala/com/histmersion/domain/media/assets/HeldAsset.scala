@@ -6,11 +6,11 @@ import java.time.Instant
   * picture (its `provider` and key) — with its point and inclusive span when it has them.
   */
 final case class HeldAsset(
-    uid: HeldAsset.Uid,
+    uid: AssetService.AssetUid,
     citekey: Option[com.histmersion.domain.library.Citekey],
-    name: HeldAsset.Name,
-    mime: HeldAsset.Mime,
-    bytes: Array[HeldAsset.Bytes],
+    name: AssetService.AssetName,
+    mime: AssetService.Mime,
+    bytes: AssetService.Bytes,
     sha256: com.histmersion.Sha256,
     width: Option[HeldAsset.Width],
     height: Option[HeldAsset.Height],
@@ -20,28 +20,20 @@ final case class HeldAsset(
     licenseUrl: Option[HeldAsset.LicenseUrl] = None,
     author: Option[HeldAsset.Author] = None,
     credit: Option[HeldAsset.Credit] = None,
-    provider: Option[HeldAsset.Provider] = None,
-    providerKey: Option[HeldAsset.ProviderKey] = None,
+    provider: Option[AssetService.Provider] = None,
+    providerKey: Option[AssetService.ProviderKey] = None,
     sourceUrl: Option[HeldAsset.SourceUrl] = None,
     originalUrl: Option[HeldAsset.OriginalUrl] = None,
     retrievedAt: Option[Instant] = None,
-    thumb: Option[Array[HeldAsset.Thumb]] = None,
-    thumbMime: Option[HeldAsset.ThumbMime] = None,
-    thumbWidth: Option[HeldAsset.ThumbWidth] = None,
-    thumbHeight: Option[HeldAsset.ThumbHeight] = None,
-    point: Option[(HeldAsset.PointPart1, HeldAsset.PointPart2)] = None,
-    period: Option[(Option[HeldAsset.PeriodPart1], Option[HeldAsset.PeriodPart2])] = None
+    thumb: Option[ProviderAsset.Thumb] = None,
+    thumbMime: Option[ProviderAsset.ThumbMime] = None,
+    thumbWidth: Option[ProviderAsset.ThumbWidth] = None,
+    thumbHeight: Option[ProviderAsset.ThumbHeight] = None,
+    point: Option[(HeldAsset.Latitude, HeldAsset.Longitude)] = None,
+    period: Option[(Option[com.histmersion.domain.DeepTime.SignedYear], Option[com.histmersion.domain.DeepTime.SignedYear])] = None
 )
 
 object HeldAsset:
-  type Uid = Uid.T
-  object Uid extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type Name = Name.T
-  object Name extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type Mime = Mime.T
-  object Mime extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type Bytes = Bytes.T
-  object Bytes extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Byte, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type Width = Width.T
   object Width extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type Height = Height.T
@@ -58,27 +50,11 @@ object HeldAsset:
   object Author extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type Credit = Credit.T
   object Credit extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type Provider = Provider.T
-  object Provider extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type ProviderKey = ProviderKey.T
-  object ProviderKey extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type SourceUrl = SourceUrl.T
   object SourceUrl extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type OriginalUrl = OriginalUrl.T
   object OriginalUrl extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type Thumb = Thumb.T
-  object Thumb extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Byte, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type ThumbMime = ThumbMime.T
-  object ThumbMime extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type ThumbWidth = ThumbWidth.T
-  object ThumbWidth extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type ThumbHeight = ThumbHeight.T
-  object ThumbHeight extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type PointPart1 = PointPart1.T
-  object PointPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type PointPart2 = PointPart2.T
-  object PointPart2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type PeriodPart1 = PeriodPart1.T
-  object PeriodPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type PeriodPart2 = PeriodPart2.T
-  object PeriodPart2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type Latitude = Latitude.T
+  object Latitude extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type Longitude = Longitude.T
+  object Longitude extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]

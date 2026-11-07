@@ -41,7 +41,9 @@ final class EventImportsControllers(
         case None    => Right(None)
       job <- jobs.start(
         EventImportsControllers.ImportJobKind,
-        s"${imports.infoOf(provider).fold(provider.value)(_.title.value)} events${if req.dryRun.value then " (dry run)" else ""}",
+        com.histmersion.api.jobs.JobKinds.Subject(
+          s"${imports.infoOf(provider).fold(provider.value)(_.title.value)} events${if req.dryRun.value then " (dry run)" else ""}"
+        ),
         write = !req.dryRun.value
       ) { (job, progress) =>
         val r = imports.runImport(provider, req, area, progress)
@@ -58,8 +60,10 @@ final class EventImportsControllers(
         case None    => Right(None)
       job <- jobs.start(
         EventImportsControllers.RederiveJobKind,
-        s"re-derive the dating of ${provider.fold("every catalogue's")(p => imports.infoOf(p).fold(p.value)(_.title.value) + "'s")} " +
-          s"events${if req.dryRun.value then " (dry run)" else ""}",
+        com.histmersion.api.jobs.JobKinds.Subject(
+          s"re-derive the dating of ${provider.fold("every catalogue's")(p => imports.infoOf(p).fold(p.value)(_.title.value) + "'s")} " +
+            s"events${if req.dryRun.value then " (dry run)" else ""}"
+        ),
         write = !req.dryRun.value
       ) { (job, progress) =>
         val r = imports.runRederive(provider, req.dryRun.value, progress)

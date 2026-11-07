@@ -46,16 +46,24 @@ object AttestationService:
         targetId: Option[Attestation.TargetId],
         limit: com.histmersion.PageSize,
         offset: com.histmersion.Offset
-    ): Attestation.List = db.read(AttestationRepo.list(citekey, targetType, targetId, limit, offset))
-    def get(id: Attestation.Id): Option[Attestation] = db.read(AttestationRepo.get(id))
+    ): Attestation.List = db.read(
+      AttestationRepo.list(
+        citekey,
+        targetType.map(t => BAttestationFullRow.TargetType(t.value)),
+        targetId.map(t => BAttestationFullRow.TargetId(t.value)),
+        limit,
+        offset
+      )
+    )
+    def get(id: Attestation.Id): Option[Attestation] = db.read(AttestationRepo.get(AttestationRepo.AttestationId(id.value)))
     def create(in: Attestation.Put): Attestation = db.transact(AttestationRepo.create(in))
     def patch(id: Attestation.Id, p: Attestation.Patch): Either[Api.Error, Attestation] =
       db.transact:
-        if !AttestationRepo.exists(id) then Left(missing(id))
+        if !AttestationRepo.exists(AttestationRepo.AttestationId(id.value)) then Left(missing(id))
         else
-          AttestationRepo.update(id, p)
-          Right(AttestationRepo.get(id).get)
-    def delete(id: Attestation.Id): Boolean = db.transact(AttestationRepo.delete(id))
+          AttestationRepo.update(AttestationRepo.AttestationId(id.value), p)
+          Right(AttestationRepo.get(AttestationRepo.AttestationId(id.value)).get)
+    def delete(id: Attestation.Id): Boolean = db.transact(AttestationRepo.delete(AttestationRepo.AttestationId(id.value)))
 
 
   /** The same rules over the shared in-memory state; ids are given in order, as the database's sequence gives them. */
@@ -75,7 +83,7 @@ object AttestationService:
       val from = offset.value.max(0)
       Attestation.List.of(
         com.histmersion.api.RowCount(all.size),
-        all.sortBy(_.id.value).slice(from, from + limit.value.max(1)).toList,
+        all.sortBy(a => a.id.value: Long).slice(from, from + limit.value.max(1)).toList,
         com.histmersion.api.personal.UnreadPage.Offset(from)
       )
 

@@ -13,8 +13,10 @@ final class ArticleFilterApproval(articles: => ArticlesControllers, store: => Ar
 
   def apply(a: ApprovalInfo): Either[com.histmersion.domain.research.workflows.ArticleFilterApproval.Problem, com.histmersion.domain.automation.Approval.Outcome] =
     a.filter
-      .toRight("the approval carries no readable filter")
+      .toRight(InferFilterPipeline.Problem("the approval carries no readable filter"))
       .flatMap(InferFilterPipeline.applyProposal(articles, store, _))
+      .left
+      .map(p => ArticleFilterApproval.Problem(p.value))
 
 object ArticleFilterApproval:
   type Problem = Problem.T

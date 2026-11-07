@@ -15,7 +15,16 @@ import com.histmersion.domain.automation.workflows.Pipelines
 import com.histmersion.api.Plural
 import com.histmersion.config.*
 import com.histmersion.domain.*
+import com.histmersion.api.automation.Agents
 import com.histmersion.api.automation.Agents.{ApprovalKind, Pipeline}
+import com.histmersion.domain.automation.Goal
+import com.histmersion.domain.automation.agents.AgentRepo
+import com.histmersion.domain.automation.agents.ApprovalService
+import com.histmersion.domain.automation.approvals.ApprovalQuery
+import com.histmersion.domain.automation.managers.{ManagerContext, ManagerLight}
+import com.histmersion.domain.research.Slug
+import com.histmersion.domain.research.articles.ArticlesControllers
+import com.histmersion.api.library.Facet
 import com.histmersion.api.research.Article.Plans.ArticlePlan
 import com.histmersion.api.automation.Goal.Plans.LinkKind
 import com.histmersion.domain.PlanArticles.ArticlesAnswer
@@ -50,28 +59,34 @@ final class ProposeArticlesPipeline(
   val pipeline: Pipeline = Pipeline.ProposeArticles
   import ProposeArticlesPipeline.*
 
-  def run(ctx: RunCtx): Either[Halt, com.histmersion.domain.research.workflows.ProposeArticlesPipeline.Outcome] =
-    val goal = ctx.run.target
+  def run(ctx: RunCtx): Either[Halt, PipelineDef.RunResultPart2] =
+    Goal.Slug.either(ctx.run.target.value).left.map(m => Halt.Fail(Halt.Fail.Message(m))).flatMap(runFor(ctx, _))
+
+  private def runFor(ctx: RunCtx, goal: Goal.Slug): Either[Halt, PipelineDef.RunResultPart2] =
+    val runId = com.histmersion.domain.automation.Run.Id.assume(ctx.run.id.value)
     for
-      loaded <- ctx.code[Loaded](com.histmersion.domain.automation.agents.AgentRepo.StepRecord.Name("load"))(load(goal))
+      loaded <- ctx.code[Loaded](AgentRepo.StepRecord.Name("load"))(load(goal))
       plan <- ctx.llm[ArticlesAnswer, ArticlePlan](
-        "propose",
+        AgentRepo.StepRecord.Name("propose"),
         StepAgent.ArticlePlanner,
-        input(ctx, loaded),
+        Prompt.UserText(input(ctx, loaded)),
         ResearchAnswers.articles
-      )((a, last) => check(ctx, loaded, a, last).map(Checked(_, Nil)))
-      recorded <- ctx.code[Recorded]("record")(record(ctx, goal, plan))
-      closed <- ctx.code[String]("close")(
-        Pipelines.log(site.workLists, ctx, PlanArticles.logLine(goal, plan, recorded.line, ctx.run.id))
+      )((a, last) => check(ctx, loaded, a, last.value).map(Checked(_, Nil)))
+      recorded <- ctx.code[Recorded](AgentRepo.StepRecord.Name("record"))(record(ctx, goal, plan))
+      closed <- ctx.code[String](AgentRepo.StepRecord.Name("close"))(
+        log(ctx, PlanArticles.logLine(goal, plan, PlanArticles.Outcome(recorded.line.value), runId))
       )
-    yield closed
+    yield PipelineDef.RunResultPart2(closed)
+
+  private def log(ctx: RunCtx, line: PlanArticles.LogLine): Either[String, String] =
+    Pipelines.log(site.workLists, ctx, Pipelines.LogLine(line.value)).left.map(_.value).map(_.value)
 
   private def limits(ctx: RunCtx): PlanArticles.Limits =
     val p = ctx.run.params
     PlanArticles.Limits(
-      math.max(1, p.minSources.getOrElse(lib.seed.minSources)),
-      math.min(1.0, math.max(0.0, lib.seed.maxOverlap)),
-      math.max(1, p.maxArticles.getOrElse(lib.seed.maxArticles))
+      PlanArticles.Limits.MinSources(math.max(1, p.minSources.fold(lib.seed.minSources.value)(_.value))),
+      PlanArticles.Limits.MaxOverlap(math.min(1.0, math.max(0.0, lib.seed.maxOverlap.value))),
+      PlanArticles.Limits.MaxArticles(math.max(1, p.maxArticles.fold(lib.seed.maxArticles.value)(_.value)))
     )
 
   // ── steps ──────────────────────────────────────────────────────────────────────────────────────
@@ -79,71 +94,89 @@ final class ProposeArticlesPipeline(
   /** The goals above `slug` and below it: an area's articles overlap its parent's and its sub-areas' as much as its own
     * (the autopilot seeds them all).
     */
-  private def family(slug: com.histmersion.domain.research.Slug): List[com.histmersion.domain.research.Slug] =
+  private def family(slug: Goal.Slug): List[Goal.Slug] =
     val up = Iterator
       .iterate(goals.get(slug).flatMap(_.parentSlug))(
-        _.flatMap(p => goals.get(p).flatMap(_.parentSlug))
+        _.flatMap(p => goals.get(Goal.Slug.assume(p.value)).flatMap(_.parentSlug))
       )
       .takeWhile(_.isDefined)
       .take(16)
       .flatten
       .toList
-    def down(s: com.histmersion.domain.research.Slug, depth: com.histmersion.domain.research.workflows.ProposeArticlesPipeline.FamilyDownDepth): List[com.histmersion.domain.research.Slug] =
-      if depth > 16 then Nil else goals.children(s).flatMap(c => c.slug :: down(c.slug, depth + 1))
+      .map(p => Goal.Slug.assume(p.value))
+    def down(s: Goal.Slug, depth: Int): List[Goal.Slug] =
+      if depth > 16 then Nil
+      else
+        goals.children(s).flatMap { c =>
+          val child = Goal.Slug.assume(c.slug.value)
+          child :: down(child, depth + 1)
+        }
     (up ++ down(slug, 0)).distinct.filterNot(_ == slug)
 
-  private def load(slug: com.histmersion.domain.research.Slug): Either[com.histmersion.domain.research.workflows.ProposeArticlesPipeline.Problem, Loaded] =
-    site.goal(slug).left.map(_.message).map { g =>
-      val links = goals.links(g.slug)
-      val area = g.slug :: family(g.slug)
-      val articles = area.flatMap(a => goals.refs(a, com.histmersion.domain.automation.Goal.LinkKind.Article)).distinct.flatMap { ref =>
-        site.articles.get(ref).toOption.map { v =>
-          val f = site.articleStore.load(v.article.slug).flatMap(_.filter)
-          Existing(v.article.slug, v.article.title, f, site.articles.citedSources(v.article.body))
+  private def load(slug: Goal.Slug): Either[String, Loaded] =
+    site.goal(slug).left.map(_.message.value).map { g =>
+      val goal = Goal.Slug.assume(g.slug.value)
+      val links = goals.links(goal)
+      val area = goal :: family(goal)
+      val articles = area.flatMap(a => goals.refs(a, Goal.LinkKind.Article)).distinct.flatMap { ref =>
+        Slug.parse(ref.value).toOption.flatMap(site.articles.get(_).toOption).map { v =>
+          val articleSlug = Slug.assume(v.article.slug.value)
+          val body = com.histmersion.domain.research.Article.Body(v.article.body.value)
+          val f = site.articleStore.load(articleSlug).flatMap(_.filter)
+          Existing(articleSlug, com.histmersion.domain.Title(v.article.title.value), f, site.articles.citedSources(body))
         }
       }
       // what its seeding manager (or a parent's or sub-area's) will compile already counts as the area's
       val planned = area
-        .flatMap(a => managers.items(Managers.seedId(a), 1000))
+        .flatMap(a =>
+          managers.items(
+            ManagerLight.Id(Managers.seedId(com.histmersion.api.automation.Goal.Ref(a.value)).value),
+            ManagerContext.Limit(1000)
+          )
+        )
         .filter(i =>
-          i.kind == Managers.ArticleCompile && !Managers.ItemStatus
+          i.kind.value == Managers.ArticleCompile && !Managers.ItemStatus
             .parse(i.status)
             .exists(s => s.isFinal && s != Managers.ItemStatus.Done)
         )
-        .flatMap(i => i.state.spec.map(sp => Existing(i.target, sp.title, Some(sp.filter), Nil)))
+        .flatMap(i =>
+          i.state.spec.map(sp =>
+            Existing(Slug.assume(i.target.value), com.histmersion.domain.Title(sp.title.value), Some(sp.filter), Nil)
+          )
+        )
         .foldLeft(List.empty[Existing])((acc, e) => if acc.exists(_.slug == e.slug) then acc else acc :+ e)
       val vocab = (field: String) =>
         site.labels
-          .facets(field, None, Filter())
+          .facets(Facet.Field.Wire(field), None, Filter())
           .toOption
           .toList
           .flatten
-          .sortBy(-_.count)
+          .sortBy(f => -f.count.value)
           .take(VocabularySize)
-          .map(_.value)
+          .map(_.value.value)
       Loaded(
-        g.slug,
-        g.title,
-        g.notes,
-        g.tags,
-        g.regions,
+        goal,
+        com.histmersion.domain.Title(g.title.value),
+        g.notes.map(n => Loaded.Notes(n.value)),
+        g.tags.map(t => Loaded.Tags(t.value)),
+        g.regions.map(r => Loaded.Regions(r.value)),
         g.periodStart,
         g.periodEnd,
         (articles ++ planned.filterNot(p => articles.exists(_.slug == p.slug))),
-        links.filter(_.kind == LinkKind.Query).map(_.ref),
-        vocab("topics"),
-        vocab("tags")
+        links.filter(_.kind == LinkKind.Query).map(l => Loaded.Queries(l.ref.value)),
+        vocab("topics").map(Loaded.Topics(_)),
+        vocab("tags").map(Loaded.Tags(_))
       )
     }
 
-  private def input(ctx: RunCtx, l: Loaded): com.histmersion.domain.research.workflows.ProposeArticlesPipeline.Prompt =
+  private def input(ctx: RunCtx, l: Loaded): String =
     val lim = limits(ctx)
     val period = (l.periodStart, l.periodEnd) match
       case (Some(a), Some(b)) => s"$a to $b (signed years, BCE negative)"
       case _                  => "not given"
     def list(xs: List[String]) = if xs.isEmpty then "none" else xs.map(x => s"- $x").mkString("\n", "\n", "")
     val area =
-      s"slug: ${l.slug}\ntitle: ${l.title}\nnotes: ${l.notes.getOrElse("none")}\ntags: ${l.tags.mkString(", ")}\n" +
+      s"slug: ${l.slug}\ntitle: ${l.title}\nnotes: ${l.notes.fold("none")(_.value)}\ntags: ${l.tags.mkString(", ")}\n" +
         s"regions: ${l.regions.mkString(", ")}\nperiod: $period"
     s"Plan the articles of this research area.\n\n${Prompt.data("research-area", area)}\n\n" +
       s"Its articles, its parent's and its sub-areas' (and the ones already planned): ${list(
@@ -151,117 +184,122 @@ final class ProposeArticlesPipeline(
             s"[[${a.slug}]] — ${a.title}" +
               a.filter.fold(" (no filter)")(f => s" · ${f.line}")
           )
-        )}\n\nIts search queries: ${list(l.queries)}\n\n" +
+        )}\n\nIts search queries: ${list(l.queries.map(_.value))}\n\n" +
       s"The corpus's most used topics: ${l.topics.mkString(", ")}\nIts most used tags: ${l.tags0.mkString(", ")}\n\n" +
       f"Limits: at most ${lim.maxArticles} articles; each filter returns at least ${lim.minSources} sources, and less than " +
-      f"${lim.maxOverlap * 100}%.0f%% of them may belong to an article the area already has." + ctx.notes
+      f"${lim.maxOverlap.value * 100}%.0f%% of them may belong to an article the area already has." + ctx.notes
 
   /** The source set of an existing article: its filter's sources and the ones it cites. */
   private def sourcesOf(e: Existing): Set[com.histmersion.domain.library.Citekey] =
-    e.filter.fold(Set.empty[String])(f => site.articles.filterReach(f, Nil, OverlapCap)._3.toSet) ++ e.cited
+    e.filter.fold(Set.empty[com.histmersion.domain.library.Citekey])(f =>
+      site.articles.filterReach(f, Nil, OverlapCap)._3.map(r => com.histmersion.domain.library.Citekey.assume(r.value)).toSet
+    ) ++ e.cited
 
-  private def check(ctx: RunCtx, l: Loaded, a: ArticlesAnswer, last: com.histmersion.domain.research.workflows.ProposeArticlesPipeline.CheckLast): Either[List[com.histmersion.domain.research.workflows.ProposeArticlesPipeline.Problem], ArticlePlan] =
+  private def check(
+      ctx: RunCtx,
+      l: Loaded,
+      a: ArticlesAnswer,
+      last: Boolean
+  ): Either[List[RunCtx.Problem], ArticlePlan] =
     val lim = limits(ctx)
-    PlanArticles.check(a, lim.maxArticles, last).flatMap { (cs, dropped) =>
-      val taken = l.articles.map(_.slug).toSet
-      val existing = l.articles.map(e => (e.slug, sourcesOf(e)))
-      val plan = PlanArticles.verify(
-        l.slug,
-        a.rationale,
-        cs,
-        dropped,
-        s => !taken(s) && !site.articleStore.exists(s) && site.articles.get(s).isLeft,
-        f => { val (n, _, rows) = site.articles.filterReach(f, Nil, OverlapCap); (n, rows.toSet) },
-        existing,
-        lim
-      )
-      if plan.isEmpty && !last then
-        Left(plan.dropped.take(12) :+ "no proposed article passed the checks: fix the ones above or propose others")
-      else Right(plan)
-    }
+    PlanArticles
+      .check(a, lim.maxArticles, PlanArticles.LastRound(last))
+      .left
+      .map(_.map(p => RunCtx.Problem(p.value)))
+      .flatMap { (cs, dropped) =>
+        val taken = l.articles.map(_.slug).toSet
+        val existing = l.articles.map(e => (Article.Slug(e.slug.value), sourcesOf(e)))
+        val plan = PlanArticles.verify(
+          l.slug,
+          a.rationale,
+          cs,
+          dropped,
+          s =>
+            Slug
+              .parse(s.value)
+              .fold(_ => true, d => !taken(d) && !site.articleStore.exists(d) && site.articles.get(d).isLeft),
+          f => {
+            val (n, _, rows) = site.articles.filterReach(f, Nil, OverlapCap)
+            (
+              ArticlePlan.ProposedArticle.Hits(n.value),
+              rows.map(r => com.histmersion.domain.library.Citekey.assume(r.value)).toSet
+            )
+          },
+          existing,
+          lim
+        )
+        if plan.isEmpty && !last then
+          Left(
+            plan.dropped.take(12).map(d => RunCtx.Problem(d.value)) :+
+              RunCtx.Problem("no proposed article passed the checks: fix the ones above or propose others")
+          )
+        else Right(plan)
+      }
 
   /** The plan as an `article-plan` approval (a person's, or the supervisor's checks — [[AutoApprovals]]), through the
     * write gate.
     */
-  private def record(ctx: RunCtx, goal: com.histmersion.domain.automation.Goal.Slug, plan: ArticlePlan): Either[com.histmersion.domain.research.workflows.ProposeArticlesPipeline.Problem, Recorded] =
-    if plan.isEmpty then Right(Recorded(None, s"nothing survived the checks; no approval was opened"))
+  private def record(ctx: RunCtx, goal: Goal.Slug, plan: ArticlePlan): Either[String, Recorded] =
+    if plan.isEmpty then Right(Recorded(None, Recorded.Line("nothing survived the checks; no approval was opened")))
     else
       ctx.write(
-        s"${ApprovalKind.ArticlePlan.wire} approval for goal $goal: ${Plural.count(plan.articles.size, com.histmersion.api.Plural.CountSingular("article"))}",
+        s"${ApprovalKind.ArticlePlan.wire} approval for goal $goal: ${Plural.count(Plural.CountN(plan.articles.size.toLong), Plural.CountSingular("article"))}",
         plan.asJson
       )(
-        Right(ctx.approvalStore.openSubject(Some(ctx.run.id), ApprovalKind.ArticlePlan, goal, plan.asJson.noSpaces))
-          .map(a => Recorded(Some(a.id), s"approval ${a.id} waits for a person"))
-      )(Right(Recorded(None, s"no approval opened (${AgentsMarkdown.DryRunNote})")))
+        Right(
+          ctx.approvalStore.openSubject(
+            Some(com.histmersion.util.jobs.Job.Id.assume(ctx.run.id.value)),
+            ApprovalKind.ArticlePlan,
+            ApprovalQuery.Subject(goal.value),
+            ApprovalService.Payload(plan.asJson.noSpaces)
+          )
+        ).map(a => Recorded(Some(a.id), Recorded.Line(s"approval ${a.id} waits for a person")))
+      )(Right(Recorded(None, Recorded.Line(s"no approval opened (${AgentsMarkdown.DryRunNote})"))))
 
 object ProposeArticlesPipeline:
-  type Outcome = Outcome.T
-  object Outcome extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type Problem = Problem.T
-  object Problem extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type Prompt = Prompt.T
-  object Prompt extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   /** How many of the most used topics and tags the planner is shown; how many sources of a filter an overlap is
     * measured on.
     */
-  type FamilyDownDepth = FamilyDownDepth.T
-  object FamilyDownDepth extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
-
-  type CheckLast = CheckLast.T
-  object CheckLast extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
-
   val VocabularySize = 40
-  val OverlapCap = 1000
+  val OverlapCap: ArticlesControllers.FilterReachCap = ArticlesControllers.FilterReachCap(1000)
 
   /** An article of the area (linked to the goal, or planned by its seeding manager). */
-  final case class Existing(slug: Existing.Slug, title: Existing.Title, filter: Option[Article.Filter], cited: List[Existing.Cited])
-      derives KindlingsCodecAsObject
-
-  object Existing:
-    type Slug = com.histmersion.domain.research.Slug
-    val Slug: _root_.com.histmersion.domain.research.Slug.type = _root_.com.histmersion.domain.research.Slug
-    type Title = com.histmersion.domain.Title
-    val Title: _root_.com.histmersion.domain.Title.type = _root_.com.histmersion.domain.Title
-    type Cited = com.histmersion.domain.library.Citekey
-    val Cited: _root_.com.histmersion.domain.library.Citekey.type = _root_.com.histmersion.domain.library.Citekey
+  final case class Existing(
+      slug: Slug,
+      title: com.histmersion.domain.Title,
+      filter: Option[Article.Filter],
+      cited: List[com.histmersion.domain.library.Citekey]
+  ) derives KindlingsCodecAsObject
 
   /** The area as the planner sees it (checkpointed). `tags0` = the corpus's tags. */
   final case class Loaded(
-      slug: Loaded.Slug,
-      title: Loaded.Title,
+      slug: Goal.Slug,
+      title: com.histmersion.domain.Title,
       notes: Option[Loaded.Notes],
       tags: List[Loaded.Tags],
       regions: List[Loaded.Regions],
-      periodStart: Option[com.histmersion.Year],
-      periodEnd: Option[com.histmersion.Year],
+      periodStart: Option[com.histmersion.api.catalogue.Year],
+      periodEnd: Option[com.histmersion.api.catalogue.Year],
       articles: List[Existing],
       queries: List[Loaded.Queries],
       topics: List[Loaded.Topics],
-      tags0: List[Loaded.Tags0]
+      tags0: List[Loaded.Tags]
   ) derives KindlingsCodecAsObject
 
   object Loaded:
-    type Slug = com.histmersion.domain.research.Slug
-    val Slug: _root_.com.histmersion.domain.research.Slug.type = _root_.com.histmersion.domain.research.Slug
-    type Title = com.histmersion.domain.Title
-    val Title: _root_.com.histmersion.domain.Title.type = _root_.com.histmersion.domain.Title
     type Notes = Notes.T
     object Notes extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-    type Tags = com.histmersion.domain.research.articles.ArticleSummaryRow.Tags
-    val Tags: _root_.com.histmersion.domain.research.articles.ArticleSummaryRow.Tags.type = _root_.com.histmersion.domain.research.articles.ArticleSummaryRow.Tags
-    type Regions = com.histmersion.domain.research.articles.ArticleSummaryRow.Regions
-    val Regions: _root_.com.histmersion.domain.research.articles.ArticleSummaryRow.Regions.type = _root_.com.histmersion.domain.research.articles.ArticleSummaryRow.Regions
-    type Queries = com.histmersion.domain.research.articles.ArticleTools.ListArticlesInput.Query
-    val Queries: _root_.com.histmersion.domain.research.articles.ArticleTools.ListArticlesInput.Query.type = _root_.com.histmersion.domain.research.articles.ArticleTools.ListArticlesInput.Query
+    type Tags = Tags.T
+    object Tags extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Regions = Regions.T
+    object Regions extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Queries = Queries.T
+    object Queries extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
     type Topics = Topics.T
     object Topics extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-    type Tags0 = com.histmersion.domain.research.articles.ArticleSummaryRow.Tags
-    val Tags0: _root_.com.histmersion.domain.research.articles.ArticleSummaryRow.Tags.type = _root_.com.histmersion.domain.research.articles.ArticleSummaryRow.Tags
 
-  final case class Recorded(approval: Option[Recorded.Approval], line: Recorded.Line) derives KindlingsCodecAsObject
+  final case class Recorded(approval: Option[Agents.ApprovalInfo.Id], line: Recorded.Line) derives KindlingsCodecAsObject
 
   object Recorded:
-    type Approval = Approval.T
-    object Approval extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
     type Line = Line.T
     object Line extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]

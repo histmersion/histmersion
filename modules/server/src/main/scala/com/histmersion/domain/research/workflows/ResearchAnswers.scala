@@ -24,13 +24,13 @@ object ResearchAnswers:
 
   /** Its step schemas, by name. */
   val all: List[(com.histmersion.domain.research.workflows.ResearchAnswers.AnswerKind, ResponseSchema[?])] = List(
-    "extract" -> extract,
-    "draft" -> draft,
-    "rules" -> rules,
-    "cold-reader" -> coldReader,
-    "skeptic" -> skeptic,
-    "recheck" -> recheck,
-    "fixer" -> fixer,
-    "filter" -> filter,
-    "articles" -> articles
+    AnswerKind("extract") -> extract,
+    AnswerKind("draft") -> draft,
+    AnswerKind("rules") -> rules,
+    AnswerKind("cold-reader") -> coldReader,
+    AnswerKind("skeptic") -> skeptic,
+    AnswerKind("recheck") -> recheck,
+    AnswerKind("fixer") -> fixer,
+    AnswerKind("filter") -> filter,
+    AnswerKind("articles") -> articles
   )

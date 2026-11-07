@@ -68,12 +68,12 @@ object SiteTypeService:
 
     def setSiteTypes(types: List[(DPlace.Id, Option[SiteTypes.SiteType.Id])]): Unit =
       val at = now()
-      val typed = types.map((id, t) => id.value -> t).toMap
+      val typed = types.map((id, t) => HeldSite.Id(id.value) -> t).toMap
       val _ = state.updateAndGet(
         _.modify(_.sites)
           .using(
             _.map(s =>
-              typed.get(s.id.value).fold(s)(t =>
+              typed.get(s.id).fold(s)(t =>
                 s.modify(_.siteType).setTo(t.map(x => HeldSite.SiteType(x.value))).modify(_.checkedAt).setTo(Some(at))
               )
             )

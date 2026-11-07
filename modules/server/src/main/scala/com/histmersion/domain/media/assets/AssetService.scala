@@ -1,7 +1,11 @@
 package com.histmersion.domain.media.assets
 
 import com.histmersion.api.{Api, Write}
+import com.histmersion.api.exchange.Bundle
+import com.histmersion.domain.DeepTime
+import com.histmersion.domain.catalogue.evidence.EventMatcher
 import com.histmersion.domain.media.MediaState
+import com.histmersion.domain.media.imports.{MediaMatch, Target}
 import com.histmersion.util.database.{RangeSql, Transactor}
 import com.histmersion.domain.media.MediaRole
 
@@ -15,6 +19,7 @@ import com.histmersion.api.media.{
   AssetDetail,
   AssetInfo,
   AssetPatch,
+  ImageSize,
   MediaCount,
   MediaFacets,
   MediaGeoHit,
@@ -65,29 +70,29 @@ trait AssetService:
 
   def refreshRights(uid: com.histmersion.domain.media.assets.AssetService.AssetUid, r: Rights): Unit
 
-  def setThumb(uid: com.histmersion.domain.media.assets.AssetService.AssetUid, bytes: com.histmersion.domain.media.assets.AssetService.Bytes, mime: com.histmersion.domain.media.assets.AssetService.Mime, width: Option[com.histmersion.domain.media.assets.AssetService.ThumbWidth], height: Option[com.histmersion.domain.media.assets.AssetService.ThumbHeight]): Unit
+  def setThumb(uid: com.histmersion.domain.media.assets.AssetService.AssetUid, bytes: ProviderAsset.Thumb, mime: ProviderAsset.ThumbMime, width: Option[ProviderAsset.ThumbWidth], height: Option[ProviderAsset.ThumbHeight]): Unit
 
   /** A picture shown on a place or event in a role; whether the link is new. */
   def link(
       uid: com.histmersion.domain.media.assets.AssetService.AssetUid,
       targetType: com.histmersion.domain.media.assets.AssetService.TargetType,
       targetId: com.histmersion.domain.media.assets.AssetService.TargetId,
-      role: com.histmersion.domain.media.assets.AssetService.LinkRole,
-      property: Option[com.histmersion.domain.media.assets.AssetService.LinkProperty],
-      item: Option[com.histmersion.domain.media.assets.AssetService.LinkItem],
-      rank: com.histmersion.domain.media.assets.AssetService.LinkRank,
-      basis: Option[com.histmersion.domain.media.assets.AssetService.LinkBasis]
+      role: com.histmersion.domain.media.MediaRole.Wire,
+      property: Option[AssetService.LinkProperty],
+      item: Option[AssetService.LinkItem],
+      rank: AssetService.LinkRank,
+      basis: Option[MediaMatch.Basis]
   ): Boolean
 
   /** `uid` made the source's picture in `role`, replacing the one it had in that role. */
-  def setSourcePicture(citekey: com.histmersion.domain.library.Citekey, uid: com.histmersion.domain.media.assets.AssetService.AssetUid, role: com.histmersion.domain.media.assets.AssetService.PictureRole, property: Option[com.histmersion.domain.media.assets.AssetService.SetSourcePictureProperty]): Unit
+  def setSourcePicture(citekey: com.histmersion.domain.library.Citekey, uid: com.histmersion.domain.media.assets.AssetService.AssetUid, role: com.histmersion.domain.media.MediaRole.Wire, property: Option[AssetService.LinkProperty]): Unit
 
   /** The source's picture in `role`: its uid and its provider key or figure name. */
-  def sourcePicture(citekey: com.histmersion.domain.library.Citekey, role: com.histmersion.domain.media.assets.AssetService.PictureRole): Option[(com.histmersion.domain.media.assets.AssetService.AssetUid, com.histmersion.domain.media.assets.AssetService.AssetName)]
+  def sourcePicture(citekey: com.histmersion.domain.library.Citekey, role: com.histmersion.domain.media.MediaRole.Wire): Option[(com.histmersion.domain.media.assets.AssetService.AssetUid, AssetService.PictureKey)]
 
   // ── reads ──
 
-  def list(q: Api.MediaQuery, limit: com.histmersion.domain.media.assets.AssetService.ListLimit): MediaList
+  def list(q: Api.MediaQuery, limit: AssetService.Limit): MediaList
   def show(uid: com.histmersion.domain.media.assets.AssetService.AssetUid): Option[MediaItem]
 
   /** The thumbnail's type and bytes — a source's figure (or a cover) without one is its own thumbnail. */
@@ -95,80 +100,59 @@ trait AssetService:
 
   def file(uid: com.histmersion.domain.media.assets.AssetService.AssetUid): Option[(com.histmersion.domain.media.assets.AssetService.Mime, com.histmersion.domain.media.assets.AssetService.Bytes)]
   def facets: MediaFacets
-  def geo(q: Api.MediaGeoQuery, limit: com.histmersion.domain.media.assets.AssetService.GeoLimit): List[MediaGeoHit]
+  def geo(q: Api.MediaGeoQuery, limit: AssetService.Limit): List[MediaGeoHit]
   def geoOf(uids: List[com.histmersion.domain.media.assets.AssetService.AssetUid]): Map[com.histmersion.domain.media.assets.AssetService.AssetUid, MediaGeoHit]
 
   /** A place's, an event's or a source's pictures for its card, best first. */
-  def thumbs(targetType: com.histmersion.domain.media.assets.AssetService.TargetType, targetId: com.histmersion.domain.media.assets.AssetService.TargetId, limit: com.histmersion.domain.media.assets.AssetService.ThumbsLimit): List[MediaThumb]
+  def thumbs(targetType: com.histmersion.domain.media.assets.AssetService.TargetType, targetId: com.histmersion.domain.media.assets.AssetService.TargetId, limit: AssetService.Limit): List[MediaThumb]
 
   /** A place's pictures for its card, through its equivalents (its old ids, its Wikidata items, a point of the same
     * name within `sameSiteKm`).
     */
-  def placeThumbs(placeId: com.histmersion.domain.catalogue.Place.Id, sameSiteKm: com.histmersion.domain.media.assets.AssetService.SameSiteKm, limit: com.histmersion.domain.media.assets.AssetService.PlaceThumbsLimit): List[MediaThumb]
+  def placeThumbs(placeId: com.histmersion.domain.catalogue.Place.Id, sameSiteKm: EventMatcher.NearFinding.Km, limit: AssetService.Limit): List[MediaThumb]
 
 object AssetService:
-  type AddedFigureCount = AddedFigureCount.T
-  object AddedFigureCount extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type AssetName = AssetName.T
-  object AssetName extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type AssetUid = AssetUid.T
-  object AssetUid extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type AddedFigureCount = com.histmersion.RowCount
+  type FigureCount = com.histmersion.RowCount
+  type ReplacedFigureCount = com.histmersion.RowCount
+  type AssetName = AssetInfoRow.Name
+  val AssetName: AssetInfoRow.Name.type = AssetInfoRow.Name
+  type AssetUid = MediaItemRow.Uid
+  val AssetUid: MediaItemRow.Uid.type = MediaItemRow.Uid
+  type Provider = MediaItemRow.Provider
+  val Provider: MediaItemRow.Provider.type = MediaItemRow.Provider
+  type ProviderKey = MediaItemRow.ProviderKey
+  val ProviderKey: MediaItemRow.ProviderKey.type = MediaItemRow.ProviderKey
+  type TargetType = Target.TargetType
+  val TargetType: Target.TargetType.type = Target.TargetType
+  type TargetId = Target.Id
+  val TargetId: Target.Id.type = Target.Id
   type Bytes = Bytes.T
   object Bytes extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Array[_root_.scala.Byte], _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type FacetKey = FacetKey.T
-  object FacetKey extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type FigureCount = FigureCount.T
-  object FigureCount extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type License = License.T
-  object License extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type Mime = Mime.T
   object Mime extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type Ordinal = Ordinal.T
-  object Ordinal extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type PictureRole = PictureRole.T
-  object PictureRole extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type Provider = Provider.T
-  object Provider extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type ProviderKey = ProviderKey.T
-  object ProviderKey extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type ReplacedFigureCount = ReplacedFigureCount.T
-  object ReplacedFigureCount extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type SameSiteKm = SameSiteKm.T
-  object SameSiteKm extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type TargetId = TargetId.T
-  object TargetId extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type TargetType = TargetType.T
-  object TargetType extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type ThumbHeight = ThumbHeight.T
-  object ThumbHeight extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type ThumbWidth = ThumbWidth.T
-  object ThumbWidth extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type LinkRole = LinkRole.T
-  object LinkRole extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
+  type Limit = Limit.T
+  object Limit extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type LinkProperty = LinkProperty.T
   object LinkProperty extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type LinkRole = com.histmersion.domain.media.MediaRole.Wire
+  val LinkRole: com.histmersion.domain.media.MediaRole.Wire.type = com.histmersion.domain.media.MediaRole.Wire
+  type LinkBasis = MediaMatch.Basis
+  val LinkBasis: MediaMatch.Basis.type = MediaMatch.Basis
   type LinkItem = LinkItem.T
   object LinkItem extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type LinkRank = LinkRank.T
   object LinkRank extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type LinkBasis = LinkBasis.T
-  object LinkBasis extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type SetSourcePictureProperty = SetSourcePictureProperty.T
-  object SetSourcePictureProperty extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type ListLimit = ListLimit.T
-  object ListLimit extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type GeoLimit = GeoLimit.T
-  object GeoLimit extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type ThumbsLimit = ThumbsLimit.T
-  object ThumbsLimit extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type PlaceThumbsLimit = PlaceThumbsLimit.T
-  object PlaceThumbsLimit extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type PictureKey = PictureKey.T
+  object PictureKey extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
   def apply(db: Transactor): AssetService = Implementation(db)
 
   final private class Implementation(db: Transactor) extends AssetService:
     def figures(citekey: com.histmersion.domain.library.Citekey): List[AssetInfo] = db.read(AssetRepo.list(citekey)).toList
-    def figure(citekey: com.histmersion.domain.library.Citekey, name: com.histmersion.domain.media.assets.AssetService.AssetName): Option[(com.histmersion.domain.media.assets.AssetService.Mime, com.histmersion.domain.media.assets.AssetService.Bytes)] = db.read(AssetRepo.read(citekey, name))
+    def figure(citekey: com.histmersion.domain.library.Citekey, name: com.histmersion.domain.media.assets.AssetService.AssetName): Option[(com.histmersion.domain.media.assets.AssetService.Mime, com.histmersion.domain.media.assets.AssetService.Bytes)] =
+      db.read(AssetRepo.read(citekey, name)).map((m, b) => (Mime(m.value), Bytes(b.value)))
     def figureCount(citekey: com.histmersion.domain.library.Citekey): com.histmersion.domain.media.assets.AssetService.FigureCount = db.read(AssetRepo.count(citekey))
     def addFigures(citekey: com.histmersion.domain.library.Citekey, figures: List[NewFigure]): com.histmersion.domain.media.assets.AssetService.AddedFigureCount = db.transact(AssetRepo.add(citekey, figures))
     def replaceFigures(citekey: com.histmersion.domain.library.Citekey, figures: List[NewFigure]): com.histmersion.domain.media.assets.AssetService.ReplacedFigureCount =
@@ -176,63 +160,43 @@ object AssetService:
     def detail(citekey: com.histmersion.domain.library.Citekey, name: com.histmersion.domain.media.assets.AssetService.AssetName): Option[AssetDetail] = db.read(AssetRepo.detail(citekey, name))
     def patch(citekey: com.histmersion.domain.library.Citekey, name: com.histmersion.domain.media.assets.AssetService.AssetName, p: AssetPatch): Either[Api.Error, AssetDetail] =
       db.transact(AssetRepo.patch(citekey, name, p))
-        .flatMap(_ => detail(citekey, name).toRight(Api.Error(s"No asset '$citekey/$name'", Some(Write.CodeNotFound))))
+        .flatMap(_ => detail(citekey, name).toRight(Api.Error(Api.Error.Message(s"No asset '$citekey/$name'"), Some(Api.Error.Code(Write.CodeNotFound)))))
     def sourceFigures(citekey: com.histmersion.domain.library.Citekey): List[SourceFigure] = db.read(MediaRepo.sourceFigures(citekey))
     def known(provider: com.histmersion.domain.media.assets.AssetService.Provider, keys: List[com.histmersion.domain.media.assets.AssetService.ProviderKey]): Map[com.histmersion.domain.media.assets.AssetService.ProviderKey, Known] = db.read(MediaRepo.known(provider, keys))
     def save(a: ProviderAsset, firstTarget: (com.histmersion.domain.media.assets.AssetService.TargetType, com.histmersion.domain.media.assets.AssetService.TargetId)): (com.histmersion.domain.media.assets.AssetService.AssetUid, Boolean) =
       db.transact(MediaRepo.save(a, firstTarget))
     def refreshRights(uid: com.histmersion.domain.media.assets.AssetService.AssetUid, r: Rights): Unit = db.transact(MediaRepo.refreshRights(uid, r))
-    def setThumb(uid: com.histmersion.domain.media.assets.AssetService.AssetUid, bytes: com.histmersion.domain.media.assets.AssetService.Bytes, mime: com.histmersion.domain.media.assets.AssetService.Mime, width: Option[com.histmersion.domain.media.assets.AssetService.ThumbWidth], height: Option[com.histmersion.domain.media.assets.AssetService.ThumbHeight]): Unit =
-      db.transact(MediaRepo.setThumb(uid, bytes, mime, width, height))
+    def setThumb(uid: com.histmersion.domain.media.assets.AssetService.AssetUid, bytes: ProviderAsset.Thumb, mime: ProviderAsset.ThumbMime, width: Option[ProviderAsset.ThumbWidth], height: Option[ProviderAsset.ThumbHeight]): Unit =
+      db.transact(MediaRepo.setThumb(uid, bytes, mime, width.map(w => MediaThumbRow.Width(w.value)), height.map(h => MediaThumbRow.Height(h.value))))
     def link(
         uid: com.histmersion.domain.media.assets.AssetService.AssetUid,
         targetType: com.histmersion.domain.media.assets.AssetService.TargetType,
         targetId: com.histmersion.domain.media.assets.AssetService.TargetId,
-        role: com.histmersion.domain.media.assets.AssetService.Implementation.LinkRole,
-        property: Option[com.histmersion.domain.media.assets.AssetService.Implementation.LinkProperty],
-        item: Option[com.histmersion.domain.media.assets.AssetService.Implementation.LinkItem],
-        rank: com.histmersion.domain.media.assets.AssetService.Implementation.LinkRank,
-        basis: Option[com.histmersion.domain.media.assets.AssetService.Implementation.LinkBasis]
-    ): Boolean = db.transact(MediaRepo.link(uid, targetType, targetId, role, property, item, rank, basis))
-    def setSourcePicture(citekey: com.histmersion.domain.library.Citekey, uid: com.histmersion.domain.media.assets.AssetService.AssetUid, role: com.histmersion.domain.media.assets.AssetService.PictureRole, property: Option[com.histmersion.domain.media.assets.AssetService.Implementation.SetSourcePictureProperty]): Unit =
-      db.transact(MediaRepo.setSourcePicture(citekey, uid, role, property))
-    def sourcePicture(citekey: com.histmersion.domain.library.Citekey, role: com.histmersion.domain.media.assets.AssetService.PictureRole): Option[(com.histmersion.domain.media.assets.AssetService.AssetUid, com.histmersion.domain.media.assets.AssetService.AssetName)] =
-      db.read(MediaRepo.sourcePicture(citekey, role))
-    def list(q: Api.MediaQuery, limit: com.histmersion.domain.media.assets.AssetService.Implementation.ListLimit): MediaList = db.read(MediaRepo.list(q, limit))
+        role: com.histmersion.domain.media.MediaRole.Wire,
+        property: Option[LinkProperty],
+        item: Option[LinkItem],
+        rank: LinkRank,
+        basis: Option[MediaMatch.Basis]
+    ): Boolean = db.transact(MediaRepo.link(uid, targetType, targetId, role, property.map(p => MediaRepo.LinkProperty(p.value)), item.map(i => MediaRepo.LinkItem(i.value)), MediaRepo.LinkRank(rank.value), basis))
+    def setSourcePicture(citekey: com.histmersion.domain.library.Citekey, uid: com.histmersion.domain.media.assets.AssetService.AssetUid, role: com.histmersion.domain.media.MediaRole.Wire, property: Option[LinkProperty]): Unit =
+      db.transact(MediaRepo.setSourcePicture(citekey, uid, role, property.map(p => MediaRepo.SetSourcePictureProperty(p.value))))
+    def sourcePicture(citekey: com.histmersion.domain.library.Citekey, role: com.histmersion.domain.media.MediaRole.Wire): Option[(com.histmersion.domain.media.assets.AssetService.AssetUid, PictureKey)] =
+      db.read(MediaRepo.sourcePicture(citekey, role)).map((uid, key) => (uid, PictureKey(key.value)))
+    def list(q: Api.MediaQuery, limit: Limit): MediaList = db.read(MediaRepo.list(q, MediaRepo.Limit(limit.value)))
     def show(uid: com.histmersion.domain.media.assets.AssetService.AssetUid): Option[MediaItem] = db.read(MediaRepo.show(uid))
-    def thumb(uid: com.histmersion.domain.media.assets.AssetService.AssetUid): Option[(com.histmersion.domain.media.assets.AssetService.Mime, com.histmersion.domain.media.assets.AssetService.Bytes)] = db.read(MediaRepo.thumb(uid))
-    def file(uid: com.histmersion.domain.media.assets.AssetService.AssetUid): Option[(com.histmersion.domain.media.assets.AssetService.Mime, com.histmersion.domain.media.assets.AssetService.Bytes)] = db.read(MediaRepo.file(uid))
+    def thumb(uid: com.histmersion.domain.media.assets.AssetService.AssetUid): Option[(com.histmersion.domain.media.assets.AssetService.Mime, com.histmersion.domain.media.assets.AssetService.Bytes)] =
+      db.read(MediaRepo.thumb(uid)).map((m, b) => (Mime(m.value), Bytes(b.value)))
+    def file(uid: com.histmersion.domain.media.assets.AssetService.AssetUid): Option[(com.histmersion.domain.media.assets.AssetService.Mime, com.histmersion.domain.media.assets.AssetService.Bytes)] =
+      db.read(MediaRepo.file(uid)).map((m, b) => (Mime(m.value), Bytes(b.value)))
     def facets: MediaFacets = db.read(MediaRepo.facets)
-    def geo(q: Api.MediaGeoQuery, limit: com.histmersion.domain.media.assets.AssetService.Implementation.GeoLimit): List[MediaGeoHit] = db.read(MediaRepo.geo(q, limit))
+    def geo(q: Api.MediaGeoQuery, limit: Limit): List[MediaGeoHit] = db.read(MediaRepo.geo(q, MediaRepo.Limit(limit.value)))
     // no connection for a tile with no pictures
     def geoOf(uids: List[com.histmersion.domain.media.assets.AssetService.AssetUid]): Map[com.histmersion.domain.media.assets.AssetService.AssetUid, MediaGeoHit] =
       if uids.isEmpty then Map.empty else db.read(MediaRepo.geoOf(uids))
-    def thumbs(targetType: com.histmersion.domain.media.assets.AssetService.TargetType, targetId: com.histmersion.domain.media.assets.AssetService.TargetId, limit: com.histmersion.domain.media.assets.AssetService.Implementation.ThumbsLimit): List[MediaThumb] =
-      db.read(MediaRepo.thumbsIn(targetType, targetId, limit))
-    def placeThumbs(placeId: com.histmersion.domain.catalogue.Place.Id, sameSiteKm: com.histmersion.domain.media.assets.AssetService.SameSiteKm, limit: com.histmersion.domain.media.assets.AssetService.Implementation.PlaceThumbsLimit): List[MediaThumb] =
-      db.read(MediaRepo.placeThumbsIn(placeId, sameSiteKm, limit))
-
-  object Implementation:
-    type LinkRole = LinkRole.T
-    object LinkRole extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-    type LinkProperty = LinkProperty.T
-    object LinkProperty extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-    type LinkItem = LinkItem.T
-    object LinkItem extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-    type LinkRank = LinkRank.T
-    object LinkRank extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
-    type LinkBasis = LinkBasis.T
-    object LinkBasis extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-    type SetSourcePictureProperty = SetSourcePictureProperty.T
-    object SetSourcePictureProperty extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-    type ListLimit = ListLimit.T
-    object ListLimit extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
-    type GeoLimit = GeoLimit.T
-    object GeoLimit extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
-    type ThumbsLimit = ThumbsLimit.T
-    object ThumbsLimit extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
-    type PlaceThumbsLimit = PlaceThumbsLimit.T
-    object PlaceThumbsLimit extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    def thumbs(targetType: com.histmersion.domain.media.assets.AssetService.TargetType, targetId: com.histmersion.domain.media.assets.AssetService.TargetId, limit: Limit): List[MediaThumb] =
+      db.read(MediaRepo.thumbsIn(targetType, targetId, MediaRepo.Limit(limit.value)))
+    def placeThumbs(placeId: com.histmersion.domain.catalogue.Place.Id, sameSiteKm: EventMatcher.NearFinding.Km, limit: Limit): List[MediaThumb] =
+      db.read(MediaRepo.placeThumbsIn(placeId, sameSiteKm, MediaRepo.Limit(limit.value)))
 
   /** Media's pictures alone, in memory: no place, event or source is held, so a provider's picture gets no point or
     * period from the target it is stored for, and a place's card shows nothing (the place is not there to have
@@ -256,63 +220,81 @@ object AssetService:
 
     def figures(citekey: com.histmersion.domain.library.Citekey): List[AssetInfo] =
       ofSource(citekey)
-        .sortBy(_.name)
+        .sortBy(_.name.value)
         .toList
-        .map(a => AssetInfo(a.name, a.mime, a.bytes.length, com.histmersion.api.Sha256(a.sha256), a.width, a.height))
+        .map(a =>
+          AssetInfo(
+            AssetInfo.Name(a.name.value),
+            AssetInfo.Mime(a.mime.value),
+            com.histmersion.api.ByteCount(a.bytes.value.length.toLong),
+            com.histmersion.api.Sha256(a.sha256.value),
+            a.width.map(w => AssetInfo.Width(w.value)),
+            a.height.map(h => AssetInfo.Height(h.value))
+          )
+        )
 
     def figure(citekey: com.histmersion.domain.library.Citekey, name: com.histmersion.domain.media.assets.AssetService.AssetName): Option[(com.histmersion.domain.media.assets.AssetService.Mime, com.histmersion.domain.media.assets.AssetService.Bytes)] =
       named(citekey, name).map(a => (a.mime, a.bytes))
 
-    def figureCount(citekey: com.histmersion.domain.library.Citekey): com.histmersion.domain.media.assets.AssetService.FigureCount = ofSource(citekey).size
+    def figureCount(citekey: com.histmersion.domain.library.Citekey): com.histmersion.domain.media.assets.AssetService.FigureCount = com.histmersion.RowCount(ofSource(citekey).size)
 
     private def newFigure(citekey: com.histmersion.domain.library.Citekey, f: NewFigure): HeldAsset =
-      HeldAsset(newId().toString, Some(citekey), f.name, f.mime, f.bytes, f.sha256, f.width, f.height)
+      HeldAsset(
+        AssetUid(newId().toString),
+        Some(citekey),
+        AssetName(f.name.value),
+        Mime(f.mime.value),
+        Bytes(f.bytes.value),
+        f.sha256,
+        f.width.map(w => HeldAsset.Width(w.value)),
+        f.height.map(h => HeldAsset.Height(h.value))
+      )
 
     def addFigures(citekey: com.histmersion.domain.library.Citekey, figures: List[NewFigure]): com.histmersion.domain.media.assets.AssetService.AddedFigureCount =
       val incoming = NewFigure.dedupe(figures)
       val _ = state.updateAndGet { s =>
         val taken = s.assets.filter(_.citekey.contains(citekey)).map(_.name).toSet
-        s.modify(_.assets).using(_ ++ incoming.filterNot(f => taken(f.name)).map(newFigure(citekey, _)))
+        s.modify(_.assets).using(_ ++ incoming.filterNot(f => taken(AssetName(f.name.value))).map(newFigure(citekey, _)))
       }
-      incoming.size
+      com.histmersion.RowCount(incoming.size)
 
     def replaceFigures(citekey: com.histmersion.domain.library.Citekey, figures: List[NewFigure]): com.histmersion.domain.media.assets.AssetService.ReplacedFigureCount =
       val incoming = NewFigure.dedupe(figures)
       val _ = state.updateAndGet { s =>
-        val mine = s.assets.filter(_.citekey.contains(citekey)).sortBy(_.name)
-        val plan = Reconciled.of(mine.map(a => a.name -> a.sha256).toList, incoming.map(f => f.name -> f.sha256))
-        val gone = plan.deletes.toSet
-        val renamed = plan.renames.toMap
-        val goneUids = mine.filter(a => gone(a.name)).map(_.uid).toSet
+        val mine = s.assets.filter(_.citekey.contains(citekey)).sortBy(_.name.value)
+        val plan = Reconciled.of(mine.map(a => NewFigure.Name(a.name.value) -> a.sha256).toList, incoming.map(f => f.name -> f.sha256))
+        val gone = plan.deletes.map(_.value).toSet
+        val renamed = plan.renames.map((from, to) => from.value -> to).toMap
+        val goneUids = mine.filter(a => gone(a.name.value)).map(_.uid).toSet
         val kept = s.assets
           .filterNot(a => goneUids(a.uid))
           .map(a =>
-            if a.citekey.contains(citekey) then renamed.get(a.name).fold(a)(n => a.modify(_.name).setTo(n)) else a
+            if a.citekey.contains(citekey) then renamed.get(a.name.value).fold(a)(n => a.modify(_.name).setTo(AssetName(n.value))) else a
           )
         val links = s.assetLinks
-          .filterNot(l => l.citekey == citekey && gone(l.assetName))
+          .filterNot(l => l.citekey.value == citekey.value && gone(l.assetName.value))
           .map(l =>
-            if l.citekey == citekey then renamed.get(l.assetName).fold(l)(n => l.modify(_.assetName).setTo(n)) else l
+            if l.citekey.value == citekey.value then renamed.get(l.assetName.value).fold(l)(n => l.modify(_.assetName).setTo(Bundle.Asset.FileName(n.value))) else l
           )
         val written = incoming.foldLeft(kept) { (as, f) =>
-          as.indexWhere(a => a.citekey.contains(citekey) && a.name == f.name) match
+          as.indexWhere(a => a.citekey.contains(citekey) && a.name.value == f.name.value) match
             case -1 => as :+ newFigure(citekey, f)
             case i  =>
               val a = as(i)
-              if (a.mime, a.sha256, a.width, a.height) == (f.mime, f.sha256, f.width, f.height) then as
+              if (a.mime.value, a.sha256, a.width.map(_.value), a.height.map(_.value)) == (f.mime.value, f.sha256, f.width.map(_.value), f.height.map(_.value)) then as
               else
                 as.updated(
                   i,
                   a.modify(_.mime)
-                    .setTo(f.mime)
+                    .setTo(Mime(f.mime.value))
                     .modify(_.bytes)
-                    .setTo(f.bytes)
+                    .setTo(Bytes(f.bytes.value))
                     .modify(_.sha256)
                     .setTo(f.sha256)
                     .modify(_.width)
-                    .setTo(f.width)
+                    .setTo(f.width.map(w => HeldAsset.Width(w.value)))
                     .modify(_.height)
-                    .setTo(f.height)
+                    .setTo(f.height.map(h => HeldAsset.Height(h.value)))
                 )
         }
         s.modify(_.assets)
@@ -322,99 +304,112 @@ object AssetService:
           .modify(_.mediaLinks)
           .using(_.filterNot(m => goneUids(m.assetUid)))
       }
-      incoming.size
+      com.histmersion.RowCount(incoming.size)
 
     def detail(citekey: com.histmersion.domain.library.Citekey, name: com.histmersion.domain.media.assets.AssetService.AssetName): Option[AssetDetail] =
       named(citekey, name).map { a =>
         AssetDetail(
-          a.name,
-          a.mime,
-          a.bytes.length,
-          a.sha256,
-          a.width,
-          a.height,
-          a.kind,
-          a.caption,
-          a.license,
-          a.point.map(_._1),
-          a.point.map(_._2),
-          a.period.flatMap(_._1),
-          a.period.flatMap(_._2)
+          Bundle.Asset.FileName(a.name.value),
+          Bundle.Asset.MimeText(a.mime.value),
+          com.histmersion.api.ByteCount(a.bytes.value.length.toLong),
+          com.histmersion.api.Sha256(a.sha256.value),
+          a.width.map(w => ImageSize.Width(w.value)),
+          a.height.map(h => ImageSize.Height(h.value)),
+          a.kind.map(k => MediaItem.Kind(k.value)),
+          a.caption.map(c => MediaItem.Caption(c.value)),
+          a.license.map(l => MediaItem.License(l.value)),
+          a.point.map(p => com.histmersion.api.catalogue.Latitude(p._1.value)),
+          a.point.map(p => com.histmersion.api.catalogue.Longitude(p._2.value)),
+          a.period.flatMap(_._1).map(y => com.histmersion.api.catalogue.Year(y.value)),
+          a.period.flatMap(_._2).map(y => com.histmersion.api.catalogue.Year(y.value))
         )
       }
 
     def patch(citekey: com.histmersion.domain.library.Citekey, name: com.histmersion.domain.media.assets.AssetService.AssetName, p: AssetPatch): Either[Api.Error, AssetDetail] =
+      def missing = Api.Error(Api.Error.Message(s"No asset '$citekey/$name'"), Some(Api.Error.Code(Write.CodeNotFound)))
       named(citekey, name) match
-        case None    => Left(Api.Error(s"No asset '$citekey/$name'", Some(Write.CodeNotFound)))
+        case None    => Left(missing)
         case Some(a) =>
           change(a.uid) { x =>
             val point = (p.lat, p.lon) match
-              case (Some(lat), Some(lon)) => Some((lat, lon))
+              case (Some(lat), Some(lon)) => Some((HeldAsset.Latitude(lat.value), HeldAsset.Longitude(lon.value)))
               case _                      => x.point
             x.modify(_.kind)
-              .using(p.kind.orElse(_))
+              .using(old => p.kind.map(k => HeldAsset.Kind(k.value)).orElse(old))
               .modify(_.caption)
-              .using(p.caption.orElse(_))
+              .using(old => p.caption.map(c => HeldAsset.Caption(c.value)).orElse(old))
               .modify(_.license)
-              .using(p.license.orElse(_))
+              .using(old => p.license.map(l => HeldAsset.License(l.value)).orElse(old))
               .modify(_.point)
               .setTo(point)
           }
           val stored = named(citekey, name).flatMap(_.period).getOrElse((None, None))
           RangeSql
-            .merge(stored, p.periodStart, p.periodEnd, s"asset '$citekey/$name'")
+            .merge(
+              stored,
+              p.periodStart.map(y => DeepTime.SignedYear(y.value)),
+              p.periodEnd.map(y => DeepTime.SignedYear(y.value)),
+              s"asset '$citekey/$name'"
+            )
             .getOrElse(Right(stored))
             .map { (s, e) =>
               if (s, e) != stored then
                 change(a.uid)(_.modify(_.period).setTo(Option.when(s.isDefined || e.isDefined)((s, e))))
             }
-            .flatMap(_ =>
-              detail(citekey, name).toRight(Api.Error(s"No asset '$citekey/$name'", Some(Write.CodeNotFound)))
-            )
+            .flatMap(_ => detail(citekey, name).toRight(missing))
 
     def sourceFigures(citekey: com.histmersion.domain.library.Citekey): List[SourceFigure] =
       ofSource(citekey)
-        .filter(_.mime.startsWith("image/"))
-        .sortBy(_.name)
+        .filter(_.mime.value.startsWith("image/"))
+        .sortBy(_.name.value)
         .toList
-        .map(a => SourceFigure(a.uid, a.name, a.width, a.height, a.thumb.isDefined))
+        .map(a =>
+          SourceFigure(
+            SourceFigure.Uid(a.uid.value),
+            SourceFigure.Name(a.name.value),
+            a.width.map(w => SourceFigure.Width(w.value)),
+            a.height.map(h => SourceFigure.Height(h.value)),
+            SourceFigure.HasThumb(a.thumb.isDefined)
+          )
+        )
 
     def known(provider: com.histmersion.domain.media.assets.AssetService.Provider, keys: List[com.histmersion.domain.media.assets.AssetService.ProviderKey]): Map[com.histmersion.domain.media.assets.AssetService.ProviderKey, Known] =
       held
         .filter(a => a.provider.contains(provider) && a.providerKey.exists(keys.contains))
-        .flatMap(a => a.providerKey.map(_ -> Known(a.uid, a.license)))
+        .flatMap(a => a.providerKey.map(_ -> Known(Known.Uid(a.uid.value), a.license.map(l => Known.License(l.value)))))
         .toMap
 
     def save(a: ProviderAsset, firstTarget: (com.histmersion.domain.media.assets.AssetService.TargetType, com.histmersion.domain.media.assets.AssetService.TargetId)): (com.histmersion.domain.media.assets.AssetService.AssetUid, Boolean) =
       val t = now
-      val license = Option(a.license).filter(_.nonEmpty)
-      held.find(x => x.provider.contains(a.provider) && x.providerKey.contains(a.key)) match
+      val license = Option(a.license.value).filter(_.nonEmpty).map(HeldAsset.License(_))
+      val kind = a.kind.map(k => HeldAsset.Kind(k.value))
+      held.find(x => x.provider.exists(_.value == a.provider.value) && x.providerKey.exists(_.value == a.key.value)) match
         case Some(x) =>
           change(x.uid)(
             _.modify(_.name)
-              .setTo(a.name)
+              .setTo(AssetName(a.name.value))
               .modify(_.mime)
-              .setTo(a.mime)
+              .setTo(Mime(a.mime.value))
               .modify(_.bytes)
-              .setTo(a.bytes)
+              .setTo(Bytes(a.bytes.value))
               .modify(_.sha256)
-              .setTo(NewFigure.sha256(a.bytes))
+              .setTo(NewFigure.sha256(NewFigure.Bytes(a.bytes.value)))
               .modify(_.width)
-              .setTo(a.width)
+              .setTo(a.width.map(w => HeldAsset.Width(w.value)))
               .modify(_.height)
-              .setTo(a.height)
+              .setTo(a.height.map(h => HeldAsset.Height(h.value)))
               .modify(_.license)
               .setTo(license)
               .modify(_.sourceUrl)
-              .setTo(Some(a.sourceUrl))
+              .setTo(Some(HeldAsset.SourceUrl(a.sourceUrl.value)))
               .modify(_.originalUrl)
-              .setTo(a.originalUrl)
+              .setTo(a.originalUrl.map(u => HeldAsset.OriginalUrl(u.value)))
               .modify(_.author)
-              .setTo(a.author)
+              .setTo(a.author.map(u => HeldAsset.Author(u.value)))
               .modify(_.credit)
-              .setTo(Some(a.credit))
+              .setTo(Some(HeldAsset.Credit(a.credit.value)))
               .modify(_.licenseUrl)
-              .setTo(a.licenseUrl)
+              .setTo(a.licenseUrl.map(u => HeldAsset.LicenseUrl(u.value)))
               .modify(_.retrievedAt)
               .setTo(Some(t))
               .modify(_.thumb)
@@ -426,29 +421,29 @@ object AssetService:
               .modify(_.thumbHeight)
               .setTo(a.thumbHeight)
               .modify(_.kind)
-              .using(_.orElse(a.kind))
+              .using(_.orElse(kind))
           )
           (x.uid, false)
         case None =>
-          val uid = newId().toString
+          val uid = AssetUid(newId().toString)
           val row = HeldAsset(
             uid,
             None,
-            a.name,
-            a.mime,
-            a.bytes,
-            NewFigure.sha256(a.bytes),
-            a.width,
-            a.height,
-            kind = a.kind,
+            AssetName(a.name.value),
+            Mime(a.mime.value),
+            Bytes(a.bytes.value),
+            NewFigure.sha256(NewFigure.Bytes(a.bytes.value)),
+            a.width.map(w => HeldAsset.Width(w.value)),
+            a.height.map(h => HeldAsset.Height(h.value)),
+            kind = kind,
             license = license,
-            licenseUrl = a.licenseUrl,
-            author = a.author,
-            credit = Some(a.credit),
-            provider = Some(a.provider),
-            providerKey = Some(a.key),
-            sourceUrl = Some(a.sourceUrl),
-            originalUrl = a.originalUrl,
+            licenseUrl = a.licenseUrl.map(u => HeldAsset.LicenseUrl(u.value)),
+            author = a.author.map(u => HeldAsset.Author(u.value)),
+            credit = Some(HeldAsset.Credit(a.credit.value)),
+            provider = Some(Provider(a.provider.value)),
+            providerKey = Some(ProviderKey(a.key.value)),
+            sourceUrl = Some(HeldAsset.SourceUrl(a.sourceUrl.value)),
+            originalUrl = a.originalUrl.map(u => HeldAsset.OriginalUrl(u.value)),
             retrievedAt = Some(t),
             thumb = a.thumb,
             thumbMime = a.thumbMime,
@@ -462,18 +457,18 @@ object AssetService:
       val t = now
       change(uid)(
         _.modify(_.license)
-          .setTo(Some(r.license))
+          .setTo(Some(HeldAsset.License(r.license.value)))
           .modify(_.licenseUrl)
-          .setTo(r.licenseUrl)
+          .setTo(r.licenseUrl.map(u => HeldAsset.LicenseUrl(u.value)))
           .modify(_.author)
-          .setTo(r.author)
+          .setTo(r.author.map(a => HeldAsset.Author(a.value)))
           .modify(_.credit)
-          .setTo(Some(r.credit))
+          .setTo(Some(HeldAsset.Credit(r.credit.value)))
           .modify(_.retrievedAt)
           .setTo(Some(t))
       )
 
-    def setThumb(uid: com.histmersion.domain.media.assets.AssetService.AssetUid, bytes: com.histmersion.domain.media.assets.AssetService.Bytes, mime: com.histmersion.domain.media.assets.AssetService.Mime, width: Option[com.histmersion.domain.media.assets.AssetService.ThumbWidth], height: Option[com.histmersion.domain.media.assets.AssetService.ThumbHeight]): Unit =
+    def setThumb(uid: com.histmersion.domain.media.assets.AssetService.AssetUid, bytes: ProviderAsset.Thumb, mime: ProviderAsset.ThumbMime, width: Option[ProviderAsset.ThumbWidth], height: Option[ProviderAsset.ThumbHeight]): Unit =
       change(uid)(
         _.modify(_.thumb)
           .setTo(Some(bytes))
@@ -487,13 +482,13 @@ object AssetService:
 
     def link(
         uid: com.histmersion.domain.media.assets.AssetService.AssetUid,
-        targetType: com.histmersion.domain.media.assets.AssetService.InMemory.LinkTargetType,
-        targetId: com.histmersion.domain.media.assets.AssetService.InMemory.LinkTargetId,
-        role: com.histmersion.domain.media.assets.AssetService.InMemory.LinkRole,
-        property: Option[com.histmersion.domain.media.assets.AssetService.InMemory.LinkProperty],
-        item: Option[com.histmersion.domain.media.assets.AssetService.InMemory.LinkItem],
-        rank: com.histmersion.domain.media.assets.AssetService.InMemory.LinkRank,
-        basis: Option[com.histmersion.domain.media.assets.AssetService.InMemory.LinkBasis]
+        targetType: com.histmersion.domain.media.assets.AssetService.TargetType,
+        targetId: com.histmersion.domain.media.assets.AssetService.TargetId,
+        role: com.histmersion.domain.media.MediaRole.Wire,
+        property: Option[LinkProperty],
+        item: Option[LinkItem],
+        rank: LinkRank,
+        basis: Option[MediaMatch.Basis]
     ): Boolean =
       require(byUid(uid).isDefined, s"no picture $uid")
       def same(m: HeldMediaLink) =
@@ -513,99 +508,115 @@ object AssetService:
       }
       !before.mediaLinks.exists(same)
 
-    def setSourcePicture(citekey: com.histmersion.domain.library.Citekey, uid: com.histmersion.domain.media.assets.AssetService.AssetUid, role: com.histmersion.domain.media.assets.AssetService.InMemory.SetSourcePictureRole, property: Option[com.histmersion.domain.media.assets.AssetService.InMemory.SetSourcePictureProperty]): Unit =
-      def mine(m: HeldMediaLink) = m.targetType == PictureTarget.Source.wire && m.targetId == citekey && m.role == role
+    private def onSource(m: HeldMediaLink, target: PictureTarget): Boolean = m.targetType.value == target.wire.value
+
+    def setSourcePicture(citekey: com.histmersion.domain.library.Citekey, uid: com.histmersion.domain.media.assets.AssetService.AssetUid, role: com.histmersion.domain.media.MediaRole.Wire, property: Option[LinkProperty]): Unit =
+      def mine(m: HeldMediaLink) = onSource(m, PictureTarget.Source) && m.targetId.value == citekey.value && m.role == role
+      val linked = property.map(p => LinkProperty(p.value))
       val _ = state.updateAndGet { s =>
         val others = s.mediaLinks.filterNot(m => mine(m) && m.assetUid != uid)
         val updated =
           if others.exists(m => mine(m) && m.assetUid == uid) then
-            others.map(m => if mine(m) && m.assetUid == uid then m.modify(_.property).setTo(property) else m)
-          else others :+ HeldMediaLink(uid, PictureTarget.Source.wire, citekey, role, property, None, com.histmersion.domain.media.assets.HeldMediaLink.Rank(0), None)
+            others.map(m => if mine(m) && m.assetUid == uid then m.modify(_.property).setTo(linked) else m)
+          else others :+ HeldMediaLink(uid, TargetType(PictureTarget.Source.wire.value), TargetId(citekey.value), role, linked, None, LinkRank(0), None)
         s.modify(_.mediaLinks).setTo(updated)
       }
 
-    def sourcePicture(citekey: com.histmersion.domain.library.Citekey, role: com.histmersion.domain.media.assets.AssetService.PictureRole): Option[(com.histmersion.domain.media.assets.AssetService.AssetUid, com.histmersion.domain.media.assets.AssetService.AssetName)] =
+    def sourcePicture(citekey: com.histmersion.domain.library.Citekey, role: com.histmersion.domain.media.MediaRole.Wire): Option[(com.histmersion.domain.media.assets.AssetService.AssetUid, PictureKey)] =
       state.get.mediaLinks
-        .find(m => m.targetType == PictureTarget.Source.wire && m.targetId == citekey && m.role == role)
+        .find(m => onSource(m, PictureTarget.Source) && m.targetId.value == citekey.value && m.role == role)
         .flatMap(m => byUid(m.assetUid))
-        .map(a => (a.uid, a.providerKey.getOrElse(a.name)))
+        .map(a => (a.uid, PictureKey(a.providerKey.map(_.value).getOrElse(a.name.value))))
 
     private val stamp = DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ss'Z'").withZone(ZoneOffset.UTC)
 
     private def targetsOf(uid: com.histmersion.domain.media.assets.AssetService.AssetUid): List[MediaTarget] =
       state.get.mediaLinks
         .filter(_.assetUid == uid)
-        .sortBy(m => (m.targetType, m.targetId, m.rank))
+        .sortBy(m => (m.targetType.value, m.targetId.value, m.rank.value))
         .toList
-        .map(m => MediaTarget(m.targetType, m.targetId, m.role, m.property, m.item, m.basis))
+        .map(m =>
+          MediaTarget(
+            MediaTarget.TargetType(m.targetType.value),
+            MediaTarget.TargetId(m.targetId.value),
+            MediaTarget.Role(m.role.value),
+            m.property.map(p => MediaTarget.Property(p.value)),
+            m.item.map(i => MediaTarget.Item(i.value)),
+            m.basis.map(b => MediaTarget.Basis(b.value))
+          )
+        )
 
     private def item(a: HeldAsset): MediaItem =
       MediaItem(
-        a.uid,
-        a.name,
-        a.mime,
-        a.bytes.length,
-        a.citekey,
-        a.provider,
-        a.providerKey,
-        a.width,
-        a.height,
-        a.kind,
-        a.caption,
-        a.license,
-        a.licenseUrl,
-        a.author,
-        a.credit,
-        a.sourceUrl,
-        a.originalUrl,
-        a.retrievedAt.map(stamp.format),
-        Option.when(a.thumb.isDefined)(MediaThumb.thumbPath(a.uid)),
-        MediaThumb.filePath(a.uid),
+        MediaItem.Uid(a.uid.value),
+        Bundle.Asset.FileName(a.name.value),
+        Bundle.Asset.MimeText(a.mime.value),
+        com.histmersion.api.ByteCount(a.bytes.value.length.toLong),
+        a.citekey.map(c => com.histmersion.api.library.Citekey(c.value)),
+        a.provider.map(p => MediaItem.Provider(p.value)),
+        a.providerKey.map(k => MediaItem.ProviderKey(k.value)),
+        a.width.map(w => ImageSize.Width(w.value)),
+        a.height.map(h => ImageSize.Height(h.value)),
+        a.kind.map(k => MediaItem.Kind(k.value)),
+        a.caption.map(c => MediaItem.Caption(c.value)),
+        a.license.map(l => MediaItem.License(l.value)),
+        a.licenseUrl.map(u => MediaItem.LicenseUrl(u.value)),
+        a.author.map(x => MediaItem.Author(x.value)),
+        a.credit.map(c => MediaItem.Credit(c.value)),
+        a.sourceUrl.map(u => MediaItem.SourceUrl(u.value)),
+        a.originalUrl.map(u => MediaItem.OriginalUrl(u.value)),
+        a.retrievedAt.map(t => MediaItem.RetrievedAt(stamp.format(t))),
+        Option.when(a.thumb.isDefined)(MediaItem.ThumbUrl(MediaThumb.thumbPath(Bundle.Asset.Uid(a.uid.value)).value)),
+        MediaItem.FileUrl(MediaThumb.filePath(Bundle.Asset.Uid(a.uid.value)).value),
         targetsOf(a.uid)
       )
 
-    private def ofProvider(a: HeldAsset, provider: Option[com.histmersion.domain.media.assets.AssetService.Provider]): Boolean =
-      provider.forall(p => (p == MediaProvider.Source && a.provider.isEmpty) || a.provider.contains(p))
+    private def ofProvider(a: HeldAsset, provider: Option[String]): Boolean =
+      provider.forall(p => (p == MediaProvider.Source && a.provider.isEmpty) || a.provider.exists(_.value == p))
 
-    private def underLicence(a: HeldAsset, license: Option[com.histmersion.domain.media.assets.AssetService.License]): Boolean =
-      license.forall(l => (l == "none" && a.license.forall(_.trim.isEmpty)) || a.license.contains(l))
+    private def underLicence(a: HeldAsset, license: Option[String]): Boolean =
+      license.forall(l => (l == "none" && a.license.forall(_.value.trim.isEmpty)) || a.license.exists(_.value == l))
 
-    private def shownOn(a: HeldAsset, targetType: com.histmersion.domain.media.assets.AssetService.TargetType, id: Option[com.histmersion.domain.media.assets.AssetService.TargetId]): Boolean =
+    private def shownOn(a: HeldAsset, target: PictureTarget, id: Option[String]): Boolean =
       id.forall(i =>
-        state.get.mediaLinks.exists(m => m.assetUid == a.uid && m.targetType == targetType && m.targetId == i)
+        state.get.mediaLinks.exists(m => m.assetUid == a.uid && onSource(m, target) && m.targetId.value == i)
       )
 
-    def list(q: Api.MediaQuery, limit: com.histmersion.domain.media.assets.AssetService.InMemory.ListLimit): MediaList =
-      val (provider, license) = (clean(q.provider), clean(q.license))
-      val text = clean(q.q).map(_.toLowerCase)
-      val offset = q.offset.getOrElse(0).max(0)
+    def list(q: Api.MediaQuery, limit: Limit): MediaList =
+      val (provider, license) = (clean(q.provider.map(_.value)), clean(q.license.map(_.value)))
+      val text = clean(q.q.map(_.value)).map(_.toLowerCase)
+      val offset = q.offset.map(_.value).getOrElse(0).max(0)
       def matches(a: HeldAsset) =
-        text.forall(t => List(Some(a.name), a.credit, a.providerKey).flatten.exists(_.toLowerCase.contains(t)))
+        text.forall(t => List(Some(a.name.value), a.credit.map(_.value), a.providerKey.map(_.value)).flatten.exists(_.toLowerCase.contains(t)))
       val all = held
         .filter(a =>
-          ofProvider(a, provider) && underLicence(a, license) && shownOn(a, PictureTarget.Place.wire, clean(q.place)) &&
-            shownOn(a, PictureTarget.Event.wire, clean(q.event)) && matches(a)
+          ofProvider(a, provider) && underLicence(a, license) && shownOn(a, PictureTarget.Place, clean(q.place.map(_.value))) &&
+            shownOn(a, PictureTarget.Event, clean(q.event.map(_.value))) && matches(a)
         )
         .sortBy(a =>
           (
             a.retrievedAt.isEmpty,
             a.retrievedAt.map(t => -(t.getEpochSecond * 1000000L + t.getNano / 1000)),
             a.citekey.isEmpty,
-            a.citekey,
-            a.name
+            a.citekey.map(_.value),
+            a.name.value
           )
         )
-      MediaList.of(all.size, all.slice(offset, offset + limit.max(1)).toList.map(item), offset)
+      MediaList.of(
+        com.histmersion.api.RowCount(all.size),
+        all.slice(offset, offset + limit.value.max(1)).toList.map(item),
+        com.histmersion.api.personal.UnreadPage.Offset(offset)
+      )
 
     def show(uid: com.histmersion.domain.media.assets.AssetService.AssetUid): Option[MediaItem] = byUid(uid).map(item)
 
     def thumb(uid: com.histmersion.domain.media.assets.AssetService.AssetUid): Option[(com.histmersion.domain.media.assets.AssetService.Mime, com.histmersion.domain.media.assets.AssetService.Bytes)] =
       byUid(uid).flatMap { a =>
         a.thumb match
-          case Some(t) => Some((a.thumbMime.getOrElse(a.mime), t))
+          case Some(t) => Some((Mime(a.thumbMime.map(_.value).getOrElse(a.mime.value)), Bytes(t.value)))
           case None
               if a.provider.isEmpty || a.provider
-                .exists(p => p == MediaProvider.Calibre || p == MediaProvider.OpenLibrary) =>
+                .exists(p => p.value == MediaProvider.Calibre || p.value == MediaProvider.OpenLibrary) =>
             Some((a.mime, a.bytes))
           case None => None
       }
@@ -613,113 +624,79 @@ object AssetService:
     def file(uid: com.histmersion.domain.media.assets.AssetService.AssetUid): Option[(com.histmersion.domain.media.assets.AssetService.Mime, com.histmersion.domain.media.assets.AssetService.Bytes)] = byUid(uid).map(a => (a.mime, a.bytes))
 
     def facets: MediaFacets =
-      def counted(keys: Vector[com.histmersion.domain.media.assets.AssetService.FacetKey]): List[MediaCount] =
-        keys.groupBy(identity).toList.map((k, v) => MediaCount(k, v.size)).sortBy(c => (-c.n, c.key))
+      def counted(keys: Vector[String]): List[MediaCount] = MediaCount.of(keys.toList.map(MediaCount.Key(_)))
       MediaFacets(
-        counted(held.map(_.provider.getOrElse(MediaProvider.Source))),
-        counted(held.map(_.license.map(_.trim).filter(_.nonEmpty).getOrElse("none")))
+        counted(held.map(_.provider.map(_.value).getOrElse(MediaProvider.Source))),
+        counted(held.map(_.license.map(_.value.trim).filter(_.nonEmpty).getOrElse("none")))
       )
 
-    private def hit(a: HeldAsset, p: (com.histmersion.domain.media.assets.AssetService.InMemory.HitPPart1, com.histmersion.domain.media.assets.AssetService.InMemory.HitPPart2)): MediaGeoHit =
+    private def hit(a: HeldAsset, p: (HeldAsset.Latitude, HeldAsset.Longitude)): MediaGeoHit =
       MediaGeoHit(
-        a.citekey,
-        a.name,
-        a.kind,
-        p._1,
-        p._2,
-        a.period.flatMap(_._1),
-        a.period.flatMap(_._2),
-        a.caption,
-        a.uid,
-        a.provider,
-        a.license,
-        a.credit,
-        Option.when(a.thumb.isDefined)(MediaThumb.thumbPath(a.uid)),
-        fileUrl = Some(MediaThumb.filePath(a.uid)),
-        sourceUrl = a.sourceUrl,
-        licenseUrl = a.licenseUrl,
-        author = a.author
+        a.citekey.map(c => com.histmersion.api.library.Citekey(c.value)),
+        Bundle.Asset.FileName(a.name.value),
+        a.kind.map(k => MediaItem.Kind(k.value)),
+        com.histmersion.api.catalogue.Latitude(p._1.value),
+        com.histmersion.api.catalogue.Longitude(p._2.value),
+        a.period.flatMap(_._1).map(y => com.histmersion.api.catalogue.Year(y.value)),
+        a.period.flatMap(_._2).map(y => com.histmersion.api.catalogue.Year(y.value)),
+        a.caption.map(c => MediaItem.Caption(c.value)),
+        MediaItem.Uid(a.uid.value),
+        a.provider.map(x => MediaItem.Provider(x.value)),
+        a.license.map(l => MediaItem.License(l.value)),
+        a.credit.map(c => MediaItem.Credit(c.value)),
+        Option.when(a.thumb.isDefined)(MediaItem.ThumbUrl(MediaThumb.thumbPath(Bundle.Asset.Uid(a.uid.value)).value)),
+        fileUrl = Some(MediaItem.FileUrl(MediaThumb.filePath(Bundle.Asset.Uid(a.uid.value)).value)),
+        sourceUrl = a.sourceUrl.map(u => MediaItem.SourceUrl(u.value)),
+        licenseUrl = a.licenseUrl.map(u => MediaItem.LicenseUrl(u.value)),
+        author = a.author.map(x => MediaItem.Author(x.value))
       )
 
-    def geo(q: Api.MediaGeoQuery, limit: com.histmersion.domain.media.assets.AssetService.InMemory.GeoLimit): List[MediaGeoHit] =
-      val k = q.kind.map(_.trim.toLowerCase).filter(_.nonEmpty)
-      val (provider, license) = (clean(q.provider), clean(q.license))
+    def geo(q: Api.MediaGeoQuery, limit: Limit): List[MediaGeoHit] =
+      val k = q.kind.map(_.value.trim.toLowerCase).filter(_.nonEmpty)
+      val (provider, license) = (clean(q.provider.map(_.value)), clean(q.license.map(_.value)))
       def inSpan(a: HeldAsset) = q.from.forall { from =>
-        a.period.exists((s, e) => s.forall(x => q.to.forall(x < _)) && e.forall(from <= _))
+        a.period.exists((s, e) => s.forall(x => q.to.forall(x.value < _.value)) && e.forall(from.value <= _.value))
       }
       held
         .filter(a =>
-          a.point.isDefined && k.forall(a.kind.contains) && inSpan(a) && ofProvider(a, provider) &&
+          a.point.isDefined && k.forall(kk => a.kind.exists(_.value == kk)) && inSpan(a) && ofProvider(a, provider) &&
             underLicence(a, license)
         )
-        .sortBy(a => (a.period.flatMap(_._1).isEmpty, a.period.flatMap(_._1)))
-        .take(limit.max(1))
+        .sortBy(a => (a.period.flatMap(_._1).isEmpty, a.period.flatMap(_._1).map(_.value)))
+        .take(limit.value.max(1))
         .toList
         .map(a => hit(a, a.point.get))
 
     def geoOf(uids: List[com.histmersion.domain.media.assets.AssetService.AssetUid]): Map[com.histmersion.domain.media.assets.AssetService.AssetUid, MediaGeoHit] =
       held.filter(a => uids.contains(a.uid)).flatMap(a => a.point.map(p => a.uid -> hit(a, p))).toMap
 
-    private def ord(role: com.histmersion.domain.media.MediaRole.Wire): com.histmersion.domain.media.assets.AssetService.Ordinal =
+    private def ord(role: com.histmersion.domain.media.MediaRole.Wire): Int =
       MediaRole.all.indexOf(role) match
         case -1 => Int.MaxValue
         case i  => i
 
-    def thumbs(targetType: com.histmersion.domain.media.assets.AssetService.TargetType, targetId: com.histmersion.domain.media.assets.AssetService.TargetId, limit: com.histmersion.domain.media.assets.AssetService.InMemory.ThumbsLimit): List[MediaThumb] =
+    def thumbs(targetType: com.histmersion.domain.media.assets.AssetService.TargetType, targetId: com.histmersion.domain.media.assets.AssetService.TargetId, limit: Limit): List[MediaThumb] =
       val links = state.get.mediaLinks.filter(m => m.targetType == targetType && m.targetId == targetId)
       val best = links
         .flatMap(m => byUid(m.assetUid).map(a => (m, a)))
-        .filter((_, a) => a.thumb.isDefined || targetType == PictureTarget.Source.wire)
+        .filter((_, a) => a.thumb.isDefined || targetType.value == PictureTarget.Source.wire.value)
         .groupBy(_._2.uid)
         .values
-        .map(_.minBy((m, _) => (ord(m.role), m.rank)))
+        .map(_.minBy((m, _) => (ord(m.role), m.rank.value)))
         .toList
-        .sortBy((m, a) => (ord(m.role), m.rank, a.uid))
-      best.take(limit.max(1)).map { (m, a) =>
+        .sortBy((m, a) => (ord(m.role), m.rank.value, a.uid.value))
+      best.take(limit.value.max(1)).map { (m, a) =>
         MediaThumb(
-          a.uid,
-          m.role,
-          MediaThumb.thumbPath(a.uid),
-          a.credit.getOrElse(""),
-          a.license,
-          a.licenseUrl,
-          a.sourceUrl,
-          a.thumbWidth.orElse(a.width),
-          a.thumbHeight.orElse(a.height)
+          MediaItem.Uid(a.uid.value),
+          MediaThumb.Role(m.role.value),
+          MediaThumb.Url(MediaThumb.thumbPath(Bundle.Asset.Uid(a.uid.value)).value),
+          MediaItem.Credit(a.credit.map(_.value).getOrElse("")),
+          a.license.map(l => MediaItem.License(l.value)),
+          a.licenseUrl.map(u => MediaItem.LicenseUrl(u.value)),
+          a.sourceUrl.map(u => MediaItem.SourceUrl(u.value)),
+          a.thumbWidth.map(w => ImageSize.Width(w.value)).orElse(a.width.map(w => ImageSize.Width(w.value))),
+          a.thumbHeight.map(h => ImageSize.Height(h.value)).orElse(a.height.map(h => ImageSize.Height(h.value)))
         )
       }
 
-    def placeThumbs(placeId: com.histmersion.domain.catalogue.Place.Id, sameSiteKm: com.histmersion.domain.media.assets.AssetService.SameSiteKm, limit: com.histmersion.domain.media.assets.AssetService.InMemory.PlaceThumbsLimit): List[MediaThumb] = Nil
-
-  object InMemory:
-
-    type LinkTargetType = _root_.com.histmersion.domain.media.assets.HeldMediaLink.TargetType
-    val LinkTargetType: _root_.com.histmersion.domain.media.assets.HeldMediaLink.TargetType.type = _root_.com.histmersion.domain.media.assets.HeldMediaLink.TargetType
-    type LinkTargetId = _root_.com.histmersion.domain.media.assets.HeldMediaLink.TargetId
-    val LinkTargetId: _root_.com.histmersion.domain.media.assets.HeldMediaLink.TargetId.type = _root_.com.histmersion.domain.media.assets.HeldMediaLink.TargetId
-    type LinkRole = _root_.com.histmersion.domain.media.assets.HeldMediaLink.Role
-    val LinkRole: _root_.com.histmersion.domain.media.assets.HeldMediaLink.Role.type = _root_.com.histmersion.domain.media.assets.HeldMediaLink.Role
-    type LinkProperty = _root_.com.histmersion.domain.media.assets.HeldMediaLink.Property
-    val LinkProperty: _root_.com.histmersion.domain.media.assets.HeldMediaLink.Property.type = _root_.com.histmersion.domain.media.assets.HeldMediaLink.Property
-    type LinkItem = _root_.com.histmersion.domain.media.assets.HeldMediaLink.Item
-    val LinkItem: _root_.com.histmersion.domain.media.assets.HeldMediaLink.Item.type = _root_.com.histmersion.domain.media.assets.HeldMediaLink.Item
-    type LinkRank = _root_.com.histmersion.domain.media.assets.HeldMediaLink.Rank
-    val LinkRank: _root_.com.histmersion.domain.media.assets.HeldMediaLink.Rank.type = _root_.com.histmersion.domain.media.assets.HeldMediaLink.Rank
-    type LinkBasis = _root_.com.histmersion.domain.media.assets.HeldMediaLink.Basis
-    val LinkBasis: _root_.com.histmersion.domain.media.assets.HeldMediaLink.Basis.type = _root_.com.histmersion.domain.media.assets.HeldMediaLink.Basis
-    type SetSourcePictureRole = _root_.com.histmersion.domain.media.assets.HeldMediaLink.Role
-    val SetSourcePictureRole: _root_.com.histmersion.domain.media.assets.HeldMediaLink.Role.type = _root_.com.histmersion.domain.media.assets.HeldMediaLink.Role
-    type SetSourcePictureProperty = _root_.com.histmersion.domain.media.assets.HeldMediaLink.Property
-    val SetSourcePictureProperty: _root_.com.histmersion.domain.media.assets.HeldMediaLink.Property.type = _root_.com.histmersion.domain.media.assets.HeldMediaLink.Property
-    type ListLimit = ListLimit.T
-    object ListLimit extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
-    type HitPPart1 = HitPPart1.T
-    object HitPPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
-    type HitPPart2 = HitPPart2.T
-    object HitPPart2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
-    type GeoLimit = GeoLimit.T
-    object GeoLimit extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
-    type ThumbsLimit = ThumbsLimit.T
-    object ThumbsLimit extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
-    type PlaceThumbsLimit = PlaceThumbsLimit.T
-    object PlaceThumbsLimit extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    def placeThumbs(placeId: com.histmersion.domain.catalogue.Place.Id, sameSiteKm: EventMatcher.NearFinding.Km, limit: Limit): List[MediaThumb] = Nil

@@ -614,7 +614,7 @@ final class AcquisitionControllers(
           true,
           s"${f.source}: ${f.bytes.value.length} bytes" +
             AcquisitionControllers.hostOf(f.url.map(_.value)).fold("")(h => s" from $h") +
-            (if f.extension == "xml" then " (JATS full text — no PDF is published)" else "") +
+            (if f.extension.value == "xml" then " (JATS full text — no PDF is published)" else "") +
             f.licence.map(_.value.trim).filter(_.nonEmpty).fold("")(l => s", licence $l") +
             original.fold("")(h => s" (replacing $h: --refetch)")
         )
@@ -695,7 +695,7 @@ final class AcquisitionControllers(
         steps ++= acquireSteps(doi, com.histmersion.domain.Title(meta.title.value), meta.authors.map(a => AcquireMatch.DecideAuthors(a.value)), outcome.jobId)
         // an open-access work no script may download goes to the acquisition list once, as a download
         // in the browser (#1581) — a person's ingest only: a watcher's legal path queues its own
-        if fetched.isLeft && skip.isEmpty && !path.needsFile && browserOnly.isEmpty then
+        if fetched.isLeft && skip.isEmpty && !path.needsFile.value && browserOnly.isEmpty then
           for
             d <- doi
             w <- work
@@ -878,7 +878,7 @@ final class AcquisitionControllers(
   private def setStatus(
       citekey: com.histmersion.domain.library.Citekey,
       status: com.histmersion.domain.library.Source.Status
-  ): Either[Api.Error, com.histmersion.domain.library.Citekey] =
+  ): Either[Api.Error, Source.UpdatedAt] =
     sources.patch(
       citekey,
       Source.Patch(metadata =

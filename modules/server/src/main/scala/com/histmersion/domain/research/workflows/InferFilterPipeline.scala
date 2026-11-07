@@ -6,7 +6,12 @@ import com.histmersion.domain.automation.workflows.{PipelineDef, Pipelines}
 import com.histmersion.api.Plural
 import com.histmersion.config.*
 import com.histmersion.domain.*
+import com.histmersion.api.automation.Agents
 import com.histmersion.api.automation.Agents.{ApprovalKind, ApprovalMode, ApprovalState, Pipeline}
+import com.histmersion.domain.automation.approvals.ApprovalQuery
+import com.histmersion.domain.library.Citekey
+import com.histmersion.domain.research.Slug
+import com.histmersion.api.library.Facet
 import com.histmersion.api.research.Article.Plans.FilterProposal
 import com.histmersion.domain.FilterInference.{FilterAnswer, Inferred}
 import com.histmersion.domain.research.articles.{ArticlesControllers, ArticleService}
@@ -34,209 +39,257 @@ final class InferFilterPipeline(site: ResearchSite, cfg: => AgentsConfig, resear
   val pipeline: Pipeline = Pipeline.InferFilter
   import InferFilterPipeline.*
 
-  def run(ctx: RunCtx): Either[Halt, com.histmersion.domain.research.workflows.InferFilterPipeline.Outcome] =
-    val slug = ctx.run.target
+  def run(ctx: RunCtx): Either[Halt, PipelineDef.RunResultPart2] =
+    Slug.parse(ctx.run.target.value).left.map(p => Halt.Fail(Halt.Fail.Message(p.value))).flatMap(runFor(ctx, _))
+
+  private def runFor(ctx: RunCtx, slug: Slug): Either[Halt, PipelineDef.RunResultPart2] =
+    val runId = com.histmersion.domain.automation.Run.Id.assume(ctx.run.id.value)
     for
-      loaded <- ctx.code[Loaded](com.histmersion.domain.automation.agents.AgentRepo.StepRecord.Name("load"))(load(slug))
+      loaded <- ctx.code[Loaded](AgentRepo.StepRecord.Name("load"))(load(slug))
       line <-
         if loaded.hasFilter then
-          ctx.code[String]("close")(
-            log(ctx, FilterInference.logLine(slug, "it records a filter already; nothing proposed", ctx.run.id))
+          ctx.code[String](AgentRepo.StepRecord.Name("close"))(
+            log(
+              ctx,
+              FilterInference.logLine(slug, FilterInference.Outcome("it records a filter already; nothing proposed"), runId)
+            )
           )
         else
           for
             inferred <- ctx.llm[FilterAnswer, Inferred](
-              "propose",
+              AgentRepo.StepRecord.Name("propose"),
               StepAgent.FilterInferrer,
-              input(loaded),
+              Prompt.UserText(input(loaded)),
               ResearchAnswers.filter
-            )((a, last) => check(slug, loaded, a, last).map(Checked(_)))
-            recorded <- ctx.code[Recorded]("record")(record(ctx, slug, inferred))
-            closed <- ctx.code[String]("close")(log(ctx, FilterInference.logLine(slug, recorded.line, ctx.run.id)))
+            )((a, last) =>
+              check(slug, loaded, a, FilterInference.Last(last.value)).left
+                .map(_.map(p => RunCtx.Problem(p.value)))
+                .map(Checked(_))
+            )
+            recorded <- ctx.code[Recorded](AgentRepo.StepRecord.Name("record"))(record(ctx, slug, inferred))
+            closed <- ctx.code[String](AgentRepo.StepRecord.Name("close"))(
+              log(ctx, FilterInference.logLine(slug, FilterInference.Outcome(recorded.line.value), runId))
+            )
           yield closed
-    yield line
+    yield PipelineDef.RunResultPart2(line)
 
   // ── steps ──────────────────────────────────────────────────────────────────────────────────────
 
-  private def load(slug: com.histmersion.domain.research.Slug): Either[com.histmersion.domain.research.workflows.InferFilterPipeline.Problem, Loaded] =
-    site.articles.get(slug).left.map(_.message).map { v =>
+  private def load(slug: Slug): Either[String, Loaded] =
+    site.articles.get(slug).left.map(_.message.value).map { v =>
       val a = v.article
-      val stored = site.articleStore.load(a.slug)
-      val cited = site.articles.citedSources(a.body)
+      val canonical = Slug.assume(a.slug.value)
+      val stored = site.articleStore.load(canonical)
+      val body = com.histmersion.domain.research.Article.Body(a.body.value)
+      val cited = site.articles.citedSources(body)
       val refs =
         site.sourceStore
           .refs(cited.take(CitedShown))
           .map(r => s"[[${r.citekey}]] — ${r.title}${r.year.fold("")(y => s" ($y)")}")
       val vocab = (field: String) =>
         site.labels
-          .facets(field, None, Filter())
+          .facets(Facet.Field.Wire(field), None, Filter())
           .toOption
           .toList
           .flatten
-          .sortBy(-_.count)
+          .sortBy(f => -f.count.value)
           .take(VocabularySize)
-          .map(_.value)
+          .map(_.value.value)
       Loaded(
-        a.slug,
-        a.title,
-        a.kind,
-        a.summary,
-        a.tags,
+        canonical,
+        com.histmersion.domain.Title(a.title.value),
+        com.histmersion.domain.research.Article.Kind(a.kind.value),
+        a.summary.map(s => Loaded.Summary(s.value)),
+        a.tags.map(t => Loaded.Tags(t.value)),
         stored.flatMap(_.filter).isDefined,
         cited,
-        refs,
-        a.body.take(ExcerptChars),
-        vocab("topics"),
-        vocab("tags")
+        refs.map(Loaded.CitedLines(_)),
+        Loaded.Excerpt(body.value.take(ExcerptChars)),
+        vocab("topics").map(Loaded.Topics(_)),
+        vocab("tags").map(Loaded.Tags(_))
       )
     }
 
-  private def input(l: Loaded): com.histmersion.domain.research.workflows.InferFilterPipeline.Prompt =
+  private def input(l: Loaded): String =
     val lim = limits(research.inferFilter)
     val cited = if l.citedLines.isEmpty then "none"
     else
       l.citedLines.map(x => s"- $x").mkString("\n", "\n", "") +
         (if l.cited.size > l.citedLines.size then s"\n- … and ${l.cited.size - l.citedLines.size} more" else "")
-    val article = s"slug: ${l.slug}\ntitle: ${l.title}\nkind: ${l.kind}\nsummary: ${l.summary.getOrElse("none")}\n" +
+    val article = s"slug: ${l.slug}\ntitle: ${l.title}\nkind: ${l.kind}\nsummary: ${l.summary.fold("none")(_.value)}\n" +
       s"tags: ${l.tags.mkString(", ")}"
     s"Infer the filter this article is compiled from.\n\n${Prompt.data("article", article)}\n\n" +
-      s"${Prompt.data("article-text", l.excerpt)}\n\nThe sources it cites (${l.cited.size}): $cited\n\n" +
+      s"${Prompt.data("article-text", l.excerpt.value)}\n\nThe sources it cites (${l.cited.size}): $cited\n\n" +
       s"The corpus's most used topics: ${l.topics.mkString(", ")}\nIts most used tags: ${l.tags0.mkString(", ")}\n\n" +
       f"Limits: the filter returns at least ${lim.minHits} and at most ${lim.maxHits} sources, and at least " +
-      f"${lim.minCitedShare * 100}%.0f%% of the sources the article cites."
+      f"${lim.minCitedShare.value * 100}%.0f%% of the sources the article cites."
 
   /** An answer's filter, measured against the corpus and the article's citations. */
-  private def check(slug: com.histmersion.domain.research.Slug, l: Loaded, a: FilterAnswer, last: com.histmersion.domain.research.workflows.InferFilterPipeline.CheckLast): Either[List[com.histmersion.domain.research.workflows.InferFilterPipeline.Problem], Inferred] =
+  private def check(
+      slug: Slug,
+      l: Loaded,
+      a: FilterAnswer,
+      last: FilterInference.Last
+  ): Either[List[FilterInference.Problem], Inferred] =
     FilterInference.filterOf(a) match
-      case Left(ps) => if last then Right(Inferred(None, ps)) else Left(ps)
+      case Left(ps) => if last.value then Right(Inferred(None, ps)) else Left(ps)
       case Right(f) =>
-        val (total, in, rows) = site.articles.filterReach(f, l.cited, research.inferFilter.sample + l.cited.size)
-        val sample = rows.filterNot(l.cited.contains).take(math.max(0, research.inferFilter.sample))
-        FilterInference.judge(slug, f, a.rationale, total, l.cited, in, sample, limits(research.inferFilter), last)
+        val cap = ArticlesControllers.FilterReachCap(research.inferFilter.sample.value + l.cited.size)
+        val (total, in, rows) = site.articles.filterReach(f, l.cited, cap)
+        val sample = rows
+          .map(r => Citekey.assume(r.value))
+          .filterNot(l.cited.contains)
+          .take(math.max(0, research.inferFilter.sample.value))
+        FilterInference.judge(
+          slug,
+          f,
+          a.rationale,
+          FilterProposal.Total(total.value),
+          l.cited,
+          in,
+          sample,
+          limits(research.inferFilter),
+          last
+        )
 
   /** The proposal, through the write gate: an open approval (manual), or the filter recorded at once with an approval
     * already approved (auto). None passed: nothing is recorded.
     */
-  private def record(ctx: RunCtx, slug: com.histmersion.domain.research.Slug, inf: Inferred): Either[com.histmersion.domain.research.workflows.InferFilterPipeline.Problem, Recorded] =
+  private def record(ctx: RunCtx, slug: Slug, inf: Inferred): Either[String, Recorded] =
     inf.proposal match
       case None =>
-        Right(Recorded(None, applied = com.histmersion.domain.research.workflows.InferFilterPipeline.Recorded.Applied(false), s"no filter passed the checks: ${inf.problems.mkString("; ").take(600)}"))
+        Right(
+          Recorded(
+            None,
+            applied = false,
+            Recorded.Line(s"no filter passed the checks: ${inf.problems.mkString("; ").take(600)}")
+          )
+        )
       case Some(p) =>
         val json = p.asJson.noSpaces
-        val what = s"${p.filter.line} → ${Plural.count(p.total, com.histmersion.api.Plural.CountSingular("source"))}, ${p.citedIn} of ${p.cited} cited"
+        val jobId = Some(com.histmersion.util.jobs.Job.Id.assume(ctx.run.id.value))
+        val subject = ApprovalQuery.Subject(slug.value)
+        val what =
+          s"${p.filter.line} → ${Plural.count(Plural.CountN(p.total.value.toLong), Plural.CountSingular("source"))}, ${p.citedIn} of ${p.cited} cited"
         cfg.approvals.filterMode match
           case com.histmersion.domain.automation.Approval.Mode.Auto =>
             ctx.write(s"record the coverage filter of [[$slug]]", p.asJson)(
-              site.articles.patch(slug, Article.Patch(filter = Some(p.filter))).left.map(_.message).map { _ =>
+              site.articles.patch(slug, Article.Patch(filter = Some(p.filter))).left.map(_.message.value).map { _ =>
                 val a = ctx.approvalStore.openSubject(
-                  Some(ctx.run.id),
+                  jobId,
                   ApprovalKind.ArticleFilter,
-                  slug,
-                  json,
+                  subject,
+                  ApprovalService.Payload(json),
                   ApprovalState.Approved,
-                  Some(s"applied automatically (agents.approvals.article-filter): ${p.filter.line}")
+                  Some(
+                    ApprovalService.OpenSubjectResult(
+                      s"applied automatically (agents.approvals.article-filter): ${p.filter.line}"
+                    )
+                  )
                 )
-                Recorded(Some(a.id), applied = com.histmersion.domain.research.workflows.InferFilterPipeline.Recorded.Applied(true), s"filter recorded: $what")
+                Recorded(Some(a.id), applied = true, Recorded.Line(s"filter recorded: $what"))
               }
-            )(Right(Recorded(None, applied = com.histmersion.domain.research.workflows.InferFilterPipeline.Recorded.Applied(false), s"filter not recorded (${AgentsMarkdown.DryRunNote}): $what")))
+            )(
+              Right(
+                Recorded(
+                  None,
+                  applied = false,
+                  Recorded.Line(s"filter not recorded (${AgentsMarkdown.DryRunNote}): $what")
+                )
+              )
+            )
           case com.histmersion.domain.automation.Approval.Mode.Manual =>
             ctx.write(s"${ApprovalKind.ArticleFilter.wire} approval for [[$slug]]", p.asJson)(
-              Right(ctx.approvalStore.openSubject(Some(ctx.run.id), ApprovalKind.ArticleFilter, slug, json))
-                .map(a => Recorded(Some(a.id), applied = false, s"approval ${a.id} waits for a person: $what"))
-            )(Right(Recorded(None, applied = com.histmersion.domain.research.workflows.InferFilterPipeline.Recorded.Applied(false), s"no approval opened (${AgentsMarkdown.DryRunNote}): $what")))
+              Right(
+                ctx.approvalStore.openSubject(jobId, ApprovalKind.ArticleFilter, subject, ApprovalService.Payload(json))
+              )
+                .map(a =>
+                  Recorded(
+                    Some(a.id),
+                    applied = false,
+                    Recorded.Line(s"approval ${a.id} waits for a person: $what")
+                  )
+                )
+            )(
+              Right(
+                Recorded(
+                  None,
+                  applied = false,
+                  Recorded.Line(s"no approval opened (${AgentsMarkdown.DryRunNote}): $what")
+                )
+              )
+            )
 
-  private def log(ctx: RunCtx, line: com.histmersion.domain.research.workflows.InferFilterPipeline.LogLine): Either[com.histmersion.domain.research.workflows.InferFilterPipeline.Problem, String] = Pipelines.log(site.workLists, ctx, line)
+  private def log(ctx: RunCtx, line: FilterInference.LogLine): Either[String, String] =
+    Pipelines.log(site.workLists, ctx, Pipelines.LogLine(line.value)).left.map(_.value).map(_.value)
 
 object InferFilterPipeline:
-  type Outcome = Outcome.T
-  object Outcome extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type Problem = Problem.T
-  object Problem extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type Prompt = Prompt.T
-  object Prompt extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   /** How many of the most used topics and tags the model is shown, how many cited sources by title, and how much of the
     * article's text.
     */
-  type CheckLast = CheckLast.T
-  object CheckLast extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type LogLine = LogLine.T
-  object LogLine extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-
   val VocabularySize = 40
   val CitedShown = 40
   val ExcerptChars = 4000
 
   /** The checks a proposed filter is held to (`agents.infer-filter`), each within its range. */
   def limits(c: AgentInferFilterConfig): FilterInference.Limits = FilterInference.Limits(
-    math.max(1, c.minHits),
-    math.max(c.minHits, c.maxHits),
-    math.min(1.0, math.max(0.0, c.minCitedShare))
+    FilterInference.Limits.MinHits(math.max(1, c.minHits.value)),
+    FilterInference.Limits.MaxHits(math.max(c.minHits.value, c.maxHits.value)),
+    FilterInference.Limits.MinCitedShare(math.min(1.0, math.max(0.0, c.minCitedShare.value)))
   )
 
   /** The article as the step sees it (checkpointed). `tags0` = the corpus's tags. */
   final case class Loaded(
-      slug: Loaded.Slug,
-      title: Loaded.Title,
-      kind: Loaded.Kind,
+      slug: Slug,
+      title: com.histmersion.domain.Title,
+      kind: com.histmersion.domain.research.Article.Kind,
       summary: Option[Loaded.Summary],
       tags: List[Loaded.Tags],
-      hasFilter: Loaded.HasFilter,
-      cited: List[Loaded.Cited],
+      hasFilter: Boolean,
+      cited: List[Citekey],
       citedLines: List[Loaded.CitedLines],
       excerpt: Loaded.Excerpt,
       topics: List[Loaded.Topics],
-      tags0: List[Loaded.Tags0]
+      tags0: List[Loaded.Tags]
   ) derives KindlingsCodecAsObject
 
   object Loaded:
-    type Slug = com.histmersion.domain.research.Slug
-    val Slug: _root_.com.histmersion.domain.research.Slug.type = _root_.com.histmersion.domain.research.Slug
-    type Title = com.histmersion.domain.Title
-    val Title: _root_.com.histmersion.domain.Title.type = _root_.com.histmersion.domain.Title
-    type Kind = com.histmersion.domain.research.Article.Kind
-    val Kind: _root_.com.histmersion.domain.research.Article.Kind.type = _root_.com.histmersion.domain.research.Article.Kind
-    type Summary = com.histmersion.domain.research.articles.ArticleSummaryRow.Summary
-    val Summary: _root_.com.histmersion.domain.research.articles.ArticleSummaryRow.Summary.type = _root_.com.histmersion.domain.research.articles.ArticleSummaryRow.Summary
-    type Tags = com.histmersion.domain.research.articles.ArticleSummaryRow.Tags
-    val Tags: _root_.com.histmersion.domain.research.articles.ArticleSummaryRow.Tags.type = _root_.com.histmersion.domain.research.articles.ArticleSummaryRow.Tags
-    type HasFilter = HasFilter.T
-    object HasFilter extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
-    type Cited = Cited.T
-    object Cited extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Summary = Summary.T
+    object Summary extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Tags = Tags.T
+    object Tags extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
     type CitedLines = CitedLines.T
     object CitedLines extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
     type Excerpt = Excerpt.T
     object Excerpt extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
     type Topics = Topics.T
     object Topics extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-    type Tags0 = com.histmersion.domain.research.articles.ArticleSummaryRow.Tags
-    val Tags0: _root_.com.histmersion.domain.research.articles.ArticleSummaryRow.Tags.type = _root_.com.histmersion.domain.research.articles.ArticleSummaryRow.Tags
 
   /** What the record step did: the approval it opened (or recorded approved), whether the filter is on the article now,
     * and the line for the log.
     */
-  final case class Recorded(approval: Option[Recorded.Approval], applied: Recorded.Applied, line: Recorded.Line) derives KindlingsCodecAsObject
+  final case class Recorded(approval: Option[Agents.ApprovalInfo.Id], applied: Boolean, line: Recorded.Line)
+      derives KindlingsCodecAsObject
 
   object Recorded:
-    type Approval = Approval.T
-    object Approval extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
-    type Applied = Applied.T
-    object Applied extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
     type Line = Line.T
     object Line extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
   /** The proposal a decided `article-filter` approval carries, applied: the article's filter recorded — unless it
     * records one by now (a person set it meanwhile). Left = why it was not applied.
     */
-  def applyProposal(articles: ArticlesControllers, store: ArticleService, p: FilterProposal): Either[com.histmersion.domain.research.workflows.InferFilterPipeline.Problem, com.histmersion.domain.research.workflows.InferFilterPipeline.Outcome] =
-    articles.get(p.slug).left.map(_.message).flatMap { v =>
-      val has = store.load(v.article.slug).flatMap(_.filter)
-      if has.isDefined then
-        Left(s"[[${v.article.slug}]] records a filter already (${has.get.line}); the proposal was not applied")
-      else
-        articles
-          .patch(v.article.slug, Article.Patch(filter = Some(p.filter)))
-          .left
-          .map(_.message)
-          .map(_ => s"filter of [[${v.article.slug}]] recorded: ${p.filter.line}")
+  def applyProposal(articles: ArticlesControllers, store: ArticleService, p: FilterProposal): Either[String, String] =
+    Slug.parse(p.slug.value).left.map(_.value).flatMap { slug =>
+      articles.get(slug).left.map(_.message.value).flatMap { v =>
+        val canonical = Slug.assume(v.article.slug.value)
+        val has = store.load(canonical).flatMap(_.filter)
+        if has.isDefined then
+          Left(s"[[${v.article.slug}]] records a filter already (${has.get.line}); the proposal was not applied")
+        else
+          articles
+            .patch(canonical, Article.Patch(filter = Some(p.filter)))
+            .left
+            .map(_.message.value)
+            .map(_ => s"filter of [[${v.article.slug}]] recorded: ${p.filter.line}")
+      }
     }

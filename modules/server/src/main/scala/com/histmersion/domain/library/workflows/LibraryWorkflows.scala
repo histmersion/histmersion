@@ -40,8 +40,8 @@ final class LibraryWorkflows(
       site.sources
         .patch(p.citekey, p.patch)
         .left
-        .map(e => SourceProposals.ApplyKey(e.message.value))
-        .map(_ => SourceProposals.ApplyText(p.describe.value))
+        .map(e => SourceProposals.Outcome.Failed.Why(e.message.value))
+        .map(_ => SourceProposals.Outcome.Applied.What(p.describe.value))
   )
 
   val enrichSource: WorkflowDefinition = LibraryWorkflow(

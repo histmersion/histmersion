@@ -44,70 +44,81 @@ final class EnrichSourcePipeline(
   val pipeline: Pipeline = Pipeline.EnrichSource
   private val name = pipeline.wire
 
-  def run(ctx: RunCtx): Either[Halt, com.histmersion.domain.library.workflows.EnrichSourcePipeline.RunResultPart2] =
-    val ck = ctx.run.target
+  def run(ctx: RunCtx): Either[Halt, PipelineDef.RunResultPart2] =
     for
-      loaded <- ctx.code[Loaded](com.histmersion.domain.automation.agents.AgentRepo.StepRecord.Name("load"))(load(ck))
-      _ <- ctx.code[MetaChecked]("metadata")(Right(metadata(ctx, loaded)))
+      ck <- Citekey.either(ctx.run.target.value).left.map(m => Halt.Fail(Halt.Fail.Message(m)))
+      loaded <- ctx.code[Loaded](AgentRepo.StepRecord.Name("load"))(load(ck))
+      _ <- ctx.code[MetaChecked](AgentRepo.StepRecord.Name("metadata"))(Right(metadata(ctx, loaded)))
       classified <- ctx.llm[Classification, Classified](
-        "classify",
+        AgentRepo.StepRecord.Name("classify"),
         StepAgent.EnrichClassify,
-        classifyInput(loaded),
+        Prompt.UserText(classifyInput(loaded)),
         LibraryAnswers.classification
-      )((c, last) => checkClassification(c, lib.verify.maxAbsYear, last).map(Checked(_, _)))
+      )((c, last) =>
+        accepted(checkClassification(c, MaxAbsYear(lib.verify.maxAbsYear.value), Last(last.value)))
+      )
       verified <- findings(ctx, loaded, classified)
-      geocoded <- ctx.code[Geocoded]("geocode")(Right(geocode(ctx, verified)))
+      geocoded <- ctx.code[Geocoded](AgentRepo.StepRecord.Name("geocode"))(Right(geocode(ctx, verified)))
       notes <- ctx.llm[Notes, String](
-        "notes",
+        AgentRepo.StepRecord.Name("notes"),
         StepAgent.EnrichNotes,
-        notesInput(loaded, classified, verified),
+        Prompt.UserText(notesInput(loaded, classified, verified)),
         LibraryAnswers.notes
-      )((n, _) => checkNotes(n, isCitekey, site.articleExists).map(Checked(_)))
-      patched <- ctx.code[Patched]("patch")(write(ctx, ck, loaded, classified, geocoded.findings, notes))
-      _ <- ctx.code[Upstreamed]("refs")(Right(refs(ctx, loaded)))
-      assessed <- ctx.code[Upstreamed]("assess")(Right(assess(ctx, loaded)))
-      routed <- ctx.code[StatusRouted]("status")(Right(status(ctx, ck, classified, patched, assessed)))
-      closed <- ctx.code[Closed]("close")(close(ctx, ck, patched, routed))
-    yield closed.line
+      )((n, _) =>
+        checkNotes(n, isCitekey, site.articleExists).left
+          .map(_.map(p => RunCtx.Problem(p.value)))
+          .map(d => Checked(d.value))
+      )
+      patched <- ctx.code[Patched](AgentRepo.StepRecord.Name("patch"))(write(ctx, ck, loaded, classified, geocoded.findings, notes))
+      _ <- ctx.code[Upstreamed](AgentRepo.StepRecord.Name("refs"))(Right(refs(ctx, loaded)))
+      assessed <- ctx.code[Upstreamed](AgentRepo.StepRecord.Name("assess"))(Right(assess(ctx, loaded)))
+      routed <- ctx.code[StatusRouted](AgentRepo.StepRecord.Name("status"))(Right(status(ctx, ck, classified, patched, assessed)))
+      closed <- ctx.code[Closed](AgentRepo.StepRecord.Name("close"))(close(ctx, ck, patched, routed))
+    yield PipelineDef.RunResultPart2(closed.line.value)
+
+  private def accepted[A](
+      r: Either[List[EnrichSource.Problem], (A, List[EnrichSource.Description])]
+  ): Either[List[RunCtx.Problem], Checked[A]] =
+    r.left.map(_.map(p => RunCtx.Problem(p.value))).map((v, w) => Checked(v, w.map(d => Checked.Warnings(d.value))))
 
   // ── steps ──────────────────────────────────────────────────────────────────────────────────────
 
-  private def load(ck: com.histmersion.domain.library.Citekey): Either[com.histmersion.domain.library.workflows.EnrichSourcePipeline.Problem, Loaded] =
-    site.sources.get(ck, body = com.histmersion.domain.library.sources.SourcesControllers.GetBody(true)).left.map(_.message).flatMap { sw =>
+  private def load(ck: com.histmersion.domain.library.Citekey): Either[String, Loaded] =
+    site.sources.get(ck, body = com.histmersion.domain.library.sources.SourcesControllers.GetBody(true)).left.map(_.message.value).flatMap { sw =>
       val s = sw.source
-      val body = s.ocrMarkdown.map(_.trim).getOrElse("")
+      val body = s.ocrMarkdown.map(_.value.trim).getOrElse("")
       if body.isEmpty then Left(s"$ck has no text — ingest or OCR it first")
       else
         Right(
           Loaded(
-            citekey = s.citekey,
-            title = s.title,
-            authors = s.authors,
-            year = s.year,
-            venue = s.venue,
+            citekey = Citekey.assume(s.citekey.value),
+            title = Loaded.Title(s.title.value),
+            authors = s.authors.map(a => AuthorName(a.value)),
+            year = s.year.map(y => com.histmersion.Year(y.value.toInt)),
+            venue = s.venue.map(v => Loaded.Venue(v.value)),
             status = s.status.wire,
-            hasSummary = s.summary.exists(_.trim.nonEmpty),
-            hasNotes = s.notes.exists(_.trim.nonEmpty),
-            hasPeriod = s.periodStart.isDefined,
+            hasSummary = Loaded.HasSummary(s.summary.exists(_.value.trim.nonEmpty)),
+            hasNotes = Loaded.HasNotes(s.notes.exists(_.value.trim.nonEmpty)),
+            hasPeriod = Loaded.HasPeriod(s.periodStart.isDefined),
             period = for a <- s.periodStart; b <- s.periodEnd yield Period(a, b),
-            topics = s.topics,
-            regions = s.regions,
-            existingClaims = sw.findings.map(_.claim),
+            topics = s.topics.map(t => Topic(t.value)),
+            regions = s.regions.map(r => Region(r.value)),
+            existingClaims = sw.findings.map(f => Loaded.ExistingClaims(f.claim.value)),
             updatedAt = s.updatedAt,
-            head = body.take(lib.enrich.headChars),
-            windows = windows(body, lib.enrich.windowChars, lib.enrich.maxWindows),
-            tags = s.tags,
-            doi = s.doi
+            head = Loaded.Head(body.take(lib.enrich.headChars.value)),
+            windows = windows(SourceBody(body), WindowChars(lib.enrich.windowChars.value), MaxWindows(lib.enrich.maxWindows.value)),
+            tags = s.tags.map(t => Tag(t.value)),
+            doi = s.doi.flatMap(d => com.histmersion.domain.library.Doi.option(d.value))
           )
         )
     }
 
-  private def meta(l: Loaded): com.histmersion.domain.library.workflows.EnrichSourcePipeline.MetaResult =
+  private def meta(l: Loaded): String =
     s"citekey: ${l.citekey}\ntitle: ${l.title}\nauthors: ${l.authors.mkString("; ")}\n" +
       s"year: ${l.year.fold("unknown")(_.toString)}\nvenue: ${l.venue.getOrElse("unknown")}"
 
-  private def classifyInput(l: Loaded): com.histmersion.domain.library.workflows.EnrichSourcePipeline.ClassifyInputResult =
-    s"Classify this source.\n\n${meta(l)}\n\nThe opening of its text:\n\n${Prompt.data("source-text", l.head)}"
+  private def classifyInput(l: Loaded): String =
+    s"Classify this source.\n\n${meta(l)}\n\nThe opening of its text:\n\n${Prompt.data("source-text", l.head.value)}"
 
   /** One LLM step per window. Each answer's quotes are checked against THAT window, and its places against the
     * gazetteer the `geocode` step will use (#1424: asking before the answer is accepted is the only point where a
@@ -115,30 +126,32 @@ final class EnrichSourcePipeline(
     */
   private def findings(ctx: RunCtx, l: Loaded, c: Classified): Either[Halt, List[VerifiedFinding]] =
     val existing = l.existingClaims.toSet
-    val guards = lib.enrich.guards.guards((name, kind, at) => site.geocode(name, kind, at).isDefined)
+    val guards = lib.enrich.guards.guards((name, kind, at) => site.geocode(LibrarySite.PlaceName(name.value), kind, at).isDefined)
     l.windows.foldLeft[Either[Halt, List[VerifiedFinding]]](Right(Nil)) { (acc, w) =>
       acc.flatMap { sofar =>
         val user = s"Extract the findings of this stretch of the source.\n\n${meta(l)}\n" +
           w.heading.fold("")(hd => s"section: $hd\n") +
-          s"stretch ${w.index} of ${l.windows.size}\n\n${Prompt.data("source-text", w.text)}" + ctx.notes
+          s"stretch ${w.index} of ${l.windows.size}\n\n${Prompt.data("source-text", w.text.value)}" + ctx.notes
         // the VERIFIED list is what is checkpointed: a resume replays it without re-checking
         ctx
           .llm[Findings, VerifiedFindings](
-            s"findings-${w.index}",
+            AgentRepo.StepRecord.Name(s"findings-${w.index}"),
             StepAgent.EnrichFindings,
-            user,
+            Prompt.UserText(user),
             LibraryAnswers.findings
           ) { (f, last) =>
-            checkFindings(
-              f,
-              w,
-              lib.verify.quoteMinRatio,
-              lib.verify.maxAbsYear,
-              l.period.orElse(c.period),
-              existing ++ sofar.map(_.claim),
-              guards,
-              last
-            ).map(Checked(_, _))
+            accepted(
+              checkFindings(
+                f,
+                w,
+                MinRatio(lib.verify.quoteMinRatio.value),
+                MaxAbsYear(lib.verify.maxAbsYear.value),
+                l.period.orElse(c.period),
+                existing ++ sofar.map(v => Loaded.ExistingClaims(v.claim.value)),
+                guards,
+                Last(last.value)
+              )
+            )
           }
           .map(v => sofar ++ v.findings)
       }
@@ -152,7 +165,7 @@ final class EnrichSourcePipeline(
     */
   private def geocode(ctx: RunCtx, fs: List[VerifiedFinding]): Geocoded =
     val placed = fs.map { f =>
-      val hit = f.place.flatMap(p => site.geocode(p, f.placeKind.getOrElse(Geocode.KindHint.Unknown), f.period))
+      val hit = f.place.flatMap(p => site.geocode(LibrarySite.PlaceName(p.value), f.placeKind.getOrElse(Geocode.KindHint.Unknown), f.period))
       f.place.foreach { p =>
         hit match
           case None => ctx.warn(s"geocode: no gazetteer place named '$p' (finding kept without a point)")
@@ -160,34 +173,34 @@ final class EnrichSourcePipeline(
           case Some(_)                    => ()
       }
       val input = Finding.Input(
-        claim = f.claim,
-        region = f.place,
+        claim = Finding.Claim(f.claim.value),
+        region = f.place.map(p => Finding.Region(p.value)),
         lon = hit.map(_.lon),
         lat = hit.map(_.lat),
         periodStart = f.start,
         periodEnd = f.end,
-        periodName = f.periodName,
-        tags = f.tags,
-        confidence = Some(f.confidence)
+        periodName = f.periodName.map(n => Finding.PeriodName(n.value)),
+        tags = f.tags.map(t => Finding.Tags(t.value)),
+        confidence = Some(com.histmersion.api.library.Confidence.Wire(f.confidence.value))
       )
       val choice = f.place.map(p =>
         GeocodeChoice(
-          f.claim,
-          p,
-          hit.map(_.placeId),
-          hit.map(_.label),
-          hit.filter(_.isApproximate).map(_.approximate.map(_.describe).mkString("; "))
+          GeocodeChoice.Claim(f.claim.value),
+          GeocodeChoice.Asked(p.value),
+          hit.map(h => com.histmersion.domain.catalogue.Place.Id.assume(h.placeId.value)),
+          hit.map(h => GeocodeChoice.Label(h.label.value)),
+          hit.filter(_.isApproximate).map(h => GeocodeChoice.Approximate(h.approximate.map(_.describe).mkString("; ")))
         )
       )
       (input, choice)
     }
     Geocoded(placed.map(_._1), placed.flatMap(_._2))
 
-  private def notesInput(l: Loaded, c: Classified, fs: List[VerifiedFinding]): com.histmersion.domain.library.workflows.EnrichSourcePipeline.NotesInputResult =
+  private def notesInput(l: Loaded, c: Classified, fs: List[VerifiedFinding]): String =
     s"Write the notes for [[${l.citekey}]].\n\n${meta(l)}\n\nsummary: ${c.summary}\n\nverified findings:\n" +
       fs.map(f => s"- ${f.claim} (quote: \"${f.quote}\")").mkString("\n")
 
-  private def isCitekey(s: com.histmersion.domain.library.workflows.EnrichSourcePipeline.IsCitekeyS): Boolean = site.sources.get(s, body = com.histmersion.domain.library.sources.SourcesControllers.GetBody(false)).isRight
+  private def isCitekey(s: com.histmersion.domain.library.Citekey): Boolean = site.sources.get(s, body = com.histmersion.domain.library.sources.SourcesControllers.GetBody(false)).isRight
 
   /** The single write. On a 412 (someone wrote the source since `load`) the source is re-read and the patch rebuilt
     * from the CHECKPOINTED answers — no LLM call — and sent once more.
@@ -198,38 +211,45 @@ final class EnrichSourcePipeline(
       l: Loaded,
       c: Classified,
       fs: List[Finding.Input],
-      notes: com.histmersion.domain.library.sources.SourceNote.Text
-  ): Either[com.histmersion.domain.library.workflows.EnrichSourcePipeline.Problem, Patched] =
-    val (p, fields, proposal) = patch(l, c, fs, Option(notes).filter(_.nonEmpty))
+      notes: String
+  ): Either[String, Patched] =
+    val (p, fields, proposal) = patch(l, c, fs, Option(notes).filter(_.nonEmpty).map(PatchNotes(_)))
     // a dry run's simulated patch "succeeds": its step says what it would have set
     ctx.write(s"patch [[$ck]]: ${if fields.isEmpty then "nothing new" else fields.mkString(", ")}", p.asJson)(
       site.sources.patch(ck, p).map(_ => ())
     )(Right(())) match
-      case Right(_)                                           => Right(Patched(fs.size, fields, proposal))
-      case Left(e) if e.code.contains(Write.CodePrecondition) =>
+      case Right(_) =>
+        Right(Patched(Patched.FindingsAdded(fs.size), fields.map(f => Patched.FieldsSet(f.value)), proposal.map(d => Patched.StatusProposal(d.value))))
+      case Left(e) if e.code.exists(_.value == Write.CodePrecondition) =>
         load(ck).flatMap { fresh =>
-          val again = fresh.modify(_.windows).setTo(Nil).modify(_.head).setTo("")
-          val existing = fresh.existingClaims.map(AgentVerify.normalise).toSet
+          val again = fresh.modify(_.windows).setTo(Nil).modify(_.head).setTo(Loaded.Head(""))
+          val existing = fresh.existingClaims.map(x => AgentVerify.normalise(AgentVerify.Text(x.value))).toSet
           val (p2, fields2, proposal2) = patch(
             again,
             c,
-            fs.filterNot(f => existing.contains(AgentVerify.normalise(f.claim))),
-            Option(notes).filter(_.nonEmpty)
+            fs.filterNot(f => existing.contains(AgentVerify.normalise(AgentVerify.Text(f.claim.value)))),
+            Option(notes).filter(_.nonEmpty).map(PatchNotes(_))
           )
           site.sources
             .patch(ck, p2)
             .left
-            .map(_.message)
-            .map(_ => Patched(p2.findings.fold(0)(_.add.size), fields2, proposal2))
+            .map(_.message.value)
+            .map(_ =>
+              Patched(
+                Patched.FindingsAdded(p2.findings.fold(0)(_.add.size)),
+                fields2.map(f => Patched.FieldsSet(f.value)),
+                proposal2.map(d => Patched.StatusProposal(d.value))
+              )
+            )
         }
-      case Left(e) => Left(e.message)
+      case Left(e) => Left(e.message.value)
 
   // ── upstream: metadata, refs, assess ──────────────────────────────────────────────────────────
 
   /** Why an upstream step cannot run, if it cannot: switched off, or no DOI to ask about. */
-  private def upstreamBlocked(l: Loaded): Option[com.histmersion.domain.library.workflows.EnrichSourcePipeline.UpstreamBlockedResult] =
-    if !lib.enrich.upstream then Some(com.histmersion.domain.library.workflows.EnrichSourcePipeline.("upstream checks are off (agents.enrich.upstream)"))
-    else if l.doi.forall(_.trim.isEmpty) then Some(com.histmersion.domain.library.workflows.EnrichSourcePipeline.("the source has no DOI"))
+  private def upstreamBlocked(l: Loaded): Option[String] =
+    if !lib.enrich.upstream.value then Some("upstream checks are off (agents.enrich.upstream)")
+    else if l.doi.forall(_.value.trim.isEmpty) then Some("the source has no DOI")
     else None
 
   /** The record against OpenAlex/Crossref. Differences are WARNINGS for a person (a wrong year can mean a wrong
@@ -237,28 +257,28 @@ final class EnrichSourcePipeline(
     */
   private def metadata(ctx: RunCtx, l: Loaded): MetaChecked =
     upstreamBlocked(l) match
-      case Some(why) => MetaChecked(checked = com.histmersion.domain.EnrichSource.MetaChecked.Checked(false), Nil, why)
+      case Some(why) => MetaChecked(checked = MetaChecked.Checked(false), Nil, MetaChecked.Note(why))
       case None      =>
         upstream().meta(l.doi.get) match
           case Left(m) =>
             ctx.warn(s"metadata: not checked — $m")
-            MetaChecked(checked = com.histmersion.domain.EnrichSource.MetaChecked.Checked(false), Nil, m)
+            MetaChecked(checked = MetaChecked.Checked(false), Nil, MetaChecked.Note(m.value))
           case Right(w) =>
-            val diffs = compareMetadata(l.citekey, l.title, l.authors, l.year, w)
+            val diffs = compareMetadata(l.citekey, Title(l.title.value), l.authors, l.year, w)
             diffs.foreach(d => ctx.warn(s"metadata: $d"))
-            MetaChecked(checked = com.histmersion.domain.EnrichSource.MetaChecked.Checked(true), diffs)
+            MetaChecked(checked = MetaChecked.Checked(true), diffs.map(d => MetaChecked.Differences(d.value)))
 
   /** `refs --apply`: the deposited reference list becomes `references` edges (a network failure is a warning, never a
     * failed run — the enrichment is already written).
     */
   private def refs(ctx: RunCtx, l: Loaded): Upstreamed =
     upstreamBlocked(l) match
-      case Some(why) => Upstreamed(ran = com.histmersion.domain.EnrichSource.Upstreamed.Ran(false), why)
+      case Some(why) => Upstreamed(ran = Upstreamed.Ran(false), Upstreamed.Summary(why))
       case None      =>
-        upstream().refs(l.citekey, apply = !ctx.dryRun) match
+        upstream().refs(l.citekey, apply = AgentUpstream.RefsApply(!ctx.dryRun)) match
           case Left(m) =>
             ctx.warn(s"refs: $m")
-            Upstreamed(ran = com.histmersion.domain.EnrichSource.Upstreamed.Ran(false), m)
+            Upstreamed(ran = Upstreamed.Ran(false), Upstreamed.Summary(m.value))
           case Right(r) =>
             if ctx.dryRun then
               ctx.write(
@@ -266,51 +286,51 @@ final class EnrichSourcePipeline(
                 r.asJson
               )(())(())
             Upstreamed(
-              ran = com.histmersion.domain.EnrichSource.Upstreamed.Ran(true),
-              s"${r.count} reference(s), ${r.resolved} in the corpus, ${r.edgesAdded} edge(s) added"
+              ran = Upstreamed.Ran(true),
+              Upstreamed.Summary(s"${r.count} reference(s), ${r.resolved} in the corpus, ${r.edgesAdded} edge(s) added")
             )
 
   /** `assess --apply`: a retraction overwrites the status (the assess rule) and flags the run. */
   private def assess(ctx: RunCtx, l: Loaded): Upstreamed =
     upstreamBlocked(l) match
-      case Some(why) => Upstreamed(ran = com.histmersion.domain.EnrichSource.Upstreamed.Ran(false), why)
+      case Some(why) => Upstreamed(ran = Upstreamed.Ran(false), Upstreamed.Summary(why))
       case None      =>
-        upstream().assess(l.citekey, apply = !ctx.dryRun) match
+        upstream().assess(l.citekey, apply = AgentUpstream.AssessApply(!ctx.dryRun)) match
           case Left(m) =>
             ctx.warn(s"assess: $m")
-            Upstreamed(ran = com.histmersion.domain.EnrichSource.Upstreamed.Ran(false), m)
+            Upstreamed(ran = Upstreamed.Ran(false), Upstreamed.Summary(m.value))
           case Right(a) =>
             if a.isRetracted then ctx.warn(s"assess: RETRACTED — ${a.recommendation}")
             if ctx.dryRun then ctx.write(s"assess [[${l.citekey}]] applied: verdict ${a.verdict}", a.asJson)(())(())
             Upstreamed(
-              ran = com.histmersion.domain.EnrichSource.Upstreamed.Ran(true),
-              s"verdict ${a.verdict}${a.applied.fold("")(st => s", status set to $st")}",
-              a.isRetracted
+              ran = Upstreamed.Ran(true),
+              Upstreamed.Summary(s"verdict ${a.verdict}${a.applied.fold("")(st => s", status set to $st")}"),
+              Upstreamed.Retracted(a.isRetracted)
             )
 
   /** The classify step's status, if the patch did not already fill it: through the approval gate. A retraction found by
     * `assess` outranks any proposal.
     */
   private def status(ctx: RunCtx, ck: com.histmersion.domain.library.Citekey, c: Classified, p: Patched, a: Upstreamed): StatusRouted =
-    if p.fieldsSet.contains("status") then StatusRouted(Some(c.status.wire), None, com.histmersion.domain.EnrichSource.StatusRouted.Note("filled by the patch"))
-    else if c.status == Source.Status.Unassessed then StatusRouted(None, None, com.histmersion.domain.EnrichSource.StatusRouted.Note("no status proposed"))
-    else if a.retracted then StatusRouted(None, None, s"${c.status.wire} not proposed: the source is retracted")
+    if p.fieldsSet.contains("status") then StatusRouted(Some(StatusRouted.Applied(c.status.wire.value)), None, StatusRouted.Note("filled by the patch"))
+    else if c.status == Source.Status.Unassessed then StatusRouted(None, None, StatusRouted.Note("no status proposed"))
+    else if a.retracted.value then StatusRouted(None, None, StatusRouted.Note(s"${c.status.wire} not proposed: the source is retracted"))
     else
       val proposal = AgentProposals.Proposal(
         ApprovalKind.StatusChange,
         ck,
         status = Some(c.status),
-        evidence = Option(c.statusEvidence).filter(_.trim.nonEmpty).getOrElse("(the model gave no evidence)")
+        evidence = AgentProposals.Proposal.Evidence(Option(c.statusEvidence.value).filter(_.trim.nonEmpty).getOrElse("(the model gave no evidence)"))
       )
       approvals.propose(ctx, proposal) match
-        case o @ SourceProposals.Outcome.Applied(w)      => StatusRouted(Some(c.status.wire), None, o.line)
+        case o @ SourceProposals.Outcome.Applied(w)      => StatusRouted(Some(StatusRouted.Applied(c.status.wire.value)), None, StatusRouted.Note(o.line))
         case o @ SourceProposals.Outcome.Recorded(id, _) =>
           ctx.warn(s"status ${c.status.wire} not applied: approval $id waits for a person")
-          StatusRouted(None, Some(id), o.line)
+          StatusRouted(None, Some(StatusRouted.Approval(id.value)), StatusRouted.Note(o.line))
         case o @ SourceProposals.Outcome.Failed(_) =>
           ctx.warn(s"status: ${o.line}")
-          StatusRouted(None, None, o.line)
-        case o => StatusRouted(None, None, o.line)
+          StatusRouted(None, None, StatusRouted.Note(o.line))
+        case o => StatusRouted(None, None, StatusRouted.Note(o.line))
 
   // ── close ──────────────────────────────────────────────────────────────────────────────────────
 
@@ -318,51 +338,33 @@ final class EnrichSourcePipeline(
     * started for ticked off, and a `log` line. Calibre is untouched: a source not in Calibre is already what
     * `histmersion calibre gaps` reports, host-side.
     */
-  private def close(ctx: RunCtx, ck: com.histmersion.domain.library.Citekey, p: Patched, r: StatusRouted): Either[com.histmersion.domain.library.workflows.EnrichSourcePipeline.Problem, Closed] =
+  private def close(ctx: RunCtx, ck: com.histmersion.domain.library.Citekey, p: Patched, r: StatusRouted): Either[String, Closed] =
     // a dry run patched nothing: the lint would only describe the source as it was before
     val lint = if ctx.dryRun then Nil
     else
       site.sources.get(ck, body = com.histmersion.domain.library.sources.SourcesControllers.GetBody(false)).toOption.toList.flatMap { s =>
-        closeLint(s.findings.size, s.source.periodStart.isDefined, s.source.status)
+        closeLint(FindingCount(s.findings.size), Loaded.HasPeriod(s.source.periodStart.isDefined), s.source.status)
       }
     lint.foreach(l => ctx.warn(s"lint: $l"))
     val acquire = ctx.run.acquireItem.map(id =>
-      ctx.write(s"tick off acquisition item $id", io.circe.Json.obj("item" -> id.asJson, "fulfilledBy" -> ck.asJson))(
+      ctx.write(s"tick off acquisition item $id", io.circe.Json.obj("item" -> id.value.asJson, "fulfilledBy" -> ck.value.asJson))(
         tickOff(id, ck, ctx.run.id)
       )(s"acquisition item $id not ticked off (${AgentsMarkdown.DryRunNote})")
     )
     acquire.filter(_.contains("NOT")).foreach(ctx.warn)
     val what = if p.fieldsSet.isEmpty then "nothing new" else p.fieldsSet.mkString(", ")
     val approval = r.approval.fold("")(id => s"; its status proposal waits for approval $id")
-    val line = s"enrich-source [[$ck]] (agent run ${ctx.run.id.take(8)}): $what$approval" +
+    val line = s"enrich-source [[$ck]] (agent run ${ctx.run.id.value.take(8)}): $what$approval" +
       acquire.fold("")(a => s"; $a")
-    Pipelines.log(site.workLists, ctx, line).map(_ => Closed(line, lint, acquire))
+    Pipelines.log(site.workLists, ctx, Pipelines.LogLine(line)).left.map(_.value).map(_ => Closed(Closed.Line(line), lint.map(d => Closed.Lint(d.value)), acquire.map(Closed.Acquire(_))))
 
   /** Tick acquisition item `id` off as fulfilled by `ck` — the same rule an OCR upload follows. It never fails the run:
     * an item done or deleted meanwhile is left as it is, and said so.
     */
-  private def tickOff(id: com.histmersion.domain.library.ingest.IngestQueue.QueueItemId, ck: com.histmersion.domain.library.Citekey, runId: com.histmersion.domain.automation.Run.Id): com.histmersion.domain.library.workflows.EnrichSourcePipeline.TickOffResult =
-    Queue.fulfillable(id, site.queues.get(QueueItemId(id))) match
+  private def tickOff(id: Queue.QueueItem.Id, ck: com.histmersion.domain.library.Citekey, runId: com.histmersion.api.automation.Agents.RunInfo.Id): String =
+    Queue.fulfillable(id, site.queues.get(QueueItemId(id.value))) match
       case Left(m)     => s"acquisition item $id NOT ticked off: $m"
       case Right(item) =>
-        site.workLists.patch(id, Queue.fulfil(item, ck, Some(runId))) match
+        site.workLists.patch(QueueItemId(id.value), Queue.fulfil(item, com.histmersion.api.library.Citekey(ck.value), Some(Queue.QueueItem.ClosedBy(runId.value)))) match
           case Right(_) => s"ticked off acquisition item $id"
           case Left(e)  => s"acquisition item $id NOT ticked off: ${e.message}"
-
-object EnrichSourcePipeline:
-  type Problem = Problem.T
-  object Problem extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type RunResultPart2 = RunResultPart2.T
-  object RunResultPart2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type MetaResult = MetaResult.T
-  object MetaResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type ClassifyInputResult = ClassifyInputResult.T
-  object ClassifyInputResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type NotesInputResult = NotesInputResult.T
-  object NotesInputResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type IsCitekeyS = IsCitekeyS.T
-  object IsCitekeyS extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type UpstreamBlockedResult = UpstreamBlockedResult.T
-  object UpstreamBlockedResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type TickOffResult = TickOffResult.T
-  object TickOffResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]

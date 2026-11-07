@@ -109,7 +109,7 @@ object LeadService:
         )
       val att = s.attestations
         .filter(a => a.targetType.value == "event" && a.targetId.value == id.value)
-        .sortBy(a => (a.citekey.value, a.id.value))
+        .sortBy(a => (a.citekey.value: String, a.id.value: Long))
         .distinctBy(_.citekey)
         .flatMap(a =>
           com.histmersion.domain.library.Citekey
@@ -126,7 +126,7 @@ object LeadService:
 
     private def factsOf(s: CatalogueState, id: com.histmersion.domain.catalogue.Event.Id): Option[LeadRow] =
       s.events.find(_.id == id).map { e =>
-        val recs = s.catalogueRecords.filter(_._1 == id).map(_._2)
+        val recs = s.catalogueRecords.filter(_._1.value == id.value).map(_._2)
         val tier =
           if e.citekey.isDefined || s.attestations.exists(a => a.targetType.value == "event" && a.targetId.value == id.value)
           then EventTier.Attested
@@ -154,7 +154,12 @@ object LeadService:
       val listed = events.list(selection, com.histmersion.PageSize(Int.MaxValue), com.histmersion.Offset.Start)
       val rows = listed.events.flatMap(e => Event.Id.option(e.id.value).flatMap(factsOf(s, _))).sortBy { r =>
         val size = r.vei.fold(0.0)(_.value.toDouble) + r.magnitude.fold(0.0)(_.value)
-        (r.tier.value != EventTier.Catalogue, -size, r.notBefore.orElse(r.beginBy).fold((1, 0L))(y => (0, y)), r.id.value)
+        (
+          r.tier.value != EventTier.Catalogue,
+          -size,
+          r.notBefore.map(_.value: Long).orElse(r.beginBy.map(_.value: Long)).fold((1, 0L))(y => (0, y)),
+          r.id.value: String
+        )
       }
       (
         com.histmersion.RowCount(listed.total.value),

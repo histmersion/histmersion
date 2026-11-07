@@ -13,18 +13,12 @@ trait ArticleSearch:
       filter: Filter,
       scope: PlaceScope,
       kind: Option[com.histmersion.domain.research.Article.Kind],
-      text: Option[com.histmersion.domain.research.articles.ArticleSearch.Query],
-      limit: com.histmersion.domain.research.articles.ArticleSearch.ListLimit,
+      text: Option[com.histmersion.domain.library.search.Search.Query],
+      limit: com.histmersion.domain.research.articles.ArticleRepo.Limit,
       offset: com.histmersion.Offset
   ): Article.List
 
 object ArticleSearch:
-  type Query = Query.T
-  object Query extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-
-  type ListLimit = ListLimit.T
-  object ListLimit extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
-
   def apply(db: Transactor): ArticleSearch = Implementation(db)
 
   final private class Implementation(db: Transactor) extends ArticleSearch:
@@ -32,11 +26,7 @@ object ArticleSearch:
         filter: Filter,
         scope: PlaceScope,
         kind: Option[com.histmersion.domain.research.Article.Kind],
-        text: Option[com.histmersion.domain.research.articles.ArticleSearch.Query],
-        limit: com.histmersion.domain.research.articles.ArticleSearch.Implementation.ListLimit,
+        text: Option[com.histmersion.domain.library.search.Search.Query],
+        limit: com.histmersion.domain.research.articles.ArticleRepo.Limit,
         offset: com.histmersion.Offset
     ): Article.List = db.read(ArticleRepo.list(filter, scope, kind, text, limit, offset))
-
-  object Implementation:
-    type ListLimit = ListLimit.T
-    object ListLimit extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]

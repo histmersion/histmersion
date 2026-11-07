@@ -24,22 +24,20 @@ trait MediaImporter:
   def over: com.histmersion.domain.media.imports.MediaImporter.OverText
 
   /** Targets per job batch. */
-  def batch: com.histmersion.domain.media.imports.MediaImporter.BatchCount
+  def batch: MediaConfig.ImportBatch
   def targets(
       place: Option[com.histmersion.domain.catalogue.Place.Id],
       event: Option[com.histmersion.domain.catalogue.Event.Id],
-      limit: com.histmersion.domain.media.imports.MediaImporter.TargetsLimit,
-      refresh: com.histmersion.domain.media.imports.MediaImporter.Refresh,
-      since: Option[com.histmersion.domain.media.imports.MediaImporter.Since]
-  ): Either[com.histmersion.domain.media.imports.MediaImporter.TargetsText, List[Target]]
-  def pending(since: Option[com.histmersion.domain.media.imports.MediaImporter.Since]): com.histmersion.domain.media.imports.MediaImporter.PendingCount
+      limit: com.histmersion.domain.media.imports.ImportService.TargetsLimit,
+      refresh: com.histmersion.domain.media.imports.ImportService.Refresh,
+      since: Option[com.histmersion.domain.media.imports.ImportService.Since]
+  ): Either[com.histmersion.domain.media.imports.ImportService.TargetsText, List[Target]]
+  def pending(since: Option[com.histmersion.domain.media.imports.ImportService.Since]): com.histmersion.domain.media.imports.ImportService.PendingCount
 
   /** A run: one polite client for its whole length (the pace is per run). */
   def start(): MediaImporter.Run
 
 object MediaImporter:
-  type BatchCount = BatchCount.T
-  object BatchCount extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type CheckName = CheckName.T
   object CheckName extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type DryRun = DryRun.T
@@ -48,27 +46,10 @@ object MediaImporter:
   object ImporterName extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type OverText = OverText.T
   object OverText extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type PendingCount = PendingCount.T
-  object PendingCount extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type Refresh = Refresh.T
-  object Refresh extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type RequestCount = RequestCount.T
-  object RequestCount extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type Since = Since.T
-  object Since extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type TargetsText = TargetsText.T
-  object TargetsText extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-
-  type OfTargetsLimit = OfTargetsLimit.T
-  object OfTargetsLimit extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
-
-  type TargetsLimit = TargetsLimit.T
-  object TargetsLimit extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
   trait Run:
-    def run(targets: List[Target], dryRun: com.histmersion.domain.media.imports.MediaImporter.DryRun, refresh: com.histmersion.domain.media.imports.MediaImporter.Refresh): MediaImportReport
-    def requests: com.histmersion.domain.media.imports.MediaImporter.RequestCount
-
+    def run(targets: List[Target], dryRun: com.histmersion.domain.media.imports.MediaImporter.DryRun, refresh: com.histmersion.domain.media.imports.ImportService.Refresh): MediaImportReport
+    def requests: com.histmersion.pluginhost.Polite.RequestCount
 
   /** What a collection that asks about `asks` is said to ask about: "places", "events", "places and events". */
   def over(asks: Set[MediaTarget]): com.histmersion.domain.media.imports.MediaImporter.OverText =
@@ -99,29 +80,35 @@ object MediaImporter:
     val events = !asks(MediaTarget.Places)
     val pleiades = PluginMedia.guard(Right(col.placesCarrying)).toOption.flatten.isDefined
     val own = PluginMedia.guard(Right(col.matchRule)).toOption.contains(MediaMatchRule.Own)
-    val checkName = BuiltinMedia.checkOf(name)
+    val checkName = MediaImporter.CheckName(BuiltinMedia.checkOf(BuiltinMedia.CheckOfName(name.value)).value)
     val what = title
     new MediaImporter:
       val check = checkName
       val title = what
       val over = MediaImporter.over(asks)
       def batch = cfg().importBatch
-      def targets(place: Option[com.histmersion.domain.catalogue.Place.Id], event: Option[com.histmersion.domain.catalogue.Event.Id], limit: com.histmersion.domain.media.imports.MediaImporter.OfTargetsLimit, refresh: com.histmersion.domain.media.imports.MediaImporter.Refresh, since: Option[com.histmersion.domain.media.imports.MediaImporter.Since]) =
-        if both then imports.targets(check, place, event, limit, refresh, since)
+      def targets(place: Option[com.histmersion.domain.catalogue.Place.Id], event: Option[com.histmersion.domain.catalogue.Event.Id], limit: com.histmersion.domain.media.imports.ImportService.TargetsLimit, refresh: com.histmersion.domain.media.imports.ImportService.Refresh, since: Option[com.histmersion.domain.media.imports.ImportService.Since]) =
+        if both then imports.targets(ImportService.Provider(check.value), place, event, limit, refresh, since)
         else
           imports.collectionTargets(
-            check,
-            places = !events,
+            ImportService.CheckName(check.value),
+            places = ImportService.Places(!events),
             place,
             event,
-            limit,
+            ImportService.CollectionTargetsLimit(limit.value),
             refresh,
             since,
-            pleiadesOnly = pleiades
+            pleiadesOnly = ImportService.PleiadesOnly(pleiades)
           )
-      def pending(since: Option[com.histmersion.domain.media.imports.MediaImporter.Since]) =
-        if both then imports.pending(check, since)
-        else imports.collectionPending(check, places = !events, since, pleiadesOnly = pleiades)
+      def pending(since: Option[com.histmersion.domain.media.imports.ImportService.Since]) =
+        if both then imports.pending(ImportService.Provider(check.value), since)
+        else
+          imports.collectionPending(
+            ImportService.CheckName(check.value),
+            places = ImportService.Places(!events),
+            since,
+            pleiadesOnly = ImportService.PleiadesOnly(pleiades)
+          )
       def start() =
         val media = cfg()
         // the collection's own pace, one host at a time, and its own patience with a refusal (#2561)
@@ -129,18 +116,35 @@ object MediaImporter:
           http,
           media
             .modify(_.requestIntervalMs)
-            .setTo(PluginMedia.guard(Right(col.requestIntervalMs)).getOrElse(media.requestIntervalMs)),
-          refusalBackoffMs = PluginMedia.guard(Right(col.refusalBackoffMs)).getOrElse(Nil)
+            .setTo(
+              PluginMedia
+                .guard(Right(col.requestIntervalMs))
+                .map(ms => MediaConfig.RequestIntervalMs(ms.value))
+                .getOrElse(media.requestIntervalMs)
+            ),
+          refusalBackoffMs =
+            PluginMedia.guard(Right(col.refusalBackoffMs)).map(_.map(ms => Polite.RefusalBackoffMs(ms.value))).getOrElse(Nil)
         )
-        val runs: (List[Target], com.histmersion.domain.media.imports.MediaImporter.DryRun, com.histmersion.domain.media.imports.MediaImporter.Refresh) => MediaImportReport =
+        val runs: (List[Target], com.histmersion.domain.media.imports.MediaImporter.DryRun, com.histmersion.domain.media.imports.ImportService.Refresh) => MediaImportReport =
           if own then OwnImport(name, col, fetch, media).run(_, _, _, store)
           else
-            CollectionImport(
-              PluginCollection(BuiltinMedia.providerOf(name), col, BuiltinMedia.licencesFor(name, media)),
+            val collection = CollectionImport(
+              PluginCollection(
+                ImportService.Provider(BuiltinMedia.providerOf(BuiltinMedia.ProviderOfName(name.value)).value),
+                col,
+                MediaCollectionConfig.Licences(BuiltinMedia.licencesFor(BuiltinMedia.LicencesForName(name.value), media).value)
+              ),
               fetch,
               media,
               converter
-            ).run(_, _, _, store)
+            )
+            (ts, dryRun, refresh) =>
+              collection.run(
+                ts,
+                CollectionImport.DryRun(dryRun.value),
+                CollectionImport.Refresh(refresh.value),
+                store
+              )
         new Run:
-          def run(ts: List[Target], dryRun: com.histmersion.domain.media.imports.MediaImporter.DryRun, refresh: com.histmersion.domain.media.imports.MediaImporter.Refresh) = runs(ts, dryRun, refresh)
+          def run(ts: List[Target], dryRun: com.histmersion.domain.media.imports.MediaImporter.DryRun, refresh: com.histmersion.domain.media.imports.ImportService.Refresh) = runs(ts, dryRun, refresh)
           def requests = fetch.requests

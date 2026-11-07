@@ -110,7 +110,7 @@ object MediaTools:
           val rows = assets.figures(in.citekey)
           if rows.isEmpty && !sourceExists(in.citekey) then
             ToolResult.text(s"_No source '${in.citekey}' — find a citekey with search._")
-          else ToolResult.text(AssetsMarkdown.assets(in.citekey, rows.toVector))
+          else ToolResult.text(AssetsMarkdown.assets(com.histmersion.api.library.Citekey(in.citekey.value), rows.toVector))
         },
       tool("patch_asset")
         .description(
@@ -121,18 +121,18 @@ object MediaTools:
         .handle { in =>
           assets.patch(
             in.citekey,
-            in.name,
+            com.histmersion.domain.media.assets.AssetService.AssetName(in.name.value),
             AssetPatch(
-              kind = in.kind,
-              caption = in.caption,
-              license = in.license,
-              lat = in.lat,
-              lon = in.lon,
-              periodStart = in.periodStart,
-              periodEnd = in.periodEnd
+              kind = in.kind.map(k => com.histmersion.api.media.MediaItem.Kind(k.value)),
+              caption = in.caption.map(c => com.histmersion.api.media.MediaItem.Caption(c.value)),
+              license = in.license.map(l => com.histmersion.api.media.MediaItem.License(l.value)),
+              lat = in.lat.map(l => com.histmersion.api.catalogue.Latitude(l.value)),
+              lon = in.lon.map(l => com.histmersion.api.catalogue.Longitude(l.value)),
+              periodStart = in.periodStart.map(y => com.histmersion.api.catalogue.Year(y.value.toLong)),
+              periodEnd = in.periodEnd.map(y => com.histmersion.api.catalogue.Year(y.value.toLong))
             )
           ) match
-            case Right(d) => ToolResult.text(MediaMarkdown.assetDetail(in.citekey, d))
+            case Right(d) => ToolResult.text(MediaMarkdown.assetDetail(com.histmersion.api.library.Citekey(in.citekey.value), d))
             case Left(e)  => McpOut.error(e)
         },
       tool("asset_links")
@@ -146,25 +146,25 @@ object MediaTools:
           in.relation match
             case Some(rel) =>
               val put = AssetLink.Put(
-                citekey = in.citekey.getOrElse(""),
-                assetName = in.asset.getOrElse(""),
-                relation = rel,
-                targetType = in.targetType.getOrElse(""),
-                targetId = in.targetId.getOrElse(""),
-                xywh = in.xywh,
-                notes = in.notes
+                citekey = com.histmersion.api.library.Citekey(in.citekey.fold("")(_.value)),
+                assetName = com.histmersion.api.exchange.Bundle.Asset.FileName(in.asset.fold("")(_.value)),
+                relation = com.histmersion.api.media.AssetRelation.Wire(rel.value),
+                targetType = com.histmersion.api.media.MediaTarget.TargetType(in.targetType.fold("")(_.value)),
+                targetId = com.histmersion.api.media.MediaTarget.TargetId(in.targetId.fold("")(_.value)),
+                xywh = in.xywh.map(x => AssetLink.Xywh(x.value)),
+                notes = in.notes.map(n => AssetLink.Notes(n.value))
               )
               links.create(put) match
                 case Right(l) => ToolResult.text(MediaMarkdown.assetLink(l))
                 case Left(e)  => McpOut.error(e)
             case None =>
-              ToolResult.text(MediaMarkdown.assetLinkList(links.list(in.citekey, in.asset, in.targetType, in.targetId)))
+              ToolResult.text(MediaMarkdown.assetLinkList(links.list(in.citekey, in.asset.map(a => com.histmersion.domain.media.assets.AssetService.AssetUid(a.value)), in.targetType.map(t => com.histmersion.domain.media.assets.AssetService.TargetType(t.value)), in.targetId.map(t => com.histmersion.domain.media.assets.AssetService.TargetId(t.value)))))
         },
       tool("delete_asset_link")
         .description("Delete an asset link by id.")
         .input[DeleteAssetLinkInput]
         .handle { in =>
-          links.delete(in.id) match
+          links.delete(com.histmersion.domain.media.links.AssetLinkService.LinkId(in.id.value)) match
             case Right(d) => ToolResult.text(s"Deleted asset link #${d.id}.")
             case Left(e)  => McpOut.error(e)
         }

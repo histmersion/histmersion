@@ -7,7 +7,7 @@ import com.histmersion.api.Api
 
 /** The agents' scratch state as REST, MCP and the CLI reach it; every write holds the maintenance guard. */
 final class AgentStateControllers(store: AgentStateService, maintenance: WriteGate):
-  private def notFound(key: com.histmersion.domain.automation.agents.AgentStateRecord.Key) = Api.Error(s"No agent state key '$key'", Some(Write.CodeNotFound))
+  private def notFound(key: com.histmersion.domain.automation.agents.AgentStateRecord.Key) = Api.Error(Api.Error.Message(s"No agent state key '$key'"), Some(Api.Error.Code(Write.CodeNotFound)))
 
   def list(): List[AgentStateEntry] = store.list()
 
@@ -15,10 +15,10 @@ final class AgentStateControllers(store: AgentStateService, maintenance: WriteGa
 
   def set(key: com.histmersion.domain.automation.agents.AgentStateRecord.Key, in: AgentStatePut): Either[Api.Error, AgentStateEntry] =
     maintenance.guard(com.histmersion.util.data.maintenance.WriteGate.OperationName("agent_state_set")):
-      store.set(key, in.value)
+      store.set(key, AgentStateService.SetValue(in.value.value))
       get(key)
 
   def delete(key: com.histmersion.domain.automation.agents.AgentStateRecord.Key): Either[Api.Error, AgentStateDeleted] =
     maintenance.guard(com.histmersion.util.data.maintenance.WriteGate.OperationName("agent_state_delete")):
-      if store.delete(key) then Right(AgentStateDeleted(key, com.histmersion.api.automation.AgentStateDeleted.Deleted(true))) else Left(notFound(key))
+      if store.delete(key) then Right(AgentStateDeleted(AgentStateDeleted.Key(key.value), com.histmersion.api.automation.AgentStateDeleted.Deleted(true))) else Left(notFound(key))
 

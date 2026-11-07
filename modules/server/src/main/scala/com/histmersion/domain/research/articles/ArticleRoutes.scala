@@ -1,7 +1,9 @@
 package com.histmersion.domain.research.articles
 
-import com.histmersion.api.Api
-import com.histmersion.server.{ArticleHtml, PageKind}
+import com.histmersion.api.{Api, Write}
+import com.histmersion.api.research.{Article, Articles, ReviewGoal}
+import com.histmersion.domain.research.Slug
+import com.histmersion.server.{ArticleHtml, HtmlRender, PageKind}
 import sttp.model.{Header, MediaType}
 import sttp.shared.Identity
 import sttp.tapir.*
@@ -18,23 +20,39 @@ import sttp.tapir.server.ServerEndpoint
   * verbatim.
   */
 object ArticleRoutes:
+  /** A slug that names an article to read: one that is no slug names no article. */
+  private def read(slug: ReviewGoal.Slug): Either[Api.Error, Slug] =
+    Slug.parse(slug.value).left.map(_ => Articles.notFound(Article.Slug(slug.value)))
+
+  /** A slug a write names: one that is no slug is refused. */
+  private def write(slug: ReviewGoal.Slug): Either[Api.Error, Slug] =
+    Slug.parse(slug.value).left.map(p => Api.Error(Api.Error.Message(p.value), Some(Api.Error.Code(Write.CodeInvalid))))
+
   def apply(articles: ArticlesControllers, pages: PageBuilder): List[ServerEndpoint[Any, Identity]] =
     val rest: List[ServerEndpoint[Any, Identity]] = List(
       Api.articles.serverLogicSuccess[Identity](q => articles.list(q)),
-      Api.articleSlugs.serverLogicSuccess[Identity](_ => articles.slugs),
+      Api.articleSlugs.serverLogicSuccess[Identity](_ => articles.slugs.map(s => ReviewGoal.Slug(s.value))),
       Api.importArticle.serverLogic[Identity](req => articles.importNote(req)),
-      Api.exportArticle.serverLogic[Identity](slug => articles.exportNote(slug)),
-      Api.articleVersions.serverLogic[Identity](slug => articles.versions(slug)),
-      Api.articleVersion.serverLogic[Identity]((slug, id) => articles.version(slug, id)),
-      Api.lintArticle.serverLogic[Identity](slug => articles.lint(slug)),
-      Api.fixArticleFormat.serverLogic[Identity](slug => articles.fix(slug)),
-      Api.checkArticle.serverLogic[Identity]((slug, req) => articles.check(slug, req)),
-      Api.articleCoverage.serverLogic[Identity](slug => articles.coverage(slug)),
-      Api.articleReview.serverLogic[Identity](slug => articles.review(slug)),
-      Api.getArticle.serverLogic[Identity]((slug, brief) => articles.get(slug, brief)),
-      Api.putArticle.serverLogic[Identity]((slug, in, strict) => articles.put(slug, in, strict)),
-      Api.patchArticle.serverLogic[Identity]((slug, p, strict) => articles.patch(slug, p, strict)),
-      Api.deleteArticle.serverLogic[Identity](slug => articles.delete(slug))
+      Api.exportArticle.serverLogic[Identity](slug => read(slug).flatMap(articles.exportNote)),
+      Api.articleVersions.serverLogic[Identity](slug => read(slug).flatMap(articles.versions)),
+      Api.articleVersion.serverLogic[Identity]((slug, id) =>
+        read(slug).flatMap(s => articles.version(s, ArticleRepo.VersionId(id.value)))
+      ),
+      Api.lintArticle.serverLogic[Identity](slug => read(slug).flatMap(articles.lint)),
+      Api.fixArticleFormat.serverLogic[Identity](slug => read(slug).flatMap(articles.fix)),
+      Api.checkArticle.serverLogic[Identity]((slug, req) => write(slug).flatMap(articles.check(_, req))),
+      Api.articleCoverage.serverLogic[Identity](slug => read(slug).flatMap(articles.coverage)),
+      Api.articleReview.serverLogic[Identity](slug => read(slug).flatMap(articles.review)),
+      Api.getArticle.serverLogic[Identity]((slug, brief) =>
+        read(slug).flatMap(articles.get(_, ArticlesControllers.GetBrief(brief.value)))
+      ),
+      Api.putArticle.serverLogic[Identity]((slug, in, strict) =>
+        write(slug).flatMap(articles.put(_, in, com.histmersion.domain.research.Article.StrictMode(strict.value)))
+      ),
+      Api.patchArticle.serverLogic[Identity]((slug, p, strict) =>
+        write(slug).flatMap(articles.patch(_, p, com.histmersion.domain.research.Article.StrictMode(strict.value)))
+      ),
+      Api.deleteArticle.serverLogic[Identity](slug => read(slug).flatMap(articles.delete))
     )
 
     /** `/article/{slug}` — 404 for an unknown slug. */
@@ -47,14 +65,18 @@ object ArticleRoutes:
         .out(stringBody)
         .out(header(Header.contentType(MediaType.TextHtml)))
         .serverLogicSuccess[Identity] { case (slug, fragment, q) =>
-          pages.article(slug, q) match
+          Slug.parse(slug).toOption.flatMap(s => pages.article(s, q.map(com.histmersion.domain.library.search.Search.Query(_)))) match
             case Some((title, inner)) =>
-              (sttp.model.StatusCode.Ok, if fragment then inner else ArticleHtml.page(title, inner, PageKind.Article))
+              (
+                sttp.model.StatusCode.Ok,
+                if fragment then inner.value else ArticleHtml.page(title, inner, PageKind.Article).value
+              )
             case None =>
-              val body = s"<p>No article <code>${ArticleHtml.esc(slug)}</code>.</p>"
+              val body = s"<p>No article <code>${ArticleHtml.esc(HtmlRender.Text(slug))}</code>.</p>"
               (
                 sttp.model.StatusCode.NotFound,
-                if fragment then body else ArticleHtml.page(com.histmersion.domain.Title("Not found"), body, PageKind.Article)
+                if fragment then body
+                else ArticleHtml.page(com.histmersion.domain.Title("Not found"), HtmlRender.Html(body), PageKind.Article).value
               )
         }
 

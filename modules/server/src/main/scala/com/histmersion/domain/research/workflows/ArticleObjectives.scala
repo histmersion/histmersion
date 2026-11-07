@@ -8,6 +8,6 @@ import com.histmersion.domain.research.articles.ArticleService
   * ledger holds no open MAJOR and the review manager has no item open on them.
   */
 final class ArticleObjectives(articles: => ArticleService, ledgers: => ReviewLedgerService) extends ObjectiveProgress:
-  def linked(): Map[com.histmersion.domain.research.Slug, List[com.histmersion.domain.research.Slug]] = articles.articlesByGoal
-  def finished(): Set[com.histmersion.domain.research.Slug] = ledgers.passedReview(ReviewId)
+  def linked(): Map[com.histmersion.domain.automation.Goal.Slug, List[com.histmersion.domain.research.Slug]] = articles.articlesByGoal
+  def finished(): Set[com.histmersion.domain.research.Slug] = ledgers.passedReview(ReviewLedgerService.ReviewId(ReviewId))
 

@@ -54,7 +54,7 @@ final class MapTileService(
       val versions = currentVersions()
       val k = key(layer, coord, q, versions)
       val tag = etag(k)
-      if matches(q.ifNoneMatch, tag) then
+      if matches(q.ifNoneMatch.map(h => Etag(h.value)), tag) then
         TilesApi.TileAnswer(
           Api.FileBytes(Array.emptyByteArray),
           TilesApi.TileAnswer.ContentType(TilesApi.ContentType),
@@ -64,7 +64,7 @@ final class MapTileService(
         )
       else
         val bytes = cache.get(k).getOrElse {
-          val b = cut(layer, coord, q, TileGrid.of(s.maxZoom, s.maxPoints, s.cellPx))
+          val b = cut(layer, coord, q, TileGrid.of(TileGrid.MaxZoom(s.maxZoom.value), TileGrid.MaxPoints(s.maxPoints.value), TileGrid.CellPx(s.cellPx.value)))
           cache.put(k, b)
           b
         }
@@ -143,7 +143,13 @@ final class MapTileService(
         val records = events.geoOf(cells.filter(_.isItem).map(cell => Event.Id.assume(cell.key.value)))
         TileFeatures.of(c.z, cells, key => records.get(Event.Id.assume(key.value)), TileFeatures.event)
       case TileLayer.Media =>
-        val cells = db.read(TileRepo.cells(media.candidates(q, window(q.filter), TileRepo.envelope(c)), c, grid))
-        val drawn = media.features(cells.filter(_.isItem).map(_.key))
-        TileFeatures.of(c.z, cells, drawn.get, (cell, feature) => feature(cell))
+        val cells = db.read(TileRepo.cells(media.candidates(
+              q,
+              window(q.filter).map((lo, hi) =>
+                (com.histmersion.domain.catalogue.periods.BPeriodRow.PLo(lo.value), com.histmersion.domain.catalogue.periods.BPeriodRow.PHi(hi.value))
+              ),
+              TileRepo.envelope(c)
+            ), c, grid))
+        val drawn = media.features(cells.filter(_.isItem).map(cell => TileKey(cell.key.value)))
+        TileFeatures.of(c.z, cells, key => drawn.get(TileKey(key.value)), (cell, feature) => feature(cell))
     VectorTileWriter.tile(Seq(VectorTileWriter.LayerName(layer.wire.value) -> points))

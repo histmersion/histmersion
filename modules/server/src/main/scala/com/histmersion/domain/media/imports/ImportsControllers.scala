@@ -1,16 +1,19 @@
 package com.histmersion.domain.media.imports
 
 import com.histmersion.api.Write
-import com.histmersion.config.MediaConfig
+import com.histmersion.config.{MediaConfig, MediaPluginCollectionsConfig}
+import com.histmersion.domain.catalogue.{Event, Place}
 import com.histmersion.domain.media.MediaJobs
-import com.histmersion.plugin.MediaCollection
-import com.histmersion.pluginhost.HttpTransport
+import com.histmersion.plugin.{MediaCollection, Plugin}
+import com.histmersion.pluginhost.{HttpTransport, Polite, Registries}
+import com.histmersion.util.data.maintenance.WriteGate
+import com.histmersion.util.jobs.{BackgroundJob, Job}
 import com.histmersion.util.ocr.ConverterClient
 
 import hearth.kindlings.optics.syntax.*
 
 import scala.collection.immutable.ListMap
-import com.histmersion.api.jobs.JobInfo
+import com.histmersion.api.jobs.{JobInfo, JobKinds}
 import com.histmersion.api.media.{MediaImportReport, MediaImportRequest}
 import com.histmersion.api.Api
 import com.histmersion.api.media.MediaProvider
@@ -27,7 +30,7 @@ final class ImportsControllers(
     imports: ImportService,
     store: MediaStore,
     jobs: MediaJobs,
-    collections: () => (ListMap[ImportsControllers.CollectionsResultPart1Key, MediaCollection], Map[ImportsControllers.CollectionsResultPart2Key, ImportsControllers.CollectionsResultPart2Value]),
+    collections: () => (ListMap[Registries.MediaCollectionsKey, MediaCollection], Map[Registries.MediaCollectionsKey, Plugin.Info.Id]),
     cfg: () => MediaConfig,
     http: HttpTransport,
     converter: ConverterClient,
@@ -37,16 +40,35 @@ final class ImportsControllers(
   /** The importer an import request names, or why it cannot run (unknown, its plugin switched off, or its own
     * `media.<provider>.enabled` off).
     */
-  private def providerOf(p: com.histmersion.domain.media.imports.ImportsControllers.Provider): Either[Api.Error, MediaImporter] =
+  private def providerOf(p: com.histmersion.api.media.MediaItem.Provider): Either[Api.Error, MediaImporter] =
     MediaImporters
-      .resolve(p, collections()._1, imports, store, cfg, http, converter)
+      .resolve(MediaImporters.ImporterKey(p.value), collections()._1, imports, store, cfg, http, converter)
       .left
-      .map(Api.Error(_, Some(Write.CodeInvalid)))
+      .map(why => ImportsControllers.error(why.value, Write.CodeInvalid))
+
+  /** The place or event a request names, as the domain's ids: a blank one names none, a malformed one is no place or
+    * event that exists. A place wins over an event.
+    */
+  private def targetsOf(req: MediaImportRequest): Either[Api.Error, (Option[Place.Id], Option[Event.Id])] =
+    for
+      place <- req.place.map(_.value.trim).filter(_.nonEmpty) match
+        case Some(p) =>
+          Place.Id.either(p).left.map(_ => ImportsControllers.error(s"No place '$p'", Write.CodeNotFound)).map(Some(_))
+        case None => Right(None)
+      event <- req.event.map(_.value.trim).filter(_.nonEmpty) match
+        case Some(e) if place.isEmpty =>
+          Event.Id.either(e).left.map(_ => ImportsControllers.error(s"No event '$e'", Write.CodeNotFound)).map(Some(_))
+        case _ => Right(None)
+    yield (place, event)
 
   /** `GET /api/media/providers`: what `media import` can run, as the registries hold it. */
   def providers: List[MediaProvider.Info] =
     val (registered, owner) = collections()
-    MediaImporters.infos(registered, n => owner.getOrElse(n, ""), n => cfg().collections.licencesFor(n))
+    MediaImporters.infos(
+      registered,
+      n => owner.getOrElse(n, Plugin.Info.Id("")),
+      n => cfg().collections.licencesFor(MediaPluginCollectionsConfig.PerCollectionKey(n.value))
+    )
 
   /** One import run, answered when it ends: a dry run (at most `media.max-limit`), or a real one of ONE place or event.
     * A real run over many is a job ([[importJob]], #1491): asked here it outlived the CLI's request while the server
@@ -55,32 +77,40 @@ final class ImportsControllers(
   def importMedia(req: MediaImportRequest): Either[Api.Error, MediaImportReport] =
     def go: Either[Api.Error, MediaImportReport] =
       providerOf(req.provider).flatMap { imp =>
-        jobs.exclusive("media import") {
-          imp
-            .targets(req.place, req.event, cfg().limit(req.limit), req.refresh, None)
-            .left
-            .map(Api.Error(_, Some(Write.CodeNotFound)))
-            .map { targets =>
-              val run = imp.start()
-              val report = run.run(targets, req.dryRun, req.refresh)
-              scribe.info(
-                s"media import ${imp.check} (${if req.dryRun then "dry run" else "stored"}): ${targets.size} target(s), " +
-                  s"${report.files} file(s), ${report.stored} stored, ${run.requests} request(s)"
+        targetsOf(req).flatMap { (place, event) =>
+          jobs.exclusive(BackgroundJob.Work("media import")) {
+            imp
+              .targets(
+                place,
+                event,
+                ImportService.TargetsLimit(cfg().limit(req.limit.map(l => MediaConfig.Limit(l.value))).value),
+                ImportService.Refresh(req.refresh.value),
+                None
               )
-              report.modify(_.pending).setTo(imp.pending(None))
-            }
+              .left
+              .map(why => ImportsControllers.error(why.value, Write.CodeNotFound))
+              .map { targets =>
+                val run = imp.start()
+                val report = run.run(targets, MediaImporter.DryRun(req.dryRun.value), ImportService.Refresh(req.refresh.value))
+                scribe.info(
+                  s"media import ${imp.check} (${if req.dryRun.value then "dry run" else "stored"}): ${targets.size} target(s), " +
+                    s"${report.files} file(s), ${report.stored} stored, ${run.requests} request(s)"
+                )
+                report.modify(_.pending).setTo(MediaImportReport.Pending(imp.pending(None).value))
+              }
+          }
         }
       }
-    if req.dryRun then go
+    if req.dryRun.value then go
     else if !ImportsControllers.single(req) then
       Left(
-        Api.Error(
+        ImportsControllers.error(
           "an import over many places/events is a job: POST /api/media/import/job " +
             "(`histmersion media import wikidata` starts and follows it)",
-          Some(Write.CodeInvalid)
+          Write.CodeInvalid
         )
       )
-    else jobs.guarded(com.histmersion.domain.media.MediaJobs.JobWhat("media_import"))(go)
+    else jobs.guarded(WriteGate.OperationName("media_import"))(go)
 
   /** The import as a job: `media.import-batch` items at a time, most-cited sites first, each batch recorded before the
     * next (so a stopped job resumes after the last one), until none is left, `limit` targets are done, or a batch gets
@@ -88,28 +118,32 @@ final class ImportsControllers(
     */
   def importJob(req: MediaImportRequest): Either[Api.Error, JobInfo] =
     providerOf(req.provider).flatMap { imp =>
-      if req.dryRun then Left(Api.Error("a dry run answers at once: POST /api/media/import", Some(Write.CodeInvalid)))
+      if req.dryRun.value then
+        Left(ImportsControllers.error("a dry run answers at once: POST /api/media/import", Write.CodeInvalid))
       else
         val single = ImportsControllers.single(req)
-        // the one target must exist (and have an item) before a job is started for it
-        val check =
-          if single then
-            imp
-              .targets(req.place, req.event, 1, req.refresh, None)
-              .left
-              .map(Api.Error(_, Some(Write.CodeNotFound)))
-              .map(_ => ())
-          else Right(())
-        check.flatMap { _ =>
-          val cap = req.limit.filter(_ > 0)
-          val what =
-            (if single then s"${imp.title} of ${req.place.orElse(req.event).getOrElse("")}"
-             else s"${imp.title} of ${cap.fold(s"every ${imp.over}")(n => s"up to $n ${imp.over}")} not asked yet") +
-              (if req.refresh then " (refresh)" else "")
-          // a refresh asks again what was asked before this job started — a resumed job too
-          val since = Option.when(req.refresh)(clock.millis())
-          jobs.start(ImportsControllers.ImportJobKind, what) { progress =>
-            Right(ImportsControllers.summary(runImport(imp, req, single, cap, since, progress)))
+        val refresh = ImportService.Refresh(req.refresh.value)
+        targetsOf(req).flatMap { (place, event) =>
+          // the one target must exist (and have an item) before a job is started for it
+          val check =
+            if single then
+              imp
+                .targets(place, event, ImportService.TargetsLimit(1), refresh, None)
+                .left
+                .map(why => ImportsControllers.error(why.value, Write.CodeNotFound))
+                .map(_ => ())
+            else Right(())
+          check.flatMap { _ =>
+            val cap = req.limit.map(_.value).filter(_ > 0).map(ImportsControllers.ImportLimit(_))
+            val what =
+              (if single then s"${imp.title} of ${req.place.map(_.value).orElse(req.event.map(_.value)).getOrElse("")}"
+               else s"${imp.title} of ${cap.fold(s"every ${imp.over}")(n => s"up to $n ${imp.over}")} not asked yet") +
+                (if req.refresh.value then " (refresh)" else "")
+            // a refresh asks again what was asked before this job started — a resumed job too
+            val since = Option.when(req.refresh.value)(ImportService.Since(clock.millis()))
+            jobs.start(ImportsControllers.ImportJobKind, JobKinds.Subject(what)) { progress =>
+              Right(ImportsControllers.summary(runImport(imp, place, event, refresh, single, cap, since, progress)))
+            }
           }
         }
     }
@@ -121,118 +155,109 @@ final class ImportsControllers(
     */
   private def runImport(
       imp: MediaImporter,
-      req: MediaImportRequest,
-      single: com.histmersion.domain.media.imports.ImportsControllers.Single,
+      place: Option[Place.Id],
+      event: Option[Event.Id],
+      refresh: ImportService.Refresh,
+      single: Boolean,
       limit: Option[com.histmersion.domain.media.imports.ImportsControllers.ImportLimit],
-      since: Option[com.histmersion.domain.media.imports.ImportsControllers.Since],
-      progress: com.histmersion.domain.media.imports.ImportsControllers.Progress => Unit
+      since: Option[ImportService.Since],
+      progress: JobInfo.Progress => Unit
   ): MediaImportReport =
     val run = imp.start()
-    val batch = imp.batch.max(1)
-    val cap = limit.getOrElse(Int.MaxValue)
-    progress(s"counting the ${imp.over} not asked yet")
-    val total = if single then 1 else imp.pending(since).min(cap)
+    val batch = imp.batch.value.max(1)
+    val cap = limit.fold(Int.MaxValue)(_.value)
+    progress(JobInfo.Progress(s"counting the ${imp.over} not asked yet"))
+    val total = ImportsControllers.TotalCount(if single then 1 else imp.pending(since).value.min(cap))
     @annotation.tailrec
     def loop(acc: MediaImportReport, seen: Set[com.histmersion.domain.media.imports.ImportsControllers.SeenKey]): MediaImportReport =
-      val left = cap - acc.targets
+      val left = cap - acc.targets.value
       if left <= 0 || jobs.held then acc
       else
-        imp.targets(req.place, req.event, batch.min(left), req.refresh, since) match
-          case Left(e)    => acc.modify(_.failed).using(_ :+ e)
+        imp.targets(place, event, ImportService.TargetsLimit(batch.min(left)), refresh, since) match
+          case Left(e)    => acc.modify(_.failed).using(_ :+ MediaImportReport.Failed(e.value))
           case Right(Nil) => acc
           // none of the last batch's checks were recorded: asking again would spin on the same ones
-          case Right(targets) if !single && targets.forall(t => seen(s"${t.targetType}:${t.id}")) =>
+          case Right(targets) if !single && targets.forall(t => seen(ImportsControllers.seenKey(t))) =>
             acc
               .modify(_.failed)
-              .using(_ :+ s"${targets.size} place(s)/event(s) came back unrecorded (${targets.head.id}…); stopped")
+              .using(
+                _ :+ MediaImportReport.Failed(
+                  s"${targets.size} place(s)/event(s) came back unrecorded (${targets.head.id}…); stopped"
+                )
+              )
           case Right(targets) =>
-            scala.util.Try(run.run(targets, dryRun = com.histmersion.domain.media.imports.MediaImporter.DryRun(false), req.refresh)) match
+            scala.util.Try(run.run(targets, dryRun = MediaImporter.DryRun(false), refresh)) match
               case scala.util.Failure(e: InterruptedException) => throw e
               case scala.util.Failure(e)                       =>
-                scribe.error(s"media import job: batch ${acc.batches + 1} failed: ${e.getMessage}", e)
+                scribe.error(s"media import job: batch ${acc.batches.value + 1} failed: ${e.getMessage}", e)
                 acc
                   .modify(_.failed)
                   .using(
-                    _ :+ s"batch ${acc.batches + 1} (${targets.head.id}…): " +
-                      s"${e.getClass.getSimpleName}: ${e.getMessage}"
+                    _ :+ MediaImportReport.Failed(
+                      s"batch ${acc.batches.value + 1} (${targets.head.id}…): " +
+                        s"${e.getClass.getSimpleName}: ${e.getMessage}"
+                    )
                   )
               case scala.util.Success(r) =>
-                val next = MediaImportReport.combine(acc, r.modify(_.batches).setTo(1))
+                val next = MediaImportReport.combine(acc, r.modify(_.batches).setTo(MediaImportReport.Batches(1)))
                 progress(ImportsControllers.progressLine(next, total, run.requests))
                 // a batch the provider did not answer at all ends the job (the next one resumes) rather than spin
-                if single || (r.items == 0 && r.failed.nonEmpty) then next
-                else loop(next, seen ++ targets.map(t => s"${t.targetType}:${t.id}"))
-    val out = loop(MediaImportReport(imp.check, dryRun = com.histmersion.api.library.RepairAcquire.RepairRequest.DryRun(false)), Set.empty)
+                if single || (r.items.value == 0 && r.failed.nonEmpty) then next
+                else loop(next, seen ++ targets.map(ImportsControllers.seenKey))
+    val out = loop(
+      MediaImportReport(com.histmersion.api.media.MediaItem.Provider(imp.check.value), dryRun = MediaImportRequest.DryRun(false)),
+      Set.empty
+    )
     scribe.info(
       s"media import job ${imp.check}: ${out.targets} target(s) in ${out.batches} batch(es), ${out.stored} stored, " +
         s"${run.requests} request(s), ${out.failed.size} failed"
     )
     out.failed.take(50).foreach(f => scribe.warn(s"media import job: $f"))
-    out.modify(_.pending).setTo(imp.pending(since))
+    out.modify(_.pending).setTo(MediaImportReport.Pending(imp.pending(since).value))
 
 object ImportsControllers:
-  type CollectionItemKey = CollectionItemKey.T
-  object CollectionItemKey extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type CollectionKey = CollectionKey.T
-  object CollectionKey extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type ImportLimit = ImportLimit.T
   object ImportLimit extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type Progress = Progress.T
-  object Progress extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type ProgressLine = ProgressLine.T
-  object ProgressLine extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type Provider = Provider.T
-  object Provider extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type RequestCount = RequestCount.T
-  object RequestCount extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type SeenKey = SeenKey.T
   object SeenKey extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type Since = Since.T
-  object Since extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type Single = Single.T
-  object Single extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type SummaryText = SummaryText.T
-  object SummaryText extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type TotalCount = TotalCount.T
   object TotalCount extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
-  type CollectionsResultPart1Key = com.histmersion.domain.media.imports.ImportsControllers.CollectionKey
-  val CollectionsResultPart1Key: _root_.com.histmersion.domain.media.imports.ImportsControllers.CollectionKey.type = _root_.com.histmersion.domain.media.imports.ImportsControllers.CollectionKey
-  type CollectionsResultPart2Key = com.histmersion.domain.media.imports.ImportsControllers.CollectionItemKey
-  val CollectionsResultPart2Key: _root_.com.histmersion.domain.media.imports.ImportsControllers.CollectionItemKey.type = _root_.com.histmersion.domain.media.imports.ImportsControllers.CollectionItemKey
-  type CollectionsResultPart2Value = CollectionsResultPart2Value.T
-  object CollectionsResultPart2Value extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  val ImportJobKind: Job.Kind = Job.Kind.applyUnsafe(com.histmersion.api.media.ImportJobKinds.MediaImport.kind.value)
 
-  type ImportJobKind = ImportJobKindValue
-  type ImportJobKindValue = ImportJobKindValue.T
-  object ImportJobKindValue extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  private[imports] def error(message: String, code: String): Api.Error =
+    Api.Error(Api.Error.Message(message), Some(Api.Error.Code(code)))
 
-  val ImportJobKind: com.histmersion.domain.media.imports.ImportsControllers.ImportJobKind = com.histmersion.api.media.ImportJobKinds.MediaImport.kind.value
+  private[imports] def seenKey(t: Target): SeenKey = SeenKey(s"${t.targetType}:${t.id}")
 
   /** Pure: does the request name one place or event (not "every one not asked yet")? */
   def single(req: MediaImportRequest): Boolean =
-    req.place.exists(_.trim.nonEmpty) || req.event.exists(_.trim.nonEmpty)
+    req.place.exists(_.value.trim.nonEmpty) || req.event.exists(_.value.trim.nonEmpty)
 
   /** Pure: a running import job's progress line — `n/total` asked (a total of 0 or less is unknown, and a total passed
     * by the asked count is the asked count: places cited meanwhile join in).
     */
-  def progressLine(r: MediaImportReport, total: com.histmersion.domain.media.imports.ImportsControllers.TotalCount, requests: com.histmersion.domain.media.imports.ImportsControllers.RequestCount): com.histmersion.domain.media.imports.ImportsControllers.ProgressLine =
-    val of = if total > 0 then s"/${total.max(r.targets)}" else ""
-    List(
-      Some(s"${r.targets}$of place(s)/event(s) asked"),
-      Some(s"batch ${r.batches}"),
-      Some(s"${r.stored} stored · ${r.linked} linked"),
-      Option.when(r.failed.nonEmpty)(s"${r.failed.size} failed"),
-      Some(s"$requests request(s)")
-    ).flatten.mkString(" · ")
+  def progressLine(r: MediaImportReport, total: com.histmersion.domain.media.imports.ImportsControllers.TotalCount, requests: Polite.RequestCount): JobInfo.Progress =
+    val of = if total.value > 0 then s"/${total.value.max(r.targets.value)}" else ""
+    JobInfo.Progress(
+      List(
+        Some(s"${r.targets}$of place(s)/event(s) asked"),
+        Some(s"batch ${r.batches}"),
+        Some(s"${r.stored} stored · ${r.linked} linked"),
+        Option.when(r.failed.nonEmpty)(s"${r.failed.size} failed"),
+        Some(s"$requests request(s)")
+      ).flatten.mkString(" · ")
+    )
 
   /** Pure: a finished import job's line in `histmersion jobs`. */
-  def summary(r: MediaImportReport): com.histmersion.domain.media.imports.ImportsControllers.SummaryText =
-    List(
-      Some(s"${r.targets} place(s)/event(s) asked in ${r.batches} batch(es)"),
-      Some(s"${r.files} file(s) · ${r.stored} stored · ${r.updated} refreshed · ${r.linked} link(s)"),
-      Option.when(r.rejected.nonEmpty)("not stored: " + r.rejected.map(c => s"${c.key} ${c.n}").mkString(", ")),
-      Option.when(r.revoked.nonEmpty)(s"${r.revoked.size} licence(s) no longer allowed (kept, review)"),
-      Option.when(r.failed.nonEmpty)(s"${r.failed.size} failed: ${r.failed.take(3).mkString("; ")}"),
-      Some(s"${r.pending} not asked yet")
-    ).flatten.mkString(" · ")
+  def summary(r: MediaImportReport): BackgroundJob.Outcome.Summary =
+    BackgroundJob.Outcome.Summary(
+      List(
+        Some(s"${r.targets} place(s)/event(s) asked in ${r.batches} batch(es)"),
+        Some(s"${r.files} file(s) · ${r.stored} stored · ${r.updated} refreshed · ${r.linked} link(s)"),
+        Option.when(r.rejected.nonEmpty)("not stored: " + r.rejected.map(c => s"${c.key} ${c.n}").mkString(", ")),
+        Option.when(r.revoked.nonEmpty)(s"${r.revoked.size} licence(s) no longer allowed (kept, review)"),
+        Option.when(r.failed.nonEmpty)(s"${r.failed.size} failed: ${r.failed.take(3).mkString("; ")}"),
+        Some(s"${r.pending} not asked yet")
+      ).flatten.mkString(" · ")
+    )

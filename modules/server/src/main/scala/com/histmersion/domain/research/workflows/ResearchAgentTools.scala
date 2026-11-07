@@ -2,7 +2,7 @@ package com.histmersion.domain.research.workflows
 
 import com.histmersion.domain.automation.agents.ToolResultCap
 
-import com.histmersion.api.research.ArticleMarkdown
+import com.histmersion.api.research.{Article, ArticleMarkdown}
 import com.histmersion.config.AgentToolsConfig
 import com.histmersion.domain.automation.workflows.{ToolContribution, ToolName}
 import com.histmersion.domain.research.articles.{ArticlesControllers, ArticleTools}
@@ -18,7 +18,7 @@ import sttp.shared.Identity
 final class ResearchAgentTools(articles: => ArticlesControllers, caps: => AgentToolsConfig):
   import ToolResultCap.cap
 
-  private def max = caps.resultMaxChars
+  private def max = ToolResultCap.CapMax(caps.resultMaxChars.value)
 
   private def contribution(n: ToolName)(t: => AgentTool[Identity, ?]): ToolContribution = new ToolContribution:
     val name: ToolName = n
@@ -38,7 +38,10 @@ final class ResearchAgentTools(articles: => ArticlesControllers, caps: => AgentT
             e => s"No article '${in.slug}': ${e.message}",
             v =>
               cap(
-                ArticleMarkdown.article(v, in.parts.map(_.split(',').map(_.trim.toLowerCase).toList).getOrElse(Nil)),
+                ArticleMarkdown.article(
+                  v,
+                  in.parts.map(_.value.split(',').map(p => Article.Part(p.trim.toLowerCase)).toList).getOrElse(Nil)
+                ),
                 max,
                 "ask for fewer `parts`"
               )
@@ -51,7 +54,7 @@ final class ResearchAgentTools(articles: => ArticlesControllers, caps: => AgentT
         ResearchAgentTools.CheckEdits.value,
         "Dry-run edits (or a whole draft `body`) against the stored article: which edits apply, and what the " +
           "review checks find in the result. Nothing is written."
-      )(in => cap(ArticleTools.checkEdits(articles, in), max, "dry-run fewer edits at once"))
+      )(in => cap(ArticleTools.checkEdits(articles, in).value, max, "dry-run fewer edits at once"))
     },
 
     contribution(ResearchAgentTools.ArticleCoverage) {
@@ -61,7 +64,7 @@ final class ResearchAgentTools(articles: => ArticlesControllers, caps: => AgentT
           "drift (sources with no reason), and the generated Not used list and Method note."
       )(in =>
         cap(
-          ArticleTools.articleCoverageMarkdown(articles, in),
+          ArticleTools.articleCoverageMarkdown(articles, in).value,
           max,
           "read one source's record with get_source"
         )

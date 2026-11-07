@@ -20,7 +20,10 @@ for i, l in enumerate(t):
         body.append(x[:170])
     byfile[m.group(2)].append(f"{m.group(3)}:{m.group(4)} [{m.group(1) or '-'}] " + ' / '.join(body[:6]))
 RANK = ['/util/', '/domain/personal/', '/domain/library/', '/domain/catalogue/', '/domain/media/', '/domain/research/', '/domain/automation/', '/server/']
+FIRST = ('ManagerKindDefinition', 'ManagerContext', 'PipelineDef', 'RunCtx', 'Pipelines.scala', 'CheckRule', 'MapLayer', 'BasemapJobs', 'McpOut', 'LibraryState', 'AcquisitionState', 'CatalogueState')
 def rank(f):
+    if any(k in f for k in FIRST):
+        return (-1, '', f)
     r = next((i for i, k in enumerate(RANK) if k in f), 3)
     return (r, f.rsplit('/', 1)[0], f)
 order = sorted(byfile, key=rank); bundles = [[] for _ in range(agents)]; b = 0; n = 0; used = 0

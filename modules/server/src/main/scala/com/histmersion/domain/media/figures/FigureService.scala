@@ -17,11 +17,11 @@ object FigureService:
 
   final private class Implementation(db: Transactor) extends FigureService:
     def fillLicences(apply: com.histmersion.domain.media.figures.FigureService.Apply): FigureLicenceFill =
-      if apply then db.transact(FigureRepo.fillLicences(apply = com.histmersion.api.media.FigureLicenceFill.Applied(true)))
+      if apply.value then db.transact(FigureRepo.fillLicences(apply = com.histmersion.api.media.FigureLicenceFill.Applied(true)))
       else db.read(FigureRepo.fillLicences(apply = com.histmersion.api.media.FigureLicenceFill.Applied(false)))
 
 
   /** Media's rows alone, in memory: no source is held, so no figure has a source licence to take. */
   final class InMemory extends FigureService:
-    def fillLicences(apply: com.histmersion.domain.media.figures.FigureService.Apply): FigureLicenceFill = FigureLicenceFill(com.histmersion.api.media.FigureLicenceFill.Candidates(0), com.histmersion.api.media.FigureLicenceFill.Updated(0), apply, Nil)
+    def fillLicences(apply: com.histmersion.domain.media.figures.FigureService.Apply): FigureLicenceFill = FigureLicenceFill(com.histmersion.api.media.FigureLicenceFill.Candidates(0), com.histmersion.api.media.FigureLicenceFill.Updated(0), com.histmersion.api.media.FigureLicenceFill.Applied(apply.value), Nil)
 

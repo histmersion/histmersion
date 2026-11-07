@@ -37,4 +37,4 @@ object CorrectionService:
         val label = Option.when(c.targetKind.value == "event")(s.events.find(_.id.value == c.targetId.value).map(_.label)).flatten
         c.modify(_.label).setTo(label)
       }
-      Correction.List(all.size, page)
+      Correction.List(Correction.List.Total(all.size), page)

@@ -2,12 +2,14 @@ package com.histmersion.domain.media.imports
 
 import hearth.kindlings.optics.syntax.*
 
-import com.histmersion.pluginhost.{PluginMedia, Polite, SpiValues}
+import com.histmersion.pluginhost.{HttpTransport, PluginMedia, Polite, SpiValues}
 
-import com.histmersion.api.media.{ImageSize, MediaCount, MediaImportReport, MediaSample}
+import com.histmersion.api.media.{ImageSize, MediaCount, MediaImportReport, MediaImportRequest, MediaSample}
 import com.histmersion.config.MediaConfig
 import com.histmersion.domain.Licence
-import com.histmersion.domain.media.assets.{ProviderAsset, Rights}
+import com.histmersion.domain.catalogue.Place
+import com.histmersion.domain.catalogue.places.{ExternalIds, Wikidata}
+import com.histmersion.domain.media.assets.{AssetService, ProviderAsset, Rights}
 import com.histmersion.plugin.*
 import com.histmersion.upstreams.media.MediaText
 
@@ -26,92 +28,123 @@ import scala.util.control.NonFatal
   * @param name
   *   the collection's name in the registry
   */
-final class OwnImport(name: OwnImport.Name, col: MediaCollection, fetch: Polite, cfg: MediaConfig):
+final class OwnImport(name: MediaImporter.ImporterName, col: MediaCollection, fetch: Polite, cfg: MediaConfig):
 
-  private val check = BuiltinMedia.checkOf(name)
-  private val provider = BuiltinMedia.providerOf(name)
-  private val allow = LicencePolicy.of(BuiltinMedia.licencesFor(name, cfg))
+  private val check: String = BuiltinMedia.checkOf(BuiltinMedia.CheckOfName(name.value)).value
+  private val provider: String = BuiltinMedia.providerOf(BuiltinMedia.ProviderOfName(name.value)).value
+  private val allow = LicencePolicy.of(
+    Licence.AllowList(BuiltinMedia.licencesFor(BuiltinMedia.LicencesForName(name.value), cfg).value)
+  )
 
   /** What the host decided about one picture: its licence key for the counts, and the item and rights when it may be
     * stored, else why not.
     */
-  final private case class Verdict(licence: Option[Verdict.Licence], decision: Either[Verdict.DecisionPart1, (MediaItem, Rights)])
-
-  object Verdict:
-    type Licence = Licence.T
-    object Licence extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-    type DecisionPart1 = DecisionPart1.T
-    object DecisionPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  final private case class Verdict(licence: Option[String], decision: Either[String, (MediaItem, Rights)])
 
   private def idOf(t: Target): com.histmersion.plugin.MediaTarget.Id =
     com.histmersion.plugin.MediaTarget
-      .Id(if t.targetType == ImportRepo.Event then MediaTarget.Events else MediaTarget.Places, t.id)
+      .Id(
+        if t.targetType == ImportRepo.Event then MediaTarget.Events else MediaTarget.Places,
+        com.histmersion.plugin.MediaTarget.Id.Value(t.id.value)
+      )
 
   /** A use's Wikidata statement as the host checks it: one that is no item is left out, with a warning. */
-  private def wikidataOf(u: MediaUse): Option[com.histmersion.domain.catalogue.places.Wikidata.Id] =
+  private def wikidataOf(u: MediaUse): Option[Wikidata.Id] =
     val (q, why) = SpiValues.kept(u.wikidata)(SpiValues.wikidataOf)
     why.foreach(w => scribe.warn(s"media import: ${u.item.key}: $w, left out"))
-    q.map(_.value)
+    q
 
-  private def typeOf(t: com.histmersion.plugin.MediaTarget.Id): com.histmersion.domain.media.imports.OwnImport.MediaKind = t.kind match
+  private def typeOf(t: com.histmersion.plugin.MediaTarget.Id): Target.TargetType = t.kind match
     case MediaTarget.Events => ImportRepo.Event
     case MediaTarget.Places => ImportRepo.Place
 
-  private def roleOf(u: MediaUse): com.histmersion.domain.media.MediaRole.Wire = u.item.role.map(_.trim).filter(_.nonEmpty).getOrElse(col.role)
+  private def roleOf(u: MediaUse): com.histmersion.domain.media.MediaRole.Wire =
+    com.histmersion.domain.media.MediaRole.Wire(
+      u.item.role.map(_.value.trim).filter(_.nonEmpty).getOrElse(col.role.value)
+    )
+
+  private def providerKey(key: MediaItem.Key): AssetService.ProviderKey = AssetService.ProviderKey(key.value)
 
   /** The host's reading of an item's stated licence, and its judgement. */
   private def judge(item: MediaItem): Verdict =
     item.rights match
-      case Left(why)     => Verdict(None, Left(why))
+      case Left(why)     => Verdict(None, Left(why.value))
       case Right(rights) =>
-        val stated = scala.util.Try(SpiValues.licenceOf(rights.licence)).toOption.getOrElse("").trim
-        val read = Licence.ofStatement(stated)
-        val key = Some(if read.id.value.isEmpty then Licence.Family.Unknown.wire else read.id.value)
+        val stated = scala.util.Try(SpiValues.licenceOf(rights.licence)).toOption.map(_.value).getOrElse("").trim
+        val read = Licence.ofStatement(Licence.Statement(stated))
+        val key: Option[String] = Some(if read.id.value.isEmpty then Licence.Family.Unknown.wire.value else read.id.value)
         item.withheld match
-          case Some(why) => Verdict(key, Left(why))
+          case Some(why) => Verdict(key, Left(why.value))
           case None      =>
             PluginMedia.rights(rights) match
-              case Left(why)                            => Verdict(key, Left(why))
+              case Left(why)                            => Verdict(key, Left(why.value))
               case Right(r) if !allow.allows(r.licence) =>
                 Verdict(key, Left(s"licence ${r.licence.family.wire} not allowed for $provider"))
-              case Right(r) => Verdict(key, Right(item -> Rights(r.licence.id.value, r.licenceUrl, r.author, r.credit)))
+              case Right(r) =>
+                Verdict(
+                  key,
+                  Right(
+                    item -> Rights(
+                      Rights.License(r.licence.id.value),
+                      r.licenceUrl.map(u => Rights.LicenseUrl(u.value)),
+                      r.author.map(a => Rights.Author(a.value)),
+                      Rights.Credit(r.credit.value)
+                    )
+                  )
+                )
 
-  def run(targets: List[Target], dryRun: com.histmersion.domain.media.imports.CollectionImport.DryRun, refresh: com.histmersion.domain.media.imports.OwnImport.Refresh, store: MediaStore): MediaImportReport =
+  def run(targets: List[Target], dryRun: MediaImporter.DryRun, refresh: ImportService.Refresh, store: MediaStore): MediaImportReport =
     val places = targets.filter(_.targetType == ImportRepo.Place)
     val events = targets.filter(_.targetType == ImportRepo.Event)
     val carried =
-      if col.placesCarrying.isDefined then store.pleiadesIds(places.map(_.id)) else Map.empty[String, List[String]]
+      if col.placesCarrying.isDefined then store.pleiadesIds(places.flatMap(t => Place.Id.option(t.id.value)))
+      else Map.empty[Place.Id, List[ExternalIds.ExternalId]]
     val asPlaces = places.map(t =>
       MediaPlace(
-        t.id,
-        t.label,
-        SpiValues.wikidata(t.qid),
-        ids = col.placesCarrying.toList.flatMap(s => carried.getOrElse(t.id, Nil).map(s -> _))
+        MediaPlace.Id(t.id.value),
+        MediaPlace.Label(t.label.value),
+        Wikidata.Id.option(t.qid.value).flatMap(SpiValues.wikidata),
+        ids = col.placesCarrying.toList.flatMap(s =>
+          Place.Id.option(t.id.value).flatMap(carried.get).getOrElse(Nil).map(e => MediaPlace.IdsPart1(s.value) -> MediaPlace.IdsPart2(e.value))
+        )
       )
     )
-    val asEvents = events.map(t => MediaEvent(t.id, t.label, SpiValues.wikidata(t.qid)))
+    val asEvents = events.map(t =>
+      MediaEvent(
+        MediaEvent.Id(t.id.value),
+        MediaEvent.Label(t.label.value),
+        Wikidata.Id.option(t.qid.value).flatMap(SpiValues.wikidata)
+      )
+    )
     val found =
       try col.searchTargets(asPlaces, asEvents, PluginMedia.http(fetch))
       catch
         case e: InterruptedException => throw e
         case NonFatal(e)             =>
-          MediaFound(Nil, Nil, failed = List(s"the plugin failed: ${e.getClass.getSimpleName}: ${e.getMessage}"))
-    val failed = List.newBuilder[String] ++= found.failed
+          MediaFound(
+            Nil,
+            Nil,
+            failed = List(MediaFound.Failed(s"the plugin failed: ${e.getClass.getSimpleName}: ${e.getMessage}"))
+          )
+    val failed = List.newBuilder[String] ++= found.failed.map(_.value)
     val byId = targets.map(t => idOf(t) -> t).toMap
     val uses = found.uses.filter(u => byId.contains(u.target))
     val verdicts = uses.map(_.item).distinctBy(_.key).map(it => it.key -> judge(it)).toMap
 
     val counted = MediaImportReport(
-      provider = check,
-      dryRun = dryRun,
-      targets = found.asked.size,
-      items = found.read,
-      statements = uses.size,
-      files = verdicts.size,
+      provider = com.histmersion.api.media.MediaItem.Provider(check),
+      dryRun = MediaImportRequest.DryRun(dryRun.value),
+      targets = MediaImportReport.Targets(found.asked.size),
+      items = MediaImportReport.Items(found.read.value),
+      statements = MediaImportReport.Statements(uses.size),
+      files = MediaImportReport.Files(verdicts.size),
       byLicence = MediaCount
-        .of(verdicts.values.flatMap(_.licence).toList, k => allow.allows(Licence.classify(k))),
-      byRole = MediaCount.of(uses.map(roleOf)),
-      rejected = MediaCount.of(verdicts.values.flatMap(_.decision.left.toOption).toList)
+        .of(
+          verdicts.values.flatMap(_.licence).toList.map(MediaCount.Key(_)),
+          k => allow.allows(Licence.classify(Licence.Id(k.value)))
+        ),
+      byRole = MediaCount.of(uses.map(u => MediaCount.Key(roleOf(u).value))),
+      rejected = MediaCount.of(verdicts.values.flatMap(_.decision.left.toOption).toList.map(MediaCount.Key(_)))
     )
     val samples = uses
       .flatMap { u =>
@@ -119,14 +152,29 @@ final class OwnImport(name: OwnImport.Name, col: MediaCollection, fetch: Polite,
           note <- u.note
           (_, r) <- verdicts.get(u.item.key).flatMap(_.decision.toOption)
           t <- byId.get(u.target)
-        yield MediaSample(t.targetType, t.id, t.label, u.item.key, u.item.title, r.license, note, u.item.pageUrl)
+        yield MediaSample(
+          com.histmersion.api.media.MediaTarget.TargetType(t.targetType.value),
+          com.histmersion.api.media.MediaTarget.TargetId(t.id.value),
+          MediaSample.TargetLabel(t.label.value),
+          MediaSample.Key(u.item.key.value),
+          MediaSample.Title(u.item.title.value),
+          com.histmersion.api.media.MediaItem.License(r.license.value),
+          MediaSample.Basis(note.value),
+          MediaSample.Url(u.item.pageUrl.value)
+        )
       }
-      .take(cfg.samples.max(0))
-    val base = counted.modify(
-      _.samples).setTo(samples).modify(_.rejected).setTo(MediaCount.of(counted.rejected.flatMap(c => List.fill(c.n)(c.key)) ++ found.notTaken)
-    )
+      .take(cfg.samples.value.max(0))
+    val base = counted
+      .modify(_.samples)
+      .setTo(samples)
+      .modify(_.rejected)
+      .setTo(
+        MediaCount.of(
+          counted.rejected.flatMap(c => List.fill(c.n.value)(c.key)) ++ found.notTaken.map(n => MediaCount.Key(n.value))
+        )
+      )
 
-    if dryRun then base.modify(_.failed).setTo(failed.result())
+    if dryRun.value then base.modify(_.failed).setTo(failed.result().map(MediaImportReport.Failed(_)))
     else
       val asked = found.asked.toSet -- found.unanswered
       val answered = targets.filter(t => asked(idOf(t)))
@@ -135,77 +183,83 @@ final class OwnImport(name: OwnImport.Name, col: MediaCollection, fetch: Polite,
   private def persist(
       base: MediaImportReport,
       uses: List[MediaUse],
-      verdicts: Map[com.histmersion.domain.media.imports.OwnImport.VerdictKey, Verdict],
+      verdicts: Map[MediaItem.Key, Verdict],
       answered: List[Target],
-      refresh: com.histmersion.domain.media.imports.OwnImport.Refresh,
+      refresh: ImportService.Refresh,
       db: MediaStore,
-      failed: scala.collection.mutable.Builder[com.histmersion.domain.media.imports.CollectionImport.FailedKey, List[com.histmersion.domain.media.imports.OwnImport.Problem]],
-      categories: List[(com.histmersion.domain.catalogue.places.Wikidata.Id, com.histmersion.domain.media.imports.OwnImport.CategoryText)],
+      failed: scala.collection.mutable.Builder[String, List[String]],
+      categories: List[(MediaFound.CategoriesPart1, MediaFound.CategoriesPart2)],
       byId: Map[com.histmersion.plugin.MediaTarget.Id, Target]
   ): MediaImportReport =
-    val known = db.known(provider, verdicts.keys.toList)
+    val known = db.known(ImportService.Provider(provider), verdicts.keys.toList.map(providerKey))
     def each[A](what: => String)(write: => A): Option[A] = MediaStep.each(failed)(what)(write)
 
     val revoked = verdicts.toList.collect {
       case (key, Verdict(_, Left(why)))
-          if known.contains(key) && !why.startsWith("no answer") && !why.startsWith("missing") =>
-        s"$key (media:${known(key).uid}): $why"
+          if known.contains(providerKey(key)) && !why.startsWith("no answer") && !why.startsWith("missing") =>
+        s"$key (media:${known(providerKey(key)).uid}): $why"
     }
 
     val accepted = verdicts.collect { case (k, Verdict(_, Right(v))) => k -> v }
-    val toFetch = accepted.keys.filterNot(known.contains).toList.sorted
+    val toFetch = accepted.keys.filterNot(k => known.contains(providerKey(k))).toList.sortBy(_.value)
     val completed =
       try col.completeAll(toFetch.flatMap(accepted.get).map(_._1), PluginMedia.http(fetch))
       catch
         case e: InterruptedException => throw e
         case NonFatal(e)             =>
-          MediaCompleted(Map.empty, List(s"the plugin failed: ${e.getClass.getSimpleName}: ${e.getMessage}"))
-    failed ++= completed.failed
+          MediaCompleted(
+            Map.empty,
+            List(MediaCompleted.Failed(s"the plugin failed: ${e.getClass.getSimpleName}: ${e.getMessage}"))
+          )
+    failed ++= completed.failed.map(_.value)
     val firstUse = uses.groupBy(_.item.key).view.mapValues(_.head).toMap
 
     // `var`s: the counts of what this run wrote
     var stored, updated = 0
-    val uids = scala.collection.mutable.Map.empty[String, String]
-    accepted.toList.sortBy(_._1).foreach { case (key, (item, r)) =>
-      known.get(key) match
+    val uids = scala.collection.mutable.Map.empty[MediaItem.Key, AssetService.AssetUid]
+    accepted.toList.sortBy(_._1.value).foreach { case (key, (item, r)) =>
+      known.get(providerKey(key)) match
         case Some(k) =>
-          if refresh then each(s"$key (licence re-read)")(db.refreshRights(k.uid, r))
-          uids(key) = k.uid
+          if refresh.value then each(s"$key (licence re-read)")(db.refreshRights(AssetService.AssetUid(k.uid.value), r))
+          uids(key) = AssetService.AssetUid(k.uid.value)
         case None =>
           download(item, completed.items.get(key)) match
             case Left(why)                   => failed += s"$key: $why"
             case Right((bytes, mime, thumb)) =>
               val use = firstUse(key)
-              val (width, height) = item.rendition.fold(ImageSize.of(bytes).map(_._1) -> ImageSize.of(bytes).map(_._2))(
-                r => r.width -> r.height
+              val sized = ImageSize.of(ImageSize.Bytes(bytes))
+              val (width, height) = item.rendition.fold(sized.map(_._1.value) -> sized.map(_._2.value))(
+                r => r.width.map(_.value) -> r.height.map(_.value)
               )
               val target = byId(use.target)
               val a = ProviderAsset(
-                provider,
-                key,
-                MediaText.safeName(key),
-                mime,
-                bytes,
-                width,
-                height,
-                thumb.map(_._1),
-                thumb.map(_._2),
-                thumb.flatMap(_._3),
-                thumb.flatMap(_._4),
-                r.license,
-                r.licenseUrl,
-                r.author,
-                r.credit,
-                item.pageUrl,
-                item.originalUrl,
+                ProviderAsset.Provider(provider),
+                ProviderAsset.Key(key.value),
+                ProviderAsset.Name(MediaText.safeName(WorkKey.Title(key.value)).value),
+                ProviderAsset.Mime(mime),
+                ProviderAsset.Bytes(bytes),
+                width.map(ProviderAsset.Width(_)),
+                height.map(ProviderAsset.Height(_)),
+                thumb.map(t => ProviderAsset.Thumb(t._1)),
+                thumb.map(t => ProviderAsset.ThumbMime(t._2)),
+                thumb.flatMap(_._3).map(ProviderAsset.ThumbWidth(_)),
+                thumb.flatMap(_._4).map(ProviderAsset.ThumbHeight(_)),
+                ProviderAsset.License(r.license.value),
+                r.licenseUrl.map(u => ProviderAsset.LicenseUrl(u.value)),
+                r.author.map(a => ProviderAsset.Author(a.value)),
+                ProviderAsset.Credit(r.credit.value),
+                ProviderAsset.SourceUrl(item.pageUrl.value),
+                item.originalUrl.map(u => ProviderAsset.OriginalUrl(u.value)),
                 Some(ProviderAsset.kindOf(roleOf(use)))
               )
-              each(s"$key (store)")(db.save(a, (target.targetType, target.id))).foreach { (uid, inserted) =>
+              each(s"$key (store)")(
+                db.save(a, (ImportService.TargetType(target.targetType.value), ImportService.TargetId(target.id.value)))
+              ).foreach { (uid, inserted) =>
                 if inserted then stored += 1 else updated += 1
                 uids(key) = uid
               }
     }
-    if refresh then updated += accepted.keys.count(known.contains)
+    if refresh.value then updated += accepted.keys.count(k => known.contains(providerKey(k)))
 
     val linked = uses.count(u =>
       uids
@@ -214,37 +268,59 @@ final class OwnImport(name: OwnImport.Name, col: MediaCollection, fetch: Polite,
           each(s"${u.item.key} → ${typeOf(u.target)} ${u.target.id} (link)")(
             db.linkBasis(
               uid,
-              typeOf(u.target),
-              u.target.id,
-              roleOf(u),
-              u.statement.map(_.trim).filter(_.nonEmpty),
-              wikidataOf(u),
-              u.rank,
-              u.basis
+              ImportService.TargetType(typeOf(u.target).value),
+              ImportService.TargetId(u.target.id.value),
+              AssetService.LinkRole(roleOf(u).value),
+              u.statement.map(_.value.trim).filter(_.nonEmpty).map(AssetService.LinkProperty(_)),
+              wikidataOf(u).map(q => AssetService.LinkItem(q.value)),
+              AssetService.LinkRank(u.rank.value),
+              u.basis.map(b => AssetService.LinkBasis(b.value))
             )
           ).getOrElse(false)
         )
     )
     val found = uses
       .filter(u => uids.contains(u.item.key))
-      .groupBy(u => (typeOf(u.target), u.target.id))
+      .groupBy(u => (typeOf(u.target), Target.Id(u.target.id.value)))
       .view
       .mapValues(_.map(_.item.key).distinct.size)
       .toMap
     answered.foreach(t =>
       each(s"${t.targetType} ${t.id} (check)")(
-        db.checked(check, t.targetType, t.id, found.getOrElse((t.targetType, t.id), 0), Some(t.qid).filter(_.nonEmpty))
+        db.checked(
+          ImportService.Provider(check),
+          ImportService.TargetType(t.targetType.value),
+          ImportService.TargetId(t.id.value),
+          ImportService.FoundCount(found.getOrElse((t.targetType, t.id), 0)),
+          Option.when(t.qid.value.nonEmpty)(t.qid.value).flatMap(q => Wikidata.Id.option(q))
+        )
       )
     )
     val placeIds = answered.filter(_.targetType == ImportRepo.Place).map(t => t.id -> t).toMap
     val cats = categories.count((placeId, c) =>
       placeIds
-        .get(placeId)
-        .exists(t => each(s"category $c → $placeId")(db.commonsCategory(placeId, c, t.qid)).getOrElse(false))
+        .get(Target.Id(placeId.value))
+        .exists(t =>
+          (for
+            pid <- Place.Id.option(placeId.value)
+            qid <- Wikidata.Id.option(t.qid.value)
+          yield each(s"category $c → $placeId")(db.commonsCategory(pid, ImportService.CommonsCategory(c.value), qid))
+            .getOrElse(false)).getOrElse(false)
+        )
     )
-    base.modify(
-      _.stored).setTo(stored).modify(_.updated).setTo(updated).modify(_.linked).setTo(linked).modify(_.categories).setTo(cats).modify(_.revoked).setTo(revoked.sorted).modify(_.failed).setTo(failed.result()
-    )
+    base
+      .modify(_.stored)
+      .setTo(MediaImportReport.Stored(stored))
+      .modify(_.updated)
+      .setTo(MediaImportReport.Updated(updated))
+      .modify(_.linked)
+      .setTo(MediaImportReport.Linked(linked))
+      .modify(_.categories)
+      .setTo(MediaImportReport.Categories(cats))
+      .modify(_.revoked)
+      .setTo(revoked.sorted.map(MediaImportReport.Revoked(_)))
+      .modify(_.failed)
+      .setTo(failed.result().map(MediaImportReport.Failed(_)))
 
   /** The picture and its thumbnail — the provider's own copies; the picture must not pass `max-bytes`. A failed
     * thumbnail leaves the picture without one (the card skips it).
@@ -252,39 +328,30 @@ final class OwnImport(name: OwnImport.Name, col: MediaCollection, fetch: Polite,
   private def download(
       item: MediaItem,
       completed: Option[MediaItem]
-  ): Either[com.histmersion.domain.media.imports.OwnImport.DownloadOutcome, (com.histmersion.domain.media.assets.AssetService.Bytes, com.histmersion.domain.media.assets.AssetService.Mime, Option[(com.histmersion.domain.media.assets.AssetService.Bytes, com.histmersion.domain.media.assets.AssetService.Mime, Option[com.histmersion.domain.media.assets.AssetService.ThumbWidth], Option[com.histmersion.domain.media.assets.AssetService.ThumbHeight])])] =
-    val mime = item.rendition.map(_.mime).getOrElse("image/jpeg")
-    item.rendition.flatMap(_.bytes).filter(_ > cfg.maxBytes) match
+  ): Either[String, (Array[Byte], String, Option[(Array[Byte], String, Option[Int], Option[Int])])] =
+    val mime = item.rendition.map(_.mime.value).getOrElse("image/jpeg")
+    item.rendition.flatMap(_.bytes).map(_.value).filter(_ > cfg.maxBytes.value) match
       case Some(size) => Left(s"original of $size bytes is larger than media.max-bytes")
       case None       =>
-        item.imageUrl.toRight("no image").flatMap(u => fetch.file(u, mime)).flatMap { (bytes, got) =>
-          if bytes.length.toLong > cfg.maxBytes then
-            Left(s"rendition of ${bytes.length} bytes is larger than media.max-bytes")
-          else
-            val t = completed.flatMap(i => i.thumbUrl.map(u => (u, i))).flatMap { (u, i) =>
-              fetch.file(u, mime) match
-                case Right((tb, tm)) =>
-                  Some((tb, tm, i.rendition.flatMap(_.thumbWidth), i.rendition.flatMap(_.thumbHeight)))
-                case Left(why) => scribe.warn(s"media: thumbnail of ${item.key} not fetched: $why"); None
-            }
-            Right((bytes, got, t))
-        }
-
-object OwnImport:
-  type CategoryText = CategoryText.T
-  object CategoryText extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type DownloadOutcome = DownloadOutcome.T
-  object DownloadOutcome extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type ImporterName = ImporterName.T
-  object ImporterName extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type MediaKind = MediaKind.T
-  object MediaKind extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type Problem = Problem.T
-  object Problem extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type Refresh = Refresh.T
-  object Refresh extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type VerdictKey = VerdictKey.T
-  object VerdictKey extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type Name = com.histmersion.domain.media.imports.OwnImport.ImporterName
-  val Name: _root_.com.histmersion.domain.media.imports.OwnImport.ImporterName.type = _root_.com.histmersion.domain.media.imports.OwnImport.ImporterName
-
+        item.imageUrl
+          .toRight("no image")
+          .flatMap(u => fetch.file(HttpTransport.Url(u.value), Polite.Mime(mime)).left.map(_.value))
+          .flatMap { (bytes, got) =>
+            if bytes.value.length.toLong > cfg.maxBytes.value then
+              Left(s"rendition of ${bytes.value.length} bytes is larger than media.max-bytes")
+            else
+              val t = completed.flatMap(i => i.thumbUrl.map(u => (u, i))).flatMap { (u, i) =>
+                fetch.file(HttpTransport.Url(u.value), Polite.Mime(mime)) match
+                  case Right((tb, tm)) =>
+                    Some(
+                      (
+                        tb.value,
+                        tm.value,
+                        i.rendition.flatMap(_.thumbWidth).map(_.value),
+                        i.rendition.flatMap(_.thumbHeight).map(_.value)
+                      )
+                    )
+                  case Left(why) => scribe.warn(s"media: thumbnail of ${item.key} not fetched: $why"); None
+              }
+              Right((bytes.value, got.value, t))
+          }

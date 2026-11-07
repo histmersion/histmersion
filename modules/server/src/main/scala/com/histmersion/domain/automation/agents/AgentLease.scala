@@ -71,7 +71,7 @@ final class AgentLease(ds: DataSource, ttlSeconds: AgentLease.TtlSeconds, val ow
     else scribe.warn(s"agent lease held by $holderText: this server runs no agents until it is free")
     if thread.isEmpty then
       stopping = false
-      val every = math.max(1000L, ttlSeconds.toLong * 1000L / 3)
+      val every = math.max(1000L, ttlSeconds.value.toLong * 1000L / 3)
       val t = Thread.ofPlatform().daemon(true).name("histmersion-agent-lease").unstarted { () =>
         var started = first // the once-only flag of onAcquired; confined to this thread after start
         try
@@ -108,9 +108,9 @@ object AgentLease:
   val Owner: _root_.com.histmersion.domain.automation.agents.LeaseRepo.LeaseOwner.type = _root_.com.histmersion.domain.automation.agents.LeaseRepo.LeaseOwner
 
 
-  val Name = "agents"
+  val Name: LeaseRepo.LeaseName = LeaseRepo.LeaseName("agents")
 
   def ownerId(): com.histmersion.domain.automation.agents.LeaseRepo.LeaseOwner =
     val host = try java.net.InetAddress.getLocalHost.getHostName
     catch case _: Exception => "localhost"
-    s"$host:${ProcessHandle.current().pid()}"
+    Owner(s"$host:${ProcessHandle.current().pid()}")
