@@ -6,8 +6,8 @@ import com.histmersion.util.database.given
 
 /** The plan pools' readings, settings and refresh log (migrations V063–V065, V069). Stateless. */
 object PlanQuotaRepo:
-  type PoolId = PoolId.T
-  object PoolId extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type PoolName = PoolName.T
+  object PoolName extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type EpochMillis = EpochMillis.T
   object EpochMillis extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type RefreshDetail = RefreshDetail.T

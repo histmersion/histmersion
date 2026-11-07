@@ -256,13 +256,13 @@ final class AgentsControllers(
       picker.cooldowns(now).map((m, u) => PlanQuota.Cooldown(m, u.toString, ModelPicker.CoolingWhy))
     )
 
-  private def poolOf(raw: com.histmersion.domain.automation.agents.PlanQuotaRepo.PoolId): Either[Api.Error, PlanQuota.PoolId] =
+  private def poolOf(raw: com.histmersion.domain.automation.agents.PlanQuotaRepo.PoolName): Either[Api.Error, PlanQuota.PoolId] =
     PlanQuota.PoolId
       .parse(raw)
       .toRight(Api.Error(s"unknown pool '$raw' (one of: ${PlanQuota.PoolId.values.map(_.wire).mkString(", ")})"))
 
   /** `PUT /api/agents/quota/{pool}` — the hold switch and the floors. */
-  def setPool(pool: com.histmersion.domain.automation.agents.PlanQuotaRepo.PoolId, in: PlanQuota.PoolSet): Either[Api.Error, PlanQuota.PoolStatus] =
+  def setPool(pool: com.histmersion.domain.automation.agents.PlanQuotaRepo.PoolName, in: PlanQuota.PoolSet): Either[Api.Error, PlanQuota.PoolStatus] =
     for
       p <- poolOf(pool)
       f <- in.floors.map(_.trim) match

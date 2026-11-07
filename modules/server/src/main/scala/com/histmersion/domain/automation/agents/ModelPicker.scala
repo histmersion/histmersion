@@ -159,7 +159,7 @@ final class ModelPicker(
       m: ModelRef,
       effective: List[Effective],
       now: com.histmersion.domain.automation.agents.PlanQuotaRepo.EpochMillis
-  ): List[(Effective, Either[com.histmersion.domain.automation.agents.PlanQuotaRepo.PoolId, List[LimitState]])] =
+  ): List[(Effective, Either[com.histmersion.domain.automation.agents.PlanQuotaRepo.PoolName, List[LimitState]])] =
     effective
       .filter(e => e.allowance.fold(_ => Target.parse(e.target, known()).exists(_.covers(m)), _.target.covers(m)))
       .map(e => e -> e.allowance.map(a => states(a, spendsOf(a), now)))
