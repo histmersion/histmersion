@@ -1,0 +1,23 @@
+## modules/db/src/main/scala/com/histmersion/domain/catalogue/places/PlaceBundleRepo.scala
+221:40 [E008] 221 |        .filterNot(p => w.writes(p.uid).value) / |                        value value is not a member of Boolean
+234:31 [E008] 234 |      p => BundleImport.Writer.Label(p.id.value), / |value Label is not a member of object com.histmersion.util.data.exchange.BundleImport.Writer
+235:59 [E008] 235 |      w.local.places.map(p => p.uid -> BundleImport.Writer.Label(p.id.value)).toMap, / |value Label is not a member of object com.histmersion.util.data.exchange.BundleImport.Writer
+239:62 [E008] 239 |        com.histmersion.domain.catalogue.Place.Id.assume(from.value), / |                                    value value is not a member of Any
+240:60 [E008] 240 |        com.histmersion.domain.catalogue.Place.Id.assume(to.value) / |                                    value value is not a member of Any
+250:57 [E008] 250 |    val places = w.es.places.filter(p => w.writes(p.uid).value) / |                                value value is not a member of Boolean
+
+## modules/db/src/main/scala/com/histmersion/domain/library/search/AggregateRepo.scala
+54:49 [E007] 54 |        FilterSql.sourceWhere(filter) ++ Sql.raw(" AND ") ++ FilterSql.findingWhere(filter, scope = scope) / |                        Found:    (" AND " : String) / |                        Required: com.histmersion.util.database.Sql.Text
+68:16 [E007] 68 |        Sql.raw(") AS in_window FROM findings f WHERE f.citekey = s.citekey AND ") ++ / |Found:    (") AS in_window FROM findings f WHERE f.citekey = s.citekey AND " : String) / |Required: com.histmersion.util.database.Sql.Text
+130:49 [E007] 130 |        FilterSql.sourceWhere(filter) ++ Sql.raw(" AND ") ++ FilterSql.findingWhere(filter, scope = scope) ++ / |                      Found:    (" AND " : String) / |                      Required: com.histmersion.util.database.Sql.Text
+149:10 [E007] 149 |          ") AS in_window, array_agg(DISTINCT l.place_id) FILTER (WHERE l.place_id IS NOT NULL) AS place_ids" + / |Found:    ( / |  ") AS in_window, array_agg(DISTINCT l.place_id) FILTER (WHERE l.place_id IS NOT NULL) AS place_ids FROM findings f LEFT JOIN finding_places l ON l.finding_id = f.id WH / |   : String) / |Required: com.histmersion.util.database.Sql.Text / 150 |            " FROM findings f LEFT JOIN finding_places l ON l.finding_id = f.id" +
+
+## modules/plugin-host/src/main/scala/com/histmersion/pluginhost/PluginMedia.scala
+63:23 [E007] 63 |          headers.map((k, v) => CoreQuota.HeaderName(k.value) -> CoreQuota.HeaderValue(v.value)) / |         Found:    ((com.histmersion.plugin.Plugin.Http.GetHeadersPart1, / |           com.histmersion.plugin.Plugin.Http.GetHeadersPart2)) => ( / |           com.histmersion.domain.CoreQuota.HeaderName.T, / |           com.histmersion.domain.CoreQuota.HeaderValue.T) / |         Required: ((com.histmersion.plugin.Plugin.Http.GetHeadersPart1,
+
+## modules/db/src/main/scala/com/histmersion/domain/catalogue/evidence/EvidenceBundleRepo.scala
+173:50 [E008] 173 |    w.es.attestations.filter(t => w.writes(t.uid).value).foreach { t => / |value value is not a member of Boolean, but could be made available as an extension method. / |The following import might make progress towards fixing the problem:
+
+## modules/db/src/main/scala/com/histmersion/domain/media/links/AssetLinkBundleRepo.scala
+43:48 [E008] 43 |    w.es.assetLinks.filter(l => w.writes(l.uid).value).foreach { l => / |                                value value is not a member of Boolean
+
