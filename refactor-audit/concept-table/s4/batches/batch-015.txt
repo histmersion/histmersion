@@ -1,0 +1,134 @@
+## CONCEPTS NEARBY
+com.histmersion.domain.library.acquisition.CandidateRepo.Row.AbstractText (String)
+com.histmersion.domain.library.acquisition.CandidateRepo.Row.ArxivId (String)
+com.histmersion.domain.library.acquisition.CandidateRepo.Row.Authors (String)
+com.histmersion.domain.library.acquisition.CandidateRepo.Row.FirstSeen (String)
+com.histmersion.domain.library.acquisition.CandidateRepo.Row.FoundBy (String)
+com.histmersion.domain.library.acquisition.CandidateRepo.Row.Goal (String)
+com.histmersion.domain.library.acquisition.CandidateRepo.Row.Id (Long)
+com.histmersion.domain.library.acquisition.CandidateRepo.Row.IsOa (Boolean)
+com.histmersion.domain.library.acquisition.CandidateRepo.Row.LastSeen (String)
+com.histmersion.domain.library.acquisition.CandidateRepo.Row.State (String)
+com.histmersion.domain.library.acquisition.CandidateRepo.Row.Title (String)
+com.histmersion.domain.library.acquisition.CandidateRepo.Row.Venue (String)
+com.histmersion.domain.library.acquisition.CandidateRepo.WatchRow.Goal (String)
+com.histmersion.domain.library.acquisition.CandidateRepo.WatchRow.Index (String)
+com.histmersion.domain.library.acquisition.CandidateRepo.WatchRow.Kind (String)
+com.histmersion.domain.library.acquisition.CandidateRepo.WatchRow.LastError (String)
+com.histmersion.domain.library.acquisition.CandidateRepo.WatchRow.LastFound (Int)
+com.histmersion.domain.library.acquisition.CandidateRepo.WatchRow.LastRun (String)
+com.histmersion.domain.library.acquisition.CandidateRepo.WatchRow.Subject (String)
+com.histmersion.domain.library.acquisition.CandidateRepo.WatchRow.Watermark (String)
+com.histmersion.domain.library.findings.GeoFeedRow.Claim (String)
+com.histmersion.domain.library.findings.GeoFeedRow.HasCover (Boolean)
+com.histmersion.domain.library.findings.GeoFeedRow.Provenance (String)
+com.histmersion.domain.library.findings.GeoFeedRow.RegionName (String)
+com.histmersion.domain.library.findings.GeoFeedRow.Significance (String)
+com.histmersion.domain.library.findings.GeoFeedRow.Tags (String)
+com.histmersion.domain.library.findings.GeoFeedRow.Title (String)
+com.histmersion.domain.library.findings.GeoFeedRow.Topics (String)
+com.histmersion.domain.library.findings.GeoFeedRow.Venue (String)
+com.histmersion.domain.library.search.AggregateRepo.TreeRowRaw.Key (String)
+com.histmersion.domain.library.search.AggregateRepo.TreeRowRaw.PlaceIds (String)
+com.histmersion.domain.library.search.AggregateRepo.TreeRowRaw.Title (String)
+
+## TYPES TO DECIDE
+com.histmersion.domain.library.acquisition.CandidateRepo.CountsGoal | base String | generated | method-parameter
+    def counts(goal: Option[com.histmersion.domain.library.acquisition.CandidateRepo.CountsGoal])(using DbCon): List[CandidateCount] =
+com.histmersion.domain.library.acquisition.CandidateRepo.DoisGoal | base String | generated | method-parameter
+    def dois(goal: com.histmersion.domain.library.acquisition.CandidateRepo.DoisGoal)(using DbCon): Set[com.histmersion.domain.library.acquisition.CandidateRepo.DoisResult] =
+com.histmersion.domain.library.acquisition.CandidateRepo.DoisResult | base String | generated | method-result
+    def dois(goal: com.histmersion.domain.library.acquisition.CandidateRepo.DoisGoal)(using DbCon): Set[com.histmersion.domain.library.acquisition.CandidateRepo.DoisResult] =
+com.histmersion.domain.library.acquisition.CandidateRepo.ListGoal | base String | generated | method-parameter
+    def list(goal: Option[com.histmersion.domain.library.acquisition.CandidateRepo.ListGoal], state: com.histmersion.domain.library.acquisition.CandidateRepo.ListState, limit
+com.histmersion.domain.library.acquisition.CandidateRepo.ListLimit | base Int | generated | method-parameter
+    def list(goal: Option[com.histmersion.domain.library.acquisition.CandidateRepo.ListGoal], state: com.histmersion.domain.library.acquisition.CandidateRepo.ListState, limit
+com.histmersion.domain.library.acquisition.CandidateRepo.ListOffset | base Int | generated | method-parameter
+    def list(goal: Option[com.histmersion.domain.library.acquisition.CandidateRepo.ListGoal], state: com.histmersion.domain.library.acquisition.CandidateRepo.ListState, limit
+com.histmersion.domain.library.acquisition.CandidateRepo.ListState | base String | generated | method-parameter
+    def list(goal: Option[com.histmersion.domain.library.acquisition.CandidateRepo.ListGoal], state: com.histmersion.domain.library.acquisition.CandidateRepo.ListState, limit
+com.histmersion.domain.library.acquisition.CandidateRepo.MarkDoisDois | base String | generated | method-parameter
+    def markDois(goal: com.histmersion.domain.library.acquisition.CandidateRepo.MarkDoisGoal, dois: List[com.histmersion.domain.library.acquisition.CandidateRepo.MarkDoisDois
+com.histmersion.domain.library.acquisition.CandidateRepo.MarkDoisGoal | base String | generated | method-parameter
+    def markDois(goal: com.histmersion.domain.library.acquisition.CandidateRepo.MarkDoisGoal, dois: List[com.histmersion.domain.library.acquisition.CandidateRepo.MarkDoisDois
+com.histmersion.domain.library.acquisition.CandidateRepo.MarkDoisResult | base Int | generated | method-result
+    def markDois(goal: com.histmersion.domain.library.acquisition.CandidateRepo.MarkDoisGoal, dois: List[com.histmersion.domain.library.acquisition.CandidateRepo.MarkDoisDois
+com.histmersion.domain.library.acquisition.CandidateRepo.MarkDoisState | base String | generated | method-parameter
+    def markDois(goal: com.histmersion.domain.library.acquisition.CandidateRepo.MarkDoisGoal, dois: List[com.histmersion.domain.library.acquisition.CandidateRepo.MarkDoisDois
+com.histmersion.domain.library.acquisition.CandidateRepo.MarkIds | base Long | generated | method-parameter
+    def mark(ids: List[com.histmersion.domain.library.acquisition.CandidateRepo.MarkIds], state: com.histmersion.domain.library.acquisition.CandidateRepo.MarkState)(using DbC
+com.histmersion.domain.library.acquisition.CandidateRepo.MarkResult | base Int | generated | method-result
+    def mark(ids: List[com.histmersion.domain.library.acquisition.CandidateRepo.MarkIds], state: com.histmersion.domain.library.acquisition.CandidateRepo.MarkState)(using DbC
+com.histmersion.domain.library.acquisition.CandidateRepo.MarkState | base String | generated | method-parameter
+    def mark(ids: List[com.histmersion.domain.library.acquisition.CandidateRepo.MarkIds], state: com.histmersion.domain.library.acquisition.CandidateRepo.MarkState)(using DbC
+com.histmersion.domain.library.acquisition.CandidateRepo.RecordWatchError | base String | generated | method-parameter
+com.histmersion.domain.library.acquisition.CandidateRepo.RecordWatchFound | base Int | generated | method-parameter
+com.histmersion.domain.library.acquisition.CandidateRepo.RecordWatchWatermark | base String | generated | method-parameter
+com.histmersion.domain.library.acquisition.CandidateRepo.Row.AbstractText | base String | original | constructor-parameter
+com.histmersion.domain.library.acquisition.CandidateRepo.Row.ArxivId | base String | original | constructor-parameter
+com.histmersion.domain.library.acquisition.CandidateRepo.Row.Authors | base String | original | constructor-parameter
+com.histmersion.domain.library.acquisition.CandidateRepo.Row.FirstSeen | base String | original | constructor-parameter
+com.histmersion.domain.library.acquisition.CandidateRepo.Row.FoundBy | base String | original | constructor-parameter
+com.histmersion.domain.library.acquisition.CandidateRepo.Row.Goal | base String | original | constructor-parameter
+com.histmersion.domain.library.acquisition.CandidateRepo.Row.Id | base Long | original | constructor-parameter
+com.histmersion.domain.library.acquisition.CandidateRepo.Row.IsOa | base Boolean | original | constructor-parameter
+com.histmersion.domain.library.acquisition.CandidateRepo.Row.LastSeen | base String | original | constructor-parameter
+com.histmersion.domain.library.acquisition.CandidateRepo.Row.State | base String | original | constructor-parameter
+com.histmersion.domain.library.acquisition.CandidateRepo.Row.Title | base String | original | constructor-parameter
+com.histmersion.domain.library.acquisition.CandidateRepo.Row.Venue | base String | original | constructor-parameter
+com.histmersion.domain.library.acquisition.CandidateRepo.UpsertResult | base Boolean | generated | method-result
+    def upsert(c: Source.Candidate)(using DbCon): com.histmersion.domain.library.acquisition.CandidateRepo.UpsertResult =
+com.histmersion.domain.library.acquisition.CandidateRepo.WatchRow.Goal | base String | original | constructor-parameter
+com.histmersion.domain.library.acquisition.CandidateRepo.WatchRow.Index | base String | original | constructor-parameter
+com.histmersion.domain.library.acquisition.CandidateRepo.WatchRow.Kind | base String | original | constructor-parameter
+com.histmersion.domain.library.acquisition.CandidateRepo.WatchRow.LastError | base String | original | constructor-parameter
+com.histmersion.domain.library.acquisition.CandidateRepo.WatchRow.LastFound | base Int | original | constructor-parameter
+com.histmersion.domain.library.acquisition.CandidateRepo.WatchRow.LastRun | base String | original | constructor-parameter
+com.histmersion.domain.library.acquisition.CandidateRepo.WatchRow.Subject | base String | original | constructor-parameter
+com.histmersion.domain.library.acquisition.CandidateRepo.WatchRow.Watermark | base String | original | constructor-parameter
+com.histmersion.domain.library.acquisition.CandidateRepo.WatchesGoal | base String | generated | method-parameter
+    def watches(goal: com.histmersion.domain.library.acquisition.CandidateRepo.WatchesGoal)(using DbCon): List[CandidateWatch] =
+com.histmersion.domain.library.acquisition.UpstreamQuotaRepo.LoadUpstream | base String | generated | method-parameter
+    def load(upstream: com.histmersion.domain.library.acquisition.UpstreamQuotaRepo.LoadUpstream)(using DbCon): Option[CoreQuota.State] =
+com.histmersion.domain.library.acquisition.UpstreamQuotaRepo.SaveUpstream | base String | generated | method-parameter
+    def save(upstream: com.histmersion.domain.library.acquisition.UpstreamQuotaRepo.SaveUpstream, s: CoreQuota.State)(using DbCon): Unit =
+com.histmersion.domain.library.citations.CitationRepo.ContradictionsAllSince | base Long | generated | method-parameter
+    private def contradictionsAll(since: Option[com.histmersion.domain.library.citations.CitationRepo.ContradictionsAllSince])(using DbCon): ContradictionsResult =
+com.histmersion.domain.library.citations.CitationRepo.ContradictionsForCk | base String | generated | method-parameter
+    private def contradictionsFor(ck: com.histmersion.domain.library.citations.CitationRepo.ContradictionsForCk)(using DbCon): ContradictionsResult =
+com.histmersion.domain.library.citations.CitationRepo.ContradictionsSince | base Long | generated | method-parameter
+    def contradictions(citekey: Option[com.histmersion.domain.library.Citekey], since: Option[com.histmersion.domain.library.citations.CitationRepo.ContradictionsSince])(usin
+com.histmersion.domain.library.citations.CitationRepo.GraphMaxDepth | base Int | generated | method-parameter
+    def graph(citekey: com.histmersion.domain.library.Citekey, maxDepth: com.histmersion.domain.library.citations.CitationRepo.GraphMaxDepth)(using DbCon): com.histmersion.ap
+com.histmersion.domain.library.citations.CitationRepo.GraphWalkD | base Int | generated | method-parameter
+com.histmersion.domain.library.citations.CitationRepo.GraphWalkFrontier | base String | generated | method-parameter
+com.histmersion.domain.library.citations.CitationRepo.NeighborsKinds | base String | generated | method-parameter
+    def neighbors(citekey: com.histmersion.domain.library.Citekey, kinds: List[com.histmersion.domain.library.citations.CitationRepo.NeighborsKinds] = Nil)(using DbCon): Vect
+com.histmersion.domain.library.findings.FindingRepo.FindingsCountResult | base Int | generated | method-result
+    def findingsCount(filter: Filter, scope: PlaceScope = PlaceScope.empty)(using DbCon): com.histmersion.domain.library.findings.FindingRepo.FindingsCountResult =
+com.histmersion.domain.library.findings.GeoFeedRow.Claim | base String | original | constructor-parameter
+com.histmersion.domain.library.findings.GeoFeedRow.HasCover | base Boolean | original | constructor-parameter
+com.histmersion.domain.library.findings.GeoFeedRow.Provenance | base String | original | constructor-parameter
+com.histmersion.domain.library.findings.GeoFeedRow.RegionName | base String | original | constructor-parameter
+com.histmersion.domain.library.findings.GeoFeedRow.Significance | base String | original | constructor-parameter
+com.histmersion.domain.library.findings.GeoFeedRow.Tags | base String | original | constructor-parameter
+com.histmersion.domain.library.findings.GeoFeedRow.Title | base String | original | constructor-parameter
+com.histmersion.domain.library.findings.GeoFeedRow.Topics | base String | original | constructor-parameter
+com.histmersion.domain.library.findings.GeoFeedRow.Venue | base String | original | constructor-parameter
+com.histmersion.domain.library.labels.LabelRepo.FacetsLimit | base Int | generated | method-parameter
+com.histmersion.domain.library.labels.LabelRepo.FacetsPrefix | base String | generated | method-parameter
+com.histmersion.domain.library.search.AggregateRepo.PeriodsQueryUnit | base String | generated | method-parameter
+    def periodsQuery(unit: com.histmersion.domain.library.search.AggregateRepo.PeriodsQueryUnit, filter: Filter, scope: PlaceScope = PlaceScope.empty): Sql =
+com.histmersion.domain.library.search.AggregateRepo.PeriodsUnit | base String | generated | method-parameter
+    def periods(unit: com.histmersion.domain.library.search.AggregateRepo.PeriodsUnit, filter: Filter, scope: PlaceScope = PlaceScope.empty)(using DbCon): Vector[Period.Row] 
+com.histmersion.domain.library.search.AggregateRepo.PlacesOfFa | base String | generated | method-parameter
+    private def placesOf(fa: com.histmersion.domain.library.search.AggregateRepo.PlacesOfFa): com.histmersion.domain.library.search.AggregateRepo.PlacesOfResult =
+com.histmersion.domain.library.search.AggregateRepo.PlacesOfResult | base String | generated | method-result
+    private def placesOf(fa: com.histmersion.domain.library.search.AggregateRepo.PlacesOfFa): com.histmersion.domain.library.search.AggregateRepo.PlacesOfResult =
+com.histmersion.domain.library.search.AggregateRepo.TreeRowRaw.Key | base String | original | constructor-parameter
+com.histmersion.domain.library.search.AggregateRepo.TreeRowRaw.PlaceIds | base String | original | constructor-parameter
+com.histmersion.domain.library.search.AggregateRepo.TreeRowRaw.Title | base String | original | constructor-parameter
+com.histmersion.domain.library.search.AggregateRepo.TreeRowsQueryUnit | base String | generated | method-parameter
+    def treeRowsQuery(unit: com.histmersion.domain.library.search.AggregateRepo.TreeRowsQueryUnit, filter: Filter, scope: PlaceScope = PlaceScope.empty): Sql =
+com.histmersion.domain.library.search.AggregateRepo.TreeRowsUnit | base String | generated | method-parameter
+    def treeRows(unit: com.histmersion.domain.library.search.AggregateRepo.TreeRowsUnit, filter: Filter, scope: PlaceScope = PlaceScope.empty)(using DbCon): Vector[Tree.TreeR

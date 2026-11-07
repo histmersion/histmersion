@@ -15,60 +15,32 @@ import com.histmersion.domain.catalogue.Historicity
   * turned into the host's [[CatalogRecord]]s. Pure but for [[http]].
   */
 object PluginEvents:
+  type IntervalMs = IntervalMs.T
+  object IntervalMs extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type PartDone = PartDone.T
+  object PartDone extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type PartName = PartName.T
+  object PartName extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type Problem = Problem.T
+  object Problem extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type Provider = Provider.T
+  object Provider extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type Reason = Reason.T
+  object Reason extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type SleepMs = SleepMs.T
+  object SleepMs extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
   /** The limits of a plugin catalogue's dating (pure but for asking the plugin) — the present, and the catalogue's own
     * [[EventCatalogue.floorYear]] (`None` when it states none, throws, or is not registered now: a dating stored under
     * a floor is already held at it, so a looser limit changes nothing).
     */
-  type ReadPartFromPart = ReadPartFromPart.T
-  object ReadPartFromPart extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type HttpGetUrl = HttpGetUrl.T
-  object HttpGetUrl extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type HttpGetHeadersPart1 = HttpGetHeadersPart1.T
-  object HttpGetHeadersPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type HttpGetHeadersPart2 = HttpGetHeadersPart2.T
   object HttpGetHeadersPart2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type CheckedStatedResultPart1 = CheckedStatedResultPart1.T
-  object CheckedStatedResultPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type CheckedStatedFResultPart1 = CheckedStatedFResultPart1.T
-  object CheckedStatedFResultPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type CheckedLeftWhy = CheckedLeftWhy.T
-  object CheckedLeftWhy extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
-  type LimitsPresent = LimitsPresent.T
-  object LimitsPresent extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type RereadProvider = _root_.com.histmersion.pluginhost.PluginEvents.RecordProvider
-  val RereadProvider: _root_.com.histmersion.pluginhost.PluginEvents.RecordProvider.type = _root_.com.histmersion.pluginhost.PluginEvents.RecordProvider
-  type QueryFrom = QueryFrom.T
-  object QueryFrom extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type QueryTo = QueryTo.T
-  object QueryTo extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type PoliteIntervalMs = PoliteIntervalMs.T
-  object PoliteIntervalMs extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type PoliteSleepArg1 = PoliteSleepArg1.T
-  object PoliteSleepArg1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type ReadPartFirst = ReadPartFirst.T
-  object ReadPartFirst extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type ReadPartDoneArg1 = ReadPartDoneArg1.T
-  object ReadPartDoneArg1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type ReadPartDoneResult = ReadPartDoneResult.T
-  object ReadPartDoneResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type ReadPartEachArg1 = ReadPartEachArg1.T
-  object ReadPartEachArg1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type ReadPartEachArg2Part1 = ReadPartEachArg2Part1.T
-  object ReadPartEachArg2Part1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type GuardResultPart1 = GuardResultPart1.T
-  object GuardResultPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type RecordResultPart1 = RecordResultPart1.T
-  object RecordResultPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type RecordProvider = RecordProvider.T
-  object RecordProvider extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type CheckedResultPart1 = CheckedResultPart1.T
-  object CheckedResultPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type CheckedProvider = CheckedProvider.T
-  object CheckedProvider extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type RereadProvider = _root_.com.histmersion.pluginhost.PluginEvents.Provider
+  val RereadProvider: _root_.com.histmersion.pluginhost.PluginEvents.Provider.type = _root_.com.histmersion.pluginhost.PluginEvents.Provider
 
-  def limits(catalogue: Option[EventCatalogue], present: com.histmersion.pluginhost.PluginEvents.LimitsPresent): CatalogDating.Limits =
+  def limits(catalogue: Option[EventCatalogue], present: com.histmersion.domain.DeepTime.SignedYear): CatalogDating.Limits =
     CatalogDating.Limits(
       present,
       catalogue
@@ -146,7 +118,7 @@ object PluginEvents:
   /** The query a plugin catalogue is asked: the import's years (held at what a `Year` holds) and its area (left out
     * when a corner is off the globe: the host applies the area itself anyway).
     */
-  def query(from: Option[com.histmersion.pluginhost.PluginEvents.QueryFrom], to: com.histmersion.pluginhost.PluginEvents.QueryTo, area: Option[BBox]): CatalogueQuery =
+  def query(from: Option[com.histmersion.domain.DeepTime.SignedYear], to: com.histmersion.domain.DeepTime.SignedYear, area: Option[BBox]): CatalogueQuery =
     CatalogueQuery(
       from.map(SpiValues.yearBound),
       SpiValues.yearBound(to),
@@ -159,8 +131,8 @@ object PluginEvents:
   def polite(
       http: HttpTransport,
       media: MediaConfig,
-      intervalMs: com.histmersion.pluginhost.PluginEvents.PoliteIntervalMs,
-      sleep: com.histmersion.pluginhost.PluginEvents.PoliteSleepArg1 => Unit = ms => Thread.sleep(ms),
+      intervalMs: com.histmersion.pluginhost.PluginEvents.IntervalMs,
+      sleep: com.histmersion.pluginhost.PluginEvents.SleepMs => Unit = ms => Thread.sleep(ms),
       log: HostLog = HostLog.scribe
   ): Polite =
     Polite(
@@ -175,14 +147,14 @@ object PluginEvents:
     */
   def readPart(
       cat: EventCatalogue,
-      first: com.histmersion.pluginhost.PluginEvents.ReadPartFirst,
+      first: com.histmersion.pluginhost.PluginEvents.PartName,
       query: CatalogueQuery,
       http: Plugin.Http,
-      done: com.histmersion.pluginhost.PluginEvents.ReadPartDoneArg1 => com.histmersion.pluginhost.PluginEvents.ReadPartDoneResult,
+      done: com.histmersion.pluginhost.PluginEvents.PartName => com.histmersion.pluginhost.PluginEvents.PartDone,
       full: => Boolean
-  )(each: (com.histmersion.pluginhost.PluginEvents.ReadPartEachArg1, Either[com.histmersion.pluginhost.PluginEvents.ReadPartEachArg2Part1, CataloguePage]) => Unit): Unit =
+  )(each: (com.histmersion.pluginhost.PluginEvents.PartName, Either[com.histmersion.pluginhost.PluginEvents.PartName, CataloguePage]) => Unit): Unit =
     @annotation.tailrec
-    def from(part: Option[com.histmersion.pluginhost.PluginEvents.ReadPartFromPart]): Unit = part match
+    def from(part: Option[com.histmersion.pluginhost.PluginEvents.PartName]): Unit = part match
       case Some(p) if !full =>
         val got = guard(cat.read(p, query, http))
         each(p, got)
@@ -191,14 +163,14 @@ object PluginEvents:
     from(Option(first).filter(p => !done(p)))
 
   def http(polite: Polite): Plugin.Http = new Plugin.Http:
-    def get(url: com.histmersion.pluginhost.PluginEvents.HttpGetUrl, headers: Map[com.histmersion.pluginhost.PluginEvents.HttpGetHeadersPart1, com.histmersion.pluginhost.PluginEvents.HttpGetHeadersPart2]) = polite.get(url, headers).map(_.body)
+    def get(url: com.histmersion.pluginhost.HttpTransport.Url, headers: Map[com.histmersion.domain.CoreQuota.HeaderName, com.histmersion.pluginhost.PluginEvents.HttpGetHeadersPart2]) = polite.get(url, headers).map(_.body)
 
   def safe[A](a: => A): Option[A] =
     try Option(a)
     catch case NonFatal(_) => None
 
   /** A plugin's answer, or what it threw as a failure of that call. */
-  def guard[A](a: => Either[String, A]): Either[com.histmersion.pluginhost.PluginEvents.GuardResultPart1, A] =
+  def guard[A](a: => Either[String, A]): Either[com.histmersion.pluginhost.PluginEvents.Problem, A] =
     try Option(a).getOrElse(Left("the plugin answered nothing"))
     catch
       case e: InterruptedException => throw e
@@ -210,7 +182,7 @@ object PluginEvents:
     * off the globe (or half a position) and a Wikidata id that is no item are left out of the record, each with a
     * warning. Its kind is the host's spelling of it ([[EventTaxonomy.refine]]).
     */
-  def record(provider: com.histmersion.pluginhost.PluginEvents.RecordProvider, e: CatalogueEvent): Either[com.histmersion.pluginhost.PluginEvents.RecordResultPart1, Kept[CatalogRecord]] =
+  def record(provider: com.histmersion.pluginhost.PluginEvents.Provider, e: CatalogueEvent): Either[com.histmersion.pluginhost.PluginEvents.Problem, Kept[CatalogRecord]] =
     try checked(provider, e)
     catch
       case NonFatal(x) =>
@@ -219,12 +191,12 @@ object PluginEvents:
             s"(${x.getClass.getSimpleName}: ${x.getMessage}) — is the plugin built against plugin SPI ${Spi.Version}?"
         )
 
-  private def checked(provider: com.histmersion.pluginhost.PluginEvents.CheckedProvider, e: CatalogueEvent): Either[com.histmersion.pluginhost.PluginEvents.CheckedResultPart1, Kept[CatalogRecord]] =
+  private def checked(provider: com.histmersion.pluginhost.PluginEvents.Provider, e: CatalogueEvent): Either[com.histmersion.pluginhost.PluginEvents.Problem, Kept[CatalogRecord]] =
     val id = Option(e.id).getOrElse("").trim
     val label = Option(e.label).getOrElse("").trim
-    def stated[A, B](a: Option[A])(f: A => Either[com.histmersion.pluginhost.PluginEvents.CheckedStatedFResultPart1, B]): Either[com.histmersion.pluginhost.PluginEvents.CheckedStatedResultPart1, Option[B]] =
+    def stated[A, B](a: Option[A])(f: A => Either[com.histmersion.pluginhost.PluginEvents.Problem, B]): Either[com.histmersion.pluginhost.PluginEvents.Problem, Option[B]] =
       SpiValues.optional(a)(f).left.map(why => s"$id: catalogue '$provider': $why")
-    def left(why: com.histmersion.pluginhost.PluginEvents.CheckedLeftWhy) = s"$id: catalogue '$provider': $why, left out"
+    def left(why: com.histmersion.pluginhost.PluginEvents.Reason) = s"$id: catalogue '$provider': $why, left out"
     val (lat0, latWhy) = SpiValues.kept(e.lat)(SpiValues.latitudeOf)
     val (lon0, lonWhy) = SpiValues.kept(e.lon)(SpiValues.longitudeOf)
     val (wikidata, wikidataWhy) = SpiValues.kept(e.wikidata)(SpiValues.wikidataOf)

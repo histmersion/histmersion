@@ -1,0 +1,185 @@
+## CONCEPTS NEARBY
+com.histmersion.plugin.testkit.AcceptedEvent.Kind (String)
+com.histmersion.plugin.testkit.AcceptedPlace.Source (String)
+com.histmersion.plugin.testkit.AiHttpRequest.Body (String)
+com.histmersion.plugin.testkit.AiHttpRequest.HeadersKey (String)
+com.histmersion.plugin.testkit.AiHttpRequest.HeadersValue (String)
+com.histmersion.plugin.testkit.AiHttpRequest.Method (String)
+com.histmersion.plugin.testkit.AiHttpRequest.Url (String)
+com.histmersion.plugin.testkit.AiReport.CheckPart1 (String)
+com.histmersion.plugin.testkit.CatalogueReport.Failure (String)
+com.histmersion.plugin.testkit.CatalogueReport.LeftOut (String)
+com.histmersion.plugin.testkit.CatalogueReport.PagesPart1 (String)
+com.histmersion.plugin.testkit.CatalogueReport.PagesPart2Part1 (String)
+com.histmersion.plugin.testkit.CatalogueReport.PagesPart2Part2 (Int)
+com.histmersion.plugin.testkit.CatalogueReport.Parts (String)
+com.histmersion.plugin.testkit.CatalogueReport.Refused (String)
+com.histmersion.plugin.testkit.CatalogueReport.Requests (String)
+com.histmersion.plugin.testkit.Contributions.AiProviders (String)
+com.histmersion.plugin.testkit.Contributions.EventCatalogues (String)
+com.histmersion.plugin.testkit.Contributions.MediaCollections (String)
+com.histmersion.plugin.testkit.Contributions.SecretVaults (String)
+com.histmersion.plugin.testkit.Contributions.SourceFetchers (String)
+com.histmersion.plugin.testkit.FetchOutcome.Found.Fetcher (String)
+com.histmersion.plugin.testkit.FetchOutcome.Miss.Why (String)
+com.histmersion.plugin.testkit.FetchOutcome.Refused.Why (String)
+com.histmersion.plugin.testkit.FetchReport.Requests (String)
+com.histmersion.plugin.testkit.FetcherAnswer.Fetcher (String)
+com.histmersion.plugin.testkit.FetcherAnswer.Refused (Boolean)
+com.histmersion.plugin.testkit.FetcherAnswer.Why (String)
+com.histmersion.plugin.testkit.GazetteerReport.Failure (String)
+com.histmersion.plugin.testkit.GazetteerReport.Refused (String)
+com.histmersion.plugin.testkit.GazetteerReport.Requests (String)
+com.histmersion.plugin.testkit.HttpMode.Stub.AnswersKey (String)
+com.histmersion.plugin.testkit.LogLine.Message (String)
+com.histmersion.plugin.testkit.LogLine.Source (String)
+com.histmersion.plugin.testkit.LogLine.Warn (Boolean)
+com.histmersion.plugin.testkit.MediaReport.Failure (String)
+com.histmersion.plugin.testkit.MediaReport.Requests (String)
+com.histmersion.plugin.testkit.MediaVerdict.Key (String)
+com.histmersion.plugin.testkit.MediaVerdict.Licence (String)
+com.histmersion.plugin.testkit.MediaVerdict.Refused (String)
+com.histmersion.pluginhost.SystemProcesses.Session.Tool (String)
+
+## TYPES TO DECIDE
+com.histmersion.pluginhost.SystemProcesses.CaptureArgv | base String | generated | method-parameter
+    def capture(argv: List[com.histmersion.pluginhost.SystemProcesses.CaptureArgv]): Either[com.histmersion.pluginhost.SystemProcesses.CaptureResultPart1, Result] =
+com.histmersion.pluginhost.SystemProcesses.CaptureResultPart1 | base String | generated | method-result
+    def capture(argv: List[com.histmersion.pluginhost.SystemProcesses.CaptureArgv]): Either[com.histmersion.pluginhost.SystemProcesses.CaptureResultPart1, Result] =
+com.histmersion.pluginhost.SystemProcesses.DrainResultResult | base String | generated | method-result
+    private def drain(in: InputStream): () => com.histmersion.pluginhost.SystemProcesses.DrainResultResult =
+com.histmersion.pluginhost.SystemProcesses.RunArgv | base String | generated | method-parameter
+com.histmersion.pluginhost.SystemProcesses.RunEnvPart1 | base String | generated | method-parameter
+com.histmersion.pluginhost.SystemProcesses.RunEnvPart2 | base String | generated | method-parameter
+com.histmersion.pluginhost.SystemProcesses.RunResultPart1 | base String | generated | method-result
+com.histmersion.pluginhost.SystemProcesses.RunStdin | base String | generated | method-parameter
+com.histmersion.pluginhost.SystemProcesses.Session.AliveResult | base Boolean | generated | method-result
+    def alive: com.histmersion.pluginhost.SystemProcesses.Session.AliveResult = proc.isAlive
+com.histmersion.pluginhost.SystemProcesses.Session.AwaitErrLength | base Int | generated | method-parameter
+    def awaitErr(length: com.histmersion.pluginhost.SystemProcesses.Session.AwaitErrLength, timeout: FiniteDuration): Unit = { val _ = await(timeout, () => err.length > lengt
+com.histmersion.pluginhost.SystemProcesses.Session.AwaitOutReadyArg1 | base String | generated | method-parameter
+    def awaitOut(timeout: FiniteDuration)(ready: com.histmersion.pluginhost.SystemProcesses.Session.AwaitOutReadyArg1 => com.histmersion.pluginhost.SystemProcesses.Session.Aw
+com.histmersion.pluginhost.SystemProcesses.Session.AwaitOutReadyResult | base Boolean | generated | method-parameter
+    def awaitOut(timeout: FiniteDuration)(ready: com.histmersion.pluginhost.SystemProcesses.Session.AwaitOutReadyArg1 => com.histmersion.pluginhost.SystemProcesses.Session.Aw
+com.histmersion.pluginhost.SystemProcesses.Session.AwaitOutResult | base Boolean | generated | method-result
+    def awaitOut(timeout: FiniteDuration)(ready: com.histmersion.pluginhost.SystemProcesses.Session.AwaitOutReadyArg1 => com.histmersion.pluginhost.SystemProcesses.Session.Aw
+com.histmersion.pluginhost.SystemProcesses.Session.AwaitReadyResult | base Boolean | generated | method-parameter
+    private def await(timeout: FiniteDuration, ready: () => com.histmersion.pluginhost.SystemProcesses.Session.AwaitReadyResult): com.histmersion.pluginhost.SystemProcesses.S
+com.histmersion.pluginhost.SystemProcesses.Session.AwaitResult | base Boolean | generated | method-result
+    private def await(timeout: FiniteDuration, ready: () => com.histmersion.pluginhost.SystemProcesses.Session.AwaitReadyResult): com.histmersion.pluginhost.SystemProcesses.S
+com.histmersion.pluginhost.SystemProcesses.Session.CloseResult | base Int | generated | method-result
+    def close(timeout: FiniteDuration): Option[com.histmersion.pluginhost.SystemProcesses.Session.CloseResult] =
+com.histmersion.pluginhost.SystemProcesses.Session.ErrResult | base String | generated | method-result
+    def err: com.histmersion.pluginhost.SystemProcesses.Session.ErrResult = lock.synchronized(errBytes.toString(UTF_8))
+com.histmersion.pluginhost.SystemProcesses.Session.ExitResult | base Int | generated | method-result
+    def exit(timeout: FiniteDuration): Option[com.histmersion.pluginhost.SystemProcesses.Session.ExitResult] =
+com.histmersion.pluginhost.SystemProcesses.Session.OutResult | base String | generated | method-result
+    def out: com.histmersion.pluginhost.SystemProcesses.Session.OutResult = lock.synchronized(outBytes.toString(UTF_8))
+com.histmersion.pluginhost.SystemProcesses.Session.SendLine | base String | generated | method-parameter
+    def send(line: com.histmersion.pluginhost.SystemProcesses.Session.SendLine): Either[com.histmersion.pluginhost.SystemProcesses.Session.SendResultPart1, Unit] =
+com.histmersion.pluginhost.SystemProcesses.Session.SendResultPart1 | base String | generated | method-result
+    def send(line: com.histmersion.pluginhost.SystemProcesses.Session.SendLine): Either[com.histmersion.pluginhost.SystemProcesses.Session.SendResultPart1, Unit] =
+com.histmersion.pluginhost.SystemProcesses.Session.StartArgv | base String | generated | method-parameter
+    def start(argv: List[com.histmersion.pluginhost.SystemProcesses.Session.StartArgv], env: Map[com.histmersion.pluginhost.SystemProcesses.Session.StartEnvPart1, com.histmer
+    def start(argv: List[com.histmersion.pluginhost.SystemProcesses.StartArgv], env: Map[com.histmersion.pluginhost.SystemProcesses.StartEnvPart1, com.histmersion.pluginhost.
+com.histmersion.pluginhost.SystemProcesses.Session.StartEnvPart1 | base String | generated | method-parameter
+    def start(argv: List[com.histmersion.pluginhost.SystemProcesses.Session.StartArgv], env: Map[com.histmersion.pluginhost.SystemProcesses.Session.StartEnvPart1, com.histmer
+    def start(argv: List[com.histmersion.pluginhost.SystemProcesses.StartArgv], env: Map[com.histmersion.pluginhost.SystemProcesses.StartEnvPart1, com.histmersion.pluginhost.
+com.histmersion.pluginhost.SystemProcesses.Session.StartEnvPart2 | base String | generated | method-parameter
+    def start(argv: List[com.histmersion.pluginhost.SystemProcesses.Session.StartArgv], env: Map[com.histmersion.pluginhost.SystemProcesses.Session.StartEnvPart1, com.histmer
+    def start(argv: List[com.histmersion.pluginhost.SystemProcesses.StartArgv], env: Map[com.histmersion.pluginhost.SystemProcesses.StartEnvPart1, com.histmersion.pluginhost.
+com.histmersion.pluginhost.SystemProcesses.Session.StartResultPart1 | base String | generated | method-result
+    def start(argv: List[com.histmersion.pluginhost.SystemProcesses.Session.StartArgv], env: Map[com.histmersion.pluginhost.SystemProcesses.Session.StartEnvPart1, com.histmer
+    def start(argv: List[com.histmersion.pluginhost.SystemProcesses.StartArgv], env: Map[com.histmersion.pluginhost.SystemProcesses.StartEnvPart1, com.histmersion.pluginhost.
+com.histmersion.pluginhost.SystemProcesses.Session.Tool | base String | generated | constructor-parameter
+    final class Session private (proc: Process, tool: Session.Tool) extends Processes.Session:
+com.histmersion.pluginhost.SystemProcesses.StartArgv | base String | generated | method-parameter
+    def start(argv: List[com.histmersion.pluginhost.SystemProcesses.Session.StartArgv], env: Map[com.histmersion.pluginhost.SystemProcesses.Session.StartEnvPart1, com.histmer
+    def start(argv: List[com.histmersion.pluginhost.SystemProcesses.StartArgv], env: Map[com.histmersion.pluginhost.SystemProcesses.StartEnvPart1, com.histmersion.pluginhost.
+com.histmersion.pluginhost.SystemProcesses.StartEnvPart1 | base String | generated | method-parameter
+    def start(argv: List[com.histmersion.pluginhost.SystemProcesses.Session.StartArgv], env: Map[com.histmersion.pluginhost.SystemProcesses.Session.StartEnvPart1, com.histmer
+    def start(argv: List[com.histmersion.pluginhost.SystemProcesses.StartArgv], env: Map[com.histmersion.pluginhost.SystemProcesses.StartEnvPart1, com.histmersion.pluginhost.
+com.histmersion.pluginhost.SystemProcesses.StartEnvPart2 | base String | generated | method-parameter
+    def start(argv: List[com.histmersion.pluginhost.SystemProcesses.Session.StartArgv], env: Map[com.histmersion.pluginhost.SystemProcesses.Session.StartEnvPart1, com.histmer
+    def start(argv: List[com.histmersion.pluginhost.SystemProcesses.StartArgv], env: Map[com.histmersion.pluginhost.SystemProcesses.StartEnvPart1, com.histmersion.pluginhost.
+com.histmersion.pluginhost.SystemProcesses.StartResultPart1 | base String | generated | method-result
+    def start(argv: List[com.histmersion.pluginhost.SystemProcesses.Session.StartArgv], env: Map[com.histmersion.pluginhost.SystemProcesses.Session.StartEnvPart1, com.histmer
+    def start(argv: List[com.histmersion.pluginhost.SystemProcesses.StartArgv], env: Map[com.histmersion.pluginhost.SystemProcesses.StartEnvPart1, com.histmersion.pluginhost.
+com.histmersion.plugin.testkit.AcceptedEvent.Kind | base String | original | constructor-parameter
+com.histmersion.plugin.testkit.AcceptedPlace.Source | base String | original | constructor-parameter
+    final case class AcceptedPlace(place: GazetteerPlace, source: Option[AcceptedPlace.Source])
+com.histmersion.plugin.testkit.AiHttpRequest.Body | base String | original | constructor-parameter
+    final case class AiHttpRequest(method: AiHttpRequest.Method, url: AiHttpRequest.Url, headers: Map[AiHttpRequest.HeadersKey, AiHttpRequest.HeadersValue], body: Option[AiHt
+com.histmersion.plugin.testkit.AiHttpRequest.HeadersKey | base String | original | constructor-parameter
+    final case class AiHttpRequest(method: AiHttpRequest.Method, url: AiHttpRequest.Url, headers: Map[AiHttpRequest.HeadersKey, AiHttpRequest.HeadersValue], body: Option[AiHt
+com.histmersion.plugin.testkit.AiHttpRequest.HeadersValue | base String | original | constructor-parameter
+    final case class AiHttpRequest(method: AiHttpRequest.Method, url: AiHttpRequest.Url, headers: Map[AiHttpRequest.HeadersKey, AiHttpRequest.HeadersValue], body: Option[AiHt
+com.histmersion.plugin.testkit.AiHttpRequest.Method | base String | original | constructor-parameter
+    final case class AiHttpRequest(method: AiHttpRequest.Method, url: AiHttpRequest.Url, headers: Map[AiHttpRequest.HeadersKey, AiHttpRequest.HeadersValue], body: Option[AiHt
+com.histmersion.plugin.testkit.AiHttpRequest.Url | base String | original | alias,constructor-parameter
+    final case class AiHttpRequest(method: AiHttpRequest.Method, url: AiHttpRequest.Url, headers: Map[AiHttpRequest.HeadersKey, AiHttpRequest.HeadersValue], body: Option[AiHt
+com.histmersion.plugin.testkit.AiReport.CheckPart1 | base String | original | constructor-parameter
+    final case class AiReport(check: Either[AiReport.CheckPart1, Unit], turn: Option[Either[AiFailure, AiTurn]], log: List[LogLine])
+com.histmersion.plugin.testkit.CatalogueReport.Failure | base String | original | constructor-parameter
+com.histmersion.plugin.testkit.CatalogueReport.LeftOut | base String | original | constructor-parameter
+com.histmersion.plugin.testkit.CatalogueReport.PagesPart1 | base String | original | constructor-parameter
+com.histmersion.plugin.testkit.CatalogueReport.PagesPart2Part1 | base String | original | constructor-parameter
+com.histmersion.plugin.testkit.CatalogueReport.PagesPart2Part2 | base Int | original | constructor-parameter
+com.histmersion.plugin.testkit.CatalogueReport.Parts | base String | original | constructor-parameter
+com.histmersion.plugin.testkit.CatalogueReport.Refused | base String | original | constructor-parameter
+com.histmersion.plugin.testkit.CatalogueReport.Requests | base String | original | constructor-parameter
+com.histmersion.plugin.testkit.Contributions.AiProviders | base String | original | constructor-parameter
+com.histmersion.plugin.testkit.Contributions.EventCatalogues | base String | original | constructor-parameter
+com.histmersion.plugin.testkit.Contributions.MediaCollections | base String | original | constructor-parameter
+com.histmersion.plugin.testkit.Contributions.ProvidesResult | base String | generated | method-result
+    def provides: List[com.histmersion.plugin.testkit.Contributions.ProvidesResult] =
+com.histmersion.plugin.testkit.Contributions.SecretVaults | base String | original | constructor-parameter
+com.histmersion.plugin.testkit.Contributions.SourceFetchers | base String | original | constructor-parameter
+com.histmersion.plugin.testkit.FetchOutcome.Found.Fetcher | base String | generated | constructor-parameter
+    case Found(fetcher: FetchOutcome.Found.Fetcher, file: FetchedFile, savedTo: Option[Path])
+com.histmersion.plugin.testkit.FetchOutcome.Miss.Why | base String | generated | constructor-parameter
+    case Miss(why: FetchOutcome.Miss.Why)
+    case Refused(why: FetchOutcome.Refused.Why)
+com.histmersion.plugin.testkit.FetchOutcome.Refused.Why | base String | generated | constructor-parameter
+    case Miss(why: FetchOutcome.Miss.Why)
+    case Refused(why: FetchOutcome.Refused.Why)
+com.histmersion.plugin.testkit.FetchReport.LicenceResult | base String | generated | method-result
+    def licence: Option[com.histmersion.plugin.testkit.FetchReport.LicenceResult] =
+com.histmersion.plugin.testkit.FetchReport.Requests | base String | original | constructor-parameter
+com.histmersion.plugin.testkit.FetcherAnswer.Fetcher | base String | original | constructor-parameter
+    final case class FetcherAnswer(fetcher: FetcherAnswer.Fetcher, refused: FetcherAnswer.Refused, why: FetcherAnswer.Why)
+com.histmersion.plugin.testkit.FetcherAnswer.Refused | base Boolean | original | constructor-parameter
+    final case class FetcherAnswer(fetcher: FetcherAnswer.Fetcher, refused: FetcherAnswer.Refused, why: FetcherAnswer.Why)
+com.histmersion.plugin.testkit.FetcherAnswer.Why | base String | original | constructor-parameter
+    final case class FetcherAnswer(fetcher: FetcherAnswer.Fetcher, refused: FetcherAnswer.Refused, why: FetcherAnswer.Why)
+com.histmersion.plugin.testkit.GazetteerReport.Failure | base String | original | constructor-parameter
+com.histmersion.plugin.testkit.GazetteerReport.Refused | base String | original | constructor-parameter
+com.histmersion.plugin.testkit.GazetteerReport.Requests | base String | original | constructor-parameter
+com.histmersion.plugin.testkit.HttpMode.ChooseEnvPart1 | base String | generated | alias,method-parameter
+    val FromEnvEnvPart1: _root_.com.histmersion.plugin.testkit.HttpMode.ChooseEnvPart1.type = _root_.com.histmersion.plugin.testkit.HttpMode.ChooseEnvPart1
+    private def choose(dir: Path, env: Map[com.histmersion.plugin.testkit.HttpMode.ChooseEnvPart1, com.histmersion.plugin.testkit.HttpMode.ChooseEnvPart2]): Either[com.histme
+com.histmersion.plugin.testkit.HttpMode.ChooseEnvPart2 | base String | generated | alias,method-parameter
+    val FromEnvEnvPart2: _root_.com.histmersion.plugin.testkit.HttpMode.ChooseEnvPart2.type = _root_.com.histmersion.plugin.testkit.HttpMode.ChooseEnvPart2
+    private def choose(dir: Path, env: Map[com.histmersion.plugin.testkit.HttpMode.ChooseEnvPart1, com.histmersion.plugin.testkit.HttpMode.ChooseEnvPart2]): Either[com.histme
+com.histmersion.plugin.testkit.HttpMode.ChooseResultPart1 | base String | generated | method-result
+    private def choose(dir: Path, env: Map[com.histmersion.plugin.testkit.HttpMode.ChooseEnvPart1, com.histmersion.plugin.testkit.HttpMode.ChooseEnvPart2]): Either[com.histme
+com.histmersion.plugin.testkit.HttpMode.FromEnvResultPart1 | base String | generated | method-result
+    def fromEnv(dir: Path, env: Map[com.histmersion.plugin.testkit.HttpMode.FromEnvEnvPart1, com.histmersion.plugin.testkit.HttpMode.FromEnvEnvPart2] = sys.env): Either[com.h
+com.histmersion.plugin.testkit.HttpMode.LiveResult | base Boolean | generated | method-result
+    def live: com.histmersion.plugin.testkit.HttpMode.LiveResult = this match
+com.histmersion.plugin.testkit.HttpMode.Stub.AnswersKey | base String | generated | constructor-parameter
+    case Stub(answers: Map[HttpMode.Stub.AnswersKey, StubAnswer])
+com.histmersion.plugin.testkit.LogLine.Message | base String | original | constructor-parameter
+    final case class LogLine(source: LogLine.Source, warn: LogLine.Warn, message: LogLine.Message):
+com.histmersion.plugin.testkit.LogLine.Source | base String | original | constructor-parameter
+    final case class LogLine(source: LogLine.Source, warn: LogLine.Warn, message: LogLine.Message):
+com.histmersion.plugin.testkit.LogLine.Warn | base Boolean | original | constructor-parameter
+    final case class LogLine(source: LogLine.Source, warn: LogLine.Warn, message: LogLine.Message):
+com.histmersion.plugin.testkit.MediaReport.Failure | base String | original | constructor-parameter
+com.histmersion.plugin.testkit.MediaReport.Requests | base String | original | constructor-parameter
+com.histmersion.plugin.testkit.MediaVerdict.Key | base String | original | constructor-parameter
+    final case class MediaVerdict(key: MediaVerdict.Key, item: Option[MediaItem], licence: Option[MediaVerdict.Licence], refused: Option[MediaVerdict.Refused])
+com.histmersion.plugin.testkit.MediaVerdict.Licence | base String | original | constructor-parameter
+    final case class MediaVerdict(key: MediaVerdict.Key, item: Option[MediaItem], licence: Option[MediaVerdict.Licence], refused: Option[MediaVerdict.Refused])
+com.histmersion.plugin.testkit.MediaVerdict.Refused | base String | original | constructor-parameter
+    final case class MediaVerdict(key: MediaVerdict.Key, item: Option[MediaItem], licence: Option[MediaVerdict.Licence], refused: Option[MediaVerdict.Refused])

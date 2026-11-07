@@ -21,12 +21,12 @@ final private[articles] case class FullArticleRow(
 ) derives DbCodec
 
 object FullArticleRow:
-  type Slug = Slug.T
-  object Slug extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type Title = Title.T
-  object Title extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type Kind = Kind.T
-  object Kind extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type Slug = com.histmersion.domain.research.Slug
+  val Slug: _root_.com.histmersion.domain.research.Slug.type = _root_.com.histmersion.domain.research.Slug
+  type Title = com.histmersion.domain.Title
+  val Title: _root_.com.histmersion.domain.Title.type = _root_.com.histmersion.domain.Title
+  type Kind = com.histmersion.domain.research.Article.Kind
+  val Kind: _root_.com.histmersion.domain.research.Article.Kind.type = _root_.com.histmersion.domain.research.Article.Kind
   type Body = Body.T
   object Body extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type Summary = Summary.T

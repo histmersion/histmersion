@@ -31,15 +31,15 @@ final class PolicyHttp(
   /** One GET: the body of a 2xx answer, or why there is none. A caller's own `User-Agent` replaces the configured one;
     * either goes through [[HttpPolicy.userAgent]], so neither can carry an e-mail.
     */
-  def bytes(url: com.histmersion.pluginhost.PolicyHttp.BytesUrl, headers: Map[com.histmersion.pluginhost.PolicyHttp.BytesHeadersPart1, com.histmersion.pluginhost.PolicyHttp.BytesHeadersPart2] = Map.empty): Either[com.histmersion.pluginhost.PolicyHttp.BytesResultPart1, com.histmersion.pluginhost.PolicyHttp.BytesResultPart2] =
+  def bytes(url: com.histmersion.pluginhost.HttpTransport.Url, headers: Map[com.histmersion.domain.CoreQuota.HeaderName, com.histmersion.pluginhost.PolicyHttp.BytesHeadersPart2] = Map.empty): Either[com.histmersion.pluginhost.PolicyHttp.Problem, com.histmersion.pluginhost.PolicyHttp.BytesResultPart2] =
     val ua = headers.collectFirst { case (k, v) if k.equalsIgnoreCase(PolicyHttp.UserAgent) => v }
     val sent = headers.filterNot(_._1.equalsIgnoreCase(PolicyHttp.UserAgent)) +
       (PolicyHttp.UserAgent -> HttpPolicy.userAgent(ua.getOrElse(userAgent)))
-    def again(n: com.histmersion.pluginhost.PolicyHttp.BytesAgainN, ms: com.histmersion.pluginhost.PolicyHttp.BytesAgainMs, why: com.histmersion.pluginhost.PolicyHttp.BytesAgainWhy): Either[com.histmersion.pluginhost.PolicyHttp.BytesAgainResultPart1, com.histmersion.pluginhost.PolicyHttp.BytesAgainResultPart2] =
+    def again(n: com.histmersion.domain.HttpPolicy.Attempt, ms: com.histmersion.domain.HttpPolicy.Step.Wait.Ms, why: com.histmersion.pluginhost.PolicyHttp.Reason): Either[com.histmersion.pluginhost.PolicyHttp.Problem, com.histmersion.pluginhost.PolicyHttp.BytesAgainResultPart2] =
       log.warn(s"acquire: $why — retrying $url in ${ms}ms")
       sleep(ms)
       attempt(n + 1)
-    def attempt(n: com.histmersion.pluginhost.PolicyHttp.BytesAttemptN): Either[com.histmersion.pluginhost.PolicyHttp.BytesAttemptResultPart1, com.histmersion.pluginhost.PolicyHttp.BytesAttemptResultPart2] =
+    def attempt(n: com.histmersion.domain.HttpPolicy.Attempt): Either[com.histmersion.pluginhost.PolicyHttp.Problem, com.histmersion.pluginhost.PolicyHttp.BytesAttemptResultPart2] =
       transport.get(url, sent) match
         case Left(unreachable) =>
           if n < maxRetries then again(n, HttpPolicy.backoffMs(n), unreachable) else Left(unreachable)
@@ -59,7 +59,7 @@ final class PolicyHttp(
     * headers — for an upstream whose own budget decides when to ask again (CORE's rate-limit headers), where a retry
     * would spend what the budget is keeping.
     */
-  def once(url: com.histmersion.pluginhost.PolicyHttp.OnceUrl, headers: Map[com.histmersion.pluginhost.PolicyHttp.OnceHeadersPart1, com.histmersion.pluginhost.PolicyHttp.OnceHeadersPart2] = Map.empty): Either[com.histmersion.pluginhost.PolicyHttp.OnceResultPart1, HttpAnswer] =
+  def once(url: com.histmersion.pluginhost.HttpTransport.Url, headers: Map[com.histmersion.domain.CoreQuota.HeaderName, com.histmersion.pluginhost.PolicyHttp.OnceHeadersPart2] = Map.empty): Either[com.histmersion.pluginhost.PolicyHttp.Problem, HttpAnswer] =
     val ua = headers.collectFirst { case (k, v) if k.equalsIgnoreCase(PolicyHttp.UserAgent) => v }
     transport.get(
       url,
@@ -71,31 +71,19 @@ final class PolicyHttp(
     * budget meters is sent [[once]], answered with its status and headers.
     */
   def plugin: Plugin.Http = new Plugin.Http:
-    def get(url: com.histmersion.pluginhost.PolicyHttp.PluginGetUrl, headers: Map[com.histmersion.pluginhost.PolicyHttp.PluginGetHeadersPart1, com.histmersion.pluginhost.PolicyHttp.PluginGetHeadersPart2]) = bytes(url, headers)
+    def get(url: com.histmersion.pluginhost.HttpTransport.Url, headers: Map[com.histmersion.domain.CoreQuota.HeaderName, com.histmersion.pluginhost.PolicyHttp.PluginGetHeadersPart2]) = bytes(url, headers)
     override def fetch(url: String, headers: Map[String, String]) =
       once(url, headers).map(a => Plugin.HttpResponse(a.code, a.headers, a.body))
 
 object PolicyHttp:
-  type BytesAgainResultPart1 = BytesAgainResultPart1.T
-  object BytesAgainResultPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type Problem = Problem.T
+  object Problem extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type Reason = Reason.T
+  object Reason extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type BytesAgainResultPart2 = BytesAgainResultPart2.T
   object BytesAgainResultPart2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Array[_root_.scala.Byte], _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type BytesAgainN = BytesAgainN.T
-  object BytesAgainN extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type BytesAgainMs = BytesAgainMs.T
-  object BytesAgainMs extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type BytesAgainWhy = BytesAgainWhy.T
-  object BytesAgainWhy extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type BytesAttemptResultPart1 = BytesAttemptResultPart1.T
-  object BytesAttemptResultPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type BytesAttemptResultPart2 = BytesAttemptResultPart2.T
   object BytesAttemptResultPart2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Array[_root_.scala.Byte], _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type BytesAttemptN = BytesAttemptN.T
-  object BytesAttemptN extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type PluginGetUrl = PluginGetUrl.T
-  object PluginGetUrl extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type PluginGetHeadersPart1 = PluginGetHeadersPart1.T
-  object PluginGetHeadersPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type PluginGetHeadersPart2 = PluginGetHeadersPart2.T
   object PluginGetHeadersPart2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
@@ -111,20 +99,8 @@ object PolicyHttp:
   type SleepArg1 = SleepArg1.T
   object SleepArg1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
-  type BytesResultPart1 = BytesResultPart1.T
-  object BytesResultPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type BytesUrl = BytesUrl.T
-  object BytesUrl extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type BytesHeadersPart1 = BytesHeadersPart1.T
-  object BytesHeadersPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type BytesHeadersPart2 = BytesHeadersPart2.T
   object BytesHeadersPart2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type OnceResultPart1 = OnceResultPart1.T
-  object OnceResultPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type OnceUrl = OnceUrl.T
-  object OnceUrl extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type OnceHeadersPart1 = OnceHeadersPart1.T
-  object OnceHeadersPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type OnceHeadersPart2 = OnceHeadersPart2.T
   object OnceHeadersPart2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type AcquisitionSleepArg1 = AcquisitionSleepArg1.T

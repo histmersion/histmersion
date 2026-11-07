@@ -19,7 +19,7 @@ final class JavaHttpTransport(timeoutSeconds: => Int, connectSeconds: Option[Jav
     .version(HttpClient.Version.HTTP_1_1)
     .build()
 
-  def get(url: com.histmersion.pluginhost.JavaHttpTransport.GetUrl, headers: Map[com.histmersion.pluginhost.JavaHttpTransport.GetHeadersPart1, com.histmersion.pluginhost.JavaHttpTransport.GetHeadersPart2]): Either[com.histmersion.pluginhost.JavaHttpTransport.GetResultPart1, HttpAnswer] =
+  def get(url: com.histmersion.pluginhost.HttpTransport.Url, headers: Map[com.histmersion.domain.CoreQuota.HeaderName, com.histmersion.pluginhost.JavaHttpTransport.GetHeadersPart2]): Either[com.histmersion.pluginhost.JavaHttpTransport.Problem, HttpAnswer] =
     scala.util
       .Try {
         val b = HttpRequest.newBuilder(URI.create(url)).GET().timeout(Duration.ofSeconds(timeoutSeconds.toLong.max(1)))
@@ -38,14 +38,10 @@ final class JavaHttpTransport(timeoutSeconds: => Int, connectSeconds: Option[Jav
       .map(e => s"$url unreachable: ${e.getClass.getSimpleName}: ${e.getMessage}")
 
 object JavaHttpTransport:
+  type Problem = Problem.T
+  object Problem extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type ConnectSeconds = ConnectSeconds.T
   object ConnectSeconds extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
-  type GetResultPart1 = GetResultPart1.T
-  object GetResultPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type GetUrl = GetUrl.T
-  object GetUrl extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type GetHeadersPart1 = GetHeadersPart1.T
-  object GetHeadersPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type GetHeadersPart2 = GetHeadersPart2.T
   object GetHeadersPart2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]

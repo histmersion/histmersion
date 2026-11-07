@@ -11,18 +11,6 @@ import com.augustnagro.magnum.*
 private[places] object LandRepo:
 
   /** Vertices per stored piece: small pieces make the index narrow a clip to a handful of rows. */
-  type ReplaceResult = ReplaceResult.T
-  object ReplaceResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type ReplaceGeometries = ReplaceGeometries.T
-  object ReplaceGeometries extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type PolitiesResult = PolitiesResult.T
-  object PolitiesResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type ReclipBatch = ReclipBatch.T
-  object ReclipBatch extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type ClippedResult = ClippedResult.T
-  object ClippedResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type PiecesResult = PiecesResult.T
-  object PiecesResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
   private val PieceVertices = 256
 
@@ -32,7 +20,7 @@ private[places] object LandRepo:
   /** Replace the land with `geometries` (GeoJSON geometry objects). Returns how many pieces were stored. One
     * transaction: the map never sees half a coastline.
     */
-  def replace(geometries: List[com.histmersion.domain.catalogue.places.LandRepo.ReplaceGeometries])(using DbCon): com.histmersion.domain.catalogue.places.LandRepo.ReplaceResult =
+  def replace(geometries: List[com.histmersion.domain.catalogue.places.BPlaceRow.Geom])(using DbCon): com.histmersion.RowCount =
     val _ = sql"TRUNCATE land".update.run()
     val _ = batchUpdate(geometries) { g =>
       sql"""INSERT INTO land (geom)
@@ -58,17 +46,17 @@ private[places] object LandRepo:
     * 000 of them for the ~12 minutes a full re-clip takes, so an import running meanwhile stalled — or deadlocked
     * against it, taking rows in another order (seen as a flaky test when two suites ran together).
     */
-  def polities()(using DbCon): List[com.histmersion.domain.catalogue.places.LandRepo.PolitiesResult] =
+  def polities()(using DbCon): List[com.histmersion.domain.catalogue.places.BPlaceRow.Label] =
     sql"SELECT id FROM places WHERE kind = 'polity' AND geom IS NOT NULL ORDER BY id".query[String].run().toList
 
   /** One batch of [[polities]] clipped again. */
-  def reclip(batch: List[com.histmersion.domain.catalogue.places.LandRepo.ReclipBatch])(using DbCon): Unit =
+  def reclip(batch: List[com.histmersion.domain.catalogue.places.BPlaceRow.Id])(using DbCon): Unit =
     val list = batch.mkString(Sep)
     val _ = sql"""UPDATE places SET geom_clipped = clip_to_land(geom)
             WHERE id = ANY(string_to_array($list, $Sep))""".update.run()
 
-  def clipped()(using DbCon): com.histmersion.domain.catalogue.places.LandRepo.ClippedResult =
+  def clipped()(using DbCon): com.histmersion.RowCount =
     sql"SELECT count(*)::int FROM places WHERE geom_clipped IS NOT NULL".query[Int].run().head
 
-  def pieces()(using DbCon): com.histmersion.domain.catalogue.places.LandRepo.PiecesResult =
+  def pieces()(using DbCon): com.histmersion.RowCount =
     sql"SELECT count(*)::int FROM land".query[Int].run().head

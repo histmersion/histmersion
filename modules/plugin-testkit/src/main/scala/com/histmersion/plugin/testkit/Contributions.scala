@@ -11,14 +11,14 @@ final case class Contributions(
     secretVaults: List[Contributions.SecretVaults]
 ):
   /** As `histmersion plugin add` and `histmersion about` show them: `source-fetcher:oapen`, … */
-  def provides: List[com.histmersion.plugin.testkit.Contributions.ProvidesResult] =
+  def provides: List[com.histmersion.plugin.testkit.Contributions.RegistryKey] =
     sourceFetchers.map("source-fetcher:" + _) ++ mediaCollections.map("media-collection:" + _) ++
       eventCatalogues.map("event-catalogue:" + _) ++ aiProviders.map("ai-provider:" + _) ++
       secretVaults.map("secret-vault:" + _)
 
 object Contributions:
-  type ProvidesResult = ProvidesResult.T
-  object ProvidesResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type RegistryKey = RegistryKey.T
+  object RegistryKey extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
   type SourceFetchers = SourceFetchers.T
   object SourceFetchers extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]

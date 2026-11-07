@@ -21,36 +21,10 @@ import com.histmersion.api.research.Coverage
 private[articles] object ArticleCheckRepo:
 
   /** Rules that are one SQL statement. Ordered so the report is stable. */
-  type ProjectionsPart1 = ProjectionsPart1.T
-  object ProjectionsPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type ProjectionsPart2 = ProjectionsPart2.T
-  object ProjectionsPart2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type SqlOfResult = SqlOfResult.T
-  object SqlOfResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type SqlOfRule = SqlOfRule.T
-  object SqlOfRule extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type PairsResultPart1 = PairsResultPart1.T
-  object PairsResultPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type PairsResultPart2 = PairsResultPart2.T
-  object PairsResultPart2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type PairsSql = PairsSql.T
-  object PairsSql extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type TriplesResultPart1 = TriplesResultPart1.T
-  object TriplesResultPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type TriplesResultPart2 = TriplesResultPart2.T
-  object TriplesResultPart2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type TriplesResultPart3 = TriplesResultPart3.T
-  object TriplesResultPart3 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type TriplesSql = TriplesSql.T
-  object TriplesSql extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type StoredCitekeyResultArg1 = StoredCitekeyResultArg1.T
-  object StoredCitekeyResultArg1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type StoredCitekeyResultResult = StoredCitekeyResultResult.T
-  object StoredCitekeyResultResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type ReportMaxItems = ReportMaxItems.T
   object ReportMaxItems extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
-  val projections: Map[com.histmersion.domain.research.articles.ArticleCheckRepo.ProjectionsPart1, com.histmersion.domain.research.articles.ArticleCheckRepo.ProjectionsPart2] = Map(
+  val projections: Map[String, String] = Map(
     // The article-side twin of `dangling-edges`, resolved exactly the way the RENDERER resolves a
     // link (`ArticleLinks.hrefFor`): an exact slug, an exact citekey, or a UNIQUE `<target>_%` alias
     // — the short form the wiki writes (`[[knapp2016]]`). Whatever is left is a name with no page
@@ -80,17 +54,17 @@ private[articles] object ArticleCheckRepo:
   val articleTextsSql = "SELECT slug, body, coalesce(summary, '') FROM articles ORDER BY slug"
 
   /** Every rule must be runnable — the report would otherwise lie by omission. */
-  def sqlOf(rule: com.histmersion.domain.research.articles.ArticleCheckRepo.SqlOfRule): List[com.histmersion.domain.research.articles.ArticleCheckRepo.SqlOfResult] = rule match
+  def sqlOf(rule: String): List[String] = rule match
     case ArticleFiller | ArticleUncitedParagraph => List(articlesSql)
     case ArticleCritiquePairing => List(articlesSql, disagreementEdgesSql, sourceNamesSql, sourceAliasesSql)
     case ArticleThinSummary     => List(articleSummariesSql)
     case ArticleFormat          => List(articleTextsSql)
     case r                      => projections.get(r).toList
 
-  private def pairs(sql: com.histmersion.domain.research.articles.ArticleCheckRepo.PairsSql)(using DbCon): List[(com.histmersion.domain.research.articles.ArticleCheckRepo.PairsResultPart1, com.histmersion.domain.research.articles.ArticleCheckRepo.PairsResultPart2)] =
+  private def pairs(sql: String)(using DbCon): List[(com.histmersion.domain.research.Slug, com.histmersion.domain.library.Citekey)] =
     Sql.raw(sql).frag.query[(String, String)].run().toList
 
-  private def triples(sql: com.histmersion.domain.research.articles.ArticleCheckRepo.TriplesSql)(using DbCon): List[(com.histmersion.domain.research.articles.ArticleCheckRepo.TriplesResultPart1, com.histmersion.domain.research.articles.ArticleCheckRepo.TriplesResultPart2, com.histmersion.domain.research.articles.ArticleCheckRepo.TriplesResultPart3)] =
+  private def triples(sql: String)(using DbCon): List[(com.histmersion.domain.library.Citekey, com.histmersion.domain.library.Edge.Kind.Wire, com.histmersion.domain.library.Citekey)] =
     Sql.raw(sql).frag.query[(String, String, String)].run().toList
 
   // the stored citekeys and the articles several rules classify, read at most once per run
@@ -98,7 +72,7 @@ private[articles] object ArticleCheckRepo:
   private val ArticleRows = CheckInput(pairs(articlesSql))
 
   /** Whether a citekey is stored — what the formatting rules check a bare citekey against, read once per run. */
-  def storedCitekey(using run: CheckRun)(using DbCon): com.histmersion.domain.research.articles.ArticleCheckRepo.StoredCitekeyResultArg1 => com.histmersion.domain.research.articles.ArticleCheckRepo.StoredCitekeyResultResult = ck => run(StoredCitekeys).contains(ck)
+  def storedCitekey(using run: CheckRun)(using DbCon): com.histmersion.domain.library.Citekey => Boolean = ck => run(StoredCitekeys).contains(ck)
 
   /** One rule's report, on the run's connection; `format` is the formatting check. */
   def report(r: Rule, format: FormatChecker, maxItems: com.histmersion.domain.research.articles.ArticleCheckRepo.ReportMaxItems)(using run: CheckRun)(using DbCon): LintRuleReport =
@@ -131,12 +105,12 @@ private[articles] object ArticleCheckRepo:
   )
 
   object PairingCorpus:
-    type ResolveArg1 = ResolveArg1.T
-    object ResolveArg1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-    type ResolveResult = ResolveResult.T
-    object ResolveResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-    type WorkArg1 = WorkArg1.T
-    object WorkArg1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type ResolveArg1 = com.histmersion.domain.library.Citekey
+    val ResolveArg1: _root_.com.histmersion.domain.library.Citekey.type = _root_.com.histmersion.domain.library.Citekey
+    type ResolveResult = com.histmersion.domain.library.Citekey
+    val ResolveResult: _root_.com.histmersion.domain.library.Citekey.type = _root_.com.histmersion.domain.library.Citekey
+    type WorkArg1 = com.histmersion.domain.library.Citekey
+    val WorkArg1: _root_.com.histmersion.domain.library.Citekey.type = _root_.com.histmersion.domain.library.Citekey
 
   private def pairingCorpusIn()(using DbCon): PairingCorpus =
     val names = Sql
@@ -167,8 +141,8 @@ private[articles] object ArticleCheckRepo:
   )
 
   object PairingRepair:
-    type Slug = Slug.T
-    object Slug extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Slug = com.histmersion.domain.research.Slug
+    val Slug: _root_.com.histmersion.domain.research.Slug.type = _root_.com.histmersion.domain.research.Slug
     type UpdatedAt = UpdatedAt.T
     object UpdatedAt extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
     type Body = Body.T

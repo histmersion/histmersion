@@ -32,34 +32,6 @@ import com.histmersion.api.catalogue.Place
   */
 private[places] object GazetteerRepo:
 
-  type LinkSeedIdsResult = LinkSeedIdsResult.T
-  object LinkSeedIdsResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type LinkSeedIdsIds = LinkSeedIdsIds.T
-  object LinkSeedIdsIds extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type RecordSourceKey = RecordSourceKey.T
-  object RecordSourceKey extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type RecordSourceTitle = RecordSourceTitle.T
-  object RecordSourceTitle extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type RecordSourceVersion = RecordSourceVersion.T
-  object RecordSourceVersion extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type RecordSourceFile = RecordSourceFile.T
-  object RecordSourceFile extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type RecordSourceUrl = RecordSourceUrl.T
-  object RecordSourceUrl extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type RecordSourceLicence = RecordSourceLicence.T
-  object RecordSourceLicence extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type RecordSourceCitation = RecordSourceCitation.T
-  object RecordSourceCitation extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type PlaceResultPart2 = PlaceResultPart2.T
-  object PlaceResultPart2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type SessionSource = SessionSource.T
-  object SessionSource extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type SessionVersion = SessionVersion.T
-  object SessionVersion extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type SessionWindowYears = SessionWindowYears.T
-  object SessionWindowYears extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type SessionPointAreaKinds = SessionPointAreaKinds.T
-  object SessionPointAreaKinds extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
   private val Json0 = io.circe.Printer.noSpaces
 
@@ -69,7 +41,7 @@ private[places] object GazetteerRepo:
     * import ([[PlaceRepo.upsertPlaces]]) writes them for the places it touches. Places an external source wrote are
     * left alone. Idempotent.
     */
-  def linkSeedIds(ids: List[com.histmersion.domain.catalogue.places.GazetteerRepo.LinkSeedIdsIds])(using DbCon): com.histmersion.domain.catalogue.places.GazetteerRepo.LinkSeedIdsResult =
+  def linkSeedIds(ids: List[com.histmersion.domain.catalogue.places.BPlaceRow.Id])(using DbCon): com.histmersion.RowCount =
     if ids.isEmpty then 0
     else
       sql"""INSERT INTO place_links (place_id, scheme, external_id, relation)
@@ -100,15 +72,15 @@ private[places] object GazetteerRepo:
 
   /** Record a finished import: what was read, and what it now holds in the store. */
   def recordSource(
-      key: com.histmersion.domain.catalogue.places.GazetteerRepo.RecordSourceKey,
+      key: com.histmersion.domain.catalogue.places.GazetteerSourceRow.Key,
       kind: Gazetteer.Kind,
-      title: com.histmersion.domain.catalogue.places.GazetteerRepo.RecordSourceTitle,
-      version: com.histmersion.domain.catalogue.places.GazetteerRepo.RecordSourceVersion,
+      title: com.histmersion.domain.catalogue.places.GazetteerSourceRow.Title,
+      version: com.histmersion.domain.catalogue.places.GazetteerSourceRow.Version,
       sha256: com.histmersion.Sha256,
-      file: com.histmersion.domain.catalogue.places.GazetteerRepo.RecordSourceFile,
-      url: Option[com.histmersion.domain.catalogue.places.GazetteerRepo.RecordSourceUrl],
-      licence: Option[com.histmersion.domain.catalogue.places.GazetteerRepo.RecordSourceLicence],
-      citation: Option[com.histmersion.domain.catalogue.places.GazetteerRepo.RecordSourceCitation],
+      file: com.histmersion.domain.catalogue.places.GazetteerSourceRow.File,
+      url: Option[com.histmersion.domain.catalogue.places.GazetteerSourceRow.Url],
+      licence: Option[com.histmersion.domain.catalogue.places.GazetteerSourceRow.Licence],
+      citation: Option[com.histmersion.domain.catalogue.places.GazetteerSourceRow.Citation],
       span: Span
   )(using DbCon): Unit =
     val lo = span.from
@@ -165,7 +137,7 @@ private[places] object GazetteerRepo:
       byLinks: List[Place.Match],
       byId: Option[Stored],
       own: Option[Stored]
-  ): (Placement, Option[com.histmersion.domain.catalogue.places.GazetteerRepo.PlaceResultPart2]) =
+  ): (Placement, Option[com.histmersion.domain.catalogue.places.BPlaceRow.Id]) =
     Gazetteer.canonical(byOwn ++ byId.map(_.toMatch).toList ++ own.map(_.toMatch).toList, byLinks) match
       case None                               => (Placement.Create(r.placeId.value), None)
       case Some(id) if own.exists(_.id == id) => (Placement.Own(id), None)
@@ -174,10 +146,10 @@ private[places] object GazetteerRepo:
   // ── one import session ─────────────────────────────────────────────────────────────────────────
 
   def session(
-      source: com.histmersion.domain.catalogue.places.GazetteerRepo.SessionSource,
-      version: com.histmersion.domain.catalogue.places.GazetteerRepo.SessionVersion,
-      windowYears: com.histmersion.domain.catalogue.places.GazetteerRepo.SessionWindowYears = Gazetteer.DefaultOpenStartWindowYears,
-      pointAreaKinds: Set[com.histmersion.domain.catalogue.places.GazetteerRepo.SessionPointAreaKinds] = Gazetteer.DefaultPointAreaKinds.toSet
+      source: com.histmersion.domain.catalogue.places.GazetteerRepo.Session.Source,
+      version: com.histmersion.domain.catalogue.places.GazetteerRepo.Session.Version,
+      windowYears: com.histmersion.domain.catalogue.places.GazetteerRepo.Session.WindowYears = Gazetteer.DefaultOpenStartWindowYears,
+      pointAreaKinds: Set[com.histmersion.domain.catalogue.places.GazetteerRepo.Session.PointAreaKinds] = Gazetteer.DefaultPointAreaKinds.toSet
   )(using con: DbCon): Session =
     val _ = sql"CREATE TEMP TABLE IF NOT EXISTS gaz_seen (ref text PRIMARY KEY)".update.run()
     val _ = sql"TRUNCATE gaz_seen".update.run()
@@ -196,11 +168,11 @@ private[places] object GazetteerRepo:
       val refs = records.map(_.ref)
       val _ = sql"INSERT INTO gaz_seen SELECT unnest($refs::text[]) ON CONFLICT DO NOTHING".update.run()
 
-    def pruneCandidates: List[com.histmersion.domain.catalogue.places.GazetteerRepo.Session.PruneCandidatesResult] =
+    def pruneCandidates: List[com.histmersion.domain.catalogue.places.BPlaceRow.Id] =
       if pointAreaKinds.isEmpty || !Gazetteer.PointAreaSources.contains(source) then Nil
       else PointAreaRepo.ofSourceIn(source, pointAreaKinds.toList.sorted)
 
-    def deletePruneChunk(ids: List[com.histmersion.domain.catalogue.places.GazetteerRepo.Session.DeletePruneChunkIds]): com.histmersion.domain.catalogue.places.GazetteerRepo.Session.DeletePruneChunkResult = PointAreaRepo.deletePlacesIn(ids)
+    def deletePruneChunk(ids: List[com.histmersion.domain.catalogue.places.BPlaceRow.Id]): com.histmersion.RowCount = PointAreaRepo.deletePlacesIn(ids)
 
     def sweep(): Gazetteer.LoadCounts =
       val names = sql"""DELETE FROM place_names n WHERE n.import_source = $source
@@ -260,7 +232,7 @@ private[places] object GazetteerRepo:
         // go now, in this batch (it still counts as seen, so the sweep has nothing left of it and a dry
         // run counts it once). A place a person's evidence names (an attestation, an asset link) stays.
         val areas = rs.filter(Gazetteer.dropsPointArea(source, _, pointAreaKinds))
-        val doomed: Set[com.histmersion.domain.catalogue.places.GazetteerRepo.Session.WriteDoomed] =
+        val doomed: Set[com.histmersion.domain.catalogue.places.BPlaceRow.Id] =
           val ids = areas.flatMap(r => own.get(r.ref)).map(_.id).distinct
           if ids.isEmpty then Set.empty
           else
@@ -337,11 +309,11 @@ private[places] object GazetteerRepo:
           pointAreasSkipped = dropped.size
         )
 
-    private def num(v: Option[com.histmersion.domain.catalogue.places.GazetteerRepo.Session.NumV]): Json = v.fold(Json.Null)(Json.fromLong)
-    private def txt(v: Option[com.histmersion.domain.catalogue.places.GazetteerRepo.Session.TxtV]): Json = v.fold(Json.Null)(Json.fromString)
+    private def num(v: Option[Long]): Json = v.fold(Json.Null)(Json.fromLong)
+    private def txt(v: Option[String]): Json = v.fold(Json.Null)(Json.fromString)
 
     /** The records' own places: inserted, or updated where something differs. (inserted, updated) */
-    private def writePlaces(rows: List[(GazRecord, com.histmersion.domain.catalogue.places.GazetteerRepo.Session.WritePlacesRowsPart2)]): (com.histmersion.domain.catalogue.places.GazetteerRepo.Session.WritePlacesResultPart1, com.histmersion.domain.catalogue.places.GazetteerRepo.Session.WritePlacesResultPart2) =
+    private def writePlaces(rows: List[(GazRecord, com.histmersion.domain.catalogue.places.BPlaceRow.Label)]): (com.histmersion.RowCount, com.histmersion.RowCount) =
       if rows.isEmpty then (0, 0)
       else
         val doc = Json.arr(rows.map { (r, id) =>
@@ -387,7 +359,7 @@ private[places] object GazetteerRepo:
         (out.count(identity), out.count(!_))
 
     /** The records' names on their places, as a diff. (added, removed, changed) */
-    private def writeNames(rows: List[(GazRecord, com.histmersion.domain.catalogue.places.GazetteerRepo.Session.WriteNamesRowsPart2)]): (com.histmersion.domain.catalogue.places.GazetteerRepo.Session.WriteNamesResultPart1, com.histmersion.domain.catalogue.places.GazetteerRepo.Session.WriteNamesResultPart2, com.histmersion.domain.catalogue.places.GazetteerRepo.Session.WriteNamesResultPart3) =
+    private def writeNames(rows: List[(GazRecord, com.histmersion.domain.catalogue.places.BPlaceNameRow.Name)]): (com.histmersion.RowCount, com.histmersion.RowCount, com.histmersion.RowCount) =
       val doc = Json.arr(rows.flatMap { (r, id) =>
         r.names.map(n =>
           Json.obj(
@@ -425,7 +397,7 @@ private[places] object GazetteerRepo:
       (out.count(identity), removed, out.count(!_))
 
     /** The records' descriptions on their places (joined ones too), as a diff. (added, removed, changed) */
-    private def writeDescriptions(rows: List[(GazRecord, com.histmersion.domain.catalogue.places.GazetteerRepo.Session.WriteDescriptionsRowsPart2)]): (com.histmersion.domain.catalogue.places.GazetteerRepo.Session.WriteDescriptionsResultPart1, com.histmersion.domain.catalogue.places.GazetteerRepo.Session.WriteDescriptionsResultPart2, com.histmersion.domain.catalogue.places.GazetteerRepo.Session.WriteDescriptionsResultPart3) =
+    private def writeDescriptions(rows: List[(GazRecord, com.histmersion.domain.catalogue.places.BPlaceRow.Label)]): (com.histmersion.RowCount, com.histmersion.RowCount, com.histmersion.RowCount) =
       val doc = Json.arr(rows.flatMap { (r, id) =>
         r.descriptions
           .distinctBy(_.lang)
@@ -462,7 +434,7 @@ private[places] object GazetteerRepo:
       * — on a link the seed wrote for the same id too (a curated place citing that Wikidata item), where only those
       * three columns change. (added, removed, changed)
       */
-    private def writeLinks(rows: List[(GazRecord, com.histmersion.domain.catalogue.places.GazetteerRepo.Session.WriteLinksRowsPart2)]): (com.histmersion.domain.catalogue.places.GazetteerRepo.Session.WriteLinksResultPart1, com.histmersion.domain.catalogue.places.GazetteerRepo.Session.WriteLinksResultPart2, com.histmersion.domain.catalogue.places.GazetteerRepo.Session.WriteLinksResultPart3) =
+    private def writeLinks(rows: List[(GazRecord, com.histmersion.domain.catalogue.places.BPlaceRelRow.ChildId)]): (com.histmersion.RowCount, com.histmersion.RowCount, com.histmersion.RowCount) =
       val doc = Json.arr(rows.flatMap { (r, id) =>
         r.placeLinks.map { l =>
           val own = r.own.contains(l.id)
@@ -520,8 +492,6 @@ private[places] object GazetteerRepo:
       (out.count(identity), removed, out.count(!_))
 
   object Session:
-    type WriteDoomed = WriteDoomed.T
-    object WriteDoomed extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
     type Source = Source.T
     object Source extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
@@ -532,43 +502,3 @@ private[places] object GazetteerRepo:
     type PointAreaKinds = PointAreaKinds.T
     object PointAreaKinds extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
-    type PruneCandidatesResult = PruneCandidatesResult.T
-    object PruneCandidatesResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-    type DeletePruneChunkResult = DeletePruneChunkResult.T
-    object DeletePruneChunkResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
-    type DeletePruneChunkIds = DeletePruneChunkIds.T
-    object DeletePruneChunkIds extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-    type NumV = NumV.T
-    object NumV extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
-    type TxtV = TxtV.T
-    object TxtV extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-    type WritePlacesResultPart1 = WritePlacesResultPart1.T
-    object WritePlacesResultPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
-    type WritePlacesResultPart2 = WritePlacesResultPart2.T
-    object WritePlacesResultPart2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
-    type WritePlacesRowsPart2 = WritePlacesRowsPart2.T
-    object WritePlacesRowsPart2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-    type WriteNamesResultPart1 = WriteNamesResultPart1.T
-    object WriteNamesResultPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
-    type WriteNamesResultPart2 = WriteNamesResultPart2.T
-    object WriteNamesResultPart2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
-    type WriteNamesResultPart3 = WriteNamesResultPart3.T
-    object WriteNamesResultPart3 extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
-    type WriteNamesRowsPart2 = WriteNamesRowsPart2.T
-    object WriteNamesRowsPart2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-    type WriteDescriptionsResultPart1 = WriteDescriptionsResultPart1.T
-    object WriteDescriptionsResultPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
-    type WriteDescriptionsResultPart2 = WriteDescriptionsResultPart2.T
-    object WriteDescriptionsResultPart2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
-    type WriteDescriptionsResultPart3 = WriteDescriptionsResultPart3.T
-    object WriteDescriptionsResultPart3 extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
-    type WriteDescriptionsRowsPart2 = WriteDescriptionsRowsPart2.T
-    object WriteDescriptionsRowsPart2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-    type WriteLinksResultPart1 = WriteLinksResultPart1.T
-    object WriteLinksResultPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
-    type WriteLinksResultPart2 = WriteLinksResultPart2.T
-    object WriteLinksResultPart2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
-    type WriteLinksResultPart3 = WriteLinksResultPart3.T
-    object WriteLinksResultPart3 extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
-    type WriteLinksRowsPart2 = WriteLinksRowsPart2.T
-    object WriteLinksRowsPart2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]

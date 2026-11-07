@@ -12,50 +12,14 @@ import com.histmersion.api.Api
 
 object GoalRepo:
 
-  type RenameInExistsS = RenameInExistsS.T
-  object RenameInExistsS extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
-  type ListInStatus = ListInStatus.T
-  object ListInStatus extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type ListInLimit = ListInLimit.T
-  object ListInLimit extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type ListInOffset = ListInOffset.T
-  object ListInOffset extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type GetSlug = GetSlug.T
-  object GetSlug extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type ChildrenSlug = ChildrenSlug.T
-  object ChildrenSlug extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type ExistsResult = ExistsResult.T
-  object ExistsResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type ExistsSlug = ExistsSlug.T
-  object ExistsSlug extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type PutSlug = PutSlug.T
-  object PutSlug extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type PutInSlug = PutInSlug.T
-  object PutInSlug extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type PutInPeriod = PutInPeriod.T
-  object PutInPeriod extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type PatchInSlug = PatchInSlug.T
-  object PatchInSlug extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type RenameInOldSlug = RenameInOldSlug.T
-  object RenameInOldSlug extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type RenameInNewSlug = RenameInNewSlug.T
-  object RenameInNewSlug extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type RenamedToResult = RenamedToResult.T
-  object RenamedToResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type RenamedToSlug = RenamedToSlug.T
-  object RenamedToSlug extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type DeleteInResult = DeleteInResult.T
-  object DeleteInResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type DeleteInSlug = DeleteInSlug.T
-  object DeleteInSlug extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
   private val cols =
     "g.slug, g.title, g.status, g.notes, g.tags, g.regions, " +
       s"${RangeSql.cols("g.period")}, g.parent_slug, g.updated_at::text"
 
   /** One page of the goals (of one status), by slug, on the caller's connection. */
-  def listIn(status: Option[com.histmersion.domain.automation.goals.GoalRepo.ListInStatus], limit: com.histmersion.domain.automation.goals.GoalRepo.ListInLimit, offset: com.histmersion.domain.automation.goals.GoalRepo.ListInOffset)(using DbCon): Goal.List =
+  def listIn(status: Option[com.histmersion.domain.automation.goals.GoalRow.Status], limit: com.histmersion.PageSize, offset: com.histmersion.Offset)(using DbCon): Goal.List =
     val st = status.map(_.trim.toLowerCase).filter(_.nonEmpty)
     locally:
       val total = sql"""SELECT count(*)::int FROM goals g
@@ -67,7 +31,7 @@ object GoalRepo:
             """.query[GoalRow].run().toList.map(_.toDto)
       Goal.List.of(total, rows, offset.max(0))
 
-  def get(slug: com.histmersion.domain.automation.goals.GoalRepo.GetSlug)(using DbCon): Option[Goal] =
+  def get(slug: com.histmersion.domain.automation.Goal.Slug)(using DbCon): Option[Goal] =
     sql"""SELECT ${SqlLiteral(cols)} FROM goals g WHERE g.slug = $slug"""
       .query[GoalRow]
       .run()
@@ -79,26 +43,26 @@ object GoalRepo:
     sql"""SELECT ${SqlLiteral(cols)} FROM goals g ORDER BY g.slug""".query[GoalRow].run().toList.map(_.toDto)
 
   /** A goal's direct sub-goals, by slug. */
-  def children(slug: com.histmersion.domain.automation.goals.GoalRepo.ChildrenSlug)(using DbCon): List[Goal] =
+  def children(slug: com.histmersion.domain.automation.Goal.Slug)(using DbCon): List[Goal] =
     sql"""SELECT ${SqlLiteral(cols)} FROM goals g WHERE g.parent_slug = $slug ORDER BY g.slug"""
       .query[GoalRow]
       .run()
       .toList
       .map(_.toDto)
 
-  def exists(slug: com.histmersion.domain.automation.goals.GoalRepo.ExistsSlug)(using DbCon): com.histmersion.domain.automation.goals.GoalRepo.ExistsResult =
+  def exists(slug: com.histmersion.domain.automation.Goal.Slug)(using DbCon): Boolean =
     (sql"SELECT 1 FROM goals WHERE slug = $slug".query[Int].run().nonEmpty)
 
   /** Create or replace a goal. Either bound of its period may be given alone (an open period); one that starts after it
     * ends is refused.
     */
-  def put(slug: com.histmersion.domain.automation.goals.GoalRepo.PutSlug, in: Goal.Put)(using DbCon): Either[Api.Error, Unit] =
+  def put(slug: com.histmersion.domain.automation.Goal.Slug, in: Goal.Put)(using DbCon): Either[Api.Error, Unit] =
     RangeSql
       .merge((None, None), in.periodStart, in.periodEnd, s"goal '$slug'")
       .getOrElse(Right((None, None)))
       .map((s, e) => putIn(slug, in, RangeSql.literal(s, e)))
 
-  private def putIn(slug: com.histmersion.domain.automation.goals.GoalRepo.PutInSlug, in: Goal.Put, period: Option[com.histmersion.domain.automation.goals.GoalRepo.PutInPeriod])(using DbCon): Unit =
+  private def putIn(slug: com.histmersion.domain.automation.Goal.Slug, in: Goal.Put, period: Option[com.histmersion.domain.EnrichSource.StatedPeriod.Name])(using DbCon): Unit =
     sql"""INSERT INTO goals (slug, title, status, notes, tags, regions, period, parent_slug, updated_at)
           VALUES ($slug, ${in.title}, ${in.status}, ${in.notes},
                   ${in.tags}::text[], ${in.regions}::text[],
@@ -109,7 +73,7 @@ object GoalRepo:
             parent_slug = EXCLUDED.parent_slug, updated_at = now()""".update.run()
 
   /** A goal's fields changed as given, in the caller's transaction. */
-  def patchIn(slug: com.histmersion.domain.automation.goals.GoalRepo.PatchInSlug, p: Goal.Patch)(using DbCon): Either[Api.Error, Unit] =
+  def patchIn(slug: com.histmersion.domain.automation.Goal.Slug, p: Goal.Patch)(using DbCon): Either[Api.Error, Unit] =
     locally:
       val exists = sql"SELECT 1 FROM goals WHERE slug = $slug".query[Int].run().nonEmpty
       if !exists then Left(Api.Error(s"No goal '$slug'", Some(Write.CodeNotFound)))
@@ -147,8 +111,8 @@ object GoalRepo:
   /** Rename a goal (V042), inside the caller's transaction: the slug moves with one UPDATE (its sub-goals' parent
     * cascades). What a bundle import does when a goal was renamed on the other side.
     */
-  private[histmersion] def renameIn(oldSlug: com.histmersion.domain.automation.goals.GoalRepo.RenameInOldSlug, newSlug: com.histmersion.domain.automation.goals.GoalRepo.RenameInNewSlug)(using DbCon): Either[Api.Error, Unit] =
-    def exists(s: com.histmersion.domain.automation.goals.GoalRepo.RenameInExistsS) = sql"SELECT 1 FROM goals WHERE slug = $s".query[Int].run().nonEmpty
+  private[histmersion] def renameIn(oldSlug: com.histmersion.domain.automation.Goal.Slug, newSlug: com.histmersion.domain.automation.Goal.Slug)(using DbCon): Either[Api.Error, Unit] =
+    def exists(s: com.histmersion.domain.automation.Goal.Slug) = sql"SELECT 1 FROM goals WHERE slug = $s".query[Int].run().nonEmpty
     val aliasOf = sql"SELECT goal_slug FROM goal_aliases WHERE alias = $newSlug".query[String].run().headOption
     if !exists(oldSlug) then Left(Api.Error(s"No goal '$oldSlug'", Some(Write.CodeNotFound)))
     else if exists(newSlug) then
@@ -168,9 +132,9 @@ object GoalRepo:
       Right(())
 
   /** The slug an OLD slug was renamed to — `None` when it is a live slug, or nothing. */
-  def renamedTo(slug: com.histmersion.domain.automation.goals.GoalRepo.RenamedToSlug)(using DbCon): Option[com.histmersion.domain.automation.goals.GoalRepo.RenamedToResult] =
+  def renamedTo(slug: com.histmersion.domain.automation.Goal.Slug)(using DbCon): Option[com.histmersion.domain.automation.Goal.Slug] =
     com.histmersion.domain.automation.goals.GoalAliasTable.table.renamedToIn(slug)
 
   /** A goal removed in the caller's transaction; false when there was none. */
-  def deleteIn(slug: com.histmersion.domain.automation.goals.GoalRepo.DeleteInSlug)(using DbCon): com.histmersion.domain.automation.goals.GoalRepo.DeleteInResult =
+  def deleteIn(slug: com.histmersion.domain.automation.Goal.Slug)(using DbCon): Boolean =
     sql"DELETE FROM goals WHERE slug = $slug".update.run() > 0

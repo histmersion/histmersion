@@ -22,19 +22,11 @@ import com.histmersion.api.catalogue.Period
   * "by time" tree (§1.6) cannot drift apart, and so no SQL has to know about adaptive bucket sizes.
   */
 private[search] object AggregateRepo:
+  type Unit = Unit.T
+  object Unit extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
-  type PeriodsQueryUnit = PeriodsQueryUnit.T
-  object PeriodsQueryUnit extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type PeriodsUnit = PeriodsUnit.T
-  object PeriodsUnit extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type PlacesOfResult = PlacesOfResult.T
-  object PlacesOfResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type PlacesOfFa = PlacesOfFa.T
   object PlacesOfFa extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type TreeRowsQueryUnit = TreeRowsQueryUnit.T
-  object TreeRowsQueryUnit extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type TreeRowsUnit = TreeRowsUnit.T
-  object TreeRowsUnit extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
   private given DbCodec[Period.Row] = DbCodec.derived
 
@@ -53,7 +45,7 @@ private[search] object AggregateRepo:
     *     place/tag/bbox criterion, at least one finding must match it (so a source with no findings at all drops out,
     *     as it always has for places).
     */
-  def periodsQuery(unit: com.histmersion.domain.library.search.AggregateRepo.PeriodsQueryUnit, filter: Filter, scope: PlaceScope = PlaceScope.empty): Sql =
+  def periodsQuery(unit: com.histmersion.domain.library.search.AggregateRepo.Unit, filter: Filter, scope: PlaceScope = PlaceScope.empty): Sql =
     if unit == "findings" then
       Sql.raw(
         s"SELECT ${RangeSql.cols("f.period")}" +
@@ -77,7 +69,7 @@ private[search] object AggregateRepo:
         Sql.raw(" AND (") ++ ownPeriod ++ Sql.raw(" OR fp.in_window > 0)")
 
   /** Run [[periodsQuery]]. `unit` is `sources` (default) or `findings`. */
-  def periods(unit: com.histmersion.domain.library.search.AggregateRepo.PeriodsUnit, filter: Filter, scope: PlaceScope = PlaceScope.empty)(using DbCon): Vector[Period.Row] =
+  def periods(unit: com.histmersion.domain.library.search.AggregateRepo.Unit, filter: Filter, scope: PlaceScope = PlaceScope.empty)(using DbCon): Vector[Period.Row] =
     periodsQuery(unit, filter, scope).frag.query[Period.Row].run()
 
   /** One row as SQL returns it — the place ids arrive as a `text[]`. */
@@ -102,7 +94,7 @@ private[search] object AggregateRepo:
   // ── the rows of the §1.6 aggregation tree ──────────────────────────────────────────────────────
 
   /** The gazetteer places one FINDING was materialised into, as an array (correlated on `fa`). */
-  private def placesOf(fa: com.histmersion.domain.library.search.AggregateRepo.PlacesOfFa): com.histmersion.domain.library.search.AggregateRepo.PlacesOfResult =
+  private def placesOf(fa: com.histmersion.domain.library.search.AggregateRepo.PlacesOfFa): com.histmersion.domain.library.search.AggregateRepo.TreeRowRaw.PlaceIds =
     s"ARRAY(SELECT fp.place_id FROM finding_places fp WHERE fp.finding_id = $fa.id ORDER BY fp.place_id)"
 
   /** The SQL behind [[treeRows]] — a **pure** value, so the predicate can be asserted on without a database (plan
@@ -117,7 +109,7 @@ private[search] object AggregateRepo:
     * Ordering is the caller's `sort=`, which is what makes `samples` under a leaf the *top* sources for that bucket
     * rather than an arbitrary few.
     */
-  def treeRowsQuery(unit: com.histmersion.domain.library.search.AggregateRepo.TreeRowsQueryUnit, filter: Filter, scope: PlaceScope = PlaceScope.empty): Sql =
+  def treeRowsQuery(unit: com.histmersion.domain.library.search.AggregateRepo.Unit, filter: Filter, scope: PlaceScope = PlaceScope.empty): Sql =
     if unit == "findings" then
       Sql.raw(
         s"SELECT f.id, f.citekey, s.title, ${RangeSql.cols("f.period")}, ${placesOf("f")}" +
@@ -152,5 +144,5 @@ private[search] object AggregateRepo:
   /** Run [[treeRowsQuery]]: the rows the tree buckets and nests ([[com.histmersion.api.library.Tree]], pure), hung off
     * the gazetteer the catalogue gives (`TreeRepo.gazetteer`). `unit` is `sources` (default) or `findings`.
     */
-  def treeRows(unit: com.histmersion.domain.library.search.AggregateRepo.TreeRowsUnit, filter: Filter, scope: PlaceScope = PlaceScope.empty)(using DbCon): Vector[Tree.TreeRow] =
+  def treeRows(unit: com.histmersion.domain.library.search.AggregateRepo.Unit, filter: Filter, scope: PlaceScope = PlaceScope.empty)(using DbCon): Vector[Tree.TreeRow] =
     treeRowsQuery(unit, filter, scope).frag.query[TreeRowRaw].run().map(_.toRow)

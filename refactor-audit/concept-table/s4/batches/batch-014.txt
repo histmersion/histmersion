@@ -1,0 +1,145 @@
+## CONCEPTS NEARBY
+com.histmersion.domain.catalogue.places.TreeRepo.RegionNodeRow.Contested (Boolean)
+com.histmersion.domain.catalogue.places.TreeRepo.RegionNodeRow.Id (String)
+com.histmersion.domain.catalogue.places.TreeRepo.RegionNodeRow.Kind (String)
+com.histmersion.domain.catalogue.places.TreeRepo.RegionNodeRow.Label (String)
+com.histmersion.domain.catalogue.places.TreeRepo.RegionNodeRow.Withdrawn (Boolean)
+com.histmersion.domain.catalogue.places.TreeRepo.RelationRow.ChildId (String)
+com.histmersion.domain.catalogue.places.TreeRepo.RelationRow.Kind (String)
+com.histmersion.domain.catalogue.places.TreeRepo.RelationRow.ParentId (String)
+com.histmersion.domain.library.acquisition.AcquireCheckRow.Checks (Int)
+com.histmersion.domain.library.acquisition.AcquireCheckRow.Generation (String)
+com.histmersion.domain.library.acquisition.AcquireCheckRow.Item (Int)
+com.histmersion.domain.library.acquisition.AcquireCheckRow.Outcome (String)
+com.histmersion.domain.library.acquisition.AcquireCheckRow.Reason (String)
+com.histmersion.domain.library.acquisition.AssessmentRecord.CitedBy (Int)
+com.histmersion.domain.library.acquisition.AssessmentRecord.Influential (Int)
+com.histmersion.domain.library.acquisition.AssessmentRecord.NoticesJson (String)
+com.histmersion.domain.library.acquisition.AssessmentRecord.Retracted (Boolean)
+com.histmersion.domain.library.acquisition.AssessmentRecord.Verdict (String)
+com.histmersion.domain.library.acquisition.AssessmentRepo.AssessmentRow.CheckedAt (String)
+com.histmersion.domain.library.acquisition.AssessmentRepo.AssessmentRow.CitedBy (Int)
+com.histmersion.domain.library.acquisition.AssessmentRepo.AssessmentRow.Influential (Int)
+com.histmersion.domain.library.acquisition.AssessmentRepo.AssessmentRow.Retracted (Boolean)
+com.histmersion.domain.library.acquisition.AssessmentRepo.AssessmentRow.Verdict (String)
+com.histmersion.domain.library.acquisition.AssessmentRepo.RwRow.Date (String)
+com.histmersion.domain.library.acquisition.AssessmentRepo.RwRow.Nature (String)
+com.histmersion.domain.library.acquisition.AssessmentRepo.RwRow.Reason (String)
+
+## TYPES TO DECIDE
+com.histmersion.domain.catalogue.places.SiteTypeRepo.CountSitesToTypeBefore | base Long | generated | method-parameter
+    def countSitesToType(refresh: com.histmersion.domain.catalogue.places.SiteTypeRepo.CountSitesToTypeRefresh, before: Option[com.histmersion.domain.catalogue.places.SiteTyp
+com.histmersion.domain.catalogue.places.SiteTypeRepo.CountSitesToTypeRefresh | base Boolean | generated | method-parameter
+    def countSitesToType(refresh: com.histmersion.domain.catalogue.places.SiteTypeRepo.CountSitesToTypeRefresh, before: Option[com.histmersion.domain.catalogue.places.SiteTyp
+com.histmersion.domain.catalogue.places.SiteTypeRepo.CountSitesToTypeResult | base Int | generated | method-result
+    def countSitesToType(refresh: com.histmersion.domain.catalogue.places.SiteTypeRepo.CountSitesToTypeRefresh, before: Option[com.histmersion.domain.catalogue.places.SiteTyp
+com.histmersion.domain.catalogue.places.SiteTypeRepo.SetSiteTypesTypesPart1 | base String | generated | method-parameter
+    def setSiteTypes(types: List[(com.histmersion.domain.catalogue.places.SiteTypeRepo.SetSiteTypesTypesPart1, Option[com.histmersion.domain.catalogue.places.SiteTypeRepo.Set
+com.histmersion.domain.catalogue.places.SiteTypeRepo.SetSiteTypesTypesPart2 | base String | generated | method-parameter
+    def setSiteTypes(types: List[(com.histmersion.domain.catalogue.places.SiteTypeRepo.SetSiteTypesTypesPart1, Option[com.histmersion.domain.catalogue.places.SiteTypeRepo.Set
+com.histmersion.domain.catalogue.places.SiteTypeRepo.SitesToTypeBefore | base Long | generated | method-parameter
+com.histmersion.domain.catalogue.places.SiteTypeRepo.SitesToTypeLimit | base Int | generated | method-parameter
+com.histmersion.domain.catalogue.places.SiteTypeRepo.SitesToTypeRefresh | base Boolean | generated | method-parameter
+com.histmersion.domain.catalogue.places.SiteTypeRepo.SitesToTypeResultPart1 | base String | generated | method-result
+com.histmersion.domain.catalogue.places.SiteTypeRepo.SitesToTypeResultPart2 | base String | generated | method-result
+com.histmersion.domain.catalogue.places.SiteTypeRepo.SitesToTypeResultPart3 | base String | generated | method-result
+com.histmersion.domain.catalogue.places.SiteTypeRepo.ToTypeWhereBefore | base Long | generated | method-parameter
+    private def toTypeWhere(refresh: com.histmersion.domain.catalogue.places.SiteTypeRepo.ToTypeWhereRefresh, before: Option[com.histmersion.domain.catalogue.places.SiteTypeR
+com.histmersion.domain.catalogue.places.SiteTypeRepo.ToTypeWhereRefresh | base Boolean | generated | method-parameter
+    private def toTypeWhere(refresh: com.histmersion.domain.catalogue.places.SiteTypeRepo.ToTypeWhereRefresh, before: Option[com.histmersion.domain.catalogue.places.SiteTypeR
+com.histmersion.domain.catalogue.places.SiteTypesSql.ExprA | base String | generated | method-parameter
+    def expr(a: com.histmersion.domain.catalogue.places.SiteTypesSql.ExprA): com.histmersion.domain.catalogue.places.SiteTypesSql.ExprResult =
+com.histmersion.domain.catalogue.places.SiteTypesSql.ExprResult | base String | generated | method-result
+    def expr(a: com.histmersion.domain.catalogue.places.SiteTypesSql.ExprA): com.histmersion.domain.catalogue.places.SiteTypesSql.ExprResult =
+com.histmersion.domain.catalogue.places.SiteTypesSql.ListResult | base String | generated | method-result
+    private def list(xs: Iterable[com.histmersion.domain.catalogue.places.SiteTypesSql.ListXs]): com.histmersion.domain.catalogue.places.SiteTypesSql.ListResult = xs.map(quot
+com.histmersion.domain.catalogue.places.SiteTypesSql.ListXs | base String | generated | method-parameter
+    private def list(xs: Iterable[com.histmersion.domain.catalogue.places.SiteTypesSql.ListXs]): com.histmersion.domain.catalogue.places.SiteTypesSql.ListResult = xs.map(quot
+com.histmersion.domain.catalogue.places.SiteTypesSql.Preference | base String | generated | value
+    private val preference: List[com.histmersion.domain.catalogue.places.SiteTypesSql.Preference] = SiteTypes.preference
+com.histmersion.domain.catalogue.places.SiteTypesSql.QuoteResult | base String | generated | method-result
+    private def quote(s: com.histmersion.domain.catalogue.places.SiteTypesSql.QuoteS): com.histmersion.domain.catalogue.places.SiteTypesSql.QuoteResult = "'" + s.replace("'",
+com.histmersion.domain.catalogue.places.SiteTypesSql.QuoteS | base String | generated | method-parameter
+    private def quote(s: com.histmersion.domain.catalogue.places.SiteTypesSql.QuoteS): com.histmersion.domain.catalogue.places.SiteTypesSql.QuoteResult = "'" + s.replace("'",
+com.histmersion.domain.catalogue.places.TreeRepo.ClosureIds | base String | generated | alias,method-parameter
+    val ClosureParamsIds: _root_.com.histmersion.domain.catalogue.places.TreeRepo.ClosureIds.type = _root_.com.histmersion.domain.catalogue.places.TreeRepo.ClosureIds
+    val NodesQueryIds: _root_.com.histmersion.domain.catalogue.places.TreeRepo.ClosureIds.type = _root_.com.histmersion.domain.catalogue.places.TreeRepo.ClosureIds
+com.histmersion.domain.catalogue.places.TreeRepo.ClosureResult | base String | generated | method-result
+    private def closure(ids: List[com.histmersion.domain.catalogue.places.TreeRepo.ClosureIds]): com.histmersion.domain.catalogue.places.TreeRepo.ClosureResult =
+com.histmersion.domain.catalogue.places.TreeRepo.GazetteerPlaceIds | base String | generated | method-parameter
+    def gazetteer(placeIds: List[com.histmersion.domain.catalogue.places.TreeRepo.GazetteerPlaceIds])(using DbCon): (List[RegionNode], List[Place.Relation]) =
+com.histmersion.domain.catalogue.places.TreeRepo.PeriodOfEnd | base Long | generated | method-parameter
+    private def periodOf(start: Option[com.histmersion.domain.catalogue.places.TreeRepo.PeriodOfStart], end: Option[com.histmersion.domain.catalogue.places.TreeRepo.PeriodOfE
+com.histmersion.domain.catalogue.places.TreeRepo.PeriodOfStart | base Long | generated | method-parameter
+    private def periodOf(start: Option[com.histmersion.domain.catalogue.places.TreeRepo.PeriodOfStart], end: Option[com.histmersion.domain.catalogue.places.TreeRepo.PeriodOfE
+com.histmersion.domain.catalogue.places.TreeRepo.RegionNodeRow.Contested | base Boolean | original | constructor-parameter
+com.histmersion.domain.catalogue.places.TreeRepo.RegionNodeRow.Id | base String | original | constructor-parameter
+com.histmersion.domain.catalogue.places.TreeRepo.RegionNodeRow.Kind | base String | original | constructor-parameter
+com.histmersion.domain.catalogue.places.TreeRepo.RegionNodeRow.Label | base String | original | constructor-parameter
+com.histmersion.domain.catalogue.places.TreeRepo.RegionNodeRow.Withdrawn | base Boolean | original | constructor-parameter
+com.histmersion.domain.catalogue.places.TreeRepo.RelationRow.ChildId | base String | original | constructor-parameter
+com.histmersion.domain.catalogue.places.TreeRepo.RelationRow.Kind | base String | original | constructor-parameter
+com.histmersion.domain.catalogue.places.TreeRepo.RelationRow.ParentId | base String | original | constructor-parameter
+com.histmersion.domain.library.acquisition.AcquireCheckRepo.CountSinceResultPart1 | base String | generated | method-result
+    def countSince(since: Instant)(using DbCon): Map[com.histmersion.domain.library.acquisition.AcquireCheckRepo.CountSinceResultPart1, com.histmersion.domain.library.acquisi
+com.histmersion.domain.library.acquisition.AcquireCheckRepo.CountSinceResultPart2 | base Int | generated | method-result
+    def countSince(since: Instant)(using DbCon): Map[com.histmersion.domain.library.acquisition.AcquireCheckRepo.CountSinceResultPart1, com.histmersion.domain.library.acquisi
+com.histmersion.domain.library.acquisition.AcquireCheckRepo.HeldByDoiDois | base String | generated | method-parameter
+    def heldByDoi(dois: List[com.histmersion.domain.library.acquisition.AcquireCheckRepo.HeldByDoiDois])(using DbCon): Map[com.histmersion.domain.library.acquisition.AcquireC
+com.histmersion.domain.library.acquisition.AcquireCheckRepo.HeldByDoiResultPart1 | base String | generated | method-result
+    def heldByDoi(dois: List[com.histmersion.domain.library.acquisition.AcquireCheckRepo.HeldByDoiDois])(using DbCon): Map[com.histmersion.domain.library.acquisition.AcquireC
+com.histmersion.domain.library.acquisition.AcquireCheckRepo.OfItems | base Int | generated | method-parameter
+    def of(items: List[com.histmersion.domain.library.acquisition.AcquireCheckRepo.OfItems])(using DbCon): Map[com.histmersion.domain.library.acquisition.AcquireCheckRepo.OfR
+com.histmersion.domain.library.acquisition.AcquireCheckRepo.OfResultPart1 | base Int | generated | method-result
+    def of(items: List[com.histmersion.domain.library.acquisition.AcquireCheckRepo.OfItems])(using DbCon): Map[com.histmersion.domain.library.acquisition.AcquireCheckRepo.OfR
+com.histmersion.domain.library.acquisition.AcquireCheckRepo.OpenResultPart1 | base Int | generated | method-result
+    def open()(using DbCon): Map[com.histmersion.domain.library.acquisition.AcquireCheckRepo.OpenResultPart1, AcquireCheckRow] =
+com.histmersion.domain.library.acquisition.AcquireCheckRepo.RecordGeneration | base String | generated | method-parameter
+    def record(item: com.histmersion.domain.library.acquisition.AcquireCheckRepo.RecordItem, at: Instant, generation: com.histmersion.domain.library.acquisition.AcquireCheckR
+com.histmersion.domain.library.acquisition.AcquireCheckRepo.RecordItem | base Int | generated | method-parameter
+    def record(item: com.histmersion.domain.library.acquisition.AcquireCheckRepo.RecordItem, at: Instant, generation: com.histmersion.domain.library.acquisition.AcquireCheckR
+com.histmersion.domain.library.acquisition.AcquireCheckRepo.RecordReason | base String | generated | method-parameter
+    def record(item: com.histmersion.domain.library.acquisition.AcquireCheckRepo.RecordItem, at: Instant, generation: com.histmersion.domain.library.acquisition.AcquireCheckR
+com.histmersion.domain.library.acquisition.AcquireCheckRepo.RowTPart1 | base Int | generated | method-parameter
+    private def row(t: (com.histmersion.domain.library.acquisition.AcquireCheckRepo.RowTPart1, com.histmersion.domain.library.acquisition.AcquireCheckRepo.RowTPart2, com.hist
+com.histmersion.domain.library.acquisition.AcquireCheckRepo.RowTPart2 | base Long | generated | method-parameter
+    private def row(t: (com.histmersion.domain.library.acquisition.AcquireCheckRepo.RowTPart1, com.histmersion.domain.library.acquisition.AcquireCheckRepo.RowTPart2, com.hist
+com.histmersion.domain.library.acquisition.AcquireCheckRepo.RowTPart3 | base String | generated | method-parameter
+    private def row(t: (com.histmersion.domain.library.acquisition.AcquireCheckRepo.RowTPart1, com.histmersion.domain.library.acquisition.AcquireCheckRepo.RowTPart2, com.hist
+com.histmersion.domain.library.acquisition.AcquireCheckRepo.RowTPart4 | base String | generated | method-parameter
+    private def row(t: (com.histmersion.domain.library.acquisition.AcquireCheckRepo.RowTPart1, com.histmersion.domain.library.acquisition.AcquireCheckRepo.RowTPart2, com.hist
+com.histmersion.domain.library.acquisition.AcquireCheckRepo.RowTPart5 | base String | generated | method-parameter
+    private def row(t: (com.histmersion.domain.library.acquisition.AcquireCheckRepo.RowTPart1, com.histmersion.domain.library.acquisition.AcquireCheckRepo.RowTPart2, com.hist
+com.histmersion.domain.library.acquisition.AcquireCheckRepo.RowTPart6 | base Int | generated | method-parameter
+    private def row(t: (com.histmersion.domain.library.acquisition.AcquireCheckRepo.RowTPart1, com.histmersion.domain.library.acquisition.AcquireCheckRepo.RowTPart2, com.hist
+com.histmersion.domain.library.acquisition.AcquireCheckRow.Checks | base Int | original | constructor-parameter
+com.histmersion.domain.library.acquisition.AcquireCheckRow.Generation | base String | original | constructor-parameter
+com.histmersion.domain.library.acquisition.AcquireCheckRow.Item | base Int | original | constructor-parameter
+com.histmersion.domain.library.acquisition.AcquireCheckRow.Outcome | base String | original | constructor-parameter
+com.histmersion.domain.library.acquisition.AcquireCheckRow.Reason | base String | original | constructor-parameter
+com.histmersion.domain.library.acquisition.AssessmentRecord.CitedBy | base Int | original | constructor-parameter
+com.histmersion.domain.library.acquisition.AssessmentRecord.Influential | base Int | original | constructor-parameter
+com.histmersion.domain.library.acquisition.AssessmentRecord.NoticesJson | base String | original | constructor-parameter
+com.histmersion.domain.library.acquisition.AssessmentRecord.Retracted | base Boolean | original | constructor-parameter
+com.histmersion.domain.library.acquisition.AssessmentRecord.Verdict | base String | original | constructor-parameter
+com.histmersion.domain.library.acquisition.AssessmentRepo.AssessmentForResultPart1 | base String | generated | method-result
+    def assessmentFor(citekey: com.histmersion.domain.library.Citekey)(using DbCon): Option[(com.histmersion.domain.library.acquisition.AssessmentRepo.AssessmentForResultPart
+com.histmersion.domain.library.acquisition.AssessmentRepo.AssessmentForResultPart2 | base String | generated | method-result
+    def assessmentFor(citekey: com.histmersion.domain.library.Citekey)(using DbCon): Option[(com.histmersion.domain.library.acquisition.AssessmentRepo.AssessmentForResultPart
+com.histmersion.domain.library.acquisition.AssessmentRepo.AssessmentRow.CheckedAt | base String | original | constructor-parameter
+com.histmersion.domain.library.acquisition.AssessmentRepo.AssessmentRow.CitedBy | base Int | original | constructor-parameter
+com.histmersion.domain.library.acquisition.AssessmentRepo.AssessmentRow.Influential | base Int | original | constructor-parameter
+com.histmersion.domain.library.acquisition.AssessmentRepo.AssessmentRow.Retracted | base Boolean | original | constructor-parameter
+com.histmersion.domain.library.acquisition.AssessmentRepo.AssessmentRow.Verdict | base String | original | constructor-parameter
+com.histmersion.domain.library.acquisition.AssessmentRepo.PutAssessmentResult | base String | generated | method-result
+    def putAssessment(a: AssessmentRecord)(using DbCon): com.histmersion.domain.library.acquisition.AssessmentRepo.PutAssessmentResult =
+com.histmersion.domain.library.acquisition.AssessmentRepo.ReplaceRetractionWatchResult | base Int | generated | method-result
+    def replaceRetractionWatch(rows: List[Acquire.RetractionRow])(using DbCon): com.histmersion.domain.library.acquisition.AssessmentRepo.ReplaceRetractionWatchResult =
+com.histmersion.domain.library.acquisition.AssessmentRepo.RetractionCountResult | base Int | generated | method-result
+    def retractionCount()(using DbCon): com.histmersion.domain.library.acquisition.AssessmentRepo.RetractionCountResult =
+com.histmersion.domain.library.acquisition.AssessmentRepo.RwRow.Date | base String | original | constructor-parameter
+    final private case class RwRow(nature: Option[RwRow.Nature], reason: Option[RwRow.Reason], date: Option[RwRow.Date]) derives DbCodec
+com.histmersion.domain.library.acquisition.AssessmentRepo.RwRow.Nature | base String | original | constructor-parameter
+    final private case class RwRow(nature: Option[RwRow.Nature], reason: Option[RwRow.Reason], date: Option[RwRow.Date]) derives DbCodec
+com.histmersion.domain.library.acquisition.AssessmentRepo.RwRow.Reason | base String | original | constructor-parameter
+    final private case class RwRow(nature: Option[RwRow.Nature], reason: Option[RwRow.Reason], date: Option[RwRow.Date]) derives DbCodec

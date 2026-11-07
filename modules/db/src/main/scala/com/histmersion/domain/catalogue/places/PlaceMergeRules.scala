@@ -17,13 +17,11 @@ import hearth.kindlings.optics.syntax.*
   * plan's `merge.place-*` settings) — and which of the places the bundle's events point at are here.
   */
 object PlaceMergeRules extends MergeRules:
-  type LedgerLabel = LedgerLabel.T
-  object LedgerLabel extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
   override val planning: Option[PlanRules] = Some(CataloguePlan)
   val owner: DataOwner = DataOwner("catalogue")
   val kind: Bundle.Kind = Bundle.Kind.Place
-  override val ledgerLabel: Option[com.histmersion.domain.catalogue.places.PlaceMergeRules.LedgerLabel] = Some("SELECT id FROM places WHERE uid = l.local_uid")
+  override val ledgerLabel: Option[String] = Some("SELECT id FROM places WHERE uid = l.local_uid")
 
   override def gather(
       bundle: BundleEntities,

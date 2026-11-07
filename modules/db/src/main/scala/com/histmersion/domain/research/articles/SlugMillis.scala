@@ -6,7 +6,7 @@ import com.augustnagro.magnum.DbCodec
 final private[articles] case class SlugMillis(slug: SlugMillis.Slug, millis: SlugMillis.Millis) derives DbCodec
 
 object SlugMillis:
-  type Slug = Slug.T
-  object Slug extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type Millis = Millis.T
-  object Millis extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type Slug = com.histmersion.domain.research.Slug
+  val Slug: _root_.com.histmersion.domain.research.Slug.type = _root_.com.histmersion.domain.research.Slug
+  type Millis = com.histmersion.domain.library.sources.CitekeyMillis.Millis
+  val Millis: _root_.com.histmersion.domain.library.sources.CitekeyMillis.Millis.type = _root_.com.histmersion.domain.library.sources.CitekeyMillis.Millis

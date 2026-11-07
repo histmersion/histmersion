@@ -19,15 +19,13 @@ object ApprovalQuery:
     * constants (no quote, `%` or `_` in them — `ListFiltersSuite` holds that), so they are written in, not bound: the
     * expression is used both to filter and to count.
     */
-  type DecidedByExpr = DecidedByExpr.T
-  object DecidedByExpr extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
   type Subject = Subject.T
   object Subject extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type Goal = Goal.T
   object Goal extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
-  val decidedByExpr: com.histmersion.domain.automation.approvals.ApprovalQuery.DecidedByExpr =
+  val decidedByExpr: String =
     import ListFilters.DecidedBy
     s"""(CASE WHEN state = '${ApprovalState.Open.wire}' THEN NULL
               WHEN note LIKE '${DecidedBy.AutopilotNote}%' THEN '${DecidedBy.Autopilot.wire}'

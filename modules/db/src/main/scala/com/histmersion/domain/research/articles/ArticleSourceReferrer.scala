@@ -41,7 +41,7 @@ final class ArticleSourceReferrer extends SourceReferrer:
     * write time), and a scan of the text for the short forms the renderer resolves to it (`[[beckman2025]]` for
     * `beckman2025_ahhiyawa` while that is unambiguous).
     */
-  private def citing(source: SourceKeys)(using DbCon): List[(com.histmersion.domain.research.articles.ArticleSourceReferrer.CitingResultPart1, com.histmersion.domain.research.articles.ArticleSourceReferrer.CitingResultPart2)] =
+  private def citing(source: SourceKeys)(using DbCon): List[(com.histmersion.domain.research.Slug, String)] =
     val ck = source.citekey
     val linked = sql"""SELECT a.slug, a.title FROM article_links l JOIN articles a ON a.slug = l.src_slug
                        WHERE l.target_kind = 'source' AND l.target = $ck"""
@@ -59,17 +59,9 @@ final class ArticleSourceReferrer extends SourceReferrer:
     (linked ++ scanned).distinctBy(_._1).sortBy(_._1)
 
   /** Articles whose coverage reasons (V066) are keyed by the source. */
-  private def coverageOf(keys: List[com.histmersion.domain.research.articles.ArticleSourceReferrer.CoverageOfKeys])(using DbCon): List[com.histmersion.domain.research.articles.ArticleSourceReferrer.CoverageOfResult] =
+  private def coverageOf(keys: List[com.histmersion.domain.library.Citekey])(using DbCon): List[String] =
     sql"""SELECT slug FROM articles a
           WHERE EXISTS (SELECT 1 FROM jsonb_object_keys(a.coverage_reasons) AS k(key) WHERE k.key = ANY($keys::text[]))
           ORDER BY slug""".query[String].run().toList
 
 object ArticleSourceReferrer:
-  type CitingResultPart1 = CitingResultPart1.T
-  object CitingResultPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type CitingResultPart2 = CitingResultPart2.T
-  object CitingResultPart2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type CoverageOfResult = CoverageOfResult.T
-  object CoverageOfResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type CoverageOfKeys = CoverageOfKeys.T
-  object CoverageOfKeys extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]

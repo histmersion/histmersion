@@ -7,9 +7,9 @@ import com.histmersion.api.catalogue.Correction
 final case class EventSaved(created: EventSaved.Created, updated: EventSaved.Updated, rows: EventSaved.Rows, corrections: Correction.Counts = Correction.Counts())
 
 object EventSaved:
-  type Created = Created.T
-  object Created extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type Updated = Updated.T
-  object Updated extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type Rows = Rows.T
-  object Rows extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type Created = com.histmersion.RowCount
+  val Created: _root_.com.histmersion.RowCount.type = _root_.com.histmersion.RowCount
+  type Updated = com.histmersion.RowCount
+  val Updated: _root_.com.histmersion.RowCount.type = _root_.com.histmersion.RowCount
+  type Rows = com.histmersion.RowCount
+  val Rows: _root_.com.histmersion.RowCount.type = _root_.com.histmersion.RowCount

@@ -21,37 +21,9 @@ import com.histmersion.api.catalogue.Place
   * decides how a place takes findings — a site by the point tolerance, a point-only region only by an explicit match.
   */
 private[places] object PlaceOverrideRepo:
+  type RemovalReason = RemovalReason.T
+  object RemovalReason extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
-  type RowOfId = RowOfId.T
-  object RowOfId extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type LinkedResult = LinkedResult.T
-  object LinkedResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type LinkedId = LinkedId.T
-  object LinkedId extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type SetId = SetId.T
-  object SetId extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type SetToleranceKm = SetToleranceKm.T
-  object SetToleranceKm extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type LabelOfResult = LabelOfResult.T
-  object LabelOfResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type LabelOfId = LabelOfId.T
-  object LabelOfId extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type StillLocatedResult = StillLocatedResult.T
-  object StillLocatedResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type StillLocatedIds = StillLocatedIds.T
-  object StillLocatedIds extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type MergeFrom = MergeFrom.T
-  object MergeFrom extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type MergeInto = MergeInto.T
-  object MergeInto extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type MergeToleranceKm = MergeToleranceKm.T
-  object MergeToleranceKm extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type RemoveId = RemoveId.T
-  object RemoveId extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type RemoveReason = RemoveReason.T
-  object RemoveReason extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type ListId = ListId.T
-  object ListId extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
   final private case class Row(
       label: Row.Label,
@@ -79,7 +51,7 @@ private[places] object PlaceOverrideRepo:
   /** The place's label, kind, STATED period (an unknown start reads as none) and point (when it is a point; `hasShape`
     * when its geometry is a line or an area).
     */
-  private def rowOf(id: com.histmersion.domain.catalogue.places.PlaceOverrideRepo.RowOfId)(using DbCon): Option[Row] =
+  private def rowOf(id: com.histmersion.domain.catalogue.places.BPlaceRow.Id)(using DbCon): Option[Row] =
     sql"""SELECT p.label, p.kind, ${SqlLiteral(PlaceRepo.startCol)},
                  ${SqlLiteral(RangeSql.end("p.period"))},
                  CASE WHEN GeometryType(p.geom) = 'POINT' THEN ST_Y(p.geom) END,
@@ -87,16 +59,16 @@ private[places] object PlaceOverrideRepo:
                  coalesce(GeometryType(p.geom) <> 'POINT', false)
           FROM places p WHERE p.id = $id""".query[Row].run().headOption
 
-  private def linked(id: com.histmersion.domain.catalogue.places.PlaceOverrideRepo.LinkedId)(using DbCon): List[com.histmersion.domain.catalogue.places.PlaceOverrideRepo.LinkedResult] =
+  private def linked(id: com.histmersion.domain.catalogue.places.BPlaceRow.Id)(using DbCon): List[com.histmersion.domain.catalogue.places.BPlaceRow.Id] =
     sql"SELECT finding_id FROM finding_places WHERE place_id = $id".query[String].run().toList
 
   /** Apply `edit` to place `id` and re-match its findings. `Left` when there is no such place, or a reset finds no
     * override.
     */
   def set(
-      id: com.histmersion.domain.catalogue.places.PlaceOverrideRepo.SetId,
+      id: com.histmersion.domain.catalogue.places.BPlaceRow.Id,
       edit: Place.OverrideEdit,
-      toleranceKm: com.histmersion.domain.catalogue.places.PlaceOverrideRepo.SetToleranceKm
+      toleranceKm: com.histmersion.domain.catalogue.places.FindingPlacement.Implementation.ToleranceKm
   )(using DbCon): Either[Api.Error, Place.OverrideChanged] =
     rowOf(id).toRight(Api.Error(s"No place '$id'", Some(Write.CodeNotFound))).flatMap { before =>
       val had = linked(id)
@@ -196,10 +168,10 @@ private[places] object PlaceOverrideRepo:
       }
     }
 
-  private def labelOf(id: com.histmersion.domain.catalogue.places.PlaceOverrideRepo.LabelOfId)(using DbCon): Option[com.histmersion.domain.catalogue.places.PlaceOverrideRepo.LabelOfResult] =
+  private def labelOf(id: com.histmersion.domain.catalogue.places.BPlaceRow.Id)(using DbCon): Option[com.histmersion.domain.catalogue.places.BPlaceRow.Label] =
     sql"SELECT label FROM places WHERE id = $id".query[String].run().headOption
 
-  private def stillLocated(ids: List[com.histmersion.domain.catalogue.places.PlaceOverrideRepo.StillLocatedIds])(using DbCon): com.histmersion.domain.catalogue.places.PlaceOverrideRepo.StillLocatedResult =
+  private def stillLocated(ids: List[com.histmersion.domain.catalogue.places.BPlaceRow.Id])(using DbCon): com.histmersion.RowCount =
     sql"""SELECT count(*)::int FROM unnest(${ids.distinct}::text[]) AS f(id)
           WHERE NOT EXISTS (SELECT 1 FROM finding_places fp WHERE fp.finding_id = f.id)""".query[Int].run().head
 
@@ -207,7 +179,7 @@ private[places] object PlaceOverrideRepo:
     * asset links move, `from` is deleted and stays an old id of `into`, which no seed import re-creates) and match
     * `into`'s findings again.
     */
-  def merge(from: com.histmersion.domain.catalogue.places.PlaceOverrideRepo.MergeFrom, into: com.histmersion.domain.catalogue.places.PlaceOverrideRepo.MergeInto, toleranceKm: com.histmersion.domain.catalogue.places.PlaceOverrideRepo.MergeToleranceKm)(using DbCon): Either[Api.Error, Place.Gone] =
+  def merge(from: com.histmersion.domain.catalogue.places.BPlaceRow.Id, into: com.histmersion.domain.catalogue.places.BPlaceRow.Id, toleranceKm: com.histmersion.domain.catalogue.places.FindingPlacement.Implementation.ToleranceKm)(using DbCon): Either[Api.Error, Place.Gone] =
     (labelOf(from), labelOf(into)) match
       case (None, _)            => Left(Api.Error(s"No place '$from'", Some(Write.CodeNotFound)))
       case (_, None)            => Left(Api.Error(s"No place '$into'", Some(Write.CodeNotFound)))
@@ -222,7 +194,7 @@ private[places] object PlaceOverrideRepo:
     * nor a finding it is the ONLY place of — and remember the removal, so no seed import brings it back
     * (`place_removals`, V080).
     */
-  def remove(id: com.histmersion.domain.catalogue.places.PlaceOverrideRepo.RemoveId, reason: Option[com.histmersion.domain.catalogue.places.PlaceOverrideRepo.RemoveReason])(using DbCon): Either[Api.Error, Place.Gone] =
+  def remove(id: com.histmersion.domain.catalogue.places.BPlaceRow.Id, reason: Option[com.histmersion.domain.catalogue.places.PlaceOverrideRepo.RemovalReason])(using DbCon): Either[Api.Error, Place.Gone] =
     labelOf(id).toRight(Api.Error(s"No place '$id'", Some(Write.CodeNotFound))).flatMap { label =>
       def n(q: Frag) = q.query[Int].run().head
       val refs = List(
@@ -258,7 +230,7 @@ private[places] object PlaceOverrideRepo:
     }
 
   /** The overrides, by place id; `id` narrows to one place. */
-  def list(id: Option[com.histmersion.domain.catalogue.places.PlaceOverrideRepo.ListId])(using DbCon): List[Place.Override] =
+  def list(id: Option[com.histmersion.domain.catalogue.places.BPlaceRow.Id])(using DbCon): List[Place.Override] =
     sql"""SELECT o.place_id, p.label, o.kind,
                  ${SqlLiteral(RangeSql.cols("o.period"))},
                  o.period IS NOT NULL, o.reason, o.source_kind,

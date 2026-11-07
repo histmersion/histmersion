@@ -38,8 +38,8 @@ final private[sources] case class BSourceRow(
 ) derives DbCodec
 
 object BSourceRow:
-  type Title = Title.T
-  object Title extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type Title = com.histmersion.domain.Title
+  val Title: _root_.com.histmersion.domain.Title.type = _root_.com.histmersion.domain.Title
   type Authors = Authors.T
   object Authors extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type Venue = Venue.T
@@ -52,10 +52,10 @@ object BSourceRow:
   object Tags extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type PNull = PNull.T
   object PNull extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type PLo = PLo.T
-  object PLo extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type PHi = PHi.T
-  object PHi extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type PLo = com.histmersion.domain.DeepTime.SignedYear
+  val PLo: _root_.com.histmersion.domain.DeepTime.SignedYear.type = _root_.com.histmersion.domain.DeepTime.SignedYear
+  type PHi = com.histmersion.domain.DeepTime.SignedYear
+  val PHi: _root_.com.histmersion.domain.DeepTime.SignedYear.type = _root_.com.histmersion.domain.DeepTime.SignedYear
   type Summary = Summary.T
   object Summary extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type Notes = Notes.T
@@ -68,12 +68,12 @@ object BSourceRow:
   object Influential extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type AddedDate = AddedDate.T
   object AddedDate extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type BodySha = BodySha.T
-  object BodySha extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type BodyBytes = BodyBytes.T
-  object BodyBytes extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type OriginalSha = OriginalSha.T
-  object OriginalSha extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type BodySha = com.histmersion.Sha256
+  val BodySha: _root_.com.histmersion.Sha256.type = _root_.com.histmersion.Sha256
+  type BodyBytes = com.histmersion.ByteCount
+  val BodyBytes: _root_.com.histmersion.ByteCount.type = _root_.com.histmersion.ByteCount
+  type OriginalSha = com.histmersion.Sha256
+  val OriginalSha: _root_.com.histmersion.Sha256.type = _root_.com.histmersion.Sha256
   type UpdatedAt = UpdatedAt.T
   object UpdatedAt extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type Isbns = Isbns.T

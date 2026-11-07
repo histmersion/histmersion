@@ -21,8 +21,6 @@ private[articles] object ArticleBundleRepo:
 
   // ── out ──────────────────────────────────────────────────────────────────────────────────────
 
-  type SlugOfResult = SlugOfResult.T
-  object SlugOfResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
   def articles(scope: BundleScope)(using DbCon): Vector[Bundle.Article] =
     (Sql.raw(s"""SELECT a.uid, a.origin, a.slug, a.title, a.kind, a.body, a.summary, a.tags, a.regions,
@@ -85,7 +83,7 @@ private[articles] object ArticleBundleRepo:
   /** The bundle's versions by uid, for their bodies as they arrive. */
   private val versionsByUid = BundleImport.Once(w => w.es.versions.map(v => v.uid -> v).toMap)
 
-  private def slugOf(u: UUID)(using DbCon): com.histmersion.domain.research.articles.ArticleBundleRepo.SlugOfResult =
+  private def slugOf(u: UUID)(using DbCon): com.histmersion.domain.research.Slug =
     sql"SELECT slug FROM articles WHERE uid = $u".query[String].run().head
 
   /** Rename what the other side renamed (the same uid, a new slug), through the ordinary rename path. */

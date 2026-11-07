@@ -25,133 +25,27 @@ import com.histmersion.api.media.{
   * connection it is given.
   */
 private[assets] object MediaRepo:
+  type Degrees = Degrees.T
+  object Degrees extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type Limit = Limit.T
+  object Limit extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type SameSiteKm = SameSiteKm.T
+  object SameSiteKm extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
   // ── writes ───────────────────────────────────────────────────────────────────────────────────
 
   /** The pictures of `provider` already stored under these keys. */
-  type SetThumbBytes = SetThumbBytes.T
-  object SetThumbBytes extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Array[_root_.scala.Byte], _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type ThumbResultPart2 = ThumbResultPart2.T
-  object ThumbResultPart2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Array[_root_.scala.Byte], _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type FileResultPart2 = FileResultPart2.T
-  object FileResultPart2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Array[_root_.scala.Byte], _root_.io.github.iltotore.iron.constraint.any.Pure]
 
-  type KnownResultPart1 = KnownResultPart1.T
-  object KnownResultPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type KnownProvider = KnownProvider.T
-  object KnownProvider extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type KnownKeys = KnownKeys.T
-  object KnownKeys extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type SaveResultPart1 = SaveResultPart1.T
-  object SaveResultPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type SaveResultPart2 = SaveResultPart2.T
-  object SaveResultPart2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type SaveFirstTargetPart1 = SaveFirstTargetPart1.T
-  object SaveFirstTargetPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type SaveFirstTargetPart2 = SaveFirstTargetPart2.T
-  object SaveFirstTargetPart2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type PlaceAtUid = PlaceAtUid.T
-  object PlaceAtUid extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type PlaceAtTargetPart1 = PlaceAtTargetPart1.T
-  object PlaceAtTargetPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type PlaceAtTargetPart2 = PlaceAtTargetPart2.T
-  object PlaceAtTargetPart2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type RefreshRightsUid = RefreshRightsUid.T
-  object RefreshRightsUid extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type LinkResult = LinkResult.T
-  object LinkResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type LinkUid = LinkUid.T
-  object LinkUid extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type LinkTargetType = LinkTargetType.T
-  object LinkTargetType extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type LinkTargetId = LinkTargetId.T
-  object LinkTargetId extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type LinkRole = LinkRole.T
-  object LinkRole extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type LinkProperty = LinkProperty.T
   object LinkProperty extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type LinkItem = LinkItem.T
   object LinkItem extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type LinkRank = LinkRank.T
   object LinkRank extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type LinkBasis = LinkBasis.T
-  object LinkBasis extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type SetThumbUid = SetThumbUid.T
-  object SetThumbUid extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type SetThumbMime = SetThumbMime.T
-  object SetThumbMime extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type SetThumbWidth = SetThumbWidth.T
-  object SetThumbWidth extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type SetThumbHeight = SetThumbHeight.T
-  object SetThumbHeight extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type SetSourcePictureUid = SetSourcePictureUid.T
-  object SetSourcePictureUid extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type SetSourcePictureRole = SetSourcePictureRole.T
-  object SetSourcePictureRole extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type SetSourcePictureProperty = SetSourcePictureProperty.T
   object SetSourcePictureProperty extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type SourcePictureResultPart1 = SourcePictureResultPart1.T
-  object SourcePictureResultPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type SourcePictureResultPart2 = SourcePictureResultPart2.T
-  object SourcePictureResultPart2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type SourcePictureRole = SourcePictureRole.T
-  object SourcePictureRole extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type ThumbsInTargetType = ThumbsInTargetType.T
-  object ThumbsInTargetType extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type ThumbsInTargetId = ThumbsInTargetId.T
-  object ThumbsInTargetId extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type ThumbsInLimit = ThumbsInLimit.T
-  object ThumbsInLimit extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type KmToDegreesResult = KmToDegreesResult.T
-  object KmToDegreesResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type KmToDegreesKm = KmToDegreesKm.T
-  object KmToDegreesKm extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type PlaceThumbsInSameSiteKm = PlaceThumbsInSameSiteKm.T
-  object PlaceThumbsInSameSiteKm extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type PlaceThumbsInLimit = PlaceThumbsInLimit.T
-  object PlaceThumbsInLimit extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type TargetsOfResultPart1 = TargetsOfResultPart1.T
-  object TargetsOfResultPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type TargetsOfUids = TargetsOfUids.T
-  object TargetsOfUids extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type CleanResult = CleanResult.T
-  object CleanResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type CleanO = CleanO.T
-  object CleanO extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type ListLimit = ListLimit.T
-  object ListLimit extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type ShowUid = ShowUid.T
-  object ShowUid extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type ThumbResultPart1 = ThumbResultPart1.T
-  object ThumbResultPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type ThumbUid = ThumbUid.T
-  object ThumbUid extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type FileResultPart1 = FileResultPart1.T
-  object FileResultPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type FileUid = FileUid.T
-  object FileUid extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type GeoLimit = GeoLimit.T
-  object GeoLimit extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type GeoOfResultPart1 = GeoOfResultPart1.T
-  object GeoOfResultPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type GeoOfUids = GeoOfUids.T
-  object GeoOfUids extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type TileCandidatesKind = TileCandidatesKind.T
-  object TileCandidatesKind extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type TileCandidatesProvider = TileCandidatesProvider.T
-  object TileCandidatesProvider extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type TileCandidatesLicense = TileCandidatesLicense.T
-  object TileCandidatesLicense extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type TileCandidatesWindowPart1 = TileCandidatesWindowPart1.T
-  object TileCandidatesWindowPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type TileCandidatesWindowPart2 = TileCandidatesWindowPart2.T
-  object TileCandidatesWindowPart2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type LicenceGapsResultPart1 = LicenceGapsResultPart1.T
-  object LicenceGapsResultPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type LicenceGapsResultPart2 = LicenceGapsResultPart2.T
-  object LicenceGapsResultPart2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
-  def known(provider: com.histmersion.domain.media.assets.MediaRepo.KnownProvider, keys: List[com.histmersion.domain.media.assets.MediaRepo.KnownKeys])(using DbCon): Map[com.histmersion.domain.media.assets.MediaRepo.KnownResultPart1, Known] =
+  def known(provider: com.histmersion.domain.media.assets.MediaItemRow.Provider, keys: List[com.histmersion.domain.media.assets.MediaItemRow.ProviderKey])(using DbCon): Map[com.histmersion.domain.media.assets.MediaItemRow.ProviderKey, Known] =
     if keys.isEmpty then Map.empty
     else
       sql"""SELECT provider_key, uid::text, license FROM assets
@@ -164,7 +58,7 @@ private[assets] object MediaRepo:
   /** Store a provider's picture (or replace the bytes and rights of the one stored under its key); its point and period
     * come from the place or event it is first stored for. Returns its uid and whether it is new.
     */
-  def save(a: ProviderAsset, firstTarget: (com.histmersion.domain.media.assets.MediaRepo.SaveFirstTargetPart1, com.histmersion.domain.media.assets.MediaRepo.SaveFirstTargetPart2))(using DbCon): (com.histmersion.domain.media.assets.MediaRepo.SaveResultPart1, com.histmersion.domain.media.assets.MediaRepo.SaveResultPart2) =
+  def save(a: ProviderAsset, firstTarget: (com.histmersion.domain.media.imports.Target.TargetType, com.histmersion.domain.media.imports.Target.Id))(using DbCon): (com.histmersion.domain.media.assets.MediaItemRow.Uid, Boolean) =
     val sha = com.histmersion.domain.media.assets.NewFigure.sha256(a.bytes)
     val (uid, inserted) =
       sql"""INSERT INTO assets (citekey, name, mime, bytes, sha256, width, height, kind, license, provider,
@@ -189,7 +83,7 @@ private[assets] object MediaRepo:
     * (else its place's) and outer span. An open period (a place with no dates is stored as `(,)`) is not copied: a
     * time-filtered media layer shows dated pictures only.
     */
-  private def placeAt(uid: com.histmersion.domain.media.assets.MediaRepo.PlaceAtUid, target: (com.histmersion.domain.media.assets.MediaRepo.PlaceAtTargetPart1, com.histmersion.domain.media.assets.MediaRepo.PlaceAtTargetPart2))(using DbCon): Unit =
+  private def placeAt(uid: com.histmersion.domain.media.assets.MediaItemRow.Uid, target: (com.histmersion.domain.media.imports.Target.TargetType, com.histmersion.domain.media.imports.Target.Id))(using DbCon): Unit =
     val (tt, id) = target
     if tt == PictureTarget.Source.wire then () // a source's picture (a cover) is not on the map
     else if tt == PictureTarget.Place.wire then sql"""UPDATE assets a SET geom = coalesce(a.geom, t.g),
@@ -204,7 +98,7 @@ private[assets] object MediaRepo:
     ()
 
   /** Re-read rights on a stored picture whose bytes are kept (a refresh that does not re-download). */
-  def refreshRights(uid: com.histmersion.domain.media.assets.MediaRepo.RefreshRightsUid, r: Rights)(using DbCon): Unit =
+  def refreshRights(uid: com.histmersion.domain.media.assets.MediaItemRow.Uid, r: Rights)(using DbCon): Unit =
     val _ = sql"""UPDATE assets SET license = ${r.license}, license_url = ${r.licenseUrl}, author = ${r.author},
             credit = ${r.credit}, retrieved_at = now() WHERE uid = $uid::uuid""".update.run()
 
@@ -212,15 +106,15 @@ private[assets] object MediaRepo:
     * (V094). Returns whether the link is new.
     */
   def link(
-      uid: com.histmersion.domain.media.assets.MediaRepo.LinkUid,
-      targetType: com.histmersion.domain.media.assets.MediaRepo.LinkTargetType,
-      targetId: com.histmersion.domain.media.assets.MediaRepo.LinkTargetId,
-      role: com.histmersion.domain.media.assets.MediaRepo.LinkRole,
+      uid: com.histmersion.domain.media.assets.MediaItemRow.Uid,
+      targetType: com.histmersion.domain.media.imports.Target.TargetType,
+      targetId: com.histmersion.domain.media.imports.Target.Id,
+      role: com.histmersion.domain.media.MediaRole.Wire,
       property: Option[com.histmersion.domain.media.assets.MediaRepo.LinkProperty],
       item: Option[com.histmersion.domain.media.assets.MediaRepo.LinkItem],
       rank: com.histmersion.domain.media.assets.MediaRepo.LinkRank,
-      basis: Option[com.histmersion.domain.media.assets.MediaRepo.LinkBasis]
-  )(using DbCon): com.histmersion.domain.media.assets.MediaRepo.LinkResult =
+      basis: Option[com.histmersion.domain.media.imports.MediaMatch.Basis]
+  )(using DbCon): Boolean =
     sql"""INSERT INTO media_links (asset_uid, target_type, target_id, role, property, item, rank, basis)
           VALUES ($uid::uuid, $targetType, $targetId, $role, $property, $item, $rank, $basis)
           ON CONFLICT (asset_uid, target_type, target_id, role) DO UPDATE SET
@@ -229,14 +123,14 @@ private[assets] object MediaRepo:
           RETURNING (xmax = 0)""".query[Boolean].run().head
 
   /** Store a thumbnail for a stored picture (a figure chosen to illustrate its source). */
-  def setThumb(uid: com.histmersion.domain.media.assets.MediaRepo.SetThumbUid, bytes: com.histmersion.domain.media.assets.MediaRepo.SetThumbBytes, mime: com.histmersion.domain.media.assets.MediaRepo.SetThumbMime, width: Option[com.histmersion.domain.media.assets.MediaRepo.SetThumbWidth], height: Option[com.histmersion.domain.media.assets.MediaRepo.SetThumbHeight])(using
+  def setThumb(uid: com.histmersion.domain.media.assets.MediaItemRow.Uid, bytes: com.histmersion.domain.media.assets.ProviderAsset.Thumb, mime: com.histmersion.domain.media.assets.ProviderAsset.ThumbMime, width: Option[com.histmersion.domain.media.assets.MediaThumbRow.Width], height: Option[com.histmersion.domain.media.assets.MediaThumbRow.Height])(using
       DbCon
   ): Unit =
     val _ = sql"""UPDATE assets SET thumb = $bytes, thumb_mime = $mime, thumb_width = $width, thumb_height = $height
           WHERE uid = $uid::uuid""".update.run()
 
   /** Make `uid` the source's picture in `role` — replacing the one it had in that role. */
-  def setSourcePicture(citekey: com.histmersion.domain.library.Citekey, uid: com.histmersion.domain.media.assets.MediaRepo.SetSourcePictureUid, role: com.histmersion.domain.media.assets.MediaRepo.SetSourcePictureRole, property: Option[com.histmersion.domain.media.assets.MediaRepo.SetSourcePictureProperty])(using DbCon): Unit =
+  def setSourcePicture(citekey: com.histmersion.domain.library.Citekey, uid: com.histmersion.domain.media.assets.MediaItemRow.Uid, role: com.histmersion.domain.media.MediaRole.Wire, property: Option[com.histmersion.domain.media.assets.MediaRepo.SetSourcePictureProperty])(using DbCon): Unit =
     val _ = sql"""DELETE FROM media_links WHERE target_type = 'source' AND target_id = $citekey AND role = $role
             AND asset_uid <> $uid::uuid""".update.run()
     val _ = sql"""INSERT INTO media_links (asset_uid, target_type, target_id, role, property, item, rank)
@@ -245,7 +139,7 @@ private[assets] object MediaRepo:
       .run()
 
   /** The source's picture in `role`, if it has one: its uid and the provider key or figure name. */
-  def sourcePicture(citekey: com.histmersion.domain.library.Citekey, role: com.histmersion.domain.media.assets.MediaRepo.SourcePictureRole)(using DbCon): Option[(com.histmersion.domain.media.assets.MediaRepo.SourcePictureResultPart1, com.histmersion.domain.media.assets.MediaRepo.SourcePictureResultPart2)] =
+  def sourcePicture(citekey: com.histmersion.domain.library.Citekey, role: com.histmersion.domain.media.MediaRole.Wire)(using DbCon): Option[(com.histmersion.domain.media.assets.MediaItemRow.Uid, com.histmersion.domain.media.MediaRole.Wire)] =
     sql"""SELECT a.uid::text, coalesce(a.provider_key, a.name) FROM media_links m JOIN assets a ON a.uid = m.asset_uid
           WHERE m.target_type = 'source' AND m.target_id = $citekey AND m.role = $role LIMIT 1"""
       .query[(String, String)]
@@ -272,7 +166,7 @@ private[assets] object MediaRepo:
     * thumbnail is shown from its own bytes (a figure is already small enough); a provider's picture of a place needs
     * one.
     */
-  def thumbsIn(targetType: com.histmersion.domain.media.assets.MediaRepo.ThumbsInTargetType, targetId: com.histmersion.domain.media.assets.MediaRepo.ThumbsInTargetId, limit: com.histmersion.domain.media.assets.MediaRepo.ThumbsInLimit)(using DbCon): List[MediaThumb] =
+  def thumbsIn(targetType: com.histmersion.domain.media.imports.Target.TargetType, targetId: com.histmersion.domain.media.imports.Target.Id, limit: com.histmersion.domain.media.assets.MediaRepo.Limit)(using DbCon): List[MediaThumb] =
     // one row per picture (an event's P18 image may also be one of its depictions), in its best role
     sql"""SELECT uid, role, credit, license, license_url, source_url, w, h FROM (
             SELECT DISTINCT ON (a.uid) a.uid::text AS uid, m.role, coalesce(a.credit, '') AS credit, a.license,
@@ -289,7 +183,7 @@ private[assets] object MediaRepo:
   /** Pure: `km` as degrees of arc for `ST_DWithin` on lon/lat geometry — a latitude degree, so a little generous
     * east–west away from the equator, which a "same site" test can afford.
     */
-  def kmToDegrees(km: com.histmersion.domain.media.assets.MediaRepo.KmToDegreesKm): com.histmersion.domain.media.assets.MediaRepo.KmToDegreesResult = (km.max(0) / 111.32)
+  def kmToDegrees(km: com.histmersion.domain.catalogue.evidence.EventMatcher.NearFinding.Km): com.histmersion.domain.media.assets.MediaRepo.Degrees = (km.max(0) / 111.32)
 
   /** A PLACE's pictures for its card (#1446): its own, and those stored for its equivalents —
     *   - any place with the same Wikidata item (the picture's `item`): Mycenae is `pleiades_570491` and a Wikidata
@@ -300,7 +194,7 @@ private[assets] object MediaRepo:
     * Best role first, then the place's own before an equivalent's, then the provider's preference. Index lookups only
     * (label key, GiST on the point, the links' item), within the hover budget.
     */
-  def placeThumbsIn(placeId: com.histmersion.domain.catalogue.Place.Id, sameSiteKm: com.histmersion.domain.media.assets.MediaRepo.PlaceThumbsInSameSiteKm, limit: com.histmersion.domain.media.assets.MediaRepo.PlaceThumbsInLimit)(using DbCon): List[MediaThumb] =
+  def placeThumbsIn(placeId: com.histmersion.domain.catalogue.Place.Id, sameSiteKm: com.histmersion.domain.media.assets.MediaRepo.SameSiteKm, limit: com.histmersion.domain.media.assets.MediaRepo.Limit)(using DbCon): List[MediaThumb] =
     val deg = kmToDegrees(sameSiteKm)
     sql"""WITH p AS (SELECT id, label, geom FROM places WHERE id = $placeId),
           eq AS (
@@ -358,7 +252,7 @@ private[assets] object MediaRepo:
       targets
     )
 
-  private def targetsOf(uids: List[com.histmersion.domain.media.assets.MediaRepo.TargetsOfUids])(using DbCon): Map[com.histmersion.domain.media.assets.MediaRepo.TargetsOfResultPart1, List[MediaTarget]] =
+  private def targetsOf(uids: List[com.histmersion.domain.media.assets.MediaItemRow.Uid])(using DbCon): Map[com.histmersion.domain.media.assets.MediaItemRow.Uid, List[MediaTarget]] =
     if uids.isEmpty then Map.empty
     else
       sql"""SELECT asset_uid::text, target_type, target_id, role, coalesce(property, ''), coalesce(item, ''),
@@ -379,12 +273,12 @@ private[assets] object MediaRepo:
           )
         )
 
-  private def clean(o: Option[com.histmersion.domain.media.assets.MediaRepo.CleanO]): Option[com.histmersion.domain.media.assets.MediaRepo.CleanResult] = o.map(_.trim).filter(_.nonEmpty)
+  private def clean(o: Option[String]): Option[String] = o.map(_.trim).filter(_.nonEmpty)
 
   /** The list: by provider (`source` = a source's figures), licence (`none` = no licence), the place or event a picture
     * is linked to, and a text match; newest first. `total` ignores the limit.
     */
-  def list(q: Api.MediaQuery, limit: com.histmersion.domain.media.assets.MediaRepo.ListLimit)(using DbCon): MediaList =
+  def list(q: Api.MediaQuery, limit: com.histmersion.domain.media.assets.MediaRepo.Limit)(using DbCon): MediaList =
     val (provider, license) = (clean(q.provider), clean(q.license))
     val (place, event) = (clean(q.place), clean(q.event))
     val text = clean(q.q).map(t => s"%$t%")
@@ -407,7 +301,7 @@ private[assets] object MediaRepo:
     val ts = targetsOf(rows.map(_._1.uid))
     MediaList.of(rows.headOption.fold(0)(_._2), rows.map((r, _) => item(r, ts.getOrElse(r.uid, Nil))), offset)
 
-  def show(uid: com.histmersion.domain.media.assets.MediaRepo.ShowUid)(using DbCon): Option[MediaItem] =
+  def show(uid: com.histmersion.domain.media.assets.MediaItemRow.Uid)(using DbCon): Option[MediaItem] =
     sql"SELECT ${SqlLiteral(itemCols)} FROM assets a WHERE a.uid = $uid::uuid"
       .query[MediaItemRow]
       .run()
@@ -415,7 +309,7 @@ private[assets] object MediaRepo:
       .map(r => item(r, targetsOf(List(r.uid)).getOrElse(r.uid, Nil)))
 
   /** The thumbnail's bytes and type — a source's figure without one is its own thumbnail. */
-  def thumb(uid: com.histmersion.domain.media.assets.MediaRepo.ThumbUid)(using DbCon): Option[(com.histmersion.domain.media.assets.MediaRepo.ThumbResultPart1, com.histmersion.domain.media.assets.MediaRepo.ThumbResultPart2)] =
+  def thumb(uid: com.histmersion.domain.media.assets.MediaItemRow.Uid)(using DbCon): Option[(com.histmersion.domain.media.assets.ProviderAsset.ThumbMime, com.histmersion.domain.media.assets.ProviderAsset.Thumb)] =
     sql"""SELECT CASE WHEN thumb IS NOT NULL THEN coalesce(thumb_mime, mime) ELSE mime END, coalesce(thumb, bytes)
           FROM assets WHERE uid = $uid::uuid
             AND (thumb IS NOT NULL OR provider IS NULL OR provider IN (${MediaProvider.Calibre}, ${MediaProvider.OpenLibrary}))"""
@@ -424,7 +318,7 @@ private[assets] object MediaRepo:
       .headOption
 
   /** The stored rendition's (or figure's) bytes and type. */
-  def file(uid: com.histmersion.domain.media.assets.MediaRepo.FileUid)(using DbCon): Option[(com.histmersion.domain.media.assets.MediaRepo.FileResultPart1, com.histmersion.domain.media.assets.MediaRepo.FileResultPart2)] =
+  def file(uid: com.histmersion.domain.media.assets.MediaItemRow.Uid)(using DbCon): Option[(com.histmersion.domain.media.assets.AssetBytesRow.Mime, com.histmersion.domain.media.assets.AssetBytesRow.Bytes)] =
     sql"SELECT mime, bytes FROM assets WHERE uid = $uid::uuid".query[(String, Array[Byte])].run().headOption
 
   def facets(using DbCon): MediaFacets =
@@ -435,7 +329,7 @@ private[assets] object MediaRepo:
     MediaFacets(providers, licences)
 
   /** The media layer: geolocated pictures in the span, by kind, provider and licence. */
-  def geo(q: Api.MediaGeoQuery, limit: com.histmersion.domain.media.assets.MediaRepo.GeoLimit)(using DbCon): List[MediaGeoHit] =
+  def geo(q: Api.MediaGeoQuery, limit: com.histmersion.domain.media.assets.MediaRepo.Limit)(using DbCon): List[MediaGeoHit] =
     val k = q.kind.map(_.trim.toLowerCase).filter(_.nonEmpty)
     val (provider, license) = (clean(q.provider), clean(q.license))
     sql"""SELECT ${SqlLiteral(geoCols)}
@@ -454,7 +348,7 @@ private[assets] object MediaRepo:
       .map(geoHit)
 
   /** The pictures of `uids` as the map's tiles draw one ([[geo]]'s hits), by uid. */
-  def geoOf(uids: List[com.histmersion.domain.media.assets.MediaRepo.GeoOfUids])(using DbCon): Map[com.histmersion.domain.media.assets.MediaRepo.GeoOfResultPart1, MediaGeoHit] =
+  def geoOf(uids: List[com.histmersion.domain.media.assets.MediaItemRow.Uid])(using DbCon): Map[com.histmersion.domain.media.assets.MediaItemRow.Uid, MediaGeoHit] =
     if uids.isEmpty then Map.empty
     else
       sql"""SELECT ${SqlLiteral(geoCols)} FROM assets a
@@ -468,10 +362,10 @@ private[assets] object MediaRepo:
     * overlap `window` (none: whatever their dates), in the tile's box `envelope`: uid, point and dates.
     */
   def tileCandidates(
-      kind: Option[com.histmersion.domain.media.assets.MediaRepo.TileCandidatesKind],
-      provider: Option[com.histmersion.domain.media.assets.MediaRepo.TileCandidatesProvider],
-      license: Option[com.histmersion.domain.media.assets.MediaRepo.TileCandidatesLicense],
-      window: Option[(com.histmersion.domain.media.assets.MediaRepo.TileCandidatesWindowPart1, com.histmersion.domain.media.assets.MediaRepo.TileCandidatesWindowPart2)],
+      kind: Option[com.histmersion.domain.media.assets.MediaItemRow.Kind],
+      provider: Option[com.histmersion.domain.media.assets.MediaItemRow.Provider],
+      license: Option[com.histmersion.domain.media.assets.MediaItemRow.License],
+      window: Option[(com.histmersion.domain.DeepTime.SignedYear, com.histmersion.domain.DeepTime.SignedYear)],
       envelope: Sql
   ): Sql =
     val k = kind.map(_.trim.toLowerCase).filter(_.nonEmpty)
@@ -522,7 +416,7 @@ private[assets] object MediaRepo:
   /** `media-licence`: the pictures with no licence (a cover from Calibre or Open Library needs none) or a provider's
     * with no credit line — `citekey/name` (else `media:<uid>`) and what is missing, the provider's first.
     */
-  def licenceGaps()(using DbCon): List[(com.histmersion.domain.media.assets.MediaRepo.LicenceGapsResultPart1, com.histmersion.domain.media.assets.MediaRepo.LicenceGapsResultPart2)] =
+  def licenceGaps()(using DbCon): List[(com.histmersion.domain.media.assets.MediaItemRow.Uid, com.histmersion.domain.media.assets.MediaItemRow.Name)] =
     sql"""SELECT coalesce(a.citekey || '/' || a.name, 'media:' || a.uid::text),
                 concat_ws(' · ',
                   CASE WHEN coalesce(btrim(a.license), '') = ''

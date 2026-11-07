@@ -17,10 +17,10 @@ trait MergeRules:
   def kind: Bundle.Kind
 
   /** SQL for the label of the record here whose uid is `l.local_uid`, as `merge ledger` shows it. */
-  def ledgerLabel: Option[com.histmersion.util.data.exchange.MergeRules.LedgerLabelResult] = None
+  def ledgerLabel: Option[com.histmersion.util.data.exchange.LedgerRow.Label] = None
 
   /** Lines of other kinds refer to its records by uid. */
-  def referable: com.histmersion.util.data.exchange.MergeRules.ReferableResult = false
+  def referable: Boolean = false
 
   /** The planner's rules of the kind, when its owner registers them (the matching, folding and questions of its
     * records); several kinds of one owner may share one.
@@ -40,7 +40,3 @@ trait MergeRules:
     in
 
 object MergeRules:
-  type LedgerLabelResult = LedgerLabelResult.T
-  object LedgerLabelResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type ReferableResult = ReferableResult.T
-  object ReferableResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]

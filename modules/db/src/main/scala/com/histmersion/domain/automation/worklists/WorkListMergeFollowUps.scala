@@ -14,23 +14,21 @@ import java.util.UUID
   * and a worklog line.
   */
 object WorkListMergeFollowUps extends MergeFollowUps:
-  type RecordInResultPart1 = RecordInResultPart1.T
-  object RecordInResultPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type RecordInResultPart2 = RecordInResultPart2.T
-  object RecordInResultPart2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type RecordInFrom = RecordInFrom.T
-  object RecordInFrom extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type RecordInDump = RecordInDump.T
-  object RecordInDump extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type Dump = Dump.T
+  object Dump extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type RecordText = RecordText.T
+  object RecordText extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type SourceLabel = SourceLabel.T
+  object SourceLabel extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
   def recordIn(
       m: com.histmersion.api.exchange.Bundle.Manifest,
-      from: com.histmersion.domain.automation.worklists.WorkListMergeFollowUps.RecordInFrom,
+      from: com.histmersion.domain.automation.worklists.WorkListMergeFollowUps.SourceLabel,
       mergeId: UUID,
       ap: MergePlanner.Apply,
       counts: List[com.histmersion.api.exchange.Bundle.KindCounts],
-      dump: com.histmersion.domain.automation.worklists.WorkListMergeFollowUps.RecordInDump
-  )(using DbCon): (List[com.histmersion.domain.automation.worklists.WorkListMergeFollowUps.RecordInResultPart1], com.histmersion.domain.automation.worklists.WorkListMergeFollowUps.RecordInResultPart2) =
+      dump: com.histmersion.domain.automation.worklists.WorkListMergeFollowUps.Dump
+  )(using DbCon): (List[com.histmersion.domain.automation.worklists.WorkListMergeFollowUps.RecordText], com.histmersion.RowCount) =
     val short = mergeId.toString.take(8)
     val reviews = ap.reviews.map { slug =>
       QueueRepo.insert(

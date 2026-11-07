@@ -29,8 +29,6 @@ private[sources] object SourceBundleRepo:
 
   // ── out ──────────────────────────────────────────────────────────────────────────────────────
 
-  type BlobInSha = BlobInSha.T
-  object BlobInSha extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
   def sources(scope: BundleScope)(using DbCon): Vector[BSourceRow] =
     (Sql.raw(
@@ -301,7 +299,7 @@ private[sources] object SourceBundleRepo:
     w.insertedSources.foreach(u => SourceRepo.promote(w.citekeyOf(u)))
 
   /** A source's body into its row; a stored original into `files`. */
-  def blobIn(use: BlobUse, sha: com.histmersion.domain.library.sources.SourceBundleRepo.BlobInSha, w: BundleImport.Writer, files: ContentStore): Option[BlobSink] =
+  def blobIn(use: BlobUse, sha: com.histmersion.Sha256, w: BundleImport.Writer, files: ContentStore): Option[BlobSink] =
     given DbCon = w.transaction
     use match
       case BlobUse.Body(u) =>

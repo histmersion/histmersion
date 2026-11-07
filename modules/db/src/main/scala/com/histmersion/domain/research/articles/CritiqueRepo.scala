@@ -14,20 +14,14 @@ import com.histmersion.api.Api
   * connection it is given.
   */
 private[articles] object CritiqueRepo:
+  type By = By.T
+  object By extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type Reason = Reason.T
+  object Reason extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
   /** The article's reasons, by pair. */
-  type ListSlug = ListSlug.T
-  object ListSlug extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type CheckBy = CheckBy.T
-  object CheckBy extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type ApplyInResultPart2 = ApplyInResultPart2.T
-  object ApplyInResultPart2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type ApplyInSlug = ApplyInSlug.T
-  object ApplyInSlug extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type ApplyInBy = ApplyInBy.T
-  object ApplyInBy extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
-  def list(slug: com.histmersion.domain.research.articles.CritiqueRepo.ListSlug)(using DbCon): List[CritiqueReason] =
+  def list(slug: com.histmersion.domain.research.Slug)(using DbCon): List[CritiqueReason] =
     sql"""SELECT src, dst, reason, set_by FROM article_critique_reasons WHERE slug = $slug ORDER BY src, dst"""
       .query[(String, String, String, String)]
       .run()
@@ -41,19 +35,19 @@ private[articles] object CritiqueRepo:
 
   object Change:
     object Set:
-      type Src = Src.T
-      object Src extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-      type Dst = Dst.T
-      object Dst extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-      type Reason = Reason.T
-      object Reason extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-      type By = By.T
-      object By extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+      type Src = com.histmersion.domain.library.Citekey
+      val Src: _root_.com.histmersion.domain.library.Citekey.type = _root_.com.histmersion.domain.library.Citekey
+      type Dst = com.histmersion.domain.library.Citekey
+      val Dst: _root_.com.histmersion.domain.library.Citekey.type = _root_.com.histmersion.domain.library.Citekey
+      type Reason = com.histmersion.domain.research.articles.CritiqueRepo.Reason
+      val Reason: _root_.com.histmersion.domain.research.articles.CritiqueRepo.Reason.type = _root_.com.histmersion.domain.research.articles.CritiqueRepo.Reason
+      type By = com.histmersion.domain.research.articles.CritiqueRepo.By
+      val By: _root_.com.histmersion.domain.research.articles.CritiqueRepo.By.type = _root_.com.histmersion.domain.research.articles.CritiqueRepo.By
     object Remove:
-      type A = A.T
-      object A extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-      type B = B.T
-      object B extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+      type A = com.histmersion.domain.library.Citekey
+      val A: _root_.com.histmersion.domain.library.Citekey.type = _root_.com.histmersion.domain.library.Citekey
+      type B = com.histmersion.domain.library.Citekey
+      val B: _root_.com.histmersion.domain.library.Citekey.type = _root_.com.histmersion.domain.library.Citekey
 
   /** Check the reasons of a patch, inside the caller's transaction, writing nothing. Each pair's citekeys resolve as
     * links do (an old citekey names its source); a reason is kept under the direction of the disagreement edge between
@@ -61,7 +55,7 @@ private[articles] object CritiqueRepo:
     * removes the pair's reason in either direction. `by` is the setter of a reason that names none. The first refusal
     * is the answer.
     */
-  private def check(reasons: List[CritiqueReason], by: com.histmersion.domain.research.articles.CritiqueRepo.CheckBy)(using DbCon): Either[Api.Error, List[Change]] =
+  private def check(reasons: List[CritiqueReason], by: com.histmersion.domain.research.articles.CritiqueRepo.By)(using DbCon): Either[Api.Error, List[Change]] =
     val tidy = reasons.map(CritiqueReason.tidy)
     tidy.collectFirst { case Left(m) => m } match
       case Some(m) => Left(Api.Error(m, Some(Write.CodeInvalid)))
@@ -104,9 +98,9 @@ private[articles] object CritiqueRepo:
     * (the article's own write, if any) runs between the two, so a refused reason leaves nothing written. Returns how
     * many pairs changed.
     */
-  def applyIn(slug: com.histmersion.domain.research.articles.CritiqueRepo.ApplyInSlug, reasons: List[CritiqueReason], by: com.histmersion.domain.research.articles.CritiqueRepo.ApplyInBy)(
+  def applyIn(slug: com.histmersion.domain.research.Slug, reasons: List[CritiqueReason], by: com.histmersion.domain.research.articles.CritiqueRepo.By)(
       write: => Unit
-  )(using DbCon): Either[Api.Error, com.histmersion.domain.research.articles.CritiqueRepo.ApplyInResultPart2] =
+  )(using DbCon): Either[Api.Error, com.histmersion.RowCount] =
     check(reasons, by).map { changes =>
       write
       changes.map {

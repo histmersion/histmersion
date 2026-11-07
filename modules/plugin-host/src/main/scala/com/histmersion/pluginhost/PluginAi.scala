@@ -9,14 +9,14 @@ import scala.util.control.NonFatal
   * plugin code is the provider's failure, never the host's.
   */
 object PluginAi:
+  type ModelName = ModelName.T
+  object ModelName extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type Problem = Problem.T
+  object Problem extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
   /** Whether the provider can serve `model` now, by its own check; an exception is a "no". */
-  type CheckResultPart1 = CheckResultPart1.T
-  object CheckResultPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type CheckModel = CheckModel.T
-  object CheckModel extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
-  def check(provider: AiProvider, model: com.histmersion.pluginhost.PluginAi.CheckModel): Either[com.histmersion.pluginhost.PluginAi.CheckResultPart1, Unit] =
+  def check(provider: AiProvider, model: com.histmersion.pluginhost.PluginAi.ModelName): Either[com.histmersion.pluginhost.PluginAi.Problem, Unit] =
     try Option(provider.check(model)).getOrElse(Left("its check answered null"))
     catch
       case e: InterruptedException => throw e

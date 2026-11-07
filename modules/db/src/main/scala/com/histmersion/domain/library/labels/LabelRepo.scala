@@ -11,20 +11,18 @@ import com.histmersion.api.library.{Facet, Filter}
   * sources each would leave inside a filter.
   */
 private[labels] object LabelRepo:
+  type Prefix = Prefix.T
+  object Prefix extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
-  type FacetsPrefix = FacetsPrefix.T
-  object FacetsPrefix extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type FacetsLimit = FacetsLimit.T
-  object FacetsLimit extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
   private given DbCodec[Facet] = DbCodec.derived
 
   /** Facet vocabulary of one dimension within the current filter; counts are DISTINCT sources. */
   def facets(
       field: Facet.Field,
-      prefix: Option[com.histmersion.domain.library.labels.LabelRepo.FacetsPrefix],
+      prefix: Option[com.histmersion.domain.library.labels.LabelRepo.Prefix],
       filter: Filter,
-      limit: com.histmersion.domain.library.labels.LabelRepo.FacetsLimit,
+      limit: com.histmersion.domain.library.acquisition.CandidateRepo.Limit,
       scope: PlaceScope = PlaceScope.empty
   )(using DbCon): Vector[Facet] =
     FilterSql.facetsQuery(field, prefix, filter, limit, scope).frag.query[Facet].run()

@@ -1,0 +1,198 @@
+## CONCEPTS NEARBY
+com.histmersion.domain.catalogue.events.CorrectionRow.CheckedAt (String)
+com.histmersion.domain.catalogue.events.CorrectionRow.CreatedAt (String)
+com.histmersion.domain.catalogue.events.CorrectionRow.Field (String)
+com.histmersion.domain.catalogue.events.CorrectionRow.Id (Long)
+com.histmersion.domain.catalogue.events.CorrectionRow.Status (String)
+com.histmersion.domain.catalogue.events.CorrectionRow.TargetId (String)
+com.histmersion.domain.catalogue.events.CorrectionRow.TargetKind (String)
+com.histmersion.domain.catalogue.events.CorrectionRow.Upstream (String)
+com.histmersion.domain.catalogue.events.CorrectionRow.UpstreamNow (String)
+com.histmersion.domain.catalogue.events.CorrectionRow.UpstreamValue (String)
+com.histmersion.domain.catalogue.events.CorrectionRow.Value (String)
+com.histmersion.domain.catalogue.events.EventDatingRow.BeginBy (Long)
+com.histmersion.domain.catalogue.events.EventDatingRow.EndFrom (Long)
+com.histmersion.domain.catalogue.events.EventDatingRow.Method (String)
+com.histmersion.domain.catalogue.events.EventDatingRow.NotAfter (Long)
+com.histmersion.domain.catalogue.events.EventDatingRow.NotBefore (Long)
+com.histmersion.domain.catalogue.events.EventDatingRow.Note (String)
+com.histmersion.domain.catalogue.events.EventDetailRow.Geometry (String)
+com.histmersion.domain.catalogue.events.EventGeoRow.Anchor (String)
+com.histmersion.domain.catalogue.events.EventGeoRow.HasArea (Boolean)
+com.histmersion.domain.catalogue.events.EventGeoRow.Magnitude (Double)
+com.histmersion.domain.catalogue.events.EventGeoRow.PlaceLabel (String)
+com.histmersion.domain.catalogue.events.EventGeoRow.Vei (Int)
+
+## TYPES TO DECIDE
+com.histmersion.domain.catalogue.events.CorrectionRow.CheckedAt | base String | original | constructor-parameter
+com.histmersion.domain.catalogue.events.CorrectionRow.CreatedAt | base String | original | constructor-parameter
+com.histmersion.domain.catalogue.events.CorrectionRow.Field | base String | original | constructor-parameter
+com.histmersion.domain.catalogue.events.CorrectionRow.Id | base Long | original | constructor-parameter
+com.histmersion.domain.catalogue.events.CorrectionRow.JsonS | base String | generated | method-parameter
+    def json(s: com.histmersion.domain.catalogue.events.CorrectionRow.JsonS): Json = Jsonb.read[Json](s).getOrElse(Json.Null)
+com.histmersion.domain.catalogue.events.CorrectionRow.Status | base String | original | constructor-parameter
+com.histmersion.domain.catalogue.events.CorrectionRow.TargetId | base String | original | constructor-parameter
+com.histmersion.domain.catalogue.events.CorrectionRow.TargetKind | base String | original | constructor-parameter
+com.histmersion.domain.catalogue.events.CorrectionRow.ToDtoLabel | base String | generated | method-parameter
+    def toDto(label: Option[com.histmersion.domain.catalogue.events.CorrectionRow.ToDtoLabel] = None): Correction =
+com.histmersion.domain.catalogue.events.CorrectionRow.Upstream | base String | original | constructor-parameter
+com.histmersion.domain.catalogue.events.CorrectionRow.UpstreamNow | base String | original | constructor-parameter
+com.histmersion.domain.catalogue.events.CorrectionRow.UpstreamValue | base String | original | constructor-parameter
+com.histmersion.domain.catalogue.events.CorrectionRow.Value | base String | original | constructor-parameter
+com.histmersion.domain.catalogue.events.EventBundleRepo.EventExistsId | base String | generated | method-parameter
+    private def eventExists(id: com.histmersion.domain.catalogue.events.EventBundleRepo.EventExistsId)(using DbCon): com.histmersion.domain.catalogue.events.EventBundleRepo.E
+com.histmersion.domain.catalogue.events.EventBundleRepo.EventExistsResult | base Boolean | generated | method-result
+    private def eventExists(id: com.histmersion.domain.catalogue.events.EventBundleRepo.EventExistsId)(using DbCon): com.histmersion.domain.catalogue.events.EventBundleRepo.E
+com.histmersion.domain.catalogue.events.EventBundleRepo.EventIdOfResult | base String | generated | method-result
+    private def eventIdOf(u: UUID)(using DbCon): Option[com.histmersion.domain.catalogue.events.EventBundleRepo.EventIdOfResult] =
+com.histmersion.domain.catalogue.events.EventBundleRepo.EventIdsOfResultResult | base String | generated | method-result
+    private def eventIdsOf()(using DbCon): UUID => Option[com.histmersion.domain.catalogue.events.EventBundleRepo.EventIdsOfResultResult] =
+com.histmersion.domain.catalogue.events.EventBundleRepo.EventsNamedIds | base String | generated | method-parameter
+    def eventsNamed(ids: List[com.histmersion.domain.catalogue.events.EventBundleRepo.EventsNamedIds])(using DbCon): Map[com.histmersion.domain.catalogue.events.EventBundleRe
+com.histmersion.domain.catalogue.events.EventBundleRepo.EventsNamedResultPart1 | base String | generated | method-result
+    def eventsNamed(ids: List[com.histmersion.domain.catalogue.events.EventBundleRepo.EventsNamedIds])(using DbCon): Map[com.histmersion.domain.catalogue.events.EventBundleRe
+com.histmersion.domain.catalogue.events.EventBundleRepo.OldIdsNamedIds | base String | generated | method-parameter
+    def oldIdsNamed(ids: List[com.histmersion.domain.catalogue.events.EventBundleRepo.OldIdsNamedIds])(using DbCon): Map[com.histmersion.domain.catalogue.events.EventBundleRe
+com.histmersion.domain.catalogue.events.EventBundleRepo.OldIdsNamedResultPart1 | base String | generated | method-result
+    def oldIdsNamed(ids: List[com.histmersion.domain.catalogue.events.EventBundleRepo.OldIdsNamedIds])(using DbCon): Map[com.histmersion.domain.catalogue.events.EventBundleRe
+com.histmersion.domain.catalogue.events.EventBundleRepo.OwnersLabels | base String | generated | method-parameter
+    private def owners(q: com.histmersion.domain.catalogue.events.EventBundleRepo.OwnersQ, labels: List[com.histmersion.domain.catalogue.events.EventBundleRepo.OwnersLabels])
+com.histmersion.domain.catalogue.events.EventBundleRepo.OwnersQ | base String | generated | method-parameter
+    private def owners(q: com.histmersion.domain.catalogue.events.EventBundleRepo.OwnersQ, labels: List[com.histmersion.domain.catalogue.events.EventBundleRepo.OwnersLabels])
+com.histmersion.domain.catalogue.events.EventBundleRepo.OwnersResultPart1 | base String | generated | method-result
+    private def owners(q: com.histmersion.domain.catalogue.events.EventBundleRepo.OwnersQ, labels: List[com.histmersion.domain.catalogue.events.EventBundleRepo.OwnersLabels])
+com.histmersion.domain.catalogue.events.EventDatingRow.BeginBy | base Long | original | constructor-parameter
+com.histmersion.domain.catalogue.events.EventDatingRow.EndFrom | base Long | original | constructor-parameter
+com.histmersion.domain.catalogue.events.EventDatingRow.Method | base String | original | constructor-parameter
+com.histmersion.domain.catalogue.events.EventDatingRow.NotAfter | base Long | original | constructor-parameter
+com.histmersion.domain.catalogue.events.EventDatingRow.NotBefore | base Long | original | constructor-parameter
+com.histmersion.domain.catalogue.events.EventDatingRow.Note | base String | original | constructor-parameter
+com.histmersion.domain.catalogue.events.EventDetailRow.Geometry | base String | original | constructor-parameter
+    final private[events] case class EventDetailRow(row: EventRow, geometry: Option[EventDetailRow.Geometry]) derives DbCodec:
+com.histmersion.domain.catalogue.events.EventGeoRow.Anchor | base String | original | constructor-parameter
+com.histmersion.domain.catalogue.events.EventGeoRow.HasArea | base Boolean | original | constructor-parameter
+com.histmersion.domain.catalogue.events.EventGeoRow.Magnitude | base Double | original | constructor-parameter
+com.histmersion.domain.catalogue.events.EventGeoRow.PlaceLabel | base String | original | constructor-parameter
+com.histmersion.domain.catalogue.events.EventGeoRow.Vei | base Int | original | constructor-parameter
+com.histmersion.domain.catalogue.events.EventImportRepo.CatalogueRefsId | base String | generated | method-parameter
+    def catalogueRefs(id: com.histmersion.domain.catalogue.events.EventImportRepo.CatalogueRefsId)(using DbCon): List[EventCatalogueRef] =
+com.histmersion.domain.catalogue.events.EventImportRepo.ClearPartsProvider | base String | generated | method-parameter
+    def clearParts(provider: com.histmersion.domain.catalogue.events.EventImportRepo.ClearPartsProvider)(using DbCon): Unit =
+com.histmersion.domain.catalogue.events.EventImportRepo.FillId | base String | generated | method-parameter
+    private def fill(id: com.histmersion.domain.catalogue.events.EventImportRepo.FillId, names: List[com.histmersion.domain.catalogue.events.EventImportRepo.FillNames], wd: O
+com.histmersion.domain.catalogue.events.EventImportRepo.FillNames | base String | generated | method-parameter
+    private def fill(id: com.histmersion.domain.catalogue.events.EventImportRepo.FillId, names: List[com.histmersion.domain.catalogue.events.EventImportRepo.FillNames], wd: O
+com.histmersion.domain.catalogue.events.EventImportRepo.FillWd | base String | generated | method-parameter
+    private def fill(id: com.histmersion.domain.catalogue.events.EventImportRepo.FillId, names: List[com.histmersion.domain.catalogue.events.EventImportRepo.FillNames], wd: O
+com.histmersion.domain.catalogue.events.EventImportRepo.InsertEventId | base String | generated | method-parameter
+    private def insertEvent(id: com.histmersion.domain.catalogue.events.EventImportRepo.InsertEventId, r: CatalogRecord, names: List[com.histmersion.domain.catalogue.events.E
+com.histmersion.domain.catalogue.events.EventImportRepo.InsertEventNames | base String | generated | method-parameter
+    private def insertEvent(id: com.histmersion.domain.catalogue.events.EventImportRepo.InsertEventId, r: CatalogRecord, names: List[com.histmersion.domain.catalogue.events.E
+com.histmersion.domain.catalogue.events.EventImportRepo.InsertEventWd | base String | generated | method-parameter
+    private def insertEvent(id: com.histmersion.domain.catalogue.events.EventImportRepo.InsertEventId, r: CatalogRecord, names: List[com.histmersion.domain.catalogue.events.E
+com.histmersion.domain.catalogue.events.EventImportRepo.MarkPartPart | base String | generated | method-parameter
+    def markPart(provider: com.histmersion.domain.catalogue.events.EventImportRepo.MarkPartProvider, part: com.histmersion.domain.catalogue.events.EventImportRepo.MarkPartPar
+com.histmersion.domain.catalogue.events.EventImportRepo.MarkPartProvider | base String | generated | method-parameter
+    def markPart(provider: com.histmersion.domain.catalogue.events.EventImportRepo.MarkPartProvider, part: com.histmersion.domain.catalogue.events.EventImportRepo.MarkPartPar
+com.histmersion.domain.catalogue.events.EventImportRepo.MarkPartRecords | base Int | generated | method-parameter
+    def markPart(provider: com.histmersion.domain.catalogue.events.EventImportRepo.MarkPartProvider, part: com.histmersion.domain.catalogue.events.EventImportRepo.MarkPartPar
+com.histmersion.domain.catalogue.events.EventImportRepo.PartsDoneProvider | base String | generated | method-parameter
+    def partsDone(provider: com.histmersion.domain.catalogue.events.EventImportRepo.PartsDoneProvider)(using DbCon): Set[com.histmersion.domain.catalogue.events.EventImportRe
+com.histmersion.domain.catalogue.events.EventImportRepo.PartsDoneResult | base String | generated | method-result
+    def partsDone(provider: com.histmersion.domain.catalogue.events.EventImportRepo.PartsDoneProvider)(using DbCon): Set[com.histmersion.domain.catalogue.events.EventImportRe
+com.histmersion.domain.catalogue.events.EventImportRepo.PointSqlResult | base String | generated | method-result
+    private def pointSql(r: CatalogRecord): Option[com.histmersion.domain.catalogue.events.EventImportRepo.PointSqlResult] =
+com.histmersion.domain.catalogue.events.EventImportRepo.RecordsProvider | base String | generated | method-parameter
+    def records(provider: Option[com.histmersion.domain.catalogue.events.EventImportRepo.RecordsProvider])(using DbCon): (List[(com.histmersion.domain.catalogue.events.EventI
+com.histmersion.domain.catalogue.events.EventImportRepo.RecordsResultPart1Part1 | base String | generated | method-result
+    def records(provider: Option[com.histmersion.domain.catalogue.events.EventImportRepo.RecordsProvider])(using DbCon): (List[(com.histmersion.domain.catalogue.events.EventI
+com.histmersion.domain.catalogue.events.EventImportRepo.RecordsResultPart1Part2 | base String | generated | method-result
+    def records(provider: Option[com.histmersion.domain.catalogue.events.EventImportRepo.RecordsProvider])(using DbCon): (List[(com.histmersion.domain.catalogue.events.EventI
+com.histmersion.domain.catalogue.events.EventImportRepo.RecordsResultPart2 | base Int | generated | method-result
+    def records(provider: Option[com.histmersion.domain.catalogue.events.EventImportRepo.RecordsProvider])(using DbCon): (List[(com.histmersion.domain.catalogue.events.EventI
+com.histmersion.domain.catalogue.events.EventImportRepo.RefreshGeom | base String | generated | value
+    val geom: Option[com.histmersion.domain.catalogue.events.EventImportRepo.RefreshGeom] = keep.get(EventFields.Geometry) match
+com.histmersion.domain.catalogue.events.EventImportRepo.RefreshId | base String | generated | method-parameter
+    private def refresh(id: com.histmersion.domain.catalogue.events.EventImportRepo.RefreshId, r: CatalogRecord, names: List[com.histmersion.domain.catalogue.events.EventImpo
+com.histmersion.domain.catalogue.events.EventImportRepo.RefreshNames | base String | generated | method-parameter
+    private def refresh(id: com.histmersion.domain.catalogue.events.EventImportRepo.RefreshId, r: CatalogRecord, names: List[com.histmersion.domain.catalogue.events.EventImpo
+com.histmersion.domain.catalogue.events.EventImportRepo.RefreshTextF | base String | generated | method-parameter
+    def text(f: com.histmersion.domain.catalogue.events.EventImportRepo.RefreshTextF): Option[Option[com.histmersion.domain.catalogue.events.EventImportRepo.RefreshTextResult
+com.histmersion.domain.catalogue.events.EventImportRepo.RefreshTextResult | base String | generated | method-result
+    def text(f: com.histmersion.domain.catalogue.events.EventImportRepo.RefreshTextF): Option[Option[com.histmersion.domain.catalogue.events.EventImportRepo.RefreshTextResult
+com.histmersion.domain.catalogue.events.EventImportRepo.RefreshWd | base String | generated | method-parameter
+    private def refresh(id: com.histmersion.domain.catalogue.events.EventImportRepo.RefreshId, r: CatalogRecord, names: List[com.histmersion.domain.catalogue.events.EventImpo
+com.histmersion.domain.catalogue.events.EventImportRepo.SaveOwnerInP | base String | generated | method-parameter
+    def ownerIn(p: com.histmersion.domain.catalogue.events.EventImportRepo.SaveOwnerInP): Option[CatalogRecord] =
+com.histmersion.domain.catalogue.events.EventImportRepo.StoredKindsProvider | base String | generated | method-parameter
+    def storedKinds(provider: com.histmersion.domain.catalogue.events.EventImportRepo.StoredKindsProvider)(using DbCon): Map[(com.histmersion.domain.catalogue.events.EventImp
+com.histmersion.domain.catalogue.events.EventImportRepo.StoredKindsResultPart1Part1 | base String | generated | method-result
+    def storedKinds(provider: com.histmersion.domain.catalogue.events.EventImportRepo.StoredKindsProvider)(using DbCon): Map[(com.histmersion.domain.catalogue.events.EventImp
+com.histmersion.domain.catalogue.events.EventImportRepo.StoredKindsResultPart1Part2 | base String | generated | method-result
+    def storedKinds(provider: com.histmersion.domain.catalogue.events.EventImportRepo.StoredKindsProvider)(using DbCon): Map[(com.histmersion.domain.catalogue.events.EventImp
+com.histmersion.domain.catalogue.events.EventImportRepo.StoredKindsResultPart2 | base String | generated | method-result
+    def storedKinds(provider: com.histmersion.domain.catalogue.events.EventImportRepo.StoredKindsProvider)(using DbCon): Map[(com.histmersion.domain.catalogue.events.EventImp
+com.histmersion.domain.catalogue.events.EventImportRepo.UpstreamOfId | base String | generated | method-parameter
+    def upstreamOf(id: com.histmersion.domain.catalogue.events.EventImportRepo.UpstreamOfId)(using DbCon): Option[(com.histmersion.domain.catalogue.events.EventImportRepo.Ups
+com.histmersion.domain.catalogue.events.EventImportRepo.UpstreamOfResultPart1 | base String | generated | method-result
+    def upstreamOf(id: com.histmersion.domain.catalogue.events.EventImportRepo.UpstreamOfId)(using DbCon): Option[(com.histmersion.domain.catalogue.events.EventImportRepo.Ups
+com.histmersion.domain.catalogue.events.EventMergeRules.LedgerLabel | base String | generated | value
+    override val ledgerLabel: Option[com.histmersion.domain.catalogue.events.EventMergeRules.LedgerLabel] = Some("SELECT id FROM events WHERE uid = l.local_uid")
+com.histmersion.domain.catalogue.events.EventMergeRules.Referable | base Boolean | generated | value
+    override val referable: com.histmersion.domain.catalogue.events.EventMergeRules.Referable = true
+com.histmersion.domain.catalogue.events.EventRepo.CountResult | base Long | generated | method-result
+    def count()(using DbCon): com.histmersion.domain.catalogue.events.EventRepo.CountResult = sql"SELECT count(*)::int FROM events".query[Int].run().head.toLong
+com.histmersion.domain.catalogue.events.EventRepo.DeleteId | base String | generated | method-parameter
+    def delete(id: com.histmersion.domain.catalogue.events.EventRepo.DeleteId)(using DbCon): com.histmersion.domain.catalogue.events.EventRepo.DeleteResult =
+com.histmersion.domain.catalogue.events.EventRepo.DeleteResult | base Boolean | generated | method-result
+    def delete(id: com.histmersion.domain.catalogue.events.EventRepo.DeleteId)(using DbCon): com.histmersion.domain.catalogue.events.EventRepo.DeleteResult =
+com.histmersion.domain.catalogue.events.EventRepo.ExistsId | base String | generated | method-parameter
+    def exists(id: com.histmersion.domain.catalogue.events.EventRepo.ExistsId)(using DbCon): com.histmersion.domain.catalogue.events.EventRepo.ExistsResult = sql"SELECT 1 FRO
+com.histmersion.domain.catalogue.events.EventRepo.ExistsResult | base Boolean | generated | method-result
+    def exists(id: com.histmersion.domain.catalogue.events.EventRepo.ExistsId)(using DbCon): com.histmersion.domain.catalogue.events.EventRepo.ExistsResult = sql"SELECT 1 FRO
+com.histmersion.domain.catalogue.events.EventRepo.GeoLimit | base Int | generated | method-parameter
+    def geo(listed: Sql, limit: com.histmersion.domain.catalogue.events.EventRepo.GeoLimit, tolerance: com.histmersion.domain.catalogue.events.EventRepo.GeoTolerance)(using D
+com.histmersion.domain.catalogue.events.EventRepo.GeoOfIds | base String | generated | method-parameter
+    def geoOf(ids: List[com.histmersion.domain.catalogue.events.EventRepo.GeoOfIds])(using DbCon): Map[com.histmersion.domain.catalogue.events.EventRepo.GeoOfResultPart1, com
+com.histmersion.domain.catalogue.events.EventRepo.GeoOfResultPart1 | base String | generated | method-result
+    def geoOf(ids: List[com.histmersion.domain.catalogue.events.EventRepo.GeoOfIds])(using DbCon): Map[com.histmersion.domain.catalogue.events.EventRepo.GeoOfResultPart1, com
+com.histmersion.domain.catalogue.events.EventRepo.GeoOutlinesPart1 | base String | generated | value
+    val outlines: Map[com.histmersion.domain.catalogue.events.EventRepo.GeoOutlinesPart1, com.histmersion.domain.catalogue.events.EventRepo.GeoOutlinesPart2] =
+com.histmersion.domain.catalogue.events.EventRepo.GeoOutlinesPart2 | base String | generated | value
+    val outlines: Map[com.histmersion.domain.catalogue.events.EventRepo.GeoOutlinesPart1, com.histmersion.domain.catalogue.events.EventRepo.GeoOutlinesPart2] =
+com.histmersion.domain.catalogue.events.EventRepo.GeoTolerance | base Double | generated | method-parameter
+    def geo(listed: Sql, limit: com.histmersion.domain.catalogue.events.EventRepo.GeoLimit, tolerance: com.histmersion.domain.catalogue.events.EventRepo.GeoTolerance)(using D
+com.histmersion.domain.catalogue.events.EventRepo.GeometryErrorGeojson | base String | generated | method-parameter
+    def geometryError(geojson: com.histmersion.domain.catalogue.events.EventRepo.GeometryErrorGeojson)(using con: DbCon): Option[com.histmersion.domain.catalogue.events.Event
+com.histmersion.domain.catalogue.events.EventRepo.GeometryErrorResult | base String | generated | method-result
+    def geometryError(geojson: com.histmersion.domain.catalogue.events.EventRepo.GeometryErrorGeojson)(using con: DbCon): Option[com.histmersion.domain.catalogue.events.Event
+com.histmersion.domain.catalogue.events.EventRepo.GetId | base String | generated | method-parameter
+    def get(id: com.histmersion.domain.catalogue.events.EventRepo.GetId)(using DbCon): Option[EventEntry] =
+com.histmersion.domain.catalogue.events.EventRepo.ListLimit | base Int | generated | method-parameter
+    def list(where: Sql, limit: com.histmersion.domain.catalogue.events.EventRepo.ListLimit, offset: com.histmersion.domain.catalogue.events.EventRepo.ListOffset)(using DbCon
+com.histmersion.domain.catalogue.events.EventRepo.ListOffset | base Int | generated | method-parameter
+    def list(where: Sql, limit: com.histmersion.domain.catalogue.events.EventRepo.ListLimit, offset: com.histmersion.domain.catalogue.events.EventRepo.ListOffset)(using DbCon
+com.histmersion.domain.catalogue.events.EventRepo.PatchId | base String | generated | method-parameter
+    def patch(id: com.histmersion.domain.catalogue.events.EventRepo.PatchId, p: EventPatch)(using DbCon): Either[Api.Error, Unit] =
+com.histmersion.domain.catalogue.events.EventRepo.PutId | base String | generated | method-parameter
+    def put(id: com.histmersion.domain.catalogue.events.EventRepo.PutId, in: EventPut)(using DbCon): Unit =
+com.histmersion.domain.catalogue.events.EventRepo.RecordCorrectionsFieldsPart1 | base String | generated | method-parameter
+    private def recordCorrections(id: com.histmersion.domain.catalogue.events.EventRepo.RecordCorrectionsId, fields: Map[com.histmersion.domain.catalogue.events.EventRepo.Rec
+com.histmersion.domain.catalogue.events.EventRepo.RecordCorrectionsId | base String | generated | method-parameter
+    private def recordCorrections(id: com.histmersion.domain.catalogue.events.EventRepo.RecordCorrectionsId, fields: Map[com.histmersion.domain.catalogue.events.EventRepo.Rec
+com.histmersion.domain.catalogue.events.EventRepo.RenameNewId | base String | generated | method-parameter
+    def rename(oldId: com.histmersion.domain.catalogue.events.EventRepo.RenameOldId, newId: com.histmersion.domain.catalogue.events.EventRepo.RenameNewId)(using DbCon): Eithe
+com.histmersion.domain.catalogue.events.EventRepo.RenameOldId | base String | generated | method-parameter
+    def rename(oldId: com.histmersion.domain.catalogue.events.EventRepo.RenameOldId, newId: com.histmersion.domain.catalogue.events.EventRepo.RenameNewId)(using DbCon): Eithe
+com.histmersion.domain.catalogue.events.EventRepo.RenamedToId | base String | generated | method-parameter
+    def renamedTo(id: com.histmersion.domain.catalogue.events.EventRepo.RenamedToId)(using DbCon): Option[com.histmersion.domain.catalogue.events.EventRepo.RenamedToResult] =
+com.histmersion.domain.catalogue.events.EventRepo.RenamedToResult | base String | generated | method-result
+    def renamedTo(id: com.histmersion.domain.catalogue.events.EventRepo.RenamedToId)(using DbCon): Option[com.histmersion.domain.catalogue.events.EventRepo.RenamedToResult] =
+com.histmersion.domain.catalogue.events.EventRepo.TierAndNamesId | base String | generated | method-parameter
+    def tierAndNames(id: com.histmersion.domain.catalogue.events.EventRepo.TierAndNamesId)(using DbCon): Option[(com.histmersion.domain.catalogue.events.EventRepo.TierAndName
+com.histmersion.domain.catalogue.events.EventRepo.TierAndNamesResultPart1 | base String | generated | method-result
+    def tierAndNames(id: com.histmersion.domain.catalogue.events.EventRepo.TierAndNamesId)(using DbCon): Option[(com.histmersion.domain.catalogue.events.EventRepo.TierAndName
+com.histmersion.domain.catalogue.events.EventRepo.TierAndNamesResultPart2 | base String | generated | method-result
+    def tierAndNames(id: com.histmersion.domain.catalogue.events.EventRepo.TierAndNamesId)(using DbCon): Option[(com.histmersion.domain.catalogue.events.EventRepo.TierAndName
+com.histmersion.domain.catalogue.events.EventRepo.TierAndNamesResultPart3 | base String | generated | method-result
+    def tierAndNames(id: com.histmersion.domain.catalogue.events.EventRepo.TierAndNamesId)(using DbCon): Option[(com.histmersion.domain.catalogue.events.EventRepo.TierAndName

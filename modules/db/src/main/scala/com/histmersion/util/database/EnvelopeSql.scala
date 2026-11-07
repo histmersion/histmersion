@@ -16,10 +16,8 @@ object EnvelopeSql:
   type EnvelopesEnvMaxLat = EnvelopesEnvMaxLat.T
   object EnvelopesEnvMaxLat extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
-  type EnvelopesGeom = EnvelopesGeom.T
-  object EnvelopesGeom extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
-  def envelopes(geom: com.histmersion.util.database.EnvelopeSql.EnvelopesGeom, b: BBox): Sql =
+  def envelopes(geom: String, b: BBox): Sql =
     def env(minLon: com.histmersion.util.database.EnvelopeSql.EnvelopesEnvMinLon, minLat: com.histmersion.util.database.EnvelopeSql.EnvelopesEnvMinLat, maxLon: com.histmersion.util.database.EnvelopeSql.EnvelopesEnvMaxLon, maxLat: com.histmersion.util.database.EnvelopeSql.EnvelopesEnvMaxLat) =
       Sql.of(
         s"$geom && ST_MakeEnvelope(?, ?, ?, ?, 4326)",

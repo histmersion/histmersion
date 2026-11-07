@@ -38,8 +38,8 @@ final private[exchange] case class MergeRow(
 ) derives DbCodec
 
 object MergeRow:
-  type BundleSha256 = BundleSha256.T
-  object BundleSha256 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type BundleSha256 = com.histmersion.Sha256
+  val BundleSha256: _root_.com.histmersion.Sha256.type = _root_.com.histmersion.Sha256
   type FromLabel = FromLabel.T
   object FromLabel extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type AppliedAt = AppliedAt.T
@@ -48,7 +48,7 @@ object MergeRow:
   object PlanHash extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type Backup = Backup.T
   object Backup extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type LedgerRows = LedgerRows.T
-  object LedgerRows extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type LedgerRows = com.histmersion.RowCount
+  val LedgerRows: _root_.com.histmersion.RowCount.type = _root_.com.histmersion.RowCount
   type Redirects = Redirects.T
   object Redirects extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]

@@ -5,18 +5,8 @@ package com.histmersion.pluginhost
   * server suite fails when the two disagree.
   */
 object ReservedNames:
-  type MediaCollections = MediaCollections.T
-  object MediaCollections extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type EventCatalogues = EventCatalogues.T
-  object EventCatalogues extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type FirstPartyPlugins = FirstPartyPlugins.T
-  object FirstPartyPlugins extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type GazetteerSources = GazetteerSources.T
-  object GazetteerSources extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type SourceCollections = SourceCollections.T
-  object SourceCollections extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type AiProviders = AiProviders.T
-  object AiProviders extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type Name = Name.T
+  object Name extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
   import com.histmersion.api.automation.Agents
   import com.histmersion.api.media.MediaProvider
@@ -25,7 +15,7 @@ object ReservedNames:
   /** The built-in media imports (`media import <name>`) and their aliases, and every provider pictures are stored
     * under.
     */
-  val mediaCollections: Set[com.histmersion.pluginhost.ReservedNames.MediaCollections] =
+  val mediaCollections: Set[com.histmersion.pluginhost.ReservedNames.Name] =
     Set(
       "wikidata",
       "depicts",
@@ -48,13 +38,13 @@ object ReservedNames:
       MediaProvider.all ++ Set(MediaProvider.CommonsDepicts, MediaProvider.Pleiades)
 
   /** The built-in event catalogues and their aliases. */
-  val eventCatalogues: Set[com.histmersion.pluginhost.ReservedNames.EventCatalogues] = CatalogProvider.all.toSet ++ Set("smithsonian", "volcano", "ncei", "wd")
+  val eventCatalogues: Set[com.histmersion.pluginhost.ReservedNames.Name] = CatalogProvider.all.toSet ++ Set("smithsonian", "volcano", "ncei", "wd")
 
   /** The first-party plugins: Histmersion's own, in every image. A plugin is first-party when its id is one of these
     * and it was loaded from the image's own class path, not from the plugin set a relink added; a reserved name of a
     * catalogue, a media provider or an AI provider is kept for it.
     */
-  val firstPartyPlugins: Set[com.histmersion.pluginhost.ReservedNames.FirstPartyPlugins] = Set(
+  val firstPartyPlugins: Set[com.histmersion.pluginhost.ReservedNames.Name] = Set(
     "archive-org",
     "oa-unpaywall",
     "oa-core",
@@ -93,12 +83,12 @@ object ReservedNames:
   /** The network gazetteers `places fetch` and `init.fetch-sources` name, and the other names they take (the coastline,
     * PeriodO, the bundled extracts): a plugin's source under one of them would be taken for the host's own.
     */
-  val gazetteerSources: Set[com.histmersion.pluginhost.ReservedNames.GazetteerSources] =
+  val gazetteerSources: Set[com.histmersion.pluginhost.ReservedNames.Name] =
     Set("cliopatria", "awmc", "chronontology", "land", "periodo") ++
       com.histmersion.api.catalogue.Gazetteer.Kind.values.map(_.wire).toSet
 
   /** Histmersion's own source collections: the Calibre library and archive.org. */
-  val sourceCollections: Set[com.histmersion.pluginhost.ReservedNames.SourceCollections] = Set("calibre", "archive-org")
+  val sourceCollections: Set[com.histmersion.pluginhost.ReservedNames.Name] = Set("calibre", "archive-org")
 
   /** The built-in AI providers. */
-  val aiProviders: Set[com.histmersion.pluginhost.ReservedNames.AiProviders] = Agents.ProviderKind.values.map(_.wire).toSet
+  val aiProviders: Set[com.histmersion.pluginhost.ReservedNames.Name] = Agents.ProviderKind.values.map(_.wire).toSet

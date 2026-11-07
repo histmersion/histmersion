@@ -1,0 +1,217 @@
+## CONCEPTS NEARBY
+com.histmersion.domain.research.articles.ArticleSummaryRow.Kind (String)
+com.histmersion.domain.research.articles.ArticleSummaryRow.Regions (String)
+com.histmersion.domain.research.articles.ArticleSummaryRow.Slug (String)
+com.histmersion.domain.research.articles.ArticleSummaryRow.Summary (String)
+com.histmersion.domain.research.articles.ArticleSummaryRow.Tags (String)
+com.histmersion.domain.research.articles.ArticleSummaryRow.Title (String)
+com.histmersion.domain.research.articles.ArticleSummaryRow.UpdatedAt (String)
+com.histmersion.domain.research.articles.BArticleRow.Body (String)
+com.histmersion.domain.research.articles.BArticleRow.Kind (String)
+com.histmersion.domain.research.articles.BArticleRow.PHi (Long)
+com.histmersion.domain.research.articles.BArticleRow.PLo (Long)
+com.histmersion.domain.research.articles.BArticleRow.PNull (Boolean)
+com.histmersion.domain.research.articles.BArticleRow.Regions (String)
+com.histmersion.domain.research.articles.BArticleRow.Slug (String)
+com.histmersion.domain.research.articles.BArticleRow.Summary (String)
+com.histmersion.domain.research.articles.BArticleRow.Tags (String)
+com.histmersion.domain.research.articles.BArticleRow.Title (String)
+com.histmersion.domain.research.articles.BArticleRow.UpdatedAt (String)
+com.histmersion.domain.research.articles.BVersionRow.BodyBytes (Long)
+com.histmersion.domain.research.articles.BVersionRow.BodySha (String)
+com.histmersion.domain.research.articles.BVersionRow.CreatedAt (String)
+com.histmersion.domain.research.articles.BVersionRow.Summary (String)
+com.histmersion.domain.research.articles.BVersionRow.VersionOf (String)
+com.histmersion.domain.research.articles.CritiqueRepo.Change.Remove.A (String)
+com.histmersion.domain.research.articles.CritiqueRepo.Change.Remove.B (String)
+com.histmersion.domain.research.articles.CritiqueRepo.Change.Set.By (String)
+com.histmersion.domain.research.articles.CritiqueRepo.Change.Set.Dst (String)
+com.histmersion.domain.research.articles.CritiqueRepo.Change.Set.Reason (String)
+com.histmersion.domain.research.articles.CritiqueRepo.Change.Set.Src (String)
+
+## TYPES TO DECIDE
+com.histmersion.domain.research.articles.ArticleRepo.ArticlesByGoalResultPart1 | base String | generated | method-result
+    def articlesByGoal(using DbCon): Map[com.histmersion.domain.research.articles.ArticleRepo.ArticlesByGoalResultPart1, List[com.histmersion.domain.research.articles.Article
+com.histmersion.domain.research.articles.ArticleRepo.ArticlesByGoalResultPart2 | base String | generated | method-result
+    def articlesByGoal(using DbCon): Map[com.histmersion.domain.research.articles.ArticleRepo.ArticlesByGoalResultPart1, List[com.histmersion.domain.research.articles.Article
+com.histmersion.domain.research.articles.ArticleRepo.BacklinksSlug | base String | generated | method-parameter
+    def backlinks(slug: com.histmersion.domain.research.articles.ArticleRepo.BacklinksSlug)(using DbCon): List[Backlink] =
+com.histmersion.domain.research.articles.ArticleRepo.CanonicalResult | base String | generated | method-result
+    def canonical(slug: com.histmersion.domain.research.articles.ArticleRepo.CanonicalSlug)(using DbCon): com.histmersion.domain.research.articles.ArticleRepo.CanonicalResult
+com.histmersion.domain.research.articles.ArticleRepo.CanonicalSlug | base String | generated | method-parameter
+    def canonical(slug: com.histmersion.domain.research.articles.ArticleRepo.CanonicalSlug)(using DbCon): com.histmersion.domain.research.articles.ArticleRepo.CanonicalResult
+com.histmersion.domain.research.articles.ArticleRepo.CitingCitekeys | base String | generated | method-parameter
+    def citing(citekeys: List[com.histmersion.domain.research.articles.ArticleRepo.CitingCitekeys], limit: com.histmersion.domain.research.articles.ArticleRepo.CitingLimit)(u
+com.histmersion.domain.research.articles.ArticleRepo.CitingLimit | base Int | generated | method-parameter
+    def citing(citekeys: List[com.histmersion.domain.research.articles.ArticleRepo.CitingCitekeys], limit: com.histmersion.domain.research.articles.ArticleRepo.CitingLimit)(u
+com.histmersion.domain.research.articles.ArticleRepo.CountResult | base Long | generated | method-result
+    def count()(using DbCon): com.histmersion.domain.research.articles.ArticleRepo.CountResult = sql"SELECT count(*)::int FROM articles".query[Int].run().head.toLong
+com.histmersion.domain.research.articles.ArticleRepo.DeleteResult | base Boolean | generated | method-result
+    def delete(slug: com.histmersion.domain.research.articles.ArticleRepo.DeleteSlug)(using DbCon): com.histmersion.domain.research.articles.ArticleRepo.DeleteResult =
+com.histmersion.domain.research.articles.ArticleRepo.DeleteSlug | base String | generated | method-parameter
+    def delete(slug: com.histmersion.domain.research.articles.ArticleRepo.DeleteSlug)(using DbCon): com.histmersion.domain.research.articles.ArticleRepo.DeleteResult =
+com.histmersion.domain.research.articles.ArticleRepo.ExistingSlugsResult | base String | generated | method-result
+    def existingSlugs(slugs: List[com.histmersion.domain.research.articles.ArticleRepo.ExistingSlugsSlugs])(using DbCon): Set[com.histmersion.domain.research.articles.Article
+com.histmersion.domain.research.articles.ArticleRepo.ExistingSlugsSlugs | base String | generated | method-parameter
+    def existingSlugs(slugs: List[com.histmersion.domain.research.articles.ArticleRepo.ExistingSlugsSlugs])(using DbCon): Set[com.histmersion.domain.research.articles.Article
+com.histmersion.domain.research.articles.ArticleRepo.FilterJsonResult | base String | generated | method-result
+    private def filterJson(a: Article): Option[com.histmersion.domain.research.articles.ArticleRepo.FilterJsonResult] =
+com.histmersion.domain.research.articles.ArticleRepo.FilterOfJson | base String | generated | method-parameter
+    private[articles] def filterOf(json: Option[com.histmersion.domain.research.articles.ArticleRepo.FilterOfJson]): Option[Article.Filter] =
+com.histmersion.domain.research.articles.ArticleRepo.GetSlug | base String | generated | method-parameter
+    def get(slug: com.histmersion.domain.research.articles.ArticleRepo.GetSlug)(using DbCon): Option[Article.Row] =
+com.histmersion.domain.research.articles.ArticleRepo.GetVersionSlug | base String | generated | method-parameter
+    def getVersion(slug: com.histmersion.domain.research.articles.ArticleRepo.GetVersionSlug, versionId: com.histmersion.domain.research.articles.ArticleRepo.GetVersionVersio
+com.histmersion.domain.research.articles.ArticleRepo.GetVersionVersionId | base Long | generated | method-parameter
+    def getVersion(slug: com.histmersion.domain.research.articles.ArticleRepo.GetVersionSlug, versionId: com.histmersion.domain.research.articles.ArticleRepo.GetVersionVersio
+com.histmersion.domain.research.articles.ArticleRepo.LatestVersionResult | base Long | generated | method-result
+    def latestVersion(slug: com.histmersion.domain.research.articles.ArticleRepo.LatestVersionSlug)(using DbCon): Option[com.histmersion.domain.research.articles.ArticleRepo.
+com.histmersion.domain.research.articles.ArticleRepo.LatestVersionSlug | base String | generated | method-parameter
+    def latestVersion(slug: com.histmersion.domain.research.articles.ArticleRepo.LatestVersionSlug)(using DbCon): Option[com.histmersion.domain.research.articles.ArticleRepo.
+com.histmersion.domain.research.articles.ArticleRepo.ListKind | base String | generated | method-parameter
+com.histmersion.domain.research.articles.ArticleRepo.ListLimit | base Int | generated | method-parameter
+com.histmersion.domain.research.articles.ArticleRepo.ListOffset | base Int | generated | method-parameter
+com.histmersion.domain.research.articles.ArticleRepo.ListText | base String | generated | method-parameter
+com.histmersion.domain.research.articles.ArticleRepo.ListVersionsLimit | base Int | generated | method-parameter
+    def listVersions(slug: com.histmersion.domain.research.articles.ArticleRepo.ListVersionsSlug, limit: com.histmersion.domain.research.articles.ArticleRepo.ListVersionsLimi
+com.histmersion.domain.research.articles.ArticleRepo.ListVersionsSlug | base String | generated | method-parameter
+    def listVersions(slug: com.histmersion.domain.research.articles.ArticleRepo.ListVersionsSlug, limit: com.histmersion.domain.research.articles.ArticleRepo.ListVersionsLimi
+com.histmersion.domain.research.articles.ArticleRepo.ListWhereKind | base String | generated | method-parameter
+    def listWhere(filter: Filter, scope: PlaceScope, kind: Option[com.histmersion.domain.research.articles.ArticleRepo.ListWhereKind], text: Option[com.histmersion.domain.res
+com.histmersion.domain.research.articles.ArticleRepo.ListWhereText | base String | generated | method-parameter
+    def listWhere(filter: Filter, scope: PlaceScope, kind: Option[com.histmersion.domain.research.articles.ArticleRepo.ListWhereKind], text: Option[com.histmersion.domain.res
+com.histmersion.domain.research.articles.ArticleRepo.LoadSlug | base String | generated | method-parameter
+    def load(slug: com.histmersion.domain.research.articles.ArticleRepo.LoadSlug)(using DbCon): Option[Article] =
+com.histmersion.domain.research.articles.ArticleRepo.PatchBy | base String | generated | method-parameter
+    def patch(slug: com.histmersion.domain.research.articles.ArticleRepo.PatchSlug, p: Article.Patch, by: com.histmersion.domain.research.articles.ArticleRepo.PatchBy = "pers
+com.histmersion.domain.research.articles.ArticleRepo.PatchResultPart2 | base String | generated | method-result
+    def patch(slug: com.histmersion.domain.research.articles.ArticleRepo.PatchSlug, p: Article.Patch, by: com.histmersion.domain.research.articles.ArticleRepo.PatchBy = "pers
+com.histmersion.domain.research.articles.ArticleRepo.PatchSlug | base String | generated | method-parameter
+    def patch(slug: com.histmersion.domain.research.articles.ArticleRepo.PatchSlug, p: Article.Patch, by: com.histmersion.domain.research.articles.ArticleRepo.PatchBy = "pers
+com.histmersion.domain.research.articles.ArticleRepo.PutResult | base String | generated | method-result
+    def put(a: Article)(using DbCon): com.histmersion.domain.research.articles.ArticleRepo.PutResult =
+com.histmersion.domain.research.articles.ArticleRepo.ReasonsJsonResult | base String | generated | method-result
+    private def reasonsJson(a: Article): com.histmersion.domain.research.articles.ArticleRepo.ReasonsJsonResult =
+com.histmersion.domain.research.articles.ArticleRepo.ReasonsOfJson | base String | generated | method-parameter
+    private[articles] def reasonsOf(json: com.histmersion.domain.research.articles.ArticleRepo.ReasonsOfJson): Map[com.histmersion.domain.research.articles.ArticleRepo.Reason
+com.histmersion.domain.research.articles.ArticleRepo.ReasonsOfResultPart1 | base String | generated | method-result
+    private[articles] def reasonsOf(json: com.histmersion.domain.research.articles.ArticleRepo.ReasonsOfJson): Map[com.histmersion.domain.research.articles.ArticleRepo.Reason
+com.histmersion.domain.research.articles.ArticleRepo.ReasonsOfResultPart2 | base String | generated | method-result
+    private[articles] def reasonsOf(json: com.histmersion.domain.research.articles.ArticleRepo.ReasonsOfJson): Map[com.histmersion.domain.research.articles.ArticleRepo.Reason
+com.histmersion.domain.research.articles.ArticleRepo.RefsSlugs | base String | generated | method-parameter
+    def refs(slugs: List[com.histmersion.domain.research.articles.ArticleRepo.RefsSlugs])(using DbCon): List[Article.Ref] =
+com.histmersion.domain.research.articles.ArticleRepo.RenameInExistsS | base String | generated | method-parameter
+    def exists(s: com.histmersion.domain.research.articles.ArticleRepo.RenameInExistsS) = sql"SELECT 1 FROM articles WHERE slug = $s".query[Int].run().nonEmpty
+com.histmersion.domain.research.articles.ArticleRepo.RenameInNewSlug | base String | generated | method-parameter
+    private[histmersion] def renameIn(oldSlug: com.histmersion.domain.research.articles.ArticleRepo.RenameInOldSlug, newSlug: com.histmersion.domain.research.articles.Article
+com.histmersion.domain.research.articles.ArticleRepo.RenameInOldSlug | base String | generated | method-parameter
+    private[histmersion] def renameIn(oldSlug: com.histmersion.domain.research.articles.ArticleRepo.RenameInOldSlug, newSlug: com.histmersion.domain.research.articles.Article
+com.histmersion.domain.research.articles.ArticleRepo.RenameInResultPart2 | base String | generated | method-result
+    private[histmersion] def renameIn(oldSlug: com.histmersion.domain.research.articles.ArticleRepo.RenameInOldSlug, newSlug: com.histmersion.domain.research.articles.Article
+com.histmersion.domain.research.articles.ArticleRepo.RenameNewSlug | base String | generated | method-parameter
+    def rename(oldSlug: com.histmersion.domain.research.articles.ArticleRepo.RenameOldSlug, newSlug: com.histmersion.domain.research.articles.ArticleRepo.RenameNewSlug)(using
+com.histmersion.domain.research.articles.ArticleRepo.RenameOldSlug | base String | generated | method-parameter
+    def rename(oldSlug: com.histmersion.domain.research.articles.ArticleRepo.RenameOldSlug, newSlug: com.histmersion.domain.research.articles.ArticleRepo.RenameNewSlug)(using
+com.histmersion.domain.research.articles.ArticleRepo.RenameResultPart2 | base String | generated | method-result
+    def rename(oldSlug: com.histmersion.domain.research.articles.ArticleRepo.RenameOldSlug, newSlug: com.histmersion.domain.research.articles.ArticleRepo.RenameNewSlug)(using
+com.histmersion.domain.research.articles.ArticleRepo.RetargetLinksNeedle | base String | generated | method-parameter
+    private[histmersion] def retargetLinks(needle: com.histmersion.domain.research.articles.ArticleRepo.RetargetLinksNeedle, to: com.histmersion.domain.research.articles.Arti
+com.histmersion.domain.research.articles.ArticleRepo.RetargetLinksResultPart1 | base String | generated | method-result
+com.histmersion.domain.research.articles.ArticleRepo.RetargetLinksResultPart2 | base Int | generated | method-result
+com.histmersion.domain.research.articles.ArticleRepo.RetargetLinksToArg1 | base String | generated | method-parameter
+    private[histmersion] def retargetLinks(needle: com.histmersion.domain.research.articles.ArticleRepo.RetargetLinksNeedle, to: com.histmersion.domain.research.articles.Arti
+com.histmersion.domain.research.articles.ArticleRepo.RetargetLinksToResult | base String | generated | method-parameter
+    private[histmersion] def retargetLinks(needle: com.histmersion.domain.research.articles.ArticleRepo.RetargetLinksNeedle, to: com.histmersion.domain.research.articles.Arti
+com.histmersion.domain.research.articles.ArticleRepo.SlugExistsResult | base Boolean | generated | method-result
+    def slugExists(slug: com.histmersion.domain.research.articles.ArticleRepo.SlugExistsSlug)(using DbCon): com.histmersion.domain.research.articles.ArticleRepo.SlugExistsRes
+com.histmersion.domain.research.articles.ArticleRepo.SlugExistsSlug | base String | generated | method-parameter
+    def slugExists(slug: com.histmersion.domain.research.articles.ArticleRepo.SlugExistsSlug)(using DbCon): com.histmersion.domain.research.articles.ArticleRepo.SlugExistsRes
+com.histmersion.domain.research.articles.ArticleRepo.SlugsResult | base String | generated | method-result
+    def slugs(using DbCon): Vector[com.histmersion.domain.research.articles.ArticleRepo.SlugsResult] =
+com.histmersion.domain.research.articles.ArticleRepo.SourcesCitedSlug | base String | generated | method-parameter
+    def sourcesCited(slug: com.histmersion.domain.research.articles.ArticleRepo.SourcesCitedSlug)(using DbCon): List[CitedSource] =
+com.histmersion.domain.research.articles.ArticleRepo.TokenResult | base String | generated | method-result
+    private def token(slug: com.histmersion.domain.research.articles.ArticleRepo.TokenSlug)(using DbCon): Option[com.histmersion.domain.research.articles.ArticleRepo.TokenRes
+com.histmersion.domain.research.articles.ArticleRepo.TokenSlug | base String | generated | method-parameter
+    private def token(slug: com.histmersion.domain.research.articles.ArticleRepo.TokenSlug)(using DbCon): Option[com.histmersion.domain.research.articles.ArticleRepo.TokenRes
+com.histmersion.domain.research.articles.ArticleRepo.TsQueryQ | base String | generated | method-parameter
+    private def tsQuery(q: com.histmersion.domain.research.articles.ArticleRepo.TsQueryQ): Sql = Search.tsQuery(q)
+com.histmersion.domain.research.articles.ArticleRepo.UpdatedAtMillisResultPart1 | base String | generated | method-result
+    def updatedAtMillis(using DbCon): Map[com.histmersion.domain.research.articles.ArticleRepo.UpdatedAtMillisResultPart1, com.histmersion.domain.research.articles.ArticleRep
+com.histmersion.domain.research.articles.ArticleRepo.UpdatedAtMillisResultPart2 | base Long | generated | method-result
+    def updatedAtMillis(using DbCon): Map[com.histmersion.domain.research.articles.ArticleRepo.UpdatedAtMillisResultPart1, com.histmersion.domain.research.articles.ArticleRep
+com.histmersion.domain.research.articles.ArticleRepo.ViewRequested | base String | generated | method-parameter
+    def view(requested: com.histmersion.domain.research.articles.ArticleRepo.ViewRequested)(using DbCon): Option[Article.View] =
+com.histmersion.domain.research.articles.ArticleRepo.WriteLinksBody | base String | generated | method-parameter
+    private[histmersion] def writeLinks(slug: com.histmersion.domain.research.articles.ArticleRepo.WriteLinksSlug, body: com.histmersion.domain.research.articles.ArticleRepo.
+com.histmersion.domain.research.articles.ArticleRepo.WriteLinksSlug | base String | generated | method-parameter
+    private[histmersion] def writeLinks(slug: com.histmersion.domain.research.articles.ArticleRepo.WriteLinksSlug, body: com.histmersion.domain.research.articles.ArticleRepo.
+com.histmersion.domain.research.articles.ArticleSourceReferrer.CitingResultPart1 | base String | generated | method-result
+    private def citing(source: SourceKeys)(using DbCon): List[(com.histmersion.domain.research.articles.ArticleSourceReferrer.CitingResultPart1, com.histmersion.domain.resear
+com.histmersion.domain.research.articles.ArticleSourceReferrer.CitingResultPart2 | base String | generated | method-result
+    private def citing(source: SourceKeys)(using DbCon): List[(com.histmersion.domain.research.articles.ArticleSourceReferrer.CitingResultPart1, com.histmersion.domain.resear
+com.histmersion.domain.research.articles.ArticleSourceReferrer.CoverageOfKeys | base String | generated | method-parameter
+    private def coverageOf(keys: List[com.histmersion.domain.research.articles.ArticleSourceReferrer.CoverageOfKeys])(using DbCon): List[com.histmersion.domain.research.artic
+com.histmersion.domain.research.articles.ArticleSourceReferrer.CoverageOfResult | base String | generated | method-result
+    private def coverageOf(keys: List[com.histmersion.domain.research.articles.ArticleSourceReferrer.CoverageOfKeys])(using DbCon): List[com.histmersion.domain.research.artic
+com.histmersion.domain.research.articles.ArticleSummaryRow.Kind | base String | original | constructor-parameter
+com.histmersion.domain.research.articles.ArticleSummaryRow.Regions | base String | original | constructor-parameter
+com.histmersion.domain.research.articles.ArticleSummaryRow.Slug | base String | original | constructor-parameter
+com.histmersion.domain.research.articles.ArticleSummaryRow.Summary | base String | original | constructor-parameter
+    def summaryRow: Article.Summary =
+com.histmersion.domain.research.articles.ArticleSummaryRow.Tags | base String | original | constructor-parameter
+com.histmersion.domain.research.articles.ArticleSummaryRow.Title | base String | original | constructor-parameter
+com.histmersion.domain.research.articles.ArticleSummaryRow.UpdatedAt | base String | original | constructor-parameter
+com.histmersion.domain.research.articles.ArticlesCarried.RowsRank | base Int | generated | method-parameter
+    private def rows(rank: com.histmersion.domain.research.articles.ArticlesCarried.RowsRank)(write: BundleImport.Writer => Unit) = RowsIn(ImportStage.Rows, ImportRank(rank),
+com.histmersion.domain.research.articles.ArticlesCarried.SetStem | base String | generated | method-parameter
+    private def set(stem: com.histmersion.domain.research.articles.ArticlesCarried.SetStem): BundleEntry = BundleEntry(s"entities/$stem.ndjson")
+com.histmersion.domain.research.articles.BArticleRow.Body | base String | original | constructor-parameter
+com.histmersion.domain.research.articles.BArticleRow.Kind | base String | original | constructor-parameter
+com.histmersion.domain.research.articles.BArticleRow.PHi | base Long | original | constructor-parameter
+com.histmersion.domain.research.articles.BArticleRow.PLo | base Long | original | constructor-parameter
+com.histmersion.domain.research.articles.BArticleRow.PNull | base Boolean | original | constructor-parameter
+com.histmersion.domain.research.articles.BArticleRow.Regions | base String | original | constructor-parameter
+com.histmersion.domain.research.articles.BArticleRow.Slug | base String | original | constructor-parameter
+com.histmersion.domain.research.articles.BArticleRow.Summary | base String | original | constructor-parameter
+com.histmersion.domain.research.articles.BArticleRow.Tags | base String | original | constructor-parameter
+com.histmersion.domain.research.articles.BArticleRow.Title | base String | original | constructor-parameter
+com.histmersion.domain.research.articles.BArticleRow.UpdatedAt | base String | original | constructor-parameter
+com.histmersion.domain.research.articles.BVersionRow.BodyBytes | base Long | original | constructor-parameter
+com.histmersion.domain.research.articles.BVersionRow.BodySha | base String | original | constructor-parameter
+com.histmersion.domain.research.articles.BVersionRow.CreatedAt | base String | original | constructor-parameter
+com.histmersion.domain.research.articles.BVersionRow.Summary | base String | original | constructor-parameter
+com.histmersion.domain.research.articles.BVersionRow.VersionOf | base String | original | constructor-parameter
+com.histmersion.domain.research.articles.CoverageRepo.EdgesTouchingCitekeys | base String | generated | method-parameter
+    def edgesTouching(citekeys: List[com.histmersion.domain.research.articles.CoverageRepo.EdgesTouchingCitekeys], kinds: List[com.histmersion.domain.research.articles.Covera
+com.histmersion.domain.research.articles.CoverageRepo.EdgesTouchingKinds | base String | generated | method-parameter
+    def edgesTouching(citekeys: List[com.histmersion.domain.research.articles.CoverageRepo.EdgesTouchingCitekeys], kinds: List[com.histmersion.domain.research.articles.Covera
+com.histmersion.domain.research.articles.CoverageRepo.MembersCitekeys | base String | generated | method-parameter
+    def members(f: Filter, scope: PlaceScope, citekeys: List[com.histmersion.domain.research.articles.CoverageRepo.MembersCitekeys])(using DbCon): (com.histmersion.domain.res
+com.histmersion.domain.research.articles.CoverageRepo.MembersResultPart1 | base Int | generated | method-result
+    def members(f: Filter, scope: PlaceScope, citekeys: List[com.histmersion.domain.research.articles.CoverageRepo.MembersCitekeys])(using DbCon): (com.histmersion.domain.res
+com.histmersion.domain.research.articles.CoverageRepo.MembersResultPart2 | base String | generated | method-result
+    def members(f: Filter, scope: PlaceScope, citekeys: List[com.histmersion.domain.research.articles.CoverageRepo.MembersCitekeys])(using DbCon): (com.histmersion.domain.res
+com.histmersion.domain.research.articles.CoverageRepo.SourceSetCap | base Int | generated | method-parameter
+    def sourceSet(f: Filter, scope: PlaceScope, cap: com.histmersion.domain.research.articles.CoverageRepo.SourceSetCap)(using DbCon): (com.histmersion.domain.research.articl
+com.histmersion.domain.research.articles.CoverageRepo.SourceSetResultPart1 | base Int | generated | method-result
+    def sourceSet(f: Filter, scope: PlaceScope, cap: com.histmersion.domain.research.articles.CoverageRepo.SourceSetCap)(using DbCon): (com.histmersion.domain.research.articl
+com.histmersion.domain.research.articles.CritiqueRepo.ApplyInBy | base String | generated | method-parameter
+    def applyIn(slug: com.histmersion.domain.research.articles.CritiqueRepo.ApplyInSlug, reasons: List[CritiqueReason], by: com.histmersion.domain.research.articles.CritiqueR
+com.histmersion.domain.research.articles.CritiqueRepo.ApplyInResultPart2 | base Int | generated | method-result
+com.histmersion.domain.research.articles.CritiqueRepo.ApplyInSlug | base String | generated | method-parameter
+    def applyIn(slug: com.histmersion.domain.research.articles.CritiqueRepo.ApplyInSlug, reasons: List[CritiqueReason], by: com.histmersion.domain.research.articles.CritiqueR
+com.histmersion.domain.research.articles.CritiqueRepo.Change.Remove.A | base String | generated | constructor-parameter
+com.histmersion.domain.research.articles.CritiqueRepo.Change.Remove.B | base String | generated | constructor-parameter
+com.histmersion.domain.research.articles.CritiqueRepo.Change.Set.By | base String | generated | constructor-parameter
+    case Set(src: Change.Set.Src, dst: Change.Set.Dst, reason: Change.Set.Reason, by: Change.Set.By)
+com.histmersion.domain.research.articles.CritiqueRepo.Change.Set.Dst | base String | generated | constructor-parameter
+    case Set(src: Change.Set.Src, dst: Change.Set.Dst, reason: Change.Set.Reason, by: Change.Set.By)
+com.histmersion.domain.research.articles.CritiqueRepo.Change.Set.Reason | base String | generated | constructor-parameter
+    case Set(src: Change.Set.Src, dst: Change.Set.Dst, reason: Change.Set.Reason, by: Change.Set.By)
+com.histmersion.domain.research.articles.CritiqueRepo.Change.Set.Src | base String | generated | constructor-parameter
+    case Set(src: Change.Set.Src, dst: Change.Set.Dst, reason: Change.Set.Reason, by: Change.Set.By)
+com.histmersion.domain.research.articles.CritiqueRepo.CheckBy | base String | generated | method-parameter
+    private def check(reasons: List[CritiqueReason], by: com.histmersion.domain.research.articles.CritiqueRepo.CheckBy)(using DbCon): Either[Api.Error, List[Change]] =
+com.histmersion.domain.research.articles.CritiqueRepo.ListSlug | base String | generated | method-parameter
+    def list(slug: com.histmersion.domain.research.articles.CritiqueRepo.ListSlug)(using DbCon): List[CritiqueReason] =

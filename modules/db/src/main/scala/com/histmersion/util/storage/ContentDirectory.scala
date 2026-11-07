@@ -6,7 +6,7 @@ import java.nio.file.{Files, Path, StandardCopyOption}
 /** A [[ContentStore]] in a directory: `<dir>/<sha256>.<ext>`. */
 final class ContentDirectory(dir: Path) extends ContentStore:
 
-  def find(sha256: com.histmersion.util.storage.ContentDirectory.FindSha256): Option[(ByteSource, com.histmersion.util.storage.ContentDirectory.FindResultPart2)] =
+  def find(sha256: com.histmersion.Sha256): Option[(ByteSource, com.histmersion.util.storage.ContentDirectory.Ext)] =
     scala.util
       .Try {
         val s = Files.list(dir)
@@ -20,7 +20,7 @@ final class ContentDirectory(dir: Path) extends ContentStore:
   /** Written to a temporary file, hashed, and moved into place only when the content IS `sha256`: the directory is
     * content-addressed, and whoever reads it trusts the name.
     */
-  def store(sha256: com.histmersion.util.storage.ContentDirectory.StoreSha256, ext: com.histmersion.util.storage.ContentDirectory.StoreExt, in: InputStream): Either[com.histmersion.util.storage.ContentDirectory.StoreResultPart1, Unit] =
+  def store(sha256: com.histmersion.Sha256, ext: com.histmersion.util.storage.ContentDirectory.Ext, in: InputStream): Either[com.histmersion.util.storage.ContentDirectory.Problem, Unit] =
     if find(sha256).isDefined then
       val _ = in.transferTo(java.io.OutputStream.nullOutputStream())
       Right(())
@@ -49,13 +49,7 @@ final class ContentDirectory(dir: Path) extends ContentStore:
         .flatten
 
 object ContentDirectory:
-  type FindResultPart2 = FindResultPart2.T
-  object FindResultPart2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type FindSha256 = FindSha256.T
-  object FindSha256 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type StoreResultPart1 = StoreResultPart1.T
-  object StoreResultPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type StoreSha256 = StoreSha256.T
-  object StoreSha256 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type StoreExt = StoreExt.T
-  object StoreExt extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type Ext = Ext.T
+  object Ext extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type Problem = Problem.T
+  object Problem extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]

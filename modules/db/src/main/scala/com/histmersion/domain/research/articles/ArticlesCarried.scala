@@ -31,14 +31,14 @@ import hearth.kindlings.optics.syntax.*
   * carry the new slug; the articles before their old slugs and versions; their links in the derived step.
   */
 object ArticlesCarried:
-  type RowsRank = RowsRank.T
-  object RowsRank extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type SetStem = SetStem.T
-  object SetStem extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type Rank = Rank.T
+  object Rank extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type Stem = Stem.T
+  object Stem extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
   private val Research = DataOwner("research")
 
-  private def rows(rank: com.histmersion.domain.research.articles.ArticlesCarried.RowsRank)(write: BundleImport.Writer => Unit) = RowsIn(ImportStage.Rows, ImportRank(rank), write)
+  private def rows(rank: com.histmersion.domain.research.articles.ArticlesCarried.Rank)(write: BundleImport.Writer => Unit) = RowsIn(ImportStage.Rows, ImportRank(rank), write)
 
   val articles: CarriedKind = CarriedKind.records[com.histmersion.api.exchange.Bundle.Article](
     Research,
@@ -79,7 +79,7 @@ object ArticlesCarried:
     override val rowsIn: List[RowsIn] = List(rows(45)(ArticleBundleRepo.mergedVersionsIn))
 
   /** The entry of a set records own, by its file's stem. */
-  private def set(stem: com.histmersion.domain.research.articles.ArticlesCarried.SetStem): BundleEntry = BundleEntry(s"entities/$stem.ndjson")
+  private def set(stem: com.histmersion.domain.research.articles.ArticlesCarried.Stem): BundleEntry = BundleEntry(s"entities/$stem.ndjson")
 
   val aliases: CarriedKind =
     CarriedKind.owned[com.histmersion.api.exchange.Bundle.ArticleAlias](

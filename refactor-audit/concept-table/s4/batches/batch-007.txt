@@ -1,0 +1,209 @@
+## CONCEPTS NEARBY
+com.histmersion.domain.catalogue.events.EventRow.BeginBy (Long)
+com.histmersion.domain.catalogue.events.EventRow.Central (Long)
+com.histmersion.domain.catalogue.events.EventRow.DatingMethod (String)
+com.histmersion.domain.catalogue.events.EventRow.Description (String)
+com.histmersion.domain.catalogue.events.EventRow.EndFrom (Long)
+com.histmersion.domain.catalogue.events.EventRow.GeometryType (String)
+com.histmersion.domain.catalogue.events.EventRow.Historicity (String)
+com.histmersion.domain.catalogue.events.EventRow.Id (String)
+com.histmersion.domain.catalogue.events.EventRow.Kind (String)
+com.histmersion.domain.catalogue.events.EventRow.Label (String)
+com.histmersion.domain.catalogue.events.EventRow.NotAfter (Long)
+com.histmersion.domain.catalogue.events.EventRow.NotBefore (Long)
+com.histmersion.domain.catalogue.events.EventRow.ParentId (String)
+com.histmersion.domain.catalogue.events.EventRow.PlaceKind (String)
+com.histmersion.domain.catalogue.events.EventRow.PlusMinus (Long)
+com.histmersion.domain.catalogue.events.EventRow.Scale (String)
+com.histmersion.domain.catalogue.events.EventRow.Tier (String)
+com.histmersion.domain.catalogue.events.EventRow.Uncertainty (Long)
+com.histmersion.domain.catalogue.events.EventSaved.Created (Int)
+com.histmersion.domain.catalogue.events.EventSaved.Rows (Int)
+com.histmersion.domain.catalogue.events.EventSaved.Updated (Int)
+com.histmersion.domain.catalogue.events.EventSelection.Historicity (String)
+com.histmersion.domain.catalogue.events.EventSelection.Kind (String)
+com.histmersion.domain.catalogue.events.EventSelection.Text (String)
+com.histmersion.domain.catalogue.events.EventSql.AnchorSqlValue (String)
+com.histmersion.domain.catalogue.events.EventSql.Narrow.Context (Boolean)
+com.histmersion.domain.catalogue.events.EventSql.Narrow.Tier (String)
+com.histmersion.domain.catalogue.events.EventSql.TierSqlValue (String)
+com.histmersion.domain.catalogue.events.StoredEventRow.BeginBy (Long)
+com.histmersion.domain.catalogue.events.StoredEventRow.Catalogue (String)
+com.histmersion.domain.catalogue.events.StoredEventRow.EndFrom (Long)
+com.histmersion.domain.catalogue.events.StoredEventRow.Id (String)
+com.histmersion.domain.catalogue.events.StoredEventRow.Keys (String)
+com.histmersion.domain.catalogue.events.StoredEventRow.Kind (String)
+com.histmersion.domain.catalogue.events.StoredEventRow.Label (String)
+com.histmersion.domain.catalogue.events.StoredEventRow.NotAfter (Long)
+com.histmersion.domain.catalogue.events.StoredEventRow.NotBefore (Long)
+com.histmersion.domain.catalogue.events.StoredEventRow.Wikidata (String)
+com.histmersion.domain.catalogue.evidence.BAttestationFullRow.Canvas (String)
+com.histmersion.domain.catalogue.evidence.BAttestationFullRow.CharEnd (Int)
+com.histmersion.domain.catalogue.evidence.BAttestationFullRow.CharStart (Int)
+com.histmersion.domain.catalogue.evidence.BAttestationFullRow.ChunkOrd (Int)
+com.histmersion.domain.catalogue.evidence.BAttestationFullRow.CreatedAt (String)
+com.histmersion.domain.catalogue.evidence.BAttestationFullRow.CtsUrn (String)
+com.histmersion.domain.catalogue.evidence.BAttestationFullRow.Note (String)
+com.histmersion.domain.catalogue.evidence.BAttestationFullRow.Page (String)
+com.histmersion.domain.catalogue.evidence.BAttestationFullRow.Prefix (String)
+com.histmersion.domain.catalogue.evidence.BAttestationFullRow.Quote (String)
+com.histmersion.domain.catalogue.evidence.BAttestationFullRow.Suffix (String)
+com.histmersion.domain.catalogue.evidence.BAttestationFullRow.TargetId (String)
+com.histmersion.domain.catalogue.evidence.BAttestationFullRow.TargetType (String)
+com.histmersion.domain.catalogue.evidence.BAttestationFullRow.UpdatedAt (String)
+com.histmersion.domain.catalogue.evidence.BAttestationFullRow.Xywh (String)
+com.histmersion.domain.catalogue.evidence.BCandidateRow.ComputedAt (String)
+com.histmersion.domain.catalogue.evidence.BCandidateRow.Findings (String)
+com.histmersion.domain.catalogue.evidence.BCandidateRow.Passages (String)
+com.histmersion.domain.catalogue.evidence.BCandidateRow.Reasons (String)
+com.histmersion.domain.catalogue.evidence.BCandidateRow.Score (Double)
+com.histmersion.domain.catalogue.evidence.BCandidateRow.Status (String)
+com.histmersion.domain.catalogue.evidence.CandidateRow.Findings (String)
+com.histmersion.domain.catalogue.evidence.CandidateRow.Passages (String)
+com.histmersion.domain.catalogue.evidence.CandidateRow.Reasons (String)
+com.histmersion.domain.catalogue.evidence.CandidateRow.Score (Double)
+com.histmersion.domain.catalogue.evidence.CandidateRow.Status (String)
+com.histmersion.domain.catalogue.evidence.CandidateRow.Title (String)
+
+## TYPES TO DECIDE
+com.histmersion.domain.catalogue.events.EventRow.BeginBy | base Long | original | constructor-parameter
+com.histmersion.domain.catalogue.events.EventRow.Central | base Long | original | constructor-parameter
+com.histmersion.domain.catalogue.events.EventRow.DatingMethod | base String | original | constructor-parameter
+com.histmersion.domain.catalogue.events.EventRow.Description | base String | original | constructor-parameter
+com.histmersion.domain.catalogue.events.EventRow.EndFrom | base Long | original | constructor-parameter
+com.histmersion.domain.catalogue.events.EventRow.GeometryType | base String | original | constructor-parameter
+com.histmersion.domain.catalogue.events.EventRow.Historicity | base String | original | constructor-parameter
+com.histmersion.domain.catalogue.events.EventRow.Id | base String | original | constructor-parameter
+com.histmersion.domain.catalogue.events.EventRow.Kind | base String | original | constructor-parameter
+com.histmersion.domain.catalogue.events.EventRow.Label | base String | original | constructor-parameter
+com.histmersion.domain.catalogue.events.EventRow.NotAfter | base Long | original | constructor-parameter
+com.histmersion.domain.catalogue.events.EventRow.NotBefore | base Long | original | constructor-parameter
+com.histmersion.domain.catalogue.events.EventRow.ParentId | base String | original | constructor-parameter
+com.histmersion.domain.catalogue.events.EventRow.PlaceKind | base String | original | constructor-parameter
+com.histmersion.domain.catalogue.events.EventRow.PlusMinus | base Long | original | constructor-parameter
+com.histmersion.domain.catalogue.events.EventRow.Scale | base String | original | constructor-parameter
+com.histmersion.domain.catalogue.events.EventRow.Tier | base String | original | constructor-parameter
+com.histmersion.domain.catalogue.events.EventRow.Uncertainty | base Long | original | constructor-parameter
+com.histmersion.domain.catalogue.events.EventSaved.Created | base Int | original | constructor-parameter
+    final case class EventSaved(created: EventSaved.Created, updated: EventSaved.Updated, rows: EventSaved.Rows, corrections: Correction.Counts = Correction.Counts())
+com.histmersion.domain.catalogue.events.EventSaved.Rows | base Int | original | constructor-parameter
+    final case class EventSaved(created: EventSaved.Created, updated: EventSaved.Updated, rows: EventSaved.Rows, corrections: Correction.Counts = Correction.Counts())
+com.histmersion.domain.catalogue.events.EventSaved.Updated | base Int | original | constructor-parameter
+    final case class EventSaved(created: EventSaved.Created, updated: EventSaved.Updated, rows: EventSaved.Rows, corrections: Correction.Counts = Correction.Counts())
+com.histmersion.domain.catalogue.events.EventSelection.Historicity | base String | original | constructor-parameter
+com.histmersion.domain.catalogue.events.EventSelection.Kind | base String | original | constructor-parameter
+com.histmersion.domain.catalogue.events.EventSelection.Text | base String | original | constructor-parameter
+com.histmersion.domain.catalogue.events.EventSql.AnchorJoins | base String | generated | value
+    val anchorJoins: com.histmersion.domain.catalogue.events.EventSql.AnchorJoins =
+com.histmersion.domain.catalogue.events.EventSql.AnchorSqlValue | base String | original | alias
+com.histmersion.domain.catalogue.events.EventSql.BoxAroundKm | base Double | generated | method-parameter
+    def boxAround(pt: com.histmersion.domain.catalogue.events.EventSql.BoxAroundPt, km: com.histmersion.domain.catalogue.events.EventSql.BoxAroundKm): com.histmersion.domain.
+com.histmersion.domain.catalogue.events.EventSql.BoxAroundPt | base String | generated | method-parameter
+    def boxAround(pt: com.histmersion.domain.catalogue.events.EventSql.BoxAroundPt, km: com.histmersion.domain.catalogue.events.EventSql.BoxAroundKm): com.histmersion.domain.
+com.histmersion.domain.catalogue.events.EventSql.BoxAroundResult | base String | generated | method-result
+    def boxAround(pt: com.histmersion.domain.catalogue.events.EventSql.BoxAroundPt, km: com.histmersion.domain.catalogue.events.EventSql.BoxAroundKm): com.histmersion.domain.
+com.histmersion.domain.catalogue.events.EventSql.ListWhereCleanO | base String | generated | method-parameter
+    def clean(o: Option[com.histmersion.domain.catalogue.events.EventSql.ListWhereCleanO]) = o.map(_.trim).filter(_.nonEmpty)
+com.histmersion.domain.catalogue.events.EventSql.ListWhereHistoricity | base String | generated | method-parameter
+com.histmersion.domain.catalogue.events.EventSql.ListWhereKind | base String | generated | method-parameter
+com.histmersion.domain.catalogue.events.EventSql.ListWhereText | base String | generated | method-parameter
+com.histmersion.domain.catalogue.events.EventSql.Narrow.Context | base Boolean | original | constructor-parameter
+    final case class Narrow(tier: Option[Narrow.Tier] = None, context: Narrow.Context = false, area: Option[BBox] = None)
+com.histmersion.domain.catalogue.events.EventSql.Narrow.Tier | base String | original | constructor-parameter
+    final case class Narrow(tier: Option[Narrow.Tier] = None, context: Narrow.Context = false, area: Option[BBox] = None)
+com.histmersion.domain.catalogue.events.EventSql.TierSqlValue | base String | original | alias
+com.histmersion.domain.catalogue.events.EventsCarried.RowsRank | base Int | generated | method-parameter
+    private def rows(rank: com.histmersion.domain.catalogue.events.EventsCarried.RowsRank)(write: BundleImport.Writer => Unit) = RowsIn(ImportStage.Rows, ImportRank(rank), wr
+com.histmersion.domain.catalogue.events.StoredEventRow.BeginBy | base Long | original | constructor-parameter
+com.histmersion.domain.catalogue.events.StoredEventRow.Catalogue | base String | original | constructor-parameter
+com.histmersion.domain.catalogue.events.StoredEventRow.EndFrom | base Long | original | constructor-parameter
+com.histmersion.domain.catalogue.events.StoredEventRow.Id | base String | original | constructor-parameter
+com.histmersion.domain.catalogue.events.StoredEventRow.Keys | base String | original | constructor-parameter
+com.histmersion.domain.catalogue.events.StoredEventRow.Kind | base String | original | constructor-parameter
+com.histmersion.domain.catalogue.events.StoredEventRow.Label | base String | original | constructor-parameter
+com.histmersion.domain.catalogue.events.StoredEventRow.NotAfter | base Long | original | constructor-parameter
+com.histmersion.domain.catalogue.events.StoredEventRow.NotBefore | base Long | original | constructor-parameter
+com.histmersion.domain.catalogue.events.StoredEventRow.Wikidata | base String | original | constructor-parameter
+com.histmersion.domain.catalogue.evidence.AttestationRepo.DeleteId | base Long | generated | method-parameter
+    def delete(id: com.histmersion.domain.catalogue.evidence.AttestationRepo.DeleteId)(using DbCon): com.histmersion.domain.catalogue.evidence.AttestationRepo.DeleteResult = 
+com.histmersion.domain.catalogue.evidence.AttestationRepo.DeleteResult | base Boolean | generated | method-result
+    def delete(id: com.histmersion.domain.catalogue.evidence.AttestationRepo.DeleteId)(using DbCon): com.histmersion.domain.catalogue.evidence.AttestationRepo.DeleteResult = 
+com.histmersion.domain.catalogue.evidence.AttestationRepo.ExistsId | base Long | generated | method-parameter
+    def exists(id: com.histmersion.domain.catalogue.evidence.AttestationRepo.ExistsId)(using DbCon): com.histmersion.domain.catalogue.evidence.AttestationRepo.ExistsResult = 
+com.histmersion.domain.catalogue.evidence.AttestationRepo.ExistsResult | base Boolean | generated | method-result
+    def exists(id: com.histmersion.domain.catalogue.evidence.AttestationRepo.ExistsId)(using DbCon): com.histmersion.domain.catalogue.evidence.AttestationRepo.ExistsResult = 
+com.histmersion.domain.catalogue.evidence.AttestationRepo.GetId | base Long | generated | method-parameter
+    def get(id: com.histmersion.domain.catalogue.evidence.AttestationRepo.GetId)(using DbCon): Option[Attestation] =
+com.histmersion.domain.catalogue.evidence.AttestationRepo.ListLimit | base Int | generated | method-parameter
+    def list(citekey: Option[com.histmersion.domain.library.Citekey], targetType: Option[com.histmersion.domain.catalogue.evidence.AttestationRepo.ListTargetType], targetId: 
+com.histmersion.domain.catalogue.evidence.AttestationRepo.ListOffset | base Int | generated | method-parameter
+    def list(citekey: Option[com.histmersion.domain.library.Citekey], targetType: Option[com.histmersion.domain.catalogue.evidence.AttestationRepo.ListTargetType], targetId: 
+com.histmersion.domain.catalogue.evidence.AttestationRepo.ListTargetId | base String | generated | method-parameter
+    def list(citekey: Option[com.histmersion.domain.library.Citekey], targetType: Option[com.histmersion.domain.catalogue.evidence.AttestationRepo.ListTargetType], targetId: 
+com.histmersion.domain.catalogue.evidence.AttestationRepo.ListTargetType | base String | generated | method-parameter
+    def list(citekey: Option[com.histmersion.domain.library.Citekey], targetType: Option[com.histmersion.domain.catalogue.evidence.AttestationRepo.ListTargetType], targetId: 
+com.histmersion.domain.catalogue.evidence.AttestationRepo.UpdateId | base Long | generated | method-parameter
+    def update(id: com.histmersion.domain.catalogue.evidence.AttestationRepo.UpdateId, p: Attestation.Patch)(using DbCon): Unit =
+com.histmersion.domain.catalogue.evidence.AttestationSourceReferrer.GoesResult | base Boolean | generated | method-result
+    def goes(targetType: com.histmersion.domain.catalogue.evidence.AttestationSourceReferrer.GoesTargetType, targetId: com.histmersion.domain.catalogue.evidence.AttestationSo
+com.histmersion.domain.catalogue.evidence.AttestationSourceReferrer.GoesTargetId | base String | generated | method-parameter
+    def goes(targetType: com.histmersion.domain.catalogue.evidence.AttestationSourceReferrer.GoesTargetType, targetId: com.histmersion.domain.catalogue.evidence.AttestationSo
+com.histmersion.domain.catalogue.evidence.AttestationSourceReferrer.GoesTargetType | base String | generated | method-parameter
+    def goes(targetType: com.histmersion.domain.catalogue.evidence.AttestationSourceReferrer.GoesTargetType, targetId: com.histmersion.domain.catalogue.evidence.AttestationSo
+com.histmersion.domain.catalogue.evidence.AttestationSourceReferrer.LosingResult | base Long | generated | method-result
+    private def losing(source: SourceKeys)(using DbCon): List[com.histmersion.domain.catalogue.evidence.AttestationSourceReferrer.LosingResult] =
+com.histmersion.domain.catalogue.evidence.BAttestationFullRow.Canvas | base String | original | constructor-parameter
+com.histmersion.domain.catalogue.evidence.BAttestationFullRow.CharEnd | base Int | original | constructor-parameter
+com.histmersion.domain.catalogue.evidence.BAttestationFullRow.CharStart | base Int | original | constructor-parameter
+com.histmersion.domain.catalogue.evidence.BAttestationFullRow.ChunkOrd | base Int | original | constructor-parameter
+com.histmersion.domain.catalogue.evidence.BAttestationFullRow.CreatedAt | base String | original | constructor-parameter
+com.histmersion.domain.catalogue.evidence.BAttestationFullRow.CtsUrn | base String | original | constructor-parameter
+com.histmersion.domain.catalogue.evidence.BAttestationFullRow.Note | base String | original | constructor-parameter
+com.histmersion.domain.catalogue.evidence.BAttestationFullRow.Page | base String | original | constructor-parameter
+com.histmersion.domain.catalogue.evidence.BAttestationFullRow.Prefix | base String | original | constructor-parameter
+com.histmersion.domain.catalogue.evidence.BAttestationFullRow.Quote | base String | original | constructor-parameter
+com.histmersion.domain.catalogue.evidence.BAttestationFullRow.Suffix | base String | original | constructor-parameter
+com.histmersion.domain.catalogue.evidence.BAttestationFullRow.TargetId | base String | original | constructor-parameter
+com.histmersion.domain.catalogue.evidence.BAttestationFullRow.TargetType | base String | original | constructor-parameter
+com.histmersion.domain.catalogue.evidence.BAttestationFullRow.UpdatedAt | base String | original | constructor-parameter
+com.histmersion.domain.catalogue.evidence.BAttestationFullRow.Xywh | base String | original | constructor-parameter
+com.histmersion.domain.catalogue.evidence.BCandidateRow.ComputedAt | base String | original | constructor-parameter
+com.histmersion.domain.catalogue.evidence.BCandidateRow.Findings | base String | original | constructor-parameter
+com.histmersion.domain.catalogue.evidence.BCandidateRow.Passages | base String | original | constructor-parameter
+com.histmersion.domain.catalogue.evidence.BCandidateRow.Reasons | base String | original | constructor-parameter
+com.histmersion.domain.catalogue.evidence.BCandidateRow.Score | base Double | original | constructor-parameter
+com.histmersion.domain.catalogue.evidence.BCandidateRow.Status | base String | original | constructor-parameter
+com.histmersion.domain.catalogue.evidence.CandidateRow.Findings | base String | original | constructor-parameter
+com.histmersion.domain.catalogue.evidence.CandidateRow.Passages | base String | original | constructor-parameter
+com.histmersion.domain.catalogue.evidence.CandidateRow.Reasons | base String | original | constructor-parameter
+com.histmersion.domain.catalogue.evidence.CandidateRow.Score | base Double | original | constructor-parameter
+com.histmersion.domain.catalogue.evidence.CandidateRow.Status | base String | original | constructor-parameter
+com.histmersion.domain.catalogue.evidence.CandidateRow.Title | base String | original | constructor-parameter
+com.histmersion.domain.catalogue.evidence.EventLinkRepo.CandidatesId | base String | generated | method-parameter
+    def candidates(id: com.histmersion.domain.catalogue.evidence.EventLinkRepo.CandidatesId, withRejected: com.histmersion.domain.catalogue.evidence.EventLinkRepo.CandidatesW
+com.histmersion.domain.catalogue.evidence.EventLinkRepo.CandidatesWithRejected | base Boolean | generated | method-parameter
+    def candidates(id: com.histmersion.domain.catalogue.evidence.EventLinkRepo.CandidatesId, withRejected: com.histmersion.domain.catalogue.evidence.EventLinkRepo.CandidatesW
+com.histmersion.domain.catalogue.evidence.EventLinkRepo.EventsToCheckAll | base Boolean | generated | method-parameter
+    def eventsToCheck(all: com.histmersion.domain.catalogue.evidence.EventLinkRepo.EventsToCheckAll, limit: com.histmersion.domain.catalogue.evidence.EventLinkRepo.EventsToCh
+com.histmersion.domain.catalogue.evidence.EventLinkRepo.EventsToCheckLimit | base Int | generated | method-parameter
+    def eventsToCheck(all: com.histmersion.domain.catalogue.evidence.EventLinkRepo.EventsToCheckAll, limit: com.histmersion.domain.catalogue.evidence.EventLinkRepo.EventsToCh
+com.histmersion.domain.catalogue.evidence.EventLinkRepo.EventsToCheckResult | base String | generated | method-result
+    def eventsToCheck(all: com.histmersion.domain.catalogue.evidence.EventLinkRepo.EventsToCheckAll, limit: com.histmersion.domain.catalogue.evidence.EventLinkRepo.EventsToCh
+com.histmersion.domain.catalogue.evidence.EventLinkRepo.IsCheckedId | base String | generated | method-parameter
+    def isChecked(id: com.histmersion.domain.catalogue.evidence.EventLinkRepo.IsCheckedId)(using DbCon): com.histmersion.domain.catalogue.evidence.EventLinkRepo.IsCheckedResu
+com.histmersion.domain.catalogue.evidence.EventLinkRepo.IsCheckedResult | base Boolean | generated | method-result
+    def isChecked(id: com.histmersion.domain.catalogue.evidence.EventLinkRepo.IsCheckedId)(using DbCon): com.histmersion.domain.catalogue.evidence.EventLinkRepo.IsCheckedResu
+com.histmersion.domain.catalogue.evidence.EventLinkRepo.SaveCandidatesId | base String | generated | method-parameter
+    def saveCandidates(id: com.histmersion.domain.catalogue.evidence.EventLinkRepo.SaveCandidatesId, cs: List[EventLinkCandidate])(using DbCon): Unit =
+com.histmersion.domain.catalogue.evidence.EventLinkRepo.SetStatusId | base String | generated | method-parameter
+    def setStatus(id: com.histmersion.domain.catalogue.evidence.EventLinkRepo.SetStatusId, citekey: com.histmersion.domain.library.Citekey, status: com.histmersion.domain.cat
+com.histmersion.domain.catalogue.evidence.EventLinkRepo.SetStatusResult | base Boolean | generated | method-result
+    def setStatus(id: com.histmersion.domain.catalogue.evidence.EventLinkRepo.SetStatusId, citekey: com.histmersion.domain.library.Citekey, status: com.histmersion.domain.cat
+com.histmersion.domain.catalogue.evidence.EventLinkRepo.SetStatusStatus | base String | generated | method-parameter
+    def setStatus(id: com.histmersion.domain.catalogue.evidence.EventLinkRepo.SetStatusId, citekey: com.histmersion.domain.library.Citekey, status: com.histmersion.domain.cat
+com.histmersion.domain.catalogue.evidence.EvidenceBundleRepo.EventIdsOfResultResult | base String | generated | method-result
+    private def eventIdsOf()(using DbCon): UUID => Option[com.histmersion.domain.catalogue.evidence.EvidenceBundleRepo.EventIdsOfResultResult] =
+com.histmersion.domain.catalogue.evidence.EvidenceCarried.AfterBlobsRank | base Int | generated | method-parameter
+    private def afterBlobs(rank: com.histmersion.domain.catalogue.evidence.EvidenceCarried.AfterBlobsRank)(write: BundleImport.Writer => Unit) =
+com.histmersion.domain.catalogue.evidence.EvidenceCarried.RowsRank | base Int | generated | method-parameter
+    private def rows(rank: com.histmersion.domain.catalogue.evidence.EvidenceCarried.RowsRank)(write: BundleImport.Writer => Unit) = RowsIn(ImportStage.Rows, ImportRank(rank)

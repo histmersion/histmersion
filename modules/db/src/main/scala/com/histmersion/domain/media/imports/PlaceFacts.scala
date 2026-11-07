@@ -21,9 +21,9 @@ object PlaceFacts:
   object Label extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type Keys = Keys.T
   object Keys extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type PeriodPart1 = PeriodPart1.T
-  object PeriodPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type PeriodPart2 = PeriodPart2.T
-  object PeriodPart2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type Qid = Qid.T
-  object Qid extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type PeriodPart1 = com.histmersion.domain.DeepTime.SignedYear
+  val PeriodPart1: _root_.com.histmersion.domain.DeepTime.SignedYear.type = _root_.com.histmersion.domain.DeepTime.SignedYear
+  type PeriodPart2 = com.histmersion.domain.DeepTime.SignedYear
+  val PeriodPart2: _root_.com.histmersion.domain.DeepTime.SignedYear.type = _root_.com.histmersion.domain.DeepTime.SignedYear
+  type Qid = com.histmersion.domain.media.imports.Target.Qid
+  val Qid: _root_.com.histmersion.domain.media.imports.Target.Qid.type = _root_.com.histmersion.domain.media.imports.Target.Qid

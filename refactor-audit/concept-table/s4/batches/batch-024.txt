@@ -1,0 +1,196 @@
+## CONCEPTS NEARBY
+com.histmersion.util.data.exchange.CarriedKind.Lines.ClockResult (String)
+com.histmersion.util.data.exchange.CarriedKind.Lines.LineResult (String)
+com.histmersion.util.data.exchange.CarriedOut.AsOf (String)
+com.histmersion.util.data.exchange.CarriedOut.Payload (Array[Byte])
+com.histmersion.util.data.exchange.ImportAbort.Problems (String)
+com.histmersion.util.data.exchange.ImportOptions.ChunkChars (Int)
+com.histmersion.util.data.exchange.ImportOptions.DryRun (Boolean)
+com.histmersion.util.data.exchange.ImportOptions.ToleranceKm (Double)
+com.histmersion.util.data.exchange.ImportRank (Int)
+com.histmersion.util.data.exchange.LedgerRow.Decision (String)
+com.histmersion.util.data.exchange.LedgerRow.ForeignRev (String)
+com.histmersion.util.data.exchange.LedgerRow.Kind (String)
+com.histmersion.util.data.exchange.LedgerRow.Label (String)
+com.histmersion.util.data.exchange.LedgerRow.LocalRevAfter (String)
+com.histmersion.util.data.exchange.LedgerRow.RecordedAt (String)
+com.histmersion.util.data.exchange.MergeRow.AppliedAt (String)
+com.histmersion.util.data.exchange.MergeRow.Backup (String)
+com.histmersion.util.data.exchange.MergeRow.BundleSha256 (String)
+com.histmersion.util.data.exchange.MergeRow.FromLabel (String)
+com.histmersion.util.data.exchange.MergeRow.LedgerRows (Int)
+com.histmersion.util.data.exchange.MergeRow.PlanHash (String)
+com.histmersion.util.data.exchange.MergeRow.Redirects (Int)
+com.histmersion.util.data.maintenance.VacuumRepo.TableState.Bytes (Long)
+com.histmersion.util.data.maintenance.VacuumRepo.TableState.DeadRows (Long)
+
+## TYPES TO DECIDE
+com.histmersion.util.data.exchange.BundleSql.RangeColsCol | base String | generated | method-parameter
+    def rangeCols(col: com.histmersion.util.data.exchange.BundleSql.RangeColsCol): com.histmersion.util.data.exchange.BundleSql.RangeColsResult = s"$col IS NULL, ${RangeSql.c
+com.histmersion.util.data.exchange.BundleSql.RangeColsResult | base String | generated | method-result
+    def rangeCols(col: com.histmersion.util.data.exchange.BundleSql.RangeColsCol): com.histmersion.util.data.exchange.BundleSql.RangeColsResult = s"$col IS NULL, ${RangeSql.c
+com.histmersion.util.data.exchange.BundleSql.RangeHi | base Long | generated | method-parameter
+    def range(isNull: com.histmersion.util.data.exchange.BundleSql.RangeIsNull, lo: Option[com.histmersion.util.data.exchange.BundleSql.RangeLo], hi: Option[com.histmersion.u
+com.histmersion.util.data.exchange.BundleSql.RangeIsNull | base Boolean | generated | method-parameter
+    def range(isNull: com.histmersion.util.data.exchange.BundleSql.RangeIsNull, lo: Option[com.histmersion.util.data.exchange.BundleSql.RangeLo], hi: Option[com.histmersion.u
+com.histmersion.util.data.exchange.BundleSql.RangeLiteralResult | base String | generated | method-result
+    def rangeLiteral(p: Option[com.histmersion.api.exchange.Bundle.Range]): Option[com.histmersion.util.data.exchange.BundleSql.RangeLiteralResult] =
+com.histmersion.util.data.exchange.BundleSql.RangeLo | base Long | generated | method-parameter
+    def range(isNull: com.histmersion.util.data.exchange.BundleSql.RangeIsNull, lo: Option[com.histmersion.util.data.exchange.BundleSql.RangeLo], hi: Option[com.histmersion.u
+com.histmersion.util.data.exchange.BundleSql.RangeOrAllResult | base String | generated | method-result
+    def rangeOrAll(p: Option[com.histmersion.api.exchange.Bundle.Range]): com.histmersion.util.data.exchange.BundleSql.RangeOrAllResult =
+com.histmersion.util.data.exchange.BundleSql.TargetUidResult | base String | generated | method-result
+    def targetUid(tt: com.histmersion.util.data.exchange.BundleSql.TargetUidTt, tid: com.histmersion.util.data.exchange.BundleSql.TargetUidTid): com.histmersion.util.data.exc
+com.histmersion.util.data.exchange.BundleSql.TargetUidTid | base String | generated | method-parameter
+    def targetUid(tt: com.histmersion.util.data.exchange.BundleSql.TargetUidTt, tid: com.histmersion.util.data.exchange.BundleSql.TargetUidTid): com.histmersion.util.data.exc
+com.histmersion.util.data.exchange.BundleSql.TargetUidTt | base String | generated | method-parameter
+    def targetUid(tt: com.histmersion.util.data.exchange.BundleSql.TargetUidTt, tid: com.histmersion.util.data.exchange.BundleSql.TargetUidTid): com.histmersion.util.data.exc
+com.histmersion.util.data.exchange.BundleSql.TsCol | base String | generated | method-parameter
+    def ts(col: com.histmersion.util.data.exchange.BundleSql.TsCol): com.histmersion.util.data.exchange.BundleSql.TsResult =
+com.histmersion.util.data.exchange.BundleSql.TsResult | base String | generated | method-result
+    def ts(col: com.histmersion.util.data.exchange.BundleSql.TsCol): com.histmersion.util.data.exchange.BundleSql.TsResult =
+com.histmersion.util.data.exchange.BundleSql.WhereClock | base String | generated | method-parameter
+    def where(scope: BundleScope, uid: com.histmersion.util.data.exchange.BundleSql.WhereUid, clock: com.histmersion.util.data.exchange.BundleSql.WhereClock): Sql = scope mat
+com.histmersion.util.data.exchange.BundleSql.WhereUid | base String | generated | method-parameter
+    def where(scope: BundleScope, uid: com.histmersion.util.data.exchange.BundleSql.WhereUid, clock: com.histmersion.util.data.exchange.BundleSql.WhereClock): Sql = scope mat
+com.histmersion.util.data.exchange.CarriedKind.BlobInSha256 | base String | generated | method-parameter
+    def blobIn(use: BlobUse, sha256: com.histmersion.util.data.exchange.CarriedKind.BlobInSha256, writer: BundleImport.Writer, files: ContentStore): Option[BlobSink] = None
+com.histmersion.util.data.exchange.CarriedKind.Lines.ClockResult | base String | generated | constructor-parameter
+com.histmersion.util.data.exchange.CarriedKind.Lines.LineResult | base String | generated | constructor-parameter
+com.histmersion.util.data.exchange.CarriedKind.OwnedClockResult | base String | generated | method-parameter
+com.histmersion.util.data.exchange.CarriedKind.RecordsClockResult | base String | generated | method-parameter
+com.histmersion.util.data.exchange.CarriedKinds.OfResultPart1 | base String | generated | method-result
+    def of(kinds: List[CarriedKind]): Either[List[com.histmersion.util.data.exchange.CarriedKinds.OfResultPart1], CarriedKinds] =
+com.histmersion.util.data.exchange.CarriedKinds.SinkSha256 | base String | generated | method-parameter
+    def sink(use: BlobUse, sha256: com.histmersion.util.data.exchange.CarriedKinds.SinkSha256, writer: BundleImport.Writer, files: ContentStore): Option[BlobSink] =
+com.histmersion.util.data.exchange.CarriedOut.AsOf | base String | original | constructor-parameter
+    final case class CarriedOut(payload: CarriedOut.Payload, asOf: Option[CarriedOut.AsOf], blobs: List[BlobOut] = Nil)
+com.histmersion.util.data.exchange.CarriedOut.Payload | base Array[Byte] | original | constructor-parameter
+    final case class CarriedOut(payload: CarriedOut.Payload, asOf: Option[CarriedOut.AsOf], blobs: List[BlobOut] = Nil)
+com.histmersion.util.data.exchange.ImportAbort.Problems | base String | generated | constructor-parameter
+    final class ImportAbort(val problems: List[ImportAbort.Problems]) extends RuntimeException(problems.mkString("; "))
+com.histmersion.util.data.exchange.ImportOptions.ChunkChars | base Int | original | constructor-parameter
+    final case class ImportOptions(dryRun: ImportOptions.DryRun, chunkChars: ImportOptions.ChunkChars, toleranceKm: ImportOptions.ToleranceKm)
+com.histmersion.util.data.exchange.ImportOptions.DryRun | base Boolean | original | constructor-parameter
+    final case class ImportOptions(dryRun: ImportOptions.DryRun, chunkChars: ImportOptions.ChunkChars, toleranceKm: ImportOptions.ToleranceKm)
+com.histmersion.util.data.exchange.ImportOptions.ToleranceKm | base Double | original | constructor-parameter
+    final case class ImportOptions(dryRun: ImportOptions.DryRun, chunkChars: ImportOptions.ChunkChars, toleranceKm: ImportOptions.ToleranceKm)
+com.histmersion.util.data.exchange.ImportRank | base Int | original | constructor-parameter
+com.histmersion.util.data.exchange.LedgerRow.Decision | base String | original | constructor-parameter
+com.histmersion.util.data.exchange.LedgerRow.ForeignRev | base String | original | constructor-parameter
+com.histmersion.util.data.exchange.LedgerRow.Kind | base String | original | constructor-parameter
+com.histmersion.util.data.exchange.LedgerRow.Label | base String | original | constructor-parameter
+com.histmersion.util.data.exchange.LedgerRow.LocalRevAfter | base String | original | constructor-parameter
+com.histmersion.util.data.exchange.LedgerRow.RecordedAt | base String | original | constructor-parameter
+com.histmersion.util.data.exchange.MergeFollowUps.RecordInDump | base String | generated | method-parameter
+com.histmersion.util.data.exchange.MergeFollowUps.RecordInFrom | base String | generated | method-parameter
+com.histmersion.util.data.exchange.MergeFollowUps.RecordInResultPart1 | base String | generated | method-result
+com.histmersion.util.data.exchange.MergeFollowUps.RecordInResultPart2 | base Int | generated | method-result
+com.histmersion.util.data.exchange.MergePlans.PlanChunkChars | base Int | generated | method-parameter
+com.histmersion.util.data.exchange.MergePlans.PlanFileChunkChars | base Int | generated | method-parameter
+com.histmersion.util.data.exchange.MergePlans.PlanFileResultPart1 | base String | generated | method-result
+com.histmersion.util.data.exchange.MergeRepo.DetailIdOrPrefix | base String | generated | method-parameter
+    def detail(idOrPrefix: com.histmersion.util.data.exchange.MergeRepo.DetailIdOrPrefix)(using DbCon): Either[Api.Error, MergeDetail] =
+com.histmersion.util.data.exchange.MergeRepo.DropSessionBundle | base String | generated | method-parameter
+    def dropSession(bundle: com.histmersion.util.data.exchange.MergeRepo.DropSessionBundle)(using DbCon): Unit =
+com.histmersion.util.data.exchange.MergeRepo.FindIdOrPrefix | base String | generated | method-parameter
+    def find(idOrPrefix: com.histmersion.util.data.exchange.MergeRepo.FindIdOrPrefix)(using DbCon): Either[Api.Error, MergeRow] =
+com.histmersion.util.data.exchange.MergeRepo.ImportingOn | base Boolean | generated | method-parameter
+    def importing(on: com.histmersion.util.data.exchange.MergeRepo.ImportingOn)(using DbCon): Unit =
+com.histmersion.util.data.exchange.MergeRepo.LedgerAsUidS | base String | generated | method-parameter
+    def asUid(s: com.histmersion.util.data.exchange.MergeRepo.LedgerAsUidS): Option[UUID] = scala.util.Try(UUID.fromString(s.trim)).toOption
+com.histmersion.util.data.exchange.MergeRepo.LedgerLimit | base Int | generated | method-parameter
+    def ledger(uid: Option[com.histmersion.util.data.exchange.MergeRepo.LedgerUid], merge: Option[com.histmersion.util.data.exchange.MergeRepo.LedgerMerge], limit: com.histme
+com.histmersion.util.data.exchange.MergeRepo.LedgerMerge | base String | generated | method-parameter
+    def ledger(uid: Option[com.histmersion.util.data.exchange.MergeRepo.LedgerUid], merge: Option[com.histmersion.util.data.exchange.MergeRepo.LedgerMerge], limit: com.histme
+com.histmersion.util.data.exchange.MergeRepo.LedgerUid | base String | generated | method-parameter
+    def ledger(uid: Option[com.histmersion.util.data.exchange.MergeRepo.LedgerUid], merge: Option[com.histmersion.util.data.exchange.MergeRepo.LedgerMerge], limit: com.histme
+com.histmersion.util.data.exchange.MergeRepo.ListLimit | base Int | generated | method-parameter
+    def list(limit: com.histmersion.util.data.exchange.MergeRepo.ListLimit)(using DbCon): List[MergeInfo] =
+com.histmersion.util.data.exchange.MergeRepo.PutSessionBundle | base String | generated | method-parameter
+    def putSession(bundle: com.histmersion.util.data.exchange.MergeRepo.PutSessionBundle, r: MergeResolutions)(using DbCon): MergeSession =
+com.histmersion.util.data.exchange.MergeRepo.RecordAppliedPart1 | base String | generated | method-parameter
+com.histmersion.util.data.exchange.MergeRepo.RecordAppliedPart2 | base String | generated | method-parameter
+com.histmersion.util.data.exchange.MergeRepo.RecordAppliedPart3 | base String | generated | method-parameter
+com.histmersion.util.data.exchange.MergeRepo.RecordBundleSha | base String | generated | method-parameter
+com.histmersion.util.data.exchange.MergeRepo.RecordChanged | base Int | generated | method-parameter
+com.histmersion.util.data.exchange.MergeRepo.RecordOwnBundle | base Boolean | generated | method-parameter
+com.histmersion.util.data.exchange.MergeRepo.RememberDecisionsPart1 | base String | generated | method-parameter
+    def remember(decisions: List[(com.histmersion.util.data.exchange.MergeRepo.RememberDecisionsPart1, MergeDecision)], mergeId: UUID)(using DbCon): Unit =
+com.histmersion.util.data.exchange.MergeRepo.SessionBundle | base String | generated | method-parameter
+    def session(bundle: com.histmersion.util.data.exchange.MergeRepo.SessionBundle)(using DbCon): MergeSession =
+com.histmersion.util.data.exchange.MergeRow.AppliedAt | base String | original | constructor-parameter
+com.histmersion.util.data.exchange.MergeRow.Backup | base String | original | constructor-parameter
+com.histmersion.util.data.exchange.MergeRow.BundleSha256 | base String | original | constructor-parameter
+com.histmersion.util.data.exchange.MergeRow.FromLabel | base String | original | constructor-parameter
+com.histmersion.util.data.exchange.MergeRow.LedgerRows | base Int | original | constructor-parameter
+com.histmersion.util.data.exchange.MergeRow.PlanHash | base String | original | constructor-parameter
+com.histmersion.util.data.exchange.MergeRow.Redirects | base Int | original | constructor-parameter
+com.histmersion.util.data.exchange.MergeRuleSet.LedgerLabelSqlResult | base String | generated | method-result
+    def ledgerLabelSql: com.histmersion.util.data.exchange.MergeRuleSet.LedgerLabelSqlResult =
+com.histmersion.util.data.exchange.MergeRules.LedgerLabelResult | base String | generated | method-result
+    def ledgerLabel: Option[com.histmersion.util.data.exchange.MergeRules.LedgerLabelResult] = None
+com.histmersion.util.data.exchange.MergeRules.ReferableResult | base Boolean | generated | method-result
+    def referable: com.histmersion.util.data.exchange.MergeRules.ReferableResult = false
+com.histmersion.util.data.exchange.MergeState.BlobTextsLoopAccPart1 | base String | generated | method-parameter
+    def loop(acc: Map[com.histmersion.util.data.exchange.MergeState.BlobTextsLoopAccPart1, com.histmersion.util.data.exchange.MergeState.BlobTextsLoopAccPart2]): Map[com.hist
+com.histmersion.util.data.exchange.MergeState.BlobTextsLoopAccPart2 | base String | generated | method-parameter
+    def loop(acc: Map[com.histmersion.util.data.exchange.MergeState.BlobTextsLoopAccPart1, com.histmersion.util.data.exchange.MergeState.BlobTextsLoopAccPart2]): Map[com.hist
+com.histmersion.util.data.exchange.MergeState.BlobTextsLoopResultPart1 | base String | generated | method-result
+    def loop(acc: Map[com.histmersion.util.data.exchange.MergeState.BlobTextsLoopAccPart1, com.histmersion.util.data.exchange.MergeState.BlobTextsLoopAccPart2]): Map[com.hist
+com.histmersion.util.data.exchange.MergeState.BlobTextsLoopResultPart2 | base String | generated | method-result
+    def loop(acc: Map[com.histmersion.util.data.exchange.MergeState.BlobTextsLoopAccPart1, com.histmersion.util.data.exchange.MergeState.BlobTextsLoopAccPart2]): Map[com.hist
+com.histmersion.util.data.exchange.MergeState.BlobTextsResultPart1 | base String | generated | method-result
+    private def blobTexts(bundle: ByteSource, wanted: Set[com.histmersion.util.data.exchange.MergeState.BlobTextsWanted]): Map[com.histmersion.util.data.exchange.MergeState.B
+com.histmersion.util.data.exchange.MergeState.BlobTextsResultPart2 | base String | generated | method-result
+    private def blobTexts(bundle: ByteSource, wanted: Set[com.histmersion.util.data.exchange.MergeState.BlobTextsWanted]): Map[com.histmersion.util.data.exchange.MergeState.B
+com.histmersion.util.data.exchange.MergeState.BlobTextsWanted | base String | generated | method-parameter
+    private def blobTexts(bundle: ByteSource, wanted: Set[com.histmersion.util.data.exchange.MergeState.BlobTextsWanted]): Map[com.histmersion.util.data.exchange.MergeState.B
+com.histmersion.util.data.exchange.MergeState.BodiesResultPart1 | base String | generated | method-result
+    def bodies(bundle: ByteSource, in: Input, wanted: Set[com.histmersion.util.data.exchange.MergeState.BodiesWanted])(using DbCon): Map[com.histmersion.util.data.exchange.Me
+com.histmersion.util.data.exchange.MergeState.BodiesResultPart2 | base String | generated | method-result
+    def bodies(bundle: ByteSource, in: Input, wanted: Set[com.histmersion.util.data.exchange.MergeState.BodiesWanted])(using DbCon): Map[com.histmersion.util.data.exchange.Me
+com.histmersion.util.data.exchange.MergeState.BodiesWanted | base String | generated | method-parameter
+    def bodies(bundle: ByteSource, in: Input, wanted: Set[com.histmersion.util.data.exchange.MergeState.BodiesWanted])(using DbCon): Map[com.histmersion.util.data.exchange.Me
+com.histmersion.util.data.exchange.MergeState.BundleSketchesLoopAccPart1 | base String | generated | method-parameter
+    def loop(acc: Map[com.histmersion.util.data.exchange.MergeState.BundleSketchesLoopAccPart1, MinHash]): Map[com.histmersion.util.data.exchange.MergeState.BundleSketchesLoo
+com.histmersion.util.data.exchange.MergeState.BundleSketchesLoopResultPart1 | base String | generated | method-result
+    def loop(acc: Map[com.histmersion.util.data.exchange.MergeState.BundleSketchesLoopAccPart1, MinHash]): Map[com.histmersion.util.data.exchange.MergeState.BundleSketchesLoo
+com.histmersion.util.data.exchange.MergeState.BundleSketchesResultPart1 | base String | generated | method-result
+    private def bundleSketches(bundle: ByteSource, wanted: Set[com.histmersion.util.data.exchange.MergeState.BundleSketchesWanted], size: com.histmersion.util.data.exchange.M
+com.histmersion.util.data.exchange.MergeState.BundleSketchesSize | base Int | generated | method-parameter
+    private def bundleSketches(bundle: ByteSource, wanted: Set[com.histmersion.util.data.exchange.MergeState.BundleSketchesWanted], size: com.histmersion.util.data.exchange.M
+com.histmersion.util.data.exchange.MergeState.BundleSketchesWanted | base String | generated | method-parameter
+    private def bundleSketches(bundle: ByteSource, wanted: Set[com.histmersion.util.data.exchange.MergeState.BundleSketchesWanted], size: com.histmersion.util.data.exchange.M
+com.histmersion.util.data.exchange.MergeState.IdsResult | base String | generated | method-result
+    private def ids(us: Iterable[UUID]): List[com.histmersion.util.data.exchange.MergeState.IdsResult] = us.iterator.map(_.toString).toList.distinct
+com.histmersion.util.data.exchange.MergeState.LoadChunkChars | base Int | generated | method-parameter
+com.histmersion.util.data.exchange.MergeState.LoadOwnersLabels | base String | generated | method-parameter
+    def owners(q: com.histmersion.util.data.exchange.MergeState.LoadOwnersQ, labels: List[com.histmersion.util.data.exchange.MergeState.LoadOwnersLabels]): Map[com.histmersio
+com.histmersion.util.data.exchange.MergeState.LoadOwnersQ | base String | generated | method-parameter
+    def owners(q: com.histmersion.util.data.exchange.MergeState.LoadOwnersQ, labels: List[com.histmersion.util.data.exchange.MergeState.LoadOwnersLabels]): Map[com.histmersio
+com.histmersion.util.data.exchange.MergeState.LoadOwnersResultPart1 | base String | generated | method-result
+    def owners(q: com.histmersion.util.data.exchange.MergeState.LoadOwnersQ, labels: List[com.histmersion.util.data.exchange.MergeState.LoadOwnersLabels]): Map[com.histmersio
+com.histmersion.util.data.exchange.MergeState.LoadReadProblems | base String | generated | method-parameter
+com.histmersion.util.data.exchange.MergeState.PlanFileChunkChars | base Int | generated | method-parameter
+com.histmersion.util.data.exchange.MergeState.PlanFileResultPart1 | base String | generated | method-result
+com.histmersion.util.data.exchange.MergeState.SketchesResultPart1 | base String | generated | method-result
+    def sketches(bundle: ByteSource, in: Input, wanted: Set[com.histmersion.util.data.exchange.MergeState.SketchesWanted], size: com.histmersion.util.data.exchange.MergeState
+com.histmersion.util.data.exchange.MergeState.SketchesSize | base Int | generated | method-parameter
+    def sketches(bundle: ByteSource, in: Input, wanted: Set[com.histmersion.util.data.exchange.MergeState.SketchesWanted], size: com.histmersion.util.data.exchange.MergeState
+com.histmersion.util.data.exchange.MergeState.SketchesWanted | base String | generated | method-parameter
+    def sketches(bundle: ByteSource, in: Input, wanted: Set[com.histmersion.util.data.exchange.MergeState.SketchesWanted], size: com.histmersion.util.data.exchange.MergeState
+com.histmersion.util.data.exchange.MergeState.WithGeoJsonConvG | base String | generated | method-parameter
+    def conv(g: Option[com.histmersion.util.data.exchange.MergeState.WithGeoJsonConvG]) = g.flatMap(json.get)
+com.histmersion.util.data.maintenance.VacuumRepo.StateTable | base String | generated | method-parameter
+    def state(table: com.histmersion.util.data.maintenance.VacuumRepo.StateTable)(using DbCon): TableState =
+com.histmersion.util.data.maintenance.VacuumRepo.TableState.Bytes | base Long | original | constructor-parameter
+    final case class TableState(deadRows: TableState.DeadRows, bytes: TableState.Bytes)
+com.histmersion.util.data.maintenance.VacuumRepo.TableState.DeadRows | base Long | original | constructor-parameter
+    final case class TableState(deadRows: TableState.DeadRows, bytes: TableState.Bytes)
+com.histmersion.util.data.maintenance.VacuumRepo.TablesResult | base String | generated | method-result
+    def tables(using DbCon): Set[com.histmersion.util.data.maintenance.VacuumRepo.TablesResult] =
+com.histmersion.util.data.maintenance.VacuumRepo.VacuumAnalyze | base Boolean | generated | method-parameter
+    def vacuum(table: com.histmersion.util.data.maintenance.VacuumRepo.VacuumTable, analyze: com.histmersion.util.data.maintenance.VacuumRepo.VacuumAnalyze)(using con: DbCon)
+com.histmersion.util.data.maintenance.VacuumRepo.VacuumTable | base String | generated | method-parameter
+    def vacuum(table: com.histmersion.util.data.maintenance.VacuumRepo.VacuumTable, analyze: com.histmersion.util.data.maintenance.VacuumRepo.VacuumAnalyze)(using con: DbCon)

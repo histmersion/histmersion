@@ -18,20 +18,6 @@ import com.histmersion.api.research.Coverage
   */
 private[articles] object CoverageRepo:
 
-  type SourceSetResultPart1 = SourceSetResultPart1.T
-  object SourceSetResultPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type SourceSetCap = SourceSetCap.T
-  object SourceSetCap extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type MembersResultPart1 = MembersResultPart1.T
-  object MembersResultPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type MembersResultPart2 = MembersResultPart2.T
-  object MembersResultPart2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type MembersCitekeys = MembersCitekeys.T
-  object MembersCitekeys extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type EdgesTouchingCitekeys = EdgesTouchingCitekeys.T
-  object EdgesTouchingCitekeys extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type EdgesTouchingKinds = EdgesTouchingKinds.T
-  object EdgesTouchingKinds extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
   private given DbCodec[Coverage.Source] = DbCodec.derived
   private given DbCodec[Coverage.Edge] = DbCodec.derived
@@ -39,7 +25,7 @@ private[articles] object CoverageRepo:
   import Param.*
 
   /** How many sources `f` selects, and the first `cap` of them in citekey order. */
-  def sourceSet(f: Filter, scope: PlaceScope, cap: com.histmersion.domain.research.articles.CoverageRepo.SourceSetCap)(using DbCon): (com.histmersion.domain.research.articles.CoverageRepo.SourceSetResultPart1, List[Coverage.Source]) =
+  def sourceSet(f: Filter, scope: PlaceScope, cap: com.histmersion.domain.research.articles.ArticleRepo.Limit)(using DbCon): (com.histmersion.RowCount, List[Coverage.Source]) =
     val total = FilterSql.countQuery(f, scope).frag.query[Int].run().headOption.getOrElse(0)
     val rows = (Sql.raw("SELECT s.citekey, s.title, s.year, s.status, s.authors FROM sources s WHERE ") ++
       FilterSql.where(f, scope) ++ Sql
@@ -47,7 +33,7 @@ private[articles] object CoverageRepo:
     (total, rows)
 
   /** How many sources `f` selects, and which of `citekeys` are among them (exact, whatever their number). */
-  def members(f: Filter, scope: PlaceScope, citekeys: List[com.histmersion.domain.research.articles.CoverageRepo.MembersCitekeys])(using DbCon): (com.histmersion.domain.research.articles.CoverageRepo.MembersResultPart1, Set[com.histmersion.domain.research.articles.CoverageRepo.MembersResultPart2]) =
+  def members(f: Filter, scope: PlaceScope, citekeys: List[com.histmersion.domain.library.Citekey])(using DbCon): (com.histmersion.RowCount, Set[com.histmersion.domain.library.Citekey]) =
     val total = FilterSql.countQuery(f, scope).frag.query[Int].run().headOption.getOrElse(0)
     val in =
       if citekeys.isEmpty then Set.empty[String]
@@ -57,7 +43,7 @@ private[articles] object CoverageRepo:
     (total, in)
 
   /** The edges of `kinds` with either end in `citekeys` (source to source only, V026). */
-  def edgesTouching(citekeys: List[com.histmersion.domain.research.articles.CoverageRepo.EdgesTouchingCitekeys], kinds: List[com.histmersion.domain.research.articles.CoverageRepo.EdgesTouchingKinds])(using DbCon): List[Coverage.Edge] =
+  def edgesTouching(citekeys: List[com.histmersion.domain.library.Citekey], kinds: List[com.histmersion.domain.library.Edge.Kind.Wire])(using DbCon): List[Coverage.Edge] =
     if citekeys.isEmpty || kinds.isEmpty then Nil
     else sql"""SELECT e.src, e.kind, e.dst FROM edges e
               WHERE e.kind = ANY($kinds::text[])

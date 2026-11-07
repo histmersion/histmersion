@@ -51,7 +51,7 @@ final class AttestationSourceReferrer extends SourceReferrer:
     if gone.nonEmpty then sql"DELETE FROM attestations WHERE id::text = ANY($gone::text[])".update.run()
 
   /** Other sources' attestations whose target goes with the source. */
-  private def losing(source: SourceKeys)(using DbCon): List[com.histmersion.domain.catalogue.evidence.AttestationSourceReferrer.LosingResult] =
+  private def losing(source: SourceKeys)(using DbCon): List[com.histmersion.domain.catalogue.evidence.AttestationRepo.AttestationId] =
     val ck = source.citekey
     sql"""SELECT id, target_type, target_id FROM attestations
           WHERE citekey <> $ck AND target_type IN ('finding', 'edge', 'event_dating') AND strpos(target_id, $ck) > 0"""
@@ -65,16 +65,8 @@ object AttestationSourceReferrer:
   /** Whether an attestation of another source loses its target with the source: one of its findings, an edge FROM it, a
     * dating it gives. An edge TO it is parked, not deleted, so its attestations stay.
     */
-  type LosingResult = LosingResult.T
-  object LosingResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type GoesResult = GoesResult.T
-  object GoesResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type GoesTargetType = GoesTargetType.T
-  object GoesTargetType extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type GoesTargetId = GoesTargetId.T
-  object GoesTargetId extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
-  def goes(targetType: com.histmersion.domain.catalogue.evidence.AttestationSourceReferrer.GoesTargetType, targetId: com.histmersion.domain.catalogue.evidence.AttestationSourceReferrer.GoesTargetId, source: SourceKeys): com.histmersion.domain.catalogue.evidence.AttestationSourceReferrer.GoesResult =
+  def goes(targetType: com.histmersion.domain.catalogue.evidence.BAttestationFullRow.TargetType, targetId: com.histmersion.domain.catalogue.evidence.BAttestationFullRow.TargetId, source: SourceKeys): Boolean =
     targetType match
       case "finding"      => targetId.startsWith(source.findingPrefix)
       case "edge"         => targetId.split('|').headOption.contains(source.citekey)

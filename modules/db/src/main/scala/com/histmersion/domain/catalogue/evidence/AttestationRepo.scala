@@ -8,27 +8,9 @@ import com.augustnagro.magnum.*
   * edge. Every method runs on the connection it is given.
   */
 private[evidence] object AttestationRepo:
+  type AttestationId = AttestationId.T
+  object AttestationId extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
-  type ListTargetType = ListTargetType.T
-  object ListTargetType extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type ListTargetId = ListTargetId.T
-  object ListTargetId extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type ListLimit = ListLimit.T
-  object ListLimit extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type ListOffset = ListOffset.T
-  object ListOffset extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type GetId = GetId.T
-  object GetId extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type ExistsResult = ExistsResult.T
-  object ExistsResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type ExistsId = ExistsId.T
-  object ExistsId extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type UpdateId = UpdateId.T
-  object UpdateId extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type DeleteResult = DeleteResult.T
-  object DeleteResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type DeleteId = DeleteId.T
-  object DeleteId extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
   private given DbCodec[Attestation] = DbCodec.derived
 
@@ -37,7 +19,7 @@ private[evidence] object AttestationRepo:
       "a.quote, a.prefix, a.suffix, a.char_start, a.char_end, a.chunk_ord, " +
       "a.page, a.canvas, a.xywh, a.cts_urn, a.note"
 
-  def list(citekey: Option[com.histmersion.domain.library.Citekey], targetType: Option[com.histmersion.domain.catalogue.evidence.AttestationRepo.ListTargetType], targetId: Option[com.histmersion.domain.catalogue.evidence.AttestationRepo.ListTargetId], limit: com.histmersion.domain.catalogue.evidence.AttestationRepo.ListLimit, offset: com.histmersion.domain.catalogue.evidence.AttestationRepo.ListOffset)(using
+  def list(citekey: Option[com.histmersion.domain.library.Citekey], targetType: Option[com.histmersion.domain.catalogue.evidence.BAttestationFullRow.TargetType], targetId: Option[com.histmersion.domain.catalogue.evidence.BAttestationFullRow.TargetId], limit: com.histmersion.PageSize, offset: com.histmersion.Offset)(using
       DbCon
   ): Attestation.List =
     val ck = citekey.map(_.trim).filter(_.nonEmpty)
@@ -57,7 +39,7 @@ private[evidence] object AttestationRepo:
           """.query[Attestation].run().toList
     Attestation.List.of(total, rows, offset.max(0))
 
-  def get(id: com.histmersion.domain.catalogue.evidence.AttestationRepo.GetId)(using DbCon): Option[Attestation] =
+  def get(id: com.histmersion.domain.catalogue.evidence.AttestationRepo.AttestationId)(using DbCon): Option[Attestation] =
     sql"""SELECT ${SqlLiteral(cols)} FROM attestations a WHERE a.id = $id""".query[Attestation].run().headOption
 
   def create(in: Attestation.Put)(using DbCon): Attestation =
@@ -72,9 +54,9 @@ private[evidence] object AttestationRepo:
                    RETURNING id""".query[Long].run().head
     get(id).get
 
-  def exists(id: com.histmersion.domain.catalogue.evidence.AttestationRepo.ExistsId)(using DbCon): com.histmersion.domain.catalogue.evidence.AttestationRepo.ExistsResult = sql"SELECT 1 FROM attestations WHERE id = $id".query[Int].run().nonEmpty
+  def exists(id: com.histmersion.domain.catalogue.evidence.AttestationRepo.AttestationId)(using DbCon): Boolean = sql"SELECT 1 FROM attestations WHERE id = $id".query[Int].run().nonEmpty
 
-  def update(id: com.histmersion.domain.catalogue.evidence.AttestationRepo.UpdateId, p: Attestation.Patch)(using DbCon): Unit =
+  def update(id: com.histmersion.domain.catalogue.evidence.AttestationRepo.AttestationId, p: Attestation.Patch)(using DbCon): Unit =
     p.quote.foreach(v => sql"UPDATE attestations SET quote = $v WHERE id = $id".update.run())
     p.prefix.foreach(v => sql"UPDATE attestations SET prefix = $v WHERE id = $id".update.run())
     p.suffix.foreach(v => sql"UPDATE attestations SET suffix = $v WHERE id = $id".update.run())
@@ -87,4 +69,4 @@ private[evidence] object AttestationRepo:
     p.ctsUrn.foreach(v => sql"UPDATE attestations SET cts_urn = $v WHERE id = $id".update.run())
     p.note.foreach(v => sql"UPDATE attestations SET note = $v WHERE id = $id".update.run())
 
-  def delete(id: com.histmersion.domain.catalogue.evidence.AttestationRepo.DeleteId)(using DbCon): com.histmersion.domain.catalogue.evidence.AttestationRepo.DeleteResult = sql"DELETE FROM attestations WHERE id = $id".update.run() > 0
+  def delete(id: com.histmersion.domain.catalogue.evidence.AttestationRepo.AttestationId)(using DbCon): Boolean = sql"DELETE FROM attestations WHERE id = $id".update.run() > 0

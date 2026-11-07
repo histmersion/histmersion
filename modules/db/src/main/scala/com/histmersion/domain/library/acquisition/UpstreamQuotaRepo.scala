@@ -13,12 +13,8 @@ private[acquisition] object UpstreamQuotaRepo:
 
   // Times cross as epoch milliseconds (no timestamp codec in the native image), a day as its ISO text.
 
-  type LoadUpstream = LoadUpstream.T
-  object LoadUpstream extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type SaveUpstream = SaveUpstream.T
-  object SaveUpstream extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
-  def load(upstream: com.histmersion.domain.library.acquisition.UpstreamQuotaRepo.LoadUpstream)(using DbCon): Option[CoreQuota.State] =
+  def load(upstream: com.histmersion.domain.automation.ProviderKind.Wire)(using DbCon): Option[CoreQuota.State] =
     sql"""SELECT day::text, lookup_tokens, search_tokens, (extract(epoch FROM blocked_until) * 1000)::bigint, blocked_why,
                  rate_limit, rate_remaining, (extract(epoch FROM observed_at) * 1000)::bigint
           FROM upstream_quota WHERE upstream = $upstream"""
@@ -35,7 +31,7 @@ private[acquisition] object UpstreamQuotaRepo:
         )
       }
 
-  def save(upstream: com.histmersion.domain.library.acquisition.UpstreamQuotaRepo.SaveUpstream, s: CoreQuota.State)(using DbCon): Unit =
+  def save(upstream: com.histmersion.domain.automation.ProviderKind.Wire, s: CoreQuota.State)(using DbCon): Unit =
     val day = s.day.toString
     val until = s.block.map(_.until.toEpochMilli.toDouble / 1000)
     val why = s.block.map(_.why)

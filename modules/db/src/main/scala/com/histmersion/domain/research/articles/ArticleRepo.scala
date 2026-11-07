@@ -38,130 +38,14 @@ given given_DbCodec_ArticleVersionFull: DbCodec[Article.VersionFull] = DbCodec.d
   * bundle import's rename and link rewrite (`BundleImport`), which research's carried kinds take over.
   */
 private[articles] object ArticleRepo:
+  type Count = Count.T
+  object Count extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type Limit = Limit.T
+  object Limit extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type VersionId = VersionId.T
+  object VersionId extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
-  type RenameInExistsS = RenameInExistsS.T
-  object RenameInExistsS extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
-  type FilterJsonResult = FilterJsonResult.T
-  object FilterJsonResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type ReasonsJsonResult = ReasonsJsonResult.T
-  object ReasonsJsonResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type FilterOfJson = FilterOfJson.T
-  object FilterOfJson extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type ReasonsOfResultPart1 = ReasonsOfResultPart1.T
-  object ReasonsOfResultPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type ReasonsOfResultPart2 = ReasonsOfResultPart2.T
-  object ReasonsOfResultPart2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type ReasonsOfJson = ReasonsOfJson.T
-  object ReasonsOfJson extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type PutResult = PutResult.T
-  object PutResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type PatchResultPart2 = PatchResultPart2.T
-  object PatchResultPart2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type PatchSlug = PatchSlug.T
-  object PatchSlug extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type PatchBy = PatchBy.T
-  object PatchBy extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type DeleteResult = DeleteResult.T
-  object DeleteResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type DeleteSlug = DeleteSlug.T
-  object DeleteSlug extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type WriteLinksSlug = WriteLinksSlug.T
-  object WriteLinksSlug extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type WriteLinksBody = WriteLinksBody.T
-  object WriteLinksBody extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type RetargetLinksResultPart1 = RetargetLinksResultPart1.T
-  object RetargetLinksResultPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type RetargetLinksResultPart2 = RetargetLinksResultPart2.T
-  object RetargetLinksResultPart2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type RetargetLinksNeedle = RetargetLinksNeedle.T
-  object RetargetLinksNeedle extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type RetargetLinksToArg1 = RetargetLinksToArg1.T
-  object RetargetLinksToArg1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type RetargetLinksToResult = RetargetLinksToResult.T
-  object RetargetLinksToResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type RenameInResultPart2 = RenameInResultPart2.T
-  object RenameInResultPart2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type RenameInOldSlug = RenameInOldSlug.T
-  object RenameInOldSlug extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type RenameInNewSlug = RenameInNewSlug.T
-  object RenameInNewSlug extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type RenameResultPart2 = RenameResultPart2.T
-  object RenameResultPart2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type RenameOldSlug = RenameOldSlug.T
-  object RenameOldSlug extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type RenameNewSlug = RenameNewSlug.T
-  object RenameNewSlug extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type CanonicalResult = CanonicalResult.T
-  object CanonicalResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type CanonicalSlug = CanonicalSlug.T
-  object CanonicalSlug extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type TokenResult = TokenResult.T
-  object TokenResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type TokenSlug = TokenSlug.T
-  object TokenSlug extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type LoadSlug = LoadSlug.T
-  object LoadSlug extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type GetSlug = GetSlug.T
-  object GetSlug extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type ViewRequested = ViewRequested.T
-  object ViewRequested extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type BacklinksSlug = BacklinksSlug.T
-  object BacklinksSlug extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type CitingCitekeys = CitingCitekeys.T
-  object CitingCitekeys extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type CitingLimit = CitingLimit.T
-  object CitingLimit extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type ExistingSlugsResult = ExistingSlugsResult.T
-  object ExistingSlugsResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type ExistingSlugsSlugs = ExistingSlugsSlugs.T
-  object ExistingSlugsSlugs extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type RefsSlugs = RefsSlugs.T
-  object RefsSlugs extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type SourcesCitedSlug = SourcesCitedSlug.T
-  object SourcesCitedSlug extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type ListKind = ListKind.T
-  object ListKind extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type ListText = ListText.T
-  object ListText extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type ListLimit = ListLimit.T
-  object ListLimit extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type ListOffset = ListOffset.T
-  object ListOffset extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type ListWhereKind = ListWhereKind.T
-  object ListWhereKind extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type ListWhereText = ListWhereText.T
-  object ListWhereText extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type TsQueryQ = TsQueryQ.T
-  object TsQueryQ extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type SlugsResult = SlugsResult.T
-  object SlugsResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type UpdatedAtMillisResultPart1 = UpdatedAtMillisResultPart1.T
-  object UpdatedAtMillisResultPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type UpdatedAtMillisResultPart2 = UpdatedAtMillisResultPart2.T
-  object UpdatedAtMillisResultPart2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type ListVersionsSlug = ListVersionsSlug.T
-  object ListVersionsSlug extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type ListVersionsLimit = ListVersionsLimit.T
-  object ListVersionsLimit extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type CountResult = CountResult.T
-  object CountResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type LatestVersionResult = LatestVersionResult.T
-  object LatestVersionResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type LatestVersionSlug = LatestVersionSlug.T
-  object LatestVersionSlug extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type GetVersionSlug = GetVersionSlug.T
-  object GetVersionSlug extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type GetVersionVersionId = GetVersionVersionId.T
-  object GetVersionVersionId extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type SlugExistsResult = SlugExistsResult.T
-  object SlugExistsResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type SlugExistsSlug = SlugExistsSlug.T
-  object SlugExistsSlug extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type ArticlesByGoalResultPart1 = ArticlesByGoalResultPart1.T
-  object ArticlesByGoalResultPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type ArticlesByGoalResultPart2 = ArticlesByGoalResultPart2.T
-  object ArticlesByGoalResultPart2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
   private given DbCodec[Backlink] = DbCodec.derived
   private given DbCodec[Article.Version] = DbCodec.derived
@@ -193,28 +77,28 @@ private[articles] object ArticleRepo:
   private val LoadCols = s"$RowCols, a.coverage_filter::text, a.coverage_reasons::text"
 
   /** The filter and the reasons as the jsonb columns store them. */
-  private def filterJson(a: Article): Option[com.histmersion.domain.research.articles.ArticleRepo.FilterJsonResult] =
+  private def filterJson(a: Article): Option[String] =
     import io.circe.syntax.*
     a.filter.map(_.asJson.deepDropNullValues.noSpaces)
-  private def reasonsJson(a: Article): com.histmersion.domain.research.articles.ArticleRepo.ReasonsJsonResult =
+  private def reasonsJson(a: Article): String =
     io.circe.Json.obj(a.reasons.toList.sortBy(_._1).map((k, v) => k -> io.circe.Json.fromString(v))*).noSpaces
 
   /** The stored JSON back; a value that no longer decodes (an older shape) reads as none, never fails the read. */
-  private[articles] def filterOf(json: Option[com.histmersion.domain.research.articles.ArticleRepo.FilterOfJson]): Option[Article.Filter] =
+  private[articles] def filterOf(json: Option[String]): Option[Article.Filter] =
     json.flatMap(Jsonb.read[Article.Filter])
-  private[articles] def reasonsOf(json: com.histmersion.domain.research.articles.ArticleRepo.ReasonsOfJson): Map[com.histmersion.domain.research.articles.ArticleRepo.ReasonsOfResultPart1, com.histmersion.domain.research.articles.ArticleRepo.ReasonsOfResultPart2] =
+  private[articles] def reasonsOf(json: String): Map[com.histmersion.domain.library.Citekey, com.histmersion.domain.research.articles.CritiqueRepo.Reason] =
     Jsonb.read[Map[String, String]](json).getOrElse(Map.empty)
 
   // ── writes ─────────────────────────────────────────────────────────────────────────────────
   /** Full replace (`put_article`). Returns the fresh `updatedAt` concurrency token. */
-  def put(a: Article)(using DbCon): com.histmersion.domain.research.articles.ArticleRepo.PutResult =
+  def put(a: Article)(using DbCon): com.histmersion.domain.research.Slug =
     write(a)
     token(a.slug).getOrElse("")
 
   /** Selective merge (`patch_article`): read → [[Articles.applyPatch]] → write, all in ONE transaction, so two
     * concurrent patches cannot interleave and `ifUpdatedAt` means something.
     */
-  def patch(slug: com.histmersion.domain.research.articles.ArticleRepo.PatchSlug, p: Article.Patch, by: com.histmersion.domain.research.articles.ArticleRepo.PatchBy = "person")(using DbCon): Either[Api.Error, com.histmersion.domain.research.articles.ArticleRepo.PatchResultPart2] =
+  def patch(slug: com.histmersion.domain.research.Slug, p: Article.Patch, by: com.histmersion.domain.research.articles.CritiqueRepo.By = "person")(using DbCon): Either[Api.Error, String] =
     // FOR UPDATE before the read: `ifUpdatedAt` is a compare-and-swap, and without the row lock
     // two concurrent patches both saw the token they were given and both "succeeded", the second
     // discarding the first. See the twin comment in `SourceRepo.patch`.
@@ -235,7 +119,7 @@ private[articles] object ArticleRepo:
                   .applyIn(slug, p.critiqueReasons, by)(if !p.onlyCritiques then write(updated))
                   .map(_ => token(slug).getOrElse(""))
 
-  def delete(slug: com.histmersion.domain.research.articles.ArticleRepo.DeleteSlug)(using DbCon): com.histmersion.domain.research.articles.ArticleRepo.DeleteResult =
+  def delete(slug: com.histmersion.domain.research.Slug)(using DbCon): Boolean =
     sql"DELETE FROM articles WHERE slug = $slug".update.run() > 0
 
   /** The write itself, inside the caller's transaction: snapshot the previous body into `article_versions` (when the
@@ -261,7 +145,7 @@ private[articles] object ArticleRepo:
   /** Rewrite one article's outgoing links. A `[[x]]` is a SOURCE link iff x is citekey-shaped AND a source with that
     * citekey exists — resolved with one query over the citekey-shaped candidates.
     */
-  private[histmersion] def writeLinks(slug: com.histmersion.domain.research.articles.ArticleRepo.WriteLinksSlug, body: com.histmersion.domain.research.articles.ArticleRepo.WriteLinksBody)(using DbCon): Unit =
+  private[histmersion] def writeLinks(slug: com.histmersion.domain.research.Slug, body: com.histmersion.domain.research.articles.BArticleRow.Body)(using DbCon): Unit =
     sql"DELETE FROM article_links WHERE src_slug = $slug".update.run()
     val written = Article.Links.targets(body).filter(_ != slug) // an article does not link to itself
     if written.nonEmpty then
@@ -278,9 +162,9 @@ private[articles] object ArticleRepo:
     * [[write]], so the previous text is kept in `article_versions` and `article_links` is recomputed. Returns (slug,
     * links moved) for each article that changed.
     */
-  private[histmersion] def retargetLinks(needle: com.histmersion.domain.research.articles.ArticleRepo.RetargetLinksNeedle, to: com.histmersion.domain.research.articles.ArticleRepo.RetargetLinksToArg1 => Option[com.histmersion.domain.research.articles.ArticleRepo.RetargetLinksToResult])(using
+  private[histmersion] def retargetLinks(needle: com.histmersion.domain.research.Slug, to: com.histmersion.domain.research.Slug => Option[com.histmersion.domain.research.Slug])(using
       DbCon
-  ): List[(com.histmersion.domain.research.articles.ArticleRepo.RetargetLinksResultPart1, com.histmersion.domain.research.articles.ArticleRepo.RetargetLinksResultPart2)] =
+  ): List[(com.histmersion.domain.research.Slug, com.histmersion.RowCount)] =
     sql"""SELECT slug FROM articles
           WHERE strpos(lower(body || ' ' || coalesce(summary, '') || ' ' || coverage_reasons::text), ${needle.toLowerCase}) > 0
           ORDER BY slug""".query[String].run().toList.flatMap { slug =>
@@ -304,8 +188,8 @@ private[articles] object ArticleRepo:
     * when an article was renamed on the other side, and what `merge apply` does to keep two articles apart. Returns the
     * articles whose links moved.
     */
-  private[histmersion] def renameIn(oldSlug: com.histmersion.domain.research.articles.ArticleRepo.RenameInOldSlug, newSlug: com.histmersion.domain.research.articles.ArticleRepo.RenameInNewSlug)(using DbCon): Either[Api.Error, List[com.histmersion.domain.research.articles.ArticleRepo.RenameInResultPart2]] =
-    def exists(s: com.histmersion.domain.research.articles.ArticleRepo.RenameInExistsS) = sql"SELECT 1 FROM articles WHERE slug = $s".query[Int].run().nonEmpty
+  private[histmersion] def renameIn(oldSlug: com.histmersion.domain.research.Slug, newSlug: com.histmersion.domain.research.Slug)(using DbCon): Either[Api.Error, List[String]] =
+    def exists(s: com.histmersion.domain.research.Slug) = sql"SELECT 1 FROM articles WHERE slug = $s".query[Int].run().nonEmpty
     val aliasOf = sql"SELECT slug FROM article_aliases WHERE alias = $newSlug".query[String].run().headOption
     if !exists(oldSlug) then Left(Articles.notFound(oldSlug))
     else if exists(newSlug) then
@@ -335,23 +219,23 @@ private[articles] object ArticleRepo:
   /** `histmersion articles rename`: a new slug, the old one kept as an alias (V042); every `[[old]]` in other articles
     * is rewritten through the write path. One transaction; returns the articles rewritten.
     */
-  def rename(oldSlug: com.histmersion.domain.research.articles.ArticleRepo.RenameOldSlug, newSlug: com.histmersion.domain.research.articles.ArticleRepo.RenameNewSlug)(using DbCon): Either[Api.Error, List[com.histmersion.domain.research.articles.ArticleRepo.RenameResultPart2]] =
+  def rename(oldSlug: com.histmersion.domain.research.Slug, newSlug: com.histmersion.domain.research.Slug)(using DbCon): Either[Api.Error, List[String]] =
     renameIn(oldSlug.trim, newSlug.trim)
 
   /** The slug an old slug was renamed to (`article_aliases`), or the slug itself. */
-  def canonical(slug: com.histmersion.domain.research.articles.ArticleRepo.CanonicalSlug)(using DbCon): com.histmersion.domain.research.articles.ArticleRepo.CanonicalResult =
+  def canonical(slug: com.histmersion.domain.research.Slug)(using DbCon): com.histmersion.domain.research.Slug =
     sql"SELECT slug FROM article_aliases WHERE alias = $slug AND NOT EXISTS (SELECT 1 FROM articles WHERE slug = $slug)"
       .query[String]
       .run()
       .headOption
       .getOrElse(slug)
 
-  private def token(slug: com.histmersion.domain.research.articles.ArticleRepo.TokenSlug)(using DbCon): Option[com.histmersion.domain.research.articles.ArticleRepo.TokenResult] =
+  private def token(slug: com.histmersion.domain.research.Slug)(using DbCon): Option[String] =
     Sql.of(s"SELECT $Token FROM articles a WHERE a.slug = ?", S(slug)).frag.query[String].run().headOption
 
   // ── reads ──────────────────────────────────────────────────────────────────────────────────
   /** The whole article as the DOMAIN model — the input side of a patch, and what `export` renders. */
-  def load(slug: com.histmersion.domain.research.articles.ArticleRepo.LoadSlug)(using DbCon): Option[Article] =
+  def load(slug: com.histmersion.domain.research.Slug)(using DbCon): Option[Article] =
     Sql
       .of(s"SELECT $LoadCols FROM articles a WHERE a.slug = ?", S(slug))
       .frag
@@ -376,7 +260,7 @@ private[articles] object ArticleRepo:
         )
       }
 
-  def get(slug: com.histmersion.domain.research.articles.ArticleRepo.GetSlug)(using DbCon): Option[Article.Row] =
+  def get(slug: com.histmersion.domain.research.Slug)(using DbCon): Option[Article.Row] =
     Sql
       .of(s"SELECT $ViewCols FROM articles a WHERE a.slug = ?", S(canonical(slug)))
       .frag
@@ -385,7 +269,7 @@ private[articles] object ArticleRepo:
       .headOption
 
   /** The article plus both directions of its link graph — one connection, three queries. */
-  def view(requested: com.histmersion.domain.research.articles.ArticleRepo.ViewRequested)(using DbCon): Option[Article.View] =
+  def view(requested: com.histmersion.domain.research.Slug)(using DbCon): Option[Article.View] =
     val slug = canonical(requested) // an old slug (V042) shows the article it was renamed to
     Sql
       .of(s"SELECT $ViewCols FROM articles a WHERE a.slug = ?", S(slug))
@@ -399,7 +283,7 @@ private[articles] object ArticleRepo:
     * `[[slug]]` (the source notes are Markdown, not a link table). `strpos` rather than `LIKE` so an underscore in a
     * slug stays a literal underscore.
     */
-  def backlinks(slug: com.histmersion.domain.research.articles.ArticleRepo.BacklinksSlug)(using DbCon): List[Backlink] =
+  def backlinks(slug: com.histmersion.domain.research.Slug)(using DbCon): List[Backlink] =
     sql"""SELECT 'article' AS kind, a.slug AS id, a.title
           FROM article_links l JOIN articles a ON a.slug = l.src_slug
           WHERE l.target_kind = 'article' AND l.target = $slug AND a.slug <> $slug
@@ -413,7 +297,7 @@ private[articles] object ArticleRepo:
   /** The articles citing any of `citekeys` (one row per article, its first cited key), at most `limit` — an event's
     * card lists those citing the sources that attest it.
     */
-  def citing(citekeys: List[com.histmersion.domain.research.articles.ArticleRepo.CitingCitekeys], limit: com.histmersion.domain.research.articles.ArticleRepo.CitingLimit)(using DbCon): List[EventArticleRef] =
+  def citing(citekeys: List[com.histmersion.domain.library.Citekey], limit: com.histmersion.domain.research.articles.ArticleRepo.Limit)(using DbCon): List[EventArticleRef] =
     if citekeys.isEmpty then Nil
     else sql"""SELECT DISTINCT ON (a.slug) a.slug, a.title, l.target
             FROM article_links l JOIN articles a ON a.slug = l.src_slug
@@ -436,7 +320,7 @@ private[articles] object ArticleRepo:
   /** Which of `slugs` actually exist — the article half of resolving a `[[wikilink]]`. One query for the whole body, so
     * rendering an article is still three round trips.
     */
-  def existingSlugs(slugs: List[com.histmersion.domain.research.articles.ArticleRepo.ExistingSlugsSlugs])(using DbCon): Set[com.histmersion.domain.research.articles.ArticleRepo.ExistingSlugsResult] =
+  def existingSlugs(slugs: List[com.histmersion.domain.research.Slug])(using DbCon): Set[com.histmersion.domain.research.Slug] =
     val wanted = slugs.map(_.trim.toLowerCase).filter(_.nonEmpty).distinct
     if wanted.isEmpty then Set.empty
     else
@@ -446,7 +330,7 @@ private[articles] object ArticleRepo:
         .toSet
 
   /** The link view (slug, title, summary) of the given articles; unknown slugs are absent. */
-  def refs(slugs: List[com.histmersion.domain.research.articles.ArticleRepo.RefsSlugs])(using DbCon): List[Article.Ref] =
+  def refs(slugs: List[com.histmersion.domain.research.Slug])(using DbCon): List[Article.Ref] =
     val wanted = slugs.map(_.trim.toLowerCase).filter(_.nonEmpty).distinct
     if wanted.isEmpty then Nil
     else
@@ -458,7 +342,7 @@ private[articles] object ArticleRepo:
   /** The sources this article cites, with the metadata the footer shows. A citekey that is not in the corpus still
     * appears (with a NULL title) — a dangling citation is a lint finding, not a reason to hide it.
     */
-  def sourcesCited(slug: com.histmersion.domain.research.articles.ArticleRepo.SourcesCitedSlug)(using DbCon): List[CitedSource] =
+  def sourcesCited(slug: com.histmersion.domain.research.Slug)(using DbCon): List[CitedSource] =
     sql"""SELECT l.target AS citekey, s.title, s.year, s.status, s.authors, s.doi
           FROM article_links l LEFT JOIN sources s ON s.citekey = l.target
           WHERE l.src_slug = $slug AND l.target_kind = 'source'
@@ -474,10 +358,10 @@ private[articles] object ArticleRepo:
   def list(
       filter: Filter,
       scope: PlaceScope,
-      kind: Option[com.histmersion.domain.research.articles.ArticleRepo.ListKind],
-      text: Option[com.histmersion.domain.research.articles.ArticleRepo.ListText],
-      limit: com.histmersion.domain.research.articles.ArticleRepo.ListLimit,
-      offset: com.histmersion.domain.research.articles.ArticleRepo.ListOffset
+      kind: Option[com.histmersion.domain.research.Article.Kind],
+      text: Option[com.histmersion.domain.library.search.Search.Query],
+      limit: com.histmersion.domain.research.articles.ArticleRepo.Limit,
+      offset: com.histmersion.Offset
   )(using DbCon): Article.List =
     val where = listWhere(filter, scope, kind, text)
     val order = text.map(_.trim).filter(_.nonEmpty) match
@@ -495,7 +379,7 @@ private[articles] object ArticleRepo:
   /** The WHERE of [[list]], as a value — pure, so it is unit-tested without a database. The filter's part is
     * [[FilterSql.articleWhere]] (the one rule relating articles to sources).
     */
-  def listWhere(filter: Filter, scope: PlaceScope, kind: Option[com.histmersion.domain.research.articles.ArticleRepo.ListWhereKind], text: Option[com.histmersion.domain.research.articles.ArticleRepo.ListWhereText]): Sql =
+  def listWhere(filter: Filter, scope: PlaceScope, kind: Option[com.histmersion.domain.research.Article.Kind], text: Option[com.histmersion.domain.library.search.Search.Query]): Sql =
     val ps = List.newBuilder[Sql]
     val related = FilterSql.articleWhere(filter, scope)
     if related.text != "TRUE" then ps += related
@@ -509,13 +393,13 @@ private[articles] object ArticleRepo:
     if parts.isEmpty then Sql.raw("TRUE")
     else Sql(parts.map(_.text).mkString(" AND "), parts.flatMap(_.params))
 
-  private def tsQuery(q: com.histmersion.domain.research.articles.ArticleRepo.TsQueryQ): Sql = Search.tsQuery(q)
+  private def tsQuery(q: com.histmersion.domain.library.search.Search.Query): Sql = Search.tsQuery(q)
 
-  def slugs(using DbCon): Vector[com.histmersion.domain.research.articles.ArticleRepo.SlugsResult] =
+  def slugs(using DbCon): Vector[com.histmersion.domain.research.Slug] =
     sql"""SELECT slug FROM articles ORDER BY slug COLLATE "C"""".query[String].run()
 
   /** `slug -> updated_at` in epoch millis, for the seed guard (one query for the whole wiki). */
-  def updatedAtMillis(using DbCon): Map[com.histmersion.domain.research.articles.ArticleRepo.UpdatedAtMillisResultPart1, com.histmersion.domain.research.articles.ArticleRepo.UpdatedAtMillisResultPart2] =
+  def updatedAtMillis(using DbCon): Map[com.histmersion.domain.research.Slug, com.histmersion.domain.library.sources.CitekeyMillis.Millis] =
     sql"SELECT slug, (extract(epoch from updated_at) * 1000)::bigint FROM articles"
       .query[SlugMillis]
       .run()
@@ -533,7 +417,7 @@ private[articles] object ArticleRepo:
   /** List the version history of one article: id, slug, summary (first 200 chars), updatedAt, createdAt, and word count
     * (approximated as non-empty whitespace-split tokens). Newest first.
     */
-  def listVersions(slug: com.histmersion.domain.research.articles.ArticleRepo.ListVersionsSlug, limit: com.histmersion.domain.research.articles.ArticleRepo.ListVersionsLimit = 20)(using DbCon): List[Article.Version] =
+  def listVersions(slug: com.histmersion.domain.research.Slug, limit: com.histmersion.domain.research.articles.ArticleRepo.Limit = 20)(using DbCon): List[Article.Version] =
     Sql
       .of(
         s"""SELECT v.id, v.slug, left(v.summary, 200),
@@ -550,13 +434,13 @@ private[articles] object ArticleRepo:
 
   /** One historical version's full body. */
   /** How many articles are stored. */
-  def count()(using DbCon): com.histmersion.domain.research.articles.ArticleRepo.CountResult = sql"SELECT count(*)::int FROM articles".query[Int].run().head.toLong
+  def count()(using DbCon): com.histmersion.domain.research.articles.ArticleRepo.Count = sql"SELECT count(*)::int FROM articles".query[Int].run().head.toLong
 
   /** The newest saved version of an article: after a write, the row holding the text it replaced. */
-  def latestVersion(slug: com.histmersion.domain.research.articles.ArticleRepo.LatestVersionSlug)(using DbCon): Option[com.histmersion.domain.research.articles.ArticleRepo.LatestVersionResult] =
+  def latestVersion(slug: com.histmersion.domain.research.Slug)(using DbCon): Option[com.histmersion.domain.research.articles.ArticleRepo.VersionId] =
     sql"SELECT max(id) FROM article_versions WHERE slug = $slug".query[Option[Long]].run().headOption.flatten
 
-  def getVersion(slug: com.histmersion.domain.research.articles.ArticleRepo.GetVersionSlug, versionId: com.histmersion.domain.research.articles.ArticleRepo.GetVersionVersionId)(using DbCon): Option[Article.VersionFull] =
+  def getVersion(slug: com.histmersion.domain.research.Slug, versionId: com.histmersion.domain.research.articles.ArticleRepo.VersionId)(using DbCon): Option[Article.VersionFull] =
     Sql
       .of(
         s"""SELECT v.id, v.slug, v.body, v.summary,
@@ -572,10 +456,10 @@ private[articles] object ArticleRepo:
 
   /** Every goal's linked articles that exist: goal → slugs. */
   /** Is there an article with this slug? */
-  def slugExists(slug: com.histmersion.domain.research.articles.ArticleRepo.SlugExistsSlug)(using DbCon): com.histmersion.domain.research.articles.ArticleRepo.SlugExistsResult =
+  def slugExists(slug: com.histmersion.domain.research.Slug)(using DbCon): Boolean =
     sql"SELECT count(*) FROM articles WHERE slug = $slug".query[Long].run().head > 0
 
-  def articlesByGoal(using DbCon): Map[com.histmersion.domain.research.articles.ArticleRepo.ArticlesByGoalResultPart1, List[com.histmersion.domain.research.articles.ArticleRepo.ArticlesByGoalResultPart2]] =
+  def articlesByGoal(using DbCon): Map[com.histmersion.domain.automation.Goal.Slug, List[com.histmersion.domain.research.Slug]] =
     sql"""SELECT l.goal_slug, l.ref FROM goal_links l JOIN articles a ON a.slug = l.ref
             WHERE l.kind = 'article' ORDER BY l.goal_slug, l.ref"""
       .query[(String, String)]

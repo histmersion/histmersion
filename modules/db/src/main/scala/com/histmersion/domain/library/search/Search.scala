@@ -31,43 +31,31 @@ import com.histmersion.util.database.{Param, Sql}
   * actually type — is unaffected.
   */
 object Search:
+  type Query = Query.T
+  object Query extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type SnippetWords = SnippetWords.T
+  object SnippetWords extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
   /** The parsed query, as a fragment. Spliced once per use site so parameters stay in textual order. */
-  type TsQueryQ = TsQueryQ.T
-  object TsQueryQ extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type FtsPredicateQ = _root_.com.histmersion.domain.library.search.Search.TsQueryQ
-  val FtsPredicateQ: _root_.com.histmersion.domain.library.search.Search.TsQueryQ.type = _root_.com.histmersion.domain.library.search.Search.TsQueryQ
-  type FtsPredicateAlias = FtsPredicateAlias.T
-  object FtsPredicateAlias extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type RankExprQ = _root_.com.histmersion.domain.library.search.Search.TsQueryQ
-  val RankExprQ: _root_.com.histmersion.domain.library.search.Search.TsQueryQ.type = _root_.com.histmersion.domain.library.search.Search.TsQueryQ
-  type RankExprAlias = RankExprAlias.T
-  object RankExprAlias extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type BestChunkJoinQ = _root_.com.histmersion.domain.library.search.Search.TsQueryQ
-  val BestChunkJoinQ: _root_.com.histmersion.domain.library.search.Search.TsQueryQ.type = _root_.com.histmersion.domain.library.search.Search.TsQueryQ
-  type BestChunkJoinMaxWords = BestChunkJoinMaxWords.T
-  object BestChunkJoinMaxWords extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type BestChunkJoinAlias = BestChunkJoinAlias.T
-  object BestChunkJoinAlias extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type BestChunkCteQ = _root_.com.histmersion.domain.library.search.Search.TsQueryQ
-  val BestChunkCteQ: _root_.com.histmersion.domain.library.search.Search.TsQueryQ.type = _root_.com.histmersion.domain.library.search.Search.TsQueryQ
-  type RankExprCteQ = _root_.com.histmersion.domain.library.search.Search.TsQueryQ
-  val RankExprCteQ: _root_.com.histmersion.domain.library.search.Search.TsQueryQ.type = _root_.com.histmersion.domain.library.search.Search.TsQueryQ
-  type RankExprCteAlias = RankExprCteAlias.T
-  object RankExprCteAlias extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type SnippetsQueryQ = _root_.com.histmersion.domain.library.search.Search.TsQueryQ
-  val SnippetsQueryQ: _root_.com.histmersion.domain.library.search.Search.TsQueryQ.type = _root_.com.histmersion.domain.library.search.Search.TsQueryQ
-  type SnippetsQueryMaxWords = SnippetsQueryMaxWords.T
-  object SnippetsQueryMaxWords extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type SnippetsQueryCitekeys = SnippetsQueryCitekeys.T
-  object SnippetsQueryCitekeys extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type FtsPredicateQ = _root_.com.histmersion.domain.library.search.Search.Query
+  val FtsPredicateQ: _root_.com.histmersion.domain.library.search.Search.Query.type = _root_.com.histmersion.domain.library.search.Search.Query
+  type RankExprQ = _root_.com.histmersion.domain.library.search.Search.Query
+  val RankExprQ: _root_.com.histmersion.domain.library.search.Search.Query.type = _root_.com.histmersion.domain.library.search.Search.Query
+  type BestChunkJoinQ = _root_.com.histmersion.domain.library.search.Search.Query
+  val BestChunkJoinQ: _root_.com.histmersion.domain.library.search.Search.Query.type = _root_.com.histmersion.domain.library.search.Search.Query
+  type BestChunkCteQ = _root_.com.histmersion.domain.library.search.Search.Query
+  val BestChunkCteQ: _root_.com.histmersion.domain.library.search.Search.Query.type = _root_.com.histmersion.domain.library.search.Search.Query
+  type RankExprCteQ = _root_.com.histmersion.domain.library.search.Search.Query
+  val RankExprCteQ: _root_.com.histmersion.domain.library.search.Search.Query.type = _root_.com.histmersion.domain.library.search.Search.Query
+  type SnippetsQueryQ = _root_.com.histmersion.domain.library.search.Search.Query
+  val SnippetsQueryQ: _root_.com.histmersion.domain.library.search.Search.Query.type = _root_.com.histmersion.domain.library.search.Search.Query
 
-  def tsQuery(q: com.histmersion.domain.library.search.Search.TsQueryQ): Sql = Sql.of("websearch_to_tsquery('english', ?)", Param.S(q))
+  def tsQuery(q: com.histmersion.domain.library.search.Search.Query): Sql = Sql.of("websearch_to_tsquery('english', ?)", Param.S(q))
 
   /** True when the source matches: its weighted title(A)/summary(B) vector, or ANY of its body chunks. Use in a
     * `WHERE`.
     */
-  def ftsPredicate(q: com.histmersion.domain.library.search.Search.FtsPredicateQ, alias: com.histmersion.domain.library.search.Search.FtsPredicateAlias = "s"): Sql =
+  def ftsPredicate(q: com.histmersion.domain.library.search.Search.FtsPredicateQ, alias: String = "s"): Sql =
     Sql.raw(s"($alias.tsv @@ ") ++ tsQuery(q) ++
       s" OR EXISTS (SELECT 1 FROM source_chunks fts_p WHERE fts_p.citekey = $alias.citekey AND fts_p.tsv @@ " ++
       tsQuery(q) ++ "))"
@@ -76,7 +64,7 @@ object Search:
     * do the work — chunk lexemes are unweighted, i.e. D — so a title match outranks a body match without any hand-tuned
     * multiplier. Use in an `ORDER BY … DESC`.
     */
-  def rankExpr(q: com.histmersion.domain.library.search.Search.RankExprQ, alias: com.histmersion.domain.library.search.Search.RankExprAlias = "s"): Sql =
+  def rankExpr(q: com.histmersion.domain.library.search.Search.RankExprQ, alias: String = "s"): Sql =
     Sql.raw(s"(ts_rank_cd($alias.tsv, ") ++ tsQuery(q) ++
       ") + coalesce((SELECT max(ts_rank_cd(fts_r.tsv, " ++ tsQuery(q) ++
       s")) FROM source_chunks fts_r WHERE fts_r.citekey = $alias.citekey AND fts_r.tsv @@ " ++
@@ -99,7 +87,7 @@ object Search:
     * **Deprecated in favour of the two-phase approach**: [[bestChunkCte]] + [[snippetsQuery]]. Kept for reference; new
     * callers should use the CTE path.
     */
-  def bestChunkJoin(q: com.histmersion.domain.library.search.Search.BestChunkJoinQ, maxWords: com.histmersion.domain.library.search.Search.BestChunkJoinMaxWords, alias: com.histmersion.domain.library.search.Search.BestChunkJoinAlias = "s"): Sql =
+  def bestChunkJoin(q: com.histmersion.domain.library.search.Search.BestChunkJoinQ, maxWords: com.histmersion.domain.library.search.Search.SnippetWords, alias: String = "s"): Sql =
     val maxW = math.max(2, maxWords)
     val minW = math.max(1, math.min(8, maxW - 1))
     val opts = s"MaxFragments=1, MaxWords=$maxW, MinWords=$minW, StartSel=**, StopSel=**, HighlightAll=false"
@@ -134,7 +122,7 @@ object Search:
     * `ORDER BY … DESC` when [[bestChunkCte]] is the query's CTE. Falls back gracefully: `coalesce(bc.rank, 0)` when the
     * source matched only on title/summary.
     */
-  def rankExprCte(q: com.histmersion.domain.library.search.Search.RankExprCteQ, alias: com.histmersion.domain.library.search.Search.RankExprCteAlias = "s"): Sql =
+  def rankExprCte(q: com.histmersion.domain.library.search.Search.RankExprCteQ, alias: String = "s"): Sql =
     Sql.raw(s"(ts_rank_cd($alias.tsv, ") ++ tsQuery(q) ++ ") + coalesce(bc.rank, 0))"
 
   /** Compute the snippet and heading for a specific set of citekeys. Uses a two-level query:
@@ -153,7 +141,7 @@ object Search:
     * Returns `(citekey, heading, snippet)` rows. An empty `citekeys` list returns an empty fragment that matches
     * nothing (the caller should skip the query).
     */
-  def snippetsQuery(q: com.histmersion.domain.library.search.Search.SnippetsQueryQ, maxWords: com.histmersion.domain.library.search.Search.SnippetsQueryMaxWords, citekeys: List[com.histmersion.domain.library.search.Search.SnippetsQueryCitekeys]): Sql =
+  def snippetsQuery(q: com.histmersion.domain.library.search.Search.SnippetsQueryQ, maxWords: com.histmersion.domain.library.search.Search.SnippetWords, citekeys: List[com.histmersion.domain.library.Citekey]): Sql =
     if citekeys.isEmpty then return Sql.raw("SELECT NULL::text, NULL::text, NULL::text WHERE FALSE")
     val maxW = math.max(2, maxWords)
     val minW = math.max(1, math.min(8, maxW - 1))

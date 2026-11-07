@@ -14,15 +14,11 @@ import hearth.kindlings.optics.syntax.*
   * names the figures of the bundle's sources have here, and folds, renames and relabels them by [[AssetPlan]].
   */
 object AssetMergeRules extends MergeRules:
-  type LedgerLabel = LedgerLabel.T
-  object LedgerLabel extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type Referable = Referable.T
-  object Referable extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
   val owner: DataOwner = DataOwner("media")
   val kind: Bundle.Kind = Bundle.Kind.Asset
-  override val ledgerLabel: Option[com.histmersion.domain.media.assets.AssetMergeRules.LedgerLabel] = Some("SELECT name FROM assets WHERE uid = l.local_uid")
-  override val referable: com.histmersion.domain.media.assets.AssetMergeRules.Referable = true
+  override val ledgerLabel: Option[String] = Some("SELECT name FROM assets WHERE uid = l.local_uid")
+  override val referable: Boolean = true
   override val planning: Option[PlanRules] = Some(AssetPlan)
 
   override def gather(
