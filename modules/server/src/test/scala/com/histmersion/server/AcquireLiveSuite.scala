@@ -45,7 +45,7 @@ class AcquireLiveSuite extends munit.FunSuite:
     assertEquals(w.year, Some(2015))
     assertEquals(w.authors.headOption, Some("Wolfgang Haak"))
     assertEquals(w.citekey, Some("haak2015_massive"))
-    assert(w.citedByCount.exists(_ > 500), s"cited_by_count = ${w.citedByCount}")
+    assert(w.citedByCount.exists(_.value > 500), s"cited_by_count = ${w.citedByCount}")
 
   test("Crossref still deposits this paper's reference list"):
     val (backend, refs) = openalex.references(doi).fold(e => fail(e.value), identity)
@@ -75,8 +75,8 @@ class AcquireLiveSuite extends munit.FunSuite:
     (f.source.value, f.extension.value) match
       case ("europepmc", "pdf") => assert(new String(f.bytes.value.take(8), "ISO-8859-1").contains("%PDF"))
       case ("pmc", "xml")       =>
-        val md = com.histmersion.upstreams.jats.Jats.toMarkdown(new String(f.bytes.value, "UTF-8"))
-        assert(md.startsWith("# The First Horse Herders"), md.take(200))
+        val md = com.histmersion.upstreams.jats.Jats.toMarkdown(com.histmersion.upstreams.jats.Jats.Xml(new String(f.bytes.value, "UTF-8")))
+        assert(md.value.startsWith("# The First Horse Herders"), md.value.take(200))
       case other => fail(s"unexpected copy $other")
 
   test("Semantic Scholar returns citing papers with intents"):

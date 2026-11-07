@@ -226,3 +226,7 @@ The client table's new concepts were placed on same-named owners in other module
 - Ordering for newtypes: tests write `sortBy[Long](_.value)`, `.value >= ...` (Wcag.Ratio, tile ids, MessageInfo.Seq, slugs, citekeys). Lift Ordering once (G45).
 - "object X does not take parameters" for classes with a companion (Client, SourceProposals, PeriodImports, Prompts) worked around with `new`: find the real cause.
 - Public String left in src/main: Bootstrap.PeriodSeed, AcquireConfig.agent.
+
+## From server tests, wave 3
+
+- Split concepts in server main that tests bridge: BuiltinMedia EntryKey vs EntryName, MediaCollectionsKey vs OrderedRegistered, ReservedName vs Entry.Name; Registries *Key types vs CatalogProviderInfo.Id vs CatalogRecord.Provider; Registries.SourceFetchersKey vs util.plugins.Plugin.Id; Engine.outputCapMessage takes String while capKey returns CapKey; ToolResultCap.compactSource returns String where source takes Markdown; SpatialHierarchyResult.Job.Id is the api job id type (positional name); RefreshGate.Instant vs RefreshInfo.LastAttempt; ModelRef.Wire vs ProbeRequest.Model vs ModelOverride.Model; research.Slug vs ReviewLedger.Ledger.Slug; AssetUid vs Known.Uid; ProviderKey vs ProviderAsset.Key.

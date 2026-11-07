@@ -9,7 +9,12 @@ import com.histmersion.domain.media.imports.CollectionImport
 import com.histmersion.domain.media.imports.PlaceFacts
 import com.histmersion.domain.media.imports.Target
 
-import com.histmersion.pluginhost.HttpAnswer
+import com.histmersion.domain.media.imports.{BuiltinMedia, ImportService}
+import com.histmersion.domain.media.assets.ProviderAsset
+import com.histmersion.domain.catalogue.Place
+import com.histmersion.config.MediaConfig
+
+import com.histmersion.pluginhost.{HttpAnswer, Registries}
 
 import com.histmersion.domain.*
 import com.histmersion.plugin.Year
@@ -31,44 +36,54 @@ class KeyedCollectionsSuite extends munit.FunSuite:
   final private class NoConverter extends ConverterClient:
     def convert(
         file: com.histmersion.util.storage.Blob,
-        filename: String,
-        quality: Boolean
-    ): Either[String, ConvertedDoc] = Left(
-      "not used"
+        filename: ConverterClient.Filename,
+        quality: ConverterClient.HighQuality
+    ): Either[ConverterClient.Problem, ConvertedDoc] = Left(
+      ConverterClient.Problem("not used")
     )
-    def health: Either[String, String] = Right("ok")
+    def health: Either[ConverterClient.Problem, ConverterClient.HealthSummary] = Right(ConverterClient.HealthSummary("ok"))
 
   private def fx(name: String) = FakeMediaHttp.fixture(name)
   private val cfg = FakeMediaHttp.cfg
 
   private val egypt =
-    PlaceFacts(com.histmersion.domain.media.imports.PlaceFacts.Id("geonames_357994"), com.histmersion.domain.media.imports.PlaceFacts.Label("Egypt"), Set(com.histmersion.domain.media.imports.PlaceFacts.Keys("egypt")), Some((com.histmersion.domain.DeepTime.SignedYear(-3100L), com.histmersion.domain.DeepTime.SignedYear(-30L))), Some(com.histmersion.domain.media.imports.Target.Qid("Q79")), Some(26.0), Some(30.0))
+    PlaceFacts(com.histmersion.domain.media.imports.PlaceFacts.Id("geonames_357994"), com.histmersion.domain.media.imports.PlaceFacts.Label("Egypt"), Set(com.histmersion.domain.media.imports.PlaceFacts.Keys("egypt")), Some((com.histmersion.domain.DeepTime.SignedYear(-3100L), com.histmersion.domain.DeepTime.SignedYear(-30L))), Some(com.histmersion.domain.media.imports.Target.Qid("Q79")), Some(com.histmersion.Latitude(26.0)), Some(com.histmersion.Longitude(30.0)))
   private val syria =
-    PlaceFacts(com.histmersion.domain.media.imports.PlaceFacts.Id("geonames_163843"), com.histmersion.domain.media.imports.PlaceFacts.Label("Syria"), Set(com.histmersion.domain.media.imports.PlaceFacts.Keys("syria")), Some((com.histmersion.domain.DeepTime.SignedYear(-3000L), com.histmersion.domain.DeepTime.SignedYear(1500L))), Some(com.histmersion.domain.media.imports.Target.Qid("Q858")), Some(35.0), Some(38.0))
+    PlaceFacts(com.histmersion.domain.media.imports.PlaceFacts.Id("geonames_163843"), com.histmersion.domain.media.imports.PlaceFacts.Label("Syria"), Set(com.histmersion.domain.media.imports.PlaceFacts.Keys("syria")), Some((com.histmersion.domain.DeepTime.SignedYear(-3000L), com.histmersion.domain.DeepTime.SignedYear(1500L))), Some(com.histmersion.domain.media.imports.Target.Qid("Q858")), Some(com.histmersion.Latitude(35.0)), Some(com.histmersion.Longitude(38.0)))
   private val mycenae = PlaceFacts(
     com.histmersion.domain.media.imports.PlaceFacts.Id("pleiades_570491"),
     com.histmersion.domain.media.imports.PlaceFacts.Label("Mycenae"),
     Set(com.histmersion.domain.media.imports.PlaceFacts.Keys("mycenae")),
     Some((com.histmersion.domain.DeepTime.SignedYear(-1600L), com.histmersion.domain.DeepTime.SignedYear(-1100L))),
     Some(com.histmersion.domain.media.imports.Target.Qid("Q132564")),
-    Some(37.73),
-    Some(22.756)
+    Some(com.histmersion.Latitude(37.73)),
+    Some(com.histmersion.Longitude(22.756))
   )
   private val greece =
-    PlaceFacts(com.histmersion.domain.media.imports.PlaceFacts.Id("geonames_390903"), com.histmersion.domain.media.imports.PlaceFacts.Label("Greece"), Set(com.histmersion.domain.media.imports.PlaceFacts.Keys("greece")), Some((com.histmersion.domain.DeepTime.SignedYear(-3000L), com.histmersion.domain.DeepTime.SignedYear(-100L))), Some(com.histmersion.domain.media.imports.Target.Qid("Q41")), Some(39.0), Some(22.0))
-  private val facts = List(egypt, syria, mycenae, greece).map(f => f.id -> f).toMap
+    PlaceFacts(com.histmersion.domain.media.imports.PlaceFacts.Id("geonames_390903"), com.histmersion.domain.media.imports.PlaceFacts.Label("Greece"), Set(com.histmersion.domain.media.imports.PlaceFacts.Keys("greece")), Some((com.histmersion.domain.DeepTime.SignedYear(-3000L), com.histmersion.domain.DeepTime.SignedYear(-100L))), Some(com.histmersion.domain.media.imports.Target.Qid("Q41")), Some(com.histmersion.Latitude(39.0)), Some(com.histmersion.Longitude(22.0)))
+  private val facts = List(egypt, syria, mycenae, greece).map(f => Place.Id.assume(f.id.value) -> f).toMap
   private val named =
-    Map("egypt" -> List(egypt), "syria" -> List(syria), "mycenae" -> List(mycenae), "greece" -> List(greece))
-  private def target(f: PlaceFacts) = Target(com.histmersion.domain.media.imports.Target.TargetType("place"), f.id, com.histmersion.domain.media.imports.Target.Qid(""), f.label)
+    Map(
+      ImportService.PlaceKey("egypt") -> List(egypt),
+      ImportService.PlaceKey("syria") -> List(syria),
+      ImportService.PlaceKey("mycenae") -> List(mycenae),
+      ImportService.PlaceKey("greece") -> List(greece)
+    )
+  private def target(f: PlaceFacts) = Target(com.histmersion.domain.media.imports.Target.TargetType("place"), Target.Id(f.id.value), com.histmersion.domain.media.imports.Target.Qid(""), Target.Label(f.label.value))
+
+  private val DryOn = CollectionImport.DryRun(true)
+  private val DryOff = CollectionImport.DryRun(false)
+  private val Smithsonian = BuiltinMedia.EntryName("smithsonian")
+  private val Europeana = BuiltinMedia.EntryName("europeana")
 
   private def run(
       col: SearchedCollection,
       http: FakeMediaHttp,
       targets: List[Target],
-      dryRun: Boolean,
+      dryRun: CollectionImport.DryRun,
       store: CollStore = CollStore(facts, named)
   ): MediaImportReport =
-    val (polite, _) = FakeMediaHttp.polite(http, cfg.modify(_.requestIntervalMs).setTo(0))
+    val (polite, _) = FakeMediaHttp.polite(http, cfg.modify(_.requestIntervalMs).setTo(MediaConfig.RequestIntervalMs(0)))
     CollectionImport(col, polite, cfg, NoConverter()).run(targets, dryRun, refresh = com.histmersion.domain.media.imports.CollectionImport.Refresh(false), store)
 
   /** The two key-gated plugins switched on, each with the fixture key as a secret reference. */
@@ -77,7 +92,7 @@ class KeyedCollectionsSuite extends munit.FunSuite:
       |histmersion.plugins.media-europeana { enabled = true, api-key = "env:ZQMT_EU_KEY" }
       |""".stripMargin
   private val env = Map("ZQMT_SI_KEY" -> key, "ZQMT_EU_KEY" -> key)
-  private def collection(name: String): SearchedCollection =
+  private def collection(name: BuiltinMedia.EntryName): SearchedCollection =
     FakeMediaHttp.builtin(name, keyed, env)
 
   private def noKeyInUrls(http: FakeMediaHttp) =
@@ -97,13 +112,13 @@ class KeyedCollectionsSuite extends munit.FunSuite:
     "Smithsonian dry run: the CC0 bead matched to Egypt by its origin and dates; the key only as a header to api.si.edu"
   ):
     val http = si()
-    val r = run(collection("smithsonian"), http, List(target(egypt)), dryRun = true)
+    val r = run(collection(Smithsonian), http, List(target(egypt)), dryRun = DryOn)
     assertEquals(r.provider, MediaProvider.Smithsonian)
     assertEquals(
       r.samples.map(s => (s.key, s.license, s.basis)),
       List(("fsg_F1909.1185", "CC0-1.0", "origin = Egypt; 1550–1196 BCE within 3100–30 BCE"))
     )
-    assert(r.rejected.exists(_.key == "names another place on the map"), r.rejected.toString)
+    assert(r.rejected.exists(_.key.value == "names another place on the map"), r.rejected.toString)
     noKeyInUrls(http)
     val (apiCalls, others) = http.requests.partition(_._1.startsWith("https://api.si.edu/"))
     assertEquals(apiCalls.size, 1)
@@ -116,7 +131,7 @@ class KeyedCollectionsSuite extends munit.FunSuite:
     val store = CollStore(facts, named)
     val http = si()
     val r =
-      run(collection("smithsonian"), http, List(target(egypt), target(syria)), dryRun = false, store)
+      run(collection(Smithsonian), http, List(target(egypt), target(syria)), dryRun = DryOff, store)
     // the bead to Egypt; the Raqqa tile to Syria (its origin's first part is not on the map, Syria is)
     assertEquals((r.stored, r.linked), (2, 2), r.toString)
     assertEquals(
@@ -126,7 +141,7 @@ class KeyedCollectionsSuite extends munit.FunSuite:
         ("geonames_163843", Some("origin = Syria; 1101–1300 CE within 3000 BCE–1500 CE"))
       )
     )
-    val (_, a) = store.saved("fsg_F1909.1185")
+    val (_, a) = store.saved(ProviderAsset.Key("fsg_F1909.1185"))
     assertEquals((a.provider, a.license), (MediaProvider.Smithsonian, "CC0-1.0"))
     assertEquals(a.originalUrl, Some("https://ids.si.edu/ids/download?id=FS-8431_10.jpg"))
     assertEquals(
@@ -144,12 +159,12 @@ class KeyedCollectionsSuite extends munit.FunSuite:
     val http = si(FakeMediaHttp.json(gov, code = 403))
     val store = CollStore(facts, named)
     val r =
-      run(collection("smithsonian"), http, List(target(egypt), target(syria)), dryRun = false, store)
+      run(collection(Smithsonian), http, List(target(egypt), target(syria)), dryRun = DryOff, store)
     assert(
-      r.failed.exists(_.contains("the API key was refused (check histmersion.plugins.media-smithsonian.api-key)")),
+      r.failed.exists(_.value.contains("the API key was refused (check histmersion.plugins.media-smithsonian.api-key)")),
       r.failed.toString
     )
-    assert(r.failed.exists(_.contains("the rest of this batch was not asked")))
+    assert(r.failed.exists(_.value.contains("the rest of this batch was not asked")))
     assertEquals(http.requests.size, 1)
     assert(store.checks.isEmpty && store.saved.isEmpty)
 
@@ -174,7 +189,7 @@ class KeyedCollectionsSuite extends munit.FunSuite:
 
   test("Europeana dry run: matched by its own dcterms:spatial; a coarser place and a non-CC statement refused"):
     val http = eu()
-    val r = run(collection("europeana"), http, List(target(mycenae)), dryRun = true)
+    val r = run(collection(Europeana), http, List(target(mycenae)), dryRun = DryOn)
     assertEquals(r.provider, MediaProvider.Europeana)
     assertEquals(
       r.samples.map(s => (s.key, s.license, s.basis)),
@@ -187,7 +202,7 @@ class KeyedCollectionsSuite extends munit.FunSuite:
       )
     )
     assertEquals(
-      r.rejected.map(_.key).sorted,
+      r.rejected.map(_.key.value).sorted,
       List(
         "its dcterms:spatial names another place on the map",
         "not an open licence (http://rightsstatements.org/vocab/NoC-NC/1.0/)"
@@ -202,9 +217,9 @@ class KeyedCollectionsSuite extends munit.FunSuite:
   ):
     val store = CollStore(facts, named)
     val http = eu()
-    val r = run(collection("europeana"), http, List(target(mycenae)), dryRun = false, store)
+    val r = run(collection(Europeana), http, List(target(mycenae)), dryRun = DryOff, store)
     assertEquals((r.stored, r.linked), (1, 1), r.toString)
-    val (_, a) = store.saved("9200999/fixture_mycenae_lion_gate")
+    val (_, a) = store.saved(ProviderAsset.Key("9200999/fixture_mycenae_lion_gate"))
     assertEquals((a.provider, a.license), (MediaProvider.Europeana, "CC-BY-SA-4.0"))
     assertEquals(a.author, Some("Fixture Photographer"))
     assertEquals(a.originalUrl, Some(gateMedia))
@@ -223,7 +238,7 @@ class KeyedCollectionsSuite extends munit.FunSuite:
   test("Europeana: a full record whose licence differs from the search's is not stored (a line in the report)"):
     val store = CollStore(facts, named)
     val r = run(
-      collection("europeana"),
+      collection(Europeana),
       eu(
         _.replace(
           "\"webResourceEdmRights\": {\"def\": [\"http://creativecommons.org/licenses/by-sa/4.0/\"]}",
@@ -231,11 +246,11 @@ class KeyedCollectionsSuite extends munit.FunSuite:
         )
       ),
       List(target(mycenae)),
-      dryRun = false,
+      dryRun = DryOff,
       store
     )
     assertEquals(r.stored, 0)
-    assert(r.failed.exists(_.contains("differs from the search's (CC-BY-SA-4.0)")), r.failed.toString)
+    assert(r.failed.exists(_.value.contains("differs from the search's (CC-BY-SA-4.0)")), r.failed.toString)
 
   // ── relevance: the default exclusions and max-year ──────────────────────────────────────────
 
@@ -245,15 +260,15 @@ class KeyedCollectionsSuite extends munit.FunSuite:
     Set(com.histmersion.domain.media.imports.PlaceFacts.Keys("orkney islands"), com.histmersion.domain.media.imports.PlaceFacts.Keys("orkney")),
     Some((com.histmersion.domain.DeepTime.SignedYear(-7000L), com.histmersion.domain.DeepTime.SignedYear(2100L))),
     None,
-    Some(59.0),
-    Some(-3.0)
+    Some(com.histmersion.Latitude(59.0)),
+    Some(com.histmersion.Longitude(-3.0))
   )
-  private val orkneyStore = CollStore(Map(orkney.id -> orkney), Map("orkney" -> List(orkney)))
+  private val orkneyStore = CollStore(Map(Place.Id.assume(orkney.id.value) -> orkney), Map(ImportService.PlaceKey("orkney") -> List(orkney)))
 
   test("Europeana defaults: max-year 1500 and the natural-history exclusions are in the search and the reasons"):
     assertEquals(cfg.europeana.maxYear, 1500)
     assertEquals(
-      FakeMediaHttp.collection("europeana", keyed, env).latestYear,
+      FakeMediaHttp.collection(Registries.MediaCollectionsKey("europeana"), keyed, env).latestYear,
       Some(Year(1500)),
       "the plugin reads the same"
     )
@@ -262,7 +277,7 @@ class KeyedCollectionsSuite extends munit.FunSuite:
         FakeMediaHttp.json(fx("eu-search-orkney.json"))
       else Left(s"unexpected $url")
     }
-    val r = run(collection("europeana"), http, List(target(orkney)), dryRun = true, orkneyStore)
+    val r = run(collection(Europeana), http, List(target(orkney)), dryRun = DryOn, orkneyStore)
     assertEquals(
       r.samples.map(s => (s.key, s.basis)),
       List(("9200999/fixture_orkney_mace_head", "dcterms:spatial = Orkney; 3000–2500 BCE within 7000 BCE–1500 CE"))
@@ -283,7 +298,7 @@ class KeyedCollectionsSuite extends munit.FunSuite:
   test("Smithsonian defaults: max-year 1500, the natural-history units left out of the search and refused"):
     assertEquals(cfg.smithsonian.maxYear, 1500)
     assertEquals(
-      FakeMediaHttp.collection("smithsonian", keyed, env).latestYear,
+      FakeMediaHttp.collection(Registries.MediaCollectionsKey("smithsonian"), keyed, env).latestYear,
       Some(Year(1500)),
       "the plugin reads the same"
     )
@@ -295,10 +310,10 @@ class KeyedCollectionsSuite extends munit.FunSuite:
     val third = rows.downArray.right.right.focus.get.noSpaces
     val answer = s"""{"status":200,"responseCode":1,"response":{"rows":[$bead,$tile,$third],"rowCount":3}}"""
     val http = si(FakeMediaHttp.json(answer))
-    val r = run(collection("smithsonian"), http, List(target(egypt), target(syria)), dryRun = true)
+    val r = run(collection(Smithsonian), http, List(target(egypt), target(syria)), dryRun = DryOn)
     assertEquals(r.samples, Nil)
-    assert(r.rejected.exists(c => c.key == "an excluded unit (NMNHINV)"), r.rejected.toString)
-    assert(r.rejected.exists(c => c.key == "made after 1500 CE"), r.rejected.toString)
+    assert(r.rejected.exists(c => c.key.value == "an excluded unit (NMNHINV)"), r.rejected.toString)
+    assert(r.rejected.exists(c => c.key.value == "made after 1500 CE"), r.rejected.toString)
     val search = java.net.URLDecoder.decode(http.requests.head._1, "UTF-8")
     assert(search.contains("AND NOT unit_code:(NMNHBIRDS OR "), search)
     assert(!search.contains("NMNHANTHRO"), "Anthropology's objects are kept")

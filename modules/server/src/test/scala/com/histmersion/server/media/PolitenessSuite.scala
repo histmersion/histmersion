@@ -4,7 +4,9 @@ import com.histmersion.testsupport.ComparedByValue.given
 
 import hearth.kindlings.optics.syntax.*
 
-import com.histmersion.pluginhost.{HttpAnswer, Politeness}
+import com.histmersion.config.MediaConfig
+import com.histmersion.domain.CoreQuota
+import com.histmersion.pluginhost.{HttpAnswer, HttpTransport, Polite, Politeness}
 
 import java.time.Instant
 
@@ -17,7 +19,11 @@ class PolitenessSuite extends munit.FunSuite:
 
   private val now = Instant.parse("2026-10-10T12:00:00Z")
   private def answer(code: Int, headers: Map[String, String] = Map.empty, body: String = "{}") =
-    HttpAnswer(code, headers, body.getBytes("UTF-8"))
+    HttpAnswer(
+      HttpAnswer.Code(code),
+      headers.map((k, v) => CoreQuota.HeaderName(k) -> CoreQuota.HeaderValue(v)),
+      HttpAnswer.Body(body.getBytes("UTF-8"))
+    )
 
   test("a 200 is taken; a 404 gives up at once"):
     assertEquals(Politeness.decide(answer(200), com.histmersion.domain.HttpPolicy.Attempt(0), com.histmersion.domain.HttpPolicy.MaxRetries(5), com.histmersion.domain.HttpPolicy.MaxRetryAfterSeconds(60), now), Step.Accept)
@@ -67,7 +73,7 @@ class PolitenessSuite extends munit.FunSuite:
 
   test("requests to one host are spaced by request-interval-ms; another host is not held up"):
     val http = FakeMediaHttp(_ => FakeMediaHttp.json("{}"))
-    val (p, slept) = FakeMediaHttp.polite(http, FakeMediaHttp.cfg.modify(_.requestIntervalMs).setTo(500))
+    val (p, slept) = FakeMediaHttp.polite(http, FakeMediaHttp.cfg.modify(_.requestIntervalMs).setTo(MediaConfig.RequestIntervalMs(500)))
     p.get(com.histmersion.pluginhost.HttpTransport.Url("https://a.example/1")); p.get(com.histmersion.pluginhost.HttpTransport.Url("https://a.example/2")); p.get(com.histmersion.pluginhost.HttpTransport.Url("https://b.example/1"))
     assertEquals(slept.toList, List(500L))
     assertEquals(p.requests, 3)
@@ -91,7 +97,7 @@ class PolitenessSuite extends munit.FunSuite:
 
   test("a provider that keeps saying 429 is given up on after max-retries, with the reason"):
     val http = FakeMediaHttp(_ => FakeMediaHttp.json("{}", Map("retry-after" -> "1"), code = 429))
-    val (p, slept) = FakeMediaHttp.polite(http, FakeMediaHttp.cfg.modify(_.maxRetries).setTo(2))
+    val (p, slept) = FakeMediaHttp.polite(http, FakeMediaHttp.cfg.modify(_.maxRetries).setTo(MediaConfig.MaxRetries(2)))
     assertEquals(
       p.get(com.histmersion.pluginhost.HttpTransport.Url("https://commons.wikimedia.org/w/api.php")).left.toOption,
       Some("commons.wikimedia.org: HTTP 429 after 2 retries")
@@ -102,8 +108,8 @@ class PolitenessSuite extends munit.FunSuite:
   test("a file's type is the answer's Content-Type, else the fallback"):
     val http = FakeMediaHttp {
       case u if u.endsWith(".png") =>
-        Right(HttpAnswer(com.histmersion.pluginhost.HttpAnswer.Code(200), Map("content-type" -> "image/png; charset=binary"), Array[Byte](1)))
-      case _ => Right(HttpAnswer(com.histmersion.pluginhost.HttpAnswer.Code(200), Map.empty, Array[Byte](2)))
+        Right(HttpAnswer(com.histmersion.pluginhost.HttpAnswer.Code(200), Map(CoreQuota.HeaderName("content-type") -> CoreQuota.HeaderValue("image/png; charset=binary")), HttpAnswer.Body(Array[Byte](1))))
+      case _ => Right(HttpAnswer(com.histmersion.pluginhost.HttpAnswer.Code(200), Map.empty, HttpAnswer.Body(Array[Byte](2))))
     }
     val (p, _) = FakeMediaHttp.polite(http)
     assertEquals(p.file(com.histmersion.pluginhost.HttpTransport.Url("https://u/x.png"), com.histmersion.pluginhost.Polite.Mime("image/jpeg")).map(_._2), Right("image/png"))
@@ -111,8 +117,8 @@ class PolitenessSuite extends munit.FunSuite:
 
   // ── a refusal taken as rate limiting (#2561: the Met's firewall after ~2 000 requests) ──────────
 
-  private val metHost = "collectionapi.metmuseum.org"
-  private def metUrl(i: Int) = s"https://$metHost/public/collection/v1/objects/$i"
+  private val metHost = Polite.Host("collectionapi.metmuseum.org")
+  private def metUrl(i: Int) = HttpTransport.Url(s"https://$metHost/public/collection/v1/objects/$i")
 
   test("a 403 after answers waits each backoff step and asks again; the host's pace then halves per refusal"):
     // `var`: the answers the fake host gives, in turn
@@ -121,7 +127,7 @@ class PolitenessSuite extends munit.FunSuite:
       val code = answers.head; answers = answers.tail
       FakeMediaHttp.json("{}", code = code)
     }
-    val (p, slept) = FakeMediaHttp.polite(http, FakeMediaHttp.cfg.modify(_.requestIntervalMs).setTo(250), List(60000L, 300000L))
+    val (p, slept) = FakeMediaHttp.polite(http, FakeMediaHttp.cfg.modify(_.requestIntervalMs).setTo(MediaConfig.RequestIntervalMs(250)), List(Polite.RefusalBackoffMs(60000L), Polite.RefusalBackoffMs(300000L)))
     assert(p.get(metUrl(1)).isRight)
     assert(p.get(metUrl(2)).isRight, "the third answer, after two waits")
     assert(p.get(metUrl(3)).isRight)
@@ -132,7 +138,7 @@ class PolitenessSuite extends munit.FunSuite:
 
   test("when the backoff steps run out the 403 stands, saying how long it waited; without steps it is final at once"):
     val always = FakeMediaHttp(_ => FakeMediaHttp.json("{}", code = 403))
-    val (p, slept) = FakeMediaHttp.polite(always, FakeMediaHttp.cfg, List(60000L, 300000L))
+    val (p, slept) = FakeMediaHttp.polite(always, FakeMediaHttp.cfg, List(Polite.RefusalBackoffMs(60000L), Polite.RefusalBackoffMs(300000L)))
     assertEquals(p.get(metUrl(1)).left.toOption, Some(s"$metHost: HTTP 403 (still, after waiting 360 s)"))
     assertEquals((always.requests.size, slept.toList), (3, List(60000L, 300000L)))
     val once = FakeMediaHttp(_ => FakeMediaHttp.json("{}", code = 403))
@@ -141,8 +147,8 @@ class PolitenessSuite extends munit.FunSuite:
     assertEquals((once.requests.size, none.toList), (1, Nil))
 
   test("the slow-down stops at 16 times the pace; another host keeps its own"):
-    val http = FakeMediaHttp(u => FakeMediaHttp.json("{}", code = if u.contains(metHost) then 403 else 200))
-    val (p, _) = FakeMediaHttp.polite(http, FakeMediaHttp.cfg.modify(_.requestIntervalMs).setTo(100), List.fill(6)(1L))
+    val http = FakeMediaHttp(u => FakeMediaHttp.json("{}", code = if u.contains(metHost.value) then 403 else 200))
+    val (p, _) = FakeMediaHttp.polite(http, FakeMediaHttp.cfg.modify(_.requestIntervalMs).setTo(MediaConfig.RequestIntervalMs(100)), List.fill(6)(Polite.RefusalBackoffMs(1L)))
     assert(p.get(metUrl(1)).isLeft)
     assertEquals(p.intervalMs(metHost), 1600L)
     assertEquals(p.intervalMs(com.histmersion.pluginhost.Polite.Host("images.metmuseum.org")), 100L)

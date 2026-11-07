@@ -41,8 +41,8 @@ class PlanPoolsSuite extends munit.FunSuite:
     val (rs, refusal, plan) = PlanPools.codexReadings(parser.parse(Captured).toOption.get, com.histmersion.api.automation.PlanQuota.Now(1000L))
     val got = rs.map(r => s"${r.limit} ${r.kind} ${r.usedPct} ${r.rejected} ${r.model.getOrElse("-")}").toSet
     assertEquals(got, Set("codex 10080m 100.0 true -", "gpt-reserve 10080m 0.0 false gpt-5.6-luna"))
-    assertEquals(rs.find(_.limit == "codex").flatMap(_.resetsAt), Some(1791625500000L))
-    assert(refusal.exists(_._1.contains("ordinaryUsageAllowed")))
+    assertEquals(rs.find(_.limit.value == "codex").flatMap(_.resetsAt), Some(1791625500000L))
+    assert(refusal.exists(_._1.value.contains("ordinaryUsageAllowed")))
     assertEquals(plan, Some("prolite"))
 
   test("codex: a plan whose primary is the 5-hour window and secondary the week"):
@@ -74,7 +74,7 @@ class PlanPoolsSuite extends munit.FunSuite:
     )
     script.toFile.setExecutable(true)
     val home = Files.createDirectories(dir.resolve("home"))
-    val r = PlanPools.readCodex(script.toString, home, com.histmersion.config.AgentsConfig.DoctorTimeoutSeconds(10))
+    val r = PlanPools.readCodex(com.histmersion.config.CodexConfig.Command(script.toString), home, com.histmersion.config.AgentsConfig.DoctorTimeoutSeconds(10))
     assert(r.isRight, r)
     assertEquals(r.toOption.get.hcursor.downField("ordinaryUsageAllowed").as[Boolean], Right(false))
     val sent = Files.readString(log)
@@ -88,8 +88,8 @@ class PlanPoolsSuite extends munit.FunSuite:
     Files.writeString(script, "#!/bin/bash\nsleep 30\n")
     script.toFile.setExecutable(true)
     val t0 = System.nanoTime()
-    val r = PlanPools.readCodex(script.toString, dir, com.histmersion.config.AgentsConfig.DoctorTimeoutSeconds(2))
-    assert(r.left.exists(_.contains("did not answer")), r)
+    val r = PlanPools.readCodex(com.histmersion.config.CodexConfig.Command(script.toString), dir, com.histmersion.config.AgentsConfig.DoctorTimeoutSeconds(2))
+    assert(r.left.exists(_.value.contains("did not answer")), r)
     assert((System.nanoTime() - t0) / 1000000000L < 15)
 
   test("a mod's report: percentUsed and the ISO reset"):

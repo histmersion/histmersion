@@ -53,7 +53,7 @@ class ListFiltersHttpSuite extends com.histmersion.db.DbSuite:
 
   private def facets(h: Map[String, String]): Map[ListFilters.FacetName, Map[ListFilters.Term, RowCount]] =
     h.get(ListFilters.FacetsHeader.toLowerCase)
-      .fold(Map.empty)(ListFilters.decodeFacets(ListFilters.EncodedFacets(_)).map((f, vs) => f -> vs.toMap).toMap)
+      .fold(Map.empty)(s => ListFilters.decodeFacets(ListFilters.EncodedFacets(s)).map((f, vs) => f -> vs.toMap).toMap)
 
   override def afterSuite(): Unit =
     if testDb.nonEmpty then

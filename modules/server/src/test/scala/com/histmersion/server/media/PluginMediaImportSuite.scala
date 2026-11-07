@@ -31,7 +31,9 @@ import com.histmersion.domain.media.MediaRole
 import com.histmersion.api.VocabularyCodecs.given
 import com.histmersion.api.catalogue.Place
 import com.histmersion.api.media.MediaImportRequest
+import com.histmersion.api.media.MediaItem
 import com.histmersion.api.media.MediaProvider
+import com.histmersion.domain.media.imports.Target
 
 /** A THIRD-PARTY plugin's media collection (docs/research-plugins.md §6, §11) run by `media import` through the
   * registries, against a real PostGIS (HISTMERSION_TEST_DB_URL; skipped otherwise): the plugin states each record's
@@ -45,55 +47,63 @@ class PluginMediaImportSuite extends com.histmersion.db.DbSuite:
   private val testDb = com.histmersion.db.TestDb.url
   override def munitIgnore: Boolean = testDb.isEmpty
 
-  private val Collection = "zq-portal"
-  private val PlaceId = "zqpl_site"
+  private val Collection = MediaItem.Provider("zq-portal")
+  private val CollectionAdd = spi.Registry.AddId("zq-portal")
+  private val CollectionKey = MediaPluginCollectionsConfig.PerCollectionKey("zq-portal")
+  private val PlaceId = Place.Id("zqpl_site")
+  private val PlaceTarget = Target.Id("zqpl_site")
 
   /** The fixture plugin: one collection whose search asks its API through the host's client and answers four records —
     * CC BY, CC BY-NC, all rights reserved, and a CC0 one from another place.
     */
   final private class ZqPlugin extends spi.Plugin:
     type Config = ZqPluginConfig
-    val info = spi.Plugin.Info(com.histmersion.plugin.Plugin.Info.Id("zq-plugin"), com.histmersion.plugin.Plugin.Info.Version("0.1.0"), spi.Spi.Version)
+    val info = spi.Plugin.Info(com.histmersion.plugin.Plugin.Info.Id("zq-plugin"), com.histmersion.plugin.Plugin.Info.Version("0.1.0"), spi.Plugin.Info.SpiVersion(spi.Spi.Version))
     override def defaultsResource = com.histmersion.plugin.Plugin.DefaultsResourceResult("zq-none.conf")
-    def register(c: ZqPluginConfig, ctx: spi.Plugin.Context) = ctx.mediaCollections.add(Collection, ZqCollection)
+    def register(c: ZqPluginConfig, ctx: spi.Plugin.Context) = ctx.mediaCollections.add(CollectionAdd, ZqCollection).left.map(e => spi.Plugin.RegisterResultPart1(e.value))
 
   private object ZqCollection extends spi.MediaCollection:
     val title = com.histmersion.plugin.MediaCollection.TitleResult("Zq portal objects")
-    override val description = "A test fixture's collection"
-    val role = spi.MediaCollection.Object
+    override val description = spi.MediaCollection.DescriptionResult("A test fixture's collection")
+    val role = spi.MediaCollection.RoleResult(spi.MediaCollection.Object)
     override val requestIntervalMs = com.histmersion.plugin.MediaCollection.RequestIntervalMsResult(0)
     def search(place: spi.MediaPlace, http: spi.Plugin.Http) =
       // the plugin asks with its own User-Agent: the host's replaces it
       http
         .get(
-          s"https://zq.example/search?q=${place.label}",
-          Map("User-Agent" -> "zq-bot/1.0", "Accept" -> "application/json")
+          spi.Plugin.Http.GetUrl(s"https://zq.example/search?q=${place.label}"),
+          Map(
+            spi.Plugin.Http.GetHeadersPart1("User-Agent") -> spi.Plugin.Http.GetHeadersPart2("zq-bot/1.0"),
+            spi.Plugin.Http.GetHeadersPart1("Accept") -> spi.Plugin.Http.GetHeadersPart2("application/json")
+          )
         )
+        .left
+        .map(e => spi.MediaCollection.SearchResultPart1(e.value))
         .map { _ =>
-          def item(key: String, licence: String, where: String) =
+          def item(key: spi.MediaItem.Key, licence: spi.Licence, where: spi.MediaItem.GeographyPart2) =
             Right(
               spi.MediaItem(
                 key,
-                s"Zq bowl $key",
-                s"https://zq.example/objects/$key",
-                Some(s"https://zq.example/img/$key.jpg"),
+                spi.MediaItem.Title(s"Zq bowl $key"),
+                spi.MediaItem.PageUrl(s"https://zq.example/objects/$key"),
+                Some(spi.MediaItem.ImageUrl(s"https://zq.example/img/$key.jpg")),
                 Right(
                   spi.MediaRights(
-                    spi.Licence(licence),
-                    author = Some("Zq Museum"),
-                    credit = s"Zq bowl $key, Zq Museum, $licence"
+                    licence,
+                    author = Some(spi.MediaRights.Author("Zq Museum")),
+                    credit = spi.MediaRights.Credit(s"Zq bowl $key, Zq Museum, $licence")
                   )
                 ),
-                geography = List("place_of_origin" -> where),
+                geography = List(spi.MediaItem.GeographyPart1("place_of_origin") -> where),
                 period = spi.Period.from(spi.Year(-1400), spi.Year(-1300)).toOption
               )
             )
           List(
-            item("by", "CC BY 4.0", "Zqplenai"),
-            item("nc", "CC BY-NC 4.0", "Zqplenai"),
-            item("arr", "All rights reserved", "Zqplenai"),
-            item("far", "https://creativecommons.org/publicdomain/zero/1.0/", "Zqpl Nowhere"),
-            Left("a record the API could not describe")
+            item(spi.MediaItem.Key("by"), spi.Licence("CC BY 4.0"), spi.MediaItem.GeographyPart2("Zqplenai")),
+            item(spi.MediaItem.Key("nc"), spi.Licence("CC BY-NC 4.0"), spi.MediaItem.GeographyPart2("Zqplenai")),
+            item(spi.MediaItem.Key("arr"), spi.Licence("All rights reserved"), spi.MediaItem.GeographyPart2("Zqplenai")),
+            item(spi.MediaItem.Key("far"), spi.Licence("https://creativecommons.org/publicdomain/zero/1.0/"), spi.MediaItem.GeographyPart2("Zqpl Nowhere")),
+            Left(spi.MediaCollection.SearchResultPart2Part1("a record the API could not describe"))
           )
         }
 
@@ -112,7 +122,7 @@ class PluginMediaImportSuite extends com.histmersion.db.DbSuite:
 
   private lazy val base =
     val b = AppConfig.load()
-    b.modify(_.db).setTo(b.db.modify(_.url).setTo(testDb.get)).modify(_.media).setTo(b.media.modify(_.requestIntervalMs).setTo(0))
+    b.modify(_.db).setTo(b.db.modify(_.url).setTo(DbConfig.Url(testDb.get))).modify(_.media).setTo(b.media.modify(_.requestIntervalMs).setTo(MediaConfig.RequestIntervalMs(0)))
   private lazy val ds =
     val d = testPool(base.db)
     Migrate.run(d)
@@ -120,12 +130,12 @@ class PluginMediaImportSuite extends com.histmersion.db.DbSuite:
 
   /** The config with `allow` as this collection's own allowlist. */
   private def allowing(allow: String): AppConfig =
-    base.modify(_.media).setTo(base.media.modify(_.collections).setTo(base.media.collections.modify(_.perCollection).setTo(Map(Collection -> allow)))
+    base.modify(_.media).setTo(base.media.modify(_.collections).setTo(base.media.collections.modify(_.perCollection).setTo(Map(CollectionKey -> MediaPluginCollectionsConfig.Licences(allow))))
     )
 
   private def clean(): Unit = connect(ds):
     val _ = sql"DELETE FROM media_links WHERE target_id LIKE 'zqpl%'".update.run()
-    val _ = sql"DELETE FROM assets WHERE provider = $Collection".update.run()
+    val _ = sql"DELETE FROM assets WHERE provider = ${Collection.value}".update.run()
     val _ = sql"DELETE FROM media_checks WHERE target_id LIKE 'zqpl%'".update.run()
     val _ = sql"DELETE FROM finding_places WHERE place_id LIKE 'zqpl%'".update.run()
     val _ = sql"DELETE FROM findings WHERE citekey LIKE 'zqpl%'".update.run()
@@ -140,10 +150,10 @@ class PluginMediaImportSuite extends com.histmersion.db.DbSuite:
         List(
           Place.Input(
             Place(
-              com.histmersion.api.catalogue.Place.Id(PlaceId),
+              PlaceId,
               com.histmersion.api.catalogue.Place.Label("Zqplenae"),
-              com.histmersion.domain.catalogue.Place.Kind.Site,
-              Some("""{"type":"Point","coordinates":[142.0,-43]}""")
+              Place.KindValue(com.histmersion.domain.catalogue.Place.Kind.Site),
+              Some(Place.Geometry("""{"type":"Point","coordinates":[142.0,-43]}"""))
             ),
             List(Place.Name(com.histmersion.api.catalogue.Place.Name.Value("Zqplenae")), Place.Name(com.histmersion.api.catalogue.Place.Name.Value("Zqplenai")))
           )
@@ -153,7 +163,7 @@ class PluginMediaImportSuite extends com.histmersion.db.DbSuite:
         sql"INSERT INTO sources (citekey, title) VALUES ('zqpl2020_x', 'Zqpl')".update.run()
         sql"""INSERT INTO findings (id, citekey, claim, period) VALUES
               ('zqpl2020_x#1', 'zqpl2020_x', 'a', int8range(-1600, -1100, '[]'))""".update.run()
-        sql"INSERT INTO finding_places (finding_id, place_id) VALUES ('zqpl2020_x#1', $PlaceId)".update.run()
+        sql"INSERT INTO finding_places (finding_id, place_id) VALUES ('zqpl2020_x#1', ${PlaceId.value})".update.run()
         ()
   override def afterSuite(): Unit = if testDb.isDefined then clean()
 
@@ -164,13 +174,13 @@ class PluginMediaImportSuite extends com.histmersion.db.DbSuite:
     val http = fake
     val r = handlers(base, http)
       .importMedia(MediaImportRequest(Collection, place = Some(PlaceId)))
-      .fold(e => fail(e.message), identity)
+      .fold(e => fail(e.message.value), identity)
     assertEquals(r.provider, Collection)
     assertEquals(
       r.samples.map(s => (s.key, s.license, s.basis)),
       List(("by", "CC-BY-4.0", "place_of_origin = Zqplenai; 1400–1300 BCE within 1600–1100 BCE"))
     )
-    val rejected = r.rejected.map(c => c.key -> c.n).toMap
+    val rejected = r.rejected.map(c => c.key.value -> c.n.value).toMap
     assertEquals(rejected.get(s"licence cc-by-nc not allowed for $Collection"), Some(1))
     assertEquals(rejected.get(s"licence all-rights-reserved not allowed for $Collection"), Some(1))
     assertEquals(rejected.get("its place is not on the map"), Some(1))
@@ -178,25 +188,25 @@ class PluginMediaImportSuite extends com.histmersion.db.DbSuite:
       r.byLicence.map(c => (c.key, c.allowed)).toMap,
       Map("CC-BY-4.0" -> true, "CC-BY-NC-4.0" -> false, "all-rights-reserved" -> false, "CC0-1.0" -> true)
     )
-    assert(r.failed.exists(_.contains("a record the API could not describe")), r.failed.toString)
+    assert(r.failed.exists(_.value.contains("a record the API could not describe")), r.failed.toString)
     // the plugin's request went through the host's polite client, with the host's User-Agent
     val (url, headers) = http.requests.head
     assert(url.startsWith("https://zq.example/search?q=Zqplenae"), url)
-    assertEquals(headers.get("User-Agent"), Some(HttpPolicy.userAgent(base.media.userAgent)))
+    assertEquals(headers.get("User-Agent"), Some(HttpPolicy.userAgent(HttpPolicy.UserAgent(base.media.userAgent.value)).value))
     assertEquals(headers.get("Accept"), Some("application/json"))
-    assertEquals(AssetFixtures.thumbs(ds, com.histmersion.domain.media.imports.Target.TargetType("place"), PlaceId), Nil, "a dry run stores nothing")
+    assertEquals(AssetFixtures.thumbs(ds, com.histmersion.domain.media.imports.Target.TargetType("place"), PlaceTarget), Nil, "a dry run stores nothing")
 
   test("allowed for this collection by the user, the NC record is stored; all-rights-reserved never is"):
     val cfg = allowing("cc0,public-domain,cc-by,cc-by-nc,all-rights-reserved")
     val http = fake
     val r = handlers(cfg, http)
       .importMedia(MediaImportRequest(Collection, dryRun = com.histmersion.api.media.MediaImportRequest.DryRun(false), place = Some(PlaceId)))
-      .fold(e => fail(e.message), identity)
+      .fold(e => fail(e.message.value), identity)
     assertEquals((r.stored, r.linked), (2, 2), r.toString)
-    assert(r.rejected.exists(_.key == s"licence all-rights-reserved not allowed for $Collection"), r.rejected.toString)
+    assert(r.rejected.exists(_.key.value == s"licence all-rights-reserved not allowed for $Collection"), r.rejected.toString)
     val stored = connect(ds)(
       sql"""SELECT a.provider_key, a.license, a.credit, m.basis, m.role FROM assets a
-          JOIN media_links m ON m.asset_uid = a.uid WHERE a.provider = $Collection ORDER BY a.provider_key"""
+          JOIN media_links m ON m.asset_uid = a.uid WHERE a.provider = ${Collection.value} ORDER BY a.provider_key"""
         .query[(String, Option[String], Option[String], Option[String], String)]
         .run()
         .toList
@@ -209,7 +219,7 @@ class PluginMediaImportSuite extends com.histmersion.db.DbSuite:
     assertEquals(stored.head._4, Some("place_of_origin = Zqplenai; 1400–1300 BCE within 1600–1100 BCE"))
     assert(http.requests.exists(_._1 == "https://zq.example/img/nc.jpg"), "the host downloaded the rendition")
     val checked = connect(ds)(
-      sql"SELECT found FROM media_checks WHERE provider = $Collection AND target_id = $PlaceId"
+      sql"SELECT found FROM media_checks WHERE provider = ${Collection.value} AND target_id = ${PlaceId.value}"
         .query[Int]
         .run()
         .toList
@@ -229,17 +239,17 @@ class PluginMediaImportSuite extends com.histmersion.db.DbSuite:
         Collection,
         com.histmersion.api.media.MediaProvider.Info.Title("Zq portal objects"),
         com.histmersion.api.media.MediaProvider.Info.Over("places"),
-        "A test fixture's collection",
+        MediaProvider.Info.Description("A test fixture's collection"),
         com.histmersion.api.media.MediaProvider.Info.Plugin("zq-plugin"),
         builtin = com.histmersion.api.media.MediaProvider.Info.Builtin(false),
-        base.media.collections.licences
+        MediaProvider.Info.Licences(base.media.collections.licences.value)
       )
     )
     assert(
-      h.imports.importMedia(MediaImportRequest(com.histmersion.api.media.MediaItem.Provider("rijks"))).left.exists(_.message.contains(s"opencontext, $Collection;"))
+      h.imports.importMedia(MediaImportRequest(com.histmersion.api.media.MediaItem.Provider("rijks"))).left.exists(_.message.value.contains(s"opencontext, $Collection;"))
     )
     assert(
-      handlers(base, fake).importMedia(MediaImportRequest(Collection, event = Some("e1"))).isLeft,
+      handlers(base, fake).importMedia(MediaImportRequest(Collection, event = Some(com.histmersion.api.catalogue.Event.Id("e1")))).isLeft,
       "a collection is about places"
     )
     // the plugin switched off: its collection is gone from the import and the list
@@ -250,7 +260,7 @@ class PluginMediaImportSuite extends com.histmersion.db.DbSuite:
       h2.imports
         .importMedia(MediaImportRequest(Collection))
         .left
-        .exists(_.message.contains("unknown media provider 'zq-portal'"))
+        .exists(_.message.value.contains("unknown media provider 'zq-portal'"))
     )
 
   test("through the server: GET /api/media/providers lists the plugin's collection; about lists what it registered"):
@@ -266,7 +276,7 @@ class PluginMediaImportSuite extends com.histmersion.db.DbSuite:
         assertEquals(r.statusCode, 200, r.body)
         val ps = decode[List[MediaProvider.Info]](r.body).fold(e => fail(s"$e: ${r.body}"), identity)
         assertEquals(ps.map(_.name).last, Collection)
-        assert(ps.find(_.name == "met").exists(p => p.builtin && p.plugin == "media-met"), ps.toString)
+        assert(ps.find(_.name == MediaItem.Provider("met")).exists(p => p.builtin.value && p.plugin == MediaProvider.Info.Plugin("media-met")), ps.toString)
         assert(
           MediaMarkdown
             .mediaProviders(ps)

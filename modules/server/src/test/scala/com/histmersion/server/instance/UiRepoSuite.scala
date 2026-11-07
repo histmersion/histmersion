@@ -6,7 +6,10 @@ import com.histmersion.util.database.Transactor
 
 import com.histmersion.config.*
 import com.histmersion.domain.*
+import com.histmersion.api.instance.UiNotices
 import com.histmersion.api.instance.UiNotices.Board
+import com.histmersion.domain.automation.Goal
+import com.histmersion.domain.library.Citekey
 import com.histmersion.util.database.Migrate
 
 import com.augustnagro.magnum.*
@@ -21,17 +24,17 @@ class UiRepoSuite extends com.histmersion.db.DbSuite:
   override def munitIgnore: Boolean = testDb.isEmpty
 
   private lazy val ds =
-    val d = testPool(AppConfig.load().db.copy(url = testDb.get))
+    val d = testPool(AppConfig.load().db.copy(url = DbConfig.Url(testDb.get)))
     Migrate.run(d)
     d
 
-  private val ck = "zz_ui_notice_src"
-  private val goal = "zz-ui-notice-goal"
+  private val ck = Citekey("zz_ui_notice_src")
+  private val goal = Goal.Slug("zz-ui-notice-goal")
 
   private def tidy(): Unit =
     connect(ds):
-      sql"DELETE FROM approvals WHERE citekey = $ck".update.run()
-      sql"DELETE FROM goals WHERE slug = $goal".update.run()
+      sql"DELETE FROM approvals WHERE citekey = ${ck.value}".update.run()
+      sql"DELETE FROM goals WHERE slug = ${goal.value}".update.run()
 
   override def beforeEach(context: BeforeEach): Unit = if testDb.isDefined then tidy()
   override def afterEach(context: AfterEach): Unit = if testDb.isDefined then tidy()
@@ -39,17 +42,18 @@ class UiRepoSuite extends com.histmersion.db.DbSuite:
   /** The seen marks as the person's service keeps them (`ui_seen`, written here directly: that service is the
     * server's).
     */
-  private def seen(): Map[String, String] =
+  private def seen(): Map[Board.Wire, UiNotices.Counter.Seen] =
     connect(ds)(
       sql"""SELECT board, to_char(seen_at AT TIME ZONE 'UTC', 'YYYY-MM-DD"T"HH24:MI:SS.US"Z"') FROM ui_seen"""
         .query[(String, String)]
         .run()
+        .map((b, at) => Board.Wire(b) -> UiNotices.Counter.Seen(at))
         .toMap
     )
 
-  private def markSeen(b: Board, at: String): Unit =
+  private def markSeen(b: Board, at: UiNotices.Counter.Seen): Unit =
     connect(ds)(
-      sql"""INSERT INTO ui_seen (board, seen_at) VALUES (${b.wire}, $at::timestamptz)
+      sql"""INSERT INTO ui_seen (board, seen_at) VALUES (${b.wire.value}, ${at.value}::timestamptz)
             ON CONFLICT (board) DO UPDATE SET seen_at = greatest(ui_seen.seen_at, EXCLUDED.seen_at)""".update
         .run(): Unit
     )
@@ -57,16 +61,18 @@ class UiRepoSuite extends com.histmersion.db.DbSuite:
   private def board(b: Board) =
     Transactor(ds).read(UiRepo.counters(seen())).boards.find(_.key == b.wire).getOrElse(fail(s"no ${b.wire}"))
 
-  private def now(): String =
-    connect(ds)(
-      sql"""SELECT to_char(now() AT TIME ZONE 'UTC', 'YYYY-MM-DD"T"HH24:MI:SS.US"Z"')""".query[String].run().head
+  private def now(): UiNotices.Counter.Seen =
+    UiNotices.Counter.Seen(
+      connect(ds)(
+        sql"""SELECT to_char(now() AT TIME ZONE 'UTC', 'YYYY-MM-DD"T"HH24:MI:SS.US"Z"')""".query[String].run().head
+      )
     )
 
   test("every board is listed in order; the counted ones carry a count"):
     val cs = Transactor(ds).read(UiRepo.counters(seen())).boards
     assertEquals(cs.map(_.key), Board.wires)
     assertEquals(cs.filter(_.count.isDefined).map(_.key), List("tasks", "approvals", "acquire"))
-    assert(cs.forall(_.count.forall(_ >= 0)))
+    assert(cs.forall(_.count.forall(_.value >= 0)))
 
   test("the agents at a glance count the agent runs running and queued, and read the autopilot's switch"):
     final class Rollback extends RuntimeException
@@ -83,7 +89,7 @@ class UiRepoSuite extends com.histmersion.db.DbSuite:
         sql"""INSERT INTO jobs (id, kind, status) VALUES ('zz-ui-glance-r', 'agent', 'running'),
               ('zz-ui-glance-q', 'agent', 'queued'), ('zz-ui-glance-i', 'ingest', 'running')""".update.run()
         val g = UiRepo.agentsGlance
-        assert(g.running >= 1 && g.queued >= 1, g.toString)
+        assert(g.running.value >= 1 && g.queued.value >= 1, g.toString)
         assertEquals((g.on, g.draining), autopilot)
         throw Rollback()
       }
@@ -91,38 +97,38 @@ class UiRepoSuite extends com.histmersion.db.DbSuite:
     assertEquals(connect(ds)(sql"SELECT count(*) FROM jobs WHERE id LIKE 'zz-ui-glance-%'".query[Long].run().head), 0L)
 
   test("V083 left a mark for every board, so an upgraded corpus does not light up at once"):
-    val marked = connect(ds)(sql"SELECT board FROM ui_seen".query[String].run()).toSet
+    val marked = connect(ds)(sql"SELECT board FROM ui_seen".query[String].run()).map(Board.Wire(_)).toSet
     assert(Board.wires.forall(marked), marked.toString)
 
   test("an approval proposed is counted and new; read, it is not; its decision is news again"):
     val t0 = now()
     markSeen(Board.Approvals, t0)
-    val before = board(Board.Approvals).count.get
+    val before = board(Board.Approvals).count.get.value
     val id = connect(ds)(
-      sql"""INSERT INTO approvals (kind, citekey, status, proposal) VALUES ('status-change', $ck, 'contested', '{}'::jsonb)
+      sql"""INSERT INTO approvals (kind, citekey, status, proposal) VALUES ('status-change', ${ck.value}, 'contested', '{}'::jsonb)
             RETURNING id""".query[Long].run().head
     )
     val proposed = board(Board.Approvals)
-    assert(proposed.count.get >= before + 1, proposed.toString)
-    assert(proposed.fresh, proposed.toString)
-    assert(proposed.latest.exists(_ > t0), proposed.toString)
+    assert(proposed.count.get.value >= before + 1, proposed.toString)
+    assert(proposed.fresh.value, proposed.toString)
+    assert(proposed.latest.exists(_.value > t0.value), proposed.toString)
     val latest = proposed.latest.get
-    markSeen(Board.Approvals, latest)
+    markSeen(Board.Approvals, UiNotices.Counter.Seen(latest.value))
     val read = board(Board.Approvals)
     assertEquals(read.seen, Some(latest))
     // another suite may propose one at the same moment; ours is read either way
-    assert(read.latest != Some(latest) || !read.fresh, read.toString)
+    assert(read.latest != Some(latest) || !read.fresh.value, read.toString)
     connect(ds)(sql"UPDATE approvals SET state = 'rejected', decided_at = now() WHERE id = $id".update.run())
     val decided = board(Board.Approvals)
-    assert(decided.latest.exists(_ > latest), decided.toString)
-    assert(decided.fresh, decided.toString)
+    assert(decided.latest.exists(_.value > latest.value), decided.toString)
+    assert(decided.fresh.value, decided.toString)
 
   test("a goal changed after the mark is news"):
     val t0 = now()
     markSeen(Board.Goals, t0)
-    connect(ds)(sql"INSERT INTO goals (slug, title) VALUES ($goal, 'zz notice')".update.run())
+    connect(ds)(sql"INSERT INTO goals (slug, title) VALUES (${goal.value}, 'zz notice')".update.run())
     val g = board(Board.Goals)
-    assert(g.fresh && g.latest.exists(_ > t0), g.toString)
+    assert(g.fresh.value && g.latest.exists(_.value > t0.value), g.toString)
     assertEquals(g.count, None, "goals are not counted")
 
   test("a board's counter carries the seen mark it is given, and none for a board never opened"):

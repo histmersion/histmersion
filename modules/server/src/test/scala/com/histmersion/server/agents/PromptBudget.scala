@@ -7,6 +7,7 @@ import com.histmersion.domain.research.workflows.*
 import com.histmersion.domain.library.workflows.*
 
 import com.histmersion.domain.automation.agents.{
+  AgentDef,
   AgentGenerator,
   AgentRuntime,
   AnswerSchemas,
@@ -47,7 +48,7 @@ object PromptBudget:
   private given com.histmersion.util.storage.Resources = com.histmersion.util.storage.Resources.classpath(getClass.getClassLoader)
   private given java.time.Clock = java.time.Clock.systemUTC()
   private given com.histmersion.util.system.JvmHome = com.histmersion.util.system.JvmHome(java.nio.file.Path.of("target/test-home").toAbsolutePath)
-  final case class Row(agent: String, system: Int, tools: Map[String, Int], answer: Int):
+  final case class Row(agent: AgentDef.Name, system: Int, tools: Map[ToolName, Int], answer: Int):
     def toolChars: Int = tools.values.sum
     def total: Int = system + toolChars + answer
 
@@ -55,19 +56,19 @@ object PromptBudget:
   def tokens(chars: Int): Int = math.round(chars / CharsPerToken).toInt
 
   /** The answer schema each agent definition's steps use (a reviewer's verification pass: `recheck`). */
-  val answers: Map[String, ResponseSchema[?]] = Map(
-    "probe" -> AnswerSchemas.probe,
-    "enrich-classify" -> LibraryAnswers.classification,
-    "enrich-findings" -> LibraryAnswers.findings,
-    "enrich-notes" -> LibraryAnswers.notes,
-    "compile-extractor" -> ResearchAnswers.extract,
-    "compile-writer" -> ResearchAnswers.draft,
-    "article-rules-reviewer" -> ResearchAnswers.rules,
-    "article-cold-reader" -> ResearchAnswers.coldReader,
-    "article-skeptic" -> ResearchAnswers.skeptic,
-    "article-fixer" -> ResearchAnswers.fixer,
-    "goal-planner" -> AnswerSchemas.plan,
-    "acquisition-ranker" -> LibraryAnswers.ranking
+  val answers: Map[AgentDef.Name, ResponseSchema[?]] = Map(
+    AgentDef.Name("probe") -> AnswerSchemas.probe,
+    AgentDef.Name("enrich-classify") -> LibraryAnswers.classification,
+    AgentDef.Name("enrich-findings") -> LibraryAnswers.findings,
+    AgentDef.Name("enrich-notes") -> LibraryAnswers.notes,
+    AgentDef.Name("compile-extractor") -> ResearchAnswers.extract,
+    AgentDef.Name("compile-writer") -> ResearchAnswers.draft,
+    AgentDef.Name("article-rules-reviewer") -> ResearchAnswers.rules,
+    AgentDef.Name("article-cold-reader") -> ResearchAnswers.coldReader,
+    AgentDef.Name("article-skeptic") -> ResearchAnswers.skeptic,
+    AgentDef.Name("article-fixer") -> ResearchAnswers.fixer,
+    AgentDef.Name("goal-planner") -> AnswerSchemas.plan,
+    AgentDef.Name("acquisition-ranker") -> LibraryAnswers.ranking
   )
 
   private lazy val toolbox = TestToolbox(null)
@@ -80,12 +81,12 @@ object PromptBudget:
   def toolChars(t: ToolName): Int = toolJson(t).noSpaces.length
 
   def rows(d: AgentGenerator.Defs): List[Row] =
-    d.agents.sortBy(_.name).map { a =>
+    d.agents.sortBy(_.name.value).map { a =>
       Row(
         a.name,
         d.system(a, ToolStyle.Claude).length,
-        a.tools.map(t => t.value -> toolChars(t)).toMap,
-        answers.get(a.name).fold(0)(s => ClaudeCode.schemaJson(s).length)
+        a.tools.map(t => t -> toolChars(t)).toMap,
+        answers.get(a.name).fold(0)(s => ClaudeCode.schemaJson(s).value.length)
       )
     }
 
@@ -109,12 +110,12 @@ object PromptBudget:
       com.histmersion.domain.automation.agents.GenSettings.QuotaUrl("http://127.0.0.1:9/quota"),
       claudeMod = com.histmersion.domain.automation.agents.GenSettings.ClaudeMod(false),
       interactiveMod = com.histmersion.domain.automation.agents.GenSettings.InteractiveMod(false),
-      AgentGenerator.PluginVersion
+      GenSettings.Version(AgentGenerator.PluginVersion)
     )
     val runs = d.agents.filter(_.runsOn(AgentRuntime.ClaudeCode))
     AgentGenerator.claudeCode(d, settings) ++
       runs.map(a => s"mcp-tools/${a.name}.json" -> Json.obj("tools" -> a.tools.map(toolJson).asJson).spaces2) ++
-      runs.flatMap(a => answers.get(a.name).map(s => s"answer-schemas/${a.name}.json" -> ClaudeCode.schemaJson(s)))
+      runs.flatMap(a => answers.get(a.name).map(s => s"answer-schemas/${a.name}.json" -> ClaudeCode.schemaJson(s).value))
 
   def run(args: List[String]): Unit =
     val d = Generated.defs()
@@ -127,7 +128,7 @@ object PromptBudget:
           com.histmersion.domain.automation.agents.GenSettings.QuotaUrl("http://127.0.0.1:9/quota"),
           claudeMod = com.histmersion.domain.automation.agents.GenSettings.ClaudeMod(false),
           interactiveMod = com.histmersion.domain.automation.agents.GenSettings.InteractiveMod(false),
-          AgentGenerator.PluginVersion,
+          GenSettings.Version(AgentGenerator.PluginVersion),
           codexToolOutputTokens = com.histmersion.domain.automation.agents.GenSettings.CodexToolOutputTokens(6000),
           codexLeanBase = com.histmersion.domain.automation.agents.GenSettings.CodexLeanBase(true)
         )
@@ -150,4 +151,4 @@ object PromptBudget:
         println()
         println(toolTable)
         println()
-        println(s"recheck answer schema: ${ClaudeCode.schemaJson(ResearchAnswers.recheck).length} chars")
+        println(s"recheck answer schema: ${ClaudeCode.schemaJson(ResearchAnswers.recheck).value.length} chars")

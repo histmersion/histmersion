@@ -3,6 +3,7 @@ package com.histmersion.server.agents
 import com.histmersion.testsupport.ComparedByValue.given
 
 import com.histmersion.domain.automation.agents.{
+  AgentDef,
   AgentDefinitions,
   AgentGenerator,
   AgentRuntime,
@@ -33,8 +34,9 @@ class PromptTrimSuite extends munit.FunSuite:
   // ── the markers ────────────────────────────────────────────────────────────────────────────────
 
   test("a marked part reaches only its audience, without its markers or a run of blank lines"):
-    val t =
+    val t = com.histmersion.domain.automation.agents.AgentDef.Body(
       "a\n\n<!-- only:interactive -->\nrun it in Bash\n<!-- /only:interactive -->\n\nb\n<!-- only:headless -->\ncall the tool\n<!-- /only:headless -->\nc\n"
+    )
     assertEquals(AgentDefinitions.forAudience(t, Set(Audience.Headless)), "a\n\nb\ncall the tool\nc\n")
     assertEquals(AgentDefinitions.forAudience(t, Set(Audience.Interactive)), "a\n\nrun it in Bash\n\nb\nc\n")
     assertEquals(
@@ -56,7 +58,7 @@ class PromptTrimSuite extends munit.FunSuite:
         .exists(_.contains("names no audience"))
     )
     assertEquals(
-      AgentGenerator.check(d, Generated.known(AgentDefinitions(Prompts(""), EngineContributions.roster))),
+      AgentGenerator.check(d, Generated.known(AgentDefinitions(new Prompts(Prompts.OverrideDir("")), EngineContributions.roster))),
       Nil,
       "the bundled definitions are clean"
     )
@@ -206,10 +208,10 @@ class PromptTrimSuite extends munit.FunSuite:
     // co-citation check and repair, citations that bring critiques, closed findings), rules +200 (a missing critique's
     // severity), cold reader +200 (its ledger is its own); the guide's pairing line +100 each but the cold reader's
     val ceilings = Map(
-      "article-rules-reviewer" -> 26_700,
-      "article-skeptic" -> 28_000,
-      "article-fixer" -> 30_200,
-      "article-cold-reader" -> 7_700
+      AgentDef.Name("article-rules-reviewer") -> 26_700,
+      AgentDef.Name("article-skeptic") -> 28_000,
+      AgentDef.Name("article-fixer") -> 30_200,
+      AgentDef.Name("article-cold-reader") -> 7_700
     )
     val rows = PromptBudget.rows(d).map(r => r.agent -> r).toMap
     ceilings.foreach((a, max) => assert(rows(a).total <= max, s"$a: ${rows(a).total} characters a turn, over $max"))

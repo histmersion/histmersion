@@ -257,7 +257,7 @@ class OpsHttpSuite extends com.histmersion.db.DbSuite:
       val named = com.histmersion.server.agents.Generated
         .known(
           com.histmersion.domain.automation.agents.AgentDefinitions(
-            com.histmersion.domain.automation.agents.Prompts(com.histmersion.domain.automation.agents.Prompts.OverrideDir("")),
+            new com.histmersion.domain.automation.agents.Prompts(com.histmersion.domain.automation.agents.Prompts.OverrideDir("")),
             com.histmersion.server.agents.EngineContributions.roster
           )
         )

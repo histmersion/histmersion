@@ -21,7 +21,7 @@ class AgentGeneratorSuite extends munit.FunSuite:
   private given com.histmersion.util.storage.Resources = com.histmersion.util.storage.Resources.classpath(getClass.getClassLoader)
   private given java.time.Clock = java.time.Clock.systemUTC()
   private given com.histmersion.util.system.JvmHome = com.histmersion.util.system.JvmHome(java.nio.file.Path.of("target/test-home").toAbsolutePath)
-  private lazy val defs = AgentDefinitions(Prompts(Prompts.OverrideDir("")), EngineContributions.roster)
+  private lazy val defs = AgentDefinitions(new Prompts(Prompts.OverrideDir("")), EngineContributions.roster)
   private lazy val d = Generated.defs()
   private def agent(s: StepAgent) = d.agents.find(_.name == s.wire).getOrElse(fail(s"no ${s.wire}"))
 
@@ -32,7 +32,7 @@ class AgentGeneratorSuite extends munit.FunSuite:
     assert(Prompts.bundled.map(_.value).contains("index.txt") || Prompts.bundled.nonEmpty)
     Prompts.bundled.foreach(rel =>
       assert(
-        Prompts(Prompts.OverrideDir("")).load(com.histmersion.util.storage.SafePath.Candidate(rel.value)).exists(_.trim.nonEmpty),
+        new Prompts(Prompts.OverrideDir("")).load(com.histmersion.util.storage.SafePath.Candidate(rel.value)).exists(_.trim.nonEmpty),
         s"missing or empty: agents/$rel"
       )
     )
@@ -323,7 +323,7 @@ class AgentGeneratorSuite extends munit.FunSuite:
   test("the whole tree generates under a server's runtimes dir"):
     val dir = Files.createTempDirectory("hm-gen-all-")
     val rt = CliRuntime(FakeCli.app(dir), EngineContributions.roster)
-    val r = rt.trees.generate(Generated.known(rt.definitions)).fold(m => fail(m), identity)
+    val r = rt.trees.generate(Generated.known(rt.definitions)).fold(m => fail(m.value), identity)
     assertEquals(r.runtimes, List("claude-code", "codex", "opencode"))
     assert(Files.isRegularFile(dir.resolve("codex/home/article-skeptic.config.toml")))
     assert(Files.isRegularFile(dir.resolve("opencode/config/agents/enrich-classify.md")))

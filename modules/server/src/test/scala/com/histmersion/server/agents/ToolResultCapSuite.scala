@@ -30,20 +30,20 @@ class ToolResultCapSuite extends munit.FunSuite:
     assert(cut.startsWith("x" * 500) && cut.length <= 1000, cut.length)
 
   test("chip links lose their targets; article links and wikilinks stay"):
-    val md = "**Topics:** [pie religion](/#topic=pie_religion), [oral tradition](/#topic=oral_tradition)  \n" +
-      "- [Dragon-Slayer](/article/dragon_slayer) cites [[watkins1995_dragon]]; see [a figure](http://h/x.png)"
+    val md = ToolResultCap.Markdown("**Topics:** [pie religion](/#topic=pie_religion), [oral tradition](/#topic=oral_tradition)  \n" +
+      "- [Dragon-Slayer](/article/dragon_slayer) cites [[watkins1995_dragon]]; see [a figure](http://h/x.png)")
     assertEquals(
       ToolResultCap.plainLinks(md),
       "**Topics:** pie religion, oral tradition  \n- [Dragon-Slayer](/article/dragon_slayer) cites [[watkins1995_dragon]]; see [a figure](http://h/x.png)"
     )
 
-  private val Record =
+  private val Record = ToolResultCap.CompactSourceMd(
     "# How to Kill a Dragon\n\n_[Calvert Watkins](/#author=Calvert%20Watkins) · 1995 · foundational_\n\n" +
       "**Topics:** [pie religion](/#topic=pie_religion)  \n**Regions:** [Anatolia](/#place=Anatolia)  \n" +
       "**Provenance:** archive_org  \n**Uid:** 01a102ee-d28a-75e8-9beb-7c8ee0d08957\n\nThe summary.\n\n" +
       "## Notes\n\n" + (1 to 300).map(i => s"Note line $i about the book.").mkString("\n") +
       "\n\n## Findings (2)\n- The formula *gʷhen- dhgʷhim recurs.\n- It is Proto-Indo-European." +
-      "\n\n## Mentioned in articles (1)\n- [Dragon-Slayer](/article/dragon_slayer)"
+      "\n\n## Mentioned in articles (1)\n- [Dragon-Slayer](/article/dragon_slayer)")
 
   test("a source record drops its identity lines and chip links"):
     val c = ToolResultCap.compactSource(Record)
@@ -55,7 +55,7 @@ class ToolResultCapSuite extends munit.FunSuite:
 
   test("a record over the cap shortens its notes first: summary and findings arrive whole"):
     val c = ToolResultCap.compactSource(Record)
-    val r = ToolResultCap.source(c, com.histmersion.domain.automation.agents.ToolResultCap.SourceMax(4000))
+    val r = ToolResultCap.source(ToolResultCap.Markdown(c), com.histmersion.domain.automation.agents.ToolResultCap.SourceMax(4000))
     assert(r.length <= 4000, r.length)
     assert(
       r.contains("The summary.") && r.contains(
@@ -66,20 +66,20 @@ class ToolResultCapSuite extends munit.FunSuite:
     assert(r.contains("## Mentioned in articles (1)"), "room left: the mentions stay")
     assert(r.contains("get_source section=\"notes\""), "the notes say how to read them whole")
     assert(r.contains("Note line 1 about") && !r.contains("Note line 300 about"), "the notes are cut")
-    assertEquals(ToolResultCap.source(c, c.length), c, "within the cap: untouched")
+    assertEquals(ToolResultCap.source(ToolResultCap.Markdown(c), ToolResultCap.SourceMax(c.length)), c, "within the cap: untouched")
 
   test("with no room for the notes they are left out, then the mentions, then the rest is cut"):
     val c = ToolResultCap.compactSource(Record)
-    val tight = ToolResultCap.source(c, com.histmersion.domain.automation.agents.ToolResultCap.SourceMax(700))
+    val tight = ToolResultCap.source(ToolResultCap.Markdown(c), com.histmersion.domain.automation.agents.ToolResultCap.SourceMax(700))
     assert(tight.length <= 700, tight.length)
     assert(tight.contains("characters of notes left out") || tight.contains("…cut at"), tight)
-    val noNotes = ToolResultCap.source(c.replace("## Notes", "## Elsewhere"), com.histmersion.domain.automation.agents.ToolResultCap.SourceMax(300))
+    val noNotes = ToolResultCap.source(ToolResultCap.Markdown(c.replace("## Notes", "## Elsewhere")),com.histmersion.domain.automation.agents.ToolResultCap.SourceMax(300))
     assert(noNotes.length <= 300 && noNotes.contains("section=\"findings\""), noNotes)
 
   test("a query shows at most its row cap, marked, with how to ask for less"):
     val r = QueryResult(
       List(com.histmersion.api.library.Query.QueryResult.Columns("citekey"), com.histmersion.api.library.Query.QueryResult.Columns("status")),
-      (1 to 120).toList.map(i => List(Some(s"ck$i"), Some(com.histmersion.api.library.Query.QueryResult.Rows("current")))),
+      (1 to 120).toList.map(i => List(Some(com.histmersion.api.library.Query.QueryResult.Rows(s"ck$i")), Some(com.histmersion.api.library.Query.QueryResult.Rows("current")))),
       com.histmersion.api.library.Query.QueryResult.RowCount(120),
       com.histmersion.api.library.Query.QueryResult.Truncated(false),
       com.histmersion.api.library.Query.QueryResult.ElapsedMs(3)
@@ -88,14 +88,14 @@ class ToolResultCapSuite extends munit.FunSuite:
     assert(md.startsWith("### 50 row(s) (truncated by the row cap)"), md.take(80))
     assert(md.contains("| ck50 |") && !md.contains("| ck51 |"), "50 rows")
     assert(md.contains("70 more rows not shown") && md.contains("never a whole table"), md.takeRight(200))
-    val capped = QueryResult(List(com.histmersion.api.library.Query.QueryResult.Columns("c")), (1 to 500).toList.map(i => List(Some(s"r$i"))), com.histmersion.api.library.Query.QueryResult.RowCount(500), com.histmersion.api.library.Query.QueryResult.Truncated(true), com.histmersion.api.library.Query.QueryResult.ElapsedMs(3))
+    val capped = QueryResult(List(com.histmersion.api.library.Query.QueryResult.Columns("c")), (1 to 500).toList.map(i => List(Some(com.histmersion.api.library.Query.QueryResult.Rows(s"r$i")))), com.histmersion.api.library.Query.QueryResult.RowCount(500), com.histmersion.api.library.Query.QueryResult.Truncated(true), com.histmersion.api.library.Query.QueryResult.ElapsedMs(3))
     assert(
       com.histmersion.domain.library.workflows.LibraryAgentTools
         .queryResult(capped, com.histmersion.config.AgentToolsConfig.QueryMaxRows(50), com.histmersion.domain.automation.agents.ToolResultCap.CapMax(100000))
         .contains("450+ more rows"),
       "the server's row cap hid more"
     )
-    val few = r.modify(_.rows).setTo(r.rows.take(3)).modify(_.rowCount).setTo(3)
+    val few = r.modify(_.rows).setTo(r.rows.take(3)).modify(_.rowCount).setTo(com.histmersion.api.library.Query.QueryResult.RowCount(3))
     assertEquals(
       com.histmersion.domain.library.workflows.LibraryAgentTools.queryResult(few, com.histmersion.config.AgentToolsConfig.QueryMaxRows(50), com.histmersion.domain.automation.agents.ToolResultCap.CapMax(100000)),
       com.histmersion.api.library.Query.markdown(few)

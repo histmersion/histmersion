@@ -24,8 +24,8 @@ class HotGraphSuite extends munit.FunSuite:
     def close(): Unit = { closed = true; log.add(s"close $name") }
 
   private val quiet = new Hot.Graph.Log:
-    def info(m: String) = ()
-    def warn(m: String) = ()
+    def info(m: Hot.Graph.Log.Message) = ()
+    def warn(m: Hot.Graph.Log.Message) = ()
 
   final private class Fixture:
     val log = ConcurrentLinkedQueue[String]()
@@ -38,23 +38,23 @@ class HotGraphSuite extends munit.FunSuite:
           case "broken" => Left(com.histmersion.server.hot.Hot.Graph.Problem("cannot connect"))
           case db       => Right(useInScope(Res(s"pool-$db", log))(_.close()))
       }
-      .fold(fail(_), identity)
+      .fold(p => fail(p.value), identity)
     val schema = graph
       .node[String](com.histmersion.server.hot.Hot.Graph.Def.Name("schema"), deps = List(pool)) { ctx =>
         Right(s"migrated ${ctx(pool).name}")
       }
-      .fold(fail(_), identity)
+      .fold(p => fail(p.value), identity)
     val query = graph
       .node[Res](com.histmersion.server.hot.Hot.Graph.Def.Name("query"), deps = List(pool), keys = List(com.histmersion.config.HotNode.Keys("query"))) { ctx =>
         if ctx.config("query") == "bad" then Left(com.histmersion.server.hot.Hot.Graph.Problem("role cannot log in"))
         else Right(useInScope(Res(s"query-${ctx.config("query")}-on-${ctx(pool).name}", log))(_.close()))
       }
-      .fold(fail(_), identity)
+      .fold(p => fail(p.value), identity)
     val loose = graph
       .node[Res](com.histmersion.server.hot.Hot.Graph.Def.Name("loose"), keys = List(com.histmersion.config.HotNode.Keys("other"))) { ctx =>
         Right(useInScope(Res(s"loose-${ctx.config("other")}", log))(_.close()))
       }
-      .fold(fail(_), identity)
+      .fold(p => fail(p.value), identity)
     def opened: List[String] = log.asScala.toList.filter(_.startsWith("open"))
     def closed: List[String] = log.asScala.toList.filter(_.startsWith("close"))
 
@@ -77,7 +77,7 @@ class HotGraphSuite extends munit.FunSuite:
       val looseBefore = f.loose.peek
       val o = f.graph
         .reload(Map("db" -> "b", "query" -> "q1", "other" -> "x"), List(com.histmersion.config.HotNode.Name("db")), drain = 2.seconds)
-        .fold(fail(_), identity)
+        .fold(p => fail(p.value), identity)
       assertEquals(o.generation, 1L)
       assertEquals(o.rebuilt, List("pool", "schema", "query"))
       assertEquals(o.draining, Nil)
@@ -94,7 +94,7 @@ class HotGraphSuite extends munit.FunSuite:
     withFixture { f =>
       val o = f.graph
         .reload(Map("db" -> "a", "query" -> "q1", "other" -> "x", "limit" -> "5"), List(com.histmersion.config.HotNode.Name("limit")))
-        .fold(fail(_), identity)
+        .fold(p => fail(p.value), identity)
       assertEquals(o.rebuilt, Nil)
       assertEquals(f.graph.config.get("limit"), Some("5"))
       assertEquals(f.builds.get, 1)
@@ -104,7 +104,7 @@ class HotGraphSuite extends munit.FunSuite:
     withFixture { f =>
       // the pool builds, the query role does not: nothing changes, the new pool is closed again
       val e = f.graph.reload(Map("db" -> "b", "query" -> "bad", "other" -> "x"), List(com.histmersion.config.HotNode.Name("db"), com.histmersion.config.HotNode.Name("query")))
-      assert(e.swap.exists(m => m.contains("query") && m.contains("role cannot log in")), e.toString)
+      assert(e.swap.exists(m => m.value.contains("query") && m.value.contains("role cannot log in")), e.toString)
       assertEquals(f.graph.generation, 0L)
       assertEquals(f.graph.config("db"), "a")
       assertEquals(f.pool.use(_.name), "pool-a")
@@ -113,7 +113,7 @@ class HotGraphSuite extends munit.FunSuite:
       assert(!f.closed.exists(_.contains("pool-a")), f.closed.toString)
       // the first node failing: same
       val e2 = f.graph.reload(Map("db" -> "broken", "query" -> "q1", "other" -> "x"), List(com.histmersion.config.HotNode.Name("db")))
-      assert(e2.swap.exists(_.contains("cannot connect")), e2.toString)
+      assert(e2.swap.exists(_.value.contains("cannot connect")), e2.toString)
       assertEquals(f.pool.use(_.name), "pool-a")
     }
 
@@ -123,15 +123,15 @@ class HotGraphSuite extends munit.FunSuite:
         .node[Int](com.histmersion.server.hot.Hot.Graph.Def.Name("throws"), keys = List(com.histmersion.config.HotNode.Keys("t"))) { ctx =>
           if ctx.config.get("t").contains("boom") then throw IllegalStateException("boom") else Right(1)
         }
-        .fold(fail(_), identity)
+        .fold(p => fail(p.value), identity)
       val e = f.graph.reload(Map("db" -> "a", "query" -> "q1", "other" -> "x", "t" -> "boom"), List(com.histmersion.config.HotNode.Name("t")))
-      assert(e.swap.exists(_.contains("boom")), e.toString)
+      assert(e.swap.exists(_.value.contains("boom")), e.toString)
       assertEquals(h.use(identity), 1)
     }
 
   test("a node that would close a cycle, or names a node twice, is refused"):
     withFixture { f =>
-      assert(f.graph.node[Int](com.histmersion.server.hot.Hot.Graph.Def.Name("pool"))(_ => Right(1)).swap.exists(_.contains("twice")))
+      assert(f.graph.node[Int](com.histmersion.server.hot.Hot.Graph.Def.Name("pool"))(_ => Right(1)).swap.exists(_.value.contains("twice")))
     }
 
   test("a pinned user keeps its generation: the old value stays open until it lets go"):
@@ -153,10 +153,10 @@ class HotGraphSuite extends munit.FunSuite:
       assert(pinned.await(5, TimeUnit.SECONDS))
       val o = f.graph
         .reload(Map("db" -> "b", "query" -> "q1", "other" -> "x"), List(com.histmersion.config.HotNode.Name("db")), drain = 200.millis)
-        .fold(fail(_), identity)
+        .fold(p => fail(p.value), identity)
       // the bound passed with the old generation still pinned: reported, not closed
       assertEquals(o.draining.size, 3, o.draining.toString)
-      assert(o.draining.exists(_.startsWith("pool (generation 0")), o.draining.toString)
+      assert(o.draining.exists(_.value.startsWith("pool (generation 0")), o.draining.toString)
       assert(!f.closed.exists(_.contains("pool-a")), f.closed.toString)
       assertEquals(f.pool.use(_.name), "pool-b") // a new user sees the new generation
       release.countDown()
@@ -174,7 +174,7 @@ class HotGraphSuite extends munit.FunSuite:
       val work = f.graph.pinned(f.graph.carry(f.pool.use(_.name)))
       f.graph
         .reload(Map("db" -> "b", "query" -> "q1", "other" -> "x"), List(com.histmersion.config.HotNode.Name("db")), drain = 50.millis)
-        .fold(fail(_), identity)
+        .fold(p => fail(p.value), identity)
       assert(!f.closed.exists(_.contains("pool-a")), "the carried work's generation stays open")
       val out = java.util.concurrent.CompletableFuture[String]()
       Thread.ofVirtual().start { () =>
@@ -188,7 +188,7 @@ class HotGraphSuite extends munit.FunSuite:
       val dropped = f.graph.carry(f.pool.use(_.name))
       f.graph
         .reload(Map("db" -> "c", "query" -> "q1", "other" -> "x"), List(com.histmersion.config.HotNode.Name("db")), drain = 50.millis)
-        .fold(fail(_), identity)
+        .fold(p => fail(p.value), identity)
       dropped.drop()
       val d2 = System.nanoTime() + 5.seconds.toNanos
       while !f.closed.contains("close pool-b") && System.nanoTime() < d2 do Thread.sleep(10)
@@ -204,8 +204,8 @@ class HotGraphSuite extends munit.FunSuite:
         .node[Res](com.histmersion.server.hot.Hot.Graph.Def.Name("pool"), keys = List(com.histmersion.config.HotNode.Keys("db")), idle = _ => out.get == 0) { ctx =>
           Right(useInScope(Res(s"pool-${ctx.config("db")}", log))(_.close()))
         }
-        .fold(fail(_), identity)
-      val o = graph.reload(Map("db" -> "b"), List(com.histmersion.config.HotNode.Name("db")), drain = 100.millis).fold(fail(_), identity)
+        .fold(p => fail(p.value), identity)
+      val o = graph.reload(Map("db" -> "b"), List(com.histmersion.config.HotNode.Name("db")), drain = 100.millis).fold(p => fail(p.value), identity)
       assertEquals(o.draining.size, 1)
       assert(!log.contains("close pool-a"))
       out.set(0) // the last connection came back
@@ -219,14 +219,14 @@ class HotGraphSuite extends munit.FunSuite:
     val graph = Hot.Graph[Conf](Map("db" -> "a"), quiet)
     try
       val seen = ConcurrentLinkedQueue[String]()
-      val pool = graph.node[String](com.histmersion.server.hot.Hot.Graph.Def.Name("pool"), keys = List(com.histmersion.config.HotNode.Keys("db")))(ctx => Right(ctx.config("db"))).fold(fail(_), identity)
+      val pool = graph.node[String](com.histmersion.server.hot.Hot.Graph.Def.Name("pool"), keys = List(com.histmersion.config.HotNode.Keys("db")))(ctx => Right(ctx.config("db"))).fold(p => fail(p.value), identity)
       val _ = graph
         .node[String](com.histmersion.server.hot.Hot.Graph.Def.Name("hook"), deps = List(pool), onPublish = _ => { val _ = seen.add(pool.use(identity)) }) { ctx =>
           Right(ctx(pool))
         }
-        .fold(fail(_), identity)
+        .fold(p => fail(p.value), identity)
       graph.pinned {
-        graph.reload(Map("db" -> "b"), List(com.histmersion.config.HotNode.Name("db")), drain = 50.millis).fold(fail(_), identity)
+        graph.reload(Map("db" -> "b"), List(com.histmersion.config.HotNode.Name("db")), drain = 50.millis).fold(p => fail(p.value), identity)
         assertEquals(pool.use(identity), "a") // this thread's own pin
       }
       assertEquals(seen.asScala.toList, List("b"))
@@ -241,10 +241,10 @@ class HotGraphSuite extends munit.FunSuite:
         releaseAfterScope(log.add(s"released ${r.name}"))
         if ctx.config("db") == "half" then Left(com.histmersion.server.hot.Hot.Graph.Problem("the second half failed")) else Right(r)
       }
-      .fold(fail(_), identity)
+      .fold(p => fail(p.value), identity)
     assert(graph.reload(Map("db" -> "half"), List(com.histmersion.config.HotNode.Name("db"))).isLeft)
     assert(log.contains("close pool-half") && log.contains("released pool-half"), log.toString)
     graph.close(1.second)
     assert(log.contains("close pool-a"))
     assert(h.peek.closed)
-    assert(graph.reload(Map("db" -> "z"), List(com.histmersion.config.HotNode.Name("db"))).swap.exists(_.contains("closed")))
+    assert(graph.reload(Map("db" -> "z"), List(com.histmersion.config.HotNode.Name("db"))).swap.exists(_.value.contains("closed")))
