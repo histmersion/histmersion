@@ -5,6 +5,8 @@ import com.histmersion.api.Api
 import com.histmersion.api.catalogue.{EventLeads, EventLinksMarkdown, EventLinksRequest}
 import com.histmersion.api.library.Filter
 import com.histmersion.domain.Caller
+import com.histmersion.domain.catalogue.Event
+import com.histmersion.api.Write
 import com.histmersion.util.mcp.McpOut
 import hearth.kindlings.circederivation.KindlingsCodecAsObject
 import hearth.kindlings.tapirschemaderivation.KindlingsSchema
@@ -17,33 +19,16 @@ object EventLinksTools:
   import com.histmersion.util.mcp.ToolInputs.given
 
   final case class EventLinksInput(
-      id: Option[EventLinksInput.Id] = None,
-      recompute: EventLinksInput.Recompute = com.histmersion.domain.catalogue.evidence.EventLinksTools.EventLinksInput.(false),
-      confirm: List[EventLinksInput.Confirm] = Nil,
-      reject: List[EventLinksInput.Reject] = Nil,
-      from: Option[EventLinksInput.From] = None,
-      to: Option[EventLinksInput.To] = None,
-      kind: Option[EventLinksInput.Kind] = None,
-      limit: Option[EventLinksInput.Limit] = None
+      id: Option[com.histmersion.api.catalogue.Event.Id] = None,
+      recompute: EventLinksRequest.Recompute = EventLinksRequest.Recompute(false),
+      confirm: List[EventLinksRequest.Confirm] = Nil,
+      reject: List[EventLinksRequest.Reject] = Nil,
+      from: Option[com.histmersion.api.catalogue.Year] = None,
+      to: Option[com.histmersion.api.catalogue.Year] = None,
+      kind: Option[Api.EventQuery.Kind] = None,
+      limit: Option[Filter.Limit] = None
   ) derives KindlingsCodecAsObject
   object EventLinksInput:
-    type Id = com.histmersion.domain.catalogue.Event.Id
-    val Id: _root_.com.histmersion.domain.catalogue.Event.Id.type = _root_.com.histmersion.domain.catalogue.Event.Id
-    type Recompute = Recompute.T
-    object Recompute extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
-    type Confirm = Confirm.T
-    object Confirm extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-    type Reject = Reject.T
-    object Reject extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-    type From = From.T
-    object From extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
-    type To = To.T
-    object To extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
-    type Kind = Kind.T
-    object Kind extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-    type Limit = com.histmersion.PageSize
-    val Limit: _root_.com.histmersion.PageSize.type = _root_.com.histmersion.PageSize
-
     given Schema[EventLinksInput] = KindlingsSchema
       .derived[EventLinksInput]
       .schema
@@ -74,17 +59,22 @@ object EventLinksTools:
         )
         .input[EventLinksInput]
         .handle { in =>
-          in.id.map(_.trim).filter(_.nonEmpty) match
-            case Some(id) =>
+          in.id.map(_.value.trim).filter(_.nonEmpty) match
+            case Some(raw) =>
               val r =
-                if in.recompute || in.confirm.nonEmpty || in.reject.nonEmpty then
-                  links
-                    .applyLinks(Caller.Local, id, EventLinksRequest(in.recompute, in.confirm, in.reject))
-                    .map(EventLinksMarkdown.result)
-                else links.links(id).map(EventLinksMarkdown.list)
+                Event.Id
+                  .option(raw)
+                  .toRight(Api.Error(Api.Error.Message(s"No event '$raw'"), Some(Api.Error.Code(Write.CodeNotFound))))
+                  .flatMap { id =>
+                    if in.recompute.value || in.confirm.nonEmpty || in.reject.nonEmpty then
+                      links
+                        .applyLinks(Caller.Local, id, EventLinksRequest(in.recompute, in.confirm, in.reject))
+                        .map(EventLinksMarkdown.result)
+                    else links.links(id).map(EventLinksMarkdown.list)
+                  }
               ToolResult.text(r.fold(McpOut.refusal, identity))
             case None =>
               val q = Api.EventQuery(Filter.of(from = in.from, to = in.to, limit = in.limit), kind = in.kind)
-              ToolResult.text(EventLeads.markdown(links.leads(q)))
+              ToolResult.text(EventLeads.markdown(links.leads(q)).value)
         }
     List(linksTool)

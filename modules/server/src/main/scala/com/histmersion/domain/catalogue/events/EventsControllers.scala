@@ -12,7 +12,17 @@ import com.histmersion.api.aliases.AliasKinds
 import com.histmersion.domain.catalogue.places.PlaceScope
 
 import com.histmersion.api.{Api, BBox, Write}
-import com.histmersion.api.catalogue.{EventDeleted, EventGeometry, EventList, EventPatch, EventPut, EventScale}
+import com.histmersion.api.catalogue.{
+  EventDeleted,
+  EventGeometry,
+  EventList,
+  EventPatch,
+  EventPut,
+  EventScale,
+  EventSummary
+}
+import com.histmersion.domain.catalogue.{Event, Place}
+import com.histmersion.{Offset, PageSize}
 import com.histmersion.api.library.Filter
 import com.histmersion.domain.catalogue.places.PlaceScope
 import com.histmersion.domain.Caller
@@ -29,66 +39,97 @@ import com.histmersion.api.catalogue.EventGeo
 final class EventsControllers(
     events: EventService,
     card: EventEntry => EventEntry,
-    current: (AliasKind, EventsControllers.CurrentArg2) => EventsControllers.CurrentResult,
+    current: (AliasKind, Event.Id) => Event.Id,
     resolve: Filter => Filter,
     scope: Filter => PlaceScope,
-    mapView: () => (EventsControllers.MapViewResultPart1, EventsControllers.MapViewResultPart2),
+    mapView: () => (PageSize, EventRepo.GeoTolerance),
     maintenance: WriteGate
 ):
 
   /** What only an event is narrowed by: tier, the catalogue context, the area of the map. */
   private def narrow(q: Api.EventQuery): EventSql.Narrow =
-    EventSql.Narrow(q.tier.map(_.trim).filter(_.nonEmpty), q.context.getOrElse(false), q.area.flatMap(BBox.parse))
+    EventSql.Narrow(
+      q.tier.map(_.value.trim).filter(_.nonEmpty).map(EventSql.Narrow.Tier(_)),
+      EventSql.Narrow.Context(q.context.fold(false)(_.value)),
+      q.area.flatMap(a => BBox.parse(BBox.Text(a.value)))
+    )
 
-  private def selection(q: Api.EventQuery, f: Filter): EventSelection =
-    EventSelection(f, scope(f), q.text, q.kind, q.historicity, q.placeId, narrow(q))
+  /** The selection a query makes; `None` when it names a place no event can be at (an id that is no place id). */
+  private def selection(q: Api.EventQuery, f: Filter): Option[EventSelection] =
+    def of(place: Option[Place.Id]) =
+      EventSelection(
+        f,
+        scope(f),
+        q.text.map(t => EventSelection.Text(t.value)),
+        q.kind.map(k => EventSelection.Kind(k.value)),
+        q.historicity.map(h => EventSelection.Historicity(h.value)),
+        place,
+        narrow(q)
+      )
+    q.placeId.map(_.value.trim).filter(_.nonEmpty) match
+      case None    => Some(of(None))
+      case Some(p) => Place.Id.option(p).map(id => of(Some(id)))
 
   /** `GET /api/events` — the events related to the filter's sources. */
   def list(q: Api.EventQuery): EventList =
     val f = resolve(q.filter)
-    events.list(selection(q, f), f.limit, f.offset)
+    selection(q, f).fold(
+      EventList.of(EventList.Total(0), Nil, com.histmersion.api.personal.UnreadPage.Offset(f.offset.value))
+    )(sel =>
+      events.list(
+        sel,
+        PageSize.option(f.limit.value).getOrElse(PageSize(1)),
+        Offset.option(f.offset.value).getOrElse(Offset.Start)
+      )
+    )
 
   /** `GET /api/events/geo` — the map's events with their scale, anchor and outline. */
   def geo(q: Api.EventQuery): EventGeo.List =
     val (limit, tolerance) = mapView()
-    events.geo(selection(q, q.filter), limit, tolerance)
+    selection(q, q.filter).fold(EventGeo.List(Nil))(events.geo(_, limit, tolerance))
+
+  private def invalid(m: String) = Api.Error(Api.Error.Message(m), Some(Api.Error.Code(Write.CodeInvalid)))
+
+  private def notFound(m: String) = Api.Error(Api.Error.Message(m), Some(Api.Error.Code(Write.CodeNotFound)))
 
   /** A stated scale must be `local`, `regional` or (to clear it) `auto`. */
-  private def validScale(scale: Option[com.histmersion.domain.catalogue.events.EventRow.Scale]): Either[Api.Error, Unit] =
+  private def validScale(scale: Option[EventSummary.Scale]): Either[Api.Error, Unit] =
     scale match
       case Some(v) if EventScale.parse(v).isEmpty =>
-        Left(
-          Api.Error(
-            s"scale '$v' is not ${(EventScale.all :+ EventScale.Auto).mkString(" | ")}",
-            Some(Write.CodeInvalid)
-          )
-        )
+        Left(invalid(s"scale '$v' is not ${(EventScale.all.map(_.value) :+ EventScale.Auto).mkString(" | ")}"))
       case _ => Right(())
 
   /** An event's geometry is a GeoJSON geometry the store reads: WKT, a Feature or bad coordinates are a 400 naming the
     * problem, not a failed statement. Blank passes (none / clear).
     */
-  private def validGeometry(g: Option[com.histmersion.domain.catalogue.events.EventDetailRow.Geometry]): Either[Api.Error, Unit] =
-    g.map(_.trim).filter(_.nonEmpty) match
+  private def validGeometry(g: Option[EventPut.Geometry]): Either[Api.Error, Unit] =
+    g.map(_.value.trim).filter(_.nonEmpty) match
       case None    => Right(())
       case Some(v) =>
         EventGeometry
-          .check(v)
-          .flatMap(gj => events.geometryError(gj).map(m => s"geometry is not a valid GeoJSON geometry: $m").toLeft(()))
+          .check(EventGeometry.Geojson(v))
           .left
-          .map(m => Api.Error(m, Some(Write.CodeInvalid)))
+          .map(_.value)
+          .flatMap(gj =>
+            events
+              .geometryError(EventDetailRow.Geometry(gj.value))
+              .map(m => s"geometry is not a valid GeoJSON geometry: ${m.value}")
+              .toLeft(())
+          )
+          .left
+          .map(invalid)
 
   /** An event's Wikidata item is a `Q…` id; `""` clears it. */
-  private def validWikidata(q: Option[com.histmersion.domain.catalogue.places.Wikidata.Id]): Either[Api.Error, Unit] =
-    q.map(_.trim) match
+  private def validWikidata(q: Option[EventPatch.Wikidata]): Either[Api.Error, Unit] =
+    q.map(_.value.trim) match
       case Some(v) if v.nonEmpty && !Wikidata.isQid(v) =>
-        Left(Api.Error(s"wikidata '$v' is not a Wikidata item id (Q followed by digits)", Some(Write.CodeInvalid)))
+        Left(invalid(s"wikidata '$v' is not a Wikidata item id (Q followed by digits)"))
       case _ => Right(())
 
   private def now(id: com.histmersion.domain.catalogue.Event.Id): com.histmersion.domain.catalogue.Event.Id = current(AliasKinds.EventRecords, id)
 
   def get(id: com.histmersion.domain.catalogue.Event.Id): Either[Api.Error, EventEntry] =
-    events.get(now(id)).map(card).toRight(Api.Error(s"No event '$id'", Some(Write.CodeNotFound)))
+    events.get(now(id)).map(card).toRight(notFound(s"No event '$id'"))
 
   /** A put to an old id replaces the event it was renamed to, never creates a second one under the old id. */
   def put(caller: Caller, id: com.histmersion.domain.catalogue.Event.Id, in: EventPut): Either[Api.Error, EventEntry] =
@@ -110,16 +151,25 @@ final class EventsControllers(
   def delete(caller: Caller, id: com.histmersion.domain.catalogue.Event.Id): Either[Api.Error, EventDeleted] =
     maintenance.guard(com.histmersion.util.data.maintenance.WriteGate.OperationName("delete_event")):
       val to = now(id)
-      if events.delete(to) then Right(EventDeleted(to, com.histmersion.api.catalogue.EventDeleted.Deleted(true)))
-      else Left(Api.Error(s"No event '$id'", Some(Write.CodeNotFound)))
+      if events.delete(to) then
+        Right(
+          EventDeleted(com.histmersion.api.catalogue.Event.Id(to.value), com.histmersion.api.catalogue.EventDeleted.Deleted(true))
+        )
+      else Left(notFound(s"No event '$id'"))
 
   /** `POST /api/events/{id}/rename` — a new id (`to` checks the one asked for against the current one); the old one
     * keeps resolving. Answers the event's id before and after.
     */
   /** `POST /api/events/{id}/rename` — a new id; the old one keeps resolving (V053). */
   def renamed(id: com.histmersion.domain.catalogue.Event.Id, req: LabelRename): Either[Api.Error, LabelRenamed] =
-    rename(Caller.Local, id, from => LabelRenames.validate(Bundle.Kind.Event, from, req.to))
-      .map((from, to) => LabelRenamed(Bundle.Kind.Event, from, to))
+    rename(
+      Caller.Local,
+      id,
+      from =>
+        LabelRenames
+          .validate(Bundle.Kind.Event, LabelRenames.Label(from.value), LabelRenames.Label(req.to.value))
+          .flatMap(l => Event.Id.either(l.value).left.map(why => invalid(s"'${l.value}' is not an event id: $why")))
+    ).map((from, to) => LabelRenamed(Bundle.Kind.Event, LabelRenamed.From(from.value), LabelRenamed.To(to.value)))
 
   def rename(caller: Caller, id: com.histmersion.domain.catalogue.Event.Id, to: com.histmersion.domain.catalogue.Event.Id => Either[Api.Error, com.histmersion.domain.catalogue.Event.Id]): Either[Api.Error, (com.histmersion.domain.catalogue.Event.Id, com.histmersion.domain.catalogue.Event.Id)] =
     maintenance.guard(com.histmersion.util.data.maintenance.WriteGate.OperationName("rename_event")):
@@ -128,16 +178,3 @@ final class EventsControllers(
         newId <- to(from)
         _ <- events.rename(from, newId)
       yield (from, newId)
-
-object EventsControllers:
-  type Alias = Alias.T
-  object Alias extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type CurrentArg2 = com.histmersion.domain.catalogue.events.EventsControllers.Alias
-  val CurrentArg2: _root_.com.histmersion.domain.catalogue.events.EventsControllers.Alias.type = _root_.com.histmersion.domain.catalogue.events.EventsControllers.Alias
-  type CurrentResult = com.histmersion.domain.catalogue.Event.Id
-  val CurrentResult: _root_.com.histmersion.domain.catalogue.Event.Id.type = _root_.com.histmersion.domain.catalogue.Event.Id
-  type MapViewResultPart1 = com.histmersion.RowCount
-  val MapViewResultPart1: _root_.com.histmersion.RowCount.type = _root_.com.histmersion.RowCount
-  type MapViewResultPart2 = com.histmersion.domain.catalogue.events.EventGeoRow.Magnitude
-  val MapViewResultPart2: _root_.com.histmersion.domain.catalogue.events.EventGeoRow.Magnitude.type = _root_.com.histmersion.domain.catalogue.events.EventGeoRow.Magnitude
-

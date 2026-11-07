@@ -9,7 +9,7 @@ object Place:
   /** A place's id: the gazetteer it comes from, an underscore, that gazetteer's id (`geonames_2911611`). */
   type Id = Id.T
 
-  object Id extends RefinedType[String, Match["[a-z][a-z0-9]*_.+"]]:
+  object Id extends RefinedType[String, Match["[a-z][a-z0-9-]*(_.+)?"]]:
     extension (id: T) def isPleiades: Boolean = id.value.startsWith("pleiades_")
 
   /** The five `kind`s the store recognises. Free text in the column (an importer may carry its own vocabulary), but

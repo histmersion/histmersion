@@ -3,7 +3,7 @@ package com.histmersion.domain.catalogue.periods
 import hearth.kindlings.optics.syntax.*
 
 import com.histmersion.api.{Dataset, PeriodODataset}
-import com.histmersion.api.catalogue.PeriodO
+import com.histmersion.api.catalogue.{HistoricalPeriod, PeriodO}
 import com.histmersion.api.catalogue.Period
 
 /** How periods come in: the bundled seed (its rows upserted, its presets made the only presets, its version recorded),
@@ -13,42 +13,51 @@ import com.histmersion.api.catalogue.Period
 final class PeriodImports(
     periods: PeriodService,
     sources: () => PeriodSources,
-    seed: () => Either[PeriodImports.SeedResultPart1, PeriodImports.SeedResultPart2],
-    download: PeriodImports.DownloadArg1 => Either[PeriodImports.DownloadResultPart1, PeriodImports.DownloadResultPart2]
+    seed: () => Either[PeriodImports.Problem, PeriodImports.Document],
+    download: PeriodSources.PeriodoUrl => Either[PeriodImports.Problem, PeriodImports.Document]
 ):
 
   /** The bundled seed, parsed. */
-  private def bundled: Either[com.histmersion.domain.catalogue.periods.PeriodImports.Problem, PeriodODataset] = seed().flatMap(PeriodO.parse)
+  private def bundled: Either[PeriodImports.Problem, PeriodODataset] = seed().flatMap(parsed)
+
+  private def parsed(document: PeriodImports.Document): Either[PeriodImports.Problem, PeriodODataset] =
+    PeriodO.parse(document.value).left.map(why => PeriodImports.Problem(why.value))
 
   /** Apply the bundled seed — with `replace`, the seed rows it no longer has are deleted as well. */
-  def applySeed(replace: com.histmersion.domain.catalogue.periods.PeriodImports.Replace): Either[com.histmersion.domain.catalogue.periods.PeriodImports.Problem, Period.ImportResult] =
+  def applySeed(replace: PeriodImports.Replace): Either[PeriodImports.Problem, Period.ImportResult] =
     bundled.map { d =>
       val r = write(d, Dataset.Seed)
       val ids = d.authorities.flatMap(_.periods.map(_.id))
-      val _ = periods.retainPresets(d.presets.keys.toList)
-      val removed = if replace then periods.deleteSeedExcept(ids) else 0
-      d.version.foreach(periods.setSeedVersion(PeriodImports.SeedName, _))
-      r.modify(_.presets).setTo(periods.presetCount()).modify(_.removed).setTo(removed)
+      val _ = periods.retainPresets(d.presets.keys.toList.map(k => HistoricalPeriod.Id(k.value)))
+      val removed = if replace.value then periods.deleteSeedExcept(ids).value else 0
+      d.version.foreach(v =>
+        periods.setSeedVersion(PeriodService.SeedName(PeriodImports.SeedName), PeriodService.SeedVersion(v.value))
+      )
+      r.modify(_.presets)
+        .setTo(Period.ImportResult.Presets(periods.presetCount().value))
+        .modify(_.removed)
+        .setTo(Period.ImportResult.Removed(removed))
     }
 
   /** Is the bundled seed newer than the one last applied here? */
   def seedOutdated: Boolean =
     bundled.toOption
       .flatMap(_.version)
-      .exists(v => periods.seedVersion(PeriodImports.SeedName).forall(_ < v))
+      .exists(v => periods.seedVersion(PeriodService.SeedName(PeriodImports.SeedName)).forall(_.value < v.value))
 
   /** The live PeriodO dump, the named collections only (the configured ones when none is named). */
-  def fetch(collections: List[com.histmersion.domain.catalogue.periods.PeriodSources.Collections]): Either[com.histmersion.domain.catalogue.periods.PeriodImports.Problem, Period.ImportResult] =
+  def fetch(collections: List[PeriodSources.Collections]): Either[PeriodImports.Problem, Period.ImportResult] =
     val s = sources()
-    val wanted = collections.map(_.trim).filter(_.nonEmpty) match
-      case Nil => s.collections
+    val wanted = collections.map(_.value.trim).filter(_.nonEmpty) match
+      case Nil => s.collections.map(_.value)
       case cs  => cs
     for
       raw <- download(s.periodoUrl)
-      all <- PeriodO.parse(raw)
-      d = all.only(wanted.toSet)
+      all <- parsed(raw)
+      d = all.only(wanted.map(HistoricalPeriod.Id(_)).toSet)
       _ <-
-        if d.authorities.isEmpty then Left(s"no PeriodO collection ${wanted.mkString(", ")} in the dump")
+        if d.authorities.isEmpty then
+          Left(PeriodImports.Problem(s"no PeriodO collection ${wanted.mkString(", ")} in the dump"))
         else Right(())
     yield write(d, Dataset.Seed)
 
@@ -61,11 +70,11 @@ final class PeriodImports(
     val rows = PeriodO.toPeriods(d, periods.placement(ids), roots)
     val n = periods.write(rows, dataset)
     Period.ImportResult(
-      n,
-      if roots then d.authorities.count(_.periods.nonEmpty) else com.histmersion.api.catalogue.Period.ImportResult.Roots(0),
-      periods.presetCount(),
+      Period.ImportResult.Periods(n.value),
+      Period.ImportResult.Roots(if roots then d.authorities.count(_.periods.nonEmpty) else 0),
+      Period.ImportResult.Presets(periods.presetCount().value),
       d.skipped.take(PeriodImports.SkippedListed),
-      d.skipped.size
+      Period.ImportResult.SkippedCount(d.skipped.size)
     )
 
 object PeriodImports:
@@ -73,21 +82,14 @@ object PeriodImports:
   object Dataset extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type DatasetBody = DatasetBody.T
   object DatasetBody extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  /** The text of a PeriodO dataset: the bundled seed or a dump. */
+  type Document = Document.T
+  object Document extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type Problem = Problem.T
   object Problem extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type Replace = Replace.T
   object Replace extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
   /** The `seed_versions` name of the bundled period seed. */
-  type SeedResultPart1 = SeedResultPart1.T
-  object SeedResultPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type SeedResultPart2 = SeedResultPart2.T
-  object SeedResultPart2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type DownloadArg1 = DownloadArg1.T
-  object DownloadArg1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type DownloadResultPart1 = DownloadResultPart1.T
-  object DownloadResultPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type DownloadResultPart2 = DownloadResultPart2.T
-  object DownloadResultPart2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
 
   val SeedName = "periods"

@@ -38,4 +38,4 @@ object SourcePassages:
         )
         .left
         .map(p => Passage.Text(p.value))
-        .map(_.passages.map(h => Passage(h.offset, h.text, h.matches)))
+        .map(_.passages.map(h => Passage(Passage.Offset(h.offset.value), Passage.Text(h.text.value), h.matches)))

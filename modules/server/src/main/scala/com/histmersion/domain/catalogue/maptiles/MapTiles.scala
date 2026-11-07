@@ -26,32 +26,33 @@ object MapTiles:
     * (the rest — a filter's paging, another layer's options — left out, so they never split one tile into many) and the
     * versions of the groups it reads.
     */
-  def key(layer: TileLayer, c: TileCoord, q: TilesApi.TileQuery, versions: Map[com.histmersion.domain.catalogue.maptiles.VectorTileWriter.LayerName, com.histmersion.domain.catalogue.maptiles.UndatedBuild.Version]): com.histmersion.domain.catalogue.maptiles.MapTiles.TileKey =
+  def key(layer: TileLayer, c: TileCoord, q: TilesApi.TileQuery, versions: Map[TileRepo.GroupName, UndatedBuild.Version]): MapTiles.TileKey =
     val f = q.filter
     val time = f.period.fold("")(p => s"${p.start}..${p.end}")
     val undated = if q.withUndated then "undated" else ""
     val params = layer match
-      case TileLayer.Sites  => List(time, q.siteType.getOrElse(""), undated)
-      case TileLayer.Media  => List(time, q.kind.getOrElse(""), q.provider.getOrElse(""), q.license.getOrElse(""))
+      case TileLayer.Sites  => List(time, q.siteType.fold("")(_.value), undated)
+      case TileLayer.Media  =>
+        List(time, q.kind.fold("")(_.value), q.provider.fold("")(_.value), q.license.fold("")(_.value))
       case TileLayer.Events =>
         List(
-          f.modify(_.limit).setTo(0).modify(_.offset).setTo(0).modify(_.sort).setTo(Filter().sort).toString,
-          q.kind.getOrElse(""),
-          q.tier.getOrElse(""),
-          q.historicity.getOrElse(""),
-          q.context.fold("")(_.toString),
-          q.text.getOrElse(""),
-          q.placeId.getOrElse(""),
+          f.modify(_.limit).setTo(Filter.Limit(0)).modify(_.offset).setTo(Filter.Offset(0)).modify(_.sort).setTo(Filter().sort).toString,
+          q.kind.fold("")(_.value),
+          q.tier.fold("")(_.value),
+          q.historicity.fold("")(_.value),
+          q.context.fold("")(_.value.toString),
+          q.text.fold("")(_.value),
+          q.placeId.fold("")(_.value),
           undated
         )
-    val v = TileRepo.Groups(layer).map(g => s"$g=${versions.getOrElse(g, 0L)}")
-    (List(layer.wire, s"${c.z}/${c.x}/${c.y}") ++ params ++ v).mkString("|")
+    val v = TileRepo.Groups(layer).map(g => s"$g=${versions.get(g).fold(0L)(_.value)}")
+    TileKey((List(layer.wire.value, s"${c.z}/${c.x}/${c.y}") ++ params ++ v).mkString("|"))
 
   /** Pure: a key's ETag (a strong one: the tile's bytes follow from the key). */
-  def etag(key: com.histmersion.domain.catalogue.maptiles.MapTiles.TileKey): com.histmersion.domain.catalogue.maptiles.MapTiles.Etag =
-    val d = MessageDigest.getInstance("SHA-256").digest(key.getBytes(StandardCharsets.UTF_8))
-    "\"" + d.take(12).map(b => f"${b & 0xff}%02x").mkString + "\""
+  def etag(key: MapTiles.TileKey): MapTiles.Etag =
+    val d = MessageDigest.getInstance("SHA-256").digest(key.value.getBytes(StandardCharsets.UTF_8))
+    Etag("\"" + d.take(12).map(b => f"${b & 0xff}%02x").mkString + "\"")
 
   /** Pure: does the browser's `If-None-Match` name `tag` (one of a list, or `*`)? */
-  def matches(ifNoneMatch: Option[com.histmersion.domain.catalogue.maptiles.MapTiles.Etag], tag: com.histmersion.domain.catalogue.maptiles.MapTiles.Etag): Boolean =
-    ifNoneMatch.exists(h => h.split(",").map(_.trim.stripPrefix("W/")).exists(t => t == tag || t == "*"))
+  def matches(ifNoneMatch: Option[MapTiles.Etag], tag: MapTiles.Etag): Boolean =
+    ifNoneMatch.exists(h => h.value.split(",").map(_.trim.stripPrefix("W/")).exists(t => t == tag.value || t == "*"))

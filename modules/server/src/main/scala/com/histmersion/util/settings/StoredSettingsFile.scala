@@ -1,7 +1,7 @@
 package com.histmersion.util.settings
 
 import com.histmersion.config.AppConfig
-import com.histmersion.config.ConfigLayers
+import com.histmersion.config.ConfigProblem
 import com.histmersion.config.edit.{ConfigFileState, FileVersion, SettingError, SettingsFile, WriteOutcome}
 import com.histmersion.util.storage.{Store, TempName}
 import org.ekrich.config.{Config, ConfigFactory}
@@ -75,7 +75,7 @@ final class StoredSettingsFile(store: Store, key: Store.Key, val shown: Settings
         .map(_ => Some(WriteOutcome.Backup(s"$shown.bak")))
 
   /** A parse of the file at `where`, its messages naming the settings file. */
-  private def parsed(parse: Either[ConfigLayers.Problem, Option[Config]], where: String): Either[SettingError, Config] =
+  private def parsed(parse: Either[ConfigProblem, Option[Config]], where: String): Either[SettingError, Config] =
     parse.left
       .map(m => SettingError.Unreadable(SettingError.Unreadable.Why(m.value.replace(where, shown.value))))
       .flatMap(_.toRight(SettingError.Unreadable(SettingError.Unreadable.Why(s"$shown: no such file"))))

@@ -5,11 +5,13 @@ import hearth.kindlings.optics.syntax.*
 import com.histmersion.domain.catalogue.places.PlaceScope
 
 import com.histmersion.api.library.Filter
+import com.histmersion.domain.DeepTime.SignedYear
+import com.histmersion.domain.catalogue.{Event, Place}
 import com.histmersion.api.catalogue.{TileLayer, TilesApi}
 import com.histmersion.config.UiMapTilesSettings
 import com.histmersion.domain.catalogue.places.PlaceScope
 import com.histmersion.domain.catalogue.events.{EventSelection, EventService, EventSourceFilter, EventSql}
-import com.histmersion.domain.catalogue.maptiles.layers.MapLayer
+import layers.MapLayer
 import com.histmersion.util.database.Transactor
 
 import sttp.model.StatusCode
@@ -23,7 +25,7 @@ import com.histmersion.api.Api
 final class MapTileService(
     db: Transactor,
     settings: () => UiMapTilesSettings,
-    modernFrom: () => MapTileService.ModernFromResult,
+    modernFrom: () => SignedYear,
     scopeOf: Filter => PlaceScope,
     undatedSites: UndatedSites,
     events: EventService,
@@ -32,35 +34,55 @@ final class MapTileService(
 ):
   import MapTiles.*
 
-  val cache: TileCache = TileCache(() => settings().cacheMb.toLong.max(1) * 1024 * 1024)
+  val cache: TileCache = TileCache(() => com.histmersion.ByteCount.assume(settings().cacheMb.value.toLong.max(1) * 1024 * 1024))
 
   def tile(q: TilesApi.TileQuery): Either[Api.Error, TilesApi.TileAnswer] =
     val s = settings()
     for
       layer <- TileLayer
         .parse(q.layer)
-        .toRight(Api.Error(s"unknown layer '${q.layer}': one of ${TileLayer.values.map(_.wire).mkString(", ")}"))
-      coord <- TileCoord.of(q.z, q.x, q.y, s.maxZoom).left.map(Api.Error(_))
+        .toRight(
+          Api.Error(
+            Api.Error.Message(s"unknown layer '${q.layer}': one of ${TileLayer.values.map(_.wire).mkString(", ")}")
+          )
+        )
+      coord <- TileCoord
+        .of(TileCoord.Z(q.z.value), TileCoord.X(q.x.value), TileCoord.Y(q.y.value), TileCoord.Z(s.maxZoom.value))
+        .left
+        .map(why => Api.Error(Api.Error.Message(s"$why")))
     yield
       val versions = currentVersions()
       val k = key(layer, coord, q, versions)
       val tag = etag(k)
       if matches(q.ifNoneMatch, tag) then
-        TilesApi.TileAnswer(Array.emptyByteArray, TilesApi.ContentType, tag, CacheControl, StatusCode.NotModified)
+        TilesApi.TileAnswer(
+          Api.FileBytes(Array.emptyByteArray),
+          TilesApi.TileAnswer.ContentType(TilesApi.ContentType),
+          TilesApi.TileAnswer.Etag(tag.value),
+          TilesApi.TileAnswer.CacheControl(CacheControl),
+          StatusCode.NotModified
+        )
       else
         val bytes = cache.get(k).getOrElse {
           val b = cut(layer, coord, q, TileGrid.of(s.maxZoom, s.maxPoints, s.cellPx))
           cache.put(k, b)
           b
         }
-        TilesApi.TileAnswer(bytes, TilesApi.ContentType, tag, CacheControl, StatusCode.Ok)
+        TilesApi.TileAnswer(
+          Api.FileBytes(bytes.value),
+          TilesApi.TileAnswer.ContentType(TilesApi.ContentType),
+          TilesApi.TileAnswer.Etag(tag.value),
+          TilesApi.TileAnswer.CacheControl(CacheControl),
+          StatusCode.Ok
+        )
 
   /** The groups' versions, their change rows folded first where they have grown many. */
-  private def currentVersions(): Map[com.histmersion.domain.catalogue.maptiles.VectorTileWriter.LayerName, com.histmersion.domain.catalogue.maptiles.UndatedBuild.Version] =
-    db.read(TileRepo.changeRows).foreach((g, n) => if n > CompactAbove then db.transact(TileRepo.compact(g)))
+  private def currentVersions(): Map[TileRepo.GroupName, UndatedBuild.Version] =
+    db.read(TileRepo.changeRows).foreach((g, n) => if n.value > CompactAbove then db.transact(TileRepo.compact(g)))
     db.read(TileRepo.versions)
 
-  private def window(f: Filter): Option[(com.histmersion.domain.catalogue.periods.BPeriodRow.PLo, com.histmersion.domain.catalogue.periods.BPeriodRow.PHi)] = f.period.map(p => (p.start.min(p.end), p.start.max(p.end)))
+  private def window(f: Filter): Option[(SignedYear, SignedYear)] =
+    f.period.map(p => (SignedYear(p.start.value.min(p.end.value)), SignedYear(p.start.value.max(p.end.value))))
 
   /** A sites tile with the sites of no known date: the dated ones of the span and the undated ones (an undated one the
     * span shows by its findings counted once, as dated), each alone when the tile keeps that many, else counted by its
@@ -69,52 +91,59 @@ final class MapTileService(
   private def sitesWithUndated(
       c: TileCoord,
       grid: TileGrid,
-      window: (com.histmersion.domain.catalogue.periods.BPeriodRow.PLo, com.histmersion.domain.catalogue.periods.BPeriodRow.PHi),
-      siteType: Option[com.histmersion.domain.catalogue.Place.Kind.Wire]
+      window: (SignedYear, SignedYear),
+      siteType: Option[TileRepo.SiteType]
   ): List[TileCell] =
     val dated = TileRepo.datedSites(c, window, siteType, modernFrom())
     val datedCounts = db.read(TileRepo.gridCells(dated, c, grid))
     val undatedCounts = undatedSites.counted(c, grid, siteType)
-    if UndatedCells.total(datedCounts, undatedCounts) <= grid.pointsAt(c) then
+    if UndatedCells.total(datedCounts, undatedCounts).value <= grid.pointsAt(c).value then
       val datedItems = db.read(TileRepo.items(dated, c))
-      val shownByFindings = datedItems.filter(_.undated > 0).map(_.key)
-      datedItems.map(_.modify(_.undated).setTo(0)) ++ undatedSites.items(c, siteType, shownByFindings)
+      val shownByFindings = datedItems.filter(_.undated.value > 0).map(cell => TileRepo.SiteId(cell.key.value))
+      datedItems.map(_.modify(_.undated).setTo(TileCell.Undated(0))) ++ undatedSites.items(c, siteType, shownByFindings)
     else UndatedCells.merge(c.z, datedCounts, undatedCounts)
 
-  private def cut(layer: TileLayer, c: TileCoord, q: TilesApi.TileQuery, grid: TileGrid): com.histmersion.domain.catalogue.maptiles.VectorTileWriter.VectorTile =
+  private def cut(layer: TileLayer, c: TileCoord, q: TilesApi.TileQuery, grid: TileGrid): VectorTileWriter.VectorTile =
     val points = layer match
       case TileLayer.Sites =>
         // a sites tile with no span is every year's: the time rule needs a window
-        val w = window(q.filter).getOrElse((Long.MinValue / 4, Long.MaxValue / 4))
+        val w = window(q.filter).getOrElse((SignedYear(Long.MinValue / 4), SignedYear(Long.MaxValue / 4)))
+        val siteType = q.siteType.map(t => TileRepo.SiteType(t.value))
         val cells =
-          if q.withUndated then sitesWithUndated(c, grid, w, q.siteType)
-          else db.read(TileRepo.siteCells(c, grid, w, q.siteType, modernFrom()))
-        val records = db.read(TileRepo.sitesOf(cells.filter(_.isItem).map(_.key)))
-        TileFeatures.of(c.z, cells, records.get, TileFeatures.site)
+          if q.withUndated then sitesWithUndated(c, grid, w, siteType)
+          else db.read(TileRepo.siteCells(c, grid, w, siteType, modernFrom()))
+        val records = db.read(TileRepo.sitesOf(cells.filter(_.isItem).map(cell => TileRepo.SiteId(cell.key.value))))
+        TileFeatures.of(c.z, cells, key => records.get(TileRepo.SiteId(key.value)), TileFeatures.site)
       case TileLayer.Events =>
         val f = q.filter
-        def where(f: Filter) = EventSelection(
+        // an id that is no place id names a place no event is at: the tile is empty
+        val place = q.placeId.map(_.value.trim).filter(_.nonEmpty) match
+          case None    => Some(None)
+          case Some(p) => Place.Id.option(p).map(Some(_))
+        def where(f: Filter, place: Option[Place.Id]) = EventSelection(
           f,
           scopeOf(f),
-          q.text,
-          q.kind,
-          q.historicity,
-          q.placeId,
-          EventSql.Narrow(q.tier.map(_.trim).filter(_.nonEmpty), q.context.getOrElse(false), None)
+          q.text.map(t => EventSelection.Text(t.value)),
+          q.kind.map(k => EventSelection.Kind(k.value)),
+          q.historicity.map(h => EventSelection.Historicity(h.value)),
+          place,
+          EventSql.Narrow(
+            q.tier.map(t => EventSql.Narrow.Tier(t.value.trim)).filter(_.value.nonEmpty),
+            EventSql.Narrow.Context(q.context.fold(false)(_.value)),
+            None
+          )
         ).sql(related)
-        val cells =
+        val cells: List[TileCell] = place.fold(List.empty[TileCell]) { p =>
           if q.withUndated then
-            db.read(TileRepo.eventCellsWithUndated(c, grid, where(f), where(f.modify(_.period).setTo(None))))
-          else db.read(TileRepo.eventCells(c, grid, where(f)))
-        val records = events.geoOf(cells.filter(_.isItem).map(_.key))
-        TileFeatures.of(c.z, cells, records.get, TileFeatures.event)
+            db.read(
+              TileRepo.eventCellsWithUndated(c, grid, where(f, p), where(f.modify(_.period).setTo(None), p))
+            )
+          else db.read(TileRepo.eventCells(c, grid, where(f, p)))
+        }
+        val records = events.geoOf(cells.filter(_.isItem).map(cell => Event.Id.assume(cell.key.value)))
+        TileFeatures.of(c.z, cells, key => records.get(Event.Id.assume(key.value)), TileFeatures.event)
       case TileLayer.Media =>
         val cells = db.read(TileRepo.cells(media.candidates(q, window(q.filter), TileRepo.envelope(c)), c, grid))
         val drawn = media.features(cells.filter(_.isItem).map(_.key))
         TileFeatures.of(c.z, cells, drawn.get, (cell, feature) => feature(cell))
-    VectorTileWriter.tile(Seq(layer.wire -> points))
-
-object MapTileService:
-  type ModernFromResult = ModernFromResult.T
-  object ModernFromResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
-
+    VectorTileWriter.tile(Seq(VectorTileWriter.LayerName(layer.wire.value) -> points))

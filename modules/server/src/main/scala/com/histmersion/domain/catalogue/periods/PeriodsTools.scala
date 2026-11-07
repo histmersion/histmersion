@@ -1,7 +1,7 @@
 package com.histmersion.domain.catalogue.periods
 
 import chimp.server.*
-import com.histmersion.api.catalogue.PeriodsMarkdown
+import com.histmersion.api.catalogue.{HistoricalPeriod, PeriodsMarkdown}
 import com.histmersion.util.mcp.McpOut
 import hearth.kindlings.circederivation.KindlingsCodecAsObject
 import hearth.kindlings.tapirschemaderivation.KindlingsSchema
@@ -54,15 +54,24 @@ object PeriodsTools:
         )
         .input[PeriodsInput]
         .handle { in =>
-          in.id.map(_.trim).filter(_.nonEmpty) match
+          in.id.map(_.value.trim).filter(_.nonEmpty) match
             case Some(id) =>
-              periods.period(id) match
+              periods.period(HistoricalPeriod.Id(id)) match
                 case Right(d) => ToolResult.text(PeriodsMarkdown.detail(d))
                 case Left(e)  => McpOut.error(e)
             case None =>
               ToolResult.text(
                 PeriodsMarkdown
-                  .list(periods.search(in.query.map(_.trim).filter(_.nonEmpty), in.region, in.from, in.to).toVector)
+                  .list(
+                    periods
+                      .search(
+                        in.query.map(_.value.trim).filter(_.nonEmpty).map(PeriodSearch.Text(_)),
+                        in.region.map(g => PeriodSearch.Region(g.value)),
+                        in.from.map(y => PeriodSearch.From(y.value)),
+                        in.to.map(y => PeriodSearch.To(y.value))
+                      )
+                      .toVector
+                  )
               )
         }
     )

@@ -16,7 +16,7 @@ trait EventLinkService:
   /** One event's candidates, the confirmed first, then by score; `withRejected` includes the rejected ones. A candidate
     * whose source is gone is not listed.
     */
-  def candidates(id: com.histmersion.domain.catalogue.Event.Id, withRejected: com.histmersion.domain.catalogue.evidence.EventLinkService.WithRejected = com.histmersion.domain.catalogue.evidence.EventLinkService.WithRejected(false)): List[EventLinkCandidate]
+  def candidates(id: com.histmersion.domain.catalogue.Event.Id, withRejected: Boolean = false): List[EventLinkCandidate]
 
   /** Replace the event's proposed candidates with `cs` (one confirmed or rejected before keeps its status) and record
     * the check.
@@ -29,46 +29,49 @@ trait EventLinkService:
   def isChecked(id: com.histmersion.domain.catalogue.Event.Id): Boolean
 
   /** The events whose candidates were never computed (every one, with `all`), the catalogue's first, by id. */
-  def eventsToCheck(all: com.histmersion.domain.catalogue.evidence.EventLinkService.CheckAll, limit: com.histmersion.PageSize): List[com.histmersion.domain.catalogue.Event.Id]
+  def eventsToCheck(all: Boolean, limit: com.histmersion.PageSize): List[com.histmersion.domain.catalogue.Event.Id]
 
 object EventLinkService:
-  type CheckAll = CheckAll.T
-  object CheckAll extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type WithRejected = WithRejected.T
-  object WithRejected extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
   def apply(db: Transactor): EventLinkService = Implementation(db)
 
   final private class Implementation(db: Transactor) extends EventLinkService:
-    def candidates(id: com.histmersion.domain.catalogue.Event.Id, withRejected: com.histmersion.domain.catalogue.evidence.EventLinkService.WithRejected): List[EventLinkCandidate] =
+    def candidates(id: com.histmersion.domain.catalogue.Event.Id, withRejected: Boolean): List[EventLinkCandidate] =
       db.read(EventLinkRepo.candidates(id, withRejected))
     def saveCandidates(id: com.histmersion.domain.catalogue.Event.Id, cs: List[EventLinkCandidate]): Unit =
       db.transact(EventLinkRepo.saveCandidates(id, cs))
     def setStatus(id: com.histmersion.domain.catalogue.Event.Id, citekey: com.histmersion.domain.library.Citekey, status: com.histmersion.domain.catalogue.Event.LinkStatus.Wire): Boolean =
       db.transact(EventLinkRepo.setStatus(id, citekey, status))
     def isChecked(id: com.histmersion.domain.catalogue.Event.Id): Boolean = db.read(EventLinkRepo.isChecked(id))
-    def eventsToCheck(all: com.histmersion.domain.catalogue.evidence.EventLinkService.CheckAll, limit: com.histmersion.PageSize): List[com.histmersion.domain.catalogue.Event.Id] = db.read(EventLinkRepo.eventsToCheck(all, limit))
+    def eventsToCheck(all: Boolean, limit: com.histmersion.PageSize): List[com.histmersion.domain.catalogue.Event.Id] = db.read(EventLinkRepo.eventsToCheck(all, limit))
 
 
   /** The same rules over the shared in-memory state; `title` names a source by its citekey (the library's), `None` for
     * one that is gone.
     */
-  final class InMemory(state: AtomicReference[CatalogueState], title: InMemory.TitleArg1 => Option[Option[InMemory.TitleResult]])
+  final class InMemory(state: AtomicReference[CatalogueState], title: com.histmersion.domain.library.Citekey => Option[Option[com.histmersion.domain.Title]])
       extends EventLinkService:
-    def candidates(id: com.histmersion.domain.catalogue.Event.Id, withRejected: com.histmersion.domain.catalogue.evidence.EventLinkService.WithRejected): List[EventLinkCandidate] =
+    def candidates(id: com.histmersion.domain.catalogue.Event.Id, withRejected: Boolean): List[EventLinkCandidate] =
+      val apiId = com.histmersion.api.catalogue.Event.Id(id.value)
       state.get.candidates
-        .filter(c => c.eventId == com.histmersion.api.catalogue.Event.Id(id) && (withRejected || c.status != Event.LinkStatus.Rejected))
-        .flatMap(c => title(c.citekey.value).map(t => c.modify(_.title).setTo(t)))
-        .sortBy(c => (c.status != Event.LinkStatus.Confirmed, -c.score, c.citekey.value.toString))
+        .filter(c => c.eventId == apiId && (withRejected || c.status.value != Event.LinkStatus.Rejected))
+        .flatMap(c =>
+          com.histmersion.domain.library.Citekey
+            .option(c.citekey.value)
+            .flatMap(title)
+            .map(t => c.modify(_.title).setTo(t.map(x => com.histmersion.api.library.Title(x.value))))
+        )
+        .sortBy(c => (c.status.value != Event.LinkStatus.Confirmed, -c.score.value, c.citekey.value.toString))
         .toList
 
     def saveCandidates(id: com.histmersion.domain.catalogue.Event.Id, cs: List[EventLinkCandidate]): Unit =
       val _ = state.updateAndGet { s =>
-        val kept = s.candidates.filterNot(c => c.eventId == com.histmersion.api.catalogue.Event.Id(id) && c.status == Event.LinkStatus.Proposed)
+        val apiId = com.histmersion.api.catalogue.Event.Id(id.value)
+        val kept = s.candidates.filterNot(c => c.eventId == apiId && c.status.value == Event.LinkStatus.Proposed)
         @tailrec def loop(rest: List[EventLinkCandidate], acc: Vector[EventLinkCandidate]): Vector[EventLinkCandidate] =
           rest match
             case c :: tail =>
-              val decided = acc.indexWhere(o => o.eventId == com.histmersion.api.catalogue.Event.Id(id) && o.citekey == c.citekey)
+              val decided = acc.indexWhere(o => o.eventId == apiId && o.citekey == c.citekey)
               val next =
                 if decided >= 0 then
                   acc.updated(
@@ -83,7 +86,12 @@ object EventLinkService:
                       .modify(_.reasons)
                       .setTo(c.reasons)
                   )
-                else acc :+ c.modify(_.eventId).setTo(com.histmersion.api.catalogue.Event.Id(id)).modify(_.status).setTo(Event.LinkStatus.Proposed)
+                else
+                  acc :+ c
+                    .modify(_.eventId)
+                    .setTo(apiId)
+                    .modify(_.status)
+                    .setTo(EventLinkCandidate.StatusValue(Event.LinkStatus.Proposed))
               loop(tail, next)
             case Nil => acc
         val written = loop(cs, kept)
@@ -91,27 +99,28 @@ object EventLinkService:
       }
 
     def setStatus(id: com.histmersion.domain.catalogue.Event.Id, citekey: com.histmersion.domain.library.Citekey, status: com.histmersion.domain.catalogue.Event.LinkStatus.Wire): Boolean =
-      val had = state.get.candidates.exists(c => c.eventId == com.histmersion.api.catalogue.Event.Id(id) && c.citekey == com.histmersion.api.library.Citekey(citekey))
+      val apiId = com.histmersion.api.catalogue.Event.Id(id.value)
+      val apiKey = com.histmersion.api.library.Citekey(citekey.value)
+      val had = state.get.candidates.exists(c => c.eventId == apiId && c.citekey == apiKey)
       val _ = state.updateAndGet(
         _.modify(_.candidates)
-          .using(_.map(c => if c.eventId == com.histmersion.api.catalogue.Event.Id(id) && c.citekey == com.histmersion.api.library.Citekey(citekey) then c.modify(_.status).setTo(status) else c))
+          .using(
+            _.map(c =>
+              if c.eventId == apiId && c.citekey == apiKey then
+                c.modify(_.status).setTo(EventLinkCandidate.StatusValue(status.value))
+              else c
+            )
+          )
       )
       had
 
     def isChecked(id: com.histmersion.domain.catalogue.Event.Id): Boolean = state.get.checked(id)
 
-    def eventsToCheck(all: com.histmersion.domain.catalogue.evidence.EventLinkService.CheckAll, limit: com.histmersion.PageSize): List[com.histmersion.domain.catalogue.Event.Id] =
+    def eventsToCheck(all: Boolean, limit: com.histmersion.PageSize): List[com.histmersion.domain.catalogue.Event.Id] =
       val s = state.get
       s.events
         .filter(e => all || !s.checked(e.id))
-        .sortBy(e => (e.catalogue.isEmpty, e.id))
-        .take(limit.max(0))
+        .sortBy(e => (e.catalogue.isEmpty, e.id.value))
+        .take(limit.value.max(0))
         .map(_.id)
         .toList
-
-  object InMemory:
-    type TitleArg1 = com.histmersion.domain.library.Citekey
-    val TitleArg1: _root_.com.histmersion.domain.library.Citekey.type = _root_.com.histmersion.domain.library.Citekey
-    type TitleResult = com.histmersion.domain.Title
-    val TitleResult: _root_.com.histmersion.domain.Title.type = _root_.com.histmersion.domain.Title
-

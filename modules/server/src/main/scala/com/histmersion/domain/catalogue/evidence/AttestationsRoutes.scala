@@ -1,7 +1,9 @@
 package com.histmersion.domain.catalogue.evidence
 
 import com.histmersion.api.Api
+import com.histmersion.api.catalogue.Attestation
 import com.histmersion.domain.Caller
+import com.histmersion.{Offset, PageSize}
 import sttp.shared.Identity
 import sttp.tapir.server.ServerEndpoint
 
@@ -11,7 +13,13 @@ object AttestationsRoutes:
     val me = Caller.Local
     List(
       Api.attestations.serverLogicSuccess[Identity](q =>
-        attestations.list(q.citekey, q.targetType, q.targetId, q.limit, q.offset)
+        attestations.list(
+          q.citekey,
+          q.targetType.map(t => Attestation.TargetType(t.value)),
+          q.targetId.map(t => Attestation.TargetId(t.value)),
+          q.limit.flatMap(l => PageSize.option(l.value)),
+          q.offset.flatMap(o => Offset.option(o.value))
+        )
       ),
       Api.getAttestation.serverLogic[Identity](id => attestations.get(id)),
       Api.createAttestation.serverLogic[Identity](in => attestations.create(me, in)),

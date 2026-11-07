@@ -21,8 +21,8 @@ import com.histmersion.api.library.Source
 final class SourceProposals(
     approvals: SourceApprovalService,
     cfg: => AgentsConfig,
-    status: SourceProposals.StatusArg1 => Option[Source.Status],
-    apply: Proposal => Either[SourceProposals.ApplyResultPart1, SourceProposals.ApplyResultPart2]
+    status: com.histmersion.domain.library.Citekey => Option[Source.Status],
+    apply: Proposal => Either[SourceProposals.Outcome.Failed.Why, SourceProposals.Outcome.Applied.What]
 ):
   def proposedBefore(p: Proposal): Boolean = approvals.proposedBefore(p.kind, p.citekey, p.status.transformInto[Option[com.histmersion.domain.library.Source.Status]], p.edgeKind.transformInto[Option[com.histmersion.domain.library.Edge.Kind]], p.target)
 
@@ -32,8 +32,8 @@ final class SourceProposals(
     * nor records it.
     */
   def propose(ctx: RunCtx, p: Proposal): Outcome =
-    ctx.write(s"${p.kind.wire} proposal: ${p.describe}", p.asJson)(propose(Some(ctx.run.id), p))(
-      Outcome.NotProposed(p.describe)
+    ctx.write(s"${p.kind.wire} proposal: ${p.describe}", p.asJson)(propose(Some(com.histmersion.domain.automation.Run.Id(ctx.run.id.value)), p))(
+      Outcome.NotProposed(Outcome.NotProposed.What(p.describe.value))
     )
 
   private def record(
@@ -41,10 +41,10 @@ final class SourceProposals(
       p: Proposal,
       now: Option[Source.Status],
       state: ApprovalState,
-      result: Option[com.histmersion.domain.library.workflows.SourceProposals.RecordResult]
+      result: Option[ApprovalRecord.Result]
   ) =
     approvals.record(
-      runId,
+      runId.map(r => com.histmersion.util.jobs.Job.Id(r.value)),
       p.kind,
       p.citekey,
       p.status.transformInto[Option[com.histmersion.domain.library.Source.Status]],
@@ -61,44 +61,27 @@ final class SourceProposals(
     // the status it had matters to a status change only (an edge leaves the status alone)
     val now = if p.kind == Approval.Kind.StatusChange then status(p.citekey) else None
     AgentProposals.route(p, now.transformInto[Option[com.histmersion.api.library.Source.Status]], cfg.approvals.statusMode.transformInto[com.histmersion.api.automation.Approval.Mode], cfg.approvals.edgeMode.transformInto[com.histmersion.api.automation.Approval.Mode]) match
-      case Route.Skip(why) => Outcome.Skipped(s"${p.describe} ($why)")
+      case Route.Skip(why) => Outcome.Skipped(Outcome.Skipped.Why(s"${p.describe} ($why)"))
       case Route.Apply     =>
         apply(p) match
-          case Left(m)  => Outcome.Failed(s"${p.describe}: $m")
+          case Left(m)  => Outcome.Failed(Outcome.Failed.Why(s"${p.describe}: $m"))
           case Right(w) =>
-            val _ = record(runId, p, now, ApprovalState.Approved, Some(s"${ListFilters.DecidedBy.AutoResult}: $w"))
+            val _ = record(runId, p, now, ApprovalState.Approved, Some(ApprovalRecord.Result(s"${ListFilters.DecidedBy.AutoResult}: $w")))
             Outcome.Applied(w)
       case Route.Ask =>
         record(runId, p, now, ApprovalState.Open, None) match
-          case Some(a) => Outcome.Recorded(a.id, p.describe)
-          case None    => Outcome.AlreadyOpen(p.describe)
+          case Some(a) => Outcome.Recorded(Outcome.Recorded.Id(a.id.value), Outcome.Recorded.What(p.describe.value))
+          case None    => Outcome.AlreadyOpen(Outcome.AlreadyOpen.What(p.describe.value))
 
 object SourceProposals:
-  type ApplyKey = ApplyKey.T
-  object ApplyKey extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type ApplyText = ApplyText.T
-  object ApplyText extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type ApprovalRecordId = ApprovalRecordId.T
   object ApprovalRecordId extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type OutcomeLine = OutcomeLine.T
-  object OutcomeLine extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type OutcomeWhat = OutcomeWhat.T
   object OutcomeWhat extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type OutcomeWhy = OutcomeWhy.T
   object OutcomeWhy extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type ProposalStatus = ProposalStatus.T
-  object ProposalStatus extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
   /** What became of one proposal, for the run's log and warnings. */
-  type StatusArg1 = com.histmersion.domain.library.workflows.SourceProposals.ProposalStatus
-  val StatusArg1: _root_.com.histmersion.domain.library.workflows.SourceProposals.ProposalStatus.type = _root_.com.histmersion.domain.library.workflows.SourceProposals.ProposalStatus
-  type ApplyResultPart1 = com.histmersion.domain.library.workflows.SourceProposals.ApplyKey
-  val ApplyResultPart1: _root_.com.histmersion.domain.library.workflows.SourceProposals.ApplyKey.type = _root_.com.histmersion.domain.library.workflows.SourceProposals.ApplyKey
-  type ApplyResultPart2 = com.histmersion.domain.library.workflows.SourceProposals.ApplyText
-  val ApplyResultPart2: _root_.com.histmersion.domain.library.workflows.SourceProposals.ApplyText.type = _root_.com.histmersion.domain.library.workflows.SourceProposals.ApplyText
-
-  type RecordResult = RecordResult.T
-  object RecordResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-
   enum Outcome:
     case Applied(what: Outcome.Applied.What)
     case Recorded(id: Outcome.Recorded.Id, what: Outcome.Recorded.What)
@@ -109,7 +92,7 @@ object SourceProposals:
     /** A dry run's proposal: neither recorded nor applied (#992). */
     case NotProposed(what: Outcome.NotProposed.What)
 
-    def line: com.histmersion.domain.library.workflows.SourceProposals.OutcomeLine = this match
+    def line: String = this match
       case Applied(w)     => s"applied: $w"
       case Recorded(i, w) => s"approval $i waits for a person: $w"
       case AlreadyOpen(w) => s"already waiting for a person: $w"

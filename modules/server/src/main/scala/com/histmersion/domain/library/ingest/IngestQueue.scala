@@ -73,7 +73,7 @@ final class IngestQueue(
   /** Started by the composition root, after construction. Returns the jobs a restart had to fail. */
   def start(): com.histmersion.RowCount =
     val n = pool.start()
-    if n > 0 then scribe.warn(s"$n unfinished job(s) marked failed: ${JobState.Interrupted}")
+    if n.value > 0 then scribe.warn(s"$n unfinished job(s) marked failed: ${JobState.Interrupted}")
     n
 
   def stop(): Unit = pool.stop()
@@ -89,7 +89,7 @@ final class IngestQueue(
     val jobId = Job.Id.assume(job.id.value)
     val _ = pending.put(jobId, IngestPending(params, citekey, file, sha, kind))
     pool.submit(jobId)
-    Ingest.Accepted(job.id, com.histmersion.api.library.Citekey(citekey.value), job.status, Some(com.histmersion.api.Sha256(sha.value)))
+    Ingest.Accepted(job.id, com.histmersion.api.library.Citekey(citekey.value), Ingest.Accepted.Status(job.status.value), Some(com.histmersion.api.Sha256(sha.value)))
 
   // ── the converter's health ─────────────────────────────────────────────────────────────────
 

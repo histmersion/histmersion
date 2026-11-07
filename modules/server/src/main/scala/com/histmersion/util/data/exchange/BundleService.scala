@@ -265,7 +265,7 @@ object BundleService:
               w.followUps
             )
             .map { r =>
-              if r.applied && r.mergeId.isDefined then Transactor(w.ds).transact(MergeRepo.dropSession(MergeRepo.BundleName(bundle.value)))
+              if r.applied.value && r.mergeId.isDefined then Transactor(w.ds).transact(MergeRepo.dropSession(MergeRepo.BundleName(bundle.value)))
               r
             }
             .left

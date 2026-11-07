@@ -1,25 +1,32 @@
 package com.histmersion.domain.library.workflows
 
-import io.scalaland.chimney.dsl.*
-
+import com.histmersion.domain.automation.agents.AgentRepo.StepRecord
 import com.histmersion.domain.automation.agents.Checked
 import com.histmersion.domain.automation.agents.Halt
 import com.histmersion.domain.automation.agents.Prompt
 import com.histmersion.domain.automation.agents.RunCtx
 import com.histmersion.domain.automation.agents.StepAgent
+import com.histmersion.domain.automation.goals.BGoalLinkRow
+import com.histmersion.domain.automation.managers.ManagerContext
+import com.histmersion.domain.automation.managers.ManagerLight
+import com.histmersion.domain.automation.managers.ManagerService
 import com.histmersion.domain.automation.workflows.PipelineDef
+import com.histmersion.domain.library.Citekey
+import com.histmersion.domain.library.Doi
+import com.histmersion.domain.library.search.Search
 
 import com.histmersion.config.*
 import com.histmersion.domain.*
 import com.histmersion.api.automation.Agents.Pipeline
-import com.histmersion.api.automation.Goal.Plans.LinkKind
 import AcquisitionSweepRules.{Candidate, Ranking}
 import hearth.kindlings.circederivation.KindlingsCodecAsObject
 import io.circe.syntax.*
 
 import com.histmersion.api.VocabularyCodecs.given
-import com.histmersion.api.automation.{AgentsMarkdown, Managers}
-import com.histmersion.api.library.Candidates
+import com.histmersion.api.json.NewtypeCodecs.given
+import com.histmersion.util.json.StoredIdCodecs.given
+import com.histmersion.api.automation.{AgentsMarkdown, Managers, Queue}
+import com.histmersion.api.library.{Candidates, Source, WorkRef}
 
 /** `acquisition-sweep <goal>` (docs/research-embedded-agents.md §4.5, §14): code searches OpenAlex with the goal's
   * linked queries (its title when it has none) and drops every work the corpus or the acquisition queue already has;
@@ -52,40 +59,44 @@ final class AcquisitionSweepPipeline(
   protected def goals: com.histmersion.domain.automation.goals.GoalService = agents.goals
   import AcquisitionSweepPipeline.*
 
-  def run(ctx: RunCtx): Either[Halt, com.histmersion.domain.library.workflows.AcquisitionSweepPipeline.RunResultPart2] =
-    val goal = ctx.run.target
+  def run(ctx: RunCtx): Either[Halt, PipelineDef.RunResultPart2] =
+    val goal = goalOf(ctx)
     for
-      found <- ctx.code[Found](com.histmersion.domain.automation.agents.AgentRepo.StepRecord.Name("discover"))(discover(ctx, goal))
+      found <- ctx.code[Found](StepRecord.Name("discover"))(discover(ctx, goal))
       line <-
         if found.candidates.isEmpty then
-          ctx.code[String]("close")(
+          ctx.code[String](StepRecord.Name("close"))(
             log(
               ctx,
               s"acquisition-sweep goal $goal: ${found.queries.size} query(ies), nothing new " +
-                s"(${skippedText(found.skipped)}) (agent run ${ctx.run.id.take(8)})"
+                s"(${skippedText(found.skipped)}) (agent run ${ctx.run.id.value.take(8)})"
             )
           )
         else
-          val allowed = ctx.run.params.autoIngest.getOrElse(0)
+          val allowed = AcquisitionSweepRules.Allowance(ctx.run.params.autoIngest.fold(0)(_.value))
           for
             picks <- ctx.llm[Ranking, List[Picked]](
-              "rank",
+              StepRecord.Name("rank"),
               StepAgent.AcquisitionRanker,
-              rankInput(goal, found),
+              Prompt.UserText(rankInput(goal, found)),
               LibraryAnswers.ranking
             )((r, last) =>
               AcquisitionSweepRules
-                .checkRanking(r, found.candidates, last)
-                .map((ps, ws) => Checked(ps.map((c, why) => Picked(c, why)), ws))
+                .checkRanking(r, found.candidates, AcquisitionSweepRules.LastAttempt(last.value))
+                .left
+                .map(_.map(p => com.histmersion.domain.automation.agents.RunCtx.Problem(p.value)))
+                .map((ps, ws) => Checked(ps.map((c, why) => Picked(c, why)), ws.map(d => Checked.Warnings(d.value))))
             )
             // the stored candidates the ranking saw are SEEN, its picks QUEUED: a later sweep shows neither again
-            _ <- if found.stored.isEmpty then Right(0) else ctx.code[Int]("seen")(Right(markSeen(ctx, found, picks)))
-            backed = ctx.run.params.oaBacklog.contains(true) && ctx.run.managerId.isDefined
+            _ <-
+              if found.stored.isEmpty then Right(0)
+              else ctx.code[Int](StepRecord.Name("seen"))(Right(markSeen(ctx, found, picks)))
+            backed = ctx.run.params.oaBacklog.exists(_.value) && ctx.run.managerId.isDefined
             line <-
               if backed then withBacklog(ctx, goal, found, picks, allowed)
               else withoutBacklog(ctx, goal, found, picks, allowed)
           yield line
-    yield line
+    yield PipelineDef.RunResultPart2(line)
 
   /** The steps after the ranking as they always were: the open-access picks within the allowance ingested, every other
     * pick queued for acquisition.
@@ -96,23 +107,23 @@ final class AcquisitionSweepPipeline(
       found: Found,
       picks: List[Picked],
       allowed: com.histmersion.domain.library.workflows.AcquisitionSweepRules.Allowance
-  ): Either[Halt, com.histmersion.domain.library.workflows.AcquisitionSweepPipeline.WithoutBacklogResultPart2] =
+  ): Either[Halt, String] =
     for
       took <-
-        if allowed > 0 then ctx.code[List[Ingested]](com.histmersion.domain.automation.agents.AgentRepo.StepRecord.Name("ingest"))(Right(ingest(ctx, goal, picks, allowed)))
+        if allowed.value > 0 then ctx.code[List[Ingested]](StepRecord.Name("ingest"))(Right(ingest(ctx, goal, picks, allowed)))
         else Right(Nil)
-      added <- ctx.code[Int](com.histmersion.domain.automation.agents.AgentRepo.StepRecord.Name("queue"))(
+      added <- ctx.code[Int](StepRecord.Name("queue"))(
         Right(queue(ctx, goal, picks.filterNot(p => took.exists(_.doi == p.candidate.doi))))
       )
-      line <- ctx.code[String]("close")(
+      line <- ctx.code[String](StepRecord.Name("close"))(
         log(
           ctx,
           s"acquisition-sweep goal $goal: ${found.queries.size} query(ies), " +
             s"${found.candidates.size} new candidate(s), ${picks.size} picked, " +
-            (if allowed > 0 then
+            (if allowed.value > 0 then
                s"${took.size} ingested (legal open access${took.map(i => s" [[${i.citekey}]]").mkString}), "
              else "") +
-            s"$added queued for acquisition (${skippedText(found.skipped)}) (agent run ${ctx.run.id.take(8)})"
+            s"$added queued for acquisition (${skippedText(found.skipped)}) (agent run ${ctx.run.id.value.take(8)})"
         )
       )
     yield line
@@ -127,111 +138,129 @@ final class AcquisitionSweepPipeline(
       found: Found,
       picks: List[Picked],
       allowed: com.histmersion.domain.library.workflows.AcquisitionSweepRules.Allowance
-  ): Either[Halt, com.histmersion.domain.library.workflows.AcquisitionSweepPipeline.WithBacklogResultPart2] =
+  ): Either[Halt, String] =
     for
       tried <-
-        if allowed > 0 then ctx.code[Tried](com.histmersion.domain.automation.agents.AgentRepo.StepRecord.Name("ingest"))(Right(ingestOa(ctx, goal, picks, allowed))) else Right(Tried())
+        if allowed.value > 0 then ctx.code[Tried](StepRecord.Name("ingest"))(Right(ingestOa(ctx, goal, picks, allowed))) else Right(Tried())
       noCopy = tried.failed.filter(_.noCopy).map(_.doi).toSet
       waiting = picks.filter(p =>
-        p.candidate.isOa && !tried.ingested.exists(_.doi == p.candidate.doi) && !noCopy(p.candidate.doi)
+        p.candidate.isOa.value && !tried.ingested.exists(_.doi == p.candidate.doi) && !noCopy(p.candidate.doi)
       )
-      parked <- ctx.code[Parked](com.histmersion.domain.automation.agents.AgentRepo.StepRecord.Name("backlog"))(Right(park(ctx, goal, waiting)))
-      added <- ctx.code[Int](com.histmersion.domain.automation.agents.AgentRepo.StepRecord.Name("queue"))(
-        Right(queue(ctx, goal, picks.filter(p => !p.candidate.isOa || noCopy(p.candidate.doi))))
+      parked <- ctx.code[Parked](StepRecord.Name("backlog"))(Right(park(ctx, goal, waiting)))
+      added <- ctx.code[Int](StepRecord.Name("queue"))(
+        Right(queue(ctx, goal, picks.filter(p => !p.candidate.isOa.value || noCopy(p.candidate.doi))))
       )
-      line <- ctx.code[String]("close")(
+      line <- ctx.code[String](StepRecord.Name("close"))(
         log(
           ctx,
           s"acquisition-sweep goal $goal: ${found.queries.size} query(ies), " +
             s"${found.candidates.size} new candidate(s), ${picks.size} picked, " +
             s"${tried.ingested.size} ingested (legal open access${tried.ingested.map(i => s" [[${i.citekey}]]").mkString}), " +
             s"${parked.waiting} to the ingest backlog (legal open access past today's allowance)" +
-            (if parked.known > 0 then s", ${parked.known} in the corpus or on the acquisition list already" else "") +
-            s", $added queued for acquisition (${skippedText(found.skipped)}) (agent run ${ctx.run.id.take(8)})"
+            (if parked.known.value > 0 then s", ${parked.known} in the corpus or on the acquisition list already" else "") +
+            s", $added queued for acquisition (${skippedText(found.skipped)}) (agent run ${ctx.run.id.value.take(8)})"
         )
       )
     yield line
 
-  private def skippedText(m: Map[com.histmersion.domain.library.workflows.AcquisitionSweepPipeline.SkippedTextMPart1, com.histmersion.RowCount]): com.histmersion.domain.library.workflows.AcquisitionSweepPipeline.SkippedTextResult =
-    if m.isEmpty then com.histmersion.domain.library.workflows.AcquisitionSweepPipeline.("none left out") else m.toList.sortBy(_._1).map((k, n) => s"$n $k").mkString(", ")
+  private def skippedText(m: Map[AcquisitionSweepRules.SkipReason, AcquisitionSweepRules.SkipCount]): String =
+    if m.isEmpty then "none left out" else m.toList.sortBy(_._1.value).map((k, n) => s"$n $k").mkString(", ")
 
   /** The DOIs in a watcher's ingest backlog that this goal found already (a pick another goal found joins that entry,
     * so it is offered to this goal's ranking too).
     */
-  private def backlogged(goal: com.histmersion.domain.automation.Goal.Slug): Set[com.histmersion.domain.library.workflows.AcquisitionSweepPipeline.BackloggedResult] =
+  private def backlogged(goal: com.histmersion.domain.automation.Goal.Slug): Set[Doi] =
+    val apiGoal = com.histmersion.api.automation.Goal.Slug(goal.value)
+    val watcher = Managers.watchId(com.histmersion.api.automation.Goal.Ref(goal.value))
     agents.managerStore
       .backlogOpen()
-      .filter(i => i.state.oa.exists(_.goals.contains(goal)) || i.managerId == Managers.watchId(goal))
-      .map(_.target)
+      .filter(i => i.state.oa.exists(_.goals.contains(apiGoal)) || i.managerId == watcher)
+      .map(i => Doi.assume(i.target.value))
       .toSet
 
   /** The candidates the deterministic search stored for the goal (#3761): its watches read now from their watermarks
     * (no model), then the unseen ones; the live search below only when that search is not connected (a fixture).
     */
-  private def discover(ctx: RunCtx, goal: com.histmersion.domain.automation.Goal.Slug): Either[com.histmersion.domain.library.workflows.AcquisitionSweepPipeline.Problem, Found] =
-    upstream().sweepCandidates(goal, ctx.dryRun) match
+  private def discover(ctx: RunCtx, goal: com.histmersion.domain.automation.Goal.Slug): Either[String, Found] =
+    upstream().sweepCandidates(goal, AgentUpstream.SweepCandidatesDryRun(ctx.dryRun)) match
       case Left(_)   => liveDiscover(ctx, goal)
       case Right(sw) =>
         sw.watches
           .filter(_.lastError.isDefined)
           .foreach(w =>
-            ctx.warn(s"candidates: ${w.index} ${w.kind} '${w.subject}' not read — ${w.lastError.getOrElse("")}")
+            ctx.warn(s"candidates: ${w.index} ${w.kind} '${w.subject}' not read — ${w.lastError.fold("")(_.value)}")
           )
         for
-          g <- agents.host.goal(goal).left.map(_.message)
-          rows <- upstream().candidates(goal, Candidates.State.New.wire, cfg.scheduler.sweepCandidates)
+          g <- agents.host.goal(goal).left.map(_.message.value)
+          rows <- upstream()
+            .candidates(goal, Candidates.State.New.wire, AgentUpstream.Limit(cfg.scheduler.sweepCandidates.value))
+            .left
+            .map(_.value)
         yield
           val queued = queuedDois().keySet ++ backlogged(goal)
-          val (gone, open) = rows.partition(c => queued.contains(c.doi))
+          val (gone, open) = rows.partition(c => queued.contains(Doi.assume(c.doi.value)))
           val cands = open.map(c =>
             Candidate(
-              c.doi,
+              Doi.assume(c.doi.value),
               c.title,
               c.year,
               c.authors.take(4),
               c.venue,
-              c.isOa,
-              c.foundBy.headOption.getOrElse("the candidate search"),
-              c.abstractText.map(_.take(600))
+              WorkRef.IsOa(c.isOa.value),
+              Candidate.Query(c.foundBy.headOption.fold("the candidate search")(_.value)),
+              c.abstractText.map(a => WorkRef.AbstractText(a.value.take(600)))
             )
           )
-          val queries = sw.watches.filter(_.kind == Candidates.WatchKind.Query.wire).map(_.subject).distinct
+          val queries = sw.watches
+            .filter(_.kind == Candidates.WatchKind.Query.wire)
+            .map(w => Search.Query(w.subject.value))
+            .distinct
           Found(
             g.title,
             g.notes,
             queries,
             cands,
-            sw.skipped ++ Option.when(gone.nonEmpty)("already queued" -> gone.size).toMap,
-            stored = open.map(c => c.doi -> c.id).toMap
+            sw.skipped.map((k, n) => AcquisitionSweepRules.SkipReason(k.value) -> AcquisitionSweepRules.SkipCount(n.value)) ++
+              Option
+                .when(gone.nonEmpty)(
+                  AcquisitionSweepRules.SkipReason("already queued") -> AcquisitionSweepRules.SkipCount(gone.size)
+                )
+                .toMap,
+            stored = open.map(c => Doi.assume(c.doi.value) -> c.id).toMap
           )
 
   /** The stored candidates shown to the ranking: the picks marked queued, the rest seen. */
-  private def markSeen(ctx: RunCtx, found: Found, picks: List[Picked]): com.histmersion.RowCount =
+  private def markSeen(ctx: RunCtx, found: Found, picks: List[Picked]): Int =
     val picked = picks.map(_.candidate.doi).toSet
     val (q, s) = found.stored.toList.partition((doi, _) => picked.contains(doi))
     ctx.write(
       s"candidates of goal ${ctx.run.target}: ${q.size} queued, ${s.size} seen",
       io.circe.Json.obj("queued" -> q.map(_._2).asJson, "seen" -> s.map(_._2).asJson)
     )(
-      upstream().markCandidates(q.map(_._2), Candidates.State.Queued.wire).getOrElse(0) +
-        upstream().markCandidates(s.map(_._2), Candidates.State.Seen.wire).getOrElse(0)
+      upstream().markCandidates(q.map(_._2), Candidates.State.Queued.wire).fold(_ => 0, _.value) +
+        upstream().markCandidates(s.map(_._2), Candidates.State.Seen.wire).fold(_ => 0, _.value)
     )(q.size + s.size)
 
   /** OpenAlex searched live with the goal's queries (the sweep as it was before the candidate search). */
-  private def liveDiscover(ctx: RunCtx, goal: com.histmersion.domain.automation.Goal.Slug): Either[com.histmersion.domain.library.workflows.AcquisitionSweepPipeline.Problem, Found] =
-    agents.host.goal(goal).left.map(_.message).map { g =>
-      val queries = Some(goals.refs(goal, com.histmersion.domain.automation.Goal.LinkKind.Query)).filter(_.nonEmpty).getOrElse(List(g.title))
+  private def liveDiscover(ctx: RunCtx, goal: com.histmersion.domain.automation.Goal.Slug): Either[String, Found] =
+    agents.host.goal(goal).left.map(_.message.value).map { g =>
+      val linked = goals.refs(goal, com.histmersion.domain.automation.Goal.LinkKind.Query).map(r => Search.Query(r.value))
+      val queries = Some(linked).filter(_.nonEmpty).getOrElse(List(Search.Query(g.title.value)))
       val found = queries.flatMap { q =>
-        upstream().discover(q, cfg.scheduler.discoverPerQuery) match
+        upstream().discover(q, AgentUpstream.Limit(cfg.scheduler.discoverPerQuery.value)) match
           case Left(m)  => ctx.warn(s"discover '$q': $m"); Nil
-          case Right(r) => r.works.map(q -> _)
+          case Right(r) => r.works.map(w => Candidate.Query(q.value) -> w)
       }
       val (cands, skipped) =
-        AcquisitionSweepRules.candidates(found, queuedDois().keySet ++ backlogged(goal), cfg.scheduler.sweepCandidates)
+        AcquisitionSweepRules.candidates(
+          found,
+          queuedDois().keySet ++ backlogged(goal),
+          AcquisitionSweepRules.Limit(cfg.scheduler.sweepCandidates.value)
+        )
       Found(g.title, g.notes, queries, cands, skipped)
     }
 
-  private def rankInput(goal: com.histmersion.domain.automation.Goal.Slug, f: Found): com.histmersion.domain.library.workflows.AcquisitionSweepPipeline.RankInputResult =
+  private def rankInput(goal: com.histmersion.domain.automation.Goal.Slug, f: Found): String =
     val list = f.candidates
       .map { c =>
         val who = c.authors.headOption.fold("")(a => s"$a${if c.authors.size > 1 then " et al." else ""}, ")
@@ -240,7 +269,7 @@ final class AcquisitionSweepPipeline(
       }
       .mkString("\n")
     s"Pick the candidates worth acquiring for this goal.\n\n" +
-      Prompt.data("goal", s"slug: $goal\ntitle: ${f.title}\nnotes: ${f.notes.getOrElse("none")}") + "\n\n" +
+      Prompt.data("goal", s"slug: $goal\ntitle: ${f.title}\nnotes: ${f.notes.fold("none")(_.value)}") + "\n\n" +
       Prompt.data("candidates", list)
 
   /** The watcher's auto-ingest: the open-access picks, in the model's order, until `allowed` were ingested, each
@@ -249,7 +278,7 @@ final class AcquisitionSweepPipeline(
     */
   private def ingest(ctx: RunCtx, goal: com.histmersion.domain.automation.Goal.Slug, picks: List[Picked], allowed: com.histmersion.domain.library.workflows.AcquisitionSweepRules.Allowance): List[Ingested] =
     AcquisitionSweepRules
-      .ingestPicks(picks, (p: Picked) => p.candidate.isOa, allowed) { p =>
+      .ingestPicks(picks, (p: Picked) => p.candidate.isOa.value, allowed) { p =>
         ingestOne(ctx, goal, p) match
           case Left(m) =>
             ctx.warn(s"ingest: ${p.candidate.doi} not ingested, queued instead — $m")
@@ -261,134 +290,124 @@ final class AcquisitionSweepPipeline(
   /** One open-access pick through the legal chain: linked to the goal and recorded as an `ingested` event of the
     * watcher (what its daily cap counts). Left = why not.
     */
-  private def ingestOne(ctx: RunCtx, goal: com.histmersion.domain.automation.Goal.Slug, p: Picked): Either[com.histmersion.domain.library.workflows.AcquisitionSweepPipeline.Problem, Ingested] =
+  private def ingestOne(ctx: RunCtx, goal: com.histmersion.domain.automation.Goal.Slug, p: Picked): Either[AcquisitionSweepRules.IngestFailure, Ingested] =
     val doi = p.candidate.doi
     ctx.write(
       s"ingest $doi (legal open access only) for goal $goal",
       io.circe.Json.obj("doi" -> doi.asJson, "title" -> p.candidate.title.asJson, "why" -> p.why.asJson)
-    )(upstream().ingestLegal(doi).map { r =>
+    )(upstream().ingestLegal(doi).left.map(e => AcquisitionSweepRules.IngestFailure(e.value)).map { r =>
       val _ =
-        goals.link(goal, io.scalaland.chimney.Transformer.derive[com.histmersion.api.automation.Goal.LinkKind, com.histmersion.domain.automation.Goal.LinkKind].transform(LinkKind.Source), r.citekey, Some(s"ingested by a watcher sweep: ${
-  p.why
-}".take(500)))
+        goals.link(
+          goal,
+          com.histmersion.domain.automation.Goal.LinkKind.Source,
+          BGoalLinkRow.Ref(r.citekey.value),
+          Some(BGoalLinkRow.Note(s"ingested by a watcher sweep: ${p.why}".take(500)))
+        )
       ctx.run.managerId.foreach(mid =>
         agents.managerStore.event(
-          mid,
-          ctx.run.managerItem,
-          Some(ctx.run.id),
-          Managers.Feed.Ingested,
-          s"[[${r.citekey}]] ingested (legal open access, ${r.pdf.fold("no file")(_.source)}): ${p.candidate.title} — https://doi.org/$doi"
+          ManagerLight.Id(mid.value),
+          ctx.run.managerItem.map(i => ManagerContext.ItemId(i.value)),
+          Some(com.histmersion.domain.automation.Run.Id(ctx.run.id.value)),
+          ManagerService.EventKind(Managers.Feed.Ingested),
+          ManagerService.EventText(
+            s"[[${r.citekey}]] ingested (legal open access, ${r.pdf.fold("no file")(_.source.value)}): ${p.candidate.title} — https://doi.org/$doi"
+          )
         )
       )
-      Ingested(doi, r.citekey)
-    })(Right(Ingested(doi, s"(${AgentsMarkdown.DryRunNote})")))
+      Ingested(doi, Citekey.assume(r.citekey.value))
+    })(Right(Ingested(doi, Citekey.assume(s"(${AgentsMarkdown.DryRunNote})"))))
 
   /** [[ingest]] for a watcher with a backlog: what failed is kept too (a missing legal file → the acquisition list;
     * anything else → the backlog, tried again on a later day).
     */
   private def ingestOa(ctx: RunCtx, goal: com.histmersion.domain.automation.Goal.Slug, picks: List[Picked], allowed: com.histmersion.domain.library.workflows.AcquisitionSweepRules.Allowance): Tried =
     val (ok, ko) =
-      AcquisitionSweepRules.ingestOa(picks, (p: Picked) => p.candidate.isOa, allowed)(ingestOne(ctx, goal, _))
+      AcquisitionSweepRules.ingestOa(picks, (p: Picked) => p.candidate.isOa.value, allowed)(ingestOne(ctx, goal, _))
     ko.foreach((p, why) => ctx.warn(s"ingest: ${p.candidate.doi} not ingested — $why"))
-    Tried(ok.map(_._2), ko.map((p, why) => Failed(p.candidate.doi, why.take(500), IngestBacklog.isNoLegalCopy(why))))
+    Tried(
+      ok.map(_._2),
+      ko.map((p, why) =>
+        Failed(p.candidate.doi, Failed.Why(why.value.take(500)), IngestBacklog.isNoLegalCopy(IngestBacklog.Problem(why.value)))
+      )
+    )
 
   /** The open-access picks not ingested now, into the watcher's ingest backlog (deduplicated against the corpus, the
     * acquisition list and every watcher's backlog).
     */
   private def park(ctx: RunCtx, goal: com.histmersion.domain.automation.Goal.Slug, picks: List[Picked]): Parked =
-    val mid = ctx.run.managerId.getOrElse(Managers.watchId(goal))
+    val mid = ManagerLight.Id(
+      ctx.run.managerId.getOrElse(Managers.watchId(com.histmersion.api.automation.Goal.Ref(goal.value))).value
+    )
     val placed = picks.map { p =>
       val c = p.candidate
-      val w = Managers.OaWork(c.doi, c.title, c.year, c.authors, c.venue, List(goal), p.why, Some(ctx.run.id))
+      val w = Managers.OaWork(
+        com.histmersion.api.library.Doi(c.doi.value),
+        c.title,
+        c.year,
+        c.authors,
+        c.venue,
+        List(com.histmersion.api.automation.Goal.Slug(goal.value)),
+        Managers.OaWork.Why(p.why.value),
+        Some(Managers.OaWork.FoundBy(ctx.run.id.value))
+      )
       ctx.write(
         s"ingest backlog of $mid: ${c.doi} for goal $goal",
         io.circe.Json.obj("doi" -> c.doi.asJson, "title" -> c.title.asJson, "why" -> p.why.asJson)
       )(backlog.add(mid, goal, w))(IngestBacklog.Placement.New)
     }
     Parked(
-      placed.count {
+      Parked.Waiting(placed.count {
         case IngestBacklog.Placement.New | IngestBacklog.Placement.JoinBacklog(_) => true
         case _                                                                    => false
-      },
-      placed.count {
+      }),
+      Parked.Known(placed.count {
         case IngestBacklog.Placement.InCorpus(_) | IngestBacklog.Placement.JoinAcquire(_) => true
         case _                                                                            => false
-      }
+      })
     )
 
-  private def queue(ctx: RunCtx, goal: com.histmersion.domain.automation.Goal.Slug, picks: List[Picked]): com.histmersion.RowCount =
+  private def queue(ctx: RunCtx, goal: com.histmersion.domain.automation.Goal.Slug, picks: List[Picked]): Int =
     val queued = queuedDois()
     picks.count { p =>
-      queueOnce(ctx, goal, p.candidate.doi, AcquisitionSweepRules.acquireText(p.candidate, goal, p.why), queued) match
+      val text = Queue.QueueItem.Text(AcquisitionSweepRules.acquireText(p.candidate, goal, p.why).value)
+      queueOnce(ctx, goal, p.candidate.doi, text, queued) match
         case Left(m)      => ctx.warn(s"queue: ${p.candidate.doi} not queued — $m"); false
         case Right(added) => added
     }
 
 object AcquisitionSweepPipeline:
-  type Problem = Problem.T
-  object Problem extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  given io.circe.KeyEncoder[AcquisitionSweepRules.SkipReason] =
+    io.circe.KeyEncoder.encodeKeyString.contramap(_.value)
+  given io.circe.KeyDecoder[AcquisitionSweepRules.SkipReason] =
+    io.circe.KeyDecoder.decodeKeyString.map(AcquisitionSweepRules.SkipReason(_))
+  given io.circe.KeyEncoder[Doi] = io.circe.KeyEncoder.encodeKeyString.contramap(_.value)
+  given io.circe.KeyDecoder[Doi] = io.circe.KeyDecoder.decodeKeyString.map(Doi.assume(_))
 
   /** What an acquisition sweep picked (its `rank` step's checked answer). */
-  type RunResultPart2 = RunResultPart2.T
-  object RunResultPart2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type WithoutBacklogResultPart2 = WithoutBacklogResultPart2.T
-  object WithoutBacklogResultPart2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type WithBacklogResultPart2 = WithBacklogResultPart2.T
-  object WithBacklogResultPart2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type SkippedTextResult = SkippedTextResult.T
-  object SkippedTextResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type SkippedTextMPart1 = SkippedTextMPart1.T
-  object SkippedTextMPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type BackloggedResult = BackloggedResult.T
-  object BackloggedResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type RankInputResult = RankInputResult.T
-  object RankInputResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-
   def picked(c: com.histmersion.domain.automation.managers.ManagerContext, run: com.histmersion.domain.automation.Run.Id): List[Picked] =
-    c.stepOutput(run, com.histmersion.domain.automation.managers.ManagerContext.StepOutputStep("rank")).flatMap(o => io.circe.parser.decode[List[Picked]](o).toOption).getOrElse(Nil)
+    c.stepOutput(run, com.histmersion.domain.automation.managers.ManagerContext.StepOutputStep("rank")).flatMap(o => io.circe.parser.decode[List[Picked]](o.value).toOption).getOrElse(Nil)
 
   /** `stored`: the candidates' ids in the store (#3761), by DOI — none when the live search found them. */
   final case class Found(
-      title: Found.Title,
-      notes: Option[Found.Notes],
-      queries: List[Found.Queries],
+      title: com.histmersion.api.automation.Goal.Title,
+      notes: Option[com.histmersion.api.automation.Goal.Notes],
+      queries: List[Search.Query],
       candidates: List[Candidate],
-      skipped: Map[Found.SkippedKey, Found.SkippedValue],
-      stored: Map[Found.StoredKey, Found.StoredValue] = Map.empty
+      skipped: Map[AcquisitionSweepRules.SkipReason, AcquisitionSweepRules.SkipCount],
+      stored: Map[Doi, Source.Candidate.Id] = Map.empty
   ) derives KindlingsCodecAsObject
 
-  object Found:
-    type Title = com.histmersion.domain.Title
-    val Title: _root_.com.histmersion.domain.Title.type = _root_.com.histmersion.domain.Title
-    type Notes = Notes.T
-    object Notes extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-    type Queries = Queries.T
-    object Queries extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-    type SkippedKey = SkippedKey.T
-    object SkippedKey extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-    type SkippedValue = SkippedValue.T
-    object SkippedValue extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
-    type StoredKey = StoredKey.T
-    object StoredKey extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-    type StoredValue = StoredValue.T
-    object StoredValue extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  final case class Picked(candidate: Candidate, why: Picked.Why) derives KindlingsCodecAsObject
-
-  object Picked:
-    type Why = Why.T
-    object Why extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  final case class Picked(candidate: Candidate, why: AcquisitionSweepRules.Pick.Why) derives KindlingsCodecAsObject
 
   /** A pick the watcher's auto-ingest brought in (`citekey` the new source's). */
   final case class Ingested(doi: com.histmersion.domain.library.Doi, citekey: com.histmersion.domain.library.Citekey) derives KindlingsCodecAsObject
 
   /** An open-access pick whose ingest failed: why, and whether the legal chain has no file for it. */
-  final case class Failed(doi: com.histmersion.domain.library.Doi, why: Failed.Why, noCopy: Failed.NoCopy) derives KindlingsCodecAsObject
+  final case class Failed(doi: com.histmersion.domain.library.Doi, why: Failed.Why, noCopy: Boolean) derives KindlingsCodecAsObject
 
   object Failed:
     type Why = Why.T
     object Why extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-    type NoCopy = NoCopy.T
-    object NoCopy extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
   /** What the ingest step of a run with a backlog did. */
   final case class Tried(ingested: List[Ingested] = Nil, failed: List[Failed] = Nil) derives KindlingsCodecAsObject

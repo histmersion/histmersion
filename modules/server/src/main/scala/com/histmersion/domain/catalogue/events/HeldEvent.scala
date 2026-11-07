@@ -9,8 +9,10 @@ import com.histmersion.api.catalogue.{
   EventPrecision,
   EventScale,
   EventSummary,
-  EventTier
+  EventTier,
+  Year
 }
+import com.histmersion.{Latitude, Longitude}
 
 /** An event as the in-memory catalogue keeps it: the columns of its `events` row, with its datings, edges and
   * participants. `geometry` is its own GeoJSON geometry; `attested` whether an attestation names it (its tier).
@@ -41,39 +43,38 @@ final case class HeldEvent(
   def geometryType: Option[com.histmersion.domain.catalogue.events.EventRow.GeometryType] = geometry.flatMap(HeldEvent.typeOf)
 
   /** Its outer span: the earliest and the latest year it may cover. */
-  def outer: Option[(com.histmersion.domain.catalogue.events.EventRow.NotBefore, com.histmersion.domain.catalogue.events.EventRow.NotAfter)] = timeSpan.outer
+  def outer: Option[(Year, Year)] = timeSpan.outer
 
-  def uncertainty: Option[com.histmersion.domain.catalogue.events.EventRow.Uncertainty] = EventPrecision.uncertainty(timeSpan, plusMinus)
+  def uncertainty: Option[EventPrecision.Uncertainty] =
+    EventPrecision.uncertainty(timeSpan, plusMinus.map(p => EventSummary.PlusMinus(p.value)))
 
-  def summary(attested: com.histmersion.domain.catalogue.events.HeldEvent.Attested): EventSummary =
+  def summary(attested: Boolean): EventSummary =
     EventSummary(
-      id,
-      label,
-      kind,
+      com.histmersion.api.catalogue.Event.Id(id.value),
+      EventSummary.Label(label.value),
+      EventSummary.Kind(kind.value),
       timeSpan,
-      historicity,
-      placeId,
-      parentId,
-      description,
-      citekey,
-      EventScale.effective(scale, kind, parentId.isDefined, None, geometryType),
-      scale.isDefined,
-      if citekey.isDefined || attested then EventTier.Attested else EventTier.Catalogue,
+      EventSummary.Historicity(historicity.value),
+      placeId.map(p => com.histmersion.api.catalogue.Place.Id(p.value)),
+      parentId.map(p => com.histmersion.api.catalogue.Event.Id(p.value)),
+      description.map(d => EventSummary.Description(d.value)),
+      citekey.map(c => com.histmersion.api.library.Citekey(c.value)),
+      EventScale.effective(
+        scale.map(s => EventSummary.Scale(s.value)),
+        EventScale.EffectiveKind(kind.value),
+        parentId.isDefined,
+        None,
+        geometryType.map(g => EventScale.GeometryType(g.value))
+      ),
+      EventSummary.ScaleStated(scale.isDefined),
+      EventSummary.Tier(if citekey.isDefined || attested then EventTier.Attested else EventTier.Catalogue),
       EventPrecision.of(uncertainty),
-      central,
-      plusMinus,
-      datingMethod
+      central.map(c => EventSummary.Central(c.value)),
+      plusMinus.map(p => EventSummary.PlusMinus(p.value)),
+      datingMethod.map(m => EventSummary.DatingMethod(m.value))
     )
 
 object HeldEvent:
-  type Attested = Attested.T
-  object Attested extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  /** The `type` of a GeoJSON geometry, upper case. */
-  type PointOfResultPart1 = PointOfResultPart1.T
-  object PointOfResultPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type PointOfResultPart2 = PointOfResultPart2.T
-  object PointOfResultPart2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
-
   type Id = com.histmersion.domain.catalogue.Event.Id
   val Id: _root_.com.histmersion.domain.catalogue.Event.Id.type = _root_.com.histmersion.domain.catalogue.Event.Id
   type Label = com.histmersion.domain.catalogue.events.EventRow.Label
@@ -103,13 +104,24 @@ object HeldEvent:
   type DatingMethod = com.histmersion.domain.catalogue.events.BEventRow.DatingMethod
   val DatingMethod: _root_.com.histmersion.domain.catalogue.events.BEventRow.DatingMethod.type = _root_.com.histmersion.domain.catalogue.events.BEventRow.DatingMethod
 
+  /** The `type` of a GeoJSON geometry, upper case. */
   def typeOf(geojson: com.histmersion.domain.catalogue.events.EventDetailRow.Geometry): Option[com.histmersion.domain.catalogue.events.EventRow.GeometryType] =
-    io.circe.parser.parse(geojson).toOption.flatMap(_.hcursor.get[String]("type").toOption).map(_.toUpperCase)
+    io.circe.parser
+      .parse(geojson.value)
+      .toOption
+      .flatMap(_.hcursor.get[String]("type").toOption)
+      .map(t => com.histmersion.domain.catalogue.events.EventRow.GeometryType(t.toUpperCase))
 
   /** The point of a GeoJSON `Point`: (lat, lon). */
-  def pointOf(geojson: com.histmersion.domain.catalogue.events.EventDetailRow.Geometry): Option[(com.histmersion.domain.catalogue.events.HeldEvent.PointOfResultPart1, com.histmersion.domain.catalogue.events.HeldEvent.PointOfResultPart2)] =
-    io.circe.parser.parse(geojson).toOption.flatMap { j =>
+  def pointOf(geojson: com.histmersion.domain.catalogue.events.EventDetailRow.Geometry): Option[(Latitude, Longitude)] =
+    io.circe.parser.parse(geojson.value).toOption.flatMap { j =>
       val c = j.hcursor
       if !c.get[String]("type").toOption.contains("Point") then None
-      else c.get[List[Double]]("coordinates").toOption.collect { case lon :: lat :: _ => (lat, lon) }
+      else
+        c.get[List[Double]]("coordinates").toOption.collect { case lon :: lat :: _ => (lat, lon) }.flatMap((lat, lon) =>
+          for
+            la <- Latitude.option(lat)
+            lo <- Longitude.option(lon)
+          yield (la, lo)
+        )
     }

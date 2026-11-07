@@ -1,9 +1,12 @@
 package com.histmersion.domain.catalogue.places
 
-import com.histmersion.api.catalogue.{EventCount, SiteTypes}
-import com.histmersion.api.jobs.JobInfo
+import com.histmersion.api.catalogue.{CatalogRecord, EventCount, SiteTypes}
+import com.histmersion.api.jobs.{JobInfo, JobKinds}
 import com.histmersion.config.AppConfig
-import com.histmersion.domain.Caller
+import com.histmersion.domain.{Caller, DeepTime}
+import com.histmersion.config.MediaConfig
+import com.histmersion.upstreams.wikidata.{WikidataEntities, WikidataItem}
+import com.histmersion.util.jobs.{BackgroundJob, Job}
 import com.histmersion.domain.catalogue.CatalogueJobs
 import com.histmersion.domain.catalogue.events.EventProviders
 import com.histmersion.pluginhost.{HttpTransport, PluginEvents, Polite}
@@ -25,83 +28,76 @@ final class SiteTypesControllers(
   private def ec = settings().events
 
   /** A polite client at `intervalMs` between requests to one host; the media politeness otherwise. */
-  private def polite(intervalMs: com.histmersion.domain.catalogue.places.SiteTypesControllers.PoliteInterval): Polite = PluginEvents.polite(http, settings().media, intervalMs)
+  private def polite(intervalMs: PluginEvents.IntervalMs): Polite = PluginEvents.polite(http, settings().media, intervalMs)
 
   def refineSiteTypes(caller: Caller, req: SiteTypes.Request): Either[Api.Error, JobInfo] =
     jobs.start(
       SiteTypesControllers.SiteTypesJobKind,
-      s"site types of the Wikidata sites on the map${if req.dryRun then " (dry run)" else ""}",
-      write = !req.dryRun
+      JobKinds.Subject(s"site types of the Wikidata sites on the map${if req.dryRun.value then " (dry run)" else ""}"),
+      write = !req.dryRun.value
     ) { (_, progress) =>
-      Right(SiteTypes.Report.summary(runSiteTypes(req, progress)))
+      Right(BackgroundJob.Outcome.Summary(SiteTypes.Report.summary(runSiteTypes(req, progress)).value))
     }
 
-  def runSiteTypes(req: SiteTypes.Request, progress: String => Unit): SiteTypes.Report =
-    val started = clock.millis()
-    if req.dryRun then SiteTypes.Report(dryRun = com.histmersion.api.catalogue.SiteTypes.Report.DryRun(true), pending = sites.countSitesToType(req.refresh, None))
+  def runSiteTypes(req: SiteTypes.Request, progress: JobInfo.Progress => Unit): SiteTypes.Report =
+    val started = DeepTime.SignedYear(clock.millis())
+    val refresh = SiteTypeService.Refresh(req.refresh.value)
+    if req.dryRun.value then SiteTypes.Report(dryRun = SiteTypes.Report.DryRun(true), pending = SiteTypes.Report.Pending(sites.countSitesToType(refresh, None).value))
     else
-      val c = polite(ec.wikidata.apiIntervalMs)
-      val cap = req.limit.filter(_ > 0).getOrElse(Int.MaxValue)
-      val api = settings().media.wikidata.apiUrl
+      val c = polite(MediaConfig.RequestIntervalMs(ec.wikidata.apiIntervalMs.value))
+      val cap = req.limit.map(_.value).filter(_ > 0).getOrElse(Int.MaxValue)
+      val api = WikidataEntities.Api(settings().media.wikidata.apiUrl.value)
+      val maxlag = WikidataEntities.Maxlag(settings().media.wikidata.maxlag.value)
       val superCache = scala.collection.mutable.Map.empty[String, List[String]]
-      def claims(ids: List[com.histmersion.domain.catalogue.Place.Id], prop: com.histmersion.domain.catalogue.events.EventProviders.WikidataProperty): Map[com.histmersion.domain.catalogue.Place.Id, List[com.histmersion.domain.catalogue.places.HeldSite.SiteType]] =
+      def claims(ids: List[WikidataItem.Id], prop: EventProviders.WikidataProperty): Map[String, List[String]] =
         ids
-          .grouped(ec.siteTypes.batch.max(1))
+          .grouped(math.max(1, ec.siteTypes.batch.value))
           .toList
           .flatMap { b =>
-            c.json(com.histmersion.upstreams.wikidata.WikidataEntities.url(api, b, settings().media.wikidata.maxlag))
-              .flatMap(EventProviders.WikidataEvents.claims(_, prop))
+            c.json(HttpTransport.Url(WikidataEntities.url(api, b, maxlag).value))
+              .toOption
+              .flatMap(j => EventProviders.WikidataEvents.claims(j, prop).toOption)
               .getOrElse(Map.empty)
               .toList
           }
           .toMap
 
       /** The superclasses of `classes` within `depth` P279 steps, nearest first (cached per run). */
-      def supers(classes: List[com.histmersion.domain.catalogue.places.HeldSite.SiteType]): List[com.histmersion.domain.catalogue.places.HeldSite.SiteType] =
+      def supers(classes: List[CatalogRecord.Wikidata.Class]): List[CatalogRecord.Wikidata.Class] =
         val unknown = classes.filterNot(SiteTypes.wikidataClasses.contains)
-        @tailrec def walk(steps: com.histmersion.domain.catalogue.places.PlaceService.DepthLimit, frontier: List[com.histmersion.domain.catalogue.places.HeldSite.SiteType], acc: List[com.histmersion.domain.catalogue.places.HeldSite.SiteType]): List[com.histmersion.domain.catalogue.places.HeldSite.SiteType] =
+        @tailrec def walk(steps: Int, frontier: List[CatalogRecord.Wikidata.Class], acc: List[CatalogRecord.Wikidata.Class]): List[CatalogRecord.Wikidata.Class] =
           if steps <= 0 then acc
           else
-            val ask = frontier.filterNot(superCache.contains).distinct
+            val ask = frontier.filterNot(q => superCache.contains(q.value)).distinct
             if ask.nonEmpty then
-              val got = claims(ask, com.histmersion.domain.catalogue.events.EventProviders.WikidataProperty("P279"))
-              superCache ++= ask.map(q => q -> got.getOrElse(q, Nil))
-            val next = frontier.flatMap(q => superCache.getOrElse(q, Nil)).distinct.filterNot(acc.contains)
+              val got = claims(ask.map(q => WikidataItem.Id(q.value)), EventProviders.WikidataProperty("P279"))
+              superCache ++= ask.map(q => q.value -> got.getOrElse(q.value, Nil))
+            val next = frontier.flatMap(q => superCache.getOrElse(q.value, Nil)).map(CatalogRecord.Wikidata.Class(_)).distinct.filterNot(acc.contains)
             walk(steps - 1, next.filterNot(SiteTypes.wikidataClasses.contains), acc ++ next)
-        walk(ec.siteTypes.superclassDepth.max(0), unknown, Nil)
+        walk(math.max(0, ec.siteTypes.superclassDepth.value), unknown, Nil)
+      def next(limit: Int) =
+        com.histmersion.PageSize.option(limit).fold(Nil)(size => sites.sitesToType(size, refresh, Some(started)))
       // `var`s: the walk
-      var report = SiteTypes.Report(dryRun = com.histmersion.api.catalogue.SiteTypes.Report.DryRun(false))
-      var batch = sites.sitesToType(ec.siteTypes.batch.min(cap), req.refresh, Some(started))
-      while batch.nonEmpty && report.asked < cap && !jobs.held do
-        val p31 = claims(batch.map(_._2), com.histmersion.domain.catalogue.events.EventProviders.WikidataProperty("P31"))
-        val answered = batch.filter((_, q, _) => p31.contains(q))
+      var report = SiteTypes.Report(dryRun = SiteTypes.Report.DryRun(false))
+      var batch = next(math.min(ec.siteTypes.batch.value, cap))
+      while batch.nonEmpty && report.asked.value < cap && !jobs.held do
+        val p31 = claims(batch.map(_._2), EventProviders.WikidataProperty("P31"))
+        val answered = batch.filter((_, q, _) => p31.contains(q.value))
         val types = answered.map { (pid, q, cls) =>
-          val own = p31.getOrElse(q, Nil)
+          val own = p31.getOrElse(q.value, Nil).map(CatalogRecord.Wikidata.Class(_))
           pid -> SiteTypes.wikidata(own, supers(own), cls)
         }
         sites.setSiteTypes(types)
         report = report.copy(
-          asked = report.asked + answered.size,
-          typed = EventCount.add(report.typed, EventCount.of(types.flatMap(_._2))),
-          untyped = report.untyped + types.count(_._2.isEmpty),
-          failed = report.failed ++ Option.when(answered.isEmpty)(s"no answer for ${batch.head._2}…").toList
+          asked = SiteTypes.Report.Asked(report.asked.value + answered.size),
+          typed = EventCount.add(report.typed, EventCount.of(types.flatMap(_._2).map(t => EventCount.Key(t.value)))),
+          untyped = SiteTypes.Report.Untyped(report.untyped.value + types.count(_._2.isEmpty)),
+          failed = report.failed ++ Option.when(answered.isEmpty)(SiteTypes.Report.Failed(s"no answer for ${batch.head._2}…")).toList
         )
-        progress(s"${report.asked} site(s) asked · ${c.requests} request(s)")
+        progress(JobInfo.Progress(s"${report.asked} site(s) asked · ${c.requests} request(s)"))
         batch = if answered.isEmpty then Nil
-        else
-          sites.sitesToType(
-            ec.siteTypes.batch.min((cap - report.asked).max(0)),
-            req.refresh,
-            Some(started)
-          )
-      report.copy(pending = sites.countSitesToType(req.refresh, Some(started)), requests = c.requests)
+        else next(math.min(ec.siteTypes.batch.value, math.max(0, cap - report.asked.value)))
+      report.copy(pending = SiteTypes.Report.Pending(sites.countSitesToType(refresh, Some(started)).value), requests = SiteTypes.Report.Requests(c.requests.value))
 
 object SiteTypesControllers:
-  type PoliteInterval = PoliteInterval.T
-  object PoliteInterval extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
-
-  type SiteTypesJobKind = SiteTypesJobKindValue
-  type SiteTypesJobKindValue = SiteTypesJobKindValue.T
-  object SiteTypesJobKindValue extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-
-  val SiteTypesJobKind: com.histmersion.domain.catalogue.places.SiteTypesControllers.SiteTypesJobKind = com.histmersion.api.catalogue.PlacesJobKinds.SiteTypes.kind.value
+  val SiteTypesJobKind: Job.Kind = Job.Kind.assume(com.histmersion.api.catalogue.PlacesJobKinds.SiteTypes.kind.value)

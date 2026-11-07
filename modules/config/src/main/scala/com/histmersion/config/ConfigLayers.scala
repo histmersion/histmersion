@@ -36,8 +36,8 @@ import scala.util.Try
   * reference.conf.
   */
 private[config] object ConfigLayers:
-  type Problem = Problem.T
-  object Problem extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type Problem = ConfigProblem
+  val Problem: ConfigProblem.type = ConfigProblem
 
 
   def reference: Config = ConfigFactory.parseResources("reference.conf")

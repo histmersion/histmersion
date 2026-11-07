@@ -49,7 +49,7 @@ object PlaceGeometry:
       db.transact(FindingPlaceRepo.rebuildFindingPlaces(toleranceKm))
     def buildHierarchy(): SpatialHierarchyResult = db.transact(PlaceRepo.buildSpatialHierarchy())
     def replaceLand(geometries: List[com.histmersion.domain.catalogue.places.PlaceDetailRow.Geometry]): com.histmersion.RowCount =
-      val _ = db.transact(LandRepo.replace(geometries))
+      val _ = db.transact(LandRepo.replace(geometries.map(g => BPlaceRow.Geom(g.value))))
       db.read(LandRepo.analyze())
       db.read(LandRepo.pieces())
     def reclip(): com.histmersion.RowCount =
@@ -57,32 +57,27 @@ object PlaceGeometry:
       db.read(LandRepo.clipped())
     def reclassify(toleranceKm: com.histmersion.domain.catalogue.places.GeocodeSettings.ToleranceKm): (com.histmersion.RowCount, com.histmersion.RowCount) =
       val proposals = db.read(PlaceReviewRepo.proposals())
-      if !proposals.exists(_.fixable) then (com.histmersion.RowCount(0), com.histmersion.RowCount(0)) else db.transact(PlaceReviewRepo.apply(proposals, toleranceKm))
+      if !proposals.exists(_.fixable) then (com.histmersion.RowCount(0), com.histmersion.RowCount(0)) else db.transact(PlaceReviewRepo.apply(proposals, PointAreaRepo.Settings.ToleranceKm(toleranceKm.value)))
     def relocate(toleranceKm: com.histmersion.domain.catalogue.places.GeocodeSettings.ToleranceKm): com.histmersion.RowCount =
       val moves = db.read(PlaceReviewRepo.relocations())
-      if moves.isEmpty then com.histmersion.RowCount(0) else db.transact(PlaceReviewRepo.relocate(moves, toleranceKm))
+      if moves.isEmpty then com.histmersion.RowCount(0) else db.transact(PlaceReviewRepo.relocate(moves, PointAreaRepo.Settings.ToleranceKm(toleranceKm.value)))
     def removePointAreas(s: PointAreaRepo.Settings): PointAreaRepo.Removal =
       if s.kinds.isEmpty then PointAreaRepo.Removal(com.histmersion.domain.catalogue.places.PointAreaRepo.Removal.Removed(0), com.histmersion.domain.catalogue.places.PointAreaRepo.Removal.Remaining(0), com.histmersion.domain.catalogue.places.PointAreaRepo.Removal.Findings(0), com.histmersion.domain.catalogue.places.PointAreaRepo.Removal.Sources(0))
       else
-        val kinds = s.kinds
-        val deadline = timer.after(scala.concurrent.duration.FiniteDuration(math.max(0L, s.budgetMs), scala.concurrent.duration.MILLISECONDS))
+        val kinds = s.kinds.map(k => com.histmersion.domain.catalogue.Place.Kind.Wire(k.value))
+        val deadline = timer.after(scala.concurrent.duration.FiniteDuration(math.max(0L, s.budgetMs.value), scala.concurrent.duration.MILLISECONDS))
         val todo = db.read(PointAreaRepo.removableIn(kinds))
-        val chunks = todo.grouped(math.max(1, s.batch)).toList
-        val named = if todo.isEmpty then Map.empty[String, Set[String]] else db.read(PointAreaRepo.nameKeysIn())
+        val chunks = todo.grouped(math.max(1, s.batch.value)).toList
+        val named = if todo.isEmpty then Map.empty[PointAreaRepo.NameKey, Set[com.histmersion.domain.library.Citekey]] else db.read(PointAreaRepo.nameKeysIn())
         // one pass over the chunks while time is left; at least one chunk per call, so a call progresses
         @tailrec
-        def go(rest: List[List[com.histmersion.domain.catalogue.Place.Id]], removed: com.histmersion.domain.catalogue.places.PointAreas.FixedRemoved, findings: com.histmersion.domain.catalogue.places.PlaceDetailRow.Findings, cks: Set[com.histmersion.domain.catalogue.places.PointAreas.Group.Kind]): (com.histmersion.domain.catalogue.places.PointAreas.FixedRemaining, com.histmersion.domain.catalogue.places.PointAreas.FixedRemoved, Set[com.histmersion.domain.catalogue.places.PlaceGeometry.Implementation.RemovePointAreasGoResultPart3]) =
+        def go(rest: List[List[com.histmersion.domain.catalogue.Place.Id]], removed: Int, findings: Int, cks: Set[com.histmersion.domain.library.Citekey]): (Int, Int, Set[com.histmersion.domain.library.Citekey]) =
           rest match
             case Nil         => (removed, findings, cks)
             case ids :: more =>
               val (n, f, c) = db.transact(PointAreaRepo.removeIn(ids, kinds, s.toleranceKm, named))
-              val acc = (removed + n, findings + f, cks ++ c)
+              val acc = (removed + n.value, findings + f.value, cks ++ c)
               if deadline.reached then acc else go(more, acc._1, acc._2, acc._3)
-        val (removed, findings, cks) = go(chunks, com.histmersion.domain.catalogue.places.PointAreas.FixedRemoved(0), com.histmersion.domain.catalogue.places.PlaceDetailRow.Findings(0), Set.empty)
+        val (removed, findings, cks) = go(chunks, 0, 0, Set.empty)
         val remaining = db.read(PointAreaRepo.removableIn(kinds)).size
-        PointAreaRepo.Removal(removed, remaining, findings, cks.size)
-
-  object Implementation:
-    type RemovePointAreasGoResultPart3 = RemovePointAreasGoResultPart3.T
-    object RemovePointAreasGoResultPart3 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-
+        PointAreaRepo.Removal(PointAreaRepo.Removal.Removed(removed), PointAreaRepo.Removal.Remaining(remaining), PointAreaRepo.Removal.Findings(findings), PointAreaRepo.Removal.Sources(cks.size))

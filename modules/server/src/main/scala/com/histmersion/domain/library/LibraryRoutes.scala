@@ -1,7 +1,7 @@
 package com.histmersion.domain.library
 
 import com.histmersion.api.{Api, Write}
-import com.histmersion.api.library.{Citekey => ApiCitekey}
+import com.histmersion.api.library.{Citekey as ApiCitekey, Facet, Filter, Source}
 import com.histmersion.domain.library.citations.{CitationService, CitationsControllers}
 import com.histmersion.domain.library.findings.FindingsControllers
 import com.histmersion.domain.library.labels.LabelsControllers
@@ -35,24 +35,26 @@ object LibraryRoutes:
       ck.fold[Either[Api.Error, Option[Citekey]]](Right(None))(c => citekey(c).map(Some(_)))
     List(
       Api.search.serverLogicSuccess[Identity]((q, limit) =>
-        search.search(q.map(t => Search.Query(t.value)), limit.map(l => SearchControllers.Limit(l.value)))),
+        search.search(q.map(t => Search.Query(t.value)), limit.map(l => Filter.Limit(l.value)))),
       Api.sources.serverLogicSuccess[Identity](f => search.sources(f)),
       Api.facets.serverLogic[Identity]((field, prefix, f) =>
-        labels.facets(LabelsControllers.FacetField(field.value), prefix.map(p => FilterSql.FacetPrefix(p.value)), f)),
+        labels.facets(Facet.Field.Wire(field.value), prefix.map(p => FilterSql.FacetPrefix(p.value)), f)),
       sourceArticles,
       Api.lintSource.serverLogic[Identity](ck => citekey(ck).flatMap(sources.lint)),
       Api.fixSourceFormat.serverLogic[Identity](ck => citekey(ck).flatMap(sources.fix)),
       lintMarkdown,
       Api.sourceView.serverLogic[Identity](q =>
         citekey(q.citekey).flatMap(ck =>
-          sources.markdown(
-            ck,
-            SourcesControllers.MarkdownFullText(q.fullText.value),
-            q.section,
-            q.heading.map(h => SourceService.Heading(h.value)),
-            q.offset.map(o => com.histmersion.Offset.option(o.value).getOrElse(com.histmersion.Offset.Start)),
-            q.chars.map(c => SourcesControllers.Chars(c.value))
-          )
+          sources
+            .markdown(
+              ck,
+              SourcesControllers.MarkdownFullText(q.fullText.value),
+              q.section,
+              q.heading.map(h => SourceService.Heading(h.value)),
+              q.offset.map(o => com.histmersion.Offset.option(o.value).getOrElse(com.histmersion.Offset.Start)),
+              q.chars.map(c => SourcesControllers.Chars(c.value))
+            )
+            .map(md => Source.View(md.value))
         )
       ),
       Api.passages.serverLogic[Identity](q => sources.passages(q)),

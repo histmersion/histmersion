@@ -181,13 +181,13 @@ final class StorageFigures(registry: DataContributions):
       volumes = volumes,
       backups = usage,
       lowFreeBytes = com.histmersion.api.ByteCount(settings.storage.lowFreeBytes.value),
-      problems = problems.result() ++
+      problems = (problems.result() ++
         Option
           .when(budget.exhausted)(
             s"the measurement stopped at its cap (storage.max-millis ${settings.storage.maxMillis}, " +
               s"storage.max-entries ${settings.storage.maxEntries}): sizes marked \"at least\" are lower bounds"
           )
-          .toList
+          .toList).map(StorageReports.Report.Problems(_))
     )
     StorageReports.withHints(report)
 

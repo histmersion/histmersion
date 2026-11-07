@@ -47,7 +47,7 @@ final class SourcesControllers(
   private def apiCk(c: Citekey): com.histmersion.api.library.Citekey = com.histmersion.api.library.Citekey(c.value)
 
   private def currentOf(id: Citekey): Option[Citekey] =
-    sources.current(SourceService.Id(id.value)).map(r => Citekey.assume(r.value))
+    sources.current(id)
 
   private def notFound(citekey: Citekey): Api.Error =
     Api.Error(Api.Error.Message(s"No source '$citekey'"), Some(Api.Error.Code(Write.CodeNotFound)))
@@ -139,9 +139,9 @@ final class SourcesControllers(
         val today = LocalDate.now(clock.withZone(ZoneOffset.UTC)).toString
         // the files are named inside the transaction (they are in its log line) and go only after it committed
         sources
-          .delete(ck, SourceReferrers.Day(today), p => originals.find(p).map(f => SourceService.DeleteFilesResult(f.value)), Caller.Local)
+          .delete(ck, SourceReferrers.Day(today), p => originals.find(p).map(f => Source.Deletion.Files(f.value)), Caller.Local)
           .map { p =>
-            scribe.info(Source.Delete.logText(p.deletion))
+            scribe.info(Source.Delete.logText(p.deletion).value)
             p.deletion.modify(_.filesFailed).setTo(
               originals.remove(p.deletion.files.map(f => SourceOriginals.RemoveFiles(f.value))).map(r => Source.Deletion.FilesFailed(r.value))
             )
