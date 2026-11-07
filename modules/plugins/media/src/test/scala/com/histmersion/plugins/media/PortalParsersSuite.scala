@@ -1,5 +1,7 @@
 package com.histmersion.plugins.media
 
+import com.histmersion.testsupport.ComparedByValue.given
+
 import com.histmersion.plugin.*
 import com.histmersion.domain.DeepTime
 import com.histmersion.domain.media.imports.MediaMatch
@@ -24,25 +26,25 @@ class PortalParsersSuite extends munit.FunSuite:
   // ── ids ──────────────────────────────────────────────────────────────────────────────────────
 
   test("gazetteer ids in their URI forms"):
-    assertEquals(GazetteerUri.of("https://pleiades.stoa.org/places/697725"), Some("pleiades" -> "697725"))
-    assertEquals(GazetteerUri.of("http://pleiades.stoa.org/places/697725/"), Some("pleiades" -> "697725"))
-    assertEquals(GazetteerUri.of("https://www.geonames.org/310858"), Some("geonames" -> "310858"))
-    assertEquals(GazetteerUri.of("http://sws.geonames.org/310858/"), Some("geonames" -> "310858"))
-    assertEquals(GazetteerUri.of("http://www.wikidata.org/entity/Q5788"), Some("wikidata" -> "Q5788"))
-    assertEquals(GazetteerUri.of("https://opencontext.org/subjects/x"), None)
+    assertEquals(GazetteerUri.of(com.histmersion.plugin.GazetteerPlace.Id("https://pleiades.stoa.org/places/697725")), Some("pleiades" -> "697725"))
+    assertEquals(GazetteerUri.of(com.histmersion.plugin.GazetteerPlace.Id("http://pleiades.stoa.org/places/697725/")), Some("pleiades" -> "697725"))
+    assertEquals(GazetteerUri.of(com.histmersion.plugin.GazetteerPlace.Id("https://www.geonames.org/310858")), Some("geonames" -> "310858"))
+    assertEquals(GazetteerUri.of(com.histmersion.plugin.GazetteerPlace.Id("http://sws.geonames.org/310858/")), Some("geonames" -> "310858"))
+    assertEquals(GazetteerUri.of(com.histmersion.plugin.GazetteerPlace.Id("http://www.wikidata.org/entity/Q5788")), Some("wikidata" -> "Q5788"))
+    assertEquals(GazetteerUri.of(com.histmersion.plugin.GazetteerPlace.Id("https://opencontext.org/subjects/x")), None)
     assertEquals(GazetteerUri.of(null), None)
 
   // ── Open Context ─────────────────────────────────────────────────────────────────────────────
 
   test("Open Context: the search URL asks for images with each record's licence, creators, subjects and places"):
     assertEquals(
-      OpenContext.searchUrl("https://opencontext.org/", "Petra", 20),
+      OpenContext.searchUrl(com.histmersion.plugins.media.CollectionSettings.ApiUrl("https://opencontext.org/"), com.histmersion.plugin.MediaPlace.Label("Petra"), com.histmersion.plugins.media.CollectionSettings.Candidates(20)),
       "https://opencontext.org/query/.json?type=media&cat=oc-gen-image&q=Petra&rows=20" +
         "&attributes=dc-terms-license%2Cdc-terms-spatial%2Cdc-terms-creator%2Cdc-terms-subject&add-attribute-uris=1" +
         "&response=metadata%2Curi-meta"
     )
     assertEquals(
-      OpenContext.itemUrl("https://opencontext.org", "f589a368-62ed-43df-5738-4c84d2f5f765"),
+      OpenContext.itemUrl(com.histmersion.plugins.media.CollectionSettings.ApiUrl("https://opencontext.org"), com.histmersion.plugins.media.OpenContext.Uuid("f589a368-62ed-43df-5738-4c84d2f5f765")),
       "https://opencontext.org/media/f589a368-62ed-43df-5738-4c84d2f5f765.json"
     )
 
@@ -68,7 +70,7 @@ class PortalParsersSuite extends munit.FunSuite:
     assertEquals(r.licence, Licence("https://creativecommons.org/licenses/by/4.0"), "stated as the record states it")
     assertEquals(
       licences.readUrl(r.licence.value),
-      Licence.Read("CC-BY-4.0", "cc-by", needsAttribution = true),
+      Licence.Read(com.histmersion.plugin.Licence.Read.Id("CC-BY-4.0"), com.histmersion.plugin.Licence.Read.Family("cc-by"), needsAttribution = com.histmersion.plugin.Licence.Read.NeedsAttribution(true)),
       "the host reads it as CC BY 4.0"
     )
     assertEquals(r.licenceUrl, Some("https://creativecommons.org/licenses/by/4.0"))
@@ -132,8 +134,8 @@ class PortalParsersSuite extends munit.FunSuite:
     assert(OpenContext.item(bones, rec, licences).left.exists(_.contains("human remains")))
 
   test("Open Context: the short licence name of a label"):
-    assertEquals(OpenContext.shortLicence("Attribution 4.0 International (CC BY 4.0)", "CC-BY-4.0"), "CC BY 4.0")
-    assertEquals(OpenContext.shortLicence("", "CC-BY-4.0"), "CC-BY-4.0")
+    assertEquals(OpenContext.shortLicence(com.histmersion.plugin.Licence("Attribution 4.0 International (CC BY 4.0)"), com.histmersion.plugin.Licence.Read.Id("CC-BY-4.0")), "CC BY 4.0")
+    assertEquals(OpenContext.shortLicence(com.histmersion.plugin.Licence(""), com.histmersion.plugin.Licence.Read.Id("CC-BY-4.0")), "CC-BY-4.0")
 
   // ── #2571: real Domuztepe records (Open Context, 2026-10-23) ─────────────────────────────────
 
@@ -178,7 +180,7 @@ class PortalParsersSuite extends munit.FunSuite:
       .map(PluginMedia.record)
 
   private val domuztepe =
-    MediaMatch.PlaceInfo("wikidata_q4165990", "Domuztepe", Set("domuztepe"), DeepTime.span(-6500L, -5400L))
+    MediaMatch.PlaceInfo(com.histmersion.domain.media.imports.MediaMatch.PlaceInfo.Id("wikidata_q4165990"), com.histmersion.domain.media.imports.MediaMatch.PlaceInfo.Label("Domuztepe"), Set(com.histmersion.domain.media.imports.MediaMatch.PlaceInfo.Keys("domuztepe")), DeepTime.span(com.histmersion.domain.DeepTime.SignedYear(-6500L), com.histmersion.domain.DeepTime.SignedYear(-5400L)))
   // the live map (2026-10-23) has a place called "I" and Kahramanmaraş; the record's ids name the province
   private val domNames: MediaMatch.Resolve = Map(
     "domuztepe" -> Set("wikidata_q4165990"),
@@ -197,7 +199,7 @@ class PortalParsersSuite extends munit.FunSuite:
     )
     // the province's own place is not given the site's finds: the finer context names another place
     val kahramanmaras =
-      MediaMatch.PlaceInfo("ne_city_1159127453", "Kahramanmaraş", Set("kahramanmaras"), DeepTime.span(-8000L, 2000L))
+      MediaMatch.PlaceInfo(com.histmersion.domain.media.imports.MediaMatch.PlaceInfo.Id("ne_city_1159127453"), com.histmersion.domain.media.imports.MediaMatch.PlaceInfo.Label("Kahramanmaraş"), Set(com.histmersion.domain.media.imports.MediaMatch.PlaceInfo.Keys("kahramanmaras")), DeepTime.span(com.histmersion.domain.DeepTime.SignedYear(-8000L), com.histmersion.domain.DeepTime.SignedYear(2000L)))
     assertEquals(
       MediaMatch.withIds(recs.head, kahramanmaras, domIds, domNames, Set(OpenContext.Context)),
       Left("its context names another place on the map")
@@ -213,7 +215,7 @@ class PortalParsersSuite extends munit.FunSuite:
 
   test("Pleiades: the place record URL"):
     assertEquals(
-      PleiadesLinks.placeUrl("https://pleiades.stoa.org/", "570491"),
+      PleiadesLinks.placeUrl(com.histmersion.plugins.media.CollectionSettings.ApiUrl("https://pleiades.stoa.org/"), com.histmersion.plugin.GazetteerPlace.Id("570491")),
       "https://pleiades.stoa.org/places/570491/json"
     )
 
@@ -228,29 +230,29 @@ class PortalParsersSuite extends munit.FunSuite:
       Some(Right("File:Lions Gate.jpg"))
     )
     assertEquals(
-      classify("https://upload.wikimedia.org/wikipedia/commons/a/ab/Lions_Gate.jpg"),
+      classify(com.histmersion.plugin.Plugin.Http.GetUrl("https://upload.wikimedia.org/wikipedia/commons/a/ab/Lions_Gate.jpg")),
       Some(Right("File:Lions Gate.jpg"))
     )
     assertEquals(
-      classify("https://it.wikipedia.org/wiki/Vara_(fiume)#/media/File:Brugnato-IMG_0146.JPG"),
+      classify(com.histmersion.plugin.Plugin.Http.GetUrl("https://it.wikipedia.org/wiki/Vara_(fiume)#/media/File:Brugnato-IMG_0146.JPG")),
       Some(Right("File:Brugnato-IMG 0146.JPG"))
     )
-    assertEquals(classify("https://en.wikipedia.org/wiki/File:Afrin,Huri.jpg"), Some(Right("File:Afrin,Huri.jpg")))
+    assertEquals(classify(com.histmersion.plugin.Plugin.Http.GetUrl("https://en.wikipedia.org/wiki/File:Afrin,Huri.jpg")), Some(Right("File:Afrin,Huri.jpg")))
     assertEquals(
-      classify("https://commons.wikimedia.org/wiki/Category:Msoura?uselang=en"),
+      classify(com.histmersion.plugin.Plugin.Http.GetUrl("https://commons.wikimedia.org/wiki/Category:Msoura?uselang=en")),
       Some(Left(PleiadesLinks.Category))
     )
     assertEquals(
-      classify("https://www.flickr.com/photos/dandiffendale/8039595644/"),
+      classify(com.histmersion.plugin.Plugin.Http.GetUrl("https://www.flickr.com/photos/dandiffendale/8039595644/")),
       Some(Left(PleiadesLinks.OnFlickr))
     )
     assertEquals(
-      classify("=https://elexikon.ch/RE/X,2_2449.png"),
+      classify(com.histmersion.plugin.Plugin.Http.GetUrl("=https://elexikon.ch/RE/X,2_2449.png")),
       Some(Left("a picture on elexikon.ch (no documented keyless licence API)"))
     )
-    assertEquals(classify("https://en.wikipedia.org/wiki/Mycenae"), None)
-    assertEquals(classify("http://www.worldcat.org/oclc/43970336"), None)
-    assertEquals(classify("https://www.wikidata.org/wiki/Q87276897"), None)
+    assertEquals(classify(com.histmersion.plugin.Plugin.Http.GetUrl("https://en.wikipedia.org/wiki/Mycenae")), None)
+    assertEquals(classify(com.histmersion.plugin.Plugin.Http.GetUrl("http://www.worldcat.org/oclc/43970336")), None)
+    assertEquals(classify(com.histmersion.plugin.Plugin.Http.GetUrl("https://www.wikidata.org/wiki/Q87276897")), None)
 
   test("Pleiades: a place record's picture links, in its order, with their citation type"):
     val ls = PleiadesLinks.links(fixture("pleiades-place.json")).fold(fail(_), identity)
