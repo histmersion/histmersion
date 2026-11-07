@@ -19,39 +19,39 @@ class FirstPartySettingsSuite extends munit.FunSuite:
   )
 
   test("a fetcher is supplied histmersion.acquire, under acquire, and nothing it does not read"):
-    val f = FirstPartySettings.fallback("arxiv", host)
+    val f = FirstPartySettings.fallback(com.histmersion.plugin.Plugin.Info.Id("arxiv"), host)
     assertEquals(f.getString("acquire.unpaywall.url"), "https://u.example")
     assertEquals(f.getInt("media.max-retry-after-seconds"), 60)
     assert(!f.hasPath("events"), f.toString)
 
   test("the landing step is supplied oa-unpaywall's contact; an event catalogue its own block and the years"):
     assertEquals(
-      FirstPartySettings.fallback("oa-landing", host).getString("plugins.oa-unpaywall.contact-email"),
+      FirstPartySettings.fallback(com.histmersion.plugin.Plugin.Info.Id("oa-landing"), host).getString("plugins.oa-unpaywall.contact-email"),
       "plugin@example.org"
     )
-    val gvp = FirstPartySettings.fallback("events-gvp", host)
+    val gvp = FirstPartySettings.fallback(com.histmersion.plugin.Plugin.Info.Id("events-gvp"), host)
     assertEquals((gvp.getString("events.gvp.url"), gvp.getInt("events.min-year")), ("https://gvp.example", -12000))
     assert(!gvp.hasPath("events.noaa") && !gvp.hasPath("acquire"), gvp.toString)
 
   test("a plugin the table does not name — a third party's — is supplied nothing"):
-    assert(FirstPartySettings.fallback("zq-portal", host).isEmpty)
-    assert(FirstPartySettings.fallback("ai-claude-code", host).isEmpty)
+    assert(FirstPartySettings.fallback(com.histmersion.plugin.Plugin.Info.Id("zq-portal"), host).isEmpty)
+    assert(FirstPartySettings.fallback(com.histmersion.plugin.Plugin.Info.Id("ai-claude-code"), host).isEmpty)
 
   test("a changed host key rebuilds the plugins that read it; a third party's on the client's keys alone"):
-    assert(FirstPartySettings.rebuilds("pmc", "histmersion.acquire.europepmc.url"))
-    assert(FirstPartySettings.rebuilds("pmc", "histmersion.media.max-retry-after-seconds"))
-    assert(!FirstPartySettings.rebuilds("pmc", "histmersion.events.gvp.url"))
-    assert(FirstPartySettings.rebuilds("events-gvp", "histmersion.events.gvp.url"))
-    assert(FirstPartySettings.rebuilds("events-gvp", "histmersion.events"))
-    assert(!FirstPartySettings.rebuilds("events-gvp", "histmersion.acquire.user-agent"))
-    assert(!FirstPartySettings.rebuilds("media-met", "histmersion.acquire.user-agent"))
-    assert(FirstPartySettings.rebuilds("media-met", "histmersion.media.met.licences"))
-    assert(FirstPartySettings.rebuilds("media-wikidata", "histmersion.media.commons.api-url"))
-    assert(!FirstPartySettings.rebuilds("media-met", "histmersion.events.gvp.url"))
-    assert(FirstPartySettings.rebuilds("zq-portal", "histmersion.acquire.user-agent"))
-    assert(!FirstPartySettings.rebuilds("zq-portal", "histmersion.events.gvp.url"))
-    assert(FirstPartySettings.of("oa-landing").exists(_.readsHostKey("histmersion.plugins.oa-unpaywall.contact-email")))
-    assert(!FirstPartySettings.of("oa-landing").exists(_.readsHostKey("histmersion.plugins.oa-unpaywall.enabled")))
+    assert(FirstPartySettings.rebuilds(com.histmersion.plugin.Plugin.Info.Id("pmc"), com.histmersion.config.ConfigReload.ChangedKey("histmersion.acquire.europepmc.url")))
+    assert(FirstPartySettings.rebuilds(com.histmersion.plugin.Plugin.Info.Id("pmc"), com.histmersion.config.ConfigReload.ChangedKey("histmersion.media.max-retry-after-seconds")))
+    assert(!FirstPartySettings.rebuilds(com.histmersion.plugin.Plugin.Info.Id("pmc"), com.histmersion.config.ConfigReload.ChangedKey("histmersion.events.gvp.url")))
+    assert(FirstPartySettings.rebuilds(com.histmersion.plugin.Plugin.Info.Id("events-gvp"), com.histmersion.config.ConfigReload.ChangedKey("histmersion.events.gvp.url")))
+    assert(FirstPartySettings.rebuilds(com.histmersion.plugin.Plugin.Info.Id("events-gvp"), com.histmersion.config.ConfigReload.ChangedKey("histmersion.events")))
+    assert(!FirstPartySettings.rebuilds(com.histmersion.plugin.Plugin.Info.Id("events-gvp"), com.histmersion.config.ConfigReload.ChangedKey("histmersion.acquire.user-agent")))
+    assert(!FirstPartySettings.rebuilds(com.histmersion.plugin.Plugin.Info.Id("media-met"), com.histmersion.config.ConfigReload.ChangedKey("histmersion.acquire.user-agent")))
+    assert(FirstPartySettings.rebuilds(com.histmersion.plugin.Plugin.Info.Id("media-met"), com.histmersion.config.ConfigReload.ChangedKey("histmersion.media.met.licences")))
+    assert(FirstPartySettings.rebuilds(com.histmersion.plugin.Plugin.Info.Id("media-wikidata"), com.histmersion.config.ConfigReload.ChangedKey("histmersion.media.commons.api-url")))
+    assert(!FirstPartySettings.rebuilds(com.histmersion.plugin.Plugin.Info.Id("media-met"), com.histmersion.config.ConfigReload.ChangedKey("histmersion.events.gvp.url")))
+    assert(FirstPartySettings.rebuilds(com.histmersion.plugin.Plugin.Info.Id("zq-portal"), com.histmersion.config.ConfigReload.ChangedKey("histmersion.acquire.user-agent")))
+    assert(!FirstPartySettings.rebuilds(com.histmersion.plugin.Plugin.Info.Id("zq-portal"), com.histmersion.config.ConfigReload.ChangedKey("histmersion.events.gvp.url")))
+    assert(FirstPartySettings.of(com.histmersion.plugin.Plugin.Info.Id("oa-landing")).exists(_.readsHostKey(com.histmersion.config.ConfigReload.ChangedKey("histmersion.plugins.oa-unpaywall.contact-email"))))
+    assert(!FirstPartySettings.of(com.histmersion.plugin.Plugin.Info.Id("oa-landing")).exists(_.readsHostKey(com.histmersion.config.ConfigReload.ChangedKey("histmersion.plugins.oa-unpaywall.enabled"))))
 
   test("the host keys a generation is built from: the client's and every path the table names, no plugin block"):
     val keys = FirstPartySettings.hostKeys
@@ -63,8 +63,8 @@ class FirstPartySettingsSuite extends munit.FunSuite:
   /** A first-party plugin whose defaults declare an environment override, as `oa-unpaywall`'s do. */
   final private class Unpaywall extends Plugin:
     type Config = Contact
-    val info = Plugin.Info("oa-unpaywall", "1.0.0", Spi.Version)
-    override def defaultsResource = "zq-first-defaults.conf"
+    val info = Plugin.Info(com.histmersion.plugin.Plugin.Info.Id("oa-unpaywall"), com.histmersion.plugin.Plugin.Info.Version("1.0.0"), Spi.Version)
+    override def defaultsResource = com.histmersion.plugin.Plugin.DefaultsResourceResult("zq-first-defaults.conf")
     def register(c: Contact, ctx: Plugin.Context) = Right(())
 
   test("another plugin's block is read as it is in effect: its defaults, the user's block, the environment"):
