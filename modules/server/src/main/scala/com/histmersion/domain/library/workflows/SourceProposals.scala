@@ -24,7 +24,7 @@ final class SourceProposals(
     status: SourceProposals.StatusArg1 => Option[Source.Status],
     apply: Proposal => Either[SourceProposals.ApplyResultPart1, SourceProposals.ApplyResultPart2]
 ):
-  def proposedBefore(p: Proposal): com.histmersion.domain.library.workflows.SourceProposals.ProposedBeforeResult = approvals.proposedBefore(p.kind, p.citekey, p.status.transformInto[Option[com.histmersion.domain.library.Source.Status]], p.edgeKind.transformInto[Option[com.histmersion.domain.library.Edge.Kind]], p.target)
+  def proposedBefore(p: Proposal): Boolean = approvals.proposedBefore(p.kind, p.citekey, p.status.transformInto[Option[com.histmersion.domain.library.Source.Status]], p.edgeKind.transformInto[Option[com.histmersion.domain.library.Edge.Kind]], p.target)
 
   import SourceProposals.Outcome
 
@@ -74,16 +74,28 @@ final class SourceProposals(
           case None    => Outcome.AlreadyOpen(p.describe)
 
 object SourceProposals:
+  type ApplyKey = ApplyKey.T
+  object ApplyKey extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type ApplyText = ApplyText.T
+  object ApplyText extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type ApprovalRecordId = ApprovalRecordId.T
+  object ApprovalRecordId extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type OutcomeLine = OutcomeLine.T
+  object OutcomeLine extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type OutcomeWhat = OutcomeWhat.T
+  object OutcomeWhat extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type OutcomeWhy = OutcomeWhy.T
+  object OutcomeWhy extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type ProposalStatus = ProposalStatus.T
+  object ProposalStatus extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   /** What became of one proposal, for the run's log and warnings. */
-  type StatusArg1 = StatusArg1.T
-  object StatusArg1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type ApplyResultPart1 = ApplyResultPart1.T
-  object ApplyResultPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type ApplyResultPart2 = ApplyResultPart2.T
-  object ApplyResultPart2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type StatusArg1 = com.histmersion.domain.library.workflows.SourceProposals.ProposalStatus
+  val StatusArg1: _root_.com.histmersion.domain.library.workflows.SourceProposals.ProposalStatus.type = _root_.com.histmersion.domain.library.workflows.SourceProposals.ProposalStatus
+  type ApplyResultPart1 = com.histmersion.domain.library.workflows.SourceProposals.ApplyKey
+  val ApplyResultPart1: _root_.com.histmersion.domain.library.workflows.SourceProposals.ApplyKey.type = _root_.com.histmersion.domain.library.workflows.SourceProposals.ApplyKey
+  type ApplyResultPart2 = com.histmersion.domain.library.workflows.SourceProposals.ApplyText
+  val ApplyResultPart2: _root_.com.histmersion.domain.library.workflows.SourceProposals.ApplyText.type = _root_.com.histmersion.domain.library.workflows.SourceProposals.ApplyText
 
-  type ProposedBeforeResult = ProposedBeforeResult.T
-  object ProposedBeforeResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type RecordResult = RecordResult.T
   object RecordResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
@@ -97,7 +109,7 @@ object SourceProposals:
     /** A dry run's proposal: neither recorded nor applied (#992). */
     case NotProposed(what: Outcome.NotProposed.What)
 
-    def line: com.histmersion.domain.library.workflows.SourceProposals.Outcome.LineResult = this match
+    def line: com.histmersion.domain.library.workflows.SourceProposals.OutcomeLine = this match
       case Applied(w)     => s"applied: $w"
       case Recorded(i, w) => s"approval $i waits for a person: $w"
       case AlreadyOpen(w) => s"already waiting for a person: $w"
@@ -107,30 +119,28 @@ object SourceProposals:
 
   object Outcome:
     object Applied:
-      type What = What.T
-      object What extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+      type What = com.histmersion.domain.library.workflows.SourceProposals.OutcomeWhat
+      val What: _root_.com.histmersion.domain.library.workflows.SourceProposals.OutcomeWhat.type = _root_.com.histmersion.domain.library.workflows.SourceProposals.OutcomeWhat
 
     object Recorded:
-      type Id = Id.T
-      object Id extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
-      type What = What.T
-      object What extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+      type Id = com.histmersion.domain.library.workflows.SourceProposals.ApprovalRecordId
+      val Id: _root_.com.histmersion.domain.library.workflows.SourceProposals.ApprovalRecordId.type = _root_.com.histmersion.domain.library.workflows.SourceProposals.ApprovalRecordId
+      type What = com.histmersion.domain.library.workflows.SourceProposals.OutcomeWhat
+      val What: _root_.com.histmersion.domain.library.workflows.SourceProposals.OutcomeWhat.type = _root_.com.histmersion.domain.library.workflows.SourceProposals.OutcomeWhat
 
     object AlreadyOpen:
-      type What = What.T
-      object What extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+      type What = com.histmersion.domain.library.workflows.SourceProposals.OutcomeWhat
+      val What: _root_.com.histmersion.domain.library.workflows.SourceProposals.OutcomeWhat.type = _root_.com.histmersion.domain.library.workflows.SourceProposals.OutcomeWhat
 
     object Skipped:
-      type Why = Why.T
-      object Why extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+      type Why = com.histmersion.domain.library.workflows.SourceProposals.OutcomeWhy
+      val Why: _root_.com.histmersion.domain.library.workflows.SourceProposals.OutcomeWhy.type = _root_.com.histmersion.domain.library.workflows.SourceProposals.OutcomeWhy
 
     object Failed:
-      type Why = Why.T
-      object Why extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+      type Why = com.histmersion.domain.library.workflows.SourceProposals.OutcomeWhy
+      val Why: _root_.com.histmersion.domain.library.workflows.SourceProposals.OutcomeWhy.type = _root_.com.histmersion.domain.library.workflows.SourceProposals.OutcomeWhy
 
     object NotProposed:
-      type What = What.T
-      object What extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+      type What = com.histmersion.domain.library.workflows.SourceProposals.OutcomeWhat
+      val What: _root_.com.histmersion.domain.library.workflows.SourceProposals.OutcomeWhat.type = _root_.com.histmersion.domain.library.workflows.SourceProposals.OutcomeWhat
 
-    type LineResult = LineResult.T
-    object LineResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]

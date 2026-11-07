@@ -20,8 +20,6 @@ object FetcherGeneration:
   object PartsContact extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type PartsCoreKey = PartsCoreKey.T
   object PartsCoreKey extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type OfResult = OfResult.T
-  object OfResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type OfPlanPart1 = _root_.com.histmersion.domain.library.acquisition.FetcherGeneration.PartsPlanPart1
   val OfPlanPart1: _root_.com.histmersion.domain.library.acquisition.FetcherGeneration.PartsPlanPart1.type = _root_.com.histmersion.domain.library.acquisition.FetcherGeneration.PartsPlanPart1
   type OfContact = _root_.com.histmersion.domain.library.acquisition.FetcherGeneration.PartsContact
@@ -46,5 +44,5 @@ object FetcherGeneration:
     legal.map((id, access) => s"$id:${access.toString.toLowerCase(java.util.Locale.ROOT)}") ++ owners ++
       List(s"contact=$contact", s"core-key=$coreKey")
 
-  def of(plan: List[(com.histmersion.domain.library.acquisition.FetcherGeneration.OfPlanPart1, Access)], plugins: List[PluginStatus], contact: com.histmersion.domain.library.acquisition.FetcherGeneration.OfContact, coreKey: com.histmersion.domain.library.acquisition.FetcherGeneration.OfCoreKey): com.histmersion.domain.library.acquisition.FetcherGeneration.OfResult =
+  def of(plan: List[(com.histmersion.domain.library.acquisition.FetcherGeneration.OfPlanPart1, Access)], plugins: List[PluginStatus], contact: com.histmersion.domain.library.acquisition.FetcherGeneration.OfContact, coreKey: com.histmersion.domain.library.acquisition.FetcherGeneration.OfCoreKey): com.histmersion.domain.library.acquisition.AcquireClients.Generation =
     AcquireRecheck.generation(parts(plan, plugins, contact, coreKey))

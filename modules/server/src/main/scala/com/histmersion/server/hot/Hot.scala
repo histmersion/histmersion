@@ -20,7 +20,7 @@ import scala.util.control.NonFatal
   * for the duration of the call — so a value is never closed under the code using it.
   */
 trait Hot[+A]:
-  def name: com.histmersion.server.hot.Hot.NameResult
+  def name: com.histmersion.server.hot.Hot.Graph.Def.Name
 
   /** The value for this call, pinned while `f` runs. */
   def use[B](f: A => B): B
@@ -50,37 +50,31 @@ object Hot:
     * `use` for no gain — the pin is already per request or per job), and a delegating `Connection` (more surface, and
     * the pool's own active count already says when a retired pool is free).
     */
-  type NameResult = NameResult.T
-  object NameResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
   final class DataSource[A](pool: Hot[A])(of: A => javax.sql.DataSource) extends javax.sql.DataSource:
     private def now: javax.sql.DataSource = of(pool.peek)
     def getConnection(): Connection = pool.use(a => of(a).getConnection())
-    def getConnection(username: com.histmersion.server.hot.Hot.DataSource.GetConnectionUsername, password: com.histmersion.server.hot.Hot.DataSource.GetConnectionPassword): Connection =
+    def getConnection(username: com.histmersion.server.hot.Hot.DataSource.Username, password: com.histmersion.server.hot.Hot.DataSource.Password): Connection =
       pool.use(a => of(a).getConnection(username, password))
 
     def getLogWriter: PrintWriter = now.getLogWriter
     def setLogWriter(out: PrintWriter): Unit = now.setLogWriter(out)
-    def setLoginTimeout(seconds: com.histmersion.server.hot.Hot.DataSource.SetLoginTimeoutSeconds): Unit = now.setLoginTimeout(seconds)
-    def getLoginTimeout: com.histmersion.server.hot.Hot.DataSource.GetLoginTimeoutResult = now.getLoginTimeout
+    def setLoginTimeout(seconds: com.histmersion.server.hot.Hot.DataSource.LoginTimeoutSeconds): Unit = now.setLoginTimeout(seconds)
+    def getLoginTimeout: com.histmersion.server.hot.Hot.DataSource.LoginTimeoutSeconds = now.getLoginTimeout
     def getParentLogger: Logger = now.getParentLogger
     def unwrap[T](iface: Class[T]): T =
       if iface.isInstance(this) then iface.cast(this) else now.unwrap(iface)
-    def isWrapperFor(iface: Class[?]): com.histmersion.server.hot.Hot.DataSource.IsWrapperForResult = iface.isInstance(this) || now.isWrapperFor(iface)
+    def isWrapperFor(iface: Class[?]): Boolean = iface.isInstance(this) || now.isWrapperFor(iface)
 
     override def toString = s"HotDataSource(${pool.name})"
 
   object DataSource:
-    type GetConnectionUsername = GetConnectionUsername.T
-    object GetConnectionUsername extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-    type GetConnectionPassword = GetConnectionPassword.T
-    object GetConnectionPassword extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-    type SetLoginTimeoutSeconds = SetLoginTimeoutSeconds.T
-    object SetLoginTimeoutSeconds extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
-    type GetLoginTimeoutResult = GetLoginTimeoutResult.T
-    object GetLoginTimeoutResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
-    type IsWrapperForResult = IsWrapperForResult.T
-    object IsWrapperForResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type LoginTimeoutSeconds = LoginTimeoutSeconds.T
+    object LoginTimeoutSeconds extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Password = Password.T
+    object Password extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Username = Username.T
+    object Username extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
   /** The hot component graph (docs/research-plugins.md §3.6): Ox has no `Hotswap`, so this is one.
     *
@@ -116,7 +110,7 @@ object Hot:
     // ── reading ────────────────────────────────────────────────────────────────────────────────────
 
     /** The generation the calling thread sees: its pin's, else the current one (not pinned). */
-    def generation: com.histmersion.server.hot.Hot.Graph.GenerationResult = seen.generation
+    def generation: com.histmersion.server.hot.Hot.Graph.Instance.Generation = seen.generation
 
     /** The config the calling thread sees: its pin's, else the current one. Read it once per unit of work that needs
       * one consistent config; a pinned request sees one config throughout.
@@ -128,7 +122,7 @@ object Hot:
       if s == null then current.get() else s
 
     /** The node names, in the order they were added. */
-    def nodes: List[com.histmersion.server.hot.Hot.Graph.NodesResult] = defs.get().map(_.name).toList
+    def nodes: List[com.histmersion.server.hot.Hot.Graph.Def.Name] = defs.get().map(_.name).toList
 
     /** Pin the generation the calling thread sees (its own pin's, nested, or the current one). Release it when the work
       * it covers is done; [[carry]] does both for work handed to another thread.
@@ -155,7 +149,7 @@ object Hot:
     def latest: C = current.get().config
 
     /** The latest published generation's number. */
-    def latestGeneration: com.histmersion.server.hot.Hot.Graph.LatestGenerationResult = current.get().generation
+    def latestGeneration: com.histmersion.server.hot.Hot.Graph.Instance.Generation = current.get().generation
 
     def pinned[A](f: => A): A =
       if pinnedTL.get() != null then f
@@ -193,12 +187,12 @@ object Hot:
       * published a new value of this node.
       */
     def node[A](
-        name: com.histmersion.server.hot.Hot.Graph.NodeName,
+        name: com.histmersion.server.hot.Hot.Graph.Def.Name,
         deps: List[Hot[?]] = Nil,
-        keys: List[com.histmersion.server.hot.Hot.Graph.NodeKeys] = Nil,
-        idle: A => com.histmersion.server.hot.Hot.Graph.NodeIdleResult = (_: A) => true,
+        keys: List[com.histmersion.server.hot.Hot.Graph.Def.Keys] = Nil,
+        idle: A => com.histmersion.server.hot.Hot.Graph.Def.Idle = (_: A) => true,
         onPublish: A => Unit = (_: A) => ()
-    )(build: BuildCtx[C, A] => Ox ?=> Either[com.histmersion.server.hot.Hot.Graph.NodeBuildResultResultPart1, A]): Either[com.histmersion.server.hot.Hot.Graph.NodeResultPart1, Hot[A]] =
+    )(build: BuildCtx[C, A] => Ox ?=> Either[com.histmersion.server.hot.Hot.Graph.Problem, A]): Either[com.histmersion.server.hot.Hot.Graph.Problem, Hot[A]] =
       locked {
         val d = Def[C](
           name,
@@ -249,10 +243,10 @@ object Hot:
       */
     def reload(
         next: C,
-        changed: List[com.histmersion.server.hot.Hot.Graph.ReloadChanged],
-        forced: Set[com.histmersion.server.hot.Hot.Graph.ReloadForced] = Set.empty,
+        changed: List[com.histmersion.server.hot.Hot.Graph.Def.Name],
+        forced: Set[com.histmersion.server.hot.Hot.Graph.Reason] = Set.empty,
         drain: FiniteDuration = 10.seconds
-    ): Either[com.histmersion.server.hot.Hot.Graph.ReloadResultPart1, Outcome] =
+    ): Either[com.histmersion.server.hot.Hot.Graph.Problem, Outcome] =
       locked {
         if closed.get() then Left("hot graph: closed")
         else
@@ -309,7 +303,7 @@ object Hot:
       * still in use then — it keeps draining in the background. A pin the calling thread holds itself (a reload asked
       * for over HTTP) does not count: it is released when the request returns.
       */
-    private def retire(old: List[Instance], bound: FiniteDuration): List[com.histmersion.server.hot.Hot.Graph.RetireResult] =
+    private def retire(old: List[Instance], bound: FiniteDuration): List[com.histmersion.server.hot.Hot.Graph.Instance.Description] =
       if old.isEmpty then Nil
       else
         old.foreach(i => draining.put(i, ()))
@@ -338,7 +332,7 @@ object Hot:
         busy.map(_.describe)
 
     /** What is still draining from earlier generations. */
-    def stillDraining: List[com.histmersion.server.hot.Hot.Graph.StillDrainingResult] =
+    def stillDraining: List[com.histmersion.server.hot.Hot.Graph.Instance.Description] =
       import scala.jdk.CollectionConverters.*
       draining.keySet.asScala.toList.map(_.describe).sorted
 
@@ -369,7 +363,7 @@ object Hot:
     /** Build one node's value in a scope of its own, on a thread of its own that holds the scope open until the value
       * is retired.
       */
-    private def instantiate(d: Def[C], ctx: BuildCtx[C, Any], gen: com.histmersion.server.hot.Hot.Graph.InstantiateGen): Either[com.histmersion.server.hot.Hot.Graph.InstantiateResultPart1, Instance] =
+    private def instantiate(d: Def[C], ctx: BuildCtx[C, Any], gen: com.histmersion.server.hot.Hot.Graph.Instance.Generation): Either[com.histmersion.server.hot.Hot.Graph.Problem, Instance] =
       val built = CompletableFuture[Either[String, Any]]()
       val release = CountDownLatch(1)
       val ended = CountDownLatch(1)
@@ -396,52 +390,24 @@ object Hot:
         case Right(v) => Right(Instance(d.name, gen, v, () => d.idle(v), release, ended))
 
   object Graph:
+    type Problem = Problem.T
+    object Problem extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Reason = Reason.T
+    object Reason extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
     /** How often a drain looks at its components' users. */
-    type GenerationResult = GenerationResult.T
-    object GenerationResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
-    type NodesResult = NodesResult.T
-    object NodesResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-    type LatestGenerationResult = LatestGenerationResult.T
-    object LatestGenerationResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
-    type NodeResultPart1 = NodeResultPart1.T
-    object NodeResultPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-    type NodeName = NodeName.T
-    object NodeName extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-    type NodeKeys = NodeKeys.T
-    object NodeKeys extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-    type NodeIdleResult = NodeIdleResult.T
-    object NodeIdleResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
-    type NodeBuildResultResultPart1 = NodeBuildResultResultPart1.T
-    object NodeBuildResultResultPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-    type ReloadResultPart1 = ReloadResultPart1.T
-    object ReloadResultPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-    type ReloadChanged = ReloadChanged.T
-    object ReloadChanged extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-    type ReloadForced = ReloadForced.T
-    object ReloadForced extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-    type RetireResult = RetireResult.T
-    object RetireResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-    type StillDrainingResult = StillDrainingResult.T
-    object StillDrainingResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-    type InstantiateResultPart1 = InstantiateResultPart1.T
-    object InstantiateResultPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-    type InstantiateGen = InstantiateGen.T
-    object InstantiateGen extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
     private[hot] val DrainPollMs = 20L
 
     trait Log:
-      def info(m: com.histmersion.server.hot.Hot.Graph.Log.InfoM): Unit
-      def warn(m: com.histmersion.server.hot.Hot.Graph.Log.WarnM): Unit
+      def info(m: com.histmersion.server.hot.Hot.Graph.Log.Message): Unit
+      def warn(m: com.histmersion.server.hot.Hot.Graph.Log.Message): Unit
     object Log:
-      type InfoM = InfoM.T
-      object InfoM extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-      type WarnM = WarnM.T
-      object WarnM extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+      type Message = Message.T
+      object Message extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
       val scribe: Log = new Log:
-        def info(m: com.histmersion.server.hot.Hot.Graph.Log.InfoM) = _root_.scribe.info(m)
-        def warn(m: com.histmersion.server.hot.Hot.Graph.Log.WarnM) = _root_.scribe.warn(m)
+        def info(m: com.histmersion.server.hot.Hot.Graph.Log.Message) = _root_.scribe.info(m)
+        def warn(m: com.histmersion.server.hot.Hot.Graph.Log.Message) = _root_.scribe.warn(m)
 
     /** What a reload did: the generation published, the nodes rebuilt (in build order), the retired components still in
       * use when it stopped waiting, and the `onPublish` failures.
@@ -469,10 +435,14 @@ object Hot:
       def spec: HotNode = HotNode(name, deps, keys)
 
     object Def:
-      type BuildResultResultPart1 = BuildResultResultPart1.T
-      object BuildResultResultPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-      type IdleResult = IdleResult.T
-      object IdleResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
+      type Idle = Idle.T
+      object Idle extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
+      type Problem = Problem.T
+      object Problem extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+      type BuildResultResultPart1 = com.histmersion.server.hot.Hot.Graph.Def.Problem
+      val BuildResultResultPart1: _root_.com.histmersion.server.hot.Hot.Graph.Def.Problem.type = _root_.com.histmersion.server.hot.Hot.Graph.Def.Problem
+      type IdleResult = com.histmersion.server.hot.Hot.Graph.Def.Idle
+      val IdleResult: _root_.com.histmersion.server.hot.Hot.Graph.Def.Idle.type = _root_.com.histmersion.server.hot.Hot.Graph.Def.Idle
 
       type Name = Name.T
       object Name extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
@@ -492,15 +462,15 @@ object Hot:
     ):
       val users = AtomicInteger(0)
       private val closedFlag = AtomicBoolean(false)
-      def isClosed: com.histmersion.server.hot.Hot.Graph.Instance.IsClosedResult = closedFlag.get()
-      private def idleNow: com.histmersion.server.hot.Hot.Graph.Instance.IdleNowResult =
+      def isClosed: Boolean = closedFlag.get()
+      private def idleNow: Boolean =
         try idle()
         catch case NonFatal(_) => true
-      def free: com.histmersion.server.hot.Hot.Graph.Instance.FreeResult = users.get() == 0 && idleNow
+      def free: Boolean = users.get() == 0 && idleNow
 
       /** Free but for `own` pins the asking thread holds itself. */
-      def freeBut(own: com.histmersion.server.hot.Hot.Graph.Instance.FreeButOwn): com.histmersion.server.hot.Hot.Graph.Instance.FreeButResult = users.get() <= own && idleNow
-      def describe: com.histmersion.server.hot.Hot.Graph.Instance.DescribeResult = s"$name (generation $generation, ${users.get()} pinned)"
+      def freeBut(own: com.histmersion.server.hot.Hot.Graph.Instance.PinCount): Boolean = users.get() <= own && idleNow
+      def describe: com.histmersion.server.hot.Hot.Graph.Instance.Description = s"$name (generation $generation, ${users.get()} pinned)"
       def close(log: Log): Unit =
         if closedFlag.compareAndSet(false, true) then
           release.countDown()
@@ -508,25 +478,19 @@ object Hot:
             log.warn(s"$name (generation $generation): its scope did not close within $CloseWaitSeconds s")
 
     object Instance:
+      type Description = Description.T
+      object Description extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+      type Idle = Idle.T
+      object Idle extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
+      type PinCount = PinCount.T
+      object PinCount extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
       type Name = Name.T
       object Name extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
       type Generation = Generation.T
       object Generation extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
-      type IdleResult = IdleResult.T
-      object IdleResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
+      type IdleResult = com.histmersion.server.hot.Hot.Graph.Instance.Idle
+      val IdleResult: _root_.com.histmersion.server.hot.Hot.Graph.Instance.Idle.type = _root_.com.histmersion.server.hot.Hot.Graph.Instance.Idle
 
-      type IsClosedResult = IsClosedResult.T
-      object IsClosedResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
-      type IdleNowResult = IdleNowResult.T
-      object IdleNowResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
-      type FreeResult = FreeResult.T
-      object FreeResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
-      type FreeButResult = FreeButResult.T
-      object FreeButResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
-      type FreeButOwn = FreeButOwn.T
-      object FreeButOwn extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
-      type DescribeResult = DescribeResult.T
-      object DescribeResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
     private val CloseWaitSeconds = 60L
 

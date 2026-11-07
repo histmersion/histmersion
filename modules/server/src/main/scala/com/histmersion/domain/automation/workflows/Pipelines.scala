@@ -13,8 +13,6 @@ import io.circe.syntax.*
 private[histmersion] object Pipelines:
 
   /** The goal a run works for: its own, else the goal it targets. */
-  type GoalOfResult = GoalOfResult.T
-  object GoalOfResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type EntryText = EntryText.T
   object EntryText extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type EntryTopic = EntryTopic.T
@@ -26,7 +24,7 @@ private[histmersion] object Pipelines:
   type LogLine = LogLine.T
   object LogLine extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
-  def goalOf(run: com.histmersion.api.automation.Agents.RunInfo): Option[com.histmersion.domain.automation.workflows.Pipelines.GoalOfResult] =
+  def goalOf(run: com.histmersion.api.automation.Agents.RunInfo): Option[com.histmersion.domain.automation.Goal.Slug] =
     run.goal
       .orElse(Option.when(run.targetKind == com.histmersion.domain.automation.TargetKind.Goal.wire)(run.target))
       .filter(_.nonEmpty)

@@ -1,0 +1,382 @@
+## CONCEPTS NEARBY
+com.histmersion.domain.automation.AgentRole.Wire (String)
+com.histmersion.domain.automation.Approval.DecidedBy.Describe (String)
+com.histmersion.domain.automation.Approval.DecidedBy.Wire (String)
+com.histmersion.domain.automation.Approval.Kind.Blocking (Boolean)
+com.histmersion.domain.automation.Approval.Kind.Wire (String)
+com.histmersion.domain.automation.Approval.Mode.Wire (String)
+com.histmersion.domain.automation.Approval.Note (String)
+com.histmersion.domain.automation.Approval.Outcome (String)
+com.histmersion.domain.automation.Approval.State.Wire (String)
+com.histmersion.domain.automation.Goal.LinkKind.Wire (String)
+com.histmersion.domain.automation.Goal.Slug (String)
+com.histmersion.domain.automation.Goal.Status.Wire (String)
+com.histmersion.domain.automation.Goal.Uid (UUID)
+com.histmersion.domain.automation.ItemStatus.Wire (String)
+com.histmersion.domain.automation.Manager.Kind.Wire (String)
+com.histmersion.domain.automation.Manager.State.Wire (String)
+com.histmersion.domain.automation.Pipeline.Describe (String)
+com.histmersion.domain.automation.Pipeline.Version (Int)
+com.histmersion.domain.automation.Pipeline.Wire (String)
+com.histmersion.domain.automation.ProviderKind.Wire (String)
+com.histmersion.domain.automation.Run.Id (String)
+com.histmersion.domain.automation.Run.State.Wire (String)
+com.histmersion.domain.automation.ScheduleKind.Wire (String)
+com.histmersion.domain.automation.Step.Status.Wire (String)
+com.histmersion.domain.automation.TargetKind.Wire (String)
+com.histmersion.domain.automation.agents.AgentRepo.ActiveOnly (Boolean)
+com.histmersion.domain.automation.agents.AgentRepo.ApprovalJobId (String)
+com.histmersion.domain.automation.agents.AgentRepo.CloseReason (String)
+com.histmersion.domain.automation.agents.AgentRepo.CursorProblem (String)
+com.histmersion.domain.automation.agents.AgentRepo.MessageRecord.Content (String)
+com.histmersion.domain.automation.agents.AgentRepo.MessageRecord.LatencyMs (Int)
+com.histmersion.domain.automation.agents.AgentRepo.MessageRecord.N (Int)
+com.histmersion.domain.automation.agents.AgentRepo.MessageRecord.Role (String)
+com.histmersion.domain.automation.agents.AgentRepo.MessageRecord.ToolInput (String)
+com.histmersion.domain.automation.agents.AgentRepo.MessageRecord.ToolName (String)
+com.histmersion.domain.automation.agents.AgentRepo.MessageRecord.ToolResult (String)
+com.histmersion.domain.automation.agents.AgentRepo.OutputChars (Int)
+com.histmersion.domain.automation.agents.AgentRepo.PageCursor (String)
+com.histmersion.domain.automation.agents.AgentRepo.StepRecord.ActualModel (String)
+com.histmersion.domain.automation.agents.AgentRepo.StepRecord.Attempt (Int)
+com.histmersion.domain.automation.agents.AgentRepo.StepRecord.Error (String)
+com.histmersion.domain.automation.agents.AgentRepo.StepRecord.FirstCallTokens (Long)
+com.histmersion.domain.automation.agents.AgentRepo.StepRecord.Model (String)
+com.histmersion.domain.automation.agents.AgentRepo.StepRecord.Name (String)
+com.histmersion.domain.automation.agents.AgentRepo.StepRecord.Output (String)
+com.histmersion.domain.automation.agents.AgentRepo.StepRecord.PromptHash (String)
+com.histmersion.domain.automation.agents.AgentRepo.StepRecord.Seq (Int)
+com.histmersion.domain.automation.agents.AgentRepo.StepRecord.Turns (Int)
+com.histmersion.domain.automation.agents.LeaseRepo.LeaseExpiry (String)
+com.histmersion.domain.automation.agents.LeaseRepo.LeaseName (String)
+com.histmersion.domain.automation.agents.LeaseRepo.LeaseOwner (String)
+com.histmersion.domain.automation.agents.LeaseRepo.TtlSeconds (Int)
+com.histmersion.domain.automation.agents.PlanQuotaRepo.EpochMillis (Long)
+com.histmersion.domain.automation.agents.PlanQuotaRepo.Pool.Floors (String)
+com.histmersion.domain.automation.agents.PlanQuotaRepo.Pool.Held (Boolean)
+com.histmersion.domain.automation.agents.PlanQuotaRepo.Pool.PlanType (String)
+com.histmersion.domain.automation.agents.PlanQuotaRepo.Pool.Refusal (String)
+com.histmersion.domain.automation.agents.PlanQuotaRepo.Pool.RefusalUntil (Long)
+com.histmersion.domain.automation.agents.PlanQuotaRepo.RefreshDetail (String)
+com.histmersion.domain.automation.agents.PlanQuotaRepo.RefreshMode (String)
+com.histmersion.domain.automation.agents.PlanQuotaRepo.RefreshTrigger (String)
+com.histmersion.domain.automation.agents.RunQuery.Goal (String)
+com.histmersion.domain.automation.agents.RunQuery.Managers (String)
+com.histmersion.domain.automation.agents.RunQuery.Models (String)
+com.histmersion.domain.automation.agents.RunQuery.Origins (String)
+com.histmersion.domain.automation.agents.RunQuery.Pipelines (String)
+com.histmersion.domain.automation.agents.RunQuery.Providers (String)
+com.histmersion.domain.automation.agents.RunQuery.Q (String)
+com.histmersion.domain.automation.agents.RunQuery.Status (String)
+com.histmersion.domain.automation.agents.SkillDef.Body (String)
+com.histmersion.domain.automation.agents.SkillDef.Header (String)
+com.histmersion.domain.automation.agents.SkillDef.Name (String)
+com.histmersion.domain.automation.agents.StepAgent.Wire (String)
+com.histmersion.domain.automation.agents.StrictJsonSchema.KeywordsValue (String)
+com.histmersion.domain.automation.agents.StrictJsonSchema.StringFormatsValue (String)
+com.histmersion.domain.automation.agents.ToolUse.Input (String)
+com.histmersion.domain.automation.agents.ToolUse.Tool (String)
+com.histmersion.domain.automation.agents.VerbatimFailure.Description (String)
+com.histmersion.domain.automation.agents.WebAccess.Wire (String)
+com.histmersion.domain.automation.agents.Writes.Wire (String)
+com.histmersion.domain.automation.approvals.ApprovalQuery.Goal (String)
+com.histmersion.domain.automation.approvals.ApprovalQuery.Subject (String)
+com.histmersion.domain.automation.approvals.Approvals.ApplyHintResultPart1 (String)
+com.histmersion.domain.automation.approvals.Approvals.ApplyHintResultPart2 (String)
+com.histmersion.domain.automation.approvals.Decided.Approval (Long)
+com.histmersion.domain.automation.approvals.Decided.Approved (Boolean)
+com.histmersion.domain.automation.approvals.Decided.Note (String)
+com.histmersion.domain.automation.approvals.ProposalEvidence.Evidence (String)
+com.histmersion.domain.automation.approvals.ProposalEvidence.Quote (String)
+com.histmersion.domain.automation.autopilot.AutopilotRepo.Digest (String)
+com.histmersion.domain.automation.autopilot.AutopilotRepo.DrainSince (String)
+com.histmersion.domain.automation.autopilot.AutopilotRepo.DrainedAt (String)
+com.histmersion.domain.automation.autopilot.AutopilotRepo.Row.ChangedAt (String)
+com.histmersion.domain.automation.autopilot.AutopilotRepo.Row.ChangedBy (String)
+com.histmersion.domain.automation.autopilot.AutopilotRepo.Row.Enabled (Boolean)
+com.histmersion.domain.automation.autopilot.AutopilotRepo.Row.LastBackupAt (String)
+com.histmersion.domain.automation.autopilot.AutopilotRepo.Row.LastEnsureAt (String)
+com.histmersion.domain.automation.autopilot.AutopilotRepo.Row.LastLintAt (String)
+com.histmersion.domain.automation.autopilot.AutopilotRepo.Row.Paused (String)
+com.histmersion.domain.automation.autopilot.AutopilotRepo.StrategyName (String)
+com.histmersion.domain.automation.goals.BGoalLinkRow.CreatedAt (String)
+com.histmersion.domain.automation.goals.BGoalLinkRow.Kind (String)
+com.histmersion.domain.automation.goals.BGoalLinkRow.Note (String)
+com.histmersion.domain.automation.goals.BGoalLinkRow.Ref (String)
+com.histmersion.domain.automation.goals.BGoalRow.CreatedAt (String)
+com.histmersion.domain.automation.goals.BGoalRow.Notes (String)
+com.histmersion.domain.automation.goals.BGoalRow.PHi (Long)
+com.histmersion.domain.automation.goals.BGoalRow.PLo (Long)
+com.histmersion.domain.automation.goals.BGoalRow.PNull (Boolean)
+com.histmersion.domain.automation.goals.BGoalRow.Plan (String)
+com.histmersion.domain.automation.goals.BGoalRow.PlanApprovedAt (String)
+com.histmersion.domain.automation.goals.BGoalRow.Regions (String)
+com.histmersion.domain.automation.goals.BGoalRow.Slug (String)
+com.histmersion.domain.automation.goals.BGoalRow.Status (String)
+com.histmersion.domain.automation.goals.BGoalRow.Tags (String)
+com.histmersion.domain.automation.goals.BGoalRow.Title (String)
+com.histmersion.domain.automation.goals.BGoalRow.UpdatedAt (String)
+com.histmersion.domain.automation.goals.BGoalScheduleRow.Cron (String)
+com.histmersion.domain.automation.goals.BGoalScheduleRow.Enabled (Boolean)
+com.histmersion.domain.automation.goals.BGoalScheduleRow.Kind (String)
+com.histmersion.domain.automation.goals.FocusRepo.GoalRow.Active (Boolean)
+com.histmersion.domain.automation.goals.FocusRepo.GoalRow.CreatedAt (String)
+com.histmersion.domain.automation.goals.FocusRepo.GoalRow.LeftAt (String)
+com.histmersion.domain.automation.goals.FocusRepo.GoalRow.LeftWhy (String)
+com.histmersion.domain.automation.goals.FocusRepo.GoalRow.Parent (String)
+com.histmersion.domain.automation.goals.FocusRepo.GoalRow.Pinned (Boolean)
+com.histmersion.domain.automation.goals.FocusRepo.GoalRow.Priority (Int)
+com.histmersion.domain.automation.goals.FocusRepo.GoalRow.Since (String)
+com.histmersion.domain.automation.goals.FocusRepo.GoalRow.Slug (String)
+com.histmersion.domain.automation.goals.FocusRepo.GoalRow.Status (String)
+com.histmersion.domain.automation.goals.FocusRepo.GoalRow.Title (String)
+com.histmersion.domain.automation.goals.FocusRepo.GoalRow.Why (String)
+com.histmersion.domain.automation.goals.FocusRepo.JoinWhy (String)
+com.histmersion.domain.automation.goals.FocusRepo.WorkRow.Approval (Long)
+com.histmersion.domain.automation.goals.FocusRepo.WorkRow.ApprovalKind (String)
+com.histmersion.domain.automation.goals.FocusRepo.WorkRow.AutoApprove (String)
+com.histmersion.domain.automation.goals.FocusRepo.WorkRow.FocusHeld (Boolean)
+com.histmersion.domain.automation.goals.FocusRepo.WorkRow.Goals (String)
+com.histmersion.domain.automation.goals.FocusRepo.WorkRow.Id (Long)
+com.histmersion.domain.automation.goals.FocusRepo.WorkRow.Kind (String)
+com.histmersion.domain.automation.goals.FocusRepo.WorkRow.ManagerId (String)
+com.histmersion.domain.automation.goals.FocusRepo.WorkRow.ManagerKind (String)
+com.histmersion.domain.automation.goals.FocusRepo.WorkRow.Person (Boolean)
+com.histmersion.domain.automation.goals.FocusRepo.WorkRow.PersonHeld (Boolean)
+com.histmersion.domain.automation.goals.FocusRepo.WorkRow.Status (String)
+com.histmersion.domain.automation.goals.FocusRepo.WorkRow.Target (String)
+com.histmersion.domain.automation.goals.GoalLinkRepo.ItemId (Int)
+com.histmersion.domain.automation.goals.GoalRow.Notes (String)
+com.histmersion.domain.automation.goals.GoalRow.ParentSlug (String)
+com.histmersion.domain.automation.goals.GoalRow.Regions (String)
+com.histmersion.domain.automation.goals.GoalRow.Slug (String)
+com.histmersion.domain.automation.goals.GoalRow.Status (String)
+com.histmersion.domain.automation.goals.GoalRow.Tags (String)
+com.histmersion.domain.automation.goals.GoalRow.Title (String)
+com.histmersion.domain.automation.goals.GoalRow.UpdatedAt (String)
+com.histmersion.domain.automation.managers.ManagerLight.Cron (String)
+com.histmersion.domain.automation.managers.ManagerLight.Goal (String)
+com.histmersion.domain.automation.managers.ManagerLight.Id (String)
+com.histmersion.domain.automation.managers.ManagerLight.Kind (String)
+com.histmersion.domain.automation.managers.ManagerLight.PlanItem (Boolean)
+com.histmersion.domain.automation.managers.ManagerLight.State (String)
+com.histmersion.domain.automation.managers.ManagerLight.StatusNote (String)
+com.histmersion.domain.automation.managers.ManagerRepo.CancelReason (String)
+com.histmersion.domain.automation.managers.ManagerRepo.EventCursor (Long)
+com.histmersion.domain.automation.managers.ManagerRepo.ProgressText (String)
+com.histmersion.domain.automation.managers.ManagerRepo.RestaleReason (String)
+com.histmersion.domain.automation.managers.SweepAcquireItem.Authors (String)
+com.histmersion.domain.automation.managers.SweepAcquireItem.Goal (String)
+com.histmersion.domain.automation.managers.SweepAcquireItem.IsOa (Boolean)
+com.histmersion.domain.automation.managers.SweepAcquireItem.Item (Int)
+com.histmersion.domain.automation.managers.SweepAcquireItem.Job (String)
+com.histmersion.domain.automation.managers.SweepAcquireItem.ManagerId (String)
+com.histmersion.domain.automation.managers.SweepAcquireItem.Text (String)
+com.histmersion.domain.automation.managers.SweepAcquireItem.Title (String)
+com.histmersion.domain.automation.managers.SweepAcquireItem.Topic (String)
+com.histmersion.domain.automation.managers.SweepAcquireItem.Venue (String)
+com.histmersion.domain.automation.managers.SweepAcquireItem.Why (String)
+com.histmersion.domain.automation.worklists.BQueueRow.CreatedAt (String)
+com.histmersion.domain.automation.worklists.BQueueRow.DoneAt (String)
+com.histmersion.domain.automation.worklists.BQueueRow.List (String)
+com.histmersion.domain.automation.worklists.BQueueRow.Reason (String)
+com.histmersion.domain.automation.worklists.BQueueRow.Status (String)
+com.histmersion.domain.automation.worklists.BQueueRow.Text (String)
+com.histmersion.domain.automation.worklists.BQueueRow.Topic (String)
+com.histmersion.domain.automation.worklists.BQueueRow.UpdatedAt (String)
+
+## TYPES TO DECIDE
+com.histmersion.domain.automation.agents.RunTokenGate.RefuseMsg | base String | generated | method-parameter
+    private def refuse(ctx: ChannelHandlerContext, req: HttpRequest, status: HttpResponseStatus, msg: com.histmersion.domain.automation.agents.RunTokenGate.RefuseMsg): Unit =
+com.histmersion.domain.automation.agents.RunTokens.BearerHeader | base String | generated | method-parameter
+    def bearer(header: com.histmersion.domain.automation.agents.RunTokens.BearerHeader, now: com.histmersion.domain.automation.agents.RunTokens.BearerNow = wallClock.millis()
+com.histmersion.domain.automation.agents.RunTokens.BearerNow | base Long | generated | method-parameter
+    def bearer(header: com.histmersion.domain.automation.agents.RunTokens.BearerHeader, now: com.histmersion.domain.automation.agents.RunTokens.BearerNow = wallClock.millis()
+com.histmersion.domain.automation.agents.RunTokens.CheckNow | base Long | generated | method-parameter
+    def check(token: com.histmersion.domain.automation.agents.RunTokens.CheckToken, now: com.histmersion.domain.automation.agents.RunTokens.CheckNow = wallClock.millis()): Op
+com.histmersion.domain.automation.agents.RunTokens.CheckToken | base String | generated | method-parameter
+    def check(token: com.histmersion.domain.automation.agents.RunTokens.CheckToken, now: com.histmersion.domain.automation.agents.RunTokens.CheckNow = wallClock.millis()): Op
+com.histmersion.domain.automation.agents.RunTokens.IsAgentPathPath | base String | generated | method-parameter
+    def isAgentPath(path: com.histmersion.domain.automation.agents.RunTokens.IsAgentPathPath): com.histmersion.domain.automation.agents.RunTokens.IsAgentPathResult = path == 
+com.histmersion.domain.automation.agents.RunTokens.IsAgentPathResult | base Boolean | generated | method-result
+    def isAgentPath(path: com.histmersion.domain.automation.agents.RunTokens.IsAgentPathPath): com.histmersion.domain.automation.agents.RunTokens.IsAgentPathResult = path == 
+com.histmersion.domain.automation.agents.RunTokens.IssueNow | base Long | generated | method-parameter
+com.histmersion.domain.automation.agents.RunTokens.IssueTtlMillis | base Long | generated | method-parameter
+com.histmersion.domain.automation.agents.RunTokens.PruneNow | base Long | generated | method-parameter
+    private def prune(now: com.histmersion.domain.automation.agents.RunTokens.PruneNow): Unit = grants.values().removeIf(_.expiresAt <= now)
+com.histmersion.domain.automation.agents.RunTokens.RevokeToken | base String | generated | method-parameter
+    def revoke(token: com.histmersion.domain.automation.agents.RunTokens.RevokeToken): Unit = { val _ = grants.remove(token) }
+com.histmersion.domain.automation.agents.SkillDef.Body | base String | original | constructor-parameter
+    final case class SkillDef(name: SkillDef.Name, header: List[SkillDef.Header], body: SkillDef.Body):
+com.histmersion.domain.automation.agents.SkillDef.DescriptionResult | base String | generated | method-result
+    def description: com.histmersion.domain.automation.agents.SkillDef.DescriptionResult =
+com.histmersion.domain.automation.agents.SkillDef.Header | base String | original | constructor-parameter
+    final case class SkillDef(name: SkillDef.Name, header: List[SkillDef.Header], body: SkillDef.Body):
+com.histmersion.domain.automation.agents.SkillDef.Name | base String | original | alias,constructor-parameter
+    final case class SkillDef(name: SkillDef.Name, header: List[SkillDef.Header], body: SkillDef.Body):
+com.histmersion.domain.automation.agents.StepAgent.Wire | base String | generated | constructor-parameter
+    enum StepAgent(val wire: StepAgent.Wire):
+com.histmersion.domain.automation.agents.StrictJsonSchema.ConvertDefsPart1 | base String | generated | alias,method-parameter
+    val ConvertObjectDefsPart1: _root_.com.histmersion.domain.automation.agents.StrictJsonSchema.ConvertDefsPart1.type = _root_.com.histmersion.domain.automation.agents.Stric
+    private def convert(node: Json, defs: Map[com.histmersion.domain.automation.agents.StrictJsonSchema.ConvertDefsPart1, Json], seen: Set[com.histmersion.domain.automation.a
+com.histmersion.domain.automation.agents.StrictJsonSchema.ConvertObjectSeen | base String | generated | alias,method-parameter
+    val ConvertSeen: _root_.com.histmersion.domain.automation.agents.StrictJsonSchema.ConvertObjectSeen.type = _root_.com.histmersion.domain.automation.agents.StrictJsonSchem
+    private def convertObject(o: JsonObject, defs: Map[com.histmersion.domain.automation.agents.StrictJsonSchema.ConvertObjectDefsPart1, Json], seen: Set[com.histmersion.doma
+com.histmersion.domain.automation.agents.StrictJsonSchema.IsNullableResult | base Boolean | generated | method-result
+    private def isNullable(o: JsonObject): com.histmersion.domain.automation.agents.StrictJsonSchema.IsNullableResult =
+com.histmersion.domain.automation.agents.StrictJsonSchema.IsObjectSchemaResult | base Boolean | generated | method-result
+    private def isObjectSchema(o: JsonObject): com.histmersion.domain.automation.agents.StrictJsonSchema.IsObjectSchemaResult = types(o).contains("object") || o.contains("pro
+com.histmersion.domain.automation.agents.StrictJsonSchema.KeywordsValue | base String | original | alias
+com.histmersion.domain.automation.agents.StrictJsonSchema.StringFormatsValue | base String | original | alias
+com.histmersion.domain.automation.agents.StrictJsonSchema.TypesResult | base String | generated | method-result
+    private def types(o: JsonObject): List[com.histmersion.domain.automation.agents.StrictJsonSchema.TypesResult] =
+com.histmersion.domain.automation.agents.ToolResultCap.CapMax | base Int | generated | alias,method-parameter
+    val SourceMax: _root_.com.histmersion.domain.automation.agents.ToolResultCap.CapMax.type = _root_.com.histmersion.domain.automation.agents.ToolResultCap.CapMax
+    def cap(text: com.histmersion.domain.automation.agents.ToolResultCap.CapText, max: com.histmersion.domain.automation.agents.ToolResultCap.CapMax, hint: com.histmersion.do
+com.histmersion.domain.automation.agents.ToolResultCap.CapResult | base String | generated | method-result
+    def cap(text: com.histmersion.domain.automation.agents.ToolResultCap.CapText, max: com.histmersion.domain.automation.agents.ToolResultCap.CapMax, hint: com.histmersion.do
+com.histmersion.domain.automation.agents.ToolResultCap.CapText | base String | generated | method-parameter
+    def cap(text: com.histmersion.domain.automation.agents.ToolResultCap.CapText, max: com.histmersion.domain.automation.agents.ToolResultCap.CapMax, hint: com.histmersion.do
+com.histmersion.domain.automation.agents.ToolResultCap.CompactSourceResult | base String | generated | method-result
+    def compactSource(md: com.histmersion.domain.automation.agents.ToolResultCap.CompactSourceMd): com.histmersion.domain.automation.agents.ToolResultCap.CompactSourceResult 
+com.histmersion.domain.automation.agents.ToolResultCap.NotesExcerptNotes | base String | generated | method-parameter
+    private def notesExcerpt(notes: com.histmersion.domain.automation.agents.ToolResultCap.NotesExcerptNotes, room: com.histmersion.domain.automation.agents.ToolResultCap.Not
+com.histmersion.domain.automation.agents.ToolResultCap.NotesExcerptResult | base String | generated | method-result
+    private def notesExcerpt(notes: com.histmersion.domain.automation.agents.ToolResultCap.NotesExcerptNotes, room: com.histmersion.domain.automation.agents.ToolResultCap.Not
+com.histmersion.domain.automation.agents.ToolResultCap.NotesExcerptRoom | base Int | generated | method-parameter
+    private def notesExcerpt(notes: com.histmersion.domain.automation.agents.ToolResultCap.NotesExcerptNotes, room: com.histmersion.domain.automation.agents.ToolResultCap.Not
+com.histmersion.domain.automation.agents.ToolResultCap.PlainLinksMd | base String | generated | alias,method-parameter
+    val CompactSourceMd: _root_.com.histmersion.domain.automation.agents.ToolResultCap.PlainLinksMd.type = _root_.com.histmersion.domain.automation.agents.ToolResultCap.Plain
+    def plainLinks(md: com.histmersion.domain.automation.agents.ToolResultCap.PlainLinksMd): com.histmersion.domain.automation.agents.ToolResultCap.PlainLinksResult =
+com.histmersion.domain.automation.agents.ToolResultCap.PlainLinksResult | base String | generated | method-result
+    def plainLinks(md: com.histmersion.domain.automation.agents.ToolResultCap.PlainLinksMd): com.histmersion.domain.automation.agents.ToolResultCap.PlainLinksResult =
+com.histmersion.domain.automation.agents.ToolResultCap.SourceMd | base String | generated | method-parameter
+    def source(md: com.histmersion.domain.automation.agents.ToolResultCap.SourceMd, max: com.histmersion.domain.automation.agents.ToolResultCap.SourceMax): com.histmersion.do
+com.histmersion.domain.automation.agents.ToolResultCap.SourceResult | base String | generated | method-result
+    def source(md: com.histmersion.domain.automation.agents.ToolResultCap.SourceMd, max: com.histmersion.domain.automation.agents.ToolResultCap.SourceMax): com.histmersion.do
+com.histmersion.domain.automation.agents.ToolResultCap.TrailerHint | base String | generated | alias,method-parameter
+    val CapHint: _root_.com.histmersion.domain.automation.agents.ToolResultCap.TrailerHint.type = _root_.com.histmersion.domain.automation.agents.ToolResultCap.TrailerHint
+    val NotesExcerptHint: _root_.com.histmersion.domain.automation.agents.ToolResultCap.TrailerHint.type = _root_.com.histmersion.domain.automation.agents.ToolResultCap.Trail
+com.histmersion.domain.automation.agents.ToolResultCap.TrailerResult | base String | generated | method-result
+    def trailer(shown: com.histmersion.domain.automation.agents.ToolResultCap.TrailerShown, total: com.histmersion.domain.automation.agents.ToolResultCap.TrailerTotal, hint: 
+com.histmersion.domain.automation.agents.ToolResultCap.TrailerShown | base Int | generated | method-parameter
+    def trailer(shown: com.histmersion.domain.automation.agents.ToolResultCap.TrailerShown, total: com.histmersion.domain.automation.agents.ToolResultCap.TrailerTotal, hint: 
+com.histmersion.domain.automation.agents.ToolResultCap.TrailerTotal | base Int | generated | method-parameter
+    def trailer(shown: com.histmersion.domain.automation.agents.ToolResultCap.TrailerShown, total: com.histmersion.domain.automation.agents.ToolResultCap.TrailerTotal, hint: 
+com.histmersion.domain.automation.agents.ToolStyle.ToolName | base String | generated | method-parameter
+    def tool(name: com.histmersion.domain.automation.agents.ToolStyle.ToolName): com.histmersion.domain.automation.agents.ToolStyle.ToolResult = this match
+com.histmersion.domain.automation.agents.ToolStyle.ToolResult | base String | generated | method-result
+    def tool(name: com.histmersion.domain.automation.agents.ToolStyle.ToolName): com.histmersion.domain.automation.agents.ToolStyle.ToolResult = this match
+com.histmersion.domain.automation.agents.Trace.MessagesCutS | base String | generated | method-parameter
+    def cut(s: com.histmersion.domain.automation.agents.Trace.MessagesCutS) = if s.length <= max then s else s.take(max) + s"… (${s.length - max} more chars)"
+com.histmersion.domain.automation.agents.Trace.MessagesLatencies | base Int | generated | method-parameter
+    def messages(h: ConversationHistory, latencies: Vector[com.histmersion.domain.automation.agents.Trace.MessagesLatencies], max: com.histmersion.domain.automation.agents.Tr
+com.histmersion.domain.automation.agents.Trace.MessagesMax | base Int | generated | method-parameter
+    def messages(h: ConversationHistory, latencies: Vector[com.histmersion.domain.automation.agents.Trace.MessagesLatencies], max: com.histmersion.domain.automation.agents.Tr
+com.histmersion.domain.automation.agents.VerbatimFailure.DescribeResult | base String | generated | method-result
+    def describe(e: Throwable): com.histmersion.domain.automation.agents.VerbatimFailure.DescribeResult = e match
+com.histmersion.domain.automation.agents.VerbatimFailure.Description | base String | generated | constructor-parameter
+    final class VerbatimFailure(val description: VerbatimFailure.Description) extends java.io.IOException(description)
+com.histmersion.domain.automation.agents.WebAccess.Wire | base String | generated | constructor-parameter
+    enum WebAccess(val wire: WebAccess.Wire):
+com.histmersion.domain.automation.agents.Writes.Wire | base String | generated | constructor-parameter
+    enum Writes(val wire: Writes.Wire):
+com.histmersion.domain.automation.approvals.ApprovalChecks.CheckpointResult | base String | generated | method-result
+    def checkpoint(run: com.histmersion.domain.automation.approvals.ApprovalChecks.CheckpointRun, step: com.histmersion.domain.automation.approvals.ApprovalChecks.CheckpointS
+com.histmersion.domain.automation.approvals.ApprovalChecks.CheckpointRun | base String | generated | method-parameter
+    def checkpoint(run: com.histmersion.domain.automation.approvals.ApprovalChecks.CheckpointRun, step: com.histmersion.domain.automation.approvals.ApprovalChecks.CheckpointS
+com.histmersion.domain.automation.approvals.ApprovalChecks.CheckpointStep | base String | generated | method-parameter
+    def checkpoint(run: com.histmersion.domain.automation.approvals.ApprovalChecks.CheckpointRun, step: com.histmersion.domain.automation.approvals.ApprovalChecks.CheckpointS
+com.histmersion.domain.automation.approvals.ApprovalChecks.PublishCapResult | base Int | generated | method-result
+    def publishCap: com.histmersion.domain.automation.approvals.ApprovalChecks.PublishCapResult
+com.histmersion.domain.automation.approvals.ApprovalChecks.SlugExistsResult | base Boolean | generated | method-result
+    def slugExists(slug: com.histmersion.domain.automation.approvals.ApprovalChecks.SlugExistsSlug): com.histmersion.domain.automation.approvals.ApprovalChecks.SlugExistsResu
+com.histmersion.domain.automation.approvals.ApprovalChecks.SlugExistsSlug | base String | generated | method-parameter
+    def slugExists(slug: com.histmersion.domain.automation.approvals.ApprovalChecks.SlugExistsSlug): com.histmersion.domain.automation.approvals.ApprovalChecks.SlugExistsResu
+com.histmersion.domain.automation.approvals.ApprovalDigestService.CheckedK | base String | generated | method-parameter
+    private def checked(k: com.histmersion.domain.automation.approvals.ApprovalDigestService.CheckedK): com.histmersion.domain.automation.approvals.ApprovalDigestService.Chec
+com.histmersion.domain.automation.approvals.ApprovalDigestService.CheckedResult | base Boolean | generated | method-result
+    private def checked(k: com.histmersion.domain.automation.approvals.ApprovalDigestService.CheckedK): com.histmersion.domain.automation.approvals.ApprovalDigestService.Chec
+com.histmersion.domain.automation.approvals.ApprovalDigestService.TickResult | base String | generated | method-result
+    def tick(now: Instant): List[com.histmersion.domain.automation.approvals.ApprovalDigestService.TickResult] =
+com.histmersion.domain.automation.approvals.ApprovalEffects.ApplySubjectResultPart1 | base String | generated | method-result
+    def applySubject(a: ApprovalInfo): Either[com.histmersion.domain.automation.approvals.ApprovalEffects.ApplySubjectResultPart1, com.histmersion.domain.automation.approvals
+com.histmersion.domain.automation.approvals.ApprovalEffects.ApplySubjectResultPart2 | base String | generated | method-result
+    def applySubject(a: ApprovalInfo): Either[com.histmersion.domain.automation.approvals.ApprovalEffects.ApplySubjectResultPart1, com.histmersion.domain.automation.approvals
+com.histmersion.domain.automation.approvals.ApprovalEffects.OfApplySubjectResultPart1 | base String | generated | method-result
+    def applySubject(a: ApprovalInfo): Either[com.histmersion.domain.automation.approvals.ApprovalEffects.OfApplySubjectResultPart1, com.histmersion.domain.automation.approva
+com.histmersion.domain.automation.approvals.ApprovalEffects.OfApplySubjectResultPart2 | base String | generated | method-result
+    def applySubject(a: ApprovalInfo): Either[com.histmersion.domain.automation.approvals.ApprovalEffects.OfApplySubjectResultPart1, com.histmersion.domain.automation.approva
+com.histmersion.domain.automation.approvals.ApprovalEffects.OfProposalPayload | base String | generated | method-parameter
+    def proposal(payload: com.histmersion.domain.automation.approvals.ApprovalEffects.OfProposalPayload): Option[() => Either[com.histmersion.domain.automation.approvals.Appr
+com.histmersion.domain.automation.approvals.ApprovalEffects.OfProposalResultResultPart1 | base String | generated | method-result
+    def proposal(payload: com.histmersion.domain.automation.approvals.ApprovalEffects.OfProposalPayload): Option[() => Either[com.histmersion.domain.automation.approvals.Appr
+com.histmersion.domain.automation.approvals.ApprovalEffects.OfProposalResultResultPart2 | base String | generated | method-result
+    def proposal(payload: com.histmersion.domain.automation.approvals.ApprovalEffects.OfProposalPayload): Option[() => Either[com.histmersion.domain.automation.approvals.Appr
+com.histmersion.domain.automation.approvals.ApprovalEffects.ProposalPayload | base String | generated | method-parameter
+    def proposal(payload: com.histmersion.domain.automation.approvals.ApprovalEffects.ProposalPayload): Option[() => Either[com.histmersion.domain.automation.approvals.Approv
+com.histmersion.domain.automation.approvals.ApprovalEffects.ProposalResultResultPart1 | base String | generated | method-result
+    def proposal(payload: com.histmersion.domain.automation.approvals.ApprovalEffects.ProposalPayload): Option[() => Either[com.histmersion.domain.automation.approvals.Approv
+com.histmersion.domain.automation.approvals.ApprovalEffects.ProposalResultResultPart2 | base String | generated | method-result
+    def proposal(payload: com.histmersion.domain.automation.approvals.ApprovalEffects.ProposalPayload): Option[() => Either[com.histmersion.domain.automation.approvals.Approv
+com.histmersion.domain.automation.approvals.Approvals.ApplyHintResultPart1 | base String | generated | constructor-parameter
+com.histmersion.domain.automation.approvals.Approvals.ApplyHintResultPart2 | base String | generated | constructor-parameter
+com.histmersion.domain.automation.approvals.Approvals.DecideBlockingNote | base String | generated | method-parameter
+    private def decideBlocking(a: ApprovalInfo, d: Decision, note: Option[com.histmersion.domain.automation.approvals.Approvals.DecideBlockingNote]): Either[Api.Error, Approv
+com.histmersion.domain.automation.approvals.Approvals.DecideDecision | base String | generated | method-parameter
+    def decide(id: com.histmersion.domain.automation.approvals.Approvals.DecideId, decision: com.histmersion.domain.automation.approvals.Approvals.DecideDecision, note: Optio
+com.histmersion.domain.automation.approvals.Approvals.DecideId | base Long | generated | method-parameter
+    def decide(id: com.histmersion.domain.automation.approvals.Approvals.DecideId, decision: com.histmersion.domain.automation.approvals.Approvals.DecideDecision, note: Optio
+com.histmersion.domain.automation.approvals.Approvals.DecideNote | base String | generated | method-parameter
+    def decide(id: com.histmersion.domain.automation.approvals.Approvals.DecideId, decision: com.histmersion.domain.automation.approvals.Approvals.DecideDecision, note: Optio
+com.histmersion.domain.automation.approvals.Approvals.DecideSourceClean | base String | generated | method-parameter
+    private def decideSource(id: com.histmersion.domain.automation.approvals.Approvals.DecideSourceId, d: Decision, clean: Option[com.histmersion.domain.automation.approvals.
+com.histmersion.domain.automation.approvals.Approvals.DecideSourceId | base Long | generated | method-parameter
+    private def decideSource(id: com.histmersion.domain.automation.approvals.Approvals.DecideSourceId, d: Decision, clean: Option[com.histmersion.domain.automation.approvals.
+com.histmersion.domain.automation.approvals.Approvals.DecideSubjectNote | base String | generated | method-parameter
+com.histmersion.domain.automation.approvals.Approvals.FilterState | base String | generated | method-parameter
+    private def filter(state: Option[com.histmersion.domain.automation.approvals.Approvals.FilterState]): Either[Api.Error, Option[ApprovalState]] =
+com.histmersion.domain.automation.approvals.Approvals.ListLimit | base Int | generated | method-parameter
+    def list(state: Option[com.histmersion.domain.automation.approvals.Approvals.ListState], limit: Option[com.histmersion.domain.automation.approvals.Approvals.ListLimit], p
+com.histmersion.domain.automation.approvals.Approvals.ListPage | base Int | generated | method-parameter
+    def list(state: Option[com.histmersion.domain.automation.approvals.Approvals.ListState], limit: Option[com.histmersion.domain.automation.approvals.Approvals.ListLimit], p
+com.histmersion.domain.automation.approvals.Approvals.ListState | base String | generated | method-parameter
+    def list(state: Option[com.histmersion.domain.automation.approvals.Approvals.ListState], limit: Option[com.histmersion.domain.automation.approvals.Approvals.ListLimit], p
+com.histmersion.domain.automation.approvals.Approvals.PageBefore | base String | generated | method-parameter
+com.histmersion.domain.automation.approvals.Approvals.PageLimit | base Int | generated | method-parameter
+com.histmersion.domain.automation.approvals.Approvals.PageUpTo | base String | generated | method-parameter
+com.histmersion.domain.automation.approvals.AutoApprovals.CheckedResult | base Boolean | generated | method-result
+    def checked(a: ApprovalInfo, manager: Option[Managers.ManagerInfo]): com.histmersion.domain.automation.approvals.AutoApprovals.CheckedResult =
+com.histmersion.domain.automation.approvals.AutoApprovals.CheckpointResult | base String | generated | method-result
+    def checkpoint(run: com.histmersion.domain.automation.approvals.AutoApprovals.CheckpointRun, step: com.histmersion.domain.automation.approvals.AutoApprovals.CheckpointSte
+com.histmersion.domain.automation.approvals.AutoApprovals.CheckpointRun | base String | generated | method-parameter
+    def checkpoint(run: com.histmersion.domain.automation.approvals.AutoApprovals.CheckpointRun, step: com.histmersion.domain.automation.approvals.AutoApprovals.CheckpointSte
+com.histmersion.domain.automation.approvals.AutoApprovals.CheckpointStep | base String | generated | method-parameter
+    def checkpoint(run: com.histmersion.domain.automation.approvals.AutoApprovals.CheckpointRun, step: com.histmersion.domain.automation.approvals.AutoApprovals.CheckpointSte
+com.histmersion.domain.automation.approvals.AutoApprovals.DecideResult | base String | generated | method-result
+com.histmersion.domain.automation.approvals.AutoApprovals.GoalPlanCapResult | base Int | generated | method-result
+    def goalPlanCap: com.histmersion.domain.automation.approvals.AutoApprovals.GoalPlanCapResult =
+com.histmersion.domain.automation.approvals.AutoApprovals.PublishCapResult | base Int | generated | method-result
+    def publishCap: com.histmersion.domain.automation.approvals.AutoApprovals.PublishCapResult =
+com.histmersion.domain.automation.approvals.AutoApprovals.SlugExistsResult | base Boolean | generated | method-result
+    def slugExists(slug: com.histmersion.domain.automation.approvals.AutoApprovals.SlugExistsSlug): com.histmersion.domain.automation.approvals.AutoApprovals.SlugExistsResult
+com.histmersion.domain.automation.approvals.AutoApprovals.SlugExistsSlug | base String | generated | method-parameter
+    def slugExists(slug: com.histmersion.domain.automation.approvals.AutoApprovals.SlugExistsSlug): com.histmersion.domain.automation.approvals.AutoApprovals.SlugExistsResult
+com.histmersion.domain.automation.approvals.AutoApprovals.SweepResult | base String | generated | method-result
+    def sweep(now: Instant): List[com.histmersion.domain.automation.approvals.AutoApprovals.SweepResult] =
+com.histmersion.domain.automation.approvals.Decided.Approval | base Long | original | constructor-parameter
+    final case class Decided(approved: Decided.Approved, approval: Decided.Approval, note: Option[Decided.Note] = None)
+com.histmersion.domain.automation.approvals.Decided.Approved | base Boolean | original | constructor-parameter
+    final case class Decided(approved: Decided.Approved, approval: Decided.Approval, note: Option[Decided.Note] = None)
+com.histmersion.domain.automation.approvals.Decided.Note | base String | original | constructor-parameter
+    final case class Decided(approved: Decided.Approved, approval: Decided.Approval, note: Option[Decided.Note] = None)
+com.histmersion.domain.automation.approvals.ProposalEffect.ProposalPayload | base String | generated | method-parameter
+    def proposal(payload: com.histmersion.domain.automation.approvals.ProposalEffect.ProposalPayload): Option[() => Either[com.histmersion.domain.automation.approvals.Proposa
+com.histmersion.domain.automation.approvals.ProposalEffect.ProposalResultResultPart1 | base String | generated | method-result
+    def proposal(payload: com.histmersion.domain.automation.approvals.ProposalEffect.ProposalPayload): Option[() => Either[com.histmersion.domain.automation.approvals.Proposa
+com.histmersion.domain.automation.approvals.ProposalEffect.ProposalResultResultPart2 | base String | generated | method-result
+    def proposal(payload: com.histmersion.domain.automation.approvals.ProposalEffect.ProposalPayload): Option[() => Either[com.histmersion.domain.automation.approvals.Proposa
+com.histmersion.domain.automation.approvals.SubjectEffect.ApplyResultPart1 | base String | generated | method-result
+    def apply(a: ApprovalInfo): Either[com.histmersion.domain.automation.approvals.SubjectEffect.ApplyResultPart1, com.histmersion.domain.automation.approvals.SubjectEffect.A
+com.histmersion.domain.automation.approvals.SubjectEffect.ApplyResultPart2 | base String | generated | method-result
+    def apply(a: ApprovalInfo): Either[com.histmersion.domain.automation.approvals.SubjectEffect.ApplyResultPart1, com.histmersion.domain.automation.approvals.SubjectEffect.A

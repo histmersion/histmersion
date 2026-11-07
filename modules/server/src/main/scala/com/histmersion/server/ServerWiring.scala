@@ -58,7 +58,7 @@ final class ServerWiring(deps: Deps, converter: ConverterClient):
   val queues: com.histmersion.domain.automation.worklists.QueueService = deps.queues
 
   /** The first acquisition item (any status) whose text names `doi`. */
-  def acquisitionItemNaming(doi: com.histmersion.server.ServerWiring.AcquisitionItemNamingDoi): Option[com.histmersion.server.ServerWiring.AcquisitionItemNamingResult] =
+  def acquisitionItemNaming(doi: com.histmersion.domain.library.Doi): Option[com.histmersion.server.ServerWiring.AcquisitionItemNamingResult] =
     queues.naming(com.histmersion.api.automation.Queue.Kind.Acquire, doi).headOption.map(_.id)
 
   /** Media's pictures, their links, the imports from outside providers (#1446), the sources' covers and illustrations.
@@ -145,7 +145,7 @@ final class ServerWiring(deps: Deps, converter: ConverterClient):
   /** Pause, resume and cancel a job: a long background job cooperatively, an agent run by its own control. */
   lazy val jobControl: com.histmersion.util.jobs.JobControlControllers =
     import com.histmersion.util.jobs.{JobAction, JobControlControllers, JobControlService}
-    def run(id: com.histmersion.server.ServerWiring.RunId, a: JobAction): Either[Api.Error, Unit] = (a match
+    def run(id: com.histmersion.util.jobs.Job.Id, a: JobAction): Either[Api.Error, Unit] = (a match
       case JobAction.Pause  => agents.engine.pause(id)
       case JobAction.Resume => agents.engine.resume(id, None, None)
       case JobAction.Cancel => agents.engine.cancel(id)
@@ -247,7 +247,7 @@ final class ServerWiring(deps: Deps, converter: ConverterClient):
     * asking about a source wants what the corpus has WRITTEN about it in the same answer, not after a second round
     * trip.
     */
-  private def mentionedIn(citekey: com.histmersion.server.ServerWiring.MentionedInCitekey): com.histmersion.server.ServerWiring.MentionedInResult = research.articles.mentionedIn(citekey)
+  private def mentionedIn(citekey: com.histmersion.domain.library.Citekey): com.histmersion.server.HtmlRender.Html = research.articles.mentionedIn(citekey)
 
   // ── events (plan §1.2) ──────────────────────────────────────────────────────────────────────
 
@@ -351,7 +351,7 @@ final class ServerWiring(deps: Deps, converter: ConverterClient):
   /** A place NAME → its gazetteer point (#981), for a finding about a place of kind `hint` dated `at`. `None` =
     * unknown.
     */
-  def geocode(name: com.histmersion.server.ServerWiring.GeocodeName, hint: Geocode.KindHint, at: Option[Period]): Option[Geocode.Resolution] =
+  def geocode(name: com.histmersion.server.LibraryWorkflowSite.PlaceName, hint: Geocode.KindHint, at: Option[Period]): Option[Geocode.Resolution] =
     places.geocode(name, hint, at)
 
   /** The map's sites, events and pictures as vector tiles (`GET /api/tiles/…`). */
@@ -384,7 +384,7 @@ final class ServerWiring(deps: Deps, converter: ConverterClient):
   /** What `place=<id>` alone selects in each list — the same scope (the place and its descendants) and the same queries
     * as `/api/sources`, `/api/findings`, `/api/articles` and `/api/events`.
     */
-  private def placeCounts(id: com.histmersion.server.ServerWiring.PlaceCountsId): Place.Counts =
+  private def placeCounts(id: com.histmersion.domain.catalogue.Place.Id): Place.Counts =
     val f = Filter(places = List(id))
     library.search.selectionCounts(f)
 
@@ -501,19 +501,7 @@ final class ServerWiring(deps: Deps, converter: ConverterClient):
 object ServerWiring:
   type AcquisitionItemNamingResult = AcquisitionItemNamingResult.T
   object AcquisitionItemNamingResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type AcquisitionItemNamingDoi = AcquisitionItemNamingDoi.T
-  object AcquisitionItemNamingDoi extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type RunId = RunId.T
-  object RunId extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type CurrentResult = CurrentResult.T
   object CurrentResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type CurrentId = CurrentId.T
   object CurrentId extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type MentionedInResult = MentionedInResult.T
-  object MentionedInResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type MentionedInCitekey = MentionedInCitekey.T
-  object MentionedInCitekey extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type GeocodeName = GeocodeName.T
-  object GeocodeName extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type PlaceCountsId = PlaceCountsId.T
-  object PlaceCountsId extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]

@@ -31,7 +31,7 @@ final class BackupJobs(
     object Started extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
   private val current = AtomicReference[Option[Job]](None)
 
-  def running: com.histmersion.util.data.backup.BackupJobs.RunningResult = current.get().exists(!_.result.isDone)
+  def running: Boolean = current.get().exists(!_.result.isDone)
 
   /** Start a dump (or join the running one) and wait up to `waitSeconds` for it. */
   def start(now: Instant): Either[Api.Error, Backup.Status] =
@@ -69,5 +69,3 @@ final class BackupJobs(
         case Left(e)  => Backup.Status.failed(j.file, elapsed, e.message)
 
 object BackupJobs:
-  type RunningResult = RunningResult.T
-  object RunningResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]

@@ -1,0 +1,681 @@
+## CONCEPTS NEARBY
+com.histmersion.domain.catalogue.AttestationTarget.Problem (String)
+com.histmersion.domain.catalogue.AttestationTarget.Wire (String)
+com.histmersion.domain.catalogue.Event.EdgeKind.Wire (String)
+com.histmersion.domain.catalogue.Event.Id (String)
+com.histmersion.domain.catalogue.Event.LinkStatus.Wire (String)
+com.histmersion.domain.catalogue.Event.Uid (UUID)
+com.histmersion.domain.catalogue.Historicity.Wire (String)
+com.histmersion.domain.catalogue.Place.Id (String)
+com.histmersion.domain.catalogue.Place.Kind.Wire (String)
+com.histmersion.domain.catalogue.Place.Precision.ApproximateValue (String)
+com.histmersion.domain.catalogue.Place.Precision.CellsMicroValue (Long)
+com.histmersion.domain.catalogue.Place.Precision.Wire (String)
+com.histmersion.domain.catalogue.events.BCatalogueRow.BeginBy (Long)
+com.histmersion.domain.catalogue.events.BCatalogueRow.Deaths (Long)
+com.histmersion.domain.catalogue.events.BCatalogueRow.EndFrom (Long)
+com.histmersion.domain.catalogue.events.BCatalogueRow.Historicity (String)
+com.histmersion.domain.catalogue.events.BCatalogueRow.Kind (String)
+com.histmersion.domain.catalogue.events.BCatalogueRow.Label (String)
+com.histmersion.domain.catalogue.events.BCatalogueRow.Magnitude (Double)
+com.histmersion.domain.catalogue.events.BCatalogueRow.NotAfter (Long)
+com.histmersion.domain.catalogue.events.BCatalogueRow.NotBefore (Long)
+com.histmersion.domain.catalogue.events.BCatalogueRow.Provider (String)
+com.histmersion.domain.catalogue.events.BCatalogueRow.ProviderId (String)
+com.histmersion.domain.catalogue.events.BCatalogueRow.Record (String)
+com.histmersion.domain.catalogue.events.BCatalogueRow.RetrievedAt (String)
+com.histmersion.domain.catalogue.events.BCatalogueRow.Url (String)
+com.histmersion.domain.catalogue.events.BCatalogueRow.Vei (Int)
+com.histmersion.domain.catalogue.events.BDatingRow.BeginBy (Long)
+com.histmersion.domain.catalogue.events.BDatingRow.EndFrom (Long)
+com.histmersion.domain.catalogue.events.BDatingRow.Method (String)
+com.histmersion.domain.catalogue.events.BDatingRow.NotAfter (Long)
+com.histmersion.domain.catalogue.events.BDatingRow.NotBefore (Long)
+com.histmersion.domain.catalogue.events.BDatingRow.Note (String)
+com.histmersion.domain.catalogue.events.BEventEdgeRow.Kind (String)
+com.histmersion.domain.catalogue.events.BEventEdgeRow.Note (String)
+com.histmersion.domain.catalogue.events.BEventRow.BeginBy (Long)
+com.histmersion.domain.catalogue.events.BEventRow.Catalogue (String)
+com.histmersion.domain.catalogue.events.BEventRow.Central (Long)
+com.histmersion.domain.catalogue.events.BEventRow.DatingMethod (String)
+com.histmersion.domain.catalogue.events.BEventRow.Description (String)
+com.histmersion.domain.catalogue.events.BEventRow.EndFrom (Long)
+com.histmersion.domain.catalogue.events.BEventRow.Geom (String)
+com.histmersion.domain.catalogue.events.BEventRow.Historicity (String)
+com.histmersion.domain.catalogue.events.BEventRow.Id (String)
+com.histmersion.domain.catalogue.events.BEventRow.Kind (String)
+com.histmersion.domain.catalogue.events.BEventRow.Label (String)
+com.histmersion.domain.catalogue.events.BEventRow.Names (String)
+com.histmersion.domain.catalogue.events.BEventRow.NotAfter (Long)
+com.histmersion.domain.catalogue.events.BEventRow.NotBefore (Long)
+com.histmersion.domain.catalogue.events.BEventRow.PlusMinus (Long)
+com.histmersion.domain.catalogue.events.BEventRow.Scale (String)
+com.histmersion.domain.catalogue.events.BEventRow.UpdatedAt (String)
+com.histmersion.domain.catalogue.events.BEventRow.Wikidata (String)
+com.histmersion.domain.catalogue.events.BParticipantRow.Actor (String)
+com.histmersion.domain.catalogue.events.BParticipantRow.Role (String)
+com.histmersion.domain.catalogue.events.CatalogMerge.Fit.Km (Double)
+com.histmersion.domain.catalogue.events.CatalogMerge.Fit.Score (Double)
+com.histmersion.domain.catalogue.events.CatalogMerge.Fit.Years (Double)
+com.histmersion.domain.catalogue.events.CatalogMerge.Placement.Why (String)
+com.histmersion.domain.catalogue.events.CatalogMerge.Tolerance.Km (Double)
+com.histmersion.domain.catalogue.events.CatalogMerge.Tolerance.Years (Long)
+com.histmersion.domain.catalogue.events.CatalogProvider.Problem (String)
+com.histmersion.domain.catalogue.events.CatalogueRefRow.Deaths (Long)
+com.histmersion.domain.catalogue.events.CatalogueRefRow.Magnitude (Double)
+com.histmersion.domain.catalogue.events.CatalogueRefRow.Provider (String)
+com.histmersion.domain.catalogue.events.CatalogueRefRow.ProviderId (String)
+com.histmersion.domain.catalogue.events.CatalogueRefRow.RetrievedAt (String)
+com.histmersion.domain.catalogue.events.CatalogueRefRow.Url (String)
+com.histmersion.domain.catalogue.events.CatalogueRefRow.Vei (Int)
+com.histmersion.domain.catalogue.events.EventDetailRow.Geometry (String)
+com.histmersion.domain.catalogue.events.EventGeoRow.Anchor (String)
+com.histmersion.domain.catalogue.events.EventGeoRow.Magnitude (Double)
+com.histmersion.domain.catalogue.events.EventGeoRow.PlaceLabel (String)
+com.histmersion.domain.catalogue.events.EventGeoRow.Vei (Int)
+com.histmersion.domain.catalogue.events.EventProviders.Problem (String)
+com.histmersion.domain.catalogue.events.EventProviders.Thresholds.OutsideMagnitude (Double)
+com.histmersion.domain.catalogue.events.EventProviders.Thresholds.OutsideVei (Int)
+com.histmersion.domain.catalogue.events.EventProviders.Thresholds.RegionMagnitude (Double)
+com.histmersion.domain.catalogue.events.EventProviders.Thresholds.RegionVei (Int)
+com.histmersion.domain.catalogue.events.EventProviders.WikidataEvents.Problem (String)
+com.histmersion.domain.catalogue.events.EventProviders.WikidataProperty (String)
+com.histmersion.domain.catalogue.events.EventRow.BeginBy (Long)
+com.histmersion.domain.catalogue.events.EventRow.Central (Long)
+com.histmersion.domain.catalogue.events.EventRow.DatingMethod (String)
+com.histmersion.domain.catalogue.events.EventRow.Description (String)
+com.histmersion.domain.catalogue.events.EventRow.EndFrom (Long)
+com.histmersion.domain.catalogue.events.EventRow.GeometryType (String)
+com.histmersion.domain.catalogue.events.EventRow.Historicity (String)
+com.histmersion.domain.catalogue.events.EventRow.Kind (String)
+com.histmersion.domain.catalogue.events.EventRow.Label (String)
+com.histmersion.domain.catalogue.events.EventRow.NotAfter (Long)
+com.histmersion.domain.catalogue.events.EventRow.NotBefore (Long)
+com.histmersion.domain.catalogue.events.EventRow.ParentId (String)
+com.histmersion.domain.catalogue.events.EventRow.PlaceKind (String)
+com.histmersion.domain.catalogue.events.EventRow.PlusMinus (Long)
+com.histmersion.domain.catalogue.events.EventRow.Scale (String)
+com.histmersion.domain.catalogue.events.EventRow.Tier (String)
+com.histmersion.domain.catalogue.events.EventRow.Uncertainty (Long)
+com.histmersion.domain.catalogue.events.EventSelection.Historicity (String)
+com.histmersion.domain.catalogue.events.EventSelection.Kind (String)
+com.histmersion.domain.catalogue.events.EventSelection.Text (String)
+com.histmersion.domain.catalogue.events.EventSql.Narrow.Context (Boolean)
+com.histmersion.domain.catalogue.events.EventSql.Narrow.Tier (String)
+com.histmersion.domain.catalogue.events.EventSql.Point (String)
+com.histmersion.domain.catalogue.events.StoredEvent.Catalogue (Boolean)
+com.histmersion.domain.catalogue.events.StoredEvent.Kind (String)
+com.histmersion.domain.catalogue.events.StoredEvent.Label (String)
+com.histmersion.domain.catalogue.events.StoredEventRow.BeginBy (Long)
+com.histmersion.domain.catalogue.events.StoredEventRow.Catalogue (String)
+com.histmersion.domain.catalogue.events.StoredEventRow.EndFrom (Long)
+com.histmersion.domain.catalogue.events.StoredEventRow.Id (String)
+com.histmersion.domain.catalogue.events.StoredEventRow.Keys (String)
+com.histmersion.domain.catalogue.events.StoredEventRow.Kind (String)
+com.histmersion.domain.catalogue.events.StoredEventRow.Label (String)
+com.histmersion.domain.catalogue.events.StoredEventRow.NotAfter (Long)
+com.histmersion.domain.catalogue.events.StoredEventRow.NotBefore (Long)
+com.histmersion.domain.catalogue.events.StoredEventRow.Wikidata (String)
+com.histmersion.domain.catalogue.evidence.BAttestationFullRow.Canvas (String)
+com.histmersion.domain.catalogue.evidence.BAttestationFullRow.CharEnd (Int)
+com.histmersion.domain.catalogue.evidence.BAttestationFullRow.CharStart (Int)
+com.histmersion.domain.catalogue.evidence.BAttestationFullRow.ChunkOrd (Int)
+com.histmersion.domain.catalogue.evidence.BAttestationFullRow.CreatedAt (String)
+com.histmersion.domain.catalogue.evidence.BAttestationFullRow.CtsUrn (String)
+com.histmersion.domain.catalogue.evidence.BAttestationFullRow.Note (String)
+com.histmersion.domain.catalogue.evidence.BAttestationFullRow.Page (String)
+com.histmersion.domain.catalogue.evidence.BAttestationFullRow.Prefix (String)
+com.histmersion.domain.catalogue.evidence.BAttestationFullRow.Quote (String)
+com.histmersion.domain.catalogue.evidence.BAttestationFullRow.Suffix (String)
+com.histmersion.domain.catalogue.evidence.BAttestationFullRow.TargetId (String)
+com.histmersion.domain.catalogue.evidence.BAttestationFullRow.TargetType (String)
+com.histmersion.domain.catalogue.evidence.BAttestationFullRow.UpdatedAt (String)
+com.histmersion.domain.catalogue.evidence.BAttestationFullRow.Xywh (String)
+com.histmersion.domain.catalogue.evidence.BCandidateRow.ComputedAt (String)
+com.histmersion.domain.catalogue.evidence.BCandidateRow.Findings (String)
+com.histmersion.domain.catalogue.evidence.BCandidateRow.Passages (String)
+com.histmersion.domain.catalogue.evidence.BCandidateRow.Reasons (String)
+com.histmersion.domain.catalogue.evidence.BCandidateRow.Score (Double)
+com.histmersion.domain.catalogue.evidence.BCandidateRow.Status (String)
+com.histmersion.domain.catalogue.evidence.CandidateRow.Findings (String)
+com.histmersion.domain.catalogue.evidence.CandidateRow.Passages (String)
+com.histmersion.domain.catalogue.evidence.CandidateRow.Reasons (String)
+com.histmersion.domain.catalogue.evidence.CandidateRow.Score (Double)
+com.histmersion.domain.catalogue.evidence.CandidateRow.Status (String)
+com.histmersion.domain.catalogue.evidence.CandidateRow.Title (String)
+com.histmersion.domain.catalogue.evidence.EventMatcher.FindingWeight (Double)
+com.histmersion.domain.catalogue.evidence.EventMatcher.NearFinding.Id (String)
+com.histmersion.domain.catalogue.evidence.EventMatcher.NearFinding.Km (Double)
+com.histmersion.domain.catalogue.evidence.EventMatcher.NearFinding.YearGap (Long)
+com.histmersion.domain.catalogue.evidence.EventMatcher.Weights.Finding (Double)
+com.histmersion.domain.catalogue.evidence.EventMatcher.Weights.Km (Double)
+com.histmersion.domain.catalogue.evidence.EventMatcher.Weights.MaxCandidates (Int)
+com.histmersion.domain.catalogue.evidence.EventMatcher.Weights.MinNameChars (Int)
+com.histmersion.domain.catalogue.evidence.EventMatcher.Weights.MinScore (Double)
+com.histmersion.domain.catalogue.evidence.EventMatcher.Weights.Name (Double)
+com.histmersion.domain.catalogue.evidence.EventMatcher.Weights.Years (Long)
+com.histmersion.domain.catalogue.evidence.LeadRow.Attesting (Int)
+com.histmersion.domain.catalogue.evidence.LeadRow.BeginBy (Long)
+com.histmersion.domain.catalogue.evidence.LeadRow.EndFrom (Long)
+com.histmersion.domain.catalogue.evidence.LeadRow.FindingsNear (Int)
+com.histmersion.domain.catalogue.evidence.LeadRow.Id (String)
+com.histmersion.domain.catalogue.evidence.LeadRow.Kind (String)
+com.histmersion.domain.catalogue.evidence.LeadRow.Label (String)
+com.histmersion.domain.catalogue.evidence.LeadRow.Magnitude (Double)
+com.histmersion.domain.catalogue.evidence.LeadRow.NotAfter (Long)
+com.histmersion.domain.catalogue.evidence.LeadRow.NotBefore (Long)
+com.histmersion.domain.catalogue.evidence.LeadRow.Proposed (Int)
+com.histmersion.domain.catalogue.evidence.LeadRow.Tier (String)
+com.histmersion.domain.catalogue.evidence.LeadRow.Vei (Int)
+com.histmersion.domain.catalogue.evidence.NearFindingRow.Claim (String)
+com.histmersion.domain.catalogue.evidence.NearFindingRow.Id (String)
+com.histmersion.domain.catalogue.evidence.NearFindingRow.Km (Double)
+com.histmersion.domain.catalogue.evidence.NearFindingRow.YearGap (Long)
+com.histmersion.domain.catalogue.evidence.TextAnchor.ChunkChars (Int)
+com.histmersion.domain.catalogue.evidence.TextAnchor.Prefix (String)
+com.histmersion.domain.catalogue.evidence.TextAnchor.Quote (String)
+com.histmersion.domain.catalogue.evidence.TextAnchor.ReanchorHint (Int)
+com.histmersion.domain.catalogue.evidence.TextAnchor.Suffix (String)
+com.histmersion.domain.catalogue.evidence.TextAnchor.Text (String)
+com.histmersion.domain.catalogue.maptiles.GridCell.Dup (Int)
+com.histmersion.domain.catalogue.maptiles.GridCell.DupX (Double)
+com.histmersion.domain.catalogue.maptiles.GridCell.DupY (Double)
+com.histmersion.domain.catalogue.maptiles.GridCell.East (Double)
+com.histmersion.domain.catalogue.maptiles.GridCell.Gx (Long)
+com.histmersion.domain.catalogue.maptiles.GridCell.Gy (Long)
+com.histmersion.domain.catalogue.maptiles.GridCell.MidHi (Double)
+com.histmersion.domain.catalogue.maptiles.GridCell.MidLo (Double)
+com.histmersion.domain.catalogue.maptiles.GridCell.N (Int)
+com.histmersion.domain.catalogue.maptiles.GridCell.North (Double)
+com.histmersion.domain.catalogue.maptiles.GridCell.One (String)
+com.histmersion.domain.catalogue.maptiles.GridCell.South (Double)
+com.histmersion.domain.catalogue.maptiles.GridCell.SumX (Double)
+com.histmersion.domain.catalogue.maptiles.GridCell.SumY (Double)
+com.histmersion.domain.catalogue.maptiles.GridCell.West (Double)
+com.histmersion.domain.catalogue.maptiles.TileCell.East (Double)
+com.histmersion.domain.catalogue.maptiles.TileCell.Key (String)
+com.histmersion.domain.catalogue.maptiles.TileCell.MidHi (Double)
+com.histmersion.domain.catalogue.maptiles.TileCell.MidLo (Double)
+com.histmersion.domain.catalogue.maptiles.TileCell.N (Int)
+com.histmersion.domain.catalogue.maptiles.TileCell.North (Double)
+com.histmersion.domain.catalogue.maptiles.TileCell.South (Double)
+com.histmersion.domain.catalogue.maptiles.TileCell.Undated (Int)
+com.histmersion.domain.catalogue.maptiles.TileCell.West (Double)
+com.histmersion.domain.catalogue.maptiles.TileCoord.ExtentValue (Int)
+com.histmersion.domain.catalogue.maptiles.TileCoord.MaxLatValue (Double)
+com.histmersion.domain.catalogue.maptiles.TileCoord.Problem (String)
+com.histmersion.domain.catalogue.maptiles.TileCoord.TilesPerSide (Long)
+com.histmersion.domain.catalogue.maptiles.TileCoord.X (Long)
+com.histmersion.domain.catalogue.maptiles.TileCoord.Y (Long)
+com.histmersion.domain.catalogue.maptiles.TileCoord.Z (Int)
+com.histmersion.domain.catalogue.maptiles.TileGrid.CellPx (Int)
+com.histmersion.domain.catalogue.maptiles.TileGrid.CellUnits (Int)
+com.histmersion.domain.catalogue.maptiles.TileGrid.MaxPoints (Int)
+com.histmersion.domain.catalogue.maptiles.TileGrid.MaxZoom (Int)
+com.histmersion.domain.catalogue.maptiles.TileGrid.TilePxValue (Int)
+com.histmersion.domain.catalogue.maptiles.TilePoint.PropKey (String)
+com.histmersion.domain.catalogue.maptiles.TilePoint.X (Int)
+com.histmersion.domain.catalogue.maptiles.TilePoint.Y (Int)
+com.histmersion.domain.catalogue.maptiles.TileValue.Flag.Value (Boolean)
+com.histmersion.domain.catalogue.maptiles.TileValue.Real.Value (Double)
+com.histmersion.domain.catalogue.maptiles.TileValue.Text.Value (String)
+com.histmersion.domain.catalogue.maptiles.TileValue.Whole.Value (Long)
+com.histmersion.domain.catalogue.maptiles.UndatedBuild.MaxZoom (Int)
+com.histmersion.domain.catalogue.maptiles.UndatedBuild.PerSide (Int)
+com.histmersion.domain.catalogue.maptiles.UndatedBuild.Version (Long)
+com.histmersion.domain.catalogue.maptiles.UndatedCells.Total (Long)
+com.histmersion.domain.catalogue.maptiles.VectorTileWriter.LayerMessage (Array[Byte])
+com.histmersion.domain.catalogue.maptiles.VectorTileWriter.LayerName (String)
+com.histmersion.domain.catalogue.maptiles.VectorTileWriter.VectorTile (Array[Byte])
+com.histmersion.domain.catalogue.periods.BPeriodRow.Authority (String)
+com.histmersion.domain.catalogue.periods.BPeriodRow.Id (String)
+com.histmersion.domain.catalogue.periods.BPeriodRow.Label (String)
+com.histmersion.domain.catalogue.periods.BPeriodRow.PHi (Long)
+com.histmersion.domain.catalogue.periods.BPeriodRow.PLo (Long)
+com.histmersion.domain.catalogue.periods.BPeriodRow.PNull (Boolean)
+com.histmersion.domain.catalogue.periods.BPeriodRow.ParentId (String)
+com.histmersion.domain.catalogue.periods.BPeriodRow.Region (String)
+com.histmersion.domain.catalogue.periods.BPeriodRow.UpdatedAt (String)
+com.histmersion.domain.catalogue.places.BPlaceNameRow.Lang (String)
+com.histmersion.domain.catalogue.places.BPlaceNameRow.Name (String)
+com.histmersion.domain.catalogue.places.BPlaceNameRow.PHi (Long)
+com.histmersion.domain.catalogue.places.BPlaceNameRow.PLo (Long)
+com.histmersion.domain.catalogue.places.BPlaceNameRow.PNull (Boolean)
+com.histmersion.domain.catalogue.places.BPlaceRelRow.ChildId (String)
+com.histmersion.domain.catalogue.places.BPlaceRelRow.Kind (String)
+com.histmersion.domain.catalogue.places.BPlaceRelRow.PHi (Long)
+com.histmersion.domain.catalogue.places.BPlaceRelRow.PLo (Long)
+com.histmersion.domain.catalogue.places.BPlaceRelRow.PNull (Boolean)
+com.histmersion.domain.catalogue.places.BPlaceRelRow.ParentId (String)
+com.histmersion.domain.catalogue.places.BPlaceRow.Geom (String)
+com.histmersion.domain.catalogue.places.BPlaceRow.Id (String)
+com.histmersion.domain.catalogue.places.BPlaceRow.Kind (String)
+com.histmersion.domain.catalogue.places.BPlaceRow.Label (String)
+com.histmersion.domain.catalogue.places.BPlaceRow.PHi (Long)
+com.histmersion.domain.catalogue.places.BPlaceRow.PLo (Long)
+com.histmersion.domain.catalogue.places.BPlaceRow.PNull (Boolean)
+com.histmersion.domain.catalogue.places.BPlaceRow.Properties (String)
+com.histmersion.domain.catalogue.places.BPlaceRow.Source (String)
+com.histmersion.domain.catalogue.places.BPlaceRow.UpdatedAt (String)
+com.histmersion.domain.catalogue.places.BPlaceTypeRow.PHi (Long)
+com.histmersion.domain.catalogue.places.BPlaceTypeRow.PLo (Long)
+com.histmersion.domain.catalogue.places.BPlaceTypeRow.PNull (Boolean)
+com.histmersion.domain.catalogue.places.BPlaceTypeRow.TypeLabel (String)
+com.histmersion.domain.catalogue.places.ExternalIds.ExternalId (String)
+com.histmersion.domain.catalogue.places.ExternalIds.Scheme (String)
+com.histmersion.domain.catalogue.places.ExternalIds.Shown (String)
+com.histmersion.domain.catalogue.places.ExternalIds.Uri (String)
+com.histmersion.domain.catalogue.places.FootprintRow.AccuracyM (Float)
+com.histmersion.domain.catalogue.places.FootprintRow.Certainty (String)
+com.histmersion.domain.catalogue.places.FootprintRow.Citekey (String)
+com.histmersion.domain.catalogue.places.FootprintRow.Id (Int)
+com.histmersion.domain.catalogue.places.FootprintRow.Role (String)
+com.histmersion.domain.catalogue.places.GazetteerSourceRow.Citation (String)
+com.histmersion.domain.catalogue.places.GazetteerSourceRow.File (String)
+com.histmersion.domain.catalogue.places.GazetteerSourceRow.ImportedAt (String)
+com.histmersion.domain.catalogue.places.GazetteerSourceRow.Key (String)
+com.histmersion.domain.catalogue.places.GazetteerSourceRow.Kind (String)
+com.histmersion.domain.catalogue.places.GazetteerSourceRow.Licence (String)
+com.histmersion.domain.catalogue.places.GazetteerSourceRow.Links (Int)
+com.histmersion.domain.catalogue.places.GazetteerSourceRow.Names (Int)
+com.histmersion.domain.catalogue.places.GazetteerSourceRow.Places (Int)
+com.histmersion.domain.catalogue.places.GazetteerSourceRow.Title (String)
+com.histmersion.domain.catalogue.places.GazetteerSourceRow.Url (String)
+com.histmersion.domain.catalogue.places.GazetteerSourceRow.Version (String)
+com.histmersion.domain.catalogue.places.GeocodeSettings.PlaceholderMin (Int)
+com.histmersion.domain.catalogue.places.GeocodeSettings.RepairKm (Double)
+com.histmersion.domain.catalogue.places.GeocodeSettings.ToleranceKm (Double)
+com.histmersion.domain.catalogue.places.PlaceDetailRow.Findings (Int)
+com.histmersion.domain.catalogue.places.PlaceDetailRow.Geometry (String)
+com.histmersion.domain.catalogue.places.PlaceDetailRow.HasBoundary (Boolean)
+com.histmersion.domain.catalogue.places.PlaceReview.Evidence.Descriptions (String)
+com.histmersion.domain.catalogue.places.PlaceReview.Evidence.FeatureTypes (String)
+com.histmersion.domain.catalogue.places.PlaceReview.Evidence.Id (String)
+com.histmersion.domain.catalogue.places.PlaceReview.Evidence.Label (String)
+com.histmersion.domain.catalogue.places.PlaceReview.Evidence.TimePeriods (String)
+com.histmersion.domain.catalogue.places.PlaceReview.LinkedItem.ClassLabel (String)
+com.histmersion.domain.catalogue.places.PlaceReview.LinkedItem.ItemClass (String)
+com.histmersion.domain.catalogue.places.PlaceReview.LinkedItem.Ref (String)
+com.histmersion.domain.catalogue.places.PlaceReview.Proposal.EvidenceLine (String)
+com.histmersion.domain.catalogue.places.PlaceReview.Proposal.Line (String)
+com.histmersion.domain.catalogue.places.PlaceReview.Proposal.Reason (String)
+com.histmersion.domain.catalogue.places.PlaceScope.Value (String)
+com.histmersion.domain.catalogue.places.PlaceSeed.Entry.Directory (Boolean)
+com.histmersion.domain.catalogue.places.PlaceSeed.Entry.Name (String)
+com.histmersion.domain.catalogue.places.PlaceService.InMemory.RootKindsValue (String)
+com.histmersion.domain.catalogue.places.PlaceSql.ImportedListValue (String)
+com.histmersion.domain.catalogue.places.PlaceTypeRow.TypeLabel (String)
+com.histmersion.domain.catalogue.places.PointAreas.Dating.WireResult (String)
+com.histmersion.domain.catalogue.places.PointAreas.FixedFindings (Int)
+com.histmersion.domain.catalogue.places.PointAreas.FixedRemaining (Int)
+com.histmersion.domain.catalogue.places.PointAreas.FixedRemoved (Int)
+com.histmersion.domain.catalogue.places.PointAreas.FixedResult (String)
+com.histmersion.domain.catalogue.places.PointAreas.FixedSources (Int)
+com.histmersion.domain.catalogue.places.PointAreas.Group.Kind (String)
+com.histmersion.domain.catalogue.places.PointAreas.Group.Places (Int)
+com.histmersion.domain.catalogue.places.PointAreas.Group.Source (String)
+com.histmersion.domain.catalogue.places.PointAreas.Listed.Alone (Int)
+com.histmersion.domain.catalogue.places.PointAreas.Listed.DetailResult (String)
+com.histmersion.domain.catalogue.places.PointAreas.Listed.Findings (Int)
+com.histmersion.domain.catalogue.places.PointAreas.Listed.Id (String)
+com.histmersion.domain.catalogue.places.PointAreas.Listed.Kind (String)
+com.histmersion.domain.catalogue.places.PointAreas.Listed.Label (String)
+com.histmersion.domain.catalogue.places.PointAreas.Listed.Pinned (Int)
+com.histmersion.domain.catalogue.places.PointAreas.Listed.Source (String)
+com.histmersion.domain.catalogue.places.PointAreas.ReportMaxItems (Int)
+com.histmersion.domain.catalogue.places.Wikidata.Id (String)
+
+## TYPES TO DECIDE
+com.histmersion.domain.catalogue.places.PlaceService.AddNameId | base String | generated | method-parameter
+    def addName(id: com.histmersion.domain.catalogue.places.PlaceService.AddNameId, name: com.histmersion.domain.catalogue.places.PlaceService.AddNameName, lang: com.histmers
+    def addName(id: com.histmersion.domain.catalogue.places.PlaceService.Implementation.AddNameId, name: com.histmersion.domain.catalogue.places.PlaceService.Implementation.A
+com.histmersion.domain.catalogue.places.PlaceService.AddNameLang | base String | generated | method-parameter
+    def addName(id: com.histmersion.domain.catalogue.places.PlaceService.AddNameId, name: com.histmersion.domain.catalogue.places.PlaceService.AddNameName, lang: com.histmers
+    def addName(id: com.histmersion.domain.catalogue.places.PlaceService.Implementation.AddNameId, name: com.histmersion.domain.catalogue.places.PlaceService.Implementation.A
+com.histmersion.domain.catalogue.places.PlaceService.AddNameName | base String | generated | method-parameter
+    def addName(id: com.histmersion.domain.catalogue.places.PlaceService.AddNameId, name: com.histmersion.domain.catalogue.places.PlaceService.AddNameName, lang: com.histmers
+    def addName(id: com.histmersion.domain.catalogue.places.PlaceService.Implementation.AddNameId, name: com.histmersion.domain.catalogue.places.PlaceService.Implementation.A
+com.histmersion.domain.catalogue.places.PlaceService.ChildrenAsOf | base Long | generated | method-parameter
+    def children(id: com.histmersion.domain.catalogue.places.PlaceService.ChildrenId, asOf: Option[com.histmersion.domain.catalogue.places.PlaceService.ChildrenAsOf], limit: 
+    def children(id: com.histmersion.domain.catalogue.places.PlaceService.Implementation.ChildrenId, asOf: Option[com.histmersion.domain.catalogue.places.PlaceService.Impleme
+com.histmersion.domain.catalogue.places.PlaceService.ChildrenId | base String | generated | method-parameter
+    def children(id: com.histmersion.domain.catalogue.places.PlaceService.ChildrenId, asOf: Option[com.histmersion.domain.catalogue.places.PlaceService.ChildrenAsOf], limit: 
+    def children(id: com.histmersion.domain.catalogue.places.PlaceService.Implementation.ChildrenId, asOf: Option[com.histmersion.domain.catalogue.places.PlaceService.Impleme
+com.histmersion.domain.catalogue.places.PlaceService.ChildrenLimit | base Int | generated | method-parameter
+    def children(id: com.histmersion.domain.catalogue.places.PlaceService.ChildrenId, asOf: Option[com.histmersion.domain.catalogue.places.PlaceService.ChildrenAsOf], limit: 
+    def children(id: com.histmersion.domain.catalogue.places.PlaceService.Implementation.ChildrenId, asOf: Option[com.histmersion.domain.catalogue.places.PlaceService.Impleme
+com.histmersion.domain.catalogue.places.PlaceService.ChildrenModernFrom | base Long | generated | method-parameter
+    def children(id: com.histmersion.domain.catalogue.places.PlaceService.ChildrenId, asOf: Option[com.histmersion.domain.catalogue.places.PlaceService.ChildrenAsOf], limit: 
+    def children(id: com.histmersion.domain.catalogue.places.PlaceService.Implementation.ChildrenId, asOf: Option[com.histmersion.domain.catalogue.places.PlaceService.Impleme
+com.histmersion.domain.catalogue.places.PlaceService.CountResult | base Int | generated | method-result
+    def count(): com.histmersion.domain.catalogue.places.PlaceService.CountResult
+    def count(): com.histmersion.domain.catalogue.places.PlaceService.Implementation.CountResult = db.read(PlaceRepo.count())
+com.histmersion.domain.catalogue.places.PlaceService.FootprintsAsOf | base Long | generated | method-parameter
+    def footprints(id: com.histmersion.domain.catalogue.places.PlaceService.FootprintsId, asOf: Option[com.histmersion.domain.catalogue.places.PlaceService.FootprintsAsOf]): 
+    def footprints(id: com.histmersion.domain.catalogue.places.PlaceService.Implementation.FootprintsId, asOf: Option[com.histmersion.domain.catalogue.places.PlaceService.Imp
+com.histmersion.domain.catalogue.places.PlaceService.FootprintsId | base String | generated | method-parameter
+    def footprints(id: com.histmersion.domain.catalogue.places.PlaceService.FootprintsId, asOf: Option[com.histmersion.domain.catalogue.places.PlaceService.FootprintsAsOf]): 
+    def footprints(id: com.histmersion.domain.catalogue.places.PlaceService.Implementation.FootprintsId, asOf: Option[com.histmersion.domain.catalogue.places.PlaceService.Imp
+com.histmersion.domain.catalogue.places.PlaceService.GazetteerPlaceIds | base String | generated | method-parameter
+    def gazetteer(placeIds: List[com.histmersion.domain.catalogue.places.PlaceService.GazetteerPlaceIds]): (List[RegionNode], List[Place.Relation])
+    def gazetteer(placeIds: List[com.histmersion.domain.catalogue.places.PlaceService.Implementation.GazetteerPlaceIds]): (List[RegionNode], List[Place.Relation]) =
+com.histmersion.domain.catalogue.places.PlaceService.GetAsOf | base Long | generated | method-parameter
+    def get(id: com.histmersion.domain.catalogue.places.PlaceService.GetId, asOf: Option[com.histmersion.domain.catalogue.places.PlaceService.GetAsOf] = None, modernFrom: com
+    def get(id: com.histmersion.domain.catalogue.places.PlaceService.Implementation.GetId, asOf: Option[com.histmersion.domain.catalogue.places.PlaceService.Implementation.Ge
+com.histmersion.domain.catalogue.places.PlaceService.GetId | base String | generated | method-parameter
+    def get(id: com.histmersion.domain.catalogue.places.PlaceService.GetId, asOf: Option[com.histmersion.domain.catalogue.places.PlaceService.GetAsOf] = None, modernFrom: com
+    def get(id: com.histmersion.domain.catalogue.places.PlaceService.Implementation.GetId, asOf: Option[com.histmersion.domain.catalogue.places.PlaceService.Implementation.Ge
+com.histmersion.domain.catalogue.places.PlaceService.GetModernFrom | base Long | generated | method-parameter
+    def get(id: com.histmersion.domain.catalogue.places.PlaceService.GetId, asOf: Option[com.histmersion.domain.catalogue.places.PlaceService.GetAsOf] = None, modernFrom: com
+    def get(id: com.histmersion.domain.catalogue.places.PlaceService.Implementation.GetId, asOf: Option[com.histmersion.domain.catalogue.places.PlaceService.Implementation.Ge
+com.histmersion.domain.catalogue.places.PlaceService.HierarchyAsOf | base Long | generated | method-parameter
+com.histmersion.domain.catalogue.places.PlaceService.HierarchyDepthCap | base Int | generated | method-parameter
+com.histmersion.domain.catalogue.places.PlaceService.HierarchyLimit | base Int | generated | method-parameter
+com.histmersion.domain.catalogue.places.PlaceService.HierarchyMaxDepth | base Int | generated | method-parameter
+com.histmersion.domain.catalogue.places.PlaceService.HierarchyModernFrom | base Long | generated | method-parameter
+com.histmersion.domain.catalogue.places.PlaceService.HierarchyRoot | base String | generated | method-parameter
+com.histmersion.domain.catalogue.places.PlaceService.Implementation.AddNameId | base String | generated | method-parameter
+    def addName(id: com.histmersion.domain.catalogue.places.PlaceService.AddNameId, name: com.histmersion.domain.catalogue.places.PlaceService.AddNameName, lang: com.histmers
+    def addName(id: com.histmersion.domain.catalogue.places.PlaceService.Implementation.AddNameId, name: com.histmersion.domain.catalogue.places.PlaceService.Implementation.A
+com.histmersion.domain.catalogue.places.PlaceService.Implementation.AddNameLang | base String | generated | method-parameter
+    def addName(id: com.histmersion.domain.catalogue.places.PlaceService.AddNameId, name: com.histmersion.domain.catalogue.places.PlaceService.AddNameName, lang: com.histmers
+    def addName(id: com.histmersion.domain.catalogue.places.PlaceService.Implementation.AddNameId, name: com.histmersion.domain.catalogue.places.PlaceService.Implementation.A
+com.histmersion.domain.catalogue.places.PlaceService.Implementation.AddNameName | base String | generated | method-parameter
+    def addName(id: com.histmersion.domain.catalogue.places.PlaceService.AddNameId, name: com.histmersion.domain.catalogue.places.PlaceService.AddNameName, lang: com.histmers
+    def addName(id: com.histmersion.domain.catalogue.places.PlaceService.Implementation.AddNameId, name: com.histmersion.domain.catalogue.places.PlaceService.Implementation.A
+com.histmersion.domain.catalogue.places.PlaceService.Implementation.ChildrenAsOf | base Long | generated | method-parameter
+    def children(id: com.histmersion.domain.catalogue.places.PlaceService.ChildrenId, asOf: Option[com.histmersion.domain.catalogue.places.PlaceService.ChildrenAsOf], limit: 
+    def children(id: com.histmersion.domain.catalogue.places.PlaceService.Implementation.ChildrenId, asOf: Option[com.histmersion.domain.catalogue.places.PlaceService.Impleme
+com.histmersion.domain.catalogue.places.PlaceService.Implementation.ChildrenId | base String | generated | method-parameter
+    def children(id: com.histmersion.domain.catalogue.places.PlaceService.ChildrenId, asOf: Option[com.histmersion.domain.catalogue.places.PlaceService.ChildrenAsOf], limit: 
+    def children(id: com.histmersion.domain.catalogue.places.PlaceService.Implementation.ChildrenId, asOf: Option[com.histmersion.domain.catalogue.places.PlaceService.Impleme
+com.histmersion.domain.catalogue.places.PlaceService.Implementation.ChildrenLimit | base Int | generated | method-parameter
+    def children(id: com.histmersion.domain.catalogue.places.PlaceService.ChildrenId, asOf: Option[com.histmersion.domain.catalogue.places.PlaceService.ChildrenAsOf], limit: 
+    def children(id: com.histmersion.domain.catalogue.places.PlaceService.Implementation.ChildrenId, asOf: Option[com.histmersion.domain.catalogue.places.PlaceService.Impleme
+com.histmersion.domain.catalogue.places.PlaceService.Implementation.ChildrenModernFrom | base Long | generated | method-parameter
+    def children(id: com.histmersion.domain.catalogue.places.PlaceService.ChildrenId, asOf: Option[com.histmersion.domain.catalogue.places.PlaceService.ChildrenAsOf], limit: 
+    def children(id: com.histmersion.domain.catalogue.places.PlaceService.Implementation.ChildrenId, asOf: Option[com.histmersion.domain.catalogue.places.PlaceService.Impleme
+com.histmersion.domain.catalogue.places.PlaceService.Implementation.CountResult | base Int | generated | method-result
+    def count(): com.histmersion.domain.catalogue.places.PlaceService.CountResult
+    def count(): com.histmersion.domain.catalogue.places.PlaceService.Implementation.CountResult = db.read(PlaceRepo.count())
+com.histmersion.domain.catalogue.places.PlaceService.Implementation.FootprintsAsOf | base Long | generated | method-parameter
+    def footprints(id: com.histmersion.domain.catalogue.places.PlaceService.FootprintsId, asOf: Option[com.histmersion.domain.catalogue.places.PlaceService.FootprintsAsOf]): 
+    def footprints(id: com.histmersion.domain.catalogue.places.PlaceService.Implementation.FootprintsId, asOf: Option[com.histmersion.domain.catalogue.places.PlaceService.Imp
+com.histmersion.domain.catalogue.places.PlaceService.Implementation.FootprintsId | base String | generated | method-parameter
+    def footprints(id: com.histmersion.domain.catalogue.places.PlaceService.FootprintsId, asOf: Option[com.histmersion.domain.catalogue.places.PlaceService.FootprintsAsOf]): 
+    def footprints(id: com.histmersion.domain.catalogue.places.PlaceService.Implementation.FootprintsId, asOf: Option[com.histmersion.domain.catalogue.places.PlaceService.Imp
+com.histmersion.domain.catalogue.places.PlaceService.Implementation.GazetteerPlaceIds | base String | generated | method-parameter
+    def gazetteer(placeIds: List[com.histmersion.domain.catalogue.places.PlaceService.GazetteerPlaceIds]): (List[RegionNode], List[Place.Relation])
+    def gazetteer(placeIds: List[com.histmersion.domain.catalogue.places.PlaceService.Implementation.GazetteerPlaceIds]): (List[RegionNode], List[Place.Relation]) =
+com.histmersion.domain.catalogue.places.PlaceService.Implementation.GetAsOf | base Long | generated | method-parameter
+    def get(id: com.histmersion.domain.catalogue.places.PlaceService.GetId, asOf: Option[com.histmersion.domain.catalogue.places.PlaceService.GetAsOf] = None, modernFrom: com
+    def get(id: com.histmersion.domain.catalogue.places.PlaceService.Implementation.GetId, asOf: Option[com.histmersion.domain.catalogue.places.PlaceService.Implementation.Ge
+com.histmersion.domain.catalogue.places.PlaceService.Implementation.GetId | base String | generated | method-parameter
+    def get(id: com.histmersion.domain.catalogue.places.PlaceService.GetId, asOf: Option[com.histmersion.domain.catalogue.places.PlaceService.GetAsOf] = None, modernFrom: com
+    def get(id: com.histmersion.domain.catalogue.places.PlaceService.Implementation.GetId, asOf: Option[com.histmersion.domain.catalogue.places.PlaceService.Implementation.Ge
+com.histmersion.domain.catalogue.places.PlaceService.Implementation.GetModernFrom | base Long | generated | method-parameter
+    def get(id: com.histmersion.domain.catalogue.places.PlaceService.GetId, asOf: Option[com.histmersion.domain.catalogue.places.PlaceService.GetAsOf] = None, modernFrom: com
+    def get(id: com.histmersion.domain.catalogue.places.PlaceService.Implementation.GetId, asOf: Option[com.histmersion.domain.catalogue.places.PlaceService.Implementation.Ge
+com.histmersion.domain.catalogue.places.PlaceService.Implementation.HierarchyAsOf | base Long | generated | method-parameter
+com.histmersion.domain.catalogue.places.PlaceService.Implementation.HierarchyDepthCap | base Int | generated | method-parameter
+com.histmersion.domain.catalogue.places.PlaceService.Implementation.HierarchyLimit | base Int | generated | method-parameter
+com.histmersion.domain.catalogue.places.PlaceService.Implementation.HierarchyMaxDepth | base Int | generated | method-parameter
+com.histmersion.domain.catalogue.places.PlaceService.Implementation.HierarchyModernFrom | base Long | generated | method-parameter
+com.histmersion.domain.catalogue.places.PlaceService.Implementation.HierarchyRoot | base String | generated | method-parameter
+com.histmersion.domain.catalogue.places.PlaceService.Implementation.LinksId | base String | generated | method-parameter
+    def links(id: com.histmersion.domain.catalogue.places.PlaceService.LinksId): List[Place.Link]
+    def links(id: com.histmersion.domain.catalogue.places.PlaceService.Implementation.LinksId): List[Place.Link] = db.read(PlaceRepo.links(id)).toList
+com.histmersion.domain.catalogue.places.PlaceService.Implementation.ManualNamesId | base String | generated | method-parameter
+    def manualNames(id: Option[com.histmersion.domain.catalogue.places.PlaceService.ManualNamesId]): List[ManualPlaceName]
+    def manualNames(id: Option[com.histmersion.domain.catalogue.places.PlaceService.Implementation.ManualNamesId]): List[ManualPlaceName] = db.read(PlaceRepo.manualNames(id))
+com.histmersion.domain.catalogue.places.PlaceService.Implementation.MergeFrom | base String | generated | method-parameter
+    def merge(from: com.histmersion.domain.catalogue.places.PlaceService.MergeFrom, into: com.histmersion.domain.catalogue.places.PlaceService.MergeInto, toleranceKm: com.his
+    def merge(from: com.histmersion.domain.catalogue.places.PlaceService.Implementation.MergeFrom, into: com.histmersion.domain.catalogue.places.PlaceService.Implementation.M
+com.histmersion.domain.catalogue.places.PlaceService.Implementation.MergeInto | base String | generated | method-parameter
+    def merge(from: com.histmersion.domain.catalogue.places.PlaceService.MergeFrom, into: com.histmersion.domain.catalogue.places.PlaceService.MergeInto, toleranceKm: com.his
+    def merge(from: com.histmersion.domain.catalogue.places.PlaceService.Implementation.MergeFrom, into: com.histmersion.domain.catalogue.places.PlaceService.Implementation.M
+com.histmersion.domain.catalogue.places.PlaceService.Implementation.MergeToleranceKm | base Double | generated | method-parameter
+    def merge(from: com.histmersion.domain.catalogue.places.PlaceService.MergeFrom, into: com.histmersion.domain.catalogue.places.PlaceService.MergeInto, toleranceKm: com.his
+    def merge(from: com.histmersion.domain.catalogue.places.PlaceService.Implementation.MergeFrom, into: com.histmersion.domain.catalogue.places.PlaceService.Implementation.M
+com.histmersion.domain.catalogue.places.PlaceService.Implementation.OverridesId | base String | generated | method-parameter
+    def overrides(id: Option[com.histmersion.domain.catalogue.places.PlaceService.OverridesId]): List[Place.Override]
+    def overrides(id: Option[com.histmersion.domain.catalogue.places.PlaceService.Implementation.OverridesId]): List[Place.Override] = db.read(PlaceOverrideRepo.list(id))
+com.histmersion.domain.catalogue.places.PlaceService.Implementation.RemoveId | base String | generated | method-parameter
+    def remove(id: com.histmersion.domain.catalogue.places.PlaceService.RemoveId, reason: Option[com.histmersion.domain.catalogue.places.PlaceService.RemoveReason]): Either[A
+    def remove(id: com.histmersion.domain.catalogue.places.PlaceService.Implementation.RemoveId, reason: Option[com.histmersion.domain.catalogue.places.PlaceService.Implement
+com.histmersion.domain.catalogue.places.PlaceService.Implementation.RemoveNameId | base String | generated | method-parameter
+    def removeName(id: com.histmersion.domain.catalogue.places.PlaceService.RemoveNameId, name: com.histmersion.domain.catalogue.places.PlaceService.RemoveNameName, lang: com
+    def removeName(id: com.histmersion.domain.catalogue.places.PlaceService.Implementation.RemoveNameId, name: com.histmersion.domain.catalogue.places.PlaceService.Implementa
+com.histmersion.domain.catalogue.places.PlaceService.Implementation.RemoveNameLang | base String | generated | method-parameter
+    def removeName(id: com.histmersion.domain.catalogue.places.PlaceService.RemoveNameId, name: com.histmersion.domain.catalogue.places.PlaceService.RemoveNameName, lang: com
+    def removeName(id: com.histmersion.domain.catalogue.places.PlaceService.Implementation.RemoveNameId, name: com.histmersion.domain.catalogue.places.PlaceService.Implementa
+com.histmersion.domain.catalogue.places.PlaceService.Implementation.RemoveNameName | base String | generated | method-parameter
+    def removeName(id: com.histmersion.domain.catalogue.places.PlaceService.RemoveNameId, name: com.histmersion.domain.catalogue.places.PlaceService.RemoveNameName, lang: com
+    def removeName(id: com.histmersion.domain.catalogue.places.PlaceService.Implementation.RemoveNameId, name: com.histmersion.domain.catalogue.places.PlaceService.Implementa
+com.histmersion.domain.catalogue.places.PlaceService.Implementation.RemoveReason | base String | generated | method-parameter
+    def remove(id: com.histmersion.domain.catalogue.places.PlaceService.RemoveId, reason: Option[com.histmersion.domain.catalogue.places.PlaceService.RemoveReason]): Either[A
+    def remove(id: com.histmersion.domain.catalogue.places.PlaceService.Implementation.RemoveId, reason: Option[com.histmersion.domain.catalogue.places.PlaceService.Implement
+com.histmersion.domain.catalogue.places.PlaceService.Implementation.RenameFrom | base String | generated | method-parameter
+    def rename(from: com.histmersion.domain.catalogue.places.PlaceService.RenameFrom, to: com.histmersion.domain.catalogue.places.PlaceService.RenameTo): Either[Api.Error, Un
+    def rename(from: com.histmersion.domain.catalogue.places.PlaceService.Implementation.RenameFrom, to: com.histmersion.domain.catalogue.places.PlaceService.Implementation.R
+com.histmersion.domain.catalogue.places.PlaceService.Implementation.RenameTo | base String | generated | method-parameter
+    def rename(from: com.histmersion.domain.catalogue.places.PlaceService.RenameFrom, to: com.histmersion.domain.catalogue.places.PlaceService.RenameTo): Either[Api.Error, Un
+    def rename(from: com.histmersion.domain.catalogue.places.PlaceService.Implementation.RenameFrom, to: com.histmersion.domain.catalogue.places.PlaceService.Implementation.R
+com.histmersion.domain.catalogue.places.PlaceService.Implementation.ScopeForValues | base String | generated | method-parameter
+    def scopeFor(values: List[com.histmersion.domain.catalogue.places.PlaceService.ScopeForValues], period: Option[Period]): PlaceScope
+    def scopeFor(values: List[com.histmersion.domain.catalogue.places.PlaceService.Implementation.ScopeForValues], period: Option[Period]): PlaceScope = db.read(PlaceRepo.sco
+com.histmersion.domain.catalogue.places.PlaceService.Implementation.SearchAsOf | base Long | generated | method-parameter
+    def search(q: Option[com.histmersion.domain.catalogue.places.PlaceService.SearchQ], asOf: Option[com.histmersion.domain.catalogue.places.PlaceService.SearchAsOf], limit: 
+    def search(q: Option[com.histmersion.domain.catalogue.places.PlaceService.Implementation.SearchQ], asOf: Option[com.histmersion.domain.catalogue.places.PlaceService.Imple
+com.histmersion.domain.catalogue.places.PlaceService.Implementation.SearchLimit | base Int | generated | method-parameter
+    def search(q: Option[com.histmersion.domain.catalogue.places.PlaceService.SearchQ], asOf: Option[com.histmersion.domain.catalogue.places.PlaceService.SearchAsOf], limit: 
+    def search(q: Option[com.histmersion.domain.catalogue.places.PlaceService.Implementation.SearchQ], asOf: Option[com.histmersion.domain.catalogue.places.PlaceService.Imple
+com.histmersion.domain.catalogue.places.PlaceService.Implementation.SearchModernFrom | base Long | generated | method-parameter
+    def search(q: Option[com.histmersion.domain.catalogue.places.PlaceService.SearchQ], asOf: Option[com.histmersion.domain.catalogue.places.PlaceService.SearchAsOf], limit: 
+    def search(q: Option[com.histmersion.domain.catalogue.places.PlaceService.Implementation.SearchQ], asOf: Option[com.histmersion.domain.catalogue.places.PlaceService.Imple
+com.histmersion.domain.catalogue.places.PlaceService.Implementation.SearchQ | base String | generated | method-parameter
+    def search(q: Option[com.histmersion.domain.catalogue.places.PlaceService.SearchQ], asOf: Option[com.histmersion.domain.catalogue.places.PlaceService.SearchAsOf], limit: 
+    def search(q: Option[com.histmersion.domain.catalogue.places.PlaceService.Implementation.SearchQ], asOf: Option[com.histmersion.domain.catalogue.places.PlaceService.Imple
+com.histmersion.domain.catalogue.places.PlaceService.Implementation.SetOverrideId | base String | generated | method-parameter
+    def setOverride(id: com.histmersion.domain.catalogue.places.PlaceService.SetOverrideId, edit: Place.OverrideEdit, toleranceKm: com.histmersion.domain.catalogue.places.Pla
+com.histmersion.domain.catalogue.places.PlaceService.Implementation.SetOverrideToleranceKm | base Double | generated | method-parameter
+    def setOverride(id: com.histmersion.domain.catalogue.places.PlaceService.SetOverrideId, edit: Place.OverrideEdit, toleranceKm: com.histmersion.domain.catalogue.places.Pla
+com.histmersion.domain.catalogue.places.PlaceService.InMemory.AddNameId | base String | generated | method-parameter
+    def addName(id: com.histmersion.domain.catalogue.places.PlaceService.AddNameId, name: com.histmersion.domain.catalogue.places.PlaceService.AddNameName, lang: com.histmers
+    def addName(id: com.histmersion.domain.catalogue.places.PlaceService.Implementation.AddNameId, name: com.histmersion.domain.catalogue.places.PlaceService.Implementation.A
+com.histmersion.domain.catalogue.places.PlaceService.InMemory.ChildrenAsOf | base Long | generated | method-parameter
+    def children(id: com.histmersion.domain.catalogue.places.PlaceService.ChildrenId, asOf: Option[com.histmersion.domain.catalogue.places.PlaceService.ChildrenAsOf], limit: 
+    def children(id: com.histmersion.domain.catalogue.places.PlaceService.Implementation.ChildrenId, asOf: Option[com.histmersion.domain.catalogue.places.PlaceService.Impleme
+com.histmersion.domain.catalogue.places.PlaceService.InMemory.ChildrenId | base String | generated | method-parameter
+    def children(id: com.histmersion.domain.catalogue.places.PlaceService.ChildrenId, asOf: Option[com.histmersion.domain.catalogue.places.PlaceService.ChildrenAsOf], limit: 
+    def children(id: com.histmersion.domain.catalogue.places.PlaceService.Implementation.ChildrenId, asOf: Option[com.histmersion.domain.catalogue.places.PlaceService.Impleme
+com.histmersion.domain.catalogue.places.PlaceService.InMemory.ChildrenLimit | base Int | generated | method-parameter
+    def children(id: com.histmersion.domain.catalogue.places.PlaceService.ChildrenId, asOf: Option[com.histmersion.domain.catalogue.places.PlaceService.ChildrenAsOf], limit: 
+    def children(id: com.histmersion.domain.catalogue.places.PlaceService.Implementation.ChildrenId, asOf: Option[com.histmersion.domain.catalogue.places.PlaceService.Impleme
+com.histmersion.domain.catalogue.places.PlaceService.InMemory.ChildrenModernFrom | base Long | generated | method-parameter
+    def children(id: com.histmersion.domain.catalogue.places.PlaceService.ChildrenId, asOf: Option[com.histmersion.domain.catalogue.places.PlaceService.ChildrenAsOf], limit: 
+    def children(id: com.histmersion.domain.catalogue.places.PlaceService.Implementation.ChildrenId, asOf: Option[com.histmersion.domain.catalogue.places.PlaceService.Impleme
+com.histmersion.domain.catalogue.places.PlaceService.InMemory.CountResult | base Int | generated | method-result
+    def count(): com.histmersion.domain.catalogue.places.PlaceService.CountResult
+    def count(): com.histmersion.domain.catalogue.places.PlaceService.Implementation.CountResult = db.read(PlaceRepo.count())
+com.histmersion.domain.catalogue.places.PlaceService.InMemory.FindId | base String | generated | method-parameter
+    private def find(id: com.histmersion.domain.catalogue.places.PlaceService.InMemory.FindId): Option[HeldPlace] = places.find(_.id == id)
+com.histmersion.domain.catalogue.places.PlaceService.InMemory.FootprintsAsOf | base Long | generated | method-parameter
+    def footprints(id: com.histmersion.domain.catalogue.places.PlaceService.FootprintsId, asOf: Option[com.histmersion.domain.catalogue.places.PlaceService.FootprintsAsOf]): 
+    def footprints(id: com.histmersion.domain.catalogue.places.PlaceService.Implementation.FootprintsId, asOf: Option[com.histmersion.domain.catalogue.places.PlaceService.Imp
+com.histmersion.domain.catalogue.places.PlaceService.InMemory.FootprintsId | base String | generated | method-parameter
+    def footprints(id: com.histmersion.domain.catalogue.places.PlaceService.FootprintsId, asOf: Option[com.histmersion.domain.catalogue.places.PlaceService.FootprintsAsOf]): 
+    def footprints(id: com.histmersion.domain.catalogue.places.PlaceService.Implementation.FootprintsId, asOf: Option[com.histmersion.domain.catalogue.places.PlaceService.Imp
+com.histmersion.domain.catalogue.places.PlaceService.InMemory.GazetteerPlaceIds | base String | generated | method-parameter
+    def gazetteer(placeIds: List[com.histmersion.domain.catalogue.places.PlaceService.GazetteerPlaceIds]): (List[RegionNode], List[Place.Relation])
+    def gazetteer(placeIds: List[com.histmersion.domain.catalogue.places.PlaceService.Implementation.GazetteerPlaceIds]): (List[RegionNode], List[Place.Relation]) =
+com.histmersion.domain.catalogue.places.PlaceService.InMemory.GazetteerUpFrontier | base String | generated | method-parameter
+    @tailrec def up(frontier: List[com.histmersion.domain.catalogue.places.PlaceService.InMemory.GazetteerUpFrontier], seen: Vector[com.histmersion.domain.catalogue.places.Pl
+com.histmersion.domain.catalogue.places.PlaceService.InMemory.GazetteerUpResult | base String | generated | method-result
+    @tailrec def up(frontier: List[com.histmersion.domain.catalogue.places.PlaceService.InMemory.GazetteerUpFrontier], seen: Vector[com.histmersion.domain.catalogue.places.Pl
+com.histmersion.domain.catalogue.places.PlaceService.InMemory.GazetteerUpSeen | base String | generated | method-parameter
+    @tailrec def up(frontier: List[com.histmersion.domain.catalogue.places.PlaceService.InMemory.GazetteerUpFrontier], seen: Vector[com.histmersion.domain.catalogue.places.Pl
+com.histmersion.domain.catalogue.places.PlaceService.InMemory.GetAsOf | base Long | generated | method-parameter
+    def get(id: com.histmersion.domain.catalogue.places.PlaceService.GetId, asOf: Option[com.histmersion.domain.catalogue.places.PlaceService.GetAsOf] = None, modernFrom: com
+    def get(id: com.histmersion.domain.catalogue.places.PlaceService.Implementation.GetId, asOf: Option[com.histmersion.domain.catalogue.places.PlaceService.Implementation.Ge
+com.histmersion.domain.catalogue.places.PlaceService.InMemory.GetId | base String | generated | method-parameter
+    def get(id: com.histmersion.domain.catalogue.places.PlaceService.GetId, asOf: Option[com.histmersion.domain.catalogue.places.PlaceService.GetAsOf] = None, modernFrom: com
+    def get(id: com.histmersion.domain.catalogue.places.PlaceService.Implementation.GetId, asOf: Option[com.histmersion.domain.catalogue.places.PlaceService.Implementation.Ge
+com.histmersion.domain.catalogue.places.PlaceService.InMemory.GetModernFrom | base Long | generated | method-parameter
+    def get(id: com.histmersion.domain.catalogue.places.PlaceService.GetId, asOf: Option[com.histmersion.domain.catalogue.places.PlaceService.GetAsOf] = None, modernFrom: com
+    def get(id: com.histmersion.domain.catalogue.places.PlaceService.Implementation.GetId, asOf: Option[com.histmersion.domain.catalogue.places.PlaceService.Implementation.Ge
+com.histmersion.domain.catalogue.places.PlaceService.InMemory.HierarchyAsOf | base Long | generated | method-parameter
+com.histmersion.domain.catalogue.places.PlaceService.InMemory.HierarchyDepthCap | base Int | generated | method-parameter
+com.histmersion.domain.catalogue.places.PlaceService.InMemory.HierarchyLimit | base Int | generated | method-parameter
+com.histmersion.domain.catalogue.places.PlaceService.InMemory.HierarchyMaxDepth | base Int | generated | method-parameter
+com.histmersion.domain.catalogue.places.PlaceService.InMemory.HierarchyModernFrom | base Long | generated | method-parameter
+com.histmersion.domain.catalogue.places.PlaceService.InMemory.HierarchyRoot | base String | generated | method-parameter
+com.histmersion.domain.catalogue.places.PlaceService.InMemory.HierarchyRowD | base Int | generated | method-parameter
+    def row(p: HeldPlace, d: com.histmersion.domain.catalogue.places.PlaceService.InMemory.HierarchyRowD) = Place.TreeRow(com.histmersion.api.catalogue.Place.Id(p.id), p.plac
+com.histmersion.domain.catalogue.places.PlaceService.InMemory.HierarchyWalkD | base Int | generated | method-parameter
+    def walk(p: HeldPlace, d: com.histmersion.domain.catalogue.places.PlaceService.InMemory.HierarchyWalkD, seen: Set[com.histmersion.domain.catalogue.places.PlaceService.InM
+com.histmersion.domain.catalogue.places.PlaceService.InMemory.HierarchyWalkSeen | base String | generated | method-parameter
+    def walk(p: HeldPlace, d: com.histmersion.domain.catalogue.places.PlaceService.InMemory.HierarchyWalkD, seen: Set[com.histmersion.domain.catalogue.places.PlaceService.InM
+com.histmersion.domain.catalogue.places.PlaceService.InMemory.IsPointGeojson | base String | generated | method-parameter
+    def isPoint(geojson: com.histmersion.domain.catalogue.places.PlaceService.InMemory.IsPointGeojson): com.histmersion.domain.catalogue.places.PlaceService.InMemory.IsPointR
+com.histmersion.domain.catalogue.places.PlaceService.InMemory.IsPointResult | base Boolean | generated | method-result
+    def isPoint(geojson: com.histmersion.domain.catalogue.places.PlaceService.InMemory.IsPointGeojson): com.histmersion.domain.catalogue.places.PlaceService.InMemory.IsPointR
+com.histmersion.domain.catalogue.places.PlaceService.InMemory.KidsOfAsOf | base Long | generated | method-parameter
+    private def kidsOf(id: com.histmersion.domain.catalogue.places.PlaceService.InMemory.KidsOfId, asOf: Option[com.histmersion.domain.catalogue.places.PlaceService.InMemory.
+com.histmersion.domain.catalogue.places.PlaceService.InMemory.KidsOfId | base String | generated | method-parameter
+    private def kidsOf(id: com.histmersion.domain.catalogue.places.PlaceService.InMemory.KidsOfId, asOf: Option[com.histmersion.domain.catalogue.places.PlaceService.InMemory.
+com.histmersion.domain.catalogue.places.PlaceService.InMemory.LinksId | base String | generated | method-parameter
+    def links(id: com.histmersion.domain.catalogue.places.PlaceService.LinksId): List[Place.Link]
+    def links(id: com.histmersion.domain.catalogue.places.PlaceService.Implementation.LinksId): List[Place.Link] = db.read(PlaceRepo.links(id)).toList
+com.histmersion.domain.catalogue.places.PlaceService.InMemory.ManualNamesId | base String | generated | method-parameter
+    def manualNames(id: Option[com.histmersion.domain.catalogue.places.PlaceService.ManualNamesId]): List[ManualPlaceName]
+    def manualNames(id: Option[com.histmersion.domain.catalogue.places.PlaceService.Implementation.ManualNamesId]): List[ManualPlaceName] = db.read(PlaceRepo.manualNames(id))
+com.histmersion.domain.catalogue.places.PlaceService.InMemory.MergeFrom | base String | generated | method-parameter
+    def merge(from: com.histmersion.domain.catalogue.places.PlaceService.MergeFrom, into: com.histmersion.domain.catalogue.places.PlaceService.MergeInto, toleranceKm: com.his
+    def merge(from: com.histmersion.domain.catalogue.places.PlaceService.Implementation.MergeFrom, into: com.histmersion.domain.catalogue.places.PlaceService.Implementation.M
+com.histmersion.domain.catalogue.places.PlaceService.InMemory.MergeInto | base String | generated | method-parameter
+    def merge(from: com.histmersion.domain.catalogue.places.PlaceService.MergeFrom, into: com.histmersion.domain.catalogue.places.PlaceService.MergeInto, toleranceKm: com.his
+    def merge(from: com.histmersion.domain.catalogue.places.PlaceService.Implementation.MergeFrom, into: com.histmersion.domain.catalogue.places.PlaceService.Implementation.M
+com.histmersion.domain.catalogue.places.PlaceService.InMemory.MergeToleranceKm | base Double | generated | method-parameter
+    def merge(from: com.histmersion.domain.catalogue.places.PlaceService.MergeFrom, into: com.histmersion.domain.catalogue.places.PlaceService.MergeInto, toleranceKm: com.his
+    def merge(from: com.histmersion.domain.catalogue.places.PlaceService.Implementation.MergeFrom, into: com.histmersion.domain.catalogue.places.PlaceService.Implementation.M
+com.histmersion.domain.catalogue.places.PlaceService.InMemory.NotFoundId | base String | generated | method-parameter
+    private def notFound(id: com.histmersion.domain.catalogue.places.PlaceService.InMemory.NotFoundId): Api.Error = Api.Error(s"No place '$id'", Some(Write.CodeNotFound))
+com.histmersion.domain.catalogue.places.PlaceService.InMemory.OverridesId | base String | generated | method-parameter
+    def overrides(id: Option[com.histmersion.domain.catalogue.places.PlaceService.OverridesId]): List[Place.Override]
+    def overrides(id: Option[com.histmersion.domain.catalogue.places.PlaceService.Implementation.OverridesId]): List[Place.Override] = db.read(PlaceOverrideRepo.list(id))
+com.histmersion.domain.catalogue.places.PlaceService.InMemory.ParentsOfAsOf | base Long | generated | method-parameter
+    private def parentsOf(p: HeldPlace, asOf: Option[com.histmersion.domain.catalogue.places.PlaceService.InMemory.ParentsOfAsOf]): List[Place.Summary] =
+com.histmersion.domain.catalogue.places.PlaceService.InMemory.PeriodOfSidesPart1 | base Long | generated | method-parameter
+    def periodOf(sides: (Option[com.histmersion.domain.catalogue.places.PlaceService.InMemory.PeriodOfSidesPart1], Option[com.histmersion.domain.catalogue.places.PlaceService
+com.histmersion.domain.catalogue.places.PlaceService.InMemory.PeriodOfSidesPart2 | base Long | generated | method-parameter
+    def periodOf(sides: (Option[com.histmersion.domain.catalogue.places.PlaceService.InMemory.PeriodOfSidesPart1], Option[com.histmersion.domain.catalogue.places.PlaceService
+com.histmersion.domain.catalogue.places.PlaceService.InMemory.RemoveId | base String | generated | method-parameter
+    def remove(id: com.histmersion.domain.catalogue.places.PlaceService.RemoveId, reason: Option[com.histmersion.domain.catalogue.places.PlaceService.RemoveReason]): Either[A
+    def remove(id: com.histmersion.domain.catalogue.places.PlaceService.Implementation.RemoveId, reason: Option[com.histmersion.domain.catalogue.places.PlaceService.Implement
+com.histmersion.domain.catalogue.places.PlaceService.InMemory.RemoveNameId | base String | generated | method-parameter
+    def removeName(id: com.histmersion.domain.catalogue.places.PlaceService.RemoveNameId, name: com.histmersion.domain.catalogue.places.PlaceService.RemoveNameName, lang: com
+    def removeName(id: com.histmersion.domain.catalogue.places.PlaceService.Implementation.RemoveNameId, name: com.histmersion.domain.catalogue.places.PlaceService.Implementa
+com.histmersion.domain.catalogue.places.PlaceService.InMemory.RemoveNameLang | base String | generated | method-parameter
+    def removeName(id: com.histmersion.domain.catalogue.places.PlaceService.RemoveNameId, name: com.histmersion.domain.catalogue.places.PlaceService.RemoveNameName, lang: com
+    def removeName(id: com.histmersion.domain.catalogue.places.PlaceService.Implementation.RemoveNameId, name: com.histmersion.domain.catalogue.places.PlaceService.Implementa
+com.histmersion.domain.catalogue.places.PlaceService.InMemory.RemoveNameName | base String | generated | method-parameter
+    def removeName(id: com.histmersion.domain.catalogue.places.PlaceService.RemoveNameId, name: com.histmersion.domain.catalogue.places.PlaceService.RemoveNameName, lang: com
+    def removeName(id: com.histmersion.domain.catalogue.places.PlaceService.Implementation.RemoveNameId, name: com.histmersion.domain.catalogue.places.PlaceService.Implementa
+com.histmersion.domain.catalogue.places.PlaceService.InMemory.RemoveReason | base String | generated | method-parameter
+    def remove(id: com.histmersion.domain.catalogue.places.PlaceService.RemoveId, reason: Option[com.histmersion.domain.catalogue.places.PlaceService.RemoveReason]): Either[A
+    def remove(id: com.histmersion.domain.catalogue.places.PlaceService.Implementation.RemoveId, reason: Option[com.histmersion.domain.catalogue.places.PlaceService.Implement
+com.histmersion.domain.catalogue.places.PlaceService.InMemory.RenameFrom | base String | generated | method-parameter
+    def rename(from: com.histmersion.domain.catalogue.places.PlaceService.RenameFrom, to: com.histmersion.domain.catalogue.places.PlaceService.RenameTo): Either[Api.Error, Un
+    def rename(from: com.histmersion.domain.catalogue.places.PlaceService.Implementation.RenameFrom, to: com.histmersion.domain.catalogue.places.PlaceService.Implementation.R
+com.histmersion.domain.catalogue.places.PlaceService.InMemory.RenameTo | base String | generated | method-parameter
+    def rename(from: com.histmersion.domain.catalogue.places.PlaceService.RenameFrom, to: com.histmersion.domain.catalogue.places.PlaceService.RenameTo): Either[Api.Error, Un
+    def rename(from: com.histmersion.domain.catalogue.places.PlaceService.Implementation.RenameFrom, to: com.histmersion.domain.catalogue.places.PlaceService.Implementation.R
+com.histmersion.domain.catalogue.places.PlaceService.InMemory.RootKindsValue | base String | original | alias
+com.histmersion.domain.catalogue.places.PlaceService.InMemory.ScopeForDownFrontier | base String | generated | method-parameter
+    @tailrec def down(frontier: List[com.histmersion.domain.catalogue.places.PlaceService.InMemory.ScopeForDownFrontier], seen: Vector[com.histmersion.domain.catalogue.places
+com.histmersion.domain.catalogue.places.PlaceService.InMemory.ScopeForDownResult | base String | generated | method-result
+    @tailrec def down(frontier: List[com.histmersion.domain.catalogue.places.PlaceService.InMemory.ScopeForDownFrontier], seen: Vector[com.histmersion.domain.catalogue.places
+com.histmersion.domain.catalogue.places.PlaceService.InMemory.ScopeForDownSeen | base String | generated | method-parameter
+    @tailrec def down(frontier: List[com.histmersion.domain.catalogue.places.PlaceService.InMemory.ScopeForDownFrontier], seen: Vector[com.histmersion.domain.catalogue.places
+com.histmersion.domain.catalogue.places.PlaceService.InMemory.ScopeForValues | base String | generated | method-parameter
+    def scopeFor(values: List[com.histmersion.domain.catalogue.places.PlaceService.ScopeForValues], period: Option[Period]): PlaceScope
+    def scopeFor(values: List[com.histmersion.domain.catalogue.places.PlaceService.Implementation.ScopeForValues], period: Option[Period]): PlaceScope = db.read(PlaceRepo.sco
+com.histmersion.domain.catalogue.places.PlaceService.InMemory.SearchAsOf | base Long | generated | method-parameter
+    def search(q: Option[com.histmersion.domain.catalogue.places.PlaceService.SearchQ], asOf: Option[com.histmersion.domain.catalogue.places.PlaceService.SearchAsOf], limit: 
+    def search(q: Option[com.histmersion.domain.catalogue.places.PlaceService.Implementation.SearchQ], asOf: Option[com.histmersion.domain.catalogue.places.PlaceService.Imple
+com.histmersion.domain.catalogue.places.PlaceService.InMemory.SearchLimit | base Int | generated | method-parameter
+    def search(q: Option[com.histmersion.domain.catalogue.places.PlaceService.SearchQ], asOf: Option[com.histmersion.domain.catalogue.places.PlaceService.SearchAsOf], limit: 
+    def search(q: Option[com.histmersion.domain.catalogue.places.PlaceService.Implementation.SearchQ], asOf: Option[com.histmersion.domain.catalogue.places.PlaceService.Imple
+com.histmersion.domain.catalogue.places.PlaceService.InMemory.SearchMatchesResult | base Boolean | generated | method-result
+    def matches(p: HeldPlace): com.histmersion.domain.catalogue.places.PlaceService.InMemory.SearchMatchesResult = t.forall { w =>
+com.histmersion.domain.catalogue.places.PlaceService.InMemory.SearchModernFrom | base Long | generated | method-parameter
+    def search(q: Option[com.histmersion.domain.catalogue.places.PlaceService.SearchQ], asOf: Option[com.histmersion.domain.catalogue.places.PlaceService.SearchAsOf], limit: 
+    def search(q: Option[com.histmersion.domain.catalogue.places.PlaceService.Implementation.SearchQ], asOf: Option[com.histmersion.domain.catalogue.places.PlaceService.Imple
+com.histmersion.domain.catalogue.places.PlaceService.InMemory.SearchQ | base String | generated | method-parameter
+    def search(q: Option[com.histmersion.domain.catalogue.places.PlaceService.SearchQ], asOf: Option[com.histmersion.domain.catalogue.places.PlaceService.SearchAsOf], limit: 
+    def search(q: Option[com.histmersion.domain.catalogue.places.PlaceService.Implementation.SearchQ], asOf: Option[com.histmersion.domain.catalogue.places.PlaceService.Imple
+com.histmersion.domain.catalogue.places.PlaceService.InMemory.SetOverrideId | base String | generated | method-parameter
+    def setOverride(id: com.histmersion.domain.catalogue.places.PlaceService.SetOverrideId, edit: Place.OverrideEdit, toleranceKm: com.histmersion.domain.catalogue.places.Pla
+com.histmersion.domain.catalogue.places.PlaceService.InMemory.SetOverrideToleranceKm | base Double | generated | method-parameter
+    def setOverride(id: com.histmersion.domain.catalogue.places.PlaceService.SetOverrideId, edit: Place.OverrideEdit, toleranceKm: com.histmersion.domain.catalogue.places.Pla
+com.histmersion.domain.catalogue.places.PlaceService.InMemory.TimestampResult | base String | generated | method-result
+    def timestamp(at: Instant): com.histmersion.domain.catalogue.places.PlaceService.InMemory.TimestampResult = at.truncatedTo(java.time.temporal.ChronoUnit.SECONDS).toString
+com.histmersion.domain.catalogue.places.PlaceService.LinksId | base String | generated | method-parameter
+    def links(id: com.histmersion.domain.catalogue.places.PlaceService.LinksId): List[Place.Link]
+    def links(id: com.histmersion.domain.catalogue.places.PlaceService.Implementation.LinksId): List[Place.Link] = db.read(PlaceRepo.links(id)).toList
+com.histmersion.domain.catalogue.places.PlaceService.ManualNamesId | base String | generated | method-parameter
+    def manualNames(id: Option[com.histmersion.domain.catalogue.places.PlaceService.ManualNamesId]): List[ManualPlaceName]
+    def manualNames(id: Option[com.histmersion.domain.catalogue.places.PlaceService.Implementation.ManualNamesId]): List[ManualPlaceName] = db.read(PlaceRepo.manualNames(id))
+com.histmersion.domain.catalogue.places.PlaceService.MergeFrom | base String | generated | method-parameter
+    def merge(from: com.histmersion.domain.catalogue.places.PlaceService.MergeFrom, into: com.histmersion.domain.catalogue.places.PlaceService.MergeInto, toleranceKm: com.his
+    def merge(from: com.histmersion.domain.catalogue.places.PlaceService.Implementation.MergeFrom, into: com.histmersion.domain.catalogue.places.PlaceService.Implementation.M
+com.histmersion.domain.catalogue.places.PlaceService.MergeInto | base String | generated | method-parameter
+    def merge(from: com.histmersion.domain.catalogue.places.PlaceService.MergeFrom, into: com.histmersion.domain.catalogue.places.PlaceService.MergeInto, toleranceKm: com.his
+    def merge(from: com.histmersion.domain.catalogue.places.PlaceService.Implementation.MergeFrom, into: com.histmersion.domain.catalogue.places.PlaceService.Implementation.M
+com.histmersion.domain.catalogue.places.PlaceService.MergeToleranceKm | base Double | generated | method-parameter
+    def merge(from: com.histmersion.domain.catalogue.places.PlaceService.MergeFrom, into: com.histmersion.domain.catalogue.places.PlaceService.MergeInto, toleranceKm: com.his
+    def merge(from: com.histmersion.domain.catalogue.places.PlaceService.Implementation.MergeFrom, into: com.histmersion.domain.catalogue.places.PlaceService.Implementation.M
+com.histmersion.domain.catalogue.places.PlaceService.OverridesId | base String | generated | method-parameter
+    def overrides(id: Option[com.histmersion.domain.catalogue.places.PlaceService.OverridesId]): List[Place.Override]
+    def overrides(id: Option[com.histmersion.domain.catalogue.places.PlaceService.Implementation.OverridesId]): List[Place.Override] = db.read(PlaceOverrideRepo.list(id))
+com.histmersion.domain.catalogue.places.PlaceService.RemoveId | base String | generated | method-parameter
+    def remove(id: com.histmersion.domain.catalogue.places.PlaceService.RemoveId, reason: Option[com.histmersion.domain.catalogue.places.PlaceService.RemoveReason]): Either[A
+    def remove(id: com.histmersion.domain.catalogue.places.PlaceService.Implementation.RemoveId, reason: Option[com.histmersion.domain.catalogue.places.PlaceService.Implement
+com.histmersion.domain.catalogue.places.PlaceService.RemoveNameId | base String | generated | method-parameter
+    def removeName(id: com.histmersion.domain.catalogue.places.PlaceService.RemoveNameId, name: com.histmersion.domain.catalogue.places.PlaceService.RemoveNameName, lang: com
+    def removeName(id: com.histmersion.domain.catalogue.places.PlaceService.Implementation.RemoveNameId, name: com.histmersion.domain.catalogue.places.PlaceService.Implementa
+com.histmersion.domain.catalogue.places.PlaceService.RemoveNameLang | base String | generated | method-parameter
+    def removeName(id: com.histmersion.domain.catalogue.places.PlaceService.RemoveNameId, name: com.histmersion.domain.catalogue.places.PlaceService.RemoveNameName, lang: com
+    def removeName(id: com.histmersion.domain.catalogue.places.PlaceService.Implementation.RemoveNameId, name: com.histmersion.domain.catalogue.places.PlaceService.Implementa
+com.histmersion.domain.catalogue.places.PlaceService.RemoveNameName | base String | generated | method-parameter
+    def removeName(id: com.histmersion.domain.catalogue.places.PlaceService.RemoveNameId, name: com.histmersion.domain.catalogue.places.PlaceService.RemoveNameName, lang: com
+    def removeName(id: com.histmersion.domain.catalogue.places.PlaceService.Implementation.RemoveNameId, name: com.histmersion.domain.catalogue.places.PlaceService.Implementa
+com.histmersion.domain.catalogue.places.PlaceService.RemoveReason | base String | generated | method-parameter
+    def remove(id: com.histmersion.domain.catalogue.places.PlaceService.RemoveId, reason: Option[com.histmersion.domain.catalogue.places.PlaceService.RemoveReason]): Either[A
+    def remove(id: com.histmersion.domain.catalogue.places.PlaceService.Implementation.RemoveId, reason: Option[com.histmersion.domain.catalogue.places.PlaceService.Implement
+com.histmersion.domain.catalogue.places.PlaceService.RenameFrom | base String | generated | method-parameter
+    def rename(from: com.histmersion.domain.catalogue.places.PlaceService.RenameFrom, to: com.histmersion.domain.catalogue.places.PlaceService.RenameTo): Either[Api.Error, Un
+    def rename(from: com.histmersion.domain.catalogue.places.PlaceService.Implementation.RenameFrom, to: com.histmersion.domain.catalogue.places.PlaceService.Implementation.R
+com.histmersion.domain.catalogue.places.PlaceService.RenameTo | base String | generated | method-parameter
+    def rename(from: com.histmersion.domain.catalogue.places.PlaceService.RenameFrom, to: com.histmersion.domain.catalogue.places.PlaceService.RenameTo): Either[Api.Error, Un
+    def rename(from: com.histmersion.domain.catalogue.places.PlaceService.Implementation.RenameFrom, to: com.histmersion.domain.catalogue.places.PlaceService.Implementation.R
+com.histmersion.domain.catalogue.places.PlaceService.ScopeForValues | base String | generated | method-parameter
+    def scopeFor(values: List[com.histmersion.domain.catalogue.places.PlaceService.ScopeForValues], period: Option[Period]): PlaceScope
+    def scopeFor(values: List[com.histmersion.domain.catalogue.places.PlaceService.Implementation.ScopeForValues], period: Option[Period]): PlaceScope = db.read(PlaceRepo.sco
+com.histmersion.domain.catalogue.places.PlaceService.SearchAsOf | base Long | generated | method-parameter
+    def search(q: Option[com.histmersion.domain.catalogue.places.PlaceService.SearchQ], asOf: Option[com.histmersion.domain.catalogue.places.PlaceService.SearchAsOf], limit: 
+    def search(q: Option[com.histmersion.domain.catalogue.places.PlaceService.Implementation.SearchQ], asOf: Option[com.histmersion.domain.catalogue.places.PlaceService.Imple
+com.histmersion.domain.catalogue.places.PlaceService.SearchLimit | base Int | generated | method-parameter
+    def search(q: Option[com.histmersion.domain.catalogue.places.PlaceService.SearchQ], asOf: Option[com.histmersion.domain.catalogue.places.PlaceService.SearchAsOf], limit: 
+    def search(q: Option[com.histmersion.domain.catalogue.places.PlaceService.Implementation.SearchQ], asOf: Option[com.histmersion.domain.catalogue.places.PlaceService.Imple
+com.histmersion.domain.catalogue.places.PlaceService.SearchModernFrom | base Long | generated | method-parameter
+    def search(q: Option[com.histmersion.domain.catalogue.places.PlaceService.SearchQ], asOf: Option[com.histmersion.domain.catalogue.places.PlaceService.SearchAsOf], limit: 
+    def search(q: Option[com.histmersion.domain.catalogue.places.PlaceService.Implementation.SearchQ], asOf: Option[com.histmersion.domain.catalogue.places.PlaceService.Imple
+com.histmersion.domain.catalogue.places.PlaceService.SearchQ | base String | generated | method-parameter
+    def search(q: Option[com.histmersion.domain.catalogue.places.PlaceService.SearchQ], asOf: Option[com.histmersion.domain.catalogue.places.PlaceService.SearchAsOf], limit: 
+    def search(q: Option[com.histmersion.domain.catalogue.places.PlaceService.Implementation.SearchQ], asOf: Option[com.histmersion.domain.catalogue.places.PlaceService.Imple
+com.histmersion.domain.catalogue.places.PlaceService.SetOverrideId | base String | generated | method-parameter
+    def setOverride(id: com.histmersion.domain.catalogue.places.PlaceService.SetOverrideId, edit: Place.OverrideEdit, toleranceKm: com.histmersion.domain.catalogue.places.Pla
+com.histmersion.domain.catalogue.places.PlaceService.SetOverrideToleranceKm | base Double | generated | method-parameter
+    def setOverride(id: com.histmersion.domain.catalogue.places.PlaceService.SetOverrideId, edit: Place.OverrideEdit, toleranceKm: com.histmersion.domain.catalogue.places.Pla

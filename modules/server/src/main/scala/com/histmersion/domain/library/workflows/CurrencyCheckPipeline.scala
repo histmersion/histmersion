@@ -57,7 +57,7 @@ final class CurrencyCheckPipeline(
       )
     yield line
 
-  private def load(goal: com.histmersion.domain.library.workflows.CurrencyCheckPipeline.LoadGoal): List[Target] =
+  private def load(goal: com.histmersion.domain.automation.Goal.Slug): List[Target] =
     goalSources(goal, cfg.scheduler.currencySources)
       .flatMap(ck => site.sources.get(ck, body = false).toOption)
       .map(s => Target(s.source.citekey, s.source.doi.filter(_.trim.nonEmpty)))
@@ -73,7 +73,7 @@ final class CurrencyCheckPipeline(
     }
     Assessed(results.flatten.size, results.flatten.collect { case (ck, true) => ck })
 
-  private def followups(ctx: RunCtx, goal: com.histmersion.domain.library.workflows.CurrencyCheckPipeline.FollowupsGoal, ts: List[Target]): Followed =
+  private def followups(ctx: RunCtx, goal: com.histmersion.domain.automation.Goal.Slug, ts: List[Target]): Followed =
     val queued = queuedDois()
     val counts = ts.filter(_.doi.isDefined).map { t =>
       upstream().followups(t.citekey, None, Some(cfg.scheduler.followupsPerSource)) match
@@ -106,10 +106,6 @@ final class CurrencyCheckPipeline(
 object CurrencyCheckPipeline:
   type RunResultPart2 = RunResultPart2.T
   object RunResultPart2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type LoadGoal = LoadGoal.T
-  object LoadGoal extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type FollowupsGoal = FollowupsGoal.T
-  object FollowupsGoal extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
   final case class Target(citekey: com.histmersion.domain.library.Citekey, doi: Option[com.histmersion.domain.library.Doi]) derives KindlingsCodecAsObject
   final case class Assessed(checked: Assessed.Checked, retracted: List[Assessed.Retracted]) derives KindlingsCodecAsObject
@@ -117,8 +113,8 @@ object CurrencyCheckPipeline:
   object Assessed:
     type Checked = Checked.T
     object Checked extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
-    type Retracted = Retracted.T
-    object Retracted extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Retracted = com.histmersion.domain.library.Citekey
+    val Retracted: _root_.com.histmersion.domain.library.Citekey.type = _root_.com.histmersion.domain.library.Citekey
   final case class Followed(citing: Followed.Citing, proposed: Followed.Proposed, queued: Followed.Queued) derives KindlingsCodecAsObject
 
   object Followed:

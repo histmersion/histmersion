@@ -9,16 +9,16 @@ import com.histmersion.api.Api
   * article, else nothing; never an error.
   */
 final class ResolveView(source: ResolveView.SourceArg1 => Option[ResolvedSource], article: ResolveView.ArticleArg1 => Option[ResolvedArticle]):
-  def apply(id: com.histmersion.server.views.ResolveView.ApplyId): Either[Api.Error, ResolvedId] =
+  def apply(id: com.histmersion.server.views.ResolveView.Reference): Either[Api.Error, ResolvedId] =
     val src = source(id)
     val art = if src.isDefined then None else article(id)
     Right(ResolvedId(id, src, art))
 
 object ResolveView:
-  type SourceArg1 = SourceArg1.T
-  object SourceArg1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type ArticleArg1 = ArticleArg1.T
-  object ArticleArg1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type Reference = Reference.T
+  object Reference extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type SourceArg1 = com.histmersion.domain.library.Citekey
+  val SourceArg1: _root_.com.histmersion.domain.library.Citekey.type = _root_.com.histmersion.domain.library.Citekey
+  type ArticleArg1 = com.histmersion.domain.research.Slug
+  val ArticleArg1: _root_.com.histmersion.domain.research.Slug.type = _root_.com.histmersion.domain.research.Slug
 
-  type ApplyId = ApplyId.T
-  object ApplyId extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]

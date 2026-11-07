@@ -1,0 +1,188 @@
+## CONCEPTS NEARBY
+com.histmersion.server.ResearchWiring.ArticleLeadsArg1 (String)
+com.histmersion.server.ResearchWiring.ArticleLeadsArg2 (String)
+com.histmersion.server.ResearchWiring.NoteArg1 (String)
+com.histmersion.server.ResearchWiring.NoteResultPart2 (String)
+com.histmersion.server.SeedNoteFiles.ConfineTo (String)
+com.histmersion.server.ServerArgs.UsageValue (String)
+com.histmersion.server.ServerGraph.Migrations (String)
+com.histmersion.server.SourcePage.Notes (String)
+com.histmersion.server.SourcePage.PeriodEnd (Long)
+com.histmersion.server.SourcePage.PeriodStart (Long)
+com.histmersion.server.SourcePage.Query (String)
+com.histmersion.server.SourcePage.Regions (String)
+com.histmersion.server.SourcePage.Summary (String)
+com.histmersion.server.SourcePage.Tags (String)
+com.histmersion.server.SourcePage.Topics (String)
+com.histmersion.server.SourcePage.Venue (String)
+
+## TYPES TO DECIDE
+com.histmersion.server.Pages.ArticleLinksArg1 | base String | generated | method-parameter
+    def article(p: ArticlePage, links: com.histmersion.server.Pages.ArticleLinksArg1 => Option[LinkTarget]): com.histmersion.server.Pages.ArticleResult =
+com.histmersion.server.Pages.ArticleResult | base String | generated | method-result
+    def article(p: ArticlePage, links: com.histmersion.server.Pages.ArticleLinksArg1 => Option[LinkTarget]): com.histmersion.server.Pages.ArticleResult =
+com.histmersion.server.Pages.BacklinksResult | base String | generated | method-result
+    def backlinks(rows: List[Backlink]): com.histmersion.server.Pages.BacklinksResult =
+com.histmersion.server.Pages.CitationResult | base String | generated | method-result
+    def citation(c: Citation): com.histmersion.server.Pages.CitationResult = c match
+com.histmersion.server.Pages.CitationsBlockAnchor | base String | generated | method-parameter
+    def block(anchor: com.histmersion.server.Pages.CitationsBlockAnchor, title: com.histmersion.server.Pages.CitationsBlockTitle, cs: List[Citation]) =
+com.histmersion.server.Pages.CitationsBlockTitle | base String | generated | method-parameter
+    def block(anchor: com.histmersion.server.Pages.CitationsBlockAnchor, title: com.histmersion.server.Pages.CitationsBlockTitle, cs: List[Citation]) =
+com.histmersion.server.Pages.CitationsResult | base String | generated | method-result
+    def citations(cites: List[Citation], citedBy: List[Citation]): com.histmersion.server.Pages.CitationsResult =
+com.histmersion.server.Pages.CiteNumberN | base Int | generated | method-parameter
+    private def citeNumber(n: com.histmersion.server.Pages.CiteNumberN): com.histmersion.server.Pages.CiteNumberResult =
+com.histmersion.server.Pages.CiteNumberResult | base String | generated | method-result
+    private def citeNumber(n: com.histmersion.server.Pages.CiteNumberN): com.histmersion.server.Pages.CiteNumberResult =
+com.histmersion.server.Pages.CitedEntriesLinksArg1 | base String | generated | method-parameter
+com.histmersion.server.Pages.CitedEntriesNumbersPart1 | base String | generated | method-parameter
+com.histmersion.server.Pages.CitedEntriesNumbersPart2 | base Int | generated | method-parameter
+com.histmersion.server.Pages.FormatNoticeResult | base String | generated | method-result
+    def formatNotice(issues: List[FormatIssue], what: com.histmersion.server.Pages.FormatNoticeWhat, slug: Option[com.histmersion.server.Pages.FormatNoticeSlug]): com.histmer
+com.histmersion.server.Pages.FormatNoticeSlug | base String | generated | method-parameter
+    def formatNotice(issues: List[FormatIssue], what: com.histmersion.server.Pages.FormatNoticeWhat, slug: Option[com.histmersion.server.Pages.FormatNoticeSlug]): com.histmer
+com.histmersion.server.Pages.FormatNoticeWhat | base String | generated | method-parameter
+    def formatNotice(issues: List[FormatIssue], what: com.histmersion.server.Pages.FormatNoticeWhat, slug: Option[com.histmersion.server.Pages.FormatNoticeSlug]): com.histmer
+com.histmersion.server.Pages.GoalBadgeLinkResult | base String | generated | method-result
+    def goalBadgeLink(g: ReviewGoal): com.histmersion.server.Pages.GoalBadgeLinkResult =
+com.histmersion.server.Pages.KindLabelKind | base String | generated | method-parameter
+    private def kindLabel(kind: com.histmersion.server.Pages.KindLabelKind): com.histmersion.server.Pages.KindLabelResult = s"""<span class="edge-kind">${esc(Label.display(ki
+com.histmersion.server.Pages.KindLabelResult | base String | generated | method-result
+    private def kindLabel(kind: com.histmersion.server.Pages.KindLabelKind): com.histmersion.server.Pages.KindLabelResult = s"""<span class="edge-kind">${esc(Label.display(ki
+com.histmersion.server.Pages.LinkProseLinksArg1 | base String | generated | method-parameter
+    def linkProse(md: com.histmersion.server.Pages.LinkProseMd, links: com.histmersion.server.Pages.LinkProseLinksArg1 => Option[LinkTarget], number: com.histmersion.server.P
+com.histmersion.server.Pages.LinkProseMd | base String | generated | method-parameter
+    def linkProse(md: com.histmersion.server.Pages.LinkProseMd, links: com.histmersion.server.Pages.LinkProseLinksArg1 => Option[LinkTarget], number: com.histmersion.server.P
+com.histmersion.server.Pages.LinkProseNumberArg1 | base String | generated | method-parameter
+    def linkProse(md: com.histmersion.server.Pages.LinkProseMd, links: com.histmersion.server.Pages.LinkProseLinksArg1 => Option[LinkTarget], number: com.histmersion.server.P
+com.histmersion.server.Pages.LinkProseNumberResult | base Int | generated | method-parameter
+    def linkProse(md: com.histmersion.server.Pages.LinkProseMd, links: com.histmersion.server.Pages.LinkProseLinksArg1 => Option[LinkTarget], number: com.histmersion.server.P
+com.histmersion.server.Pages.LinkProseResult | base String | generated | method-result
+    def linkProse(md: com.histmersion.server.Pages.LinkProseMd, links: com.histmersion.server.Pages.LinkProseLinksArg1 => Option[LinkTarget], number: com.histmersion.server.P
+com.histmersion.server.Pages.NumberingLinksArg1 | base String | generated | method-parameter
+    def numbering(md: com.histmersion.server.Pages.NumberingMd, links: com.histmersion.server.Pages.NumberingLinksArg1 => Option[LinkTarget]): Map[com.histmersion.server.Page
+com.histmersion.server.Pages.NumberingMd | base String | generated | method-parameter
+    def numbering(md: com.histmersion.server.Pages.NumberingMd, links: com.histmersion.server.Pages.NumberingLinksArg1 => Option[LinkTarget]): Map[com.histmersion.server.Page
+com.histmersion.server.Pages.NumberingResultPart1 | base String | generated | method-result
+    def numbering(md: com.histmersion.server.Pages.NumberingMd, links: com.histmersion.server.Pages.NumberingLinksArg1 => Option[LinkTarget]): Map[com.histmersion.server.Page
+com.histmersion.server.Pages.NumberingResultPart2 | base Int | generated | method-result
+    def numbering(md: com.histmersion.server.Pages.NumberingMd, links: com.histmersion.server.Pages.NumberingLinksArg1 => Option[LinkTarget]): Map[com.histmersion.server.Page
+com.histmersion.server.Pages.ReadableUtcResult | base String | generated | method-result
+    def readableUtc(t: com.histmersion.server.Pages.ReadableUtcT): com.histmersion.server.Pages.ReadableUtcResult = t match
+com.histmersion.server.Pages.ReadableUtcT | base String | generated | method-parameter
+    def readableUtc(t: com.histmersion.server.Pages.ReadableUtcT): com.histmersion.server.Pages.ReadableUtcResult = t match
+com.histmersion.server.Pages.ReviewBadgeResult | base String | generated | method-result
+    def reviewBadge(b: ReviewBadge): com.histmersion.server.Pages.ReviewBadgeResult =
+com.histmersion.server.Pages.ReviewHistoryResult | base String | generated | method-result
+    def reviewHistory(r: Article.ReviewView): com.histmersion.server.Pages.ReviewHistoryResult =
+com.histmersion.server.Pages.ReviewLineResult | base String | generated | method-result
+    def reviewLine(r: Article.ReviewView): com.histmersion.server.Pages.ReviewLineResult =
+com.histmersion.server.Pages.SourceHtmlMd | base String | generated | method-parameter
+    def html(md: com.histmersion.server.Pages.SourceHtmlMd): com.histmersion.server.Pages.SourceHtmlResult =
+com.histmersion.server.Pages.SourceHtmlResult | base String | generated | method-result
+    def html(md: com.histmersion.server.Pages.SourceHtmlMd): com.histmersion.server.Pages.SourceHtmlResult =
+com.histmersion.server.Pages.SourceLinksArg1 | base String | generated | method-parameter
+    def source(p: SourcePage, links: com.histmersion.server.Pages.SourceLinksArg1 => Option[LinkTarget]): com.histmersion.server.Pages.SourceResult =
+com.histmersion.server.Pages.SourceResult | base String | generated | method-result
+    def source(p: SourcePage, links: com.histmersion.server.Pages.SourceLinksArg1 => Option[LinkTarget]): com.histmersion.server.Pages.SourceResult =
+com.histmersion.server.Pages.SourcesCitedResult | base String | generated | method-result
+    def sourcesCited(entries: List[CitedEntry]): com.histmersion.server.Pages.SourcesCitedResult =
+com.histmersion.server.ResearchWiring.ArticleLeadsArg1 | base String | generated | constructor-parameter
+com.histmersion.server.ResearchWiring.ArticleLeadsArg2 | base String | generated | constructor-parameter
+com.histmersion.server.ResearchWiring.NoteArg1 | base String | generated | constructor-parameter
+com.histmersion.server.ResearchWiring.NoteResultPart2 | base String | generated | constructor-parameter
+com.histmersion.server.ResearchWorkflowSite.GoalSlug | base String | generated | method-parameter
+    def goal(slug: com.histmersion.server.ResearchWorkflowSite.GoalSlug): Either[Api.Error, Goal] = h.goals.get(slug)
+com.histmersion.server.SeedNoteFiles.ConfineTo | base String | generated | constructor-parameter
+    final class SeedNoteFiles(dir: Path, confineTo: Option[SeedNoteFiles.ConfineTo])(using com.histmersion.util.storage.TextFiles) extends SeedFolder:
+com.histmersion.server.SeedNoteFiles.DirForCitekey | base String | generated | method-parameter
+    def dirFor(notePath: Path, noteText: com.histmersion.server.SeedNoteFiles.DirForNoteText, citekey: com.histmersion.server.SeedNoteFiles.DirForCitekey): Option[Path] =
+com.histmersion.server.SeedNoteFiles.DirForNoteText | base String | generated | method-parameter
+    def dirFor(notePath: Path, noteText: com.histmersion.server.SeedNoteFiles.DirForNoteText, citekey: com.histmersion.server.SeedNoteFiles.DirForCitekey): Option[Path] =
+com.histmersion.server.SeedNoteFiles.FiguresCitekey | base String | generated | method-parameter
+    def figures(name: com.histmersion.server.SeedNoteFiles.FiguresName, citekey: com.histmersion.server.SeedNoteFiles.FiguresCitekey, maxBytes: com.histmersion.server.SeedNot
+com.histmersion.server.SeedNoteFiles.FiguresMaxBytes | base Long | generated | method-parameter
+    def figures(name: com.histmersion.server.SeedNoteFiles.FiguresName, citekey: com.histmersion.server.SeedNoteFiles.FiguresCitekey, maxBytes: com.histmersion.server.SeedNot
+com.histmersion.server.SeedNoteFiles.FiguresName | base String | generated | method-parameter
+    def figures(name: com.histmersion.server.SeedNoteFiles.FiguresName, citekey: com.histmersion.server.SeedNoteFiles.FiguresCitekey, maxBytes: com.histmersion.server.SeedNot
+com.histmersion.server.SeedNoteFiles.LoadMaxBytes | base Long | generated | method-parameter
+    def load(dir: Path, maxBytes: com.histmersion.server.SeedNoteFiles.LoadMaxBytes): List[NewFigure] =
+com.histmersion.server.SeedNoteFiles.NotesResult | base String | generated | method-result
+    def notes: List[com.histmersion.server.SeedNoteFiles.NotesResult] =
+com.histmersion.server.SeedNoteFiles.ReadName | base String | generated | method-parameter
+    def read(name: com.histmersion.server.SeedNoteFiles.ReadName): Option[SeedNote] =
+com.histmersion.server.ServerArgs.ParseArgs | base String | generated | method-parameter
+    def parse(args: List[com.histmersion.server.ServerArgs.ParseArgs]): Either[com.histmersion.server.ServerArgs.ParseResultPart1, ServerMode] =
+com.histmersion.server.ServerArgs.ParseResultPart1 | base String | generated | method-result
+    def parse(args: List[com.histmersion.server.ServerArgs.ParseArgs]): Either[com.histmersion.server.ServerArgs.ParseResultPart1, ServerMode] =
+com.histmersion.server.ServerArgs.UsageValue | base String | original | alias
+com.histmersion.server.ServerGraph.AddWatchResultPart1 | base String | generated | method-result
+    private[server] def addWatch(): Either[com.histmersion.server.ServerGraph.AddWatchResultPart1, Hot[com.histmersion.server.ServerGraph.AddWatchResultPart2]] =
+com.histmersion.server.ServerGraph.AddWatchResultPart2 | base Boolean | generated | method-result
+    private[server] def addWatch(): Either[com.histmersion.server.ServerGraph.AddWatchResultPart1, Hot[com.histmersion.server.ServerGraph.AddWatchResultPart2]] =
+com.histmersion.server.ServerGraph.Migrations | base String | generated | constructor-parameter
+    val migrations: Hot[ServerGraph.Migrations],
+    val Migrations = "migrations"
+com.histmersion.server.ServerGraph.RedactResult | base String | generated | method-result
+    def redact(url: com.histmersion.server.ServerGraph.RedactUrl): com.histmersion.server.ServerGraph.RedactResult = url.takeWhile(_ != '?')
+com.histmersion.server.ServerGraph.RedactUrl | base String | generated | method-parameter
+    def redact(url: com.histmersion.server.ServerGraph.RedactUrl): com.histmersion.server.ServerGraph.RedactResult = url.takeWhile(_ != '?')
+com.histmersion.server.ServerGraph.StartResultPart1 | base String | generated | method-result
+com.histmersion.server.ServerGraph.WatchDebounceMs | base Long | generated | method-parameter
+    private def watch(file: Path, debounceMs: com.histmersion.server.ServerGraph.WatchDebounceMs, changed: () => Unit): Unit =
+com.histmersion.server.ServerGraph.WatchOursResult | base Boolean | generated | method-result
+    def ours(k: java.nio.file.WatchKey): com.histmersion.server.ServerGraph.WatchOursResult =
+com.histmersion.server.ServerPlugins.LoadChanged | base String | generated | method-parameter
+com.histmersion.server.ServerPlugins.OfflineWithCarriedPart1 | base String | generated | method-parameter
+com.histmersion.server.ServerToolFiles.FilePath | base String | generated | method-parameter
+    def file(path: com.histmersion.server.ServerToolFiles.FilePath): Either[com.histmersion.server.ServerToolFiles.FileResultPart1, Option[Upload]] =
+com.histmersion.server.ServerToolFiles.FileResultPart1 | base String | generated | method-result
+    def file(path: com.histmersion.server.ServerToolFiles.FilePath): Either[com.histmersion.server.ServerToolFiles.FileResultPart1, Option[Upload]] =
+com.histmersion.server.ServerWiring.AcquisitionItemNamingDoi | base String | generated | method-parameter
+    def acquisitionItemNaming(doi: com.histmersion.server.ServerWiring.AcquisitionItemNamingDoi): Option[com.histmersion.server.ServerWiring.AcquisitionItemNamingResult] =
+com.histmersion.server.ServerWiring.AcquisitionItemNamingResult | base Int | generated | method-result
+    def acquisitionItemNaming(doi: com.histmersion.server.ServerWiring.AcquisitionItemNamingDoi): Option[com.histmersion.server.ServerWiring.AcquisitionItemNamingResult] =
+com.histmersion.server.ServerWiring.CurrentId | base String | generated | method-parameter
+    def current(k: AliasKind, id: com.histmersion.server.ServerWiring.CurrentId): com.histmersion.server.ServerWiring.CurrentResult = Deps.aliasTables.current(ds, k, id)
+com.histmersion.server.ServerWiring.CurrentResult | base String | generated | method-result
+    def current(k: AliasKind, id: com.histmersion.server.ServerWiring.CurrentId): com.histmersion.server.ServerWiring.CurrentResult = Deps.aliasTables.current(ds, k, id)
+com.histmersion.server.ServerWiring.GeocodeName | base String | generated | method-parameter
+    def geocode(name: com.histmersion.server.ServerWiring.GeocodeName, hint: Geocode.KindHint, at: Option[Period]): Option[Geocode.Resolution] =
+com.histmersion.server.ServerWiring.MentionedInCitekey | base String | generated | method-parameter
+    private def mentionedIn(citekey: com.histmersion.server.ServerWiring.MentionedInCitekey): com.histmersion.server.ServerWiring.MentionedInResult = research.articles.mentio
+com.histmersion.server.ServerWiring.MentionedInResult | base String | generated | method-result
+    private def mentionedIn(citekey: com.histmersion.server.ServerWiring.MentionedInCitekey): com.histmersion.server.ServerWiring.MentionedInResult = research.articles.mentio
+com.histmersion.server.ServerWiring.PlaceCountsId | base String | generated | method-parameter
+    private def placeCounts(id: com.histmersion.server.ServerWiring.PlaceCountsId): Place.Counts =
+com.histmersion.server.ServerWiring.RunId | base String | generated | method-parameter
+    def run(id: com.histmersion.server.ServerWiring.RunId, a: JobAction): Either[Api.Error, Unit] = (a match
+com.histmersion.server.SourcePage.Notes | base String | original | constructor-parameter
+com.histmersion.server.SourcePage.PeriodEnd | base Long | original | constructor-parameter
+com.histmersion.server.SourcePage.PeriodStart | base Long | original | constructor-parameter
+com.histmersion.server.SourcePage.Query | base String | original | constructor-parameter
+com.histmersion.server.SourcePage.Regions | base String | original | constructor-parameter
+com.histmersion.server.SourcePage.Summary | base String | original | constructor-parameter
+com.histmersion.server.SourcePage.Tags | base String | original | constructor-parameter
+com.histmersion.server.SourcePage.Topics | base String | original | constructor-parameter
+com.histmersion.server.SourcePage.Venue | base String | original | constructor-parameter
+com.histmersion.server.Static.ReadPath | base String | generated | method-parameter
+    def read(path: com.histmersion.server.Static.ReadPath): com.histmersion.server.Static.ReadResult =
+com.histmersion.server.Static.ReadResult | base String | generated | method-result
+    def read(path: com.histmersion.server.Static.ReadPath): com.histmersion.server.Static.ReadResult =
+com.histmersion.server.StorageLocations.ConfiguredEnvArg1 | base String | generated | method-parameter
+    private def configured(s: com.histmersion.server.StorageLocations.ConfiguredS, env: com.histmersion.server.StorageLocations.ConfiguredEnvArg1 => Option[com.histmersion.se
+com.histmersion.server.StorageLocations.ConfiguredEnvResult | base String | generated | method-parameter
+    private def configured(s: com.histmersion.server.StorageLocations.ConfiguredS, env: com.histmersion.server.StorageLocations.ConfiguredEnvArg1 => Option[com.histmersion.se
+com.histmersion.server.StorageLocations.ConfiguredS | base String | generated | method-parameter
+    private def configured(s: com.histmersion.server.StorageLocations.ConfiguredS, env: com.histmersion.server.StorageLocations.ConfiguredEnvArg1 => Option[com.histmersion.se
+com.histmersion.server.StorageLocations.MeasuredEnvArg1 | base String | generated | method-parameter
+    def measured(cfg: AppConfig, env: com.histmersion.server.StorageLocations.MeasuredEnvArg1 => Option[com.histmersion.server.StorageLocations.MeasuredEnvResult], osName: co
+com.histmersion.server.StorageLocations.MeasuredEnvResult | base String | generated | method-parameter
+    def measured(cfg: AppConfig, env: com.histmersion.server.StorageLocations.MeasuredEnvArg1 => Option[com.histmersion.server.StorageLocations.MeasuredEnvResult], osName: co
+com.histmersion.server.StorageLocations.MeasuredOsName | base String | generated | method-parameter
+    def measured(cfg: AppConfig, env: com.histmersion.server.StorageLocations.MeasuredEnvArg1 => Option[com.histmersion.server.StorageLocations.MeasuredEnvResult], osName: co
+com.histmersion.server.StorageLocations.SearchPathPath | base String | generated | method-parameter
+    def searchPath(path: Option[com.histmersion.server.StorageLocations.SearchPathPath]): List[Store] =
+com.histmersion.server.StorageLocations.SpoolDir | base String | generated | method-parameter
+    def spool(dir: com.histmersion.server.StorageLocations.SpoolDir): Path =

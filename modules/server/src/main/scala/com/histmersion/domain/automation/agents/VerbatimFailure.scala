@@ -6,13 +6,13 @@ package com.histmersion.domain.automation.agents
 final class VerbatimFailure(val description: VerbatimFailure.Description) extends java.io.IOException(description)
 
 object VerbatimFailure:
+  type Problem = Problem.T
+  object Problem extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   /** How a failed provider call is described: a verbatim failure as it is, any other exception by class and message. */
-  type Description = Description.T
-  object Description extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type Description = com.histmersion.domain.automation.agents.VerbatimFailure.Problem
+  val Description: _root_.com.histmersion.domain.automation.agents.VerbatimFailure.Problem.type = _root_.com.histmersion.domain.automation.agents.VerbatimFailure.Problem
 
-  type DescribeResult = DescribeResult.T
-  object DescribeResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
-  def describe(e: Throwable): com.histmersion.domain.automation.agents.VerbatimFailure.DescribeResult = e match
+  def describe(e: Throwable): com.histmersion.domain.automation.agents.VerbatimFailure.Problem = e match
     case v: VerbatimFailure => v.description
     case _                  => s"${e.getClass.getSimpleName}: ${Option(e.getMessage).getOrElse("")}"

@@ -58,7 +58,7 @@ final class GoalFocusService(
     * the focus holds nothing; it ranks the goals (what [[info]] shows), and its pins and priorities are the goals'
     * priorities in the scheduler.
     */
-  def inForce: com.histmersion.domain.automation.goals.GoalFocusService.InForceResult = false
+  def inForce: Boolean = false
 
   /** Every goal's facts as the focus reads them (the scheduler's goal priorities, ages and stages). */
   def facts(): List[Facts] = read().facts
@@ -75,7 +75,7 @@ final class GoalFocusService(
   @volatile private var queued: Set[com.histmersion.domain.automation.goals.GoalFocusService.Queued] = Set.empty
 
   /** The status line of a seeding manager or watcher whose goal waits for a focus slot (else `note`). */
-  def statusNote(goal: Option[com.histmersion.domain.automation.goals.GoalFocusService.StatusNoteGoal], note: com.histmersion.domain.automation.goals.GoalFocusService.StatusNoteNote): com.histmersion.domain.automation.goals.GoalFocusService.StatusNoteResult =
+  def statusNote(goal: Option[com.histmersion.domain.automation.Goal.Slug], note: com.histmersion.domain.automation.managers.ManagerLight.StatusNote): com.histmersion.domain.automation.goals.GoalFocusService.StatusNoteResult =
     goal.filter(g => current.isDefined && queued(g)).fold(note)(_ => s"focus: its goal waits for a slot — $note")
 
   // ── the facts ──────────────────────────────────────────────────────────────────────────────────
@@ -83,7 +83,7 @@ final class GoalFocusService(
   /** Does only a person decide an approval of `kind` opened by a run of a manager whose `autoApprove` is `auto` (the
     * same rule as [[AutoApprovals.checked]])?
     */
-  private def byPerson(kind: Option[com.histmersion.domain.automation.goals.GoalFocusService.ByPersonKind], autoApprove: Option[com.histmersion.domain.automation.goals.GoalFocusService.ByPersonAutoApprove]): com.histmersion.domain.automation.goals.GoalFocusService.ByPersonResult =
+  private def byPerson(kind: Option[com.histmersion.domain.automation.goals.FocusRepo.WorkRow.Kind], autoApprove: Option[com.histmersion.domain.automation.goals.FocusRepo.WorkRow.AutoApprove]): Boolean =
     kind.flatMap(ApprovalKind.parse) match
       case Some(k) if List(ApprovalKind.ArticlePlan, ApprovalKind.GoalPlan, ApprovalKind.ArticlePublish).contains(k) =>
         !autoApprove
@@ -193,10 +193,10 @@ final class GoalFocusService(
   private def notInForce: com.histmersion.domain.automation.goals.GoalFocusService.NotInForceResult = "the central scheduler admits the work (agents.scheduler.strategy)"
 
   /** The goal's manager an event about it goes to: its seeding manager, else its watcher. */
-  private def managerOf(goal: com.histmersion.domain.automation.goals.GoalFocusService.ManagerOfGoal): Option[com.histmersion.domain.automation.goals.GoalFocusService.ManagerOfResult] =
+  private def managerOf(goal: com.histmersion.domain.automation.Goal.Slug): Option[com.histmersion.domain.automation.goals.GoalFocusService.ManagerOfResult] =
     List(seedId(goal), watchId(goal)).find(id => agents.managerStore.get(id).isDefined)
 
-  private def event(goal: com.histmersion.domain.automation.goals.GoalFocusService.EventGoal, text: com.histmersion.domain.automation.goals.GoalFocusService.EventText): Unit =
+  private def event(goal: com.histmersion.domain.automation.Goal.Slug, text: com.histmersion.domain.automation.goals.GoalFocusService.EventText): Unit =
     managerOf(goal).foreach(id => agents.managerStore.event(id, None, None, Feed.Autopilot, text.take(2000)))
 
   /** The goals that joined and left, recorded with why. */
@@ -273,7 +273,7 @@ final class GoalFocusService(
     * focus and the plan approvals waited for each other — a goal waiting for its plan was never active, so code never
     * decided its plan).
     */
-  def goalPlanBlock(goal: com.histmersion.domain.automation.goals.GoalFocusService.GoalPlanBlockGoal, proposed: com.histmersion.domain.automation.goals.GoalFocusService.GoalPlanBlockProposed): Option[com.histmersion.domain.automation.goals.GoalFocusService.GoalPlanBlockResult] =
+  def goalPlanBlock(goal: com.histmersion.domain.automation.Goal.Slug, proposed: com.histmersion.domain.automation.goals.GoalFocusService.GoalPlanBlockProposed): Option[com.histmersion.domain.automation.goals.GoalFocusService.GoalPlanBlockResult] =
     val goals = agents.focusStore.goals()
     val kids = goals.filter(_.parent.isDefined).groupMap(_.parent.get)(identity)
     def open(s: com.histmersion.domain.automation.goals.GoalFocusService.GoalPlanBlockOpenS, seen: Set[com.histmersion.domain.automation.goals.GoalFocusService.GoalPlanBlockOpenSeen]): com.histmersion.domain.automation.goals.GoalFocusService.GoalPlanBlockOpenResult =
@@ -304,7 +304,7 @@ final class GoalFocusService(
     val plan = GoalFocus.select(r.facts, settings(r, if max > 0 then max else acfg.maxActiveGoals))
     val pace = agents.managerStore.pace(now.minusSeconds(7L * 86400L))
     val byGoal = r.facts.map(f => f.slug -> f).toMap
-    def goal(p: GoalFocus.Pick, active: com.histmersion.domain.automation.goals.GoalFocusService.InfoGoalActive): FocusGoal =
+    def goal(p: GoalFocus.Pick, active: com.histmersion.domain.automation.goals.FocusRepo.GoalRow.Active): FocusGoal =
       val f = byGoal.get(p.slug)
       val ps = List(seedId(p.slug), watchId(p.slug)).flatMap(pace.get)
       val (open, done) = (f.fold(0)(_.work.size), ps.map(_._2).sum)
@@ -357,7 +357,7 @@ final class GoalFocusService(
   def set(in: FocusSet, now: Instant = Instant.now(agents.clock)): Either[Api.Error, FocusInfo] =
     val by = in.by.map(_.trim).filter(_.nonEmpty).getOrElse("person")
     def goal = in.goal.map(_.trim).filter(_.nonEmpty).toRight(Api.Error(s"`${in.action}` needs `goal`"))
-    def missing(g: com.histmersion.domain.automation.goals.GoalFocusService.SetMissingG) = Api.Error(s"no goal '$g'", Some(Write.CodeNotFound))
+    def missing(g: com.histmersion.domain.automation.Goal.Slug) = Api.Error(s"no goal '$g'", Some(Write.CodeNotFound))
     val done: Either[Api.Error, com.histmersion.domain.automation.goals.GoalFocusService.SetDonePart2] = in.action.trim.toLowerCase match
       case "pin" | "unpin" =>
         val on = in.action.trim.equalsIgnoreCase("pin")
@@ -403,10 +403,6 @@ object GoalFocusService:
   object GoalPlanBlockOpenS extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type GoalPlanBlockOpenSeen = GoalPlanBlockOpenSeen.T
   object GoalPlanBlockOpenSeen extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type InfoGoalActive = InfoGoalActive.T
-  object InfoGoalActive extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type SetMissingG = SetMissingG.T
-  object SetMissingG extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type SetDonePart2 = SetDonePart2.T
   object SetDonePart2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
@@ -414,8 +410,6 @@ object GoalFocusService:
   object CapResultPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type CapResultPart2 = CapResultPart2.T
   object CapResultPart2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type InForceResult = InForceResult.T
-  object InForceResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type Current = Current.T
   object Current extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type ActiveGoalsResult = ActiveGoalsResult.T
@@ -424,16 +418,6 @@ object GoalFocusService:
   object Queued extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type StatusNoteResult = StatusNoteResult.T
   object StatusNoteResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type StatusNoteGoal = StatusNoteGoal.T
-  object StatusNoteGoal extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type StatusNoteNote = StatusNoteNote.T
-  object StatusNoteNote extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type ByPersonResult = ByPersonResult.T
-  object ByPersonResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type ByPersonKind = ByPersonKind.T
-  object ByPersonKind extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type ByPersonAutoApprove = ByPersonAutoApprove.T
-  object ByPersonAutoApprove extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type SettingsMax = SettingsMax.T
   object SettingsMax extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type TickResult = TickResult.T
@@ -442,10 +426,6 @@ object GoalFocusService:
   object NotInForceResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type ManagerOfResult = ManagerOfResult.T
   object ManagerOfResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type ManagerOfGoal = ManagerOfGoal.T
-  object ManagerOfGoal extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type EventGoal = EventGoal.T
-  object EventGoal extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type EventText = EventText.T
   object EventText extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type RecordResult = RecordResult.T
@@ -454,8 +434,6 @@ object GoalFocusService:
   object ApplyHoldsResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type GoalPlanBlockResult = GoalPlanBlockResult.T
   object GoalPlanBlockResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type GoalPlanBlockGoal = GoalPlanBlockGoal.T
-  object GoalPlanBlockGoal extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type GoalPlanBlockProposed = GoalPlanBlockProposed.T
   object GoalPlanBlockProposed extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type UnfinishedPlannedResult = UnfinishedPlannedResult.T

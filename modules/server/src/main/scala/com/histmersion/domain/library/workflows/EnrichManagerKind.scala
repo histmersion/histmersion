@@ -30,15 +30,15 @@ final class EnrichManagerKind(site: LibrarySite, a: AgentsControllers) extends M
   def defaults(cfg: AgentsConfig, m: ManagerDefaults): ManagerConfig =
     ReviewSettings.defaultsFor(kind.transformInto[com.histmersion.domain.automation.Manager.Kind], m)
 
-  def pipelineOf(itemKind: com.histmersion.domain.library.workflows.EnrichManagerKind.PipelineOfItemKind): Pipeline = itemKind match
+  def pipelineOf(itemKind: com.histmersion.domain.library.workflows.EnrichManagerKind.ItemKind): Pipeline = itemKind match
     case SourceEnrich => Pipeline.EnrichSource
     case _            => Pipeline.Fallback
 
   def fire(c: ManagerContext, m: ManagerInfo, now: Instant): List[com.histmersion.domain.library.workflows.EnrichManagerKind.FireResult] = Nil
 
-  def facts(c: ManagerContext, item: ManagerItem, run: com.histmersion.domain.library.workflows.EnrichManagerKind.FactsRun): StepFacts = StepFacts.Finished("enriched")
+  def facts(c: ManagerContext, item: ManagerItem, run: com.histmersion.domain.automation.Run.Id): StepFacts = StepFacts.Finished("enriched")
 
-  def target(m: ManagerInfo, itemKind: com.histmersion.domain.library.workflows.EnrichManagerKind.TargetItemKind, raw: com.histmersion.domain.library.workflows.EnrichManagerKind.TargetRaw): Either[Api.Error, com.histmersion.domain.library.workflows.EnrichManagerKind.TargetResultPart2] =
+  def target(m: ManagerInfo, itemKind: com.histmersion.domain.library.workflows.EnrichManagerKind.ItemKind, raw: com.histmersion.domain.library.workflows.EnrichManagerKind.TargetRaw): Either[Api.Error, com.histmersion.domain.library.workflows.EnrichManagerKind.TargetResultPart2] =
     itemKind match
       case SourceEnrich => site.sources.get(raw.trim, body = false).map(_.source.citekey)
       case other        => Left(Api.Error(s"unknown item kind '$other'"))
@@ -58,7 +58,7 @@ final class EnrichManagerKind(site: LibrarySite, a: AgentsControllers) extends M
     }
 
   /** Why a source counts as enriched already (findings, notes, a live enrich run), if it does. */
-  private def enrichedWhy(c: ManagerContext, ck: com.histmersion.domain.library.workflows.EnrichManagerKind.EnrichedWhyCk): Option[com.histmersion.domain.library.workflows.EnrichManagerKind.EnrichedWhyResult] =
+  private def enrichedWhy(c: ManagerContext, ck: com.histmersion.domain.library.Citekey): Option[com.histmersion.domain.library.workflows.EnrichManagerKind.EnrichedWhyResult] =
     site.sources.get(ck, body = false).toOption match
       case None      => Some("no such source")
       case Some(src) =>
@@ -163,22 +163,16 @@ final class EnrichManagerKind(site: LibrarySite, a: AgentsControllers) extends M
         c.settleNow(m, item, ItemStatus.Cancelled, s"'$other' items are not driven by a ${m.kind} manager")
 
 object EnrichManagerKind:
-  type PipelineOfItemKind = PipelineOfItemKind.T
-  object PipelineOfItemKind extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type ItemKind = ItemKind.T
+  object ItemKind extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type FireResult = FireResult.T
   object FireResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type FactsRun = FactsRun.T
-  object FactsRun extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type TargetResultPart2 = TargetResultPart2.T
   object TargetResultPart2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type TargetItemKind = TargetItemKind.T
-  object TargetItemKind extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type TargetRaw = TargetRaw.T
   object TargetRaw extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type EnrichedWhyResult = EnrichedWhyResult.T
   object EnrichedWhyResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type EnrichedWhyCk = EnrichedWhyCk.T
-  object EnrichedWhyCk extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type AutoEnrichResult = AutoEnrichResult.T
   object AutoEnrichResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type IngestedResult = IngestedResult.T

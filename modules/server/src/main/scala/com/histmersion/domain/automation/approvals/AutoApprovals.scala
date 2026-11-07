@@ -43,7 +43,7 @@ final class AutoApprovals(
   private def runOf(a: ApprovalInfo): Option[RunInfo] = a.runId.flatMap(agents.runs.get(_))
 
   /** Does the supervisor decide `a`? The manager's `autoApprove` wins; else `agents.approvals.<kind>`. */
-  def checked(a: ApprovalInfo, manager: Option[Managers.ManagerInfo]): com.histmersion.domain.automation.approvals.AutoApprovals.CheckedResult =
+  def checked(a: ApprovalInfo, manager: Option[Managers.ManagerInfo]): Boolean =
     a.approvalKind.exists(k =>
       Kinds.contains(k) &&
         manager
@@ -52,7 +52,7 @@ final class AutoApprovals(
     )
 
   /** Decide what can be decided now; one line per decision (for the tick's log). */
-  def sweep(now: Instant): List[com.histmersion.domain.automation.approvals.AutoApprovals.SweepResult] =
+  def sweep(now: Instant): List[String] =
     // the goals the scheduler puts first, first: a daily cap is spent on the highest-priority goals (a pin, a
     // person's priority), then the oldest goals; approvals about no known goal last, oldest first
     // the window is taken among the approvals code decides: those a person decides never crowd it out
@@ -96,7 +96,7 @@ final class AutoApprovals(
       run: Option[RunInfo],
       mgr: Option[Managers.ManagerInfo],
       now: Instant
-  ): List[com.histmersion.domain.automation.approvals.AutoApprovals.DecideResult] =
+  ): List[com.histmersion.domain.automation.Approval.Outcome] =
     val verdict = judge(a, run, mgr, now)
     val what = s"${a.kind} #${a.id}${a.subject.fold("")(s => s" ($s)")}"
     AutopilotPolicy.note(verdict) match
@@ -136,7 +136,7 @@ final class AutoApprovals(
   /** Today's cap of automatic goal-plan approvals: `goal-plans-per-day`, scaled to the open plans when
     * `goal-plans-backlog-share` is above 0 (at most `goal-plans-ceiling`).
     */
-  def goalPlanCap: com.histmersion.domain.automation.approvals.AutoApprovals.GoalPlanCapResult =
+  def goalPlanCap: com.histmersion.domain.automation.approvals.AutoApprovals.GoalPlanCap =
     val c = cfg.approvals.auto
     AutopilotPolicy.scaledCap(
       c.goalPlansPerDay,
@@ -146,7 +146,7 @@ final class AutoApprovals(
     )
 
   /** Today's cap of automatic publishes, scaled the same way to the open drafts. */
-  def publishCap: com.histmersion.domain.automation.approvals.AutoApprovals.PublishCapResult =
+  def publishCap: com.histmersion.domain.automation.approvals.ApprovalChecks.PublishCap =
     val c = cfg.approvals.auto
     AutopilotPolicy.scaledCap(
       c.publishPerDay,
@@ -185,7 +185,7 @@ final class AutoApprovals(
               case v                      => v
       case _ => Verdict.Leave("not a kind the autopilot decides")
 
-  def checkpoint(run: com.histmersion.domain.automation.approvals.AutoApprovals.CheckpointRun, step: com.histmersion.domain.automation.approvals.AutoApprovals.CheckpointStep): Option[com.histmersion.domain.automation.approvals.AutoApprovals.CheckpointResult] =
+  def checkpoint(run: com.histmersion.domain.automation.Run.Id, step: com.histmersion.domain.automation.agents.AgentRepo.StepRecord.Name): Option[String] =
     agents.runs
       .steps(run, 100000)
       .filter(s => s.name == step && s.status == StepStatus.Done.wire)
@@ -193,27 +193,9 @@ final class AutoApprovals(
       .flatMap(_.output)
 
   def config: AgentsConfig = cfg
-  def slugExists(slug: com.histmersion.domain.automation.approvals.AutoApprovals.SlugExistsSlug): com.histmersion.domain.automation.approvals.AutoApprovals.SlugExistsResult = agents.host.articleExists(slug)
+  def slugExists(slug: com.histmersion.domain.automation.approvals.ApprovalChecks.Slug): Boolean = agents.host.articleExists(slug)
   def autoApprovedSince(kind: com.histmersion.domain.automation.Approval.Kind, since: Instant): List[ApprovalInfo] = agents.approvalStore.autoApprovedSince(io.scalaland.chimney.Transformer.derive[com.histmersion.domain.automation.Approval.Kind, ApprovalKind].transform(kind), since)
 
 object AutoApprovals:
-  type CheckedResult = CheckedResult.T
-  object CheckedResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type SweepResult = SweepResult.T
-  object SweepResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type DecideResult = DecideResult.T
-  object DecideResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type GoalPlanCapResult = GoalPlanCapResult.T
-  object GoalPlanCapResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type PublishCapResult = PublishCapResult.T
-  object PublishCapResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type CheckpointResult = CheckpointResult.T
-  object CheckpointResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type CheckpointRun = CheckpointRun.T
-  object CheckpointRun extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type CheckpointStep = CheckpointStep.T
-  object CheckpointStep extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type SlugExistsResult = SlugExistsResult.T
-  object SlugExistsResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type SlugExistsSlug = SlugExistsSlug.T
-  object SlugExistsSlug extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type GoalPlanCap = GoalPlanCap.T
+  object GoalPlanCap extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]

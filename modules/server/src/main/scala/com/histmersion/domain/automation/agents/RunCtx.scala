@@ -34,13 +34,13 @@ final class RunCtx private[automation] (val run: RunInfo, engine: Engine):
     */
   private var nextSeq = 0
 
-  private def claimSeq(): com.histmersion.domain.automation.agents.RunCtx.ClaimSeqResult = { nextSeq += 1; nextSeq }
+  private def claimSeq(): com.histmersion.domain.automation.agents.AgentRepo.StepRecord.Seq = { nextSeq += 1; nextSeq }
 
   /** The next `n` step numbers, for steps that then run IN PARALLEL ([[llmAt]] inside one [[RunCtx.parallel]]):
     * numbering happens here, in program order, so a resumed run lines its parallel steps up with their checkpoints
     * whichever of them finished first.
     */
-  def reserve(n: com.histmersion.domain.automation.agents.RunCtx.ReserveN): List[com.histmersion.domain.automation.agents.RunCtx.ReserveResult] = List.fill(math.max(0, n))(claimSeq())
+  def reserve(n: Int): List[com.histmersion.domain.automation.agents.AgentRepo.StepRecord.Seq] = List.fill(math.max(0, n))(claimSeq())
 
   /** Run steps concurrently (Ox `par`, inside the run's own thread's scope: a cancel interrupts them all). A halt wins
     * over the others' results — cancel first, then a failure (terminal), then a pause — but every step that finished is
@@ -60,10 +60,10 @@ final class RunCtx private[automation] (val run: RunInfo, engine: Engine):
       case Some(h) => Left(h)
       case None    => Right(results.collect { case Right(a) => a }.toList)
 
-  def warn(w: com.histmersion.domain.automation.agents.RunCtx.WarnW): Unit = engine.agents.jobRuns.warn(JobKind, run.id, w.take(500))
+  def warn(w: String): Unit = engine.agents.jobRuns.warn(JobKind, run.id, w.take(500))
 
   /** A DRY run (#992) reads and calls models as usual but writes nothing to the corpus. */
-  def dryRun: com.histmersion.domain.automation.agents.RunCtx.DryRunResult = run.dryRun
+  def dryRun: Boolean = run.dryRun
 
   /** The writes this run's current step skipped (a dry run), recorded with the step when it ends. A concurrent queue: a
     * step's body runs on the run's thread, but nothing stops a parallel step from asking.
@@ -78,18 +78,18 @@ final class RunCtx private[automation] (val run: RunInfo, engine: Engine):
     * (the whole write, as JSON) are recorded on the step under "dry run: not written", and `simulated` stands in for
     * the result.
     */
-  def write[A](what: com.histmersion.domain.automation.agents.RunCtx.WriteWhat, payload: => io.circe.Json)(perform: => A)(simulated: => A): A =
+  def write[A](what: String, payload: => io.circe.Json)(perform: => A)(simulated: => A): A =
     if !dryRun then perform
     else
       skipped.add(WouldWrite(what, payload.noSpaces))
       simulated
 
-  def progress(p: com.histmersion.domain.automation.agents.RunCtx.ProgressP): Unit = engine.agents.jobRuns.progress(JobKind, run.id, p)
+  def progress(p: String): Unit = engine.agents.jobRuns.progress(JobKind, run.id, p)
 
   /** Replay step `seq` if it finished before; a recorded step of another NAME means the pipeline changed under a paused
     * run, which is refused rather than misread.
     */
-  private def replay[O: Decoder](seq: com.histmersion.domain.automation.agents.RunCtx.ReplaySeq, name: com.histmersion.domain.automation.agents.RunCtx.ReplayName): Option[Either[Halt, O]] =
+  private def replay[O: Decoder](seq: com.histmersion.domain.automation.agents.AgentRepo.StepRecord.Seq, name: com.histmersion.domain.automation.agents.AgentRepo.StepRecord.Name): Option[Either[Halt, O]] =
     engine.agents.runs.checkpoint(run.id, seq).map { (recorded, json) =>
       if recorded != name then
         Left(
@@ -104,7 +104,7 @@ final class RunCtx private[automation] (val run: RunInfo, engine: Engine):
   /** A deterministic step. Its output is checkpointed, so a side effect in `body` (a patch, a queue entry) happens at
     * most once per run.
     */
-  def code[O: {Encoder, Decoder}](name: com.histmersion.domain.automation.agents.RunCtx.CodeName)(body: => Either[String, O]): Either[Halt, O] =
+  def code[O: {Encoder, Decoder}](name: com.histmersion.domain.automation.agents.AgentRepo.StepRecord.Name)(body: => Either[String, O]): Either[Halt, O] =
     val seq = claimSeq()
     replay[O](seq, name).getOrElse {
       engine.checkControl(run.id).flatMap { _ =>
@@ -173,7 +173,7 @@ final class RunCtx private[automation] (val run: RunInfo, engine: Engine):
     * opens none: the proposal is recorded on the step as not written, and the run goes on as if it were approved, so
     * the steps after it run too (and skip their writes).
     */
-  def approval(name: com.histmersion.domain.automation.agents.RunCtx.ApprovalName, kind: ApprovalKind, subject: com.histmersion.domain.automation.agents.RunCtx.ApprovalSubject, mode: ApprovalMode)(
+  def approval(name: com.histmersion.domain.automation.agents.AgentRepo.StepRecord.Name, kind: ApprovalKind, subject: com.histmersion.domain.automation.approvals.ApprovalQuery.Subject, mode: ApprovalMode)(
       payload: => Either[String, String]
   ): Either[Halt, Decided] =
     val seq = claimSeq()
@@ -263,16 +263,16 @@ final class RunCtx private[automation] (val run: RunInfo, engine: Engine):
     * appends to its USER message — never the system prompt: they are fenced, and subordinate to the record. Empty when
     * the run has none.
     */
-  def notes: com.histmersion.domain.automation.agents.RunCtx.NotesResult = Prompt.notes(run.params.noteList)
+  def notes: String = Prompt.notes(run.params.noteList)
 
   def llm[A, O: {Encoder, Decoder}](
-      name: com.histmersion.domain.automation.agents.RunCtx.LlmName,
+      name: com.histmersion.domain.automation.agents.AgentRepo.StepRecord.Name,
       agent: StepAgent,
-      user: com.histmersion.domain.automation.agents.RunCtx.LlmUser,
+      user: com.histmersion.domain.automation.agents.Prompt.UserText,
       schema: ResponseSchema[A],
-      maxTokens: Option[com.histmersion.domain.automation.agents.RunCtx.LlmMaxTokens] = None,
-      turns: Option[com.histmersion.domain.automation.agents.RunCtx.LlmTurns] = None
-  )(validate: (A, com.histmersion.domain.automation.agents.RunCtx.LlmValidateArg2) => Either[List[com.histmersion.domain.automation.agents.RunCtx.LlmValidateResultPart1], Checked[O]]): Either[Halt, O] =
+      maxTokens: Option[com.histmersion.domain.automation.agents.RunCtx.MaxTokens] = None,
+      turns: Option[com.histmersion.domain.automation.agents.AgentRepo.StepRecord.Turns] = None
+  )(validate: (A, com.histmersion.domain.automation.agents.RunCtx.Validate) => Either[List[com.histmersion.domain.automation.agents.RunCtx.Problem], Checked[O]]): Either[Halt, O] =
     llmAt(claimSeq(), name, agent, user, schema, maxTokens, turns)(validate)
 
   /** [[llm]] at a step number taken earlier with [[reserve]] — the form a parallel step uses. `maxTokens` overrides
@@ -281,14 +281,14 @@ final class RunCtx private[automation] (val run: RunInfo, engine: Engine):
     * [[Engine.stepTurns]]).
     */
   def llmAt[A, O: {Encoder, Decoder}](
-      seq: com.histmersion.domain.automation.agents.RunCtx.LlmAtSeq,
-      name: com.histmersion.domain.automation.agents.RunCtx.LlmAtName,
+      seq: com.histmersion.domain.automation.agents.AgentRepo.StepRecord.Seq,
+      name: com.histmersion.domain.automation.agents.AgentRepo.StepRecord.Name,
       agent: StepAgent,
-      user: com.histmersion.domain.automation.agents.RunCtx.LlmAtUser,
+      user: com.histmersion.domain.automation.agents.Prompt.UserText,
       schema: ResponseSchema[A],
-      maxTokens: Option[com.histmersion.domain.automation.agents.RunCtx.LlmAtMaxTokens] = None,
-      turns: Option[com.histmersion.domain.automation.agents.RunCtx.LlmAtTurns] = None
-  )(validate: (A, com.histmersion.domain.automation.agents.RunCtx.LlmAtValidateArg2) => Either[List[com.histmersion.domain.automation.agents.RunCtx.LlmAtValidateResultPart1], Checked[O]]): Either[Halt, O] =
+      maxTokens: Option[com.histmersion.domain.automation.agents.RunCtx.MaxTokens] = None,
+      turns: Option[com.histmersion.domain.automation.agents.AgentRepo.StepRecord.Turns] = None
+  )(validate: (A, com.histmersion.domain.automation.agents.RunCtx.Validate) => Either[List[com.histmersion.domain.automation.agents.RunCtx.Problem], Checked[O]]): Either[Halt, O] =
     llmAtSeen[A, O](seq, name, agent, user, schema, maxTokens, turns)((a, last, _) => validate(a, last))
 
   /** [[llmAt]] whose `validate` also sees the tool calls the step has made so far — this attempt's and the earlier
@@ -297,14 +297,14 @@ final class RunCtx private[automation] (val run: RunInfo, engine: Engine):
     * amends its answer without repeating its lookups, so the earlier attempts' calls count.
     */
   def llmAtSeen[A, O: {Encoder, Decoder}](
-      seq: com.histmersion.domain.automation.agents.RunCtx.LlmAtSeenSeq,
-      name: com.histmersion.domain.automation.agents.RunCtx.LlmAtSeenName,
+      seq: com.histmersion.domain.automation.agents.AgentRepo.StepRecord.Seq,
+      name: com.histmersion.domain.automation.agents.AgentRepo.StepRecord.Name,
       agent: StepAgent,
-      user: com.histmersion.domain.automation.agents.RunCtx.LlmAtSeenUser,
+      user: com.histmersion.domain.automation.agents.Prompt.UserText,
       schema: ResponseSchema[A],
-      maxTokens: Option[com.histmersion.domain.automation.agents.RunCtx.LlmAtSeenMaxTokens] = None,
-      turns: Option[com.histmersion.domain.automation.agents.RunCtx.LlmAtSeenTurns] = None
-  )(validate: (A, com.histmersion.domain.automation.agents.RunCtx.LlmAtSeenValidateArg2, List[ToolUse]) => Either[List[com.histmersion.domain.automation.agents.RunCtx.LlmAtSeenValidateResultPart1], Checked[O]]): Either[Halt, O] =
+      maxTokens: Option[com.histmersion.domain.automation.agents.RunCtx.MaxTokens] = None,
+      turns: Option[com.histmersion.domain.automation.agents.AgentRepo.StepRecord.Turns] = None
+  )(validate: (A, com.histmersion.domain.automation.agents.RunCtx.Validate, List[ToolUse]) => Either[List[com.histmersion.domain.automation.agents.RunCtx.Problem], Checked[O]]): Either[Halt, O] =
     replay[O](seq, name).getOrElse {
       engine.checkControl(run.id).flatMap { _ =>
         engine.beat(run.id, Some(seq))
@@ -339,7 +339,7 @@ final class RunCtx private[automation] (val run: RunInfo, engine: Engine):
   /** The model for the next call of `role`: the first of its chain with allowance left ([[ModelPicker.pick]]). None
     * left = the run pauses until the earliest window frees.
     */
-  private def pickModel(name: com.histmersion.domain.automation.agents.RunCtx.PickModelName, role: Role): Either[Halt, Picked] =
+  private def pickModel(name: com.histmersion.domain.automation.agents.AgentsControllers.ModelName, role: Role): Either[Halt, Picked] =
     engine.agents.picker.pick(role, run.modelFor(role), onRefresh = n => warn(s"${role.wire}: $n")) match
       case Left(PickFailure.Unavailable(m))        => Left(Halt.Fail(s"$name: $m"))
       case Left(PickFailure.Exhausted(m, at, why)) => Left(Halt.Pause(why, s"$name: $m", at))
@@ -350,15 +350,15 @@ final class RunCtx private[automation] (val run: RunInfo, engine: Engine):
         Right(p)
 
   private def attempts[A, O: {Encoder, Decoder}](
-      seq: com.histmersion.domain.automation.agents.RunCtx.AttemptsSeq,
-      name: com.histmersion.domain.automation.agents.RunCtx.AttemptsName,
+      seq: com.histmersion.domain.automation.agents.AgentRepo.StepRecord.Seq,
+      name: com.histmersion.domain.automation.agents.AgentRepo.StepRecord.Name,
       agent: AgentDef,
       prompt: Prompt,
       schema: ResponseSchema[A],
-      maxTokens: com.histmersion.domain.automation.agents.RunCtx.AttemptsMaxTokens,
-      turns: com.histmersion.domain.automation.agents.RunCtx.AttemptsTurns,
-      validate: (A, com.histmersion.domain.automation.agents.RunCtx.AttemptsValidateArg2, List[ToolUse]) => Either[List[com.histmersion.domain.automation.agents.RunCtx.AttemptsValidateResultPart1], Checked[O]],
-      capKey: com.histmersion.domain.automation.agents.RunCtx.AttemptsCapKey
+      maxTokens: com.histmersion.domain.automation.agents.RunCtx.MaxTokens,
+      turns: com.histmersion.domain.automation.agents.AgentRepo.StepRecord.Turns,
+      validate: (A, com.histmersion.domain.automation.agents.RunCtx.Validate, List[ToolUse]) => Either[List[com.histmersion.domain.automation.agents.RunCtx.Problem], Checked[O]],
+      capKey: String
   ): Either[Halt, O] =
     val role = agent.role
     val maxAttempts = 1 + math.max(0, cfg.step.maxRetries)
@@ -370,10 +370,10 @@ final class RunCtx private[automation] (val run: RunInfo, engine: Engine):
     // `seen`: the tool calls of this step's attempts so far, oldest first (what `validate` is shown)
     @annotation.tailrec
     def go(
-        attempt: com.histmersion.domain.automation.agents.RunCtx.AttemptsGoAttempt,
-        tries: com.histmersion.domain.automation.agents.RunCtx.AttemptsGoTries,
-        problems: List[com.histmersion.domain.automation.agents.RunCtx.AttemptsGoProblems],
-        previous: Option[com.histmersion.domain.automation.agents.RunCtx.AttemptsGoPrevious],
+        attempt: Int,
+        tries: Int,
+        problems: List[String],
+        previous: Option[String],
         seen: List[ToolUse]
     ): Either[Halt, O] =
       engine.checkControl(run.id).flatMap(_ => engine.checkBudget(run.id)).flatMap(_ => pickModel(name, role)) match
@@ -566,15 +566,15 @@ final class RunCtx private[automation] (val run: RunInfo, engine: Engine):
     * otherwise (an `output` then is the rejected answer). `served` = what the provider reported.
     */
   private def record(
-      seq: com.histmersion.domain.automation.agents.RunCtx.RecordSeq,
-      attempt: com.histmersion.domain.automation.agents.RunCtx.RecordAttempt,
-      name: com.histmersion.domain.automation.agents.RunCtx.RecordName,
+      seq: com.histmersion.domain.automation.agents.AgentRepo.StepRecord.Seq,
+      attempt: com.histmersion.domain.automation.agents.AgentRepo.StepRecord.Attempt,
+      name: com.histmersion.domain.automation.agents.AgentRepo.StepRecord.Name,
       client: LlmClient,
       prompt: Prompt,
       use: Usage,
       billing: Billing,
-      output: Option[com.histmersion.domain.automation.agents.RunCtx.RecordOutput],
-      error: Option[com.histmersion.domain.automation.agents.RunCtx.RecordError],
+      output: Option[com.histmersion.domain.automation.agents.AgentRepo.StepRecord.Output],
+      error: Option[com.histmersion.domain.automation.agents.AgentRepo.StepRecord.Error],
       started: java.time.Instant,
       msgs: List[AgentRepo.MessageRecord],
       served: Served = Served.Unknown
@@ -603,104 +603,10 @@ final class RunCtx private[automation] (val run: RunInfo, engine: Engine):
     )
 
 object RunCtx:
-  type AttemptsGoAttempt = AttemptsGoAttempt.T
-  object AttemptsGoAttempt extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type AttemptsGoTries = AttemptsGoTries.T
-  object AttemptsGoTries extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type AttemptsGoProblems = AttemptsGoProblems.T
-  object AttemptsGoProblems extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type AttemptsGoPrevious = AttemptsGoPrevious.T
-  object AttemptsGoPrevious extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type MaxTokens = MaxTokens.T
+  object MaxTokens extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type Problem = Problem.T
+  object Problem extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type Validate = Validate.T
+  object Validate extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
-  type ClaimSeqResult = ClaimSeqResult.T
-  object ClaimSeqResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type ReserveResult = ReserveResult.T
-  object ReserveResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type ReserveN = ReserveN.T
-  object ReserveN extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type WarnW = WarnW.T
-  object WarnW extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type DryRunResult = DryRunResult.T
-  object DryRunResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type WriteWhat = WriteWhat.T
-  object WriteWhat extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type ProgressP = ProgressP.T
-  object ProgressP extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type ReplaySeq = ReplaySeq.T
-  object ReplaySeq extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type ReplayName = ReplayName.T
-  object ReplayName extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type CodeName = CodeName.T
-  object CodeName extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type ApprovalName = ApprovalName.T
-  object ApprovalName extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type ApprovalSubject = ApprovalSubject.T
-  object ApprovalSubject extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type NotesResult = NotesResult.T
-  object NotesResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type LlmName = LlmName.T
-  object LlmName extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type LlmUser = LlmUser.T
-  object LlmUser extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type LlmMaxTokens = LlmMaxTokens.T
-  object LlmMaxTokens extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type LlmTurns = LlmTurns.T
-  object LlmTurns extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type LlmValidateArg2 = LlmValidateArg2.T
-  object LlmValidateArg2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type LlmValidateResultPart1 = LlmValidateResultPart1.T
-  object LlmValidateResultPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type LlmAtSeq = LlmAtSeq.T
-  object LlmAtSeq extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type LlmAtName = LlmAtName.T
-  object LlmAtName extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type LlmAtUser = LlmAtUser.T
-  object LlmAtUser extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type LlmAtMaxTokens = LlmAtMaxTokens.T
-  object LlmAtMaxTokens extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type LlmAtTurns = LlmAtTurns.T
-  object LlmAtTurns extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type LlmAtValidateArg2 = LlmAtValidateArg2.T
-  object LlmAtValidateArg2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type LlmAtValidateResultPart1 = LlmAtValidateResultPart1.T
-  object LlmAtValidateResultPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type LlmAtSeenSeq = LlmAtSeenSeq.T
-  object LlmAtSeenSeq extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type LlmAtSeenName = LlmAtSeenName.T
-  object LlmAtSeenName extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type LlmAtSeenUser = LlmAtSeenUser.T
-  object LlmAtSeenUser extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type LlmAtSeenMaxTokens = LlmAtSeenMaxTokens.T
-  object LlmAtSeenMaxTokens extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type LlmAtSeenTurns = LlmAtSeenTurns.T
-  object LlmAtSeenTurns extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type LlmAtSeenValidateArg2 = LlmAtSeenValidateArg2.T
-  object LlmAtSeenValidateArg2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type LlmAtSeenValidateResultPart1 = LlmAtSeenValidateResultPart1.T
-  object LlmAtSeenValidateResultPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type PickModelName = PickModelName.T
-  object PickModelName extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type AttemptsSeq = AttemptsSeq.T
-  object AttemptsSeq extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type AttemptsName = AttemptsName.T
-  object AttemptsName extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type AttemptsMaxTokens = AttemptsMaxTokens.T
-  object AttemptsMaxTokens extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type AttemptsTurns = AttemptsTurns.T
-  object AttemptsTurns extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type AttemptsValidateArg2 = AttemptsValidateArg2.T
-  object AttemptsValidateArg2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type AttemptsValidateResultPart1 = AttemptsValidateResultPart1.T
-  object AttemptsValidateResultPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type AttemptsCapKey = AttemptsCapKey.T
-  object AttemptsCapKey extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type RecordSeq = RecordSeq.T
-  object RecordSeq extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type RecordAttempt = RecordAttempt.T
-  object RecordAttempt extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type RecordName = RecordName.T
-  object RecordName extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type RecordOutput = RecordOutput.T
-  object RecordOutput extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type RecordError = RecordError.T
-  object RecordError extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]

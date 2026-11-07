@@ -19,7 +19,7 @@ final class PageBuilder(
 ):
 
   /** `(title, inner HTML)` of `/source/{citekey}`, `?q=` terms highlighted. */
-  def source(ck: com.histmersion.domain.research.articles.PageBuilder.SourceCk, full: com.histmersion.domain.research.articles.PageBuilder.SourceFull, q: Option[com.histmersion.domain.research.articles.PageBuilder.SourceQ]): Option[(com.histmersion.domain.research.articles.PageBuilder.SourceResultPart1, com.histmersion.domain.research.articles.PageBuilder.SourceResultPart2)] =
+  def source(ck: com.histmersion.domain.library.Citekey, full: com.histmersion.domain.research.articles.PageBuilder.SourceFull, q: Option[com.histmersion.domain.research.articles.ArticleTools.ListArticlesInput.Query]): Option[(com.histmersion.domain.research.articles.PageBuilder.Html, com.histmersion.domain.research.articles.PageBuilder.Html)] =
     sources.get(ck).toOption.map { sw =>
       val s = sw.source
       val ref = Source.Ref(s.citekey, s.doi, s.authors, s.year, s.title, s.status)
@@ -66,7 +66,7 @@ final class PageBuilder(
     }
 
   /** `(title, inner HTML)` of `/article/{slug}`, `?q=` terms highlighted. */
-  def article(slug: com.histmersion.domain.research.articles.PageBuilder.ArticleSlug, q: Option[com.histmersion.domain.research.articles.PageBuilder.ArticleQ]): Option[(com.histmersion.domain.research.articles.PageBuilder.ArticleResultPart1, com.histmersion.domain.research.articles.PageBuilder.ArticleResultPart2)] =
+  def article(slug: com.histmersion.domain.research.Slug, q: Option[com.histmersion.domain.research.articles.ArticleTools.ListArticlesInput.Query]): Option[(com.histmersion.domain.research.Article.Page, com.histmersion.domain.research.Article.Page)] =
     articles.get(slug).toOption.map { v =>
       val generated = v.coverage.fold(List.empty[String])(c => Article.Links.targets(Article.Coverage.sections(c)))
       val links =
@@ -85,34 +85,14 @@ final class PageBuilder(
       (v.article.title, highlighted(html, q.map(_.trim).filter(_.nonEmpty)))
     }
 
-  private def highlighted(html: com.histmersion.domain.research.articles.PageBuilder.HighlightedHtml, term: Option[com.histmersion.domain.research.articles.PageBuilder.HighlightedTerm]): com.histmersion.domain.research.articles.PageBuilder.HighlightedResult = term match
+  private def highlighted(html: com.histmersion.domain.research.articles.PageBuilder.Html, term: Option[com.histmersion.domain.research.articles.ArticleTools.ListArticlesInput.Query]): com.histmersion.domain.research.articles.PageBuilder.Html = term match
     case Some(t) =>
       val (out, n) = Highlight(html, t)
       ArticleHtml.matchNav(n) + out
     case None => html
 
 object PageBuilder:
-  type SourceResultPart1 = SourceResultPart1.T
-  object SourceResultPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type SourceResultPart2 = SourceResultPart2.T
-  object SourceResultPart2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type SourceCk = SourceCk.T
-  object SourceCk extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type Html = Html.T
+  object Html extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type SourceFull = SourceFull.T
   object SourceFull extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type SourceQ = SourceQ.T
-  object SourceQ extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type ArticleResultPart1 = ArticleResultPart1.T
-  object ArticleResultPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type ArticleResultPart2 = ArticleResultPart2.T
-  object ArticleResultPart2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type ArticleSlug = ArticleSlug.T
-  object ArticleSlug extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type ArticleQ = ArticleQ.T
-  object ArticleQ extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type HighlightedResult = HighlightedResult.T
-  object HighlightedResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type HighlightedHtml = HighlightedHtml.T
-  object HighlightedHtml extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type HighlightedTerm = HighlightedTerm.T
-  object HighlightedTerm extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]

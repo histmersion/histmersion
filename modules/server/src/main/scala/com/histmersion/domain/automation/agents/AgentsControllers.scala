@@ -62,10 +62,10 @@ final class AgentsControllers(
   def config: AgentsConfig = cfg
 
   /** How many sources a goal gathers before its articles are planned (the site's, read at each use). */
-  def sourcesToPlan: com.histmersion.domain.automation.agents.AgentsControllers.SourcesToPlanResult = site.sourcesToPlan
+  def sourcesToPlan: com.histmersion.domain.automation.agents.AgentsControllers.SourcesCount = site.sourcesToPlan
 
   /** The most panel rounds a run or a manager may ask a review for ([[EngineSite.roundsCap]]). */
-  def roundsCap: com.histmersion.domain.automation.agents.AgentsControllers.RoundsCapResult = site.roundsCap
+  def roundsCap: com.histmersion.domain.automation.agents.AgentsControllers.RoundsCap = site.roundsCap
   private val ds = site.ds
 
   /** The goals: their sub-goals, links, plans and the schedules not moved into a watcher yet. */
@@ -187,7 +187,7 @@ final class AgentsControllers(
     * paused; idempotent — agents on or off). Returns how many interrupted runs were paused (0 when the lease is held
     * elsewhere).
     */
-  def start(): com.histmersion.domain.automation.agents.AgentsControllers.StartResult =
+  def start(): Int =
     val _ = managers.migrateSchedules(java.time.Instant.now(clock))
     if !cfg.enabled then 0
     else
@@ -212,9 +212,9 @@ final class AgentsControllers(
     * handlers ([[com.histmersion.server.McpTools]] needs them); `Main` attaches it before [[start]]. Until then, the
     * agent tools.
     */
-  @volatile private var knownTools: Set[com.histmersion.domain.automation.agents.AgentsControllers.KnownTools] = toolbox.names.map(_.value).toSet
+  @volatile private var knownTools: Set[com.histmersion.domain.automation.agents.ToolUse.Tool] = toolbox.names.map(_.value).toSet
 
-  def attachTools(names: Set[com.histmersion.domain.automation.agents.AgentsControllers.AttachToolsNames]): Unit = knownTools = names ++ toolbox.names.map(_.value)
+  def attachTools(names: Set[com.histmersion.domain.automation.agents.ToolUse.Tool]): Unit = knownTools = names ++ toolbox.names.map(_.value)
 
   /** `POST /api/agents/generate` — works with agents off too: the interactive plugin the research workspace installs is
     * one of the trees.
@@ -236,7 +236,7 @@ final class AgentsControllers(
 
   // ── plan pools ─────────────────────────────────────────────────────────────────────────────────
 
-  private def covers(p: PlanQuota.PoolId): List[com.histmersion.domain.automation.agents.AgentsControllers.CoversResult] = p match
+  private def covers(p: PlanQuota.PoolId): List[String] = p match
     case PlanQuota.PoolId.ClaudePlan  => List(s"${ProviderKind.ClaudeCode.wire}:*")
     case PlanQuota.PoolId.ChatgptPlan =>
       s"${ProviderKind.Codex.wire}:*" :: Option
@@ -256,13 +256,13 @@ final class AgentsControllers(
       picker.cooldowns(now).map((m, u) => PlanQuota.Cooldown(m, u.toString, ModelPicker.CoolingWhy))
     )
 
-  private def poolOf(raw: com.histmersion.domain.automation.agents.AgentsControllers.PoolOfRaw): Either[Api.Error, PlanQuota.PoolId] =
+  private def poolOf(raw: com.histmersion.domain.automation.agents.PlanQuotaRepo.PoolId): Either[Api.Error, PlanQuota.PoolId] =
     PlanQuota.PoolId
       .parse(raw)
       .toRight(Api.Error(s"unknown pool '$raw' (one of: ${PlanQuota.PoolId.values.map(_.wire).mkString(", ")})"))
 
   /** `PUT /api/agents/quota/{pool}` — the hold switch and the floors. */
-  def setPool(pool: com.histmersion.domain.automation.agents.AgentsControllers.SetPoolPool, in: PlanQuota.PoolSet): Either[Api.Error, PlanQuota.PoolStatus] =
+  def setPool(pool: com.histmersion.domain.automation.agents.PlanQuotaRepo.PoolId, in: PlanQuota.PoolSet): Either[Api.Error, PlanQuota.PoolStatus] =
     for
       p <- poolOf(pool)
       f <- in.floors.map(_.trim) match
@@ -275,7 +275,7 @@ final class AgentsControllers(
     yield st
 
   /** `PUT /api/agents/quota/fallthrough/{role}`. */
-  def setFallthrough(role: com.histmersion.domain.automation.agents.AgentsControllers.SetFallthroughRole, in: PlanQuota.FallthroughSet): Either[Api.Error, PlanQuota.QuotaInfo] =
+  def setFallthrough(role: com.histmersion.domain.automation.AgentRole.Wire, in: PlanQuota.FallthroughSet): Either[Api.Error, PlanQuota.QuotaInfo] =
     roleOf(role).map { r =>
       Transactor(ds).transact(
         com.histmersion.domain.automation.agents.PlanQuotaRepo.setFallthrough(r.wire, in.fallthrough)
@@ -341,13 +341,13 @@ final class AgentsControllers(
     else Left(Api.Error("embedded agents are off — set HISTMERSION_AGENTS_ENABLED=true on the server to use them"))
 
   /** The price table, parsed once per call (config is immutable; parsing is microseconds). */
-  private def prices: Either[com.histmersion.domain.automation.agents.AgentsControllers.PricesResultPart1, Map[com.histmersion.domain.automation.agents.AgentsControllers.PricesResultPart2Part1, Price]] =
+  private def prices: Either[com.histmersion.domain.automation.agents.AgentsControllers.Problem, Map[com.histmersion.domain.automation.agents.AgentsControllers.Problem, Price]] =
     Agents.Prices.parse(cfg.prices).left.map(m => s"agents.prices: $m")
 
   /** A model that can run: on a plan pool or PRICED (an unpriced metered model is refused, never treated as free), and
     * with a client its provider can build (a hosted provider needs its key; `claude-code` a loopback server).
     */
-  def resolve(m: ModelRef): Either[com.histmersion.domain.automation.agents.AgentsControllers.ResolveResultPart1, (LlmClient, Billing)] =
+  def resolve(m: ModelRef): Either[com.histmersion.domain.automation.agents.AgentsControllers.Problem, (LlmClient, Billing)] =
     for
       ps <- prices
       b <- Agents.Prices.billing(ps, m, pools.poolOf(m))
@@ -360,7 +360,7 @@ final class AgentsControllers(
   /** The client plugin AI providers' doctor checks and model listings go through. */
   private val aiHttp: com.histmersion.plugin.AiHttp = HostAiHttp()
 
-  def knownProviders: Set[com.histmersion.domain.automation.agents.AgentsControllers.KnownProvidersResult] = BuiltinAi.known(site.aiProviders())
+  def knownProviders: Set[com.histmersion.domain.automation.ProviderKind.Wire] = BuiltinAi.known(site.aiProviders())
 
   /** The model chains and allowances in effect, and the choice before every LLM call. */
   val picker: ModelPicker = ModelPicker(ds, cfg, resolve, pools, () => knownProviders)(using clock)
@@ -368,7 +368,7 @@ final class AgentsControllers(
   /** A role's chain can run at all: at least one of its models is on a plan or priced, and buildable (allowances are
     * not looked at — a run whose models are all spent queues and pauses until a window frees).
     */
-  def runnable(role: Role, overrideRef: Option[com.histmersion.domain.automation.agents.AgentsControllers.RunnableOverrideRef]): Either[com.histmersion.domain.automation.agents.AgentsControllers.RunnableResultPart1, Unit] =
+  def runnable(role: Role, overrideRef: Option[com.histmersion.domain.automation.agents.AgentsControllers.ModelName]): Either[com.histmersion.domain.automation.agents.AgentsControllers.Problem, Unit] =
     picker.chainFor(role, overrideRef).flatMap { chain =>
       val tried = chain.map(m => m -> resolve(m))
       if tried.exists(_._2.isRight) then Right(())
@@ -385,7 +385,7 @@ final class AgentsControllers(
     */
   def models: ModelsInfo = models(clock.millis())
 
-  def models(now: com.histmersion.domain.automation.agents.AgentsControllers.ModelsNow): ModelsInfo =
+  def models(now: com.histmersion.domain.automation.agents.PlanQuotaRepo.EpochMillis): ModelsInfo =
     val chains = picker.roleChains(now)
     val roles = chains.map { c =>
       val shown = c.active.orElse(c.models.headOption.map(_.model))
@@ -425,7 +425,7 @@ final class AgentsControllers(
 
   // ── chains and allowances: saved over config ───────────────────────────────────────────────────
 
-  private def roleOf(raw: com.histmersion.domain.automation.agents.AgentsControllers.RoleOfRaw): Either[Api.Error, Role] =
+  private def roleOf(raw: com.histmersion.domain.automation.AgentRole.Wire): Either[Api.Error, Role] =
     Role.parse(raw).toRight(Api.Error(s"unknown role '$raw' (one of: ${Role.values.map(_.wire).mkString(", ")})"))
 
   private def chainOf(role: Role): Either[Api.Error, ModelChains.RoleChain] =
@@ -435,7 +435,7 @@ final class AgentsControllers(
     * `provider:model`; one that is not priced or buildable yet is accepted and shown as not ready (a price or key may
     * come next). Works with agents off.
     */
-  def setChain(role: com.histmersion.domain.automation.agents.AgentsControllers.SetChainRole, in: ModelChains.ChainSet): Either[Api.Error, ModelChains.RoleChain] =
+  def setChain(role: com.histmersion.domain.automation.AgentRole.Wire, in: ModelChains.ChainSet): Either[Api.Error, ModelChains.RoleChain] =
     for
       r <- roleOf(role)
       ms <- ModelChains.parseModels(in.models, knownProviders).left.map(Api.Error(_))
@@ -449,7 +449,7 @@ final class AgentsControllers(
     yield c
 
   /** `DELETE /api/agents/models/{role}` — back to `agents.roles.<role>`. */
-  def resetChain(role: com.histmersion.domain.automation.agents.AgentsControllers.ResetChainRole): Either[Api.Error, ModelChains.RoleChain] =
+  def resetChain(role: com.histmersion.domain.automation.AgentRole.Wire): Either[Api.Error, ModelChains.RoleChain] =
     for
       r <- roleOf(role)
       _ = Transactor(ds).transact(ModelSettingsRepo.removeChain(r.wire))
@@ -472,7 +472,7 @@ final class AgentsControllers(
     yield st
 
   /** `DELETE /api/agents/allowances?target=…` — the saved allowance goes; config's (if any) applies again. */
-  def removeAllowance(target: com.histmersion.domain.automation.agents.AgentsControllers.RemoveAllowanceTarget): Either[Api.Error, Goal.Plans.Removed] =
+  def removeAllowance(target: com.histmersion.domain.automation.agents.AgentsControllers.Target): Either[Api.Error, Goal.Plans.Removed] =
     ModelChains.Target
       .parse(target, knownProviders)
       .left
@@ -480,7 +480,7 @@ final class AgentsControllers(
       .map(t => Goal.Plans.Removed(Transactor(ds).transact(ModelSettingsRepo.removeAllowance(t.wire))))
 
   /** `GET /api/agents/doctor` — every provider checked without spending anything. */
-  def doctor(offline: com.histmersion.domain.automation.agents.AgentsControllers.DoctorOffline): Agents.DoctorReport =
+  def doctor(offline: com.histmersion.domain.automation.agents.AgentsControllers.Offline): Agents.DoctorReport =
     val r =
       AgentDoctor(
         site.config,
@@ -621,7 +621,7 @@ final class AgentsControllers(
     * ref (or `a > b` chain) that parses. Whether that model can run is checked with the rest of the roles (the
     * readiness `models set` shows).
     */
-  private def overrides(p: Pipeline, asked: List[ModelOverride]): Either[Api.Error, Map[Role, com.histmersion.domain.automation.agents.AgentsControllers.OverridesResultPart2Part2]] =
+  private def overrides(p: Pipeline, asked: List[ModelOverride]): Either[Api.Error, Map[Role, com.histmersion.domain.automation.agents.AgentsControllers.ModelName]] =
     val roles = host.runRoles(p)
     asked.foldLeft[Either[Api.Error, Map[Role, String]]](Right(Map.empty)) { (acc, o) =>
       acc.flatMap { m =>
@@ -648,7 +648,7 @@ final class AgentsControllers(
     }
 
   /** The target as the pipeline names it (its workflow's domain resolves it), or a manager. */
-  private def targetOf(p: Pipeline, raw: com.histmersion.domain.automation.agents.AgentsControllers.TargetOfRaw): Either[Api.Error, com.histmersion.domain.automation.agents.AgentsControllers.TargetOfResultPart2] =
+  private def targetOf(p: Pipeline, raw: com.histmersion.domain.automation.agents.AgentsControllers.Target): Either[Api.Error, com.histmersion.domain.automation.agents.AgentsControllers.Target] =
     host
       .runTarget(p, raw)
       .getOrElse(
@@ -660,21 +660,21 @@ final class AgentsControllers(
 
   /** The goal a run works for: the target of a goal pipeline, else the one the request names (which must exist).
     */
-  private def goalOf(p: Pipeline, target: com.histmersion.domain.automation.agents.AgentsControllers.GoalOfTarget, named: Option[com.histmersion.domain.automation.agents.AgentsControllers.GoalOfNamed]): Either[Api.Error, Option[com.histmersion.domain.automation.agents.AgentsControllers.GoalOfResultPart2]] =
+  private def goalOf(p: Pipeline, target: com.histmersion.domain.automation.agents.AgentsControllers.Target, named: Option[com.histmersion.domain.automation.Goal.Slug]): Either[Api.Error, Option[com.histmersion.domain.automation.Goal.Slug]] =
     if p.targetKind == TargetKind.Goal then Right(Some(target))
     else
       named.map(_.trim).filter(_.nonEmpty) match
         case None    => Right(None)
         case Some(g) => host.goal(g).map(x => Some(x.slug))
 
-  private def goalBudget(goal: com.histmersion.domain.automation.agents.AgentsControllers.GoalBudgetGoal): Option[com.histmersion.domain.automation.agents.AgentsControllers.GoalBudgetResult] =
+  private def goalBudget(goal: com.histmersion.domain.automation.Goal.Slug): Option[com.histmersion.domain.automation.agents.AgentsControllers.BudgetUsd] =
     goals.planAndBudget(goal).flatMap(_._2).map(_.toDouble)
 
   /** Budgets are stored to the micro-dollar (numeric(12,6)): anything smaller would round to 0. */
-  private def positive(v: com.histmersion.domain.automation.agents.AgentsControllers.PositiveV, what: com.histmersion.domain.automation.agents.AgentsControllers.PositiveWhat): Either[Api.Error, com.histmersion.domain.automation.agents.AgentsControllers.PositiveResultPart2] =
+  private def positive(v: com.histmersion.domain.automation.agents.AgentsControllers.PositiveAmount, what: String): Either[Api.Error, com.histmersion.domain.automation.agents.AgentsControllers.PositiveAmount] =
     if v >= 0.000001 then Right(v) else Left(Api.Error(s"$what must be at least 0.000001"))
 
-  def runs(status: Option[com.histmersion.domain.automation.agents.AgentsControllers.RunsStatus], limit: Option[com.histmersion.domain.automation.agents.AgentsControllers.RunsLimit], goal: Option[com.histmersion.domain.automation.agents.AgentsControllers.RunsGoal] = None): Either[Api.Error, List[RunInfo]] =
+  def runs(status: Option[com.histmersion.domain.automation.agents.RunQuery.Status], limit: Option[com.histmersion.domain.automation.agents.RunQuery.Limit], goal: Option[com.histmersion.domain.automation.Goal.Slug] = None): Either[Api.Error, List[RunInfo]] =
     status.map(_.trim).filter(_.nonEmpty) match
       case Some(st) if RunState.parse(st).isEmpty =>
         Left(Api.Error(s"unknown status '$st' (one of: ${RunState.values.map(_.wire).mkString(", ")})"))
@@ -684,11 +684,11 @@ final class AgentsControllers(
     * when given).
     */
   def runsPage(
-      status: Option[com.histmersion.domain.automation.agents.AgentsControllers.RunsPageStatus],
-      limit: Option[com.histmersion.domain.automation.agents.AgentsControllers.RunsPageLimit],
-      goal: Option[com.histmersion.domain.automation.agents.AgentsControllers.RunsPageGoal] = None,
-      before: Option[com.histmersion.domain.automation.agents.AgentsControllers.RunsPageBefore] = None,
-      upTo: Option[com.histmersion.domain.automation.agents.AgentsControllers.RunsPageUpTo] = None
+      status: Option[com.histmersion.domain.automation.agents.RunQuery.Status],
+      limit: Option[com.histmersion.domain.automation.agents.RunQuery.Limit],
+      goal: Option[com.histmersion.domain.automation.Goal.Slug] = None,
+      before: Option[com.histmersion.domain.automation.agents.AgentRepo.PageCursor] = None,
+      upTo: Option[com.histmersion.domain.automation.agents.RunQuery.UpTo] = None
   ): Either[Api.Error, (List[RunInfo], Paging.Page)] =
     runsPage(ListFilters.RunFilter(status = status.toList, goal = goal), limit, before, upTo)
 
@@ -697,9 +697,9 @@ final class AgentsControllers(
     */
   def runsPage(
       f: ListFilters.RunFilter,
-      limit: Option[com.histmersion.domain.automation.agents.AgentsControllers.RunsPageLimit],
-      before: Option[com.histmersion.domain.automation.agents.AgentsControllers.RunsPageBefore],
-      upTo: Option[com.histmersion.domain.automation.agents.AgentsControllers.RunsPageUpTo]
+      limit: Option[com.histmersion.domain.automation.agents.RunQuery.Limit],
+      before: Option[com.histmersion.domain.automation.agents.AgentRepo.PageCursor],
+      upTo: Option[com.histmersion.domain.automation.agents.RunQuery.UpTo]
   ): Either[Api.Error, (List[RunInfo], Paging.Page)] =
     for
       q <- com.histmersion.server.ListQueries.runs(f, java.time.Instant.now(clock))
@@ -712,9 +712,9 @@ final class AgentsControllers(
       val (counts, facets) = runs.runFacets(q)
       (rows.toList, Paging.Page.filtered(counts, q.status, Option.when(more)(rows.last.id), facets))
 
-  private def cursor(c: Option[com.histmersion.domain.automation.agents.AgentsControllers.CursorC]): Option[com.histmersion.domain.automation.agents.AgentsControllers.CursorResult] = c.map(_.trim).filter(_.nonEmpty)
+  private def cursor(c: Option[com.histmersion.domain.automation.agents.AgentRepo.PageCursor]): Option[com.histmersion.domain.automation.agents.AgentRepo.PageCursor] = c.map(_.trim).filter(_.nonEmpty)
 
-  def run(id: com.histmersion.domain.automation.agents.AgentsControllers.RunId): Either[Api.Error, RunDetail] =
+  def run(id: com.histmersion.domain.automation.Run.Id): Either[Api.Error, RunDetail] =
     runs
       .get(id)
       .toRight(Api.Error(s"No agent run '$id'", Some(Write.CodeNotFound)))
@@ -724,7 +724,7 @@ final class AgentsControllers(
     * (full outputs, not the display cut). How each configured model is paid for is named from the server's prices and
     * plan pools.
     */
-  def compare(ids: List[com.histmersion.domain.automation.agents.AgentsControllers.CompareIds]): Either[Api.Error, RunCompare.Comparison] =
+  def compare(ids: List[com.histmersion.domain.automation.Run.Id]): Either[Api.Error, RunCompare.Comparison] =
     val wanted = ids.flatMap(_.split(',')).map(_.trim).filter(_.nonEmpty)
     for
       runs <- wanted.foldLeft[Either[Api.Error, List[RunDetail]]](Right(Nil)) { (acc, id) =>
@@ -744,7 +744,7 @@ final class AgentsControllers(
     yield CompareRunsViews.comparison(cmp)
 
   /** How a configured model is paid for, as `agent models` words it (None: it cannot be read). */
-  private def billingOf(ref: com.histmersion.domain.automation.agents.AgentsControllers.BillingOfRef): Option[com.histmersion.domain.automation.agents.AgentsControllers.BillingOfResult] =
+  private def billingOf(ref: String): Option[String] =
     ModelRef
       .parse(ref, knownProviders)
       .toOption
@@ -752,10 +752,10 @@ final class AgentsControllers(
       .map(_.describe)
 
   def control(
-      id: com.histmersion.domain.automation.agents.AgentsControllers.ControlId,
+      id: com.histmersion.domain.automation.Run.Id,
       action: com.histmersion.domain.automation.agents.AgentsControllers.ControlAction,
-      budgetUsd: Option[com.histmersion.domain.automation.agents.AgentsControllers.ControlBudgetUsd],
-      budgetTokens: Option[com.histmersion.domain.automation.agents.AgentsControllers.ControlBudgetTokens]
+      budgetUsd: Option[com.histmersion.domain.automation.agents.AgentsControllers.BudgetUsd],
+      budgetTokens: Option[com.histmersion.domain.automation.agents.AgentsControllers.BudgetTokens]
   ): Either[Api.Error, RunInfo] =
     action.trim.toLowerCase match
       case "pause"  => engine.pause(id)
@@ -768,15 +768,15 @@ final class AgentsControllers(
   /** `GET /api/agents/approvals` — readable whether or not agents are on (a person can still decide what an earlier run
     * proposed).
     */
-  def approvalsList(state: Option[com.histmersion.domain.automation.agents.AgentsControllers.ApprovalsListState], limit: Option[com.histmersion.domain.automation.agents.AgentsControllers.ApprovalsListLimit]): Either[Api.Error, List[ApprovalInfo]] =
+  def approvalsList(state: Option[com.histmersion.domain.automation.approvals.ApprovalQuery.State], limit: Option[com.histmersion.domain.automation.approvals.ApprovalQuery.Limit]): Either[Api.Error, List[ApprovalInfo]] =
     approvals.list(state, limit, site.config.limits.page(limit, site.config.limits.search))
 
   /** One page of [[approvalsList]] ([[Paging]]), with the per-state counts of every approval. */
   def approvalsPage(
-      state: Option[com.histmersion.domain.automation.agents.AgentsControllers.ApprovalsPageState],
-      limit: Option[com.histmersion.domain.automation.agents.AgentsControllers.ApprovalsPageLimit],
-      before: Option[com.histmersion.domain.automation.agents.AgentsControllers.ApprovalsPageBefore] = None,
-      upTo: Option[com.histmersion.domain.automation.agents.AgentsControllers.ApprovalsPageUpTo] = None
+      state: Option[com.histmersion.domain.automation.approvals.ApprovalQuery.State],
+      limit: Option[com.histmersion.domain.automation.approvals.ApprovalQuery.Limit],
+      before: Option[com.histmersion.domain.automation.approvals.ApprovalQuery.Cursor] = None,
+      upTo: Option[com.histmersion.domain.automation.approvals.ApprovalQuery.UpTo] = None
   ): Either[Api.Error, (List[ApprovalInfo], Paging.Page)] =
     approvalsPage(ListFilters.ApprovalFilter(state = state), limit, before, upTo)
 
@@ -785,16 +785,16 @@ final class AgentsControllers(
     */
   def approvalsPage(
       f: ListFilters.ApprovalFilter,
-      limit: Option[com.histmersion.domain.automation.agents.AgentsControllers.ApprovalsPageLimit],
-      before: Option[com.histmersion.domain.automation.agents.AgentsControllers.ApprovalsPageBefore],
-      upTo: Option[com.histmersion.domain.automation.agents.AgentsControllers.ApprovalsPageUpTo]
+      limit: Option[com.histmersion.domain.automation.approvals.ApprovalQuery.Limit],
+      before: Option[com.histmersion.domain.automation.approvals.ApprovalQuery.Cursor],
+      upTo: Option[com.histmersion.domain.automation.approvals.ApprovalQuery.UpTo]
   ): Either[Api.Error, (List[ApprovalInfo], Paging.Page)] =
     approvals.page(f, site.config.limits.page(limit, site.config.limits.search), cursor(before), cursor(upTo))
 
   /** `POST /api/agents/approvals/{id}/{approve|reject}`. Deciding works with agents off too: it only applies a change a
     * person accepts, through the ordinary patch.
     */
-  def decide(id: com.histmersion.domain.automation.agents.AgentsControllers.DecideId, decision: com.histmersion.domain.automation.agents.AgentsControllers.DecideDecision, req: DecisionRequest): Either[Api.Error, ApprovalInfo] =
+  def decide(id: com.histmersion.domain.automation.Approval.Id, decision: com.histmersion.domain.automation.Approval.Outcome, req: DecisionRequest): Either[Api.Error, ApprovalInfo] =
     approvals.decide(id, decision, req.note).map { a =>
       // a blocking approval: the run waiting on it goes back to the queue (it applies the decision)
       if a.approvalKind.exists(_.blocking) then a.runId.foreach(r => engine.wake(r))
@@ -808,7 +808,7 @@ final class AgentsControllers(
   // ── goals: view, links, schedules (P3) ─────────────────────────────────────────────────────────
 
   /** `GET /api/goals/{slug}/view` — readable whether or not agents are on. */
-  def goalView(slug: com.histmersion.domain.automation.agents.AgentsControllers.GoalViewSlug): Either[Api.Error, GoalView] =
+  def goalView(slug: com.histmersion.domain.automation.Goal.Slug): Either[Api.Error, GoalView] =
     host.goal(slug).map { g =>
       val (plan, budget) = goals.planAndBudget(g.slug).getOrElse((None, None))
       GoalView(
@@ -821,7 +821,7 @@ final class AgentsControllers(
       )
     }
 
-  def addGoalLink(slug: com.histmersion.domain.automation.agents.AgentsControllers.AddGoalLinkSlug, in: LinkAdd): Either[Api.Error, GoalLink] =
+  def addGoalLink(slug: com.histmersion.domain.automation.Goal.Slug, in: LinkAdd): Either[Api.Error, GoalLink] =
     val ref = in.ref.trim
     for
       g <- host.goal(slug)
@@ -851,7 +851,7 @@ final class AgentsControllers(
         .toRight(Api.Error(s"the link to $r was not recorded"))
     yield l
 
-  def removeGoalLink(slug: com.histmersion.domain.automation.agents.AgentsControllers.RemoveGoalLinkSlug, kind: com.histmersion.domain.automation.agents.AgentsControllers.RemoveGoalLinkKind, ref: com.histmersion.domain.automation.agents.AgentsControllers.RemoveGoalLinkRef): Either[Api.Error, Removed] =
+  def removeGoalLink(slug: com.histmersion.domain.automation.Goal.Slug, kind: com.histmersion.domain.automation.Goal.LinkKind.Wire, ref: com.histmersion.domain.automation.goals.BGoalLinkRow.Ref): Either[Api.Error, Removed] =
     for
       g <- host.goal(slug)
       k <- LinkKind
@@ -859,7 +859,7 @@ final class AgentsControllers(
         .toRight(Api.Error(s"unknown link kind '$kind' (one of: ${LinkKind.values.map(_.wire).mkString(", ")})"))
     yield Removed(goals.unlink(g.slug, k.transformInto[com.histmersion.domain.automation.Goal.LinkKind], ref.trim))
 
-  private def scheduleKind(kind: com.histmersion.domain.automation.agents.AgentsControllers.ScheduleKindKind): Either[Api.Error, ScheduleKind] =
+  private def scheduleKind(kind: com.histmersion.domain.automation.ScheduleKind.Wire): Either[Api.Error, ScheduleKind] =
     ScheduleKind
       .parse(kind)
       .toRight(Api.Error(s"unknown schedule '$kind' (one of: ${ScheduleKind.values.map(_.wire).mkString(", ")})"))
@@ -870,8 +870,8 @@ final class AgentsControllers(
     * is resumed.
     */
   def setSchedule(
-      slug: com.histmersion.domain.automation.agents.AgentsControllers.SetScheduleSlug,
-      kind: com.histmersion.domain.automation.agents.AgentsControllers.SetScheduleKind,
+      slug: com.histmersion.domain.automation.Goal.Slug,
+      kind: com.histmersion.domain.automation.ScheduleKind.Wire,
       in: ScheduleSet,
       now: java.time.Instant = java.time.Instant.now(clock)
   ): Either[Api.Error, GoalSchedule] =
@@ -882,7 +882,7 @@ final class AgentsControllers(
       out <- managing.setSchedule(g.slug, k, in, now)
     yield out
 
-  def removeSchedule(slug: com.histmersion.domain.automation.agents.AgentsControllers.RemoveScheduleSlug, kind: com.histmersion.domain.automation.agents.AgentsControllers.RemoveScheduleKind): Either[Api.Error, Removed] =
+  def removeSchedule(slug: com.histmersion.domain.automation.Goal.Slug, kind: com.histmersion.domain.automation.goals.BGoalScheduleRow.Kind): Either[Api.Error, Removed] =
     for
       g <- host.goal(slug)
       k <- scheduleKind(kind)
@@ -924,11 +924,11 @@ final class AgentsControllers(
       billing: Billing,
       src: ProbeAnswer,
       d: AgentDef,
-      system: com.histmersion.domain.automation.agents.AgentsControllers.ProbeCallSystem
+      system: String
   ): Either[Api.Error, ProbeResult] =
     val ask = s"Call get_source with citekey \"${src.citekey}\" and section \"summary\", then " +
       "reply with that source's citekey, exact title and publication year."
-    def call(user: com.histmersion.domain.automation.agents.AgentsControllers.ProbeCallCallUser) = LlmCall[ProbeAnswer](
+    def call(user: String) = LlmCall[ProbeAnswer](
       system = system,
       user = user,
       tools = toolbox.tools(d.tools),
@@ -940,7 +940,7 @@ final class AgentsControllers(
     val maxAttempts = 1 + math.max(0, cfg.step.maxRetries)
     val t0 = timer.start()
     @annotation.tailrec
-    def go(attempt: com.histmersion.domain.automation.agents.AgentsControllers.ProbeCallGoAttempt, user: com.histmersion.domain.automation.agents.AgentsControllers.ProbeCallGoUser, used: Usage, calls: List[com.histmersion.domain.automation.agents.AgentsControllers.ProbeCallGoCalls]): Either[Api.Error, ProbeResult] =
+    def go(attempt: Int, user: String, used: Usage, calls: List[String]): Either[Api.Error, ProbeResult] =
       AgentsControllers.attempt(client.model)(client.run(call(user))) match
         case Left(e)    => Left(e)
         case Right(res) =>
@@ -977,154 +977,28 @@ final class AgentsControllers(
     go(1, ask, Usage.Zero, Nil)
 
 object AgentsControllers:
+  type BudgetTokens = BudgetTokens.T
+  object BudgetTokens extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type BudgetUsd = BudgetUsd.T
+  object BudgetUsd extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type ModelName = ModelName.T
+  object ModelName extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type Offline = Offline.T
+  object Offline extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type PositiveAmount = PositiveAmount.T
+  object PositiveAmount extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type Problem = Problem.T
+  object Problem extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type RoundsCap = RoundsCap.T
+  object RoundsCap extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type SourcesCount = SourcesCount.T
+  object SourcesCount extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type Target = Target.T
+  object Target extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   /** The server's providers over one [[CliRuntime]]. */
-  type ProbeCallCallUser = ProbeCallCallUser.T
-  object ProbeCallCallUser extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type ProbeCallGoAttempt = ProbeCallGoAttempt.T
-  object ProbeCallGoAttempt extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type ProbeCallGoUser = ProbeCallGoUser.T
-  object ProbeCallGoUser extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type ProbeCallGoCalls = ProbeCallGoCalls.T
-  object ProbeCallGoCalls extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
-  type SourcesToPlanResult = SourcesToPlanResult.T
-  object SourcesToPlanResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type RoundsCapResult = RoundsCapResult.T
-  object RoundsCapResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type StartResult = StartResult.T
-  object StartResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type KnownTools = KnownTools.T
-  object KnownTools extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type AttachToolsNames = AttachToolsNames.T
-  object AttachToolsNames extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type CoversResult = CoversResult.T
-  object CoversResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type PoolOfRaw = PoolOfRaw.T
-  object PoolOfRaw extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type SetPoolPool = SetPoolPool.T
-  object SetPoolPool extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type SetFallthroughRole = SetFallthroughRole.T
-  object SetFallthroughRole extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type PricesResultPart1 = PricesResultPart1.T
-  object PricesResultPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type PricesResultPart2Part1 = PricesResultPart2Part1.T
-  object PricesResultPart2Part1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type ResolveResultPart1 = ResolveResultPart1.T
-  object ResolveResultPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type KnownProvidersResult = KnownProvidersResult.T
-  object KnownProvidersResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type RunnableResultPart1 = RunnableResultPart1.T
-  object RunnableResultPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type RunnableOverrideRef = RunnableOverrideRef.T
-  object RunnableOverrideRef extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type ModelsNow = ModelsNow.T
-  object ModelsNow extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type RoleOfRaw = RoleOfRaw.T
-  object RoleOfRaw extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type SetChainRole = SetChainRole.T
-  object SetChainRole extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type ResetChainRole = ResetChainRole.T
-  object ResetChainRole extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type RemoveAllowanceTarget = RemoveAllowanceTarget.T
-  object RemoveAllowanceTarget extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type DoctorOffline = DoctorOffline.T
-  object DoctorOffline extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type OverridesResultPart2Part2 = OverridesResultPart2Part2.T
-  object OverridesResultPart2Part2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type TargetOfResultPart2 = TargetOfResultPart2.T
-  object TargetOfResultPart2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type TargetOfRaw = TargetOfRaw.T
-  object TargetOfRaw extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type GoalOfResultPart2 = GoalOfResultPart2.T
-  object GoalOfResultPart2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type GoalOfTarget = GoalOfTarget.T
-  object GoalOfTarget extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type GoalOfNamed = GoalOfNamed.T
-  object GoalOfNamed extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type GoalBudgetResult = GoalBudgetResult.T
-  object GoalBudgetResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type GoalBudgetGoal = GoalBudgetGoal.T
-  object GoalBudgetGoal extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type PositiveResultPart2 = PositiveResultPart2.T
-  object PositiveResultPart2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type PositiveV = PositiveV.T
-  object PositiveV extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type PositiveWhat = PositiveWhat.T
-  object PositiveWhat extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type RunsStatus = RunsStatus.T
-  object RunsStatus extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type RunsLimit = RunsLimit.T
-  object RunsLimit extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type RunsGoal = RunsGoal.T
-  object RunsGoal extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type RunsPageStatus = RunsPageStatus.T
-  object RunsPageStatus extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type RunsPageLimit = RunsPageLimit.T
-  object RunsPageLimit extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type RunsPageGoal = RunsPageGoal.T
-  object RunsPageGoal extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type RunsPageBefore = RunsPageBefore.T
-  object RunsPageBefore extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type RunsPageUpTo = RunsPageUpTo.T
-  object RunsPageUpTo extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type CursorResult = CursorResult.T
-  object CursorResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type CursorC = CursorC.T
-  object CursorC extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type RunId = RunId.T
-  object RunId extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type CompareIds = CompareIds.T
-  object CompareIds extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type BillingOfResult = BillingOfResult.T
-  object BillingOfResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type BillingOfRef = BillingOfRef.T
-  object BillingOfRef extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type ControlId = ControlId.T
-  object ControlId extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type ControlAction = ControlAction.T
   object ControlAction extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type ControlBudgetUsd = ControlBudgetUsd.T
-  object ControlBudgetUsd extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type ControlBudgetTokens = ControlBudgetTokens.T
-  object ControlBudgetTokens extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type ApprovalsListState = ApprovalsListState.T
-  object ApprovalsListState extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type ApprovalsListLimit = ApprovalsListLimit.T
-  object ApprovalsListLimit extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type ApprovalsPageState = ApprovalsPageState.T
-  object ApprovalsPageState extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type ApprovalsPageLimit = ApprovalsPageLimit.T
-  object ApprovalsPageLimit extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type ApprovalsPageBefore = ApprovalsPageBefore.T
-  object ApprovalsPageBefore extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type ApprovalsPageUpTo = ApprovalsPageUpTo.T
-  object ApprovalsPageUpTo extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type DecideId = DecideId.T
-  object DecideId extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type DecideDecision = DecideDecision.T
-  object DecideDecision extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type GoalViewSlug = GoalViewSlug.T
-  object GoalViewSlug extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type AddGoalLinkSlug = AddGoalLinkSlug.T
-  object AddGoalLinkSlug extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type RemoveGoalLinkSlug = RemoveGoalLinkSlug.T
-  object RemoveGoalLinkSlug extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type RemoveGoalLinkKind = RemoveGoalLinkKind.T
-  object RemoveGoalLinkKind extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type RemoveGoalLinkRef = RemoveGoalLinkRef.T
-  object RemoveGoalLinkRef extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type ScheduleKindKind = ScheduleKindKind.T
-  object ScheduleKindKind extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type SetScheduleSlug = SetScheduleSlug.T
-  object SetScheduleSlug extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type SetScheduleKind = SetScheduleKind.T
-  object SetScheduleKind extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type RemoveScheduleSlug = RemoveScheduleSlug.T
-  object RemoveScheduleSlug extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type RemoveScheduleKind = RemoveScheduleKind.T
-  object RemoveScheduleKind extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type ProbeCallSystem = ProbeCallSystem.T
-  object ProbeCallSystem extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
   def serverWiring(site: EngineSite): (LlmClient.Factory, CliRuntime) =
     val rt = CliRuntime(site.config, site.roster, site.userPaths)(using site.stores, site.resources, site.clock, site.jvmHome)

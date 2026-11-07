@@ -27,7 +27,7 @@ final class StorageCache(
   private val last = AtomicReference[Option[(Long, Storage.Report)]](None)
   private val running = AtomicReference[Option[CompletableFuture[Storage.Report]]](None)
 
-  def get(waitMillis: com.histmersion.util.data.diagnostics.StorageCache.GetWaitMillis): Storage.Report =
+  def get(waitMillis: com.histmersion.util.data.diagnostics.StorageCache.WaitMillis): Storage.Report =
     last.get match
       case Some((at, r)) if clock() - at < ttlMillis() => r
       case Some((_, r))                                =>
@@ -67,10 +67,12 @@ final class StorageCache(
           f
 
 object StorageCache:
-  type TtlMillisResult = TtlMillisResult.T
-  object TtlMillisResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type TimeToLive = TimeToLive.T
+  object TimeToLive extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type WaitMillis = WaitMillis.T
+  object WaitMillis extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type TtlMillisResult = com.histmersion.util.data.diagnostics.StorageCache.TimeToLive
+  val TtlMillisResult: _root_.com.histmersion.util.data.diagnostics.StorageCache.TimeToLive.type = _root_.com.histmersion.util.data.diagnostics.StorageCache.TimeToLive
   type ClockResult = ClockResult.T
   object ClockResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
-  type GetWaitMillis = GetWaitMillis.T
-  object GetWaitMillis extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]

@@ -129,6 +129,10 @@ final class CatalogueWiring(
     )
 
 object CatalogueWiring:
+  type GazetteerText = GazetteerText.T
+  object GazetteerText extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type Problem = Problem.T
+  object Problem extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
   /** How the gazetteer comes in, over `deps`' stores and plugins: `download` fetches a pinned extract into its file,
     * `text` a url's text (the land).
@@ -136,18 +140,12 @@ object CatalogueWiring:
   type PresentYearResult = PresentYearResult.T
   object PresentYearResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
-  type GazetteerTextArg1 = GazetteerTextArg1.T
-  object GazetteerTextArg1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type GazetteerTextResultPart1 = GazetteerTextResultPart1.T
-  object GazetteerTextResultPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type GazetteerTextResultPart2 = GazetteerTextResultPart2.T
-  object GazetteerTextResultPart2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
   def gazetteer(
       deps: Deps,
       places: PlaceService,
       download: GazetteerLoad.Download,
-      text: com.histmersion.server.CatalogueWiring.GazetteerTextArg1 => Either[com.histmersion.server.CatalogueWiring.GazetteerTextResultPart1, com.histmersion.server.CatalogueWiring.GazetteerTextResultPart2]
+      text: com.histmersion.server.CatalogueWiring.GazetteerText => Either[com.histmersion.server.CatalogueWiring.Problem, com.histmersion.server.CatalogueWiring.GazetteerText]
   ): GazetteerImports =
     GazetteerImports(
       deps.transactor,

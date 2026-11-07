@@ -26,7 +26,7 @@ final class DrainService(
 ):
 
   /** Draining now? */
-  def draining: com.histmersion.domain.automation.managers.DrainService.DrainingResult = agents.autopilotRow.drain().isDefined
+  def draining: Boolean = agents.autopilotRow.drain().isDefined
 
   /** The drain as shown (None: not draining). */
   def info(): Option[DrainInfo] =
@@ -90,8 +90,6 @@ final class DrainService(
     scribe.info(line)
 
 object DrainService:
-  type DrainingResult = DrainingResult.T
-  object DrainingResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type TickResult = TickResult.T
   object TickResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type LogLine = LogLine.T

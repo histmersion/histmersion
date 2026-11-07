@@ -12,70 +12,68 @@ import sttp.ai.core.agent.*
 import sttp.apispec.circe.*
 
 object Opencode:
+  type AgentName = AgentName.T
+  object AgentName extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type ApiToken = ApiToken.T
+  object ApiToken extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type CommandLine = CommandLine.T
+  object CommandLine extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type ConfigDir = ConfigDir.T
+  object ConfigDir extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type EnvName = EnvName.T
+  object EnvName extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type EnvSetting = EnvSetting.T
+  object EnvSetting extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type FinalText = FinalText.T
+  object FinalText extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type ModelName = ModelName.T
+  object ModelName extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type OutputLine = OutputLine.T
+  object OutputLine extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type Problem = Problem.T
+  object Problem extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type SchemaJson = SchemaJson.T
+  object SchemaJson extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type SchemaNote = SchemaNote.T
+  object SchemaNote extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type ToolName = ToolName.T
+  object ToolName extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type WorkingDir = WorkingDir.T
+  object WorkingDir extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type XdgDir = XdgDir.T
+  object XdgDir extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
-  type ParseFinalText = ParseFinalText.T
-  object ParseFinalText extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type ParseError = ParseError.T
-  object ParseError extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type ParseStripT = ParseStripT.T
-  object ParseStripT extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
-  type ArgvResult = ArgvResult.T
-  object ArgvResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type ArgvModel = ArgvModel.T
-  object ArgvModel extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type ArgvAgent = ArgvAgent.T
-  object ArgvAgent extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type ArgvDir = ArgvDir.T
-  object ArgvDir extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type EnvironmentXdg = EnvironmentXdg.T
-  object EnvironmentXdg extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type EnvironmentConfigDir = EnvironmentConfigDir.T
-  object EnvironmentConfigDir extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type EnvironmentToken = EnvironmentToken.T
-  object EnvironmentToken extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type EnvironmentEnvPart1 = EnvironmentEnvPart1.T
-  object EnvironmentEnvPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type EnvironmentEnvPart2 = EnvironmentEnvPart2.T
-  object EnvironmentEnvPart2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type SchemaNoteResult = SchemaNoteResult.T
-  object SchemaNoteResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type SchemaNoteSchema = SchemaNoteSchema.T
-  object SchemaNoteSchema extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type ParseLines = ParseLines.T
-  object ParseLines extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type ClientResultPart1 = ClientResultPart1.T
-  object ClientResultPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
-  def argv(cfg: OpencodeConfig, model: com.histmersion.server.agents.Opencode.ArgvModel, agent: com.histmersion.server.agents.Opencode.ArgvAgent, dir: com.histmersion.server.agents.Opencode.ArgvDir): List[com.histmersion.server.agents.Opencode.ArgvResult] =
+  def argv(cfg: OpencodeConfig, model: com.histmersion.server.agents.Opencode.ModelName, agent: com.histmersion.server.agents.Opencode.AgentName, dir: com.histmersion.server.agents.Opencode.WorkingDir): List[com.histmersion.server.agents.Opencode.CommandLine] =
     List(cfg.command, "run", "--agent", agent, "--format", "json", "-m", model, "--dir", dir)
 
   /** Isolation (docs/research-agent-runtimes.md §1.3): a global config of its own, the generated config dir, no
     * `.claude` skills, no autoupdate; the run token for the MCP header.
     */
-  def environment(xdg: com.histmersion.server.agents.Opencode.EnvironmentXdg, configDir: com.histmersion.server.agents.Opencode.EnvironmentConfigDir, token: Option[com.histmersion.server.agents.Opencode.EnvironmentToken], env: java.util.Map[com.histmersion.server.agents.Opencode.EnvironmentEnvPart1, com.histmersion.server.agents.Opencode.EnvironmentEnvPart2]): Unit =
+  def environment(xdg: com.histmersion.server.agents.Opencode.XdgDir, configDir: com.histmersion.server.agents.Opencode.ConfigDir, token: Option[com.histmersion.server.agents.Opencode.ApiToken], env: java.util.Map[com.histmersion.server.agents.Opencode.EnvName, com.histmersion.server.agents.Opencode.EnvSetting]): Unit =
     val _ = env.put("XDG_CONFIG_HOME", xdg)
     val _ = env.put("OPENCODE_CONFIG_DIR", configDir)
     val _ = env.put("OPENCODE_DISABLE_CLAUDE_CODE", "1")
     val _ = env.put("OPENCODE_DISABLE_AUTOUPDATE", "1")
     val _ = env.put(AgentGenerator.TokenEnv, token.getOrElse("none"))
 
-  def schemaNote(schema: com.histmersion.server.agents.Opencode.SchemaNoteSchema): com.histmersion.server.agents.Opencode.SchemaNoteResult =
+  def schemaNote(schema: com.histmersion.server.agents.Opencode.SchemaJson): com.histmersion.server.agents.Opencode.SchemaNote =
     s"\n\nReply with ONE JSON object that matches this JSON Schema, and nothing else:\n$schema"
 
   /** `--format json` events: `text` parts (the last is the answer), `tool_use` (a tool part with its state: input,
     * output or error), `step_finish` (tokens, cost), `error`.
     */
-  def parse(lines: List[com.histmersion.server.agents.Opencode.ParseLines]): CliOutcome =
+  def parse(lines: List[com.histmersion.server.agents.Opencode.OutputLine]): CliOutcome =
     val events = lines.map(_.trim).filter(_.startsWith("{")).flatMap(l => parser.parse(l).toOption)
     val entries = Vector.newBuilder[ConversationEntry]
     val calls = Vector.newBuilder[ToolCallRecord]
     // accumulators of ONE parse, over the events in order
-    var finalText: Option[com.histmersion.server.agents.Opencode.ParseFinalText] = None
+    var finalText: Option[com.histmersion.server.agents.Opencode.FinalText] = None
     var usage = TokenUsage.Zero
-    var error: Option[com.histmersion.server.agents.Opencode.ParseError] = None
+    var error: Option[com.histmersion.server.agents.Opencode.Problem] = None
     var turns = 0
-    def strip(t: com.histmersion.server.agents.Opencode.ParseStripT) = t.stripPrefix(s"${AgentDefinitions.McpServer}_")
+    def strip(t: com.histmersion.server.agents.Opencode.ToolName) = t.stripPrefix(s"${AgentDefinitions.McpServer}_")
     events.foreach { e =>
       val c = e.hcursor
       val part = c.downField("part")
@@ -119,7 +117,7 @@ object Opencode:
     }
     CliOutcome(entries.result(), calls.result(), finalText, usage, error, turns)
 
-  def client(cfg: OpencodeConfig, rt: CliRuntime, ref: ModelRef): Either[com.histmersion.server.agents.Opencode.ClientResultPart1, LlmClient] =
+  def client(cfg: OpencodeConfig, rt: CliRuntime, ref: ModelRef): Either[com.histmersion.server.agents.Opencode.Problem, LlmClient] =
     if ref.provider != ProviderKind.Opencode then Left(s"${ref.wire} is not an opencode model")
     else if !ref.model.contains('/') then
       Left(s"${ref.wire}: an opencode model is <provider>/<model>, e.g. opencode:openai/gpt-5")

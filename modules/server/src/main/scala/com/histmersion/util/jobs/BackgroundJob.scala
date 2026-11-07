@@ -26,105 +26,65 @@ import com.histmersion.api.Api
   * Outcome.of(…))`, inside `maintenance.guard(kind)` when it writes.
   */
 object BackgroundJob:
+  type Problem = Problem.T
+  object Problem extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type Work = Work.T
+  object Work extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
   /** How a job ended: its summary (the finished job's progress line) and, when it failed, why. */
-  type LaunchReportText = LaunchReportText.T
-  object LaunchReportText extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
-  type BusyWhat = BusyWhat.T
-  object BusyWhat extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type BusyCurrent = BusyCurrent.T
-  object BusyCurrent extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type BusyCode = BusyCode.T
   object BusyCode extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type DescribeResult = DescribeResult.T
-  object DescribeResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type AmendDetailId = AmendDetailId.T
-  object AmendDetailId extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type StartKind = StartKind.T
-  object StartKind extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type StartWhat = StartWhat.T
-  object StartWhat extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type StartBusyCode = StartBusyCode.T
   object StartBusyCode extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type StartBodyArg2Arg1 = StartBodyArg2Arg1.T
-  object StartBodyArg2Arg1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type LaunchKind = LaunchKind.T
-  object LaunchKind extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type LaunchWhat = _root_.com.histmersion.util.jobs.BackgroundJob.BusyWhat
-  val LaunchWhat: _root_.com.histmersion.util.jobs.BackgroundJob.BusyWhat.type = _root_.com.histmersion.util.jobs.BackgroundJob.BusyWhat
+  type LaunchWhat = _root_.com.histmersion.util.jobs.BackgroundJob.Work
+  val LaunchWhat: _root_.com.histmersion.util.jobs.BackgroundJob.Work.type = _root_.com.histmersion.util.jobs.BackgroundJob.Work
   type LaunchBusyCode = LaunchBusyCode.T
   object LaunchBusyCode extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type LaunchBodyArg2Arg1 = LaunchBodyArg2Arg1.T
-  object LaunchBodyArg2Arg1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type ResumeResultPart1 = ResumeResultPart1.T
-  object ResumeResultPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type ResumeKind = _root_.com.histmersion.util.jobs.BackgroundJob.LaunchKind
-  val ResumeKind: _root_.com.histmersion.util.jobs.BackgroundJob.LaunchKind.type = _root_.com.histmersion.util.jobs.BackgroundJob.LaunchKind
-  type ResumeWhat = _root_.com.histmersion.util.jobs.BackgroundJob.BusyWhat
-  val ResumeWhat: _root_.com.histmersion.util.jobs.BackgroundJob.BusyWhat.type = _root_.com.histmersion.util.jobs.BackgroundJob.BusyWhat
+  type ResumeKind = _root_.com.histmersion.util.jobs.Job.Kind
+  val ResumeKind: _root_.com.histmersion.util.jobs.Job.Kind.type = _root_.com.histmersion.util.jobs.Job.Kind
+  type ResumeWhat = _root_.com.histmersion.util.jobs.BackgroundJob.Work
+  val ResumeWhat: _root_.com.histmersion.util.jobs.BackgroundJob.Work.type = _root_.com.histmersion.util.jobs.BackgroundJob.Work
   type ResumeBusyCode = _root_.com.histmersion.util.jobs.BackgroundJob.LaunchBusyCode
   val ResumeBusyCode: _root_.com.histmersion.util.jobs.BackgroundJob.LaunchBusyCode.type = _root_.com.histmersion.util.jobs.BackgroundJob.LaunchBusyCode
-  type ResumeBodyArg2Arg1 = ResumeBodyArg2Arg1.T
-  object ResumeBodyArg2Arg1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
   final case class Outcome(summary: Option[Outcome.Summary], error: Option[Outcome.Error] = None):
-    def failed: com.histmersion.util.jobs.BackgroundJob.Outcome.FailedResult = error.isDefined
+    def failed: Boolean = error.isDefined
 
   object Outcome:
-    type FailedResult = FailedResult.T
-    object FailedResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
-    type DoneSummary = DoneSummary.T
-    object DoneSummary extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-    type FailedWhy = FailedWhy.T
-    object FailedWhy extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-    type OfRPart1 = OfRPart1.T
-    object OfRPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-    type OfRPart2 = OfRPart2.T
-    object OfRPart2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
     type Summary = Summary.T
     object Summary extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
     type Error = Error.T
     object Error extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
-    def done(summary: com.histmersion.util.jobs.BackgroundJob.Outcome.DoneSummary): Outcome = Outcome(Some(summary))
-    def failed(why: com.histmersion.util.jobs.BackgroundJob.Outcome.FailedWhy): Outcome = Outcome(None, Some(why))
+    def done(summary: com.histmersion.util.jobs.BackgroundJob.Outcome.Summary): Outcome = Outcome(Some(summary))
+    def failed(why: com.histmersion.util.jobs.BackgroundJob.Outcome.Error): Outcome = Outcome(None, Some(why))
 
     /** The `Right(summary)` / `Left(why)` the catalogue and gazetteer runs answer. */
-    def of(r: Either[com.histmersion.util.jobs.BackgroundJob.Outcome.OfRPart1, com.histmersion.util.jobs.BackgroundJob.Outcome.OfRPart2]): Outcome = r.fold(failed, done)
+    def of(r: Either[com.histmersion.util.jobs.BackgroundJob.Outcome.Error, com.histmersion.util.jobs.BackgroundJob.Outcome.Summary]): Outcome = r.fold(failed, done)
 
   /** One kind of work that runs one job at a time. `current` names the running one. `held` may be shared with work of
     * the same kind that is not a job (the media import's one-place runs).
     */
   final class Slot(held: AtomicReference[Option[Slot.Held]] = AtomicReference[Option[String]](None)):
-    def isRunning: com.histmersion.util.jobs.BackgroundJob.Slot.IsRunningResult = held.get().isDefined
-    def current: Option[com.histmersion.util.jobs.BackgroundJob.Slot.CurrentResult] = held.get()
-    private[BackgroundJob] def claim(what: com.histmersion.util.jobs.BackgroundJob.Slot.ClaimWhat): com.histmersion.util.jobs.BackgroundJob.Slot.ClaimResult = held.compareAndSet(None, Some(what))
-    private[BackgroundJob] def note(what: com.histmersion.util.jobs.BackgroundJob.Slot.NoteWhat): Unit = held.set(Some(what))
+    def isRunning: Boolean = held.get().isDefined
+    def current: Option[com.histmersion.util.jobs.BackgroundJob.Slot.Held] = held.get()
+    private[BackgroundJob] def claim(what: com.histmersion.util.jobs.BackgroundJob.Work): Boolean = held.compareAndSet(None, Some(what))
+    private[BackgroundJob] def note(what: com.histmersion.util.jobs.BackgroundJob.Work): Unit = held.set(Some(what))
     private[BackgroundJob] def free(): Unit = held.set(None)
 
   object Slot:
     type Held = Held.T
     object Held extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
-    type IsRunningResult = IsRunningResult.T
-    object IsRunningResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
-    type CurrentResult = CurrentResult.T
-    object CurrentResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-    type ClaimResult = ClaimResult.T
-    object ClaimResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
-    type ClaimWhat = ClaimWhat.T
-    object ClaimWhat extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-    type NoteWhat = NoteWhat.T
-    object NoteWhat extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
   /** The answer for a job asked for while its slot is held: names the running one. Pure. */
-  def busy(what: com.histmersion.util.jobs.BackgroundJob.BusyWhat, current: Option[com.histmersion.util.jobs.BackgroundJob.BusyCurrent], code: Option[com.histmersion.util.jobs.BackgroundJob.BusyCode] = None): Api.Error =
+  def busy(what: com.histmersion.util.jobs.BackgroundJob.Work, current: Option[com.histmersion.util.jobs.BackgroundJob.Slot.Held], code: Option[com.histmersion.util.jobs.BackgroundJob.BusyCode] = None): Api.Error =
     Api.Error(s"$what is already running (${current.getOrElse("?")}) — see `histmersion jobs`", code)
 
   /** What a thrown exception tells a job's error line. Pure. */
-  def describe(e: Throwable): com.histmersion.util.jobs.BackgroundJob.DescribeResult = e match
+  def describe(e: Throwable): com.histmersion.util.jobs.BackgroundJob.Problem = e match
     case _: InterruptedException => "interrupted"
     case _                       => s"${e.getClass.getSimpleName}: ${e.getMessage}"
 
@@ -138,7 +98,7 @@ object BackgroundJob:
       case None               => Right(out)
 
   /** Change the detail the job `id` records. */
-  def amendDetail(ds: DataSource, id: com.histmersion.util.jobs.BackgroundJob.AmendDetailId)(change: JobDetail => JobDetail): Unit =
+  def amendDetail(ds: DataSource, id: com.histmersion.util.jobs.Job.Id)(change: JobDetail => JobDetail): Unit =
     Transactor(ds)
       .read(JobRepo.get(id))
       .foreach(j => Transactor(ds).transact(JobRepo.setDetail(id, change(j.detail.getOrElse(JobDetail.empty)))))
@@ -154,17 +114,17 @@ object BackgroundJob:
     */
   def start(
       ds: DataSource,
-      kind: com.histmersion.util.jobs.BackgroundJob.StartKind,
+      kind: com.histmersion.util.jobs.Job.Kind,
       detail: Option[JobDetail],
       slot: Slot,
-      what: com.histmersion.util.jobs.BackgroundJob.StartWhat,
+      what: com.histmersion.util.jobs.BackgroundJob.Work,
       busyCode: Option[com.histmersion.util.jobs.BackgroundJob.StartBusyCode] = None,
       /** The job runs on the generation (database, config) the caller is pinned to, even across a config reload
         * (docs/research-plugins.md §3.6).
         */
       pins: WorkCarrier = WorkCarrier.none,
       stops: Option[JobStops] = None
-  )(body: (JobInfo, com.histmersion.util.jobs.BackgroundJob.StartBodyArg2Arg1 => Unit) => Outcome): Either[Api.Error, JobInfo] =
+  )(body: (JobInfo, com.histmersion.util.jobs.Job.Id => Unit) => Outcome): Either[Api.Error, JobInfo] =
     if !slot.claim("starting") then Left(busy(what, slot.current, busyCode))
     else
       val job =
@@ -182,20 +142,20 @@ object BackgroundJob:
   private def launch(
       ds: DataSource,
       job: JobInfo,
-      kind: com.histmersion.util.jobs.BackgroundJob.LaunchKind,
+      kind: com.histmersion.util.jobs.Job.Kind,
       slot: Slot,
       what: com.histmersion.util.jobs.BackgroundJob.LaunchWhat,
       busyCode: Option[com.histmersion.util.jobs.BackgroundJob.LaunchBusyCode],
       pins: WorkCarrier,
       stops: Option[JobStops],
       from: JobState,
-      body: (JobInfo, com.histmersion.util.jobs.BackgroundJob.LaunchBodyArg2Arg1 => Unit) => Outcome
+      body: (JobInfo, com.histmersion.util.jobs.Job.Id => Unit) => Outcome
   ): Unit =
     slot.note(s"job ${job.id}")
     val work = pins.carryWork { () =>
       val last = AtomicReference[Option[String]](None)
       // a report closes a part: what it says is kept, and a stop asked meanwhile takes effect there
-      def report(text: com.histmersion.util.jobs.BackgroundJob.LaunchReportText): Unit =
+      def report(text: com.histmersion.util.jobs.JobRepo.ProgressText): Unit =
         last.set(Some(text))
         Transactor(ds).transact(JobRepo.progress(job.id, text))
         stops.flatMap(_.requestedFor(job.id)).foreach(stop => throw JobStopped(stop))
@@ -256,8 +216,8 @@ object BackgroundJob:
       busyCode: Option[com.histmersion.util.jobs.BackgroundJob.ResumeBusyCode],
       pins: WorkCarrier,
       stops: Option[JobStops],
-      body: (JobInfo, com.histmersion.util.jobs.BackgroundJob.ResumeBodyArg2Arg1 => Unit) => Outcome
-  ): Either[com.histmersion.util.jobs.BackgroundJob.ResumeResultPart1, Unit] =
+      body: (JobInfo, com.histmersion.util.jobs.Job.Id => Unit) => Outcome
+  ): Either[com.histmersion.util.jobs.BackgroundJob.Problem, Unit] =
     if !slot.claim("resuming") then
       // the paused job keeps its way to go on: it can be resumed once the other one ends
       stops.foreach(_.pausedWith(job.id, () => resume(ds, job, kind, slot, what, busyCode, pins, stops, body)))

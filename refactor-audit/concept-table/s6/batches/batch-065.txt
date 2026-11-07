@@ -1,0 +1,175 @@
+## CONCEPTS NEARBY
+com.histmersion.server.agents.ClaudeCode.Launch.Agent.Name (String)
+com.histmersion.server.agents.ClaudeCode.Launch.Agent.PluginDir (String)
+com.histmersion.server.agents.ClaudeCode.Launch.Agent.Settings (String)
+com.histmersion.server.agents.ClaudeCode.Launch.SystemPrompt.File (String)
+com.histmersion.server.agents.ClaudeCode.Limit.Message (String)
+com.histmersion.server.agents.ClaudeCode.Outcome.FirstCall (Long)
+com.histmersion.server.agents.ClaudeCode.Outcome.McpProblem (String)
+com.histmersion.server.agents.ClaudeCode.Outcome.ModelId (String)
+com.histmersion.server.agents.ClaudeCode.Outcome.ServedPart1 (String)
+com.histmersion.server.agents.ClaudeCode.Result.CostUsd (Double)
+com.histmersion.server.agents.ClaudeCode.Result.Denials (String)
+com.histmersion.server.agents.ClaudeCode.Result.Errors (String)
+com.histmersion.server.agents.ClaudeCode.Result.IsError (Boolean)
+com.histmersion.server.agents.ClaudeCode.Result.Subtype (String)
+com.histmersion.server.agents.ClaudeCode.Result.TerminalReason (String)
+com.histmersion.server.agents.ClaudeCode.Result.Text (String)
+com.histmersion.server.agents.ClaudeCode.Result.Turns (Int)
+com.histmersion.server.agents.CliOutcome.Error (String)
+com.histmersion.server.agents.CliOutcome.FinalText (String)
+com.histmersion.server.agents.CliOutcome.Turns (Int)
+com.histmersion.server.agents.CliProcess.ProcessTree.Grouped (Boolean)
+com.histmersion.server.agents.CliProcess.Run.Exit (Int)
+com.histmersion.server.agents.CliProcess.Run.Lines (String)
+com.histmersion.server.agents.CliProcess.Run.Stderr (String)
+com.histmersion.server.agents.CliProcess.Run.Stopped (String)
+
+## TYPES TO DECIDE
+com.histmersion.server.agents.ClaudeCode.AbortedByGuardResult | base Boolean | generated | method-result
+    def abortedByGuard(r: Result): com.histmersion.server.agents.ClaudeCode.AbortedByGuardResult =
+com.histmersion.server.agents.ClaudeCode.ArgvAll | base String | generated | method-parameter
+com.histmersion.server.agents.ClaudeCode.ArgvMaxTurns | base Int | generated | method-parameter
+com.histmersion.server.agents.ClaudeCode.ArgvMcpFile | base String | generated | method-parameter
+com.histmersion.server.agents.ClaudeCode.ArgvModel | base String | generated | method-parameter
+com.histmersion.server.agents.ClaudeCode.ArgvOffered | base String | generated | method-parameter
+com.histmersion.server.agents.ClaudeCode.ArgvResult | base String | generated | method-result
+com.histmersion.server.agents.ClaudeCode.ArgvSchema | base String | generated | method-parameter
+com.histmersion.server.agents.ClaudeCode.ArgvWeb | base String | generated | method-parameter
+com.histmersion.server.agents.ClaudeCode.ClientResultPart1 | base String | generated | method-result
+    def client(cfg: ClaudeCodeConfig, rt: CliRuntime, ref: ModelRef): Either[com.histmersion.server.agents.ClaudeCode.ClientResultPart1, LlmClient] =
+com.histmersion.server.agents.ClaudeCode.Env.IsLoopbackHost | base String | generated | method-parameter
+    def isLoopback(host: com.histmersion.server.agents.ClaudeCode.Env.IsLoopbackHost): com.histmersion.server.agents.ClaudeCode.Env.IsLoopbackResult =
+com.histmersion.server.agents.ClaudeCode.Env.IsLoopbackResult | base Boolean | generated | method-result
+    def isLoopback(host: com.histmersion.server.agents.ClaudeCode.Env.IsLoopbackHost): com.histmersion.server.agents.ClaudeCode.Env.IsLoopbackResult =
+com.histmersion.server.agents.ClaudeCode.EnvironmentEnvPart1 | base String | generated | method-parameter
+com.histmersion.server.agents.ClaudeCode.EnvironmentEnvPart2 | base String | generated | method-parameter
+com.histmersion.server.agents.ClaudeCode.EnvironmentMaxTokens | base Int | generated | method-parameter
+com.histmersion.server.agents.ClaudeCode.EnvironmentQuotaUrl | base String | generated | method-parameter
+com.histmersion.server.agents.ClaudeCode.EnvironmentToken | base String | generated | method-parameter
+com.histmersion.server.agents.ClaudeCode.FirstCallTokensResult | base Long | generated | method-result
+    def firstCallTokens(message: Json): Option[com.histmersion.server.agents.ClaudeCode.FirstCallTokensResult] =
+com.histmersion.server.agents.ClaudeCode.JsonInTextText | base String | generated | method-parameter
+    def jsonInText(text: com.histmersion.server.agents.ClaudeCode.JsonInTextText): Option[Json] =
+com.histmersion.server.agents.ClaudeCode.Launch.Agent.Name | base String | generated | constructor-parameter
+    case Agent(pluginDir: Launch.Agent.PluginDir, name: Launch.Agent.Name, settings: Launch.Agent.Settings)
+com.histmersion.server.agents.ClaudeCode.Launch.Agent.PluginDir | base String | generated | constructor-parameter
+    case Agent(pluginDir: Launch.Agent.PluginDir, name: Launch.Agent.Name, settings: Launch.Agent.Settings)
+com.histmersion.server.agents.ClaudeCode.Launch.Agent.Settings | base String | generated | constructor-parameter
+    case Agent(pluginDir: Launch.Agent.PluginDir, name: Launch.Agent.Name, settings: Launch.Agent.Settings)
+com.histmersion.server.agents.ClaudeCode.Launch.SystemPrompt.File | base String | generated | constructor-parameter
+    case SystemPrompt(file: Launch.SystemPrompt.File)
+com.histmersion.server.agents.ClaudeCode.Limit.Message | base String | original | constructor-parameter
+    final case class Limit(message: Limit.Message, until: Option[java.time.Instant])
+com.histmersion.server.agents.ClaudeCode.McpConfigToken | base String | generated | method-parameter
+    def mcpConfig(url: com.histmersion.server.agents.ClaudeCode.McpConfigUrl, token: Option[com.histmersion.server.agents.ClaudeCode.McpConfigToken]): Json =
+com.histmersion.server.agents.ClaudeCode.McpConfigUrl | base String | generated | method-parameter
+    def mcpConfig(url: com.histmersion.server.agents.ClaudeCode.McpConfigUrl, token: Option[com.histmersion.server.agents.ClaudeCode.McpConfigToken]): Json =
+com.histmersion.server.agents.ClaudeCode.Outcome.FirstCall | base Long | original | constructor-parameter
+com.histmersion.server.agents.ClaudeCode.Outcome.McpProblem | base String | original | constructor-parameter
+com.histmersion.server.agents.ClaudeCode.Outcome.ModelId | base String | original | constructor-parameter
+com.histmersion.server.agents.ClaudeCode.Outcome.ServedPart1 | base String | original | constructor-parameter
+com.histmersion.server.agents.ClaudeCode.ParseFirstCall | base Long | generated | variable
+    var firstCall: Option[com.histmersion.server.agents.ClaudeCode.ParseFirstCall] = None
+com.histmersion.server.agents.ClaudeCode.ParseLines | base String | generated | method-parameter
+    def parse(lines: List[com.histmersion.server.agents.ClaudeCode.ParseLines]): Outcome =
+com.histmersion.server.agents.ClaudeCode.ParseMcpProblem | base String | generated | variable
+    var mcpProblem: Option[com.histmersion.server.agents.ClaudeCode.ParseMcpProblem] = None
+com.histmersion.server.agents.ClaudeCode.ParseModel | base String | generated | variable
+    var model: Option[com.histmersion.server.agents.ClaudeCode.ParseModel] = None
+com.histmersion.server.agents.ClaudeCode.ParseServedPart1 | base String | generated | variable
+    var served: List[(com.histmersion.server.agents.ClaudeCode.ParseServedPart1, TokenUsage)] = Nil
+com.histmersion.server.agents.ClaudeCode.ParseStripN | base String | generated | method-parameter
+    def strip(n: com.histmersion.server.agents.ClaudeCode.ParseStripN) = n.stripPrefix(s"mcp__${McpServer}__")
+com.histmersion.server.agents.ClaudeCode.ProbeArgvModel | base String | generated | method-parameter
+    def probeArgv(cfg: ClaudeCodeConfig, model: com.histmersion.server.agents.ClaudeCode.ProbeArgvModel): List[com.histmersion.server.agents.ClaudeCode.ProbeArgvResult] =
+com.histmersion.server.agents.ClaudeCode.ProbeArgvResult | base String | generated | method-result
+    def probeArgv(cfg: ClaudeCodeConfig, model: com.histmersion.server.agents.ClaudeCode.ProbeArgvModel): List[com.histmersion.server.agents.ClaudeCode.ProbeArgvResult] =
+com.histmersion.server.agents.ClaudeCode.ProbeEnvironmentEnvPart1 | base String | generated | method-parameter
+    def probeEnvironment(cfg: ClaudeCodeConfig, maxTokens: com.histmersion.server.agents.ClaudeCode.ProbeEnvironmentMaxTokens, env: java.util.Map[com.histmersion.server.agent
+com.histmersion.server.agents.ClaudeCode.ProbeEnvironmentEnvPart2 | base String | generated | method-parameter
+    def probeEnvironment(cfg: ClaudeCodeConfig, maxTokens: com.histmersion.server.agents.ClaudeCode.ProbeEnvironmentMaxTokens, env: java.util.Map[com.histmersion.server.agent
+com.histmersion.server.agents.ClaudeCode.ProbeEnvironmentMaxTokens | base Int | generated | method-parameter
+    def probeEnvironment(cfg: ClaudeCodeConfig, maxTokens: com.histmersion.server.agents.ClaudeCode.ProbeEnvironmentMaxTokens, env: java.util.Map[com.histmersion.server.agent
+com.histmersion.server.agents.ClaudeCode.Result.CostUsd | base Double | original | constructor-parameter
+com.histmersion.server.agents.ClaudeCode.Result.Denials | base String | original | constructor-parameter
+com.histmersion.server.agents.ClaudeCode.Result.Errors | base String | original | constructor-parameter
+com.histmersion.server.agents.ClaudeCode.Result.IsError | base Boolean | original | constructor-parameter
+com.histmersion.server.agents.ClaudeCode.Result.Subtype | base String | original | constructor-parameter
+com.histmersion.server.agents.ClaudeCode.Result.TerminalReason | base String | original | constructor-parameter
+com.histmersion.server.agents.ClaudeCode.Result.Text | base String | original | constructor-parameter
+com.histmersion.server.agents.ClaudeCode.Result.Turns | base Int | original | constructor-parameter
+com.histmersion.server.agents.ClaudeCode.ResultUser | base String | generated | method-parameter
+com.histmersion.server.agents.ClaudeCode.SchemaJsonResult | base String | generated | method-result
+    def schemaJson(s: ResponseSchema[?]): com.histmersion.server.agents.ClaudeCode.SchemaJsonResult =
+com.histmersion.server.agents.ClaudeCode.TextResult | base String | generated | method-result
+    private def text(content: Json): com.histmersion.server.agents.ClaudeCode.TextResult =
+com.histmersion.server.agents.ClaudeCode.TokensResult | base Long | generated | method-result
+    private def tokens(j: Json, keys: String*): com.histmersion.server.agents.ClaudeCode.TokensResult =
+com.histmersion.server.agents.ClaudeCode.ToolIdName | base String | generated | method-parameter
+    def toolId(name: com.histmersion.server.agents.ClaudeCode.ToolIdName): com.histmersion.server.agents.ClaudeCode.ToolIdResult = ToolStyle.Claude.tool(name)
+com.histmersion.server.agents.ClaudeCode.ToolIdResult | base String | generated | method-result
+    def toolId(name: com.histmersion.server.agents.ClaudeCode.ToolIdName): com.histmersion.server.agents.ClaudeCode.ToolIdResult = ToolStyle.Claude.tool(name)
+com.histmersion.server.agents.ClaudeCode.WatchLine | base String | generated | method-parameter
+    def watch(line: com.histmersion.server.agents.ClaudeCode.WatchLine, pools: PoolSink): Option[com.histmersion.server.agents.ClaudeCode.WatchResult] =
+com.histmersion.server.agents.ClaudeCode.WatchResult | base String | generated | method-result
+    def watch(line: com.histmersion.server.agents.ClaudeCode.WatchLine, pools: PoolSink): Option[com.histmersion.server.agents.ClaudeCode.WatchResult] =
+com.histmersion.server.agents.CliOutcome.Error | base String | original | constructor-parameter
+com.histmersion.server.agents.CliOutcome.FinalText | base String | original | constructor-parameter
+com.histmersion.server.agents.CliOutcome.Turns | base Int | original | constructor-parameter
+com.histmersion.server.agents.CliOutcomes.IsLimitMessage | base String | generated | method-parameter
+    def isLimit(message: com.histmersion.server.agents.CliOutcomes.IsLimitMessage): com.histmersion.server.agents.CliOutcomes.IsLimitResult =
+com.histmersion.server.agents.CliOutcomes.IsLimitResult | base Boolean | generated | method-result
+    def isLimit(message: com.histmersion.server.agents.CliOutcomes.IsLimitMessage): com.histmersion.server.agents.CliOutcomes.IsLimitResult =
+com.histmersion.server.agents.CliOutcomes.ResultModelId | base String | generated | method-parameter
+com.histmersion.server.agents.CliOutcomes.ResultUser | base String | generated | method-parameter
+com.histmersion.server.agents.CliOutcomes.StripFenceResult | base String | generated | method-result
+    def stripFence(s: com.histmersion.server.agents.CliOutcomes.StripFenceS): com.histmersion.server.agents.CliOutcomes.StripFenceResult =
+com.histmersion.server.agents.CliOutcomes.StripFenceS | base String | generated | method-parameter
+    def stripFence(s: com.histmersion.server.agents.CliOutcomes.StripFenceS): com.histmersion.server.agents.CliOutcomes.StripFenceResult =
+com.histmersion.server.agents.CliOutcomes.TextProblemText | base String | generated | method-parameter
+    def textProblem(text: com.histmersion.server.agents.CliOutcomes.TextProblemText): Option[io.circe.ParsingFailure] =
+com.histmersion.server.agents.CliProcess.CannotStartCommand | base String | generated | method-parameter
+    def cannotStart(command: com.histmersion.server.agents.CliProcess.CannotStartCommand, e: java.io.IOException, hint: com.histmersion.server.agents.CliProcess.CannotStartHi
+com.histmersion.server.agents.CliProcess.CannotStartHint | base String | generated | alias,method-parameter
+    val RunHint: _root_.com.histmersion.server.agents.CliProcess.CannotStartHint.type = _root_.com.histmersion.server.agents.CliProcess.CannotStartHint
+    def cannotStart(command: com.histmersion.server.agents.CliProcess.CannotStartCommand, e: java.io.IOException, hint: com.histmersion.server.agents.CliProcess.CannotStartHi
+com.histmersion.server.agents.CliProcess.GroupPrefix | base String | generated | value
+    private lazy val groupPrefix: List[com.histmersion.server.agents.CliProcess.GroupPrefix] =
+com.histmersion.server.agents.CliProcess.PrivateFileText | base String | generated | method-parameter
+    def privateFile(f: Path, text: com.histmersion.server.agents.CliProcess.PrivateFileText): Path =
+com.histmersion.server.agents.CliProcess.ProcessTree.Grouped | base Boolean | generated | constructor-parameter
+    final private class ProcessTree(val p: Process, val grouped: ProcessTree.Grouped):
+com.histmersion.server.agents.CliProcess.ResolveCommand | base String | generated | method-parameter
+    private[agents] def resolve(command: com.histmersion.server.agents.CliProcess.ResolveCommand, path: Option[com.histmersion.server.agents.CliProcess.ResolvePath], dir: Pat
+com.histmersion.server.agents.CliProcess.ResolvePath | base String | generated | method-parameter
+    private[agents] def resolve(command: com.histmersion.server.agents.CliProcess.ResolveCommand, path: Option[com.histmersion.server.agents.CliProcess.ResolvePath], dir: Pat
+com.histmersion.server.agents.CliProcess.Run.Exit | base Int | original | constructor-parameter
+    final case class Run(lines: List[Run.Lines], exit: Run.Exit, stderr: Run.Stderr, stopped: Option[Run.Stopped])
+com.histmersion.server.agents.CliProcess.Run.Lines | base String | original | constructor-parameter
+    final case class Run(lines: List[Run.Lines], exit: Run.Exit, stderr: Run.Stderr, stopped: Option[Run.Stopped])
+com.histmersion.server.agents.CliProcess.Run.Stderr | base String | original | constructor-parameter
+    final case class Run(lines: List[Run.Lines], exit: Run.Exit, stderr: Run.Stderr, stopped: Option[Run.Stopped])
+com.histmersion.server.agents.CliProcess.Run.Stopped | base String | original | constructor-parameter
+    final case class Run(lines: List[Run.Lines], exit: Run.Exit, stderr: Run.Stderr, stopped: Option[Run.Stopped])
+com.histmersion.server.agents.CliProcess.RunArgv | base String | generated | method-parameter
+com.histmersion.server.agents.CliProcess.RunEnvArg1Part1 | base String | generated | method-parameter
+com.histmersion.server.agents.CliProcess.RunEnvArg1Part2 | base String | generated | method-parameter
+com.histmersion.server.agents.CliProcess.RunOnLineArg1 | base String | generated | method-parameter
+com.histmersion.server.agents.CliProcess.RunOnLineResult | base String | generated | method-parameter
+com.histmersion.server.agents.CliProcess.RunStdin | base String | generated | method-parameter
+com.histmersion.server.agents.CliProcess.RunTimeoutSeconds | base Int | generated | method-parameter
+com.histmersion.server.agents.CliProcess.SignalGroupPgid | base Long | generated | method-parameter
+    private def signalGroup(pgid: com.histmersion.server.agents.CliProcess.SignalGroupPgid, sig: com.histmersion.server.agents.CliProcess.SignalGroupSig): Unit =
+com.histmersion.server.agents.CliProcess.SignalGroupSig | base String | generated | method-parameter
+    private def signalGroup(pgid: com.histmersion.server.agents.CliProcess.SignalGroupPgid, sig: com.histmersion.server.agents.CliProcess.SignalGroupSig): Unit =
+com.histmersion.server.agents.CliProcess.WithDirPrefix | base String | generated | method-parameter
+    def withDir[A](prefix: com.histmersion.server.agents.CliProcess.WithDirPrefix)(f: Path => A): A =
+com.histmersion.server.agents.CliRuntime.AgentMcpUrlResult | base String | generated | method-result
+    def agentMcpUrl: com.histmersion.server.agents.CliRuntime.AgentMcpUrlResult = trees.settings("").agentMcpUrl
+com.histmersion.server.agents.CliRuntime.GrantTimeoutSeconds | base Int | generated | method-parameter
+    def grant(call: LlmCall[?], agent: Option[AgentDef], timeoutSeconds: com.histmersion.server.agents.CliRuntime.GrantTimeoutSeconds): Option[RunGrant] =
+com.histmersion.server.agents.CliRuntime.LoopbackResult | base Boolean | generated | method-result
+    def loopback: com.histmersion.server.agents.CliRuntime.LoopbackResult = ClaudeCode.Env.isLoopback(app.server.host)
+com.histmersion.server.agents.CliRuntime.QuotaUrlResult | base String | generated | method-result
+    def quotaUrl: com.histmersion.server.agents.CliRuntime.QuotaUrlResult = trees.settings("").quotaUrl

@@ -18,9 +18,9 @@ final class QueryControllers(queries: QueryService, cfg: () => AppConfig):
     * database cannot be read while the tool list is being built — a server that cannot answer `information_schema` has
     * bigger problems than a thin tool description.
     */
-  def toolDescription: com.histmersion.domain.library.search.QueryControllers.ToolDescriptionResult =
+  def toolDescription: com.histmersion.domain.library.search.QueryControllers.ToolDescription =
     Query.toolDescription(scala.util.Try(schemaTables).getOrElse(SchemaTables(Nil)))
 
 object QueryControllers:
-  type ToolDescriptionResult = ToolDescriptionResult.T
-  object ToolDescriptionResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type ToolDescription = ToolDescription.T
+  object ToolDescription extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]

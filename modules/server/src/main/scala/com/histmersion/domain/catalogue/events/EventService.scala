@@ -32,7 +32,7 @@ import com.histmersion.api.catalogue.Correction
   */
 trait EventService:
   /** The events `selection` selects, by their earliest year then label, one page of them. */
-  def list(selection: EventSelection, limit: com.histmersion.domain.catalogue.events.EventService.ListLimit, offset: com.histmersion.domain.catalogue.events.EventService.ListOffset): EventList
+  def list(selection: EventSelection, limit: com.histmersion.PageSize, offset: com.histmersion.Offset): EventList
 
   /** The events `selection` selects that the map draws (placed, dated well enough), at most `limit`, with the regional
     * ones' outlines simplified to `tolerance` degrees; the unplaced and the imprecisely dated counted.
@@ -40,149 +40,69 @@ trait EventService:
   def geo(selection: EventSelection, limit: com.histmersion.domain.catalogue.events.EventService.GeoLimit, tolerance: com.histmersion.domain.catalogue.events.EventService.GeoTolerance): EventGeo.List
 
   /** The events of `ids` the map draws, by id. */
-  def geoOf(ids: List[com.histmersion.domain.catalogue.events.EventService.GeoOfIds]): Map[com.histmersion.domain.catalogue.events.EventService.GeoOfResultPart1, EventGeo]
+  def geoOf(ids: List[com.histmersion.domain.catalogue.Event.Id]): Map[com.histmersion.domain.catalogue.Event.Id, EventGeo]
 
   /** One event with its parent, parts, datings, edges, participants, Wikidata item and corrections by hand. */
-  def get(id: com.histmersion.domain.catalogue.events.EventService.GetId): Option[EventEntry]
+  def get(id: com.histmersion.domain.catalogue.Event.Id): Option[EventEntry]
 
   /** Its tier, its other names and the catalogue it was imported from. */
-  def tierAndNames(id: com.histmersion.domain.catalogue.events.EventService.TierAndNamesId): Option[(com.histmersion.domain.catalogue.events.EventService.TierAndNamesResultPart1, List[com.histmersion.domain.catalogue.events.EventService.TierAndNamesResultPart2], Option[com.histmersion.domain.catalogue.events.EventService.TierAndNamesResultPart3])]
+  def tierAndNames(id: com.histmersion.domain.catalogue.Event.Id): Option[(com.histmersion.domain.catalogue.events.EventRow.Tier, List[com.histmersion.domain.catalogue.events.BEventRow.Names], Option[com.histmersion.domain.catalogue.events.EventRow.Scale])]
 
   /** The catalogues' rows of one event, with each built-in catalogue's licence and citation. */
-  def catalogueRefs(id: com.histmersion.domain.catalogue.events.EventService.CatalogueRefsId): List[EventCatalogueRef]
+  def catalogueRefs(id: com.histmersion.domain.catalogue.Event.Id): List[EventCatalogueRef]
 
   /** Why `geojson` is no geometry the store reads; `None` when it is one. */
-  def geometryError(geojson: com.histmersion.domain.catalogue.events.EventService.GeometryErrorGeojson): Option[com.histmersion.domain.catalogue.events.EventService.GeometryErrorResult]
+  def geometryError(geojson: com.histmersion.domain.catalogue.events.EventDetailRow.Geometry): Option[com.histmersion.domain.catalogue.events.EventService.Problem]
 
   /** Create or replace one event; on one an import created, the fields that differ from its catalogue's are recorded as
     * corrections.
     */
-  def put(id: com.histmersion.domain.catalogue.events.EventService.PutId, in: EventPut): Unit
+  def put(id: com.histmersion.domain.catalogue.Event.Id, in: EventPut): Unit
 
   /** Change the fields `p` sets; on one an import created, each changed field is recorded as a correction. */
-  def patch(id: com.histmersion.domain.catalogue.events.EventService.PatchId, p: EventPatch): Either[Api.Error, Unit]
+  def patch(id: com.histmersion.domain.catalogue.Event.Id, p: EventPatch): Either[Api.Error, Unit]
 
   /** A new id; the old one stays an alias, what names the event follows. */
-  def rename(from: com.histmersion.domain.catalogue.events.EventService.RenameFrom, to: com.histmersion.domain.catalogue.events.EventService.RenameTo): Either[Api.Error, Unit]
+  def rename(from: com.histmersion.domain.catalogue.Event.Id, to: com.histmersion.domain.catalogue.Event.Id): Either[Api.Error, Unit]
 
   /** The id an old id was renamed to; `None` for a live id, or nothing. */
-  def renamedTo(id: com.histmersion.domain.catalogue.events.EventService.RenamedToId): Option[com.histmersion.domain.catalogue.events.EventService.RenamedToResult]
+  def renamedTo(id: com.histmersion.domain.catalogue.Event.Id): Option[com.histmersion.domain.catalogue.Event.Id]
 
-  def delete(id: com.histmersion.domain.catalogue.events.EventService.DeleteId): com.histmersion.domain.catalogue.events.EventService.DeleteResult
+  def delete(id: com.histmersion.domain.catalogue.Event.Id): Boolean
 
 object EventService:
-  type ListLimit = ListLimit.T
-  object ListLimit extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type ListOffset = ListOffset.T
-  object ListOffset extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type Problem = Problem.T
+  object Problem extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type GeoLimit = GeoLimit.T
   object GeoLimit extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type GeoTolerance = GeoTolerance.T
   object GeoTolerance extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type GeoOfResultPart1 = GeoOfResultPart1.T
-  object GeoOfResultPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type GeoOfIds = GeoOfIds.T
-  object GeoOfIds extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type GetId = GetId.T
-  object GetId extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type TierAndNamesResultPart1 = TierAndNamesResultPart1.T
-  object TierAndNamesResultPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type TierAndNamesResultPart2 = TierAndNamesResultPart2.T
-  object TierAndNamesResultPart2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type TierAndNamesResultPart3 = TierAndNamesResultPart3.T
-  object TierAndNamesResultPart3 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type TierAndNamesId = TierAndNamesId.T
-  object TierAndNamesId extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type CatalogueRefsId = CatalogueRefsId.T
-  object CatalogueRefsId extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type GeometryErrorResult = GeometryErrorResult.T
-  object GeometryErrorResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type GeometryErrorGeojson = GeometryErrorGeojson.T
-  object GeometryErrorGeojson extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type PutId = PutId.T
-  object PutId extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type PatchId = PatchId.T
-  object PatchId extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type RenameFrom = RenameFrom.T
-  object RenameFrom extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type RenameTo = RenameTo.T
-  object RenameTo extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type RenamedToResult = RenamedToResult.T
-  object RenamedToResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type RenamedToId = RenamedToId.T
-  object RenamedToId extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type DeleteResult = DeleteResult.T
-  object DeleteResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type DeleteId = DeleteId.T
-  object DeleteId extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type MissingId = MissingId.T
-  object MissingId extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
   def apply(db: Transactor, related: EventSourceFilter): EventService = Implementation(db, related)
 
-  private def missing(id: com.histmersion.domain.catalogue.events.EventService.MissingId) = Api.Error(s"No event '$id'", Some(Write.CodeNotFound))
+  private def missing(id: com.histmersion.domain.catalogue.Event.Id) = Api.Error(s"No event '$id'", Some(Write.CodeNotFound))
 
   final private class Implementation(db: Transactor, related: EventSourceFilter) extends EventService:
-    def list(selection: EventSelection, limit: com.histmersion.domain.catalogue.events.EventService.Implementation.ListLimit, offset: com.histmersion.domain.catalogue.events.EventService.Implementation.ListOffset): EventList =
+    def list(selection: EventSelection, limit: com.histmersion.PageSize, offset: com.histmersion.Offset): EventList =
       db.read(EventRepo.list(selection.sql(related), limit, offset))
     def geo(selection: EventSelection, limit: com.histmersion.domain.catalogue.events.EventService.Implementation.GeoLimit, tolerance: com.histmersion.domain.catalogue.events.EventService.Implementation.GeoTolerance): EventGeo.List =
       db.read(EventRepo.geo(selection.sql(related), limit, tolerance))
-    def geoOf(ids: List[com.histmersion.domain.catalogue.events.EventService.Implementation.GeoOfIds]): Map[com.histmersion.domain.catalogue.events.EventService.Implementation.GeoOfResultPart1, EventGeo] = db.read(EventRepo.geoOf(ids))
-    def get(id: com.histmersion.domain.catalogue.events.EventService.Implementation.GetId): Option[EventEntry] = db.read(EventRepo.get(id))
-    def tierAndNames(id: com.histmersion.domain.catalogue.events.EventService.Implementation.TierAndNamesId): Option[(com.histmersion.domain.catalogue.events.EventService.Implementation.TierAndNamesResultPart1, List[com.histmersion.domain.catalogue.events.EventService.Implementation.TierAndNamesResultPart2], Option[com.histmersion.domain.catalogue.events.EventService.Implementation.TierAndNamesResultPart3])] = db.read(EventRepo.tierAndNames(id))
-    def catalogueRefs(id: com.histmersion.domain.catalogue.events.EventService.Implementation.CatalogueRefsId): List[EventCatalogueRef] = db.read(EventImportRepo.catalogueRefs(id))
-    def geometryError(geojson: com.histmersion.domain.catalogue.events.EventService.Implementation.GeometryErrorGeojson): Option[com.histmersion.domain.catalogue.events.EventService.Implementation.GeometryErrorResult] = db.read(EventRepo.geometryError(geojson))
-    def put(id: com.histmersion.domain.catalogue.events.EventService.Implementation.PutId, in: EventPut): Unit = db.transact(EventRepo.put(id, in))
-    def patch(id: com.histmersion.domain.catalogue.events.EventService.Implementation.PatchId, p: EventPatch): Either[Api.Error, Unit] = db.transact(EventRepo.patch(id, p))
-    def rename(from: com.histmersion.domain.catalogue.events.EventService.Implementation.RenameFrom, to: com.histmersion.domain.catalogue.events.EventService.Implementation.RenameTo): Either[Api.Error, Unit] = db.transact(EventRepo.rename(from.trim, to.trim))
-    def renamedTo(id: com.histmersion.domain.catalogue.events.EventService.Implementation.RenamedToId): Option[com.histmersion.domain.catalogue.events.EventService.Implementation.RenamedToResult] = db.read(EventRepo.renamedTo(id))
-    def delete(id: com.histmersion.domain.catalogue.events.EventService.Implementation.DeleteId): com.histmersion.domain.catalogue.events.EventService.Implementation.DeleteResult = db.transact(EventRepo.delete(id))
+    def geoOf(ids: List[com.histmersion.domain.catalogue.Event.Id]): Map[com.histmersion.domain.catalogue.Event.Id, EventGeo] = db.read(EventRepo.geoOf(ids))
+    def get(id: com.histmersion.domain.catalogue.Event.Id): Option[EventEntry] = db.read(EventRepo.get(id))
+    def tierAndNames(id: com.histmersion.domain.catalogue.Event.Id): Option[(com.histmersion.domain.catalogue.events.EventRow.Tier, List[com.histmersion.domain.catalogue.events.BEventRow.Names], Option[com.histmersion.domain.catalogue.events.EventRow.Scale])] = db.read(EventRepo.tierAndNames(id))
+    def catalogueRefs(id: com.histmersion.domain.catalogue.Event.Id): List[EventCatalogueRef] = db.read(EventImportRepo.catalogueRefs(id))
+    def geometryError(geojson: com.histmersion.domain.catalogue.events.EventDetailRow.Geometry): Option[com.histmersion.domain.catalogue.events.EventService.Problem] = db.read(EventRepo.geometryError(geojson))
+    def put(id: com.histmersion.domain.catalogue.Event.Id, in: EventPut): Unit = db.transact(EventRepo.put(id, in))
+    def patch(id: com.histmersion.domain.catalogue.Event.Id, p: EventPatch): Either[Api.Error, Unit] = db.transact(EventRepo.patch(id, p))
+    def rename(from: com.histmersion.domain.catalogue.Event.Id, to: com.histmersion.domain.catalogue.Event.Id): Either[Api.Error, Unit] = db.transact(EventRepo.rename(from.trim, to.trim))
+    def renamedTo(id: com.histmersion.domain.catalogue.Event.Id): Option[com.histmersion.domain.catalogue.Event.Id] = db.read(EventRepo.renamedTo(id))
+    def delete(id: com.histmersion.domain.catalogue.Event.Id): Boolean = db.transact(EventRepo.delete(id))
 
   object Implementation:
-    type ListLimit = ListLimit.T
-    object ListLimit extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
-    type ListOffset = ListOffset.T
-    object ListOffset extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
     type GeoLimit = GeoLimit.T
     object GeoLimit extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
     type GeoTolerance = GeoTolerance.T
     object GeoTolerance extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
-    type GeoOfResultPart1 = GeoOfResultPart1.T
-    object GeoOfResultPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-    type GeoOfIds = GeoOfIds.T
-    object GeoOfIds extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-    type GetId = GetId.T
-    object GetId extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-    type TierAndNamesResultPart1 = TierAndNamesResultPart1.T
-    object TierAndNamesResultPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-    type TierAndNamesResultPart2 = TierAndNamesResultPart2.T
-    object TierAndNamesResultPart2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-    type TierAndNamesResultPart3 = TierAndNamesResultPart3.T
-    object TierAndNamesResultPart3 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-    type TierAndNamesId = TierAndNamesId.T
-    object TierAndNamesId extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-    type CatalogueRefsId = CatalogueRefsId.T
-    object CatalogueRefsId extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-    type GeometryErrorResult = GeometryErrorResult.T
-    object GeometryErrorResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-    type GeometryErrorGeojson = GeometryErrorGeojson.T
-    object GeometryErrorGeojson extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-    type PutId = PutId.T
-    object PutId extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-    type PatchId = PatchId.T
-    object PatchId extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-    type RenameFrom = RenameFrom.T
-    object RenameFrom extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-    type RenameTo = RenameTo.T
-    object RenameTo extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-    type RenamedToResult = RenamedToResult.T
-    object RenamedToResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-    type RenamedToId = RenamedToId.T
-    object RenamedToId extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-    type DeleteResult = DeleteResult.T
-    object DeleteResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
-    type DeleteId = DeleteId.T
-    object DeleteId extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
   /** The same rules over the shared in-memory state, which holds the catalogue's rows alone: no place is stored, so an
     * event is anchored by its own geometry (a point; an area has no outline) and has no place's kind or label;
@@ -193,17 +113,17 @@ object EventService:
       selectedSources: com.histmersion.api.library.Filter => Option[Set[InMemory.SelectedSourcesResult]] = _ => None
   ) extends EventService:
 
-    private def attested(s: CatalogueState, id: com.histmersion.domain.catalogue.events.EventService.InMemory.AttestedId): com.histmersion.domain.catalogue.events.EventService.InMemory.AttestedResult =
+    private def attested(s: CatalogueState, id: com.histmersion.domain.catalogue.Event.Id): Boolean =
       s.attestations.exists(a => a.targetType == "event" && a.targetId == id)
 
-    private def overlaps(e: HeldEvent, period: Option[com.histmersion.api.catalogue.Period]): com.histmersion.domain.catalogue.events.EventService.InMemory.OverlapsResult =
+    private def overlaps(e: HeldEvent, period: Option[com.histmersion.api.catalogue.Period]): Boolean =
       period.forall(p => e.outer.forall((a, b) => a <= p.end && b >= p.start))
 
-    private def containsText(field: Option[com.histmersion.domain.catalogue.events.EventService.InMemory.ContainsTextField], t: com.histmersion.domain.catalogue.events.EventService.InMemory.ContainsTextT): com.histmersion.domain.catalogue.events.EventService.InMemory.ContainsTextResult =
+    private def containsText(field: Option[String], t: com.histmersion.domain.catalogue.events.EventSelection.Text): Boolean =
       field.exists(_.toLowerCase(Locale.ROOT).contains(t.toLowerCase(Locale.ROOT)))
 
     /** The part of the selection the library answers in the database: its sources, its period, its title. */
-    private def related(s: CatalogueState, e: HeldEvent, f: com.histmersion.api.library.Filter): Option[com.histmersion.domain.catalogue.events.EventService.InMemory.RelatedResult] =
+    private def related(s: CatalogueState, e: HeldEvent, f: com.histmersion.api.library.Filter): Option[Boolean] =
       val sources = selectedSources(f.sourceSet.modify(_.period).setTo(None))
       val title = f.title.map(_.trim).filter(_.nonEmpty)
       if sources.isEmpty && f.period.isEmpty && title.isEmpty then None
@@ -214,8 +134,8 @@ object EventService:
         )
         Some(bySource && overlaps(e, f.period) && title.forall(t => containsText(Some(e.label), t)))
 
-    private def selects(s: CatalogueState, sel: EventSelection)(e: HeldEvent): com.histmersion.domain.catalogue.events.EventService.InMemory.SelectsResult =
-      def clean(o: Option[com.histmersion.domain.catalogue.events.EventService.InMemory.SelectsCleanO]) = o.map(_.trim).filter(_.nonEmpty)
+    private def selects(s: CatalogueState, sel: EventSelection)(e: HeldEvent): Boolean =
+      def clean(o: Option[com.histmersion.domain.catalogue.events.EventSelection.Text]) = o.map(_.trim).filter(_.nonEmpty)
       val tier = e.summary(attested(s, e.id)).tier
       val bySources = related(s, e, sel.filter).forall { inSelection =>
         inSelection || (sel.narrow.context && tier == EventTier.Catalogue &&
@@ -235,7 +155,7 @@ object EventService:
 
     private def summaryOf(s: CatalogueState, e: HeldEvent): EventSummary = e.summary(attested(s, e.id))
 
-    def list(selection: EventSelection, limit: com.histmersion.domain.catalogue.events.EventService.InMemory.ListLimit, offset: com.histmersion.domain.catalogue.events.EventService.InMemory.ListOffset): EventList =
+    def list(selection: EventSelection, limit: com.histmersion.PageSize, offset: com.histmersion.Offset): EventList =
       val s = state.get
       val all = ordered(s.events.filter(selects(s, selection)))
       val from = offset.max(0)
@@ -267,7 +187,7 @@ object EventService:
         )
       }
 
-    private def preciseEnough(e: HeldEvent): com.histmersion.domain.catalogue.events.EventService.InMemory.PreciseEnoughResult = e.uncertainty.exists(_ <= EventPrecision.ApproximateUpTo)
+    private def preciseEnough(e: HeldEvent): Boolean = e.uncertainty.exists(_ <= EventPrecision.ApproximateUpTo)
 
     def geo(selection: EventSelection, limit: com.histmersion.domain.catalogue.events.EventService.InMemory.GeoLimit, tolerance: com.histmersion.domain.catalogue.events.EventService.InMemory.GeoTolerance): EventGeo.List =
       val s = state.get
@@ -280,11 +200,11 @@ object EventService:
         placed.count(e => e.uncertainty.exists(_ > EventPrecision.ApproximateUpTo))
       )
 
-    def geoOf(ids: List[com.histmersion.domain.catalogue.events.EventService.InMemory.GeoOfIds]): Map[com.histmersion.domain.catalogue.events.EventService.InMemory.GeoOfResultPart1, EventGeo] =
+    def geoOf(ids: List[com.histmersion.domain.catalogue.Event.Id]): Map[com.histmersion.domain.catalogue.Event.Id, EventGeo] =
       val s = state.get
       s.events.filter(e => ids.contains(e.id) && preciseEnough(e)).flatMap(e => drawn(s, e).map(e.id -> _)).toMap
 
-    def get(id: com.histmersion.domain.catalogue.events.EventService.InMemory.GetId): Option[EventEntry] =
+    def get(id: com.histmersion.domain.catalogue.Event.Id): Option[EventEntry] =
       val s = state.get
       s.events.find(_.id == id).map { e =>
         val sum = summaryOf(s, e)
@@ -309,11 +229,11 @@ object EventService:
         )
       }
 
-    def tierAndNames(id: com.histmersion.domain.catalogue.events.EventService.InMemory.TierAndNamesId): Option[(com.histmersion.domain.catalogue.events.EventService.InMemory.TierAndNamesResultPart1, List[com.histmersion.domain.catalogue.events.EventService.InMemory.TierAndNamesResultPart2], Option[com.histmersion.domain.catalogue.events.EventService.InMemory.TierAndNamesResultPart3])] =
+    def tierAndNames(id: com.histmersion.domain.catalogue.Event.Id): Option[(com.histmersion.domain.catalogue.events.EventRow.Tier, List[com.histmersion.domain.catalogue.events.BEventRow.Names], Option[com.histmersion.domain.catalogue.events.EventRow.Scale])] =
       val s = state.get
       s.events.find(_.id == id).map(e => (summaryOf(s, e).tier, e.names, e.catalogue))
 
-    def catalogueRefs(id: com.histmersion.domain.catalogue.events.EventService.InMemory.CatalogueRefsId): List[EventCatalogueRef] =
+    def catalogueRefs(id: com.histmersion.domain.catalogue.Event.Id): List[EventCatalogueRef] =
       state.get.catalogueRecords
         .filter(_._1 == id)
         .map(_._2)
@@ -335,7 +255,7 @@ object EventService:
           )
         }
 
-    def geometryError(geojson: com.histmersion.domain.catalogue.events.EventService.InMemory.GeometryErrorGeojson): Option[com.histmersion.domain.catalogue.events.EventService.InMemory.GeometryErrorResult] =
+    def geometryError(geojson: com.histmersion.domain.catalogue.events.EventDetailRow.Geometry): Option[com.histmersion.domain.catalogue.events.EventService.Problem] =
       io.circe.parser.parse(geojson) match
         case Left(e)  => Some(e.message)
         case Right(j) =>
@@ -346,7 +266,7 @@ object EventService:
             case Some(_) => Some("Unable to find 'coordinates' in GeoJSON string")
 
     /** The corrections a person's `fields` make on an event an import created, recorded as the database does. */
-    private def withCorrections(s: CatalogueState, id: com.histmersion.domain.catalogue.events.EventService.InMemory.WithCorrectionsId, fields: Map[com.histmersion.domain.catalogue.events.EventService.InMemory.WithCorrectionsFieldsPart1, io.circe.Json]): CatalogueState =
+    private def withCorrections(s: CatalogueState, id: com.histmersion.domain.catalogue.Event.Id, fields: Map[String, io.circe.Json]): CatalogueState =
       val upstream = for
         e <- s.events.find(_.id == id)
         cat <- e.catalogue
@@ -356,7 +276,7 @@ object EventService:
       yield cat -> rec
       upstream.fold(s) { (provider, rec) =>
         val up = EventFields.upstream(rec)
-        @tailrec def loop(rest: List[(com.histmersion.domain.catalogue.events.EventService.InMemory.WithCorrectionsLoopRestPart1, io.circe.Json)], acc: CatalogueState): CatalogueState = rest match
+        @tailrec def loop(rest: List[(String, io.circe.Json)], acc: CatalogueState): CatalogueState = rest match
           case (f, v) :: tail => loop(tail, up.get(f).fold(acc)(u => corrected(acc, provider, id, f, v, u)))
           case Nil            => acc
         loop(fields.toList, s)
@@ -365,9 +285,9 @@ object EventService:
     /** One field's correction recorded: none when the person's value is the catalogue's. */
     private def corrected(
         s: CatalogueState,
-        provider: com.histmersion.domain.catalogue.events.EventService.InMemory.CorrectedProvider,
-        id: com.histmersion.domain.catalogue.events.EventService.InMemory.CorrectedId,
-        field: com.histmersion.domain.catalogue.events.EventService.InMemory.CorrectedField,
+        provider: com.histmersion.domain.catalogue.events.BCatalogueRow.Provider,
+        id: com.histmersion.domain.catalogue.Event.Id,
+        field: String,
         value: io.circe.Json,
         upstream: io.circe.Json
     ): CatalogueState =
@@ -419,7 +339,7 @@ object EventService:
         withCorrections(s.modify(_.events).setTo(written), id, EventFields.ofPut(in))
       }
 
-    def patch(id: com.histmersion.domain.catalogue.events.EventService.InMemory.PatchId, p: EventPatch): Either[Api.Error, Unit] =
+    def patch(id: com.histmersion.domain.catalogue.Event.Id, p: EventPatch): Either[Api.Error, Unit] =
       if !state.get.events.exists(_.id == id) then Left(missing(id))
       else
         val _ = state.updateAndGet { s =>
@@ -468,10 +388,10 @@ object EventService:
         }
         Right(())
 
-    def rename(from: com.histmersion.domain.catalogue.events.EventService.InMemory.RenameFrom, to: com.histmersion.domain.catalogue.events.EventService.InMemory.RenameTo): Either[Api.Error, Unit] =
+    def rename(from: com.histmersion.domain.catalogue.Event.Id, to: com.histmersion.domain.catalogue.Event.Id): Either[Api.Error, Unit] =
       val (oldId, newId) = (from.trim, to.trim)
       val s = state.get
-      def exists(i: com.histmersion.domain.catalogue.events.EventService.InMemory.RenameExistsI) = s.events.exists(_.id == i)
+      def exists(i: com.histmersion.domain.catalogue.Event.Id) = s.events.exists(_.id == i)
       val aliasOf = s.eventAliases.get(newId)
       if !exists(oldId) then Left(missing(oldId))
       else if exists(newId) then
@@ -485,7 +405,7 @@ object EventService:
         )
       else
         val _ = state.updateAndGet { s =>
-          def ren(i: com.histmersion.domain.catalogue.events.EventService.InMemory.RenameRenI) = if i == oldId then newId else i
+          def ren(i: com.histmersion.domain.catalogue.Event.Id) = if i == oldId then newId else i
           s.modify(_.events)
             .using(_.map { e =>
               e.modify(_.id)
@@ -514,11 +434,11 @@ object EventService:
         }
         Right(())
 
-    def renamedTo(id: com.histmersion.domain.catalogue.events.EventService.InMemory.RenamedToId): Option[com.histmersion.domain.catalogue.events.EventService.InMemory.RenamedToResult] =
+    def renamedTo(id: com.histmersion.domain.catalogue.Event.Id): Option[com.histmersion.domain.catalogue.Event.Id] =
       val s = state.get
       if s.events.exists(_.id == id) then None else s.eventAliases.get(id)
 
-    def delete(id: com.histmersion.domain.catalogue.events.EventService.InMemory.DeleteId): com.histmersion.domain.catalogue.events.EventService.InMemory.DeleteResult =
+    def delete(id: com.histmersion.domain.catalogue.Event.Id): Boolean =
       val had = state.get.events.exists(_.id == id)
       val _ = state.updateAndGet(
         _.modify(_.events)
@@ -531,87 +451,13 @@ object EventService:
       had
 
   object InMemory:
-    type SelectsCleanO = SelectsCleanO.T
-    object SelectsCleanO extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-    type WithCorrectionsLoopRestPart1 = WithCorrectionsLoopRestPart1.T
-    object WithCorrectionsLoopRestPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-    type RenameExistsI = RenameExistsI.T
-    object RenameExistsI extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-    type RenameRenI = RenameRenI.T
-    object RenameRenI extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
     type SelectedSourcesResult = SelectedSourcesResult.T
     object SelectedSourcesResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
-    type AttestedResult = AttestedResult.T
-    object AttestedResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
-    type AttestedId = AttestedId.T
-    object AttestedId extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-    type OverlapsResult = OverlapsResult.T
-    object OverlapsResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
-    type ContainsTextResult = ContainsTextResult.T
-    object ContainsTextResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
-    type ContainsTextField = ContainsTextField.T
-    object ContainsTextField extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-    type ContainsTextT = ContainsTextT.T
-    object ContainsTextT extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-    type RelatedResult = RelatedResult.T
-    object RelatedResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
-    type SelectsResult = SelectsResult.T
-    object SelectsResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
-    type ListLimit = ListLimit.T
-    object ListLimit extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
-    type ListOffset = ListOffset.T
-    object ListOffset extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
-    type PreciseEnoughResult = PreciseEnoughResult.T
-    object PreciseEnoughResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
     type GeoLimit = GeoLimit.T
     object GeoLimit extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
     type GeoTolerance = GeoTolerance.T
     object GeoTolerance extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
-    type GeoOfResultPart1 = GeoOfResultPart1.T
-    object GeoOfResultPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-    type GeoOfIds = GeoOfIds.T
-    object GeoOfIds extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-    type GetId = GetId.T
-    object GetId extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-    type TierAndNamesResultPart1 = TierAndNamesResultPart1.T
-    object TierAndNamesResultPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-    type TierAndNamesResultPart2 = TierAndNamesResultPart2.T
-    object TierAndNamesResultPart2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-    type TierAndNamesResultPart3 = TierAndNamesResultPart3.T
-    object TierAndNamesResultPart3 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-    type TierAndNamesId = TierAndNamesId.T
-    object TierAndNamesId extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-    type CatalogueRefsId = CatalogueRefsId.T
-    object CatalogueRefsId extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-    type GeometryErrorResult = GeometryErrorResult.T
-    object GeometryErrorResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-    type GeometryErrorGeojson = GeometryErrorGeojson.T
-    object GeometryErrorGeojson extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-    type WithCorrectionsId = WithCorrectionsId.T
-    object WithCorrectionsId extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-    type WithCorrectionsFieldsPart1 = WithCorrectionsFieldsPart1.T
-    object WithCorrectionsFieldsPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-    type CorrectedProvider = CorrectedProvider.T
-    object CorrectedProvider extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-    type CorrectedId = CorrectedId.T
-    object CorrectedId extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-    type CorrectedField = CorrectedField.T
-    object CorrectedField extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-    type PutId = _root_.com.histmersion.domain.catalogue.events.HeldEvent.Id
-    val PutId: _root_.com.histmersion.domain.catalogue.events.HeldEvent.Id.type = _root_.com.histmersion.domain.catalogue.events.HeldEvent.Id
-    type PatchId = PatchId.T
-    object PatchId extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-    type RenameFrom = RenameFrom.T
-    object RenameFrom extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-    type RenameTo = RenameTo.T
-    object RenameTo extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-    type RenamedToResult = RenamedToResult.T
-    object RenamedToResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-    type RenamedToId = RenamedToId.T
-    object RenamedToId extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-    type DeleteResult = DeleteResult.T
-    object DeleteResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
-    type DeleteId = DeleteId.T
-    object DeleteId extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type PutId = _root_.com.histmersion.domain.catalogue.Event.Id
+    val PutId: _root_.com.histmersion.domain.catalogue.Event.Id.type = _root_.com.histmersion.domain.catalogue.Event.Id

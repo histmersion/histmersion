@@ -19,7 +19,7 @@ import com.histmersion.api.Api
 final class IiifControllers(assets: AssetService, baseUrl: () => IiifControllers.BaseUrlResult):
 
   /** Serve the IIIF info.json for an asset. Returns the JSON document or a left with an error. */
-  def info(citekey: com.histmersion.domain.library.Citekey, name: com.histmersion.domain.media.assets.IiifControllers.InfoName): Either[Api.Error, io.circe.Json] =
+  def info(citekey: com.histmersion.domain.library.Citekey, name: com.histmersion.domain.media.assets.AssetService.AssetName): Either[Api.Error, io.circe.Json] =
     val safeName = AssetLinks.safeName(name)
     assets.figure(citekey, safeName) match
       case None             => Left(Api.Error(s"No asset '$safeName' for '$citekey'", Some(Write.CodeNotFound)))
@@ -35,12 +35,12 @@ final class IiifControllers(assets: AssetService, baseUrl: () => IiifControllers
     */
   def image(
       citekey: com.histmersion.domain.library.Citekey,
-      name: com.histmersion.domain.media.assets.IiifControllers.ImageName,
-      regionStr: com.histmersion.domain.media.assets.IiifControllers.ImageRegionStr,
-      sizeStr: com.histmersion.domain.media.assets.IiifControllers.ImageSizeStr,
-      rotationStr: com.histmersion.domain.media.assets.IiifControllers.ImageRotationStr,
-      filename: com.histmersion.domain.media.assets.IiifControllers.ImageFilename
-  ): Either[Api.Error, (com.histmersion.domain.media.assets.IiifControllers.ImageResultPart2Part1, com.histmersion.domain.media.assets.IiifControllers.ImageResultPart2Part2)] =
+      name: com.histmersion.domain.media.assets.AssetService.AssetName,
+      regionStr: com.histmersion.domain.media.assets.IiifControllers.Region,
+      sizeStr: com.histmersion.domain.media.assets.IiifControllers.Size,
+      rotationStr: com.histmersion.domain.media.assets.IiifControllers.Rotation,
+      filename: com.histmersion.domain.media.assets.IiifControllers.Filename
+  ): Either[Api.Error, (com.histmersion.domain.media.assets.AssetService.Bytes, com.histmersion.domain.media.assets.AssetService.Mime)] =
     // parse the filename as `default.{format}`
     val safeName = AssetLinks.safeName(name)
     for
@@ -54,13 +54,13 @@ final class IiifControllers(assets: AssetService, baseUrl: () => IiifControllers
   // ── internals ──────────────────────────────────────────────────────────────────────────────
 
   /** Parse `default.jpg` or `default.png`. */
-  private def parseFilename(filename: com.histmersion.domain.media.assets.IiifControllers.ParseFilenameFilename): Either[Api.Error, com.histmersion.domain.media.assets.IiifControllers.ParseFilenameResultPart2] =
+  private def parseFilename(filename: com.histmersion.domain.media.assets.IiifControllers.Filename): Either[Api.Error, com.histmersion.domain.media.assets.AssetService.AssetName] =
     filename match
       case s"default.$ext" => Iiif.parseFormat(ext).left.map(Api.Error(_))
       case _ => Left(Api.Error(s"invalid IIIF filename: '$filename' (expected 'default.jpg' or 'default.png')"))
 
   /** Level 1 supports rotation `0` only. */
-  private def validateRotation(s: com.histmersion.domain.media.assets.IiifControllers.ValidateRotationS): Either[Api.Error, Unit] =
+  private def validateRotation(s: com.histmersion.domain.media.assets.IiifControllers.Rotation): Either[Api.Error, Unit] =
     s.trim match
       case "0" => Right(())
       case _   => Left(Api.Error(s"unsupported rotation: '$s' (only '0' is supported at Level 1)"))
@@ -68,11 +68,11 @@ final class IiifControllers(assets: AssetService, baseUrl: () => IiifControllers
   /** Load the asset, decode it, apply transforms, and encode to the output format. */
   private def render(
       citekey: com.histmersion.domain.library.Citekey,
-      name: com.histmersion.domain.media.assets.IiifControllers.RenderName,
+      name: com.histmersion.domain.media.assets.AssetService.AssetName,
       region: Iiif.Region,
       size: Iiif.Size,
-      format: com.histmersion.domain.media.assets.IiifControllers.RenderFormat
-  ): Either[Api.Error, (com.histmersion.domain.media.assets.IiifControllers.RenderResultPart2Part1, com.histmersion.domain.media.assets.IiifControllers.RenderResultPart2Part2)] =
+      format: com.histmersion.domain.media.assets.IiifControllers.Format
+  ): Either[Api.Error, (com.histmersion.domain.media.assets.AssetService.Bytes, com.histmersion.domain.media.assets.AssetService.Mime)] =
     assets.figure(citekey, name) match
       case None =>
         Left(Api.Error(s"No asset '$name' for '$citekey'", Some(Write.CodeNotFound)))
@@ -84,7 +84,7 @@ final class IiifControllers(assets: AssetService, baseUrl: () => IiifControllers
             applyRegion(img, region).flatMap(applySize(_, size)).flatMap(encode(_, format))
 
   /** Decode raw bytes into a BufferedImage. Returns None when ImageIO cannot read them. */
-  private def decodeImage(bytes: com.histmersion.domain.media.assets.IiifControllers.DecodeImageBytes): Option[BufferedImage] =
+  private def decodeImage(bytes: com.histmersion.domain.media.assets.AssetService.Bytes): Option[BufferedImage] =
     Option(ImageIO.read(new ByteArrayInputStream(bytes)))
 
   /** Crop the image to the requested region. */
@@ -135,7 +135,7 @@ final class IiifControllers(assets: AssetService, baseUrl: () => IiifControllers
         Right(scaleImage(img, w, h))
 
   /** Scale an image to the given dimensions using bilinear interpolation. */
-  private def scaleImage(src: BufferedImage, w: com.histmersion.domain.media.assets.IiifControllers.ScaleImageW, h: com.histmersion.domain.media.assets.IiifControllers.ScaleImageH): BufferedImage =
+  private def scaleImage(src: BufferedImage, w: com.histmersion.domain.media.assets.IiifControllers.PixelWidth, h: com.histmersion.domain.media.assets.IiifControllers.PixelHeight): BufferedImage =
     if w == src.getWidth && h == src.getHeight then src
     else
       val dst = new BufferedImage(w, h, effectiveType(src))
@@ -149,12 +149,12 @@ final class IiifControllers(assets: AssetService, baseUrl: () => IiifControllers
       dst
 
   /** Use TYPE_INT_ARGB for images with transparency, TYPE_INT_RGB otherwise. */
-  private def effectiveType(img: BufferedImage): com.histmersion.domain.media.assets.IiifControllers.EffectiveTypeResult =
+  private def effectiveType(img: BufferedImage): com.histmersion.domain.media.assets.IiifControllers.ImageType =
     if img.getColorModel.hasAlpha then BufferedImage.TYPE_INT_ARGB
     else BufferedImage.TYPE_INT_RGB
 
   /** Encode a BufferedImage to the requested format. */
-  private def encode(img: BufferedImage, format: com.histmersion.domain.media.assets.IiifControllers.EncodeFormat): Either[Api.Error, (com.histmersion.domain.media.assets.IiifControllers.EncodeResultPart2Part1, com.histmersion.domain.media.assets.IiifControllers.EncodeResultPart2Part2)] =
+  private def encode(img: BufferedImage, format: com.histmersion.domain.media.assets.IiifControllers.Format): Either[Api.Error, (com.histmersion.domain.media.assets.AssetService.Bytes, com.histmersion.domain.media.assets.AssetService.Mime)] =
     val out = new ByteArrayOutputStream()
     // JPEG cannot encode alpha; convert to RGB if needed
     val toEncode =
@@ -169,58 +169,28 @@ final class IiifControllers(assets: AssetService, baseUrl: () => IiifControllers
     if !written then Left(Api.Error(s"cannot encode image as $format"))
     else Right((out.toByteArray, Iiif.contentType(format)))
 
-  private def enc(s: com.histmersion.domain.media.assets.IiifControllers.EncS): com.histmersion.domain.media.assets.IiifControllers.EncResult =
+  private def enc(s: com.histmersion.domain.media.assets.IiifControllers.Format): com.histmersion.domain.media.assets.AssetService.Mime =
     java.net.URLEncoder.encode(s, "UTF-8").replace("+", "%20")
 
 object IiifControllers:
-  type BaseUrlResult = BaseUrlResult.T
-  object BaseUrlResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type BaseUrl = BaseUrl.T
+  object BaseUrl extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type Filename = Filename.T
+  object Filename extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type Format = Format.T
+  object Format extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type ImageType = ImageType.T
+  object ImageType extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type PixelHeight = PixelHeight.T
+  object PixelHeight extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type PixelWidth = PixelWidth.T
+  object PixelWidth extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type Region = Region.T
+  object Region extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type Rotation = Rotation.T
+  object Rotation extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type Size = Size.T
+  object Size extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type BaseUrlResult = com.histmersion.domain.media.assets.IiifControllers.BaseUrl
+  val BaseUrlResult: _root_.com.histmersion.domain.media.assets.IiifControllers.BaseUrl.type = _root_.com.histmersion.domain.media.assets.IiifControllers.BaseUrl
 
-  type InfoName = InfoName.T
-  object InfoName extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type ImageResultPart2Part1 = ImageResultPart2Part1.T
-  object ImageResultPart2Part1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Array[_root_.scala.Byte], _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type ImageResultPart2Part2 = ImageResultPart2Part2.T
-  object ImageResultPart2Part2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type ImageName = ImageName.T
-  object ImageName extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type ImageRegionStr = ImageRegionStr.T
-  object ImageRegionStr extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type ImageSizeStr = ImageSizeStr.T
-  object ImageSizeStr extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type ImageRotationStr = ImageRotationStr.T
-  object ImageRotationStr extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type ImageFilename = ImageFilename.T
-  object ImageFilename extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type ParseFilenameResultPart2 = ParseFilenameResultPart2.T
-  object ParseFilenameResultPart2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type ParseFilenameFilename = ParseFilenameFilename.T
-  object ParseFilenameFilename extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type ValidateRotationS = ValidateRotationS.T
-  object ValidateRotationS extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type RenderResultPart2Part1 = RenderResultPart2Part1.T
-  object RenderResultPart2Part1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Array[_root_.scala.Byte], _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type RenderResultPart2Part2 = RenderResultPart2Part2.T
-  object RenderResultPart2Part2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type RenderName = RenderName.T
-  object RenderName extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type RenderFormat = RenderFormat.T
-  object RenderFormat extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type DecodeImageBytes = DecodeImageBytes.T
-  object DecodeImageBytes extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Array[_root_.scala.Byte], _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type ScaleImageW = ScaleImageW.T
-  object ScaleImageW extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type ScaleImageH = ScaleImageH.T
-  object ScaleImageH extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type EffectiveTypeResult = EffectiveTypeResult.T
-  object EffectiveTypeResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type EncodeResultPart2Part1 = EncodeResultPart2Part1.T
-  object EncodeResultPart2Part1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Array[_root_.scala.Byte], _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type EncodeResultPart2Part2 = EncodeResultPart2Part2.T
-  object EncodeResultPart2Part2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type EncodeFormat = EncodeFormat.T
-  object EncodeFormat extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type EncResult = EncResult.T
-  object EncResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type EncS = EncS.T
-  object EncS extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]

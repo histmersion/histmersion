@@ -10,12 +10,12 @@ import com.histmersion.domain.library.Citekey
 final class Spool(store: Store):
 
   /** Where `key` is, for the ingest's report. */
-  def where(key: Store.Key): com.histmersion.domain.library.acquisition.Spool.WhereResult = store.where(key)
+  def where(key: Store.Key): com.histmersion.domain.library.acquisition.Spool.Location = store.where(key)
 
   /** `bytes` as the fetched file of `citekey`. The key is built from a caller-supplied string, so it gets BOTH guards:
     * the citekey must parse ([[Citekey]]), and the store's key refuses anything that would leave it.
     */
-  def write(citekey: com.histmersion.domain.library.Citekey, extension: com.histmersion.domain.library.acquisition.Spool.WriteExtension, bytes: com.histmersion.domain.library.acquisition.Spool.WriteBytes): Either[com.histmersion.domain.library.acquisition.Spool.WriteResultPart1, Store.Key] =
+  def write(citekey: com.histmersion.domain.library.Citekey, extension: com.histmersion.domain.library.acquisition.Spool.Extension, bytes: com.histmersion.domain.library.acquisition.Spool.Bytes): Either[com.histmersion.domain.library.acquisition.Spool.Problem, Store.Key] =
     Citekey.parse(citekey).flatMap { _ =>
       Store.Key
         .of(citekey, s"paper.${SafeName.of(extension)}")
@@ -28,11 +28,11 @@ final class Spool(store: Store):
   def get(key: Store.Key): Option[com.histmersion.util.storage.Blob] = store.get(key)
 
 object Spool:
-  type WhereResult = WhereResult.T
-  object WhereResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type WriteResultPart1 = WriteResultPart1.T
-  object WriteResultPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type WriteExtension = WriteExtension.T
-  object WriteExtension extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type WriteBytes = WriteBytes.T
-  object WriteBytes extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Array[_root_.scala.Byte], _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type Bytes = Bytes.T
+  object Bytes extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Array[_root_.scala.Byte], _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type Extension = Extension.T
+  object Extension extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type Location = Location.T
+  object Location extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type Problem = Problem.T
+  object Problem extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]

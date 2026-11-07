@@ -31,7 +31,7 @@ final class BuildCtx[C, A] private[hot] (
     dep(h.name).asInstanceOf[B]
 
 object BuildCtx:
-  type Changed = Changed.T
-  object Changed extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type DepArg1 = DepArg1.T
-  object DepArg1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type Changed = com.histmersion.server.hot.Hot.Graph.Def.Name
+  val Changed: _root_.com.histmersion.server.hot.Hot.Graph.Def.Name.type = _root_.com.histmersion.server.hot.Hot.Graph.Def.Name
+  type DepArg1 = com.histmersion.server.hot.Hot.Graph.Def.Name
+  val DepArg1: _root_.com.histmersion.server.hot.Hot.Graph.Def.Name.type = _root_.com.histmersion.server.hot.Hot.Graph.Def.Name

@@ -47,15 +47,15 @@ final private[storage] class DiskStore(val location: Location, root: Path) exten
       case e: NoSuchFileException => Left(Store.Error.NotFound(e.getMessage))
       case e: IOException         => Left(Store.Error.Failed(e.getMessage))
 
-  def where(key: Store.Key): com.histmersion.util.storage.DiskStore.WhereResult = path(key).toString
+  def where(key: Store.Key): com.histmersion.util.storage.Blob.Location = path(key).toString
 
   def sub(prefix: Store.Key): Store = DiskStore(location, path(prefix))
 
-  def exists(key: Store.Key): com.histmersion.util.storage.DiskStore.ExistsResult = Files.exists(path(key))
-  def isFile(key: Store.Key): com.histmersion.util.storage.DiskStore.IsFileResult = Files.isRegularFile(path(key))
-  def isDirectory(key: Store.Key): com.histmersion.util.storage.DiskStore.IsDirectoryResult = Files.isDirectory(path(key))
-  def isLink(key: Store.Key): com.histmersion.util.storage.DiskStore.IsLinkResult = Files.isSymbolicLink(path(key))
-  def isExecutable(key: Store.Key): com.histmersion.util.storage.DiskStore.IsExecutableResult = Files.isRegularFile(path(key)) && Files.isExecutable(path(key))
+  def exists(key: Store.Key): Boolean = Files.exists(path(key))
+  def isFile(key: Store.Key): Boolean = Files.isRegularFile(path(key))
+  def isDirectory(key: Store.Key): Boolean = Files.isDirectory(path(key))
+  def isLink(key: Store.Key): Boolean = Files.isSymbolicLink(path(key))
+  def isExecutable(key: Store.Key): Boolean = Files.isRegularFile(path(key)) && Files.isExecutable(path(key))
 
   def stat(key: Store.Key): Option[Stored] =
     val p = path(key)
@@ -79,7 +79,7 @@ final private[storage] class DiskStore(val location: Location, root: Path) exten
         .map(stored)
         .sortBy(_.key.value)
 
-  def put(key: Store.Key, bytes: com.histmersion.util.storage.DiskStore.PutBytes): Either[Store.Error, Stored] =
+  def put(key: Store.Key, bytes: com.histmersion.util.storage.ByteSource.Content): Either[Store.Error, Stored] =
     reserve(key).flatMap { r =>
       try
         Using.resource(r.output())(_.write(bytes))
@@ -87,14 +87,14 @@ final private[storage] class DiskStore(val location: Location, root: Path) exten
       finally r.close()
     }
 
-  def write(key: Store.Key, bytes: com.histmersion.util.storage.DiskStore.WriteBytes): Either[Store.Error, Stored] = io {
+  def write(key: Store.Key, bytes: com.histmersion.util.storage.ByteSource.Content): Either[Store.Error, Stored] = io {
     val p = path(key)
     Option(p.getParent).foreach(Files.createDirectories(_))
     Files.write(p, bytes, StandardOpenOption.CREATE, StandardOpenOption.TRUNCATE_EXISTING, StandardOpenOption.WRITE)
     stored(p)
   }
 
-  def reserve(key: Store.Key, temp: TempName, throughLink: com.histmersion.util.storage.DiskStore.ReserveThroughLink): Either[Store.Error, Reservation] = io {
+  def reserve(key: Store.Key, temp: TempName, throughLink: com.histmersion.util.storage.Store.ThroughLink): Either[Store.Error, Reservation] = io {
     val asked = path(key)
     val target = if throughLink && Files.isSymbolicLink(asked) then asked.toRealPath() else asked
     val dir = target.toAbsolutePath.getParent
@@ -113,7 +113,7 @@ final private[storage] class DiskStore(val location: Location, root: Path) exten
     Files.move(path(from), t, StandardCopyOption.REPLACE_EXISTING): Unit
   }
 
-  def copy(from: Store.Key, to: Store.Key, keepAttributes: com.histmersion.util.storage.DiskStore.CopyKeepAttributes): Either[Store.Error, Unit] = io {
+  def copy(from: Store.Key, to: Store.Key, keepAttributes: com.histmersion.util.storage.Store.KeepPermissions): Either[Store.Error, Unit] = io {
     val options =
       if keepAttributes then List(StandardCopyOption.REPLACE_EXISTING, StandardCopyOption.COPY_ATTRIBUTES)
       else List(StandardCopyOption.REPLACE_EXISTING)
@@ -122,7 +122,7 @@ final private[storage] class DiskStore(val location: Location, root: Path) exten
 
   def makeDirectory(prefix: Store.Key): Either[Store.Error, Unit] = io(Files.createDirectories(path(prefix)): Unit)
 
-  def delete(key: Store.Key): com.histmersion.util.storage.DiskStore.DeleteResult = Files.deleteIfExists(path(key))
+  def delete(key: Store.Key): Boolean = Files.deleteIfExists(path(key))
 
   def deleteTree(prefix: Store.Key): Option[ByteCount] =
     val p = path(prefix)
@@ -193,7 +193,7 @@ final private[storage] class DiskStore(val location: Location, root: Path) exten
       }.toOption
     }
 
-  def names(prefix: Store.Key): List[com.histmersion.util.storage.DiskStore.NamesResult] =
+  def names(prefix: Store.Key): List[com.histmersion.util.storage.Store.EntryName] =
     val dir = path(prefix)
     if !Files.isDirectory(dir) then Nil
     else
@@ -208,52 +208,26 @@ final private[storage] class DiskStore(val location: Location, root: Path) exten
 private[storage] object DiskStore:
 
   /** The files `rule` removes, oldest first. */
-  type PrunedLoopTotal = PrunedLoopTotal.T
-  object PrunedLoopTotal extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
-  type PutBytes = PutBytes.T
-  object PutBytes extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Array[_root_.scala.Byte], _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type WriteBytes = WriteBytes.T
-  object WriteBytes extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Array[_root_.scala.Byte], _root_.io.github.iltotore.iron.constraint.any.Pure]
 
-  type WhereResult = WhereResult.T
-  object WhereResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type ExistsResult = ExistsResult.T
-  object ExistsResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type IsFileResult = IsFileResult.T
-  object IsFileResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type IsDirectoryResult = IsDirectoryResult.T
-  object IsDirectoryResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type IsLinkResult = IsLinkResult.T
-  object IsLinkResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type IsExecutableResult = IsExecutableResult.T
-  object IsExecutableResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type ReserveThroughLink = ReserveThroughLink.T
-  object ReserveThroughLink extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type CopyKeepAttributes = CopyKeepAttributes.T
-  object CopyKeepAttributes extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type DeleteResult = DeleteResult.T
-  object DeleteResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type NamesResult = NamesResult.T
-  object NamesResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
   def pruned(files: List[Stored], rule: PruneRule): List[Stored] =
     val oldest = files.sortBy(s => (s.modified, s.key.value))
     rule match
       case PruneRule.OlderThan(cutoff)       => oldest.filter(_.modified.isBefore(cutoff))
       case PruneRule.LeastRecentlyUsed(keep) =>
-        @tailrec def loop(rest: List[Stored], total: com.histmersion.util.storage.DiskStore.PrunedLoopTotal, out: List[Stored]): List[Stored] = rest match
+        @tailrec def loop(rest: List[Stored], total: com.histmersion.ByteCount, out: List[Stored]): List[Stored] = rest match
           case s :: tail if total > keep.value => loop(tail, total - s.size.value, s :: out)
           case _                               => out.reverse
         loop(oldest, files.iterator.map(_.size.value).sum, Nil)
 
   final class FileBlob(val key: Store.Key, file: Path) extends Blob:
-    def where: com.histmersion.util.storage.DiskStore.FileBlob.WhereResult = file.toString
+    def where: com.histmersion.util.storage.Blob.Location = file.toString
     def size: ByteCount = ByteCount.applyUnsafe(Files.size(file))
     def modified: Instant = Files.getLastModifiedTime(file).toInstant
     def open(): InputStream = Files.newInputStream(file)
-    def bytes(): com.histmersion.util.storage.DiskStore.FileBlob.BytesResult = Files.readAllBytes(file)
-    def text(): com.histmersion.util.storage.DiskStore.FileBlob.TextResult = Files.readString(file, UTF_8)
+    def bytes(): com.histmersion.util.storage.ByteSource.Content = Files.readAllBytes(file)
+    def text(): com.histmersion.util.storage.Blob.Text = Files.readString(file, UTF_8)
 
     def sha256(): Sha256 =
       val md = MessageDigest.getInstance("SHA-256")
@@ -266,7 +240,7 @@ private[storage] object DiskStore:
       }
       Sha256.applyUnsafe(md.digest().map(b => f"${b & 0xff}%02x").mkString)
 
-    def readAt(offset: ByteOffset, length: com.histmersion.util.storage.DiskStore.FileBlob.ReadAtLength): com.histmersion.util.storage.DiskStore.FileBlob.ReadAtResult = Using.resource(reader())(_.read(offset, length))
+    def readAt(offset: ByteOffset, length: com.histmersion.util.basemap.PmTiles.ByteLength): com.histmersion.util.storage.ByteSource.Content = Using.resource(reader())(_.read(offset, length))
 
     def reader(): RandomReader = ChannelReader(file)
 
@@ -276,17 +250,7 @@ private[storage] object DiskStore:
       )
 
   object FileBlob:
-    type BytesResult = BytesResult.T
-    object BytesResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Array[_root_.scala.Byte], _root_.io.github.iltotore.iron.constraint.any.Pure]
-    type ReadAtResult = ReadAtResult.T
-    object ReadAtResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Array[_root_.scala.Byte], _root_.io.github.iltotore.iron.constraint.any.Pure]
 
-    type WhereResult = WhereResult.T
-    object WhereResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-    type TextResult = TextResult.T
-    object TextResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-    type ReadAtLength = ReadAtLength.T
-    object ReadAtLength extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
   /** Positional reads on one channel, opened again when an interrupt closed it. */
   final class ChannelReader(file: Path) extends RandomReader:
@@ -298,7 +262,7 @@ private[storage] object DiskStore:
     }
 
     private def withChannel[A](body: FileChannel => A): A =
-      def attempt(retry: com.histmersion.util.storage.DiskStore.ChannelReader.WithChannelAttemptRetry): A =
+      def attempt(retry: com.histmersion.util.storage.DiskStore.ChannelReader.Retry): A =
         val c = ch
         try body(c)
         catch
@@ -307,13 +271,13 @@ private[storage] object DiskStore:
             if retry && !Thread.currentThread().isInterrupted then attempt(retry = false) else throw e
       attempt(retry = true)
 
-    def where: com.histmersion.util.storage.DiskStore.ChannelReader.WhereResult = file.toString
+    def where: com.histmersion.util.storage.Blob.Location = file.toString
 
     def size: ByteCount = ByteCount.applyUnsafe(withChannel(_.size()))
 
-    def read(offset: ByteOffset, length: com.histmersion.util.storage.DiskStore.ChannelReader.ReadLength): com.histmersion.util.storage.DiskStore.ChannelReader.ReadResult = withChannel { c =>
+    def read(offset: ByteOffset, length: com.histmersion.util.basemap.PmTiles.ByteLength): com.histmersion.util.storage.ByteSource.Content = withChannel { c =>
       val buf = ByteBuffer.allocate(length)
-      @tailrec def loop(at: com.histmersion.util.storage.DiskStore.ChannelReader.ReadLoopAt): Unit =
+      @tailrec def loop(at: com.histmersion.ByteOffset): Unit =
         if buf.hasRemaining then
           val n = c.read(buf, at)
           if n < 0 then throw java.io.EOFException(s"$file ends before byte ${offset.value + length}")
@@ -322,9 +286,9 @@ private[storage] object DiskStore:
       buf.array()
     }
 
-    def readUpTo(offset: ByteOffset, length: com.histmersion.util.storage.DiskStore.ChannelReader.ReadUpToLength): com.histmersion.util.storage.DiskStore.ChannelReader.ReadUpToResult = withChannel { c =>
+    def readUpTo(offset: ByteOffset, length: com.histmersion.util.basemap.PmTiles.ByteLength): com.histmersion.util.storage.ByteSource.Content = withChannel { c =>
       val buf = ByteBuffer.allocate(length)
-      @tailrec def loop(at: com.histmersion.util.storage.DiskStore.ChannelReader.ReadUpToLoopAt): Unit =
+      @tailrec def loop(at: com.histmersion.ByteOffset): Unit =
         if buf.hasRemaining then
           val n = c.read(buf, at)
           if n > 0 then loop(at + n)
@@ -335,24 +299,10 @@ private[storage] object DiskStore:
     def close(): Unit = synchronized { closed = true; ch.close() }
 
   object ChannelReader:
-    type WithChannelAttemptRetry = WithChannelAttemptRetry.T
-    object WithChannelAttemptRetry extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
-    type ReadLoopAt = ReadLoopAt.T
-    object ReadLoopAt extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
-    type ReadUpToLoopAt = ReadUpToLoopAt.T
-    object ReadUpToLoopAt extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Retry = Retry.T
+    object Retry extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
-    type ReadResult = ReadResult.T
-    object ReadResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Array[_root_.scala.Byte], _root_.io.github.iltotore.iron.constraint.any.Pure]
-    type ReadUpToResult = ReadUpToResult.T
-    object ReadUpToResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Array[_root_.scala.Byte], _root_.io.github.iltotore.iron.constraint.any.Pure]
 
-    type WhereResult = WhereResult.T
-    object WhereResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-    type ReadLength = ReadLength.T
-    object ReadLength extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
-    type ReadUpToLength = ReadUpToLength.T
-    object ReadUpToLength extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
   final class FileReservation(
       val key: Store.Key,
@@ -362,20 +312,20 @@ private[storage] object DiskStore:
   ) extends Reservation:
     @volatile private var committed = false
 
-    def where: com.histmersion.util.storage.DiskStore.FileReservation.WhereResult = file.toString
+    def where: com.histmersion.util.storage.Blob.Location = file.toString
 
     def output(): OutputStream = Files.newOutputStream(file)
 
-    def writeAt(offset: ByteOffset, bytes: com.histmersion.util.storage.DiskStore.FileReservation.WriteAtBytes): Unit =
+    def writeAt(offset: ByteOffset, bytes: com.histmersion.util.storage.ByteSource.Content): Unit =
       Using.resource(FileChannel.open(file, StandardOpenOption.WRITE, StandardOpenOption.CREATE)) { ch =>
         val buf = ByteBuffer.wrap(bytes)
-        @tailrec def loop(at: com.histmersion.util.storage.DiskStore.FileReservation.WriteAtLoopAt): Unit = if buf.hasRemaining then loop(at + ch.write(buf, at))
+        @tailrec def loop(at: com.histmersion.ByteOffset): Unit = if buf.hasRemaining then loop(at + ch.write(buf, at))
         loop(offset.value)
       }
 
     def size: ByteCount = ByteCount.applyUnsafe(if Files.exists(file) then Files.size(file) else 0L)
 
-    def commit(keepPermissions: com.histmersion.util.storage.DiskStore.FileReservation.CommitKeepPermissions): Either[Store.Error, Stored] =
+    def commit(keepPermissions: com.histmersion.util.storage.Store.KeepPermissions): Either[Store.Error, Stored] =
       try
         if keepPermissions && Files.exists(asked) then
           Option(Files.getFileAttributeView(asked, classOf[PosixFileAttributeView], LinkOption.NOFOLLOW_LINKS))
@@ -401,13 +351,5 @@ private[storage] object DiskStore:
     private[util] def onDisk: Either[Store.Error, Path] = Right(file)
 
   object FileReservation:
-    type WriteAtLoopAt = WriteAtLoopAt.T
-    object WriteAtLoopAt extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
-    type WriteAtBytes = WriteAtBytes.T
-    object WriteAtBytes extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Array[_root_.scala.Byte], _root_.io.github.iltotore.iron.constraint.any.Pure]
 
-    type WhereResult = WhereResult.T
-    object WhereResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-    type CommitKeepPermissions = CommitKeepPermissions.T
-    object CommitKeepPermissions extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]

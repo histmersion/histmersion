@@ -36,20 +36,10 @@ object StrictJsonSchema:
   type StringFormats = StringFormatsValue
   type StringFormatsValue = StringFormatsValue.T
   object StringFormatsValue extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type TypesResult = TypesResult.T
-  object TypesResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type IsObjectSchemaResult = IsObjectSchemaResult.T
-  object IsObjectSchemaResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type IsNullableResult = IsNullableResult.T
-  object IsNullableResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type ConvertDefsPart1 = ConvertDefsPart1.T
-  object ConvertDefsPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type ConvertSeen = _root_.com.histmersion.domain.automation.agents.StrictJsonSchema.ConvertObjectSeen
-  val ConvertSeen: _root_.com.histmersion.domain.automation.agents.StrictJsonSchema.ConvertObjectSeen.type = _root_.com.histmersion.domain.automation.agents.StrictJsonSchema.ConvertObjectSeen
-  type ConvertObjectDefsPart1 = _root_.com.histmersion.domain.automation.agents.StrictJsonSchema.ConvertDefsPart1
-  val ConvertObjectDefsPart1: _root_.com.histmersion.domain.automation.agents.StrictJsonSchema.ConvertDefsPart1.type = _root_.com.histmersion.domain.automation.agents.StrictJsonSchema.ConvertDefsPart1
-  type ConvertObjectSeen = ConvertObjectSeen.T
-  object ConvertObjectSeen extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type ConvertSeen = String
+  val ConvertSeen: String.type = String
+  type ConvertObjectDefsPart1 = String
+  val ConvertObjectDefsPart1: String.type = String
 
   val Keywords: Set[com.histmersion.domain.automation.agents.StrictJsonSchema.Keywords] = Set(
     "type",
@@ -94,21 +84,21 @@ object StrictJsonSchema:
       .toMap
     convert(schema, defs, Set.empty)
 
-  private def types(o: JsonObject): List[com.histmersion.domain.automation.agents.StrictJsonSchema.TypesResult] =
+  private def types(o: JsonObject): List[String] =
     o("type").toList.flatMap(t => t.asString.toList ++ t.asArray.toList.flatMap(_.flatMap(_.asString)))
 
-  private def isObjectSchema(o: JsonObject): com.histmersion.domain.automation.agents.StrictJsonSchema.IsObjectSchemaResult = types(o).contains("object") || o.contains("properties")
+  private def isObjectSchema(o: JsonObject): Boolean = types(o).contains("object") || o.contains("properties")
 
-  private def isNullable(o: JsonObject): com.histmersion.domain.automation.agents.StrictJsonSchema.IsNullableResult =
+  private def isNullable(o: JsonObject): Boolean =
     types(o).contains("null") ||
       o("anyOf").flatMap(_.asArray).exists(_.exists(_.asObject.exists(isNullable))) ||
       o("enum").flatMap(_.asArray).exists(_.exists(_.isNull))
 
   /** `seen`: the `$ref`s being inlined on this path (a self-referencing definition is inlined once). */
-  private def convert(node: Json, defs: Map[com.histmersion.domain.automation.agents.StrictJsonSchema.ConvertDefsPart1, Json], seen: Set[com.histmersion.domain.automation.agents.StrictJsonSchema.ConvertSeen]): Json =
+  private def convert(node: Json, defs: Map[String, Json], seen: Set[com.histmersion.domain.automation.agents.StrictJsonSchema.ConvertSeen]): Json =
     node.asObject.fold(node)(o => Json.fromJsonObject(convertObject(o, defs, seen)))
 
-  private def convertObject(o: JsonObject, defs: Map[com.histmersion.domain.automation.agents.StrictJsonSchema.ConvertObjectDefsPart1, Json], seen: Set[com.histmersion.domain.automation.agents.StrictJsonSchema.ConvertObjectSeen]): JsonObject =
+  private def convertObject(o: JsonObject, defs: Map[com.histmersion.domain.automation.agents.StrictJsonSchema.ConvertObjectDefsPart1, Json], seen: Set[String]): JsonObject =
     val ref = o("$ref").flatMap(_.asString)
     ref.filter(r => o.size > 1 && !seen(r)).flatMap(r => defs.get(r).flatMap(_.asObject).map(r -> _)) match
       case Some((r, d)) =>

@@ -30,10 +30,10 @@ final class VacuumJobs(
   private val slot = BackgroundJob.Slot()
 
   /** Is a vacuum job running? A restore waits for it rather than drop tables under it. */
-  def isRunning: com.histmersion.util.data.maintenance.VacuumJobs.IsRunningResult = slot.isRunning
+  def isRunning: Boolean = slot.isRunning
 
   /** The tables a vacuum may name: the registered ones the database has. */
-  private def vacuumable: Set[com.histmersion.util.data.maintenance.VacuumJobs.VacuumableResult] =
+  private def vacuumable: Set[com.histmersion.util.data.TableName] =
     transactor.read(VacuumRepo.tables).intersect(registry.tables.map(t => t._2.name.value: String).toSet)
 
   def start(in: Vacuum.Request): Either[Api.Error, JobInfo] =
@@ -50,9 +50,9 @@ final class VacuumJobs(
         )((_, progress) => run(plan, progress))
       }
 
-  private def run(plan: VacuumPlan, progress: com.histmersion.util.data.maintenance.VacuumJobs.RunProgressArg1 => Unit): BackgroundJob.Outcome =
-    @tailrec def loop(rest: List[(com.histmersion.util.data.maintenance.VacuumJobs.RunLoopRestPart1, com.histmersion.util.data.maintenance.VacuumJobs.RunLoopRestPart2)], lines: List[com.histmersion.util.data.maintenance.VacuumJobs.RunLoopLines]): BackgroundJob.Outcome =
-      def outcome(failed: Option[com.histmersion.util.data.maintenance.VacuumJobs.RunLoopOutcomeFailed]) =
+  private def run(plan: VacuumPlan, progress: com.histmersion.util.data.maintenance.VacuumJobs.ProgressNote => Unit): BackgroundJob.Outcome =
+    @tailrec def loop(rest: List[(com.histmersion.util.data.maintenance.VacuumJobs.OutputLine, Int)], lines: List[com.histmersion.util.data.maintenance.VacuumJobs.OutputLine]): BackgroundJob.Outcome =
+      def outcome(failed: Option[com.histmersion.util.data.maintenance.VacuumJobs.Problem]) =
         BackgroundJob.Outcome(Option.when(lines.nonEmpty)(lines.mkString("; ")), failed)
       rest match
         case Nil                            => outcome(None)
@@ -72,21 +72,15 @@ final class VacuumJobs(
     loop(plan.tables.zipWithIndex, Nil)
 
 object VacuumJobs:
-  type RunLoopRestPart1 = RunLoopRestPart1.T
-  object RunLoopRestPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type RunLoopRestPart2 = RunLoopRestPart2.T
-  object RunLoopRestPart2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type RunLoopLines = RunLoopLines.T
-  object RunLoopLines extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type RunLoopOutcomeFailed = RunLoopOutcomeFailed.T
-  object RunLoopOutcomeFailed extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type Defaults = Defaults.T
+  object Defaults extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type OutputLine = OutputLine.T
+  object OutputLine extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type Problem = Problem.T
+  object Problem extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type ProgressNote = ProgressNote.T
+  object ProgressNote extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
-  type DefaultsResult = DefaultsResult.T
-  object DefaultsResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type DefaultsResult = com.histmersion.util.data.maintenance.VacuumJobs.Defaults
+  val DefaultsResult: _root_.com.histmersion.util.data.maintenance.VacuumJobs.Defaults.type = _root_.com.histmersion.util.data.maintenance.VacuumJobs.Defaults
 
-  type IsRunningResult = IsRunningResult.T
-  object IsRunningResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type VacuumableResult = VacuumableResult.T
-  object VacuumableResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type RunProgressArg1 = RunProgressArg1.T
-  object RunProgressArg1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]

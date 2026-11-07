@@ -10,12 +10,8 @@ object ReadingShow:
   type Wire = Wire.T
   object Wire extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
-  type ParseResultPart1 = ParseResultPart1.T
-  object ParseResultPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type ParseS = ParseS.T
-  object ParseS extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
-  def parse(s: Option[com.histmersion.domain.personal.reading.ReadingShow.ParseS]): Either[com.histmersion.domain.personal.reading.ReadingShow.ParseResultPart1, ReadingShow] =
+  def parse(s: Option[com.histmersion.domain.personal.PersonalControllers.ShowMode]): Either[com.histmersion.domain.personal.PersonalControllers.ShowMode, ReadingShow] =
     s.map(_.trim.toLowerCase)
       .filter(_.nonEmpty)
       .fold(Right(Read))(t =>

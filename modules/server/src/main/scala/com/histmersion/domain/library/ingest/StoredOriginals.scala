@@ -53,7 +53,7 @@ final class StoredOriginals(originals: () => Store, spool: () => Store) extends 
     }
 
   /** The key of `where` in `store`, when it is one of its files. */
-  private def keyIn(store: Store, where: com.histmersion.domain.library.ingest.StoredOriginals.KeyInWhere): Option[Store.Key] =
+  private def keyIn(store: Store, where: com.histmersion.domain.library.ingest.FetchedCopy.Where): Option[Store.Key] =
     val root = store.where(Store.Key.Root).stripSuffix("/") + "/"
     Option
       .when(where.startsWith(root))(where.drop(root.length))
@@ -63,7 +63,7 @@ final class StoredOriginals(originals: () => Store, spool: () => Store) extends 
   /** Every content hash the originals' store holds a file for (`<sha>.<ext>`, one listing) — what the Calibre gaps
     * listing marks as downloadable. Empty when the store cannot be read.
     */
-  def hashes: Set[com.histmersion.domain.library.ingest.StoredOriginals.HashesResult] =
+  def hashes: Set[com.histmersion.Sha256] =
     originals()
       .names()
       .filter(_.contains('.'))
@@ -78,7 +78,3 @@ object StoredOriginals:
   object RemoveResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type RemoveFiles = RemoveFiles.T
   object RemoveFiles extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type KeyInWhere = KeyInWhere.T
-  object KeyInWhere extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type HashesResult = HashesResult.T
-  object HashesResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]

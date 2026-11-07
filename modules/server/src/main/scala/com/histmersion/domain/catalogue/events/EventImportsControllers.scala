@@ -26,7 +26,7 @@ final class EventImportsControllers(
     jobs: CatalogueJobs,
     page: (Option[EventImportsControllers.PageArg1], EventImportsControllers.PageArg2) => EventImportsControllers.PageResult
 ):
-  private def invalid(m: com.histmersion.domain.catalogue.events.EventImportsControllers.InvalidM) = Api.Error(m, Some(Write.CodeInvalid))
+  private def invalid(m: com.histmersion.domain.catalogue.events.EventImportsControllers.Problem) = Api.Error(m, Some(Write.CodeInvalid))
 
   def catalogues: List[CatalogProviderInfo] = imports.catalogues
 
@@ -68,9 +68,9 @@ final class EventImportsControllers(
   /** `GET /api/events/corrections`: the corrections of catalogue events, conflicts first. */
   def corrections(
       status: Option[com.histmersion.domain.catalogue.events.EventImportsControllers.CorrectionsStatus],
-      event: Option[com.histmersion.domain.catalogue.events.EventImportsControllers.CorrectionsEvent],
-      limit: Option[com.histmersion.domain.catalogue.events.EventImportsControllers.CorrectionsLimit],
-      offset: Option[com.histmersion.domain.catalogue.events.EventImportsControllers.CorrectionsOffset]
+      event: Option[com.histmersion.domain.catalogue.Event.Id],
+      limit: Option[com.histmersion.PageSize],
+      offset: Option[com.histmersion.Offset]
   ): Either[Api.Error, Correction.List] =
     status.map(_.trim.toLowerCase).filter(_.nonEmpty) match
       case Some(s) if !Correction.Status.all.contains(s) =>
@@ -87,6 +87,8 @@ final class EventImportsControllers(
         )
 
 object EventImportsControllers:
+  type Problem = Problem.T
+  object Problem extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type PageArg1 = PageArg1.T
   object PageArg1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type PageArg2 = PageArg2.T
@@ -94,16 +96,8 @@ object EventImportsControllers:
   type PageResult = PageResult.T
   object PageResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
-  type InvalidM = InvalidM.T
-  object InvalidM extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type CorrectionsStatus = CorrectionsStatus.T
   object CorrectionsStatus extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type CorrectionsEvent = CorrectionsEvent.T
-  object CorrectionsEvent extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type CorrectionsLimit = CorrectionsLimit.T
-  object CorrectionsLimit extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type CorrectionsOffset = CorrectionsOffset.T
-  object CorrectionsOffset extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type ImportJobKind = ImportJobKindValue
   type ImportJobKindValue = ImportJobKindValue.T
   object ImportJobKindValue extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]

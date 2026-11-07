@@ -22,7 +22,9 @@ final case class ConfigSource(
 )
 
 object ConfigSource:
-  type ReadResultPart1 = ReadResultPart1.T
-  object ReadResultPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type PrepareResultPart1 = PrepareResultPart1.T
-  object PrepareResultPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type Problem = Problem.T
+  object Problem extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type ReadResultPart1 = com.histmersion.util.settings.ConfigSource.Problem
+  val ReadResultPart1: _root_.com.histmersion.util.settings.ConfigSource.Problem.type = _root_.com.histmersion.util.settings.ConfigSource.Problem
+  type PrepareResultPart1 = com.histmersion.util.settings.ConfigSource.Problem
+  val PrepareResultPart1: _root_.com.histmersion.util.settings.ConfigSource.Problem.type = _root_.com.histmersion.util.settings.ConfigSource.Problem

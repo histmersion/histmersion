@@ -71,7 +71,7 @@ final class IngestQueue(
   private val pool = JobPool(ds(), cfg().converter.parallelism, runJob, pins)
 
   /** Started by the composition root, after construction. Returns the jobs a restart had to fail. */
-  def start(): com.histmersion.domain.library.ingest.IngestQueue.StartResult =
+  def start(): com.histmersion.RowCount =
     val n = pool.start()
     if n > 0 then scribe.warn(s"$n unfinished job(s) marked failed: ${JobState.Interrupted}")
     n
@@ -81,10 +81,10 @@ final class IngestQueue(
   /** Held by a restore: see [[JobPool.pause]]. */
   def pause(): Unit = pool.pause()
   def resume(): Unit = pool.resume()
-  def paused: com.histmersion.domain.library.ingest.IngestQueue.PausedResult = pool.isPaused
+  def paused: Boolean = pool.isPaused
 
   /** Queue the conversion of the stored original `file`; the job as the caller is told of it. */
-  def enqueue(kind: com.histmersion.domain.library.ingest.IngestQueue.EnqueueKind, citekey: com.histmersion.domain.library.Citekey, sha: com.histmersion.domain.library.ingest.IngestQueue.EnqueueSha, file: Store.Key, params: Ingest.Params): Ingest.Accepted =
+  def enqueue(kind: com.histmersion.domain.library.ingest.IngestQueue.EnqueueKind, citekey: com.histmersion.domain.library.Citekey, sha: com.histmersion.Sha256, file: Store.Key, params: Ingest.Params): Ingest.Accepted =
     val job = jobs.create(kind, Some(citekey), Some(sha), params.acquireItem)
     val _ = pending.put(job.id, IngestPending(params, file, sha, kind))
     pool.submit(job.id)
@@ -139,7 +139,7 @@ final class IngestQueue(
       acc.flatMap(xs => NewFigure.of(a, cfg().limits.assetBytes).left.map(Api.Error(_)).map(xs :+ _))
     }
 
-  private def runJob(id: com.histmersion.domain.library.ingest.IngestQueue.RunJobId): Unit =
+  private def runJob(id: com.histmersion.util.jobs.Job.Id): Unit =
     Option(pending.remove(id)) match
       case None =>
         val _ = jobs.transition(
@@ -195,11 +195,11 @@ final class IngestQueue(
   /** Write the conversion: body first (patch when the source exists, so enrichment survives), then the figures, then
     * the digest of the original. Returns how many assets were kept.
     */
-  private def store(jobId: com.histmersion.util.jobs.Job.Id, job: IngestPending, doc: ConvertedDoc): Either[com.histmersion.domain.library.ingest.IngestQueue.StoreResultPart1, com.histmersion.domain.library.ingest.IngestQueue.StoreResultPart2] =
+  private def store(jobId: com.histmersion.util.jobs.Job.Id, job: IngestPending, doc: ConvertedDoc): Either[com.histmersion.domain.library.ingest.IngestQueue.Problem, com.histmersion.RowCount] =
     if maintenance.active then Left("a restore is in progress; this job was not written")
     else storeNow(jobId, job, doc)
 
-  private def storeNow(jobId: com.histmersion.util.jobs.Job.Id, job: IngestPending, doc: ConvertedDoc): Either[com.histmersion.domain.library.ingest.IngestQueue.StoreNowResultPart1, com.histmersion.domain.library.ingest.IngestQueue.StoreNowResultPart2] =
+  private def storeNow(jobId: com.histmersion.util.jobs.Job.Id, job: IngestPending, doc: ConvertedDoc): Either[com.histmersion.domain.library.ingest.IngestQueue.Problem, com.histmersion.RowCount] =
     val citekey = job.params.citekey
     // NUL bytes occur in OCR output and Postgres `text` rejects them
     val body = doc.markdown.filterNot(_.toInt == 0)
@@ -231,8 +231,8 @@ final class IngestQueue(
   /** Tick `id` off as fulfilled by `citekey`, and say what happened for the job's progress line. It never fails the
     * job: the source is stored either way. An item deleted or ticked off by hand while the OCR ran is left as it is.
     */
-  private def tickOff(id: com.histmersion.domain.library.ingest.IngestQueue.TickOffId, citekey: com.histmersion.domain.library.Citekey, jobId: com.histmersion.util.jobs.Job.Id): com.histmersion.domain.library.ingest.IngestQueue.TickOffResult =
-    def warning(message: com.histmersion.domain.library.ingest.IngestQueue.TickOffWarningMessage): com.histmersion.domain.library.ingest.IngestQueue.TickOffWarningResult =
+  private def tickOff(id: com.histmersion.domain.library.ingest.IngestQueue.QueueItemId, citekey: com.histmersion.domain.library.Citekey, jobId: com.histmersion.util.jobs.Job.Id): com.histmersion.domain.library.ingest.IngestQueue.TickOffResult =
+    def warning(message: com.histmersion.domain.library.ingest.IngestQueue.Warning): com.histmersion.domain.library.ingest.IngestQueue.Warning =
       scribe.warn(s"$citekey is stored, but acquisition item $id could not be ticked off: $message")
       s"acquisition item $id NOT ticked off: $message"
     try
@@ -291,42 +291,26 @@ final class IngestQueue(
     )
 
 object IngestQueue:
-  type TickOffWarningResult = TickOffWarningResult.T
-  object TickOffWarningResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type TickOffWarningMessage = TickOffWarningMessage.T
-  object TickOffWarningMessage extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type Problem = Problem.T
+  object Problem extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type QueueItemId = QueueItemId.T
+  object QueueItemId extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type Warning = Warning.T
+  object Warning extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
   type AfterStoreArg1 = AfterStoreArg1.T
   object AfterStoreArg1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type AfterStoreResult = AfterStoreResult.T
   object AfterStoreResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
-  type StartResult = StartResult.T
-  object StartResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type PausedResult = PausedResult.T
-  object PausedResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type EnqueueKind = _root_.com.histmersion.domain.library.ingest.IngestPending.Kind
   val EnqueueKind: _root_.com.histmersion.domain.library.ingest.IngestPending.Kind.type = _root_.com.histmersion.domain.library.ingest.IngestPending.Kind
-  type EnqueueSha = EnqueueSha.T
-  object EnqueueSha extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type ProbeConverterResult = ProbeConverterResult.T
   object ProbeConverterResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type RunJobId = RunJobId.T
-  object RunJobId extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type AfterStoreSafelyResult = AfterStoreSafelyResult.T
   object AfterStoreSafelyResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type StoreResultPart1 = StoreResultPart1.T
-  object StoreResultPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type StoreResultPart2 = StoreResultPart2.T
-  object StoreResultPart2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type StoreNowResultPart1 = StoreNowResultPart1.T
-  object StoreNowResultPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type StoreNowResultPart2 = StoreNowResultPart2.T
-  object StoreNowResultPart2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type TickOffResult = TickOffResult.T
   object TickOffResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type TickOffId = TickOffId.T
-  object TickOffId extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type MatchAcquisitionsResult = MatchAcquisitionsResult.T
   object MatchAcquisitionsResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type SkeletonBody = SkeletonBody.T

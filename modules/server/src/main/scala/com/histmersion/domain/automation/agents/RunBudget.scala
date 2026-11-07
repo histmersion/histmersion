@@ -43,7 +43,7 @@ final private[automation] class RunBudget(
 object RunBudget:
   type SpentTokens = SpentTokens.T
   object SpentTokens extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type CapTokens = CapTokens.T
-  object CapTokens extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type CapTokens = com.histmersion.domain.automation.agents.AgentsControllers.BudgetTokens
+  val CapTokens: _root_.com.histmersion.domain.automation.agents.AgentsControllers.BudgetTokens.type = _root_.com.histmersion.domain.automation.agents.AgentsControllers.BudgetTokens
   type CacheReadWeight = CacheReadWeight.T
   object CacheReadWeight extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]

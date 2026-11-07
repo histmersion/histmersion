@@ -41,8 +41,8 @@ final case class AgentSearchInput(
     )
 object AgentSearchInput:
   // the agent's few words per filter field are FilterDocs' `brief` (the MCP tool and the CLI read its `doc`)
-  type Query = Query.T
-  object Query extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type Query = com.histmersion.domain.library.search.Search.Query
+  val Query: _root_.com.histmersion.domain.library.search.Search.Query.type = _root_.com.histmersion.domain.library.search.Search.Query
   type Topics = Topics.T
   object Topics extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type Tags = Tags.T
@@ -59,7 +59,7 @@ object AgentSearchInput:
   object Sort extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type Limit = Limit.T
   object Limit extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type Offset = Offset.T
-  object Offset extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type Offset = com.histmersion.Offset
+  val Offset: _root_.com.histmersion.Offset.type = _root_.com.histmersion.Offset
 
   given Schema[AgentSearchInput] = Filter.Docs.describeBrief(KindlingsSchema.derived[AgentSearchInput].schema)

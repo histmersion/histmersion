@@ -16,7 +16,7 @@ final class SeedControllers(deps: Deps, importer: => SeedImport):
   private def cfg = deps.cfg
 
   /** `corpus.dir` as an `Option`: empty string = not configured. */
-  private def corpusRoot: Option[com.histmersion.server.instance.SeedControllers.CorpusRootResult] = Option(cfg.corpus.dir).map(_.trim).filter(_.nonEmpty)
+  private def corpusRoot: Option[com.histmersion.server.instance.SeedControllers.CorpusRoot] = Option(cfg.corpus.dir).map(_.trim).filter(_.nonEmpty)
 
   def seed(req: SeedRequest): Either[Api.Error, SeedResult] = deps.maintenance.guard("seed"):
     val asked = Option(req.dir).map(_.trim).filter(_.nonEmpty).getOrElse(cfg.corpus.dir)
@@ -33,5 +33,5 @@ final class SeedControllers(deps: Deps, importer: => SeedImport):
       }
 
 object SeedControllers:
-  type CorpusRootResult = CorpusRootResult.T
-  object CorpusRootResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type CorpusRoot = CorpusRoot.T
+  object CorpusRoot extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]

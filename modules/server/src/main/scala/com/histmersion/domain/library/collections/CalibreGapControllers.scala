@@ -22,7 +22,7 @@ final class CalibreGapControllers(
     maintenance: WriteGate
 ):
 
-  def gaps(limit: Option[com.histmersion.domain.library.collections.CalibreGapControllers.GapsLimit]): CalibreGaps =
+  def gaps(limit: Option[com.histmersion.domain.library.collections.CalibreGapControllers.Limit]): CalibreGaps =
     // capped like every other listing: `calibreGaps(None)` used to mean LIMIT Int.MaxValue
     val limits = cfg().limits
     val gaps = sources.calibreGaps(Some(limits.page(limit, limits.maxPage)))
@@ -44,5 +44,5 @@ final class CalibreGapControllers(
       Citekey.parse(req.citekey).left.map(Api.Error(_)).flatMap(_ => sources.setCalibreId(req.citekey, req.calibreId, Caller.Local).map(_ => CalibrePushResult(req.citekey, req.calibreId, ok = true)))
 
 object CalibreGapControllers:
-  type GapsLimit = GapsLimit.T
-  object GapsLimit extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type Limit = Limit.T
+  object Limit extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]

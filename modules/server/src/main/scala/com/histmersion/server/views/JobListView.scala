@@ -18,21 +18,17 @@ final class JobListView(jobs: JobListing):
   def page(
       f: JobFilter,
       now: Instant,
-      limit: Option[com.histmersion.server.views.JobListView.PageLimit],
-      before: Option[com.histmersion.server.views.JobListView.PageBefore],
-      upTo: Option[com.histmersion.server.views.JobListView.PageUpTo]
+      limit: Option[com.histmersion.PageSize],
+      before: Option[com.histmersion.server.views.JobListView.Cursor],
+      upTo: Option[com.histmersion.server.views.JobListView.Cursor]
   ): Either[Api.Error, (List[JobInfo], Paging.Page)] =
     JobListView.query(f, now).flatMap(jobs.page(_, limit, before, upTo, ListFilters.FacetMax))
 
 object JobListView:
+  type Cursor = Cursor.T
+  object Cursor extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
   /** The states a job can be in: a background job's, and — the agent runs being jobs too — a run's. */
-  type PageLimit = PageLimit.T
-  object PageLimit extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type PageBefore = PageBefore.T
-  object PageBefore extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type PageUpTo = PageUpTo.T
-  object PageUpTo extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type JobStatuses = JobStatusesValue
   type JobStatusesValue = JobStatusesValue.T
   object JobStatusesValue extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]

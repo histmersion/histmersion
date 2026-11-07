@@ -49,7 +49,7 @@ final class BasemapService(
 
   private def done(written: Either[Store.Error, ?]): Unit = written.left.foreach(e => throw IOException(e.message))
 
-  private def attribution(l: Basemap.Layer): com.histmersion.util.basemap.BasemapService.AttributionResult = l match
+  private def attribution(l: Basemap.Layer): com.histmersion.util.basemap.BasemapService.Attribution = l match
     case Basemap.Layer.Vector     => cfg.vector.attribution
     case Basemap.Layer.Terrain    => cfg.terrain.attribution
     case Basemap.Layer.Labels     => cfg.labels.attribution
@@ -58,14 +58,14 @@ final class BasemapService(
   // ── reading ────────────────────────────────────────────────────────────────────────────────────
 
   /** A stamp of the file as it is now (size, modification time): it changes with each fetch. */
-  private def stamp(k: Store.Key, store: Store = files): Option[com.histmersion.util.basemap.BasemapService.StampResult] =
+  private def stamp(k: Store.Key, store: Store = files): Option[com.histmersion.util.basemap.BasemapService.Stamp] =
     store.stat(k).filter(_.isFile).map(f => s"${f.size.value.toHexString}${f.modified.toEpochMilli.toHexString}")
 
   /** The layer's archive, opened once and again only when the file changed. */
-  def reader(l: Basemap.Layer): Either[com.histmersion.util.basemap.BasemapService.ReaderResultPart1, Option[PmTiles.File]] = readerAt(key(l))
+  def reader(l: Basemap.Layer): Either[com.histmersion.util.basemap.BasemapService.Problem, Option[PmTiles.File]] = readerAt(key(l))
 
   /** The archive `k` (a layer's, a focus region's), opened once and again only when the file changed. */
-  def readerAt(k: Store.Key): Either[com.histmersion.util.basemap.BasemapService.ReaderAtResultPart1, Option[PmTiles.File]] =
+  def readerAt(k: Store.Key): Either[com.histmersion.util.basemap.BasemapService.Problem, Option[PmTiles.File]] =
     val store = files
     val p = store.where(k)
     stamp(k, store) match
@@ -166,10 +166,10 @@ final class BasemapService(
   def focusDir: Store.Key = BasemapService.FocusDir
 
   /** The focus region `name`'s archive. */
-  def focusKey(name: com.histmersion.util.basemap.BasemapService.FocusKeyName): Store.Key = focusDir.child(s"$name.pmtiles")
+  def focusKey(name: com.histmersion.util.basemap.BasemapService.FileName): Store.Key = focusDir.child(s"$name.pmtiles")
 
   /** The focus regions' archives, by name. */
-  def focusFiles: List[(com.histmersion.util.basemap.BasemapService.FocusFilesResultPart1, Store.Key)] =
+  def focusFiles: List[(com.histmersion.util.basemap.BasemapService.Focus, Store.Key)] =
     files
       .list(focusDir)
       .filter(f => f.isFile && f.key.name.endsWith(".pmtiles"))
@@ -193,14 +193,14 @@ final class BasemapService(
   }
 
   /** The focus regions' files as they are now, in a few characters ("" with none). */
-  private def focusStamp: com.histmersion.util.basemap.BasemapService.FocusStampResult =
+  private def focusStamp: com.histmersion.util.basemap.BasemapService.Stamp =
     val all = focusFiles.flatMap((n, p) => stamp(p).map(n + _))
     if all.isEmpty then "" else "-" + Integer.toHexString(all.mkString("|").hashCode)
 
   // the on-demand layers of the directory configured now (`basemap.dir` may change with a reload)
   @volatile private var demands = Map.empty[Basemap.Layer, OnDemandTiles]
 
-  private def demandAt(l: Basemap.Layer, name: com.histmersion.util.basemap.BasemapService.DemandAtName)(make: Store => OnDemandTiles): OnDemandTiles =
+  private def demandAt(l: Basemap.Layer, name: com.histmersion.util.basemap.BasemapService.FetchName)(make: Store => OnDemandTiles): OnDemandTiles =
     val at = files.sub(Store.Key.applyUnsafe(name))
     demands
       .get(l)
@@ -261,19 +261,19 @@ final class BasemapService(
   /** What the vector extract was thinned with — so a tile read on demand matches it: its own drop list, or none when it
     * was kept whole; without an extract, the configured list.
     */
-  private def vectorRules(): Map[com.histmersion.util.basemap.BasemapService.VectorRulesResultPart1, Mvt.Rule] =
+  private def vectorRules(): Map[com.histmersion.util.basemap.BasemapService.RuleName, Mvt.Rule] =
     val meta = reader(Basemap.Layer.Vector).toOption.flatten.map(_.metadata.hcursor.downField("histmersion"))
     val keepAll = meta.flatMap(_.get[Boolean]("keepAll").toOption).getOrElse(false)
     val drop = meta.flatMap(_.get[String]("drop").toOption).getOrElse(cfg.vector.drop)
     if keepAll then Map.empty else BasemapService.mvtRules(Basemap.parseDrop(drop).toOption.getOrElse(Nil))
 
   // `var`: the newest build's key, asked of the provider once (when neither the extract nor the config names one)
-  @volatile private var latestBuild: Option[com.histmersion.util.basemap.BasemapService.LatestBuild] = None
+  @volatile private var latestBuild: Option[com.histmersion.util.basemap.BasemapService.BuildName] = None
 
   /** The planet the vector tiles are read from: the build the extract came from, else the configured one, else the
     * provider's newest. "" when none can be named (the read then fails, as offline).
     */
-  private def vectorPlanet(): com.histmersion.util.basemap.BasemapService.VectorPlanetResult =
+  private def vectorPlanet(): com.histmersion.util.basemap.BasemapService.LayerName =
     val fromExtract = reader(Basemap.Layer.Vector).toOption.flatten
       .flatMap(_.metadata.hcursor.downField("histmersion").get[String]("build").toOption)
       .filter(_.endsWith(".pmtiles"))
@@ -290,7 +290,7 @@ final class BasemapService(
       .fold("")(b => cfg.vector.url.replace("{build}", b))
 
   /** A relief tile deeper than the extract (or outside it): a focus region's, else the on-demand one. */
-  private def deeperRelief(z: com.histmersion.util.basemap.BasemapService.DeeperReliefZ, x: com.histmersion.util.basemap.BasemapService.DeeperReliefX, y: com.histmersion.util.basemap.BasemapService.DeeperReliefY, extractMax: com.histmersion.util.basemap.BasemapService.DeeperReliefExtractMax): Either[com.histmersion.util.basemap.BasemapService.DeeperReliefResultPart1, Option[com.histmersion.util.basemap.BasemapService.DeeperReliefResultPart2]] =
+  private def deeperRelief(z: com.histmersion.util.basemap.BasemapService.Zoom, x: com.histmersion.util.basemap.BasemapService.DeeperReliefX, y: com.histmersion.util.basemap.BasemapService.DeeperReliefY, extractMax: com.histmersion.util.basemap.BasemapFetch.Plan.MaxZoom): Either[com.histmersion.util.basemap.BasemapService.Problem, Option[com.histmersion.util.basemap.BasemapService.TileBytes]] =
     val focused = focusFiles.iterator
       .flatMap(f => readerAt(f._2).toOption.flatten)
       .filter(f => z >= f.header.minZoom && z <= f.header.maxZoom)
@@ -304,11 +304,11 @@ final class BasemapService(
     * that exists — a focus region's, else the extract's — cut and resampled in metres ([[TerrainResample]]) as a
     * terrarium PNG; `None` where no ancestor exists (outside every region).
     */
-  private def fromAncestor(z: com.histmersion.util.basemap.BasemapService.FromAncestorZ, x: com.histmersion.util.basemap.BasemapService.FromAncestorX, y: com.histmersion.util.basemap.BasemapService.FromAncestorY, extract: PmTiles.File): Option[com.histmersion.util.basemap.BasemapService.FromAncestorResult] =
+  private def fromAncestor(z: com.histmersion.util.basemap.BasemapService.Zoom, x: com.histmersion.util.basemap.BasemapService.FromAncestorX, y: com.histmersion.util.basemap.BasemapService.FromAncestorY, extract: PmTiles.File): Option[com.histmersion.util.basemap.BasemapService.TileBytes] =
     val key = s"${stamp(this.key(Basemap.Layer.Terrain)).getOrElse("")}$focusStamp|$z/$x/$y"
     Option(resampled.get(key)).orElse {
       val focus = focusFiles.flatMap(f => readerAt(f._2).toOption.flatten.map(f._2 -> _))
-      def at(az: com.histmersion.util.basemap.BasemapService.FromAncestorAtAz, ax: com.histmersion.util.basemap.BasemapService.FromAncestorAtAx, ay: com.histmersion.util.basemap.BasemapService.FromAncestorAtAy): Option[(com.histmersion.util.basemap.BasemapService.FromAncestorAtResultPart1, com.histmersion.util.basemap.BasemapService.FromAncestorAtResultPart2)] =
+      def at(az: com.histmersion.util.basemap.BasemapService.Zoom, ax: com.histmersion.util.basemap.BasemapService.FromAncestorAtAx, ay: com.histmersion.util.basemap.BasemapService.FromAncestorAtAy): Option[(com.histmersion.util.basemap.BasemapService.Problem, com.histmersion.util.basemap.BasemapService.TileBytes)] =
         focus.iterator
           .filter((_, f) => az >= f.header.minZoom && az <= f.header.maxZoom)
           .flatMap((p, f) =>
@@ -347,7 +347,7 @@ final class BasemapService(
   /** The deepest relief zoom anything here holds — the extract, a focus region, the on-demand relief: what the page's
     * elevation source asks for at most, and where the cutting from ancestors stops.
     */
-  private def deepestRelief(extractMax: com.histmersion.util.basemap.BasemapService.DeepestReliefExtractMax): com.histmersion.util.basemap.BasemapService.DeepestReliefResult =
+  private def deepestRelief(extractMax: com.histmersion.util.basemap.BasemapFetch.Plan.MaxZoom): com.histmersion.util.basemap.BasemapService.Zoom =
     val od = cfg.terrain.onDemand
     (extractMax :: (if od.enabled then List(od.maxZoom) else Nil) ++
       focusFiles.flatMap(f => readerAt(f._2).toOption.flatten.map(_.header.maxZoom))).max
@@ -369,13 +369,13 @@ final class BasemapService(
     * geometries asked for (and with `keys` only those properties); 204 where the extract (or the subset) has none.
     */
   def tile(
-      layer: com.histmersion.util.basemap.BasemapService.TileLayer,
-      z: com.histmersion.util.basemap.BasemapService.TileZ,
+      layer: com.histmersion.util.basemap.BasemapService.LayerName,
+      z: com.histmersion.util.basemap.BasemapService.Zoom,
       x: com.histmersion.util.basemap.BasemapService.TileX,
       y: com.histmersion.util.basemap.BasemapService.TileY,
-      subset: Option[com.histmersion.util.basemap.BasemapService.TileSubset] = None,
-      keys: Option[com.histmersion.util.basemap.BasemapService.TileKeys] = None
-  ): Either[Api.Error, (com.histmersion.util.basemap.BasemapService.TileResultPart2Part1, com.histmersion.util.basemap.BasemapService.TileResultPart2Part2, Option[com.histmersion.util.basemap.BasemapService.TileResultPart2Part3], com.histmersion.util.basemap.BasemapService.TileResultPart2Part4, StatusCode)] =
+      subset: Option[com.histmersion.util.basemap.BasemapService.Subset] = None,
+      keys: Option[com.histmersion.util.basemap.BasemapService.TileKey] = None
+  ): Either[Api.Error, (com.histmersion.util.basemap.BasemapService.TileBytes, com.histmersion.util.basemap.BasemapService.ContentType, Option[com.histmersion.util.basemap.BasemapService.Encoding], com.histmersion.util.basemap.BasemapService.Note, StatusCode)] =
     val cache = s"public, max-age=${cfg.tileCacheSeconds}"
     // the subset at this zoom: a layer asked for only from a deeper zoom is left out here
     val sub = subset.map(_.trim).filter(_.nonEmpty).map(Basemap.subsetAt(_, z))
@@ -478,7 +478,7 @@ final class BasemapService(
       if jobs.running.isDefined then Left(jobs.busy("a base-map fetch", Some(BasemapApi.Busy)))
       else
         val store = files
-        def gone(f: Store.Key, w: Store.Key): List[(com.histmersion.util.basemap.BasemapService.RemoveGoneResultPart1, com.histmersion.util.basemap.BasemapService.RemoveGoneResultPart2)] =
+        def gone(f: Store.Key, w: Store.Key): List[(com.histmersion.util.basemap.BasemapService.FileName, com.histmersion.ByteCount)] =
           Option(open.remove(store.where(f))).foreach(_._2.close())
           val bytes = store.stat(f).filter(_.isFile).fold(0L)(_.size.value)
           val file = Option.when(store.delete(f))((store.where(f), bytes))
@@ -501,7 +501,7 @@ final class BasemapService(
     }
 
   /** The unfinished download of a focus region. */
-  def focusWork(name: com.histmersion.util.basemap.BasemapService.FocusWorkName): Store.Key = Store.Key.applyUnsafe(s".terrain-focus-$name.part")
+  def focusWork(name: com.histmersion.util.basemap.BasemapService.WorkName): Store.Key = Store.Key.applyUnsafe(s".terrain-focus-$name.part")
 
   // ── fetching ───────────────────────────────────────────────────────────────────────────────────
 
@@ -530,8 +530,8 @@ final class BasemapService(
     type FocusPart1 = FocusPart1.T
     object FocusPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
-  private def ask(q: Basemap.FetchQuery): Either[com.histmersion.util.basemap.BasemapService.AskResultPart1, Ask] =
-    def zoom(z: com.histmersion.util.basemap.BasemapService.AskZoomZ, what: com.histmersion.util.basemap.BasemapService.AskZoomWhat) =
+  private def ask(q: Basemap.FetchQuery): Either[com.histmersion.util.basemap.BasemapService.Problem, Ask] =
+    def zoom(z: com.histmersion.util.basemap.BasemapService.Zoom, what: com.histmersion.util.basemap.BasemapService.Target) =
       Either.cond(z >= 0 && z <= Basemap.MaxZoomCap, z, s"$what $z is outside 0–${Basemap.MaxZoomCap}")
     val asked = q.bbox.map(_.trim).filter(_.nonEmpty)
     for
@@ -583,13 +583,13 @@ final class BasemapService(
       }
 
   /** The job: each layer in turn — planned, checked against the free disk, downloaded, assembled. */
-  private def run(a: Ask, note: com.histmersion.util.basemap.BasemapService.RunNoteArg1 => Unit): Either[com.histmersion.util.basemap.BasemapService.RunResultPart1, com.histmersion.util.basemap.BasemapService.RunResultPart2] =
+  private def run(a: Ask, note: com.histmersion.util.basemap.BasemapService.Note => Unit): Either[com.histmersion.util.basemap.BasemapService.Problem, com.histmersion.util.basemap.BasemapService.Outcome] =
     a.focus match
       case Some((name, _)) => focusFetch(a, name, note)
       case None            => layers(a, note)
 
   /** A focus region's relief: zooms deeper than the extract, into `terrain-focus/<name>.pmtiles`. */
-  private def focusFetch(a: Ask, name: com.histmersion.util.basemap.BasemapService.FocusFetchName, note: com.histmersion.util.basemap.BasemapService.FocusFetchNoteArg1 => Unit): Either[com.histmersion.util.basemap.BasemapService.FocusFetchResultPart1, com.histmersion.util.basemap.BasemapService.FocusFetchResultPart2] =
+  private def focusFetch(a: Ask, name: com.histmersion.util.basemap.BasemapService.FetchName, note: com.histmersion.util.basemap.BasemapService.Note => Unit): Either[com.histmersion.util.basemap.BasemapService.Problem, com.histmersion.util.basemap.BasemapService.Outcome] =
     val h = http()
     val src = BasemapFetch.Source(cfg.terrain.url, cfg.terrain.url)
     val extra = s"focus $name from ${cfg.terrain.maxZoom + 1}"
@@ -612,7 +612,7 @@ final class BasemapService(
           ).map(s => s"focus '$name': $s")
     yield out
 
-  private def layers(a: Ask, note: com.histmersion.util.basemap.BasemapService.LayersNoteArg1 => Unit): Either[com.histmersion.util.basemap.BasemapService.LayersResultPart1, com.histmersion.util.basemap.BasemapService.LayersResultPart2] =
+  private def layers(a: Ask, note: com.histmersion.util.basemap.BasemapService.Note => Unit): Either[com.histmersion.util.basemap.BasemapService.Problem, com.histmersion.util.basemap.BasemapService.Outcome] =
     a.layers
       .foldLeft[Either[String, List[String]]](Right(Nil)) { (acc, l) =>
         acc.flatMap(done => one(a, l, s => note(s"${l.wire}: $s")).map(done :+ _))
@@ -621,12 +621,12 @@ final class BasemapService(
 
   private def pace = BasemapFetch.Pace(cfg.requestGapMs.toLong, cfg.maxRequestMb.toLong * 1024 * 1024, cfg.overfetch)
 
-  private def minFree: com.histmersion.util.basemap.BasemapService.MinFreeResult = (cfg.minFreeGb * 1e9).toLong
+  private def minFree: com.histmersion.ByteCount = (cfg.minFreeGb * 1e9).toLong
 
   /** The source of a layer: the vector build named by the config ("latest": the newest in the provider's list — unless
     * an unfinished download of an earlier one is there to finish), or the terrain URL.
     */
-  private def source(l: Basemap.Layer, a: Ask, extra: com.histmersion.util.basemap.BasemapService.SourceExtra): Either[com.histmersion.util.basemap.BasemapService.SourceResultPart1, BasemapFetch.Source] = l match
+  private def source(l: Basemap.Layer, a: Ask, extra: com.histmersion.util.basemap.BasemapService.Note): Either[com.histmersion.util.basemap.BasemapService.Problem, BasemapFetch.Source] = l match
     case Basemap.Layer.Terrain => Right(BasemapFetch.Source(cfg.terrain.url, cfg.terrain.url))
     case Basemap.Layer.Labels  => Left("the physical names are not read with range requests") // `labels` fetches them
     case Basemap.Layer.Bathymetry => Left("the sea floor is not read with range requests") // `bathymetry` fetches it
@@ -645,7 +645,7 @@ final class BasemapService(
           )
 
   /** The source an unfinished download of the same region and depth was reading. */
-  private def resumable(l: Basemap.Layer, a: Ask, extra: com.histmersion.util.basemap.BasemapService.ResumableExtra): Option[BasemapFetch.Source] =
+  private def resumable(l: Basemap.Layer, a: Ask, extra: com.histmersion.util.basemap.BasemapService.Note): Option[BasemapFetch.Source] =
     files.get(work(l).child("state.json")).map(_.text()).flatMap(s => io.circe.parser.parse(s).toOption).flatMap { j =>
       val c = j.hcursor
       val same =
@@ -658,13 +658,13 @@ final class BasemapService(
       yield BasemapFetch.Source(url, label, size)
     }
 
-  private def zoomOf(l: Basemap.Layer, a: Ask): com.histmersion.util.basemap.BasemapService.ZoomOfResult = l match
+  private def zoomOf(l: Basemap.Layer, a: Ask): com.histmersion.util.basemap.BasemapService.Zoom = l match
     case Basemap.Layer.Vector     => a.vectorZoom
     case Basemap.Layer.Terrain    => a.terrainZoom
     case Basemap.Layer.Labels     => cfg.labels.maxZoom
     case Basemap.Layer.Bathymetry => cfg.bathymetry.extractMaxZoom
 
-  private def one(a: Ask, l: Basemap.Layer, note: com.histmersion.util.basemap.BasemapService.OneNoteArg1 => Unit): Either[com.histmersion.util.basemap.BasemapService.OneResultPart1, com.histmersion.util.basemap.BasemapService.OneResultPart2] =
+  private def one(a: Ask, l: Basemap.Layer, note: com.histmersion.util.basemap.BasemapService.Note => Unit): Either[com.histmersion.util.basemap.BasemapService.Problem, com.histmersion.util.basemap.BasemapService.Outcome] =
     l match
       case Basemap.Layer.Labels     => labels(a, note)
       case Basemap.Layer.Bathymetry =>
@@ -674,7 +674,7 @@ final class BasemapService(
       case _ => ranged(a, l, note)
 
   /** A PMTiles layer (vector, terrain): planned, checked against the free disk, downloaded, assembled. */
-  private def ranged(a: Ask, l: Basemap.Layer, note: com.histmersion.util.basemap.BasemapService.RangedNoteArg1 => Unit): Either[com.histmersion.util.basemap.BasemapService.RangedResultPart1, com.histmersion.util.basemap.BasemapService.RangedResultPart2] =
+  private def ranged(a: Ask, l: Basemap.Layer, note: com.histmersion.util.basemap.BasemapService.Note => Unit): Either[com.histmersion.util.basemap.BasemapService.Problem, com.histmersion.util.basemap.BasemapService.Outcome] =
     val rules = if a.keepAll then Nil else Basemap.parseDrop(cfg.vector.drop).toOption.getOrElse(Nil)
     val extra = if l != Basemap.Layer.Vector then "" else if a.keepAll then "keep-all" else s"drop: ${cfg.vector.drop}"
     val h = http()
@@ -691,13 +691,13 @@ final class BasemapService(
       l: Basemap.Layer,
       plan: BasemapFetch.Plan,
       rules: List[Basemap.DropRule],
-      extra: com.histmersion.util.basemap.BasemapService.DownloadExtra,
+      extra: com.histmersion.util.basemap.BasemapService.Note,
       h: RangeHttp,
-      note: com.histmersion.util.basemap.BasemapService.DownloadNoteArg1 => Unit,
-      keepAll: com.histmersion.util.basemap.BasemapService.DownloadKeepAll,
+      note: com.histmersion.util.basemap.BasemapService.Note => Unit,
+      keepAll: com.histmersion.util.basemap.BasemapService.Ask.KeepAll,
       out: Option[Store.Key] = None,
       workDir: Option[Store.Key] = None
-  ): Either[com.histmersion.util.basemap.BasemapService.DownloadResultPart1, com.histmersion.util.basemap.BasemapService.DownloadResultPart2] =
+  ): Either[com.histmersion.util.basemap.BasemapService.Problem, com.histmersion.util.basemap.BasemapService.Outcome] =
     val store = files
     done(store.makeDirectory())
     val workKey = workDir.getOrElse(this.work(l))
@@ -711,7 +711,7 @@ final class BasemapService(
     // the local archive is at most the distinct contents the requests carry (the vector one is far
     // smaller once thinned); it is written beside the downloaded parts before they are removed
     val outBytes = plan.contentBytes
-    def room(next: com.histmersion.util.basemap.BasemapService.DownloadRoomNext): Either[com.histmersion.util.basemap.BasemapService.DownloadRoomResultPart1, Unit] =
+    def room(next: com.histmersion.ByteCount): Either[com.histmersion.util.basemap.BasemapService.Problem, Unit] =
       val free = freeSpace(store)
       val left = free - next - outBytes
       Either.cond(
@@ -749,7 +749,7 @@ final class BasemapService(
     * tiles: no range requests), kept in a work directory as they come — so an interrupted fetch resumes — then written
     * as `bathymetry.pmtiles`.
     */
-  private def bathymetry(a: Ask, note: com.histmersion.util.basemap.BasemapService.BathymetryNoteArg1 => Unit): Either[com.histmersion.util.basemap.BasemapService.BathymetryResultPart1, com.histmersion.util.basemap.BasemapService.BathymetryResultPart2] =
+  private def bathymetry(a: Ask, note: com.histmersion.util.basemap.BasemapService.Note => Unit): Either[com.histmersion.util.basemap.BasemapService.Problem, com.histmersion.util.basemap.BasemapService.Outcome] =
     val bc = cfg.bathymetry
     // every tile of the region, in tile-id order (the archive's)
     val tiles = (0 to bc.maxZoom)
@@ -850,7 +850,7 @@ final class BasemapService(
     * work directory (resumed when interrupted), then made into the tiles of zooms 0…`bathymetry.gebco.max-zoom`,
     * written as `bathymetry.pmtiles`.
     */
-  private def gebco(a: Ask, note: com.histmersion.util.basemap.BasemapService.GebcoNoteArg1 => Unit): Either[com.histmersion.util.basemap.BasemapService.GebcoResultPart1, com.histmersion.util.basemap.BasemapService.GebcoResultPart2] =
+  private def gebco(a: Ask, note: com.histmersion.util.basemap.BasemapService.Note => Unit): Either[com.histmersion.util.basemap.BasemapService.Problem, com.histmersion.util.basemap.BasemapService.Outcome] =
     val bc = cfg.bathymetry
     val sea = GebcoSeaFloor(bc.gebco, bc.url, http(), cfg.maxRequestMb.toLong * 1024 * 1024)
     note("reading the GEBCO GeoTIFFs' headers")
@@ -922,7 +922,7 @@ final class BasemapService(
   /** The physical names: Natural Earth's label files read whole (a few MB each), cut to the region and written as
     * `labels.pmtiles` (about 1.4 MB for the default region) — no range requests, nothing to resume.
     */
-  private def labels(a: Ask, note: com.histmersion.util.basemap.BasemapService.LabelsNoteArg1 => Unit): Either[com.histmersion.util.basemap.BasemapService.LabelsResultPart1, com.histmersion.util.basemap.BasemapService.LabelsResultPart2] =
+  private def labels(a: Ask, note: com.histmersion.util.basemap.BasemapService.Note => Unit): Either[com.histmersion.util.basemap.BasemapService.Problem, com.histmersion.util.basemap.BasemapService.Outcome] =
     val lc = cfg.labels
     val files = lc.files.map(f => f -> lc.url.replace("{file}", f))
     if a.dryRun then
@@ -968,257 +968,101 @@ final class BasemapService(
         }
 
 object BasemapService:
+  type Attribution = Attribution.T
+  object Attribution extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type BuildName = BuildName.T
+  object BuildName extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type ContentType = ContentType.T
+  object ContentType extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type Description = Description.T
+  object Description extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type Encoding = Encoding.T
+  object Encoding extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type FetchName = FetchName.T
+  object FetchName extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type FetchedAt = FetchedAt.T
+  object FetchedAt extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type FileName = FileName.T
+  object FileName extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type Focus = Focus.T
+  object Focus extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type Hint = Hint.T
+  object Hint extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type IncludeLabels = IncludeLabels.T
+  object IncludeLabels extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type IncludeVector = IncludeVector.T
+  object IncludeVector extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type JsonText = JsonText.T
+  object JsonText extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type LayerName = LayerName.T
+  object LayerName extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type Name = Name.T
+  object Name extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type NameCount = NameCount.T
+  object NameCount extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type Names = Names.T
+  object Names extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type Narrow = Narrow.T
+  object Narrow extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type Note = Note.T
+  object Note extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type OnDemand = OnDemand.T
+  object OnDemand extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type OnlyTerrain = OnlyTerrain.T
+  object OnlyTerrain extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type Outcome = Outcome.T
+  object Outcome extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type Problem = Problem.T
+  object Problem extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type RuleName = RuleName.T
+  object RuleName extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type Stamp = Stamp.T
+  object Stamp extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type Subset = Subset.T
+  object Subset extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type Target = Target.T
+  object Target extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type TileBytes = TileBytes.T
+  object TileBytes extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Array[_root_.scala.Byte], _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type TileKey = TileKey.T
+  object TileKey extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type WorkName = WorkName.T
+  object WorkName extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type Zoom = Zoom.T
+  object Zoom extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
   /** The sea floor's credit line: the extract's own (GEBCO or ETOPO1), and ETOPO1's as well when the sea outside the
     * extract is read from it on demand and the extract is another's.
     */
-  type FromAncestorAtResultPart1 = FromAncestorAtResultPart1.T
-  object FromAncestorAtResultPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type FromAncestorAtResultPart2 = FromAncestorAtResultPart2.T
-  object FromAncestorAtResultPart2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Array[_root_.scala.Byte], _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type FromAncestorAtAz = FromAncestorAtAz.T
-  object FromAncestorAtAz extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type FromAncestorAtAx = FromAncestorAtAx.T
   object FromAncestorAtAx extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type FromAncestorAtAy = FromAncestorAtAy.T
   object FromAncestorAtAy extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type RemoveGoneResultPart1 = RemoveGoneResultPart1.T
-  object RemoveGoneResultPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type RemoveGoneResultPart2 = RemoveGoneResultPart2.T
-  object RemoveGoneResultPart2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type AskZoomZ = AskZoomZ.T
-  object AskZoomZ extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type AskZoomWhat = AskZoomWhat.T
-  object AskZoomWhat extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type DownloadRoomResultPart1 = DownloadRoomResultPart1.T
-  object DownloadRoomResultPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type DownloadRoomNext = DownloadRoomNext.T
-  object DownloadRoomNext extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
-  type DeeperReliefResultPart2 = DeeperReliefResultPart2.T
-  object DeeperReliefResultPart2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Array[_root_.scala.Byte], _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type FromAncestorResult = FromAncestorResult.T
-  object FromAncestorResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Array[_root_.scala.Byte], _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type TileResultPart2Part1 = TileResultPart2Part1.T
-  object TileResultPart2Part1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Array[_root_.scala.Byte], _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type SubsetResultPart2 = SubsetResultPart2.T
-  object SubsetResultPart2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Array[_root_.scala.Byte], _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type SubsetStored = SubsetStored.T
-  object SubsetStored extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Array[_root_.scala.Byte], _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type ThinResultPart2 = ThinResultPart2.T
-  object ThinResultPart2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Array[_root_.scala.Byte], _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type ThinStored = ThinStored.T
-  object ThinStored extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Array[_root_.scala.Byte], _root_.io.github.iltotore.iron.constraint.any.Pure]
 
-  type FreeSpaceResult = FreeSpaceResult.T
-  object FreeSpaceResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type FreeSpaceResult = com.histmersion.ByteCount
+  val FreeSpaceResult: _root_.com.histmersion.ByteCount.type = _root_.com.histmersion.ByteCount
 
-  type AttributionResult = AttributionResult.T
-  object AttributionResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type StampResult = StampResult.T
-  object StampResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type ReaderResultPart1 = ReaderResultPart1.T
-  object ReaderResultPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type ReaderAtResultPart1 = ReaderAtResultPart1.T
-  object ReaderAtResultPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type FocusKeyName = FocusKeyName.T
-  object FocusKeyName extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type FocusFilesResultPart1 = FocusFilesResultPart1.T
-  object FocusFilesResultPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type FocusStampResult = FocusStampResult.T
-  object FocusStampResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type DemandAtName = DemandAtName.T
-  object DemandAtName extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type VectorRulesResultPart1 = VectorRulesResultPart1.T
-  object VectorRulesResultPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type LatestBuild = LatestBuild.T
-  object LatestBuild extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type VectorPlanetResult = VectorPlanetResult.T
-  object VectorPlanetResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type DeeperReliefResultPart1 = DeeperReliefResultPart1.T
-  object DeeperReliefResultPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type DeeperReliefZ = DeeperReliefZ.T
-  object DeeperReliefZ extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type DeeperReliefX = DeeperReliefX.T
   object DeeperReliefX extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type DeeperReliefY = DeeperReliefY.T
   object DeeperReliefY extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type DeeperReliefExtractMax = DeeperReliefExtractMax.T
-  object DeeperReliefExtractMax extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type FromAncestorZ = FromAncestorZ.T
-  object FromAncestorZ extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type FromAncestorX = FromAncestorX.T
   object FromAncestorX extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type FromAncestorY = FromAncestorY.T
   object FromAncestorY extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type DeepestReliefResult = DeepestReliefResult.T
-  object DeepestReliefResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type DeepestReliefExtractMax = DeepestReliefExtractMax.T
-  object DeepestReliefExtractMax extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type TileResultPart2Part2 = TileResultPart2Part2.T
-  object TileResultPart2Part2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type TileResultPart2Part3 = TileResultPart2Part3.T
-  object TileResultPart2Part3 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type TileResultPart2Part4 = TileResultPart2Part4.T
-  object TileResultPart2Part4 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type TileLayer = TileLayer.T
-  object TileLayer extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type TileZ = TileZ.T
-  object TileZ extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type TileX = TileX.T
   object TileX extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type TileY = TileY.T
   object TileY extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type TileSubset = TileSubset.T
-  object TileSubset extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type TileKeys = TileKeys.T
-  object TileKeys extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type FocusWorkName = FocusWorkName.T
-  object FocusWorkName extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type AskResultPart1 = AskResultPart1.T
-  object AskResultPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type RunResultPart1 = RunResultPart1.T
-  object RunResultPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type RunResultPart2 = RunResultPart2.T
-  object RunResultPart2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type RunNoteArg1 = RunNoteArg1.T
-  object RunNoteArg1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type FocusFetchResultPart1 = FocusFetchResultPart1.T
-  object FocusFetchResultPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type FocusFetchResultPart2 = FocusFetchResultPart2.T
-  object FocusFetchResultPart2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type FocusFetchName = FocusFetchName.T
-  object FocusFetchName extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type FocusFetchNoteArg1 = FocusFetchNoteArg1.T
-  object FocusFetchNoteArg1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type LayersResultPart1 = LayersResultPart1.T
-  object LayersResultPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type LayersResultPart2 = LayersResultPart2.T
-  object LayersResultPart2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type LayersNoteArg1 = LayersNoteArg1.T
-  object LayersNoteArg1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type MinFreeResult = MinFreeResult.T
-  object MinFreeResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type SourceResultPart1 = SourceResultPart1.T
-  object SourceResultPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type SourceExtra = SourceExtra.T
-  object SourceExtra extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type ResumableExtra = ResumableExtra.T
-  object ResumableExtra extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type ZoomOfResult = ZoomOfResult.T
-  object ZoomOfResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type OneResultPart1 = OneResultPart1.T
-  object OneResultPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type OneResultPart2 = OneResultPart2.T
-  object OneResultPart2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type OneNoteArg1 = OneNoteArg1.T
-  object OneNoteArg1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type RangedResultPart1 = RangedResultPart1.T
-  object RangedResultPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type RangedResultPart2 = RangedResultPart2.T
-  object RangedResultPart2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type RangedNoteArg1 = RangedNoteArg1.T
-  object RangedNoteArg1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type DownloadResultPart1 = DownloadResultPart1.T
-  object DownloadResultPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type DownloadResultPart2 = DownloadResultPart2.T
-  object DownloadResultPart2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type DownloadExtra = DownloadExtra.T
-  object DownloadExtra extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type DownloadNoteArg1 = DownloadNoteArg1.T
-  object DownloadNoteArg1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type DownloadKeepAll = DownloadKeepAll.T
-  object DownloadKeepAll extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type BathymetryResultPart1 = BathymetryResultPart1.T
-  object BathymetryResultPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type BathymetryResultPart2 = BathymetryResultPart2.T
-  object BathymetryResultPart2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type BathymetryNoteArg1 = BathymetryNoteArg1.T
-  object BathymetryNoteArg1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type GebcoResultPart1 = GebcoResultPart1.T
-  object GebcoResultPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type GebcoResultPart2 = GebcoResultPart2.T
-  object GebcoResultPart2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type GebcoNoteArg1 = GebcoNoteArg1.T
-  object GebcoNoteArg1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type LabelsResultPart1 = LabelsResultPart1.T
-  object LabelsResultPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type LabelsResultPart2 = LabelsResultPart2.T
-  object LabelsResultPart2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type LabelsNoteArg1 = LabelsNoteArg1.T
-  object LabelsNoteArg1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type SeaCreditResult = SeaCreditResult.T
-  object SeaCreditResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type SeaCreditExtract = SeaCreditExtract.T
-  object SeaCreditExtract extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type SeaCreditEtopo1 = SeaCreditEtopo1.T
-  object SeaCreditEtopo1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type SeaCreditOnDemand = SeaCreditOnDemand.T
-  object SeaCreditOnDemand extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type FocusOfResultPart1 = FocusOfResultPart1.T
-  object FocusOfResultPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type FocusOfResultPart2Part1 = FocusOfResultPart2Part1.T
-  object FocusOfResultPart2Part1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type FocusOfFocus = FocusOfFocus.T
-  object FocusOfFocus extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type FocusOfOnlyTerrain = FocusOfOnlyTerrain.T
-  object FocusOfOnlyTerrain extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type FocusOfTerrainZoom = FocusOfTerrainZoom.T
-  object FocusOfTerrainZoom extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type HintsResult = HintsResult.T
-  object HintsResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type HintsVector = HintsVector.T
-  object HintsVector extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type HintsLabels = HintsLabels.T
-  object HintsLabels extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type HintsNarrow = HintsNarrow.T
-  object HintsNarrow extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type LackingHintResult = LackingHintResult.T
-  object LackingHintResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type NamesResult = NamesResult.T
-  object NamesResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type NamesXs = NamesXs.T
-  object NamesXs extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type LabelsMetadataNames = LabelsMetadataNames.T
-  object LabelsMetadataNames extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type LabelsMetadataFetchedAt = LabelsMetadataFetchedAt.T
-  object LabelsMetadataFetchedAt extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type InsideResult = InsideResult.T
-  object InsideResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type InsideZ = InsideZ.T
-  object InsideZ extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type InsideX = InsideX.T
   object InsideX extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type InsideY = InsideY.T
   object InsideY extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type NearResult = NearResult.T
-  object NearResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type BuildsResultPart1 = BuildsResultPart1.T
-  object BuildsResultPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type BuildsResultPart2Part1 = BuildsResultPart2Part1.T
-  object BuildsResultPart2Part1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type BuildsResultPart2Part2 = BuildsResultPart2Part2.T
-  object BuildsResultPart2Part2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type BuildsJson = BuildsJson.T
-  object BuildsJson extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type SubsetResultPart1 = SubsetResultPart1.T
-  object SubsetResultPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type SubsetRulesPart1 = SubsetRulesPart1.T
-  object SubsetRulesPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type SubsetProps = _root_.com.histmersion.util.basemap.Mvt.Rule.Props
   val SubsetProps: _root_.com.histmersion.util.basemap.Mvt.Rule.Props.type = _root_.com.histmersion.util.basemap.Mvt.Rule.Props
-  type MvtRulesResultPart1 = MvtRulesResultPart1.T
-  object MvtRulesResultPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type ThinResultPart1 = ThinResultPart1.T
-  object ThinResultPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type ThinRulesPart1 = ThinRulesPart1.T
-  object ThinRulesPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type DescribeResult = DescribeResult.T
-  object DescribeResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type DescribeDryRun = DescribeDryRun.T
-  object DescribeDryRun extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
-  def seaCredit(extract: Option[com.histmersion.util.basemap.BasemapService.SeaCreditExtract], etopo1: com.histmersion.util.basemap.BasemapService.SeaCreditEtopo1, onDemand: com.histmersion.util.basemap.BasemapService.SeaCreditOnDemand): com.histmersion.util.basemap.BasemapService.SeaCreditResult =
+  def seaCredit(extract: Option[com.histmersion.util.basemap.BasemapService.Attribution], etopo1: com.histmersion.util.basemap.BasemapService.Attribution, onDemand: com.histmersion.util.basemap.BasemapService.OnDemand): com.histmersion.util.basemap.BasemapService.Attribution =
     extract.filter(_.trim.nonEmpty) match
       case Some(e) if e != etopo1 && onDemand => s"$e; outside it, $etopo1"
       case Some(e)                            => e
@@ -1234,12 +1078,12 @@ object BasemapService:
     * regional fetch never replaces the broad extract. Pure.
     */
   def focusOf(
-      focus: Option[com.histmersion.util.basemap.BasemapService.FocusOfFocus],
+      focus: Option[com.histmersion.util.basemap.BasemapService.Focus],
       bbox: Option[BBox],
-      onlyTerrain: com.histmersion.util.basemap.BasemapService.FocusOfOnlyTerrain,
-      terrainZoom: Option[com.histmersion.util.basemap.BasemapService.FocusOfTerrainZoom],
+      onlyTerrain: com.histmersion.util.basemap.BasemapService.OnlyTerrain,
+      terrainZoom: Option[com.histmersion.util.basemap.BasemapService.Zoom],
       t: BasemapTerrainConfig
-  ): Either[com.histmersion.util.basemap.BasemapService.FocusOfResultPart1, Option[(com.histmersion.util.basemap.BasemapService.FocusOfResultPart2Part1, BBox)]] =
+  ): Either[com.histmersion.util.basemap.BasemapService.Focus, Option[(com.histmersion.util.basemap.BasemapService.Description, BBox)]] =
     val named = t.focusRegions.flatMap(r => Basemap.focusRegion(r).toOption)
     focus.map(_.trim).filter(_.nonEmpty) match
       case Some(f) =>
@@ -1255,7 +1099,7 @@ object BasemapService:
         Right(bbox.filter(_ => onlyTerrain && terrainZoom.exists(_ > t.maxZoom)).map(b => (Basemap.focusNameOf(b), b)))
 
   /** What a fetch would add: the physical names to an extract that has the map but not them. Pure. */
-  def hints(vector: com.histmersion.util.basemap.BasemapService.HintsVector, labels: com.histmersion.util.basemap.BasemapService.HintsLabels, narrow: com.histmersion.util.basemap.BasemapService.HintsNarrow = false): List[com.histmersion.util.basemap.BasemapService.HintsResult] =
+  def hints(vector: com.histmersion.util.basemap.BasemapService.IncludeVector, labels: com.histmersion.util.basemap.BasemapService.IncludeLabels, narrow: com.histmersion.util.basemap.BasemapService.Narrow = false): List[com.histmersion.util.basemap.BasemapService.Hint] =
     Option
       .when(narrow)(
         s"The vector layer was fetched before the base map kept land use and natural points: a style " +
@@ -1271,7 +1115,7 @@ object BasemapService:
         .toList
 
   /** What to run when some styles lack layers the download left out. Pure. */
-  def lackingHint(states: List[Basemap.StyleState]): List[com.histmersion.util.basemap.BasemapService.LackingHintResult] =
+  def lackingHint(states: List[Basemap.StyleState]): List[com.histmersion.util.basemap.BasemapService.Hint] =
     val lacking = states.filter(_.missing.nonEmpty)
     Option
       .when(lacking.nonEmpty) {
@@ -1284,13 +1128,13 @@ object BasemapService:
       .toList
 
   /** "a", "a and b", "a, b and c". Pure. */
-  def names(xs: List[com.histmersion.util.basemap.BasemapService.NamesXs]): com.histmersion.util.basemap.BasemapService.NamesResult = xs match
+  def names(xs: List[com.histmersion.util.basemap.BasemapService.Name]): com.histmersion.util.basemap.BasemapService.Names = xs match
     case Nil        => ""
     case one :: Nil => one
     case _          => xs.init.mkString(", ") + " and " + xs.last
 
   /** The names archive's metadata: its layers, credit, and where and when it came from. Pure. */
-  def labelsMetadata(lc: BasemapLabelsConfig, b: BBox, names: com.histmersion.util.basemap.BasemapService.LabelsMetadataNames, fetchedAt: com.histmersion.util.basemap.BasemapService.LabelsMetadataFetchedAt): io.circe.Json =
+  def labelsMetadata(lc: BasemapLabelsConfig, b: BBox, names: com.histmersion.util.basemap.BasemapService.NameCount, fetchedAt: com.histmersion.util.basemap.BasemapService.FetchedAt): io.circe.Json =
     import io.circe.Json
     val build = "/(v\\d+\\.\\d+(\\.\\d+)?)/".r
       .findFirstMatchIn(lc.url)
@@ -1318,19 +1162,19 @@ object BasemapService:
   val FocusDir: Store.Key = Store.Key.applyUnsafe("terrain-focus")
 
   /** Whether tile `z/x/y` lies in an archive's bounds (any part of it). Pure. */
-  def inside(h: PmTiles.Header, z: com.histmersion.util.basemap.BasemapService.InsideZ, x: com.histmersion.util.basemap.BasemapService.InsideX, y: com.histmersion.util.basemap.BasemapService.InsideY): com.histmersion.util.basemap.BasemapService.InsideResult =
+  def inside(h: PmTiles.Header, z: com.histmersion.util.basemap.BasemapService.Zoom, x: com.histmersion.util.basemap.BasemapService.InsideX, y: com.histmersion.util.basemap.BasemapService.InsideY): Boolean =
     val b = BBox(h.minLon, h.minLat, h.maxLon, h.maxLat)
     val ((x0, x1), (y0, y1)) = Basemap.tileRange(b, z)
     x >= x0 && x <= x1 && y >= y0 && y <= y1
 
   /** Two regions the same to within rounding. Pure. */
-  def near(a: BBox, b: BBox): com.histmersion.util.basemap.BasemapService.NearResult =
+  def near(a: BBox, b: BBox): Boolean =
     List(a.minLon - b.minLon, a.minLat - b.minLat, a.maxLon - b.maxLon, a.maxLat - b.maxLat).forall(d =>
       math.abs(d) < 1e-6
     )
 
   /** The provider's builds, oldest first: `[{key, size}, …]` → `(key, size)`. Pure. */
-  def builds(json: com.histmersion.util.basemap.BasemapService.BuildsJson): Either[com.histmersion.util.basemap.BasemapService.BuildsResultPart1, List[(com.histmersion.util.basemap.BasemapService.BuildsResultPart2Part1, com.histmersion.util.basemap.BasemapService.BuildsResultPart2Part2)]] =
+  def builds(json: com.histmersion.util.basemap.BasemapService.JsonText): Either[com.histmersion.util.basemap.BasemapService.Problem, List[(com.histmersion.util.basemap.BasemapService.BuildName, com.histmersion.ByteCount)]] =
     io.circe.parser.parse(json).left.map(e => s"the list of builds is not JSON: ${e.getMessage}").flatMap { j =>
       j.asArray
         .toRight("the list of builds is not a JSON array")
@@ -1351,18 +1195,18 @@ object BasemapService:
     * properties; gzip-compressed; empty when nothing is left. Pure.
     */
   def subset(
-      stored: com.histmersion.util.basemap.BasemapService.SubsetStored,
+      stored: com.histmersion.util.basemap.BasemapService.TileBytes,
       c: PmTiles.Compression,
-      rules: Map[com.histmersion.util.basemap.BasemapService.SubsetRulesPart1, Basemap.Read],
+      rules: Map[com.histmersion.util.basemap.BasemapService.RuleName, Basemap.Read],
       props: Option[Set[com.histmersion.util.basemap.BasemapService.SubsetProps]] = None
-  ): Either[com.histmersion.util.basemap.BasemapService.SubsetResultPart1, com.histmersion.util.basemap.BasemapService.SubsetResultPart2] =
+  ): Either[com.histmersion.util.basemap.BasemapService.Problem, com.histmersion.util.basemap.BasemapService.TileBytes] =
     val raw = if c == PmTiles.Compression.Gzip || PmTiles.isGzip(stored) then PmTiles.gunzip(stored) else Right(stored)
     raw
       .flatMap(Mvt.filter(_, rules.map((l, r) => l -> Mvt.Rule(keep = r.kinds, geoms = r.geoms, props = props))))
       .map(t => if t.isEmpty then t else PmTiles.gzip(t))
 
   /** The drop list as the MVT filter's rules: a layer dropped whole, only some kinds, or all but some. Pure. */
-  def mvtRules(rules: List[Basemap.DropRule]): Map[com.histmersion.util.basemap.BasemapService.MvtRulesResultPart1, Mvt.Rule] =
+  def mvtRules(rules: List[Basemap.DropRule]): Map[com.histmersion.util.basemap.BasemapService.RuleName, Mvt.Rule] =
     rules
       .map(r => r.layer -> (if r.whole then Mvt.Rule(none = true) else Mvt.Rule(keep = r.spare, drop = r.drop)))
       .toMap
@@ -1371,17 +1215,17 @@ object BasemapService:
     * (as the source stores it), or dropped when nothing is left. Pure.
     */
   def thin(
-      stored: com.histmersion.util.basemap.BasemapService.ThinStored,
+      stored: com.histmersion.util.basemap.BasemapService.TileBytes,
       c: PmTiles.Compression,
-      rules: Map[com.histmersion.util.basemap.BasemapService.ThinRulesPart1, Mvt.Rule]
-  ): Either[com.histmersion.util.basemap.BasemapService.ThinResultPart1, Option[com.histmersion.util.basemap.BasemapService.ThinResultPart2]] =
+      rules: Map[com.histmersion.util.basemap.BasemapService.RuleName, Mvt.Rule]
+  ): Either[com.histmersion.util.basemap.BasemapService.Problem, Option[com.histmersion.util.basemap.BasemapService.TileBytes]] =
     val raw = if c == PmTiles.Compression.Gzip || PmTiles.isGzip(stored) then PmTiles.gunzip(stored) else Right(stored)
     raw.flatMap(Mvt.filter(_, rules, others = true)).map { t =>
       Option.when(t.nonEmpty)(if c == PmTiles.Compression.Gzip then PmTiles.gzip(t) else t)
     }
 
   /** One line for a planned layer: requests and bytes. Pure. */
-  def describe(l: Basemap.Layer, p: BasemapFetch.Plan, dryRun: com.histmersion.util.basemap.BasemapService.DescribeDryRun): com.histmersion.util.basemap.BasemapService.DescribeResult =
+  def describe(l: Basemap.Layer, p: BasemapFetch.Plan, dryRun: com.histmersion.util.basemap.BasemapService.Ask.DryRun): com.histmersion.util.basemap.BasemapService.Description =
     val verb = if dryRun then "would download" else "downloaded"
     s"${l.wire} (${p.source.label}, zoom ${p.header.minZoom}–${p.maxZoom}): ${p.tiles.size} tiles, $verb " +
       s"${Backup.humanBytes(p.requestBytes)} in ${p.requests.size} requests (+${p.directoryRequests} for the directories)" +

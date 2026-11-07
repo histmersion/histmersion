@@ -18,7 +18,7 @@ import hearth.kindlings.optics.syntax.*
   */
 final class SeedImport(sources: SourceService, addFigures: (SeedImport.AddFiguresArg1, List[NewFigure]) => SeedImport.AddFiguresResult):
 
-  def run(folder: SeedFolder, force: com.histmersion.domain.library.ingest.SeedImport.RunForce, assetBytes: com.histmersion.domain.library.ingest.SeedImport.RunAssetBytes): SeedResult =
+  def run(folder: SeedFolder, force: com.histmersion.domain.library.ingest.SeedImport.RunForce, assetBytes: com.histmersion.domain.library.ingest.SeedImport.MaxBytes): SeedResult =
     val stored = if force then Map.empty[String, Long] else sources.updatedAtMillis
     val outcomes = folder.notes.map { name =>
       try
@@ -45,24 +45,18 @@ final class SeedImport(sources: SourceService, addFigures: (SeedImport.AddFigure
     )
 
 object SeedImport:
+  type MaxBytes = MaxBytes.T
+  object MaxBytes extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
   /** True when the stored source is strictly newer than the file — writing the file would lose work. */
   type AddFiguresArg1 = AddFiguresArg1.T
   object AddFiguresArg1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type AddFiguresResult = AddFiguresResult.T
-  object AddFiguresResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type AddFiguresResult = com.histmersion.RowCount
+  val AddFiguresResult: _root_.com.histmersion.RowCount.type = _root_.com.histmersion.RowCount
 
   type RunForce = RunForce.T
   object RunForce extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type RunAssetBytes = RunAssetBytes.T
-  object RunAssetBytes extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type IsStaleResult = IsStaleResult.T
-  object IsStaleResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type IsStaleStoredPart1 = IsStaleStoredPart1.T
   object IsStaleStoredPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type IsStaleStoredPart2 = IsStaleStoredPart2.T
-  object IsStaleStoredPart2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type IsStaleFileMillis = IsStaleFileMillis.T
-  object IsStaleFileMillis extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
-  def isStale(stored: Map[com.histmersion.domain.library.ingest.SeedImport.IsStaleStoredPart1, com.histmersion.domain.library.ingest.SeedImport.IsStaleStoredPart2], citekey: com.histmersion.domain.library.Citekey, fileMillis: com.histmersion.domain.library.ingest.SeedImport.IsStaleFileMillis): com.histmersion.domain.library.ingest.SeedImport.IsStaleResult =
+  def isStale(stored: Map[com.histmersion.domain.library.ingest.SeedImport.IsStaleStoredPart1, com.histmersion.domain.library.ingest.SeedNote.ModifiedMillis], citekey: com.histmersion.domain.library.Citekey, fileMillis: com.histmersion.domain.library.ingest.SeedNote.ModifiedMillis): Boolean =
     stored.get(citekey).exists(_ > fileMillis)

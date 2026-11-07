@@ -54,7 +54,7 @@ final class EventsControllers(
     events.geo(selection(q, q.filter), limit, tolerance)
 
   /** A stated scale must be `local`, `regional` or (to clear it) `auto`. */
-  private def validScale(scale: Option[com.histmersion.domain.catalogue.events.EventsControllers.ValidScaleScale]): Either[Api.Error, Unit] =
+  private def validScale(scale: Option[com.histmersion.domain.catalogue.events.EventRow.Scale]): Either[Api.Error, Unit] =
     scale match
       case Some(v) if EventScale.parse(v).isEmpty =>
         Left(
@@ -68,7 +68,7 @@ final class EventsControllers(
   /** An event's geometry is a GeoJSON geometry the store reads: WKT, a Feature or bad coordinates are a 400 naming the
     * problem, not a failed statement. Blank passes (none / clear).
     */
-  private def validGeometry(g: Option[com.histmersion.domain.catalogue.events.EventsControllers.ValidGeometryG]): Either[Api.Error, Unit] =
+  private def validGeometry(g: Option[com.histmersion.domain.catalogue.events.EventDetailRow.Geometry]): Either[Api.Error, Unit] =
     g.map(_.trim).filter(_.nonEmpty) match
       case None    => Right(())
       case Some(v) =>
@@ -79,19 +79,19 @@ final class EventsControllers(
           .map(m => Api.Error(m, Some(Write.CodeInvalid)))
 
   /** An event's Wikidata item is a `Q…` id; `""` clears it. */
-  private def validWikidata(q: Option[com.histmersion.domain.catalogue.events.EventsControllers.ValidWikidataQ]): Either[Api.Error, Unit] =
+  private def validWikidata(q: Option[com.histmersion.domain.catalogue.places.Wikidata.Id]): Either[Api.Error, Unit] =
     q.map(_.trim) match
       case Some(v) if v.nonEmpty && !Wikidata.isQid(v) =>
         Left(Api.Error(s"wikidata '$v' is not a Wikidata item id (Q followed by digits)", Some(Write.CodeInvalid)))
       case _ => Right(())
 
-  private def now(id: com.histmersion.domain.catalogue.events.EventsControllers.NowId): com.histmersion.domain.catalogue.events.EventsControllers.NowResult = current(AliasKinds.EventRecords, id)
+  private def now(id: com.histmersion.domain.catalogue.Event.Id): com.histmersion.domain.catalogue.Event.Id = current(AliasKinds.EventRecords, id)
 
-  def get(id: com.histmersion.domain.catalogue.events.EventsControllers.GetId): Either[Api.Error, EventEntry] =
+  def get(id: com.histmersion.domain.catalogue.Event.Id): Either[Api.Error, EventEntry] =
     events.get(now(id)).map(card).toRight(Api.Error(s"No event '$id'", Some(Write.CodeNotFound)))
 
   /** A put to an old id replaces the event it was renamed to, never creates a second one under the old id. */
-  def put(caller: Caller, id: com.histmersion.domain.catalogue.events.EventsControllers.PutId, in: EventPut): Either[Api.Error, EventEntry] =
+  def put(caller: Caller, id: com.histmersion.domain.catalogue.Event.Id, in: EventPut): Either[Api.Error, EventEntry] =
     maintenance.guard("put_event"):
       val to = now(id)
       validScale(in.scale).flatMap(_ => validGeometry(in.geometry)).flatMap { _ =>
@@ -99,7 +99,7 @@ final class EventsControllers(
         get(to)
       }
 
-  def patch(caller: Caller, id: com.histmersion.domain.catalogue.events.EventsControllers.PatchId, p: EventPatch): Either[Api.Error, EventEntry] =
+  def patch(caller: Caller, id: com.histmersion.domain.catalogue.Event.Id, p: EventPatch): Either[Api.Error, EventEntry] =
     maintenance.guard("patch_event"):
       val to = now(id)
       validScale(p.scale)
@@ -107,7 +107,7 @@ final class EventsControllers(
         .flatMap(_ => validGeometry(p.geometry))
         .flatMap(_ => events.patch(to, p).flatMap(_ => get(to)))
 
-  def delete(caller: Caller, id: com.histmersion.domain.catalogue.events.EventsControllers.DeleteId): Either[Api.Error, EventDeleted] =
+  def delete(caller: Caller, id: com.histmersion.domain.catalogue.Event.Id): Either[Api.Error, EventDeleted] =
     maintenance.guard("delete_event"):
       val to = now(id)
       if events.delete(to) then Right(EventDeleted(to, true))
@@ -117,11 +117,11 @@ final class EventsControllers(
     * keeps resolving. Answers the event's id before and after.
     */
   /** `POST /api/events/{id}/rename` — a new id; the old one keeps resolving (V053). */
-  def renamed(id: com.histmersion.domain.catalogue.events.EventsControllers.RenamedId, req: LabelRename): Either[Api.Error, LabelRenamed] =
+  def renamed(id: com.histmersion.domain.catalogue.Event.Id, req: LabelRename): Either[Api.Error, LabelRenamed] =
     rename(Caller.Local, id, from => LabelRenames.validate(Bundle.Kind.Event, from, req.to))
       .map((from, to) => LabelRenamed(Bundle.Kind.Event, from, to))
 
-  def rename(caller: Caller, id: com.histmersion.domain.catalogue.events.EventsControllers.RenameId, to: com.histmersion.domain.catalogue.events.EventsControllers.RenameToArg1 => Either[Api.Error, com.histmersion.domain.catalogue.events.EventsControllers.RenameToResultPart2]): Either[Api.Error, (com.histmersion.domain.catalogue.events.EventsControllers.RenameResultPart2Part1, com.histmersion.domain.catalogue.events.EventsControllers.RenameResultPart2Part2)] =
+  def rename(caller: Caller, id: com.histmersion.domain.catalogue.Event.Id, to: com.histmersion.domain.catalogue.Event.Id => Either[Api.Error, com.histmersion.domain.catalogue.Event.Id]): Either[Api.Error, (com.histmersion.domain.catalogue.Event.Id, com.histmersion.domain.catalogue.Event.Id)] =
     maintenance.guard("rename_event"):
       val from = now(id)
       for
@@ -130,42 +130,14 @@ final class EventsControllers(
       yield (from, newId)
 
 object EventsControllers:
-  type CurrentArg2 = CurrentArg2.T
-  object CurrentArg2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type CurrentResult = CurrentResult.T
-  object CurrentResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type MapViewResultPart1 = MapViewResultPart1.T
-  object MapViewResultPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type MapViewResultPart2 = MapViewResultPart2.T
-  object MapViewResultPart2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type Alias = Alias.T
+  object Alias extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type CurrentArg2 = com.histmersion.domain.catalogue.events.EventsControllers.Alias
+  val CurrentArg2: _root_.com.histmersion.domain.catalogue.events.EventsControllers.Alias.type = _root_.com.histmersion.domain.catalogue.events.EventsControllers.Alias
+  type CurrentResult = com.histmersion.domain.catalogue.Event.Id
+  val CurrentResult: _root_.com.histmersion.domain.catalogue.Event.Id.type = _root_.com.histmersion.domain.catalogue.Event.Id
+  type MapViewResultPart1 = com.histmersion.RowCount
+  val MapViewResultPart1: _root_.com.histmersion.RowCount.type = _root_.com.histmersion.RowCount
+  type MapViewResultPart2 = com.histmersion.domain.catalogue.events.EventGeoRow.Magnitude
+  val MapViewResultPart2: _root_.com.histmersion.domain.catalogue.events.EventGeoRow.Magnitude.type = _root_.com.histmersion.domain.catalogue.events.EventGeoRow.Magnitude
 
-  type ValidScaleScale = ValidScaleScale.T
-  object ValidScaleScale extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type ValidGeometryG = ValidGeometryG.T
-  object ValidGeometryG extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type ValidWikidataQ = ValidWikidataQ.T
-  object ValidWikidataQ extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type NowResult = NowResult.T
-  object NowResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type NowId = NowId.T
-  object NowId extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type GetId = GetId.T
-  object GetId extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type PutId = PutId.T
-  object PutId extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type PatchId = PatchId.T
-  object PatchId extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type DeleteId = DeleteId.T
-  object DeleteId extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type RenamedId = RenamedId.T
-  object RenamedId extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type RenameResultPart2Part1 = RenameResultPart2Part1.T
-  object RenameResultPart2Part1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type RenameResultPart2Part2 = RenameResultPart2Part2.T
-  object RenameResultPart2Part2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type RenameId = RenameId.T
-  object RenameId extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type RenameToArg1 = RenameToArg1.T
-  object RenameToArg1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type RenameToResultPart2 = RenameToResultPart2.T
-  object RenameToResultPart2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]

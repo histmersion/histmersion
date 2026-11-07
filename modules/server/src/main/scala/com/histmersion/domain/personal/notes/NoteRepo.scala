@@ -10,17 +10,15 @@ import com.augustnagro.magnum.*
 
 /** The `notes` table. Takes the connection it runs on; a removed note stays as its tombstone. */
 private[notes] object NoteRepo:
+  type Column = Column.T
+  object Column extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type RewriteCount = RewriteCount.T
+  object RewriteCount extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type TombstoneCount = TombstoneCount.T
+  object TombstoneCount extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
-  type IsoResult = IsoResult.T
-  object IsoResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type IsoCol = IsoCol.T
-  object IsoCol extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type RewriteResult = RewriteResult.T
-  object RewriteResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type TombstoneResult = TombstoneResult.T
-  object TombstoneResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
-  private def iso(col: com.histmersion.domain.personal.notes.NoteRepo.IsoCol): com.histmersion.domain.personal.notes.NoteRepo.IsoResult = s"""to_char($col AT TIME ZONE 'UTC', 'YYYY-MM-DD"T"HH24:MI:SS.US"Z"')"""
+  private def iso(col: com.histmersion.domain.personal.notes.NoteRepo.Column): com.histmersion.domain.personal.MarkTime.Iso = s"""to_char($col AT TIME ZONE 'UTC', 'YYYY-MM-DD"T"HH24:MI:SS.US"Z"')"""
 
   private val Projection =
     s"""SELECT n.id::text, n.target_kind, n.target_id, n.target_uid, n.lat, n.lon, n.period_start, n.period_end, n.body,
@@ -76,12 +74,12 @@ private[notes] object NoteRepo:
       id: com.histmersion.api.personal.Note.Id,
       text: com.histmersion.api.personal.Note.Text,
       at: MarkTime
-  )(using DbCon): com.histmersion.domain.personal.notes.NoteRepo.RewriteResult =
+  )(using DbCon): com.histmersion.domain.personal.notes.NoteRepo.RewriteCount =
     val stamp = at.iso
     sql"""UPDATE notes SET body = $text, updated_at = $stamp::timestamptz
           WHERE user_id = ${user.value} AND id = ${id.value}::uuid AND deleted_at IS NULL""".update.run()
 
-  def tombstone(user: UserId, id: com.histmersion.api.personal.Note.Id, at: MarkTime)(using DbCon): com.histmersion.domain.personal.notes.NoteRepo.TombstoneResult =
+  def tombstone(user: UserId, id: com.histmersion.api.personal.Note.Id, at: MarkTime)(using DbCon): com.histmersion.domain.personal.notes.NoteRepo.TombstoneCount =
     val stamp = at.iso
     sql"""UPDATE notes SET deleted_at = $stamp::timestamptz, updated_at = $stamp::timestamptz
           WHERE user_id = ${user.value} AND id = ${id.value}::uuid AND deleted_at IS NULL""".update.run()

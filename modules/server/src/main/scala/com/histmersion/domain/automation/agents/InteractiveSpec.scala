@@ -11,7 +11,7 @@ import scala.jdk.CollectionConverters.*
 final case class InteractiveSpec(model: InteractiveSpec.Model, tools: List[InteractiveSpec.Tools])
 
 object InteractiveSpec:
-  type Model = Model.T
-  object Model extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type Tools = Tools.T
-  object Tools extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type Model = com.histmersion.domain.automation.agents.AgentsControllers.ModelName
+  val Model: _root_.com.histmersion.domain.automation.agents.AgentsControllers.ModelName.type = _root_.com.histmersion.domain.automation.agents.AgentsControllers.ModelName
+  type Tools = com.histmersion.domain.automation.agents.ToolUse.Tool
+  val Tools: _root_.com.histmersion.domain.automation.agents.ToolUse.Tool.type = _root_.com.histmersion.domain.automation.agents.ToolUse.Tool

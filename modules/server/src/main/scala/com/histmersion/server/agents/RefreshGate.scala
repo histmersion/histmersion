@@ -17,7 +17,7 @@ final class RefreshGate:
   /** Run `body` alone for `p`, given the pool's last attempt. A `Right` is an attempt (successful or not), stamped `at`
     * for the throttle; a `Left` is "not taken", and leaves the stamp alone.
     */
-  def exclusive[A](p: PoolId, at: => Long)(body: Option[com.histmersion.server.agents.RefreshGate.ExclusiveBodyArg1] => Either[com.histmersion.server.agents.RefreshGate.ExclusiveBodyResultPart1, A]): Either[com.histmersion.server.agents.RefreshGate.ExclusiveResultPart1, A] =
+  def exclusive[A](p: PoolId, at: => Long)(body: Option[com.histmersion.server.agents.RefreshGate.Instant] => Either[com.histmersion.server.agents.RefreshGate.Problem, A]): Either[com.histmersion.server.agents.RefreshGate.Problem, A] =
     val lock = locks.computeIfAbsent(p, _ => ReentrantLock())
     lock.lockInterruptibly()
     try
@@ -26,14 +26,10 @@ final class RefreshGate:
       r
     finally lock.unlock()
 
-  def lastAttempt(p: PoolId): Option[com.histmersion.server.agents.RefreshGate.LastAttemptResult] = Option(last.get(p)).map(_.longValue)
+  def lastAttempt(p: PoolId): Option[com.histmersion.server.agents.RefreshGate.Instant] = Option(last.get(p)).map(_.longValue)
 
 object RefreshGate:
-  type ExclusiveResultPart1 = ExclusiveResultPart1.T
-  object ExclusiveResultPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type ExclusiveBodyArg1 = ExclusiveBodyArg1.T
-  object ExclusiveBodyArg1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type ExclusiveBodyResultPart1 = ExclusiveBodyResultPart1.T
-  object ExclusiveBodyResultPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type LastAttemptResult = LastAttemptResult.T
-  object LastAttemptResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type Instant = Instant.T
+  object Instant extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type Problem = Problem.T
+  object Problem extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]

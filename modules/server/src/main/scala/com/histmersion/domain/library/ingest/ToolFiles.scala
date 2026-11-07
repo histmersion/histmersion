@@ -5,10 +5,10 @@ package com.histmersion.domain.library.ingest
   */
 trait ToolFiles:
   /** The file at `path`: why it may not be read, or `None` when there is no file there. */
-  def file(path: com.histmersion.domain.library.ingest.ToolFiles.FilePath): Either[com.histmersion.domain.library.ingest.ToolFiles.FileResultPart1, Option[Upload]]
+  def file(path: com.histmersion.domain.library.ingest.ToolFiles.Path): Either[com.histmersion.domain.library.ingest.ToolFiles.Problem, Option[Upload]]
 
 object ToolFiles:
-  type FileResultPart1 = FileResultPart1.T
-  object FileResultPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type FilePath = FilePath.T
-  object FilePath extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type Path = Path.T
+  object Path extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type Problem = Problem.T
+  object Problem extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]

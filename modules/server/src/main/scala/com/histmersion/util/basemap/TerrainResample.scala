@@ -9,38 +9,24 @@ package com.histmersion.util.basemap
   * Pure: pixels and bytes in, pixels and bytes out.
   */
 object TerrainResample:
+  type Metres = Metres.T
+  object Metres extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type Pixel = Pixel.T
+  object Pixel extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type Problem = Problem.T
+  object Problem extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type SamplesPerSide = SamplesPerSide.T
+  object SamplesPerSide extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type ZoomDelta = ZoomDelta.T
+  object ZoomDelta extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
   /** Terrarium's elevation of a pixel `0x??RRGGBB`, in metres. Pure. */
-  type ResampleResult = ResampleResult.T
-  object ResampleResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Array[_root_.scala.Int], _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type ResampleSrc = ResampleSrc.T
-  object ResampleSrc extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Array[_root_.scala.Int], _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type DecodeBytes = DecodeBytes.T
-  object DecodeBytes extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Array[_root_.scala.Byte], _root_.io.github.iltotore.iron.constraint.any.Pure]
 
-  type MetresResult = MetresResult.T
-  object MetresResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type MetresP = MetresP.T
-  object MetresP extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type EncodeResult = EncodeResult.T
-  object EncodeResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type EncodeM = EncodeM.T
-  object EncodeM extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type ResampleN = ResampleN.T
-  object ResampleN extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type ResampleDz = ResampleDz.T
-  object ResampleDz extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type ResampleOx = ResampleOx.T
-  object ResampleOx extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type ResampleOy = ResampleOy.T
-  object ResampleOy extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type DecodeResultPart1 = DecodeResultPart1.T
-  object DecodeResultPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
-  def metres(p: com.histmersion.util.basemap.TerrainResample.MetresP): com.histmersion.util.basemap.TerrainResample.MetresResult = ((p >> 16) & 0xff) * 256.0 + ((p >> 8) & 0xff) + (p & 0xff) / 256.0 - 32768.0
+  def metres(p: com.histmersion.util.basemap.TerrainResample.Pixel): com.histmersion.util.basemap.TerrainResample.Metres = ((p >> 16) & 0xff) * 256.0 + ((p >> 8) & 0xff) + (p & 0xff) / 256.0 - 32768.0
 
   /** The terrarium pixel (`0xffRRGGBB`) of `m` metres. Pure. */
-  def encode(m: com.histmersion.util.basemap.TerrainResample.EncodeM): com.histmersion.util.basemap.TerrainResample.EncodeResult =
+  def encode(m: com.histmersion.util.basemap.TerrainResample.Metres): com.histmersion.util.basemap.TerrainResample.Pixel =
     val v = math.max(0.0, math.min(65535.996, m + 32768.0))
     val whole = math.floor(v).toInt
     val r = whole >> 8
@@ -51,7 +37,7 @@ object TerrainResample:
   /** The part of an ancestor tile (`src`, `n` × `n` pixels) that tile `(ox, oy)` of the `2^dz` × `2^dz` under it
     * covers, resampled to `n` × `n` pixels bilinearly in metres; terrarium pixels out. Pure.
     */
-  def resample(src: com.histmersion.util.basemap.TerrainResample.ResampleSrc, n: com.histmersion.util.basemap.TerrainResample.ResampleN, dz: com.histmersion.util.basemap.TerrainResample.ResampleDz, ox: com.histmersion.util.basemap.TerrainResample.ResampleOx, oy: com.histmersion.util.basemap.TerrainResample.ResampleOy): com.histmersion.util.basemap.TerrainResample.ResampleResult =
+  def resample(src: com.histmersion.util.basemap.Png.Pixels, n: com.histmersion.util.basemap.TerrainResample.SamplesPerSide, dz: com.histmersion.util.basemap.TerrainResample.ZoomDelta, ox: com.histmersion.util.basemap.PmTiles.TileColumn, oy: com.histmersion.util.basemap.PmTiles.TileRow): com.histmersion.util.basemap.Png.Pixels =
     val s = 1L << dz
     val step = 1.0 / s
     val x0 = (ox % s).toDouble * n / s
@@ -81,5 +67,5 @@ object TerrainResample:
     out
 
   /** A relief tile's pixels: a lossless WebP or a PNG. Pure. */
-  def decode(bytes: com.histmersion.util.basemap.TerrainResample.DecodeBytes): Either[com.histmersion.util.basemap.TerrainResample.DecodeResultPart1, Vp8l.Image] =
+  def decode(bytes: com.histmersion.util.basemap.Png.PngBytes): Either[com.histmersion.util.basemap.TerrainResample.Problem, Vp8l.Image] =
     if Png.isPng(bytes) then Png.decode(bytes) else Vp8l.decode(bytes)

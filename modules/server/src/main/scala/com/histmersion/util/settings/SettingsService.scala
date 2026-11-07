@@ -23,19 +23,19 @@ trait SettingsService:
   ): Either[SettingError, WriteOutcome]
 
   /** The first-run setup has been neither finished nor skipped, and the file sets nothing of its own. */
-  def setupDue: com.histmersion.util.settings.SettingsService.SetupDueResult
+  def setupDue: Boolean
 
 object SettingsService:
+  type ConfigPath = ConfigPath.T
+  object ConfigPath extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type Problem = Problem.T
+  object Problem extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
   /** The settings file of `loaded` — the one the server read, `file` (`None`: it read none) — with the environment it
     * read it with.
     */
   type WriteLiteralConsent = WriteLiteralConsent.T
   object WriteLiteralConsent extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type SetupDueResult = SetupDueResult.T
-  object SetupDueResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type SnapshotLoadedPart1 = SnapshotLoadedPart1.T
-  object SnapshotLoadedPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type SnapshotCompleted = SnapshotCompleted.T
   object SnapshotCompleted extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type SnapshotFile = _root_.com.histmersion.util.settings.SettingsSnapshot.File
@@ -53,7 +53,7 @@ object SettingsService:
   private[settings] def snapshot(
       schema: ConfigSchema,
       state: ConfigFileState,
-      loaded: Either[com.histmersion.util.settings.SettingsService.SnapshotLoadedPart1, LoadedConfig],
+      loaded: Either[com.histmersion.util.settings.SettingsService.Problem, LoadedConfig],
       env: Config,
       prefix: Option[SettingKey],
       completed: com.histmersion.util.settings.SettingsService.SnapshotCompleted,
@@ -108,7 +108,7 @@ object SettingsService:
     ): Either[SettingError, WriteOutcome] =
       writer.toRight(noFile).flatMap(_.write(edits, expected, literalConsent))
 
-    def setupDue: com.histmersion.util.settings.SettingsService.Implementation.SetupDueResult =
+    def setupDue: Boolean =
       !loaded().config.setup.completed && writer
         .flatMap(_.read().toOption)
         .exists(s => !ConfigSchema.setsAnything(s.parsed))
@@ -116,8 +116,6 @@ object SettingsService:
   object Implementation:
     type WriteLiteralConsent = WriteLiteralConsent.T
     object WriteLiteralConsent extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
-    type SetupDueResult = SetupDueResult.T
-    object SetupDueResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
   /** The same settings over a file's text held in memory (`None`: no file yet), changed by the same rules — the schema,
     * the text edit that keeps the rest of the file, the read-back and the load — but never written to disk; a file it
@@ -128,9 +126,9 @@ object SettingsService:
       env: Config = ConfigFactory.empty,
       val schema: ConfigSchema = ConfigSchema.reference
   ) extends SettingsService:
-    val path: com.histmersion.util.settings.SettingsService.InMemory.Path = SettingsService.InMemory.FileName
+    val path: com.histmersion.util.settings.SettingsSnapshot.File = SettingsService.InMemory.FileName
 
-    def current: Option[com.histmersion.util.settings.SettingsService.InMemory.CurrentResult] = text.get
+    def current: Option[com.histmersion.util.settings.SettingsService.InMemory.Text] = text.get
 
     private def state: Either[SettingError, ConfigFileState] =
       text.get match
@@ -139,13 +137,13 @@ object SettingsService:
           try Right(ConfigFileState(Some(t), FileVersion.of(Some(t)), parse(t), here))
           catch case e: org.ekrich.config.ConfigException => Left(SettingError.Unreadable(e.getMessage))
 
-    private def parse(t: com.histmersion.util.settings.SettingsService.InMemory.ParseT): Config =
+    private def parse(t: com.histmersion.util.settings.SettingsService.InMemory.Text): Config =
       ConfigFactory.parseString(
         t,
         ConfigParseOptions.defaults.setOriginDescription(path).setSyntax(ConfigSyntax.CONF)
       )
 
-    private def here(o: org.ekrich.config.ConfigOrigin): com.histmersion.util.settings.SettingsService.InMemory.HereResult = o.description.startsWith(path)
+    private def here(o: org.ekrich.config.ConfigOrigin): Boolean = o.description.startsWith(path)
 
     def read(prefix: Option[SettingKey], extra: List[SettingKey]): Either[SettingError, SettingsSnapshot] =
       state.map { s =>
@@ -192,24 +190,14 @@ object SettingsService:
             )
       }
 
-    def setupDue: com.histmersion.util.settings.SettingsService.InMemory.SetupDueResult = read(None).fold(_ => false, _.setupDue)
+    def setupDue: Boolean = read(None).fold(_ => false, _.setupDue)
 
   object InMemory:
     /** The name the file held in memory goes by. */
     type Text = Text.T
     object Text extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
-    type Path = Path.T
-    object Path extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-    type CurrentResult = CurrentResult.T
-    object CurrentResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-    type ParseT = ParseT.T
-    object ParseT extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-    type HereResult = HereResult.T
-    object HereResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
     type WriteLiteralConsent = WriteLiteralConsent.T
     object WriteLiteralConsent extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
-    type SetupDueResult = SetupDueResult.T
-    object SetupDueResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
     val FileName = "histmersion.conf"

@@ -46,7 +46,7 @@ final class MaintenanceControllers(
   def vacuum(in: Vacuum.Request): Either[Api.Error, JobInfo] = vacuumJobs.start(in)
 
   /** One resumable slice of the FTS chunk rebuild (plan §1.4); loop on `remaining` > 0. */
-  def reindex(after: Option[com.histmersion.server.instance.MaintenanceControllers.ReindexAfter], limit: Option[com.histmersion.server.instance.MaintenanceControllers.ReindexLimit]): Either[Api.Error, ReindexResult] =
+  def reindex(after: Option[com.histmersion.server.instance.MaintenanceControllers.Cursor], limit: Option[com.histmersion.PageSize]): Either[Api.Error, ReindexResult] =
     maintenance.guard("reindex"):
       Deps.data
         .task(MaintenanceTask.Name("reindex"))
@@ -59,7 +59,7 @@ final class MaintenanceControllers(
     * maintenance lock, or a backup or a vacuum is still running. pg_dump reads one consistent snapshot, so ingests, OCR
     * and agent runs going on beside it are fine.
     */
-  def housekeepingBlock: Option[com.histmersion.server.instance.MaintenanceControllers.HousekeepingBlockResult] =
+  def housekeepingBlock: Option[com.histmersion.server.instance.MaintenanceControllers.Reason] =
     if maintenance.active then Some("a restore holds the maintenance lock")
     else if backupJobs.running then Some("a backup is still running")
     else if vacuumJobs.isRunning then Some("a vacuum is still running")
@@ -71,7 +71,7 @@ final class MaintenanceControllers(
   def backupList: Either[Api.Error, List[Backup.Info]] = backups.list
 
   /** The archive itself, for `GET /api/backups/{file}` — validated against the listing first. */
-  def backupFile(file: com.histmersion.server.instance.MaintenanceControllers.BackupFileFile): Either[Api.Error, java.io.File] = backups.archive(file)
+  def backupFile(file: com.histmersion.server.instance.MaintenanceControllers.BackupFileName): Either[Api.Error, java.io.File] = backups.archive(file)
 
   /** Restore under the maintenance lock: every other write is answered 503 until it returns. Refuses a database that
     * still holds sources unless `force` (`pg_restore --clean` DROPS them), and re-validates the schema with Flyway
@@ -134,11 +134,9 @@ final class MaintenanceControllers(
       .foreach(c => restoredCaches.get(c.name).foreach(_()))
 
 object MaintenanceControllers:
-  type ReindexAfter = ReindexAfter.T
-  object ReindexAfter extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type ReindexLimit = ReindexLimit.T
-  object ReindexLimit extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type HousekeepingBlockResult = HousekeepingBlockResult.T
-  object HousekeepingBlockResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type BackupFileFile = BackupFileFile.T
-  object BackupFileFile extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type BackupFileName = BackupFileName.T
+  object BackupFileName extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type Cursor = Cursor.T
+  object Cursor extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type Reason = Reason.T
+  object Reason extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]

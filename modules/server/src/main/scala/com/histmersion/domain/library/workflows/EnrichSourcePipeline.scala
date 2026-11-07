@@ -72,7 +72,7 @@ final class EnrichSourcePipeline(
 
   // ── steps ──────────────────────────────────────────────────────────────────────────────────────
 
-  private def load(ck: com.histmersion.domain.library.workflows.EnrichSourcePipeline.LoadCk): Either[com.histmersion.domain.library.workflows.EnrichSourcePipeline.LoadResultPart1, Loaded] =
+  private def load(ck: com.histmersion.domain.library.Citekey): Either[com.histmersion.domain.library.workflows.EnrichSourcePipeline.Problem, Loaded] =
     site.sources.get(ck, body = true).left.map(_.message).flatMap { sw =>
       val s = sw.source
       val body = s.ocrMarkdown.map(_.trim).getOrElse("")
@@ -187,19 +187,19 @@ final class EnrichSourcePipeline(
     s"Write the notes for [[${l.citekey}]].\n\n${meta(l)}\n\nsummary: ${c.summary}\n\nverified findings:\n" +
       fs.map(f => s"- ${f.claim} (quote: \"${f.quote}\")").mkString("\n")
 
-  private def isCitekey(s: com.histmersion.domain.library.workflows.EnrichSourcePipeline.IsCitekeyS): com.histmersion.domain.library.workflows.EnrichSourcePipeline.IsCitekeyResult = site.sources.get(s, body = false).isRight
+  private def isCitekey(s: com.histmersion.domain.library.workflows.EnrichSourcePipeline.IsCitekeyS): Boolean = site.sources.get(s, body = false).isRight
 
   /** The single write. On a 412 (someone wrote the source since `load`) the source is re-read and the patch rebuilt
     * from the CHECKPOINTED answers — no LLM call — and sent once more.
     */
   private def write(
       ctx: RunCtx,
-      ck: com.histmersion.domain.library.workflows.EnrichSourcePipeline.WriteCk,
+      ck: com.histmersion.domain.library.Citekey,
       l: Loaded,
       c: Classified,
       fs: List[Finding.Input],
-      notes: com.histmersion.domain.library.workflows.EnrichSourcePipeline.WriteNotes
-  ): Either[com.histmersion.domain.library.workflows.EnrichSourcePipeline.WriteResultPart1, Patched] =
+      notes: com.histmersion.domain.library.sources.SourceNote.Text
+  ): Either[com.histmersion.domain.library.workflows.EnrichSourcePipeline.Problem, Patched] =
     val (p, fields, proposal) = patch(l, c, fs, Option(notes).filter(_.nonEmpty))
     // a dry run's simulated patch "succeeds": its step says what it would have set
     ctx.write(s"patch [[$ck]]: ${if fields.isEmpty then "nothing new" else fields.mkString(", ")}", p.asJson)(
@@ -291,7 +291,7 @@ final class EnrichSourcePipeline(
   /** The classify step's status, if the patch did not already fill it: through the approval gate. A retraction found by
     * `assess` outranks any proposal.
     */
-  private def status(ctx: RunCtx, ck: com.histmersion.domain.library.workflows.EnrichSourcePipeline.StatusCk, c: Classified, p: Patched, a: Upstreamed): StatusRouted =
+  private def status(ctx: RunCtx, ck: com.histmersion.domain.library.Citekey, c: Classified, p: Patched, a: Upstreamed): StatusRouted =
     if p.fieldsSet.contains("status") then StatusRouted(Some(c.status.wire), None, "filled by the patch")
     else if c.status == Source.Status.Unassessed then StatusRouted(None, None, "no status proposed")
     else if a.retracted then StatusRouted(None, None, s"${c.status.wire} not proposed: the source is retracted")
@@ -318,7 +318,7 @@ final class EnrichSourcePipeline(
     * started for ticked off, and a `log` line. Calibre is untouched: a source not in Calibre is already what
     * `histmersion calibre gaps` reports, host-side.
     */
-  private def close(ctx: RunCtx, ck: com.histmersion.domain.library.workflows.EnrichSourcePipeline.CloseCk, p: Patched, r: StatusRouted): Either[com.histmersion.domain.library.workflows.EnrichSourcePipeline.CloseResultPart1, Closed] =
+  private def close(ctx: RunCtx, ck: com.histmersion.domain.library.Citekey, p: Patched, r: StatusRouted): Either[com.histmersion.domain.library.workflows.EnrichSourcePipeline.Problem, Closed] =
     // a dry run patched nothing: the lint would only describe the source as it was before
     val lint = if ctx.dryRun then Nil
     else
@@ -341,7 +341,7 @@ final class EnrichSourcePipeline(
   /** Tick acquisition item `id` off as fulfilled by `ck` — the same rule an OCR upload follows. It never fails the run:
     * an item done or deleted meanwhile is left as it is, and said so.
     */
-  private def tickOff(id: com.histmersion.domain.library.workflows.EnrichSourcePipeline.TickOffId, ck: com.histmersion.domain.library.workflows.EnrichSourcePipeline.TickOffCk, runId: com.histmersion.domain.automation.Run.Id): com.histmersion.domain.library.workflows.EnrichSourcePipeline.TickOffResult =
+  private def tickOff(id: com.histmersion.domain.library.ingest.IngestQueue.QueueItemId, ck: com.histmersion.domain.library.Citekey, runId: com.histmersion.domain.automation.Run.Id): com.histmersion.domain.library.workflows.EnrichSourcePipeline.TickOffResult =
     Queue.fulfillable(id, site.queues.get(QueueItemId(id))) match
       case Left(m)     => s"acquisition item $id NOT ticked off: $m"
       case Right(item) =>
@@ -350,39 +350,19 @@ final class EnrichSourcePipeline(
           case Left(e)  => s"acquisition item $id NOT ticked off: ${e.message}"
 
 object EnrichSourcePipeline:
+  type Problem = Problem.T
+  object Problem extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type RunResultPart2 = RunResultPart2.T
   object RunResultPart2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type LoadResultPart1 = LoadResultPart1.T
-  object LoadResultPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type LoadCk = LoadCk.T
-  object LoadCk extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type MetaResult = MetaResult.T
   object MetaResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type ClassifyInputResult = ClassifyInputResult.T
   object ClassifyInputResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type NotesInputResult = NotesInputResult.T
   object NotesInputResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type IsCitekeyResult = IsCitekeyResult.T
-  object IsCitekeyResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type IsCitekeyS = IsCitekeyS.T
   object IsCitekeyS extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type WriteResultPart1 = WriteResultPart1.T
-  object WriteResultPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type WriteCk = WriteCk.T
-  object WriteCk extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type WriteNotes = WriteNotes.T
-  object WriteNotes extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type UpstreamBlockedResult = UpstreamBlockedResult.T
   object UpstreamBlockedResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type StatusCk = StatusCk.T
-  object StatusCk extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type CloseResultPart1 = CloseResultPart1.T
-  object CloseResultPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type CloseCk = CloseCk.T
-  object CloseCk extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type TickOffResult = TickOffResult.T
   object TickOffResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type TickOffId = TickOffId.T
-  object TickOffId extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type TickOffCk = TickOffCk.T
-  object TickOffCk extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]

@@ -6,7 +6,7 @@ final case class LinkedSource(citekey: com.histmersion.domain.library.Citekey, i
 object LinkedSource:
   type Id = Id.T
   object Id extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type Title = Title.T
-  object Title extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type Authors = Authors.T
-  object Authors extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type Title = com.histmersion.domain.Title
+  val Title: _root_.com.histmersion.domain.Title.type = _root_.com.histmersion.domain.Title
+  type Authors = com.histmersion.domain.AuthorName
+  val Authors: _root_.com.histmersion.domain.AuthorName.type = _root_.com.histmersion.domain.AuthorName

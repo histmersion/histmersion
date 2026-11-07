@@ -53,7 +53,7 @@ final class AutopilotService(
   private def acfg = cfg.autopilot
 
   /** Whether it is on (one row read). */
-  def on: com.histmersion.domain.automation.autopilot.AutopilotService.OnResult = agents.autopilotRow.row().enabled
+  def on: Boolean = agents.autopilotRow.row().enabled
 
   /** Today's shared ingest cap: `ingest-per-day` (0 = none), scaled to the watchers' ingest backlog when
     * `ingest-backlog-share` is above 0 (at most `ingest-ceiling`).
@@ -166,7 +166,7 @@ final class AutopilotService(
     if out.nonEmpty then agents.managers.nudge()
     out
 
-  private def next(cron: com.histmersion.domain.automation.autopilot.AutopilotService.NextCron, now: Instant): Option[Instant] = Cron.parse(cron).toOption.flatMap(_.next(now))
+  private def next(cron: com.histmersion.domain.automation.managers.ManagerLight.Cron, now: Instant): Option[Instant] = Cron.parse(cron).toOption.flatMap(_.next(now))
 
   private def event(id: com.histmersion.domain.automation.autopilot.AutopilotService.EventId, text: com.histmersion.domain.automation.autopilot.AutopilotService.EventText): Unit = agents.managerStore.event(id, None, None, Feed.Autopilot, text)
 
@@ -483,8 +483,6 @@ object AutopilotService:
   type StatusRuleCap = StatusRuleCap.T
   object StatusRuleCap extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
-  type OnResult = OnResult.T
-  object OnResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type IngestCapResult = IngestCapResult.T
   object IngestCapResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type BacklogPendingResult = BacklogPendingResult.T
@@ -497,8 +495,6 @@ object AutopilotService:
   object TickResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type EnsureNowResult = EnsureNowResult.T
   object EnsureNowResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type NextCron = NextCron.T
-  object NextCron extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type EventId = EventId.T
   object EventId extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type EventText = EventText.T

@@ -11,144 +11,64 @@ import java.nio.charset.StandardCharsets
   * transit never reach the disk ([[BasemapLayers]]).
   */
 object Mvt:
+  type Bytes = Bytes.T
+  object Bytes extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Array[_root_.scala.Byte], _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type FeatureBytes = FeatureBytes.T
+  object FeatureBytes extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Array[_root_.scala.Byte], _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type GeomType = GeomType.T
+  object GeomType extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type GeometryCommand = GeometryCommand.T
+  object GeometryCommand extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type Kind = Kind.T
+  object Kind extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type LayerBytes = LayerBytes.T
+  object LayerBytes extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Array[_root_.scala.Byte], _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type LayerNameText = LayerNameText.T
+  object LayerNameText extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type Others = Others.T
+  object Others extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type PointX = PointX.T
+  object PointX extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type PointY = PointY.T
+  object PointY extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type Problem = Problem.T
+  object Problem extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type PropKey = PropKey.T
+  object PropKey extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type PropText = PropText.T
+  object PropText extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type SignedNumber = SignedNumber.T
+  object SignedNumber extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type TagIndex = TagIndex.T
+  object TagIndex extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type Text = Text.T
+  object Text extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type TileBytes = TileBytes.T
+  object TileBytes extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Array[_root_.scala.Byte], _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type Varint = Varint.T
+  object Varint extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
   /** A protobuf field: its number, wire type and raw bytes (the whole field, tag included), and for a length-delimited
     * field its payload's range in `src`.
     */
-  type ThinLayerKindResult = ThinLayerKindResult.T
-  object ThinLayerKindResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type ThinLayerGeomTypeResult = ThinLayerGeomTypeResult.T
-  object ThinLayerGeomTypeResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type ThinLayerDroppedResult = ThinLayerDroppedResult.T
-  object ThinLayerDroppedResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
-  type FieldsB = FieldsB.T
-  object FieldsB extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Array[_root_.scala.Byte], _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type StringB = _root_.com.histmersion.util.basemap.Mvt.FieldsB
-  val StringB: _root_.com.histmersion.util.basemap.Mvt.FieldsB.type = _root_.com.histmersion.util.basemap.Mvt.FieldsB
-  type LayerNamesTile = LayerNamesTile.T
-  object LayerNamesTile extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Array[_root_.scala.Byte], _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type NameB = _root_.com.histmersion.util.basemap.Mvt.FieldsB
-  val NameB: _root_.com.histmersion.util.basemap.Mvt.FieldsB.type = _root_.com.histmersion.util.basemap.Mvt.FieldsB
-  type FilterResultPart2 = FilterResultPart2.T
-  object FilterResultPart2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Array[_root_.scala.Byte], _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type FilterTile = FilterTile.T
-  object FilterTile extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Array[_root_.scala.Byte], _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type ThinLayerResult = ThinLayerResult.T
-  object ThinLayerResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Array[_root_.scala.Byte], _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type ThinLayerB = _root_.com.histmersion.util.basemap.Mvt.FieldsB
-  val ThinLayerB: _root_.com.histmersion.util.basemap.Mvt.FieldsB.type = _root_.com.histmersion.util.basemap.Mvt.FieldsB
-  type WithPropsResult = WithPropsResult.T
-  object WithPropsResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Array[_root_.scala.Byte], _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type WithPropsB = _root_.com.histmersion.util.basemap.Mvt.FieldsB
-  val WithPropsB: _root_.com.histmersion.util.basemap.Mvt.FieldsB.type = _root_.com.histmersion.util.basemap.Mvt.FieldsB
-  type TagsB = _root_.com.histmersion.util.basemap.Mvt.FieldsB
-  val TagsB: _root_.com.histmersion.util.basemap.Mvt.FieldsB.type = _root_.com.histmersion.util.basemap.Mvt.FieldsB
-  type StringValueB = _root_.com.histmersion.util.basemap.Mvt.FieldsB
-  val StringValueB: _root_.com.histmersion.util.basemap.Mvt.FieldsB.type = _root_.com.histmersion.util.basemap.Mvt.FieldsB
-  type WriteFieldPayload = WriteFieldPayload.T
-  object WriteFieldPayload extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Array[_root_.scala.Byte], _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type LayerResult = LayerResult.T
-  object LayerResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Array[_root_.scala.Byte], _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type TypedLayerResult = TypedLayerResult.T
-  object TypedLayerResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Array[_root_.scala.Byte], _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type TileResult = TileResult.T
-  object TileResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Array[_root_.scala.Byte], _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type TileLayers = TileLayers.T
-  object TileLayers extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Array[_root_.scala.Byte], _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type FeaturesTile = FeaturesTile.T
-  object FeaturesTile extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Array[_root_.scala.Byte], _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type AnyValueB = _root_.com.histmersion.util.basemap.Mvt.FieldsB
-  val AnyValueB: _root_.com.histmersion.util.basemap.Mvt.FieldsB.type = _root_.com.histmersion.util.basemap.Mvt.FieldsB
-  type KindsTile = KindsTile.T
-  object KindsTile extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Array[_root_.scala.Byte], _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type StringB = _root_.com.histmersion.util.basemap.Mvt.Bytes
+  val StringB: _root_.com.histmersion.util.basemap.Mvt.Bytes.type = _root_.com.histmersion.util.basemap.Mvt.Bytes
+  type NameB = _root_.com.histmersion.util.basemap.Mvt.Bytes
+  val NameB: _root_.com.histmersion.util.basemap.Mvt.Bytes.type = _root_.com.histmersion.util.basemap.Mvt.Bytes
+  type ThinLayerB = _root_.com.histmersion.util.basemap.Mvt.Bytes
+  val ThinLayerB: _root_.com.histmersion.util.basemap.Mvt.Bytes.type = _root_.com.histmersion.util.basemap.Mvt.Bytes
+  type WithPropsB = _root_.com.histmersion.util.basemap.Mvt.Bytes
+  val WithPropsB: _root_.com.histmersion.util.basemap.Mvt.Bytes.type = _root_.com.histmersion.util.basemap.Mvt.Bytes
+  type TagsB = _root_.com.histmersion.util.basemap.Mvt.Bytes
+  val TagsB: _root_.com.histmersion.util.basemap.Mvt.Bytes.type = _root_.com.histmersion.util.basemap.Mvt.Bytes
+  type StringValueB = _root_.com.histmersion.util.basemap.Mvt.Bytes
+  val StringValueB: _root_.com.histmersion.util.basemap.Mvt.Bytes.type = _root_.com.histmersion.util.basemap.Mvt.Bytes
+  type AnyValueB = _root_.com.histmersion.util.basemap.Mvt.Bytes
+  val AnyValueB: _root_.com.histmersion.util.basemap.Mvt.Bytes.type = _root_.com.histmersion.util.basemap.Mvt.Bytes
 
-  type FieldsFrom = FieldsFrom.T
-  object FieldsFrom extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type FieldsUntil = FieldsUntil.T
-  object FieldsUntil extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type StringResult = StringResult.T
-  object StringResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type LayerNamesResultPart1 = LayerNamesResultPart1.T
-  object LayerNamesResultPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type LayerNamesResultPart2 = LayerNamesResultPart2.T
-  object LayerNamesResultPart2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type NameResult = NameResult.T
-  object NameResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type AttemptResultPart1 = AttemptResultPart1.T
-  object AttemptResultPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type FilterResultPart1 = FilterResultPart1.T
-  object FilterResultPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type FilterRulesPart1 = FilterRulesPart1.T
-  object FilterRulesPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type FilterOthers = FilterOthers.T
-  object FilterOthers extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type WithPropsKeys = WithPropsKeys.T
-  object WithPropsKeys extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type WithPropsGone = WithPropsGone.T
-  object WithPropsGone extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type WithPropsWanted = WithPropsWanted.T
-  object WithPropsWanted extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type TagsResult = TagsResult.T
-  object TagsResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type StringValueResult = StringValueResult.T
-  object StringValueResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type WriteFieldNumber = WriteFieldNumber.T
-  object WriteFieldNumber extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type WriteVarintV = WriteVarintV.T
-  object WriteVarintV extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type LayerName = _root_.com.histmersion.util.basemap.Mvt.TypedLayerName
-  val LayerName: _root_.com.histmersion.util.basemap.Mvt.TypedLayerName.type = _root_.com.histmersion.util.basemap.Mvt.TypedLayerName
-  type LayerFeaturesPart1 = LayerFeaturesPart1.T
-  object LayerFeaturesPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type LayerFeaturesPart2 = LayerFeaturesPart2.T
-  object LayerFeaturesPart2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type LayerFeaturesPart3Part1 = LayerFeaturesPart3Part1.T
-  object LayerFeaturesPart3Part1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type LayerFeaturesPart3Part2 = LayerFeaturesPart3Part2.T
-  object LayerFeaturesPart3Part2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type TypedLayerName = TypedLayerName.T
-  object TypedLayerName extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type TypedLayerFeaturesPart1 = TypedLayerFeaturesPart1.T
-  object TypedLayerFeaturesPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type TypedLayerFeaturesPart2 = TypedLayerFeaturesPart2.T
-  object TypedLayerFeaturesPart2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type TypedLayerFeaturesPart3Part1 = TypedLayerFeaturesPart3Part1.T
-  object TypedLayerFeaturesPart3Part1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type ZigzagResult = ZigzagResult.T
-  object ZigzagResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type ZigzagN = ZigzagN.T
-  object ZigzagN extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type PointGeometryResult = PointGeometryResult.T
-  object PointGeometryResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type PointGeometryX = PointGeometryX.T
-  object PointGeometryX extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type PointGeometryY = PointGeometryY.T
-  object PointGeometryY extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type LineGeometryResult = LineGeometryResult.T
-  object LineGeometryResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type LineGeometryPartsPart1 = LineGeometryPartsPart1.T
-  object LineGeometryPartsPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type LineGeometryPartsPart2 = LineGeometryPartsPart2.T
-  object LineGeometryPartsPart2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type FeaturesResultPart1 = FeaturesResultPart1.T
-  object FeaturesResultPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type FeaturesResultPart2Part1 = FeaturesResultPart2Part1.T
-  object FeaturesResultPart2Part1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type FeaturesResultPart2Part2 = FeaturesResultPart2Part2.T
-  object FeaturesResultPart2Part2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type FeaturesResultPart2Part3Part1 = FeaturesResultPart2Part3Part1.T
-  object FeaturesResultPart2Part3Part1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type FeaturesResultPart2Part3Part2 = FeaturesResultPart2Part3Part2.T
-  object FeaturesResultPart2Part3Part2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type AnyValueResult = AnyValueResult.T
-  object AnyValueResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type KindsResultPart1 = KindsResultPart1.T
-  object KindsResultPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type KindsResultPart2 = KindsResultPart2.T
-  object KindsResultPart2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type KindsLayerName = KindsLayerName.T
-  object KindsLayerName extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type LayerName = _root_.com.histmersion.util.basemap.Mvt.LayerNameText
+  val LayerName: _root_.com.histmersion.util.basemap.Mvt.LayerNameText.type = _root_.com.histmersion.util.basemap.Mvt.LayerNameText
 
   final private case class Field(number: Field.Number, wireType: Field.WireType, start: Field.Start, end: Field.End, payloadStart: Field.PayloadStart)
 
@@ -157,19 +77,19 @@ object Mvt:
     object Number extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
     type WireType = WireType.T
     object WireType extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
-    type Start = Start.T
-    object Start extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
-    type End = End.T
-    object End extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
-    type PayloadStart = PayloadStart.T
-    object PayloadStart extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Start = com.histmersion.Offset
+    val Start: _root_.com.histmersion.Offset.type = _root_.com.histmersion.Offset
+    type End = com.histmersion.Offset
+    val End: _root_.com.histmersion.Offset.type = _root_.com.histmersion.Offset
+    type PayloadStart = com.histmersion.Offset
+    val PayloadStart: _root_.com.histmersion.Offset.type = _root_.com.histmersion.Offset
 
   final private class Reader(val b: Array[Byte], from: Reader.From, until: Reader.Until):
-    var pos: com.histmersion.util.basemap.Mvt.Reader.Pos = from // the next unread byte
+    var pos: com.histmersion.Offset = from // the next unread byte
 
-    def hasNext: com.histmersion.util.basemap.Mvt.Reader.HasNextResult = pos < until
+    def hasNext: Boolean = pos < until
 
-    def varint(): com.histmersion.util.basemap.Mvt.Reader.VarintResult =
+    def varint(): com.histmersion.util.basemap.Mvt.Varint =
       var result = 0L
       var shift = 0
       var more = true
@@ -208,30 +128,24 @@ object Mvt:
     type Until = Until.T
     object Until extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
-    type Pos = Pos.T
-    object Pos extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
-    type HasNextResult = HasNextResult.T
-    object HasNextResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
-    type VarintResult = VarintResult.T
-    object VarintResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
-  private def fields(b: com.histmersion.util.basemap.Mvt.FieldsB, from: com.histmersion.util.basemap.Mvt.FieldsFrom, until: com.histmersion.util.basemap.Mvt.FieldsUntil): Vector[Field] =
+  private def fields(b: com.histmersion.util.basemap.Mvt.Bytes, from: com.histmersion.util.basemap.Mvt.Reader.From, until: com.histmersion.util.basemap.Mvt.Reader.Until): Vector[Field] =
     val r = Reader(b, from, until)
     val out = Vector.newBuilder[Field]
     while r.hasNext do out += r.field()
     out.result()
 
-  private def string(b: com.histmersion.util.basemap.Mvt.StringB, f: Field): com.histmersion.util.basemap.Mvt.StringResult =
+  private def string(b: com.histmersion.util.basemap.Mvt.StringB, f: Field): com.histmersion.util.basemap.Mvt.Text =
     String(b, f.payloadStart, f.end - f.payloadStart, StandardCharsets.UTF_8)
 
   /** The names of a tile's layers, in order. */
-  def layerNames(tile: com.histmersion.util.basemap.Mvt.LayerNamesTile): Either[com.histmersion.util.basemap.Mvt.LayerNamesResultPart1, List[com.histmersion.util.basemap.Mvt.LayerNamesResultPart2]] =
+  def layerNames(tile: com.histmersion.util.basemap.Mvt.TileBytes): Either[com.histmersion.util.basemap.Mvt.Problem, List[com.histmersion.util.basemap.Mvt.LayerNameText]] =
     attempt(fields(tile, 0, tile.length).filter(f => f.number == 3 && f.wireType == 2).map(l => name(tile, l)).toList)
 
-  private def name(b: com.histmersion.util.basemap.Mvt.NameB, layer: Field): com.histmersion.util.basemap.Mvt.NameResult =
+  private def name(b: com.histmersion.util.basemap.Mvt.NameB, layer: Field): com.histmersion.util.basemap.Mvt.LayerNameText =
     fields(b, layer.payloadStart, layer.end).find(f => f.number == 1 && f.wireType == 2).map(string(b, _)).getOrElse("")
 
-  private def attempt[A](a: => A): Either[com.histmersion.util.basemap.Mvt.AttemptResultPart1, A] =
+  private def attempt[A](a: => A): Either[com.histmersion.util.basemap.Mvt.Problem, A] =
     try Right(a)
     catch case e: IllegalArgumentException => Left(s"malformed vector tile: ${e.getMessage}")
 
@@ -246,18 +160,12 @@ object Mvt:
       geoms: Set[Rule.Geoms] = Set.empty,
       props: Option[Set[Rule.Props]] = None
   ):
-    def keeps(kind: Option[com.histmersion.util.basemap.Mvt.Rule.KeepsKind]): com.histmersion.util.basemap.Mvt.Rule.KeepsResult = kind match
+    def keeps(kind: Option[com.histmersion.util.basemap.Mvt.Kind]): Boolean = kind match
       case None    => keep.isEmpty
       case Some(k) => (keep.isEmpty || keep(k)) && !drop(k)
-    def all: com.histmersion.util.basemap.Mvt.Rule.AllResult = keep.isEmpty && drop.isEmpty && !none && geoms.isEmpty && props.isEmpty
+    def all: Boolean = keep.isEmpty && drop.isEmpty && !none && geoms.isEmpty && props.isEmpty
 
   object Rule:
-    type KeepsResult = KeepsResult.T
-    object KeepsResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
-    type KeepsKind = KeepsKind.T
-    object KeepsKind extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-    type AllResult = AllResult.T
-    object AllResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
     type Keep = Keep.T
     object Keep extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
@@ -273,7 +181,7 @@ object Mvt:
   /** The tile with the layers `rules` names thinned by their [[Rule]] (a `none` rule drops the layer) and the others
     * kept when `others`, dropped otherwise. A layer left with no feature is dropped too.
     */
-  def filter(tile: com.histmersion.util.basemap.Mvt.FilterTile, rules: Map[com.histmersion.util.basemap.Mvt.FilterRulesPart1, Rule], others: com.histmersion.util.basemap.Mvt.FilterOthers = false): Either[com.histmersion.util.basemap.Mvt.FilterResultPart1, com.histmersion.util.basemap.Mvt.FilterResultPart2] =
+  def filter(tile: com.histmersion.util.basemap.Mvt.TileBytes, rules: Map[com.histmersion.util.basemap.Mvt.LayerNameText, Rule], others: com.histmersion.util.basemap.Mvt.Others = false): Either[com.histmersion.util.basemap.Mvt.Problem, com.histmersion.util.basemap.Mvt.TileBytes] =
     attempt {
       val out = ByteArrayOutputStream(tile.length)
       fields(tile, 0, tile.length).foreach { f =>
@@ -287,23 +195,23 @@ object Mvt:
     }
 
   /** One layer with only the features `rule` keeps; `None` when none is left. */
-  private def thinLayer(b: com.histmersion.util.basemap.Mvt.ThinLayerB, layer: Field, rule: Rule): Option[com.histmersion.util.basemap.Mvt.ThinLayerResult] =
+  private def thinLayer(b: com.histmersion.util.basemap.Mvt.ThinLayerB, layer: Field, rule: Rule): Option[com.histmersion.util.basemap.Mvt.LayerBytes] =
     val fs = fields(b, layer.payloadStart, layer.end)
     val keys = fs.filter(f => f.number == 3 && f.wireType == 2).map(string(b, _))
     val values = fs.filter(f => f.number == 4 && f.wireType == 2).map(v => stringValue(b, v))
     val kindKey = keys.indexOf("kind")
-    def kind(feature: Field): Option[com.histmersion.util.basemap.Mvt.ThinLayerKindResult] =
+    def kind(feature: Field): Option[com.histmersion.util.basemap.Mvt.Kind] =
       if kindKey < 0 then None
       else
         tags(b, feature).grouped(2).collectFirst { case Vector(k, v) if k == kindKey => values.lift(v).flatten }.flatten
-    def geomType(feature: Field): com.histmersion.util.basemap.Mvt.ThinLayerGeomTypeResult =
+    def geomType(feature: Field): com.histmersion.util.basemap.Mvt.GeomType =
       fields(b, feature.payloadStart, feature.end)
         .find(f => f.number == 3 && f.wireType == 0)
         .map { f =>
           val r = Reader(b, f.start, f.end); r.varint(); r.varint().toInt
         }
         .getOrElse(0)
-    def dropped(feature: Field): com.histmersion.util.basemap.Mvt.ThinLayerDroppedResult =
+    def dropped(feature: Field): Boolean =
       !rule.keeps(kind(feature)) || (rule.geoms.nonEmpty && !rule.geoms(geomType(feature)))
     val features = fs.filter(f => f.number == 2 && f.wireType == 2)
     val gone = features.filter(dropped).map(_.start).toSet
@@ -324,10 +232,10 @@ object Mvt:
   private def withProps(
       b: com.histmersion.util.basemap.Mvt.WithPropsB,
       fs: Vector[Field],
-      keys: Vector[com.histmersion.util.basemap.Mvt.WithPropsKeys],
-      gone: Set[com.histmersion.util.basemap.Mvt.WithPropsGone],
-      wanted: Set[com.histmersion.util.basemap.Mvt.WithPropsWanted]
-  ): com.histmersion.util.basemap.Mvt.WithPropsResult =
+      keys: Vector[com.histmersion.util.basemap.Mvt.PropKey],
+      gone: Set[com.histmersion.util.basemap.Mvt.TagIndex],
+      wanted: Set[com.histmersion.util.basemap.Mvt.PropKey]
+  ): com.histmersion.util.basemap.Mvt.FeatureBytes =
     val valueFields = fs.filter(f => f.number == 4 && f.wireType == 2)
     val keyIndex = keys.indices.filter(i => wanted(keys(i))).zipWithIndex.toMap // old key index → new
     val values = scala.collection.mutable.LinkedHashMap.empty[Int, Int] // old value index → new
@@ -358,7 +266,7 @@ object Mvt:
     out.toByteArray
 
   /** A feature's packed `tags` (key index, value index, …). */
-  private def tags(b: com.histmersion.util.basemap.Mvt.TagsB, feature: Field): Vector[com.histmersion.util.basemap.Mvt.TagsResult] =
+  private def tags(b: com.histmersion.util.basemap.Mvt.TagsB, feature: Field): Vector[com.histmersion.util.basemap.Mvt.TagIndex] =
     fields(b, feature.payloadStart, feature.end).find(f => f.number == 2 && f.wireType == 2) match
       case None    => Vector.empty
       case Some(t) =>
@@ -368,15 +276,15 @@ object Mvt:
         out.result()
 
   /** A `Value`'s string, when it is one (field 1). */
-  private def stringValue(b: com.histmersion.util.basemap.Mvt.StringValueB, v: Field): Option[com.histmersion.util.basemap.Mvt.StringValueResult] =
+  private def stringValue(b: com.histmersion.util.basemap.Mvt.StringValueB, v: Field): Option[com.histmersion.util.basemap.Mvt.PropText] =
     fields(b, v.payloadStart, v.end).find(f => f.number == 1 && f.wireType == 2).map(string(b, _))
 
-  private def writeField(out: ByteArrayOutputStream, number: com.histmersion.util.basemap.Mvt.WriteFieldNumber, payload: com.histmersion.util.basemap.Mvt.WriteFieldPayload): Unit =
+  private def writeField(out: ByteArrayOutputStream, number: com.histmersion.util.basemap.Mvt.Field.Number, payload: com.histmersion.util.basemap.Mvt.Bytes): Unit =
     writeVarint(out, (number.toLong << 3) | 2)
     writeVarint(out, payload.length.toLong)
     out.write(payload)
 
-  private def writeVarint(out: ByteArrayOutputStream, v: com.histmersion.util.basemap.Mvt.WriteVarintV): Unit =
+  private def writeVarint(out: ByteArrayOutputStream, v: com.histmersion.util.basemap.Mvt.Varint): Unit =
     var x = v // seven bits at a time
     while (x & ~0x7fL) != 0 do
       out.write(((x & 0x7f) | 0x80).toInt)
@@ -388,13 +296,13 @@ object Mvt:
   /** A layer of `features` (each: its geometry type 1–3, its command-encoded geometry, its string properties). Extent
     * 4096, version 2.
     */
-  def layer(name: com.histmersion.util.basemap.Mvt.LayerName, features: List[(com.histmersion.util.basemap.Mvt.LayerFeaturesPart1, Vector[com.histmersion.util.basemap.Mvt.LayerFeaturesPart2], Map[com.histmersion.util.basemap.Mvt.LayerFeaturesPart3Part1, com.histmersion.util.basemap.Mvt.LayerFeaturesPart3Part2])]): com.histmersion.util.basemap.Mvt.LayerResult =
+  def layer(name: com.histmersion.util.basemap.Mvt.LayerName, features: List[(com.histmersion.util.basemap.Mvt.GeomType, Vector[com.histmersion.util.basemap.Mvt.TagIndex], Map[com.histmersion.util.basemap.Mvt.PropKey, com.histmersion.util.basemap.Mvt.PropText])]): com.histmersion.util.basemap.Mvt.LayerBytes =
     typedLayer(name, features.map((g, c, p) => (g, c, p.toList)))
 
   /** The same with text or whole-number properties (a number as `sint_value`, as the Protomaps builds store
     * `min_zoom`), in the order given.
     */
-  def typedLayer(name: com.histmersion.util.basemap.Mvt.TypedLayerName, features: List[(com.histmersion.util.basemap.Mvt.TypedLayerFeaturesPart1, Vector[com.histmersion.util.basemap.Mvt.TypedLayerFeaturesPart2], List[(com.histmersion.util.basemap.Mvt.TypedLayerFeaturesPart3Part1, String | Long)])]): com.histmersion.util.basemap.Mvt.TypedLayerResult =
+  def typedLayer(name: com.histmersion.util.basemap.Mvt.LayerNameText, features: List[(com.histmersion.util.basemap.Mvt.GeomType, Vector[com.histmersion.util.basemap.Mvt.TagIndex], List[(com.histmersion.util.basemap.Mvt.PropKey, String | Long)])]): com.histmersion.util.basemap.Mvt.LayerBytes =
     val keys = features.flatMap(_._3.map(_._1)).distinct.toVector
     val values = features.flatMap(_._3.map(_._2)).distinct.toVector
     val out = ByteArrayOutputStream()
@@ -423,15 +331,15 @@ object Mvt:
     out.toByteArray
 
   /** Protobuf's zig-zag encoding of a signed number (geometry deltas, `sint_value`). Pure. */
-  def zigzag(n: com.histmersion.util.basemap.Mvt.ZigzagN): com.histmersion.util.basemap.Mvt.ZigzagResult = (n << 1) ^ (n >> 63)
+  def zigzag(n: com.histmersion.util.basemap.Mvt.SignedNumber): com.histmersion.util.basemap.Mvt.Varint = (n << 1) ^ (n >> 63)
 
   /** A point's geometry commands: MoveTo(1) and its zig-zagged position. Pure. */
-  def pointGeometry(x: com.histmersion.util.basemap.Mvt.PointGeometryX, y: com.histmersion.util.basemap.Mvt.PointGeometryY): Vector[com.histmersion.util.basemap.Mvt.PointGeometryResult] = Vector(9, zigzag(x).toInt, zigzag(y).toInt)
+  def pointGeometry(x: com.histmersion.util.basemap.Mvt.PointX, y: com.histmersion.util.basemap.Mvt.PointY): Vector[com.histmersion.util.basemap.Mvt.GeometryCommand] = Vector(9, zigzag(x).toInt, zigzag(y).toInt)
 
   /** A (multi)line's geometry commands: per part MoveTo its first point, LineTo the rest — positions as deltas from the
     * previous point, parts of fewer than two points skipped. Pure.
     */
-  def lineGeometry(parts: Seq[Seq[(com.histmersion.util.basemap.Mvt.LineGeometryPartsPart1, com.histmersion.util.basemap.Mvt.LineGeometryPartsPart2)]]): Vector[com.histmersion.util.basemap.Mvt.LineGeometryResult] =
+  def lineGeometry(parts: Seq[Seq[(com.histmersion.util.basemap.Mvt.PointX, com.histmersion.util.basemap.Mvt.PointY)]]): Vector[com.histmersion.util.basemap.Mvt.GeometryCommand] =
     val out = Vector.newBuilder[Int]
     // `var`s: the cursor the deltas are taken from, carried across parts as the spec requires
     var cx = 0
@@ -449,7 +357,7 @@ object Mvt:
     out.result()
 
   /** A tile of encoded layers. */
-  def tile(layers: List[com.histmersion.util.basemap.Mvt.TileLayers]): com.histmersion.util.basemap.Mvt.TileResult =
+  def tile(layers: List[com.histmersion.util.basemap.Mvt.LayerBytes]): com.histmersion.util.basemap.Mvt.TileBytes =
     val out = ByteArrayOutputStream()
     layers.foreach(writeField(out, 3, _))
     out.toByteArray
@@ -457,7 +365,7 @@ object Mvt:
   /** Every feature of every layer: its layer, geometry type (1 point, 2 line, 3 polygon) and properties as text
     * (numbers and booleans written out) — what the measuring tools and the tests read. Pure.
     */
-  def features(tile: com.histmersion.util.basemap.Mvt.FeaturesTile): Either[com.histmersion.util.basemap.Mvt.FeaturesResultPart1, List[(com.histmersion.util.basemap.Mvt.FeaturesResultPart2Part1, com.histmersion.util.basemap.Mvt.FeaturesResultPart2Part2, Map[com.histmersion.util.basemap.Mvt.FeaturesResultPart2Part3Part1, com.histmersion.util.basemap.Mvt.FeaturesResultPart2Part3Part2])]] =
+  def features(tile: com.histmersion.util.basemap.Mvt.TileBytes): Either[com.histmersion.util.basemap.Mvt.Problem, List[(com.histmersion.util.basemap.Mvt.LayerNameText, com.histmersion.util.basemap.Mvt.GeomType, Map[com.histmersion.util.basemap.Mvt.PropKey, com.histmersion.util.basemap.Mvt.PropText])]] =
     attempt {
       fields(tile, 0, tile.length).filter(f => f.number == 3 && f.wireType == 2).toList.flatMap { l =>
         val fs = fields(tile, l.payloadStart, l.end)
@@ -481,7 +389,7 @@ object Mvt:
     }
 
   /** A `Value` as text, whatever its type. */
-  private def anyValue(b: com.histmersion.util.basemap.Mvt.AnyValueB, v: Field): com.histmersion.util.basemap.Mvt.AnyValueResult =
+  private def anyValue(b: com.histmersion.util.basemap.Mvt.AnyValueB, v: Field): com.histmersion.util.basemap.Mvt.PropText =
     fields(b, v.payloadStart, v.end).headOption.fold("") { f =>
       f.number match
         case 1 => string(b, f)
@@ -504,7 +412,7 @@ object Mvt:
     }
 
   /** The kinds (string `kind` values) of one layer's features — what a test or a size report reads. */
-  def kinds(tile: com.histmersion.util.basemap.Mvt.KindsTile, layerName: com.histmersion.util.basemap.Mvt.KindsLayerName): Either[com.histmersion.util.basemap.Mvt.KindsResultPart1, List[com.histmersion.util.basemap.Mvt.KindsResultPart2]] =
+  def kinds(tile: com.histmersion.util.basemap.Mvt.TileBytes, layerName: com.histmersion.util.basemap.Mvt.LayerNameText): Either[com.histmersion.util.basemap.Mvt.Problem, List[com.histmersion.util.basemap.Mvt.Kind]] =
     attempt {
       fields(tile, 0, tile.length)
         .filter(f => f.number == 3 && f.wireType == 2)

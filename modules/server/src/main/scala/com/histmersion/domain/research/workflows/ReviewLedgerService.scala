@@ -13,47 +13,35 @@ import java.util.concurrent.atomic.AtomicReference
 trait ReviewLedgerService:
 
   /** The article's ledger; None when it has none yet. A stored one that no longer decodes is an error. */
-  def get(slug: com.histmersion.domain.research.workflows.ReviewLedgerService.GetSlug): Either[com.histmersion.domain.research.workflows.ReviewLedgerService.GetResultPart1, Option[Ledger]]
+  def get(slug: com.histmersion.domain.research.Slug): Either[com.histmersion.domain.research.workflows.ReviewLedgerService.Problem, Option[Ledger]]
 
   /** Write the ledger (insert or replace). The article must exist. */
   def put(ledger: Ledger): Unit
 
   /** The articles whose ledger holds no open MAJOR and that review manager `reviewId` has no item open on. */
-  def passedReview(reviewId: com.histmersion.domain.research.workflows.ReviewLedgerService.PassedReviewReviewId): Set[com.histmersion.domain.research.workflows.ReviewLedgerService.PassedReviewResult]
+  def passedReview(reviewId: com.histmersion.domain.research.workflows.ReviewLedgerService.ReviewId): Set[com.histmersion.domain.research.Slug]
 
 object ReviewLedgerService:
-  type GetResultPart1 = GetResultPart1.T
-  object GetResultPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type GetSlug = GetSlug.T
-  object GetSlug extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type PassedReviewResult = PassedReviewResult.T
-  object PassedReviewResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type PassedReviewReviewId = PassedReviewReviewId.T
-  object PassedReviewReviewId extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type Problem = Problem.T
+  object Problem extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type ReviewId = ReviewId.T
+  object ReviewId extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
   def apply(db: Transactor): ReviewLedgerService = Implementation(db)
 
   final private class Implementation(db: Transactor) extends ReviewLedgerService:
-    def get(slug: com.histmersion.domain.research.workflows.ReviewLedgerService.Implementation.GetSlug): Either[com.histmersion.domain.research.workflows.ReviewLedgerService.Implementation.GetResultPart1, Option[Ledger]] = db.read(ReviewLedgerRepo.get(slug))
+    def get(slug: com.histmersion.domain.research.Slug): Either[com.histmersion.domain.research.workflows.ReviewLedgerService.Problem, Option[Ledger]] = db.read(ReviewLedgerRepo.get(slug))
     def put(ledger: Ledger): Unit = db.transact(ReviewLedgerRepo.put(ledger))
-    def passedReview(reviewId: com.histmersion.domain.research.workflows.ReviewLedgerService.Implementation.PassedReviewReviewId): Set[com.histmersion.domain.research.workflows.ReviewLedgerService.Implementation.PassedReviewResult] = db.read(ReviewLedgerRepo.passedReview(reviewId))
+    def passedReview(reviewId: com.histmersion.domain.research.workflows.ReviewLedgerService.ReviewId): Set[com.histmersion.domain.research.Slug] = db.read(ReviewLedgerRepo.passedReview(reviewId))
 
   object Implementation:
-    type GetResultPart1 = GetResultPart1.T
-    object GetResultPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-    type GetSlug = GetSlug.T
-    object GetSlug extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-    type PassedReviewResult = PassedReviewResult.T
-    object PassedReviewResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-    type PassedReviewReviewId = PassedReviewReviewId.T
-    object PassedReviewReviewId extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
   /** Over the ledgers of `state`, as a database holding only research's rows answers: no manager item is stored, so an
     * article passed once its ledger holds no open MAJOR; a ledger of an article that is not stored is refused, as the
     * database's reference to the article refuses it.
     */
   final class InMemory(state: AtomicReference[ResearchState]) extends ReviewLedgerService:
-    def get(slug: com.histmersion.domain.research.workflows.ReviewLedgerService.InMemory.GetSlug): Either[com.histmersion.domain.research.workflows.ReviewLedgerService.InMemory.GetResultPart1, Option[Ledger]] = Right(state.get.ledgers.get(slug))
+    def get(slug: com.histmersion.domain.research.Slug): Either[com.histmersion.domain.research.workflows.ReviewLedgerService.Problem, Option[Ledger]] = Right(state.get.ledgers.get(slug))
 
     def put(ledger: Ledger): Unit =
       val before = state.getAndUpdate(st =>
@@ -62,15 +50,7 @@ object ReviewLedgerService:
       if !before.articles.contains(ledger.slug) then
         throw IllegalStateException(s"no article '${ledger.slug}' for its review ledger")
 
-    def passedReview(reviewId: com.histmersion.domain.research.workflows.ReviewLedgerService.InMemory.PassedReviewReviewId): Set[com.histmersion.domain.research.workflows.ReviewLedgerService.InMemory.PassedReviewResult] =
+    def passedReview(reviewId: com.histmersion.domain.research.workflows.ReviewLedgerService.ReviewId): Set[com.histmersion.domain.research.Slug] =
       state.get.ledgers.collect { case (slug, l) if l.openMajors.isEmpty => slug }.toSet
 
   object InMemory:
-    type GetResultPart1 = GetResultPart1.T
-    object GetResultPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-    type GetSlug = GetSlug.T
-    object GetSlug extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-    type PassedReviewResult = PassedReviewResult.T
-    object PassedReviewResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-    type PassedReviewReviewId = PassedReviewReviewId.T
-    object PassedReviewReviewId extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]

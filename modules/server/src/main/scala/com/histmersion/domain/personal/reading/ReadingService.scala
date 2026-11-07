@@ -21,7 +21,7 @@ trait ReadingService:
       user: UserId,
       kind: ItemKind,
       key: ItemKey,
-      read: com.histmersion.domain.personal.reading.ReadingService.SetReadRead,
+      read: com.histmersion.domain.personal.reading.ReadingService.Read,
       title: Option[TargetLabel],
       at: MarkTime
   ): ReadMark
@@ -31,9 +31,9 @@ trait ReadingService:
   def unread(user: UserId, kind: ItemKind, size: PageSize, from: Offset): UnreadItems
 
 object ReadingService:
+  type Read = Read.T
+  object Read extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
-  type SetReadRead = SetReadRead.T
-  object SetReadRead extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
   def apply(db: Transactor, items: Referables, readables: List[Readable]): ReadingService =
     Implementation(db, items, readables)
@@ -65,7 +65,7 @@ object ReadingService:
         user: UserId,
         kind: ItemKind,
         key: ItemKey,
-        read: com.histmersion.domain.personal.reading.ReadingService.Implementation.SetReadRead,
+        read: com.histmersion.domain.personal.reading.ReadingService.Read,
         title: Option[TargetLabel],
         at: MarkTime
     ): ReadMark =
@@ -86,8 +86,6 @@ object ReadingService:
       unreadOf(readables, kind)(db.read(ReadingRepo.read(user, kind)).toSet, size, from)
 
   object Implementation:
-    type SetReadRead = SetReadRead.T
-    object SetReadRead extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
   /** The read marks held in `state`, beside the bookmarks and notes of the same person, by the rules the table keeps.
     */
@@ -128,7 +126,7 @@ object ReadingService:
         user: UserId,
         kind: ItemKind,
         key: ItemKey,
-        read: com.histmersion.domain.personal.reading.ReadingService.InMemory.SetReadRead,
+        read: com.histmersion.domain.personal.reading.ReadingService.Read,
         title: Option[TargetLabel],
         at: MarkTime
     ): ReadMark =
@@ -144,5 +142,3 @@ object ReadingService:
       unreadOf(readables, kind)(read, size, from)
 
   object InMemory:
-    type SetReadRead = SetReadRead.T
-    object SetReadRead extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]

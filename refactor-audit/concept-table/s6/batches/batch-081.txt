@@ -1,0 +1,378 @@
+## CONCEPTS NEARBY
+com.histmersion.util.data.DataOwner (String)
+com.histmersion.util.data.TableName (String)
+com.histmersion.util.data.diagnostics.StatsRepo.ColumnName (String)
+com.histmersion.util.data.diagnostics.StatsRepo.Count (Long)
+com.histmersion.util.data.exchange.Bundle.Kind.EntryPath (String)
+com.histmersion.util.data.exchange.Bundle.Kind.IssueLetter (String)
+com.histmersion.util.data.exchange.Bundle.Kind.Wire (String)
+com.histmersion.util.data.exchange.Bundle.RangeIsNull (Boolean)
+com.histmersion.util.data.exchange.Bundle.RangeLower (Long)
+com.histmersion.util.data.exchange.Bundle.RangeUpper (Long)
+com.histmersion.util.data.exchange.BundleEntry (String)
+com.histmersion.util.data.exchange.BundleImport.Writer.TargetId (String)
+com.histmersion.util.data.exchange.BundleImport.Writer.TargetType (String)
+com.histmersion.util.data.exchange.BundleImporter.BackupFile (String)
+com.histmersion.util.data.exchange.BundleImporter.IssueName (String)
+com.histmersion.util.data.exchange.BundlePlan.EntityOwnBundle (Boolean)
+com.histmersion.util.data.exchange.BundlePlan.Local.Tombstoned (Boolean)
+com.histmersion.util.data.exchange.BundlePlan.Rev (String)
+com.histmersion.util.data.exchange.BundlePlan.TombstoneOwnBundle (Boolean)
+com.histmersion.util.data.exchange.BundleScope.Since.At (String)
+com.histmersion.util.data.exchange.BundleService.Wiring.BackupResultPart2 (String)
+com.histmersion.util.data.exchange.BundleTar.Entry.Name (String)
+com.histmersion.util.data.exchange.BundleTar.Problem (String)
+com.histmersion.util.data.exchange.CarriedKind.OwnedClock (String)
+com.histmersion.util.data.exchange.CarriedKind.RecordsClock (String)
+com.histmersion.util.data.exchange.CarriedKinds.Problem (String)
+com.histmersion.util.data.exchange.CarriedOut.AsOf (String)
+com.histmersion.util.data.exchange.CarriedOut.Payload (Array[Byte])
+com.histmersion.util.data.exchange.DecisionKind.Wire (String)
+com.histmersion.util.data.exchange.Diff3.Hunk.Agreed.Lines (String)
+com.histmersion.util.data.exchange.Diff3.Hunk.Conflict.Base (String)
+com.histmersion.util.data.exchange.Diff3.Hunk.Conflict.Left (String)
+com.histmersion.util.data.exchange.Diff3.Hunk.Conflict.Right (String)
+com.histmersion.util.data.exchange.Diff3.MergeBase (String)
+com.histmersion.util.data.exchange.Diff3.MergeLeft (String)
+com.histmersion.util.data.exchange.Diff3.MergeRight (String)
+com.histmersion.util.data.exchange.Diff3.Result.ConflictCount (Int)
+com.histmersion.util.data.exchange.Diff3.Result.MarkedLeftName (String)
+com.histmersion.util.data.exchange.Diff3.Result.MarkedRightName (String)
+com.histmersion.util.data.exchange.Diff3.Result.MarkedText (String)
+com.histmersion.util.data.exchange.Diff3.Result.MergedText (String)
+com.histmersion.util.data.exchange.ImportAbort.Problem (String)
+com.histmersion.util.data.exchange.ImportOptions.ChunkChars (Int)
+com.histmersion.util.data.exchange.ImportOptions.DryRun (Boolean)
+com.histmersion.util.data.exchange.ImportOptions.ToleranceKm (Double)
+com.histmersion.util.data.exchange.ImportRank (Int)
+com.histmersion.util.data.exchange.Issue.DecidedBy.Wire (String)
+com.histmersion.util.data.exchange.Issue.Kind.Wire (String)
+com.histmersion.util.data.exchange.Issue.Severity.Wire (String)
+com.histmersion.util.data.exchange.LedgerRow.Decision (String)
+com.histmersion.util.data.exchange.LedgerRow.ForeignRev (String)
+com.histmersion.util.data.exchange.LedgerRow.Kind (String)
+com.histmersion.util.data.exchange.LedgerRow.Label (String)
+com.histmersion.util.data.exchange.LedgerRow.LocalRevAfter (String)
+com.histmersion.util.data.exchange.LedgerRow.RecordedAt (String)
+com.histmersion.util.data.exchange.MatchWeights.Alias (Double)
+com.histmersion.util.data.exchange.MatchWeights.AuthorsDisjoint (Double)
+com.histmersion.util.data.exchange.MatchWeights.AuthorsFirst (Double)
+com.histmersion.util.data.exchange.MatchWeights.AuthorsOverlap (Double)
+com.histmersion.util.data.exchange.MatchWeights.AuthorsSame (Double)
+com.histmersion.util.data.exchange.MatchWeights.BodyDiffers (Double)
+com.histmersion.util.data.exchange.MatchWeights.BodyDiffersBelow (Double)
+com.histmersion.util.data.exchange.MatchWeights.BodyEdition (Double)
+com.histmersion.util.data.exchange.MatchWeights.BodyEditionAtLeast (Double)
+com.histmersion.util.data.exchange.MatchWeights.BodySame (Double)
+com.histmersion.util.data.exchange.MatchWeights.BodySameAtLeast (Double)
+com.histmersion.util.data.exchange.MatchWeights.TitleDiffers (Double)
+com.histmersion.util.data.exchange.MatchWeights.TitleFingerprint (Double)
+com.histmersion.util.data.exchange.MatchWeights.TitleMain (Double)
+com.histmersion.util.data.exchange.MatchWeights.TitleSimilar (Double)
+com.histmersion.util.data.exchange.MatchWeights.TitleSimilarAtLeast (Double)
+com.histmersion.util.data.exchange.MatchWeights.TitleTokens (Double)
+com.histmersion.util.data.exchange.MatchWeights.TitleTokensAtLeast (Double)
+com.histmersion.util.data.exchange.MatchWeights.VenueDiffers (Double)
+com.histmersion.util.data.exchange.MatchWeights.VenueEqual (Double)
+com.histmersion.util.data.exchange.MatchWeights.YearEqual (Double)
+com.histmersion.util.data.exchange.MatchWeights.YearFar (Double)
+com.histmersion.util.data.exchange.MatchWeights.YearNear (Double)
+com.histmersion.util.data.exchange.MatchWeights.YearReprint (Double)
+com.histmersion.util.data.exchange.MergeFollowUps.DumpRecordRef (String)
+com.histmersion.util.data.exchange.MergeFollowUps.FromRecordRef (String)
+com.histmersion.util.data.exchange.MergePlans.PlanFileText (String)
+com.histmersion.util.data.exchange.MergeRepo.BundleName (String)
+com.histmersion.util.data.exchange.MergeRepo.DecisionKey (String)
+com.histmersion.util.data.exchange.MergeRepo.Importing (Boolean)
+com.histmersion.util.data.exchange.MergeRepo.MergeIdOrPrefix (String)
+com.histmersion.util.data.exchange.MergeRepo.UidText (String)
+com.histmersion.util.data.exchange.MergeResolutionsFile.Text (String)
+com.histmersion.util.data.exchange.MergeRow.AppliedAt (String)
+com.histmersion.util.data.exchange.MergeRow.Backup (String)
+com.histmersion.util.data.exchange.MergeRow.FromLabel (String)
+com.histmersion.util.data.exchange.MergeRow.PlanHash (String)
+com.histmersion.util.data.exchange.MergeRow.Redirects (Int)
+com.histmersion.util.data.exchange.PairQuestions.InfoLine (String)
+com.histmersion.util.data.exchange.PlanMerge.InfoBundleLabel (String)
+com.histmersion.util.data.exchange.PlanMerge.InfoLabel (String)
+com.histmersion.util.data.exchange.PlanMerge.InfoResult (String)
+com.histmersion.util.data.exchange.PlanQuestions.LabelTakenLabelResult (String)
+com.histmersion.util.data.exchange.PlanQuestions.LabelTakenWhat (String)
+com.histmersion.util.data.exchange.PlanRelabels.InfoLine (String)
+com.histmersion.util.data.exchange.PlanRelabels.RelabelledLine (String)
+com.histmersion.util.data.exchange.SourceFate.Gate.Issue (String)
+com.histmersion.util.data.exchange.SourceFate.Same.ByLedger (Boolean)
+com.histmersion.util.data.exchange.SourcePair.Basis (String)
+com.histmersion.util.data.exchange.SourcePair.ByKey (Boolean)
+com.histmersion.util.data.exchange.SourcePair.Gate (String)
+com.histmersion.util.data.maintenance.CacheName (String)
+com.histmersion.util.data.maintenance.CacheSpec.Label (String)
+com.histmersion.util.data.maintenance.MaintenanceSlice.After (String)
+com.histmersion.util.data.maintenance.MaintenanceSlice.Limit (Int)
+com.histmersion.util.data.maintenance.MaintenanceTask.Name (String)
+com.histmersion.util.data.maintenance.PgRelocation.Result.Files (Int)
+com.histmersion.util.data.maintenance.PgRelocation.Result.Signed (Int)
+com.histmersion.util.data.maintenance.PgRelocation.Result.TooLong (Int)
+com.histmersion.util.data.maintenance.VacuumJobs.DefaultsResult (String)
+com.histmersion.util.data.maintenance.VacuumRepo.Analyze (Boolean)
+com.histmersion.util.data.maintenance.VacuumRepo.TableState.DeadRows (Long)
+com.histmersion.util.data.mirror.Frontmatter.Block (String)
+com.histmersion.util.data.mirror.Frontmatter.Key (String)
+com.histmersion.util.data.mirror.Frontmatter.Note (String)
+com.histmersion.util.data.mirror.Frontmatter.NoteBody (String)
+com.histmersion.util.data.mirror.Mirror.Records (String)
+com.histmersion.util.data.mirror.MirrorPlacement.Directory (String)
+com.histmersion.util.data.mirror.MirrorPlacement.NoteFile (String)
+com.histmersion.util.data.mirror.MirrorPlacement.RecordId (String)
+com.histmersion.util.identity.AliasColumns.Alias (String)
+com.histmersion.util.identity.AliasColumns.Table (String)
+com.histmersion.util.identity.AliasColumns.Target (String)
+com.histmersion.util.identity.AliasTable.Id (String)
+com.histmersion.util.identity.AliasTable.IdColumn (String)
+com.histmersion.util.identity.AliasTable.Table (String)
+com.histmersion.util.identity.AliasTable.TargetColumn (String)
+com.histmersion.util.identity.AliasTable.Value (String)
+com.histmersion.util.identity.BTombstoneRow.DeletedAt (String)
+com.histmersion.util.identity.BTombstoneRow.Kind (String)
+
+## TYPES TO DECIDE
+com.histmersion.util.data.exchange.BundleControllers.ApplyStatusJob | base String | generated | method-parameter
+    def applyStatus(job: com.histmersion.util.data.exchange.BundleControllers.ApplyStatusJob): Either[Api.Error, MergeApplyJob] =
+com.histmersion.util.data.exchange.BundleControllers.DispositionResult | base String | generated | method-result
+    def disposition(m: Bundle.Manifest): com.histmersion.util.data.exchange.BundleControllers.DispositionResult =
+com.histmersion.util.data.exchange.BundleControllers.ExportBundleResultPart2Part2 | base String | generated | method-result
+    def exportBundle(since: Option[com.histmersion.util.data.exchange.BundleControllers.ExportBundleSince]): Either[Api.Error, (HandedFile, com.histmersion.util.data.exchange
+com.histmersion.util.data.exchange.BundleControllers.ExportBundleSince | base String | generated | method-parameter
+    def exportBundle(since: Option[com.histmersion.util.data.exchange.BundleControllers.ExportBundleSince]): Either[Api.Error, (HandedFile, com.histmersion.util.data.exchange
+com.histmersion.util.data.exchange.BundleControllers.ImportBundleDryRun | base Boolean | generated | method-parameter
+    def importBundle(dryRun: com.histmersion.util.data.exchange.BundleControllers.ImportBundleDryRun, upload: HandedFile): Either[Api.Error, Bundle.ImportResult] =
+com.histmersion.util.data.exchange.BundleControllers.MergeDetailId | base String | generated | method-parameter
+    def mergeDetail(id: com.histmersion.util.data.exchange.BundleControllers.MergeDetailId): Either[Api.Error, MergeDetail] = bundles.mergeDetail(id)
+com.histmersion.util.data.exchange.BundleControllers.MergeLedgerLimit | base Int | generated | method-parameter
+    def mergeLedger(uid: Option[com.histmersion.util.data.exchange.BundleControllers.MergeLedgerUid], merge: Option[com.histmersion.util.data.exchange.BundleControllers.Merge
+com.histmersion.util.data.exchange.BundleControllers.MergeLedgerMerge | base String | generated | method-parameter
+    def mergeLedger(uid: Option[com.histmersion.util.data.exchange.BundleControllers.MergeLedgerUid], merge: Option[com.histmersion.util.data.exchange.BundleControllers.Merge
+com.histmersion.util.data.exchange.BundleControllers.MergeLedgerUid | base String | generated | method-parameter
+    def mergeLedger(uid: Option[com.histmersion.util.data.exchange.BundleControllers.MergeLedgerUid], merge: Option[com.histmersion.util.data.exchange.BundleControllers.Merge
+com.histmersion.util.data.exchange.BundleControllers.MergesLimit | base Int | generated | method-parameter
+    def merges(limit: Option[com.histmersion.util.data.exchange.BundleControllers.MergesLimit]): List[MergeInfo] =
+com.histmersion.util.data.exchange.BundleControllers.ParseResolutionsText | base String | generated | method-parameter
+    def parseResolutions(text: com.histmersion.util.data.exchange.BundleControllers.ParseResolutionsText): Either[Api.Error, MergeResolutions] =
+com.histmersion.util.data.exchange.BundleControllers.PutSessionBundle | base String | generated | method-parameter
+    def putSession(bundle: com.histmersion.util.data.exchange.BundleControllers.PutSessionBundle, r: MergeResolutions): Either[Api.Error, MergeSession] =
+com.histmersion.util.data.exchange.BundleControllers.SessionBundle | base String | generated | method-parameter
+    def session(bundle: com.histmersion.util.data.exchange.BundleControllers.SessionBundle): Either[Api.Error, MergeSession] = BundleControllers.sha256(bundle).map(bundles.se
+com.histmersion.util.data.exchange.BundleControllers.SetInstanceLabel | base String | generated | method-parameter
+    def setInstance(label: Option[com.histmersion.util.data.exchange.BundleControllers.SetInstanceLabel]): Either[Api.Error, InstanceInfo] =
+com.histmersion.util.data.exchange.BundleControllers.Sha256Raw | base String | generated | method-parameter
+    def sha256(raw: com.histmersion.util.data.exchange.BundleControllers.Sha256Raw): Either[Api.Error, com.histmersion.util.data.exchange.BundleControllers.Sha256ResultPart2]
+com.histmersion.util.data.exchange.BundleControllers.Sha256ResultPart2 | base String | generated | method-result
+    def sha256(raw: com.histmersion.util.data.exchange.BundleControllers.Sha256Raw): Either[Api.Error, com.histmersion.util.data.exchange.BundleControllers.Sha256ResultPart2]
+com.histmersion.util.data.exchange.BundleControllers.SinceRaw | base String | generated | method-parameter
+    def since(raw: Option[com.histmersion.util.data.exchange.BundleControllers.SinceRaw]): Either[Api.Error, Option[com.histmersion.util.data.exchange.BundleControllers.Since
+com.histmersion.util.data.exchange.BundleControllers.SinceResultPart2 | base String | generated | method-result
+    def since(raw: Option[com.histmersion.util.data.exchange.BundleControllers.SinceRaw]): Either[Api.Error, Option[com.histmersion.util.data.exchange.BundleControllers.Since
+com.histmersion.util.data.exchange.BundleService.ApplyKeptBundle | base String | generated | method-parameter
+    def applyKept(bundle: com.histmersion.util.data.exchange.BundleService.ApplyKeptBundle, planHash: com.histmersion.util.data.exchange.BundleService.ApplyKeptPlanHash, reso
+    def applyKept(bundle: com.histmersion.util.data.exchange.BundleService.Implementation.ApplyKeptBundle, planHash: com.histmersion.util.data.exchange.BundleService.Implemen
+com.histmersion.util.data.exchange.BundleService.ApplyKeptPlanHash | base String | generated | method-parameter
+    def applyKept(bundle: com.histmersion.util.data.exchange.BundleService.ApplyKeptBundle, planHash: com.histmersion.util.data.exchange.BundleService.ApplyKeptPlanHash, reso
+    def applyKept(bundle: com.histmersion.util.data.exchange.BundleService.Implementation.ApplyKeptBundle, planHash: com.histmersion.util.data.exchange.BundleService.Implemen
+com.histmersion.util.data.exchange.BundleService.ApplyStatusJob | base String | generated | method-parameter
+    def applyStatus(job: com.histmersion.util.data.exchange.BundleService.ApplyStatusJob): Option[MergeApplyJob]
+    def applyStatus(job: com.histmersion.util.data.exchange.BundleService.Implementation.ApplyStatusJob): Option[MergeApplyJob] = w.applyJobs.status(job)
+com.histmersion.util.data.exchange.BundleService.ExportBundleSince | base String | generated | method-parameter
+    def exportBundle(since: Option[com.histmersion.util.data.exchange.BundleService.ExportBundleSince]): Either[Api.Error, (HandedFile, Bundle.Manifest)]
+    def exportBundle(since: Option[com.histmersion.util.data.exchange.BundleService.Implementation.ExportBundleSince]): Either[Api.Error, (HandedFile, Bundle.Manifest)] =
+com.histmersion.util.data.exchange.BundleService.Implementation.ApplyKeptBundle | base String | generated | method-parameter
+    def applyKept(bundle: com.histmersion.util.data.exchange.BundleService.ApplyKeptBundle, planHash: com.histmersion.util.data.exchange.BundleService.ApplyKeptPlanHash, reso
+    def applyKept(bundle: com.histmersion.util.data.exchange.BundleService.Implementation.ApplyKeptBundle, planHash: com.histmersion.util.data.exchange.BundleService.Implemen
+com.histmersion.util.data.exchange.BundleService.Implementation.ApplyKeptPlanHash | base String | generated | method-parameter
+    def applyKept(bundle: com.histmersion.util.data.exchange.BundleService.ApplyKeptBundle, planHash: com.histmersion.util.data.exchange.BundleService.ApplyKeptPlanHash, reso
+    def applyKept(bundle: com.histmersion.util.data.exchange.BundleService.Implementation.ApplyKeptBundle, planHash: com.histmersion.util.data.exchange.BundleService.Implemen
+com.histmersion.util.data.exchange.BundleService.Implementation.ApplyStatusJob | base String | generated | method-parameter
+    def applyStatus(job: com.histmersion.util.data.exchange.BundleService.ApplyStatusJob): Option[MergeApplyJob]
+    def applyStatus(job: com.histmersion.util.data.exchange.BundleService.Implementation.ApplyStatusJob): Option[MergeApplyJob] = w.applyJobs.status(job)
+com.histmersion.util.data.exchange.BundleService.Implementation.CopyInResultPart1 | base String | generated | method-result
+    private def copyIn(store: Store, key: Store.Key, upload: ByteSource): Either[com.histmersion.util.data.exchange.BundleService.Implementation.CopyInResultPart1, Unit] =
+com.histmersion.util.data.exchange.BundleService.Implementation.ExportBundleSince | base String | generated | method-parameter
+    def exportBundle(since: Option[com.histmersion.util.data.exchange.BundleService.ExportBundleSince]): Either[Api.Error, (HandedFile, Bundle.Manifest)]
+    def exportBundle(since: Option[com.histmersion.util.data.exchange.BundleService.Implementation.ExportBundleSince]): Either[Api.Error, (HandedFile, Bundle.Manifest)] =
+com.histmersion.util.data.exchange.BundleService.Implementation.ImportBundleDryRun | base Boolean | generated | method-parameter
+    def importBundle(upload: ByteSource, dryRun: com.histmersion.util.data.exchange.BundleService.ImportBundleDryRun): Either[Api.Error, Bundle.ImportResult]
+    def importBundle(upload: ByteSource, dryRun: com.histmersion.util.data.exchange.BundleService.Implementation.ImportBundleDryRun): Either[Api.Error, Bundle.ImportResult] =
+com.histmersion.util.data.exchange.BundleService.Implementation.ImportFromDryRun | base Boolean | generated | method-parameter
+com.histmersion.util.data.exchange.BundleService.Implementation.ImportFromSha | base String | generated | method-parameter
+com.histmersion.util.data.exchange.BundleService.Implementation.ImportKeptBundle | base String | generated | method-parameter
+    def importKept(bundle: com.histmersion.util.data.exchange.BundleService.ImportKeptBundle, resolutions: MergeResolutions, dryRun: com.histmersion.util.data.exchange.Bundle
+com.histmersion.util.data.exchange.BundleService.Implementation.ImportKeptDryRun | base Boolean | generated | method-parameter
+    def importKept(bundle: com.histmersion.util.data.exchange.BundleService.ImportKeptBundle, resolutions: MergeResolutions, dryRun: com.histmersion.util.data.exchange.Bundle
+com.histmersion.util.data.exchange.BundleService.Implementation.KeptSha | base String | generated | method-parameter
+    private def kept(sha: com.histmersion.util.data.exchange.BundleService.Implementation.KeptSha): Either[Api.Error, ByteSource] =
+com.histmersion.util.data.exchange.BundleService.Implementation.KeyOfSha | base String | generated | method-parameter
+    private def keyOf(sha: com.histmersion.util.data.exchange.BundleService.Implementation.KeyOfSha): Store.Key = Store.Key.applyUnsafe(s"upload-$sha${Bundle.Extension}")
+com.histmersion.util.data.exchange.BundleService.Implementation.MergeDetailId | base String | generated | method-parameter
+    def mergeDetail(id: com.histmersion.util.data.exchange.BundleService.MergeDetailId): Either[Api.Error, MergeDetail]
+    def mergeDetail(id: com.histmersion.util.data.exchange.BundleService.Implementation.MergeDetailId): Either[Api.Error, MergeDetail] = Transactor(w.ds).read(MergeRepo.detai
+com.histmersion.util.data.exchange.BundleService.Implementation.MergeLedgerLimit | base Int | generated | method-parameter
+    def mergeLedger(uid: Option[com.histmersion.util.data.exchange.BundleService.MergeLedgerUid], merge: Option[com.histmersion.util.data.exchange.BundleService.MergeLedgerMe
+    def mergeLedger(uid: Option[com.histmersion.util.data.exchange.BundleService.Implementation.MergeLedgerUid], merge: Option[com.histmersion.util.data.exchange.BundleServic
+com.histmersion.util.data.exchange.BundleService.Implementation.MergeLedgerMerge | base String | generated | method-parameter
+    def mergeLedger(uid: Option[com.histmersion.util.data.exchange.BundleService.MergeLedgerUid], merge: Option[com.histmersion.util.data.exchange.BundleService.MergeLedgerMe
+    def mergeLedger(uid: Option[com.histmersion.util.data.exchange.BundleService.Implementation.MergeLedgerUid], merge: Option[com.histmersion.util.data.exchange.BundleServic
+com.histmersion.util.data.exchange.BundleService.Implementation.MergeLedgerUid | base String | generated | method-parameter
+    def mergeLedger(uid: Option[com.histmersion.util.data.exchange.BundleService.MergeLedgerUid], merge: Option[com.histmersion.util.data.exchange.BundleService.MergeLedgerMe
+    def mergeLedger(uid: Option[com.histmersion.util.data.exchange.BundleService.Implementation.MergeLedgerUid], merge: Option[com.histmersion.util.data.exchange.BundleServic
+com.histmersion.util.data.exchange.BundleService.Implementation.MergesLimit | base Int | generated | method-parameter
+    def merges(limit: com.histmersion.util.data.exchange.BundleService.MergesLimit): List[MergeInfo]
+    def merges(limit: com.histmersion.util.data.exchange.BundleService.Implementation.MergesLimit): List[MergeInfo] = Transactor(w.ds).read(MergeRepo.list(limit))
+com.histmersion.util.data.exchange.BundleService.Implementation.OptionsDryRun | base Boolean | generated | method-parameter
+    private def options(dryRun: com.histmersion.util.data.exchange.BundleService.Implementation.OptionsDryRun): ImportOptions =
+com.histmersion.util.data.exchange.BundleService.Implementation.PlanBundle | base String | generated | method-parameter
+    def plan(bundle: com.histmersion.util.data.exchange.BundleService.PlanBundle, resolutions: MergeResolutions): Either[Api.Error, MergePlan]
+    def plan(bundle: com.histmersion.util.data.exchange.BundleService.Implementation.PlanBundle, resolutions: MergeResolutions): Either[Api.Error, MergePlan] =
+com.histmersion.util.data.exchange.BundleService.Implementation.PutSessionBundle | base String | generated | method-parameter
+    def putSession(bundle: com.histmersion.util.data.exchange.BundleService.PutSessionBundle, resolutions: MergeResolutions): MergeSession
+    def putSession(bundle: com.histmersion.util.data.exchange.BundleService.Implementation.PutSessionBundle, resolutions: MergeResolutions): MergeSession =
+com.histmersion.util.data.exchange.BundleService.Implementation.SessionBundle | base String | generated | method-parameter
+    def session(bundle: com.histmersion.util.data.exchange.BundleService.SessionBundle): MergeSession
+    def session(bundle: com.histmersion.util.data.exchange.BundleService.Implementation.SessionBundle): MergeSession = Transactor(w.ds).read(MergeRepo.session(bundle))
+com.histmersion.util.data.exchange.BundleService.Implementation.SetLabelLabel | base String | generated | method-parameter
+    def setLabel(label: Option[com.histmersion.util.data.exchange.BundleService.SetLabelLabel]): InstanceInfo
+    def setLabel(label: Option[com.histmersion.util.data.exchange.BundleService.Implementation.SetLabelLabel]): InstanceInfo = Transactor(w.ds).transact(BundleRepo.setLabel(l
+com.histmersion.util.data.exchange.BundleService.Implementation.WriteSince | base String | generated | method-parameter
+    private def write(part: com.histmersion.util.storage.Reservation, since: Option[com.histmersion.util.data.exchange.BundleService.Implementation.WriteSince]) =
+com.histmersion.util.data.exchange.BundleService.ImportBundleDryRun | base Boolean | generated | method-parameter
+    def importBundle(upload: ByteSource, dryRun: com.histmersion.util.data.exchange.BundleService.ImportBundleDryRun): Either[Api.Error, Bundle.ImportResult]
+    def importBundle(upload: ByteSource, dryRun: com.histmersion.util.data.exchange.BundleService.Implementation.ImportBundleDryRun): Either[Api.Error, Bundle.ImportResult] =
+com.histmersion.util.data.exchange.BundleService.ImportKeptBundle | base String | generated | method-parameter
+    def importKept(bundle: com.histmersion.util.data.exchange.BundleService.ImportKeptBundle, resolutions: MergeResolutions, dryRun: com.histmersion.util.data.exchange.Bundle
+com.histmersion.util.data.exchange.BundleService.ImportKeptDryRun | base Boolean | generated | method-parameter
+    def importKept(bundle: com.histmersion.util.data.exchange.BundleService.ImportKeptBundle, resolutions: MergeResolutions, dryRun: com.histmersion.util.data.exchange.Bundle
+com.histmersion.util.data.exchange.BundleService.MergeDetailId | base String | generated | method-parameter
+    def mergeDetail(id: com.histmersion.util.data.exchange.BundleService.MergeDetailId): Either[Api.Error, MergeDetail]
+    def mergeDetail(id: com.histmersion.util.data.exchange.BundleService.Implementation.MergeDetailId): Either[Api.Error, MergeDetail] = Transactor(w.ds).read(MergeRepo.detai
+com.histmersion.util.data.exchange.BundleService.MergeLedgerLimit | base Int | generated | method-parameter
+    def mergeLedger(uid: Option[com.histmersion.util.data.exchange.BundleService.MergeLedgerUid], merge: Option[com.histmersion.util.data.exchange.BundleService.MergeLedgerMe
+    def mergeLedger(uid: Option[com.histmersion.util.data.exchange.BundleService.Implementation.MergeLedgerUid], merge: Option[com.histmersion.util.data.exchange.BundleServic
+com.histmersion.util.data.exchange.BundleService.MergeLedgerMerge | base String | generated | method-parameter
+    def mergeLedger(uid: Option[com.histmersion.util.data.exchange.BundleService.MergeLedgerUid], merge: Option[com.histmersion.util.data.exchange.BundleService.MergeLedgerMe
+    def mergeLedger(uid: Option[com.histmersion.util.data.exchange.BundleService.Implementation.MergeLedgerUid], merge: Option[com.histmersion.util.data.exchange.BundleServic
+com.histmersion.util.data.exchange.BundleService.MergeLedgerUid | base String | generated | method-parameter
+    def mergeLedger(uid: Option[com.histmersion.util.data.exchange.BundleService.MergeLedgerUid], merge: Option[com.histmersion.util.data.exchange.BundleService.MergeLedgerMe
+    def mergeLedger(uid: Option[com.histmersion.util.data.exchange.BundleService.Implementation.MergeLedgerUid], merge: Option[com.histmersion.util.data.exchange.BundleServic
+com.histmersion.util.data.exchange.BundleService.MergesLimit | base Int | generated | method-parameter
+    def merges(limit: com.histmersion.util.data.exchange.BundleService.MergesLimit): List[MergeInfo]
+    def merges(limit: com.histmersion.util.data.exchange.BundleService.Implementation.MergesLimit): List[MergeInfo] = Transactor(w.ds).read(MergeRepo.list(limit))
+com.histmersion.util.data.exchange.BundleService.PlanBundle | base String | generated | method-parameter
+    def plan(bundle: com.histmersion.util.data.exchange.BundleService.PlanBundle, resolutions: MergeResolutions): Either[Api.Error, MergePlan]
+    def plan(bundle: com.histmersion.util.data.exchange.BundleService.Implementation.PlanBundle, resolutions: MergeResolutions): Either[Api.Error, MergePlan] =
+com.histmersion.util.data.exchange.BundleService.PutSessionBundle | base String | generated | method-parameter
+    def putSession(bundle: com.histmersion.util.data.exchange.BundleService.PutSessionBundle, resolutions: MergeResolutions): MergeSession
+    def putSession(bundle: com.histmersion.util.data.exchange.BundleService.Implementation.PutSessionBundle, resolutions: MergeResolutions): MergeSession =
+com.histmersion.util.data.exchange.BundleService.SessionBundle | base String | generated | method-parameter
+    def session(bundle: com.histmersion.util.data.exchange.BundleService.SessionBundle): MergeSession
+    def session(bundle: com.histmersion.util.data.exchange.BundleService.Implementation.SessionBundle): MergeSession = Transactor(w.ds).read(MergeRepo.session(bundle))
+com.histmersion.util.data.exchange.BundleService.SetLabelLabel | base String | generated | method-parameter
+    def setLabel(label: Option[com.histmersion.util.data.exchange.BundleService.SetLabelLabel]): InstanceInfo
+    def setLabel(label: Option[com.histmersion.util.data.exchange.BundleService.Implementation.SetLabelLabel]): InstanceInfo = Transactor(w.ds).transact(BundleRepo.setLabel(l
+com.histmersion.util.data.exchange.BundleService.Wiring.BackupResultPart2 | base String | generated | constructor-parameter
+com.histmersion.util.data.exchange.MergeApplyJobs.StartBundle | base String | generated | method-parameter
+    def start(bundle: com.histmersion.util.data.exchange.MergeApplyJobs.StartBundle, planHash: com.histmersion.util.data.exchange.MergeApplyJobs.StartPlanHash)(
+com.histmersion.util.data.exchange.MergeApplyJobs.StartPlanHash | base String | generated | method-parameter
+    def start(bundle: com.histmersion.util.data.exchange.MergeApplyJobs.StartBundle, planHash: com.histmersion.util.data.exchange.MergeApplyJobs.StartPlanHash)(
+com.histmersion.util.data.exchange.MergeApplyJobs.StartRunResultPart1 | base String | generated | method-parameter
+com.histmersion.util.data.exchange.MergeApplyJobs.StatusId | base String | generated | method-parameter
+    def status(id: com.histmersion.util.data.exchange.MergeApplyJobs.StatusId): Option[MergeApplyJob] = runs.status(id.trim)
+com.histmersion.util.data.maintenance.CacheName | base String | original | constructor-parameter
+com.histmersion.util.data.maintenance.CacheSpec.Label | base String | original | constructor-parameter
+com.histmersion.util.data.maintenance.MaintenanceSlice.After | base String | original | constructor-parameter
+    final case class MaintenanceSlice(after: Option[MaintenanceSlice.After], limit: Option[MaintenanceSlice.Limit])
+com.histmersion.util.data.maintenance.MaintenanceSlice.Limit | base Int | original | constructor-parameter
+    final case class MaintenanceSlice(after: Option[MaintenanceSlice.After], limit: Option[MaintenanceSlice.Limit])
+com.histmersion.util.data.maintenance.MaintenanceTask.Name | base String | original | method-result
+    def name: com.histmersion.util.data.maintenance.MaintenanceTask.Name
+com.histmersion.util.data.maintenance.PgRelocation.IndexOfD | base Array[Byte] | generated | method-parameter
+    private def indexOf(d: com.histmersion.util.data.maintenance.PgRelocation.IndexOfD, p: com.histmersion.util.data.maintenance.PgRelocation.IndexOfP, from: com.histmersion.
+com.histmersion.util.data.maintenance.PgRelocation.IndexOfFrom | base Int | generated | method-parameter
+    private def indexOf(d: com.histmersion.util.data.maintenance.PgRelocation.IndexOfD, p: com.histmersion.util.data.maintenance.PgRelocation.IndexOfP, from: com.histmersion.
+com.histmersion.util.data.maintenance.PgRelocation.IndexOfP | base Array[Byte] | generated | method-parameter
+    private def indexOf(d: com.histmersion.util.data.maintenance.PgRelocation.IndexOfD, p: com.histmersion.util.data.maintenance.PgRelocation.IndexOfP, from: com.histmersion.
+com.histmersion.util.data.maintenance.PgRelocation.IndexOfResult | base Int | generated | method-result
+    private def indexOf(d: com.histmersion.util.data.maintenance.PgRelocation.IndexOfD, p: com.histmersion.util.data.maintenance.PgRelocation.IndexOfP, from: com.histmersion.
+com.histmersion.util.data.maintenance.PgRelocation.IsMachOB | base Array[Byte] | generated | method-parameter
+    private def isMachO(b: com.histmersion.util.data.maintenance.PgRelocation.IsMachOB): com.histmersion.util.data.maintenance.PgRelocation.IsMachOResult = b.length >= 4 && M
+com.histmersion.util.data.maintenance.PgRelocation.IsMachOResult | base Boolean | generated | method-result
+    private def isMachO(b: com.histmersion.util.data.maintenance.PgRelocation.IsMachOB): com.histmersion.util.data.maintenance.PgRelocation.IsMachOResult = b.length >= 4 && M
+com.histmersion.util.data.maintenance.PgRelocation.LastNulBefore | base Int | generated | method-parameter
+    private def lastNul(d: com.histmersion.util.data.maintenance.PgRelocation.LastNulD, before: com.histmersion.util.data.maintenance.PgRelocation.LastNulBefore): com.histmer
+com.histmersion.util.data.maintenance.PgRelocation.LastNulD | base Array[Byte] | generated | method-parameter
+    private def lastNul(d: com.histmersion.util.data.maintenance.PgRelocation.LastNulD, before: com.histmersion.util.data.maintenance.PgRelocation.LastNulBefore): com.histmer
+com.histmersion.util.data.maintenance.PgRelocation.LastNulResult | base Int | generated | method-result
+    private def lastNul(d: com.histmersion.util.data.maintenance.PgRelocation.LastNulD, before: com.histmersion.util.data.maintenance.PgRelocation.LastNulBefore): com.histmer
+com.histmersion.util.data.maintenance.PgRelocation.PatchBytes | base Array[Byte] | generated | method-parameter
+    def patch(bytes: com.histmersion.util.data.maintenance.PgRelocation.PatchBytes, from: com.histmersion.util.data.maintenance.PgRelocation.PatchFrom, to: com.histmersion.ut
+com.histmersion.util.data.maintenance.PgRelocation.PatchResultPart1 | base Array[Byte] | generated | method-result
+    def patch(bytes: com.histmersion.util.data.maintenance.PgRelocation.PatchBytes, from: com.histmersion.util.data.maintenance.PgRelocation.PatchFrom, to: com.histmersion.ut
+com.histmersion.util.data.maintenance.PgRelocation.PatchResultPart2 | base Int | generated | method-result
+    def patch(bytes: com.histmersion.util.data.maintenance.PgRelocation.PatchBytes, from: com.histmersion.util.data.maintenance.PgRelocation.PatchFrom, to: com.histmersion.ut
+com.histmersion.util.data.maintenance.PgRelocation.RelocateMacOS | base Boolean | generated | method-parameter
+    def relocate(pg: Store, macOS: com.histmersion.util.data.maintenance.PgRelocation.RelocateMacOS, processes: Processes): Option[Result] =
+com.histmersion.util.data.maintenance.PgRelocation.ReplaceAllFrom | base Array[Byte] | generated | alias,method-parameter
+    val PatchFrom: _root_.com.histmersion.util.data.maintenance.PgRelocation.ReplaceAllFrom.type = _root_.com.histmersion.util.data.maintenance.PgRelocation.ReplaceAllFrom
+    private def replaceAll(s: com.histmersion.util.data.maintenance.PgRelocation.ReplaceAllS, from: com.histmersion.util.data.maintenance.PgRelocation.ReplaceAllFrom, to: com
+com.histmersion.util.data.maintenance.PgRelocation.ReplaceAllResult | base Array[Byte] | generated | method-result
+    private def replaceAll(s: com.histmersion.util.data.maintenance.PgRelocation.ReplaceAllS, from: com.histmersion.util.data.maintenance.PgRelocation.ReplaceAllFrom, to: com
+com.histmersion.util.data.maintenance.PgRelocation.ReplaceAllS | base Array[Byte] | generated | method-parameter
+    private def replaceAll(s: com.histmersion.util.data.maintenance.PgRelocation.ReplaceAllS, from: com.histmersion.util.data.maintenance.PgRelocation.ReplaceAllFrom, to: com
+com.histmersion.util.data.maintenance.PgRelocation.ReplaceAllTo | base Array[Byte] | generated | alias,method-parameter
+    val PatchTo: _root_.com.histmersion.util.data.maintenance.PgRelocation.ReplaceAllTo.type = _root_.com.histmersion.util.data.maintenance.PgRelocation.ReplaceAllTo
+    private def replaceAll(s: com.histmersion.util.data.maintenance.PgRelocation.ReplaceAllS, from: com.histmersion.util.data.maintenance.PgRelocation.ReplaceAllFrom, to: com
+com.histmersion.util.data.maintenance.PgRelocation.Result.Files | base Int | original | constructor-parameter
+    final case class Result(files: Result.Files, signed: Result.Signed, tooLong: Result.TooLong)
+com.histmersion.util.data.maintenance.PgRelocation.Result.Signed | base Int | original | constructor-parameter
+    final case class Result(files: Result.Files, signed: Result.Signed, tooLong: Result.TooLong)
+com.histmersion.util.data.maintenance.PgRelocation.Result.TooLong | base Int | original | constructor-parameter
+    final case class Result(files: Result.Files, signed: Result.Signed, tooLong: Result.TooLong)
+com.histmersion.util.data.maintenance.VacuumJobs.DefaultsResult | base String | generated | constructor-parameter
+com.histmersion.util.data.maintenance.VacuumJobs.IsRunningResult | base Boolean | generated | method-result
+    def isRunning: com.histmersion.util.data.maintenance.VacuumJobs.IsRunningResult = slot.isRunning
+com.histmersion.util.data.maintenance.VacuumJobs.RunLoopLines | base String | generated | method-parameter
+    @tailrec def loop(rest: List[(com.histmersion.util.data.maintenance.VacuumJobs.RunLoopRestPart1, com.histmersion.util.data.maintenance.VacuumJobs.RunLoopRestPart2)], line
+com.histmersion.util.data.maintenance.VacuumJobs.RunLoopOutcomeFailed | base String | generated | method-parameter
+    def outcome(failed: Option[com.histmersion.util.data.maintenance.VacuumJobs.RunLoopOutcomeFailed]) =
+com.histmersion.util.data.maintenance.VacuumJobs.RunLoopRestPart1 | base String | generated | method-parameter
+    @tailrec def loop(rest: List[(com.histmersion.util.data.maintenance.VacuumJobs.RunLoopRestPart1, com.histmersion.util.data.maintenance.VacuumJobs.RunLoopRestPart2)], line
+com.histmersion.util.data.maintenance.VacuumJobs.RunLoopRestPart2 | base Int | generated | method-parameter
+    @tailrec def loop(rest: List[(com.histmersion.util.data.maintenance.VacuumJobs.RunLoopRestPart1, com.histmersion.util.data.maintenance.VacuumJobs.RunLoopRestPart2)], line
+com.histmersion.util.data.maintenance.VacuumJobs.RunProgressArg1 | base String | generated | method-parameter
+    private def run(plan: VacuumPlan, progress: com.histmersion.util.data.maintenance.VacuumJobs.RunProgressArg1 => Unit): BackgroundJob.Outcome =
+com.histmersion.util.data.maintenance.VacuumJobs.VacuumableResult | base String | generated | method-result
+    private def vacuumable: Set[com.histmersion.util.data.maintenance.VacuumJobs.VacuumableResult] =
+com.histmersion.util.data.maintenance.WriteGate.ActiveResult | base Boolean | generated | method-result
+    def active: com.histmersion.util.data.maintenance.WriteGate.ActiveResult = busy.get()
+com.histmersion.util.data.maintenance.WriteGate.ExclusivelyOp | base String | generated | method-parameter
+    def exclusively[A](op: com.histmersion.util.data.maintenance.WriteGate.ExclusivelyOp)(f: => Either[Api.Error, A]): Either[Api.Error, A] =
+com.histmersion.util.data.maintenance.WriteGate.GuardOp | base String | generated | method-parameter
+    def guard[A](op: com.histmersion.util.data.maintenance.WriteGate.GuardOp)(f: => Either[Api.Error, A]): Either[Api.Error, A] =
+com.histmersion.util.data.mirror.Mirror.Note.NoteId | base String | generated | method-parameter
+    def note(records: Mirror.Records, id: com.histmersion.util.data.mirror.Mirror.NoteId): Either[Api.Error, com.histmersion.util.data.mirror.Mirror.NoteResultPart2] =
+    def note(id: com.histmersion.util.data.mirror.Mirror.Note.NoteId): Either[Api.Error, com.histmersion.util.data.mirror.Mirror.Note.NoteResultPart2]
+com.histmersion.util.data.mirror.Mirror.Note.NoteResultPart2 | base String | generated | method-result
+    def note(records: Mirror.Records, id: com.histmersion.util.data.mirror.Mirror.NoteId): Either[Api.Error, com.histmersion.util.data.mirror.Mirror.NoteResultPart2] =
+    def note(id: com.histmersion.util.data.mirror.Mirror.Note.NoteId): Either[Api.Error, com.histmersion.util.data.mirror.Mirror.Note.NoteResultPart2]
+com.histmersion.util.data.mirror.Mirror.NoteId | base String | generated | method-parameter
+    def note(records: Mirror.Records, id: com.histmersion.util.data.mirror.Mirror.NoteId): Either[Api.Error, com.histmersion.util.data.mirror.Mirror.NoteResultPart2] =
+    def note(id: com.histmersion.util.data.mirror.Mirror.Note.NoteId): Either[Api.Error, com.histmersion.util.data.mirror.Mirror.Note.NoteResultPart2]
+com.histmersion.util.data.mirror.Mirror.NoteResultPart2 | base String | generated | method-result
+    def note(records: Mirror.Records, id: com.histmersion.util.data.mirror.Mirror.NoteId): Either[Api.Error, com.histmersion.util.data.mirror.Mirror.NoteResultPart2] =
+    def note(id: com.histmersion.util.data.mirror.Mirror.Note.NoteId): Either[Api.Error, com.histmersion.util.data.mirror.Mirror.Note.NoteResultPart2]
+com.histmersion.util.data.mirror.Mirror.Records | base String | original | method-parameter,method-result
+    def kinds: List[Mirror.Records] = exports.map(_.records)
+    def note(records: Mirror.Records, id: com.histmersion.util.data.mirror.Mirror.NoteId): Either[Api.Error, com.histmersion.util.data.mirror.Mirror.NoteResultPart2] =
+com.histmersion.util.identity.AliasColumns.Alias | base String | original | constructor-parameter
+    final case class AliasColumns(table: AliasColumns.Table, alias: AliasColumns.Alias, target: AliasColumns.Target)
+com.histmersion.util.identity.AliasColumns.Table | base String | original | constructor-parameter
+    final case class AliasColumns(table: AliasColumns.Table, alias: AliasColumns.Alias, target: AliasColumns.Target)
+com.histmersion.util.identity.AliasColumns.Target | base String | original | constructor-parameter
+    final case class AliasColumns(table: AliasColumns.Table, alias: AliasColumns.Alias, target: AliasColumns.Target)

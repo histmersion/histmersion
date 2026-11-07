@@ -11,7 +11,7 @@ import com.histmersion.api.library.Candidates
 /** Europe PMC: first publication since, newest first. */
 final class EuropePmcIndex(cfg: AcquireConfig, http: Http) extends ScholarlyIndex:
   val name = "europepmc"
-  def search(query: com.histmersion.domain.library.acquisition.EuropePmcIndex.SearchQuery, since: LocalDate, limit: com.histmersion.domain.library.acquisition.EuropePmcIndex.SearchLimit) =
+  def search(query: com.histmersion.domain.library.search.Search.Query, since: LocalDate, limit: com.histmersion.domain.library.acquisition.EuropePmcIndex.SearchLimit) =
     http
       .json(
         Url(
@@ -27,7 +27,5 @@ final class EuropePmcIndex(cfg: AcquireConfig, http: Http) extends ScholarlyInde
       .map(Candidates.europepmcWorks)
 
 object EuropePmcIndex:
-  type SearchQuery = SearchQuery.T
-  object SearchQuery extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type SearchLimit = SearchLimit.T
   object SearchLimit extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]

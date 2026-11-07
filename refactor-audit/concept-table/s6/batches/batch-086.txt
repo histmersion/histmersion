@@ -1,0 +1,256 @@
+## CONCEPTS NEARBY
+com.histmersion.util.settings.StoredSettingsFile.Shown (String)
+com.histmersion.util.storage.ByteSource.Content (Array[Byte])
+com.histmersion.util.storage.ContentStore.Digest (Array[Byte])
+com.histmersion.util.storage.ContentStore.Ext (String)
+com.histmersion.util.storage.ContentStore.Problem (String)
+com.histmersion.util.storage.HandedFile.Snapshot.Name (String)
+com.histmersion.util.storage.HandedFile.Snapshot.Size (Long)
+com.histmersion.util.storage.MeasureBudget.ClockResult (Long)
+com.histmersion.util.storage.MeasureBudget.DeadlineNanos (Long)
+com.histmersion.util.storage.MeasureBudget.MaxEntries (Long)
+com.histmersion.util.storage.MemoryStore.Entry.Bytes (Array[Byte])
+com.histmersion.util.storage.MemoryStore.MemoryBlob.Where (String)
+com.histmersion.util.storage.MemoryStore.MemoryReservation.Where (String)
+com.histmersion.util.storage.MemoryStore.Name (String)
+com.histmersion.util.storage.Resources.InMemory.ContentsKey (String)
+com.histmersion.util.storage.Resources.InMemory.ContentsValue (String)
+com.histmersion.util.storage.SafePath.Base (String)
+com.histmersion.util.storage.SafePath.Candidate (String)
+com.histmersion.util.storage.SafePath.Problem (String)
+com.histmersion.util.storage.TextFiles.ReadResult (String)
+
+## TYPES TO DECIDE
+com.histmersion.util.settings.SettingsViews.PageRestartable | base Boolean | generated | method-parameter
+    def page(s: SettingsSnapshot, restartable: com.histmersion.util.settings.SettingsViews.PageRestartable): ConfigEdit.Page =
+com.histmersion.util.settings.SettingsViews.SectionDocId | base String | generated | method-parameter
+    private def sectionDoc(id: com.histmersion.util.settings.SettingsViews.SectionDocId): com.histmersion.util.settings.SettingsViews.SectionDocResult =
+com.histmersion.util.settings.SettingsViews.SectionDocResult | base String | generated | method-result
+    private def sectionDoc(id: com.histmersion.util.settings.SettingsViews.SectionDocId): com.histmersion.util.settings.SettingsViews.SectionDocResult =
+com.histmersion.util.settings.SettingsViews.WrittenRestartable | base Boolean | generated | method-parameter
+com.histmersion.util.settings.StoredSettingsFile.BackupExisted | base Boolean | generated | method-parameter
+    private def backup(existed: com.histmersion.util.settings.StoredSettingsFile.BackupExisted): Either[SettingError, Option[com.histmersion.util.settings.StoredSettingsFile.
+com.histmersion.util.settings.StoredSettingsFile.BackupResultPart2 | base String | generated | method-result
+    private def backup(existed: com.histmersion.util.settings.StoredSettingsFile.BackupExisted): Either[SettingError, Option[com.histmersion.util.settings.StoredSettingsFile.
+com.histmersion.util.settings.StoredSettingsFile.ParsedParsePart1 | base String | generated | method-parameter
+    private def parsed(parse: Either[com.histmersion.util.settings.StoredSettingsFile.ParsedParsePart1, Option[Config]], where: com.histmersion.util.settings.StoredSettingsFi
+com.histmersion.util.settings.StoredSettingsFile.ParsedWhere | base String | generated | method-parameter
+    private def parsed(parse: Either[com.histmersion.util.settings.StoredSettingsFile.ParsedParsePart1, Option[Config]], where: com.histmersion.util.settings.StoredSettingsFi
+com.histmersion.util.settings.StoredSettingsFile.ReplaceExisted | base Boolean | generated | method-parameter
+    def replace(text: com.histmersion.util.settings.StoredSettingsFile.ReplaceText, existed: com.histmersion.util.settings.StoredSettingsFile.ReplaceExisted)(
+com.histmersion.util.settings.StoredSettingsFile.ReplaceResultPart2 | base String | generated | method-result
+com.histmersion.util.settings.StoredSettingsFile.ReplaceText | base String | generated | method-parameter
+    def replace(text: com.histmersion.util.settings.StoredSettingsFile.ReplaceText, existed: com.histmersion.util.settings.StoredSettingsFile.ReplaceExisted)(
+com.histmersion.util.settings.StoredSettingsFile.Shown | base String | generated | constructor-parameter
+    final class StoredSettingsFile(store: Store, key: Store.Key, val shown: StoredSettingsFile.Shown) extends SettingsFile:
+com.histmersion.util.storage.Blob.AsSourceSizeResult | base Long | generated | method-result
+    def size: com.histmersion.util.storage.Blob.AsSourceSizeResult = blob.size.value
+com.histmersion.util.storage.Blob.BytesResult | base Array[Byte] | generated | method-result
+    def bytes(): com.histmersion.util.storage.Blob.BytesResult
+com.histmersion.util.storage.Blob.ReadAtLength | base Int | generated | method-parameter
+    def readAt(offset: ByteOffset, length: com.histmersion.util.storage.Blob.ReadAtLength): com.histmersion.util.storage.Blob.ReadAtResult
+com.histmersion.util.storage.Blob.ReadAtResult | base Array[Byte] | generated | method-result
+    def readAt(offset: ByteOffset, length: com.histmersion.util.storage.Blob.ReadAtLength): com.histmersion.util.storage.Blob.ReadAtResult
+com.histmersion.util.storage.Blob.TextResult | base String | generated | method-result
+    def text(): com.histmersion.util.storage.Blob.TextResult
+com.histmersion.util.storage.Blob.WhereResult | base String | generated | method-result
+    def where: com.histmersion.util.storage.Blob.WhereResult
+com.histmersion.util.storage.DiskStore.ChannelReader.ReadLength | base Int | generated | method-parameter
+    def read(offset: ByteOffset, length: com.histmersion.util.storage.DiskStore.ChannelReader.ReadLength): com.histmersion.util.storage.DiskStore.ChannelReader.ReadResult = w
+com.histmersion.util.storage.DiskStore.ChannelReader.ReadLoopAt | base Long | generated | method-parameter
+    @tailrec def loop(at: com.histmersion.util.storage.DiskStore.ChannelReader.ReadLoopAt): Unit =
+com.histmersion.util.storage.DiskStore.ChannelReader.ReadResult | base Array[Byte] | generated | method-result
+    def read(offset: ByteOffset, length: com.histmersion.util.storage.DiskStore.ChannelReader.ReadLength): com.histmersion.util.storage.DiskStore.ChannelReader.ReadResult = w
+com.histmersion.util.storage.DiskStore.ChannelReader.ReadUpToLength | base Int | generated | method-parameter
+    def readUpTo(offset: ByteOffset, length: com.histmersion.util.storage.DiskStore.ChannelReader.ReadUpToLength): com.histmersion.util.storage.DiskStore.ChannelReader.ReadUp
+com.histmersion.util.storage.DiskStore.ChannelReader.ReadUpToLoopAt | base Long | generated | method-parameter
+    @tailrec def loop(at: com.histmersion.util.storage.DiskStore.ChannelReader.ReadUpToLoopAt): Unit =
+com.histmersion.util.storage.DiskStore.ChannelReader.ReadUpToResult | base Array[Byte] | generated | method-result
+    def readUpTo(offset: ByteOffset, length: com.histmersion.util.storage.DiskStore.ChannelReader.ReadUpToLength): com.histmersion.util.storage.DiskStore.ChannelReader.ReadUp
+com.histmersion.util.storage.DiskStore.ChannelReader.WhereResult | base String | generated | method-result
+    def where(key: Store.Key): com.histmersion.util.storage.DiskStore.WhereResult = path(key).toString
+    def where: com.histmersion.util.storage.DiskStore.FileBlob.WhereResult = file.toString
+com.histmersion.util.storage.DiskStore.ChannelReader.WithChannelAttemptRetry | base Boolean | generated | method-parameter
+    def attempt(retry: com.histmersion.util.storage.DiskStore.ChannelReader.WithChannelAttemptRetry): A =
+com.histmersion.util.storage.DiskStore.CopyKeepAttributes | base Boolean | generated | method-parameter
+    def copy(from: Store.Key, to: Store.Key, keepAttributes: com.histmersion.util.storage.DiskStore.CopyKeepAttributes): Either[Store.Error, Unit] = io {
+com.histmersion.util.storage.DiskStore.DeleteResult | base Boolean | generated | method-result
+    def delete(key: Store.Key): com.histmersion.util.storage.DiskStore.DeleteResult = Files.deleteIfExists(path(key))
+com.histmersion.util.storage.DiskStore.ExistsResult | base Boolean | generated | method-result
+    def exists(key: Store.Key): com.histmersion.util.storage.DiskStore.ExistsResult = Files.exists(path(key))
+com.histmersion.util.storage.DiskStore.FileBlob.BytesResult | base Array[Byte] | generated | method-result
+    def bytes(): com.histmersion.util.storage.DiskStore.FileBlob.BytesResult = Files.readAllBytes(file)
+com.histmersion.util.storage.DiskStore.FileBlob.ReadAtLength | base Int | generated | method-parameter
+    def readAt(offset: ByteOffset, length: com.histmersion.util.storage.DiskStore.FileBlob.ReadAtLength): com.histmersion.util.storage.DiskStore.FileBlob.ReadAtResult = Using
+com.histmersion.util.storage.DiskStore.FileBlob.ReadAtResult | base Array[Byte] | generated | method-result
+    def readAt(offset: ByteOffset, length: com.histmersion.util.storage.DiskStore.FileBlob.ReadAtLength): com.histmersion.util.storage.DiskStore.FileBlob.ReadAtResult = Using
+com.histmersion.util.storage.DiskStore.FileBlob.TextResult | base String | generated | method-result
+    def text(): com.histmersion.util.storage.DiskStore.FileBlob.TextResult = Files.readString(file, UTF_8)
+com.histmersion.util.storage.DiskStore.FileBlob.WhereResult | base String | generated | method-result
+    def where(key: Store.Key): com.histmersion.util.storage.DiskStore.WhereResult = path(key).toString
+    def where: com.histmersion.util.storage.DiskStore.FileBlob.WhereResult = file.toString
+com.histmersion.util.storage.DiskStore.FileReservation.CommitKeepPermissions | base Boolean | generated | method-parameter
+    def commit(keepPermissions: com.histmersion.util.storage.DiskStore.FileReservation.CommitKeepPermissions): Either[Store.Error, Stored] =
+com.histmersion.util.storage.DiskStore.FileReservation.WhereResult | base String | generated | method-result
+    def where(key: Store.Key): com.histmersion.util.storage.DiskStore.WhereResult = path(key).toString
+    def where: com.histmersion.util.storage.DiskStore.FileBlob.WhereResult = file.toString
+com.histmersion.util.storage.DiskStore.FileReservation.WriteAtBytes | base Array[Byte] | generated | method-parameter
+    def writeAt(offset: ByteOffset, bytes: com.histmersion.util.storage.DiskStore.FileReservation.WriteAtBytes): Unit =
+com.histmersion.util.storage.DiskStore.FileReservation.WriteAtLoopAt | base Long | generated | method-parameter
+    @tailrec def loop(at: com.histmersion.util.storage.DiskStore.FileReservation.WriteAtLoopAt): Unit = if buf.hasRemaining then loop(at + ch.write(buf, at))
+com.histmersion.util.storage.DiskStore.IsDirectoryResult | base Boolean | generated | method-result
+    def isDirectory(key: Store.Key): com.histmersion.util.storage.DiskStore.IsDirectoryResult = Files.isDirectory(path(key))
+com.histmersion.util.storage.DiskStore.IsExecutableResult | base Boolean | generated | method-result
+    def isExecutable(key: Store.Key): com.histmersion.util.storage.DiskStore.IsExecutableResult = Files.isRegularFile(path(key)) && Files.isExecutable(path(key))
+com.histmersion.util.storage.DiskStore.IsFileResult | base Boolean | generated | method-result
+    def isFile(key: Store.Key): com.histmersion.util.storage.DiskStore.IsFileResult = Files.isRegularFile(path(key))
+com.histmersion.util.storage.DiskStore.IsLinkResult | base Boolean | generated | method-result
+    def isLink(key: Store.Key): com.histmersion.util.storage.DiskStore.IsLinkResult = Files.isSymbolicLink(path(key))
+com.histmersion.util.storage.DiskStore.NamesResult | base String | generated | method-result
+    def names(prefix: Store.Key): List[com.histmersion.util.storage.DiskStore.NamesResult] =
+com.histmersion.util.storage.DiskStore.PrunedLoopTotal | base Long | generated | method-parameter
+    @tailrec def loop(rest: List[Stored], total: com.histmersion.util.storage.DiskStore.PrunedLoopTotal, out: List[Stored]): List[Stored] = rest match
+com.histmersion.util.storage.DiskStore.PutBytes | base Array[Byte] | generated | method-parameter
+    def put(key: Store.Key, bytes: com.histmersion.util.storage.DiskStore.PutBytes): Either[Store.Error, Stored] =
+com.histmersion.util.storage.DiskStore.ReserveThroughLink | base Boolean | generated | method-parameter
+    def reserve(key: Store.Key, temp: TempName, throughLink: com.histmersion.util.storage.DiskStore.ReserveThroughLink): Either[Store.Error, Reservation] = io {
+com.histmersion.util.storage.DiskStore.WhereResult | base String | generated | method-result
+    def where(key: Store.Key): com.histmersion.util.storage.DiskStore.WhereResult = path(key).toString
+    def where: com.histmersion.util.storage.DiskStore.FileBlob.WhereResult = file.toString
+com.histmersion.util.storage.DiskStore.WriteBytes | base Array[Byte] | generated | method-parameter
+    def write(key: Store.Key, bytes: com.histmersion.util.storage.DiskStore.WriteBytes): Either[Store.Error, Stored] = io {
+com.histmersion.util.storage.DiskTextFiles.ExistsResult | base Boolean | generated | method-result
+    def exists(path: Path): com.histmersion.util.storage.DiskTextFiles.ExistsResult = Files.exists(path)
+com.histmersion.util.storage.DiskTextFiles.ReadResult | base String | generated | method-result
+    def read(path: Path): com.histmersion.util.storage.DiskTextFiles.ReadResult = Files.readString(path)
+com.histmersion.util.storage.HandedFile.Snapshot.Name | base String | original | constructor-parameter
+    final case class Snapshot(name: Snapshot.Name, size: Snapshot.Size, bytes: ByteSource)
+    def snapshot(file: HandedFile): Snapshot = Snapshot(file.getName, file.length(), source(file))
+com.histmersion.util.storage.HandedFile.Snapshot.Size | base Long | original | constructor-parameter
+    final case class Snapshot(name: Snapshot.Name, size: Snapshot.Size, bytes: ByteSource)
+com.histmersion.util.storage.MeasureBudget.ClockResult | base Long | generated | constructor-parameter
+    val clock: () => MeasureBudget.ClockResult = () => System.nanoTime()
+com.histmersion.util.storage.MeasureBudget.DeadlineNanos | base Long | generated | constructor-parameter
+    val deadlineNanos: MeasureBudget.DeadlineNanos,
+com.histmersion.util.storage.MeasureBudget.ExhaustedResult | base Boolean | generated | method-result
+    def exhausted: com.histmersion.util.storage.MeasureBudget.ExhaustedResult = used.get >= maxEntries || clock() >= deadlineNanos
+com.histmersion.util.storage.MeasureBudget.MaxEntries | base Long | generated | constructor-parameter
+    val maxEntries: MeasureBudget.MaxEntries,
+com.histmersion.util.storage.MeasureBudget.OfMaxEntries | base Long | generated | method-parameter
+    def of(maxEntries: com.histmersion.util.storage.MeasureBudget.OfMaxEntries, maxMillis: com.histmersion.util.storage.MeasureBudget.OfMaxMillis): MeasureBudget =
+com.histmersion.util.storage.MeasureBudget.OfMaxMillis | base Long | generated | method-parameter
+    def of(maxEntries: com.histmersion.util.storage.MeasureBudget.OfMaxEntries, maxMillis: com.histmersion.util.storage.MeasureBudget.OfMaxMillis): MeasureBudget =
+com.histmersion.util.storage.MeasureBudget.SpentResult | base Long | generated | method-result
+    def spent: com.histmersion.util.storage.MeasureBudget.SpentResult = used.get
+com.histmersion.util.storage.MeasureBudget.TakeResult | base Boolean | generated | method-result
+    def take(): com.histmersion.util.storage.MeasureBudget.TakeResult = used.incrementAndGet() <= maxEntries && clock() < deadlineNanos
+com.histmersion.util.storage.MemoryStore.CopyKeepAttributes | base Boolean | generated | method-parameter
+    def copy(from: Store.Key, to: Store.Key, keepAttributes: com.histmersion.util.storage.MemoryStore.CopyKeepAttributes): Either[Store.Error, Unit] =
+com.histmersion.util.storage.MemoryStore.DeleteResult | base Boolean | generated | method-result
+    def delete(key: Store.Key): com.histmersion.util.storage.MemoryStore.DeleteResult =
+com.histmersion.util.storage.MemoryStore.Entry.Bytes | base Array[Byte] | original | constructor-parameter
+    final case class Entry(bytes: Entry.Bytes, modified: Instant):
+com.histmersion.util.storage.MemoryStore.ExistsResult | base Boolean | generated | method-result
+    def exists(key: Store.Key): com.histmersion.util.storage.MemoryStore.ExistsResult = isFile(key) || isDirectory(key)
+com.histmersion.util.storage.MemoryStore.IsDirectoryResult | base Boolean | generated | method-result
+    def isDirectory(key: Store.Key): com.histmersion.util.storage.MemoryStore.IsDirectoryResult = full(key).isRoot || directories(Store.Key.Root).contains(full(key))
+com.histmersion.util.storage.MemoryStore.IsExecutableResult | base Boolean | generated | method-result
+    def isExecutable(key: Store.Key): com.histmersion.util.storage.MemoryStore.IsExecutableResult = false
+com.histmersion.util.storage.MemoryStore.IsFileResult | base Boolean | generated | method-result
+    def isFile(key: Store.Key): com.histmersion.util.storage.MemoryStore.IsFileResult = state.get.files.contains(full(key))
+com.histmersion.util.storage.MemoryStore.IsLinkResult | base Boolean | generated | method-result
+    def isLink(key: Store.Key): com.histmersion.util.storage.MemoryStore.IsLinkResult = false
+com.histmersion.util.storage.MemoryStore.MemoryBlob.BytesResult | base Array[Byte] | generated | method-result
+    def bytes(): com.histmersion.util.storage.MemoryStore.MemoryBlob.BytesResult = entry.bytes.clone()
+com.histmersion.util.storage.MemoryStore.MemoryBlob.ReadAtLength | base Int | generated | method-parameter
+    def readAt(offset: ByteOffset, length: com.histmersion.util.storage.MemoryStore.MemoryBlob.ReadAtLength): com.histmersion.util.storage.MemoryStore.MemoryBlob.ReadAtResult
+com.histmersion.util.storage.MemoryStore.MemoryBlob.ReadAtResult | base Array[Byte] | generated | method-result
+    def readAt(offset: ByteOffset, length: com.histmersion.util.storage.MemoryStore.MemoryBlob.ReadAtLength): com.histmersion.util.storage.MemoryStore.MemoryBlob.ReadAtResult
+com.histmersion.util.storage.MemoryStore.MemoryBlob.ReaderReadLength | base Int | generated | method-parameter
+    def read(offset: ByteOffset, length: com.histmersion.util.storage.MemoryStore.MemoryBlob.ReaderReadLength): com.histmersion.util.storage.MemoryStore.MemoryBlob.ReaderRead
+com.histmersion.util.storage.MemoryStore.MemoryBlob.ReaderReadResult | base Array[Byte] | generated | method-result
+    def read(offset: ByteOffset, length: com.histmersion.util.storage.MemoryStore.MemoryBlob.ReaderReadLength): com.histmersion.util.storage.MemoryStore.MemoryBlob.ReaderRead
+com.histmersion.util.storage.MemoryStore.MemoryBlob.ReaderReadUpToLength | base Int | generated | method-parameter
+    def readUpTo(offset: ByteOffset, length: com.histmersion.util.storage.MemoryStore.MemoryBlob.ReaderReadUpToLength): com.histmersion.util.storage.MemoryStore.MemoryBlob.Re
+com.histmersion.util.storage.MemoryStore.MemoryBlob.ReaderReadUpToResult | base Array[Byte] | generated | method-result
+    def readUpTo(offset: ByteOffset, length: com.histmersion.util.storage.MemoryStore.MemoryBlob.ReaderReadUpToLength): com.histmersion.util.storage.MemoryStore.MemoryBlob.Re
+com.histmersion.util.storage.MemoryStore.MemoryBlob.ReaderWhereResult | base String | generated | method-result
+    def where: com.histmersion.util.storage.MemoryStore.MemoryBlob.ReaderWhereResult = MemoryBlob.this.where
+com.histmersion.util.storage.MemoryStore.MemoryBlob.TextResult | base String | generated | method-result
+    def text(): com.histmersion.util.storage.MemoryStore.MemoryBlob.TextResult = String(entry.bytes, UTF_8)
+com.histmersion.util.storage.MemoryStore.MemoryBlob.Where | base String | generated | constructor-parameter
+    final class MemoryBlob(val key: Store.Key, val where: MemoryBlob.Where, entry: Entry) extends Blob:
+    final class MemoryReservation(val key: Store.Key, val where: MemoryReservation.Where, commitTo: (Store.Key, Array[Byte]) => Stored)
+com.histmersion.util.storage.MemoryStore.MemoryReservation.CommitKeepPermissions | base Boolean | generated | method-parameter
+    def commit(keepPermissions: com.histmersion.util.storage.MemoryStore.MemoryReservation.CommitKeepPermissions): Either[Store.Error, Stored] =
+com.histmersion.util.storage.MemoryStore.MemoryReservation.Where | base String | generated | constructor-parameter
+    final class MemoryBlob(val key: Store.Key, val where: MemoryBlob.Where, entry: Entry) extends Blob:
+    final class MemoryReservation(val key: Store.Key, val where: MemoryReservation.Where, commitTo: (Store.Key, Array[Byte]) => Stored)
+com.histmersion.util.storage.MemoryStore.MemoryReservation.WriteAtBytes | base Array[Byte] | generated | method-parameter
+    def writeAt(offset: ByteOffset, bytes: com.histmersion.util.storage.MemoryStore.MemoryReservation.WriteAtBytes): Unit =
+com.histmersion.util.storage.MemoryStore.Name | base String | generated | constructor-parameter
+com.histmersion.util.storage.MemoryStore.NamesResult | base String | generated | method-result
+    def names(prefix: Store.Key): List[com.histmersion.util.storage.MemoryStore.NamesResult] = list(prefix).map(_.key.name)
+com.histmersion.util.storage.MemoryStore.PutBytes | base Array[Byte] | generated | method-parameter
+    def put(key: Store.Key, bytes: com.histmersion.util.storage.MemoryStore.PutBytes): Either[Store.Error, Stored] = Right(store(key, bytes))
+com.histmersion.util.storage.MemoryStore.ReserveThroughLink | base Boolean | generated | method-parameter
+    def reserve(key: Store.Key, temp: TempName, throughLink: com.histmersion.util.storage.MemoryStore.ReserveThroughLink): Either[Store.Error, Reservation] =
+com.histmersion.util.storage.MemoryStore.StoreBytes | base Array[Byte] | generated | method-parameter
+    private def store(key: Store.Key, bytes: com.histmersion.util.storage.MemoryStore.StoreBytes): Stored =
+com.histmersion.util.storage.MemoryStore.WhereResult | base String | generated | method-result
+    def where(key: Store.Key): com.histmersion.util.storage.MemoryStore.WhereResult = s"$name/${full(key).value}"
+com.histmersion.util.storage.MemoryStore.WriteBytes | base Array[Byte] | generated | method-parameter
+    def write(key: Store.Key, bytes: com.histmersion.util.storage.MemoryStore.WriteBytes): Either[Store.Error, Stored] = Right(store(key, bytes))
+com.histmersion.util.storage.RandomReader.ReadLength | base Int | generated | method-parameter
+    def read(offset: ByteOffset, length: com.histmersion.util.storage.RandomReader.ReadLength): com.histmersion.util.storage.RandomReader.ReadResult
+com.histmersion.util.storage.RandomReader.ReadResult | base Array[Byte] | generated | method-result
+    def read(offset: ByteOffset, length: com.histmersion.util.storage.RandomReader.ReadLength): com.histmersion.util.storage.RandomReader.ReadResult
+com.histmersion.util.storage.RandomReader.ReadUpToLength | base Int | generated | method-parameter
+    def readUpTo(offset: ByteOffset, length: com.histmersion.util.storage.RandomReader.ReadUpToLength): com.histmersion.util.storage.RandomReader.ReadUpToResult
+com.histmersion.util.storage.RandomReader.ReadUpToResult | base Array[Byte] | generated | method-result
+    def readUpTo(offset: ByteOffset, length: com.histmersion.util.storage.RandomReader.ReadUpToLength): com.histmersion.util.storage.RandomReader.ReadUpToResult
+com.histmersion.util.storage.RandomReader.WhereResult | base String | generated | method-result
+    def where: com.histmersion.util.storage.RandomReader.WhereResult
+com.histmersion.util.storage.Reservation.CommitKeepPermissions | base Boolean | generated | method-parameter
+    def commit(keepPermissions: com.histmersion.util.storage.Reservation.CommitKeepPermissions = false): Either[Store.Error, Stored]
+com.histmersion.util.storage.Reservation.WhereResult | base String | generated | method-result
+    def where: com.histmersion.util.storage.Reservation.WhereResult
+com.histmersion.util.storage.Reservation.WriteAtBytes | base Array[Byte] | generated | method-parameter
+    def writeAt(offset: ByteOffset, bytes: com.histmersion.util.storage.Reservation.WriteAtBytes): Unit
+com.histmersion.util.storage.Resources.ClasspathTextName | base String | generated | method-parameter
+    def text(name: com.histmersion.util.storage.Resources.ClasspathTextName): Either[com.histmersion.util.storage.Resources.ClasspathTextResultPart1, com.histmersion.util.sto
+com.histmersion.util.storage.Resources.ClasspathTextResultPart1 | base String | generated | method-result
+    def text(name: com.histmersion.util.storage.Resources.ClasspathTextName): Either[com.histmersion.util.storage.Resources.ClasspathTextResultPart1, com.histmersion.util.sto
+com.histmersion.util.storage.Resources.ClasspathTextResultPart2 | base String | generated | method-result
+    def text(name: com.histmersion.util.storage.Resources.ClasspathTextName): Either[com.histmersion.util.storage.Resources.ClasspathTextResultPart1, com.histmersion.util.sto
+com.histmersion.util.storage.Resources.InMemory.ContentsKey | base String | generated | constructor-parameter
+    final class InMemory(contents: Map[InMemory.ContentsKey, InMemory.ContentsValue]) extends Resources:
+com.histmersion.util.storage.Resources.InMemory.ContentsValue | base String | generated | constructor-parameter
+    final class InMemory(contents: Map[InMemory.ContentsKey, InMemory.ContentsValue]) extends Resources:
+com.histmersion.util.storage.Resources.InMemory.TextName | base String | generated | method-parameter
+    def text(name: com.histmersion.util.storage.Resources.TextName): Either[com.histmersion.util.storage.Resources.TextResultPart1, com.histmersion.util.storage.Resources.Tex
+    def text(name: com.histmersion.util.storage.Resources.InMemory.TextName): Either[com.histmersion.util.storage.Resources.InMemory.TextResultPart1, com.histmersion.util.sto
+com.histmersion.util.storage.Resources.InMemory.TextResultPart1 | base String | generated | method-result
+    def text(name: com.histmersion.util.storage.Resources.TextName): Either[com.histmersion.util.storage.Resources.TextResultPart1, com.histmersion.util.storage.Resources.Tex
+    def text(name: com.histmersion.util.storage.Resources.InMemory.TextName): Either[com.histmersion.util.storage.Resources.InMemory.TextResultPart1, com.histmersion.util.sto
+com.histmersion.util.storage.Resources.InMemory.TextResultPart2 | base String | generated | method-result
+    def text(name: com.histmersion.util.storage.Resources.TextName): Either[com.histmersion.util.storage.Resources.TextResultPart1, com.histmersion.util.storage.Resources.Tex
+    def text(name: com.histmersion.util.storage.Resources.InMemory.TextName): Either[com.histmersion.util.storage.Resources.InMemory.TextResultPart1, com.histmersion.util.sto
+com.histmersion.util.storage.Resources.TextName | base String | generated | method-parameter
+    def text(name: com.histmersion.util.storage.Resources.TextName): Either[com.histmersion.util.storage.Resources.TextResultPart1, com.histmersion.util.storage.Resources.Tex
+    def text(name: com.histmersion.util.storage.Resources.InMemory.TextName): Either[com.histmersion.util.storage.Resources.InMemory.TextResultPart1, com.histmersion.util.sto
+com.histmersion.util.storage.Resources.TextResultPart1 | base String | generated | method-result
+    def text(name: com.histmersion.util.storage.Resources.TextName): Either[com.histmersion.util.storage.Resources.TextResultPart1, com.histmersion.util.storage.Resources.Tex
+    def text(name: com.histmersion.util.storage.Resources.InMemory.TextName): Either[com.histmersion.util.storage.Resources.InMemory.TextResultPart1, com.histmersion.util.sto
+com.histmersion.util.storage.Resources.TextResultPart2 | base String | generated | method-result
+    def text(name: com.histmersion.util.storage.Resources.TextName): Either[com.histmersion.util.storage.Resources.TextResultPart1, com.histmersion.util.storage.Resources.Tex
+    def text(name: com.histmersion.util.storage.Resources.InMemory.TextName): Either[com.histmersion.util.storage.Resources.InMemory.TextResultPart1, com.histmersion.util.sto
+com.histmersion.util.storage.Storage.Implementation.ScratchPurpose | base String | generated | method-parameter
+    def scratch(purpose: com.histmersion.util.storage.Storage.ScratchPurpose): Scratch
+    def scratch(purpose: com.histmersion.util.storage.Storage.Implementation.ScratchPurpose): Scratch =
+com.histmersion.util.storage.Storage.InMemory.ScratchPurpose | base String | generated | method-parameter
+    def scratch(purpose: com.histmersion.util.storage.Storage.ScratchPurpose): Scratch
+    def scratch(purpose: com.histmersion.util.storage.Storage.Implementation.ScratchPurpose): Scratch =
+com.histmersion.util.storage.Storage.ScratchPurpose | base String | generated | method-parameter
+    def scratch(purpose: com.histmersion.util.storage.Storage.ScratchPurpose): Scratch
+    def scratch(purpose: com.histmersion.util.storage.Storage.Implementation.ScratchPurpose): Scratch =

@@ -41,9 +41,9 @@ object SourcePage:
   object Regions extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type Tags = Tags.T
   object Tags extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type Summary = Summary.T
-  object Summary extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type Notes = Notes.T
-  object Notes extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type Query = Query.T
-  object Query extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type Summary = com.histmersion.domain.library.Source.Summary
+  val Summary: _root_.com.histmersion.domain.library.Source.Summary.type = _root_.com.histmersion.domain.library.Source.Summary
+  type Notes = com.histmersion.domain.library.sources.SourceNote.Text
+  val Notes: _root_.com.histmersion.domain.library.sources.SourceNote.Text.type = _root_.com.histmersion.domain.library.sources.SourceNote.Text
+  type Query = com.histmersion.domain.research.articles.ArticleTools.ListArticlesInput.Query
+  val Query: _root_.com.histmersion.domain.research.articles.ArticleTools.ListArticlesInput.Query.type = _root_.com.histmersion.domain.research.articles.ArticleTools.ListArticlesInput.Query

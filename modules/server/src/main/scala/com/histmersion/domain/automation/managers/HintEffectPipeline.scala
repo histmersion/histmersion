@@ -64,7 +64,7 @@ final class HintEffectPipeline(
       )
     yield closed
 
-  private def load(mid: com.histmersion.domain.automation.managers.HintEffectPipeline.LoadMid, hint: Option[com.histmersion.domain.automation.managers.HintEffectPipeline.LoadHint]): Either[com.histmersion.domain.automation.managers.HintEffectPipeline.LoadResultPart1, Loaded] =
+  private def load(mid: com.histmersion.domain.automation.managers.ManagerLight.Id, hint: Option[com.histmersion.domain.automation.managers.HintEffectPipeline.LoadHint]): Either[com.histmersion.domain.automation.managers.HintEffectPipeline.LoadResultPart1, Loaded] =
     for
       m <- connect(ds)(ManagerRepo.get(mid)).toRight(s"no manager '$mid'")
       id <- hint.toRight("the run names no hint (RunParams.hint)")
@@ -128,8 +128,6 @@ object HintEffectPipeline:
   object RunResultPart2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type LoadResultPart1 = LoadResultPart1.T
   object LoadResultPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type LoadMid = LoadMid.T
-  object LoadMid extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type LoadHint = LoadHint.T
   object LoadHint extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type InputResult = InputResult.T

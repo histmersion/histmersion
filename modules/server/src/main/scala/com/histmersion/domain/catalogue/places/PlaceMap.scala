@@ -8,30 +8,18 @@ import com.histmersion.util.database.Transactor
   * no in-memory twin (as the tiles).
   */
 trait PlaceMap:
-  def shapes(kind: Option[com.histmersion.domain.catalogue.places.PlaceMap.ShapesKind], time: GeoTime, limit: com.histmersion.domain.catalogue.places.PlaceMap.ShapesLimit, modernFrom: com.histmersion.domain.catalogue.places.PlaceMap.ShapesModernFrom): com.histmersion.domain.catalogue.places.PlaceMap.ShapesResult
+  def shapes(kind: Option[com.histmersion.domain.catalogue.Place.Kind.Wire], time: GeoTime, limit: com.histmersion.PageSize, modernFrom: com.histmersion.domain.catalogue.places.PlaceMap.ShapesModernFrom): com.histmersion.domain.catalogue.places.PlaceDetailRow.Geometry
 
 object PlaceMap:
-  type ShapesResult = ShapesResult.T
-  object ShapesResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type ShapesKind = ShapesKind.T
-  object ShapesKind extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type ShapesLimit = ShapesLimit.T
-  object ShapesLimit extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type ShapesModernFrom = ShapesModernFrom.T
   object ShapesModernFrom extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
   def apply(db: Transactor): PlaceMap = Implementation(db)
 
   final private class Implementation(db: Transactor) extends PlaceMap:
-    def shapes(kind: Option[com.histmersion.domain.catalogue.places.PlaceMap.Implementation.ShapesKind], time: GeoTime, limit: com.histmersion.domain.catalogue.places.PlaceMap.Implementation.ShapesLimit, modernFrom: com.histmersion.domain.catalogue.places.PlaceMap.Implementation.ShapesModernFrom): com.histmersion.domain.catalogue.places.PlaceMap.Implementation.ShapesResult =
+    def shapes(kind: Option[com.histmersion.domain.catalogue.Place.Kind.Wire], time: GeoTime, limit: com.histmersion.PageSize, modernFrom: com.histmersion.domain.catalogue.places.PlaceMap.Implementation.ShapesModernFrom): com.histmersion.domain.catalogue.places.PlaceDetailRow.Geometry =
       db.read(PlaceRepo.geoJsonAt(kind, time, limit, modernFrom))
 
   object Implementation:
-    type ShapesResult = ShapesResult.T
-    object ShapesResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-    type ShapesKind = ShapesKind.T
-    object ShapesKind extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-    type ShapesLimit = ShapesLimit.T
-    object ShapesLimit extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
     type ShapesModernFrom = ShapesModernFrom.T
     object ShapesModernFrom extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]

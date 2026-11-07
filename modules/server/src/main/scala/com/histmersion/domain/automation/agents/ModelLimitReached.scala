@@ -12,5 +12,7 @@ final class ModelLimitReached(val model: ModelRef, val until: Option[java.time.I
     extends RuntimeException(message)
 
 object ModelLimitReached:
-  type Message = Message.T
-  object Message extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type Problem = Problem.T
+  object Problem extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type Message = com.histmersion.domain.automation.agents.ModelLimitReached.Problem
+  val Message: _root_.com.histmersion.domain.automation.agents.ModelLimitReached.Problem.type = _root_.com.histmersion.domain.automation.agents.ModelLimitReached.Problem

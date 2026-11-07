@@ -1,0 +1,196 @@
+## CONCEPTS NEARBY
+com.histmersion.server.TimeZoneCheck.Probe.Zone (String)
+com.histmersion.server.agents.AgentDoctor.ListModelsArg1 (String)
+com.histmersion.server.agents.AgentDoctor.ListModelsArg2Part1 (String)
+com.histmersion.server.agents.AgentDoctor.ListModelsArg2Part2 (String)
+com.histmersion.server.agents.AgentDoctor.ListModelsArg3 (Int)
+com.histmersion.server.agents.AgentDoctor.RegistryKey (String)
+com.histmersion.server.agents.AgentDoctor.ResolveResultPart1 (String)
+com.histmersion.server.agents.AgentDoctor.RunCommandArg1 (String)
+com.histmersion.server.agents.AgentDoctor.RunCommandArg2Key (String)
+com.histmersion.server.agents.AgentDoctor.RunCommandArg2Value (String)
+com.histmersion.server.agents.AgentDoctor.RunCommandArg3 (Int)
+
+## TYPES TO DECIDE
+com.histmersion.server.Supervisor.BundledResult | base Boolean | generated | method-result
+    def bundled(exe: Option[Path]): com.histmersion.server.Supervisor.BundledResult =
+com.histmersion.server.Supervisor.ConfigureExplicitBind | base String | generated | method-parameter
+    private[server] def configure(cfg: AppConfig, l: Layout, explicitBind: Option[com.histmersion.server.Supervisor.ConfigureExplicitBind] = None): AppConfig =
+com.histmersion.server.Supervisor.ConverterCmdPort | base Int | generated | alias,method-parameter
+    val SuperviseConverterPort: _root_.com.histmersion.server.Supervisor.ConverterCmdPort.type = _root_.com.histmersion.server.Supervisor.ConverterCmdPort
+    private[server] def converterCmd(l: Layout, port: com.histmersion.server.Supervisor.ConverterCmdPort): List[com.histmersion.server.Supervisor.ConverterCmdResult] =
+com.histmersion.server.Supervisor.ConverterCmdResult | base String | generated | method-result
+    private[server] def converterCmd(l: Layout, port: com.histmersion.server.Supervisor.ConverterCmdPort): List[com.histmersion.server.Supervisor.ConverterCmdResult] =
+com.histmersion.server.Supervisor.InitClusterPassword | base String | generated | method-parameter
+    private def initCluster(l: Layout, user: com.histmersion.server.Supervisor.InitClusterUser, password: com.histmersion.server.Supervisor.InitClusterPassword): Unit =
+com.histmersion.server.Supervisor.InitdbResult | base String | generated | method-result
+    private[server] def initdb(l: Layout, user: com.histmersion.server.Supervisor.InitdbUser, pwFile: Path): List[com.histmersion.server.Supervisor.InitdbResult] =
+com.histmersion.server.Supervisor.InitdbUser | base String | generated | alias,method-parameter
+    val InitClusterUser: _root_.com.histmersion.server.Supervisor.InitdbUser.type = _root_.com.histmersion.server.Supervisor.InitdbUser
+    private[server] def initdb(l: Layout, user: com.histmersion.server.Supervisor.InitdbUser, pwFile: Path): List[com.histmersion.server.Supervisor.InitdbResult] =
+com.histmersion.server.Supervisor.LayoutEnvArg1 | base String | generated | method-parameter
+com.histmersion.server.Supervisor.LayoutEnvResult | base String | generated | method-parameter
+com.histmersion.server.Supervisor.LayoutOsName | base String | generated | method-parameter
+com.histmersion.server.Supervisor.LayoutResultPart1 | base String | generated | method-result
+com.histmersion.server.Supervisor.MbBytes | base Long | generated | method-parameter
+    private def mb(bytes: com.histmersion.server.Supervisor.MbBytes): com.histmersion.server.Supervisor.MbResult = s"${math.max(1L, bytes / MB)}MB"
+com.histmersion.server.Supervisor.MbResult | base String | generated | method-result
+    private def mb(bytes: com.histmersion.server.Supervisor.MbBytes): com.histmersion.server.Supervisor.MbResult = s"${math.max(1L, bytes / MB)}MB"
+com.histmersion.server.Supervisor.PgOptionsPort | base Int | generated | alias,method-parameter
+    val PgStartPort: _root_.com.histmersion.server.Supervisor.PgOptionsPort.type = _root_.com.histmersion.server.Supervisor.PgOptionsPort
+    private[server] def pgOptions(port: com.histmersion.server.Supervisor.PgOptionsPort, settings: List[(com.histmersion.server.Supervisor.PgOptionsSettingsPart1, com.histmer
+com.histmersion.server.Supervisor.PgOptionsResult | base String | generated | method-result
+    private[server] def pgOptions(port: com.histmersion.server.Supervisor.PgOptionsPort, settings: List[(com.histmersion.server.Supervisor.PgOptionsSettingsPart1, com.histmer
+com.histmersion.server.Supervisor.PgOptionsSettingsPart1 | base String | generated | alias,method-parameter
+    val PgStartSettingsPart1: _root_.com.histmersion.server.Supervisor.PgOptionsSettingsPart1.type = _root_.com.histmersion.server.Supervisor.PgOptionsSettingsPart1
+    private[server] def pgOptions(port: com.histmersion.server.Supervisor.PgOptionsPort, settings: List[(com.histmersion.server.Supervisor.PgOptionsSettingsPart1, com.histmer
+com.histmersion.server.Supervisor.PgOptionsSettingsPart2 | base String | generated | alias,method-parameter
+    val PgStartSettingsPart2: _root_.com.histmersion.server.Supervisor.PgOptionsSettingsPart2.type = _root_.com.histmersion.server.Supervisor.PgOptionsSettingsPart2
+    private[server] def pgOptions(port: com.histmersion.server.Supervisor.PgOptionsPort, settings: List[(com.histmersion.server.Supervisor.PgOptionsSettingsPart1, com.histmer
+com.histmersion.server.Supervisor.PgSettingsResultPart1 | base String | generated | method-result
+    private[server] def pgSettings(t: PgTuning, ramBytes: Option[com.histmersion.server.Supervisor.PgSettingsRamBytes]): List[(com.histmersion.server.Supervisor.PgSettingsRes
+com.histmersion.server.Supervisor.PgSettingsResultPart2 | base String | generated | method-result
+    private[server] def pgSettings(t: PgTuning, ramBytes: Option[com.histmersion.server.Supervisor.PgSettingsRamBytes]): List[(com.histmersion.server.Supervisor.PgSettingsRes
+com.histmersion.server.Supervisor.PgStartResult | base String | generated | method-result
+    private[server] def pgStart(l: Layout, port: com.histmersion.server.Supervisor.PgStartPort, settings: List[(com.histmersion.server.Supervisor.PgStartSettingsPart1, com.hi
+com.histmersion.server.Supervisor.PgStopResult | base String | generated | method-result
+    private[server] def pgStop(l: Layout): List[com.histmersion.server.Supervisor.PgStopResult] =
+com.histmersion.server.Supervisor.PhysicalMemoryOsName | base String | generated | method-parameter
+    private def physicalMemory(osName: com.histmersion.server.Supervisor.PhysicalMemoryOsName): Option[com.histmersion.server.Supervisor.PhysicalMemoryResult] =
+com.histmersion.server.Supervisor.PhysicalMemoryResult | base Long | generated | method-result
+    private def physicalMemory(osName: com.histmersion.server.Supervisor.PhysicalMemoryOsName): Option[com.histmersion.server.Supervisor.PhysicalMemoryResult] =
+com.histmersion.server.Supervisor.ReloadSourceReadResultPart1 | base String | generated | method-parameter
+    def reloadSource(started: AppConfig, read: () => Either[com.histmersion.server.Supervisor.ReloadSourceReadResultPart1, LoadedConfig], paths: UserPaths): ConfigSource =
+com.histmersion.server.Supervisor.RunCmd | base String | generated | method-parameter
+    private def run(cmd: List[com.histmersion.server.Supervisor.RunCmd], l: Layout): (com.histmersion.server.Supervisor.RunResultPart1, List[com.histmersion.server.Supervisor
+com.histmersion.server.Supervisor.RunResultPart1 | base Int | generated | method-result
+    private def run(cmd: List[com.histmersion.server.Supervisor.RunCmd], l: Layout): (com.histmersion.server.Supervisor.RunResultPart1, List[com.histmersion.server.Supervisor
+com.histmersion.server.Supervisor.RunResultPart2 | base String | generated | method-result
+    private def run(cmd: List[com.histmersion.server.Supervisor.RunCmd], l: Layout): (com.histmersion.server.Supervisor.RunResultPart1, List[com.histmersion.server.Supervisor
+com.histmersion.server.Supervisor.SizeAutoArg1 | base Long | generated | method-parameter
+    private def size(v: com.histmersion.server.Supervisor.SizeV, auto: com.histmersion.server.Supervisor.SizeAutoArg1 => com.histmersion.server.Supervisor.SizeAutoResult, ram
+com.histmersion.server.Supervisor.SizeAutoResult | base Long | generated | method-parameter
+    private def size(v: com.histmersion.server.Supervisor.SizeV, auto: com.histmersion.server.Supervisor.SizeAutoArg1 => com.histmersion.server.Supervisor.SizeAutoResult, ram
+com.histmersion.server.Supervisor.SizeRamBytes | base Long | generated | alias,method-parameter
+    val PgSettingsRamBytes: _root_.com.histmersion.server.Supervisor.SizeRamBytes.type = _root_.com.histmersion.server.Supervisor.SizeRamBytes
+    private def size(v: com.histmersion.server.Supervisor.SizeV, auto: com.histmersion.server.Supervisor.SizeAutoArg1 => com.histmersion.server.Supervisor.SizeAutoResult, ram
+com.histmersion.server.Supervisor.SizeResult | base String | generated | method-result
+    private def size(v: com.histmersion.server.Supervisor.SizeV, auto: com.histmersion.server.Supervisor.SizeAutoArg1 => com.histmersion.server.Supervisor.SizeAutoResult, ram
+com.histmersion.server.Supervisor.SizeV | base String | generated | method-parameter
+    private def size(v: com.histmersion.server.Supervisor.SizeV, auto: com.histmersion.server.Supervisor.SizeAutoArg1 => com.histmersion.server.Supervisor.SizeAutoResult, ram
+com.histmersion.server.TimeZoneCheck.JdkResultPart1 | base Boolean | generated | method-result
+    def jdk(): (com.histmersion.server.TimeZoneCheck.JdkResultPart1, com.histmersion.server.TimeZoneCheck.JdkResultPart2) =
+com.histmersion.server.TimeZoneCheck.JdkResultPart2 | base String | generated | method-result
+    def jdk(): (com.histmersion.server.TimeZoneCheck.JdkResultPart1, com.histmersion.server.TimeZoneCheck.JdkResultPart2) =
+com.histmersion.server.TimeZoneCheck.Probe.Zone | base String | original | constructor-parameter
+    final case class Probe(zone: Probe.Zone, at: Instant, offset: ZoneOffset)
+com.histmersion.server.TimeZoneCheck.ReportDefaultPart1 | base String | generated | method-parameter
+com.histmersion.server.TimeZoneCheck.ReportDefaultPart2 | base String | generated | method-parameter
+com.histmersion.server.TimeZoneCheck.ReportOffsetArg1 | base String | generated | method-parameter
+com.histmersion.server.TimeZoneCheck.ReportOffsetResultPart1 | base String | generated | method-parameter
+com.histmersion.server.TimeZoneCheck.ReportResultPart1 | base Boolean | generated | method-result
+com.histmersion.server.TimeZoneCheck.ReportResultPart2 | base String | generated | method-result
+com.histmersion.server.TimeZoneCheck.ReportVersion | base String | generated | method-parameter
+com.histmersion.server.TimeZoneCheck.ReportZones | base Int | generated | method-parameter
+com.histmersion.server.UiConfigViews.PageAgentsEnabled | base Boolean | generated | method-parameter
+com.histmersion.server.UiConfigViews.PageBaseMapSource | base String | generated | method-parameter
+com.histmersion.server.UiConfigViews.PageMapLanguage | base String | generated | method-parameter
+com.histmersion.server.UiConfigViews.PageSetupDue | base Boolean | generated | method-parameter
+com.histmersion.server.UiConfigViews.PageWriteKeyRequired | base Boolean | generated | method-parameter
+com.histmersion.server.agents.AgentDoctor.ClaudeCodeChildEnvPart1 | base String | generated | value
+    val childEnv: Map[com.histmersion.server.agents.AgentDoctor.ClaudeCodeChildEnvPart1, Option[com.histmersion.server.agents.AgentDoctor.ClaudeCodeChildEnvPart2]] =
+com.histmersion.server.agents.AgentDoctor.ClaudeCodeChildEnvPart2 | base String | generated | value
+    val childEnv: Map[com.histmersion.server.agents.AgentDoctor.ClaudeCodeChildEnvPart1, Option[com.histmersion.server.agents.AgentDoctor.ClaudeCodeChildEnvPart2]] =
+com.histmersion.server.agents.AgentDoctor.FailD | base String | generated | method-parameter
+    private def fail(n: com.histmersion.server.agents.AgentDoctor.FailN, d: com.histmersion.server.agents.AgentDoctor.FailD) = DoctorCheck(n, CheckLevel.Fail, d)
+com.histmersion.server.agents.AgentDoctor.FailN | base String | generated | method-parameter
+    private def fail(n: com.histmersion.server.agents.AgentDoctor.FailN, d: com.histmersion.server.agents.AgentDoctor.FailD) = DoctorCheck(n, CheckLevel.Fail, d)
+com.histmersion.server.agents.AgentDoctor.GeneratedRuntime | base String | generated | method-parameter
+    private def generated(runtime: com.histmersion.server.agents.AgentDoctor.GeneratedRuntime): DoctorCheck =
+com.histmersion.server.agents.AgentDoctor.HttpOnline | base Boolean | generated | method-parameter
+    private def http(k: ProviderKind, models: List[ModelRef], online: com.histmersion.server.agents.AgentDoctor.HttpOnline): (List[DoctorCheck], List[com.histmersion.server.a
+com.histmersion.server.agents.AgentDoctor.HttpResultPart2 | base String | generated | method-result
+    private def http(k: ProviderKind, models: List[ModelRef], online: com.histmersion.server.agents.AgentDoctor.HttpOnline): (List[DoctorCheck], List[com.histmersion.server.a
+com.histmersion.server.agents.AgentDoctor.ListModelsArg1 | base String | generated | constructor-parameter
+com.histmersion.server.agents.AgentDoctor.ListModelsArg2Part1 | base String | generated | constructor-parameter
+com.histmersion.server.agents.AgentDoctor.ListModelsArg2Part2 | base String | generated | constructor-parameter
+com.histmersion.server.agents.AgentDoctor.ListModelsArg3 | base Int | generated | constructor-parameter
+com.histmersion.server.agents.AgentDoctor.ListModelsHeadersPart1 | base String | generated | method-parameter
+    def listModels(url: com.histmersion.server.agents.AgentDoctor.ListModelsUrl, headers: List[(com.histmersion.server.agents.AgentDoctor.ListModelsHeadersPart1, com.histmers
+com.histmersion.server.agents.AgentDoctor.ListModelsHeadersPart2 | base String | generated | method-parameter
+    def listModels(url: com.histmersion.server.agents.AgentDoctor.ListModelsUrl, headers: List[(com.histmersion.server.agents.AgentDoctor.ListModelsHeadersPart1, com.histmers
+com.histmersion.server.agents.AgentDoctor.ListModelsResultPart1 | base String | generated | method-result
+    def listModels(url: com.histmersion.server.agents.AgentDoctor.ListModelsUrl, headers: List[(com.histmersion.server.agents.AgentDoctor.ListModelsHeadersPart1, com.histmers
+com.histmersion.server.agents.AgentDoctor.ListModelsResultPart2 | base String | generated | method-result
+    def listModels(url: com.histmersion.server.agents.AgentDoctor.ListModelsUrl, headers: List[(com.histmersion.server.agents.AgentDoctor.ListModelsHeadersPart1, com.histmers
+com.histmersion.server.agents.AgentDoctor.ListModelsTimeoutSeconds | base Int | generated | method-parameter
+    def listModels(url: com.histmersion.server.agents.AgentDoctor.ListModelsUrl, headers: List[(com.histmersion.server.agents.AgentDoctor.ListModelsHeadersPart1, com.histmers
+com.histmersion.server.agents.AgentDoctor.ListModelsUrl | base String | generated | method-parameter
+    def listModels(url: com.histmersion.server.agents.AgentDoctor.ListModelsUrl, headers: List[(com.histmersion.server.agents.AgentDoctor.ListModelsHeadersPart1, com.histmers
+com.histmersion.server.agents.AgentDoctor.LoginJson | base String | generated | method-parameter
+    def login(json: com.histmersion.server.agents.AgentDoctor.LoginJson, useApiKey: com.histmersion.server.agents.AgentDoctor.LoginUseApiKey): Either[com.histmersion.server.a
+com.histmersion.server.agents.AgentDoctor.LoginResultPart1 | base String | generated | method-result
+    def login(json: com.histmersion.server.agents.AgentDoctor.LoginJson, useApiKey: com.histmersion.server.agents.AgentDoctor.LoginUseApiKey): Either[com.histmersion.server.a
+com.histmersion.server.agents.AgentDoctor.LoginResultPart2 | base String | generated | method-result
+    def login(json: com.histmersion.server.agents.AgentDoctor.LoginJson, useApiKey: com.histmersion.server.agents.AgentDoctor.LoginUseApiKey): Either[com.histmersion.server.a
+com.histmersion.server.agents.AgentDoctor.LoginUseApiKey | base Boolean | generated | method-parameter
+    def login(json: com.histmersion.server.agents.AgentDoctor.LoginJson, useApiKey: com.histmersion.server.agents.AgentDoctor.LoginUseApiKey): Either[com.histmersion.server.a
+com.histmersion.server.agents.AgentDoctor.ModelIdsBody | base String | generated | method-parameter
+    def modelIds(body: com.histmersion.server.agents.AgentDoctor.ModelIdsBody): Either[com.histmersion.server.agents.AgentDoctor.ModelIdsResultPart1, List[com.histmersion.ser
+com.histmersion.server.agents.AgentDoctor.ModelIdsResultPart1 | base String | generated | method-result
+    def modelIds(body: com.histmersion.server.agents.AgentDoctor.ModelIdsBody): Either[com.histmersion.server.agents.AgentDoctor.ModelIdsResultPart1, List[com.histmersion.ser
+com.histmersion.server.agents.AgentDoctor.ModelIdsResultPart2 | base String | generated | method-result
+    def modelIds(body: com.histmersion.server.agents.AgentDoctor.ModelIdsBody): Either[com.histmersion.server.agents.AgentDoctor.ModelIdsResultPart1, List[com.histmersion.ser
+com.histmersion.server.agents.AgentDoctor.NeededByResult | base Boolean | generated | method-result
+    private def neededBy(r: Role): com.histmersion.server.agents.AgentDoctor.NeededByResult = Pipeline.values.exists(_.roles.contains(r))
+com.histmersion.server.agents.AgentDoctor.OkD | base String | generated | method-parameter
+    private def ok(n: com.histmersion.server.agents.AgentDoctor.OkN, d: com.histmersion.server.agents.AgentDoctor.OkD) = DoctorCheck(n, CheckLevel.Ok, d)
+com.histmersion.server.agents.AgentDoctor.OkN | base String | generated | method-parameter
+    private def ok(n: com.histmersion.server.agents.AgentDoctor.OkN, d: com.histmersion.server.agents.AgentDoctor.OkD) = DoctorCheck(n, CheckLevel.Ok, d)
+com.histmersion.server.agents.AgentDoctor.PluginsOnline | base Boolean | generated | method-parameter
+    private def plugins(chained: List[ModelRef], online: com.histmersion.server.agents.AgentDoctor.PluginsOnline): List[ProviderDoctor] =
+com.histmersion.server.agents.AgentDoctor.PluginsSafeOrElseArg1 | base String | generated | method-parameter
+    def safe[A](what: com.histmersion.server.agents.AgentDoctor.PluginsSafeWhat, a: => A, orElse: com.histmersion.server.agents.AgentDoctor.PluginsSafeOrElseArg1 => A): A =
+com.histmersion.server.agents.AgentDoctor.PluginsSafeWhat | base String | generated | method-parameter
+    def safe[A](what: com.histmersion.server.agents.AgentDoctor.PluginsSafeWhat, a: => A, orElse: com.histmersion.server.agents.AgentDoctor.PluginsSafeOrElseArg1 => A): A =
+com.histmersion.server.agents.AgentDoctor.RegistryKey | base String | generated | constructor-parameter
+com.histmersion.server.agents.AgentDoctor.ReportOnline | base Boolean | generated | method-parameter
+    def report(online: com.histmersion.server.agents.AgentDoctor.ReportOnline): DoctorReport =
+com.histmersion.server.agents.AgentDoctor.ResolveResultPart1 | base String | generated | constructor-parameter
+com.histmersion.server.agents.AgentDoctor.RunCommandArg1 | base String | generated | constructor-parameter
+com.histmersion.server.agents.AgentDoctor.RunCommandArg2Key | base String | generated | constructor-parameter
+com.histmersion.server.agents.AgentDoctor.RunCommandArg2Value | base String | generated | constructor-parameter
+com.histmersion.server.agents.AgentDoctor.RunCommandArg3 | base Int | generated | constructor-parameter
+com.histmersion.server.agents.AgentDoctor.RunCommandArgv | base String | generated | method-parameter
+com.histmersion.server.agents.AgentDoctor.RunCommandEnvPart1 | base String | generated | method-parameter
+com.histmersion.server.agents.AgentDoctor.RunCommandEnvPart2 | base String | generated | method-parameter
+com.histmersion.server.agents.AgentDoctor.RunCommandResultPart1 | base String | generated | method-result
+com.histmersion.server.agents.AgentDoctor.RunCommandResultPart2Part1 | base Int | generated | method-result
+com.histmersion.server.agents.AgentDoctor.RunCommandResultPart2Part2 | base String | generated | method-result
+com.histmersion.server.agents.AgentDoctor.RunCommandTimeoutSeconds | base Int | generated | method-parameter
+com.histmersion.server.agents.AgentDoctor.VersionCommand | base String | generated | method-parameter
+com.histmersion.server.agents.AgentDoctor.VersionEnvPart1 | base String | generated | method-parameter
+com.histmersion.server.agents.AgentDoctor.VersionEnvPart2 | base String | generated | method-parameter
+com.histmersion.server.agents.AgentDoctor.VersionHint | base String | generated | method-parameter
+com.histmersion.server.agents.AgentDoctor.VersionLevelArg1 | base String | generated | method-parameter
+com.histmersion.server.agents.AgentDoctor.VersionLevelArg2 | base String | generated | method-parameter
+com.histmersion.server.agents.AgentDoctor.WarnD | base String | generated | method-parameter
+    private def warn(n: com.histmersion.server.agents.AgentDoctor.WarnN, d: com.histmersion.server.agents.AgentDoctor.WarnD) = DoctorCheck(n, CheckLevel.Warn, d)
+com.histmersion.server.agents.AgentDoctor.WarnN | base String | generated | method-parameter
+    private def warn(n: com.histmersion.server.agents.AgentDoctor.WarnN, d: com.histmersion.server.agents.AgentDoctor.WarnD) = DoctorCheck(n, CheckLevel.Warn, d)
+com.histmersion.server.agents.BuiltinAi.KnownRegisteredPart1 | base String | generated | method-parameter
+    def known(registered: ListMap[com.histmersion.server.agents.BuiltinAi.KnownRegisteredPart1, AiProvider]): Set[com.histmersion.server.agents.BuiltinAi.KnownResult] = regis
+com.histmersion.server.agents.BuiltinAi.KnownResult | base String | generated | method-result
+    def known(registered: ListMap[com.histmersion.server.agents.BuiltinAi.KnownRegisteredPart1, AiProvider]): Set[com.histmersion.server.agents.BuiltinAi.KnownResult] = regis
+com.histmersion.server.agents.BuiltinAi.LookupRegisteredPart1 | base String | generated | method-parameter
+    def lookup(kind: ProviderKind, registered: ListMap[com.histmersion.server.agents.BuiltinAi.LookupRegisteredPart1, AiProvider]): Either[com.histmersion.server.agents.Built
+com.histmersion.server.agents.BuiltinAi.LookupResultPart1 | base String | generated | method-result
+    def lookup(kind: ProviderKind, registered: ListMap[com.histmersion.server.agents.BuiltinAi.LookupRegisteredPart1, AiProvider]): Either[com.histmersion.server.agents.Built
+com.histmersion.server.agents.BuiltinAi.PluginIds | base String | generated | value
+    val pluginIds: Set[com.histmersion.server.agents.BuiltinAi.PluginIds] = ProviderKind.values.map(pluginOf).toSet
+com.histmersion.server.agents.BuiltinAi.PluginOfResult | base String | generated | method-result
+    def pluginOf(kind: ProviderKind): com.histmersion.server.agents.BuiltinAi.PluginOfResult = s"ai-${kind.wire}"
+com.histmersion.server.agents.BuiltinAi.Reserved | base String | generated | value
+    val reserved: Set[com.histmersion.server.agents.BuiltinAi.Reserved] = ProviderKind.values.map(_.wire).toSet
+com.histmersion.server.agents.BuiltinAi.TitlesPart2 | base String | generated | value
+    val titles: Map[ProviderKind, com.histmersion.server.agents.BuiltinAi.TitlesPart2] = Map(

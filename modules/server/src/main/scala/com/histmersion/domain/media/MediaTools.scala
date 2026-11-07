@@ -20,10 +20,6 @@ import com.histmersion.api.media.AssetLink
   * `sourceExists` says whether a citekey names a source (the library's), for an empty answer's wording.
   */
 object MediaTools:
-  type ApplySourceExistsArg1 = ApplySourceExistsArg1.T
-  object ApplySourceExistsArg1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type ApplySourceExistsResult = ApplySourceExistsResult.T
-  object ApplySourceExistsResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
   import com.histmersion.util.mcp.ToolInputs.given
 
@@ -101,7 +97,7 @@ object MediaTools:
       .schema
       .modify(_.id)(_.description("Asset link id to delete"))
 
-  def apply(assets: AssetsControllers, links: AssetLinksControllers, sourceExists: com.histmersion.domain.media.MediaTools.ApplySourceExistsArg1 => com.histmersion.domain.media.MediaTools.ApplySourceExistsResult) =
+  def apply(assets: AssetsControllers, links: AssetLinksControllers, sourceExists: com.histmersion.domain.library.Citekey => Boolean) =
     List(
       tool("assets")
         .description(

@@ -30,9 +30,9 @@ final class CollectionImport(col: SearchedCollection, fetch: Polite, cfg: MediaC
     object DecisionPart2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
   /** The role a record's picture plays: its own, else the collection's. */
-  private def roleOf(rec: MediaRecord): com.histmersion.domain.media.imports.CollectionImport.RoleOfResult = rec.role.getOrElse(col.role)
+  private def roleOf(rec: MediaRecord): com.histmersion.domain.media.MediaRole.Wire = rec.role.getOrElse(col.role)
 
-  def run(targets: List[Target], dryRun: com.histmersion.domain.media.imports.CollectionImport.RunDryRun, refresh: com.histmersion.domain.media.imports.CollectionImport.RunRefresh, store: MediaStore): MediaImportReport =
+  def run(targets: List[Target], dryRun: com.histmersion.domain.media.imports.CollectionImport.DryRun, refresh: com.histmersion.domain.media.imports.CollectionImport.Refresh, store: MediaStore): MediaImportReport =
     val failed = List.newBuilder[String]
     val allow = LicencePolicy.of(col.conf.licences)
     val places = targets.filter(_.targetType == ImportRepo.Place)
@@ -133,9 +133,9 @@ final class CollectionImport(col: SearchedCollection, fetch: Polite, cfg: MediaC
       kept: List[Judged],
       judged: List[Judged],
       asked: List[Target],
-      refresh: com.histmersion.domain.media.imports.CollectionImport.PersistRefresh,
+      refresh: com.histmersion.domain.media.imports.CollectionImport.Refresh,
       db: MediaStore,
-      failed: scala.collection.mutable.Builder[com.histmersion.domain.media.imports.CollectionImport.PersistFailedPart1, List[com.histmersion.domain.media.imports.CollectionImport.PersistFailedPart2]]
+      failed: scala.collection.mutable.Builder[com.histmersion.domain.media.imports.CollectionImport.FailedKey, List[com.histmersion.domain.media.imports.CollectionImport.Problem]]
   ): MediaImportReport =
     val allow = LicencePolicy.of(col.conf.licences)
     val known = db.known(col.provider, judged.map(_.rec.key).distinct)
@@ -237,7 +237,7 @@ final class CollectionImport(col: SearchedCollection, fetch: Polite, cfg: MediaC
     */
   private def download(
       rec: MediaRecord
-  ): Either[com.histmersion.domain.media.imports.CollectionImport.DownloadResultPart1, (com.histmersion.domain.media.imports.CollectionImport.DownloadResultPart2Part1, com.histmersion.domain.media.imports.CollectionImport.DownloadResultPart2Part2, Option[(com.histmersion.domain.media.imports.CollectionImport.DownloadResultPart2Part3Part1, com.histmersion.domain.media.imports.CollectionImport.DownloadResultPart2Part3Part2, Option[com.histmersion.domain.media.imports.CollectionImport.DownloadResultPart2Part3Part3], Option[com.histmersion.domain.media.imports.CollectionImport.DownloadResultPart2Part3Part4])])] =
+  ): Either[com.histmersion.domain.media.imports.CollectionImport.DownloadOutcome, (com.histmersion.domain.media.assets.AssetService.Bytes, com.histmersion.domain.media.assets.AssetService.Mime, Option[(com.histmersion.domain.media.assets.AssetService.Bytes, com.histmersion.domain.media.assets.AssetService.Mime, Option[com.histmersion.domain.media.assets.AssetService.ThumbWidth], Option[com.histmersion.domain.media.assets.AssetService.ThumbHeight])])] =
     rec.imageUrl.toRight("no image").flatMap(u => fetch.file(u, "image/jpeg")).flatMap { (bytes, mime) =>
       if bytes.length.toLong > cfg.maxBytes then
         Left(s"rendition of ${bytes.length} bytes is larger than media.max-bytes")
@@ -258,29 +258,13 @@ final class CollectionImport(col: SearchedCollection, fetch: Polite, cfg: MediaC
     }
 
 object CollectionImport:
-  type RoleOfResult = RoleOfResult.T
-  object RoleOfResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type RunDryRun = RunDryRun.T
-  object RunDryRun extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type RunRefresh = RunRefresh.T
-  object RunRefresh extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type PersistRefresh = PersistRefresh.T
-  object PersistRefresh extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type PersistFailedPart1 = PersistFailedPart1.T
-  object PersistFailedPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type PersistFailedPart2 = PersistFailedPart2.T
-  object PersistFailedPart2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type DownloadResultPart1 = DownloadResultPart1.T
-  object DownloadResultPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type DownloadResultPart2Part1 = DownloadResultPart2Part1.T
-  object DownloadResultPart2Part1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Array[_root_.scala.Byte], _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type DownloadResultPart2Part2 = DownloadResultPart2Part2.T
-  object DownloadResultPart2Part2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type DownloadResultPart2Part3Part1 = DownloadResultPart2Part3Part1.T
-  object DownloadResultPart2Part3Part1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Array[_root_.scala.Byte], _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type DownloadResultPart2Part3Part2 = DownloadResultPart2Part3Part2.T
-  object DownloadResultPart2Part3Part2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type DownloadResultPart2Part3Part3 = DownloadResultPart2Part3Part3.T
-  object DownloadResultPart2Part3Part3 extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type DownloadResultPart2Part3Part4 = DownloadResultPart2Part3Part4.T
-  object DownloadResultPart2Part3Part4 extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type DownloadOutcome = DownloadOutcome.T
+  object DownloadOutcome extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type DryRun = DryRun.T
+  object DryRun extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type FailedKey = FailedKey.T
+  object FailedKey extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type Problem = Problem.T
+  object Problem extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type Refresh = Refresh.T
+  object Refresh extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]

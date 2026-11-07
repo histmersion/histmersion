@@ -14,7 +14,7 @@ import com.histmersion.api.library.{Candidates, WorkRef}
 /** OpenAlex: search by publication date, `cites:` and `authorships.author.id:` filters. */
 final class OpenAlexIndex(cfg: AcquireConfig, http: Http) extends ScholarlyIndex with CitationAlerts:
   val name = "openalex"
-  private def works(filter: com.histmersion.domain.library.acquisition.OpenAlexIndex.WorksFilter, limit: com.histmersion.domain.library.acquisition.OpenAlexIndex.WorksLimit, search: Option[com.histmersion.domain.library.acquisition.OpenAlexIndex.WorksSearch]): Either[com.histmersion.domain.library.acquisition.OpenAlexIndex.WorksResultPart1, List[WorkRef]] =
+  private def works(filter: com.histmersion.domain.library.acquisition.OpenAlexIndex.Filter, limit: com.histmersion.domain.library.acquisition.OpenAlexIndex.Limit, search: Option[com.histmersion.domain.library.search.Search.Query]): Either[com.histmersion.domain.library.acquisition.OpenAlexIndex.Problem, List[WorkRef]] =
     http
       .json(
         Url(
@@ -32,7 +32,7 @@ final class OpenAlexIndex(cfg: AcquireConfig, http: Http) extends ScholarlyIndex
       )
       .map(AcquireParse.openalexWorks(_).map(_.wire))
 
-  def search(query: com.histmersion.domain.library.acquisition.OpenAlexIndex.SearchQuery, since: LocalDate, limit: com.histmersion.domain.library.acquisition.OpenAlexIndex.SearchLimit) =
+  def search(query: com.histmersion.domain.library.search.Search.Query, since: LocalDate, limit: com.histmersion.domain.library.acquisition.OpenAlexIndex.Limit) =
     works(s"from_publication_date:$since,type:article|book|book-chapter", limit, Some(query))
 
   private def work(doi: com.histmersion.domain.library.Doi) =
@@ -40,7 +40,7 @@ final class OpenAlexIndex(cfg: AcquireConfig, http: Http) extends ScholarlyIndex
       Url(s"${cfg.openalex.url}/works/https://doi.org/$doi", "", "select" -> "id,authorships", "mailto" -> cfg.mailto)
     )
 
-  def citing(doi: com.histmersion.domain.library.Doi, since: LocalDate, limit: com.histmersion.domain.library.acquisition.OpenAlexIndex.CitingLimit) =
+  def citing(doi: com.histmersion.domain.library.Doi, since: LocalDate, limit: com.histmersion.domain.library.acquisition.OpenAlexIndex.Limit) =
     work(doi)
       .flatMap(j => j.hcursor.get[String]("id").left.map(_.getMessage))
       .map(_.split("/").last)
@@ -48,25 +48,15 @@ final class OpenAlexIndex(cfg: AcquireConfig, http: Http) extends ScholarlyIndex
 
   def authors(doi: com.histmersion.domain.library.Doi) = work(doi).map(Candidates.openalexAuthorIds)
 
-  def byAuthor(authorId: com.histmersion.domain.library.acquisition.OpenAlexIndex.ByAuthorAuthorId, since: LocalDate, limit: com.histmersion.domain.library.acquisition.OpenAlexIndex.ByAuthorLimit) =
+  def byAuthor(authorId: com.histmersion.domain.library.acquisition.OpenAlexIndex.AuthorId, since: LocalDate, limit: com.histmersion.domain.library.acquisition.OpenAlexIndex.Limit) =
     works(s"authorships.author.id:$authorId,from_publication_date:$since", limit, None)
 
 object OpenAlexIndex:
-  type WorksResultPart1 = WorksResultPart1.T
-  object WorksResultPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type WorksFilter = WorksFilter.T
-  object WorksFilter extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type WorksLimit = WorksLimit.T
-  object WorksLimit extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type WorksSearch = WorksSearch.T
-  object WorksSearch extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type SearchQuery = SearchQuery.T
-  object SearchQuery extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type SearchLimit = SearchLimit.T
-  object SearchLimit extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type CitingLimit = CitingLimit.T
-  object CitingLimit extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type ByAuthorAuthorId = ByAuthorAuthorId.T
-  object ByAuthorAuthorId extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type ByAuthorLimit = ByAuthorLimit.T
-  object ByAuthorLimit extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type AuthorId = AuthorId.T
+  object AuthorId extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type Filter = Filter.T
+  object Filter extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type Limit = Limit.T
+  object Limit extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type Problem = Problem.T
+  object Problem extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]

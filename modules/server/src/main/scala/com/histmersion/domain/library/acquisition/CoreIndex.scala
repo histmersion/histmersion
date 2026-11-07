@@ -13,7 +13,7 @@ final class CoreIndex(api: CoreApi, key: Option[CoreIndex.Key], budget: CoreBudg
     extends ScholarlyIndex:
   val name = "core"
   override def unavailable: Option[String] = budget.unavailable(limits, CoreQuota.Purpose.Search).map(_.describe)
-  def search(query: com.histmersion.domain.library.acquisition.CoreIndex.SearchQuery, since: LocalDate, limit: com.histmersion.domain.library.acquisition.CoreIndex.SearchLimit) =
+  def search(query: com.histmersion.domain.library.search.Search.Query, since: LocalDate, limit: com.histmersion.domain.library.acquisition.CoreIndex.SearchLimit) =
     key match
       case None    => Left("no CORE key (plugins.oa-core.api-key or acquire.core.api-key): CORE's search needs one")
       case Some(k) =>
@@ -32,7 +32,5 @@ object CoreIndex:
   type Key = Key.T
   object Key extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
-  type SearchQuery = SearchQuery.T
-  object SearchQuery extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type SearchLimit = SearchLimit.T
   object SearchLimit extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]

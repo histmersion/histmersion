@@ -15,23 +15,19 @@ import com.histmersion.api.Api
 final class WriteGate:
   private val busy = AtomicBoolean(false)
 
-  def active: com.histmersion.util.data.maintenance.WriteGate.ActiveResult = busy.get()
+  def active: Boolean = busy.get()
 
   /** Run `f` unless a restore is in progress, in which case answer 503. */
-  def guard[A](op: com.histmersion.util.data.maintenance.WriteGate.GuardOp)(f: => Either[Api.Error, A]): Either[Api.Error, A] =
+  def guard[A](op: com.histmersion.util.data.maintenance.WriteGate.OperationName)(f: => Either[Api.Error, A]): Either[Api.Error, A] =
     if active then Left(Backup.maintenance(op)) else f
 
   /** Run `f` holding the lock; a second concurrent attempt is refused rather than queued. */
-  def exclusively[A](op: com.histmersion.util.data.maintenance.WriteGate.ExclusivelyOp)(f: => Either[Api.Error, A]): Either[Api.Error, A] =
+  def exclusively[A](op: com.histmersion.util.data.maintenance.WriteGate.OperationName)(f: => Either[Api.Error, A]): Either[Api.Error, A] =
     if !busy.compareAndSet(false, true) then Left(Backup.maintenance(op))
     else
       try f
       finally busy.set(false)
 
 object WriteGate:
-  type ActiveResult = ActiveResult.T
-  object ActiveResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type GuardOp = GuardOp.T
-  object GuardOp extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type ExclusivelyOp = ExclusivelyOp.T
-  object ExclusivelyOp extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type OperationName = OperationName.T
+  object OperationName extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]

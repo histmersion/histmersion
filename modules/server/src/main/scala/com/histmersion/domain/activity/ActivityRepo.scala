@@ -13,25 +13,15 @@ import java.time.Instant
   */
 private[activity] object ActivityRepo:
 
-  type IsoCol = IsoCol.T
-  object IsoCol extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type Merged = MergedValue
   type MergedValue = MergedValue.T
   object MergedValue extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type Projection = ProjectionValue
   type ProjectionValue = ProjectionValue.T
   object ProjectionValue extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type ShowSqlResult = ShowSqlResult.T
-  object ShowSqlResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type QuotedResult = QuotedResult.T
-  object QuotedResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type QuotedStates = QuotedStates.T
-  object QuotedStates extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type PageResultPart2 = PageResultPart2.T
-  object PageResultPart2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
   private val Iso = """'YYYY-MM-DD"T"HH24:MI:SS.US"Z"'"""
-  private def iso(col: com.histmersion.domain.activity.ActivityRepo.IsoCol) = s"to_char($col AT TIME ZONE 'UTC', $Iso)"
+  private def iso(col: String) = s"to_char($col AT TIME ZONE 'UTC', $Iso)"
 
   /** Every entry, with its time as a timestamp (`t`) to filter and order by, and its key in byte order. */
   private val Merged: com.histmersion.domain.activity.ActivityRepo.Merged =
@@ -68,7 +58,7 @@ private[activity] object ActivityRepo:
       )}, goal, job, writer,
               citekey, article, queue_item, queue_list, approval, target, target_kind"""
 
-  private def showSql(show: Show): com.histmersion.domain.activity.ActivityRepo.ShowSqlResult = show match
+  private def showSql(show: Show): String = show match
     case Show.Everything => "true"
     case Show.Running    => s"kind IN ('run', 'job') AND state IN (${quoted(ActivityRules.RunningStates)})"
     case Show.Agents     => "(kind = 'run' OR (kind = 'log' AND writer = 'agent'))"
@@ -77,7 +67,7 @@ private[activity] object ActivityRepo:
     case Show.Problems   => s"kind IN ('run', 'job') AND state IN (${quoted(ActivityRules.ProblemStates)})"
 
   // the rules' own constants, never a client's text
-  private def quoted(states: Set[com.histmersion.domain.activity.ActivityRepo.QuotedStates]): com.histmersion.domain.activity.ActivityRepo.QuotedResult = states.toList.sorted.map(s => s"'$s'").mkString(", ")
+  private def quoted(states: Set[String]): String = states.toList.sorted.map(s => s"'$s'").mkString(", ")
 
   private def where(q: ActivityQuery): Sql =
     Sql.raw(s" WHERE ${showSql(q.show)}") ++
@@ -93,7 +83,7 @@ private[activity] object ActivityRepo:
       )
 
   /** One page of `q`, with the next page's cursor. */
-  def page(q: ActivityQuery)(using DbCon): (List[Entry], Option[com.histmersion.domain.activity.ActivityRepo.PageResultPart2]) =
+  def page(q: ActivityQuery)(using DbCon): (List[Entry], Option[com.histmersion.domain.activity.ActivityCursor.Wire]) =
     val sql = Sql.raw(s"$Projection FROM $Merged") ++ where(q) ++
       Sql.of(""" ORDER BY t DESC, (kind || ':' || rid) COLLATE "C" DESC LIMIT ?""", Param.I(q.limit + 1))
     val rows = sql.frag.query[ActivityRow].run().toList.map(_.entry)

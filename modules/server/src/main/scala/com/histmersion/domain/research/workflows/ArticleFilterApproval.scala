@@ -11,13 +11,11 @@ import com.histmersion.domain.automation.Approval
 final class ArticleFilterApproval(articles: => ArticlesControllers, store: => ArticleService) extends SubjectEffect:
   val kind: Approval.Kind = Approval.Kind.ArticleFilter
 
-  def apply(a: ApprovalInfo): Either[com.histmersion.domain.research.workflows.ArticleFilterApproval.ApplyResultPart1, com.histmersion.domain.research.workflows.ArticleFilterApproval.ApplyResultPart2] =
+  def apply(a: ApprovalInfo): Either[com.histmersion.domain.research.workflows.ArticleFilterApproval.Problem, com.histmersion.domain.automation.Approval.Outcome] =
     a.filter
       .toRight("the approval carries no readable filter")
       .flatMap(InferFilterPipeline.applyProposal(articles, store, _))
 
 object ArticleFilterApproval:
-  type ApplyResultPart1 = ApplyResultPart1.T
-  object ApplyResultPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type ApplyResultPart2 = ApplyResultPart2.T
-  object ApplyResultPart2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type Problem = Problem.T
+  object Problem extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]

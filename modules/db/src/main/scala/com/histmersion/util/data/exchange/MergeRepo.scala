@@ -31,6 +31,8 @@ import com.histmersion.api.Api
   * screen's draft is `merge_sessions` (V051). Stateless, like every repo.
   */
 object MergeRepo:
+  type ListLimit = ListLimit.T
+  object ListLimit extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type BundleName = BundleName.T
   object BundleName extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type DecisionKey = DecisionKey.T

@@ -23,7 +23,7 @@ final class GebcoSeaFloor(cfg: BasemapGebcoConfig, etopoUrl: GebcoSeaFloor.Etopo
   private val PngGuess = 80L * 1024 // a tile, about (the ETOPO1 extract's, 2026-10-20)
 
   /** The GeoTIFFs of the grid's tiling that meet `bbox`, their headers read. */
-  def plan(bbox: BBox, maxZoom: com.histmersion.util.basemap.GebcoSeaFloor.PlanMaxZoom): Either[com.histmersion.util.basemap.GebcoSeaFloor.PlanResultPart1, GebcoPlan] =
+  def plan(bbox: BBox, maxZoom: com.histmersion.util.basemap.GebcoSeaFloor.PlanMaxZoom): Either[com.histmersion.util.basemap.GebcoSeaFloor.Problem, GebcoPlan] =
     val deg = cfg.tileDegrees
     val cells = for
       west <- (-180 until 180 by deg).toList
@@ -47,7 +47,7 @@ final class GebcoSeaFloor(cfg: BasemapGebcoConfig, etopoUrl: GebcoSeaFloor.Etopo
       }
 
   /** What a fetch would do, zoom by zoom — the dry run's answer. */
-  def describe(p: GebcoPlan): com.histmersion.util.basemap.GebcoSeaFloor.DescribeResult =
+  def describe(p: GebcoPlan): com.histmersion.util.basemap.GebcoSeaFloor.Description =
     val byZoom = p.tiles.groupBy(_._2._1).toList.sortBy(_._1).map((z, ts) => s"zoom $z: ${ts.size}").mkString(" · ")
     s"bathymetry from GEBCO (zoom 0–${p.maxZoom}): would read ${Backup.humanBytes(p.readBytes)} of " +
       s"${Plural.count(p.parts.size, "GeoTIFF", "GeoTIFFs")} in ${Plural.count(p.parts.map(_.runs.size).sum, "range request", "range requests")}, " +
@@ -55,10 +55,10 @@ final class GebcoSeaFloor(cfg: BasemapGebcoConfig, etopoUrl: GebcoSeaFloor.Etopo
       s"${p.edge.size} of them completed from ETOPO1 outside the region"
 
   /** The bytes a fetch needs on disk at most: the rows read and the tiles written. */
-  def needs(p: GebcoPlan): com.histmersion.util.basemap.GebcoSeaFloor.NeedsResult = p.readBytes + p.tiles.size * PngGuess
+  def needs(p: GebcoPlan): com.histmersion.ByteCount = p.readBytes + p.tiles.size * PngGuess
 
   /** Read the rows still missing from `work`. */
-  def download(p: GebcoPlan, work: Store, gapMs: com.histmersion.util.basemap.GebcoSeaFloor.DownloadGapMs, note: com.histmersion.util.basemap.GebcoSeaFloor.DownloadNoteArg1 => Unit): Either[com.histmersion.util.basemap.GebcoSeaFloor.DownloadResultPart1, Unit] =
+  def download(p: GebcoPlan, work: Store, gapMs: com.histmersion.util.basemap.BasemapFetch.Pace.GapMs, note: com.histmersion.util.basemap.GebcoSeaFloor.Note => Unit): Either[com.histmersion.util.basemap.GebcoSeaFloor.Problem, Unit] =
     work.makeDirectory().left.foreach(e => throw IOException(e.message))
     val all = p.parts.flatMap(part => part.runs.map(part -> _))
     all.zipWithIndex.foldLeft[Either[String, Unit]](Right(())) { case (acc, ((part, run), i)) =>
@@ -84,13 +84,13 @@ final class GebcoSeaFloor(cfg: BasemapGebcoConfig, etopoUrl: GebcoSeaFloor.Etopo
     }
 
   /** Every tile of the plan from the rows in `work`, in tile-id order, handed to `add`. */
-  def build(p: GebcoPlan, work: Store, add: (com.histmersion.util.basemap.GebcoSeaFloor.BuildAddArg1, com.histmersion.util.basemap.GebcoSeaFloor.BuildAddArg2) => Unit, note: com.histmersion.util.basemap.GebcoSeaFloor.BuildNoteArg1 => Unit): Either[com.histmersion.util.basemap.GebcoSeaFloor.BuildResultPart1, com.histmersion.util.basemap.GebcoSeaFloor.BuildResultPart2] =
+  def build(p: GebcoPlan, work: Store, add: (com.histmersion.util.basemap.GebcoSeaFloor.TileKey, com.histmersion.util.basemap.GebcoSeaFloor.Bytes) => Unit, note: com.histmersion.util.basemap.GebcoSeaFloor.Note => Unit): Either[com.histmersion.util.basemap.GebcoSeaFloor.Problem, com.histmersion.ByteCount] =
     val samplers = p.parts.map(part => GebcoSeaFloor.Rows(part, part.runs.map(r => r -> map(work, part.key(r)))))
     var etopoFailures = 0 // ETOPO1 tiles that could not be read: their outside stays at sea level
     p.tiles.zipWithIndex.foreach { case ((id, (z, x, y)), i) =>
       if Thread.interrupted() then throw InterruptedException()
       if i % 200 == 0 then note(s"writing tile ${i + 1} of ${p.tiles.size}")
-      lazy val etopo: Option[(Array[Float], com.histmersion.util.basemap.GebcoSeaFloor.BuildEtopoPart2)] =
+      lazy val etopo: Option[(Array[Float], com.histmersion.util.basemap.GebcoSeaFloor.GridSize)] =
         http
           .file(etopoUrl.replace("{z}", z.toString).replace("{x}", x.toString).replace("{y}", y.toString))
           .toOption
@@ -113,65 +113,55 @@ final class GebcoSeaFloor(cfg: BasemapGebcoConfig, etopoUrl: GebcoSeaFloor.Etopo
     work.get(f).getOrElse(throw IOException(s"${work.where(f)}: no such file")).mapped().order(ByteOrder.LITTLE_ENDIAN)
 
 object GebcoSeaFloor:
+  type Bytes = Bytes.T
+  object Bytes extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Array[_root_.scala.Byte], _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type Column = Column.T
+  object Column extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type Description = Description.T
+  object Description extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type Elevation = Elevation.T
+  object Elevation extends _root_.io.github.iltotore.iron.RefinedType[Short, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type GridSize = GridSize.T
+  object GridSize extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type Note = Note.T
+  object Note extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type PixelX = PixelX.T
+  object PixelX extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type PixelY = PixelY.T
+  object PixelY extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type Problem = Problem.T
+  object Problem extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type Row = Row.T
+  object Row extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type RowIndex = RowIndex.T
+  object RowIndex extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Array[_root_.scala.Int], _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type SampledElevation = SampledElevation.T
+  object SampledElevation extends _root_.io.github.iltotore.iron.RefinedType[Float, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type TileKey = TileKey.T
+  object TileKey extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type TileX = TileX.T
+  object TileX extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type TileY = TileY.T
+  object TileY extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type UrlTemplate = UrlTemplate.T
+  object UrlTemplate extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type WholeDegrees = WholeDegrees.T
+  object WholeDegrees extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type Zoom = Zoom.T
+  object Zoom extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
   /** A GeoTIFF's URL in the grid's tiling: `{north}`, `{south}`, `{west}`, `{east}` as GEBCO writes them (`90.0`). */
-  type BuildEtopoPart2 = BuildEtopoPart2.T
-  object BuildEtopoPart2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type UrlOfFV = UrlOfFV.T
-  object UrlOfFV extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type BoundsLatT = BoundsLatT.T
   object BoundsLatT extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
-  type BuildAddArg2 = BuildAddArg2.T
-  object BuildAddArg2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Array[_root_.scala.Byte], _root_.io.github.iltotore.iron.constraint.any.Pure]
 
   type EtopoUrl = EtopoUrl.T
   object EtopoUrl extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type MaxRequestBytes = MaxRequestBytes.T
-  object MaxRequestBytes extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type MaxRequestBytes = com.histmersion.util.basemap.BasemapFetch.Pace.MaxRequestBytes
+  val MaxRequestBytes: _root_.com.histmersion.util.basemap.BasemapFetch.Pace.MaxRequestBytes.type = _root_.com.histmersion.util.basemap.BasemapFetch.Pace.MaxRequestBytes
 
-  type PlanResultPart1 = PlanResultPart1.T
-  object PlanResultPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type PlanMaxZoom = _root_.com.histmersion.util.basemap.GebcoPlan.MaxZoom
   val PlanMaxZoom: _root_.com.histmersion.util.basemap.GebcoPlan.MaxZoom.type = _root_.com.histmersion.util.basemap.GebcoPlan.MaxZoom
-  type DescribeResult = DescribeResult.T
-  object DescribeResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type NeedsResult = NeedsResult.T
-  object NeedsResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type DownloadResultPart1 = DownloadResultPart1.T
-  object DownloadResultPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type DownloadGapMs = DownloadGapMs.T
-  object DownloadGapMs extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type DownloadNoteArg1 = DownloadNoteArg1.T
-  object DownloadNoteArg1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type BuildResultPart1 = BuildResultPart1.T
-  object BuildResultPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type BuildResultPart2 = BuildResultPart2.T
-  object BuildResultPart2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type BuildAddArg1 = BuildAddArg1.T
-  object BuildAddArg1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type BuildNoteArg1 = BuildNoteArg1.T
-  object BuildNoteArg1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type UrlOfResult = UrlOfResult.T
-  object UrlOfResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type UrlOfTemplate = UrlOfTemplate.T
-  object UrlOfTemplate extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type UrlOfWest = UrlOfWest.T
-  object UrlOfWest extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type UrlOfSouth = UrlOfSouth.T
-  object UrlOfSouth extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type UrlOfDeg = UrlOfDeg.T
-  object UrlOfDeg extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type TilesResultPart1 = TilesResultPart1.T
-  object TilesResultPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type TilesResultPart2Part1 = TilesResultPart2Part1.T
-  object TilesResultPart2Part1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type TilesResultPart2Part2 = TilesResultPart2Part2.T
-  object TilesResultPart2Part2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type TilesResultPart2Part3 = TilesResultPart2Part3.T
-  object TilesResultPart2Part3 extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type TilesMaxZoom = TilesMaxZoom.T
-  object TilesMaxZoom extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type BoundsResultPart1 = BoundsResultPart1.T
   object BoundsResultPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type BoundsResultPart2 = BoundsResultPart2.T
@@ -180,37 +170,9 @@ object GebcoSeaFloor:
   object BoundsResultPart3 extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type BoundsResultPart4 = BoundsResultPart4.T
   object BoundsResultPart4 extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type BoundsZ = BoundsZ.T
-  object BoundsZ extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type BoundsX = BoundsX.T
-  object BoundsX extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type BoundsY = BoundsY.T
-  object BoundsY extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type InsideResult = InsideResult.T
-  object InsideResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type InsideTPart1 = InsideTPart1.T
-  object InsideTPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type InsideTPart2 = InsideTPart2.T
-  object InsideTPart2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type InsideTPart3 = InsideTPart3.T
-  object InsideTPart3 extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type SampleResult = SampleResult.T
-  object SampleResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Float, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type SampleZ = SampleZ.T
-  object SampleZ extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type SampleX = SampleX.T
-  object SampleX extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type SampleY = SampleY.T
-  object SampleY extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type SamplePx = SamplePx.T
-  object SamplePx extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type SamplePy = SamplePy.T
-  object SamplePy extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type SampleSize = SampleSize.T
-  object SampleSize extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
-  def urlOf(template: com.histmersion.util.basemap.GebcoSeaFloor.UrlOfTemplate, west: com.histmersion.util.basemap.GebcoSeaFloor.UrlOfWest, south: com.histmersion.util.basemap.GebcoSeaFloor.UrlOfSouth, deg: com.histmersion.util.basemap.GebcoSeaFloor.UrlOfDeg): com.histmersion.util.basemap.GebcoSeaFloor.UrlOfResult =
-    def f(v: com.histmersion.util.basemap.GebcoSeaFloor.UrlOfFV) = String.format(java.util.Locale.ROOT, "%.1f", v.toDouble)
+  def urlOf(template: com.histmersion.util.basemap.GebcoSeaFloor.UrlTemplate, west: com.histmersion.util.basemap.GebcoSeaFloor.WholeDegrees, south: com.histmersion.util.basemap.GebcoSeaFloor.WholeDegrees, deg: com.histmersion.util.basemap.GebcoSeaFloor.WholeDegrees): com.histmersion.util.basemap.GebcoPart.Url =
+    def f(v: com.histmersion.util.basemap.GebcoSeaFloor.WholeDegrees) = String.format(java.util.Locale.ROOT, "%.1f", v.toDouble)
     template
       .replace("{north}", f(south + deg))
       .replace("{south}", f(south))
@@ -218,7 +180,7 @@ object GebcoSeaFloor:
       .replace("{east}", f(west + deg))
 
   /** The tiles of zooms 0…`maxZoom` over `b`, in tile-id order (the archive's). */
-  def tiles(b: BBox, maxZoom: com.histmersion.util.basemap.GebcoSeaFloor.TilesMaxZoom): Vector[(com.histmersion.util.basemap.GebcoSeaFloor.TilesResultPart1, (com.histmersion.util.basemap.GebcoSeaFloor.TilesResultPart2Part1, com.histmersion.util.basemap.GebcoSeaFloor.TilesResultPart2Part2, com.histmersion.util.basemap.GebcoSeaFloor.TilesResultPart2Part3))] =
+  def tiles(b: BBox, maxZoom: com.histmersion.util.basemap.GebcoPlan.MaxZoom): Vector[(com.histmersion.util.basemap.GebcoSeaFloor.TileKey, (com.histmersion.util.basemap.GebcoSeaFloor.Zoom, com.histmersion.util.basemap.GebcoSeaFloor.TileX, com.histmersion.util.basemap.GebcoSeaFloor.TileY))] =
     (0 to maxZoom).toVector
       .flatMap { z =>
         val ((x0, x1), (y0, y1)) = Basemap.tileRange(b, z)
@@ -227,25 +189,25 @@ object GebcoSeaFloor:
       .sortBy(_._1)
 
   /** The west, south, east and north of a tile, in degrees (Web Mercator). */
-  def bounds(z: com.histmersion.util.basemap.GebcoSeaFloor.BoundsZ, x: com.histmersion.util.basemap.GebcoSeaFloor.BoundsX, y: com.histmersion.util.basemap.GebcoSeaFloor.BoundsY): (com.histmersion.util.basemap.GebcoSeaFloor.BoundsResultPart1, com.histmersion.util.basemap.GebcoSeaFloor.BoundsResultPart2, com.histmersion.util.basemap.GebcoSeaFloor.BoundsResultPart3, com.histmersion.util.basemap.GebcoSeaFloor.BoundsResultPart4) =
+  def bounds(z: com.histmersion.util.basemap.GebcoSeaFloor.Zoom, x: com.histmersion.util.basemap.GebcoSeaFloor.TileX, y: com.histmersion.util.basemap.GebcoSeaFloor.TileY): (com.histmersion.util.basemap.GebcoSeaFloor.BoundsResultPart1, com.histmersion.util.basemap.GebcoSeaFloor.BoundsResultPart2, com.histmersion.util.basemap.GebcoSeaFloor.BoundsResultPart3, com.histmersion.util.basemap.GebcoSeaFloor.BoundsResultPart4) =
     val n = math.pow(2, z)
     def lat(t: com.histmersion.util.basemap.GebcoSeaFloor.BoundsLatT) = math.toDegrees(math.atan(math.sinh(math.Pi * (1 - 2 * t / n))))
     (x / n * 360 - 180, lat(y + 1.0), (x + 1) / n * 360 - 180, lat(y.toDouble))
 
   /** A tile wholly inside `b`. */
-  def inside(b: BBox, t: (com.histmersion.util.basemap.GebcoSeaFloor.InsideTPart1, com.histmersion.util.basemap.GebcoSeaFloor.InsideTPart2, com.histmersion.util.basemap.GebcoSeaFloor.InsideTPart3)): com.histmersion.util.basemap.GebcoSeaFloor.InsideResult =
+  def inside(b: BBox, t: (com.histmersion.util.basemap.GebcoSeaFloor.Zoom, com.histmersion.util.basemap.GebcoSeaFloor.TileX, com.histmersion.util.basemap.GebcoSeaFloor.TileY)): Boolean =
     val (w, s, e, n) = bounds(t._1, t._2, t._3)
     w >= b.minLon && e <= b.maxLon && s >= b.minLat && n <= b.maxLat
 
   /** The rows of one part that were read, each run mapped from its file. */
   final case class Rows(part: GebcoPart, runs: List[(RowRun, ByteBuffer)]):
-    private val byRow: com.histmersion.util.basemap.GebcoSeaFloor.Rows.ByRow =
+    private val byRow: com.histmersion.util.basemap.GebcoSeaFloor.RowIndex =
       val a = Array.fill(part.grid.height.value)(-1)
       runs.zipWithIndex.foreach { case ((r, _), i) => for row <- r.firstRow until r.firstRow + r.rows do a(row) = i }
       a
 
     /** The sample at a column and row, when it was read and is not "no data". */
-    def at(col: com.histmersion.util.basemap.GebcoSeaFloor.Rows.AtCol, row: com.histmersion.util.basemap.GebcoSeaFloor.Rows.AtRow): Option[com.histmersion.util.basemap.GebcoSeaFloor.Rows.AtResult] =
+    def at(col: com.histmersion.util.basemap.GebcoSeaFloor.Column, row: com.histmersion.util.basemap.GebcoSeaFloor.Row): Option[com.histmersion.util.basemap.GebcoSeaFloor.Elevation] =
       val w = part.window
       if row < w.first || row > w.last || col < w.firstCol || col > w.lastCol then None
       else
@@ -254,20 +216,12 @@ object GebcoSeaFloor:
         Option.when(!part.grid.noData.contains(v))(v)
 
   object Rows:
-    type ByRow = ByRow.T
-    object ByRow extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Array[_root_.scala.Int], _root_.io.github.iltotore.iron.constraint.any.Pure]
 
-    type AtResult = AtResult.T
-    object AtResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Short, _root_.io.github.iltotore.iron.constraint.any.Pure]
-    type AtCol = AtCol.T
-    object AtCol extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
-    type AtRow = AtRow.T
-    object AtRow extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
   /** The elevation under pixel (`px`, `py`) of tile (`z`, `x`, `y`): the mean of the grid's samples under four points
     * spread over the pixel (a pixel of a low zoom covers many samples). None when the rows read hold none of them.
     */
-  def sample(rows: List[Rows], z: com.histmersion.util.basemap.GebcoSeaFloor.SampleZ, x: com.histmersion.util.basemap.GebcoSeaFloor.SampleX, y: com.histmersion.util.basemap.GebcoSeaFloor.SampleY, px: com.histmersion.util.basemap.GebcoSeaFloor.SamplePx, py: com.histmersion.util.basemap.GebcoSeaFloor.SamplePy, size: com.histmersion.util.basemap.GebcoSeaFloor.SampleSize): Option[com.histmersion.util.basemap.GebcoSeaFloor.SampleResult] =
+  def sample(rows: List[Rows], z: com.histmersion.util.basemap.GebcoSeaFloor.Zoom, x: com.histmersion.util.basemap.GebcoSeaFloor.TileX, y: com.histmersion.util.basemap.GebcoSeaFloor.TileY, px: com.histmersion.util.basemap.GebcoSeaFloor.PixelX, py: com.histmersion.util.basemap.GebcoSeaFloor.PixelY, size: com.histmersion.util.basemap.GebcoSeaFloor.GridSize): Option[com.histmersion.util.basemap.GebcoSeaFloor.SampledElevation] =
     val n = math.pow(2, z) * size
     var sum = 0.0 // the samples found under the four points, and how many
     var found = 0

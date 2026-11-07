@@ -14,26 +14,26 @@ import com.histmersion.api.catalogue.Place
 trait PlaceGeometry:
 
   /** `finding_places` from scratch: the findings' points, areas and names matched to every place again. */
-  def rebuildFindingPlaces(toleranceKm: com.histmersion.domain.catalogue.places.PlaceGeometry.RebuildFindingPlacesToleranceKm): Place.RebuildResult
+  def rebuildFindingPlaces(toleranceKm: com.histmersion.domain.catalogue.places.GeocodeSettings.ToleranceKm): Place.RebuildResult
 
   /** A `part_of` edge from every point place to each polygon place that contains it. */
   def buildHierarchy(): SpatialHierarchyResult
 
   /** The land replaced by `geometries` (GeoJSON) in one transaction; the pieces stored. */
-  def replaceLand(geometries: List[com.histmersion.domain.catalogue.places.PlaceGeometry.ReplaceLandGeometries]): com.histmersion.domain.catalogue.places.PlaceGeometry.ReplaceLandResult
+  def replaceLand(geometries: List[com.histmersion.domain.catalogue.places.PlaceDetailRow.Geometry]): com.histmersion.RowCount
 
   /** Every polity clipped to the land again, a batch per transaction; how many are clipped now. */
-  def reclip(): com.histmersion.domain.catalogue.places.PlaceGeometry.ReclipResult
+  def reclip(): com.histmersion.RowCount
 
   /** `place-kind`'s repair: the places it lists reclassified, the withdrawn ones merged into their replacement, their
     * findings matched again (reclassified, merged).
     */
-  def reclassify(toleranceKm: com.histmersion.domain.catalogue.places.PlaceGeometry.ReclassifyToleranceKm): (com.histmersion.domain.catalogue.places.PlaceGeometry.ReclassifyResultPart1, com.histmersion.domain.catalogue.places.PlaceGeometry.ReclassifyResultPart2)
+  def reclassify(toleranceKm: com.histmersion.domain.catalogue.places.GeocodeSettings.ToleranceKm): (com.histmersion.RowCount, com.histmersion.RowCount)
 
   /** `place-grid-point`'s repair: the places it lists moved from a grid square's centre to their linked record's point;
     * how many moved.
     */
-  def relocate(toleranceKm: com.histmersion.domain.catalogue.places.PlaceGeometry.RelocateToleranceKm): com.histmersion.domain.catalogue.places.PlaceGeometry.RelocateResult
+  def relocate(toleranceKm: com.histmersion.domain.catalogue.places.GeocodeSettings.ToleranceKm): com.histmersion.RowCount
 
   /** `place-imported-point-area`'s repair: the listed places no evidence names removed, `batch` per transaction, until
     * none is left or `budgetMs` is spent (call again while `remaining > 0`).
@@ -41,42 +41,24 @@ trait PlaceGeometry:
   def removePointAreas(settings: PointAreaRepo.Settings): PointAreaRepo.Removal
 
 object PlaceGeometry:
-  type RebuildFindingPlacesToleranceKm = RebuildFindingPlacesToleranceKm.T
-  object RebuildFindingPlacesToleranceKm extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type ReplaceLandResult = ReplaceLandResult.T
-  object ReplaceLandResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type ReplaceLandGeometries = ReplaceLandGeometries.T
-  object ReplaceLandGeometries extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type ReclipResult = ReclipResult.T
-  object ReclipResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type ReclassifyResultPart1 = ReclassifyResultPart1.T
-  object ReclassifyResultPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type ReclassifyResultPart2 = ReclassifyResultPart2.T
-  object ReclassifyResultPart2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type ReclassifyToleranceKm = ReclassifyToleranceKm.T
-  object ReclassifyToleranceKm extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type RelocateResult = RelocateResult.T
-  object RelocateResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type RelocateToleranceKm = RelocateToleranceKm.T
-  object RelocateToleranceKm extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
   def apply(db: Transactor)(using timer: com.histmersion.util.time.Timer): PlaceGeometry = Implementation(db)
 
   final private class Implementation(db: Transactor)(using timer: com.histmersion.util.time.Timer) extends PlaceGeometry:
-    def rebuildFindingPlaces(toleranceKm: com.histmersion.domain.catalogue.places.PlaceGeometry.Implementation.RebuildFindingPlacesToleranceKm): Place.RebuildResult =
+    def rebuildFindingPlaces(toleranceKm: com.histmersion.domain.catalogue.places.GeocodeSettings.ToleranceKm): Place.RebuildResult =
       db.transact(FindingPlaceRepo.rebuildFindingPlaces(toleranceKm))
     def buildHierarchy(): SpatialHierarchyResult = db.transact(PlaceRepo.buildSpatialHierarchy())
-    def replaceLand(geometries: List[com.histmersion.domain.catalogue.places.PlaceGeometry.Implementation.ReplaceLandGeometries]): com.histmersion.domain.catalogue.places.PlaceGeometry.Implementation.ReplaceLandResult =
+    def replaceLand(geometries: List[com.histmersion.domain.catalogue.places.PlaceDetailRow.Geometry]): com.histmersion.RowCount =
       val _ = db.transact(LandRepo.replace(geometries))
       db.read(LandRepo.analyze())
       db.read(LandRepo.pieces())
-    def reclip(): com.histmersion.domain.catalogue.places.PlaceGeometry.Implementation.ReclipResult =
+    def reclip(): com.histmersion.RowCount =
       db.read(LandRepo.polities()).grouped(LandRepo.ReclipBatch).foreach(batch => db.transact(LandRepo.reclip(batch)))
       db.read(LandRepo.clipped())
-    def reclassify(toleranceKm: com.histmersion.domain.catalogue.places.PlaceGeometry.Implementation.ReclassifyToleranceKm): (com.histmersion.domain.catalogue.places.PlaceGeometry.Implementation.ReclassifyResultPart1, com.histmersion.domain.catalogue.places.PlaceGeometry.Implementation.ReclassifyResultPart2) =
+    def reclassify(toleranceKm: com.histmersion.domain.catalogue.places.GeocodeSettings.ToleranceKm): (com.histmersion.RowCount, com.histmersion.RowCount) =
       val proposals = db.read(PlaceReviewRepo.proposals())
       if !proposals.exists(_.fixable) then (0, 0) else db.transact(PlaceReviewRepo.apply(proposals, toleranceKm))
-    def relocate(toleranceKm: com.histmersion.domain.catalogue.places.PlaceGeometry.Implementation.RelocateToleranceKm): com.histmersion.domain.catalogue.places.PlaceGeometry.Implementation.RelocateResult =
+    def relocate(toleranceKm: com.histmersion.domain.catalogue.places.GeocodeSettings.ToleranceKm): com.histmersion.RowCount =
       val moves = db.read(PlaceReviewRepo.relocations())
       if moves.isEmpty then 0 else db.transact(PlaceReviewRepo.relocate(moves, toleranceKm))
     def removePointAreas(s: PointAreaRepo.Settings): PointAreaRepo.Removal =
@@ -89,7 +71,7 @@ object PlaceGeometry:
         val named = if todo.isEmpty then Map.empty[String, Set[String]] else db.read(PointAreaRepo.nameKeysIn())
         // one pass over the chunks while time is left; at least one chunk per call, so a call progresses
         @tailrec
-        def go(rest: List[List[com.histmersion.domain.catalogue.places.PlaceGeometry.Implementation.RemovePointAreasGoRest]], removed: com.histmersion.domain.catalogue.places.PlaceGeometry.Implementation.RemovePointAreasGoRemoved, findings: com.histmersion.domain.catalogue.places.PlaceGeometry.Implementation.RemovePointAreasGoFindings, cks: Set[com.histmersion.domain.catalogue.places.PlaceGeometry.Implementation.RemovePointAreasGoCks]): (com.histmersion.domain.catalogue.places.PlaceGeometry.Implementation.RemovePointAreasGoResultPart1, com.histmersion.domain.catalogue.places.PlaceGeometry.Implementation.RemovePointAreasGoResultPart2, Set[com.histmersion.domain.catalogue.places.PlaceGeometry.Implementation.RemovePointAreasGoResultPart3]) =
+        def go(rest: List[List[com.histmersion.domain.catalogue.Place.Id]], removed: com.histmersion.domain.catalogue.places.PointAreas.FixedRemoved, findings: com.histmersion.domain.catalogue.places.PlaceDetailRow.Findings, cks: Set[com.histmersion.domain.catalogue.places.PointAreas.Group.Kind]): (com.histmersion.domain.catalogue.places.PointAreas.FixedRemaining, com.histmersion.domain.catalogue.places.PointAreas.FixedRemoved, Set[com.histmersion.domain.catalogue.places.PlaceGeometry.Implementation.RemovePointAreasGoResultPart3]) =
           rest match
             case Nil         => (removed, findings, cks)
             case ids :: more =>
@@ -101,36 +83,6 @@ object PlaceGeometry:
         PointAreaRepo.Removal(removed, remaining, findings, cks.size)
 
   object Implementation:
-    type RemovePointAreasGoResultPart1 = RemovePointAreasGoResultPart1.T
-    object RemovePointAreasGoResultPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
-    type RemovePointAreasGoResultPart2 = RemovePointAreasGoResultPart2.T
-    object RemovePointAreasGoResultPart2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
     type RemovePointAreasGoResultPart3 = RemovePointAreasGoResultPart3.T
     object RemovePointAreasGoResultPart3 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-    type RemovePointAreasGoRest = RemovePointAreasGoRest.T
-    object RemovePointAreasGoRest extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-    type RemovePointAreasGoRemoved = RemovePointAreasGoRemoved.T
-    object RemovePointAreasGoRemoved extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
-    type RemovePointAreasGoFindings = RemovePointAreasGoFindings.T
-    object RemovePointAreasGoFindings extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
-    type RemovePointAreasGoCks = RemovePointAreasGoCks.T
-    object RemovePointAreasGoCks extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
-    type RebuildFindingPlacesToleranceKm = RebuildFindingPlacesToleranceKm.T
-    object RebuildFindingPlacesToleranceKm extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
-    type ReplaceLandResult = ReplaceLandResult.T
-    object ReplaceLandResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
-    type ReplaceLandGeometries = ReplaceLandGeometries.T
-    object ReplaceLandGeometries extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-    type ReclipResult = ReclipResult.T
-    object ReclipResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
-    type ReclassifyResultPart1 = ReclassifyResultPart1.T
-    object ReclassifyResultPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
-    type ReclassifyResultPart2 = ReclassifyResultPart2.T
-    object ReclassifyResultPart2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
-    type ReclassifyToleranceKm = ReclassifyToleranceKm.T
-    object ReclassifyToleranceKm extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
-    type RelocateResult = RelocateResult.T
-    object RelocateResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
-    type RelocateToleranceKm = RelocateToleranceKm.T
-    object RelocateToleranceKm extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]

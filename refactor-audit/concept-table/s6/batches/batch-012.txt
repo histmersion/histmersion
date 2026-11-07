@@ -1,0 +1,452 @@
+## CONCEPTS NEARBY
+com.histmersion.domain.automation.AgentRole.Wire (String)
+com.histmersion.domain.automation.Approval.DecidedBy.Describe (String)
+com.histmersion.domain.automation.Approval.DecidedBy.Wire (String)
+com.histmersion.domain.automation.Approval.Kind.Blocking (Boolean)
+com.histmersion.domain.automation.Approval.Kind.Wire (String)
+com.histmersion.domain.automation.Approval.Mode.Wire (String)
+com.histmersion.domain.automation.Approval.Note (String)
+com.histmersion.domain.automation.Approval.Outcome (String)
+com.histmersion.domain.automation.Approval.State.Wire (String)
+com.histmersion.domain.automation.Goal.LinkKind.Wire (String)
+com.histmersion.domain.automation.Goal.Slug (String)
+com.histmersion.domain.automation.Goal.Status.Wire (String)
+com.histmersion.domain.automation.Goal.Uid (UUID)
+com.histmersion.domain.automation.ItemStatus.Wire (String)
+com.histmersion.domain.automation.Manager.Kind.Wire (String)
+com.histmersion.domain.automation.Manager.State.Wire (String)
+com.histmersion.domain.automation.Pipeline.Describe (String)
+com.histmersion.domain.automation.Pipeline.Version (Int)
+com.histmersion.domain.automation.Pipeline.Wire (String)
+com.histmersion.domain.automation.ProviderKind.Wire (String)
+com.histmersion.domain.automation.Run.Id (String)
+com.histmersion.domain.automation.Run.State.Wire (String)
+com.histmersion.domain.automation.ScheduleKind.Wire (String)
+com.histmersion.domain.automation.Step.Status.Wire (String)
+com.histmersion.domain.automation.TargetKind.Wire (String)
+com.histmersion.domain.automation.agents.AgentRepo.ActiveOnly (Boolean)
+com.histmersion.domain.automation.agents.AgentRepo.ApprovalJobId (String)
+com.histmersion.domain.automation.agents.AgentRepo.CloseReason (String)
+com.histmersion.domain.automation.agents.AgentRepo.CursorProblem (String)
+com.histmersion.domain.automation.agents.AgentRepo.MessageRecord.Content (String)
+com.histmersion.domain.automation.agents.AgentRepo.MessageRecord.LatencyMs (Int)
+com.histmersion.domain.automation.agents.AgentRepo.MessageRecord.N (Int)
+com.histmersion.domain.automation.agents.AgentRepo.MessageRecord.Role (String)
+com.histmersion.domain.automation.agents.AgentRepo.MessageRecord.ToolInput (String)
+com.histmersion.domain.automation.agents.AgentRepo.MessageRecord.ToolName (String)
+com.histmersion.domain.automation.agents.AgentRepo.MessageRecord.ToolResult (String)
+com.histmersion.domain.automation.agents.AgentRepo.OutputChars (Int)
+com.histmersion.domain.automation.agents.AgentRepo.PageCursor (String)
+com.histmersion.domain.automation.agents.AgentRepo.StepRecord.ActualModel (String)
+com.histmersion.domain.automation.agents.AgentRepo.StepRecord.Attempt (Int)
+com.histmersion.domain.automation.agents.AgentRepo.StepRecord.Error (String)
+com.histmersion.domain.automation.agents.AgentRepo.StepRecord.FirstCallTokens (Long)
+com.histmersion.domain.automation.agents.AgentRepo.StepRecord.Model (String)
+com.histmersion.domain.automation.agents.AgentRepo.StepRecord.Name (String)
+com.histmersion.domain.automation.agents.AgentRepo.StepRecord.Output (String)
+com.histmersion.domain.automation.agents.AgentRepo.StepRecord.PromptHash (String)
+com.histmersion.domain.automation.agents.AgentRepo.StepRecord.Seq (Int)
+com.histmersion.domain.automation.agents.AgentRepo.StepRecord.Turns (Int)
+com.histmersion.domain.automation.agents.LeaseRepo.LeaseExpiry (String)
+com.histmersion.domain.automation.agents.LeaseRepo.LeaseName (String)
+com.histmersion.domain.automation.agents.LeaseRepo.LeaseOwner (String)
+com.histmersion.domain.automation.agents.LeaseRepo.TtlSeconds (Int)
+com.histmersion.domain.automation.agents.PlanQuotaRepo.EpochMillis (Long)
+com.histmersion.domain.automation.agents.PlanQuotaRepo.Pool.Floors (String)
+com.histmersion.domain.automation.agents.PlanQuotaRepo.Pool.Held (Boolean)
+com.histmersion.domain.automation.agents.PlanQuotaRepo.Pool.PlanType (String)
+com.histmersion.domain.automation.agents.PlanQuotaRepo.Pool.Refusal (String)
+com.histmersion.domain.automation.agents.PlanQuotaRepo.Pool.RefusalUntil (Long)
+com.histmersion.domain.automation.agents.PlanQuotaRepo.RefreshDetail (String)
+com.histmersion.domain.automation.agents.PlanQuotaRepo.RefreshMode (String)
+com.histmersion.domain.automation.agents.PlanQuotaRepo.RefreshTrigger (String)
+com.histmersion.domain.automation.agents.RunQuery.Goal (String)
+com.histmersion.domain.automation.agents.RunQuery.Managers (String)
+com.histmersion.domain.automation.agents.RunQuery.Models (String)
+com.histmersion.domain.automation.agents.RunQuery.Origins (String)
+com.histmersion.domain.automation.agents.RunQuery.Pipelines (String)
+com.histmersion.domain.automation.agents.RunQuery.Providers (String)
+com.histmersion.domain.automation.agents.RunQuery.Q (String)
+com.histmersion.domain.automation.agents.RunQuery.Status (String)
+com.histmersion.domain.automation.agents.ToolUse.Input (String)
+com.histmersion.domain.automation.agents.ToolUse.Tool (String)
+com.histmersion.domain.automation.approvals.ApprovalQuery.Goal (String)
+com.histmersion.domain.automation.approvals.ApprovalQuery.Subject (String)
+com.histmersion.domain.automation.approvals.ProposalEvidence.Evidence (String)
+com.histmersion.domain.automation.approvals.ProposalEvidence.Quote (String)
+com.histmersion.domain.automation.autopilot.AutopilotRepo.Digest (String)
+com.histmersion.domain.automation.autopilot.AutopilotRepo.DrainSince (String)
+com.histmersion.domain.automation.autopilot.AutopilotRepo.DrainedAt (String)
+com.histmersion.domain.automation.autopilot.AutopilotRepo.Row.ChangedAt (String)
+com.histmersion.domain.automation.autopilot.AutopilotRepo.Row.ChangedBy (String)
+com.histmersion.domain.automation.autopilot.AutopilotRepo.Row.Enabled (Boolean)
+com.histmersion.domain.automation.autopilot.AutopilotRepo.Row.LastBackupAt (String)
+com.histmersion.domain.automation.autopilot.AutopilotRepo.Row.LastEnsureAt (String)
+com.histmersion.domain.automation.autopilot.AutopilotRepo.Row.LastLintAt (String)
+com.histmersion.domain.automation.autopilot.AutopilotRepo.Row.Paused (String)
+com.histmersion.domain.automation.autopilot.AutopilotRepo.StrategyName (String)
+com.histmersion.domain.automation.goals.BGoalLinkRow.CreatedAt (String)
+com.histmersion.domain.automation.goals.BGoalLinkRow.Kind (String)
+com.histmersion.domain.automation.goals.BGoalLinkRow.Note (String)
+com.histmersion.domain.automation.goals.BGoalLinkRow.Ref (String)
+com.histmersion.domain.automation.goals.BGoalRow.CreatedAt (String)
+com.histmersion.domain.automation.goals.BGoalRow.Notes (String)
+com.histmersion.domain.automation.goals.BGoalRow.PHi (Long)
+com.histmersion.domain.automation.goals.BGoalRow.PLo (Long)
+com.histmersion.domain.automation.goals.BGoalRow.PNull (Boolean)
+com.histmersion.domain.automation.goals.BGoalRow.Plan (String)
+com.histmersion.domain.automation.goals.BGoalRow.PlanApprovedAt (String)
+com.histmersion.domain.automation.goals.BGoalRow.Regions (String)
+com.histmersion.domain.automation.goals.BGoalRow.Slug (String)
+com.histmersion.domain.automation.goals.BGoalRow.Status (String)
+com.histmersion.domain.automation.goals.BGoalRow.Tags (String)
+com.histmersion.domain.automation.goals.BGoalRow.Title (String)
+com.histmersion.domain.automation.goals.BGoalRow.UpdatedAt (String)
+com.histmersion.domain.automation.goals.BGoalScheduleRow.Cron (String)
+com.histmersion.domain.automation.goals.BGoalScheduleRow.Enabled (Boolean)
+com.histmersion.domain.automation.goals.BGoalScheduleRow.Kind (String)
+com.histmersion.domain.automation.goals.FocusRepo.GoalRow.Active (Boolean)
+com.histmersion.domain.automation.goals.FocusRepo.GoalRow.CreatedAt (String)
+com.histmersion.domain.automation.goals.FocusRepo.GoalRow.LeftAt (String)
+com.histmersion.domain.automation.goals.FocusRepo.GoalRow.LeftWhy (String)
+com.histmersion.domain.automation.goals.FocusRepo.GoalRow.Parent (String)
+com.histmersion.domain.automation.goals.FocusRepo.GoalRow.Pinned (Boolean)
+com.histmersion.domain.automation.goals.FocusRepo.GoalRow.Priority (Int)
+com.histmersion.domain.automation.goals.FocusRepo.GoalRow.Since (String)
+com.histmersion.domain.automation.goals.FocusRepo.GoalRow.Slug (String)
+com.histmersion.domain.automation.goals.FocusRepo.GoalRow.Status (String)
+com.histmersion.domain.automation.goals.FocusRepo.GoalRow.Title (String)
+com.histmersion.domain.automation.goals.FocusRepo.GoalRow.Why (String)
+com.histmersion.domain.automation.goals.FocusRepo.JoinWhy (String)
+com.histmersion.domain.automation.goals.FocusRepo.WorkRow.Approval (Long)
+com.histmersion.domain.automation.goals.FocusRepo.WorkRow.ApprovalKind (String)
+com.histmersion.domain.automation.goals.FocusRepo.WorkRow.AutoApprove (String)
+com.histmersion.domain.automation.goals.FocusRepo.WorkRow.FocusHeld (Boolean)
+com.histmersion.domain.automation.goals.FocusRepo.WorkRow.Goals (String)
+com.histmersion.domain.automation.goals.FocusRepo.WorkRow.Id (Long)
+com.histmersion.domain.automation.goals.FocusRepo.WorkRow.Kind (String)
+com.histmersion.domain.automation.goals.FocusRepo.WorkRow.ManagerId (String)
+com.histmersion.domain.automation.goals.FocusRepo.WorkRow.ManagerKind (String)
+com.histmersion.domain.automation.goals.FocusRepo.WorkRow.Person (Boolean)
+com.histmersion.domain.automation.goals.FocusRepo.WorkRow.PersonHeld (Boolean)
+com.histmersion.domain.automation.goals.FocusRepo.WorkRow.Status (String)
+com.histmersion.domain.automation.goals.FocusRepo.WorkRow.Target (String)
+com.histmersion.domain.automation.goals.GoalFocusService.Read.LeftKey (String)
+com.histmersion.domain.automation.goals.GoalFocusService.Read.LeftValuePart1 (String)
+com.histmersion.domain.automation.goals.GoalFocusService.Read.LeftValuePart2 (String)
+com.histmersion.domain.automation.goals.GoalFocusService.Read.OpenPlans (Int)
+com.histmersion.domain.automation.goals.GoalFocusService.Read.TitlesKey (String)
+com.histmersion.domain.automation.goals.GoalFocusService.Read.TitlesValue (String)
+com.histmersion.domain.automation.goals.GoalLinkRecord.Goal (String)
+com.histmersion.domain.automation.goals.GoalLinkRecord.Note (String)
+com.histmersion.domain.automation.goals.GoalLinkRecord.Ref (String)
+com.histmersion.domain.automation.goals.GoalLinkRepo.ItemId (Int)
+com.histmersion.domain.automation.goals.GoalRecord.Plan (String)
+com.histmersion.domain.automation.goals.GoalRow.Notes (String)
+com.histmersion.domain.automation.goals.GoalRow.ParentSlug (String)
+com.histmersion.domain.automation.goals.GoalRow.Regions (String)
+com.histmersion.domain.automation.goals.GoalRow.Slug (String)
+com.histmersion.domain.automation.goals.GoalRow.Status (String)
+com.histmersion.domain.automation.goals.GoalRow.Tags (String)
+com.histmersion.domain.automation.goals.GoalRow.Title (String)
+com.histmersion.domain.automation.goals.GoalRow.UpdatedAt (String)
+com.histmersion.domain.automation.goals.GoalScheduleRecord.Cron (String)
+com.histmersion.domain.automation.goals.GoalScheduleRecord.Enabled (Boolean)
+com.histmersion.domain.automation.goals.GoalScheduleRecord.Goal (String)
+com.histmersion.domain.automation.managers.ManagerLight.Cron (String)
+com.histmersion.domain.automation.managers.ManagerLight.Goal (String)
+com.histmersion.domain.automation.managers.ManagerLight.Id (String)
+com.histmersion.domain.automation.managers.ManagerLight.Kind (String)
+com.histmersion.domain.automation.managers.ManagerLight.PlanItem (Boolean)
+com.histmersion.domain.automation.managers.ManagerLight.State (String)
+com.histmersion.domain.automation.managers.ManagerLight.StatusNote (String)
+com.histmersion.domain.automation.managers.ManagerRepo.CancelReason (String)
+com.histmersion.domain.automation.managers.ManagerRepo.EventCursor (Long)
+com.histmersion.domain.automation.managers.ManagerRepo.ProgressText (String)
+com.histmersion.domain.automation.managers.ManagerRepo.RestaleReason (String)
+com.histmersion.domain.automation.managers.SweepAcquireItem.Authors (String)
+com.histmersion.domain.automation.managers.SweepAcquireItem.Goal (String)
+com.histmersion.domain.automation.managers.SweepAcquireItem.IsOa (Boolean)
+com.histmersion.domain.automation.managers.SweepAcquireItem.Item (Int)
+com.histmersion.domain.automation.managers.SweepAcquireItem.Job (String)
+com.histmersion.domain.automation.managers.SweepAcquireItem.ManagerId (String)
+com.histmersion.domain.automation.managers.SweepAcquireItem.Text (String)
+com.histmersion.domain.automation.managers.SweepAcquireItem.Title (String)
+com.histmersion.domain.automation.managers.SweepAcquireItem.Topic (String)
+com.histmersion.domain.automation.managers.SweepAcquireItem.Venue (String)
+com.histmersion.domain.automation.managers.SweepAcquireItem.Why (String)
+com.histmersion.domain.automation.worklists.BQueueRow.CreatedAt (String)
+com.histmersion.domain.automation.worklists.BQueueRow.DoneAt (String)
+com.histmersion.domain.automation.worklists.BQueueRow.List (String)
+com.histmersion.domain.automation.worklists.BQueueRow.Reason (String)
+com.histmersion.domain.automation.worklists.BQueueRow.Status (String)
+com.histmersion.domain.automation.worklists.BQueueRow.Text (String)
+com.histmersion.domain.automation.worklists.BQueueRow.Topic (String)
+com.histmersion.domain.automation.worklists.BQueueRow.UpdatedAt (String)
+
+## TYPES TO DECIDE
+com.histmersion.domain.automation.goals.FocusService.GoalsOfKind | base String | generated | method-parameter
+    def goalsOf(kind: com.histmersion.domain.automation.goals.FocusService.GoalsOfKind, refs: List[com.histmersion.domain.automation.goals.FocusService.GoalsOfRefs]): Map[com
+    def goalsOf(kind: com.histmersion.domain.automation.goals.FocusService.Implementation.GoalsOfKind, refs: List[com.histmersion.domain.automation.goals.FocusService.Impleme
+com.histmersion.domain.automation.goals.FocusService.GoalsOfRefs | base String | generated | method-parameter
+    def goalsOf(kind: com.histmersion.domain.automation.goals.FocusService.GoalsOfKind, refs: List[com.histmersion.domain.automation.goals.FocusService.GoalsOfRefs]): Map[com
+    def goalsOf(kind: com.histmersion.domain.automation.goals.FocusService.Implementation.GoalsOfKind, refs: List[com.histmersion.domain.automation.goals.FocusService.Impleme
+com.histmersion.domain.automation.goals.FocusService.GoalsOfResultPart1 | base String | generated | method-result
+    def goalsOf(kind: com.histmersion.domain.automation.goals.FocusService.GoalsOfKind, refs: List[com.histmersion.domain.automation.goals.FocusService.GoalsOfRefs]): Map[com
+    def goalsOf(kind: com.histmersion.domain.automation.goals.FocusService.Implementation.GoalsOfKind, refs: List[com.histmersion.domain.automation.goals.FocusService.Impleme
+com.histmersion.domain.automation.goals.FocusService.GoalsOfResultPart2 | base String | generated | method-result
+    def goalsOf(kind: com.histmersion.domain.automation.goals.FocusService.GoalsOfKind, refs: List[com.histmersion.domain.automation.goals.FocusService.GoalsOfRefs]): Map[com
+    def goalsOf(kind: com.histmersion.domain.automation.goals.FocusService.Implementation.GoalsOfKind, refs: List[com.histmersion.domain.automation.goals.FocusService.Impleme
+com.histmersion.domain.automation.goals.FocusService.Implementation.GoalsOfKind | base String | generated | method-parameter
+    def goalsOf(kind: com.histmersion.domain.automation.goals.FocusService.GoalsOfKind, refs: List[com.histmersion.domain.automation.goals.FocusService.GoalsOfRefs]): Map[com
+    def goalsOf(kind: com.histmersion.domain.automation.goals.FocusService.Implementation.GoalsOfKind, refs: List[com.histmersion.domain.automation.goals.FocusService.Impleme
+com.histmersion.domain.automation.goals.FocusService.Implementation.GoalsOfRefs | base String | generated | method-parameter
+    def goalsOf(kind: com.histmersion.domain.automation.goals.FocusService.GoalsOfKind, refs: List[com.histmersion.domain.automation.goals.FocusService.GoalsOfRefs]): Map[com
+    def goalsOf(kind: com.histmersion.domain.automation.goals.FocusService.Implementation.GoalsOfKind, refs: List[com.histmersion.domain.automation.goals.FocusService.Impleme
+com.histmersion.domain.automation.goals.FocusService.Implementation.GoalsOfResultPart1 | base String | generated | method-result
+    def goalsOf(kind: com.histmersion.domain.automation.goals.FocusService.GoalsOfKind, refs: List[com.histmersion.domain.automation.goals.FocusService.GoalsOfRefs]): Map[com
+    def goalsOf(kind: com.histmersion.domain.automation.goals.FocusService.Implementation.GoalsOfKind, refs: List[com.histmersion.domain.automation.goals.FocusService.Impleme
+com.histmersion.domain.automation.goals.FocusService.Implementation.GoalsOfResultPart2 | base String | generated | method-result
+    def goalsOf(kind: com.histmersion.domain.automation.goals.FocusService.GoalsOfKind, refs: List[com.histmersion.domain.automation.goals.FocusService.GoalsOfRefs]): Map[com
+    def goalsOf(kind: com.histmersion.domain.automation.goals.FocusService.Implementation.GoalsOfKind, refs: List[com.histmersion.domain.automation.goals.FocusService.Impleme
+com.histmersion.domain.automation.goals.FocusService.Implementation.JoinedSlug | base String | generated | method-parameter
+    def joined(slug: com.histmersion.domain.automation.goals.FocusService.JoinedSlug, why: com.histmersion.domain.automation.goals.FocusService.JoinedWhy, now: Instant): Unit
+    def joined(slug: com.histmersion.domain.automation.goals.FocusService.Implementation.JoinedSlug, why: com.histmersion.domain.automation.goals.FocusService.Implementation.
+com.histmersion.domain.automation.goals.FocusService.Implementation.JoinedWhy | base String | generated | method-parameter
+    def joined(slug: com.histmersion.domain.automation.goals.FocusService.JoinedSlug, why: com.histmersion.domain.automation.goals.FocusService.JoinedWhy, now: Instant): Unit
+    def joined(slug: com.histmersion.domain.automation.goals.FocusService.Implementation.JoinedSlug, why: com.histmersion.domain.automation.goals.FocusService.Implementation.
+com.histmersion.domain.automation.goals.FocusService.Implementation.LastStopsResultPart1 | base String | generated | method-result
+    def lastStops(): Map[com.histmersion.domain.automation.goals.FocusService.LastStopsResultPart1, com.histmersion.domain.automation.goals.FocusService.LastStopsResultPart2]
+    def lastStops(): Map[com.histmersion.domain.automation.goals.FocusService.Implementation.LastStopsResultPart1, com.histmersion.domain.automation.goals.FocusService.Implem
+com.histmersion.domain.automation.goals.FocusService.Implementation.LastStopsResultPart2 | base String | generated | method-result
+    def lastStops(): Map[com.histmersion.domain.automation.goals.FocusService.LastStopsResultPart1, com.histmersion.domain.automation.goals.FocusService.LastStopsResultPart2]
+    def lastStops(): Map[com.histmersion.domain.automation.goals.FocusService.Implementation.LastStopsResultPart1, com.histmersion.domain.automation.goals.FocusService.Implem
+com.histmersion.domain.automation.goals.FocusService.Implementation.LeftSlug | base String | generated | method-parameter
+    def left(slug: com.histmersion.domain.automation.goals.FocusService.LeftSlug, why: com.histmersion.domain.automation.goals.FocusService.LeftWhy, now: Instant): Unit
+    def left(slug: com.histmersion.domain.automation.goals.FocusService.Implementation.LeftSlug, why: com.histmersion.domain.automation.goals.FocusService.Implementation.Left
+com.histmersion.domain.automation.goals.FocusService.Implementation.LeftWhy | base String | generated | method-parameter
+    def left(slug: com.histmersion.domain.automation.goals.FocusService.LeftSlug, why: com.histmersion.domain.automation.goals.FocusService.LeftWhy, now: Instant): Unit
+    def left(slug: com.histmersion.domain.automation.goals.FocusService.Implementation.LeftSlug, why: com.histmersion.domain.automation.goals.FocusService.Implementation.Left
+com.histmersion.domain.automation.goals.FocusService.Implementation.PinPinned | base Boolean | generated | method-parameter
+    def pin(slug: com.histmersion.domain.automation.goals.FocusService.PinSlug, pinned: com.histmersion.domain.automation.goals.FocusService.PinPinned): com.histmersion.domai
+    def pin(slug: com.histmersion.domain.automation.goals.FocusService.Implementation.PinSlug, pinned: com.histmersion.domain.automation.goals.FocusService.Implementation.Pin
+com.histmersion.domain.automation.goals.FocusService.Implementation.PinResult | base Boolean | generated | method-result
+    def pin(slug: com.histmersion.domain.automation.goals.FocusService.PinSlug, pinned: com.histmersion.domain.automation.goals.FocusService.PinPinned): com.histmersion.domai
+    def pin(slug: com.histmersion.domain.automation.goals.FocusService.Implementation.PinSlug, pinned: com.histmersion.domain.automation.goals.FocusService.Implementation.Pin
+com.histmersion.domain.automation.goals.FocusService.Implementation.PinSlug | base String | generated | method-parameter
+    def pin(slug: com.histmersion.domain.automation.goals.FocusService.PinSlug, pinned: com.histmersion.domain.automation.goals.FocusService.PinPinned): com.histmersion.domai
+    def pin(slug: com.histmersion.domain.automation.goals.FocusService.Implementation.PinSlug, pinned: com.histmersion.domain.automation.goals.FocusService.Implementation.Pin
+com.histmersion.domain.automation.goals.FocusService.Implementation.PriorityN | base Int | generated | method-parameter
+    def priority(slug: com.histmersion.domain.automation.goals.FocusService.PrioritySlug, n: com.histmersion.domain.automation.goals.FocusService.PriorityN): com.histmersion.
+    def priority(slug: com.histmersion.domain.automation.goals.FocusService.Implementation.PrioritySlug, n: com.histmersion.domain.automation.goals.FocusService.Implementatio
+com.histmersion.domain.automation.goals.FocusService.Implementation.PriorityResult | base Boolean | generated | method-result
+    def priority(slug: com.histmersion.domain.automation.goals.FocusService.PrioritySlug, n: com.histmersion.domain.automation.goals.FocusService.PriorityN): com.histmersion.
+    def priority(slug: com.histmersion.domain.automation.goals.FocusService.Implementation.PrioritySlug, n: com.histmersion.domain.automation.goals.FocusService.Implementatio
+com.histmersion.domain.automation.goals.FocusService.Implementation.PrioritySlug | base String | generated | method-parameter
+    def priority(slug: com.histmersion.domain.automation.goals.FocusService.PrioritySlug, n: com.histmersion.domain.automation.goals.FocusService.PriorityN): com.histmersion.
+    def priority(slug: com.histmersion.domain.automation.goals.FocusService.Implementation.PrioritySlug, n: com.histmersion.domain.automation.goals.FocusService.Implementatio
+com.histmersion.domain.automation.goals.FocusService.Implementation.SourceCountsResultPart1 | base String | generated | method-result
+    def sourceCounts(): Map[com.histmersion.domain.automation.goals.FocusService.SourceCountsResultPart1, com.histmersion.domain.automation.goals.FocusService.SourceCountsRes
+    def sourceCounts(): Map[com.histmersion.domain.automation.goals.FocusService.Implementation.SourceCountsResultPart1, com.histmersion.domain.automation.goals.FocusService.
+com.histmersion.domain.automation.goals.FocusService.Implementation.SourceCountsResultPart2 | base Int | generated | method-result
+    def sourceCounts(): Map[com.histmersion.domain.automation.goals.FocusService.SourceCountsResultPart1, com.histmersion.domain.automation.goals.FocusService.SourceCountsRes
+    def sourceCounts(): Map[com.histmersion.domain.automation.goals.FocusService.Implementation.SourceCountsResultPart1, com.histmersion.domain.automation.goals.FocusService.
+com.histmersion.domain.automation.goals.FocusService.InMemory.ChangeFocusMustExist | base Boolean | generated | method-parameter
+    private def changeFocus(slug: com.histmersion.domain.automation.goals.FocusService.InMemory.ChangeFocusSlug, mustExist: com.histmersion.domain.automation.goals.FocusServi
+com.histmersion.domain.automation.goals.FocusService.InMemory.ChangeFocusResult | base Boolean | generated | method-result
+    private def changeFocus(slug: com.histmersion.domain.automation.goals.FocusService.InMemory.ChangeFocusSlug, mustExist: com.histmersion.domain.automation.goals.FocusServi
+com.histmersion.domain.automation.goals.FocusService.InMemory.ChangeFocusSlug | base String | generated | method-parameter
+    private def changeFocus(slug: com.histmersion.domain.automation.goals.FocusService.InMemory.ChangeFocusSlug, mustExist: com.histmersion.domain.automation.goals.FocusServi
+com.histmersion.domain.automation.goals.FocusService.InMemory.GoalsOfKind | base String | generated | method-parameter
+    def goalsOf(kind: com.histmersion.domain.automation.goals.FocusService.GoalsOfKind, refs: List[com.histmersion.domain.automation.goals.FocusService.GoalsOfRefs]): Map[com
+    def goalsOf(kind: com.histmersion.domain.automation.goals.FocusService.Implementation.GoalsOfKind, refs: List[com.histmersion.domain.automation.goals.FocusService.Impleme
+com.histmersion.domain.automation.goals.FocusService.InMemory.GoalsOfRefs | base String | generated | method-parameter
+    def goalsOf(kind: com.histmersion.domain.automation.goals.FocusService.GoalsOfKind, refs: List[com.histmersion.domain.automation.goals.FocusService.GoalsOfRefs]): Map[com
+    def goalsOf(kind: com.histmersion.domain.automation.goals.FocusService.Implementation.GoalsOfKind, refs: List[com.histmersion.domain.automation.goals.FocusService.Impleme
+com.histmersion.domain.automation.goals.FocusService.InMemory.GoalsOfResultPart1 | base String | generated | method-result
+    def goalsOf(kind: com.histmersion.domain.automation.goals.FocusService.GoalsOfKind, refs: List[com.histmersion.domain.automation.goals.FocusService.GoalsOfRefs]): Map[com
+    def goalsOf(kind: com.histmersion.domain.automation.goals.FocusService.Implementation.GoalsOfKind, refs: List[com.histmersion.domain.automation.goals.FocusService.Impleme
+com.histmersion.domain.automation.goals.FocusService.InMemory.GoalsOfResultPart2 | base String | generated | method-result
+    def goalsOf(kind: com.histmersion.domain.automation.goals.FocusService.GoalsOfKind, refs: List[com.histmersion.domain.automation.goals.FocusService.GoalsOfRefs]): Map[com
+    def goalsOf(kind: com.histmersion.domain.automation.goals.FocusService.Implementation.GoalsOfKind, refs: List[com.histmersion.domain.automation.goals.FocusService.Impleme
+com.histmersion.domain.automation.goals.FocusService.InMemory.JoinedSlug | base String | generated | method-parameter
+    def joined(slug: com.histmersion.domain.automation.goals.FocusService.JoinedSlug, why: com.histmersion.domain.automation.goals.FocusService.JoinedWhy, now: Instant): Unit
+    def joined(slug: com.histmersion.domain.automation.goals.FocusService.Implementation.JoinedSlug, why: com.histmersion.domain.automation.goals.FocusService.Implementation.
+com.histmersion.domain.automation.goals.FocusService.InMemory.JoinedWhy | base String | generated | method-parameter
+    def joined(slug: com.histmersion.domain.automation.goals.FocusService.JoinedSlug, why: com.histmersion.domain.automation.goals.FocusService.JoinedWhy, now: Instant): Unit
+    def joined(slug: com.histmersion.domain.automation.goals.FocusService.Implementation.JoinedSlug, why: com.histmersion.domain.automation.goals.FocusService.Implementation.
+com.histmersion.domain.automation.goals.FocusService.InMemory.LastStopsResultPart1 | base String | generated | method-result
+    def lastStops(): Map[com.histmersion.domain.automation.goals.FocusService.LastStopsResultPart1, com.histmersion.domain.automation.goals.FocusService.LastStopsResultPart2]
+    def lastStops(): Map[com.histmersion.domain.automation.goals.FocusService.Implementation.LastStopsResultPart1, com.histmersion.domain.automation.goals.FocusService.Implem
+com.histmersion.domain.automation.goals.FocusService.InMemory.LastStopsResultPart2 | base String | generated | method-result
+    def lastStops(): Map[com.histmersion.domain.automation.goals.FocusService.LastStopsResultPart1, com.histmersion.domain.automation.goals.FocusService.LastStopsResultPart2]
+    def lastStops(): Map[com.histmersion.domain.automation.goals.FocusService.Implementation.LastStopsResultPart1, com.histmersion.domain.automation.goals.FocusService.Implem
+com.histmersion.domain.automation.goals.FocusService.InMemory.LeftSlug | base String | generated | method-parameter
+    def left(slug: com.histmersion.domain.automation.goals.FocusService.LeftSlug, why: com.histmersion.domain.automation.goals.FocusService.LeftWhy, now: Instant): Unit
+    def left(slug: com.histmersion.domain.automation.goals.FocusService.Implementation.LeftSlug, why: com.histmersion.domain.automation.goals.FocusService.Implementation.Left
+com.histmersion.domain.automation.goals.FocusService.InMemory.LeftWhy | base String | generated | method-parameter
+    def left(slug: com.histmersion.domain.automation.goals.FocusService.LeftSlug, why: com.histmersion.domain.automation.goals.FocusService.LeftWhy, now: Instant): Unit
+    def left(slug: com.histmersion.domain.automation.goals.FocusService.Implementation.LeftSlug, why: com.histmersion.domain.automation.goals.FocusService.Implementation.Left
+com.histmersion.domain.automation.goals.FocusService.InMemory.PinPinned | base Boolean | generated | method-parameter
+    def pin(slug: com.histmersion.domain.automation.goals.FocusService.PinSlug, pinned: com.histmersion.domain.automation.goals.FocusService.PinPinned): com.histmersion.domai
+    def pin(slug: com.histmersion.domain.automation.goals.FocusService.Implementation.PinSlug, pinned: com.histmersion.domain.automation.goals.FocusService.Implementation.Pin
+com.histmersion.domain.automation.goals.FocusService.InMemory.PinResult | base Boolean | generated | method-result
+    def pin(slug: com.histmersion.domain.automation.goals.FocusService.PinSlug, pinned: com.histmersion.domain.automation.goals.FocusService.PinPinned): com.histmersion.domai
+    def pin(slug: com.histmersion.domain.automation.goals.FocusService.Implementation.PinSlug, pinned: com.histmersion.domain.automation.goals.FocusService.Implementation.Pin
+com.histmersion.domain.automation.goals.FocusService.InMemory.PinSlug | base String | generated | method-parameter
+    def pin(slug: com.histmersion.domain.automation.goals.FocusService.PinSlug, pinned: com.histmersion.domain.automation.goals.FocusService.PinPinned): com.histmersion.domai
+    def pin(slug: com.histmersion.domain.automation.goals.FocusService.Implementation.PinSlug, pinned: com.histmersion.domain.automation.goals.FocusService.Implementation.Pin
+com.histmersion.domain.automation.goals.FocusService.InMemory.PriorityN | base Int | generated | method-parameter
+    def priority(slug: com.histmersion.domain.automation.goals.FocusService.PrioritySlug, n: com.histmersion.domain.automation.goals.FocusService.PriorityN): com.histmersion.
+    def priority(slug: com.histmersion.domain.automation.goals.FocusService.Implementation.PrioritySlug, n: com.histmersion.domain.automation.goals.FocusService.Implementatio
+com.histmersion.domain.automation.goals.FocusService.InMemory.PriorityResult | base Boolean | generated | method-result
+    def priority(slug: com.histmersion.domain.automation.goals.FocusService.PrioritySlug, n: com.histmersion.domain.automation.goals.FocusService.PriorityN): com.histmersion.
+    def priority(slug: com.histmersion.domain.automation.goals.FocusService.Implementation.PrioritySlug, n: com.histmersion.domain.automation.goals.FocusService.Implementatio
+com.histmersion.domain.automation.goals.FocusService.InMemory.PrioritySlug | base String | generated | method-parameter
+    def priority(slug: com.histmersion.domain.automation.goals.FocusService.PrioritySlug, n: com.histmersion.domain.automation.goals.FocusService.PriorityN): com.histmersion.
+    def priority(slug: com.histmersion.domain.automation.goals.FocusService.Implementation.PrioritySlug, n: com.histmersion.domain.automation.goals.FocusService.Implementatio
+com.histmersion.domain.automation.goals.FocusService.InMemory.SourceCountsResultPart1 | base String | generated | method-result
+    def sourceCounts(): Map[com.histmersion.domain.automation.goals.FocusService.SourceCountsResultPart1, com.histmersion.domain.automation.goals.FocusService.SourceCountsRes
+    def sourceCounts(): Map[com.histmersion.domain.automation.goals.FocusService.Implementation.SourceCountsResultPart1, com.histmersion.domain.automation.goals.FocusService.
+com.histmersion.domain.automation.goals.FocusService.InMemory.SourceCountsResultPart2 | base Int | generated | method-result
+    def sourceCounts(): Map[com.histmersion.domain.automation.goals.FocusService.SourceCountsResultPart1, com.histmersion.domain.automation.goals.FocusService.SourceCountsRes
+    def sourceCounts(): Map[com.histmersion.domain.automation.goals.FocusService.Implementation.SourceCountsResultPart1, com.histmersion.domain.automation.goals.FocusService.
+com.histmersion.domain.automation.goals.FocusService.InMemory.TResult | base String | generated | method-result
+    private def t(at: Option[Instant]): Option[com.histmersion.domain.automation.goals.FocusService.InMemory.TResult] = at.map(AutomationState.text)
+com.histmersion.domain.automation.goals.FocusService.JoinedSlug | base String | generated | method-parameter
+    def joined(slug: com.histmersion.domain.automation.goals.FocusService.JoinedSlug, why: com.histmersion.domain.automation.goals.FocusService.JoinedWhy, now: Instant): Unit
+    def joined(slug: com.histmersion.domain.automation.goals.FocusService.Implementation.JoinedSlug, why: com.histmersion.domain.automation.goals.FocusService.Implementation.
+com.histmersion.domain.automation.goals.FocusService.JoinedWhy | base String | generated | method-parameter
+    def joined(slug: com.histmersion.domain.automation.goals.FocusService.JoinedSlug, why: com.histmersion.domain.automation.goals.FocusService.JoinedWhy, now: Instant): Unit
+    def joined(slug: com.histmersion.domain.automation.goals.FocusService.Implementation.JoinedSlug, why: com.histmersion.domain.automation.goals.FocusService.Implementation.
+com.histmersion.domain.automation.goals.FocusService.LastStopsResultPart1 | base String | generated | method-result
+    def lastStops(): Map[com.histmersion.domain.automation.goals.FocusService.LastStopsResultPart1, com.histmersion.domain.automation.goals.FocusService.LastStopsResultPart2]
+    def lastStops(): Map[com.histmersion.domain.automation.goals.FocusService.Implementation.LastStopsResultPart1, com.histmersion.domain.automation.goals.FocusService.Implem
+com.histmersion.domain.automation.goals.FocusService.LastStopsResultPart2 | base String | generated | method-result
+    def lastStops(): Map[com.histmersion.domain.automation.goals.FocusService.LastStopsResultPart1, com.histmersion.domain.automation.goals.FocusService.LastStopsResultPart2]
+    def lastStops(): Map[com.histmersion.domain.automation.goals.FocusService.Implementation.LastStopsResultPart1, com.histmersion.domain.automation.goals.FocusService.Implem
+com.histmersion.domain.automation.goals.FocusService.LeftSlug | base String | generated | method-parameter
+    def left(slug: com.histmersion.domain.automation.goals.FocusService.LeftSlug, why: com.histmersion.domain.automation.goals.FocusService.LeftWhy, now: Instant): Unit
+    def left(slug: com.histmersion.domain.automation.goals.FocusService.Implementation.LeftSlug, why: com.histmersion.domain.automation.goals.FocusService.Implementation.Left
+com.histmersion.domain.automation.goals.FocusService.LeftWhy | base String | generated | method-parameter
+    def left(slug: com.histmersion.domain.automation.goals.FocusService.LeftSlug, why: com.histmersion.domain.automation.goals.FocusService.LeftWhy, now: Instant): Unit
+    def left(slug: com.histmersion.domain.automation.goals.FocusService.Implementation.LeftSlug, why: com.histmersion.domain.automation.goals.FocusService.Implementation.Left
+com.histmersion.domain.automation.goals.FocusService.PinPinned | base Boolean | generated | method-parameter
+    def pin(slug: com.histmersion.domain.automation.goals.FocusService.PinSlug, pinned: com.histmersion.domain.automation.goals.FocusService.PinPinned): com.histmersion.domai
+    def pin(slug: com.histmersion.domain.automation.goals.FocusService.Implementation.PinSlug, pinned: com.histmersion.domain.automation.goals.FocusService.Implementation.Pin
+com.histmersion.domain.automation.goals.FocusService.PinResult | base Boolean | generated | method-result
+    def pin(slug: com.histmersion.domain.automation.goals.FocusService.PinSlug, pinned: com.histmersion.domain.automation.goals.FocusService.PinPinned): com.histmersion.domai
+    def pin(slug: com.histmersion.domain.automation.goals.FocusService.Implementation.PinSlug, pinned: com.histmersion.domain.automation.goals.FocusService.Implementation.Pin
+com.histmersion.domain.automation.goals.FocusService.PinSlug | base String | generated | method-parameter
+    def pin(slug: com.histmersion.domain.automation.goals.FocusService.PinSlug, pinned: com.histmersion.domain.automation.goals.FocusService.PinPinned): com.histmersion.domai
+    def pin(slug: com.histmersion.domain.automation.goals.FocusService.Implementation.PinSlug, pinned: com.histmersion.domain.automation.goals.FocusService.Implementation.Pin
+com.histmersion.domain.automation.goals.FocusService.PriorityN | base Int | generated | method-parameter
+    def priority(slug: com.histmersion.domain.automation.goals.FocusService.PrioritySlug, n: com.histmersion.domain.automation.goals.FocusService.PriorityN): com.histmersion.
+    def priority(slug: com.histmersion.domain.automation.goals.FocusService.Implementation.PrioritySlug, n: com.histmersion.domain.automation.goals.FocusService.Implementatio
+com.histmersion.domain.automation.goals.FocusService.PriorityResult | base Boolean | generated | method-result
+    def priority(slug: com.histmersion.domain.automation.goals.FocusService.PrioritySlug, n: com.histmersion.domain.automation.goals.FocusService.PriorityN): com.histmersion.
+    def priority(slug: com.histmersion.domain.automation.goals.FocusService.Implementation.PrioritySlug, n: com.histmersion.domain.automation.goals.FocusService.Implementatio
+com.histmersion.domain.automation.goals.FocusService.PrioritySlug | base String | generated | method-parameter
+    def priority(slug: com.histmersion.domain.automation.goals.FocusService.PrioritySlug, n: com.histmersion.domain.automation.goals.FocusService.PriorityN): com.histmersion.
+    def priority(slug: com.histmersion.domain.automation.goals.FocusService.Implementation.PrioritySlug, n: com.histmersion.domain.automation.goals.FocusService.Implementatio
+com.histmersion.domain.automation.goals.FocusService.SourceCountsResultPart1 | base String | generated | method-result
+    def sourceCounts(): Map[com.histmersion.domain.automation.goals.FocusService.SourceCountsResultPart1, com.histmersion.domain.automation.goals.FocusService.SourceCountsRes
+    def sourceCounts(): Map[com.histmersion.domain.automation.goals.FocusService.Implementation.SourceCountsResultPart1, com.histmersion.domain.automation.goals.FocusService.
+com.histmersion.domain.automation.goals.FocusService.SourceCountsResultPart2 | base Int | generated | method-result
+    def sourceCounts(): Map[com.histmersion.domain.automation.goals.FocusService.SourceCountsResultPart1, com.histmersion.domain.automation.goals.FocusService.SourceCountsRes
+    def sourceCounts(): Map[com.histmersion.domain.automation.goals.FocusService.Implementation.SourceCountsResultPart1, com.histmersion.domain.automation.goals.FocusService.
+com.histmersion.domain.automation.goals.GoalFocusService.ActiveGoalsResult | base String | generated | method-result
+    def activeGoals: Option[Set[com.histmersion.domain.automation.goals.GoalFocusService.ActiveGoalsResult]] = current
+com.histmersion.domain.automation.goals.GoalFocusService.ApplyHoldsResult | base String | generated | method-result
+    private def applyHolds(plan: Plan, r: Read): List[com.histmersion.domain.automation.goals.GoalFocusService.ApplyHoldsResult] =
+com.histmersion.domain.automation.goals.GoalFocusService.ByPersonAutoApprove | base String | generated | method-parameter
+    private def byPerson(kind: Option[com.histmersion.domain.automation.goals.GoalFocusService.ByPersonKind], autoApprove: Option[com.histmersion.domain.automation.goals.Goal
+com.histmersion.domain.automation.goals.GoalFocusService.ByPersonKind | base String | generated | method-parameter
+    private def byPerson(kind: Option[com.histmersion.domain.automation.goals.GoalFocusService.ByPersonKind], autoApprove: Option[com.histmersion.domain.automation.goals.Goal
+com.histmersion.domain.automation.goals.GoalFocusService.ByPersonResult | base Boolean | generated | method-result
+    private def byPerson(kind: Option[com.histmersion.domain.automation.goals.GoalFocusService.ByPersonKind], autoApprove: Option[com.histmersion.domain.automation.goals.Goal
+com.histmersion.domain.automation.goals.GoalFocusService.CapResultPart1 | base Int | generated | method-result
+    def cap: (com.histmersion.domain.automation.goals.GoalFocusService.CapResultPart1, com.histmersion.domain.automation.goals.GoalFocusService.CapResultPart2) =
+com.histmersion.domain.automation.goals.GoalFocusService.CapResultPart2 | base String | generated | method-result
+    def cap: (com.histmersion.domain.automation.goals.GoalFocusService.CapResultPart1, com.histmersion.domain.automation.goals.GoalFocusService.CapResultPart2) =
+com.histmersion.domain.automation.goals.GoalFocusService.Current | base String | generated | variable
+    @volatile private var current: Option[Set[com.histmersion.domain.automation.goals.GoalFocusService.Current]] = None
+com.histmersion.domain.automation.goals.GoalFocusService.EventGoal | base String | generated | method-parameter
+    private def event(goal: com.histmersion.domain.automation.goals.GoalFocusService.EventGoal, text: com.histmersion.domain.automation.goals.GoalFocusService.EventText): Uni
+com.histmersion.domain.automation.goals.GoalFocusService.EventText | base String | generated | method-parameter
+    private def event(goal: com.histmersion.domain.automation.goals.GoalFocusService.EventGoal, text: com.histmersion.domain.automation.goals.GoalFocusService.EventText): Uni
+com.histmersion.domain.automation.goals.GoalFocusService.FairMineT | base String | generated | method-parameter
+    def mine(t: com.histmersion.domain.automation.goals.GoalFocusService.FairMineT) = goalsOf.getOrElse(t, Nil).exists(active)
+com.histmersion.domain.automation.goals.GoalFocusService.GoalPlanBlockGoal | base String | generated | method-parameter
+    def goalPlanBlock(goal: com.histmersion.domain.automation.goals.GoalFocusService.GoalPlanBlockGoal, proposed: com.histmersion.domain.automation.goals.GoalFocusService.Goa
+com.histmersion.domain.automation.goals.GoalFocusService.GoalPlanBlockOpenResult | base Int | generated | method-result
+    def open(s: com.histmersion.domain.automation.goals.GoalFocusService.GoalPlanBlockOpenS, seen: Set[com.histmersion.domain.automation.goals.GoalFocusService.GoalPlanBlockO
+com.histmersion.domain.automation.goals.GoalFocusService.GoalPlanBlockOpenS | base String | generated | method-parameter
+    def open(s: com.histmersion.domain.automation.goals.GoalFocusService.GoalPlanBlockOpenS, seen: Set[com.histmersion.domain.automation.goals.GoalFocusService.GoalPlanBlockO
+com.histmersion.domain.automation.goals.GoalFocusService.GoalPlanBlockOpenSeen | base String | generated | method-parameter
+    def open(s: com.histmersion.domain.automation.goals.GoalFocusService.GoalPlanBlockOpenS, seen: Set[com.histmersion.domain.automation.goals.GoalFocusService.GoalPlanBlockO
+com.histmersion.domain.automation.goals.GoalFocusService.GoalPlanBlockProposed | base Int | generated | method-parameter
+    def goalPlanBlock(goal: com.histmersion.domain.automation.goals.GoalFocusService.GoalPlanBlockGoal, proposed: com.histmersion.domain.automation.goals.GoalFocusService.Goa
+com.histmersion.domain.automation.goals.GoalFocusService.GoalPlanBlockResult | base String | generated | method-result
+    def goalPlanBlock(goal: com.histmersion.domain.automation.goals.GoalFocusService.GoalPlanBlockGoal, proposed: com.histmersion.domain.automation.goals.GoalFocusService.Goa
+com.histmersion.domain.automation.goals.GoalFocusService.GoalPlansWaitResult | base String | generated | method-result
+    def goalPlansWait(): Option[com.histmersion.domain.automation.goals.GoalFocusService.GoalPlansWaitResult] =
+com.histmersion.domain.automation.goals.GoalFocusService.InForceResult | base Boolean | generated | method-result
+    def inForce: com.histmersion.domain.automation.goals.GoalFocusService.InForceResult = false
+com.histmersion.domain.automation.goals.GoalFocusService.InfoChanges | base String | generated | method-parameter
+    def info(now: Instant = Instant.now(agents.clock), changes: List[com.histmersion.domain.automation.goals.GoalFocusService.InfoChanges] = Nil): FocusInfo =
+com.histmersion.domain.automation.goals.GoalFocusService.InfoGoalActive | base Boolean | generated | method-parameter
+    def goal(p: GoalFocus.Pick, active: com.histmersion.domain.automation.goals.GoalFocusService.InfoGoalActive): FocusGoal =
+com.histmersion.domain.automation.goals.GoalFocusService.LogLine | base String | generated | method-parameter
+    private def log(line: com.histmersion.domain.automation.goals.GoalFocusService.LogLine): Unit =
+com.histmersion.domain.automation.goals.GoalFocusService.ManagerOfGoal | base String | generated | method-parameter
+    private def managerOf(goal: com.histmersion.domain.automation.goals.GoalFocusService.ManagerOfGoal): Option[com.histmersion.domain.automation.goals.GoalFocusService.Manag
+com.histmersion.domain.automation.goals.GoalFocusService.ManagerOfResult | base String | generated | method-result
+    private def managerOf(goal: com.histmersion.domain.automation.goals.GoalFocusService.ManagerOfGoal): Option[com.histmersion.domain.automation.goals.GoalFocusService.Manag
+com.histmersion.domain.automation.goals.GoalFocusService.NotInForceResult | base String | generated | method-result
+    private def notInForce: com.histmersion.domain.automation.goals.GoalFocusService.NotInForceResult = "the central scheduler admits the work (agents.scheduler.strategy)"
+com.histmersion.domain.automation.goals.GoalFocusService.Queued | base String | generated | variable
+    @volatile private var queued: Set[com.histmersion.domain.automation.goals.GoalFocusService.Queued] = Set.empty
+com.histmersion.domain.automation.goals.GoalFocusService.Read.LeftKey | base String | original | constructor-parameter
+com.histmersion.domain.automation.goals.GoalFocusService.Read.LeftValuePart1 | base String | original | constructor-parameter
+com.histmersion.domain.automation.goals.GoalFocusService.Read.LeftValuePart2 | base String | original | constructor-parameter
+com.histmersion.domain.automation.goals.GoalFocusService.Read.OpenPlans | base Int | original | constructor-parameter
+com.histmersion.domain.automation.goals.GoalFocusService.Read.TitlesKey | base String | original | constructor-parameter
+com.histmersion.domain.automation.goals.GoalFocusService.Read.TitlesValue | base String | original | constructor-parameter
+com.histmersion.domain.automation.goals.GoalFocusService.RecordResult | base String | generated | method-result
+    private def record(plan: Plan, r: Read, now: Instant): List[com.histmersion.domain.automation.goals.GoalFocusService.RecordResult] =
+com.histmersion.domain.automation.goals.GoalFocusService.SetDonePart2 | base String | generated | value
+    val done: Either[Api.Error, com.histmersion.domain.automation.goals.GoalFocusService.SetDonePart2] = in.action.trim.toLowerCase match
+com.histmersion.domain.automation.goals.GoalFocusService.SetMissingG | base String | generated | method-parameter
+    def missing(g: com.histmersion.domain.automation.goals.GoalFocusService.SetMissingG) = Api.Error(s"no goal '$g'", Some(Write.CodeNotFound))
+com.histmersion.domain.automation.goals.GoalFocusService.SettingsMax | base Int | generated | method-parameter
+    private def settings(r: Read, max: com.histmersion.domain.automation.goals.GoalFocusService.SettingsMax): GoalFocus.Settings =
+com.histmersion.domain.automation.goals.GoalFocusService.StatusNoteGoal | base String | generated | method-parameter
+    def statusNote(goal: Option[com.histmersion.domain.automation.goals.GoalFocusService.StatusNoteGoal], note: com.histmersion.domain.automation.goals.GoalFocusService.Statu
+com.histmersion.domain.automation.goals.GoalFocusService.StatusNoteNote | base String | generated | method-parameter
+    def statusNote(goal: Option[com.histmersion.domain.automation.goals.GoalFocusService.StatusNoteGoal], note: com.histmersion.domain.automation.goals.GoalFocusService.Statu
+com.histmersion.domain.automation.goals.GoalFocusService.StatusNoteResult | base String | generated | method-result
+    def statusNote(goal: Option[com.histmersion.domain.automation.goals.GoalFocusService.StatusNoteGoal], note: com.histmersion.domain.automation.goals.GoalFocusService.Statu
+com.histmersion.domain.automation.goals.GoalFocusService.TickResult | base String | generated | method-result
+    def tick(now: Instant): List[com.histmersion.domain.automation.goals.GoalFocusService.TickResult] =
+com.histmersion.domain.automation.goals.GoalFocusService.UnfinishedPlannedResult | base Int | generated | method-result
+    def unfinishedPlanned(): com.histmersion.domain.automation.goals.GoalFocusService.UnfinishedPlannedResult =
+com.histmersion.domain.automation.goals.GoalLinkRecord.Goal | base String | original | alias,constructor-parameter
+com.histmersion.domain.automation.goals.GoalLinkRecord.Note | base String | original | alias,constructor-parameter
+com.histmersion.domain.automation.goals.GoalLinkRecord.Ref | base String | original | alias,constructor-parameter
+com.histmersion.domain.automation.goals.GoalLinkTargets.QueueListRef | base String | generated | method-parameter
+    def queueList(ref: com.histmersion.domain.automation.goals.GoalLinkTargets.QueueListRef): Option[com.histmersion.domain.automation.goals.GoalLinkTargets.QueueListResult]
+    def queueList(ref: com.histmersion.domain.automation.goals.GoalLinkTargets.QueueListRef): Option[com.histmersion.domain.automation.goals.GoalLinkTargets.QueueListResult] 
+com.histmersion.domain.automation.goals.GoalLinkTargets.QueueListResult | base String | generated | method-result
+    def queueList(ref: com.histmersion.domain.automation.goals.GoalLinkTargets.QueueListRef): Option[com.histmersion.domain.automation.goals.GoalLinkTargets.QueueListResult]
+    def queueList(ref: com.histmersion.domain.automation.goals.GoalLinkTargets.QueueListRef): Option[com.histmersion.domain.automation.goals.GoalLinkTargets.QueueListResult] 
+com.histmersion.domain.automation.goals.GoalLinkTargets.TitleRef | base String | generated | method-parameter
+    def title(kind: Goal.LinkKind, ref: com.histmersion.domain.automation.goals.GoalLinkTargets.TitleRef): Option[com.histmersion.domain.automation.goals.GoalLinkTargets.Titl
+    def title(kind: Goal.LinkKind, ref: com.histmersion.domain.automation.goals.GoalLinkTargets.TitleRef): Option[com.histmersion.domain.automation.goals.GoalLinkTargets.Titl
+com.histmersion.domain.automation.goals.GoalLinkTargets.TitleResult | base String | generated | method-result
+    def title(kind: Goal.LinkKind, ref: com.histmersion.domain.automation.goals.GoalLinkTargets.TitleRef): Option[com.histmersion.domain.automation.goals.GoalLinkTargets.Titl
+    def title(kind: Goal.LinkKind, ref: com.histmersion.domain.automation.goals.GoalLinkTargets.TitleRef): Option[com.histmersion.domain.automation.goals.GoalLinkTargets.Titl
+com.histmersion.domain.automation.goals.GoalRecord.Plan | base String | original | constructor-parameter
+com.histmersion.domain.automation.goals.GoalScheduleRecord.Cron | base String | original | alias,constructor-parameter
+com.histmersion.domain.automation.goals.GoalScheduleRecord.Enabled | base Boolean | original | alias,constructor-parameter
+com.histmersion.domain.automation.goals.GoalScheduleRecord.Goal | base String | original | alias,constructor-parameter

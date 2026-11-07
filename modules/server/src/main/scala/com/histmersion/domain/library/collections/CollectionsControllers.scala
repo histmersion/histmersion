@@ -34,7 +34,7 @@ import com.histmersion.api.Api
   */
 final class CollectionsControllers(service: CollectionsService, maintenance: WriteGate):
 
-  private def citekey(raw: com.histmersion.domain.library.collections.CollectionsControllers.CitekeyRaw): Either[Api.Error, com.histmersion.domain.library.collections.CollectionsControllers.CitekeyResultPart2] = Citekey.parse(raw).left.map(Write.invalid).map(_.value)
+  private def citekey(raw: com.histmersion.domain.library.Citekey): Either[Api.Error, com.histmersion.domain.library.Citekey] = Citekey.parse(raw).left.map(Write.invalid).map(_.value)
 
   def collections(caller: Caller): Either[Api.Error, List[CollectionInfo]] = Right(service.collections())
   def collection(caller: Caller, name: com.histmersion.domain.library.collections.CollectionsControllers.CollectionName): Either[Api.Error, CollectionInfo] = service.collection(name)
@@ -42,8 +42,8 @@ final class CollectionsControllers(service: CollectionsService, maintenance: Wri
   def search(
       caller: Caller,
       name: com.histmersion.domain.library.collections.CollectionsControllers.SearchName,
-      q: Option[com.histmersion.domain.library.collections.CollectionsControllers.SearchQ],
-      limit: Option[com.histmersion.domain.library.collections.CollectionsControllers.SearchLimit],
+      q: Option[com.histmersion.domain.library.search.Search.Query],
+      limit: Option[com.histmersion.domain.library.collections.CollectionsControllers.Limit],
       unlinked: com.histmersion.domain.library.collections.CollectionsControllers.SearchUnlinked
   ): Either[Api.Error, CollectionSearch] = service.search(name, q, limit, unlinked)
 
@@ -72,34 +72,28 @@ final class CollectionsControllers(service: CollectionsService, maintenance: Wri
 
   def audit(caller: Caller, name: com.histmersion.domain.library.collections.CollectionsControllers.AuditName): Either[Api.Error, CollectionAudit] = service.audit(name)
 
-  def gaps(caller: Caller, name: com.histmersion.domain.library.collections.CollectionsControllers.GapsName, limit: Option[com.histmersion.domain.library.collections.CollectionsControllers.GapsLimit]): Either[Api.Error, CollectionGaps] =
+  def gaps(caller: Caller, name: com.histmersion.domain.library.collections.CollectionsControllers.GapsName, limit: Option[com.histmersion.domain.library.collections.CollectionsControllers.Limit]): Either[Api.Error, CollectionGaps] =
     service.gaps(name, limit)
 
   def sync(caller: Caller, name: com.histmersion.domain.library.collections.CollectionsControllers.SyncName, req: CollectionSync.Request): Either[Api.Error, CollectionSync] =
     if req.apply then maintenance.guard("collections/sync")(service.sync(caller, name, req))
     else service.sync(caller, name, req)
 
-  def archiveSearch(caller: Caller, q: com.histmersion.domain.library.collections.CollectionsControllers.ArchiveSearchQ, rows: Option[com.histmersion.domain.library.collections.CollectionsControllers.ArchiveSearchRows]): Either[Api.Error, ArchiveSearchResult] =
+  def archiveSearch(caller: Caller, q: com.histmersion.domain.library.search.Search.Query, rows: Option[com.histmersion.domain.library.collections.CollectionsControllers.Limit]): Either[Api.Error, ArchiveSearchResult] =
     service.archiveSearch(q, rows)
 
-  def archiveInfo(caller: Caller, id: com.histmersion.domain.library.collections.CollectionsControllers.ArchiveInfoId): Either[Api.Error, ArchiveItem] = service.archiveInfo(id)
+  def archiveInfo(caller: Caller, id: com.histmersion.domain.library.ArchiveId): Either[Api.Error, ArchiveItem] = service.archiveInfo(id)
 
   def archiveImport(caller: Caller, req: ArchiveImportRequest): Either[Api.Error, Ingest.Report] =
     service.archiveImport(caller, req)
 
 object CollectionsControllers:
-  type CitekeyResultPart2 = CitekeyResultPart2.T
-  object CitekeyResultPart2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type CitekeyRaw = CitekeyRaw.T
-  object CitekeyRaw extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type Limit = Limit.T
+  object Limit extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type CollectionName = CollectionName.T
   object CollectionName extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type SearchName = SearchName.T
   object SearchName extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type SearchQ = SearchQ.T
-  object SearchQ extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type SearchLimit = SearchLimit.T
-  object SearchLimit extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type SearchUnlinked = SearchUnlinked.T
   object SearchUnlinked extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type ImportItemName = ImportItemName.T
@@ -118,13 +112,5 @@ object CollectionsControllers:
   object AuditName extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type GapsName = GapsName.T
   object GapsName extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type GapsLimit = GapsLimit.T
-  object GapsLimit extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type SyncName = SyncName.T
   object SyncName extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type ArchiveSearchQ = ArchiveSearchQ.T
-  object ArchiveSearchQ extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type ArchiveSearchRows = ArchiveSearchRows.T
-  object ArchiveSearchRows extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type ArchiveInfoId = ArchiveInfoId.T
-  object ArchiveInfoId extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]

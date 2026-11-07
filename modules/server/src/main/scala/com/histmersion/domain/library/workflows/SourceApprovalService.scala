@@ -16,8 +16,8 @@ trait SourceApprovalService:
       status: Option[Source.Status],
       current: Option[Source.Status],
       edgeKind: Option[Edge.Kind],
-      target: Option[com.histmersion.domain.library.workflows.SourceApprovalService.RecordTarget],
-      payload: com.histmersion.domain.library.workflows.SourceApprovalService.RecordPayload,
+      target: Option[com.histmersion.domain.library.workflows.SourceApprovalService.ApprovalTarget],
+      payload: com.histmersion.domain.library.workflows.SourceApprovalService.ApprovalPayload,
       state: ApprovalState,
       result: Option[com.histmersion.domain.library.workflows.SourceApprovalService.RecordResult]
   ): Option[ApprovalInfo]
@@ -27,20 +27,16 @@ trait SourceApprovalService:
       citekey: com.histmersion.domain.library.Citekey,
       status: Option[Source.Status],
       edgeKind: Option[Edge.Kind],
-      target: Option[com.histmersion.domain.library.workflows.SourceApprovalService.ProposedBeforeTarget]
-  ): com.histmersion.domain.library.workflows.SourceApprovalService.ProposedBeforeResult
+      target: Option[com.histmersion.domain.library.workflows.SourceApprovalService.ApprovalTarget]
+  ): Boolean
 
 object SourceApprovalService:
-  type RecordTarget = RecordTarget.T
-  object RecordTarget extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type RecordPayload = RecordPayload.T
-  object RecordPayload extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type ApprovalPayload = ApprovalPayload.T
+  object ApprovalPayload extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type ApprovalTarget = ApprovalTarget.T
+  object ApprovalTarget extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type RecordResult = RecordResult.T
   object RecordResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type ProposedBeforeResult = ProposedBeforeResult.T
-  object ProposedBeforeResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type ProposedBeforeTarget = ProposedBeforeTarget.T
-  object ProposedBeforeTarget extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
   def apply(db: Transactor, approvals: ApprovalService, clock: Clock): SourceApprovalService = Implementation(db, approvals, clock)
 
@@ -53,8 +49,8 @@ object SourceApprovalService:
         status: Option[Source.Status],
         current: Option[Source.Status],
         edgeKind: Option[Edge.Kind],
-        target: Option[com.histmersion.domain.library.workflows.SourceApprovalService.Implementation.RecordTarget],
-        payload: com.histmersion.domain.library.workflows.SourceApprovalService.Implementation.RecordPayload,
+        target: Option[com.histmersion.domain.library.workflows.SourceApprovalService.ApprovalTarget],
+        payload: com.histmersion.domain.library.workflows.SourceApprovalService.ApprovalPayload,
         state: ApprovalState,
         result: Option[com.histmersion.domain.library.workflows.SourceApprovalService.Implementation.RecordResult]
     ): Option[ApprovalInfo] =
@@ -67,20 +63,12 @@ object SourceApprovalService:
         citekey: com.histmersion.domain.library.Citekey,
         status: Option[Source.Status],
         edgeKind: Option[Edge.Kind],
-        target: Option[com.histmersion.domain.library.workflows.SourceApprovalService.Implementation.ProposedBeforeTarget]
-    ): com.histmersion.domain.library.workflows.SourceApprovalService.Implementation.ProposedBeforeResult = db.read(SourceApprovalRepo.proposedBefore(kind, citekey, status, edgeKind, target))
+        target: Option[com.histmersion.domain.library.workflows.SourceApprovalService.ApprovalTarget]
+    ): Boolean = db.read(SourceApprovalRepo.proposedBefore(kind, citekey, status, edgeKind, target))
 
   object Implementation:
-    type RecordTarget = RecordTarget.T
-    object RecordTarget extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-    type RecordPayload = RecordPayload.T
-    object RecordPayload extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
     type RecordResult = RecordResult.T
     object RecordResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-    type ProposedBeforeResult = ProposedBeforeResult.T
-    object ProposedBeforeResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
-    type ProposedBeforeTarget = ProposedBeforeTarget.T
-    object ProposedBeforeTarget extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
   final class InMemory(state: AtomicReference[AutomationState], approvals: ApprovalService, clock: Clock) extends SourceApprovalService:
     private def now: Instant = Instant.now(clock)
@@ -95,7 +83,7 @@ object SourceApprovalService:
         current: Option[Source.Status],
         edgeKind: Option[Edge.Kind],
         target: Option[com.histmersion.domain.library.workflows.SourceApprovalService.InMemory.RecordTarget],
-        payload: com.histmersion.domain.library.workflows.SourceApprovalService.InMemory.RecordPayload,
+        payload: com.histmersion.domain.library.workflows.SourceApprovalService.ApprovalPayload,
         state: ApprovalState,
         result: Option[com.histmersion.domain.library.workflows.SourceApprovalService.InMemory.RecordResult]
     ): Option[ApprovalInfo] =
@@ -131,8 +119,8 @@ object SourceApprovalService:
         citekey: com.histmersion.domain.library.Citekey,
         status: Option[Source.Status],
         edgeKind: Option[Edge.Kind],
-        target: Option[com.histmersion.domain.library.workflows.SourceApprovalService.InMemory.ProposedBeforeTarget]
-    ): com.histmersion.domain.library.workflows.SourceApprovalService.InMemory.ProposedBeforeResult =
+        target: Option[com.histmersion.domain.library.workflows.SourceApprovalService.ApprovalTarget]
+    ): Boolean =
       rows.exists(r =>
         r.kind == kind.wire && r.citekey.contains(citekey) && r.status.getOrElse("") == status.fold("")(_.wire) &&
           r.edgeKind.getOrElse("") == edgeKind.fold("")(Edge.Kind.wireOf) && r.target.getOrElse("") == target
@@ -142,11 +130,5 @@ object SourceApprovalService:
   object InMemory:
     type RecordTarget = _root_.com.histmersion.domain.automation.agents.ApprovalRecord.Target
     val RecordTarget: _root_.com.histmersion.domain.automation.agents.ApprovalRecord.Target.type = _root_.com.histmersion.domain.automation.agents.ApprovalRecord.Target
-    type RecordPayload = RecordPayload.T
-    object RecordPayload extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
     type RecordResult = _root_.com.histmersion.domain.automation.agents.ApprovalRecord.Result
     val RecordResult: _root_.com.histmersion.domain.automation.agents.ApprovalRecord.Result.type = _root_.com.histmersion.domain.automation.agents.ApprovalRecord.Result
-    type ProposedBeforeResult = ProposedBeforeResult.T
-    object ProposedBeforeResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
-    type ProposedBeforeTarget = ProposedBeforeTarget.T
-    object ProposedBeforeTarget extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]

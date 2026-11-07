@@ -21,26 +21,16 @@ import scala.jdk.CollectionConverters.*
 object CliProcess:
 
   /** What a run printed; `stopped` = `onLine` asked for it to end (the quota guard), with why. */
-  type CannotStartCommand = CannotStartCommand.T
-  object CannotStartCommand extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type CannotStartHint = CannotStartHint.T
   object CannotStartHint extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type GroupPrefix = GroupPrefix.T
   object GroupPrefix extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type ResolveCommand = ResolveCommand.T
-  object ResolveCommand extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type ResolvePath = ResolvePath.T
   object ResolvePath extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type SignalGroupPgid = SignalGroupPgid.T
   object SignalGroupPgid extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type SignalGroupSig = SignalGroupSig.T
   object SignalGroupSig extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type RunArgv = RunArgv.T
-  object RunArgv extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type RunEnvArg1Part1 = RunEnvArg1Part1.T
-  object RunEnvArg1Part1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type RunEnvArg1Part2 = RunEnvArg1Part2.T
-  object RunEnvArg1Part2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type RunStdin = RunStdin.T
   object RunStdin extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type RunTimeoutSeconds = RunTimeoutSeconds.T
@@ -69,7 +59,7 @@ object CliProcess:
     object Stopped extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
   /** Raised when the executable cannot be started at all. */
-  def cannotStart(command: com.histmersion.server.agents.CliProcess.CannotStartCommand, e: java.io.IOException, hint: com.histmersion.server.agents.CliProcess.CannotStartHint): java.io.IOException =
+  def cannotStart(command: com.histmersion.server.Supervisor.Command, e: java.io.IOException, hint: com.histmersion.server.agents.CliProcess.CannotStartHint): java.io.IOException =
     java.io.IOException(s"cannot run '$command' (${e.getMessage}) — $hint")
 
   /** What the engine watches of a step's processes (the stall watchdog): every process a step starts is registered
@@ -112,7 +102,7 @@ object CliProcess:
       .getOrElse(Nil)
 
   /** `command` resolved the way `execvp` would against `path` (None: not found, or not executable). */
-  private[agents] def resolve(command: com.histmersion.server.agents.CliProcess.ResolveCommand, path: Option[com.histmersion.server.agents.CliProcess.ResolvePath], dir: Path): Option[Path] =
+  private[agents] def resolve(command: com.histmersion.server.Supervisor.Command, path: Option[com.histmersion.server.agents.CliProcess.ResolvePath], dir: Path): Option[Path] =
     if command.contains('/') then Option(dir.resolve(command)).filter(Files.isExecutable)
     else
       path.toList
@@ -165,9 +155,9 @@ object CliProcess:
       case _: Exception            => () // no `kill` (or the group is gone): the per-process kills above still ran
 
   def run(
-      argv: List[com.histmersion.server.agents.CliProcess.RunArgv],
+      argv: List[com.histmersion.server.agents.ClaudeCode.Argument],
       dir: Path,
-      env: java.util.Map[com.histmersion.server.agents.CliProcess.RunEnvArg1Part1, com.histmersion.server.agents.CliProcess.RunEnvArg1Part2] => Unit,
+      env: java.util.Map[com.histmersion.server.GazetteerPaths.EnvName, com.histmersion.server.GazetteerPaths.EnvText] => Unit,
       stdin: com.histmersion.server.agents.CliProcess.RunStdin,
       timeoutSeconds: com.histmersion.server.agents.CliProcess.RunTimeoutSeconds,
       hint: com.histmersion.server.agents.CliProcess.RunHint,

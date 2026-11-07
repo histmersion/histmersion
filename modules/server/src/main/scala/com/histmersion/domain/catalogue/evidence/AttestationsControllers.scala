@@ -28,15 +28,15 @@ final class AttestationsControllers(
     maintenance: WriteGate
 ):
 
-  private def refId(targetType: com.histmersion.domain.catalogue.evidence.AttestationsControllers.RefIdTargetType, id: com.histmersion.domain.catalogue.evidence.AttestationsControllers.RefIdId): com.histmersion.domain.catalogue.evidence.AttestationsControllers.RefIdResult =
+  private def refId(targetType: com.histmersion.domain.catalogue.evidence.AttestationsTools.AttestationsInput.TargetType, id: com.histmersion.domain.catalogue.evidence.AttestationsTools.AttestationsInput.TargetId): com.histmersion.domain.catalogue.evidence.AttestationsTools.AttestationsInput.TargetId =
     AliasKinds.ofTarget(targetType).fold(id)(current(_, id))
 
   def list(
       citekey: Option[com.histmersion.domain.library.Citekey],
-      targetType: Option[com.histmersion.domain.catalogue.evidence.AttestationsControllers.ListTargetType],
-      targetId: Option[com.histmersion.domain.catalogue.evidence.AttestationsControllers.ListTargetId],
-      limit: Option[com.histmersion.domain.catalogue.evidence.AttestationsControllers.ListLimit],
-      offset: Option[com.histmersion.domain.catalogue.evidence.AttestationsControllers.ListOffset]
+      targetType: Option[com.histmersion.domain.catalogue.evidence.AttestationsTools.AttestationsInput.TargetType],
+      targetId: Option[com.histmersion.domain.catalogue.evidence.AttestationsTools.AttestationsInput.TargetId],
+      limit: Option[com.histmersion.PageSize],
+      offset: Option[com.histmersion.Offset]
   ): Attestation.List =
     val target = for t <- targetType; i <- targetId yield refId(t, i)
     attestations.list(
@@ -47,7 +47,7 @@ final class AttestationsControllers(
       offset.getOrElse(0)
     )
 
-  def get(id: com.histmersion.domain.catalogue.evidence.AttestationsControllers.GetId): Either[Api.Error, Attestation] =
+  def get(id: com.histmersion.domain.catalogue.evidence.AttestationsTools.AttestationsInput.Id): Either[Api.Error, Attestation] =
     attestations.get(id).toRight(Api.Error(s"No attestation $id", Some(Write.CodeNotFound)))
 
   /** An unknown target type is a 400 and a missing source a 404 — checked first: the table's constraints would answer
@@ -61,41 +61,23 @@ final class AttestationsControllers(
         _ <- Either.cond(sources.canonical(ck).isDefined, (), Write.notFound(ck))
       yield attestations.create(in.modify(_.citekey).setTo(ck).modify(_.targetType).setTo(t).modify(_.targetId).setTo(refId(t, in.targetId)))
 
-  def patch(caller: Caller, id: com.histmersion.domain.catalogue.evidence.AttestationsControllers.PatchId, p: Attestation.Patch): Either[Api.Error, Attestation] =
+  def patch(caller: Caller, id: com.histmersion.domain.catalogue.evidence.AttestationsTools.AttestationsInput.Id, p: Attestation.Patch): Either[Api.Error, Attestation] =
     maintenance.guard("patch_attestation")(attestations.patch(id, p))
 
-  def delete(caller: Caller, id: com.histmersion.domain.catalogue.evidence.AttestationsControllers.DeleteId): Either[Api.Error, Attestation.Deleted] =
+  def delete(caller: Caller, id: com.histmersion.domain.catalogue.evidence.AttestationsTools.AttestationsInput.Id): Either[Api.Error, Attestation.Deleted] =
     maintenance.guard("delete_attestation"):
       if attestations.delete(id) then Right(Attestation.Deleted(id, true))
       else Left(Api.Error(s"No attestation $id", Some(Write.CodeNotFound)))
 
 object AttestationsControllers:
-  type CurrentArg2 = CurrentArg2.T
-  object CurrentArg2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type CurrentResult = CurrentResult.T
-  object CurrentResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type PageArg1 = PageArg1.T
-  object PageArg1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type PageResult = PageResult.T
-  object PageResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type Alias = Alias.T
+  object Alias extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type CurrentArg2 = com.histmersion.domain.catalogue.evidence.AttestationsControllers.Alias
+  val CurrentArg2: _root_.com.histmersion.domain.catalogue.evidence.AttestationsControllers.Alias.type = _root_.com.histmersion.domain.catalogue.evidence.AttestationsControllers.Alias
+  type CurrentResult = com.histmersion.domain.catalogue.evidence.AttestationsTools.AttestationsInput.TargetId
+  val CurrentResult: _root_.com.histmersion.domain.catalogue.evidence.AttestationsTools.AttestationsInput.TargetId.type = _root_.com.histmersion.domain.catalogue.evidence.AttestationsTools.AttestationsInput.TargetId
+  type PageArg1 = com.histmersion.Offset
+  val PageArg1: _root_.com.histmersion.Offset.type = _root_.com.histmersion.Offset
+  type PageResult = com.histmersion.Offset
+  val PageResult: _root_.com.histmersion.Offset.type = _root_.com.histmersion.Offset
 
-  type RefIdResult = RefIdResult.T
-  object RefIdResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type RefIdTargetType = RefIdTargetType.T
-  object RefIdTargetType extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type RefIdId = RefIdId.T
-  object RefIdId extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type ListTargetType = ListTargetType.T
-  object ListTargetType extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type ListTargetId = ListTargetId.T
-  object ListTargetId extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type ListLimit = ListLimit.T
-  object ListLimit extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type ListOffset = ListOffset.T
-  object ListOffset extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type GetId = GetId.T
-  object GetId extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type PatchId = PatchId.T
-  object PatchId extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type DeleteId = DeleteId.T
-  object DeleteId extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]

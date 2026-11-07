@@ -1,0 +1,96 @@
+## CONCEPTS NEARBY
+com.histmersion.util.storage.ByteSource.Content (Array[Byte])
+com.histmersion.util.storage.ContentStore.Digest (Array[Byte])
+com.histmersion.util.storage.ContentStore.Ext (String)
+com.histmersion.util.storage.ContentStore.Problem (String)
+com.histmersion.util.storage.SafePath.Base (String)
+com.histmersion.util.storage.SafePath.Candidate (String)
+com.histmersion.util.storage.SafePath.Problem (String)
+com.histmersion.util.storage.Store.Error.Failed.Reason (String)
+com.histmersion.util.storage.Store.Error.Message (String)
+com.histmersion.util.storage.Store.Error.NotAFile.Where (String)
+com.histmersion.util.storage.Store.Error.NotFound.Where (String)
+com.histmersion.util.storage.Store.Error.NotOnDisk.Where (String)
+com.histmersion.util.storage.Store.Key (String)
+com.histmersion.util.storage.Store.Measure.Exists (Boolean)
+com.histmersion.util.storage.Store.Measure.Files (Long)
+com.histmersion.util.storage.Store.Measure.Partial (Boolean)
+com.histmersion.util.storage.Store.Measure.Unreadable (Int)
+com.histmersion.util.storage.Store.Volume.Id (String)
+com.histmersion.util.storage.TempName.Suffixed.Suffix (String)
+com.histmersion.util.storage.TextFiles.ReadResult (String)
+
+## TYPES TO DECIDE
+com.histmersion.util.storage.Store.Contents.FindResultPart2 | base String | generated | method-result
+    def find(sha256: com.histmersion.util.storage.Store.Contents.FindSha256): Option[(ByteSource, com.histmersion.util.storage.Store.Contents.FindResultPart2)] =
+com.histmersion.util.storage.Store.Contents.FindSha256 | base String | generated | method-parameter
+    def find(sha256: com.histmersion.util.storage.Store.Contents.FindSha256): Option[(ByteSource, com.histmersion.util.storage.Store.Contents.FindResultPart2)] =
+com.histmersion.util.storage.Store.Contents.StoreExt | base String | generated | method-parameter
+    def store(sha256: com.histmersion.util.storage.Store.Contents.StoreSha256, ext: com.histmersion.util.storage.Store.Contents.StoreExt, in: InputStream): Either[com.histmer
+com.histmersion.util.storage.Store.Contents.StoreResultPart1 | base String | generated | method-result
+    def store(sha256: com.histmersion.util.storage.Store.Contents.StoreSha256, ext: com.histmersion.util.storage.Store.Contents.StoreExt, in: InputStream): Either[com.histmer
+com.histmersion.util.storage.Store.Contents.StoreSha256 | base String | generated | method-parameter
+    def store(sha256: com.histmersion.util.storage.Store.Contents.StoreSha256, ext: com.histmersion.util.storage.Store.Contents.StoreExt, in: InputStream): Either[com.histmer
+com.histmersion.util.storage.Store.CopyKeepAttributes | base Boolean | generated | method-parameter
+com.histmersion.util.storage.Store.DeleteResult | base Boolean | generated | method-result
+    def delete(key: com.histmersion.util.storage.Store.Key): com.histmersion.util.storage.Store.DeleteResult
+com.histmersion.util.storage.Store.Error.Failed.Reason | base String | generated | constructor-parameter
+    case Failed(reason: Error.Failed.Reason) extends Error(reason)
+com.histmersion.util.storage.Store.Error.Message | base String | generated | constructor-parameter
+    enum Error(val message: Error.Message):
+com.histmersion.util.storage.Store.Error.NotAFile.Where | base String | generated | constructor-parameter
+    case NotFound(where: Error.NotFound.Where) extends Error(s"$where: no such file")
+    case NotAFile(where: Error.NotAFile.Where) extends Error(s"$where is not a file")
+com.histmersion.util.storage.Store.Error.NotFound.Where | base String | generated | constructor-parameter
+    case NotFound(where: Error.NotFound.Where) extends Error(s"$where: no such file")
+    case NotAFile(where: Error.NotAFile.Where) extends Error(s"$where is not a file")
+com.histmersion.util.storage.Store.Error.NotOnDisk.Where | base String | generated | constructor-parameter
+    case NotFound(where: Error.NotFound.Where) extends Error(s"$where: no such file")
+    case NotAFile(where: Error.NotAFile.Where) extends Error(s"$where is not a file")
+com.histmersion.util.storage.Store.ExistsResult | base Boolean | generated | method-result
+    def exists(key: com.histmersion.util.storage.Store.Key): com.histmersion.util.storage.Store.ExistsResult
+com.histmersion.util.storage.Store.IsDirectoryResult | base Boolean | generated | method-result
+    def isDirectory(key: com.histmersion.util.storage.Store.Key): com.histmersion.util.storage.Store.IsDirectoryResult
+com.histmersion.util.storage.Store.IsExecutableResult | base Boolean | generated | method-result
+    def isExecutable(key: com.histmersion.util.storage.Store.Key): com.histmersion.util.storage.Store.IsExecutableResult
+com.histmersion.util.storage.Store.IsFileResult | base Boolean | generated | method-result
+    def isFile(key: com.histmersion.util.storage.Store.Key): com.histmersion.util.storage.Store.IsFileResult
+com.histmersion.util.storage.Store.IsLinkResult | base Boolean | generated | method-result
+    def isLink(key: com.histmersion.util.storage.Store.Key): com.histmersion.util.storage.Store.IsLinkResult
+com.histmersion.util.storage.Store.Key.ChildName | base String | generated | method-parameter
+    def child(name: com.histmersion.util.storage.Store.Key.ChildName): Key = (key / name).fold(e => throw IllegalArgumentException(e), identity)
+com.histmersion.util.storage.Store.Key.IsRootResult | base Boolean | generated | method-result
+    def isRoot: com.histmersion.util.storage.Store.Key.IsRootResult = key.value.isEmpty
+com.histmersion.util.storage.Store.Key.NameResult | base String | generated | method-result
+    def name: com.histmersion.util.storage.Store.Key.NameResult = segments.lastOption.getOrElse("")
+com.histmersion.util.storage.Store.Key.OfResultPart1 | base String | generated | method-result
+    def of(segments: String*): Either[com.histmersion.util.storage.Store.Key.OfResultPart1, Key] = either(segments.filter(_.nonEmpty).mkString("/"))
+com.histmersion.util.storage.Store.Key.SegmentsResult | base String | generated | method-result
+    def segments: List[com.histmersion.util.storage.Store.Key.SegmentsResult] = if key.isRoot then Nil else key.value.split('/').toList
+com.histmersion.util.storage.Store.Key.WithSuffixSuffix | base String | generated | method-parameter
+    def withSuffix(suffix: com.histmersion.util.storage.Store.Key.WithSuffixSuffix): Key = parent.child(name + suffix)
+com.histmersion.util.storage.Store.Key.WithinResult | base Boolean | generated | method-result
+    def within(prefix: Key): com.histmersion.util.storage.Store.Key.WithinResult =
+com.histmersion.util.storage.Store.Measure.Exists | base Boolean | original | constructor-parameter
+com.histmersion.util.storage.Store.Measure.Files | base Long | original | constructor-parameter
+com.histmersion.util.storage.Store.Measure.Partial | base Boolean | original | constructor-parameter
+com.histmersion.util.storage.Store.Measure.Unreadable | base Int | original | constructor-parameter
+com.histmersion.util.storage.Store.NamesResult | base String | generated | method-result
+    def names(prefix: com.histmersion.util.storage.Store.Key = com.histmersion.util.storage.Store.Key.Root): List[com.histmersion.util.storage.Store.NamesResult]
+com.histmersion.util.storage.Store.PutBytes | base Array[Byte] | generated | method-parameter
+com.histmersion.util.storage.Store.ReserveThroughLink | base Boolean | generated | method-parameter
+com.histmersion.util.storage.Store.Volume.Id | base String | original | constructor-parameter
+    final case class Volume(id: Volume.Id, total: ByteCount, usable: ByteCount)
+com.histmersion.util.storage.Store.WhereResult | base String | generated | method-result
+    def where(key: com.histmersion.util.storage.Store.Key = com.histmersion.util.storage.Store.Key.Root): com.histmersion.util.storage.Store.WhereResult
+com.histmersion.util.storage.Store.WriteBytes | base Array[Byte] | generated | method-parameter
+com.histmersion.util.storage.Stored.IsDirectoryResult | base Boolean | generated | method-result
+    def isDirectory: com.histmersion.util.storage.Stored.IsDirectoryResult = kind == Stored.Kind.Directory
+com.histmersion.util.storage.Stored.IsFileResult | base Boolean | generated | method-result
+    def isFile: com.histmersion.util.storage.Stored.IsFileResult = kind == Stored.Kind.File
+com.histmersion.util.storage.TempName.Suffixed.Suffix | base String | generated | constructor-parameter
+    case Suffixed(suffix: TempName.Suffixed.Suffix)
+com.histmersion.util.system.JvmHome.ExpandResult | base String | generated | method-result
+    def expand(value: com.histmersion.util.system.JvmHome.ExpandValue): com.histmersion.util.system.JvmHome.ExpandResult = value.replaceFirst("^~", java.util.regex.Matcher.qu
+com.histmersion.util.system.JvmHome.ExpandValue | base String | generated | method-parameter
+    def expand(value: com.histmersion.util.system.JvmHome.ExpandValue): com.histmersion.util.system.JvmHome.ExpandResult = value.replaceFirst("^~", java.util.regex.Matcher.qu

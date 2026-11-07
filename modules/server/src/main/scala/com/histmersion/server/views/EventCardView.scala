@@ -21,32 +21,24 @@ final class EventCardView(events: EventsControllers, pictures: EventCardView.Pic
   def page(e: EventEntry): EventDetail =
     e.into[EventDetail].withFieldConst(_.media, pictures(e.event.id)).transform
 
-  def get(id: com.histmersion.server.views.EventCardView.GetId): Either[Api.Error, EventDetail] = events.get(id).map(page)
+  def get(id: com.histmersion.domain.catalogue.Event.Id): Either[Api.Error, EventDetail] = events.get(id).map(page)
 
-  def put(caller: Caller, id: com.histmersion.server.views.EventCardView.PutId, in: EventPut): Either[Api.Error, EventDetail] =
+  def put(caller: Caller, id: com.histmersion.domain.catalogue.Event.Id, in: EventPut): Either[Api.Error, EventDetail] =
     events.put(caller, id, in).map(page)
 
-  def patch(caller: Caller, id: com.histmersion.server.views.EventCardView.PatchId, p: EventPatch): Either[Api.Error, EventDetail] =
+  def patch(caller: Caller, id: com.histmersion.domain.catalogue.Event.Id, p: EventPatch): Either[Api.Error, EventDetail] =
     events.patch(caller, id, p).map(page)
 
 object EventCardView:
+  type CitationCount = CitationCount.T
+  object CitationCount extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
   /** An event's card: the catalogue's context (`context`), then the articles citing the sources that attest it. */
-  type PicturesArg1 = PicturesArg1.T
-  object PicturesArg1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type PicturesArg1 = com.histmersion.domain.catalogue.Event.Id
+  val PicturesArg1: _root_.com.histmersion.domain.catalogue.Event.Id.type = _root_.com.histmersion.domain.catalogue.Event.Id
 
-  type GetId = GetId.T
-  object GetId extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type PutId = PutId.T
-  object PutId extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type PatchId = PatchId.T
-  object PatchId extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type CitedCitingArg1 = CitedCitingArg1.T
-  object CitedCitingArg1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type CitedCitingArg2 = CitedCitingArg2.T
-  object CitedCitingArg2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
-  def cited(context: EventEntry => EventEntry, citing: (List[com.histmersion.server.views.EventCardView.CitedCitingArg1], com.histmersion.server.views.EventCardView.CitedCitingArg2) => List[EventArticleRef])(
+  def cited(context: EventEntry => EventEntry, citing: (List[com.histmersion.domain.library.Citekey], com.histmersion.server.views.EventCardView.CitationCount) => List[EventArticleRef])(
       e: EventEntry
   ): EventEntry =
     val withContext = context(e)

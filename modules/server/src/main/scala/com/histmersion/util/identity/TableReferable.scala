@@ -9,7 +9,7 @@ abstract class TableReferable(db: Transactor, tables: List[RecordTable]) extends
 
   val kinds: Set[ItemKind] = byKind.keySet
 
-  def resolve(kind: ItemKind, key: ItemKey): Either[com.histmersion.util.identity.TableReferable.ResolveResultPart1, ItemRef] =
+  def resolve(kind: ItemKind, key: ItemKey): Either[com.histmersion.util.identity.TableReferable.Problem, ItemRef] =
     byKind.get(kind).toRight(s"no records of kind '${kind.value}'").flatMap(t => db.read(t.resolve(key)))
 
   def describe(refs: Set[ItemRef]): Map[ItemRef, Described] =
@@ -18,5 +18,5 @@ abstract class TableReferable(db: Transactor, tables: List[RecordTable]) extends
     else db.read(tables.flatMap(t => t.describe(asked)).toMap)
 
 object TableReferable:
-  type ResolveResultPart1 = ResolveResultPart1.T
-  object ResolveResultPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type Problem = Problem.T
+  object Problem extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]

@@ -18,77 +18,39 @@ import java.util.concurrent.ConcurrentHashMap
   * ([[PmTilesFile]]), the writer ([[PmTilesWriter]]) and the remote extract ([[BasemapFetch]]) share one tested codec.
   */
 object PmTiles:
+  type ByteLength = ByteLength.T
+  object ByteLength extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type CompressedBytes = CompressedBytes.T
+  object CompressedBytes extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Array[_root_.scala.Byte], _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type Degrees = Degrees.T
+  object Degrees extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type DirectoryBytes = DirectoryBytes.T
+  object DirectoryBytes extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Array[_root_.scala.Byte], _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type FileBytes = FileBytes.T
+  object FileBytes extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Array[_root_.scala.Byte], _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type HeaderBytes = HeaderBytes.T
+  object HeaderBytes extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Array[_root_.scala.Byte], _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type PlainBytes = PlainBytes.T
+  object PlainBytes extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Array[_root_.scala.Byte], _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type Problem = Problem.T
+  object Problem extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type TileBytes = TileBytes.T
+  object TileBytes extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Array[_root_.scala.Byte], _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type TileColumn = TileColumn.T
+  object TileColumn extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type TileRow = TileRow.T
+  object TileRow extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type Zoom = Zoom.T
+  object Zoom extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
-  type ParseHeaderLAt = ParseHeaderLAt.T
-  object ParseHeaderLAt extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type ParseHeaderE7At = ParseHeaderE7At.T
-  object ParseHeaderE7At extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type ParseHeaderU8At = ParseHeaderU8At.T
-  object ParseHeaderU8At extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type EncodeHeaderE7D = EncodeHeaderE7D.T
-  object EncodeHeaderE7D extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
-  type ParseHeaderB = ParseHeaderB.T
-  object ParseHeaderB extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Array[_root_.scala.Byte], _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type EncodeHeaderResult = EncodeHeaderResult.T
-  object EncodeHeaderResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Array[_root_.scala.Byte], _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type EncodeDirectoryResult = EncodeDirectoryResult.T
-  object EncodeDirectoryResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Array[_root_.scala.Byte], _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type DecodeDirectoryB = DecodeDirectoryB.T
-  object DecodeDirectoryB extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Array[_root_.scala.Byte], _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type GzipResult = GzipResult.T
-  object GzipResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Array[_root_.scala.Byte], _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type GzipB = GzipB.T
-  object GzipB extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Array[_root_.scala.Byte], _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type GunzipResultPart2 = GunzipResultPart2.T
-  object GunzipResultPart2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Array[_root_.scala.Byte], _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type GunzipB = GunzipB.T
-  object GunzipB extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Array[_root_.scala.Byte], _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type IsGzipB = IsGzipB.T
-  object IsGzipB extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Array[_root_.scala.Byte], _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type DecompressResultPart2 = DecompressResultPart2.T
-  object DecompressResultPart2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Array[_root_.scala.Byte], _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type DecompressB = _root_.com.histmersion.util.basemap.PmTiles.GunzipB
-  val DecompressB: _root_.com.histmersion.util.basemap.PmTiles.GunzipB.type = _root_.com.histmersion.util.basemap.PmTiles.GunzipB
-  type CompressResult = CompressResult.T
-  object CompressResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Array[_root_.scala.Byte], _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type CompressB = _root_.com.histmersion.util.basemap.PmTiles.GzipB
-  val CompressB: _root_.com.histmersion.util.basemap.PmTiles.GzipB.type = _root_.com.histmersion.util.basemap.PmTiles.GzipB
+  type DecompressB = _root_.com.histmersion.util.basemap.PmTiles.CompressedBytes
+  val DecompressB: _root_.com.histmersion.util.basemap.PmTiles.CompressedBytes.type = _root_.com.histmersion.util.basemap.PmTiles.CompressedBytes
+  type CompressB = _root_.com.histmersion.util.basemap.PmTiles.PlainBytes
+  val CompressB: _root_.com.histmersion.util.basemap.PmTiles.PlainBytes.type = _root_.com.histmersion.util.basemap.PmTiles.PlainBytes
 
-  type ParseHeaderResultPart1 = ParseHeaderResultPart1.T
-  object ParseHeaderResultPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type ZoomBaseResult = ZoomBaseResult.T
-  object ZoomBaseResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type ZoomBaseZ = ZoomBaseZ.T
-  object ZoomBaseZ extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type TileIdResult = TileIdResult.T
-  object TileIdResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type TileIdZ = _root_.com.histmersion.util.basemap.PmTiles.ZoomBaseZ
-  val TileIdZ: _root_.com.histmersion.util.basemap.PmTiles.ZoomBaseZ.type = _root_.com.histmersion.util.basemap.PmTiles.ZoomBaseZ
-  type TileIdX = TileIdX.T
-  object TileIdX extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type TileIdY = TileIdY.T
-  object TileIdY extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type ZxyResultPart1 = ZxyResultPart1.T
-  object ZxyResultPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type ZxyResultPart2 = ZxyResultPart2.T
-  object ZxyResultPart2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type ZxyResultPart3 = ZxyResultPart3.T
-  object ZxyResultPart3 extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type ZxyId = ZxyId.T
-  object ZxyId extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type WriteVarintV = WriteVarintV.T
-  object WriteVarintV extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type DecodeDirectoryResultPart1 = DecodeDirectoryResultPart1.T
-  object DecodeDirectoryResultPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type FindId = FindId.T
-  object FindId extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type GunzipResultPart1 = GunzipResultPart1.T
-  object GunzipResultPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type IsGzipResult = IsGzipResult.T
-  object IsGzipResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type DecompressResultPart1 = DecompressResultPart1.T
-  object DecompressResultPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type TileIdZ = _root_.com.histmersion.util.basemap.PmTiles.Zoom
+  val TileIdZ: _root_.com.histmersion.util.basemap.PmTiles.Zoom.type = _root_.com.histmersion.util.basemap.PmTiles.Zoom
 
   val HeaderBytes = 127
 
@@ -106,10 +68,8 @@ object PmTiles:
     type Code = Code.T
     object Code extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
-    type OfCode = OfCode.T
-    object OfCode extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
-    def of(code: com.histmersion.util.basemap.PmTiles.Compression.OfCode): Compression = values.find(_.code == code).getOrElse(Unknown)
+    def of(code: com.histmersion.util.basemap.PmTiles.Compression.Code): Compression = values.find(_.code == code).getOrElse(Unknown)
 
   enum TileType(val code: TileType.Code, val mime: TileType.Mime):
     case Unknown extends TileType(0, "application/octet-stream")
@@ -125,10 +85,8 @@ object PmTiles:
     type Mime = Mime.T
     object Mime extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
-    type OfCode = OfCode.T
-    object OfCode extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
-    def of(code: com.histmersion.util.basemap.PmTiles.TileType.OfCode): TileType = values.find(_.code == code).getOrElse(Unknown)
+    def of(code: com.histmersion.util.basemap.PmTiles.TileType.Code): TileType = values.find(_.code == code).getOrElse(Unknown)
 
   final case class Header(
       rootOffset: Header.RootOffset,
@@ -158,22 +116,22 @@ object PmTiles:
   )
 
   object Header:
-    type RootOffset = RootOffset.T
-    object RootOffset extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
-    type RootLength = RootLength.T
-    object RootLength extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
-    type MetadataOffset = MetadataOffset.T
-    object MetadataOffset extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
-    type MetadataLength = MetadataLength.T
-    object MetadataLength extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
-    type LeafOffset = LeafOffset.T
-    object LeafOffset extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
-    type LeafLength = LeafLength.T
-    object LeafLength extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
-    type DataOffset = DataOffset.T
-    object DataOffset extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
-    type DataLength = DataLength.T
-    object DataLength extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type RootOffset = com.histmersion.ByteOffset
+    val RootOffset: _root_.com.histmersion.ByteOffset.type = _root_.com.histmersion.ByteOffset
+    type RootLength = com.histmersion.ByteCount
+    val RootLength: _root_.com.histmersion.ByteCount.type = _root_.com.histmersion.ByteCount
+    type MetadataOffset = com.histmersion.ByteOffset
+    val MetadataOffset: _root_.com.histmersion.ByteOffset.type = _root_.com.histmersion.ByteOffset
+    type MetadataLength = com.histmersion.ByteCount
+    val MetadataLength: _root_.com.histmersion.ByteCount.type = _root_.com.histmersion.ByteCount
+    type LeafOffset = com.histmersion.ByteOffset
+    val LeafOffset: _root_.com.histmersion.ByteOffset.type = _root_.com.histmersion.ByteOffset
+    type LeafLength = com.histmersion.ByteCount
+    val LeafLength: _root_.com.histmersion.ByteCount.type = _root_.com.histmersion.ByteCount
+    type DataOffset = com.histmersion.ByteOffset
+    val DataOffset: _root_.com.histmersion.ByteOffset.type = _root_.com.histmersion.ByteOffset
+    type DataLength = com.histmersion.ByteCount
+    val DataLength: _root_.com.histmersion.ByteCount.type = _root_.com.histmersion.ByteCount
     type AddressedTiles = AddressedTiles.T
     object AddressedTiles extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
     type TileEntries = TileEntries.T
@@ -182,10 +140,10 @@ object PmTiles:
     object TileContents extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
     type Clustered = Clustered.T
     object Clustered extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
-    type MinZoom = MinZoom.T
-    object MinZoom extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
-    type MaxZoom = MaxZoom.T
-    object MaxZoom extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type MinZoom = com.histmersion.util.basemap.PmTiles.Zoom
+    val MinZoom: _root_.com.histmersion.util.basemap.PmTiles.Zoom.type = _root_.com.histmersion.util.basemap.PmTiles.Zoom
+    type MaxZoom = com.histmersion.util.basemap.PmTiles.Zoom
+    val MaxZoom: _root_.com.histmersion.util.basemap.PmTiles.Zoom.type = _root_.com.histmersion.util.basemap.PmTiles.Zoom
     type MinLon = MinLon.T
     object MinLon extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
     type MinLat = MinLat.T
@@ -194,8 +152,8 @@ object PmTiles:
     object MaxLon extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
     type MaxLat = MaxLat.T
     object MaxLat extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
-    type CenterZoom = CenterZoom.T
-    object CenterZoom extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type CenterZoom = com.histmersion.util.basemap.PmTiles.Zoom
+    val CenterZoom: _root_.com.histmersion.util.basemap.PmTiles.Zoom.type = _root_.com.histmersion.util.basemap.PmTiles.Zoom
     type CenterLon = CenterLon.T
     object CenterLon extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
     type CenterLat = CenterLat.T
@@ -205,16 +163,14 @@ object PmTiles:
     * data section); `runLength == 0` points to a LEAF directory instead (relative to the leaf section).
     */
   final case class Entry(tileId: Entry.TileId, offset: Entry.Offset, length: Entry.Length, runLength: Entry.RunLength):
-    def isLeaf: com.histmersion.util.basemap.PmTiles.Entry.IsLeafResult = runLength == 0
+    def isLeaf: Boolean = runLength == 0
 
   object Entry:
-    type IsLeafResult = IsLeafResult.T
-    object IsLeafResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
     type TileId = TileId.T
     object TileId extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
-    type Offset = Offset.T
-    object Offset extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Offset = com.histmersion.ByteOffset
+    val Offset: _root_.com.histmersion.ByteOffset.type = _root_.com.histmersion.ByteOffset
     type Length = Length.T
     object Length extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
     type RunLength = RunLength.T
@@ -224,15 +180,15 @@ object PmTiles:
 
   // ── the header ──────────────────────────────────────────────────────────────────────────────────
 
-  def parseHeader(b: com.histmersion.util.basemap.PmTiles.ParseHeaderB): Either[com.histmersion.util.basemap.PmTiles.ParseHeaderResultPart1, Header] =
+  def parseHeader(b: com.histmersion.util.basemap.PmTiles.HeaderBytes): Either[com.histmersion.util.basemap.PmTiles.Problem, Header] =
     if b.length < HeaderBytes then Left(s"a PMTiles header is $HeaderBytes bytes, got ${b.length}")
     else if !b.take(7).sameElements(Magic) then Left("not a PMTiles archive (no magic number)")
     else if b(7) != 3 then Left(s"PMTiles spec version ${b(7)} is not supported (only 3)")
     else
       val bb = ByteBuffer.wrap(b).order(ByteOrder.LITTLE_ENDIAN)
-      def l(at: com.histmersion.util.basemap.PmTiles.ParseHeaderLAt) = bb.getLong(at)
-      def e7(at: com.histmersion.util.basemap.PmTiles.ParseHeaderE7At) = bb.getInt(at) / 1e7
-      def u8(at: com.histmersion.util.basemap.PmTiles.ParseHeaderU8At) = b(at) & 0xff
+      def l(at: Int) = bb.getLong(at)
+      def e7(at: Int) = bb.getInt(at) / 1e7
+      def u8(at: Int) = b(at) & 0xff
       Right(
         Header(
           l(8),
@@ -262,7 +218,7 @@ object PmTiles:
         )
       )
 
-  def encodeHeader(h: Header): com.histmersion.util.basemap.PmTiles.EncodeHeaderResult =
+  def encodeHeader(h: Header): com.histmersion.util.basemap.PmTiles.HeaderBytes =
     val bb = ByteBuffer.allocate(HeaderBytes).order(ByteOrder.LITTLE_ENDIAN)
     bb.put(Magic).put(3.toByte)
     List(
@@ -284,7 +240,7 @@ object PmTiles:
       .put(h.tileType.code.toByte)
       .put(h.minZoom.toByte)
       .put(h.maxZoom.toByte)
-    def e7(d: com.histmersion.util.basemap.PmTiles.EncodeHeaderE7D) = bb.putInt(math.round(d * 1e7).toInt)
+    def e7(d: com.histmersion.util.basemap.PmTiles.Degrees) = bb.putInt(math.round(d * 1e7).toInt)
     e7(h.minLon); e7(h.minLat); e7(h.maxLon); e7(h.maxLat)
     bb.put(h.centerZoom.toByte)
     e7(h.centerLon); e7(h.centerLat)
@@ -293,10 +249,10 @@ object PmTiles:
   // ── tile ids ────────────────────────────────────────────────────────────────────────────────────
 
   /** The first tile id of zoom `z`: the number of tiles on all zooms below it, (4^z − 1) / 3. */
-  def zoomBase(z: com.histmersion.util.basemap.PmTiles.ZoomBaseZ): com.histmersion.util.basemap.PmTiles.ZoomBaseResult = ((1L << (2 * z)) - 1) / 3
+  def zoomBase(z: com.histmersion.util.basemap.PmTiles.Zoom): com.histmersion.util.basemap.PmTiles.Entry.TileId = ((1L << (2 * z)) - 1) / 3
 
   /** The tile id of `z/x/y`: [[zoomBase]] plus the tile's position on the zoom's Hilbert curve. */
-  def tileId(z: com.histmersion.util.basemap.PmTiles.TileIdZ, x: com.histmersion.util.basemap.PmTiles.TileIdX, y: com.histmersion.util.basemap.PmTiles.TileIdY): com.histmersion.util.basemap.PmTiles.TileIdResult =
+  def tileId(z: com.histmersion.util.basemap.PmTiles.TileIdZ, x: com.histmersion.util.basemap.PmTiles.TileColumn, y: com.histmersion.util.basemap.PmTiles.TileRow): com.histmersion.util.basemap.PmTiles.Entry.TileId =
     require(z >= 0 && z <= 26, s"zoom $z out of range")
     val n = 1L << z
     require(x >= 0 && x < n && y >= 0 && y < n, s"tile $z/$x/$y out of range")
@@ -320,7 +276,7 @@ object PmTiles:
     zoomBase(z) + d
 
   /** The inverse of [[tileId]]: `(z, x, y)`. */
-  def zxy(id: com.histmersion.util.basemap.PmTiles.ZxyId): (com.histmersion.util.basemap.PmTiles.ZxyResultPart1, com.histmersion.util.basemap.PmTiles.ZxyResultPart2, com.histmersion.util.basemap.PmTiles.ZxyResultPart3) =
+  def zxy(id: com.histmersion.util.basemap.PmTiles.Entry.TileId): (com.histmersion.util.basemap.PmTiles.Zoom, com.histmersion.util.basemap.PmTiles.TileColumn, com.histmersion.util.basemap.PmTiles.TileRow) =
     var z = 0 // the zoom whose id range holds `id`
     while zoomBase(z + 1) <= id do z += 1
     val n = 1L << z
@@ -346,7 +302,7 @@ object PmTiles:
 
   // ── varints and directories ─────────────────────────────────────────────────────────────────────
 
-  private def writeVarint(out: ByteArrayOutputStream, v: com.histmersion.util.basemap.PmTiles.WriteVarintV): Unit =
+  private def writeVarint(out: ByteArrayOutputStream, v: Long): Unit =
     var x = v // the bits still to write, seven at a time
     while (x & ~0x7fL) != 0 do
       out.write(((x & 0x7f) | 0x80).toInt)
@@ -356,7 +312,7 @@ object PmTiles:
   /** A cursor over varints. */
   final private class Varints(b: Array[Byte]):
     private var pos = 0 // the next unread byte
-    def next(): com.histmersion.util.basemap.PmTiles.Varints.NextResult =
+    def next(): Long =
       var result = 0L
       var shift = 0
       var more = true
@@ -371,13 +327,11 @@ object PmTiles:
       result
 
   object Varints:
-    type NextResult = NextResult.T
-    object NextResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
   /** A directory's bytes, uncompressed: the count, then the id deltas, run lengths, lengths and offsets column by
     * column (an offset of 0 means "right after the previous entry").
     */
-  def encodeDirectory(entries: IndexedSeq[Entry]): com.histmersion.util.basemap.PmTiles.EncodeDirectoryResult =
+  def encodeDirectory(entries: IndexedSeq[Entry]): com.histmersion.util.basemap.PmTiles.DirectoryBytes =
     val out = ByteArrayOutputStream()
     writeVarint(out, entries.size.toLong)
     var last = 0L // the previous tile id: ids are stored as deltas
@@ -391,7 +345,7 @@ object PmTiles:
     }
     out.toByteArray
 
-  def decodeDirectory(b: com.histmersion.util.basemap.PmTiles.DecodeDirectoryB): Either[com.histmersion.util.basemap.PmTiles.DecodeDirectoryResultPart1, Vector[Entry]] =
+  def decodeDirectory(b: com.histmersion.util.basemap.PmTiles.DirectoryBytes): Either[com.histmersion.util.basemap.PmTiles.Problem, Vector[Entry]] =
     try
       val v = Varints(b)
       val n = v.next()
@@ -415,7 +369,7 @@ object PmTiles:
   /** The entry that holds `id` in one sorted directory: the last whose id is ≤ `id` — a leaf pointer (to look further
     * in) or a run that covers it. `None`: not in this directory.
     */
-  def find(entries: IndexedSeq[Entry], id: com.histmersion.util.basemap.PmTiles.FindId): Option[Entry] =
+  def find(entries: IndexedSeq[Entry], id: com.histmersion.util.basemap.PmTiles.Entry.TileId): Option[Entry] =
     var lo = 0
     var hi = entries.size - 1
     var at = -1 // the last entry with tileId ≤ id so far
@@ -432,23 +386,23 @@ object PmTiles:
 
   // ── compression ─────────────────────────────────────────────────────────────────────────────────
 
-  def gzip(b: com.histmersion.util.basemap.PmTiles.GzipB): com.histmersion.util.basemap.PmTiles.GzipResult =
+  def gzip(b: com.histmersion.util.basemap.PmTiles.PlainBytes): com.histmersion.util.basemap.PmTiles.CompressedBytes =
     val out = ByteArrayOutputStream()
     Using.resource(GZIPOutputStream(out))(_.write(b))
     out.toByteArray
 
-  def gunzip(b: com.histmersion.util.basemap.PmTiles.GunzipB): Either[com.histmersion.util.basemap.PmTiles.GunzipResultPart1, com.histmersion.util.basemap.PmTiles.GunzipResultPart2] =
+  def gunzip(b: com.histmersion.util.basemap.PmTiles.CompressedBytes): Either[com.histmersion.util.basemap.PmTiles.Problem, com.histmersion.util.basemap.PmTiles.PlainBytes] =
     try Right(Using.resource(GZIPInputStream(ByteArrayInputStream(b)))(_.readAllBytes()))
     catch case e: java.io.IOException => Left(s"corrupt gzip data: ${e.getMessage}")
 
-  def isGzip(b: com.histmersion.util.basemap.PmTiles.IsGzipB): com.histmersion.util.basemap.PmTiles.IsGzipResult = b.length >= 2 && (b(0) & 0xff) == 0x1f && (b(1) & 0xff) == 0x8b
+  def isGzip(b: com.histmersion.util.basemap.PmTiles.TileBytes): Boolean = b.length >= 2 && (b(0) & 0xff) == 0x1f && (b(1) & 0xff) == 0x8b
 
-  def decompress(b: com.histmersion.util.basemap.PmTiles.DecompressB, c: Compression): Either[com.histmersion.util.basemap.PmTiles.DecompressResultPart1, com.histmersion.util.basemap.PmTiles.DecompressResultPart2] = c match
+  def decompress(b: com.histmersion.util.basemap.PmTiles.DecompressB, c: Compression): Either[com.histmersion.util.basemap.PmTiles.Problem, com.histmersion.util.basemap.PmTiles.PlainBytes] = c match
     case Compression.None | Compression.Unknown => Right(b)
     case Compression.Gzip                       => gunzip(b)
     case other => Left(s"PMTiles ${other.toString.toLowerCase} compression is not supported (only gzip)")
 
-  def compress(b: com.histmersion.util.basemap.PmTiles.CompressB, c: Compression): com.histmersion.util.basemap.PmTiles.CompressResult = c match
+  def compress(b: com.histmersion.util.basemap.PmTiles.CompressB, c: Compression): com.histmersion.util.basemap.PmTiles.CompressedBytes = c match
     case Compression.Gzip => gzip(b)
     case _                => b
 
@@ -468,9 +422,9 @@ object PmTiles:
 
     private val leaves = ConcurrentHashMap[Long, Vector[PmTiles.Entry]]()
 
-    private def read(offset: com.histmersion.util.basemap.PmTiles.File.ReadOffset, length: com.histmersion.util.basemap.PmTiles.File.ReadLength): com.histmersion.util.basemap.PmTiles.File.ReadResult = reader.read(ByteOffset.applyUnsafe(offset), length)
+    private def read(offset: com.histmersion.ByteOffset, length: com.histmersion.util.basemap.PmTiles.ByteLength): com.histmersion.util.basemap.PmTiles.FileBytes = reader.read(ByteOffset.applyUnsafe(offset), length)
 
-    private def leaf(e: PmTiles.Entry): Either[com.histmersion.util.basemap.PmTiles.File.LeafResultPart1, Vector[PmTiles.Entry]] =
+    private def leaf(e: PmTiles.Entry): Either[com.histmersion.util.basemap.PmTiles.File.Problem, Vector[PmTiles.Entry]] =
       Option(leaves.get(e.offset)).map(Right(_)).getOrElse {
         PmTiles
           .decompress(read(header.leafOffset + e.offset, e.length), header.internalCompression)
@@ -483,11 +437,11 @@ object PmTiles:
       }
 
     /** The entry for `z/x/y`, walking leaf directories (at most four levels, as the spec allows). */
-    def entry(z: com.histmersion.util.basemap.PmTiles.File.EntryZ, x: com.histmersion.util.basemap.PmTiles.File.EntryX, y: com.histmersion.util.basemap.PmTiles.File.EntryY): Either[com.histmersion.util.basemap.PmTiles.File.EntryResultPart1, Option[PmTiles.Entry]] =
+    def entry(z: com.histmersion.util.basemap.PmTiles.Zoom, x: com.histmersion.util.basemap.PmTiles.TileColumn, y: com.histmersion.util.basemap.PmTiles.TileRow): Either[com.histmersion.util.basemap.PmTiles.File.Problem, Option[PmTiles.Entry]] =
       if z < header.minZoom || z > header.maxZoom || x < 0 || y < 0 || x >= (1L << z) || y >= (1L << z) then Right(None)
       else
         val id = PmTiles.tileId(z, x, y)
-        def walk(dir: Vector[PmTiles.Entry], depth: com.histmersion.util.basemap.PmTiles.File.EntryWalkDepth): Either[com.histmersion.util.basemap.PmTiles.File.EntryWalkResultPart1, Option[PmTiles.Entry]] =
+        def walk(dir: Vector[PmTiles.Entry], depth: Int): Either[com.histmersion.util.basemap.PmTiles.File.Problem, Option[PmTiles.Entry]] =
           PmTiles.find(dir, id) match
             case None                  => Right(None)
             case Some(e) if !e.isLeaf  => Right(Some(e))
@@ -498,62 +452,26 @@ object PmTiles:
     /** The stored bytes of `z/x/y` (still compressed as [[PmTiles.Header.tileCompression]] says), or `None` when the
       * archive has no such tile.
       */
-    def tile(z: com.histmersion.util.basemap.PmTiles.File.TileZ, x: com.histmersion.util.basemap.PmTiles.File.TileX, y: com.histmersion.util.basemap.PmTiles.File.TileY): Either[com.histmersion.util.basemap.PmTiles.File.TileResultPart1, Option[com.histmersion.util.basemap.PmTiles.File.TileResultPart2]] =
+    def tile(z: com.histmersion.util.basemap.PmTiles.Zoom, x: com.histmersion.util.basemap.PmTiles.TileColumn, y: com.histmersion.util.basemap.PmTiles.TileRow): Either[com.histmersion.util.basemap.PmTiles.File.Problem, Option[com.histmersion.util.basemap.PmTiles.TileBytes]] =
       entry(z, x, y).map(_.map(e => read(header.dataOffset + e.offset, e.length)))
 
-    def size: com.histmersion.util.basemap.PmTiles.File.SizeResult = reader.size.value
+    def size: com.histmersion.ByteCount = reader.size.value
 
     def close(): Unit = reader.close()
 
   object File:
+    type Problem = Problem.T
+    object Problem extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
-    type EntryWalkResultPart1 = EntryWalkResultPart1.T
-    object EntryWalkResultPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-    type EntryWalkDepth = EntryWalkDepth.T
-    object EntryWalkDepth extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
-    type ReadResult = ReadResult.T
-    object ReadResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Array[_root_.scala.Byte], _root_.io.github.iltotore.iron.constraint.any.Pure]
-    type TileResultPart2 = TileResultPart2.T
-    object TileResultPart2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Array[_root_.scala.Byte], _root_.io.github.iltotore.iron.constraint.any.Pure]
 
     type Where = Where.T
     object Where extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
     type MaxLeaves = MaxLeaves.T
     object MaxLeaves extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
-    type ReadOffset = ReadOffset.T
-    object ReadOffset extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
-    type ReadLength = ReadLength.T
-    object ReadLength extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
-    type LeafResultPart1 = LeafResultPart1.T
-    object LeafResultPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-    type EntryResultPart1 = EntryResultPart1.T
-    object EntryResultPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-    type EntryZ = EntryZ.T
-    object EntryZ extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
-    type EntryX = EntryX.T
-    object EntryX extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
-    type EntryY = EntryY.T
-    object EntryY extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
-    type TileResultPart1 = TileResultPart1.T
-    object TileResultPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-    type TileZ = TileZ.T
-    object TileZ extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
-    type TileX = TileX.T
-    object TileX extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
-    type TileY = TileY.T
-    object TileY extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
-    type SizeResult = SizeResult.T
-    object SizeResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
-    type OpenResultPart1 = OpenResultPart1.T
-    object OpenResultPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-    type OpenMaxLeaves = OpenMaxLeaves.T
-    object OpenMaxLeaves extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
-    type MetadataResultPart1 = MetadataResultPart1.T
-    object MetadataResultPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
-    def open(blob: Blob, maxLeaves: com.histmersion.util.basemap.PmTiles.File.OpenMaxLeaves = 256): Either[com.histmersion.util.basemap.PmTiles.File.OpenResultPart1, File] =
+    def open(blob: Blob, maxLeaves: com.histmersion.util.basemap.PmTiles.File.MaxLeaves = 256): Either[com.histmersion.util.basemap.PmTiles.File.Problem, File] =
       val where = blob.where
       val opened =
         try
@@ -582,7 +500,7 @@ object PmTiles:
         catch case e: java.io.IOException => Left(s"$where: ${e.getMessage}")
       opened.left.map(e => if e.startsWith(where) then e else s"$where: $e")
 
-    private def metadata(reader: RandomReader, h: PmTiles.Header): Either[com.histmersion.util.basemap.PmTiles.File.MetadataResultPart1, Json] =
+    private def metadata(reader: RandomReader, h: PmTiles.Header): Either[com.histmersion.util.basemap.PmTiles.File.Problem, Json] =
       if h.metadataLength <= 0 then Right(Json.obj())
       else if h.metadataLength > 16L * 1024 * 1024 then Left("metadata over 16 MiB")
       else

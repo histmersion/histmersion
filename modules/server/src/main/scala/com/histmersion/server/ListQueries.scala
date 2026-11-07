@@ -13,11 +13,11 @@ import com.histmersion.api.Api
   * read once, here, against `now`. Free vocabularies (job kinds, managers, models) pass as they are. Pure.
   */
 object ListQueries:
+  type Problem = Problem.T
+  object Problem extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
-  type BadM = BadM.T
-  object BadM extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
-  private def bad(m: com.histmersion.server.ListQueries.BadM): Api.Error = Api.Error(m)
+  private def bad(m: com.histmersion.server.ListQueries.Problem): Api.Error = Api.Error(m)
 
   /** No `state` = the open ones (what the list always showed); `all` = every state. */
   def approvals(f: ApprovalFilter): Either[Api.Error, com.histmersion.domain.automation.approvals.ApprovalQuery] =

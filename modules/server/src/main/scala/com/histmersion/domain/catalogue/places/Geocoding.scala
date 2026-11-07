@@ -8,13 +8,11 @@ import com.histmersion.util.database.Transactor
   * surface, a shape cut to a compass part — with no in-memory twin.
   */
 trait Geocoding:
-  def resolve(name: com.histmersion.domain.catalogue.places.Geocoding.ResolveName, hint: Geocode.KindHint, at: Option[Period], placeholderMin: com.histmersion.domain.catalogue.places.Geocoding.ResolvePlaceholderMin): Option[Geocode.Resolution]
+  def resolve(name: com.histmersion.domain.catalogue.places.Geocoding.ResolveName, hint: Geocode.KindHint, at: Option[Period], placeholderMin: com.histmersion.domain.catalogue.places.GeocodeSettings.PlaceholderMin): Option[Geocode.Resolution]
 
 object Geocoding:
   type ResolveName = ResolveName.T
   object ResolveName extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type ResolvePlaceholderMin = ResolvePlaceholderMin.T
-  object ResolvePlaceholderMin extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
   def apply(db: Transactor): Geocoding = Implementation(db)
 
@@ -23,12 +21,10 @@ object Geocoding:
         name: com.histmersion.domain.catalogue.places.Geocoding.Implementation.ResolveName,
         hint: Geocode.KindHint,
         at: Option[Period],
-        placeholderMin: com.histmersion.domain.catalogue.places.Geocoding.Implementation.ResolvePlaceholderMin
+        placeholderMin: com.histmersion.domain.catalogue.places.GeocodeSettings.PlaceholderMin
     ): Option[Geocode.Resolution] =
       db.read(Geocoder.resolve(name, hint, at, placeholderMin))
 
   object Implementation:
     type ResolveName = ResolveName.T
     object ResolveName extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-    type ResolvePlaceholderMin = ResolvePlaceholderMin.T
-    object ResolvePlaceholderMin extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]

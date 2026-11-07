@@ -27,7 +27,7 @@ final class ApprovalDigestService(
 ):
 
   /** Does code decide an approval of kind `k` now (the autopilot's checks)? */
-  private def checked(k: com.histmersion.domain.automation.approvals.ApprovalDigestService.CheckedK): com.histmersion.domain.automation.approvals.ApprovalDigestService.CheckedResult =
+  private def checked(k: String): Boolean =
     ApprovalKind
       .parse(k)
       .exists(kk =>
@@ -51,7 +51,7 @@ final class ApprovalDigestService(
   /** From the managers' tick: once a UTC day (the tick's), after `digest-hour` (on the tick's time or on the digest's
     * clock, when it has one: [[AgentsControllers.digestClock]]), the digest's line goes to the worklog.
     */
-  def tick(now: Instant): List[com.histmersion.domain.automation.approvals.ApprovalDigestService.TickResult] =
+  def tick(now: Instant): List[String] =
     val hour = cfg.autopilot.digestHour
     val day = ManagerPolicy.dayStart(now)
     def pastHour(t: Instant) = !t.isBefore(ManagerPolicy.dayStart(t).plusSeconds(math.min(23, hour).toLong * 3600L))
@@ -110,9 +110,3 @@ final class ApprovalDigestService(
         BulkResult(d.wire, dryRun = false, ms.size, ok, bad, left)
 
 object ApprovalDigestService:
-  type CheckedResult = CheckedResult.T
-  object CheckedResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type CheckedK = CheckedK.T
-  object CheckedK extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type TickResult = TickResult.T
-  object TickResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]

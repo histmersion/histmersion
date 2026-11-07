@@ -24,7 +24,7 @@ final class SeedNoteFiles(dir: Path, confineTo: Option[SeedNoteFiles.ConfineTo])
     val f = dir.resolve(name)
     SourceNote.parseFile(f, confineTo).map(s => SeedNote(s, Files.getLastModifiedTime(f).toMillis))
 
-  def figures(name: com.histmersion.server.SeedNoteFiles.FiguresName, citekey: com.histmersion.server.SeedNoteFiles.FiguresCitekey, maxBytes: com.histmersion.server.SeedNoteFiles.FiguresMaxBytes): List[NewFigure] =
+  def figures(name: com.histmersion.server.SeedNoteFiles.FiguresName, citekey: com.histmersion.domain.library.Citekey, maxBytes: com.histmersion.ByteCount): List[NewFigure] =
     val note = dir.resolve(name)
     scala.util
       .Try(Files.readString(note))
@@ -47,18 +47,8 @@ object SeedNoteFiles:
   object ReadName extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type FiguresName = FiguresName.T
   object FiguresName extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type FiguresCitekey = FiguresCitekey.T
-  object FiguresCitekey extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type FiguresMaxBytes = FiguresMaxBytes.T
-  object FiguresMaxBytes extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type LoadMaxBytes = LoadMaxBytes.T
-  object LoadMaxBytes extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type DirForNoteText = DirForNoteText.T
-  object DirForNoteText extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type DirForCitekey = DirForCitekey.T
-  object DirForCitekey extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
-  def load(dir: Path, maxBytes: com.histmersion.server.SeedNoteFiles.LoadMaxBytes): List[NewFigure] =
+  def load(dir: Path, maxBytes: com.histmersion.ByteCount): List[NewFigure] =
     if !Files.isDirectory(dir) then Nil
     else
       val files = scala.util.Using.resource(Files.list(dir))(_.iterator.asScala.filter(Files.isRegularFile(_)).toList)
@@ -71,7 +61,7 @@ object SeedNoteFiles:
     * frontmatter uses to resolve `md_path`; the figures sit next to the converted body. Falls back to the
     * `md/<citekey>/figures` convention when the note carries no `md_path`.
     */
-  def dirFor(notePath: Path, noteText: com.histmersion.server.SeedNoteFiles.DirForNoteText, citekey: com.histmersion.server.SeedNoteFiles.DirForCitekey): Option[Path] =
+  def dirFor(notePath: Path, noteText: com.histmersion.server.FullText.Shown.Markdown, citekey: com.histmersion.domain.library.Citekey): Option[Path] =
     val root = Option(notePath.getParent)
       .flatMap(a => Option(a.getParent))
       .flatMap(a => Option(a.getParent))

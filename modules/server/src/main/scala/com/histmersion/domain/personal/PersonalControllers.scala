@@ -36,14 +36,14 @@ final class PersonalControllers(
     clock: Clock
 ):
 
-  private def bad(why: com.histmersion.domain.personal.PersonalControllers.BadWhy): Api.Error = Api.Error(why)
-  private def missing(what: com.histmersion.domain.personal.PersonalControllers.MissingWhat): Api.Error = Api.Error(s"No $what", Some(Write.CodeNotFound))
+  private def bad(why: com.histmersion.domain.personal.PersonalControllers.Problem): Api.Error = Api.Error(why)
+  private def missing(what: com.histmersion.domain.personal.PersonalControllers.Problem): Api.Error = Api.Error(s"No $what", Some(Write.CodeNotFound))
   private def now(): MarkTime = MarkTime.at(Instant.now(clock))
 
   private def person(caller: Caller): Either[Api.Error, UserId] =
     caller.person.toRight(bad("bookmarks, notes and read marks are a person's own; an automated run has none"))
 
-  private def kindOf(raw: Option[com.histmersion.domain.personal.PersonalControllers.KindOfRaw], allowed: Set[MarkKind]): Either[Api.Error, Option[MarkKind]] =
+  private def kindOf(raw: Option[com.histmersion.domain.personal.PersonalControllers.Kind], allowed: Set[MarkKind]): Either[Api.Error, Option[MarkKind]] =
     raw.map(_.trim).filter(_.nonEmpty) match
       case None    => Right(None)
       case Some(k) =>
@@ -53,9 +53,9 @@ final class PersonalControllers(
           .map(Some(_))
           .toRight(bad(s"kind '$k': one of ${MarkKind.values.filter(allowed).map(_.wire).mkString(", ")}"))
 
-  private def size(raw: Option[com.histmersion.domain.personal.PersonalControllers.SizeRaw]): PageSize = PageSize.applyUnsafe(PersonalIds.limit(raw))
+  private def size(raw: Option[com.histmersion.PageSize]): PageSize = PageSize.applyUnsafe(PersonalIds.limit(raw))
 
-  private def target(t: Target, allowed: Set[MarkKind], what: com.histmersion.domain.personal.PersonalControllers.TargetWhat): Either[Api.Error, MarkTarget] =
+  private def target(t: Target, allowed: Set[MarkKind], what: com.histmersion.domain.personal.PersonalControllers.TargetText): Either[Api.Error, MarkTarget] =
     Target
       .check(t, allowed, what)
       .flatMap(MarkTarget.zoomChecked)
@@ -67,9 +67,9 @@ final class PersonalControllers(
 
   def listBookmarks(
       caller: Caller,
-      kind: Option[com.histmersion.domain.personal.PersonalControllers.ListBookmarksKind],
-      q: Option[com.histmersion.domain.personal.PersonalControllers.ListBookmarksQ],
-      max: Option[com.histmersion.domain.personal.PersonalControllers.ListBookmarksMax]
+      kind: Option[com.histmersion.domain.personal.PersonalControllers.Kind],
+      q: Option[com.histmersion.domain.personal.PersonalControllers.Query],
+      max: Option[com.histmersion.domain.personal.PersonalControllers.MaxItems]
   ): Either[Api.Error, List[WireBookmark]] =
     for
       user <- person(caller)
@@ -86,7 +86,7 @@ final class PersonalControllers(
 
   def editBookmark(
       caller: Caller,
-      id: com.histmersion.domain.personal.PersonalControllers.EditBookmarkId,
+      id: com.histmersion.domain.personal.bookmarks.Bookmark.Id,
       in: com.histmersion.api.personal.Bookmark.Edit
   ): Either[Api.Error, WireBookmark] =
     maintenance.guard("edit_bookmark"):
@@ -97,7 +97,7 @@ final class PersonalControllers(
         b <- bookmarks.rename(user, bid, label, now()).toRight(missing(s"bookmark $id"))
       yield b.wire
 
-  def removeBookmark(caller: Caller, id: com.histmersion.domain.personal.PersonalControllers.RemoveBookmarkId): Either[Api.Error, WireBookmark] =
+  def removeBookmark(caller: Caller, id: com.histmersion.domain.personal.bookmarks.Bookmark.Id): Either[Api.Error, WireBookmark] =
     maintenance.guard("remove_bookmark"):
       for
         user <- person(caller)
@@ -109,10 +109,10 @@ final class PersonalControllers(
 
   def listNotes(
       caller: Caller,
-      kind: Option[com.histmersion.domain.personal.PersonalControllers.ListNotesKind],
-      itemKey: Option[com.histmersion.domain.personal.PersonalControllers.ListNotesItemKey],
-      q: Option[com.histmersion.domain.personal.PersonalControllers.ListNotesQ],
-      max: Option[com.histmersion.domain.personal.PersonalControllers.ListNotesMax]
+      kind: Option[com.histmersion.domain.personal.PersonalControllers.Kind],
+      itemKey: Option[com.histmersion.domain.personal.PersonalControllers.ItemKey],
+      q: Option[com.histmersion.domain.personal.PersonalControllers.Query],
+      max: Option[com.histmersion.domain.personal.PersonalControllers.MaxItems]
   ): Either[Api.Error, List[WireNote]] =
     for
       user <- person(caller)
@@ -157,7 +157,7 @@ final class PersonalControllers(
       user: UserId,
       id: com.histmersion.api.personal.Note.Id,
       text: com.histmersion.api.personal.Note.Text,
-      seen: Option[com.histmersion.domain.personal.PersonalControllers.EditedSeen]
+      seen: Option[com.histmersion.domain.personal.PersonalControllers.SeenState]
   ) =
     seen.map(s => Try(MarkTime.parse(s)).toOption) match
       case Some(None) =>
@@ -179,9 +179,9 @@ final class PersonalControllers(
 
   def readMarks(
       caller: Caller,
-      kind: Option[com.histmersion.domain.personal.PersonalControllers.ReadMarksKind],
-      show: Option[com.histmersion.domain.personal.PersonalControllers.ReadMarksShow],
-      max: Option[com.histmersion.domain.personal.PersonalControllers.ReadMarksMax]
+      kind: Option[com.histmersion.domain.personal.PersonalControllers.Kind],
+      show: Option[com.histmersion.domain.personal.PersonalControllers.ShowMode],
+      max: Option[com.histmersion.domain.personal.PersonalControllers.MaxItems]
   ): Either[Api.Error, List[WireReadMark]] =
     for
       user <- person(caller)
@@ -210,9 +210,9 @@ final class PersonalControllers(
 
   def unread(
       caller: Caller,
-      kind: Option[com.histmersion.domain.personal.PersonalControllers.UnreadKind],
-      max: Option[com.histmersion.domain.personal.PersonalControllers.UnreadMax],
-      offset: Option[com.histmersion.domain.personal.PersonalControllers.UnreadOffset]
+      kind: Option[com.histmersion.domain.personal.PersonalControllers.Kind],
+      max: Option[com.histmersion.domain.personal.PersonalControllers.MaxItems],
+      offset: Option[com.histmersion.Offset]
   ): Either[Api.Error, UnreadPage] =
     for
       user <- person(caller)
@@ -239,51 +239,25 @@ final class PersonalControllers(
       )
 
 object PersonalControllers:
-  type BadWhy = BadWhy.T
-  object BadWhy extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type MissingWhat = MissingWhat.T
-  object MissingWhat extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type KindOfRaw = KindOfRaw.T
-  object KindOfRaw extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type SizeRaw = SizeRaw.T
-  object SizeRaw extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type TargetWhat = TargetWhat.T
-  object TargetWhat extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type ListBookmarksKind = ListBookmarksKind.T
-  object ListBookmarksKind extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type ListBookmarksQ = ListBookmarksQ.T
-  object ListBookmarksQ extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type ListBookmarksMax = ListBookmarksMax.T
-  object ListBookmarksMax extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type EditBookmarkId = EditBookmarkId.T
-  object EditBookmarkId extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type RemoveBookmarkId = RemoveBookmarkId.T
-  object RemoveBookmarkId extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type ListNotesKind = ListNotesKind.T
-  object ListNotesKind extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type ListNotesItemKey = ListNotesItemKey.T
-  object ListNotesItemKey extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type ListNotesQ = ListNotesQ.T
-  object ListNotesQ extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type ListNotesMax = ListNotesMax.T
-  object ListNotesMax extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type ItemKey = ItemKey.T
+  object ItemKey extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type Kind = Kind.T
+  object Kind extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type MaxItems = MaxItems.T
+  object MaxItems extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type Problem = Problem.T
+  object Problem extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type Query = Query.T
+  object Query extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type SeenState = SeenState.T
+  object SeenState extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type ShowMode = ShowMode.T
+  object ShowMode extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type TargetText = TargetText.T
+  object TargetText extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type NoteId = NoteId.T
   object NoteId extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type EditNoteId = EditNoteId.T
   object EditNoteId extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type EditedSeen = EditedSeen.T
-  object EditedSeen extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type RemoveNoteId = RemoveNoteId.T
   object RemoveNoteId extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type ReadMarksKind = ReadMarksKind.T
-  object ReadMarksKind extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type ReadMarksShow = ReadMarksShow.T
-  object ReadMarksShow extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type ReadMarksMax = ReadMarksMax.T
-  object ReadMarksMax extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type UnreadKind = UnreadKind.T
-  object UnreadKind extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type UnreadMax = UnreadMax.T
-  object UnreadMax extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type UnreadOffset = UnreadOffset.T
-  object UnreadOffset extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]

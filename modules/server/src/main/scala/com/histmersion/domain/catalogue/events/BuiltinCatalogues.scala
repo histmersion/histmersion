@@ -15,8 +15,6 @@ import scala.collection.immutable.ListMap
 object BuiltinCatalogues:
 
   /** A first-party catalogue: its plugin and the name it registers. */
-  type PluginIds = PluginIds.T
-  object PluginIds extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type AliasesPart1 = AliasesPart1.T
   object AliasesPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type AliasesPart2 = AliasesPart2.T
@@ -64,7 +62,7 @@ object BuiltinCatalogues:
     Entry("events-wikidata", CatalogProvider.Wikidata)
   )
 
-  val pluginIds: Set[com.histmersion.domain.catalogue.events.BuiltinCatalogues.PluginIds] = entries.map(_.plugin).toSet
+  val pluginIds: Set[com.histmersion.util.plugins.Plugin.Id] = entries.map(_.plugin).toSet
 
   /** The other names `events import` takes for a built-in catalogue. */
   val aliases: Map[com.histmersion.domain.catalogue.events.BuiltinCatalogues.AliasesPart1, com.histmersion.domain.catalogue.events.BuiltinCatalogues.AliasesPart2] = Map(

@@ -21,50 +21,50 @@ import com.histmersion.api.Api
   * approved plan and run cap) and the schedules not moved into a watcher yet.
   */
 trait GoalService:
-  def get(slug: com.histmersion.domain.automation.goals.GoalService.GetSlug): Option[Goal]
+  def get(slug: com.histmersion.domain.automation.Goal.Slug): Option[Goal]
 
   /** Every goal, by slug. */
   def all(): List[Goal]
 
   /** A goal's direct sub-goals, by slug. */
-  def children(slug: com.histmersion.domain.automation.goals.GoalService.ChildrenSlug): List[Goal]
+  def children(slug: com.histmersion.domain.automation.Goal.Slug): List[Goal]
 
   /** Create or replace a goal; a period that starts after it ends is refused. */
-  def put(slug: com.histmersion.domain.automation.goals.GoalService.PutSlug, in: Goal.Put): Either[Api.Error, Unit]
+  def put(slug: com.histmersion.domain.automation.Goal.Slug, in: Goal.Put): Either[Api.Error, Unit]
 
   /** One page of the goals (of one status, when given), by slug, with the total. */
-  def page(status: Option[com.histmersion.domain.automation.goals.GoalService.PageStatus], limit: com.histmersion.domain.automation.goals.GoalService.PageLimit, offset: com.histmersion.domain.automation.goals.GoalService.PageOffset): Goal.List
+  def page(status: Option[com.histmersion.domain.automation.Goal.Status.Wire], limit: com.histmersion.PageSize, offset: com.histmersion.Offset): Goal.List
 
   /** A goal's fields changed as given (a cap of 0 or less clears it; a bound given alone replaces that bound); no such
     * goal is a not-found error.
     */
-  def patch(slug: com.histmersion.domain.automation.goals.GoalService.PatchSlug, p: Goal.Patch): Either[Api.Error, Unit]
+  def patch(slug: com.histmersion.domain.automation.Goal.Slug, p: Goal.Patch): Either[Api.Error, Unit]
 
   /** A goal removed; false when there was none. */
-  def delete(slug: com.histmersion.domain.automation.goals.GoalService.DeleteSlug): com.histmersion.domain.automation.goals.GoalService.DeleteResult
+  def delete(slug: com.histmersion.domain.automation.Goal.Slug): Boolean
 
   /** A new slug, the old one kept as an alias (V053): refused when there is no such goal, or the new slug is another
     * goal's or another goal's old one.
     */
-  def rename(from: com.histmersion.domain.automation.goals.GoalService.RenameFrom, to: com.histmersion.domain.automation.goals.GoalService.RenameTo): Either[Api.Error, Unit]
+  def rename(from: com.histmersion.domain.automation.Goal.Slug, to: com.histmersion.domain.automation.Goal.Slug): Either[Api.Error, Unit]
 
   /** The goals that link each of these work-list items: (item id, goal slug, goal title), an item's goals by title. */
-  def goalsOfItems(items: List[com.histmersion.domain.automation.goals.GoalService.GoalsOfItemsItems]): List[(com.histmersion.domain.automation.goals.GoalService.GoalsOfItemsResultPart1, com.histmersion.domain.automation.goals.GoalService.GoalsOfItemsResultPart2, com.histmersion.domain.automation.goals.GoalService.GoalsOfItemsResultPart3)]
+  def goalsOfItems(items: List[com.histmersion.domain.automation.goals.GoalLinkRepo.ItemId]): List[(com.histmersion.domain.automation.goals.GoalService.GoalsOfItemsResultPart1, com.histmersion.domain.automation.goals.GoalService.GoalsOfItemsResultPart2, com.histmersion.domain.automation.goals.GoalService.GoalsOfItemsResultPart3)]
 
   /** A goal's links with the title of what each points at: sources, articles, queries, queue items; oldest first. */
-  def links(goal: com.histmersion.domain.automation.goals.GoalService.LinksGoal): List[GoalLink]
+  def links(goal: com.histmersion.domain.automation.Goal.Slug): List[GoalLink]
 
   /** Link (an existing link keeps its note unless a new one is given); false = no such goal. */
   def link(
-      goal: com.histmersion.domain.automation.goals.GoalService.LinkGoal,
+      goal: com.histmersion.domain.automation.Goal.Slug,
       kind: com.histmersion.domain.automation.Goal.LinkKind,
-      ref: com.histmersion.domain.automation.goals.GoalService.LinkRef,
-      note: Option[com.histmersion.domain.automation.goals.GoalService.LinkNote]
-  ): com.histmersion.domain.automation.goals.GoalService.LinkResult
-  def unlink(goal: com.histmersion.domain.automation.goals.GoalService.UnlinkGoal, kind: com.histmersion.domain.automation.Goal.LinkKind, ref: com.histmersion.domain.automation.goals.GoalService.UnlinkRef): com.histmersion.domain.automation.goals.GoalService.UnlinkResult
+      ref: com.histmersion.domain.automation.goals.BGoalLinkRow.Ref,
+      note: Option[com.histmersion.domain.automation.goals.BGoalLinkRow.Note]
+  ): Boolean
+  def unlink(goal: com.histmersion.domain.automation.Goal.Slug, kind: com.histmersion.domain.automation.Goal.LinkKind, ref: com.histmersion.domain.automation.goals.BGoalLinkRow.Ref): Boolean
 
   /** The refs of a goal's links of one kind (a sweep's queries, a currency check's sources), oldest first. */
-  def refs(goal: com.histmersion.domain.automation.goals.GoalService.RefsGoal, kind: com.histmersion.domain.automation.Goal.LinkKind): List[com.histmersion.domain.automation.goals.GoalService.RefsResult]
+  def refs(goal: com.histmersion.domain.automation.Goal.Slug, kind: com.histmersion.domain.automation.Goal.LinkKind): List[com.histmersion.domain.automation.goals.BGoalLinkRow.Ref]
 
   /** Every goal's links counted by kind; an article link counts only while the article exists. */
   def linkCounts(): Map[(com.histmersion.domain.automation.goals.GoalService.LinkCountsResultPart1Part1, com.histmersion.domain.automation.goals.GoalService.LinkCountsResultPart1Part2), com.histmersion.domain.automation.goals.GoalService.LinkCountsResultPart2]
@@ -73,79 +73,35 @@ trait GoalService:
   def planned(): Set[com.histmersion.domain.automation.goals.GoalService.PlannedResult]
 
   /** The approved plan (its JSON) and the run cap; None = no such goal. */
-  def planAndBudget(goal: com.histmersion.domain.automation.goals.GoalService.PlanAndBudgetGoal): Option[(Option[com.histmersion.domain.automation.goals.GoalService.PlanAndBudgetResultPart1], Option[BigDecimal])]
-  def setPlan(goal: com.histmersion.domain.automation.goals.GoalService.SetPlanGoal, planJson: com.histmersion.domain.automation.goals.GoalService.SetPlanPlanJson): Unit
-  def setBudget(goal: com.histmersion.domain.automation.goals.GoalService.SetBudgetGoal, usd: Option[BigDecimal]): Unit
+  def planAndBudget(goal: com.histmersion.domain.automation.Goal.Slug): Option[(Option[com.histmersion.domain.automation.goals.GoalService.PlanAndBudgetResultPart1], Option[BigDecimal])]
+  def setPlan(goal: com.histmersion.domain.automation.Goal.Slug, planJson: com.histmersion.domain.automation.goals.BGoalRow.Plan): Unit
+  def setBudget(goal: com.histmersion.domain.automation.Goal.Slug, usd: Option[BigDecimal]): Unit
 
   /** The schedules not moved into a watcher (one goal's, or every one), the next due first. */
-  def schedules(goal: Option[com.histmersion.domain.automation.goals.GoalService.SchedulesGoal]): List[GoalSchedule]
+  def schedules(goal: Option[com.histmersion.domain.automation.Goal.Slug]): List[GoalSchedule]
   def setSchedule(
-      goal: com.histmersion.domain.automation.goals.GoalService.SetScheduleGoal,
+      goal: com.histmersion.domain.automation.Goal.Slug,
       kind: ScheduleKind,
-      cron: com.histmersion.domain.automation.goals.GoalService.SetScheduleCron,
-      enabled: com.histmersion.domain.automation.goals.GoalService.SetScheduleEnabled,
+      cron: com.histmersion.domain.automation.goals.BGoalScheduleRow.Cron,
+      enabled: com.histmersion.domain.automation.goals.BGoalScheduleRow.Enabled,
       budgetUsd: Option[BigDecimal],
       next: Option[Instant]
   ): Unit
-  def removeSchedule(goal: com.histmersion.domain.automation.goals.GoalService.RemoveScheduleGoal, kind: ScheduleKind): com.histmersion.domain.automation.goals.GoalService.RemoveScheduleResult
+  def removeSchedule(goal: com.histmersion.domain.automation.Goal.Slug, kind: ScheduleKind): Boolean
 
   /** The goals that still have schedules here. */
   def scheduleGoals(): List[com.histmersion.domain.automation.goals.GoalService.ScheduleGoalsResult]
 
   /** A goal's schedules taken out, in the caller's transaction (moved into its watcher). */
-  def takeSchedulesIn(goal: com.histmersion.domain.automation.goals.GoalService.TakeSchedulesInGoal)(using DbCon): List[GoalSchedule]
+  def takeSchedulesIn(goal: com.histmersion.domain.automation.Goal.Slug)(using DbCon): List[GoalSchedule]
 
 object GoalService:
-  type GetSlug = GetSlug.T
-  object GetSlug extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type ChildrenSlug = ChildrenSlug.T
-  object ChildrenSlug extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type PutSlug = PutSlug.T
-  object PutSlug extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type PageStatus = PageStatus.T
-  object PageStatus extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type PageLimit = PageLimit.T
-  object PageLimit extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type PageOffset = PageOffset.T
-  object PageOffset extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type PatchSlug = PatchSlug.T
-  object PatchSlug extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type DeleteResult = DeleteResult.T
-  object DeleteResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type DeleteSlug = DeleteSlug.T
-  object DeleteSlug extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type RenameFrom = RenameFrom.T
-  object RenameFrom extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type RenameTo = RenameTo.T
-  object RenameTo extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type GoalsOfItemsResultPart1 = GoalsOfItemsResultPart1.T
   object GoalsOfItemsResultPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type GoalsOfItemsResultPart2 = GoalsOfItemsResultPart2.T
   object GoalsOfItemsResultPart2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type GoalsOfItemsResultPart3 = GoalsOfItemsResultPart3.T
   object GoalsOfItemsResultPart3 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type GoalsOfItemsItems = GoalsOfItemsItems.T
-  object GoalsOfItemsItems extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type LinksGoal = LinksGoal.T
-  object LinksGoal extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type LinkResult = LinkResult.T
-  object LinkResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type LinkGoal = LinkGoal.T
-  object LinkGoal extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type LinkRef = LinkRef.T
-  object LinkRef extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type LinkNote = LinkNote.T
-  object LinkNote extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type UnlinkResult = UnlinkResult.T
-  object UnlinkResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type UnlinkGoal = UnlinkGoal.T
-  object UnlinkGoal extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type UnlinkRef = UnlinkRef.T
-  object UnlinkRef extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type RefsResult = RefsResult.T
-  object RefsResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type RefsGoal = RefsGoal.T
-  object RefsGoal extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type LinkCountsResultPart1Part1 = LinkCountsResultPart1Part1.T
   object LinkCountsResultPart1Part1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type LinkCountsResultPart1Part2 = LinkCountsResultPart1Part2.T
@@ -156,72 +112,50 @@ object GoalService:
   object PlannedResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type PlanAndBudgetResultPart1 = PlanAndBudgetResultPart1.T
   object PlanAndBudgetResultPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type PlanAndBudgetGoal = PlanAndBudgetGoal.T
-  object PlanAndBudgetGoal extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type SetPlanGoal = SetPlanGoal.T
-  object SetPlanGoal extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type SetPlanPlanJson = SetPlanPlanJson.T
-  object SetPlanPlanJson extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type SetBudgetGoal = SetBudgetGoal.T
-  object SetBudgetGoal extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type SchedulesGoal = SchedulesGoal.T
-  object SchedulesGoal extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type SetScheduleGoal = SetScheduleGoal.T
-  object SetScheduleGoal extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type SetScheduleCron = SetScheduleCron.T
-  object SetScheduleCron extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type SetScheduleEnabled = SetScheduleEnabled.T
-  object SetScheduleEnabled extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type RemoveScheduleResult = RemoveScheduleResult.T
-  object RemoveScheduleResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type RemoveScheduleGoal = RemoveScheduleGoal.T
-  object RemoveScheduleGoal extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type ScheduleGoalsResult = ScheduleGoalsResult.T
   object ScheduleGoalsResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type TakeSchedulesInGoal = TakeSchedulesInGoal.T
-  object TakeSchedulesInGoal extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
   def apply(db: Transactor): GoalService = Implementation(db)
 
   final private class Implementation(db: Transactor) extends GoalService:
-    def get(slug: com.histmersion.domain.automation.goals.GoalService.Implementation.GetSlug): Option[Goal] = db.read(GoalRepo.get(slug))
+    def get(slug: com.histmersion.domain.automation.Goal.Slug): Option[Goal] = db.read(GoalRepo.get(slug))
     def all(): List[Goal] = db.read(GoalRepo.all())
-    def children(slug: com.histmersion.domain.automation.goals.GoalService.Implementation.ChildrenSlug): List[Goal] = db.read(GoalRepo.children(slug))
-    def put(slug: com.histmersion.domain.automation.goals.GoalService.Implementation.PutSlug, in: Goal.Put): Either[Api.Error, Unit] = db.transact(GoalRepo.put(slug, in))
-    def page(status: Option[com.histmersion.domain.automation.goals.GoalService.Implementation.PageStatus], limit: com.histmersion.domain.automation.goals.GoalService.Implementation.PageLimit, offset: com.histmersion.domain.automation.goals.GoalService.Implementation.PageOffset): Goal.List =
+    def children(slug: com.histmersion.domain.automation.Goal.Slug): List[Goal] = db.read(GoalRepo.children(slug))
+    def put(slug: com.histmersion.domain.automation.Goal.Slug, in: Goal.Put): Either[Api.Error, Unit] = db.transact(GoalRepo.put(slug, in))
+    def page(status: Option[com.histmersion.domain.automation.Goal.Status.Wire], limit: com.histmersion.PageSize, offset: com.histmersion.Offset): Goal.List =
       db.read(GoalRepo.listIn(status, limit, offset))
-    def patch(slug: com.histmersion.domain.automation.goals.GoalService.Implementation.PatchSlug, p: Goal.Patch): Either[Api.Error, Unit] = db.transact(GoalRepo.patchIn(slug, p))
-    def delete(slug: com.histmersion.domain.automation.goals.GoalService.Implementation.DeleteSlug): com.histmersion.domain.automation.goals.GoalService.Implementation.DeleteResult = db.transact(GoalRepo.deleteIn(slug))
-    def rename(from: com.histmersion.domain.automation.goals.GoalService.Implementation.RenameFrom, to: com.histmersion.domain.automation.goals.GoalService.Implementation.RenameTo): Either[Api.Error, Unit] = db.transact(GoalRepo.renameIn(from.trim, to.trim))
-    def goalsOfItems(items: List[com.histmersion.domain.automation.goals.GoalService.Implementation.GoalsOfItemsItems]): List[(com.histmersion.domain.automation.goals.GoalService.Implementation.GoalsOfItemsResultPart1, com.histmersion.domain.automation.goals.GoalService.Implementation.GoalsOfItemsResultPart2, com.histmersion.domain.automation.goals.GoalService.Implementation.GoalsOfItemsResultPart3)] = db.read(GoalLinkRepo.goalsOfItemsIn(items))
-    def links(goal: com.histmersion.domain.automation.goals.GoalService.Implementation.LinksGoal): List[GoalLink] = db.read(GoalLinkRepo.links(goal))
+    def patch(slug: com.histmersion.domain.automation.Goal.Slug, p: Goal.Patch): Either[Api.Error, Unit] = db.transact(GoalRepo.patchIn(slug, p))
+    def delete(slug: com.histmersion.domain.automation.Goal.Slug): Boolean = db.transact(GoalRepo.deleteIn(slug))
+    def rename(from: com.histmersion.domain.automation.Goal.Slug, to: com.histmersion.domain.automation.Goal.Slug): Either[Api.Error, Unit] = db.transact(GoalRepo.renameIn(from.trim, to.trim))
+    def goalsOfItems(items: List[com.histmersion.domain.automation.goals.GoalLinkRepo.ItemId]): List[(com.histmersion.domain.automation.goals.GoalService.Implementation.GoalsOfItemsResultPart1, com.histmersion.domain.automation.goals.GoalService.Implementation.GoalsOfItemsResultPart2, com.histmersion.domain.automation.goals.GoalService.Implementation.GoalsOfItemsResultPart3)] = db.read(GoalLinkRepo.goalsOfItemsIn(items))
+    def links(goal: com.histmersion.domain.automation.Goal.Slug): List[GoalLink] = db.read(GoalLinkRepo.links(goal))
     def link(
-        goal: com.histmersion.domain.automation.goals.GoalService.Implementation.LinkGoal,
+        goal: com.histmersion.domain.automation.Goal.Slug,
         kind: com.histmersion.domain.automation.Goal.LinkKind,
-        ref: com.histmersion.domain.automation.goals.GoalService.Implementation.LinkRef,
-        note: Option[com.histmersion.domain.automation.goals.GoalService.Implementation.LinkNote]
-    ): com.histmersion.domain.automation.goals.GoalService.Implementation.LinkResult =
+        ref: com.histmersion.domain.automation.goals.BGoalLinkRow.Ref,
+        note: Option[com.histmersion.domain.automation.goals.BGoalLinkRow.Note]
+    ): Boolean =
       db.transact(
         GoalLinkRepo.link(goal, kind.transformInto[com.histmersion.api.automation.Goal.Plans.LinkKind], ref, note)
       )
-    def unlink(goal: com.histmersion.domain.automation.goals.GoalService.Implementation.UnlinkGoal, kind: com.histmersion.domain.automation.Goal.LinkKind, ref: com.histmersion.domain.automation.goals.GoalService.Implementation.UnlinkRef): com.histmersion.domain.automation.goals.GoalService.Implementation.UnlinkResult =
+    def unlink(goal: com.histmersion.domain.automation.Goal.Slug, kind: com.histmersion.domain.automation.Goal.LinkKind, ref: com.histmersion.domain.automation.goals.BGoalLinkRow.Ref): Boolean =
       db.transact(
         GoalLinkRepo.unlink(goal, kind.transformInto[com.histmersion.api.automation.Goal.Plans.LinkKind], ref)
       )
-    def refs(goal: com.histmersion.domain.automation.goals.GoalService.Implementation.RefsGoal, kind: com.histmersion.domain.automation.Goal.LinkKind): List[com.histmersion.domain.automation.goals.GoalService.Implementation.RefsResult] =
+    def refs(goal: com.histmersion.domain.automation.Goal.Slug, kind: com.histmersion.domain.automation.Goal.LinkKind): List[com.histmersion.domain.automation.goals.BGoalLinkRow.Ref] =
       db.read(GoalLinkRepo.refsIn(goal, kind.transformInto[com.histmersion.api.automation.Goal.Plans.LinkKind]))
     def linkCounts(): Map[(com.histmersion.domain.automation.goals.GoalService.Implementation.LinkCountsResultPart1Part1, com.histmersion.domain.automation.goals.GoalService.Implementation.LinkCountsResultPart1Part2), com.histmersion.domain.automation.goals.GoalService.Implementation.LinkCountsResultPart2] = db.read(GoalLinkRepo.linkCounts())
     def planned(): Set[com.histmersion.domain.automation.goals.GoalService.Implementation.PlannedResult] = db.read(GoalLinkRepo.planned())
-    def planAndBudget(goal: com.histmersion.domain.automation.goals.GoalService.Implementation.PlanAndBudgetGoal): Option[(Option[com.histmersion.domain.automation.goals.GoalService.Implementation.PlanAndBudgetResultPart1], Option[BigDecimal])] =
+    def planAndBudget(goal: com.histmersion.domain.automation.Goal.Slug): Option[(Option[com.histmersion.domain.automation.goals.GoalService.Implementation.PlanAndBudgetResultPart1], Option[BigDecimal])] =
       db.read(GoalLinkRepo.planAndBudget(goal))
-    def setPlan(goal: com.histmersion.domain.automation.goals.GoalService.Implementation.SetPlanGoal, planJson: com.histmersion.domain.automation.goals.GoalService.Implementation.SetPlanPlanJson): Unit = db.transact(GoalLinkRepo.setPlan(goal, planJson))
-    def setBudget(goal: com.histmersion.domain.automation.goals.GoalService.Implementation.SetBudgetGoal, usd: Option[BigDecimal]): Unit = db.transact(GoalLinkRepo.setBudget(goal, usd))
-    def schedules(goal: Option[com.histmersion.domain.automation.goals.GoalService.Implementation.SchedulesGoal]): List[GoalSchedule] = db.read(GoalLinkRepo.schedules(goal))
+    def setPlan(goal: com.histmersion.domain.automation.Goal.Slug, planJson: com.histmersion.domain.automation.goals.BGoalRow.Plan): Unit = db.transact(GoalLinkRepo.setPlan(goal, planJson))
+    def setBudget(goal: com.histmersion.domain.automation.Goal.Slug, usd: Option[BigDecimal]): Unit = db.transact(GoalLinkRepo.setBudget(goal, usd))
+    def schedules(goal: Option[com.histmersion.domain.automation.Goal.Slug]): List[GoalSchedule] = db.read(GoalLinkRepo.schedules(goal))
     def setSchedule(
-        goal: com.histmersion.domain.automation.goals.GoalService.Implementation.SetScheduleGoal,
+        goal: com.histmersion.domain.automation.Goal.Slug,
         kind: ScheduleKind,
-        cron: com.histmersion.domain.automation.goals.GoalService.Implementation.SetScheduleCron,
-        enabled: com.histmersion.domain.automation.goals.GoalService.Implementation.SetScheduleEnabled,
+        cron: com.histmersion.domain.automation.goals.BGoalScheduleRow.Cron,
+        enabled: com.histmersion.domain.automation.goals.BGoalScheduleRow.Enabled,
         budgetUsd: Option[BigDecimal],
         next: Option[Instant]
     ): Unit = db.transact(
@@ -234,64 +168,20 @@ object GoalService:
         next
       )
     )
-    def removeSchedule(goal: com.histmersion.domain.automation.goals.GoalService.Implementation.RemoveScheduleGoal, kind: ScheduleKind): com.histmersion.domain.automation.goals.GoalService.Implementation.RemoveScheduleResult =
+    def removeSchedule(goal: com.histmersion.domain.automation.Goal.Slug, kind: ScheduleKind): Boolean =
       db.transact(
         GoalLinkRepo.removeSchedule(goal, kind.transformInto[com.histmersion.api.automation.Goal.Plans.ScheduleKind])
       )
     def scheduleGoals(): List[com.histmersion.domain.automation.goals.GoalService.Implementation.ScheduleGoalsResult] = db.read(GoalLinkRepo.scheduleGoals())
-    def takeSchedulesIn(goal: com.histmersion.domain.automation.goals.GoalService.Implementation.TakeSchedulesInGoal)(using DbCon): List[GoalSchedule] = GoalLinkRepo.takeSchedulesIn(goal)
+    def takeSchedulesIn(goal: com.histmersion.domain.automation.Goal.Slug)(using DbCon): List[GoalSchedule] = GoalLinkRepo.takeSchedulesIn(goal)
 
   object Implementation:
-    type GetSlug = GetSlug.T
-    object GetSlug extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-    type ChildrenSlug = ChildrenSlug.T
-    object ChildrenSlug extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-    type PutSlug = PutSlug.T
-    object PutSlug extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-    type PageStatus = PageStatus.T
-    object PageStatus extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-    type PageLimit = PageLimit.T
-    object PageLimit extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
-    type PageOffset = PageOffset.T
-    object PageOffset extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
-    type PatchSlug = PatchSlug.T
-    object PatchSlug extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-    type DeleteResult = DeleteResult.T
-    object DeleteResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
-    type DeleteSlug = DeleteSlug.T
-    object DeleteSlug extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-    type RenameFrom = RenameFrom.T
-    object RenameFrom extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-    type RenameTo = RenameTo.T
-    object RenameTo extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
     type GoalsOfItemsResultPart1 = GoalsOfItemsResultPart1.T
     object GoalsOfItemsResultPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
     type GoalsOfItemsResultPart2 = GoalsOfItemsResultPart2.T
     object GoalsOfItemsResultPart2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
     type GoalsOfItemsResultPart3 = GoalsOfItemsResultPart3.T
     object GoalsOfItemsResultPart3 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-    type GoalsOfItemsItems = GoalsOfItemsItems.T
-    object GoalsOfItemsItems extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
-    type LinksGoal = LinksGoal.T
-    object LinksGoal extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-    type LinkResult = LinkResult.T
-    object LinkResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
-    type LinkGoal = LinkGoal.T
-    object LinkGoal extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-    type LinkRef = LinkRef.T
-    object LinkRef extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-    type LinkNote = LinkNote.T
-    object LinkNote extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-    type UnlinkResult = UnlinkResult.T
-    object UnlinkResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
-    type UnlinkGoal = UnlinkGoal.T
-    object UnlinkGoal extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-    type UnlinkRef = UnlinkRef.T
-    object UnlinkRef extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-    type RefsResult = RefsResult.T
-    object RefsResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-    type RefsGoal = RefsGoal.T
-    object RefsGoal extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
     type LinkCountsResultPart1Part1 = LinkCountsResultPart1Part1.T
     object LinkCountsResultPart1Part1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
     type LinkCountsResultPart1Part2 = LinkCountsResultPart1Part2.T
@@ -302,30 +192,8 @@ object GoalService:
     object PlannedResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
     type PlanAndBudgetResultPart1 = PlanAndBudgetResultPart1.T
     object PlanAndBudgetResultPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-    type PlanAndBudgetGoal = PlanAndBudgetGoal.T
-    object PlanAndBudgetGoal extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-    type SetPlanGoal = SetPlanGoal.T
-    object SetPlanGoal extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-    type SetPlanPlanJson = SetPlanPlanJson.T
-    object SetPlanPlanJson extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-    type SetBudgetGoal = SetBudgetGoal.T
-    object SetBudgetGoal extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-    type SchedulesGoal = SchedulesGoal.T
-    object SchedulesGoal extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-    type SetScheduleGoal = SetScheduleGoal.T
-    object SetScheduleGoal extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-    type SetScheduleCron = SetScheduleCron.T
-    object SetScheduleCron extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-    type SetScheduleEnabled = SetScheduleEnabled.T
-    object SetScheduleEnabled extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
-    type RemoveScheduleResult = RemoveScheduleResult.T
-    object RemoveScheduleResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
-    type RemoveScheduleGoal = RemoveScheduleGoal.T
-    object RemoveScheduleGoal extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
     type ScheduleGoalsResult = ScheduleGoalsResult.T
     object ScheduleGoalsResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-    type TakeSchedulesInGoal = TakeSchedulesInGoal.T
-    object TakeSchedulesInGoal extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
   /** The goals in memory; `clock` stands in for the database's `now()`, `targets` for the other domains' rows a link
     * names.
@@ -337,21 +205,21 @@ object GoalService:
     private val Updated = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss").withZone(ZoneOffset.UTC)
 
     /** `updated_at::text` in a UTC session: seconds, the fraction without its trailing zeros, the offset. */
-    private def updatedText(at: Instant): com.histmersion.domain.automation.goals.GoalService.InMemory.UpdatedTextResult =
+    private def updatedText(at: Instant): com.histmersion.domain.automation.goals.GoalRow.UpdatedAt =
       val micros = at.getNano / 1000
       val fraction = if micros == 0 then "" else "." + f"$micros%06d".reverse.dropWhile(_ == '0').reverse
       s"${Updated.format(at)}$fraction+00"
     private def shown(r: GoalRecord): Goal = r.goal.modify(_.updatedAt).setTo(Some(updatedText(r.updatedAt)))
-    private def kindOrder(k: com.histmersion.domain.automation.Goal.LinkKind): com.histmersion.domain.automation.goals.GoalService.InMemory.KindOrderResult = k match
+    private def kindOrder(k: com.histmersion.domain.automation.Goal.LinkKind): Int = k match
       case com.histmersion.domain.automation.Goal.LinkKind.Source      => 0
       case com.histmersion.domain.automation.Goal.LinkKind.Article     => 1
       case com.histmersion.domain.automation.Goal.LinkKind.SearchQuery => 2
       case _                                                           => 3
 
-    def get(slug: com.histmersion.domain.automation.goals.GoalService.InMemory.GetSlug): Option[Goal] = goals.get(slug).map(shown)
+    def get(slug: com.histmersion.domain.automation.Goal.Slug): Option[Goal] = goals.get(slug).map(shown)
     def all(): List[Goal] = goals.values.toList.sortBy(_.goal.slug).map(shown)
-    def children(slug: com.histmersion.domain.automation.goals.GoalService.InMemory.ChildrenSlug): List[Goal] = all().filter(_.parentSlug.contains(slug))
-    def put(slug: com.histmersion.domain.automation.goals.GoalService.InMemory.PutSlug, in: Goal.Put): Either[Api.Error, Unit] =
+    def children(slug: com.histmersion.domain.automation.Goal.Slug): List[Goal] = all().filter(_.parentSlug.contains(slug))
+    def put(slug: com.histmersion.domain.automation.Goal.Slug, in: Goal.Put): Either[Api.Error, Unit] =
       (in.periodStart, in.periodEnd) match
         case (Some(a), Some(b)) if a > b =>
           Left(
@@ -375,14 +243,14 @@ object GoalService:
             )
           )
           Right(())
-    def page(status: Option[com.histmersion.domain.automation.goals.GoalService.InMemory.PageStatus], limit: com.histmersion.domain.automation.goals.GoalService.InMemory.PageLimit, offset: com.histmersion.domain.automation.goals.GoalService.InMemory.PageOffset): Goal.List =
+    def page(status: Option[com.histmersion.domain.automation.Goal.Status.Wire], limit: com.histmersion.PageSize, offset: com.histmersion.Offset): Goal.List =
       val st = status.map(_.trim.toLowerCase).filter(_.nonEmpty)
       val listed = all().filter(g => st.forall(_ == g.status))
       Goal.List.of(listed.size, listed.slice(offset.max(0), offset.max(0) + limit.max(1)), offset.max(0))
 
-    private def notFound(slug: com.histmersion.domain.automation.goals.GoalService.InMemory.NotFoundSlug) = Api.Error(s"No goal '$slug'", Some(Write.CodeNotFound))
+    private def notFound(slug: com.histmersion.domain.automation.Goal.Slug) = Api.Error(s"No goal '$slug'", Some(Write.CodeNotFound))
 
-    def patch(slug: com.histmersion.domain.automation.goals.GoalService.InMemory.PatchSlug, p: Goal.Patch): Either[Api.Error, Unit] =
+    def patch(slug: com.histmersion.domain.automation.Goal.Slug, p: Goal.Patch): Either[Api.Error, Unit] =
       goals.get(slug).toRight(notFound(slug)).flatMap { r =>
         val g = r.goal
         val start = p.periodStart.orElse(g.periodStart)
@@ -425,7 +293,7 @@ object GoalService:
             Right(())
       }
 
-    def delete(slug: com.histmersion.domain.automation.goals.GoalService.InMemory.DeleteSlug): com.histmersion.domain.automation.goals.GoalService.InMemory.DeleteResult =
+    def delete(slug: com.histmersion.domain.automation.Goal.Slug): Boolean =
       val before = state.getAndUpdate(
         _.modify(_.goals)
           .using(_ - slug)
@@ -436,7 +304,7 @@ object GoalService:
       )
       before.goals.contains(slug)
 
-    def rename(from: com.histmersion.domain.automation.goals.GoalService.InMemory.RenameFrom, to: com.histmersion.domain.automation.goals.GoalService.InMemory.RenameTo): Either[Api.Error, Unit] =
+    def rename(from: com.histmersion.domain.automation.Goal.Slug, to: com.histmersion.domain.automation.Goal.Slug): Either[Api.Error, Unit] =
       val (old, now) = (from.trim, to.trim)
       val aliasOf = state.get.goalAliases.get(now)
       if !goals.contains(old) then Left(notFound(old))
@@ -452,7 +320,7 @@ object GoalService:
       else
         val _ = state.updateAndGet { st =>
           val r = st.goals(old)
-          def moved(s: com.histmersion.domain.automation.goals.GoalService.InMemory.RenameMovedS) = if s == old then now else s
+          def moved(s: com.histmersion.domain.automation.Goal.Slug) = if s == old then now else s
           st.modify(_.goals)
             .using(gs =>
               (gs - old)
@@ -470,7 +338,7 @@ object GoalService:
         }
         Right(())
 
-    def goalsOfItems(items: List[com.histmersion.domain.automation.goals.GoalService.InMemory.GoalsOfItemsItems]): List[(com.histmersion.domain.automation.goals.GoalService.InMemory.GoalsOfItemsResultPart1, com.histmersion.domain.automation.goals.GoalService.InMemory.GoalsOfItemsResultPart2, com.histmersion.domain.automation.goals.GoalService.InMemory.GoalsOfItemsResultPart3)] =
+    def goalsOfItems(items: List[com.histmersion.domain.automation.goals.GoalLinkRepo.ItemId]): List[(com.histmersion.domain.automation.goals.GoalService.InMemory.GoalsOfItemsResultPart1, com.histmersion.domain.automation.goals.GoalService.InMemory.GoalsOfItemsResultPart2, com.histmersion.domain.automation.goals.GoalService.InMemory.GoalsOfItemsResultPart3)] =
       val refs = items.map(_.toString).toSet
       state.get.links
         .filter(l => l.kind == com.histmersion.domain.automation.Goal.LinkKind.QueueItem && refs(l.ref))
@@ -478,7 +346,7 @@ object GoalService:
         .toList
         .sortBy((_, slug, title) => (title, slug))
 
-    def links(goal: com.histmersion.domain.automation.goals.GoalService.InMemory.LinksGoal): List[GoalLink] =
+    def links(goal: com.histmersion.domain.automation.Goal.Slug): List[GoalLink] =
       state.get.links
         .filter(_.goal == goal)
         .sortBy(l => (kindOrder(l.kind), l.createdAt, l.ref))
@@ -500,7 +368,7 @@ object GoalService:
         kind: com.histmersion.domain.automation.Goal.LinkKind,
         ref: com.histmersion.domain.automation.goals.GoalService.InMemory.LinkRef,
         note: Option[com.histmersion.domain.automation.goals.GoalService.InMemory.LinkNote]
-    ): com.histmersion.domain.automation.goals.GoalService.InMemory.LinkResult =
+    ): Boolean =
       goals.contains(goal) && {
         val at = now
         val _ = state.updateAndGet(
@@ -512,10 +380,10 @@ object GoalService:
         )
         true
       }
-    def refs(goal: com.histmersion.domain.automation.goals.GoalService.InMemory.RefsGoal, kind: com.histmersion.domain.automation.Goal.LinkKind): List[com.histmersion.domain.automation.goals.GoalService.InMemory.RefsResult] =
+    def refs(goal: com.histmersion.domain.automation.Goal.Slug, kind: com.histmersion.domain.automation.Goal.LinkKind): List[com.histmersion.domain.automation.goals.BGoalLinkRow.Ref] =
       state.get.links.filter(l => l.goal == goal && l.kind == kind).sortBy(l => (l.createdAt, l.ref)).map(_.ref).toList
 
-    def unlink(goal: com.histmersion.domain.automation.goals.GoalService.InMemory.UnlinkGoal, kind: com.histmersion.domain.automation.Goal.LinkKind, ref: com.histmersion.domain.automation.goals.GoalService.InMemory.UnlinkRef): com.histmersion.domain.automation.goals.GoalService.InMemory.UnlinkResult =
+    def unlink(goal: com.histmersion.domain.automation.Goal.Slug, kind: com.histmersion.domain.automation.Goal.LinkKind, ref: com.histmersion.domain.automation.goals.BGoalLinkRow.Ref): Boolean =
       val before =
         state.getAndUpdate(_.modify(_.links).using(_.filterNot(l => l.goal == goal && l.kind == kind && l.ref == ref)))
       before.links.exists(l => l.goal == goal && l.kind == kind && l.ref == ref)
@@ -531,16 +399,16 @@ object GoalService:
         .mapValues(_.size)
         .toMap
     def planned(): Set[com.histmersion.domain.automation.goals.GoalService.InMemory.PlannedResult] = goals.values.filter(_.plan.isDefined).map(_.goal.slug).toSet
-    def planAndBudget(goal: com.histmersion.domain.automation.goals.GoalService.InMemory.PlanAndBudgetGoal): Option[(Option[com.histmersion.domain.automation.goals.GoalService.InMemory.PlanAndBudgetResultPart1], Option[BigDecimal])] =
+    def planAndBudget(goal: com.histmersion.domain.automation.Goal.Slug): Option[(Option[com.histmersion.domain.automation.goals.GoalService.InMemory.PlanAndBudgetResultPart1], Option[BigDecimal])] =
       goals.get(goal).map(r => (r.plan, r.budgetUsd))
-    private def changeGoal(goal: com.histmersion.domain.automation.goals.GoalService.InMemory.ChangeGoalGoal)(f: GoalRecord => GoalRecord): Unit =
+    private def changeGoal(goal: com.histmersion.domain.automation.Goal.Slug)(f: GoalRecord => GoalRecord): Unit =
       val _ = state.updateAndGet(_.modify(_.goals).using(gs => gs.get(goal).fold(gs)(r => gs.updated(goal, f(r)))))
-    def setPlan(goal: com.histmersion.domain.automation.goals.GoalService.InMemory.SetPlanGoal, planJson: com.histmersion.domain.automation.goals.GoalService.InMemory.SetPlanPlanJson): Unit =
+    def setPlan(goal: com.histmersion.domain.automation.Goal.Slug, planJson: com.histmersion.domain.automation.goals.BGoalRow.Plan): Unit =
       val at = now
       changeGoal(goal)(
         _.modify(_.plan).setTo(Some(planJson)).modify(_.planApprovedAt).setTo(Some(at)).modify(_.updatedAt).setTo(at)
       )
-    def setBudget(goal: com.histmersion.domain.automation.goals.GoalService.InMemory.SetBudgetGoal, usd: Option[BigDecimal]): Unit =
+    def setBudget(goal: com.histmersion.domain.automation.Goal.Slug, usd: Option[BigDecimal]): Unit =
       val at = now
       changeGoal(goal)(_.modify(_.budgetUsd).setTo(usd).modify(_.updatedAt).setTo(at))
     private def view(r: GoalScheduleRecord): GoalSchedule =
@@ -555,7 +423,7 @@ object GoalService:
         None,
         None
       )
-    def schedules(goal: Option[com.histmersion.domain.automation.goals.GoalService.InMemory.SchedulesGoal]): List[GoalSchedule] =
+    def schedules(goal: Option[com.histmersion.domain.automation.Goal.Slug]): List[GoalSchedule] =
       state.get.schedules
         .filter(r => goal.forall(_ == r.goal))
         .sortBy(r => (r.nextRunAt.isEmpty, r.nextRunAt.getOrElse(Instant.EPOCH), r.goal, r.kind.wire))
@@ -575,13 +443,13 @@ object GoalService:
           case -1 => rs :+ row
           case i  => rs.updated(i, row)
       })
-    def removeSchedule(goal: com.histmersion.domain.automation.goals.GoalService.InMemory.RemoveScheduleGoal, kind: ScheduleKind): com.histmersion.domain.automation.goals.GoalService.InMemory.RemoveScheduleResult =
+    def removeSchedule(goal: com.histmersion.domain.automation.Goal.Slug, kind: ScheduleKind): Boolean =
       state
         .getAndUpdate(_.modify(_.schedules).using(_.filterNot(r => r.goal == goal && r.kind == kind)))
         .schedules
         .exists(r => r.goal == goal && r.kind == kind)
     def scheduleGoals(): List[com.histmersion.domain.automation.goals.GoalService.InMemory.ScheduleGoalsResult] = state.get.schedules.map(_.goal).distinct.sorted.toList
-    def takeSchedulesIn(goal: com.histmersion.domain.automation.goals.GoalService.InMemory.TakeSchedulesInGoal)(using DbCon): List[GoalSchedule] =
+    def takeSchedulesIn(goal: com.histmersion.domain.automation.Goal.Slug)(using DbCon): List[GoalSchedule] =
       state
         .getAndUpdate(_.modify(_.schedules).using(_.filterNot(_.goal == goal)))
         .schedules
@@ -590,67 +458,21 @@ object GoalService:
         .map(view)
 
   object InMemory:
-    type RenameMovedS = RenameMovedS.T
-    object RenameMovedS extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
     type GoalsResultPart1 = GoalsResultPart1.T
     object GoalsResultPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-    type UpdatedTextResult = UpdatedTextResult.T
-    object UpdatedTextResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-    type KindOrderResult = KindOrderResult.T
-    object KindOrderResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
-    type GetSlug = GetSlug.T
-    object GetSlug extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-    type ChildrenSlug = ChildrenSlug.T
-    object ChildrenSlug extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-    type PutSlug = PutSlug.T
-    object PutSlug extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-    type PageStatus = PageStatus.T
-    object PageStatus extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-    type PageLimit = PageLimit.T
-    object PageLimit extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
-    type PageOffset = PageOffset.T
-    object PageOffset extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
-    type NotFoundSlug = NotFoundSlug.T
-    object NotFoundSlug extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-    type PatchSlug = PatchSlug.T
-    object PatchSlug extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-    type DeleteResult = DeleteResult.T
-    object DeleteResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
-    type DeleteSlug = DeleteSlug.T
-    object DeleteSlug extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-    type RenameFrom = RenameFrom.T
-    object RenameFrom extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-    type RenameTo = RenameTo.T
-    object RenameTo extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
     type GoalsOfItemsResultPart1 = GoalsOfItemsResultPart1.T
     object GoalsOfItemsResultPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
     type GoalsOfItemsResultPart2 = GoalsOfItemsResultPart2.T
     object GoalsOfItemsResultPart2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
     type GoalsOfItemsResultPart3 = GoalsOfItemsResultPart3.T
     object GoalsOfItemsResultPart3 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-    type GoalsOfItemsItems = GoalsOfItemsItems.T
-    object GoalsOfItemsItems extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
-    type LinksGoal = LinksGoal.T
-    object LinksGoal extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-    type LinkResult = LinkResult.T
-    object LinkResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
     type LinkGoal = _root_.com.histmersion.domain.automation.goals.GoalLinkRecord.Goal
     val LinkGoal: _root_.com.histmersion.domain.automation.goals.GoalLinkRecord.Goal.type = _root_.com.histmersion.domain.automation.goals.GoalLinkRecord.Goal
     type LinkRef = _root_.com.histmersion.domain.automation.goals.GoalLinkRecord.Ref
     val LinkRef: _root_.com.histmersion.domain.automation.goals.GoalLinkRecord.Ref.type = _root_.com.histmersion.domain.automation.goals.GoalLinkRecord.Ref
     type LinkNote = _root_.com.histmersion.domain.automation.goals.GoalLinkRecord.Note
     val LinkNote: _root_.com.histmersion.domain.automation.goals.GoalLinkRecord.Note.type = _root_.com.histmersion.domain.automation.goals.GoalLinkRecord.Note
-    type RefsResult = RefsResult.T
-    object RefsResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-    type RefsGoal = RefsGoal.T
-    object RefsGoal extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-    type UnlinkResult = UnlinkResult.T
-    object UnlinkResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
-    type UnlinkGoal = UnlinkGoal.T
-    object UnlinkGoal extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-    type UnlinkRef = UnlinkRef.T
-    object UnlinkRef extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
     type LinkCountsResultPart1Part1 = LinkCountsResultPart1Part1.T
     object LinkCountsResultPart1Part1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
     type LinkCountsResultPart1Part2 = LinkCountsResultPart1Part2.T
@@ -661,29 +483,11 @@ object GoalService:
     object PlannedResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
     type PlanAndBudgetResultPart1 = PlanAndBudgetResultPart1.T
     object PlanAndBudgetResultPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-    type PlanAndBudgetGoal = PlanAndBudgetGoal.T
-    object PlanAndBudgetGoal extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-    type ChangeGoalGoal = ChangeGoalGoal.T
-    object ChangeGoalGoal extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-    type SetPlanGoal = SetPlanGoal.T
-    object SetPlanGoal extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-    type SetPlanPlanJson = SetPlanPlanJson.T
-    object SetPlanPlanJson extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-    type SetBudgetGoal = SetBudgetGoal.T
-    object SetBudgetGoal extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-    type SchedulesGoal = SchedulesGoal.T
-    object SchedulesGoal extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
     type SetScheduleGoal = _root_.com.histmersion.domain.automation.goals.GoalScheduleRecord.Goal
     val SetScheduleGoal: _root_.com.histmersion.domain.automation.goals.GoalScheduleRecord.Goal.type = _root_.com.histmersion.domain.automation.goals.GoalScheduleRecord.Goal
     type SetScheduleCron = _root_.com.histmersion.domain.automation.goals.GoalScheduleRecord.Cron
     val SetScheduleCron: _root_.com.histmersion.domain.automation.goals.GoalScheduleRecord.Cron.type = _root_.com.histmersion.domain.automation.goals.GoalScheduleRecord.Cron
     type SetScheduleEnabled = _root_.com.histmersion.domain.automation.goals.GoalScheduleRecord.Enabled
     val SetScheduleEnabled: _root_.com.histmersion.domain.automation.goals.GoalScheduleRecord.Enabled.type = _root_.com.histmersion.domain.automation.goals.GoalScheduleRecord.Enabled
-    type RemoveScheduleResult = RemoveScheduleResult.T
-    object RemoveScheduleResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
-    type RemoveScheduleGoal = RemoveScheduleGoal.T
-    object RemoveScheduleGoal extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
     type ScheduleGoalsResult = ScheduleGoalsResult.T
     object ScheduleGoalsResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-    type TakeSchedulesInGoal = TakeSchedulesInGoal.T
-    object TakeSchedulesInGoal extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]

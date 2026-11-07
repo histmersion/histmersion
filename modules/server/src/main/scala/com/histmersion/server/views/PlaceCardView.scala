@@ -17,7 +17,7 @@ final class PlaceCardView(
     counts: PlaceCardView.CountsArg1 => Place.Counts,
     pictures: PlaceCardView.PicturesArg1 => List[MediaThumb]
 ):
-  def apply(id: com.histmersion.server.views.PlaceCardView.ApplyId, asOf: Option[com.histmersion.server.views.PlaceCardView.ApplyAsOf], withCounts: com.histmersion.server.views.PlaceCardView.ApplyWithCounts): Either[Api.Error, PlaceDetail] =
+  def apply(id: com.histmersion.domain.catalogue.Place.Id, asOf: Option[com.histmersion.server.views.PlaceCardView.AsOf], withCounts: com.histmersion.server.views.PlaceCardView.WithCounts): Either[Api.Error, PlaceDetail] =
     place(id, asOf).map(d =>
       if withCounts then
         d.modify(_.counts)
@@ -29,22 +29,22 @@ final class PlaceCardView(
     )
 
 object PlaceCardView:
-  type PlaceArg1 = PlaceArg1.T
-  object PlaceArg1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type PlaceArg2 = PlaceArg2.T
-  object PlaceArg2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type NowArg1 = NowArg1.T
-  object NowArg1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type NowResult = NowResult.T
-  object NowResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type CountsArg1 = CountsArg1.T
-  object CountsArg1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type PicturesArg1 = PicturesArg1.T
-  object PicturesArg1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type AsOf = AsOf.T
+  object AsOf extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type PlaceName = PlaceName.T
+  object PlaceName extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type WithCounts = WithCounts.T
+  object WithCounts extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type PlaceArg1 = com.histmersion.domain.catalogue.Place.Id
+  val PlaceArg1: _root_.com.histmersion.domain.catalogue.Place.Id.type = _root_.com.histmersion.domain.catalogue.Place.Id
+  type PlaceArg2 = com.histmersion.server.views.PlaceCardView.AsOf
+  val PlaceArg2: _root_.com.histmersion.server.views.PlaceCardView.AsOf.type = _root_.com.histmersion.server.views.PlaceCardView.AsOf
+  type NowArg1 = com.histmersion.domain.catalogue.Place.Id
+  val NowArg1: _root_.com.histmersion.domain.catalogue.Place.Id.type = _root_.com.histmersion.domain.catalogue.Place.Id
+  type NowResult = com.histmersion.server.views.PlaceCardView.PlaceName
+  val NowResult: _root_.com.histmersion.server.views.PlaceCardView.PlaceName.type = _root_.com.histmersion.server.views.PlaceCardView.PlaceName
+  type CountsArg1 = com.histmersion.domain.catalogue.Place.Id
+  val CountsArg1: _root_.com.histmersion.domain.catalogue.Place.Id.type = _root_.com.histmersion.domain.catalogue.Place.Id
+  type PicturesArg1 = com.histmersion.domain.catalogue.Place.Id
+  val PicturesArg1: _root_.com.histmersion.domain.catalogue.Place.Id.type = _root_.com.histmersion.domain.catalogue.Place.Id
 
-  type ApplyId = ApplyId.T
-  object ApplyId extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type ApplyAsOf = ApplyAsOf.T
-  object ApplyAsOf extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type ApplyWithCounts = ApplyWithCounts.T
-  object ApplyWithCounts extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]

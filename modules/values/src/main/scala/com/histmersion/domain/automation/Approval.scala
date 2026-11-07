@@ -3,6 +3,8 @@ package com.histmersion.domain.automation
 import com.histmersion.WireEnumValues
 
 object Approval:
+  type Id = Id.T
+  object Id extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type Note = Note.T
   object Note extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type Outcome = Outcome.T

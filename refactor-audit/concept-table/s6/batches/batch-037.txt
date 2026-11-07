@@ -1,0 +1,371 @@
+## CONCEPTS NEARBY
+com.histmersion.domain.library.ArchiveId (String)
+com.histmersion.domain.library.ArxivId (String)
+com.histmersion.domain.library.Citekey (String)
+com.histmersion.domain.library.Citekey.Problem (String)
+com.histmersion.domain.library.Confidence.Wire (String)
+com.histmersion.domain.library.Doi (String)
+com.histmersion.domain.library.Edge.Kind.Wire (String)
+com.histmersion.domain.library.EditionsPolicy.Wire (String)
+com.histmersion.domain.library.Isbn (String)
+com.histmersion.domain.library.MatchMethod.Wire (String)
+com.histmersion.domain.library.MatchOutcome.Wire (String)
+com.histmersion.domain.library.Pmcid (String)
+com.histmersion.domain.library.Pmid (String)
+com.histmersion.domain.library.Source.Status.Wire (String)
+com.histmersion.domain.library.Source.Uid (UUID)
+com.histmersion.domain.library.acquisition.AcquireCheckRow.Checks (Int)
+com.histmersion.domain.library.acquisition.AcquireCheckRow.Item (Int)
+com.histmersion.domain.library.acquisition.AcquireCheckRow.Reason (String)
+com.histmersion.domain.library.acquisition.AssessmentRecord.CitedBy (Int)
+com.histmersion.domain.library.acquisition.AssessmentRecord.Influential (Int)
+com.histmersion.domain.library.acquisition.AssessmentRecord.NoticesJson (String)
+com.histmersion.domain.library.acquisition.AssessmentRecord.Retracted (Boolean)
+com.histmersion.domain.library.acquisition.AssessmentRecord.Verdict (String)
+com.histmersion.domain.library.acquisition.CandidateDedupe.FoundBy (String)
+com.histmersion.domain.library.acquisition.CandidateDedupe.SkipCount (Int)
+com.histmersion.domain.library.acquisition.CandidateDedupe.SkipReason (String)
+com.histmersion.domain.library.acquisition.Ident.Citekey.Value (String)
+com.histmersion.domain.library.acquisition.Ident.Problem (String)
+com.histmersion.domain.library.acquisition.Ident.Written (String)
+com.histmersion.domain.library.acquisition.IngestPath.LegalChain (Boolean)
+com.histmersion.domain.library.acquisition.IngestPath.NeedsFile (Boolean)
+com.histmersion.domain.library.findings.FindingPlan.ClaimKey (String)
+com.histmersion.domain.library.findings.FindingPlan.Distance (Double)
+com.histmersion.domain.library.findings.FindingPlan.IdCount (Int)
+com.histmersion.domain.library.findings.FindingPlan.Match.Near.Jaccard (Double)
+com.histmersion.domain.library.findings.GeoFeedRow.Claim (String)
+com.histmersion.domain.library.findings.GeoFeedRow.Doi (String)
+com.histmersion.domain.library.findings.GeoFeedRow.HasCover (Boolean)
+com.histmersion.domain.library.findings.GeoFeedRow.Provenance (String)
+com.histmersion.domain.library.findings.GeoFeedRow.RegionName (String)
+com.histmersion.domain.library.findings.GeoFeedRow.Significance (String)
+com.histmersion.domain.library.findings.GeoFeedRow.Tags (String)
+com.histmersion.domain.library.findings.GeoFeedRow.Title (String)
+com.histmersion.domain.library.findings.GeoFeedRow.Topics (String)
+com.histmersion.domain.library.findings.GeoFeedRow.Venue (String)
+com.histmersion.domain.library.search.FilterSql.FacetPrefix (String)
+com.histmersion.domain.library.search.FilterSql.SnippetRow.Heading (String)
+com.histmersion.domain.library.search.FilterSql.SnippetRow.Snippet (String)
+com.histmersion.domain.library.search.FilterSql.SourceDoi (String)
+com.histmersion.domain.library.search.FindingHitRow.Claim (String)
+com.histmersion.domain.library.search.FindingHitRow.Id (String)
+com.histmersion.domain.library.search.FindingHitRow.PeriodName (String)
+com.histmersion.domain.library.search.FindingHitRow.PlaceIds (String)
+com.histmersion.domain.library.search.FindingHitRow.Places (String)
+com.histmersion.domain.library.search.FindingHitRow.RegionName (String)
+com.histmersion.domain.library.search.FindingHitRow.Tags (String)
+com.histmersion.domain.library.search.QueryAccess.Problem (String)
+com.histmersion.domain.library.search.Search.Query (String)
+com.histmersion.domain.library.search.Search.SnippetWords (Int)
+com.histmersion.domain.library.sources.BAssessmentRow.CheckedAt (String)
+com.histmersion.domain.library.sources.BAssessmentRow.CitedBy (Int)
+com.histmersion.domain.library.sources.BAssessmentRow.Influential (Int)
+com.histmersion.domain.library.sources.BAssessmentRow.Notices (String)
+com.histmersion.domain.library.sources.BAssessmentRow.Retracted (Boolean)
+com.histmersion.domain.library.sources.BAssessmentRow.Verdict (String)
+com.histmersion.domain.library.sources.BFindingRow.Claim (String)
+com.histmersion.domain.library.sources.BFindingRow.Id (String)
+com.histmersion.domain.library.sources.BFindingRow.PNull (Boolean)
+com.histmersion.domain.library.sources.BFindingRow.PeriodName (String)
+com.histmersion.domain.library.sources.BFindingRow.Region (String)
+com.histmersion.domain.library.sources.BFindingRow.Significance (String)
+com.histmersion.domain.library.sources.BFindingRow.Tags (String)
+com.histmersion.domain.library.sources.BFindingRow.UpdatedAt (String)
+com.histmersion.domain.library.sources.BSourceRow.AddedDate (String)
+com.histmersion.domain.library.sources.BSourceRow.Authors (String)
+com.histmersion.domain.library.sources.BSourceRow.CitedBy (Int)
+com.histmersion.domain.library.sources.BSourceRow.Doi (String)
+com.histmersion.domain.library.sources.BSourceRow.Influential (Int)
+com.histmersion.domain.library.sources.BSourceRow.Isbns (String)
+com.histmersion.domain.library.sources.BSourceRow.Notes (String)
+com.histmersion.domain.library.sources.BSourceRow.PNull (Boolean)
+com.histmersion.domain.library.sources.BSourceRow.Provenance (String)
+com.histmersion.domain.library.sources.BSourceRow.Regions (String)
+com.histmersion.domain.library.sources.BSourceRow.Summary (String)
+com.histmersion.domain.library.sources.BSourceRow.Tags (String)
+com.histmersion.domain.library.sources.BSourceRow.Topics (String)
+com.histmersion.domain.library.sources.BSourceRow.UpdatedAt (String)
+com.histmersion.domain.library.sources.BSourceRow.Venue (String)
+com.histmersion.domain.library.sources.CitekeyMillis.Millis (Long)
+com.histmersion.domain.library.sources.Citekeys.RenameToNewRaw (String)
+com.histmersion.domain.library.sources.Citekeys.ValidCk (String)
+com.histmersion.domain.library.sources.EdgeRow.Dst (String)
+com.histmersion.domain.library.sources.EdgeRow.Kind (String)
+com.histmersion.domain.library.sources.EdgeRow.Src (String)
+com.histmersion.domain.library.sources.FindingIdRow.Claim (String)
+com.histmersion.domain.library.sources.FindingIdRow.Id (String)
+com.histmersion.domain.library.sources.FindingIdRow.PeriodName (String)
+com.histmersion.domain.library.sources.FindingIdRow.RegionName (String)
+com.histmersion.domain.library.sources.FindingIdRow.Significance (String)
+com.histmersion.domain.library.sources.FindingIdRow.Tags (String)
+com.histmersion.domain.library.sources.FullSourceRow.Authors (String)
+com.histmersion.domain.library.sources.FullSourceRow.CalibreId (String)
+com.histmersion.domain.library.sources.FullSourceRow.CitedByCount (Int)
+com.histmersion.domain.library.sources.FullSourceRow.Doi (String)
+com.histmersion.domain.library.sources.FullSourceRow.InfluentialCitations (Int)
+com.histmersion.domain.library.sources.FullSourceRow.Notes (String)
+com.histmersion.domain.library.sources.FullSourceRow.OcrMarkdown (String)
+com.histmersion.domain.library.sources.FullSourceRow.Provenance (String)
+com.histmersion.domain.library.sources.FullSourceRow.Regions (String)
+com.histmersion.domain.library.sources.FullSourceRow.Summary (String)
+com.histmersion.domain.library.sources.FullSourceRow.Tags (String)
+com.histmersion.domain.library.sources.FullSourceRow.Topics (String)
+com.histmersion.domain.library.sources.FullSourceRow.UpdatedAt (String)
+com.histmersion.domain.library.sources.FullSourceRow.Venue (String)
+com.histmersion.domain.library.sources.MergeText.DoiKey (String)
+com.histmersion.domain.library.sources.MergeText.Folded (String)
+com.histmersion.domain.library.sources.MergeText.Person.SurnameKnown (Boolean)
+com.histmersion.domain.library.sources.MergeText.Similarity (Double)
+com.histmersion.domain.library.sources.MergeText.SurnameKey (String)
+com.histmersion.domain.library.sources.MergeText.Text (String)
+com.histmersion.domain.library.sources.MergeText.TitleKey (String)
+com.histmersion.domain.library.sources.MergeText.Token (String)
+com.histmersion.domain.library.sources.MergeText.Words (String)
+com.histmersion.domain.library.sources.MergeText.WrittenDoi (String)
+com.histmersion.domain.library.sources.SourceDeletePlan.Keys (String)
+com.histmersion.domain.library.sources.SourceDeletePlan.ShaShared (Boolean)
+com.histmersion.domain.library.sources.SourceMatcher.BlockingKey (String)
+com.histmersion.domain.library.sources.SourceMatcher.Decimals (Int)
+com.histmersion.domain.library.sources.SourceMatcher.Evidence.DoiConflict (Boolean)
+com.histmersion.domain.library.sources.SourceMatcher.Evidence.Reason (String)
+com.histmersion.domain.library.sources.SourceMatcher.Evidence.Score (Double)
+com.histmersion.domain.library.sources.SourceMatcher.Evidence.Strong (String)
+com.histmersion.domain.library.sources.SourceMatcher.Evidence.TitleDiffers (Boolean)
+com.histmersion.domain.library.sources.SourceMatcher.Evidence.Weight (Double)
+com.histmersion.domain.library.sources.SourceMatcher.Evidence.Why (String)
+com.histmersion.domain.library.sources.SourceMatcher.Evidence.YearGap (Boolean)
+com.histmersion.domain.library.sources.SourceMatcher.Figure (Double)
+com.histmersion.domain.library.sources.SourceMatcher.Pair.Flags (String)
+com.histmersion.domain.library.sources.SourceMatcher.Side.Label (String)
+com.histmersion.domain.library.sources.SourceMatcher.Stem (String)
+com.histmersion.domain.library.sources.SourceMatcher.Written (String)
+com.histmersion.domain.library.sources.SourceNote.Text (String)
+com.histmersion.domain.library.sources.SourceRepairs.MaxChars (Long)
+com.histmersion.domain.library.sources.SourceRepairs.MaxSources (Int)
+com.histmersion.domain.library.sources.SourcesCarried.Stem (String)
+com.histmersion.domain.library.sources.referrers.DeleteReport.Coverage (String)
+com.histmersion.domain.library.sources.referrers.DeleteReport.Mentions (Int)
+com.histmersion.domain.library.sources.referrers.RenamedReferences.TextsPart1 (String)
+com.histmersion.domain.library.sources.referrers.RenamedReferences.TextsPart2 (Int)
+com.histmersion.domain.library.sources.referrers.SourceKeys.FindingPrefix (String)
+com.histmersion.domain.library.sources.referrers.SourceKeys.Text (String)
+com.histmersion.domain.library.sources.referrers.SourceReferrers.Day (String)
+com.histmersion.domain.library.sources.referrers.SourceReferrers.Entry (Int)
+com.histmersion.domain.library.sources.referrers.SourceReferrers.Line (String)
+com.histmersion.domain.library.sources.referrers.SourceRename.Needle (String)
+com.histmersion.domain.library.workflows.AcquisitionSweepRules.AcquireText (String)
+com.histmersion.domain.library.workflows.AcquisitionSweepRules.Allowance (Int)
+com.histmersion.domain.library.workflows.AcquisitionSweepRules.Candidate.Query (String)
+com.histmersion.domain.library.workflows.AcquisitionSweepRules.Dropped (String)
+com.histmersion.domain.library.workflows.AcquisitionSweepRules.IngestFailure (String)
+com.histmersion.domain.library.workflows.AcquisitionSweepRules.LastAttempt (Boolean)
+com.histmersion.domain.library.workflows.AcquisitionSweepRules.Limit (Int)
+com.histmersion.domain.library.workflows.AcquisitionSweepRules.Pick.DoiText (String)
+com.histmersion.domain.library.workflows.AcquisitionSweepRules.Pick.Why (String)
+com.histmersion.domain.library.workflows.AcquisitionSweepRules.Problem (String)
+com.histmersion.domain.library.workflows.AcquisitionSweepRules.SkipCount (Int)
+com.histmersion.domain.library.workflows.AcquisitionSweepRules.SkipReason (String)
+com.histmersion.domain.library.workflows.CurrencyCheckRules.AcquireText (String)
+
+## TYPES TO DECIDE
+com.histmersion.domain.library.acquisition.Http.BytesHeadersPart1 | base String | generated | method-parameter
+    def bytes(url: com.histmersion.domain.library.acquisition.Http.BytesUrl, headers: Map[com.histmersion.domain.library.acquisition.Http.BytesHeadersPart1, com.histmersion.d
+com.histmersion.domain.library.acquisition.Http.BytesHeadersPart2 | base String | generated | method-parameter
+    def bytes(url: com.histmersion.domain.library.acquisition.Http.BytesUrl, headers: Map[com.histmersion.domain.library.acquisition.Http.BytesHeadersPart1, com.histmersion.d
+com.histmersion.domain.library.acquisition.Http.BytesResultPart1 | base String | generated | method-result
+    def bytes(url: com.histmersion.domain.library.acquisition.Http.BytesUrl, headers: Map[com.histmersion.domain.library.acquisition.Http.BytesHeadersPart1, com.histmersion.d
+com.histmersion.domain.library.acquisition.Http.BytesResultPart2 | base Array[Byte] | generated | method-result
+    def bytes(url: com.histmersion.domain.library.acquisition.Http.BytesUrl, headers: Map[com.histmersion.domain.library.acquisition.Http.BytesHeadersPart1, com.histmersion.d
+com.histmersion.domain.library.acquisition.Http.BytesUrl | base String | generated | method-parameter
+    def bytes(url: com.histmersion.domain.library.acquisition.Http.BytesUrl, headers: Map[com.histmersion.domain.library.acquisition.Http.BytesHeadersPart1, com.histmersion.d
+com.histmersion.domain.library.acquisition.Http.JsonHeadersPart1 | base String | generated | method-parameter
+    def json(url: com.histmersion.domain.library.acquisition.Http.JsonUrl, headers: Map[com.histmersion.domain.library.acquisition.Http.JsonHeadersPart1, com.histmersion.doma
+com.histmersion.domain.library.acquisition.Http.JsonHeadersPart2 | base String | generated | method-parameter
+    def json(url: com.histmersion.domain.library.acquisition.Http.JsonUrl, headers: Map[com.histmersion.domain.library.acquisition.Http.JsonHeadersPart1, com.histmersion.doma
+com.histmersion.domain.library.acquisition.Http.JsonResultPart1 | base String | generated | method-result
+    def json(url: com.histmersion.domain.library.acquisition.Http.JsonUrl, headers: Map[com.histmersion.domain.library.acquisition.Http.JsonHeadersPart1, com.histmersion.doma
+com.histmersion.domain.library.acquisition.Http.JsonUrl | base String | generated | method-parameter
+    def json(url: com.histmersion.domain.library.acquisition.Http.JsonUrl, headers: Map[com.histmersion.domain.library.acquisition.Http.JsonHeadersPart1, com.histmersion.doma
+com.histmersion.domain.library.acquisition.Http.OnceHeadersPart1 | base String | generated | method-parameter
+    def once(url: com.histmersion.domain.library.acquisition.Http.OnceUrl, headers: Map[com.histmersion.domain.library.acquisition.Http.OnceHeadersPart1, com.histmersion.doma
+com.histmersion.domain.library.acquisition.Http.OnceHeadersPart2 | base String | generated | method-parameter
+    def once(url: com.histmersion.domain.library.acquisition.Http.OnceUrl, headers: Map[com.histmersion.domain.library.acquisition.Http.OnceHeadersPart1, com.histmersion.doma
+com.histmersion.domain.library.acquisition.Http.OnceResultPart1 | base String | generated | method-result
+    def once(url: com.histmersion.domain.library.acquisition.Http.OnceUrl, headers: Map[com.histmersion.domain.library.acquisition.Http.OnceHeadersPart1, com.histmersion.doma
+com.histmersion.domain.library.acquisition.Http.OnceUrl | base String | generated | method-parameter
+    def once(url: com.histmersion.domain.library.acquisition.Http.OnceUrl, headers: Map[com.histmersion.domain.library.acquisition.Http.OnceHeadersPart1, com.histmersion.doma
+com.histmersion.domain.library.acquisition.Http.TextHeadersPart1 | base String | generated | method-parameter
+    def text(url: com.histmersion.domain.library.acquisition.Http.TextUrl, headers: Map[com.histmersion.domain.library.acquisition.Http.TextHeadersPart1, com.histmersion.doma
+com.histmersion.domain.library.acquisition.Http.TextHeadersPart2 | base String | generated | method-parameter
+    def text(url: com.histmersion.domain.library.acquisition.Http.TextUrl, headers: Map[com.histmersion.domain.library.acquisition.Http.TextHeadersPart1, com.histmersion.doma
+com.histmersion.domain.library.acquisition.Http.TextResultPart1 | base String | generated | method-result
+    def text(url: com.histmersion.domain.library.acquisition.Http.TextUrl, headers: Map[com.histmersion.domain.library.acquisition.Http.TextHeadersPart1, com.histmersion.doma
+com.histmersion.domain.library.acquisition.Http.TextResultPart2 | base String | generated | method-result
+    def text(url: com.histmersion.domain.library.acquisition.Http.TextUrl, headers: Map[com.histmersion.domain.library.acquisition.Http.TextHeadersPart1, com.histmersion.doma
+com.histmersion.domain.library.acquisition.Http.TextUrl | base String | generated | method-parameter
+    def text(url: com.histmersion.domain.library.acquisition.Http.TextUrl, headers: Map[com.histmersion.domain.library.acquisition.Http.TextHeadersPart1, com.histmersion.doma
+com.histmersion.domain.library.acquisition.HttpPlugin.GetHeadersPart1 | base String | generated | method-parameter
+    def get(url: com.histmersion.domain.library.acquisition.HttpPlugin.GetUrl, headers: Map[com.histmersion.domain.library.acquisition.HttpPlugin.GetHeadersPart1, com.histmer
+com.histmersion.domain.library.acquisition.HttpPlugin.GetHeadersPart2 | base String | generated | method-parameter
+    def get(url: com.histmersion.domain.library.acquisition.HttpPlugin.GetUrl, headers: Map[com.histmersion.domain.library.acquisition.HttpPlugin.GetHeadersPart1, com.histmer
+com.histmersion.domain.library.acquisition.HttpPlugin.GetUrl | base String | generated | method-parameter
+    def get(url: com.histmersion.domain.library.acquisition.HttpPlugin.GetUrl, headers: Map[com.histmersion.domain.library.acquisition.HttpPlugin.GetHeadersPart1, com.histmer
+com.histmersion.domain.library.acquisition.Indexes.OfAllPart1 | base String | generated | value
+    val all: Map[com.histmersion.domain.library.acquisition.Indexes.OfAllPart1, ScholarlyIndex] = Map(
+com.histmersion.domain.library.acquisition.Indexes.OfCoreKey | base String | generated | method-parameter
+com.histmersion.domain.library.acquisition.IngestPath.LegalChain | base Boolean | generated | constructor-parameter
+    enum IngestPath(val legalChain: IngestPath.LegalChain, val needsFile: IngestPath.NeedsFile):
+com.histmersion.domain.library.acquisition.IngestPath.NeedsFile | base Boolean | generated | constructor-parameter
+    enum IngestPath(val legalChain: IngestPath.LegalChain, val needsFile: IngestPath.NeedsFile):
+com.histmersion.domain.library.acquisition.NoAlerts.ByAuthorAuthorId | base String | generated | method-parameter
+    def byAuthor(authorId: com.histmersion.domain.library.acquisition.NoAlerts.ByAuthorAuthorId, since: java.time.LocalDate, limit: com.histmersion.domain.library.acquisition
+com.histmersion.domain.library.acquisition.NoAlerts.ByAuthorLimit | base Int | generated | method-parameter
+    def byAuthor(authorId: com.histmersion.domain.library.acquisition.NoAlerts.ByAuthorAuthorId, since: java.time.LocalDate, limit: com.histmersion.domain.library.acquisition
+com.histmersion.domain.library.acquisition.NoAlerts.CitingLimit | base Int | generated | method-parameter
+    def citing(doi: com.histmersion.domain.library.Doi, since: java.time.LocalDate, limit: com.histmersion.domain.library.acquisition.NoAlerts.CitingLimit) = off
+com.histmersion.domain.library.acquisition.OaFetch.Md5B | base Array[Byte] | generated | method-parameter
+    def md5(b: com.histmersion.domain.library.acquisition.OaFetch.Md5B): Option[com.histmersion.domain.library.acquisition.OaFetch.Md5Result] =
+com.histmersion.domain.library.acquisition.OaFetch.Md5Result | base String | generated | method-result
+    def md5(b: com.histmersion.domain.library.acquisition.OaFetch.Md5B): Option[com.histmersion.domain.library.acquisition.OaFetch.Md5Result] =
+com.histmersion.domain.library.acquisition.OpenAlexDiscovery.MetaResultPart1 | base String | generated | method-result
+    def meta(doi: com.histmersion.domain.library.Doi): Either[com.histmersion.domain.library.acquisition.OpenAlexDiscovery.MetaResultPart1, WorkRef] = client.meta(doi).map(_.
+com.histmersion.domain.library.acquisition.OpenAlexDiscovery.ReferencesResultPart1 | base String | generated | method-result
+    def references(doi: com.histmersion.domain.library.Doi): Either[com.histmersion.domain.library.acquisition.OpenAlexDiscovery.ReferencesResultPart1, (com.histmersion.domai
+com.histmersion.domain.library.acquisition.OpenAlexDiscovery.ReferencesResultPart2Part1 | base String | generated | method-result
+    def references(doi: com.histmersion.domain.library.Doi): Either[com.histmersion.domain.library.acquisition.OpenAlexDiscovery.ReferencesResultPart1, (com.histmersion.domai
+com.histmersion.domain.library.acquisition.OpenAlexDiscovery.SearchLimit | base Int | generated | method-parameter
+    def search(query: com.histmersion.domain.library.acquisition.OpenAlexDiscovery.SearchQuery, since: Option[com.histmersion.domain.library.acquisition.OpenAlexDiscovery.Sea
+com.histmersion.domain.library.acquisition.OpenAlexDiscovery.SearchQuery | base String | generated | method-parameter
+    def search(query: com.histmersion.domain.library.acquisition.OpenAlexDiscovery.SearchQuery, since: Option[com.histmersion.domain.library.acquisition.OpenAlexDiscovery.Sea
+com.histmersion.domain.library.acquisition.OpenAlexDiscovery.SearchResultPart1 | base String | generated | method-result
+    def search(query: com.histmersion.domain.library.acquisition.OpenAlexDiscovery.SearchQuery, since: Option[com.histmersion.domain.library.acquisition.OpenAlexDiscovery.Sea
+com.histmersion.domain.library.acquisition.OpenAlexDiscovery.SearchSince | base Int | generated | method-parameter
+    def search(query: com.histmersion.domain.library.acquisition.OpenAlexDiscovery.SearchQuery, since: Option[com.histmersion.domain.library.acquisition.OpenAlexDiscovery.Sea
+com.histmersion.domain.library.acquisition.OpenAlexDiscovery.SearchSort | base String | generated | method-parameter
+    def search(query: com.histmersion.domain.library.acquisition.OpenAlexDiscovery.SearchQuery, since: Option[com.histmersion.domain.library.acquisition.OpenAlexDiscovery.Sea
+com.histmersion.domain.library.acquisition.OpenAlexIndex.ByAuthorAuthorId | base String | generated | method-parameter
+    def byAuthor(authorId: com.histmersion.domain.library.acquisition.OpenAlexIndex.ByAuthorAuthorId, since: LocalDate, limit: com.histmersion.domain.library.acquisition.Open
+com.histmersion.domain.library.acquisition.OpenAlexIndex.ByAuthorLimit | base Int | generated | method-parameter
+    def byAuthor(authorId: com.histmersion.domain.library.acquisition.OpenAlexIndex.ByAuthorAuthorId, since: LocalDate, limit: com.histmersion.domain.library.acquisition.Open
+com.histmersion.domain.library.acquisition.OpenAlexIndex.CitingLimit | base Int | generated | method-parameter
+    def citing(doi: com.histmersion.domain.library.Doi, since: LocalDate, limit: com.histmersion.domain.library.acquisition.OpenAlexIndex.CitingLimit) =
+com.histmersion.domain.library.acquisition.OpenAlexIndex.SearchLimit | base Int | generated | method-parameter
+    def search(query: com.histmersion.domain.library.acquisition.OpenAlexIndex.SearchQuery, since: LocalDate, limit: com.histmersion.domain.library.acquisition.OpenAlexIndex.
+com.histmersion.domain.library.acquisition.OpenAlexIndex.SearchQuery | base String | generated | method-parameter
+    def search(query: com.histmersion.domain.library.acquisition.OpenAlexIndex.SearchQuery, since: LocalDate, limit: com.histmersion.domain.library.acquisition.OpenAlexIndex.
+com.histmersion.domain.library.acquisition.OpenAlexIndex.WorksFilter | base String | generated | method-parameter
+    private def works(filter: com.histmersion.domain.library.acquisition.OpenAlexIndex.WorksFilter, limit: com.histmersion.domain.library.acquisition.OpenAlexIndex.WorksLimit
+com.histmersion.domain.library.acquisition.OpenAlexIndex.WorksLimit | base Int | generated | method-parameter
+    private def works(filter: com.histmersion.domain.library.acquisition.OpenAlexIndex.WorksFilter, limit: com.histmersion.domain.library.acquisition.OpenAlexIndex.WorksLimit
+com.histmersion.domain.library.acquisition.OpenAlexIndex.WorksResultPart1 | base String | generated | method-result
+    private def works(filter: com.histmersion.domain.library.acquisition.OpenAlexIndex.WorksFilter, limit: com.histmersion.domain.library.acquisition.OpenAlexIndex.WorksLimit
+com.histmersion.domain.library.acquisition.OpenAlexIndex.WorksSearch | base String | generated | method-parameter
+    private def works(filter: com.histmersion.domain.library.acquisition.OpenAlexIndex.WorksFilter, limit: com.histmersion.domain.library.acquisition.OpenAlexIndex.WorksLimit
+com.histmersion.domain.library.acquisition.RetractionWatch.CsvResultPart1 | base String | generated | method-result
+    def csv(): Either[com.histmersion.domain.library.acquisition.RetractionWatch.CsvResultPart1, com.histmersion.domain.library.acquisition.RetractionWatch.CsvResultPart2] = 
+com.histmersion.domain.library.acquisition.RetractionWatch.CsvResultPart2 | base String | generated | method-result
+    def csv(): Either[com.histmersion.domain.library.acquisition.RetractionWatch.CsvResultPart1, com.histmersion.domain.library.acquisition.RetractionWatch.CsvResultPart2] = 
+com.histmersion.domain.library.acquisition.RetractionWatchClient.CsvResultPart1 | base String | generated | method-result
+    def csv(): Either[com.histmersion.domain.library.acquisition.RetractionWatchClient.CsvResultPart1, com.histmersion.domain.library.acquisition.RetractionWatchClient.CsvRes
+com.histmersion.domain.library.acquisition.RetractionWatchClient.CsvResultPart2 | base String | generated | method-result
+    def csv(): Either[com.histmersion.domain.library.acquisition.RetractionWatchClient.CsvResultPart1, com.histmersion.domain.library.acquisition.RetractionWatchClient.CsvRes
+com.histmersion.domain.library.acquisition.ScholarlyIndex.NameResult | base String | generated | method-result
+    def name: com.histmersion.domain.library.acquisition.ScholarlyIndex.NameResult
+com.histmersion.domain.library.acquisition.ScholarlyIndex.SearchLimit | base Int | generated | method-parameter
+    def search(query: com.histmersion.domain.library.acquisition.ScholarlyIndex.SearchQuery, since: LocalDate, limit: com.histmersion.domain.library.acquisition.ScholarlyInde
+com.histmersion.domain.library.acquisition.ScholarlyIndex.SearchQuery | base String | generated | method-parameter
+    def search(query: com.histmersion.domain.library.acquisition.ScholarlyIndex.SearchQuery, since: LocalDate, limit: com.histmersion.domain.library.acquisition.ScholarlyInde
+com.histmersion.domain.library.acquisition.ScholarlyIndex.SearchResultPart1 | base String | generated | method-result
+    def search(query: com.histmersion.domain.library.acquisition.ScholarlyIndex.SearchQuery, since: LocalDate, limit: com.histmersion.domain.library.acquisition.ScholarlyInde
+com.histmersion.domain.library.acquisition.ScholarlyIndex.UnavailableResult | base String | generated | method-result
+    def unavailable: Option[com.histmersion.domain.library.acquisition.ScholarlyIndex.UnavailableResult] = None
+com.histmersion.domain.library.acquisition.SemanticScholar.CitingLimit | base Int | generated | method-parameter
+    def citing(work: WorkRef, since: Option[com.histmersion.domain.library.acquisition.SemanticScholar.CitingSince], limit: com.histmersion.domain.library.acquisition.Semanti
+com.histmersion.domain.library.acquisition.SemanticScholar.CitingResultPart1 | base String | generated | method-result
+    def citing(work: WorkRef, since: Option[com.histmersion.domain.library.acquisition.SemanticScholar.CitingSince], limit: com.histmersion.domain.library.acquisition.Semanti
+com.histmersion.domain.library.acquisition.SemanticScholar.CitingResultPart2Part1 | base String | generated | method-result
+    def citing(work: WorkRef, since: Option[com.histmersion.domain.library.acquisition.SemanticScholar.CitingSince], limit: com.histmersion.domain.library.acquisition.Semanti
+com.histmersion.domain.library.acquisition.SemanticScholar.CitingSince | base Int | generated | method-parameter
+    def citing(work: WorkRef, since: Option[com.histmersion.domain.library.acquisition.SemanticScholar.CitingSince], limit: com.histmersion.domain.library.acquisition.Semanti
+com.histmersion.domain.library.acquisition.SemanticScholar.OpenalexCitingLimit | base Int | generated | method-parameter
+    private def openalexCiting(work: WorkRef, since: Option[com.histmersion.domain.library.acquisition.SemanticScholar.OpenalexCitingSince], limit: com.histmersion.domain.lib
+com.histmersion.domain.library.acquisition.SemanticScholar.OpenalexCitingResultPart1 | base String | generated | method-result
+    private def openalexCiting(work: WorkRef, since: Option[com.histmersion.domain.library.acquisition.SemanticScholar.OpenalexCitingSince], limit: com.histmersion.domain.lib
+com.histmersion.domain.library.acquisition.SemanticScholar.OpenalexCitingSince | base Int | generated | method-parameter
+    private def openalexCiting(work: WorkRef, since: Option[com.histmersion.domain.library.acquisition.SemanticScholar.OpenalexCitingSince], limit: com.histmersion.domain.lib
+com.histmersion.domain.library.acquisition.SemanticScholar.S2Limit | base Int | generated | method-parameter
+    private def s2(doi: com.histmersion.domain.library.Doi, since: Option[com.histmersion.domain.library.acquisition.SemanticScholar.S2Since], limit: com.histmersion.domain.l
+com.histmersion.domain.library.acquisition.SemanticScholar.S2PageOffset | base Int | generated | method-parameter
+    def page(offset: com.histmersion.domain.library.acquisition.SemanticScholar.S2PageOffset, acc: List[FollowupRow]): Either[com.histmersion.domain.library.acquisition.Seman
+com.histmersion.domain.library.acquisition.SemanticScholar.S2PageResultPart1 | base String | generated | method-result
+    def page(offset: com.histmersion.domain.library.acquisition.SemanticScholar.S2PageOffset, acc: List[FollowupRow]): Either[com.histmersion.domain.library.acquisition.Seman
+com.histmersion.domain.library.acquisition.SemanticScholar.S2ResultPart1 | base String | generated | method-result
+    private def s2(doi: com.histmersion.domain.library.Doi, since: Option[com.histmersion.domain.library.acquisition.SemanticScholar.S2Since], limit: com.histmersion.domain.l
+com.histmersion.domain.library.acquisition.SemanticScholar.S2Since | base Int | generated | method-parameter
+    private def s2(doi: com.histmersion.domain.library.Doi, since: Option[com.histmersion.domain.library.acquisition.SemanticScholar.S2Since], limit: com.histmersion.domain.l
+com.histmersion.domain.library.acquisition.Spool.WhereResult | base String | generated | method-result
+    def where(key: Store.Key): com.histmersion.domain.library.acquisition.Spool.WhereResult = store.where(key)
+com.histmersion.domain.library.acquisition.Spool.WriteBytes | base Array[Byte] | generated | method-parameter
+    def write(citekey: com.histmersion.domain.library.Citekey, extension: com.histmersion.domain.library.acquisition.Spool.WriteExtension, bytes: com.histmersion.domain.libra
+com.histmersion.domain.library.acquisition.Spool.WriteExtension | base String | generated | method-parameter
+    def write(citekey: com.histmersion.domain.library.Citekey, extension: com.histmersion.domain.library.acquisition.Spool.WriteExtension, bytes: com.histmersion.domain.libra
+com.histmersion.domain.library.acquisition.Spool.WriteResultPart1 | base String | generated | method-result
+    def write(citekey: com.histmersion.domain.library.Citekey, extension: com.histmersion.domain.library.acquisition.Spool.WriteExtension, bytes: com.histmersion.domain.libra
+com.histmersion.domain.library.acquisition.SttpHttp.ApplyMaxRetryAfterSeconds | base Int | generated | method-parameter
+com.histmersion.domain.library.acquisition.SttpHttp.ApplySleepArg1 | base Long | generated | method-parameter
+com.histmersion.domain.library.acquisition.SttpHttp.ApplyTries | base Int | generated | method-parameter
+com.histmersion.domain.library.acquisition.SttpHttp.BytesHeadersPart1 | base String | generated | method-parameter
+    def bytes(url: com.histmersion.domain.library.acquisition.SttpHttp.BytesUrl, headers: Map[com.histmersion.domain.library.acquisition.SttpHttp.BytesHeadersPart1, com.histm
+com.histmersion.domain.library.acquisition.SttpHttp.BytesHeadersPart2 | base String | generated | method-parameter
+    def bytes(url: com.histmersion.domain.library.acquisition.SttpHttp.BytesUrl, headers: Map[com.histmersion.domain.library.acquisition.SttpHttp.BytesHeadersPart1, com.histm
+com.histmersion.domain.library.acquisition.SttpHttp.BytesResultPart1 | base String | generated | method-result
+    def bytes(url: com.histmersion.domain.library.acquisition.SttpHttp.BytesUrl, headers: Map[com.histmersion.domain.library.acquisition.SttpHttp.BytesHeadersPart1, com.histm
+com.histmersion.domain.library.acquisition.SttpHttp.BytesResultPart2 | base Array[Byte] | generated | method-result
+    def bytes(url: com.histmersion.domain.library.acquisition.SttpHttp.BytesUrl, headers: Map[com.histmersion.domain.library.acquisition.SttpHttp.BytesHeadersPart1, com.histm
+com.histmersion.domain.library.acquisition.SttpHttp.BytesUrl | base String | generated | method-parameter
+    def bytes(url: com.histmersion.domain.library.acquisition.SttpHttp.BytesUrl, headers: Map[com.histmersion.domain.library.acquisition.SttpHttp.BytesHeadersPart1, com.histm
+com.histmersion.domain.library.acquisition.SttpHttp.JsonHeadersPart1 | base String | generated | method-parameter
+    def json(url: com.histmersion.domain.library.acquisition.SttpHttp.JsonUrl, headers: Map[com.histmersion.domain.library.acquisition.SttpHttp.JsonHeadersPart1, com.histmers
+com.histmersion.domain.library.acquisition.SttpHttp.JsonHeadersPart2 | base String | generated | method-parameter
+    def json(url: com.histmersion.domain.library.acquisition.SttpHttp.JsonUrl, headers: Map[com.histmersion.domain.library.acquisition.SttpHttp.JsonHeadersPart1, com.histmers
+com.histmersion.domain.library.acquisition.SttpHttp.JsonResultPart1 | base String | generated | method-result
+    def json(url: com.histmersion.domain.library.acquisition.SttpHttp.JsonUrl, headers: Map[com.histmersion.domain.library.acquisition.SttpHttp.JsonHeadersPart1, com.histmers
+com.histmersion.domain.library.acquisition.SttpHttp.JsonUrl | base String | generated | method-parameter
+    def json(url: com.histmersion.domain.library.acquisition.SttpHttp.JsonUrl, headers: Map[com.histmersion.domain.library.acquisition.SttpHttp.JsonHeadersPart1, com.histmers
+com.histmersion.domain.library.acquisition.SttpHttp.TextHeadersPart1 | base String | generated | method-parameter
+    def text(url: com.histmersion.domain.library.acquisition.SttpHttp.TextUrl, headers: Map[com.histmersion.domain.library.acquisition.SttpHttp.TextHeadersPart1, com.histmers
+com.histmersion.domain.library.acquisition.SttpHttp.TextHeadersPart2 | base String | generated | method-parameter
+    def text(url: com.histmersion.domain.library.acquisition.SttpHttp.TextUrl, headers: Map[com.histmersion.domain.library.acquisition.SttpHttp.TextHeadersPart1, com.histmers
+com.histmersion.domain.library.acquisition.SttpHttp.TextResultPart1 | base String | generated | method-result
+    def text(url: com.histmersion.domain.library.acquisition.SttpHttp.TextUrl, headers: Map[com.histmersion.domain.library.acquisition.SttpHttp.TextHeadersPart1, com.histmers
+com.histmersion.domain.library.acquisition.SttpHttp.TextResultPart2 | base String | generated | method-result
+    def text(url: com.histmersion.domain.library.acquisition.SttpHttp.TextUrl, headers: Map[com.histmersion.domain.library.acquisition.SttpHttp.TextHeadersPart1, com.histmers
+com.histmersion.domain.library.acquisition.SttpHttp.TextUrl | base String | generated | method-parameter
+    def text(url: com.histmersion.domain.library.acquisition.SttpHttp.TextUrl, headers: Map[com.histmersion.domain.library.acquisition.SttpHttp.TextHeadersPart1, com.histmers
+com.histmersion.domain.library.acquisition.UpstreamQuotaService.Implementation.LoadUpstream | base String | generated | method-parameter
+    def load(upstream: com.histmersion.domain.library.acquisition.UpstreamQuotaService.LoadUpstream): Option[CoreQuota.State]
+    def load(upstream: com.histmersion.domain.library.acquisition.UpstreamQuotaService.Implementation.LoadUpstream): Option[CoreQuota.State] = db.read(UpstreamQuotaRepo.load(
+com.histmersion.domain.library.acquisition.UpstreamQuotaService.Implementation.SaveUpstream | base String | generated | method-parameter
+    def save(upstream: com.histmersion.domain.library.acquisition.UpstreamQuotaService.SaveUpstream, state: CoreQuota.State): Unit
+    def save(upstream: com.histmersion.domain.library.acquisition.UpstreamQuotaService.Implementation.SaveUpstream, state: CoreQuota.State): Unit = db.transact(UpstreamQuotaR
+com.histmersion.domain.library.acquisition.UpstreamQuotaService.InMemory.LoadUpstream | base String | generated | method-parameter
+    def load(upstream: com.histmersion.domain.library.acquisition.UpstreamQuotaService.LoadUpstream): Option[CoreQuota.State]
+    def load(upstream: com.histmersion.domain.library.acquisition.UpstreamQuotaService.Implementation.LoadUpstream): Option[CoreQuota.State] = db.read(UpstreamQuotaRepo.load(
+com.histmersion.domain.library.acquisition.UpstreamQuotaService.InMemory.SaveUpstream | base String | generated | method-parameter
+    def save(upstream: com.histmersion.domain.library.acquisition.UpstreamQuotaService.SaveUpstream, state: CoreQuota.State): Unit
+    def save(upstream: com.histmersion.domain.library.acquisition.UpstreamQuotaService.Implementation.SaveUpstream, state: CoreQuota.State): Unit = db.transact(UpstreamQuotaR
+com.histmersion.domain.library.acquisition.UpstreamQuotaService.LoadUpstream | base String | generated | method-parameter
+    def load(upstream: com.histmersion.domain.library.acquisition.UpstreamQuotaService.LoadUpstream): Option[CoreQuota.State]
+    def load(upstream: com.histmersion.domain.library.acquisition.UpstreamQuotaService.Implementation.LoadUpstream): Option[CoreQuota.State] = db.read(UpstreamQuotaRepo.load(
+com.histmersion.domain.library.acquisition.UpstreamQuotaService.SaveUpstream | base String | generated | method-parameter
+    def save(upstream: com.histmersion.domain.library.acquisition.UpstreamQuotaService.SaveUpstream, state: CoreQuota.State): Unit
+    def save(upstream: com.histmersion.domain.library.acquisition.UpstreamQuotaService.Implementation.SaveUpstream, state: CoreQuota.State): Unit = db.transact(UpstreamQuotaR
+com.histmersion.domain.library.acquisition.WikiClient.RefsArticleUrl | base String | generated | method-parameter
+    def refs(articleUrl: com.histmersion.domain.library.acquisition.WikiClient.RefsArticleUrl): Either[com.histmersion.domain.library.acquisition.WikiClient.RefsResultPart1, 
+com.histmersion.domain.library.acquisition.WikiClient.RefsResultPart1 | base String | generated | method-result
+    def refs(articleUrl: com.histmersion.domain.library.acquisition.WikiClient.RefsArticleUrl): Either[com.histmersion.domain.library.acquisition.WikiClient.RefsResultPart1, 
+com.histmersion.domain.library.acquisition.Wikipedia.RefsArticleUrl | base String | generated | method-parameter
+    def refs(articleUrl: com.histmersion.domain.library.acquisition.Wikipedia.RefsArticleUrl): Either[com.histmersion.domain.library.acquisition.Wikipedia.RefsResultPart1, Wi
+com.histmersion.domain.library.acquisition.Wikipedia.RefsResultPart1 | base String | generated | method-result
+    def refs(articleUrl: com.histmersion.domain.library.acquisition.Wikipedia.RefsArticleUrl): Either[com.histmersion.domain.library.acquisition.Wikipedia.RefsResultPart1, Wi

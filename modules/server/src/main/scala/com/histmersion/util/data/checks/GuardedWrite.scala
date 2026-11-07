@@ -4,14 +4,12 @@ package com.histmersion.util.data.checks
   * `false` when a concurrent writer moved the record on first, and the next check lists it again.
   */
 trait GuardedWrite:
-  def apply(record: com.histmersion.util.data.checks.GuardedWrite.ApplyRecord, text: com.histmersion.util.data.checks.GuardedWrite.ApplyText, token: Option[com.histmersion.util.data.checks.GuardedWrite.ApplyToken]): com.histmersion.util.data.checks.GuardedWrite.ApplyResult
+  def apply(record: com.histmersion.util.data.checks.GuardedWrite.RecordRef, text: com.histmersion.util.data.checks.GuardedWrite.FileText, token: Option[com.histmersion.util.data.checks.GuardedWrite.ConcurrencyToken]): Boolean
 
 object GuardedWrite:
-  type ApplyResult = ApplyResult.T
-  object ApplyResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type ApplyRecord = ApplyRecord.T
-  object ApplyRecord extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type ApplyText = ApplyText.T
-  object ApplyText extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type ApplyToken = ApplyToken.T
-  object ApplyToken extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type ConcurrencyToken = ConcurrencyToken.T
+  object ConcurrencyToken extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type FileText = FileText.T
+  object FileText extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type RecordRef = RecordRef.T
+  object RecordRef extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]

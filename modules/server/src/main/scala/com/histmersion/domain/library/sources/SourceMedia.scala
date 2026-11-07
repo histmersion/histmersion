@@ -12,10 +12,10 @@ final class SourceMedia(sources: SourceService) extends MediaSources:
       if sources.load(citekey).isDefined then Right(MediaSources.Key(citekey))
       else Left(MediaSources.Error.NotFound)
     }
-  def markdown(citekey: com.histmersion.domain.library.Citekey): com.histmersion.domain.library.sources.SourceMedia.MarkdownResult = sources.markdown(citekey)
+  def markdown(citekey: com.histmersion.domain.library.Citekey): com.histmersion.domain.library.sources.SourceMedia.Markdown = sources.markdown(citekey)
 
 object SourceMedia:
+  type Markdown = Markdown.T
+  object Markdown extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type CurrentResult = CurrentResult.T
   object CurrentResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type MarkdownResult = MarkdownResult.T
-  object MarkdownResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]

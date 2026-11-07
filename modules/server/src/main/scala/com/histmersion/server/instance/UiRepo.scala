@@ -14,16 +14,16 @@ import com.histmersion.domain.automation.Run
   * exist; `note` blocks of a queue are export scaffolding and never count.
   */
 object UiRepo:
+  type Board = Board.T
+  object Board extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type ColumnName = ColumnName.T
+  object ColumnName extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type SeenMark = SeenMark.T
+  object SeenMark extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
   /** UTC, microseconds, one fixed format — so two instants compare as strings ([[UiNotices.fresh]]). */
-  type IsoCol = IsoCol.T
-  object IsoCol extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type CountersSeenPart1 = CountersSeenPart1.T
-  object CountersSeenPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type CountersSeenPart2 = CountersSeenPart2.T
-  object CountersSeenPart2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
-  private def iso(col: com.histmersion.server.instance.UiRepo.IsoCol): SqlLiteral =
+  private def iso(col: com.histmersion.server.instance.UiRepo.ColumnName): SqlLiteral =
     SqlLiteral(s"""to_char($col AT TIME ZONE 'UTC', 'YYYY-MM-DD"T"HH24:MI:SS.US"Z"')""")
 
   private val Latest = iso("b.latest")
@@ -31,7 +31,7 @@ object UiRepo:
   /** Every board's counter, in [[Board]]'s order, with the reader's `seen` marks (board → ISO instant). A board with no
     * rows yet counts 0 and has no `latest`; one never opened has no `seen`.
     */
-  def counters(seen: Map[com.histmersion.server.instance.UiRepo.CountersSeenPart1, com.histmersion.server.instance.UiRepo.CountersSeenPart2])(using DbCon): Counters =
+  def counters(seen: Map[com.histmersion.server.instance.UiRepo.Board, com.histmersion.server.instance.UiRepo.SeenMark])(using DbCon): Counters =
     val rows =
       sql"""WITH b(board, n, latest) AS (
               SELECT list, (count(*) FILTER (WHERE status = 'open'))::int, max(updated_at) FILTER (WHERE status <> 'note')

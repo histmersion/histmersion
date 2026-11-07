@@ -97,7 +97,7 @@ final class ManagerSupervisor(
   /** Manager `id` of kind `k` exists (created PAUSED when it did not — active while the autopilot is on, which runs
     * every manager); true = it was created now.
     */
-  def ensure(k: Kind, id: com.histmersion.domain.automation.managers.ManagerSupervisor.EnsureId, goal: Option[com.histmersion.domain.automation.managers.ManagerSupervisor.EnsureGoal]): com.histmersion.domain.automation.managers.ManagerSupervisor.EnsureResult =
+  def ensure(k: Kind, id: com.histmersion.domain.automation.managers.ManagerLight.Id, goal: Option[com.histmersion.domain.automation.Goal.Slug]): Boolean =
     val auto = agents.autopilot.on
     val made = agents.managerStore.create(id, k, goal, if auto then State.Active else State.Paused, ManagerConfig())
     if made then
@@ -119,7 +119,7 @@ final class ManagerSupervisor(
       t.start()
 
   /** Whether the ticking thread runs here (agents and managers enabled, the lease held). */
-  def running: com.histmersion.domain.automation.managers.ManagerSupervisor.RunningResult = thread.isDefined
+  def running: Boolean = thread.isDefined
 
   def stop(): Unit =
     stopping = true
@@ -191,7 +191,7 @@ final class ManagerSupervisor(
       out.result()
   }
 
-  private def guarded[A](id: com.histmersion.domain.automation.managers.ManagerSupervisor.GuardedId, out: collection.mutable.Builder[com.histmersion.domain.automation.managers.ManagerSupervisor.GuardedOutPart1, List[com.histmersion.domain.automation.managers.ManagerSupervisor.GuardedOutPart2]])(f: => A)(using
+  private def guarded[A](id: com.histmersion.domain.automation.managers.ManagerLight.Id, out: collection.mutable.Builder[com.histmersion.domain.automation.managers.ManagerSupervisor.GuardedOutPart1, List[com.histmersion.domain.automation.managers.ManagerSupervisor.GuardedOutPart2]])(f: => A)(using
       z: Zero[A]
   ): A =
     try f
@@ -238,9 +238,9 @@ final class ManagerSupervisor(
   def retry(
       m: ManagerInfo,
       item: ManagerItem,
-      run: com.histmersion.domain.automation.managers.ManagerSupervisor.RetryRun,
+      run: com.histmersion.domain.automation.Run.Id,
       notBefore: Instant,
-      failures: com.histmersion.domain.automation.managers.ManagerSupervisor.RetryFailures,
+      failures: com.histmersion.domain.automation.managers.ManagerContext.FailureCount,
       note: com.histmersion.domain.automation.managers.ManagerSupervisor.RetryNote,
       out: collection.mutable.Builder[com.histmersion.domain.automation.managers.ManagerSupervisor.RetryOutPart1, List[com.histmersion.domain.automation.managers.ManagerSupervisor.RetryOutPart2]]
   ): Unit =
@@ -353,7 +353,7 @@ final class ManagerSupervisor(
   /** The approval of `kind` a run opened: none (nothing passed its checks), open (the item waits for it), or decided
     * already (approved automatically, say).
     */
-  def approvalFacts(run: com.histmersion.domain.automation.managers.ManagerSupervisor.ApprovalFactsRun, kind: com.histmersion.domain.automation.Approval.Kind, none: com.histmersion.domain.automation.managers.ManagerSupervisor.ApprovalFactsNone): StepFacts =
+  def approvalFacts(run: com.histmersion.domain.automation.Run.Id, kind: com.histmersion.domain.automation.Approval.Kind, none: com.histmersion.domain.automation.managers.ManagerSupervisor.ApprovalFactsNone): StepFacts =
     agents.approvalStore
       .approvalsOf(run, Some(kind.transformInto[com.histmersion.api.automation.Approval.Kind]))
       .lastOption match
@@ -366,8 +366,8 @@ final class ManagerSupervisor(
   /** A review item for `slug` in review manager `id`, from a chain (priority 2): added, or a settled one re-opened.
     */
   def chainReview(
-      id: com.histmersion.domain.automation.managers.ManagerSupervisor.ChainReviewId,
-      slug: com.histmersion.domain.automation.managers.ManagerSupervisor.ChainReviewSlug,
+      id: com.histmersion.domain.automation.managers.ManagerLight.Id,
+      slug: com.histmersion.domain.automation.Goal.Slug,
       why: com.histmersion.domain.automation.managers.ManagerSupervisor.ChainReviewWhy,
       out: collection.mutable.Builder[com.histmersion.domain.automation.managers.ManagerSupervisor.ChainReviewOutPart1, List[com.histmersion.domain.automation.managers.ManagerSupervisor.ChainReviewOutPart2]]
   ): Unit =
@@ -530,7 +530,7 @@ final class ManagerSupervisor(
     * manager's next proposal — and move on to its next firing; never scheduled yet → record its first firing. A firing
     * missed while paused fires once. True = it fired.
     */
-  private def fireCron(m: ManagerInfo, now: Instant, out: collection.mutable.Builder[com.histmersion.domain.automation.managers.ManagerSupervisor.FireCronOutPart1, List[com.histmersion.domain.automation.managers.ManagerSupervisor.FireCronOutPart2]]): com.histmersion.domain.automation.managers.ManagerSupervisor.FireCronResult =
+  private def fireCron(m: ManagerInfo, now: Instant, out: collection.mutable.Builder[com.histmersion.domain.automation.managers.ManagerSupervisor.FireCronOutPart1, List[com.histmersion.domain.automation.managers.ManagerSupervisor.FireCronOutPart2]]): Boolean =
     if !cfg.scheduler.enabled then false
     else
       val cron = m.cron.flatMap(c => Cron.parse(c).toOption)
@@ -635,7 +635,7 @@ final class ManagerSupervisor(
         )
     }
 
-  private def guardedOpt[A](id: com.histmersion.domain.automation.managers.ManagerSupervisor.GuardedOptId, out: collection.mutable.Builder[com.histmersion.domain.automation.managers.ManagerSupervisor.GuardedOptOutPart1, List[com.histmersion.domain.automation.managers.ManagerSupervisor.GuardedOptOutPart2]])(
+  private def guardedOpt[A](id: com.histmersion.domain.automation.managers.ManagerLight.Id, out: collection.mutable.Builder[com.histmersion.domain.automation.managers.ManagerSupervisor.GuardedOptOutPart1, List[com.histmersion.domain.automation.managers.ManagerSupervisor.GuardedOptOutPart2]])(
       f: => Option[A]
   ): Option[A] =
     try f
@@ -748,7 +748,7 @@ final class ManagerSupervisor(
   /** The pipeline an item kind runs, as the kind that drives it says (an item kind none drives: as the first registered
     * kind says).
     */
-  def pipelineOf(itemKind: com.histmersion.domain.automation.managers.ManagerSupervisor.PipelineOfItemKind): Pipeline =
+  def pipelineOf(itemKind: com.histmersion.domain.automation.managers.ManagerContext.ItemKind): Pipeline =
     byItem
       .get(itemKind)
       .orElse(kinds.headOption)
@@ -756,7 +756,7 @@ final class ManagerSupervisor(
       .pipelineOf(itemKind)
 
   /** [[ManagerPolicy.blocks]] over the unsettled runs on an item's target. */
-  def blocks(kind: com.histmersion.domain.automation.managers.ManagerSupervisor.BlocksKind, unsettled: Seq[Agents.RunInfo]): com.histmersion.domain.automation.managers.ManagerSupervisor.BlocksResult =
+  def blocks(kind: com.histmersion.domain.automation.Approval.Kind.Wire, unsettled: Seq[Agents.RunInfo]): Boolean =
     ManagerPolicy.blocks(kind, pipelineOf(kind).wire, unsettled.map(_.pipeline))
 
   /** The roles a manager of kind `k` runs (what its `models` setting may name). */
@@ -769,7 +769,7 @@ final class ManagerSupervisor(
     val kind: Kind = Kind.Review
     override def items: List[String] = Nil
     def fire(c: ManagerContext, m: ManagerInfo, now: Instant): List[com.histmersion.domain.automation.managers.ManagerSupervisor.FireResult] = Nil
-    def facts(c: ManagerContext, item: ManagerItem, run: com.histmersion.domain.automation.managers.ManagerSupervisor.FactsRun): StepFacts = StepFacts.Finished("enriched")
+    def facts(c: ManagerContext, item: ManagerItem, run: com.histmersion.domain.automation.Run.Id): StepFacts = StepFacts.Finished("enriched")
     def dispatch(
         c: ManagerContext,
         m: ManagerInfo,
@@ -778,81 +778,81 @@ final class ManagerSupervisor(
         now: Instant,
         out: collection.mutable.Builder[com.histmersion.domain.automation.managers.ManagerSupervisor.DispatchOutPart1, List[com.histmersion.domain.automation.managers.ManagerSupervisor.DispatchOutPart2]]
     ): Option[com.histmersion.domain.automation.managers.ManagerSupervisor.DispatchResult] = None
-    def target(m: ManagerInfo, itemKind: com.histmersion.domain.automation.managers.ManagerSupervisor.TargetItemKind, raw: com.histmersion.domain.automation.managers.ManagerSupervisor.TargetRaw): Either[Api.Error, com.histmersion.domain.automation.managers.ManagerSupervisor.TargetResultPart2] =
+    def target(m: ManagerInfo, itemKind: com.histmersion.domain.automation.managers.ManagerContext.ItemKind, raw: com.histmersion.domain.automation.managers.ManagerSupervisor.TargetRaw): Either[Api.Error, com.histmersion.domain.automation.managers.ManagerSupervisor.TargetResultPart2] =
       Left(Api.Error(s"unknown item kind '$itemKind'"))
-    def pipelineOf(itemKind: com.histmersion.domain.automation.managers.ManagerSupervisor.PipelineOfItemKind): Pipeline = ManagerSupervisor.this.pipelineOf(itemKind)
+    def pipelineOf(itemKind: com.histmersion.domain.automation.managers.ManagerContext.ItemKind): Pipeline = ManagerSupervisor.this.pipelineOf(itemKind)
     def defaults(cfg: AgentsConfig, m: ManagerDefaults): ManagerConfig = ManagerConfig()
 
-  def event(id: com.histmersion.domain.automation.managers.ManagerSupervisor.EventId, item: Option[com.histmersion.domain.automation.managers.ManagerSupervisor.EventItem], run: Option[com.histmersion.domain.automation.managers.ManagerSupervisor.EventRun], feed: com.histmersion.domain.automation.managers.ManagerSupervisor.EventFeed, text: com.histmersion.domain.automation.managers.ManagerSupervisor.EventText): Unit =
+  def event(id: com.histmersion.domain.automation.managers.ManagerLight.Id, item: Option[com.histmersion.domain.automation.managers.ManagerContext.ItemId], run: Option[com.histmersion.domain.automation.Run.Id], feed: com.histmersion.domain.automation.managers.ManagerSupervisor.EventFeed, text: com.histmersion.domain.automation.managers.ManagerSupervisor.EventText): Unit =
     agents.managerStore.event(id, item, run, feed, text)
-  def lastEventOf(id: com.histmersion.domain.automation.managers.ManagerSupervisor.LastEventOfId, feed: com.histmersion.domain.automation.managers.ManagerSupervisor.LastEventOfFeed): Option[ManagerEvent] = agents.managerStore.lastEventOf(id, feed)
-  def countEvents(id: com.histmersion.domain.automation.managers.ManagerSupervisor.CountEventsId, feed: com.histmersion.domain.automation.managers.ManagerSupervisor.CountEventsFeed, since: Instant): com.histmersion.domain.automation.managers.ManagerSupervisor.CountEventsResult =
+  def lastEventOf(id: com.histmersion.domain.automation.managers.ManagerLight.Id, feed: com.histmersion.domain.automation.managers.ManagerSupervisor.LastEventOfFeed): Option[ManagerEvent] = agents.managerStore.lastEventOf(id, feed)
+  def countEvents(id: com.histmersion.domain.automation.managers.ManagerLight.Id, feed: com.histmersion.domain.automation.managers.ManagerSupervisor.CountEventsFeed, since: Instant): com.histmersion.domain.automation.managers.ManagerSupervisor.CountEventsResult =
     Transactor(ds).read(ManagerRepo.countEvents(id, feed, since))
   def upsert(
-      id: com.histmersion.domain.automation.managers.ManagerSupervisor.UpsertId,
-      kind: com.histmersion.domain.automation.managers.ManagerSupervisor.UpsertKind,
-      target: com.histmersion.domain.automation.managers.ManagerSupervisor.UpsertTarget,
+      id: com.histmersion.domain.automation.managers.ManagerLight.Id,
+      kind: com.histmersion.domain.automation.managers.ManagerContext.ItemKind,
+      target: com.histmersion.domain.automation.managers.ManagerContext.ItemTarget,
       origin: ItemOrigin,
-      priority: com.histmersion.domain.automation.managers.ManagerSupervisor.UpsertPriority,
+      priority: com.histmersion.domain.automation.managers.ManagerContext.Priority,
       reopen: com.histmersion.domain.automation.managers.ManagerSupervisor.UpsertReopen,
       state: ItemState = ItemState()
-  ): (com.histmersion.domain.automation.managers.ManagerSupervisor.UpsertResultPart1, com.histmersion.domain.automation.managers.ManagerSupervisor.UpsertResultPart2) = agents.managerStore.upsert(id, kind, target, origin, priority, reopen, state)
-  def item(itemId: com.histmersion.domain.automation.managers.ManagerSupervisor.ItemItemId): Option[ManagerItem] = agents.managerStore.item(itemId)
-  def itemFor(id: com.histmersion.domain.automation.managers.ManagerSupervisor.ItemForId, kind: com.histmersion.domain.automation.managers.ManagerSupervisor.ItemForKind, target: com.histmersion.domain.automation.managers.ManagerSupervisor.ItemForTarget): Option[ManagerItem] =
+  ): (com.histmersion.domain.automation.managers.ManagerSupervisor.UpsertResultPart1, Boolean) = agents.managerStore.upsert(id, kind, target, origin, priority, reopen, state)
+  def item(itemId: com.histmersion.domain.automation.managers.ManagerContext.ItemId): Option[ManagerItem] = agents.managerStore.item(itemId)
+  def itemFor(id: com.histmersion.domain.automation.managers.ManagerLight.Id, kind: com.histmersion.domain.automation.managers.ManagerContext.ItemKind, target: com.histmersion.domain.automation.managers.ManagerContext.ItemTarget): Option[ManagerItem] =
     agents.managerStore.itemFor(id, kind, target)
-  def hasItem(id: com.histmersion.domain.automation.managers.ManagerSupervisor.HasItemId, kind: com.histmersion.domain.automation.managers.ManagerSupervisor.HasItemKind, target: com.histmersion.domain.automation.managers.ManagerSupervisor.HasItemTarget): com.histmersion.domain.automation.managers.ManagerSupervisor.HasItemResult =
+  def hasItem(id: com.histmersion.domain.automation.managers.ManagerLight.Id, kind: com.histmersion.domain.automation.managers.ManagerContext.ItemKind, target: com.histmersion.domain.automation.managers.ManagerContext.ItemTarget): Boolean =
     Transactor(ds).read(ManagerRepo.hasItem(id, kind, target))
-  def restale(itemId: com.histmersion.domain.automation.managers.ManagerSupervisor.RestaleItemId, priority: com.histmersion.domain.automation.managers.ManagerSupervisor.RestalePriority, why: com.histmersion.domain.automation.managers.ManagerSupervisor.RestaleWhy): com.histmersion.domain.automation.managers.ManagerSupervisor.RestaleResult =
+  def restale(itemId: com.histmersion.domain.automation.managers.ManagerContext.ItemId, priority: com.histmersion.domain.automation.managers.ManagerContext.Priority, why: com.histmersion.domain.automation.managers.ManagerRepo.RestaleReason): Boolean =
     Transactor(ds).transact(ManagerRepo.restale(itemId, priority, why))
-  def pending(id: com.histmersion.domain.automation.managers.ManagerSupervisor.PendingId): com.histmersion.domain.automation.managers.ManagerSupervisor.PendingResult = connect(ds)(ManagerRepo.counts(id)).pending
-  def openKeys(id: com.histmersion.domain.automation.managers.ManagerSupervisor.OpenKeysId): List[(com.histmersion.domain.automation.managers.ManagerSupervisor.OpenKeysResultPart1, com.histmersion.domain.automation.managers.ManagerSupervisor.OpenKeysResultPart2)] = agents.managerStore.openKeys(id)
+  def pending(id: com.histmersion.domain.automation.managers.ManagerLight.Id): com.histmersion.domain.automation.managers.ManagerSupervisor.PendingResult = connect(ds)(ManagerRepo.counts(id)).pending
+  def openKeys(id: com.histmersion.domain.automation.managers.ManagerLight.Id): List[(com.histmersion.domain.automation.managers.ManagerSupervisor.OpenKeysResultPart1, com.histmersion.domain.automation.managers.ManagerSupervisor.OpenKeysResultPart2)] = agents.managerStore.openKeys(id)
   def evaluated(
-      itemId: com.histmersion.domain.automation.managers.ManagerSupervisor.EvaluatedItemId,
-      run: Option[com.histmersion.domain.automation.managers.ManagerSupervisor.EvaluatedRun],
+      itemId: com.histmersion.domain.automation.managers.ManagerContext.ItemId,
+      run: Option[com.histmersion.domain.automation.Run.Id],
       status: ItemStatus,
       notBefore: Option[Instant],
-      failures: Option[com.histmersion.domain.automation.managers.ManagerSupervisor.EvaluatedFailures],
+      failures: Option[com.histmersion.domain.automation.managers.ManagerContext.FailureCount],
       state: ItemState,
       outcome: Option[com.histmersion.domain.automation.managers.ManagerSupervisor.EvaluatedOutcome]
-  ): com.histmersion.domain.automation.managers.ManagerSupervisor.EvaluatedResult = Transactor(ds).transact(ManagerRepo.evaluated(itemId, run, status, notBefore, failures, state, outcome))
-  def hints(id: com.histmersion.domain.automation.managers.ManagerSupervisor.HintsId): List[ManagerHint] = Transactor(ds).read(ManagerRepo.hints(id, live = true))
-  def state(id: com.histmersion.domain.automation.managers.ManagerSupervisor.StateId): Option[com.histmersion.domain.automation.managers.ManagerSupervisor.StateResult] = agents.managerStore.get(id).map(_.state)
-  def openMajorArticles(id: com.histmersion.domain.automation.managers.ManagerSupervisor.OpenMajorArticlesId, tags: List[com.histmersion.domain.automation.managers.ManagerSupervisor.OpenMajorArticlesTags], goal: Option[com.histmersion.domain.automation.managers.ManagerSupervisor.OpenMajorArticlesGoal], limit: com.histmersion.domain.automation.managers.ManagerSupervisor.OpenMajorArticlesLimit): List[(com.histmersion.domain.automation.managers.ManagerSupervisor.OpenMajorArticlesResultPart1, com.histmersion.domain.automation.managers.ManagerSupervisor.OpenMajorArticlesResultPart2)] =
+  ): Boolean = Transactor(ds).transact(ManagerRepo.evaluated(itemId, run, status, notBefore, failures, state, outcome))
+  def hints(id: com.histmersion.domain.automation.managers.ManagerLight.Id): List[ManagerHint] = Transactor(ds).read(ManagerRepo.hints(id, live = true))
+  def state(id: com.histmersion.domain.automation.managers.ManagerLight.Id): Option[com.histmersion.domain.automation.managers.ManagerSupervisor.StateResult] = agents.managerStore.get(id).map(_.state)
+  def openMajorArticles(id: com.histmersion.domain.automation.managers.ManagerLight.Id, tags: List[com.histmersion.domain.automation.goals.GoalRow.Tags], goal: Option[com.histmersion.domain.automation.Goal.Slug], limit: com.histmersion.domain.automation.managers.ManagerContext.Limit): List[(com.histmersion.domain.automation.managers.ManagerSupervisor.OpenMajorArticlesResultPart1, com.histmersion.domain.automation.managers.ManagerSupervisor.OpenMajorArticlesResultPart2)] =
     Transactor(ds).read(ManagerRepo.openMajorArticles(id, ArticleReview, tags, goal, limit))
-  def unreviewedArticles(id: com.histmersion.domain.automation.managers.ManagerSupervisor.UnreviewedArticlesId, tags: List[com.histmersion.domain.automation.managers.ManagerSupervisor.UnreviewedArticlesTags], goal: Option[com.histmersion.domain.automation.managers.ManagerSupervisor.UnreviewedArticlesGoal], limit: com.histmersion.domain.automation.managers.ManagerSupervisor.UnreviewedArticlesLimit): List[com.histmersion.domain.automation.managers.ManagerSupervisor.UnreviewedArticlesResult] =
+  def unreviewedArticles(id: com.histmersion.domain.automation.managers.ManagerLight.Id, tags: List[com.histmersion.domain.automation.goals.GoalRow.Tags], goal: Option[com.histmersion.domain.automation.Goal.Slug], limit: com.histmersion.domain.automation.managers.ManagerContext.Limit): List[com.histmersion.domain.automation.managers.ManagerSupervisor.UnreviewedArticlesResult] =
     Transactor(ds).read(ManagerRepo.unreviewedArticles(id, ArticleReview, tags, goal, limit))
   def staleCandidates(
-      id: com.histmersion.domain.automation.managers.ManagerSupervisor.StaleCandidatesId,
-      tags: List[com.histmersion.domain.automation.managers.ManagerSupervisor.StaleCandidatesTags],
-      goal: Option[com.histmersion.domain.automation.managers.ManagerSupervisor.StaleCandidatesGoal],
-      limit: com.histmersion.domain.automation.managers.ManagerSupervisor.StaleCandidatesLimit
+      id: com.histmersion.domain.automation.managers.ManagerLight.Id,
+      tags: List[com.histmersion.domain.automation.goals.GoalRow.Tags],
+      goal: Option[com.histmersion.domain.automation.Goal.Slug],
+      limit: com.histmersion.domain.automation.managers.ManagerContext.Limit
   ): List[(com.histmersion.domain.automation.managers.ManagerSupervisor.StaleCandidatesResultPart1, com.histmersion.domain.automation.managers.ManagerSupervisor.StaleCandidatesResultPart2, Option[com.histmersion.domain.automation.managers.ManagerSupervisor.StaleCandidatesResultPart3], Option[com.histmersion.domain.automation.managers.ManagerSupervisor.StaleCandidatesResultPart4])] =
     Transactor(ds).read(ManagerRepo.staleCandidates(id, ArticleReview, tags, goal, limit))
   def extendCandidates(
-      id: com.histmersion.domain.automation.managers.ManagerSupervisor.ExtendCandidatesId,
-      tags: List[com.histmersion.domain.automation.managers.ManagerSupervisor.ExtendCandidatesTags],
-      goal: Option[com.histmersion.domain.automation.managers.ManagerSupervisor.ExtendCandidatesGoal],
-      limit: com.histmersion.domain.automation.managers.ManagerSupervisor.ExtendCandidatesLimit
+      id: com.histmersion.domain.automation.managers.ManagerLight.Id,
+      tags: List[com.histmersion.domain.automation.goals.GoalRow.Tags],
+      goal: Option[com.histmersion.domain.automation.Goal.Slug],
+      limit: com.histmersion.domain.automation.managers.ManagerContext.Limit
   ): List[(com.histmersion.domain.automation.managers.ManagerSupervisor.ExtendCandidatesResultPart1, Option[com.histmersion.domain.automation.managers.ManagerSupervisor.ExtendCandidatesResultPart2])] =
     Transactor(ds).read(ManagerRepo.extendCandidates(id, tags, goal, limit))
-  def articleFacets(slug: com.histmersion.domain.automation.managers.ManagerSupervisor.ArticleFacetsSlug): (List[com.histmersion.domain.automation.managers.ManagerSupervisor.ArticleFacetsResultPart1], List[com.histmersion.domain.automation.managers.ManagerSupervisor.ArticleFacetsResultPart2]) = Transactor(ds).read(ManagerRepo.articleFacets(slug))
+  def articleFacets(slug: com.histmersion.domain.research.Slug): (List[com.histmersion.domain.automation.managers.ManagerSupervisor.ArticleFacetsResultPart1], List[com.histmersion.domain.automation.managers.ManagerSupervisor.ArticleFacetsResultPart2]) = Transactor(ds).read(ManagerRepo.articleFacets(slug))
 
-  def progress(run: com.histmersion.domain.automation.managers.ManagerSupervisor.ProgressRun): com.histmersion.domain.automation.managers.ManagerSupervisor.ProgressResult = agents.runs.get(run).flatMap(_.progress).filter(_.nonEmpty).getOrElse("")
-  def stepOutput(run: com.histmersion.domain.automation.managers.ManagerSupervisor.StepOutputRun, step: com.histmersion.domain.automation.managers.ManagerSupervisor.StepOutputStep): Option[com.histmersion.domain.automation.managers.ManagerSupervisor.StepOutputResult] =
+  def progress(run: com.histmersion.domain.automation.Run.Id): com.histmersion.domain.automation.managers.ManagerSupervisor.ProgressResult = agents.runs.get(run).flatMap(_.progress).filter(_.nonEmpty).getOrElse("")
+  def stepOutput(run: com.histmersion.domain.automation.Run.Id, step: com.histmersion.domain.automation.managers.ManagerSupervisor.StepOutputStep): Option[com.histmersion.domain.automation.managers.ManagerSupervisor.StepOutputResult] =
     agents.runs
       .steps(run, 100000)
       .filter(s => s.name == step && s.status == StepStatus.Done.wire)
       .lastOption
       .flatMap(_.output)
-  def approvalsOf(run: com.histmersion.domain.automation.managers.ManagerSupervisor.ApprovalsOfRun, kind: com.histmersion.domain.automation.Approval.Kind): List[ApprovalInfo] =
+  def approvalsOf(run: com.histmersion.domain.automation.Run.Id, kind: com.histmersion.domain.automation.Approval.Kind): List[ApprovalInfo] =
     agents.approvalStore.approvalsOf(run, Some(kind.transformInto[com.histmersion.api.automation.Approval.Kind]))
-  def unsettledOn(target: com.histmersion.domain.automation.managers.ManagerSupervisor.UnsettledOnTarget): Seq[RunInfo] = agents.runs.unsettledOn(target)
-  def runsFor(p: Pipeline, target: com.histmersion.domain.automation.managers.ManagerSupervisor.RunsForTarget): Seq[RunInfo] = agents.runs.forTarget(p, target)
-  def slugExists(slug: com.histmersion.domain.automation.managers.ManagerSupervisor.SlugExistsSlug): com.histmersion.domain.automation.managers.ManagerSupervisor.SlugExistsResult = agents.host.articleExists(slug)
-  def parentOf(slug: com.histmersion.domain.automation.managers.ManagerSupervisor.ParentOfSlug): Option[com.histmersion.domain.automation.managers.ManagerSupervisor.ParentOfResult] = agents.goals.get(slug).flatMap(_.parentSlug)
-  def linkGoal(goal: com.histmersion.domain.automation.managers.ManagerSupervisor.LinkGoalGoal, kind: Goal.Plans.LinkKind, ref: com.histmersion.domain.automation.managers.ManagerSupervisor.LinkGoalRef, note: Option[com.histmersion.domain.automation.managers.ManagerSupervisor.LinkGoalNote]): Unit =
+  def unsettledOn(target: com.histmersion.domain.automation.managers.ManagerContext.ItemTarget): Seq[RunInfo] = agents.runs.unsettledOn(target)
+  def runsFor(p: Pipeline, target: com.histmersion.domain.automation.managers.ManagerContext.ItemTarget): Seq[RunInfo] = agents.runs.forTarget(p, target)
+  def slugExists(slug: com.histmersion.domain.automation.Goal.Slug): Boolean = agents.host.articleExists(slug)
+  def parentOf(slug: com.histmersion.domain.automation.Goal.Slug): Option[com.histmersion.domain.automation.Goal.Slug] = agents.goals.get(slug).flatMap(_.parentSlug)
+  def linkGoal(goal: com.histmersion.domain.automation.Goal.Slug, kind: Goal.Plans.LinkKind, ref: com.histmersion.domain.automation.goals.BGoalLinkRow.Ref, note: Option[com.histmersion.domain.automation.goals.BGoalLinkRow.Note]): Unit =
     val _ = agents.goals.link(goal, kind.transformInto[com.histmersion.domain.automation.Goal.LinkKind], ref, note)
-  def goalLinks(goal: com.histmersion.domain.automation.managers.ManagerSupervisor.GoalLinksGoal, kind: Goal.Plans.LinkKind): List[com.histmersion.domain.automation.managers.ManagerSupervisor.GoalLinksResult] =
+  def goalLinks(goal: com.histmersion.domain.automation.Goal.Slug, kind: Goal.Plans.LinkKind): List[com.histmersion.domain.automation.managers.ManagerSupervisor.GoalLinksResult] =
     agents.goals.links(goal).filter(_.kind == kind).map(_.ref)
   def sharedIngestLeft(now: Instant): Option[com.histmersion.domain.automation.managers.ManagerSupervisor.SharedIngestLeftResult] = agents.autopilot.sharedIngestLeft(now)
   def autopilotSoon(): Unit = agents.autopilot.soon()
@@ -871,20 +871,10 @@ final class ManagerSupervisor(
 object ManagerSupervisor:
 
   /** The priority a prioritise hint gives when it names none (a person's enqueue is 10). */
-  type EnsureResult = EnsureResult.T
-  object EnsureResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type EnsureId = EnsureId.T
-  object EnsureId extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type EnsureGoal = EnsureGoal.T
-  object EnsureGoal extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type RunningResult = RunningResult.T
-  object RunningResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type ByItemPart1 = ByItemPart1.T
   object ByItemPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type TickResult = TickResult.T
   object TickResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type GuardedId = GuardedId.T
-  object GuardedId extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type GuardedOutPart1 = GuardedOutPart1.T
   object GuardedOutPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type GuardedOutPart2 = GuardedOutPart2.T
@@ -893,10 +883,6 @@ object ManagerSupervisor:
   object EvaluateOutPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type EvaluateOutPart2 = EvaluateOutPart2.T
   object EvaluateOutPart2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type RetryRun = RetryRun.T
-  object RetryRun extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type RetryFailures = RetryFailures.T
-  object RetryFailures extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type RetryNote = RetryNote.T
   object RetryNote extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type RetryOutPart1 = RetryOutPart1.T
@@ -909,14 +895,8 @@ object ManagerSupervisor:
   object EvaluateStepOutPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type EvaluateStepOutPart2 = EvaluateStepOutPart2.T
   object EvaluateStepOutPart2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type ApprovalFactsRun = ApprovalFactsRun.T
-  object ApprovalFactsRun extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type ApprovalFactsNone = ApprovalFactsNone.T
   object ApprovalFactsNone extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type ChainReviewId = ChainReviewId.T
-  object ChainReviewId extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type ChainReviewSlug = ChainReviewSlug.T
-  object ChainReviewSlug extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type ChainReviewWhy = ChainReviewWhy.T
   object ChainReviewWhy extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type ChainReviewOutPart1 = ChainReviewOutPart1.T
@@ -941,8 +921,6 @@ object ManagerSupervisor:
   object SettleOnApprovalOutPart2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type MigrateSchedulesResult = MigrateSchedulesResult.T
   object MigrateSchedulesResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type FireCronResult = FireCronResult.T
-  object FireCronResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type FireCronOutPart1 = FireCronOutPart1.T
   object FireCronOutPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type FireCronOutPart2 = FireCronOutPart2.T
@@ -951,8 +929,6 @@ object ManagerSupervisor:
   object DispatchAllOutPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type DispatchAllOutPart2 = DispatchAllOutPart2.T
   object DispatchAllOutPart2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type GuardedOptId = GuardedOptId.T
-  object GuardedOptId extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type GuardedOptOutPart1 = GuardedOptOutPart1.T
   object GuardedOptOutPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type GuardedOptOutPart2 = GuardedOptOutPart2.T
@@ -975,128 +951,42 @@ object ManagerSupervisor:
   object StartOutPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type StartOutPart2 = StartOutPart2.T
   object StartOutPart2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type PipelineOfItemKind = PipelineOfItemKind.T
-  object PipelineOfItemKind extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type BlocksResult = BlocksResult.T
-  object BlocksResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type BlocksKind = BlocksKind.T
-  object BlocksKind extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type FireResult = FireResult.T
   object FireResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type FactsRun = FactsRun.T
-  object FactsRun extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type TargetResultPart2 = TargetResultPart2.T
   object TargetResultPart2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type TargetItemKind = TargetItemKind.T
-  object TargetItemKind extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type TargetRaw = TargetRaw.T
   object TargetRaw extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type EventId = EventId.T
-  object EventId extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type EventItem = EventItem.T
-  object EventItem extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type EventRun = EventRun.T
-  object EventRun extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type EventFeed = EventFeed.T
   object EventFeed extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type EventText = EventText.T
   object EventText extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type LastEventOfId = LastEventOfId.T
-  object LastEventOfId extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type LastEventOfFeed = LastEventOfFeed.T
   object LastEventOfFeed extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type CountEventsResult = CountEventsResult.T
   object CountEventsResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type CountEventsId = CountEventsId.T
-  object CountEventsId extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type CountEventsFeed = CountEventsFeed.T
   object CountEventsFeed extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type UpsertResultPart1 = UpsertResultPart1.T
   object UpsertResultPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type UpsertResultPart2 = UpsertResultPart2.T
-  object UpsertResultPart2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type UpsertId = UpsertId.T
-  object UpsertId extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type UpsertKind = UpsertKind.T
-  object UpsertKind extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type UpsertTarget = UpsertTarget.T
-  object UpsertTarget extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type UpsertPriority = UpsertPriority.T
-  object UpsertPriority extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type UpsertReopen = UpsertReopen.T
   object UpsertReopen extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type ItemItemId = ItemItemId.T
-  object ItemItemId extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type ItemForId = ItemForId.T
-  object ItemForId extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type ItemForKind = ItemForKind.T
-  object ItemForKind extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type ItemForTarget = ItemForTarget.T
-  object ItemForTarget extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type HasItemResult = HasItemResult.T
-  object HasItemResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type HasItemId = HasItemId.T
-  object HasItemId extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type HasItemKind = HasItemKind.T
-  object HasItemKind extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type HasItemTarget = HasItemTarget.T
-  object HasItemTarget extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type RestaleResult = RestaleResult.T
-  object RestaleResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type RestaleItemId = RestaleItemId.T
-  object RestaleItemId extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type RestalePriority = RestalePriority.T
-  object RestalePriority extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type RestaleWhy = RestaleWhy.T
-  object RestaleWhy extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type PendingResult = PendingResult.T
   object PendingResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type PendingId = PendingId.T
-  object PendingId extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type OpenKeysResultPart1 = OpenKeysResultPart1.T
   object OpenKeysResultPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type OpenKeysResultPart2 = OpenKeysResultPart2.T
   object OpenKeysResultPart2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type OpenKeysId = OpenKeysId.T
-  object OpenKeysId extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type EvaluatedResult = EvaluatedResult.T
-  object EvaluatedResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type EvaluatedItemId = EvaluatedItemId.T
-  object EvaluatedItemId extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type EvaluatedRun = EvaluatedRun.T
-  object EvaluatedRun extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type EvaluatedFailures = EvaluatedFailures.T
-  object EvaluatedFailures extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type EvaluatedOutcome = EvaluatedOutcome.T
   object EvaluatedOutcome extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type HintsId = HintsId.T
-  object HintsId extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type StateResult = StateResult.T
   object StateResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type StateId = StateId.T
-  object StateId extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type OpenMajorArticlesResultPart1 = OpenMajorArticlesResultPart1.T
   object OpenMajorArticlesResultPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type OpenMajorArticlesResultPart2 = OpenMajorArticlesResultPart2.T
   object OpenMajorArticlesResultPart2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type OpenMajorArticlesId = OpenMajorArticlesId.T
-  object OpenMajorArticlesId extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type OpenMajorArticlesTags = OpenMajorArticlesTags.T
-  object OpenMajorArticlesTags extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type OpenMajorArticlesGoal = OpenMajorArticlesGoal.T
-  object OpenMajorArticlesGoal extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type OpenMajorArticlesLimit = OpenMajorArticlesLimit.T
-  object OpenMajorArticlesLimit extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type UnreviewedArticlesResult = UnreviewedArticlesResult.T
   object UnreviewedArticlesResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type UnreviewedArticlesId = UnreviewedArticlesId.T
-  object UnreviewedArticlesId extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type UnreviewedArticlesTags = UnreviewedArticlesTags.T
-  object UnreviewedArticlesTags extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type UnreviewedArticlesGoal = UnreviewedArticlesGoal.T
-  object UnreviewedArticlesGoal extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type UnreviewedArticlesLimit = UnreviewedArticlesLimit.T
-  object UnreviewedArticlesLimit extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type StaleCandidatesResultPart1 = StaleCandidatesResultPart1.T
   object StaleCandidatesResultPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type StaleCandidatesResultPart2 = StaleCandidatesResultPart2.T
@@ -1105,66 +995,22 @@ object ManagerSupervisor:
   object StaleCandidatesResultPart3 extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type StaleCandidatesResultPart4 = StaleCandidatesResultPart4.T
   object StaleCandidatesResultPart4 extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type StaleCandidatesId = StaleCandidatesId.T
-  object StaleCandidatesId extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type StaleCandidatesTags = StaleCandidatesTags.T
-  object StaleCandidatesTags extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type StaleCandidatesGoal = StaleCandidatesGoal.T
-  object StaleCandidatesGoal extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type StaleCandidatesLimit = StaleCandidatesLimit.T
-  object StaleCandidatesLimit extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type ExtendCandidatesResultPart1 = ExtendCandidatesResultPart1.T
   object ExtendCandidatesResultPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type ExtendCandidatesResultPart2 = ExtendCandidatesResultPart2.T
   object ExtendCandidatesResultPart2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type ExtendCandidatesId = ExtendCandidatesId.T
-  object ExtendCandidatesId extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type ExtendCandidatesTags = ExtendCandidatesTags.T
-  object ExtendCandidatesTags extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type ExtendCandidatesGoal = ExtendCandidatesGoal.T
-  object ExtendCandidatesGoal extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type ExtendCandidatesLimit = ExtendCandidatesLimit.T
-  object ExtendCandidatesLimit extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type ArticleFacetsResultPart1 = ArticleFacetsResultPart1.T
   object ArticleFacetsResultPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type ArticleFacetsResultPart2 = ArticleFacetsResultPart2.T
   object ArticleFacetsResultPart2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type ArticleFacetsSlug = ArticleFacetsSlug.T
-  object ArticleFacetsSlug extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type ProgressResult = ProgressResult.T
   object ProgressResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type ProgressRun = ProgressRun.T
-  object ProgressRun extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type StepOutputResult = StepOutputResult.T
   object StepOutputResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type StepOutputRun = StepOutputRun.T
-  object StepOutputRun extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type StepOutputStep = StepOutputStep.T
   object StepOutputStep extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type ApprovalsOfRun = ApprovalsOfRun.T
-  object ApprovalsOfRun extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type UnsettledOnTarget = UnsettledOnTarget.T
-  object UnsettledOnTarget extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type RunsForTarget = RunsForTarget.T
-  object RunsForTarget extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type SlugExistsResult = SlugExistsResult.T
-  object SlugExistsResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type SlugExistsSlug = SlugExistsSlug.T
-  object SlugExistsSlug extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type ParentOfResult = ParentOfResult.T
-  object ParentOfResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type ParentOfSlug = ParentOfSlug.T
-  object ParentOfSlug extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type LinkGoalGoal = LinkGoalGoal.T
-  object LinkGoalGoal extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type LinkGoalRef = LinkGoalRef.T
-  object LinkGoalRef extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type LinkGoalNote = LinkGoalNote.T
-  object LinkGoalNote extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type GoalLinksResult = GoalLinksResult.T
   object GoalLinksResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type GoalLinksGoal = GoalLinksGoal.T
-  object GoalLinksGoal extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type SharedIngestLeftResult = SharedIngestLeftResult.T
   object SharedIngestLeftResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type PurposeResult = PurposeResult.T

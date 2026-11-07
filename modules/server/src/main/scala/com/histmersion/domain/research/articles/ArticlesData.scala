@@ -14,8 +14,6 @@ import com.augustnagro.magnum.DbCon
   */
 object ArticlesData:
 
-  type FixedName = FixedName.T
-  object FixedName extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type FixedRank = FixedRank.T
   object FixedRank extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
@@ -36,7 +34,7 @@ object ArticlesData:
 
   private def listed(owner: DataOwner, names: String*): List[CheckRule] = names.toList.map(Check(owner, _, None))
 
-  private def fixed(owner: DataOwner, name: com.histmersion.domain.research.articles.ArticlesData.FixedName, when: FixWhen, rank: com.histmersion.domain.research.articles.ArticlesData.FixedRank)(
+  private def fixed(owner: DataOwner, name: com.histmersion.domain.research.articles.ArticlesData.Check.Name, when: FixWhen, rank: com.histmersion.domain.research.articles.ArticlesData.FixedRank)(
       run: CheckContext => LintFixResult
   ): CheckRule =
     Check(owner, name, Some(SafeFix(when, FixRank(rank), run)))

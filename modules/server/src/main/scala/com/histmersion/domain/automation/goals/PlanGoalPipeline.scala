@@ -51,7 +51,7 @@ final class PlanGoalPipeline(
   /** A sub-goal slug is taken by a goal OR by an old slug of one: a put to an old slug follows the alias (#1799) and
     * would replace the renamed goal.
     */
-  private def taken(s: com.histmersion.domain.automation.goals.PlanGoalPipeline.TakenS): com.histmersion.domain.automation.goals.PlanGoalPipeline.TakenResult =
+  private def taken(s: com.histmersion.domain.automation.Goal.Slug): Boolean =
     Transactor(ds).read(GoalRepo.exists(s)) || Transactor(ds).read(GoalRepo.renamedTo(s)).isDefined
 
   def run(ctx: RunCtx): Either[Halt, com.histmersion.domain.automation.goals.PlanGoalPipeline.RunResultPart2] =
@@ -94,7 +94,7 @@ final class PlanGoalPipeline(
 
   // ── steps ──────────────────────────────────────────────────────────────────────────────────────
 
-  private def load(slug: com.histmersion.domain.automation.goals.PlanGoalPipeline.LoadSlug): Either[com.histmersion.domain.automation.goals.PlanGoalPipeline.LoadResultPart1, Loaded] =
+  private def load(slug: com.histmersion.domain.automation.Goal.Slug): Either[com.histmersion.domain.automation.goals.PlanGoalPipeline.LoadResultPart1, Loaded] =
     host.goal(slug).left.map(_.message).map { g =>
       val links = goals.links(slug)
       val vocab = (field: String) => host.vocabulary(field).take(VocabularySize)
@@ -134,7 +134,7 @@ final class PlanGoalPipeline(
   /** Every DOI through the discover path (OpenAlex/Crossref). Offline, every work is dropped — a person never sees a
     * DOI code could not check.
     */
-  private def verify(ctx: RunCtx, p: Proposed, slug: com.histmersion.domain.automation.goals.PlanGoalPipeline.VerifySlug): Plan =
+  private def verify(ctx: RunCtx, p: Proposed, slug: com.histmersion.domain.automation.Goal.Slug): Plan =
     val plan = PlanGoal.verify(p, slug, host.workLookup)
     plan.dropped.foreach(d => ctx.warn(s"verify: $d"))
     plan
@@ -145,7 +145,7 @@ final class PlanGoalPipeline(
     * queued for acquisition and linked by item. A rejected plan changes nothing. Idempotent (a re-run after a crash
     * finds what it made: goals are upserted, links are keyed, a DOI already in the queue is not added again).
     */
-  private def apply(ctx: RunCtx, slug: com.histmersion.domain.automation.goals.PlanGoalPipeline.ApplySlug, plan: Plan, d: Decided): Either[com.histmersion.domain.automation.goals.PlanGoalPipeline.ApplyResultPart1, Applied] =
+  private def apply(ctx: RunCtx, slug: com.histmersion.domain.automation.Goal.Slug, plan: Plan, d: Decided): Either[com.histmersion.domain.automation.goals.PlanGoalPipeline.ApplyResultPart1, Applied] =
     if !d.approved then
       log(ctx, PlanGoal.logLine(slug, plan, approved = false, 0, 0, 0, ctx.run.id)).map(Applied(_, 0, 0, 0))
     else
@@ -164,7 +164,7 @@ final class PlanGoalPipeline(
         )
       )
 
-  private def applyApproved(ctx: RunCtx, slug: com.histmersion.domain.automation.goals.PlanGoalPipeline.ApplyApprovedSlug, plan: Plan): Either[com.histmersion.domain.automation.goals.PlanGoalPipeline.ApplyApprovedResultPart1, Applied] =
+  private def applyApproved(ctx: RunCtx, slug: com.histmersion.domain.automation.Goal.Slug, plan: Plan): Either[com.histmersion.domain.automation.goals.PlanGoalPipeline.ApplyApprovedResultPart1, Applied] =
     val parent = host.goal(slug).toOption
     val created = plan.subGoals.filter { g =>
       if Transactor(ds).read(GoalRepo.exists(g.slug)) then {
@@ -226,20 +226,12 @@ object PlanGoalPipeline:
   type InputListXs = InputListXs.T
   object InputListXs extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
-  type TakenResult = TakenResult.T
-  object TakenResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type TakenS = TakenS.T
-  object TakenS extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type RunResultPart2 = RunResultPart2.T
   object RunResultPart2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type LoadResultPart1 = LoadResultPart1.T
   object LoadResultPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type LoadSlug = LoadSlug.T
-  object LoadSlug extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type InputResult = InputResult.T
   object InputResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type VerifySlug = VerifySlug.T
-  object VerifySlug extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type LogResultPart1 = LogResultPart1.T
   object LogResultPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type LogResultPart2 = LogResultPart2.T
@@ -248,12 +240,8 @@ object PlanGoalPipeline:
   object LogLine extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type ApplyResultPart1 = ApplyResultPart1.T
   object ApplyResultPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type ApplySlug = ApplySlug.T
-  object ApplySlug extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type ApplyApprovedResultPart1 = ApplyApprovedResultPart1.T
   object ApplyApprovedResultPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type ApplyApprovedSlug = ApplyApprovedSlug.T
-  object ApplyApprovedSlug extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
   val VocabularySize = 40
 

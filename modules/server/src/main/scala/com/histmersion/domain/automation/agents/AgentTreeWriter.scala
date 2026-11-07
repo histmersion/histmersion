@@ -8,25 +8,17 @@ import io.circe.Json
 import io.circe.syntax.*
 
 private[agents] object AgentTreeWriter:
-  type WriteKeyName = WriteKeyName.T
-  object WriteKeyName extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type Problem = Problem.T
+  object Problem extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type StoreKeyName = StoreKeyName.T
+  object StoreKeyName extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
-  type WriteResultPart1 = WriteResultPart1.T
-  object WriteResultPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type WriteTreePart1 = WriteTreePart1.T
-  object WriteTreePart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type WriteTreePart2 = WriteTreePart2.T
-  object WriteTreePart2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type WriteRuntimes = WriteRuntimes.T
-  object WriteRuntimes extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type WriteSha = WriteSha.T
-  object WriteSha extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
   private val Manifest = Store.Key.of("manifest.json").fold(error => throw IllegalArgumentException(error), identity)
 
-  def write(store: Store, tree: Map[com.histmersion.domain.automation.agents.AgentTreeWriter.WriteTreePart1, com.histmersion.domain.automation.agents.AgentTreeWriter.WriteTreePart2], runtimes: List[com.histmersion.domain.automation.agents.AgentTreeWriter.WriteRuntimes], sha: com.histmersion.domain.automation.agents.AgentTreeWriter.WriteSha)(using clock: Clock): Either[com.histmersion.domain.automation.agents.AgentTreeWriter.WriteResultPart1, GenerateResult] =
+  def write(store: Store, tree: Map[com.histmersion.util.storage.SafePath.Candidate, String], runtimes: List[String], sha: com.histmersion.Sha256)(using clock: Clock): Either[com.histmersion.domain.automation.agents.AgentTreeWriter.Problem, GenerateResult] =
     try
-      def key(name: com.histmersion.domain.automation.agents.AgentTreeWriter.WriteKeyName): Store.Key = Store.Key.of(name).fold(error => throw IllegalArgumentException(error), identity)
+      def key(name: com.histmersion.domain.automation.agents.AgentTreeWriter.StoreKeyName): Store.Key = Store.Key.of(name).fold(error => throw IllegalArgumentException(error), identity)
       store.makeDirectory().fold(error => throw java.io.IOException(error.message), identity)
       val previous = store.get(Manifest).toList.flatMap { blob =>
         io.circe.parser.parse(blob.text()).toOption

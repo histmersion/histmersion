@@ -15,16 +15,16 @@ final case class HeldPlace(
     parents: Vector[Place.Relation] = Vector.empty,
     links: Vector[Place.Link] = Vector.empty
 ):
-  def id: com.histmersion.domain.catalogue.places.HeldPlace.IdResult = place.id.value
+  def id: com.histmersion.domain.catalogue.Place.Id = place.id.value
 
   /** Is this place valid at `asOf` (a timeless place always is)? */
-  def validAt(asOf: Option[com.histmersion.domain.catalogue.places.HeldPlace.ValidAtAsOf]): com.histmersion.domain.catalogue.places.HeldPlace.ValidAtResult = HeldPlace.covers(place.period, asOf)
+  def validAt(asOf: Option[com.histmersion.domain.catalogue.places.HeldPlace.AsOf]): Boolean = HeldPlace.covers(place.period, asOf)
 
   /** Its names valid at `asOf`, distinct and by name, comma-joined — the `names` column of a summary. */
-  def namesAt(asOf: Option[com.histmersion.domain.catalogue.places.HeldPlace.NamesAtAsOf]): com.histmersion.domain.catalogue.places.HeldPlace.NamesAtResult =
+  def namesAt(asOf: Option[com.histmersion.domain.catalogue.places.HeldPlace.AsOf]): com.histmersion.domain.catalogue.places.HeldPlace.NamesAtResult =
     names.filter(n => HeldPlace.covers(n.period, asOf)).map(_.name).distinct.sorted.mkString(", ")
 
-  def contested: com.histmersion.domain.catalogue.places.HeldPlace.ContestedResult =
+  def contested: Boolean =
     place.properties.exists(p =>
       io.circe.parser.parse(p).toOption.flatMap(_.hcursor.downField("contested").as[Boolean].toOption).contains(true)
     )
@@ -44,24 +44,12 @@ final case class HeldPlace(
     )
 
 object HeldPlace:
+  type AsOf = AsOf.T
+  object AsOf extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
   /** One name: `manual` when a person added it. */
-  type IdResult = IdResult.T
-  object IdResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type ValidAtResult = ValidAtResult.T
-  object ValidAtResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type ValidAtAsOf = ValidAtAsOf.T
-  object ValidAtAsOf extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type NamesAtResult = NamesAtResult.T
   object NamesAtResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type NamesAtAsOf = NamesAtAsOf.T
-  object NamesAtAsOf extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type ContestedResult = ContestedResult.T
-  object ContestedResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type CoversResult = CoversResult.T
-  object CoversResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type CoversAsOf = CoversAsOf.T
-  object CoversAsOf extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type LowerResult = LowerResult.T
   object LowerResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type LowerS = LowerS.T
@@ -85,7 +73,7 @@ object HeldPlace:
     def of(n: Place.Name): Name = Name(n.name, n.lang, n.period, manual = false)
 
   /** Does `period` (none: always) contain the year `asOf` (none: any time)? */
-  def covers(period: Option[com.histmersion.api.catalogue.Period], asOf: Option[com.histmersion.domain.catalogue.places.HeldPlace.CoversAsOf]): com.histmersion.domain.catalogue.places.HeldPlace.CoversResult =
+  def covers(period: Option[com.histmersion.api.catalogue.Period], asOf: Option[com.histmersion.domain.catalogue.places.HeldPlace.AsOf]): Boolean =
     asOf.forall(y => period.forall(p => p.start <= y && y <= p.end))
 
   /** The case-insensitive form a search compares. */
