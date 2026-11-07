@@ -1,5 +1,7 @@
 package com.histmersion.plugins.events
 
+import com.histmersion.testsupport.ComparedByValue.given
+
 import com.histmersion.plugin.{CatalogueQuery, Year}
 import com.histmersion.plugin.testkit.{HttpMode, PluginHarness, StubAnswer}
 
@@ -25,12 +27,12 @@ class CataloguePluginsKitSuite extends munit.FunSuite:
 
   test("a catalogue plugin has no setting the host owns: an endpoint in its block is refused"):
     val refused =
-      PluginHarness.load("events-gvp", "url = \"https://elsewhere.example\"", http = HttpMode.Offline, env = Map.empty)
+      PluginHarness.load(com.histmersion.plugin.Plugin.Info.Id("events-gvp"), "url = \"https://elsewhere.example\"", http = HttpMode.Offline, env = Map.empty)
     assert(refused.left.exists(_.contains("unknown setting")), refused.toString)
 
   test("events-gvp: a window of years at the host's endpoint, each record checked and dated as the server stores it"):
-    val url = GvpCatalogue.url("https://webservices.volcano.si.edu/geoserver/GVP-VOTW/ows", -2000, -1001, 5000)
-    val h = load("events-gvp", Map(url -> StubAnswer.text(fixture("gvp.json"), "application/json")))
+    val url = GvpCatalogue.url(com.histmersion.plugins.events.GvpSettings.Url("https://webservices.volcano.si.edu/geoserver/GVP-VOTW/ows"), com.histmersion.plugins.events.GvpCatalogue.Year(-2000), com.histmersion.plugins.events.GvpCatalogue.Year(-1001), com.histmersion.plugins.events.GvpSettings.PageSize(5000))
+    val h = load("events-gvp", Map(url -> StubAnswer.text(fixture("gvp.json"), com.histmersion.domain.CoreQuota.HeaderValue("application/json"))))
     val r = h.readCatalogue("gvp", CatalogueQuery(Some(Year(-2000)), Year(-1001)))
     assertEquals(r.parts, List("years:-2000..-1001"))
     assertEquals(r.requests, List(s"GET $url"))
@@ -44,11 +46,11 @@ class CataloguePluginsKitSuite extends munit.FunSuite:
   test(
     "events-gvp: the host's own events.gvp keys reach the plugin (the user's endpoint, by its HISTMERSION_ variable)"
   ):
-    val url = GvpCatalogue.url("https://gvp.example/ows", -2000, -1001, 5000)
+    val url = GvpCatalogue.url(com.histmersion.plugins.events.GvpSettings.Url("https://gvp.example/ows"), com.histmersion.plugins.events.GvpCatalogue.Year(-2000), com.histmersion.plugins.events.GvpCatalogue.Year(-1001), com.histmersion.plugins.events.GvpSettings.PageSize(5000))
     val h = PluginHarness
       .load(
-        "events-gvp",
-        http = HttpMode.Stub(Map(url -> StubAnswer.text(fixture("gvp.json"), "application/json"))),
+        com.histmersion.plugin.Plugin.Info.Id("events-gvp"),
+        http = HttpMode.Stub(Map(url -> StubAnswer.text(fixture("gvp.json"), com.histmersion.domain.CoreQuota.HeaderValue("application/json")))),
         env = Map("HISTMERSION_EVENTS_GVP_URL" -> "https://gvp.example/ows")
       )
       .fold(e => fail(e), identity)
@@ -67,9 +69,9 @@ class CataloguePluginsKitSuite extends munit.FunSuite:
     )
     val wd = PluginHarness
       .load(
-        "events-wikidata",
+        com.histmersion.plugin.Plugin.Info.Id("events-wikidata"),
         http = HttpMode.Offline,
         env = Map("HISTMERSION_EVENTS_WIKIDATA_CLASSES" -> "Q188055:siege")
       )
       .fold(e => fail(e), identity)
-    assertEquals(wd.readCatalogue("wikidata", CatalogueQuery(None, Year(-2000))).parts, List("class:Q188055"))
+    assertEquals(wd.readCatalogue(com.histmersion.pluginhost.Registries.EventCataloguesKey("wikidata"), CatalogueQuery(None, Year(-2000))).parts, List("class:Q188055"))
