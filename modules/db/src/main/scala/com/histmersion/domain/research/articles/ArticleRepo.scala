@@ -81,7 +81,7 @@ private[articles] object ArticleRepo:
     import io.circe.syntax.*
     a.filter.map(_.asJson.deepDropNullValues.noSpaces)
   private def reasonsJson(a: Article): String =
-    io.circe.Json.obj(a.reasons.toList.sortBy(_._1.value).map((k, v) => k -> io.circe.Json.fromString(v))*).noSpaces
+    io.circe.Json.obj(a.reasons.toList.sortBy(_._1.value).map((k, v) => k -> io.circe.Json.fromString(v.value))*).noSpaces
 
   /** The stored JSON back; a value that no longer decodes (an older shape) reads as none, never fails the read. */
   private[articles] def filterOf(json: Option[String]): Option[Article.Filter] =
@@ -157,7 +157,7 @@ private[articles] object ArticleRepo:
     if written.nonEmpty then
       // an OLD citekey (V027) links the source it was renamed to, and is recorded under the new one
       // so `backlinksForSource` finds it
-      val known = CitekeyResolver.stored
+      val known: Map[String, String] = CitekeyResolver.stored
         .canonical(
           written
             .filter(t => Article.Links.isCitekeyShaped(t.value))

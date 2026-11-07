@@ -7,6 +7,7 @@ import com.histmersion.domain.automation.managers.SweepAcquireItem
 import com.histmersion.domain.automation.managers.ManagerLight
 import com.histmersion.util.database.{Jsonb, Param, Sql}
 import com.histmersion.util.database.given
+import com.histmersion.util.database.NewtypeColumns.given
 
 /** The store of the process managers (V087, docs/research-process-managers.md §2): managers, their work items, hints
   * (and which runs they reached), events, and the agent lease. All state lives in these rows, so a restart picks up
@@ -482,7 +483,7 @@ object ManagerRepo:
   /** Dispatch, in the caller's transaction: pending → active with `run`, one more attempt, the open MAJORs before it in
     * its state. `false` = it was no longer pending (another tick took it).
     */
-  def dispatchIn(itemId: com.histmersion.domain.automation.managers.ManagerRepo.ItemRow.Id, run: com.histmersion.domain.automation.agents.AgentRepo.RunRow.Id, state: ItemState)(using DbCon): Boolean =
+  def dispatchIn(itemId: com.histmersion.domain.automation.managers.ManagerRepo.ItemRow.Id, run: com.histmersion.domain.automation.Run.Id, state: ItemState)(using DbCon): Boolean =
     sql"""UPDATE manager_items SET status = ${ItemStatus.Active.wire}, run_id = $run, attempts = attempts + 1,
                                    state = $state::jsonb, updated_at = now()
           WHERE id = $itemId AND status = ${ItemStatus.Pending.wire}""".update.run() > 0
@@ -507,7 +508,7 @@ object ManagerRepo:
       )
       run match
         case None => List(i -> None) // its run was deleted
-        case Some((st, err)) if RunState.parse(st).exists(_.isTerminal) && !i.evaluatedRun.contains(i.runId.get) =>
+        case Some((st, err)) if RunState.parse(com.histmersion.api.automation.Run.State.Wire(st.value)).exists(_.isTerminal) && !i.evaluatedRun.contains(i.runId.get) =>
           List(i -> Some((st, err)))
         case _ => Nil
     }
@@ -557,13 +558,17 @@ object ManagerRepo:
     if ids.isEmpty then com.histmersion.RowCount(0)
     else
       val arr = ids.map(_.value.toString)
-      sql"""UPDATE manager_items SET status = 'pending', hold = NULL, updated_at = now()
+      com.histmersion.RowCount(
+        sql"""UPDATE manager_items SET status = 'pending', hold = NULL, updated_at = now()
             WHERE id = ANY($arr::bigint[]) AND status = 'held' AND hold->>'focus' IS NOT NULL""".update.run()
+      )
 
   /** Release every focus hold (the focus is not in force any more); how many. */
   def focusReleaseAll()(using DbCon): com.histmersion.RowCount =
-    sql"""UPDATE manager_items SET status = 'pending', hold = NULL, updated_at = now()
+    com.histmersion.RowCount(
+      sql"""UPDATE manager_items SET status = 'pending', hold = NULL, updated_at = now()
           WHERE status = 'held' AND hold->>'focus' IS NOT NULL""".update.run()
+    )
 
   /** The items the focus holds now. */
   def focusHeldCount()(using DbCon): com.histmersion.RowCount =
@@ -618,8 +623,10 @@ object ManagerRepo:
 
   /** Every open item of a manager cancelled (a stop); returns how many. */
   def cancelOpen(managerId: com.histmersion.domain.automation.managers.ManagerRepo.ManagerRow.Id, why: com.histmersion.domain.automation.managers.ManagerRepo.CancelReason)(using DbCon): com.histmersion.RowCount =
-    sql"""UPDATE manager_items SET status = 'cancelled', outcome = $why, updated_at = now()
+    com.histmersion.RowCount(
+      sql"""UPDATE manager_items SET status = 'cancelled', outcome = $why, updated_at = now()
           WHERE manager_id = $managerId AND status IN ('pending', 'held', 'active')""".update.run()
+    )
 
   /** Back to pending (an active item whose run vanished, or was never submitted). */
   def requeue(itemId: com.histmersion.domain.automation.managers.ManagerRepo.ItemRow.Id, outcome: com.histmersion.domain.automation.managers.ManagerRepo.ItemRow.Outcome)(using DbCon): Boolean =

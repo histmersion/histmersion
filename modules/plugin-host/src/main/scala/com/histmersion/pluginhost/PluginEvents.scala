@@ -264,7 +264,7 @@ object PluginEvents:
           e.vei.map(v => CatalogRecord.Vei(v.value)),
           e.magnitude.map(m => CatalogRecord.Magnitude(m.value)),
           e.deaths.map(d => CatalogRecord.Deaths(d.value)),
-          wikidata.map(w => CatalogRecord.Wikidata(w.value)),
+          wikidata.map(w => com.histmersion.api.catalogue.EventEntry.Wikidata(w.value)),
           e.names.map(_.value.trim).filter(n => n.nonEmpty && n != label).distinct.map(CatalogRecord.Names(_)),
           e.description.map(_.value.trim).filter(_.nonEmpty).map(CatalogRecord.Description(_)),
           e.group.map(_.value.trim).filter(_.nonEmpty).map(CatalogRecord.Group(_)),

@@ -33,15 +33,19 @@ private[articles] object ArticleBundleRepo:
         Bundle.Article(
           r.uid,
           r.origin,
-          r.slug,
-          r.title,
-          r.kind,
-          r.body,
-          r.summary,
-          r.tags,
-          r.regions,
-          range(r.pNull, r.pLo, r.pHi),
-          r.updatedAt
+          Bundle.Article.Slug(r.slug.value),
+          Bundle.Article.Title(r.title.value),
+          Bundle.Article.Kind(r.kind.value),
+          Bundle.Article.Body(r.body.value),
+          r.summary.map(s => Bundle.Article.Summary(s.value)),
+          r.tags.map(t => Bundle.Article.Tags(t.value)),
+          r.regions.map(g => Bundle.Article.Regions(g.value)),
+          range(
+            com.histmersion.util.data.exchange.Bundle.RangeIsNull(r.pNull.value),
+            r.pLo.map(l => com.histmersion.util.data.exchange.Bundle.RangeLower(l.value)),
+            r.pHi.map(h => com.histmersion.util.data.exchange.Bundle.RangeUpper(h.value))
+          ),
+          Bundle.Article.UpdatedAt(r.updatedAt.value)
         )
       }
 
@@ -57,7 +61,7 @@ private[articles] object ArticleBundleRepo:
     (Sql.raw(Sql.RawText(s"""SELECT x.alias, a.uid, ${ts("x.created_at")}
                 FROM article_aliases x JOIN articles a ON a.slug = x.slug WHERE """)) ++
       where(scope, "a.uid", "x.created_at") ++ """ ORDER BY x.alias COLLATE "C"""").frag
-      .query[(String, UUID, String)]
+      .query[(Bundle.ArticleAlias.Alias, UUID, Bundle.ArticleAlias.CreatedAt)]
       .run()
       .map(Bundle.ArticleAlias.apply)
 
@@ -99,7 +103,11 @@ private[articles] object ArticleBundleRepo:
   def articleRenamesIn(w: BundleImport.Writer): Unit =
     given DbCon = w.transaction
     w.followRenames(w.es.articles, _.uid, _.slug, w.local.articles.map(a => a.uid -> a.slug).toMap, com.histmersion.util.data.exchange.PlanQuestions.LabelTakenWhat("article"))(
-      ArticleRepo.renameIn
+      (old, now) =>
+        ArticleRepo.renameIn(
+          com.histmersion.domain.research.Slug.assume(old.value),
+          com.histmersion.domain.research.Slug.assume(now.value)
+        )
     )
 
   /** The articles: the text a merge replaces kept as a version first, the rows, and an article kept beside one here

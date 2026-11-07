@@ -57,7 +57,7 @@ object CarriedKinds:
     Either.cond(
       problems.isEmpty,
       new CarriedKinds(kinds.sortBy(k => com.histmersion.api.exchange.Bundle.Files.all.indexOf(k.entry.value))),
-      problems
+      problems.map(Problem(_))
     )
 
   /** The registry's kinds; an inconsistent registry is a programming error, found at start. */

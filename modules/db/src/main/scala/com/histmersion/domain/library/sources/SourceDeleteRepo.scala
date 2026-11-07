@@ -104,8 +104,8 @@ private[sources] object SourceDeleteRepo:
           counts = report.counts,
           aliases = aliases.map(a => Source.Deletion.Aliases(a.value)),
           edgesIn = edgesIn,
-          coverage = report.coverage,
-          mentions = report.mentions,
+          coverage = report.coverage.map(c => Source.Deletion.Coverage(c.value)),
+          mentions = report.mentions.map(m => Source.Deletion.Mentions(m.value)),
           calibreId = r.calibreId.map(_.value.trim).filter(_.nonEmpty).map(Source.CalibreId(_))
         )
         Right(

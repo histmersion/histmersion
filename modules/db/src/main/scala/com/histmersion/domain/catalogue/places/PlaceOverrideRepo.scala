@@ -1,6 +1,7 @@
 package com.histmersion.domain.catalogue.places
 
 import com.histmersion.util.database.given
+import com.histmersion.util.database.NewtypeColumns.given
 
 import com.histmersion.util.database.RangeSql
 
@@ -95,7 +96,7 @@ private[places] object PlaceOverrideRepo:
                               geom = CASE WHEN $hadPoint THEN ST_GeomFromText($srcGeom::text, 4326) ELSE geom END
                             WHERE id = $id""".update.run()
               Right(())
-        case Place.OverrideEdit.Put(_, _, _, Some(_)) if before.hasShape =>
+        case Place.OverrideEdit.Put(_, _, _, Some(_)) if before.hasShape.value =>
           Left(
             Api.Error(
               Api.Error.Message(
@@ -108,7 +109,9 @@ private[places] object PlaceOverrideRepo:
         case Place.OverrideEdit.Put(kind, period, reason, point) =>
           // a side not given keeps what the override had (open, the first time)
           val hasPeriod = period.isDefined
-          val range = period.map((lo, hi) => RangeSql.bounds(lo, hi))
+          val range = period.map((lo, hi) =>
+            RangeSql.bounds(lo.map(y => DeepTime.SignedYear(y.value)), hi.map(y => DeepTime.SignedYear(y.value)))
+          )
           val hasLo = period.flatMap(_._1).isDefined
           val hasHi = period.flatMap(_._2).isDefined
           val lon = point.map(_.lon)
@@ -151,21 +154,26 @@ private[places] object PlaceOverrideRepo:
           .query[Int]
           .run()
           .head
+        def period(start: Option[Row.Start], end: Option[Row.End]) =
+          Place.Overrides.periodText(
+            start.map(s => com.histmersion.api.catalogue.Year(s.value)),
+            end.map(e => com.histmersion.api.catalogue.Year(e.value))
+          ).value
         Place.OverrideChanged(
-          id,
-          before.label,
-          edit == Place.OverrideEdit.Reset,
-          before.kind,
-          after.kind,
-          Place.Overrides.periodText(before.start, before.end),
-          Place.Overrides.periodText(after.start, after.end),
-          had.size,
-          now.size,
-          lost,
-          before.lat,
-          before.lon,
-          after.lat,
-          after.lon
+          Place.Id(id.value),
+          Place.OverrideChanged.Label(before.label.value),
+          Place.OverrideChanged.Reset(edit == Place.OverrideEdit.Reset),
+          Place.OverrideChanged.KindBefore(before.kind.value),
+          Place.OverrideChanged.KindAfter(after.kind.value),
+          Place.OverrideChanged.PeriodBefore(period(before.start, before.end)),
+          Place.OverrideChanged.PeriodAfter(period(after.start, after.end)),
+          Place.OverrideChanged.FindingsBefore(had.size),
+          Place.OverrideChanged.FindingsAfter(now.size),
+          Place.OverrideChanged.Unlocated(lost),
+          before.lat.map(l => com.histmersion.api.catalogue.Latitude(l.value)),
+          before.lon.map(l => com.histmersion.api.catalogue.Longitude(l.value)),
+          after.lat.map(l => com.histmersion.api.catalogue.Latitude(l.value)),
+          after.lon.map(l => com.histmersion.api.catalogue.Longitude(l.value))
         )
       }
     }

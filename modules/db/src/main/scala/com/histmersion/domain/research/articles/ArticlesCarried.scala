@@ -85,7 +85,7 @@ object ArticlesCarried:
       set(com.histmersion.domain.research.articles.ArticlesCarried.Stem("article-aliases")),
       List(rows(ImportRank(44))(ArticleBundleRepo.articleAliasesIn))
     )(scope => ArticleBundleRepo.articleAliases(scope).toList)(
-      a => Some(a.createdAt),
+      a => Some(CarriedKind.OwnedClock(a.createdAt.value)),
       (es, ls) => es.modify(_.articleAliases).setTo(ls)
     )
 

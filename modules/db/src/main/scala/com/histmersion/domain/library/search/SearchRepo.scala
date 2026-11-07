@@ -19,7 +19,7 @@ private[search] object SearchRepo:
 
 
   def count(filter: Filter, scope: PlaceScope = PlaceScope.empty)(using DbCon): com.histmersion.RowCount =
-    (FilterSql.countQuery(filter, scope).frag.query[Int].run().headOption.getOrElse(0))
+    com.histmersion.RowCount(FilterSql.countQuery(filter, scope).frag.query[Int].run().headOption.getOrElse(0))
 
   /** How many findings the filter selects (uncapped — the map feed above stops at its limit). */
   /** How many findings matching `filter` landed in NO place at all — the "unlocated" bucket of the region tree (plan
@@ -27,15 +27,16 @@ private[search] object SearchRepo:
     * feed.
     */
   def unlocated(filter: Filter, scope: PlaceScope = PlaceScope.empty)(using DbCon): com.histmersion.RowCount =
-    val q = Sql.raw("SELECT count(*)::int FROM findings f JOIN sources s ON s.citekey = f.citekey WHERE ") ++
-      FilterSql.sourceWhere(filter) ++ Sql.raw(" AND ") ++ FilterSql.findingWhere(filter, scope = scope) ++
-      Sql.raw(" AND NOT EXISTS (SELECT 1 FROM finding_places fp WHERE fp.finding_id = f.id)")
-    (q.frag.query[Int].run().headOption.getOrElse(0))
+    val q = Sql.raw(Sql.Text("SELECT count(*)::int FROM findings f JOIN sources s ON s.citekey = f.citekey WHERE ")) ++
+      FilterSql.sourceWhere(filter) ++ Sql.raw(Sql.Text(" AND ")) ++ FilterSql.findingWhere(filter, scope = scope) ++
+      Sql.raw(Sql.Text(" AND NOT EXISTS (SELECT 1 FROM finding_places fp WHERE fp.finding_id = f.id)"))
+    com.histmersion.RowCount(q.frag.query[Int].run().headOption.getOrElse(0))
 
   /** How many sources, findings, articles and events the filter selects ([[FilterSql.selectionCountsQuery]]). */
   def selectionCounts(filter: Filter, scope: PlaceScope = PlaceScope.empty)(using DbCon): Place.Counts =
     (FilterSql.selectionCountsQuery(filter, scope).frag.query[(Int, Int, Int, Int)].run().head match
-      case (s, f, a, e) => Place.Counts(s, f, a, e)
+      case (s, f, a, e) =>
+        Place.Counts(Place.Counts.Sources(s), Place.Counts.Findings(f), Place.Counts.Articles(a), Place.Counts.Events(e))
     )
 
   /** THE search (plan §1.0/§1.3/§1.4): the sources matching the filter, each with the findings that made it match, why
@@ -51,7 +52,8 @@ private[search] object SearchRepo:
   def sources(filter: Filter, snippetWords: com.histmersion.domain.library.search.Search.SnippetWords, scope: PlaceScope = PlaceScope.empty)(using DbCon): SearchResult =
     val total = FilterSql.countQuery(filter, scope).frag.query[Int].run().headOption.getOrElse(0)
     val rows = FilterSql.sourcesQuery(filter, snippetWords, scope).frag.query[FilterSql.SourceRow].run()
-    if rows.isEmpty then SearchResult.of(total, Nil, filter.offset.max(0))
+    if rows.isEmpty then
+      SearchResult.of(SearchResult.Total(total), Nil, com.histmersion.api.personal.UnreadPage.Offset(filter.offset.value.max(0)))
     else
       val citekeys = rows.map(_.citekey).toList
       // phase 2: snippets for the page only (the expensive ts_headline runs for N page rows, not all)
@@ -88,4 +90,4 @@ private[search] object SearchRepo:
             }
         Hit(withSnippet.toHit, matched, FilterSql.sourceWhy(filter, withSnippet))
       }
-      SearchResult.of(total, hits.toList, filter.offset.max(0))
+      SearchResult.of(SearchResult.Total(total), hits.toList, com.histmersion.api.personal.UnreadPage.Offset(filter.offset.value.max(0)))

@@ -1,6 +1,7 @@
 package com.histmersion.domain.library.acquisition
 
 import com.histmersion.util.database.given
+import com.histmersion.util.database.NewtypeColumns.given
 import com.augustnagro.magnum.*
 import com.histmersion.api.library.{Acquire, RetractionNotice}
 
@@ -10,15 +11,12 @@ import com.histmersion.api.library.{Acquire, RetractionNotice}
 private[acquisition] object AssessmentRepo:
 
 
-  final private case class RwRow(nature: Option[RwRow.Nature], reason: Option[RwRow.Reason], date: Option[RwRow.Date]) derives DbCodec
+  final private case class RwRow(
+      nature: Option[RetractionNotice.Nature],
+      reason: Option[RetractionNotice.Reason],
+      date: Option[RetractionNotice.Date]
+  ) derives DbCodec
 
-  object RwRow:
-    type Nature = Nature.T
-    object Nature extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-    type Reason = Reason.T
-    object Reason extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-    type Date = Date.T
-    object Date extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   final private case class AssessmentRow(
       citekey: com.histmersion.domain.library.Citekey,
       checkedAt: AssessmentRow.CheckedAt,
@@ -53,15 +51,15 @@ private[acquisition] object AssessmentRepo:
               VALUES (${r.doi}, ${r.reason}, ${Acquire.rwDate(r.date)}::date, ${r.nature})
               ON CONFLICT (doi) DO UPDATE SET
                 reason = EXCLUDED.reason, date = EXCLUDED.date, nature = EXCLUDED.nature""".update)
-      unique.size
+      com.histmersion.RowCount(unique.size)
 
   def retractionCount()(using DbCon): com.histmersion.RowCount =
-    sql"SELECT count(*)::int FROM retraction_watch".query[Int].run().headOption.getOrElse(0)
+    com.histmersion.RowCount(sql"SELECT count(*)::int FROM retraction_watch".query[Int].run().headOption.getOrElse(0))
 
   /** Every Retraction Watch notice recorded against this DOI (usually zero or one). */
   def retractionsFor(doi: com.histmersion.domain.library.Doi)(using DbCon): List[RetractionNotice] =
     sql"""SELECT nature, reason, to_char(date, 'YYYY-MM-DD')
-          FROM retraction_watch WHERE doi = ${doi.toLowerCase}"""
+          FROM retraction_watch WHERE doi = ${doi.value.toLowerCase}"""
       .query[RwRow]
       .run()
       .map(r => RetractionNotice(r.nature, r.reason, r.date))
@@ -80,7 +78,7 @@ private[acquisition] object AssessmentRepo:
           FROM assessments WHERE citekey = ${a.citekey}""".query[String].run().headOption.getOrElse("")
 
   /** `(verdict, checkedAt)` of the last assessment, when there is one. */
-  def assessmentFor(citekey: com.histmersion.domain.library.Citekey)(using DbCon): Option[(com.histmersion.domain.library.acquisition.AssessmentRepo.AssessmentRow.CheckedAt, com.histmersion.domain.library.acquisition.AssessmentRepo.AssessmentRow.Verdict)] =
+  def assessmentFor(citekey: com.histmersion.domain.library.Citekey)(using DbCon): Option[(com.histmersion.domain.library.acquisition.AssessmentRepo.AssessmentRow.Verdict, com.histmersion.domain.library.acquisition.AssessmentRepo.AssessmentRow.CheckedAt)] =
     sql"""SELECT citekey, to_char(checked_at AT TIME ZONE 'UTC', 'YYYY-MM-DD"T"HH24:MI:SS"Z"'),
                  retracted, cited_by, influential, verdict
           FROM assessments WHERE citekey = $citekey"""

@@ -32,10 +32,12 @@ final private[events] case class EventGeoRow(
       e.parentId.map(p => EventGeo.ParentId(p.value)),
       None,
       EventGeo.Tier(e.tier.value),
-      EventLeads.size(
-        vei.map(v => com.histmersion.api.catalogue.LeadFacts.Vei(v.value)),
-        magnitude.map(m => com.histmersion.api.catalogue.LeadFacts.Magnitude(m.value))
-      ),
+      EventLeads
+        .size(
+          vei.map(v => com.histmersion.api.catalogue.LeadFacts.Vei(v.value)),
+          magnitude.map(m => com.histmersion.api.catalogue.LeadFacts.Magnitude(m.value))
+        )
+        .map(s => EventGeo.Size(s)),
       EventGeo.Precision(e.precision.value),
       e.datingNote.map(EventGeo.Dating(_))
     )

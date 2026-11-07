@@ -12,32 +12,36 @@ import com.augustnagro.magnum.*
   * no value named a known place and every one of them falls back to the wave-1 name ILIKE, exactly as before the
   * gazetteer existed.
   */
-final case class PlaceScope(byValue: Map[PlaceScope.ByValueKey, List[PlaceScope.ByValueValue]], labels: Map[PlaceScope.LabelsKey, PlaceScope.LabelsValue] = Map.empty):
+final case class PlaceScope(byValue: Map[PlaceScope.Value, List[com.histmersion.domain.catalogue.Place.Id]], labels: Map[PlaceScope.Value, com.histmersion.domain.catalogue.places.PlaceRepo.Label] = Map.empty):
   /** The place ids one filter value stands for — itself plus its descendants as of the filter's period. `None` when the
     * value is not a place id.
     */
-  def idsFor(value: com.histmersion.domain.catalogue.places.PlaceScope.IdsForValue): Option[List[com.histmersion.domain.catalogue.Place.Id]] = byValue.get(value).filter(_.nonEmpty)
+  def idsFor(value: PlaceScope.Value): Option[List[com.histmersion.domain.catalogue.Place.Id]] = byValue.get(value).filter(_.nonEmpty)
 
   /** What to CALL a filter value when explaining a match: the gazetteer label for an id, and the value itself for a
     * free-text name. "place: pleiades_589831" names nothing a reader knows (item 15); "place: Kairatos (river)" does.
     */
-  def labelFor(value: com.histmersion.domain.catalogue.places.PlaceScope.LabelForValue): com.histmersion.domain.catalogue.places.PlaceRepo.Label = labels.getOrElse(value, value)
+  def labelFor(value: PlaceScope.Value): com.histmersion.domain.catalogue.places.PlaceRepo.Label =
+    labels.getOrElse(value, PlaceRepo.Label(value.value))
   def isEmpty: Boolean = byValue.isEmpty
   def nonEmpty: Boolean = !isEmpty
 
 object PlaceScope:
-  type IdsForValue = IdsForValue.T
-  object IdsForValue extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type LabelForValue = LabelForValue.T
-  object LabelForValue extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  /** A value of a filter's `places`: a place id (an old one included) or a free-text place name. */
+  type Value = Value.T
+  object Value extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
-  type ByValueKey = ByValueKey.T
-  object ByValueKey extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type ByValueValue = ByValueValue.T
-  object ByValueValue extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type LabelsKey = LabelsKey.T
-  object LabelsKey extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type LabelsValue = LabelsValue.T
-  object LabelsValue extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type IdsForValue = Value
+  val IdsForValue: Value.type = Value
+  type LabelForValue = Value
+  val LabelForValue: Value.type = Value
+  type ByValueKey = Value
+  val ByValueKey: Value.type = Value
+  type LabelsKey = Value
+  val LabelsKey: Value.type = Value
+  type ByValueValue = com.histmersion.domain.catalogue.Place.Id
+  val ByValueValue: com.histmersion.domain.catalogue.Place.Id.type = com.histmersion.domain.catalogue.Place.Id
+  type LabelsValue = com.histmersion.domain.catalogue.places.PlaceRepo.Label
+  val LabelsValue: com.histmersion.domain.catalogue.places.PlaceRepo.Label.type = com.histmersion.domain.catalogue.places.PlaceRepo.Label
 
   val empty: PlaceScope = PlaceScope(Map.empty)

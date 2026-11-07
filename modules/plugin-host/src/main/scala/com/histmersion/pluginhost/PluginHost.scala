@@ -493,8 +493,8 @@ object PluginHost:
     else if ReservedNames.mediaCollections(ReservedNames.Name(id.value)) then
       Some(Problem(s"'$id' is the name of one of Histmersion's own media providers"))
     else
-      (c.role :: c.roles.toList.sorted).find(r => !MediaCollection.Roles(r)).map { r =>
-        Problem(s"media collection '$id': role '$r' is not one of ${MediaCollection.Roles.toList.sorted.mkString(", ")}")
+      (c.role :: c.roles.toList.sortBy(_.value)).find(r => !MediaCollection.Roles(r)).map { r =>
+        Problem(s"media collection '$id': role '$r' is not one of ${MediaCollection.Roles.toList.sortBy(_.value).mkString(", ")}")
       }
 
   /** An event catalogue: a kebab-case id; a plugin's may not take a name of the host's own catalogues, unless it is the

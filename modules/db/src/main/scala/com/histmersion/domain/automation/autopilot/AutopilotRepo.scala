@@ -2,6 +2,7 @@ package com.histmersion.domain.automation.autopilot
 import com.augustnagro.magnum.*
 import com.histmersion.util.database.Sql
 import com.histmersion.util.database.given
+import com.histmersion.util.database.NewtypeColumns.given
 
 /** The autopilot's one row (V096, docs/research-process-managers.md "As built: the autopilot"): the switch, who turned
   * it and when, the managers it paused when it was turned off, and when it last ensured the goals' managers and ran its
@@ -86,7 +87,7 @@ object AutopilotRepo:
     val _ = sql"UPDATE agent_autopilot SET last_lint_at = $t::timestamptz WHERE id".update.run()
 
   /** A paused manager the autopilot resumed (it no longer counts as one it paused). */
-  def unpaused(managerId: com.histmersion.domain.automation.agents.AgentRepo.RunRow.ManagerId)(using DbCon): Unit =
+  def unpaused(managerId: com.histmersion.api.automation.Managers.ManagerInfo.Id)(using DbCon): Unit =
     val _ = sql"UPDATE agent_autopilot SET paused = array_remove(paused, $managerId) WHERE id".update.run()
 
   /** The scheduler's strategy a person chose (V100): (name, by, at); None = agents.scheduler.strategy. */

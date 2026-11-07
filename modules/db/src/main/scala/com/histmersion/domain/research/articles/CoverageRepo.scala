@@ -6,6 +6,7 @@ import com.histmersion.domain.catalogue.places.PlaceScope
 
 import com.histmersion.util.database.{Param, Sql}
 import com.histmersion.util.database.given
+import com.histmersion.util.database.NewtypeColumns.given
 
 import com.augustnagro.magnum.*
 import com.histmersion.api.library.Filter

@@ -56,7 +56,7 @@ final class SourceRepairs(db: Transactor):
     */
   def reindexStale(chunkChars: com.histmersion.util.ocr.Chunker.ChunkMaxChars, maxChars: SourceRepairs.MaxChars): ReindexResult =
     val pending = db.read(SourceCheckRepo.stale())
-    val take = SourceRepairs.budget(pending, maxChars) match
+    val take = SourceRepairs.budget(pending.map((ck, n) => (ck, SourceRepo.BodyChars(n.value))), maxChars) match
       case Nil   => pending.take(1).map(_._1).toList
       case batch => batch
     // Best effort, one transaction per source: another writer may re-chunk or remove a source between

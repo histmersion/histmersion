@@ -1,6 +1,7 @@
 package com.histmersion.domain.catalogue.places
 
 import com.histmersion.util.database.given
+import com.histmersion.util.database.NewtypeColumns.given
 
 import com.histmersion.util.database.RangeSql
 
@@ -22,29 +23,31 @@ private[places] object TreeRepo:
   /** A closed [[Period]] from the two bounds SQL returned (`lower`, `upper - 1`); `None` unless both are present — an
     * int8range with an open end is "always", which is what `None` means here.
     */
-  type ClosureParamsIds = _root_.com.histmersion.domain.catalogue.Place.Id
-  val ClosureParamsIds: _root_.com.histmersion.domain.catalogue.Place.Id.type = _root_.com.histmersion.domain.catalogue.Place.Id
-  type NodesQueryIds = _root_.com.histmersion.domain.catalogue.Place.Id
-  val NodesQueryIds: _root_.com.histmersion.domain.catalogue.Place.Id.type = _root_.com.histmersion.domain.catalogue.Place.Id
-  type RelationsQueryIds = _root_.com.histmersion.domain.catalogue.Place.Id
-  val RelationsQueryIds: _root_.com.histmersion.domain.catalogue.Place.Id.type = _root_.com.histmersion.domain.catalogue.Place.Id
-
   private def periodOf(start: Option[com.histmersion.domain.DeepTime.SignedYear], end: Option[com.histmersion.domain.DeepTime.SignedYear]): Option[Period] =
     (start, end) match
-      case (Some(a), Some(b)) => Some(if a <= b then Period(a, b) else Period(b, a))
+      case (Some(a), Some(b)) =>
+        val (lo, hi) = (com.histmersion.api.catalogue.Year(a.value), com.histmersion.api.catalogue.Year(b.value))
+        Some(if a.value <= b.value then Period(lo, hi) else Period(hi, lo))
       case _                  => None
 
   final private[histmersion] case class RegionNodeRow(
       id: RegionNodeRow.Id,
       label: RegionNodeRow.Label,
       kind: RegionNodeRow.Kind,
-      periodStart: Option[com.histmersion.Year],
-      periodEnd: Option[com.histmersion.Year],
+      periodStart: Option[com.histmersion.domain.DeepTime.SignedYear],
+      periodEnd: Option[com.histmersion.domain.DeepTime.SignedYear],
       contested: RegionNodeRow.Contested,
       withdrawn: RegionNodeRow.Withdrawn
   ) derives DbCodec:
     def toNode: RegionNode =
-      RegionNode(id, label, kind, periodOf(periodStart, periodEnd), contested, withdrawn)
+      RegionNode(
+        RegionNode.Id(id.value),
+        RegionNode.Label(label.value),
+        RegionNode.Kind(kind.value),
+        periodOf(periodStart, periodEnd),
+        RegionNode.Contested(contested.value),
+        RegionNode.Withdrawn(withdrawn.value)
+      )
 
   object RegionNodeRow:
     type Id = Id.T
@@ -62,11 +65,16 @@ private[places] object TreeRepo:
       childId: RelationRow.ChildId,
       parentId: RelationRow.ParentId,
       kind: RelationRow.Kind,
-      periodStart: Option[com.histmersion.Year],
-      periodEnd: Option[com.histmersion.Year]
+      periodStart: Option[com.histmersion.domain.DeepTime.SignedYear],
+      periodEnd: Option[com.histmersion.domain.DeepTime.SignedYear]
   ) derives DbCodec:
     def toRelation: Place.Relation =
-      Place.Relation(childId, parentId, kind, periodOf(periodStart, periodEnd))
+      Place.Relation(
+        Place.Relation.ChildId(childId.value),
+        Place.Relation.ParentId(parentId.value),
+        Place.Relation.Kind(kind.value),
+        periodOf(periodStart, periodEnd)
+      )
 
   object RelationRow:
     type ChildId = ChildId.T
@@ -90,30 +98,34 @@ private[places] object TreeRepo:
           WHERE r.kind = '${Place.Relation.PartOf}'
         )"""
 
-  private def closureParams(ids: List[com.histmersion.domain.catalogue.places.TreeRepo.ClosureParamsIds]) = List(Param.A(ids))
+  private def closureParams(ids: List[com.histmersion.domain.catalogue.Place.Id]) = List(Param.A(ids.map(i => Param.A.V(i.value))))
 
   /** The nodes of the closure — id, label, kind, own validity, and whether the shape is contested. */
   /** `withdrawn` is Pleiades's own marker for a superseded record. Some of the export carries it as a property, some
     * only as a `Withdrawn (duplicate): …` label — [[RegionNode.rootEligible]] checks the label too, so both spellings
     * are caught wherever they come from.
     */
-  def nodesQuery(ids: List[com.histmersion.domain.catalogue.places.TreeRepo.NodesQueryIds]): Sql =
+  def nodesQuery(ids: List[com.histmersion.domain.catalogue.Place.Id]): Sql =
     Sql(
-      closure(ids) +
-        s" SELECT p.id, p.label, p.kind, ${RangeSql.cols("p.period")}," +
-        " coalesce((p.properties->>'contested')::boolean, false)," +
-        " coalesce((p.properties->>'withdrawn')::boolean, false)" +
-        " FROM places p JOIN up ON up.id = p.id",
+      Sql.Text(
+        closure(ids) +
+          s" SELECT p.id, p.label, p.kind, ${RangeSql.cols("p.period")}," +
+          " coalesce((p.properties->>'contested')::boolean, false)," +
+          " coalesce((p.properties->>'withdrawn')::boolean, false)" +
+          " FROM places p JOIN up ON up.id = p.id"
+      ),
       closureParams(ids)
     )
 
   /** The `part_of` edges WITHIN the closure, each with its own validity. */
-  def relationsQuery(ids: List[com.histmersion.domain.catalogue.places.TreeRepo.RelationsQueryIds]): Sql =
+  def relationsQuery(ids: List[com.histmersion.domain.catalogue.Place.Id]): Sql =
     Sql(
-      closure(ids) +
-        s" SELECT r.child_id, r.parent_id, r.kind, ${RangeSql.cols("r.period")}" +
-        " FROM place_relations r" +
-        " WHERE r.child_id IN (SELECT id FROM up) AND r.parent_id IN (SELECT id FROM up)",
+      Sql.Text(
+        closure(ids) +
+          s" SELECT r.child_id, r.parent_id, r.kind, ${RangeSql.cols("r.period")}" +
+          " FROM place_relations r" +
+          " WHERE r.child_id IN (SELECT id FROM up) AND r.parent_id IN (SELECT id FROM up)"
+      ),
       closureParams(ids)
     )
 

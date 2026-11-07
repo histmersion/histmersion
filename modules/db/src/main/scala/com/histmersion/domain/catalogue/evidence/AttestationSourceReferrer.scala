@@ -4,6 +4,7 @@ import com.histmersion.api.library.{DeleteCount, DeletePart}
 import com.histmersion.domain.library.sources.referrers.*
 
 import com.histmersion.util.database.given
+import com.histmersion.util.database.NewtypeColumns.given
 
 import com.augustnagro.magnum.*
 import com.histmersion.api.library.Rename
@@ -14,14 +15,14 @@ import com.histmersion.api.library.Rename
 final class AttestationSourceReferrer extends SourceReferrer:
 
   override def renamed(rename: SourceRename)(using DbCon): RenamedReferences =
-    val (to, prefix, cut) = (rename.to, rename.findingPrefix, rename.findingPrefix.length)
+    val (to, prefix, cut) = (rename.to, rename.findingPrefix, rename.findingPrefix.value.length)
     val findings =
       sql"""UPDATE attestations SET target_id = $to || substr(target_id, $cut)
             WHERE target_type = 'finding' AND left(target_id, $cut) = $prefix""".update.run()
     // an edge or a per-source dating EMBEDS the citekey: it is replaced as a whole token only
     val embedding = sql"""SELECT id, target_id FROM attestations
           WHERE target_type IN ('edge', 'event_dating') AND strpos(target_id, ${rename.from}) > 0"""
-      .query[(Long, String)]
+      .query[(Long, SourceKeys.Text)]
       .run()
       .toList
       .map((id, t) => (id, rename.inText(t), t))
@@ -34,7 +35,7 @@ final class AttestationSourceReferrer extends SourceReferrer:
       List(
         "attestations.target_id (finding)" -> findings,
         "attestations.target_id (edge, event_dating)" -> embedding
-      ).collect { case (t, n) if n > 0 => Rename.Count(t, n) }
+      ).collect { case (t, n) if n > 0 => Rename.Count(Rename.Count.Table(t), Rename.Count.Rows(n)) }
     )
 
   override def report(source: SourceKeys)(using DbCon): DeleteReport =
@@ -42,7 +43,7 @@ final class AttestationSourceReferrer extends SourceReferrer:
     val own = sql"SELECT count(*)::int FROM attestations WHERE citekey = $ck".query[Int].run().headOption.getOrElse(0)
     DeleteReport(counts =
       List(DeletePart.Attestations -> own, DeletePart.AttestationsOf -> losing(source).size).collect {
-        case (p, rows) if rows > 0 => DeleteCount(p, rows)
+        case (p, rows) if rows > 0 => DeleteCount(p, DeleteCount.Rows(rows))
       }
     )
 
@@ -55,7 +56,7 @@ final class AttestationSourceReferrer extends SourceReferrer:
     val ck = source.citekey
     sql"""SELECT id, target_type, target_id FROM attestations
           WHERE citekey <> $ck AND target_type IN ('finding', 'edge', 'event_dating') AND strpos(target_id, $ck) > 0"""
-      .query[(Long, String, String)]
+      .query[(AttestationRepo.AttestationId, BAttestationFullRow.TargetType, BAttestationFullRow.TargetId)]
       .run()
       .toList
       .collect { case (id, t, target) if AttestationSourceReferrer.goes(t, target, source) => id }
@@ -67,8 +68,8 @@ object AttestationSourceReferrer:
     */
 
   def goes(targetType: com.histmersion.domain.catalogue.evidence.BAttestationFullRow.TargetType, targetId: com.histmersion.domain.catalogue.evidence.BAttestationFullRow.TargetId, source: SourceKeys): Boolean =
-    targetType match
-      case "finding"      => targetId.startsWith(source.findingPrefix)
-      case "edge"         => targetId.split('|').headOption.contains(source.citekey)
-      case "event_dating" => source.tokenIn(targetId)
+    targetType.value match
+      case "finding"      => targetId.value.startsWith(source.findingPrefix.value)
+      case "edge"         => targetId.value.split('|').headOption.contains(source.citekey.value)
+      case "event_dating" => source.tokenIn(SourceKeys.Text(targetId.value))
       case _              => false

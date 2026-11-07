@@ -20,6 +20,7 @@ import com.histmersion.util.data.exchange.BundlePlan.Decision
 import com.histmersion.util.storage.{ByteSource, ContentStore}
 import com.histmersion.util.database.{Param, Sql}
 import com.histmersion.util.database.given
+import com.histmersion.util.database.NewtypeColumns.given
 import com.histmersion.util.data.exchange.Bundle
 import com.histmersion.api.Api
 
@@ -31,18 +32,13 @@ import com.histmersion.api.Api
   * merge plan's. Rows are written in dependency order, with the bundle's own uids, origins and timestamps.
   */
 object BundleImport:
-  type Importing = Importing.T
-  object Importing extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
-
-  type DeletedRev = DeletedRevValue
-
   type Options = ImportOptions
   val Options: ImportOptions.type = ImportOptions
 
   /** The ledger's foreign rev for a tombstone, which has no content to hash. */
-  val DeletedRev: com.histmersion.util.data.exchange.BundleImport.DeletedRev = BundlePlan.DeletedRev
+  val DeletedRev: BundlePlan.Rev = BundlePlan.Rev(BundlePlan.DeletedRev)
 
-  private def importing(on: com.histmersion.util.data.exchange.BundleImport.Importing)(using DbCon): Unit = MergeRepo.importing(on)
+  private def importing(on: MergeRepo.Importing)(using DbCon): Unit = MergeRepo.importing(on)
 
   // ── the writes ──────────────────────────────────────────────────────────────────────────────
 
@@ -62,10 +58,10 @@ object BundleImport:
       decided: List[MergePlanner.Row],
       decisionOf: Map[UUID, Decision],
       /** Whether the line of a uid is written. */
-      val writes: UUID => Writer.WritesResult,
+      val writes: UUID => Boolean,
       /** This collection's rows as lines, before the import. */
       val local: BundleEntities,
-      skipAliases: Set[Writer.SkipAliases],
+      skipAliases: Set[com.histmersion.domain.library.Citekey],
       /** What the merge does besides writing the decided lines. */
       val merged: MergePlanner.Apply,
       /** The import's options: the chunk size, the point tolerance, the referrers a rename runs. */
@@ -86,31 +82,31 @@ object BundleImport:
 
     /** citekey / slug of a uid as it stands NOW (after the writes so far). */
     def citekeyOf(u: UUID): com.histmersion.domain.library.Citekey =
-      sql"SELECT citekey FROM sources WHERE uid = $u".query[String].run().head
+      sql"SELECT citekey FROM sources WHERE uid = $u".query[com.histmersion.domain.library.Citekey].run().head
 
     /** The citekey of a source here, when its uid names one. */
     def citekeyHere(u: UUID): Option[com.histmersion.domain.library.Citekey] =
-      sql"SELECT citekey FROM sources WHERE uid = $u".query[String].run().headOption
+      sql"SELECT citekey FROM sources WHERE uid = $u".query[com.histmersion.domain.library.Citekey].run().headOption
 
     /** The label a target has HERE, when its uid names a row here; else the bundle's label. */
-    def targetLabel(tt: com.histmersion.util.data.exchange.BundleImport.Writer.TargetType, tid: com.histmersion.util.data.exchange.BundleImport.Writer.TargetId, tuid: Option[UUID]): com.histmersion.util.data.exchange.BundleImport.Writer.Label =
+    def targetLabel(tt: com.histmersion.util.data.exchange.BundleImport.Writer.TargetType, tid: com.histmersion.util.data.exchange.BundleImport.Writer.TargetId, tuid: Option[UUID]): com.histmersion.util.data.exchange.BundleImport.Writer.TargetId =
       tuid
         .flatMap { u =>
-          val q = tt match
+          val q = tt.value match
             case "finding" => Some(sql"SELECT id FROM findings WHERE uid = $u")
             case "source"  => Some(sql"SELECT citekey FROM sources WHERE uid = $u")
             case "article" => Some(sql"SELECT slug FROM articles WHERE uid = $u")
             case "event"   => Some(sql"SELECT id FROM events WHERE uid = $u")
             case _         => None
-          q.flatMap(_.query[String].run().headOption)
+          q.flatMap(_.query[com.histmersion.util.data.exchange.BundleImport.Writer.TargetId].run().headOption)
         }
         .getOrElse(tid)
 
     /** `work` written as this collection's own: the change clocks move and a delete leaves a tombstone. */
     def asLocal(work: => Unit): Unit =
-      importing(com.histmersion.util.data.exchange.BundleImport.Importing(false))
+      importing(MergeRepo.Importing(false))
       work
-      importing(com.histmersion.util.data.exchange.BundleImport.Importing(true))
+      importing(MergeRepo.Importing(true))
 
     // what the derived step and pass 2 need
     private val sourcesTouched = scala.collection.mutable.LinkedHashSet.empty[UUID]
@@ -136,12 +132,12 @@ object BundleImport:
     def tombstones(): Unit =
       val tombs = es.tombstones.map(t => t.uid -> t).toMap
       decided
-        .filter(d => d.tombstone && (d.decision == Decision.Delete || d.decision == Decision.RecordTombstone))
+        .filter(d => d.tombstone.value && (d.decision == Decision.Delete || d.decision == Decision.RecordTombstone))
         .foreach { d =>
           val t = tombs(d.uid)
           if d.decision == Decision.Delete then
             val table = kinds.tableOf(t.kind).value
-            Sql.of(s"DELETE FROM $table WHERE uid = ?::uuid", Param.S(t.uid.toString)).frag.update.run()
+            Sql.of(Sql.Text(s"DELETE FROM $table WHERE uid = ?::uuid"), Param.S(Param.S.V(t.uid.toString))).frag.update.run()
           sql"""INSERT INTO tombstones (uid, kind, origin, deleted_at)
                 VALUES (${t.uid}, ${t.kind.wire}, ${t.origin}, ${t.deletedAt}::timestamptz)
                 ON CONFLICT (uid) DO UPDATE SET deleted_at = EXCLUDED.deleted_at""".update.run()
@@ -150,30 +146,24 @@ object BundleImport:
     /** Rename what the other side renamed (the same uid, a new label), through the ordinary rename path, before the row
       * itself is written (an upsert keeps the label it finds).
       */
-    def followRenames[A](
+    def followRenames[A, L](
         lines: List[A],
         uid: A => UUID,
-        label: A => com.histmersion.util.data.exchange.BundleImport.Writer.Label,
-        localLabel: Map[UUID, com.histmersion.util.data.exchange.BundleImport.Writer.Label],
+        label: A => L,
+        localLabel: Map[UUID, L],
         what: com.histmersion.util.data.exchange.PlanQuestions.LabelTakenWhat
-    )(rename: (com.histmersion.domain.library.Citekey, com.histmersion.domain.library.Citekey) => Either[Api.Error, ?]): Unit =
+    )(rename: (L, L) => Either[Api.Error, ?]): Unit =
       lines.filter(a => writes(uid(a))).foreach { a =>
-        localLabel.get(uid(a)).filter(_ != label(a)).foreach { old =>
-          importing(com.histmersion.util.data.exchange.BundleImport.Importing(false))
+        localLabel.get(uid(a)).filter(old => !old.equals(label(a))).foreach { old =>
+          importing(MergeRepo.Importing(false))
           rename(old, label(a)).left.foreach(e => throw ImportAbort(List(s"$what $old → ${label(a)}: ${e.message}")))
-          importing(com.histmersion.util.data.exchange.BundleImport.Importing(true))
+          importing(MergeRepo.Importing(true))
         }
       }
 
   object Writer:
-    type Label = Label.T
-    object Label extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
     type TargetId = TargetId.T
     object TargetId extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
     type TargetType = TargetType.T
     object TargetType extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-    type WritesResult = WritesResult.T
-    object WritesResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
-    type SkipAliases = SkipAliases.T
-    object SkipAliases extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 

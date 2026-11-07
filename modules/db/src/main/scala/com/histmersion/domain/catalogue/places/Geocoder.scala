@@ -116,7 +116,7 @@ private[places] object Geocoder:
       case None     => Geocode.choose(asked, a, Geocode.rank(candidates(a.key, None), h, at, pm), pm)
       case Some(in) =>
         Geocode
-          .rank(candidates(Geocode.key(in.value), None).filter(_.dimension == 2), KindHint.Region, at, pm)
+          .rank(candidates(Geocode.key(in.value), None).filter(_.dimension.value == 2), KindHint.Region, at, pm)
           .headOption
           .flatMap(w => Geocode.choose(asked, a, Geocode.rank(candidates(a.key, Some(w.id)), h, at, pm), pm))
 
@@ -216,7 +216,7 @@ private[places] object Geocoder:
             )
           )
       }
-      .filter(Geocode.worthMoving(_, s.repairKm))
+      .filter(m => Geocode.worthMoving(m, Geocode.Move.MinKm(s.repairKm.value)))
 
   def moves(s: GeocodeSettings)(using DbCon): List[Move] = movesIn(s)
 

@@ -1,6 +1,7 @@
 package com.histmersion.domain.research.articles
 
 import com.histmersion.util.database.given
+import com.histmersion.util.database.NewtypeColumns.given
 
 import com.augustnagro.magnum.DbCodec
 import com.histmersion.api.research.Article
@@ -15,12 +16,22 @@ final private[articles] case class ArticleSummaryRow(
     summary: Option[ArticleSummaryRow.Summary],
     tags: List[ArticleSummaryRow.Tags],
     regions: List[ArticleSummaryRow.Regions],
-    periodStart: Option[com.histmersion.Year],
-    periodEnd: Option[com.histmersion.Year],
+    periodStart: Option[com.histmersion.domain.DeepTime.SignedYear],
+    periodEnd: Option[com.histmersion.domain.DeepTime.SignedYear],
     updatedAt: Option[ArticleSummaryRow.UpdatedAt]
 ) derives DbCodec:
   def summaryRow: Article.Summary =
-    Article.Summary(slug, title, kind, summary, tags, regions, periodStart, periodEnd, updatedAt)
+    Article.Summary(
+      Article.Slug(slug.value),
+      Article.Title(title.value),
+      Article.Kind.Wire(kind.value),
+      summary.map(s => Article.SummaryText(s.value)),
+      tags.map(t => Article.Summary.Tags(t.value)),
+      regions.map(r => Article.Summary.Regions(r.value)),
+      periodStart.map(y => Article.Summary.PeriodStart(y.value)),
+      periodEnd.map(y => Article.Summary.PeriodEnd(y.value)),
+      updatedAt.map(u => Article.Summary.UpdatedAt(u.value))
+    )
 
 object ArticleSummaryRow:
   type Slug = com.histmersion.domain.research.Slug

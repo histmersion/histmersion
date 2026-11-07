@@ -14,29 +14,22 @@ import java.util.UUID
   * and a worklog line.
   */
 object WorkListMergeFollowUps extends MergeFollowUps:
-  type Dump = Dump.T
-  object Dump extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type RecordText = RecordText.T
-  object RecordText extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type SourceLabel = SourceLabel.T
-  object SourceLabel extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-
   def recordIn(
       m: com.histmersion.api.exchange.Bundle.Manifest,
-      from: com.histmersion.domain.automation.worklists.WorkListMergeFollowUps.SourceLabel,
+      from: MergeFollowUps.FromRecordRef,
       mergeId: UUID,
       ap: MergePlanner.Apply,
       counts: List[com.histmersion.api.exchange.Bundle.KindCounts],
-      dump: com.histmersion.domain.automation.worklists.WorkListMergeFollowUps.Dump
-  )(using DbCon): (List[com.histmersion.domain.automation.worklists.WorkListMergeFollowUps.RecordText], com.histmersion.RowCount) =
+      dump: MergeFollowUps.DumpRecordRef
+  )(using DbCon): (List[Bundle.Article.Slug], Queue.QueueItem.Id) =
     val short = mergeId.toString.take(8)
     val reviews = ap.reviews.map { slug =>
       QueueRepo.insert(
         Queue.Kind.Tasks,
         Queue.QueueAdd(
-          s"/review-article $slug --fix — merged with $from's (merge $short)",
+          Queue.QueueItem.Text(s"/review-article ${slug.value} --fix — merged with ${from.value}'s (merge $short)"),
           topic = Some(com.histmersion.api.automation.Queue.QueueItem.Topic("merge")),
-          reason = Some(s"`merge apply` changed the article; a merged text is not reviewed")
+          reason = Some(Queue.QueueItem.Reason(s"`merge apply` changed the article; a merged text is not reviewed"))
         )
       )
       slug
@@ -45,9 +38,11 @@ object WorkListMergeFollowUps extends MergeFollowUps:
     val log = QueueRepo.insert(
       Queue.Kind.Log,
       Queue.QueueAdd(
-        s"Merged the bundle of $from (${m.bundleId.toString.take(8)}…) as merge $short: " +
-          s"${Plural.count(t.sourcesMerged, com.histmersion.api.Plural.CountSingular("source"))} merged, ${counts.find(_.kind == Bundle.Kind.Source).fold(0)(_.inserted)} new, " +
-          s"${Plural.count(reviews.size, "article")} to review; backup $dump",
+        Queue.QueueItem.Text(
+          s"Merged the bundle of ${from.value} (${m.bundleId.toString.take(8)}…) as merge $short: " +
+            s"${Plural.count(Plural.CountN(t.sourcesMerged.value.toLong), com.histmersion.api.Plural.CountSingular("source"))} merged, ${counts.find(_.kind == Bundle.Kind.Source).fold(0)(_.inserted.value)} new, " +
+            s"${Plural.count(Plural.CountN(reviews.size.toLong), Plural.CountSingular("article"))} to review; backup ${dump.value}"
+        ),
         topic = Some(com.histmersion.api.automation.Queue.QueueItem.Topic("merge"))
       )
     )

@@ -6,6 +6,7 @@ import com.histmersion.domain.*
 
 import com.augustnagro.magnum.*
 import com.histmersion.util.database.given
+import com.histmersion.util.database.NewtypeColumns.given
 import com.histmersion.api.automation.Goal
 
 final private[histmersion] case class GoalRow(
@@ -15,12 +16,24 @@ final private[histmersion] case class GoalRow(
     notes: Option[GoalRow.Notes],
     tags: List[GoalRow.Tags],
     regions: List[GoalRow.Regions],
-    periodStart: Option[com.histmersion.Year],
-    periodEnd: Option[com.histmersion.Year],
+    periodStart: Option[DeepTime.SignedYear],
+    periodEnd: Option[DeepTime.SignedYear],
     parentSlug: Option[GoalRow.ParentSlug],
     updatedAt: Option[GoalRow.UpdatedAt]
 ) derives DbCodec:
-  def toDto: Goal = Goal(slug, title, status, notes, tags, regions, periodStart, periodEnd, parentSlug, updatedAt)
+  def toDto: Goal =
+    Goal(
+      Goal.Slug(slug.value),
+      Goal.Title(title.value),
+      Goal.StatusValue(status.value),
+      notes.map(n => Goal.Notes(n.value)),
+      tags.map(t => Goal.Tags(t.value)),
+      regions.map(r => Goal.Regions(r.value)),
+      periodStart.map(y => com.histmersion.api.catalogue.Year(y.value)),
+      periodEnd.map(y => com.histmersion.api.catalogue.Year(y.value)),
+      parentSlug.map(p => Goal.Slug(p.value)),
+      updatedAt.map(u => Goal.UpdatedAt(u.value))
+    )
 
 object GoalRow:
   type Slug = Slug.T

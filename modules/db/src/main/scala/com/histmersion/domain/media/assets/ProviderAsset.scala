@@ -67,7 +67,7 @@ object ProviderAsset:
   type Kind = Kind.T
   object Kind extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
-  def kindOf(role: com.histmersion.domain.media.MediaRole.Wire): com.histmersion.domain.media.assets.ProviderAsset.Kind = role match
-    case MediaRole.LocatorMap | MediaRole.RouteMap | MediaRole.Map => AssetKind.Map
-    case MediaRole.Plan                                            => AssetKind.Plan
-    case _                                                         => AssetKind.Photo
+  def kindOf(role: com.histmersion.domain.media.MediaRole.Wire): com.histmersion.domain.media.assets.ProviderAsset.Kind = role.value match
+    case MediaRole.LocatorMap | MediaRole.RouteMap | MediaRole.Map => Kind(AssetKind.Map)
+    case MediaRole.Plan                                            => Kind(AssetKind.Plan)
+    case _                                                         => Kind(AssetKind.Photo)

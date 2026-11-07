@@ -39,6 +39,9 @@ final class PolicyHttp(
     headers.filterNot(_._1.value.equalsIgnoreCase(PolicyHttp.UserAgent.value)) +
       (PolicyHttp.UserAgent -> CoreQuota.HeaderValue(HttpPolicy.userAgent(ua.getOrElse(userAgent)).value))
 
+  private def onWire(headers: Map[CoreQuota.HeaderName, CoreQuota.HeaderValue]): Map[CoreQuota.HeaderName, HttpTransport.GetHeadersPart2] =
+    headers.map((k, v) => k -> HttpTransport.GetHeadersPart2(v.value))
+
   /** One GET: the body of a 2xx answer, or why there is none. A caller's own `User-Agent` replaces the configured one;
     * either goes through [[HttpPolicy.userAgent]], so neither can carry an e-mail.
     */
@@ -49,12 +52,12 @@ final class PolicyHttp(
       sleep(ms)
       attempt(HttpPolicy.Attempt(n.value + 1))
     def attempt(n: HttpPolicy.Attempt): Either[HttpTransport.Problem, HttpAnswer.Body] =
-      transport.get(url, sent) match
+      transport.get(url, onWire(sent)) match
         case Left(unreachable) =>
           if n.value < maxRetries.value then again(n, HttpPolicy.backoffMs(n), unreachable.value) else Left(unreachable)
         case Right(answer) =>
           val code = HttpPolicy.StatusCode(answer.code.value)
-          if Challenge.isChallenge(code, answer.headers, answer.body) then
+          if Challenge.isChallenge(code, answer.headers, Challenge.Body(answer.body.value)) then
             Left(HttpTransport.Problem(s"$url: HTTP $code bot-protection challenge — treated as no copy"))
           else
             HttpPolicy.decide(code, answer.header(CoreQuota.HeaderName("Retry-After")).map(v => HttpPolicy.RetryAfter(v.value)), n, maxRetries, maxRetryAfterSeconds, clock()) match
@@ -70,7 +73,7 @@ final class PolicyHttp(
     * would spend what the budget is keeping.
     */
   def once(url: HttpTransport.Url, headers: Map[CoreQuota.HeaderName, CoreQuota.HeaderValue] = Map.empty): Either[HttpTransport.Problem, HttpAnswer] =
-    transport.get(url, identified(headers))
+    transport.get(url, onWire(identified(headers)))
 
   /** The client as the plugin SPI lends it: plugins get bytes, and parse what they asked for; a call an upstream's
     * budget meters is sent [[once]], answered with its status and headers.

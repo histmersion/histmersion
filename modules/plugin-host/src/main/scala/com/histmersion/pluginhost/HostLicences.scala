@@ -7,13 +7,16 @@ import com.histmersion.plugin.LicenceReader
   * the one shared [[Licence]] classification the host judges every stated licence with.
   */
 object HostLicences extends LicenceReader:
-  type LicenceName = LicenceName.T
-  object LicenceName extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-
   private def read(l: Licence): com.histmersion.plugin.Licence.Read =
-    com.histmersion.plugin.Licence.Read(l.id.value, l.family.wire, l.family.needsAttribution)
+    com.histmersion.plugin.Licence.Read(
+      com.histmersion.plugin.Licence.Read.Id(l.id.value),
+      com.histmersion.plugin.Licence.Read.Family(l.family.wire.value),
+      com.histmersion.plugin.Licence.Read.NeedsAttribution(l.family.needsAttribution)
+    )
 
-  def readName(name: com.histmersion.pluginhost.HostLicences.LicenceName): com.histmersion.plugin.Licence.Read = read(Licence.classify(Option(name).getOrElse("")))
-  def readUrl(url: com.histmersion.domain.Licence.Url): com.histmersion.plugin.Licence.Read = read(Licence.ofUrl(url))
-  def readFirst(statements: List[com.histmersion.domain.Licence.Statement]): com.histmersion.plugin.Licence.Read =
-    read(Licence.firstKnown(statements))
+  def readName(name: com.histmersion.plugin.LicenceReader.ReadNameName): com.histmersion.plugin.Licence.Read =
+    read(Licence.classify(Licence.Id(Option(name).fold("")(_.value))))
+  def readUrl(url: com.histmersion.plugin.LicenceReader.ReadUrlUrl): com.histmersion.plugin.Licence.Read =
+    read(Licence.ofUrl(Licence.Url(url.value)))
+  def readFirst(statements: List[com.histmersion.plugin.LicenceReader.ReadFirstStatements]): com.histmersion.plugin.Licence.Read =
+    read(Licence.firstKnown(statements.map(s => Licence.Statement(s.value))))

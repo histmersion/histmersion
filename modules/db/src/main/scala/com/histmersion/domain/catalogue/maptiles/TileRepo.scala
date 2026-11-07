@@ -8,6 +8,7 @@ import com.histmersion.domain.catalogue.events.EventSql
 import com.histmersion.domain.catalogue.places.{PlaceSql, SiteTypesSql}
 
 import com.augustnagro.magnum.*
+import com.histmersion.util.database.NewtypeColumns.given
 import com.histmersion.domain.catalogue.Place
 
 /** The map's point layers cut into vector tiles (`GET /api/tiles/…`, [[TileGrid]]): each layer's selection in a tile's
@@ -24,16 +25,6 @@ private[maptiles] object TileRepo:
   object SiteType extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
   /** What a layer's tiles read, by the groups of V105's `map_changes`. */
-
-  type DatedSitesWindowPart1 = _root_.com.histmersion.domain.DeepTime.SignedYear
-  val DatedSitesWindowPart1: _root_.com.histmersion.domain.DeepTime.SignedYear.type = _root_.com.histmersion.domain.DeepTime.SignedYear
-  type DatedSitesWindowPart2 = _root_.com.histmersion.domain.DeepTime.SignedYear
-  val DatedSitesWindowPart2: _root_.com.histmersion.domain.DeepTime.SignedYear.type = _root_.com.histmersion.domain.DeepTime.SignedYear
-  type DatedSitesSiteType = _root_.com.histmersion.domain.catalogue.maptiles.TileRepo.SiteType
-  val DatedSitesSiteType: _root_.com.histmersion.domain.catalogue.maptiles.TileRepo.SiteType.type = _root_.com.histmersion.domain.catalogue.maptiles.TileRepo.SiteType
-  type DatedSitesModernFrom = _root_.com.histmersion.domain.DeepTime.SignedYear
-  val DatedSitesModernFrom: _root_.com.histmersion.domain.DeepTime.SignedYear.type = _root_.com.histmersion.domain.DeepTime.SignedYear
-
   val Groups: Map[TileLayer, List[com.histmersion.domain.catalogue.maptiles.TileRepo.GroupName]] = Map(
     // an undated site is shown by its findings, or by an event, dated then
     TileLayer.Sites -> List(com.histmersion.domain.catalogue.maptiles.TileRepo.GroupName("places"), com.histmersion.domain.catalogue.maptiles.TileRepo.GroupName("corpus"), com.histmersion.domain.catalogue.maptiles.TileRepo.GroupName("events")),
@@ -43,16 +34,20 @@ private[maptiles] object TileRepo:
   )
 
   /** Each group's version: the sum of its changes' weights (V105). */
-  def versions(using DbCon): Map[com.histmersion.domain.catalogue.maptiles.VectorTileWriter.LayerName, com.histmersion.domain.catalogue.maptiles.UndatedBuild.Version] =
+  def versions(using DbCon): Map[GroupName, com.histmersion.domain.catalogue.maptiles.UndatedBuild.Version] =
     sql"SELECT grp, sum(weight)::bigint, count(*)::int FROM map_changes GROUP BY grp"
       .query[(String, Long, Int)]
       .run()
-      .map((g, v, _) => g -> v)
+      .map((g, v, _) => GroupName(g) -> UndatedBuild.Version(v))
       .toMap
 
   /** How many change rows each group holds (a group of many is folded by [[compact]]). */
-  def changeRows(using DbCon): Map[com.histmersion.domain.catalogue.maptiles.VectorTileWriter.LayerName, com.histmersion.RowCount] =
-    sql"SELECT grp, count(*)::int FROM map_changes GROUP BY grp".query[(String, Int)].run().toMap
+  def changeRows(using DbCon): Map[GroupName, com.histmersion.RowCount] =
+    sql"SELECT grp, count(*)::int FROM map_changes GROUP BY grp"
+      .query[(String, Int)]
+      .run()
+      .map((g, n) => GroupName(g) -> com.histmersion.RowCount(n))
+      .toMap
 
   /** Fold `grp`'s change rows into one of their summed weight — its version unchanged. One fold at a time (an advisory
     * lock; a second caller does nothing).
@@ -69,15 +64,21 @@ private[maptiles] object TileRepo:
     */
   def envelope(c: TileCoord): Sql =
     val (w, s, e, n) = c.bounds
-    val south = if c.y == c.side - 1 then -90.0 else s
-    val north = if c.y == 0 then 90.0 else n
-    Sql.of(com.histmersion.util.database.Sql.OfText("ST_MakeEnvelope(?, ?, ?, ?, 4326)"), Param.D(w), Param.D(south), Param.D(e), Param.D(north))
+    val south = if c.y.value == c.side.value - 1 then -90.0 else s
+    val north = if c.y.value == 0 then 90.0 else n
+    Sql.of(
+      com.histmersion.util.database.Sql.OfText("ST_MakeEnvelope(?, ?, ?, ?, 4326)"),
+      Param.D(Param.D.V(w)),
+      Param.D(Param.D.V(south)),
+      Param.D(Param.D.V(e)),
+      Param.D(Param.D.V(north))
+    )
 
   /** Web Mercator in SQL over the columns `lon` and `lat`: [[TileCoord.mercator]], each axis held inside the unit
     * square, then in units of tile `c` — `(x, y)`. `TileRepoSuite` holds it to the Scala.
     */
   def unitsSql(c: TileCoord): (String, String) =
-    val l = s"radians(greatest(${-TileCoord.MaxLat}, least(${TileCoord.MaxLat}, lat)))"
+    val l = s"radians(greatest(${-TileCoord.MaxLat.value}, least(${TileCoord.MaxLat}, lat)))"
     def held(v: String) = s"least(greatest($v, 0), 0.99999999999)"
     (
       s"(${held("(lon + 180) / 360.0")} * ${c.side} - ${c.x}) * ${TileCoord.Extent}",
@@ -92,9 +93,11 @@ private[maptiles] object TileRepo:
     val (ux, uy) = unitsSql(c)
     val e = TileCoord.Extent
     Sql.raw(com.histmersion.util.database.Sql.RawText("WITH c AS MATERIALIZED (")) ++ candidates ++ Sql.raw(
-      "), k AS MATERIALIZED (SELECT key, lon, lat, ub, CASE WHEN ps IS NOT NULL AND pe IS NOT NULL THEN (ps + pe) / 2.0 END AS mid," +
-        s" $ux AS px, $uy AS py FROM c)" +
-        s", t AS MATERIALIZED (SELECT * FROM k WHERE px >= 0 AND px < $e AND py >= 0 AND py < $e)"
+      Sql.Text(
+        "), k AS MATERIALIZED (SELECT key, lon, lat, ub, CASE WHEN ps IS NOT NULL AND pe IS NOT NULL THEN (ps + pe) / 2.0 END AS mid," +
+          s" $ux AS px, $uy AS py FROM c)" +
+          s", t AS MATERIALIZED (SELECT * FROM k WHERE px >= 0 AND px < $e AND py >= 0 AND py < $e)"
+      )
     )
 
   /** The cells of tile `c` over `candidates` ([[placedSql]]): every item alone when there are at most `maxPoints`, else
@@ -102,34 +105,41 @@ private[maptiles] object TileRepo:
     * how many of a cell's items are marked `ub`. Pure.
     */
   def cellsSql(candidates: Sql, c: TileCoord, maxPoints: com.histmersion.domain.catalogue.maptiles.TileGrid.MaxPoints, cellUnits: com.histmersion.domain.catalogue.maptiles.TileGrid.CellUnits): Sql =
-    val perSide = (TileCoord.Extent / cellUnits.max(1)).max(1)
+    val units = cellUnits.value.max(1)
+    val perSide = (TileCoord.Extent.value / units).max(1)
     placedSql(candidates, c) ++ Sql.raw(
-      ", total AS (SELECT count(*) AS n FROM t)" +
-        " SELECT key, floor(px)::int, floor(py)::int, 1, mid, mid, lon, lat, lon, lat, CASE WHEN ub THEN 1 ELSE 0 END FROM t"
+      Sql.Text(
+        ", total AS (SELECT count(*) AS n FROM t)" +
+          " SELECT key, floor(px)::int, floor(py)::int, 1, mid, mid, lon, lat, lon, lat, CASE WHEN ub THEN 1 ELSE 0 END FROM t"
+      )
     ) ++
-      Sql.of(" WHERE (SELECT n FROM total) <= ?", Param.I(maxPoints)) ++
+      Sql.of(Sql.Text(" WHERE (SELECT n FROM total) <= ?"), Param.I(Param.I.V(maxPoints.value))) ++
       Sql.raw(
-        s" UNION ALL SELECT CASE WHEN g.n = 1 THEN g.one ELSE 'c${c.z}/' || (${c.x * perSide} + g.gx) || '/' ||" +
-          s" (${c.y * perSide} + g.gy) END, floor(g.ax)::int, floor(g.ay)::int, g.n, g.lo, g.hi, g.w, g.s, g.e, g.nn, g.u" +
-          s" FROM (SELECT floor(px / ${cellUnits.max(1)})::bigint AS gx, floor(py / ${cellUnits.max(1)})::bigint AS gy," +
-          " count(*)::int AS n, avg(px) AS ax, avg(py) AS ay, min(mid) AS lo, max(mid) AS hi," +
-          " min(lon) AS w, min(lat) AS s, max(lon) AS e, max(lat) AS nn, min(key) AS one," +
-          " (count(*) FILTER (WHERE ub))::int AS u FROM t"
+        Sql.Text(
+          s" UNION ALL SELECT CASE WHEN g.n = 1 THEN g.one ELSE 'c${c.z}/' || (${c.x.value * perSide} + g.gx) || '/' ||" +
+            s" (${c.y.value * perSide} + g.gy) END, floor(g.ax)::int, floor(g.ay)::int, g.n, g.lo, g.hi, g.w, g.s, g.e, g.nn, g.u" +
+            s" FROM (SELECT floor(px / $units)::bigint AS gx, floor(py / $units)::bigint AS gy," +
+            " count(*)::int AS n, avg(px) AS ax, avg(py) AS ay, min(mid) AS lo, max(mid) AS hi," +
+            " min(lon) AS w, min(lat) AS s, max(lon) AS e, max(lat) AS nn, min(key) AS one," +
+            " (count(*) FILTER (WHERE ub))::int AS u FROM t"
+        )
       ) ++
-      Sql.of(" WHERE (SELECT n FROM total) > ? GROUP BY 1, 2) g", Param.I(maxPoints))
+      Sql.of(Sql.Text(" WHERE (SELECT n FROM total) > ? GROUP BY 1, 2) g"), Param.I(Param.I.V(maxPoints.value)))
 
   /** The items of `candidates` in tile `c` ([[placedSql]]) counted by the squares of `cellUnits`, whatever their
     * number: one [[GridCell]] a square (`dup` those marked `ub`), its square on the world's grid of the tile's zoom.
     * Pure.
     */
   def gridCellsSql(candidates: Sql, c: TileCoord, cellUnits: com.histmersion.domain.catalogue.maptiles.TileGrid.CellUnits): Sql =
-    val perSide = (TileCoord.Extent / cellUnits.max(1)).max(1)
-    val cu = cellUnits.max(1)
+    val cu = cellUnits.value.max(1)
+    val perSide = (TileCoord.Extent.value / cu).max(1)
     placedSql(candidates, c) ++ Sql.raw(
-      s" SELECT ${c.x * perSide} + floor(px / $cu)::bigint, ${c.y * perSide} + floor(py / $cu)::bigint," +
-        " count(*)::int, (count(*) FILTER (WHERE ub))::int, sum(px), sum(py)," +
-        " coalesce(sum(px) FILTER (WHERE ub), 0), coalesce(sum(py) FILTER (WHERE ub), 0), min(mid), max(mid)," +
-        " min(lon), min(lat), max(lon), max(lat), min(key) FROM t GROUP BY 1, 2"
+      Sql.Text(
+        s" SELECT ${c.x.value * perSide} + floor(px / $cu)::bigint, ${c.y.value * perSide} + floor(py / $cu)::bigint," +
+          " count(*)::int, (count(*) FILTER (WHERE ub))::int, sum(px), sum(py)," +
+          " coalesce(sum(px) FILTER (WHERE ub), 0), coalesce(sum(py) FILTER (WHERE ub), 0), min(mid), max(mid)," +
+          " min(lon), min(lat), max(lon), max(lat), min(key) FROM t GROUP BY 1, 2"
+      )
     )
 
   private given DbCodec[TileCell] = DbCodec.derived
@@ -141,7 +151,7 @@ private[maptiles] object TileRepo:
 
   /** Every item of `candidates` in tile `c`, each alone. */
   def items(candidates: Sql, c: TileCoord)(using DbCon): List[TileCell] =
-    cellsSql(candidates, c, Int.MaxValue, TileCoord.Extent).frag.query[TileCell].run().toList
+    cellsSql(candidates, c, TileGrid.MaxPoints(Int.MaxValue), TileGrid.CellUnits(TileCoord.Extent.value)).frag.query[TileCell].run().toList
 
   /** The items of `candidates` in tile `c` counted by the grid's squares ([[gridCellsSql]]). */
   def gridCells(candidates: Sql, c: TileCoord, grid: TileGrid)(using DbCon): List[GridCell] =
@@ -167,20 +177,22 @@ private[maptiles] object TileRepo:
     // sites too when they are asked for ([[UndatedSiteRepo]])
     val ub = if markUndated then "(lower_inf(p.period) AND upper_inf(p.period))" else "false"
     Sql.raw(
-      "SELECT p.id AS key, ST_X(q.pt) AS lon, ST_Y(q.pt) AS lat," +
-        s" ${RangeSql.start("p.period")} AS ps, ${RangeSql.end("p.period")} AS pe, $ub AS ub" +
-        " FROM places p CROSS JOIN LATERAL (SELECT CASE WHEN GeometryType(p.geom) = 'POINT' THEN p.geom" +
-        " ELSE ST_PointOnSurface(p.geom) END AS pt) q" +
-        s" WHERE p.kind = '${Place.Kind.Site}' AND p.geom IS NOT NULL" +
-        s" AND NOT (coalesce(p.import_source, '') IN ${PlaceSql.ImportedList} AND lower_inf(p.period) AND upper_inf(p.period))" +
-        " AND p.geom && "
+      Sql.Text(
+        "SELECT p.id AS key, ST_X(q.pt) AS lon, ST_Y(q.pt) AS lat," +
+          s" ${RangeSql.start("p.period")} AS ps, ${RangeSql.end("p.period")} AS pe, $ub AS ub" +
+          " FROM places p CROSS JOIN LATERAL (SELECT CASE WHEN GeometryType(p.geom) = 'POINT' THEN p.geom" +
+          " ELSE ST_PointOnSurface(p.geom) END AS pt) q" +
+          s" WHERE p.kind = '${Place.Kind.Site}' AND p.geom IS NOT NULL" +
+          s" AND NOT (coalesce(p.import_source, '') IN ${PlaceSql.ImportedList} AND lower_inf(p.period) AND upper_inf(p.period))" +
+          " AND p.geom && "
+      )
     ) ++ envelope ++
-      Sql.of(" AND p.label !~* ?", Param.S(PlaceSql.UninformativeLabel)) ++
-      Sql.raw(s" AND ${PlaceSql.inWindowSql("p", tw, Some(Place.Kind.Site), Some(modernFrom))}") ++
+      Sql.of(Sql.Text(" AND p.label !~* ?"), Param.S(Param.S.V(PlaceSql.UninformativeLabel))) ++
+      Sql.raw(Sql.Text(s" AND ${PlaceSql.inWindowSql("p", tw, Some(Place.Kind.Wire(Place.Kind.Site)), Some(modernFrom))}")) ++
       siteType
-        .map(_.trim.toLowerCase)
+        .map(_.value.trim.toLowerCase)
         .filter(_.nonEmpty)
-        .fold(Sql.empty)(t => Sql.of(s" AND ${SiteTypesSql.expr("p")} = ?", Param.S(t)))
+        .fold(Sql.empty)(t => Sql.of(Sql.Text(s" AND ${SiteTypesSql.expr("p")} = ?"), Param.S(Param.S.V(t))))
 
   /** The sites of `ids` as a sites tile draws one, by id. */
   def sitesOf(ids: List[com.histmersion.domain.catalogue.maptiles.TileRepo.SiteId])(using DbCon): Map[com.histmersion.domain.catalogue.maptiles.TileRepo.SiteId, SiteTile] =
@@ -188,14 +200,26 @@ private[maptiles] object TileRepo:
     else
       Sql
         .of(
-          s"SELECT p.id, p.label, p.kind, ${SiteTypesSql.expr("p")}, ${PlaceSql.timeBasisSql("p")}," +
-            s" ${RangeSql.start("p.period")}, ${RangeSql.end("p.period")} FROM places p WHERE p.id = ANY(?)",
-          Param.A(ids)
+          Sql.Text(
+            s"SELECT p.id, p.label, p.kind, ${SiteTypesSql.expr("p")}, ${PlaceSql.timeBasisSql("p")}," +
+              s" ${RangeSql.start("p.period")}, ${RangeSql.end("p.period")} FROM places p WHERE p.id = ANY(?)"
+          ),
+          Param.A(ids.map(i => Param.A.V(i.value)))
         )
         .frag
         .query[(String, String, String, Option[String], String, Option[Long], Option[Long])]
         .run()
-        .map((id, label, kind, t, basis, ps, pe) => id -> SiteTile(id, label, kind, t, basis, ps, pe))
+        .map((id, label, kind, t, basis, ps, pe) =>
+          SiteId(id) -> SiteTile(
+            SiteTile.Id(id),
+            SiteTile.Label(label),
+            SiteTile.Kind(kind),
+            t.map(x => SiteTile.SiteType(x)),
+            SiteTile.Basis(basis),
+            ps.map(y => com.histmersion.api.catalogue.Year(y)),
+            pe.map(y => com.histmersion.api.catalogue.Year(y))
+          )
+        )
         .toMap
 
   /** A sites tile's cells. */
@@ -211,7 +235,7 @@ private[maptiles] object TileRepo:
   /** The sites tile `c` shows for `window` as candidates of [[items]] and [[gridCells]], an undated one the span shows
     * by its findings marked (it is among the undated sites too).
     */
-  def datedSites(c: TileCoord, window: (com.histmersion.domain.catalogue.maptiles.TileRepo.DatedSitesWindowPart1, com.histmersion.domain.catalogue.maptiles.TileRepo.DatedSitesWindowPart2), siteType: Option[com.histmersion.domain.catalogue.maptiles.TileRepo.DatedSitesSiteType], modernFrom: com.histmersion.domain.catalogue.maptiles.TileRepo.DatedSitesModernFrom): Sql =
+  def datedSites(c: TileCoord, window: (com.histmersion.domain.DeepTime.SignedYear, com.histmersion.domain.DeepTime.SignedYear), siteType: Option[SiteType], modernFrom: com.histmersion.domain.DeepTime.SignedYear): Sql =
     siteCandidates(window, siteType, modernFrom, envelope(c), markUndated = true)
 
   /** An events tile's cells, with the events of no known date `undatedWhere` selects

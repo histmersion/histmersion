@@ -41,7 +41,7 @@ object EventSql:
     * exact geography distance is computed (a `::geography` cast cannot use it).
     */
   def boxAround(pt: com.histmersion.domain.catalogue.events.EventSql.Point, km: com.histmersion.domain.catalogue.events.CatalogMerge.Tolerance.Km): String =
-    val dy = km / 111.32
+    val dy = km.value / 111.32
     s"ST_Expand($pt, $dy / greatest(cos(radians(ST_Y($pt))), 0.05), $dy)"
 
   /** `events e` with its place (`ep`) joined. */
@@ -67,8 +67,8 @@ object EventSql:
       filter: Filter,
       scope: PlaceScope,
       text: Option[com.histmersion.domain.catalogue.events.EventSelection.Text],
-      kind: Option[com.histmersion.domain.catalogue.events.BEventRow.Kind],
-      historicity: Option[com.histmersion.domain.catalogue.events.BEventRow.Historicity],
+      kind: Option[com.histmersion.domain.catalogue.events.EventSelection.Kind],
+      historicity: Option[com.histmersion.domain.catalogue.events.EventSelection.Historicity],
       placeId: Option[com.histmersion.domain.catalogue.Place.Id],
       more: Narrow = Narrow()
   ): Sql =
@@ -76,26 +76,29 @@ object EventSql:
     val ps = List.newBuilder[Sql]
     val selected = related.eventWhere(filter, scope)
     val catalogueOnly = s"($TierSql) = '${EventTier.Catalogue}'"
-    if selected.text != "TRUE" then
-      if more.context then
+    if selected.text.value != "TRUE" then
+      if more.context.value then
         // the catalogue's events of the period stay, whatever the sources selected
         val inPeriod = related.eventWhere(Filter(period = filter.period, title = filter.title), PlaceScope.empty)
-        ps += (Sql.raw(com.histmersion.util.database.Sql.RawText("(")) ++ selected ++ Sql.raw(s" OR ($catalogueOnly AND ") ++ inPeriod ++ Sql.raw("))"))
+        ps += (Sql.raw(com.histmersion.util.database.Sql.RawText("(")) ++ selected ++ Sql.raw(Sql.Text(s" OR ($catalogueOnly AND ")) ++ inPeriod ++ Sql.raw(Sql.Text("))")))
       else ps += selected
-    clean(more.tier).map(_.toLowerCase).foreach(t => ps += Sql.of(s"($TierSql) = ?", Param.S(t)))
+    clean(more.tier.map(_.value)).map(_.toLowerCase).foreach(t => ps += Sql.of(Sql.Text(s"($TierSql) = ?"), Param.S(Param.S.V(t))))
     more.area.foreach(b => ps += EnvelopeSql.envelopes(s"coalesce(e.geom, ep.geom)", b))
-    clean(text).foreach { t =>
+    clean(text.map(_.value)).foreach { t =>
       val c = LikePattern.contains(t)
-      ps += Sql.of("(e.label ILIKE ? ESCAPE '\\' OR e.description ILIKE ? ESCAPE '\\')", Param.S(c), Param.S(c))
+      ps += Sql.of(Sql.Text("(e.label ILIKE ? ESCAPE '\\' OR e.description ILIKE ? ESCAPE '\\')"), Param.S(Param.S.V(c)), Param.S(Param.S.V(c)))
     }
-    EventTaxonomy.condition(clean(kind)).foreach { c =>
-      ps += Sql.of(if c.negate then "NOT (e.kind = ANY(?::text[]))" else "e.kind = ANY(?::text[])", Param.A(c.kinds))
+    EventTaxonomy.condition(clean(kind.map(_.value)).map(k => EventTaxonomy.KindCondition.Filter(k))).foreach { c =>
+      ps += Sql.of(
+        Sql.Text(if c.negate.value then "NOT (e.kind = ANY(?::text[]))" else "e.kind = ANY(?::text[])"),
+        Param.A(c.kinds.map(k => Param.A.V(k.value)))
+      )
     }
-    clean(historicity).map(_.toLowerCase).foreach(h => ps += Sql.of("e.historicity = ?", Param.S(h)))
-    clean(placeId).foreach(p => ps += Sql.of("e.place_id = ?", Param.S(p)))
+    clean(historicity.map(_.value)).map(_.toLowerCase).foreach(h => ps += Sql.of(Sql.Text("e.historicity = ?"), Param.S(Param.S.V(h))))
+    clean(placeId.map(_.value)).foreach(p => ps += Sql.of(Sql.Text("e.place_id = ?"), Param.S(Param.S.V(p))))
     val parts = ps.result()
     if parts.isEmpty then Sql.raw(com.histmersion.util.database.Sql.RawText("TRUE"))
-    else Sql(parts.map(_.text).mkString(" AND "), parts.flatMap(_.params))
+    else Sql(Sql.Text(parts.map(_.text.value).mkString(" AND ")), parts.flatMap(_.params))
 
   /** An event's ANCHOR over `events e` with its place `ep`: its own geometry, else its place's (`s.g`, `s.src`), as a
     * point — the point itself, or the point-on-surface of an area (`a.pt`).
@@ -110,11 +113,11 @@ object EventSql:
     * over `events e` with `ep`), in the tile's box `envelope`.
     */
   def tileCandidates(where: Sql, envelope: Sql): Sql =
-    Sql.raw(s"""SELECT e.id AS key, ST_X(a.pt) AS lon, ST_Y(a.pt) AS lat,
+    Sql.raw(Sql.Text(s"""SELECT e.id AS key, ST_X(a.pt) AS lon, ST_Y(a.pt) AS lat,
                   ${RangeSql.start("e.outer_span")} AS ps, ${RangeSql.end("e.outer_span")} AS pe, false AS ub
                 FROM $fromEvents $anchorJoins
-                WHERE s.g IS NOT NULL AND e.uncertainty <= ${EventPrecision.ApproximateUpTo} AND s.g && """) ++
-      envelope ++ Sql.raw(" AND ") ++ where
+                WHERE s.g IS NOT NULL AND e.uncertainty <= ${EventPrecision.ApproximateUpTo} AND s.g && """)) ++
+      envelope ++ Sql.raw(Sql.Text(" AND ")) ++ where
 
   /** An event with no known date: its outer span open on both sides. */
   val UndatedSql = "(lower_inf(e.outer_span) AND upper_inf(e.outer_span))"
@@ -123,9 +126,9 @@ object EventSql:
     * `undatedWhere` is the selection without it), each marked (`ub`).
     */
   def tileCandidatesWithUndated(where: Sql, undatedWhere: Sql, envelope: Sql): Sql =
-    Sql.raw(s"""SELECT e.id AS key, ST_X(a.pt) AS lon, ST_Y(a.pt) AS lat,
+    Sql.raw(Sql.Text(s"""SELECT e.id AS key, ST_X(a.pt) AS lon, ST_Y(a.pt) AS lat,
                   ${RangeSql.start("e.outer_span")} AS ps, ${RangeSql.end("e.outer_span")} AS pe, $UndatedSql AS ub
                 FROM $fromEvents $anchorJoins
-                WHERE s.g IS NOT NULL AND s.g && """) ++ envelope ++
-      Sql.raw(s" AND ((e.uncertainty <= ${EventPrecision.ApproximateUpTo} AND ") ++ where ++
-      Sql.raw(s") OR ($UndatedSql AND ") ++ undatedWhere ++ Sql.raw("))")
+                WHERE s.g IS NOT NULL AND s.g && """)) ++ envelope ++
+      Sql.raw(Sql.Text(s" AND ((e.uncertainty <= ${EventPrecision.ApproximateUpTo} AND ")) ++ where ++
+      Sql.raw(Sql.Text(s") OR ($UndatedSql AND ")) ++ undatedWhere ++ Sql.raw(Sql.Text("))"))

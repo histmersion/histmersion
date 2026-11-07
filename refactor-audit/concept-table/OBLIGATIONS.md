@@ -74,3 +74,9 @@ Also check: `ModelChains.headroom` returns `Option[LimitState.FreesAt]` for a to
 - `math.max(1, limit)` became `limit.value` on PageSize: check nothing builds a PageSize with assume or from 0.
 - AgentRepo reports using `api` types (`RunInfo`, `Goal.Slug`, ...) in rows: G7 review.
 - Concepts split, bridged: Plugin.Info.Id vs util.plugins.Plugin.Id; Goal slug domain vs api; Job.Id / RunInfo.Id / Run.Id; Approval.State.Wire api vs domain; api Year vs DeepTime.SignedYear; HttpAnswer.Code vs HttpPolicy.StatusCode; AcquireConfig.UserAgent vs HttpPolicy.UserAgent; ProviderAsset.Bytes vs NewFigure.Bytes; ReportMaxItems vs Lint.ItemLimit; Place.Entry.SiteType vs SiteTypes.SiteType.Id; PlanQuotaRepo RefreshMode vs PlanQuota.RefreshMode.Wire; Pool.RefusalUntil vs EpochMillis; MediaGeoRow.Uid vs MediaItemRow.Uid.
+
+## From db and plugin-host, round 2
+
+- Dropped or changed: CitationRepo.graph drops a stored edge with an unknown kind; ImportRepo.targets/collectionTargets re-parse with `.option`, so an invalid trimmed id falls to the next branch instead of "No place ..."; ContentStore.hex throws on a digest that is not 32 bytes.
+- Reads that can fail on stored data: Doi in CandidateRepo.dois, AcquireCheckRepo.heldByDoi; Citekey in BundleImport.citekeyOf/citekeyHere, CoverRepo; Run.Id in ManagerRepo.dispatchIn; Place.Id, Event.Id in ImportRepo, AssetLink, Tree; Latitude/Longitude in placeFacts.
+- BlobSink.Streamed.StoreResult is Sha256 but carries an error message. BundleRepo.digest holds an md5.

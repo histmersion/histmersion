@@ -38,7 +38,7 @@ final class FetchChain(
     fetchWork(workOf(doi, arxiv), FetchChain.LegalOnly(true))
 
   private def workOf(doi: Option[com.histmersion.domain.library.Doi], arxiv: Option[com.histmersion.domain.library.ArxivId]): WorkKey =
-    WorkKey(doi = doi.flatMap(d => SpiValues.doi(d.value)), arxiv = arxiv.map(a => WorkKey.Arxiv(a.value)))
+    WorkKey(doi = doi.flatMap(SpiValues.doi), arxiv = arxiv.map(a => WorkKey.Arxiv(a.value)))
 
   override def fetchWork(work: WorkKey, legalOnly: FetchChain.LegalOnly): Either[OaFetcher.Problem, FetchedFile] =
     fetchWorkExplained(work, legalOnly).file
@@ -178,7 +178,7 @@ object FetchChain:
             "(acquire.allow-unauthorised = false)"
         )
       )
-    val known = plugins.map(_.value)
+    val known: Set[String] = plugins.map(_.value)
     (
       FetchChain(
         ids.map(id => Step.Id(id.value) -> registered(id)),

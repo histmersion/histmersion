@@ -1,6 +1,7 @@
 package com.histmersion.domain.catalogue.places
 
 import com.histmersion.util.database.given
+import com.histmersion.util.database.NewtypeColumns.given
 
 import com.histmersion.util.database.RangeSql
 
@@ -21,44 +22,30 @@ private[places] object PlaceReviewRepo:
 
 
   final private case class Row(
-      id: Row.Id,
-      label: Row.Label,
-      kind: Row.Kind,
-      types: Option[Row.Types],
-      periods: Option[Row.Periods],
+      id: Evidence.Id,
+      label: Evidence.Label,
+      kind: com.histmersion.domain.catalogue.Place.Kind.Wire,
+      types: Option[String],
+      periods: Option[String],
       start: Option[Row.Start],
       end: Option[Row.End]
   ) derives DbCodec
 
   object Row:
-    type Id = Id.T
-    object Id extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-    type Label = Label.T
-    object Label extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-    type Kind = Kind.T
-    object Kind extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-    type Types = Types.T
-    object Types extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-    type Periods = Periods.T
-    object Periods extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
     type Start = com.histmersion.domain.DeepTime.SignedYear
     val Start: _root_.com.histmersion.domain.DeepTime.SignedYear.type = _root_.com.histmersion.domain.DeepTime.SignedYear
     type End = com.histmersion.domain.DeepTime.SignedYear
     val End: _root_.com.histmersion.domain.DeepTime.SignedYear.type = _root_.com.histmersion.domain.DeepTime.SignedYear
 
   final private case class ItemRow(
-      placeId: com.histmersion.domain.catalogue.Place.Id,
-      ref: ItemRow.Ref,
-      itemClass: Option[ItemRow.ItemClass],
+      placeId: Evidence.Id,
+      ref: LinkedItem.Ref,
+      itemClass: Option[LinkedItem.ItemClass],
       from: Option[ItemRow.From],
       to: Option[ItemRow.To]
   ) derives DbCodec
 
   object ItemRow:
-    type Ref = Ref.T
-    object Ref extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-    type ItemClass = ItemClass.T
-    object ItemClass extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
     type From = com.histmersion.domain.DeepTime.SignedYear
     val From: _root_.com.histmersion.domain.DeepTime.SignedYear.type = _root_.com.histmersion.domain.DeepTime.SignedYear
     type To = com.histmersion.domain.DeepTime.SignedYear
@@ -87,9 +74,11 @@ private[places] object PlaceReviewRepo:
   def evidenceIn()(using DbCon): List[(Evidence, List[Candidate])] =
     val rows = Sql
       .raw(
-        "SELECT p.id, p.label, p.kind, p.properties->>'feature_types', p.properties->>'time_periods'," +
-          s" CASE WHEN p.start_unknown THEN NULL ELSE ${RangeSql.start("p.period")} END, ${RangeSql.end("p.period")}" +
-          s" FROM places p WHERE $reviewedSql ORDER BY p.id"
+        Sql.Text(
+          "SELECT p.id, p.label, p.kind, p.properties->>'feature_types', p.properties->>'time_periods'," +
+            s" CASE WHEN p.start_unknown THEN NULL ELSE ${RangeSql.start("p.period")} END, ${RangeSql.end("p.period")}" +
+            s" FROM places p WHERE $reviewedSql ORDER BY p.id"
+        )
       )
       .frag
       .query[Row]
@@ -102,7 +91,7 @@ private[places] object PlaceReviewRepo:
                       ORDER BY place_id, scheme, external_id""".query[ItemRow].run().toList.groupBy(_.placeId)
     val descs = sql"""SELECT place_id, text FROM place_descriptions
                       WHERE place_id = ANY($ids::text[]) AND lang = 'en' ORDER BY place_id, import_source, import_ref"""
-      .query[(String, String)]
+      .query[(Evidence.Id, Evidence.Descriptions)]
       .run()
       .toList
       .groupMap(_._1)(_._2)
@@ -111,14 +100,14 @@ private[places] object PlaceReviewRepo:
         r.id,
         r.label,
         r.kind,
-        split(r.types),
-        split(r.periods),
+        split(r.types).map(Evidence.FeatureTypes(_)),
+        split(r.periods).map(Evidence.TimePeriods(_)),
         r.start,
         r.end,
         items
           .getOrElse(r.id, Nil)
           .map(i =>
-            LinkedItem(i.ref, i.itemClass, for a <- i.from; b <- i.to if a <= b; p <- DeepTime.span(a, b) yield p)
+            LinkedItem(i.ref, i.itemClass, for a <- i.from; b <- i.to if a.value <= b.value; p <- DeepTime.span(a, b) yield p)
           ),
         descs.getOrElse(r.id, Nil)
       )
@@ -156,9 +145,14 @@ private[places] object PlaceReviewRepo:
                 start_unknown = CASE WHEN $range::text IS NULL THEN start_unknown ELSE false END
               WHERE id = ${p.id} AND kind = ${p.from}""".update.run() > 0
       }
-      val mg = todo.collect { case p: Proposal.Merge => p }.filter(p => mergeIn(p.id, p.into))
-      val _ = FindingPlaceRepo.materialisePlaces(re.map(_.id) ++ mg.map(_.into), toleranceKm)
-      (re.size, mg.size)
+      val mg = todo.collect { case p: Proposal.Merge => p }.filter(p =>
+        mergeIn(com.histmersion.domain.catalogue.Place.Id.assume(p.id.value), com.histmersion.domain.catalogue.Place.Id.assume(p.into.value))
+      )
+      val _ = FindingPlaceRepo.materialisePlaces(
+        (re.map(_.id) ++ mg.map(_.into)).map(i => BPlaceRow.Id(i.value)),
+        FindingPlacement.Implementation.ToleranceKm(toleranceKm.value)
+      )
+      (com.histmersion.RowCount(re.size), com.histmersion.RowCount(mg.size))
 
   /** Merge place `from` into `into` in the caller's transaction. `false` when either is gone. */
   private[places] def mergeIn(from: com.histmersion.domain.catalogue.Place.Id, into: com.histmersion.domain.catalogue.Place.Id)(using DbCon): Boolean =
@@ -194,7 +188,7 @@ private[places] object PlaceReviewRepo:
 
   /** A grid-cell place and the better point one of its linked records gives. */
   final case class Relocation(
-      id: Relocation.Id,
+      id: BPlaceRow.Id,
       label: Relocation.Label,
       fromLon: Relocation.FromLon,
       fromLat: Relocation.FromLat,
@@ -202,23 +196,32 @@ private[places] object PlaceReviewRepo:
       lon: com.histmersion.Longitude,
       lat: com.histmersion.Latitude
   ) derives DbCodec:
-    def km: com.histmersion.domain.catalogue.evidence.EventMatcher.NearFinding.Km = Geocode.distanceKm(fromLon, fromLat, lon, lat)
+    def km: Geocode.DistanceKm =
+      Geocode.distanceKm(
+        com.histmersion.api.catalogue.Longitude(fromLon.value),
+        com.histmersion.api.catalogue.Latitude(fromLat.value),
+        com.histmersion.api.catalogue.Longitude(lon.value),
+        com.histmersion.api.catalogue.Latitude(lat.value)
+      )
 
     /** One line: id, label, the grid point, the better one and how far. */
-    def describe: com.histmersion.domain.catalogue.places.PlaceReviewRepo.Relocation.Description = s"$id $detail"
+    def describe: com.histmersion.domain.catalogue.places.PlaceReviewRepo.Relocation.Description =
+      Relocation.Description(s"${id.value} ${detail.value}")
 
     /** The line without the id — a lint item, which carries the id beside it. */
     def detail: com.histmersion.domain.catalogue.places.PlaceReviewRepo.Relocation.Detail =
-      String.format(
-        java.util.Locale.ROOT,
-        "%s: location approximate (atlas grid square) at %.2f N %.2f E → %s's point %.4f N %.4f E, %.0f km",
-        label,
-        fromLat,
-        fromLon,
-        ref,
-        lat,
-        lon,
-        km
+      Relocation.Detail(
+        String.format(
+          java.util.Locale.ROOT,
+          "%s: location approximate (atlas grid square) at %.2f N %.2f E → %s's point %.4f N %.4f E, %.0f km",
+          label.value,
+          fromLat.value,
+          fromLon.value,
+          ref.value,
+          lat.value,
+          lon.value,
+          km.value
+        )
       )
 
   object Relocation:
@@ -227,8 +230,6 @@ private[places] object PlaceReviewRepo:
     type Detail = Detail.T
     object Detail extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
-    type Id = Id.T
-    object Id extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
     type Label = Label.T
     object Label extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
     type FromLon = FromLon.T
@@ -266,5 +267,5 @@ private[places] object PlaceReviewRepo:
                 AND abs(ST_X(geom) - ${r.fromLon}) < 1e-7 AND abs(ST_Y(geom) - ${r.fromLat}) < 1e-7""".update
           .run() > 0
       }
-      val _ = FindingPlaceRepo.materialisePlaces(moved.map(_.id), toleranceKm)
-      moved.size
+      val _ = FindingPlaceRepo.materialisePlaces(moved.map(_.id), FindingPlacement.Implementation.ToleranceKm(toleranceKm.value))
+      com.histmersion.RowCount(moved.size)

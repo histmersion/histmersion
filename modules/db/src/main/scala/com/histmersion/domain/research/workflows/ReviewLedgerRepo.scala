@@ -1,6 +1,7 @@
 package com.histmersion.domain.research.workflows
 
 import com.histmersion.util.database.Jsonb
+import com.histmersion.util.database.NewtypeColumns.given
 import com.histmersion.domain.ReviewLedger.Ledger
 
 import com.augustnagro.magnum.*

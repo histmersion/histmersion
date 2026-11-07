@@ -7,6 +7,7 @@ import com.histmersion.util.data.exchange.{BundleFormat, BundleScope}
 import com.histmersion.util.data.exchange.BundleSql.*
 
 import com.histmersion.util.database.given
+import com.histmersion.util.database.NewtypeColumns.given
 import com.augustnagro.magnum.*
 import java.util.UUID
 import com.histmersion.api.exchange.Bundle
@@ -24,26 +25,26 @@ private[events] object EventBundleRepo:
 
   def events(scope: BundleScope)(using DbCon): Vector[Bundle.Event] =
     val w = where(scope, "e.uid", "e.updated_at")
-    val rows = (Sql.raw(s"""SELECT e.uid, e.origin, e.id, e.label, e.kind, e.not_before, e.begin_by,
+    val rows = (Sql.raw(Sql.Text(s"""SELECT e.uid, e.origin, e.id, e.label, e.kind, e.not_before, e.begin_by,
                                   e.end_from, e.not_after, e.historicity, encode(ST_AsEWKB(e.geom), 'hex'),
                                   e.place_id, p.uid, e.description, e.citekey, s.uid, ${ts("e.updated_at")}, e.scale,
                                   e.catalogue, e.names, e.wikidata, e.central, e.plus_minus, e.dating_method
                            FROM events e LEFT JOIN events p ON p.id = e.parent_id
-                           LEFT JOIN sources s ON s.citekey = e.citekey WHERE """) ++ w ++ " ORDER BY e.uid").frag
+                           LEFT JOIN sources s ON s.citekey = e.citekey WHERE """)) ++ w ++ " ORDER BY e.uid").frag
       .query[BEventRow]
       .run()
-    val datings = (Sql.raw("""SELECT e.uid, d.citekey, s.uid, d.not_before, d.begin_by, d.end_from,
+    val datings = (Sql.raw(Sql.Text("""SELECT e.uid, d.citekey, s.uid, d.not_before, d.begin_by, d.end_from,
                                      d.not_after, d.method, d.note
                               FROM event_datings d JOIN events e ON e.id = d.event_id
-                              LEFT JOIN sources s ON s.citekey = d.citekey WHERE """) ++ w ++
+                              LEFT JOIN sources s ON s.citekey = d.citekey WHERE """)) ++ w ++
       """ ORDER BY e.uid, d.citekey COLLATE "C"""").frag.query[BDatingRow].run().groupBy(_.eventUid)
-    val edges = (Sql.raw("""SELECT e.uid, b.uid, g.kind, g.citekey, s.uid, g.note
+    val edges = (Sql.raw(Sql.Text("""SELECT e.uid, b.uid, g.kind, g.citekey, s.uid, g.note
                             FROM event_edges g JOIN events e ON e.id = g.src_id JOIN events b ON b.id = g.dst_id
-                            LEFT JOIN sources s ON s.citekey = g.citekey WHERE """) ++ w ++
+                            LEFT JOIN sources s ON s.citekey = g.citekey WHERE """)) ++ w ++
       """ ORDER BY e.uid, b.uid, g.kind COLLATE "C"""").frag.query[BEventEdgeRow].run().groupBy(_.eventUid)
-    val people = (Sql.raw("""SELECT e.uid, p.actor, p.role, p.citekey, s.uid
+    val people = (Sql.raw(Sql.Text("""SELECT e.uid, p.actor, p.role, p.citekey, s.uid
                              FROM event_participants p JOIN events e ON e.id = p.event_id
-                             LEFT JOIN sources s ON s.citekey = p.citekey WHERE """) ++ w ++
+                             LEFT JOIN sources s ON s.citekey = p.citekey WHERE """)) ++ w ++
       """ ORDER BY e.uid, p.actor COLLATE "C", p.role COLLATE "C"""").frag
       .query[BParticipantRow]
       .run()
@@ -52,81 +53,105 @@ private[events] object EventBundleRepo:
       Bundle.Event(
         r.uid,
         r.origin,
-        r.id,
-        r.label,
-        r.kind,
-        r.notBefore,
-        r.beginBy,
-        r.endFrom,
-        r.notAfter,
-        r.historicity,
-        r.geom,
-        r.placeId,
+        Bundle.Event.Id(r.id.value),
+        Bundle.Event.Label(r.label.value),
+        Bundle.Event.Kind(r.kind.value),
+        r.notBefore.map(v => Bundle.Event.NotBefore(v.value)),
+        r.beginBy.map(v => Bundle.Event.BeginBy(v.value)),
+        r.endFrom.map(v => Bundle.Event.EndFrom(v.value)),
+        r.notAfter.map(v => Bundle.Event.NotAfter(v.value)),
+        Bundle.Event.Historicity(r.historicity.value),
+        r.geom.map(g => Bundle.Event.Geom(g.value)),
+        r.placeId.map(p => Bundle.Event.PlaceId(p.value)),
         r.parentUid,
-        r.description,
-        r.citekey,
+        r.description.map(d => Bundle.Event.Description(d.value)),
+        r.citekey.map(c => com.histmersion.api.library.Citekey(c.value)),
         r.sourceUid,
         datings
           .getOrElse(r.uid, Vector.empty)
           .toList
           .map(d =>
-            Bundle.EventDating(d.citekey, d.sourceUid, d.notBefore, d.beginBy, d.endFrom, d.notAfter, d.method, d.note)
+            Bundle.EventDating(
+              com.histmersion.api.library.Citekey(d.citekey.value),
+              d.sourceUid,
+              d.notBefore.map(v => Bundle.EventDating.NotBefore(v.value)),
+              d.beginBy.map(v => Bundle.EventDating.BeginBy(v.value)),
+              d.endFrom.map(v => Bundle.EventDating.EndFrom(v.value)),
+              d.notAfter.map(v => Bundle.EventDating.NotAfter(v.value)),
+              d.method.map(m => Bundle.EventDating.Method(m.value)),
+              d.note.map(n => Bundle.EventDating.Note(n.value))
+            )
           ),
         edges
           .getOrElse(r.uid, Vector.empty)
           .toList
-          .map(g => Bundle.EventEdge(g.dstUid, g.kind, g.citekey, g.sourceUid, g.note)),
+          .map(g =>
+            Bundle.EventEdge(
+              g.dstUid,
+              Bundle.EventEdge.Kind(g.kind.value),
+              com.histmersion.api.library.Citekey(g.citekey.value),
+              g.sourceUid,
+              g.note.map(n => Bundle.EventEdge.Note(n.value))
+            )
+          ),
         people
           .getOrElse(r.uid, Vector.empty)
           .toList
-          .map(p => Bundle.EventParticipant(p.actor, p.role, p.citekey, p.sourceUid)),
-        r.updatedAt,
-        scale = r.scale,
-        catalogue = r.catalogue,
-        names = Option(r.names).filter(_.nonEmpty),
-        wikidata = r.wikidata,
-        central = r.central,
-        plusMinus = r.plusMinus,
-        datingMethod = r.datingMethod
+          .map(p =>
+            Bundle.EventParticipant(
+              Bundle.EventParticipant.Actor(p.actor.value),
+              Bundle.EventParticipant.Role(p.role.value),
+              p.citekey.map(c => com.histmersion.api.library.Citekey(c.value)),
+              p.sourceUid
+            )
+          ),
+        Bundle.Event.UpdatedAt(r.updatedAt.value),
+        scale = r.scale.map(s => Bundle.Event.Scale(s.value)),
+        catalogue = r.catalogue.map(c => Bundle.Event.Catalogue(c.value)),
+        names = Option(r.names).filter(_.nonEmpty).map(_.map(n => Bundle.Event.Names(n.value))),
+        wikidata = r.wikidata.map(w => Bundle.Event.Wikidata(w.value)),
+        central = r.central.map(c => Bundle.Event.Central(c.value)),
+        plusMinus = r.plusMinus.map(p => Bundle.Event.PlusMinus(p.value)),
+        datingMethod = r.datingMethod.map(m => Bundle.Event.DatingMethod(m.value))
       )
     }
 
   /** Old event ids and goal slugs (V053) of the events and goals in scope. */
   def eventAliases(scope: BundleScope)(using DbCon): Vector[Bundle.EventAlias] =
-    (Sql.raw(s"""SELECT x.alias, e.uid, ${ts("x.created_at")}
-                FROM event_aliases x JOIN events e ON e.id = x.event_id WHERE """) ++
+    (Sql.raw(Sql.Text(s"""SELECT x.alias, e.uid, ${ts("x.created_at")}
+                FROM event_aliases x JOIN events e ON e.id = x.event_id WHERE """)) ++
       where(scope, "e.uid", "x.created_at") ++ """ ORDER BY x.alias COLLATE "C"""").frag
       .query[(String, UUID, String)]
       .run()
-      .map(Bundle.EventAlias.apply)
+      .map((alias, uid, at) => Bundle.EventAlias(Bundle.EventAlias.Alias(alias), uid, Bundle.EventAlias.CreatedAt(at)))
 
   /** What the catalogues say about the events in scope (`event_catalogue`): by event, then the record's key. */
   def eventCatalogue(scope: BundleScope)(using DbCon): Vector[Bundle.EventCatalogue] =
-    (Sql.raw(s"""SELECT e.uid, c.provider, c.provider_id, c.url, c.label, c.kind, c.not_before, c.begin_by,
+    (Sql.raw(Sql.Text(s"""SELECT e.uid, c.provider, c.provider_id, c.url, c.label, c.kind, c.not_before, c.begin_by,
                        c.end_from, c.not_after, c.lat, c.lon, c.vei, c.magnitude, c.deaths, c.historicity,
                        c.record::text, ${ts("c.retrieved_at")}
-                FROM event_catalogue c JOIN events e ON e.id = c.event_id WHERE """) ++
+                FROM event_catalogue c JOIN events e ON e.id = c.event_id WHERE """)) ++
       where(scope, "e.uid", "c.retrieved_at") ++
       """ ORDER BY e.uid, c.provider COLLATE "C", c.provider_id COLLATE "C"""").frag.query[BCatalogueRow].run().map { r =>
       Bundle.EventCatalogue(
         r.eventUid,
-        r.provider,
-        r.providerId,
-        r.url,
-        r.label,
-        r.kind,
-        r.notBefore,
-        r.beginBy,
-        r.endFrom,
-        r.notAfter,
-        r.lat,
-        r.lon,
-        r.vei,
-        r.magnitude,
-        r.deaths,
-        r.historicity,
-        io.circe.parser.parse(r.record).getOrElse(io.circe.Json.obj()),
-        r.retrievedAt
+        Bundle.EventCatalogue.Provider(r.provider.value),
+        Bundle.EventCatalogue.ProviderId(r.providerId.value),
+        r.url.map(u => Bundle.EventCatalogue.Url(u.value)),
+        Bundle.EventCatalogue.Label(r.label.value),
+        Bundle.EventCatalogue.Kind(r.kind.value),
+        r.notBefore.map(v => Bundle.EventCatalogue.NotBefore(v.value)),
+        r.beginBy.map(v => Bundle.EventCatalogue.BeginBy(v.value)),
+        r.endFrom.map(v => Bundle.EventCatalogue.EndFrom(v.value)),
+        r.notAfter.map(v => Bundle.EventCatalogue.NotAfter(v.value)),
+        r.lat.map(v => com.histmersion.api.catalogue.Latitude(v.value)),
+        r.lon.map(v => com.histmersion.api.catalogue.Longitude(v.value)),
+        r.vei.map(v => Bundle.EventCatalogue.Vei(v.value)),
+        r.magnitude.map(v => Bundle.EventCatalogue.Magnitude(v.value)),
+        r.deaths.map(v => Bundle.EventCatalogue.Deaths(v.value)),
+        Bundle.EventCatalogue.Historicity(r.historicity.value),
+        io.circe.parser.parse(r.record.value).getOrElse(io.circe.Json.obj()),
+        Bundle.EventCatalogue.RetrievedAt(r.retrievedAt.value)
       )
     }
 
@@ -135,10 +160,10 @@ private[events] object EventBundleRepo:
     */
   def corrections(scope: BundleScope)(using DbCon): Vector[Bundle.Correction] =
     val eventUid = "(SELECT x.uid FROM events x WHERE c.target_kind = 'event' AND x.id = c.target_id)"
-    (Sql.raw(s"""SELECT c.target_kind, c.target_id, $eventUid, c.field, c.value::text, c.upstream,
+    (Sql.raw(Sql.Text(s"""SELECT c.target_kind, c.target_id, $eventUid, c.field, c.value::text, c.upstream,
                        c.upstream_value::text, c.upstream_now::text, c.status, ${ts("c.created_at")},
                        ${ts("c.updated_at")}, ${ts("c.checked_at")}
-                FROM corrections c WHERE """) ++
+                FROM corrections c WHERE """)) ++
       where(scope, eventUid, "greatest(c.updated_at, coalesce(c.checked_at, c.updated_at))") ++
       """ ORDER BY c.target_kind COLLATE "C", c.target_id COLLATE "C", c.field COLLATE "C"""").frag
       .query[Bundle.Correction]
@@ -147,9 +172,9 @@ private[events] object EventBundleRepo:
   // ── what a merge plan compares ───────────────────────────────────────────────────────────────
 
   /** Who has each of `labels` here, by the query's (label, uid) rows. */
-  private def owners(q: String, labels: List[com.histmersion.domain.catalogue.events.BEventRow.Label])(using DbCon): Map[com.histmersion.domain.catalogue.events.BEventRow.Id, UUID] =
+  private def owners(q: String, labels: List[com.histmersion.domain.catalogue.events.BEventRow.Id])(using DbCon): Map[com.histmersion.domain.catalogue.events.BEventRow.Id, UUID] =
     if labels.isEmpty then Map.empty
-    else Sql.of(q, Param.A(labels.distinct)).frag.query[(String, UUID)].run().toMap
+    else Sql.of(Sql.Text(q), Param.A(labels.distinct.map(l => Param.A.V(l.value)))).frag.query[(com.histmersion.domain.catalogue.events.BEventRow.Id, UUID)].run().toMap
 
   /** The events here among `ids` → their uids. */
   def eventsNamed(ids: List[com.histmersion.domain.catalogue.events.BEventRow.Id])(using DbCon): Map[com.histmersion.domain.catalogue.events.BEventRow.Id, UUID] =
@@ -166,14 +191,14 @@ private[events] object EventBundleRepo:
 
   /** The id an event has here now, when its uid names one. */
   private def eventIdOf(u: UUID)(using DbCon): Option[com.histmersion.domain.catalogue.events.BEventRow.Id] =
-    sql"SELECT id FROM events WHERE uid = $u".query[String].run().headOption
+    sql"SELECT id FROM events WHERE uid = $u".query[com.histmersion.domain.catalogue.events.BEventRow.Id].run().headOption
 
   private def eventExists(id: com.histmersion.domain.catalogue.events.BEventRow.Id)(using DbCon): Boolean =
     sql"SELECT 1 FROM events WHERE id = $id".query[Int].run().nonEmpty
 
   /** Each event of the event-catalogue sets looked up once, in one step. */
   private def eventIdsOf()(using DbCon): UUID => Option[com.histmersion.domain.catalogue.events.BEventRow.Id] =
-    val ids = scala.collection.mutable.Map.empty[UUID, Option[String]]
+    val ids = scala.collection.mutable.Map.empty[UUID, Option[com.histmersion.domain.catalogue.events.BEventRow.Id]]
     u => ids.getOrElseUpdate(u, eventIdOf(u))
 
   /** An event renamed over there: the rename here first — its datings, edges and links follow, and the old id stays an
@@ -181,13 +206,19 @@ private[events] object EventBundleRepo:
     */
   def eventRenames(w: BundleImport.Writer): Unit =
     given DbCon = w.transaction
-    w.followRenames(w.es.events, _.uid, _.id, w.local.events.map(e => e.uid -> e.id).toMap, com.histmersion.util.data.exchange.PlanQuestions.LabelTakenWhat("event"))(EventRepo.rename)
+    w.followRenames(
+      w.es.events,
+      _.uid,
+      e => BundleImport.Writer.Label(e.id.value),
+      w.local.events.map(e => e.uid -> BundleImport.Writer.Label(e.id.value)).toMap,
+      com.histmersion.util.data.exchange.PlanQuestions.LabelTakenWhat("event")
+    )((from, to) => EventRepo.rename(BEventRow.Id(from.value), BEventRow.Id(to.value)))
 
   /** Events: the rows, then their parents (a parent may come later in uid order), then the sets. */
   def eventsIn(w: BundleImport.Writer): Unit =
     given DbCon = w.transaction
     val placeHere = PlacesCarried.placeHere(w)
-    val events = w.es.events.filter(e => w.writes(e.uid))
+    val events = w.es.events.filter(e => w.writes(e.uid).value)
     events.foreach { e =>
       val names = e.names.getOrElse(Nil)
       sql"""INSERT INTO events (uid, origin, id, label, kind, not_before, begin_by, end_from, not_after,
@@ -195,8 +226,8 @@ private[events] object EventBundleRepo:
               catalogue, names, wikidata, central, plus_minus, dating_method)
             VALUES (${e.uid}, ${e.origin}, ${e.id}, ${e.label}, ${e.kind}, ${e.notBefore}, ${e.beginBy},
               ${e.endFrom}, ${e.notAfter}, ${e.historicity}, ST_GeomFromEWKB(decode(${e.geom}, 'hex')),
-              ${e.placeId.map(placeHere)}, ${e.description}, ${e.citekey}, ${e.updatedAt}::timestamptz,
-              ${e.scale.flatMap(com.histmersion.api.catalogue.EventScale.parse(_).flatten)},
+              ${e.placeId.map(p => placeHere(com.histmersion.domain.catalogue.places.BPlaceRow.Id(p.value)))}, ${e.description}, ${e.citekey}, ${e.updatedAt}::timestamptz,
+              ${e.scale.flatMap(s => com.histmersion.api.catalogue.EventScale.parse(com.histmersion.api.catalogue.EventSummary.Scale(s.value)).flatten)},
               ${e.catalogue}, $names::text[], ${e.wikidata}, ${e.central}, ${e.plusMinus}, ${e.datingMethod})
             ON CONFLICT (uid) DO UPDATE SET origin = EXCLUDED.origin, label = EXCLUDED.label,
               kind = EXCLUDED.kind, not_before = EXCLUDED.not_before, begin_by = EXCLUDED.begin_by,
@@ -215,20 +246,20 @@ private[events] object EventBundleRepo:
       sql"DELETE FROM event_edges WHERE src_id = $id".update.run()
       sql"DELETE FROM event_participants WHERE event_id = $id".update.run()
       e.datings.foreach { d =>
-        val ck = d.sourceUid.flatMap(w.citekeyHere).getOrElse(d.citekey)
+        val ck = d.sourceUid.flatMap(w.citekeyHere).map(_.value).getOrElse(d.citekey.value)
         sql"""INSERT INTO event_datings (event_id, citekey, not_before, begin_by, end_from, not_after, method, note)
               VALUES ($id, $ck, ${d.notBefore}, ${d.beginBy}, ${d.endFrom}, ${d.notAfter}, ${d.method}, ${d.note})
               ON CONFLICT DO NOTHING""".update.run()
       }
       e.edges.foreach { g =>
-        val ck = g.sourceUid.flatMap(w.citekeyHere).getOrElse(g.citekey)
+        val ck = g.sourceUid.flatMap(w.citekeyHere).map(_.value).getOrElse(g.citekey.value)
         eventIdOf(g.dstUid).foreach { dst =>
           sql"""INSERT INTO event_edges (src_id, dst_id, kind, citekey, note)
                 VALUES ($id, $dst, ${g.kind}, $ck, ${g.note}) ON CONFLICT DO NOTHING""".update.run()
         }
       }
       e.participants.foreach { p =>
-        val ck = p.sourceUid.flatMap(w.citekeyHere).orElse(p.citekey)
+        val ck = p.sourceUid.flatMap(w.citekeyHere).map(_.value).orElse(p.citekey.map(_.value))
         sql"""INSERT INTO event_participants (event_id, actor, role, citekey)
               VALUES ($id, ${p.actor}, ${p.role}, $ck) ON CONFLICT DO NOTHING""".update.run()
       }
@@ -258,14 +289,14 @@ private[events] object EventBundleRepo:
     import com.histmersion.api.exchange.Bundle.EventSets.newer
     if w.es.eventCatalogue.nonEmpty then
       val here = Sql
-        .raw(s"SELECT provider, provider_id, ${ts("retrieved_at")} FROM event_catalogue")
+        .raw(Sql.Text(s"SELECT provider, provider_id, ${ts("retrieved_at")} FROM event_catalogue"))
         .frag
-        .query[(String, String, String)]
+        .query[(String, String, Bundle.UpdatedAt)]
         .run()
         .map((p, i, at) => (p, i) -> at)
         .toMap
       w.es.eventCatalogue.foreach { c =>
-        eventIds(c.eventUid).filter(_ => newer(here.get((c.provider, c.providerId)), Some(c.retrievedAt))).foreach {
+        eventIds(c.eventUid).filter(_ => newer(here.get((c.provider.value, c.providerId.value)), Some(Bundle.UpdatedAt(c.retrievedAt.value)))).foreach {
           id =>
             val record = BundleFormat.printer.print(c.record)
             sql"""INSERT INTO event_catalogue (provider, provider_id, event_id, url, label, kind, not_before, begin_by,
@@ -291,19 +322,21 @@ private[events] object EventBundleRepo:
     if w.es.corrections.nonEmpty then
       val clock = s"greatest(${ts("updated_at")}, coalesce(${ts("checked_at")}, ''))"
       val here = Sql
-        .raw(s"SELECT target_kind, target_id, field, $clock FROM corrections")
+        .raw(Sql.Text(s"SELECT target_kind, target_id, field, $clock FROM corrections"))
         .frag
-        .query[(String, String, String, String)]
+        .query[(String, String, String, Bundle.UpdatedAt)]
         .run()
         .map((k, t, f, at) => (k, t, f) -> at)
         .toMap
       w.es.corrections.foreach { c =>
         // an event's correction follows the event here (by uid); a place's names a gazetteer id
         val target =
-          if c.targetKind == "event" then c.targetUid.fold(Option.when(eventExists(c.targetId))(c.targetId))(eventIds)
-          else Some(placeHere(c.targetId))
-        val at = (c.updatedAt :: c.checkedAt.toList).max
-        target.filter(t => newer(here.get((c.targetKind, t, c.field)), Some(at))).foreach { t =>
+          if c.targetKind.value == "event" then
+            c.targetUid
+              .fold(Option.when(eventExists(BEventRow.Id(c.targetId.value)))(c.targetId.value))(u => eventIds(u).map(_.value))
+          else Some(placeHere(com.histmersion.domain.catalogue.places.BPlaceRow.Id(c.targetId.value)).value)
+        val at = (c.updatedAt.value :: c.checkedAt.toList.map(_.value)).max
+        target.filter(t => newer(here.get((c.targetKind.value, t, c.field.value)), Some(Bundle.UpdatedAt(at)))).foreach { t =>
           sql"""INSERT INTO corrections (target_kind, target_id, field, value, upstream, upstream_value, upstream_now,
                   status, created_at, updated_at, checked_at)
                 VALUES (${c.targetKind}, $t, ${c.field}, ${c.value}::jsonb, ${c.upstream}, ${c.upstreamValue}::jsonb,
