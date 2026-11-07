@@ -4,10 +4,10 @@ import com.histmersion.plugin.*
 import com.histmersion.plugin.Plugin.Config.given
 
 trait Greeter:
-  def greet(who: com.histmersion.fixtures.hello.Greeter.GreetWho): com.histmersion.fixtures.hello.Greeter.GreetResult
+  def greet(who: Greeter.Who): Greeter.Greeting
 
 object Greeter:
-  type GreetResult = GreetResult.T
-  object GreetResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type GreetWho = GreetWho.T
-  object GreetWho extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type Greeting = Greeting.T
+  object Greeting extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type Who = Who.T
+  object Who extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]

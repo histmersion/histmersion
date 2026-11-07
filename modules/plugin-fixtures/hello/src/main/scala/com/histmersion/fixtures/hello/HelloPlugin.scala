@@ -10,7 +10,7 @@ final class HelloPlugin extends Plugin:
   type Config = HelloConfig
   val info = Plugin.Info(_root_.com.histmersion.plugin.Plugin.Info.Id("hello"), _root_.com.histmersion.plugin.Plugin.Info.Version("0.1.0"), _root_.com.histmersion.plugin.Plugin.Info.SpiVersion(Spi.Version))
 
-  def register(config: HelloConfig, ctx: Plugin.Context): Either[com.histmersion.fixtures.hello.HelloPlugin.RegisterResultPart1, Unit] =
+  def register(config: HelloConfig, ctx: Plugin.Context): Either[Plugin.RegisterResultPart1, Unit] =
     scala.util
       .Try(
         Class
@@ -21,12 +21,9 @@ final class HelloPlugin extends Plugin:
       )
       .toEither
       .left
-      .map(e => s"greeter '${config.greeter}': ${e.getClass.getSimpleName}: ${e.getMessage}")
+      .map(e => Plugin.RegisterResultPart1(s"greeter '${config.greeter}': ${e.getClass.getSimpleName}: ${e.getMessage}"))
       .flatMap { greeter =>
-        ctx.log.info(Plugin.Log.InfoMessage(s"hello: ${greeter.greet(Greeter.GreetWho(config.greeting.value)).value} (${config.mirrors.size} mirror(s))"))
-        ctx.sourceFetchers.add(_root_.com.histmersion.plugin.Registry.AddId("hello"), HelloFetcher(_root_.com.histmersion.fixtures.hello.HelloFetcher.Mirrors(config.mirrors.size)))
+        ctx.log.info(Plugin.Log.InfoMessage(s"hello: ${greeter.greet(Greeter.Who(config.greeting.value)).value} (${config.mirrors.size} mirror(s))"))
+        ctx.sourceFetchers.add(_root_.com.histmersion.plugin.Registry.AddId("hello"), HelloFetcher(HelloFetcher.Mirrors(config.mirrors.size))).left.map(e => Plugin.RegisterResultPart1(e.value))
       }
 
-object HelloPlugin:
-  type RegisterResultPart1 = RegisterResultPart1.T
-  object RegisterResultPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]

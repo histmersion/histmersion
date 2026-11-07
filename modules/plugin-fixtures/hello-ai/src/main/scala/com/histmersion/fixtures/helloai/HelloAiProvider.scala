@@ -8,12 +8,13 @@ final class HelloAiProvider(replies: List[Reply], hasToken: HelloAiProvider.HasT
   override val description = _root_.com.histmersion.plugin.AiProvider.DescriptionResult("answers from its config; calls no model")
   override val capabilities = AiCapabilities(tools = AiCapabilities.Tools(true), structuredOutput = AiCapabilities.StructuredOutput(false))
 
-  override def check(model: String): Either[String, Unit] =
-    Either.cond(model != "broken", (), "the model 'broken' cannot be built (a test of the check)")
+  override def check(model: AiProvider.CheckModel): Either[AiProvider.CheckResultPart1, Unit] =
+    Either.cond(model.value != "broken", (), AiProvider.CheckResultPart1("the model 'broken' cannot be built (a test of the check)"))
 
-  override def models(http: AiHttp): Either[String, List[String]] = Right(List("echo", "limited"))
+  override def models(http: AiHttp): Either[AiProvider.ModelsResultPart1, List[AiProvider.ModelsResultPart2]] =
+    Right(List(AiProvider.ModelsResultPart2("echo"), AiProvider.ModelsResultPart2("limited")))
 
-  override def doctor(online: Boolean, http: AiHttp): List[AiCheck] =
+  override def doctor(online: AiProvider.DoctorOnline, http: AiHttp): List[AiCheck] =
     List(
       AiCheck(_root_.com.histmersion.plugin.AiCheck.Name("script"), if replies.isEmpty then _root_.com.histmersion.plugin.AiCheck.Level("warn") else _root_.com.histmersion.plugin.AiCheck.Level("ok"), _root_.com.histmersion.plugin.AiCheck.Detail(s"${replies.size} scripted repl(ies)")),
       AiCheck(_root_.com.histmersion.plugin.AiCheck.Name("token"), _root_.com.histmersion.plugin.AiCheck.Level("ok"), if (hasToken).value then _root_.com.histmersion.plugin.AiCheck.Detail("given (never shown)") else _root_.com.histmersion.plugin.AiCheck.Detail("none asked"))
