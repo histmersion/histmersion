@@ -21,6 +21,7 @@ import com.histmersion.api.library.Source
 import com.histmersion.api.library.Facet
 import com.histmersion.api.library.Finding
 import com.histmersion.util.database.NewtypeColumns.given
+import com.histmersion.api.library.SourceColumns.given
 
 /** `Filter` → SQL, as a **pure function** (plan §1.0/§2.2): every builder here returns a value that can be asserted on
   * in a unit test without a database. `SourceRepo` is the only thing that turns one into a Magnum [[Frag]] and runs it.
@@ -512,6 +513,9 @@ object FilterSql:
 
   // ── pure match explanation ───────────────────────────────────────────────────────────────────
 
+  type SourceDoi = SourceDoi.T
+  object SourceDoi extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
   /** One row of [[sourcesQuery]]: a `SearchHit` plus the extra columns `why` needs. */
   final case class SourceRow(
       citekey: com.histmersion.domain.library.Citekey,
@@ -525,7 +529,7 @@ object FilterSql:
       summary: Option[SearchHit.Summary],
       tags: List[Filter.Tags],
       authors: List[com.histmersion.api.library.AuthorName],
-      doi: Option[com.histmersion.domain.library.Doi] = None,
+      doi: Option[SourceDoi] = None,
       bodyHit: Boolean,
       snippet: Option[SearchHit.Snippet] = None,
       matchedHeading: Option[SearchHit.MatchedHeading] = None

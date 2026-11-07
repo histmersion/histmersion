@@ -3,6 +3,7 @@ package com.histmersion.domain.library.acquisition
 import com.histmersion.domain.CoreQuota
 
 import com.histmersion.util.database.given
+import com.histmersion.util.database.NewtypeColumns.given
 import com.augustnagro.magnum.*
 import java.time.{Instant, LocalDate}
 

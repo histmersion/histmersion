@@ -535,7 +535,7 @@ private[sources] object SourceRepo:
     */
   private def retargetSourceText(needle: com.histmersion.domain.library.sources.referrers.SourceRename.Needle, to: com.histmersion.domain.library.Citekey => Option[com.histmersion.domain.library.Citekey])(using DbCon): List[(com.histmersion.domain.library.Citekey, com.histmersion.RowCount)] =
     sql"""SELECT citekey, notes, summary FROM sources
-          WHERE strpos(lower(coalesce(notes, '') || ' ' || coalesce(summary, '')), ${needle.value}) > 0
+          WHERE strpos(lower(coalesce(notes, '') || ' ' || coalesce(summary, '')), $needle) > 0
           ORDER BY citekey"""
       .query[(com.histmersion.domain.library.Citekey, Option[String], Option[String])]
       .run()
@@ -547,7 +547,7 @@ private[sources] object SourceRepo:
         val s = summary.map(v => WikiLinks.retarget(WikiLinks.Body(v), target))
         val moved = n.fold(0)(_._2.value) + s.fold(0)(_._2.value)
         Option.when(moved > 0) {
-          sql"""UPDATE sources SET notes = ${n.map(_._1.value)}, summary = ${s.map(_._1.value)}, updated_at = now()
+          sql"""UPDATE sources SET notes = ${n.map(_._1)}, summary = ${s.map(_._1)}, updated_at = now()
                 WHERE citekey = $ck""".update.run()
           ck -> com.histmersion.RowCount(moved)
         }
@@ -658,7 +658,7 @@ private[sources] object SourceRepo:
       citekey: com.histmersion.domain.library.Citekey,
       title: GapRow.Title,
       authors: List[GapRow.Authors],
-      doi: Option[com.histmersion.domain.library.Doi],
+      doi: Option[GapRow.Doi],
       year: Option[com.histmersion.Year],
       venue: Option[GapRow.Venue],
       summary: Option[GapRow.Summary],
@@ -683,6 +683,8 @@ private[sources] object SourceRepo:
       )
 
   object GapRow:
+    type Doi = Doi.T
+    object Doi extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
     type Title = com.histmersion.domain.Title
     val Title: _root_.com.histmersion.domain.Title.type = _root_.com.histmersion.domain.Title
     type Authors = Authors.T

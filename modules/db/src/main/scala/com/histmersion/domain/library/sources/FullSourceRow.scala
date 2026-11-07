@@ -13,7 +13,7 @@ final private[sources] case class FullSourceRow(
     citekey: com.histmersion.domain.library.Citekey,
     title: FullSourceRow.Title,
     authors: List[FullSourceRow.Authors],
-    doi: Option[com.histmersion.domain.library.Doi],
+    doi: Option[FullSourceRow.Doi],
     year: Option[com.histmersion.Year],
     venue: Option[FullSourceRow.Venue],
     status: Source.Status,
@@ -33,6 +33,8 @@ final private[sources] case class FullSourceRow(
 ) derives DbCodec
 
 object FullSourceRow:
+  type Doi = Doi.T
+  object Doi extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type Title = com.histmersion.domain.Title
   val Title: _root_.com.histmersion.domain.Title.type = _root_.com.histmersion.domain.Title
   type Authors = Authors.T

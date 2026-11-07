@@ -1,6 +1,7 @@
 package com.histmersion.domain.automation.worklists
 
 import com.histmersion.util.database.given
+import com.histmersion.util.database.NewtypeColumns.given
 import com.histmersion.util.data.exchange.BundleImport
 import com.histmersion.util.database.Sql
 import com.histmersion.util.data.exchange.BundleScope

@@ -10,3 +10,11 @@ private[histmersion] object SourceColumns:
       e => com.histmersion.WireEnumValues.Wire(e.wire.value),
       Source.Status.Unassessed
     )
+
+  given apiConfidence: DbCodec[Option[Confidence]] = DbCodec[Option[String]].biMap(
+    _.flatMap(s => Confidence.fromString(Confidence.Wire(s.trim))),
+    _.map(_.wire.value)
+  )
+
+  given apiEdgeKind: DbCodec[Edge.Kind] =
+    Vocab.codec(s => Edge.Kind.fromWire(Edge.Kind.Wire(s.value)), e => com.histmersion.WireEnumValues.Wire(Edge.Kind.wireOf(e).value), Edge.Kind.References)
