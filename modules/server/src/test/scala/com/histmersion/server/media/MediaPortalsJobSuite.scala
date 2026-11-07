@@ -4,7 +4,7 @@ import com.histmersion.testsupport.ComparedByValue.given
 
 import hearth.kindlings.optics.syntax.*
 
-import com.histmersion.domain.media.imports.ImportFixtures
+import com.histmersion.domain.media.imports.{ImportFixtures, Target}
 import com.histmersion.domain.media.assets.MediaItemRow
 import com.histmersion.domain.catalogue.places.ExternalIds
 import com.histmersion.server.MediaWiring
@@ -239,10 +239,10 @@ class MediaPortalsJobSuite extends com.histmersion.db.DbSuite:
         pleiadesOnly = ImportFixtures.PleiadesOnly(true)
       )
       .fold(p => fail(p.value), identity)
-      .map(_.id.value)
+      .map(_.id)
       .toSet
-    assert(Set("zqmp_site", "pleiades_99900002").subsetOf(ts), ts.toString)
-    assert(!ts.contains("zqmp_region"))
+    assert(Set(Target.Id("zqmp_site"), Target.Id("pleiades_99900002")).subsetOf(ts), ts.toString)
+    assert(!ts.contains(Target.Id("zqmp_region")))
     val none = ImportFixtures.collectionTargets(
       ds,
       MediaItemRow.Provider(MediaProvider.Pleiades),

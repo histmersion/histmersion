@@ -60,7 +60,7 @@ class SourceDeleteSuite extends com.histmersion.db.DbSuite:
   private lazy val cfg =
     val b = AppConfig.load()
     b.modify(
-      _.db).setTo(b.db.modify(_.url).setTo(testDb.get)).modify(_.converter).setTo(b.converter.modify(_.spoolDir).setTo(spool.toString)).modify(_.acquire).setTo(b.acquire.modify(_.spoolDir).setTo(acquire.toString)
+      _.db).setTo(b.db.modify(_.url).setTo(com.histmersion.config.DbConfig.Url(testDb.get))).modify(_.converter).setTo(b.converter.modify(_.spoolDir).setTo(com.histmersion.config.ConverterConfig.SpoolDir(spool.toString))).modify(_.acquire).setTo(b.acquire.modify(_.spoolDir).setTo(com.histmersion.config.AcquireConfig.SpoolDir(acquire.toString))
     )
   private lazy val deps =
     val ds = testPool(cfg.db)

@@ -133,7 +133,7 @@ class BackupSuite extends munit.FunSuite:
 
     val base = cfgWith(d)
     val svc =
-      BackupFixtures.service(base.modify(_.backups).setTo(base.backups.modify(_.pgBinDir).setTo(BackupsConfig.PgBinDir(bin.toString)).modify(_.timeoutSeconds).setTo(1)))
+      BackupFixtures.service(base.modify(_.backups).setTo(base.backups.modify(_.pgBinDir).setTo(BackupsConfig.PgBinDir(bin.toString)).modify(_.timeoutSeconds).setTo(com.histmersion.config.BackupsConfig.TimeoutSeconds(1))))
 
     val started = System.nanoTime()
     val r = svc.create(Instant.now())
@@ -199,7 +199,7 @@ class BackupSuite extends munit.FunSuite:
     old.foreach(n => Files.writeString(d.resolve(n), "old"))
     Files.writeString(d.resolve("my-own-copy.dump"), "the user's") // not ours: never pruned
     val base = cfgWith(d)
-    val svc = BackupFixtures.service(base.modify(_.backups).setTo(base.backups.modify(_.pgBinDir).setTo(BackupsConfig.PgBinDir(bin.toString)).modify(_.keep).setTo(3)))
+    val svc = BackupFixtures.service(base.modify(_.backups).setTo(base.backups.modify(_.pgBinDir).setTo(BackupsConfig.PgBinDir(bin.toString)).modify(_.keep).setTo(com.histmersion.config.BackupsConfig.Keep(3))))
     val r = svc.create(Instant.parse("2026-09-26T12:00:00Z")).fold(e => fail(e.message.value), identity)
     assertEquals(r.pruned, List("histmersion-20260101T000000Z.dump", "histmersion-20260102T000000Z.dump"))
     val left = Files.list(d).map(_.getFileName.toString).toList.asScala.toSet - "bin"

@@ -31,7 +31,7 @@ class WriteHttpSuite extends munit.FunSuite:
 
   test("put → get → patch → export over HTTP, with 412 on a stale precondition"):
     val base = AppConfig.load()
-    val cfg = base.modify(_.db).setTo(base.db.modify(_.url).setTo(testDb.get))
+    val cfg = base.modify(_.db).setTo(base.db.modify(_.url).setTo(com.histmersion.config.DbConfig.Url(testDb.get)))
     supervised {
       val b = Composition.server(cfg, com.histmersion.config.ServerConfig.Host("127.0.0.1"), com.histmersion.config.ServerConfig.Port(0)).start()
       val url = s"http://127.0.0.1:${b.port}"
@@ -115,7 +115,7 @@ class WriteHttpSuite extends munit.FunSuite:
   // #698 / #745 / #721 through the wire: what a JSON caller (the MCP tool, `patch --json`) sends
   test("patch over HTTP: a foreign edge src is a 400, null clears metadata, calibreId re-links"):
     val base = AppConfig.load()
-    val cfg = base.modify(_.db).setTo(base.db.modify(_.url).setTo(testDb.get))
+    val cfg = base.modify(_.db).setTo(base.db.modify(_.url).setTo(com.histmersion.config.DbConfig.Url(testDb.get)))
     val k = "zz_http_patch_rules"
     val dst = "zz_http_patch_dst"
     supervised {
@@ -168,7 +168,7 @@ class WriteHttpSuite extends munit.FunSuite:
   // #813: a misplaced or unknown key used to be dropped and the write reported success
   test("strict writes over HTTP and MCP: an unknown or misplaced key is a 400 naming it, and nothing is written"):
     val base = AppConfig.load()
-    val cfg = base.modify(_.db).setTo(base.db.modify(_.url).setTo(testDb.get))
+    val cfg = base.modify(_.db).setTo(base.db.modify(_.url).setTo(com.histmersion.config.DbConfig.Url(testDb.get)))
     val k = "zz_http_strict"
     supervised {
       val b = Composition.server(cfg, com.histmersion.config.ServerConfig.Host("127.0.0.1"), com.histmersion.config.ServerConfig.Port(0)).start()
@@ -211,7 +211,7 @@ class WriteHttpSuite extends munit.FunSuite:
     "an attestation with an unknown target type is a 400 naming the five, a missing source a 404 — over HTTP and MCP"
   ):
     val base = AppConfig.load()
-    val cfg = base.modify(_.db).setTo(base.db.modify(_.url).setTo(testDb.get))
+    val cfg = base.modify(_.db).setTo(base.db.modify(_.url).setTo(com.histmersion.config.DbConfig.Url(testDb.get)))
     val k = "zz_http_attest"
     supervised {
       val b = Composition.server(cfg, com.histmersion.config.ServerConfig.Host("127.0.0.1"), com.histmersion.config.ServerConfig.Port(0)).start()
@@ -239,7 +239,7 @@ class WriteHttpSuite extends munit.FunSuite:
   // #766: put_source rewrote a foreign edge src to the citekey (the #698 pattern, fixed for patch only)
   test("put over HTTP: a foreign edge src is a 400; an omitted src or an old citekey of the source is accepted"):
     val base = AppConfig.load()
-    val cfg = base.modify(_.db).setTo(base.db.modify(_.url).setTo(testDb.get))
+    val cfg = base.modify(_.db).setTo(base.db.modify(_.url).setTo(com.histmersion.config.DbConfig.Url(testDb.get)))
     val k = "zz_http_put_edges"
     val dst = "zz_http_put_edges_dst"
     supervised {

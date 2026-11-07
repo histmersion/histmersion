@@ -61,5 +61,5 @@ object AcquisitionStoreSuite:
           def goal(slug: String) =
             val _ = com.histmersion.domain.automation.goals
               .GoalService(db)
-              .put(Goal.Slug(slug), com.histmersion.api.automation.Goal.Put(com.histmersion.api.automation.Goal.Title(s"Goal $slug")))
+              .put(Goal.Slug.applyUnsafe(slug), com.histmersion.api.automation.Goal.Put(com.histmersion.api.automation.Goal.Title(s"Goal $slug")))
       }

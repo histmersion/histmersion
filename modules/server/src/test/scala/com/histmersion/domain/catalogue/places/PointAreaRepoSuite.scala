@@ -284,5 +284,5 @@ class PointAreaRepoSuite extends com.histmersion.db.DbSuite with com.histmersion
   test("the importer's prune passes over a place a person curated (place_overrides), as over evidence"):
     seed()
     val ids = connect(ds)(PointAreaRepo.ofSourceIn(com.histmersion.domain.catalogue.places.PointAreas.Group.Source("wikidata"), kinds)).toSet
-    assert(ids.contains(com.histmersion.domain.catalogue.Place.Id(Region)) && ids.contains(com.histmersion.domain.catalogue.Place.Id(Polity)), ids.toString)
-    assert(!ids.contains(com.histmersion.domain.catalogue.Place.Id(Curated)) && !ids.contains(com.histmersion.domain.catalogue.Place.Id(Pinned)), ids.toString)
+    assert(ids.contains(com.histmersion.domain.catalogue.Place.Id.applyUnsafe(Region)) && ids.contains(com.histmersion.domain.catalogue.Place.Id.applyUnsafe(Polity)), ids.toString)
+    assert(!ids.contains(com.histmersion.domain.catalogue.Place.Id.applyUnsafe(Curated)) && !ids.contains(com.histmersion.domain.catalogue.Place.Id.applyUnsafe(Pinned)), ids.toString)

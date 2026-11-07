@@ -39,7 +39,7 @@ abstract class CitationServiceContract extends LibraryStoreSuite:
       edges
     )
 
-  private def dom(c: com.histmersion.api.library.Citekey) = com.histmersion.domain.library.Citekey(c.value)
+  private def dom(c: com.histmersion.api.library.Citekey) = com.histmersion.domain.library.Citekey.applyUnsafe(c.value)
   private val A = com.histmersion.api.library.Citekey("zqa1990_a")
   private val B = com.histmersion.api.library.Citekey("zqb2001_b")
   private val C = com.histmersion.api.library.Citekey("zqc1975_c")

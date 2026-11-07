@@ -240,7 +240,7 @@ class PluginToolSuite extends munit.FunSuite:
       (m.mainClass, m.graalvm, m.spiVersion),
       ("com.histmersion.server.histmersionServer", "25.0.4.1.1", Spi.Version)
     )
-    val actual = m.files.map(f => f.file -> com.histmersion.Sha256(RelinkPlugins.sha256(kit.resolve(f.file.value)).value)).toMap
+    val actual = m.files.map(f => f.file -> com.histmersion.Sha256.applyUnsafe(RelinkPlugins.sha256(kit.resolve(f.file.value)).value)).toMap
     assertEquals(PluginKit.verifyKit(m.files, actual), Nil)
 
   test("relink exit boundary preserves JSON, usage and failure channels") {

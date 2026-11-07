@@ -1,7 +1,8 @@
 package com.histmersion.domain.media.imports
 
 import com.histmersion.api.media.MediaProvider
-import com.histmersion.config.MediaConfig
+import com.histmersion.config.{MediaCollectionConfig, MediaConfig}
+import com.histmersion.pluginhost.Registries
 
 /** Histmersion's own media collections, by name only — the plugins of `plugins/media` implement them; the host keeps
   * what it says about one whose plugin is switched off, the names it records and stores their pictures under, the
@@ -12,14 +13,14 @@ object BuiltinMedia:
   object Alias extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type CheckName = CheckName.T
   object CheckName extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type EntryKey = EntryKey.T
-  object EntryKey extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type Licences = Licences.T
-  object Licences extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type Provider = Provider.T
-  object Provider extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type ReservedName = ReservedName.T
-  object ReservedName extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type EntryKey = Entry.Name
+  val EntryKey: Entry.Name.type = Entry.Name
+  type Licences = MediaCollectionConfig.Licences
+  val Licences: MediaCollectionConfig.Licences.type = MediaCollectionConfig.Licences
+  type Provider = ImportService.Provider
+  val Provider: ImportService.Provider.type = ImportService.Provider
+  type ReservedName = Entry.Name
+  val ReservedName: Entry.Name.type = Entry.Name
 
   /** One first-party collection: its plugin, the name `media import` is asked for, what a refusal calls it, the name
     * its checks and reports are recorded under, the provider its pictures are stored under, and the allowlist it is
@@ -33,10 +34,6 @@ object BuiltinMedia:
   object CanonicalResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type CanonicalAsked = CanonicalAsked.T
   object CanonicalAsked extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type OrderedResult = OrderedResult.T
-  object OrderedResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type OrderedRegistered = OrderedRegistered.T
-  object OrderedRegistered extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type CheckOfName = _root_.com.histmersion.domain.media.imports.BuiltinMedia.EntryName
   val CheckOfName: _root_.com.histmersion.domain.media.imports.BuiltinMedia.EntryName.type = _root_.com.histmersion.domain.media.imports.BuiltinMedia.EntryName
   type ProviderOfName = _root_.com.histmersion.domain.media.imports.BuiltinMedia.EntryName
@@ -57,14 +54,14 @@ object BuiltinMedia:
     type LicencesResult = com.histmersion.domain.media.imports.BuiltinMedia.Licences
     val LicencesResult: _root_.com.histmersion.domain.media.imports.BuiltinMedia.Licences.type = _root_.com.histmersion.domain.media.imports.BuiltinMedia.Licences
 
-    type Name = Name.T
-    object Name extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Name = Registries.MediaCollectionsKey
+    val Name: Registries.MediaCollectionsKey.type = Registries.MediaCollectionsKey
     type Title = Title.T
     object Title extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
     type Check = Check.T
     object Check extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-    type Provider = Provider.T
-    object Provider extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Provider = ImportService.Provider
+    val Provider: ImportService.Provider.type = ImportService.Provider
 
   /** In the order `media import`'s list names them. */
   val entries: List[Entry] = List(
@@ -189,9 +186,9 @@ object BuiltinMedia:
   /** Pure: the registered names in the order lists show them — the built-ins in their order, then the plugins'
     * collections in registration order.
     */
-  def ordered(registered: List[com.histmersion.domain.media.imports.BuiltinMedia.OrderedRegistered]): List[com.histmersion.domain.media.imports.BuiltinMedia.OrderedResult] =
-    val own = entries.map(e => OrderedResult(e.name.value))
-    own.filter(o => registered.exists(_.value == o.value)) ++ registered.filterNot(r => own.exists(_.value == r.value)).map(r => OrderedResult(r.value))
+  def ordered(registered: List[Registries.MediaCollectionsKey]): List[Registries.MediaCollectionsKey] =
+    val own = entries.map(_.name)
+    own.filter(registered.contains) ++ registered.filterNot(own.contains)
 
   /** The name a collection's checks and report are recorded under: a first-party one's own, else its name. */
   def checkOf(name: com.histmersion.domain.media.imports.BuiltinMedia.CheckOfName): com.histmersion.domain.media.imports.BuiltinMedia.CheckName = entry(name).fold(CheckName(name.value))(e => CheckName(e.check.value))

@@ -70,7 +70,7 @@ class PlanRefreshSuite extends munit.FunSuite:
     )
     assertEquals(after("--system-prompt"), "Reply with one word.", "Claude Code's long system prompt is replaced")
     assertEquals(
-      ClaudeCode.probeArgv(Cfg.modify(_.extraArgs).setTo(" --effort low "), com.histmersion.config.ClaudePlanConfig.ProbeModel("haiku")).takeRight(2),
+      ClaudeCode.probeArgv(Cfg.modify(_.extraArgs).setTo(com.histmersion.config.ClaudeCodeConfig.ExtraArgs(" --effort low ")), com.histmersion.config.ClaudePlanConfig.ProbeModel("haiku")).takeRight(2),
       List("--effort", "low")
     )
 
@@ -216,7 +216,7 @@ class PlanRefreshSuite extends munit.FunSuite:
 
   test("the probe end to end against a FAKE claude: argv, stdin 'quota', capped output, the reading"):
     val fake = FakeCli("claude", List(Init, Answer, Event, Result))
-    val cc = Cfg.modify(_.command).setTo(fake.script.toString)
+    val cc = Cfg.modify(_.command).setTo(com.histmersion.config.ClaudeCodeConfig.Command(fake.script.toString))
     val run = PlanPools
       .runProbe(
         ClaudeCode.probeArgv(cc, com.histmersion.config.ClaudePlanConfig.ProbeModel("haiku")),

@@ -28,7 +28,7 @@ class IngestQueueFailureSuite extends com.histmersion.db.DbSuite:
   test("a queue-write failure leaves the stored OCR job done, with a bookkeeping warning"):
     val base = AppConfig.load()
     val cfg = base.modify(
-      _.db).setTo(base.db.modify(_.url).setTo(TestDb.url.get)).modify(_.converter).setTo(base.converter.modify(_.spoolDir).setTo(Files.createTempDirectory("ingest-queue-spool").toString)
+      _.db).setTo(base.db.modify(_.url).setTo(com.histmersion.config.DbConfig.Url(TestDb.url.get))).modify(_.converter).setTo(base.converter.modify(_.spoolDir).setTo(com.histmersion.config.ConverterConfig.SpoolDir(Files.createTempDirectory("ingest-queue-spool").toString))
     )
     val ds = testPool(cfg.db)
     Migrate.run(ds)
@@ -70,11 +70,11 @@ class IngestQueueFailureSuite extends com.histmersion.db.DbSuite:
         )
         .toOption
         .get
-      var job = jobs.job(accepted.jobId).toOption.get
+      var job = jobs.job(com.histmersion.util.jobs.Job.Id.applyUnsafe(accepted.jobId.value)).toOption.get
       var attempts = 0
       while !job.isTerminal && attempts < 500 do
         Thread.sleep(10)
-        job = jobs.job(accepted.jobId).toOption.get
+        job = jobs.job(com.histmersion.util.jobs.Job.Id.applyUnsafe(accepted.jobId.value)).toOption.get
         attempts += 1
       assert(SourceFixtures.load(ds, key).isDefined, "source must have been stored")
       assertEquals(QueueRows.get(ds, item.id).map(_.status), Some(Queue.Open))

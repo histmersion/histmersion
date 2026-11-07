@@ -65,9 +65,9 @@ class ModelChainRunSuite extends com.histmersion.db.DbSuite with RunTranscripts:
   private lazy val baseCfg =
     val b = AppConfig.load()
     b.modify(
-      _.db).setTo(b.db.modify(_.url).setTo(testDb.get)).modify(_.server).setTo(b.server.modify(_.host).setTo("127.0.0.1")).modify(_.agents).setTo(b.agents.modify(
-        _.enabled).setTo(true).modify(_.prices).setTo("zzA=1/2; zzB=1/2; sonnet=0/0").modify(_.roles).setTo(b.agents.roles.modify(_.extractor).setTo(s"${A.wire} > ${B.wire}")
-      )).modify(_.libraryAgents).setTo(b.libraryAgents.modify(_.enrich).setTo(b.libraryAgents.enrich.modify(_.upstream).setTo(false))
+      _.db).setTo(b.db.modify(_.url).setTo(com.histmersion.config.DbConfig.Url(testDb.get))).modify(_.server).setTo(b.server.modify(_.host).setTo(com.histmersion.config.ServerConfig.Host("127.0.0.1"))).modify(_.agents).setTo(b.agents.modify(
+        _.enabled).setTo(com.histmersion.config.AgentsConfig.Enabled(true)).modify(_.prices).setTo(com.histmersion.config.AgentsConfig.Prices("zzA=1/2; zzB=1/2; sonnet=0/0")).modify(_.roles).setTo(b.agents.roles.modify(_.extractor).setTo(com.histmersion.config.AgentRolesConfig.Extractor(s"${A.wire} > ${B.wire}"))
+      )).modify(_.libraryAgents).setTo(b.libraryAgents.modify(_.enrich).setTo(b.libraryAgents.enrich.modify(_.upstream).setTo(com.histmersion.config.AgentEnrichConfig.Upstream(false)))
     )
 
   private lazy val ds = testPool(baseCfg.db)
@@ -100,7 +100,7 @@ class ModelChainRunSuite extends com.histmersion.db.DbSuite with RunTranscripts:
       h
     )
 
-  private def withAllowances(s: String) = baseCfg.modify(_.agents).setTo(baseCfg.agents.modify(_.allowances).setTo(s))
+  private def withAllowances(s: com.histmersion.config.AgentsConfig.Allowances) = baseCfg.modify(_.agents).setTo(baseCfg.agents.modify(_.allowances).setTo(s))
 
   private def clean(): Unit =
     Migrate.run(ds)
@@ -172,7 +172,7 @@ class ModelChainRunSuite extends com.histmersion.db.DbSuite with RunTranscripts:
     "the first model below its allowance is passed over: the chain's next one runs every step, the run says so once"
   ):
     val (ca, cb) = (ScriptedClient(A), ScriptedClient(B)); enrichScripts(cb)
-    val (a, h) = handlers(Map(A -> ca, B -> cb), withAllowances("local:zzA = 1000 tokens/1h")); seed(h)
+    val (a, h) = handlers(Map(A -> ca, B -> cb), withAllowances(com.histmersion.config.AgentsConfig.Allowances("local:zzA = 1000 tokens/1h"))); seed(h)
     val _ = spend(A, Usage.Input(1500))
     val run = startAndRun(a)
     assertEquals(run.status, "done", run.error)
@@ -195,7 +195,7 @@ class ModelChainRunSuite extends com.histmersion.db.DbSuite with RunTranscripts:
   ):
     val ca = ScriptedClient(A)
     val (a, h) =
-      handlers(Map(A -> ca, B -> ScriptedClient(B)), withAllowances("local:* = 10000 tokens/1h, reserve 10%"));
+      handlers(Map(A -> ca, B -> ScriptedClient(B)), withAllowances(com.histmersion.config.AgentsConfig.Allowances("local:* = 10000 tokens/1h, reserve 10%")));
     seed(h)
     val spent = spend(A, Usage.Input(15000), minutesAgo = 50)
     val run = startAndRun(a)
@@ -227,7 +227,7 @@ class ModelChainRunSuite extends com.histmersion.db.DbSuite with RunTranscripts:
     // is told to finish (one forced call), and the step goes to zzB
     ca.scripts += Seq(tool("facets", """{"field":"tags"}"""), text(classifyJson))
     enrichScripts(cb)
-    val (a, h) = handlers(Map(A -> ca, B -> cb), withAllowances("local:zzA = 1000 tokens/1h")); seed(h)
+    val (a, h) = handlers(Map(A -> ca, B -> cb), withAllowances(com.histmersion.config.AgentsConfig.Allowances("local:zzA = 1000 tokens/1h"))); seed(h)
     val run = startAndRun(a)
     assertEquals(run.status, "done", run.error)
     val classify = connect(ds)(AgentRepo.steps(jobId(run.id), AgentRepo.OutputChars(200))).filter(_.name.value == "classify")
@@ -263,7 +263,7 @@ class ModelChainRunSuite extends com.histmersion.db.DbSuite with RunTranscripts:
     assert(run.error.exists(_.value.startsWith("provider:")), run.error)
 
   test("chains and allowances saved over config survive a restart; reset goes back to config; bad input is refused"):
-    val (a, _) = handlers(Map(A -> ScriptedClient(A), B -> ScriptedClient(B)), withAllowances("local:zzA = 5 usd/day"))
+    val (a, _) = handlers(Map(A -> ScriptedClient(A), B -> ScriptedClient(B)), withAllowances(com.histmersion.config.AgentsConfig.Allowances("local:zzA = 5 usd/day")))
     val saved = a.setChain(com.histmersion.api.automation.Agents.Role.Wire("extractor"), ChainSet(List(chainModel(B), chainModel(A)))).fold(e => fail(e.message.value), identity)
     assertEquals((saved.source, saved.active, saved.models.map(_.model)), ("saved", Some(B.wire), List(B.wire, A.wire)))
     val st = a
@@ -272,7 +272,7 @@ class ModelChainRunSuite extends com.histmersion.db.DbSuite with RunTranscripts:
     assertEquals((st.source, st.reservePct, st.limits.map(_.limit)), ("saved", 20, List("2M tokens/5h")))
     // a new process sees the same
     val (again, _) =
-      handlers(Map(A -> ScriptedClient(A), B -> ScriptedClient(B)), withAllowances("local:zzA = 5 usd/day"))
+      handlers(Map(A -> ScriptedClient(A), B -> ScriptedClient(B)), withAllowances(com.histmersion.config.AgentsConfig.Allowances("local:zzA = 5 usd/day")))
     val m = again.models
     assertEquals(
       m.chains.find(_.role.value == "extractor").map(c => (c.source, c.models.map(_.model))),
@@ -350,10 +350,10 @@ class ModelChainRunSuite extends com.histmersion.db.DbSuite with RunTranscripts:
     )
     claude.toFile.setExecutable(true)
     try
-      val cc = baseCfg.agents.providers.claudeCode.modify(_.command).setTo(claude.toString)
+      val cc = baseCfg.agents.providers.claudeCode.modify(_.command).setTo(com.histmersion.config.ClaudeCodeConfig.Command(claude.toString))
       val cfg = baseCfg.modify(_.agents).setTo(baseCfg.agents.modify(
-          _.roles).setTo(baseCfg.agents.roles.modify(_.extractor).setTo("local:zzA > local:zzMissing > claude-code:sonnet")).modify(_.providers).setTo(baseCfg.agents.providers.modify(
-            _.claudeCode).setTo(cc).modify(_.local).setTo(baseCfg.agents.providers.local.modify(_.baseUrl).setTo(s"http://127.0.0.1:${stub.getAddress.getPort}/v1")
+          _.roles).setTo(baseCfg.agents.roles.modify(_.extractor).setTo(com.histmersion.config.AgentRolesConfig.Extractor("local:zzA > local:zzMissing > claude-code:sonnet"))).modify(_.providers).setTo(baseCfg.agents.providers.modify(
+            _.claudeCode).setTo(cc).modify(_.local).setTo(baseCfg.agents.providers.local.modify(_.baseUrl).setTo(com.histmersion.config.AgentProviderConfig.BaseUrl(s"http://127.0.0.1:${stub.getAddress.getPort}/v1"))
           )
         )
       )
@@ -395,7 +395,7 @@ class ModelChainRunSuite extends com.histmersion.db.DbSuite with RunTranscripts:
       )
       assert(requests.isEmpty)
       // the same server bound beyond loopback refuses claude-code (and says why)
-      val lan = cfg.modify(_.server).setTo(cfg.server.modify(_.host).setTo("0.0.0.0"))
+      val lan = cfg.modify(_.server).setTo(cfg.server.modify(_.host).setTo(com.histmersion.config.ServerConfig.Host("0.0.0.0")))
       val ld = AgentsControllers(ServerEngineSite(Deps(lan, ds), ServerWiring(Deps(lan, ds)))).doctor(offline = com.histmersion.domain.automation.agents.AgentsControllers.Offline(true))
       val bind = ld.providers.find(_.provider.value == "claude-code").get.checks.find(_.name.value == "bind").get
       assertEquals(bind.level, CheckLevel.Fail)
@@ -432,7 +432,7 @@ class ModelChainRunSuite extends com.histmersion.db.DbSuite with RunTranscripts:
       .flatMap(_.hcursor.downField("result").downField("tools").values)
       .map(_.flatMap(_.hcursor.downField("name").as[String].toOption).toSet)
       .getOrElse(Set.empty)
-    val off = baseCfg.modify(_.agents).setTo(baseCfg.agents.modify(_.enabled).setTo(false)) // settings and tools need no run pool
+    val off = baseCfg.modify(_.agents).setTo(baseCfg.agents.modify(_.enabled).setTo(com.histmersion.config.AgentsConfig.Enabled(false))) // settings and tools need no run pool
     val list = """{"jsonrpc":"2.0","id":1,"method":"tools/list"}"""
     @volatile var hs: Option[ServerWiring] = None // the started server's handlers, for its run tokens
     ox.supervised {

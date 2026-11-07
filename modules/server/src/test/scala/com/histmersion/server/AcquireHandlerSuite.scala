@@ -47,7 +47,7 @@ class AcquireHandlerSuite extends com.histmersion.db.DbSuite:
 
   private lazy val cfg =
     val base = AppConfig.load()
-    base.modify(_.db).setTo(base.db.modify(_.url).setTo(testDb.get))
+    base.modify(_.db).setTo(base.db.modify(_.url).setTo(com.histmersion.config.DbConfig.Url(testDb.get)))
   private lazy val ds =
     val d = testPool(cfg.db); Migrate.run(d); d
 
@@ -76,22 +76,22 @@ class AcquireHandlerSuite extends com.histmersion.db.DbSuite:
       notices: List[UpdateNotice] = Nil,
       hits: List[WorkRef] = Nil
   ) extends DiscoveryClient:
-    def search(q: String, since: Option[Int], sort: Option[String], limit: Int) = Right(hits)
-    def meta(doi: String) = Right(work.modify(_.doi).setTo(Some(doi)))
-    def references(doi: String) = Right(("crossref", refs))
-    def updates(doi: String) = Right(notices)
+    def search(q: com.histmersion.domain.library.search.Search.Query, since: Option[com.histmersion.Year], sort: Option[com.histmersion.domain.library.acquisition.DiscoveryClient.SearchSort], limit: com.histmersion.domain.library.acquisition.DiscoveryClient.SearchLimit) = Right(hits)
+    def meta(doi: com.histmersion.domain.library.Doi) = Right(work.modify(_.doi).setTo(Some(com.histmersion.api.library.Doi(doi.value))))
+    def references(doi: com.histmersion.domain.library.Doi) = Right((com.histmersion.domain.library.acquisition.DiscoveryClient.Backend("crossref"), refs))
+    def updates(doi: com.histmersion.domain.library.Doi) = Right(notices)
 
   private class FakeCitations(rows: List[FollowupRow]) extends CitationsClient:
-    def citing(work: WorkRef, since: Option[Int], limit: Int) = Right(("semantic-scholar", rows))
+    def citing(work: WorkRef, since: Option[com.histmersion.Year], limit: CitationsClient.CitingLimit) = Right((CitationsClient.CitingResultPart2Part1("semantic-scholar"), rows))
 
   private object NoPdf extends OaFetcher:
-    def fetch(doi: Option[String], arxiv: Option[String]) = Left("no legal open-access PDF found")
+    def fetch(doi: Option[com.histmersion.domain.library.Doi], arxiv: Option[com.histmersion.domain.library.ArxivId]) = Left(OaFetcher.Problem("no legal open-access PDF found"))
 
   private class SomePdf(
       source: FetchedFile.Source = FetchedFile.Source("unpaywall"),
       licence: Option[com.histmersion.plugin.Licence] = None
   ) extends OaFetcher:
-    def fetch(doi: Option[String], arxiv: Option[String]) =
+    def fetch(doi: Option[com.histmersion.domain.library.Doi], arxiv: Option[com.histmersion.domain.library.ArxivId]) =
       Right(
         FetchedFile(
           source,
@@ -103,7 +103,7 @@ class AcquireHandlerSuite extends com.histmersion.db.DbSuite:
       )
 
   private object NoWiki extends WikiClient:
-    def refs(url: String) = Left("not used here")
+    def refs(url: WikiClient.ArticleUrl) = Left(WikiClient.Problem("not used here"))
 
   /** archive.org as the library's collection, answering `item` alone, its import run by `h`. */
   private def archiveService(archived: ArchiveItem, h: AcquisitionControllers) =
@@ -127,8 +127,8 @@ class AcquireHandlerSuite extends com.histmersion.db.DbSuite:
       )
       def search(query: CollectionQuery) = Right(List(one))
       def item(id: CollectionId) = Right(Some(one))
-      def file(i: CollectionItem, format: Option[String]) =
-        i.files.find(_.name.value.endsWith(".epub")).orElse(i.files.headOption).toRight("no file")
+      def file(i: CollectionItem, format: Option[com.histmersion.plugin.SourceCollection.FileFormat]) =
+        i.files.find(_.name.value.endsWith(".epub")).orElse(i.files.headOption).toRight(com.histmersion.plugin.SourceCollection.FileResultPart1("no file"))
       def original(i: CollectionItem, f: CollectionFile) = Left(com.histmersion.plugin.SourceCollection.OriginalResultPart1("the chain downloads it"))
     val library = new com.histmersion.domain.library.collections.RefusingCollectionLibrary:
       override def archiveImport(i: ArchiveItem, f: ArchiveFile, req: ArchiveImportRequest) = h.archiveImport(i, f, req)
@@ -139,14 +139,14 @@ class AcquireHandlerSuite extends com.histmersion.db.DbSuite:
       com.histmersion.domain.library.collections.CollectionsService.Limit(8)
     )
 
-  private class FakeRw(text: String) extends RetractionWatchClient:
-    def csv(): Either[String, String] = Right(text)
+  private class FakeRw(text: RetractionWatchClient.Csv) extends RetractionWatchClient:
+    def csv(): Either[RetractionWatchClient.Problem, RetractionWatchClient.Csv] = Right(text)
 
   private def handlers(
       discovery: DiscoveryClient = FakeDiscovery(),
       citations: CitationsClient = FakeCitations(Nil),
       oa: OaFetcher = NoPdf,
-      rw: RetractionWatchClient = FakeRw(""),
+      rw: RetractionWatchClient = FakeRw(RetractionWatchClient.Csv("")),
       app: AppConfig = cfg,
       jobs: IngestJobs = AcquisitionTesting.skeleton(Deps(cfg, ds))
   ) = AcquisitionTesting.controllers(Deps(app, ds), discovery, citations, oa, NoWiki, rw, jobs)
@@ -174,7 +174,7 @@ class AcquireHandlerSuite extends com.histmersion.db.DbSuite:
   /** A PDF fetcher that counts its calls. */
   final private class CountingPdf extends OaFetcher:
     val calls = java.util.concurrent.atomic.AtomicInteger(0)
-    def fetch(doi: Option[String], arxiv: Option[String]) =
+    def fetch(doi: Option[com.histmersion.domain.library.Doi], arxiv: Option[com.histmersion.domain.library.ArxivId]) =
       calls.incrementAndGet(); SomePdf().fetch(doi, arxiv)
 
   // ── fixtures in the database ────────────────────────────────────────────────────────────────
@@ -294,7 +294,7 @@ class AcquireHandlerSuite extends com.histmersion.db.DbSuite:
     val csv =
       "OriginalPaperDOI,RetractionNature,Reason,RetractionDate\n" +
         "10.1000/other,Retraction,\"+Fabrication, of data\",1/2/2020 0:00\n"
-    val h = handlers(rw = FakeRw(csv))
+    val h = handlers(rw = FakeRw(RetractionWatchClient.Csv(csv)))
     assertEquals(h.updateRetractions().map(_.rows), Right(1))
     val a = h.assess(AssessRequest(com.histmersion.api.library.AssessRequest.Id("zzacq_ok"))).fold(e => fail(e.message.value), identity)
     assertEquals(a.verdict, Acquire.Verdicts.Current)
@@ -465,7 +465,7 @@ class AcquireHandlerSuite extends com.histmersion.db.DbSuite:
       transact(ds)(items.foreach(i => sql"DELETE FROM queue_items WHERE id = ${i.id}".update.run()))
     wipe("zzacq_ingested"); dropItems()
     val gold =
-      FakeDiscovery(target.modify(_.isOa).setTo(true).modify(_.oaStatus).setTo(Some("gold")).modify(_.oaUrl).setTo(Some("https://press.example.org/a/1")))
+      FakeDiscovery(target.modify(_.isOa).setTo(com.histmersion.api.library.Source.Candidate.IsOa(true)).modify(_.oaStatus).setTo(Some(com.histmersion.api.library.WorkRef.OaStatus("gold"))).modify(_.oaUrl).setTo(Some(com.histmersion.api.library.WorkRef.OaUrl("https://press.example.org/a/1"))))
     val r = handlers(gold, oa = NoPdf).ingest(Ingest.Request(com.histmersion.api.library.Ingest.Request.Id("10.1038/zztest001"))).fold(e => fail(e.message.value), identity)
     assertEquals(items.size, 1, items.toString)
     assertEquals(items.head.topic, Some(Acquire.BrowserDownloadTopic))
@@ -505,7 +505,7 @@ class AcquireHandlerSuite extends com.histmersion.db.DbSuite:
       )
     )
     val open =
-      FakeDiscovery(target.modify(_.isOa).setTo(true).modify(_.oaStatus).setTo(Some("gold")).modify(_.oaUrl).setTo(Some("https://press.example.org/a/1")))
+      FakeDiscovery(target.modify(_.isOa).setTo(com.histmersion.api.library.Source.Candidate.IsOa(true)).modify(_.oaStatus).setTo(Some(com.histmersion.api.library.WorkRef.OaStatus("gold"))).modify(_.oaUrl).setTo(Some(com.histmersion.api.library.WorkRef.OaUrl("https://press.example.org/a/1"))))
     val _ = handlers(open, oa = chain).ingest(Ingest.Request(com.histmersion.api.library.Ingest.Request.Id("10.1038/zztest001"))).fold(e => fail(e.message.value), identity)
     assertEquals(items.size, 1, items.toString)
     assert(
@@ -524,7 +524,7 @@ class AcquireHandlerSuite extends com.histmersion.db.DbSuite:
       transact(ds)(items.foreach(i => sql"DELETE FROM queue_items WHERE id = ${i.id}".update.run()))
     wipe("zzacq_ingested"); dropItems()
     val gold = target.modify(
-      _.isOa).setTo(true).modify(_.oaStatus).setTo(Some("gold")).modify(_.oaLicence).setTo(Some("cc-by")).modify(_.oaUrl).setTo(Some("https://www.mdpi.com/zz/1/pdf")).modify(_.oaLocations).setTo(List("https://www.mdpi.com/zz/1")
+      _.isOa).setTo(com.histmersion.api.library.Source.Candidate.IsOa(true)).modify(_.oaStatus).setTo(Some(com.histmersion.api.library.WorkRef.OaStatus("gold"))).modify(_.oaLicence).setTo(Some(com.histmersion.api.library.WorkRef.OaLicence("cc-by"))).modify(_.oaUrl).setTo(Some(com.histmersion.api.library.WorkRef.OaUrl("https://www.mdpi.com/zz/1/pdf"))).modify(_.oaLocations).setTo(List(com.histmersion.api.library.WorkRef.OaLocations("https://www.mdpi.com/zz/1"))
     )
     // the watcher's legal-only path: no source, but the item, with the location, the DOI, the licence and the command
     val legal = handlers(FakeDiscovery(gold), oa = NoPdf).ingestLegal(Ingest.Request(com.histmersion.api.library.Ingest.Request.Id("10.1038/zztest001")))
@@ -553,10 +553,10 @@ class AcquireHandlerSuite extends com.histmersion.db.DbSuite:
     )
     // hybrid on the same host, or gold on a host that does not refuse scripts: the watcher adds nothing
     dropItems(); wipe("zzacq_ingested")
-    val _ = handlers(FakeDiscovery(gold.modify(_.oaStatus).setTo(Some("hybrid"))), oa = NoPdf)
+    val _ = handlers(FakeDiscovery(gold.modify(_.oaStatus).setTo(Some(com.histmersion.api.library.WorkRef.OaStatus("hybrid")))), oa = NoPdf)
       .ingestLegal(Ingest.Request(com.histmersion.api.library.Ingest.Request.Id("10.1038/zztest001")))
     val _ =
-      handlers(FakeDiscovery(gold.modify(_.oaUrl).setTo(Some("https://zenodo.org/records/1")).modify(_.oaLocations).setTo(Nil)), oa = NoPdf)
+      handlers(FakeDiscovery(gold.modify(_.oaUrl).setTo(Some(com.histmersion.api.library.WorkRef.OaUrl("https://zenodo.org/records/1"))).modify(_.oaLocations).setTo(Nil)), oa = NoPdf)
         .ingestLegal(Ingest.Request(com.histmersion.api.library.Ingest.Request.Id("10.1038/zztest001")))
     assertEquals(items.size, 0)
     // a copy found: nothing to download by hand
@@ -595,7 +595,7 @@ class AcquireHandlerSuite extends com.histmersion.db.DbSuite:
       val access = Access.Open
       def fetch(w: WorkKey, c: Fetch.Context) = Fetch.Miss(com.histmersion.plugin.Fetch.Miss.Why("no open-access location"))
     val chain = FetchChain(List(FetchChain.Step.Id("unpaywall") -> open, FetchChain.Step.Id("stub-unauthorised") -> unauthorised), allowUnauthorised = com.histmersion.pluginhost.FetchChain.AllowUnauthorised(true))
-    val allowing = cfg.modify(_.acquire).setTo(cfg.acquire.modify(_.allowUnauthorised).setTo(true))
+    val allowing = cfg.modify(_.acquire).setTo(cfg.acquire.modify(_.allowUnauthorised).setTo(com.histmersion.config.AcquireConfig.AllowUnauthorised(true)))
     val r = handlers(oa = chain, app = allowing)
       .ingest(Ingest.Request(com.histmersion.api.library.Ingest.Request.Id("10.1038/zztest001"), legalOnly = com.histmersion.api.library.Ingest.Request.LegalOnly(true)))
       .fold(e => fail(e.message.value), identity)
@@ -760,10 +760,10 @@ class AcquireHandlerSuite extends com.histmersion.db.DbSuite:
 
   test("calibre gaps lists sources with no calibre_id and non-calibre provenance"):
     wipe("zzacq_gap", "zzacq_incalibre")
-    SourceFixtures.upsert(ds, source("zzacq_gap").modify(_.provenance).setTo(Some("unpaywall")), cfg.limits.chunkChars)
+    SourceFixtures.upsert(ds, source("zzacq_gap").modify(_.provenance).setTo(Some(com.histmersion.api.library.Source.Provenance("unpaywall"))), cfg.limits.chunkChars)
     SourceFixtures.upsert(
       ds,
-      source("zzacq_incalibre").modify(_.provenance).setTo(Some("calibre")).modify(_.calibreId).setTo(Some("1691")),
+      source("zzacq_incalibre").modify(_.provenance).setTo(Some(com.histmersion.api.library.Source.Provenance("calibre"))).modify(_.calibreId).setTo(Some(com.histmersion.api.library.Source.CalibreId("1691"))),
       cfg.limits.chunkChars
     )
     val g = gaps().gaps(None)
@@ -779,9 +779,9 @@ class AcquireHandlerSuite extends com.histmersion.db.DbSuite:
   test("calibre gaps say which originals the server stores — what `calibre sync` downloads for the push"):
     wipe("zzacq_stored", "zzacq_nofile", "zzacq_nohash")
     val spool = java.nio.file.Files.createTempDirectory("zz-spool-")
-    val app = cfg.modify(_.converter).setTo(cfg.converter.modify(_.spoolDir).setTo(spool.toString))
+    val app = cfg.modify(_.converter).setTo(cfg.converter.modify(_.spoolDir).setTo(com.histmersion.config.ConverterConfig.SpoolDir(spool.toString)))
     List("zzacq_stored", "zzacq_nofile", "zzacq_nohash").foreach(ck =>
-      SourceFixtures.upsert(ds, source(ck).modify(_.provenance).setTo(Some("unpaywall")), cfg.limits.chunkChars)
+      SourceFixtures.upsert(ds, source(ck).modify(_.provenance).setTo(Some(com.histmersion.api.library.Source.Provenance("unpaywall"))), cfg.limits.chunkChars)
     )
     val (stored, gone) = ("a" * 64, "b" * 64)
     com.augustnagro.magnum.connect(ds):
@@ -811,10 +811,10 @@ class AcquireHandlerSuite extends com.histmersion.db.DbSuite:
   test("a DOI no upstream knows is refused rather than stored as an `anonnd` junk source"):
     // the metadata guard, the counterpart of the Calibre one: no title upstream and no citekey given
     val blind = new DiscoveryClient:
-      def search(q: String, since: Option[Int], sort: Option[String], limit: Int) = Right(Nil)
-      def meta(doi: String) = Left(s"$doi: HTTP 404")
-      def references(doi: String) = Right(("crossref", Nil))
-      def updates(doi: String) = Right(Nil)
+      def search(q: com.histmersion.domain.library.search.Search.Query, since: Option[com.histmersion.Year], sort: Option[com.histmersion.domain.library.acquisition.DiscoveryClient.SearchSort], limit: com.histmersion.domain.library.acquisition.DiscoveryClient.SearchLimit) = Right(Nil)
+      def meta(doi: com.histmersion.domain.library.Doi) = Left(com.histmersion.domain.library.acquisition.DiscoveryClient.Problem(s"$doi: HTTP 404"))
+      def references(doi: com.histmersion.domain.library.Doi) = Right((com.histmersion.domain.library.acquisition.DiscoveryClient.Backend("crossref"), Nil))
+      def updates(doi: com.histmersion.domain.library.Doi) = Right(Nil)
     val h = handlers(blind)
     val r = h.ingest(Ingest.Request(com.histmersion.api.library.Ingest.Request.Id("10.1017/zzdoesnotexist")))
     assert(r.left.exists(_.message.value.contains("no upstream record")), r.toString)

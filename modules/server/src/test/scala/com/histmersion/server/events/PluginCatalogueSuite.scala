@@ -228,7 +228,7 @@ class PluginCatalogueSuite extends com.histmersion.db.DbSuite:
       )
     )
 
-  private def storedFloods: Map[String, (TimeSpan, TimeSpan, Option[Long], Option[Long])] =
+  private def storedFloods: Map[CatalogRecord.ProviderId, (TimeSpan, TimeSpan, Option[CatalogRecord.Central], Option[CatalogRecord.PlusMinus])] =
     val events = EventFixtures.stored(ds).map(e => e.id -> e.timeSpan).toMap
     EventFixtures
       .records(ds, Some(Floods))
@@ -245,11 +245,11 @@ class PluginCatalogueSuite extends com.histmersion.db.DbSuite:
     assertEquals((r.records, r.kept, r.created, r.failed), (4, 4, 4, Nil), r.toString)
     val at = storedFloods
     // the record and its event both carry the held dating
-    assertEquals(at("future")._1, TimeSpan(Some(com.histmersion.api.catalogue.Year(2000L)), None, None, Some(com.histmersion.api.catalogue.Year(2026L))))
-    assertEquals(at("early")._1, TimeSpan(Some(com.histmersion.api.catalogue.Year(-3000L)), Some(com.histmersion.api.catalogue.Year(-3000L)), None, Some(com.histmersion.api.catalogue.Year(-2900L))))
-    assertEquals(at("stated")._1, TimeSpan(Some(com.histmersion.api.catalogue.Year(-1050L)), None, None, Some(com.histmersion.api.catalogue.Year(-950L))))
-    assertEquals((at("stated")._3, at("stated")._4), (Some(-1000L), Some(50L)), "the stated year and ± kept as stated")
-    assertEquals(at("plain")._1, TimeSpan(Some(com.histmersion.api.catalogue.Year(-1200L)), None, None, Some(com.histmersion.api.catalogue.Year(-1200L))))
+    assertEquals(at(CatalogRecord.ProviderId("future"))._1, TimeSpan(Some(com.histmersion.api.catalogue.Year(2000L)), None, None, Some(com.histmersion.api.catalogue.Year(2026L))))
+    assertEquals(at(CatalogRecord.ProviderId("early"))._1, TimeSpan(Some(com.histmersion.api.catalogue.Year(-3000L)), Some(com.histmersion.api.catalogue.Year(-3000L)), None, Some(com.histmersion.api.catalogue.Year(-2900L))))
+    assertEquals(at(CatalogRecord.ProviderId("stated"))._1, TimeSpan(Some(com.histmersion.api.catalogue.Year(-1050L)), None, None, Some(com.histmersion.api.catalogue.Year(-950L))))
+    assertEquals((at(CatalogRecord.ProviderId("stated"))._3, at(CatalogRecord.ProviderId("stated"))._4), (Some(-1000L), Some(50L)), "the stated year and ± kept as stated")
+    assertEquals(at(CatalogRecord.ProviderId("plain"))._1, TimeSpan(Some(com.histmersion.api.catalogue.Year(-1200L)), None, None, Some(com.histmersion.api.catalogue.Year(-1200L))))
     at.foreach((k, v) => assertEquals(v._2, v._1, s"$k: the event's dating is its record's"))
     // re-derived from the stored records (no network): the same datings, nothing changed
     val again = h.eventImporter.runRederive(Some(Floods), dryRun = false, _ => ())

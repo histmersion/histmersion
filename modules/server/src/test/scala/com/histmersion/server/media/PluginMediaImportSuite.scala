@@ -31,6 +31,7 @@ import com.histmersion.domain.media.MediaRole
 import com.histmersion.api.VocabularyCodecs.given
 import com.histmersion.api.catalogue.Place
 import com.histmersion.api.media.MediaImportRequest
+import com.histmersion.api.media.MediaCount
 import com.histmersion.api.media.MediaItem
 import com.histmersion.api.media.MediaProvider
 import com.histmersion.domain.media.imports.Target
@@ -180,10 +181,10 @@ class PluginMediaImportSuite extends com.histmersion.db.DbSuite:
       r.samples.map(s => (s.key, s.license, s.basis)),
       List(("by", "CC-BY-4.0", "place_of_origin = Zqplenai; 1400–1300 BCE within 1600–1100 BCE"))
     )
-    val rejected = r.rejected.map(c => c.key.value -> c.n.value).toMap
-    assertEquals(rejected.get(s"licence cc-by-nc not allowed for $Collection"), Some(1))
-    assertEquals(rejected.get(s"licence all-rights-reserved not allowed for $Collection"), Some(1))
-    assertEquals(rejected.get("its place is not on the map"), Some(1))
+    val rejected = r.rejected.map(c => c.key -> c.n).toMap
+    assertEquals(rejected.get(MediaCount.Key(s"licence cc-by-nc not allowed for $Collection")), Some(1))
+    assertEquals(rejected.get(MediaCount.Key(s"licence all-rights-reserved not allowed for $Collection")), Some(1))
+    assertEquals(rejected.get(MediaCount.Key("its place is not on the map")), Some(1))
     assertEquals(
       r.byLicence.map(c => (c.key, c.allowed)).toMap,
       Map("CC-BY-4.0" -> true, "CC-BY-NC-4.0" -> false, "all-rights-reserved" -> false, "CC0-1.0" -> true)

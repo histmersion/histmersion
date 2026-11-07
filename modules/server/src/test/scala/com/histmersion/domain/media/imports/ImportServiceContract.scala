@@ -11,7 +11,7 @@ abstract class ImportServiceContract extends MediaStoreSuite:
 
   stest("nothing on the map: a target by id refused, a batch empty, nothing pending, no facts") { s =>
     val i = s.imports
-    assertEquals(i.targets(com.histmersion.domain.media.imports.ImportService.Provider("zq"), Some(com.histmersion.domain.catalogue.Place.Id(" zq_p ")), None, com.histmersion.domain.media.imports.ImportService.TargetsLimit(10), refresh = com.histmersion.domain.media.imports.ImportService.Refresh(false), None), Left("No place 'zq_p'"))
+    assertEquals(i.targets(com.histmersion.domain.media.imports.ImportService.Provider("zq"), Some(com.histmersion.domain.catalogue.Place.Id.assume(" zq_p ")), None, com.histmersion.domain.media.imports.ImportService.TargetsLimit(10), refresh = com.histmersion.domain.media.imports.ImportService.Refresh(false), None), Left("No place 'zq_p'"))
     assertEquals(i.targets(com.histmersion.domain.media.imports.ImportService.Provider("zq"), None, Some(com.histmersion.domain.catalogue.Event.Id("zq_e")), com.histmersion.domain.media.imports.ImportService.TargetsLimit(10), refresh = com.histmersion.domain.media.imports.ImportService.Refresh(false), None), Left("No event 'zq_e'"))
     assertEquals(i.targets(com.histmersion.domain.media.imports.ImportService.Provider("zq"), None, None, com.histmersion.domain.media.imports.ImportService.TargetsLimit(10), refresh = com.histmersion.domain.media.imports.ImportService.Refresh(true), None), Right(Nil))
     assertEquals(i.pending(com.histmersion.domain.media.imports.ImportService.Provider("zq"), None), 0)

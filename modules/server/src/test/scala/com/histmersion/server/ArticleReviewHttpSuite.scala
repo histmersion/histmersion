@@ -43,23 +43,23 @@ class ArticleReviewHttpSuite extends com.histmersion.db.DbSuite:
     Finding(id, r, s, com.histmersion.domain.ReviewArticle.Finding.Kind("undefined-term"), com.histmersion.domain.ReviewArticle.Finding.Where("Background"), com.histmersion.domain.ReviewArticle.Finding.Quote(""), problem, com.histmersion.domain.ReviewArticle.Finding.Fix(""))
 
   private val ledger = Ledger(
-    Ledger.Slug(Running),
+    Ledger.Slug.applyUnsafe(Running),
     List(
       Entry(
         finding(Finding.Id("R1"), Reviewer.Rules, Severity.Major, Finding.Problem("a decorative citation")),
-        Entry.Run(RunA),
+        Entry.Run.assume(RunA),
         com.histmersion.domain.ReviewLedger.Entry.Round(1),
         Status.Rejected,
-        closed = Some(Closure(com.histmersion.domain.ReviewLedger.Closure.By("fixer"), com.histmersion.domain.ReviewLedger.Closure.Round(1), Closure.Run(RunA), com.histmersion.domain.ReviewLedger.Closure.Note("the record supports the sentence")))
+        closed = Some(Closure(com.histmersion.domain.ReviewLedger.Closure.By("fixer"), com.histmersion.domain.ReviewLedger.Closure.Round(1), Closure.Run.assume(RunA), com.histmersion.domain.ReviewLedger.Closure.Note("the record supports the sentence")))
       ),
       Entry(
         finding(Finding.Id("C1"), Reviewer.ColdReader, Severity.Minor, Finding.Problem("term not defined")),
-        Entry.Run(RunA),
+        Entry.Run.assume(RunA),
         com.histmersion.domain.ReviewLedger.Entry.Round(1),
         Status.Fixed,
-        closed = Some(Closure(com.histmersion.domain.ReviewLedger.Closure.By("cold-reader"), com.histmersion.domain.ReviewLedger.Closure.Round(2), Closure.Run(RunA)))
+        closed = Some(Closure(com.histmersion.domain.ReviewLedger.Closure.By("cold-reader"), com.histmersion.domain.ReviewLedger.Closure.Round(2), Closure.Run.assume(RunA)))
       ),
-      Entry(finding(Finding.Id("S1"), Reviewer.Skeptic, Severity.Major, Finding.Problem("a critique is missing")), Entry.Run(RunB), com.histmersion.domain.ReviewLedger.Entry.Round(1))
+      Entry(finding(Finding.Id("S1"), Reviewer.Skeptic, Severity.Major, Finding.Problem("a critique is missing")), Entry.Run.assume(RunB), com.histmersion.domain.ReviewLedger.Entry.Round(1))
     )
   )
 
@@ -94,7 +94,7 @@ class ArticleReviewHttpSuite extends com.histmersion.db.DbSuite:
 
   test("review state on the list, the history over REST, the page and MCP; an article with none is not reviewed"):
     val base = AppConfig.load()
-    val cfg = base.modify(_.db).setTo(base.db.modify(_.url).setTo(testDb.get))
+    val cfg = base.modify(_.db).setTo(base.db.modify(_.url).setTo(com.histmersion.config.DbConfig.Url(testDb.get)))
     supervised {
       val b = Composition.server(cfg, com.histmersion.config.ServerConfig.Host("127.0.0.1"), com.histmersion.config.ServerConfig.Port(0)).start()
       val url = s"http://127.0.0.1:${b.port}"

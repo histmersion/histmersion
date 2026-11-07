@@ -63,9 +63,9 @@ class PlanQuotaRunSuite extends com.histmersion.db.DbSuite with RunTranscripts:
   private lazy val baseCfg =
     val b = AppConfig.load()
     b.modify(
-      _.db).setTo(b.db.modify(_.url).setTo(testDb.get)).modify(_.server).setTo(b.server.modify(_.host).setTo("127.0.0.1")).modify(_.agents).setTo(b.agents.modify(
-        _.enabled).setTo(true).modify(_.prices).setTo("sonnet=0/0; zzPaid=3/15; zzFree=0/0").modify(_.roles).setTo(b.agents.roles.modify(_.extractor).setTo(s"${Plan.wire} > ${Paid.wire}")).modify(_.providers).setTo(b.agents.providers.modify(_.codex).setTo(b.agents.providers.codex.modify(_.appServer).setTo(false).modify(_.home).setTo(codexHome.toString))
-      )).modify(_.libraryAgents).setTo(b.libraryAgents.modify(_.enrich).setTo(b.libraryAgents.enrich.modify(_.upstream).setTo(false))
+      _.db).setTo(b.db.modify(_.url).setTo(com.histmersion.config.DbConfig.Url(testDb.get))).modify(_.server).setTo(b.server.modify(_.host).setTo(com.histmersion.config.ServerConfig.Host("127.0.0.1"))).modify(_.agents).setTo(b.agents.modify(
+        _.enabled).setTo(com.histmersion.config.AgentsConfig.Enabled(true)).modify(_.prices).setTo(com.histmersion.config.AgentsConfig.Prices("sonnet=0/0; zzPaid=3/15; zzFree=0/0")).modify(_.roles).setTo(b.agents.roles.modify(_.extractor).setTo(com.histmersion.config.AgentRolesConfig.Extractor(s"${Plan.wire} > ${Paid.wire}"))).modify(_.providers).setTo(b.agents.providers.modify(_.codex).setTo(b.agents.providers.codex.modify(_.appServer).setTo(com.histmersion.config.CodexConfig.AppServer(false)).modify(_.home).setTo(com.histmersion.config.CodexConfig.Home(codexHome.toString)))
+      )).modify(_.libraryAgents).setTo(b.libraryAgents.modify(_.enrich).setTo(b.libraryAgents.enrich.modify(_.upstream).setTo(com.histmersion.config.AgentEnrichConfig.Upstream(false)))
     )
 
   private lazy val ds = testPool(baseCfg.db)
@@ -157,7 +157,7 @@ class PlanQuotaRunSuite extends com.histmersion.db.DbSuite with RunTranscripts:
   test("a held pool later in the chain: the run still resumes by itself at the other pool's reset"):
     val Gpt = ModelRef(ProviderKind.Opencode, com.histmersion.api.automation.Agents.ModelRef.Model("openai/zzGpt"))
     val cfg = baseCfg.modify(_.agents).setTo(baseCfg.agents.modify(
-        _.roles).setTo(baseCfg.agents.roles.modify(_.extractor).setTo(s"${Plan.wire} > ${Gpt.wire}")).modify(_.providers).setTo(baseCfg.agents.providers.modify(_.opencode).setTo(baseCfg.agents.providers.opencode.modify(_.chatgptLogin).setTo(true))
+        _.roles).setTo(baseCfg.agents.roles.modify(_.extractor).setTo(com.histmersion.config.AgentRolesConfig.Extractor(s"${Plan.wire} > ${Gpt.wire}"))).modify(_.providers).setTo(baseCfg.agents.providers.modify(_.opencode).setTo(baseCfg.agents.providers.opencode.modify(_.chatgptLogin).setTo(com.histmersion.config.OpencodeConfig.ChatgptLogin(true)))
       )
     )
     val (plan, gpt) = (ScriptedClient(Plan), ScriptedClient(Gpt))
@@ -203,7 +203,7 @@ class PlanQuotaRunSuite extends com.histmersion.db.DbSuite with RunTranscripts:
     // a free model after the plan is used whatever fallthrough says
     assert(a.setFallthrough(com.histmersion.api.automation.Agents.Role.Wire("extractor"), FallthroughSet(com.histmersion.api.automation.PlanQuota.FallthroughSet.Fallthrough(false))).isRight)
     val (p2, free) = (ScriptedClient(Plan), ScriptedClient(Free)); enrichScripts(free)
-    val cfg = baseCfg.modify(_.agents).setTo(baseCfg.agents.modify(_.roles).setTo(baseCfg.agents.roles.modify(_.extractor).setTo(s"${Plan.wire} > ${Free.wire}"))
+    val cfg = baseCfg.modify(_.agents).setTo(baseCfg.agents.modify(_.roles).setTo(baseCfg.agents.roles.modify(_.extractor).setTo(com.histmersion.config.AgentRolesConfig.Extractor(s"${Plan.wire} > ${Free.wire}")))
     )
     val (a2, _) = handlers(Map(Plan -> p2, Free -> free), cfg)
     connect(ds)(sql"DELETE FROM jobs WHERE kind = 'agent' AND target_id LIKE 'zzplan%'".update.run())
@@ -246,7 +246,7 @@ class PlanQuotaRunSuite extends com.histmersion.db.DbSuite with RunTranscripts:
     assertEquals(q.plans.find(_.pool.value == "claude-plan").map(_.covers), Some(List("claude-code:*")))
 
   // #913: a plan model needs no price — before, an unpriced claude-code model was "not ready"
-  private lazy val unpricedPlan = baseCfg.modify(_.agents).setTo(baseCfg.agents.modify(_.prices).setTo("zzPaid=3/15").modify(_.roles).setTo(baseCfg.agents.roles.modify(_.extractor).setTo(Plan.wire))
+  private lazy val unpricedPlan = baseCfg.modify(_.agents).setTo(baseCfg.agents.modify(_.prices).setTo(com.histmersion.config.AgentsConfig.Prices("zzPaid=3/15")).modify(_.roles).setTo(baseCfg.agents.roles.modify(_.extractor).setTo(com.histmersion.config.AgentRolesConfig.Extractor(Plan.wire.value)))
   )
 
   test("a plan model with NO price is ready, costs 0 USD, and its run is still budgeted by tokens"):
@@ -278,7 +278,7 @@ class PlanQuotaRunSuite extends com.histmersion.db.DbSuite with RunTranscripts:
   test("a METERED unpriced model is still refused; claude-code set to use an API key needs a price"):
     val (a, _) = handlers(Map(Plan -> ScriptedClient(Plan), Paid -> ScriptedClient(Paid)), unpricedPlan)
     assert(a.runnable(Role.Extractor, Some(com.histmersion.domain.automation.agents.AgentsControllers.ModelName("anthropic:zzUnpriced"))).left.exists(_.value.contains("has no price")))
-    val keyed = unpricedPlan.modify(_.agents).setTo(unpricedPlan.agents.modify(_.providers).setTo(unpricedPlan.agents.providers.modify(_.claudeCode).setTo(unpricedPlan.agents.providers.claudeCode.modify(_.useApiKey).setTo(true))
+    val keyed = unpricedPlan.modify(_.agents).setTo(unpricedPlan.agents.modify(_.providers).setTo(unpricedPlan.agents.providers.modify(_.claudeCode).setTo(unpricedPlan.agents.providers.claudeCode.modify(_.useApiKey).setTo(com.histmersion.config.ClaudeCodeConfig.UseApiKey(true)))
       )
     )
     val (k, _) = handlers(Map(Plan -> ScriptedClient(Plan)), keyed)
@@ -286,7 +286,7 @@ class PlanQuotaRunSuite extends com.histmersion.db.DbSuite with RunTranscripts:
     assert(refused.left.exists(e => e.value.contains("has no price") && e.value.contains("use an API key")), refused)
     assert(k.startRun(RunRequest(com.histmersion.api.automation.Agents.RunRequest.Pipeline("enrich-source"), ApiTarget)).isLeft)
     // priced, it runs metered — and draws on no plan pool
-    val priced = keyed.modify(_.agents).setTo(keyed.agents.modify(_.prices).setTo("sonnet=3/15"))
+    val priced = keyed.modify(_.agents).setTo(keyed.agents.modify(_.prices).setTo(com.histmersion.config.AgentsConfig.Prices("sonnet=3/15")))
     val (p, _) = handlers(Map(Plan -> ScriptedClient(Plan)), priced)
     assertEquals(p.runnable(Role.Extractor, None), Right(()))
     assertEquals(
@@ -331,7 +331,7 @@ class PlanQuotaRunSuite extends com.histmersion.db.DbSuite with RunTranscripts:
           )
           .method(method, HttpRequest.BodyPublishers.ofString(body))
       )
-    val keyed = baseCfg.modify(_.auth).setTo(baseCfg.auth.modify(_.apiKey).setTo("zz-key")).modify(_.agents).setTo(baseCfg.agents.modify(_.enabled).setTo(false))
+    val keyed = baseCfg.modify(_.auth).setTo(baseCfg.auth.modify(_.apiKey).setTo(com.histmersion.config.AuthConfig.ApiKey("zz-key"))).modify(_.agents).setTo(baseCfg.agents.modify(_.enabled).setTo(com.histmersion.config.AgentsConfig.Enabled(false)))
     @volatile var hs: Option[ServerWiring] = None // the started server's handlers, for a run token
     ox.supervised {
       val b = Composition

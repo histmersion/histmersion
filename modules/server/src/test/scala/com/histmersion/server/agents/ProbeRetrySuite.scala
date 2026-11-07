@@ -6,7 +6,7 @@ import hearth.kindlings.optics.syntax.*
 
 import com.histmersion.domain.automation.agents.ScriptedClient
 
-import com.histmersion.domain.automation.agents.{AgentRuntime, AgentsControllers}
+import com.histmersion.domain.automation.agents.{AgentRuntime, AgentsControllers, PickFailure}
 import com.histmersion.domain.automation.managers.Zero
 
 import com.augustnagro.magnum.*
@@ -46,7 +46,7 @@ class ProbeRetrySuite extends com.histmersion.db.DbSuite with RunTranscripts:
   private lazy val cfg =
     val b = AppConfig.load()
     b.modify(
-      _.db).setTo(b.db.modify(_.url).setTo(testDb.get)).modify(_.server).setTo(b.server.modify(_.host).setTo("127.0.0.1")).modify(_.agents).setTo(b.agents.modify(_.enabled).setTo(true).modify(_.prices).setTo("zzProbe=0/0")).modify(_.libraryAgents).setTo(b.libraryAgents.modify(_.enrich).setTo(b.libraryAgents.enrich.modify(_.upstream).setTo(false))
+      _.db).setTo(b.db.modify(_.url).setTo(com.histmersion.config.DbConfig.Url(testDb.get))).modify(_.server).setTo(b.server.modify(_.host).setTo(com.histmersion.config.ServerConfig.Host("127.0.0.1"))).modify(_.agents).setTo(b.agents.modify(_.enabled).setTo(com.histmersion.config.AgentsConfig.Enabled(true)).modify(_.prices).setTo(com.histmersion.config.AgentsConfig.Prices("zzProbe=0/0"))).modify(_.libraryAgents).setTo(b.libraryAgents.modify(_.enrich).setTo(b.libraryAgents.enrich.modify(_.upstream).setTo(com.histmersion.config.AgentEnrichConfig.Upstream(false)))
     )
 
   private lazy val ds = testPool(cfg.db)
@@ -109,7 +109,7 @@ class ProbeRetrySuite extends com.histmersion.db.DbSuite with RunTranscripts:
     assert(rt.trees.generate(Generated.known(rt.definitions), List(AgentRuntime.ClaudeCode)).isRight)
     val client = ClaudeCodeClient(
       Haiku,
-      cfg.agents.providers.claudeCode.modify(_.command).setTo(fake.script.toString).modify(_.timeoutSeconds).setTo(30),
+      cfg.agents.providers.claudeCode.modify(_.command).setTo(com.histmersion.config.ClaudeCodeConfig.Command(fake.script.toString)).modify(_.timeoutSeconds).setTo(com.histmersion.config.ClaudeCodeConfig.TimeoutSeconds(30)),
       rt
     )
     val deps = Deps(cfg, ds)

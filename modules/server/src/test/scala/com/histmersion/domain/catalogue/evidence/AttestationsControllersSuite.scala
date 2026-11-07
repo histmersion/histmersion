@@ -36,7 +36,7 @@ class AttestationsControllersSuite extends munit.FunSuite:
       AttestationService.InMemory(AtomicReference(CatalogueState.empty)),
       sources,
       current,
-      limit => com.histmersion.PageSize(limit.getOrElse(com.histmersion.PageSize(25)).value.min(100)),
+      limit => com.histmersion.PageSize.applyUnsafe(limit.getOrElse(com.histmersion.PageSize(25)).value.min(100)),
       gate
     )
 

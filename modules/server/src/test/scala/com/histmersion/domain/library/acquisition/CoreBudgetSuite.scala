@@ -106,9 +106,9 @@ class CoreBudgetSuite extends munit.FunSuite:
     def budget(): CoreBudget = CoreBudget(() => now.get, ms => { slept.add(ms); now.updateAndGet(_.plusMillis(ms.value)) })
 
   private val Ctx: com.histmersion.plugin.Fetch.Context = new com.histmersion.plugin.Fetch.Context:
-    private val m = scala.collection.mutable.Map.empty[String, Any] // one fetch's memo
-    def memo[A](key: String)(compute: => A): A = m.getOrElseUpdate(key, compute).asInstanceOf[A]
-    val log: Plugin.Log = new Plugin.Log { def info(message: String) = (); def warn(message: String) = () }
+    private val m = scala.collection.mutable.Map.empty[com.histmersion.plugin.Fetch.Context.MemoKey, Any] // one fetch's memo
+    def memo[A](key: com.histmersion.plugin.Fetch.Context.MemoKey)(compute: => A): A = m.getOrElseUpdate(key, compute).asInstanceOf[A]
+    val log: Plugin.Log = new Plugin.Log { def info(message: Plugin.Log.InfoMessage) = (); def warn(message: Plugin.Log.WarnMessage) = () }
 
   private def generation(
       cfg: LoadedConfig,

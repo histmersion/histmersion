@@ -132,9 +132,9 @@ class AgentSchemaSuite extends munit.FunSuite:
       ).contains("\"prefix\"")
     )
     assert(!schema(com.histmersion.domain.library.workflows.LibraryAgentTools.GetSource).contains("fullText"))
-    assertEquals(AgentGetSourceInput(com.histmersion.domain.library.Citekey("x")).sectionOrBody, None, "no section: summary, findings and notes")
-    assertEquals(AgentGetSourceInput(com.histmersion.domain.library.Citekey("x"), offset = Some(com.histmersion.Offset(120))).sectionOrBody, Some("body"), "a slice reads the body")
-    assertEquals(AgentGetSourceInput(com.histmersion.domain.library.Citekey("x"), section = Some(com.histmersion.api.library.Source.Section.Wire("all")), offset = Some(com.histmersion.Offset(120))).sectionOrBody, Some("all"))
+    assertEquals(AgentGetSourceInput(com.histmersion.domain.library.Citekey.assume("x")).sectionOrBody, None, "no section: summary, findings and notes")
+    assertEquals(AgentGetSourceInput(com.histmersion.domain.library.Citekey.assume("x"), offset = Some(com.histmersion.Offset(120))).sectionOrBody, Some("body"), "a slice reads the body")
+    assertEquals(AgentGetSourceInput(com.histmersion.domain.library.Citekey.assume("x"), section = Some(com.histmersion.api.library.Source.Section.Wire("all")), offset = Some(com.histmersion.Offset(120))).sectionOrBody, Some("all"))
 
   test("an agent's arguments may leave out what has a default, and a stray one costs no turn (2026-10-16)"):
     import io.circe.parser.decode
@@ -143,7 +143,7 @@ class AgentSchemaSuite extends munit.FunSuite:
       decode[AgentSearchInput]("""{"topics":["dragon_slaying_myth"],"limit":50}"""),
       Right(AgentSearchInput(topics = List(com.histmersion.api.library.Filter.Topics("dragon_slaying_myth")), limit = Some(com.histmersion.api.library.Filter.Limit(50))))
     )
-    assertEquals(decode[AgentGetSourceInput]("""{"citekey":"x","fullText":true}"""), Right(AgentGetSourceInput(com.histmersion.domain.library.Citekey("x"))))
+    assertEquals(decode[AgentGetSourceInput]("""{"citekey":"x","fullText":true}"""), Right(AgentGetSourceInput(com.histmersion.domain.library.Citekey.assume("x"))))
     assertEquals(decode[AgentFacetsInput]("""{"field":"tags"}"""), Right(AgentFacetsInput(com.histmersion.domain.library.workflows.AgentFacetsInput.Field("tags"))))
     assertEquals(decode[FollowupsInput]("""{"id":"x"}"""), Right(FollowupsInput(com.histmersion.domain.library.workflows.FollowupsInput.Id("x"))))
     val t = box.tool(com.histmersion.domain.library.workflows.LibraryAgentTools.Search).get

@@ -61,7 +61,7 @@ class MediaTrafficSuite extends com.histmersion.db.DbSuite:
       val j = Transactor(ds).read(JobRepo.get(Job.Id.assume(id.value))).getOrElse(fail(s"no job $id"))
       if j.isTerminal || n <= 0 then j else { Thread.sleep(50); until(id, n - 1) }
 
-    def job(name: String, req: MediaImportRequest): Unit =
+    def job(name: com.histmersion.api.media.MediaItem.Provider, req: MediaImportRequest): Unit =
       handlers.imports.importJob(req) match
         case Left(e)  => sb ++= s"## job $name\n" + wire.take() + s"refused: ${e.message}\n"
         case Right(j) =>

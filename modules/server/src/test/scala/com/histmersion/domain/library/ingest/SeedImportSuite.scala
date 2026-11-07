@@ -70,10 +70,10 @@ class SeedImportSuite extends com.histmersion.db.DbSuite:
     assertEquals(r.failed, List("zz_seed_bad.md: no frontmatter"))
 
   test("isStale: only a STRICTLY newer row blocks the file"):
-    assert(SeedImport.isStale(Map(com.histmersion.domain.library.Citekey("a") -> CitekeyMillis.Millis(100L)), com.histmersion.domain.library.Citekey("a"), com.histmersion.domain.library.ingest.SeedNote.ModifiedMillis(99L)))
-    assert(!SeedImport.isStale(Map(com.histmersion.domain.library.Citekey("a") -> CitekeyMillis.Millis(100L)), com.histmersion.domain.library.Citekey("a"), com.histmersion.domain.library.ingest.SeedNote.ModifiedMillis(100L)))
-    assert(!SeedImport.isStale(Map(com.histmersion.domain.library.Citekey("a") -> CitekeyMillis.Millis(100L)), com.histmersion.domain.library.Citekey("a"), com.histmersion.domain.library.ingest.SeedNote.ModifiedMillis(101L)))
-    assert(!SeedImport.isStale(Map.empty, com.histmersion.domain.library.Citekey("a"), com.histmersion.domain.library.ingest.SeedNote.ModifiedMillis(1L))) // unknown citekey: always import
+    assert(SeedImport.isStale(Map(com.histmersion.domain.library.Citekey.assume("a") -> CitekeyMillis.Millis(100L)), com.histmersion.domain.library.Citekey.assume("a"), com.histmersion.domain.library.ingest.SeedNote.ModifiedMillis(99L)))
+    assert(!SeedImport.isStale(Map(com.histmersion.domain.library.Citekey.assume("a") -> CitekeyMillis.Millis(100L)), com.histmersion.domain.library.Citekey.assume("a"), com.histmersion.domain.library.ingest.SeedNote.ModifiedMillis(100L)))
+    assert(!SeedImport.isStale(Map(com.histmersion.domain.library.Citekey.assume("a") -> CitekeyMillis.Millis(100L)), com.histmersion.domain.library.Citekey.assume("a"), com.histmersion.domain.library.ingest.SeedNote.ModifiedMillis(101L)))
+    assert(!SeedImport.isStale(Map.empty, com.histmersion.domain.library.Citekey.assume("a"), com.histmersion.domain.library.ingest.SeedNote.ModifiedMillis(1L))) // unknown citekey: always import
 
   test("export then re-import (force) leaves identical frontmatter — the §1.9a round trip"):
     val ck = com.histmersion.domain.library.Citekey("zz_seed_roundtrip")

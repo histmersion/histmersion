@@ -58,7 +58,7 @@ class MediaOracleSuite extends DbSuite:
 
   private val tmp = Files.createTempDirectory("histmersion-media-oracle")
   private lazy val base = AppConfig.load()
-  private lazy val scratch = ScratchDatabases("histmersion_s9o", base.db.modify(_.url).setTo(testDb.get))
+  private lazy val scratch = ScratchDatabases("histmersion_s9o", base.db.modify(_.url).setTo(com.histmersion.config.DbConfig.Url(testDb.get)))
 
   override def afterSuite(): Unit =
     if testDb.isDefined then scratch.dropAll()
@@ -250,7 +250,7 @@ class MediaOracleSuite extends DbSuite:
 
   private def cfgFor(name: String): AppConfig =
     base.modify(
-      _.db).setTo(base.db.modify(_.url).setTo(scratch.urlOf(s"histmersion_s9o_${name}_test"))).modify(_.backups).setTo(base.backups.modify(_.dir).setTo(tmp.resolve(s"$name-backups").toString)).modify(_.bundles).setTo(base.bundles.modify(_.dir).setTo(tmp.resolve(s"$name-bundles").toString)).modify(_.converter).setTo(base.converter.modify(_.spoolDir).setTo(tmp.resolve(s"$name-spool").toString)).modify(_.acquire).setTo(base.acquire.modify(_.spoolDir).setTo(tmp.resolve(s"$name-acquire").toString)).modify(_.init).setTo(base.init.modify(_.auto).setTo(false)).modify(_.runtime).setTo(base.runtime.modify(_.dataDir).setTo(tmp.resolve(s"$name-data").toString)).modify(_.basemap).setTo(base.basemap.modify(_.dir).setTo(tmp.resolve(s"$name-basemap").toString)).modify(_.media).setTo(base.media.modify(_.requestIntervalMs).setTo(0)
+      _.db).setTo(base.db.modify(_.url).setTo(scratch.urlOf(s"histmersion_s9o_${name}_test"))).modify(_.backups).setTo(base.backups.modify(_.dir).setTo(com.histmersion.config.BackupsConfig.Dir(tmp.resolve(s"$name-backups").toString))).modify(_.bundles).setTo(base.bundles.modify(_.dir).setTo(com.histmersion.config.BundlesConfig.Dir(tmp.resolve(s"$name-bundles").toString))).modify(_.converter).setTo(base.converter.modify(_.spoolDir).setTo(com.histmersion.config.ConverterConfig.SpoolDir(tmp.resolve(s"$name-spool").toString))).modify(_.acquire).setTo(base.acquire.modify(_.spoolDir).setTo(com.histmersion.config.AcquireConfig.SpoolDir(tmp.resolve(s"$name-acquire").toString))).modify(_.init).setTo(base.init.modify(_.auto).setTo(com.histmersion.config.InitConfig.Auto(false))).modify(_.runtime).setTo(base.runtime.modify(_.dataDir).setTo(com.histmersion.config.RuntimeConfig.DataDir(tmp.resolve(s"$name-data").toString))).modify(_.basemap).setTo(base.basemap.modify(_.dir).setTo(com.histmersion.config.BasemapConfig.Dir(tmp.resolve(s"$name-basemap").toString))).modify(_.media).setTo(base.media.modify(_.requestIntervalMs).setTo(com.histmersion.config.MediaConfig.RequestIntervalMs(0))
     )
 
   private def withServer[A](name: String)(body: String => A): A =
@@ -953,7 +953,7 @@ class MediaOracleSuite extends DbSuite:
       .load("""histmersion.plugins.zq-own.enabled = true
               |histmersion.media.collections.per-collection { "zq-own" = "cc0,public-domain,cc-by,cc-by-sa" }
               |""".stripMargin)
-      .fold(e => fail(e), identity)
+      .fold(e => fail(e.value), identity)
     val wire = MediaWire.Wire(ownRoute)
     val plugins = ServerPlugins.offlineWith(
       List(OwnPlugin()),

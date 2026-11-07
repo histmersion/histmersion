@@ -159,7 +159,7 @@ class AgentsSettingsSuite extends munit.FunSuite:
     assert(!c.checked(com.histmersion.domain.automation.Approval.Kind.Edge))
     assertEquals(c.publishMode, com.histmersion.domain.automation.Approval.Mode.Auto)
     assertEquals(
-      c.modify(_.articlePublish).setTo("checked").publishMode,
+      c.modify(_.articlePublish).setTo(com.histmersion.config.AgentApprovalsConfig.Gate("checked")).publishMode,
       com.histmersion.domain.automation.Approval.Mode.Manual,
       "checked: the run waits, the supervisor decides"
     )

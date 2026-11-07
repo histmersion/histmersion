@@ -56,8 +56,8 @@ class AcquireRecheckDbSuite extends com.histmersion.db.DbSuite with RunTranscrip
   private lazy val baseCfg =
     val b = AppConfig.load()
     b.modify(
-      _.db).setTo(b.db.modify(_.url).setTo(testDb.get)).modify(_.agents).setTo(b.agents
-        .modify(_.enabled).setTo(true).modify(_.autopilot).setTo(b.agents.autopilot.modify(_.backupHours).setTo(0).modify(_.lintHours).setTo(0).modify(_.ingestPerDay).setTo(0))
+      _.db).setTo(b.db.modify(_.url).setTo(com.histmersion.config.DbConfig.Url(testDb.get))).modify(_.agents).setTo(b.agents
+        .modify(_.enabled).setTo(com.histmersion.config.AgentsConfig.Enabled(true)).modify(_.autopilot).setTo(b.agents.autopilot.modify(_.backupHours).setTo(com.histmersion.config.AgentAutopilotConfig.BackupHours(0)).modify(_.lintHours).setTo(com.histmersion.config.AgentAutopilotConfig.LintHours(0)).modify(_.ingestPerDay).setTo(com.histmersion.config.AgentAutopilotConfig.IngestPerDay(0)))
     )
 
   private lazy val ds = testPool(baseCfg.db)
@@ -103,7 +103,7 @@ class AcquireRecheckDbSuite extends com.histmersion.db.DbSuite with RunTranscrip
   private def checkItem(i: Queue.QueueItem.Id): com.histmersion.domain.library.acquisition.AcquireCheckRow.Item =
     com.histmersion.domain.library.acquisition.AcquireCheckRow.Item(i.value)
   private def jobKey(id: com.histmersion.api.SpatialHierarchyResult.Job.Id): com.histmersion.util.jobs.Job.Id =
-    com.histmersion.util.jobs.Job.Id(id.value)
+    com.histmersion.util.jobs.Job.Id.applyUnsafe(id.value)
   private def item(h: ServerWiring, n: String): Queue.QueueItem.Id =
     h.workLists
       .add(com.histmersion.domain.automation.worklists.WorkListControllers.ListName("acquire"), QueueAdd(Queue.QueueItem.Text(s"Zzrecheck $n, A work — https://doi.org/${doi(n)}"), topic = Some(com.histmersion.api.automation.Queue.QueueItem.Topic("zzrecheck"))))
@@ -244,7 +244,7 @@ class AcquireRecheckDbSuite extends com.histmersion.db.DbSuite with RunTranscrip
 
   test("under the autopilot's shared allowance: the watchers' backlog first, then at most share-percent of it"):
     val cfg = baseCfg.modify(
-      _.agents).setTo(baseCfg.agents.modify(_.autopilot).setTo(baseCfg.agents.autopilot.modify(_.ingestPerDay).setTo(8))).modify(_.acquire).setTo(baseCfg.acquire.modify(_.recheck).setTo(baseCfg.acquire.recheck.modify(_.perPass).setTo(ItemCount(10)).modify(_.sharePercent).setTo(Percent(25))
+      _.agents).setTo(baseCfg.agents.modify(_.autopilot).setTo(baseCfg.agents.autopilot.modify(_.ingestPerDay).setTo(com.histmersion.config.AgentAutopilotConfig.IngestPerDay(8)))).modify(_.acquire).setTo(baseCfg.acquire.modify(_.recheck).setTo(baseCfg.acquire.recheck.modify(_.perPass).setTo(ItemCount(10)).modify(_.sharePercent).setTo(Percent(25))
       )
     )
     val (a, h, up) = setup(cfg)
@@ -319,7 +319,7 @@ class AcquireRecheckDbSuite extends com.histmersion.db.DbSuite with RunTranscrip
           )
         else Fetch.Miss(com.histmersion.plugin.Fetch.Miss.Why("no open-access location"))
     val chain = FetchChain(List(FetchChain.Step.Id("unpaywall") -> open, FetchChain.Step.Id("stub-unauthorised") -> unauthorised), allowUnauthorised = com.histmersion.pluginhost.FetchChain.AllowUnauthorised(true))
-    val cfg = baseCfg.modify(_.acquire).setTo(baseCfg.acquire.modify(_.allowUnauthorised).setTo(true))
+    val cfg = baseCfg.modify(_.acquire).setTo(baseCfg.acquire.modify(_.allowUnauthorised).setTo(com.histmersion.config.AcquireConfig.AllowUnauthorised(true)))
     val deps = Deps(cfg, ds)
     val h = ServerWiring(deps)
     val a = AgentsControllers(ServerEngineSite(deps, h), (_, _) => Right(ScriptedClient(Model)))
@@ -390,7 +390,7 @@ class AcquireRecheckDbSuite extends com.histmersion.db.DbSuite with RunTranscrip
       Left(AgentUpstream.Problem(s"${IngestBacklog.NoLegalCopy} $d: no legal open-access PDF found — unpaywall: no copy — none"))
 
   private val tightCfg = baseCfg.modify(
-    _.agents).setTo(baseCfg.agents.modify(_.autopilot).setTo(baseCfg.agents.autopilot.modify(_.ingestPerDay).setTo(4))).modify(_.acquire).setTo(baseCfg.acquire.modify(_.recheck).setTo(baseCfg.acquire.recheck.modify(_.perPass).setTo(ItemCount(1)).modify(_.perDay).setTo(ItemCount(2)).modify(_.sharePercent).setTo(Percent(0))
+    _.agents).setTo(baseCfg.agents.modify(_.autopilot).setTo(baseCfg.agents.autopilot.modify(_.ingestPerDay).setTo(com.histmersion.config.AgentAutopilotConfig.IngestPerDay(4)))).modify(_.acquire).setTo(baseCfg.acquire.modify(_.recheck).setTo(baseCfg.acquire.recheck.modify(_.perPass).setTo(ItemCount(1)).modify(_.perDay).setTo(ItemCount(2)).modify(_.sharePercent).setTo(Percent(0))
     )
   )
 
@@ -586,7 +586,7 @@ class AcquireRecheckDbSuite extends com.histmersion.db.DbSuite with RunTranscrip
     // what a restart leaves: a job that ran, checked two items, and was failed as interrupted at startup
     val j = Transactor(ds).transact(
       JobRepo.create(
-        com.histmersion.util.jobs.Job.Kind(RecheckJob.JobKind),
+        com.histmersion.util.jobs.Job.Kind.applyUnsafe(RecheckJob.JobKind),
         None,
         None,
         detail = Some(RecheckJob.Detail(Some(RecheckJob(all = com.histmersion.api.library.Acquire.Checks.RecheckJob.All(true), since = RecheckJob.Since(since.toString), by = com.histmersion.api.library.Acquire.Checks.RecheckJob.By("cli")))))
@@ -616,7 +616,7 @@ class AcquireRecheckDbSuite extends com.histmersion.db.DbSuite with RunTranscrip
     Thread.sleep(5)
     val k = Transactor(ds).transact(
       JobRepo.create(
-        com.histmersion.util.jobs.Job.Kind(RecheckJob.JobKind),
+        com.histmersion.util.jobs.Job.Kind.applyUnsafe(RecheckJob.JobKind),
         None,
         None,
         detail = Some(RecheckJob.Detail(Some(RecheckJob(all = com.histmersion.api.library.Acquire.Checks.RecheckJob.All(true), since = RecheckJob.Since(Instant.now().toString), by = com.histmersion.api.library.Acquire.Checks.RecheckJob.By("cli")))))
@@ -641,7 +641,7 @@ class AcquireRecheckDbSuite extends com.histmersion.db.DbSuite with RunTranscrip
       val access = Access.Open
       def fetch(w: WorkKey, c: Fetch.Context) = Fetch.Miss(com.histmersion.plugin.Fetch.Miss.Why("no open-access location"))
     val chain = FetchChain(List(FetchChain.Step.Id("unpaywall") -> open, FetchChain.Step.Id("stub-unauthorised") -> unauthorised), allowUnauthorised = com.histmersion.pluginhost.FetchChain.AllowUnauthorised(true))
-    val cfg = baseCfg.modify(_.acquire).setTo(baseCfg.acquire.modify(_.allowUnauthorised).setTo(true))
+    val cfg = baseCfg.modify(_.acquire).setTo(baseCfg.acquire.modify(_.allowUnauthorised).setTo(com.histmersion.config.AcquireConfig.AllowUnauthorised(true)))
     val deps = Deps(cfg, ds)
     val h = ServerWiring(deps)
     val a = AgentsControllers(ServerEngineSite(deps, h), (_, _) => Right(ScriptedClient(Model)))

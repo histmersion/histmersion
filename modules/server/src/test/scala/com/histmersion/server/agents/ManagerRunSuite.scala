@@ -86,13 +86,13 @@ class ManagerRunSuite extends com.histmersion.db.DbSuite with RunTranscripts:
   private lazy val baseCfg =
     val b = AppConfig.load()
     b.modify(
-      _.db).setTo(b.db.modify(_.url).setTo(testDb.get)).modify(_.agents).setTo(b.agents.modify(
-        _.enabled).setTo(true).modify(_.prices).setTo("scripted=1/2").modify(_.roles).setTo(b.agents.roles.modify(_.reviewer).setTo(Model.wire).modify(_.coldReader).setTo(Model.wire).modify(_.skeptic).setTo(Model.wire).modify(_.fixer).setTo(Model.wire)
+      _.db).setTo(b.db.modify(_.url).setTo(com.histmersion.config.DbConfig.Url(testDb.get))).modify(_.agents).setTo(b.agents.modify(
+        _.enabled).setTo(com.histmersion.config.AgentsConfig.Enabled(true)).modify(_.prices).setTo(com.histmersion.config.AgentsConfig.Prices("scripted=1/2")).modify(_.roles).setTo(b.agents.roles.modify(_.reviewer).setTo(com.histmersion.config.AgentRolesConfig.Reviewer(Model.wire.value)).modify(_.coldReader).setTo(com.histmersion.config.AgentRolesConfig.ColdReader(Model.wire.value)).modify(_.skeptic).setTo(com.histmersion.config.AgentRolesConfig.Skeptic(Model.wire.value)).modify(_.fixer).setTo(com.histmersion.config.AgentRolesConfig.Fixer(Model.wire.value))
       )).modify(_.researchAgents).setTo(b.researchAgents.copy(
         managers = b.researchAgents.managers
-          .modify(_.review).setTo(b.researchAgents.managers.review.modify(_.cooldownMinutes).setTo(30).modify(_.inferFilter).setTo(false)),
+          .modify(_.review).setTo(b.researchAgents.managers.review.modify(_.cooldownMinutes).setTo(com.histmersion.config.ReviewManagerConfig.CooldownMinutes(30)).modify(_.inferFilter).setTo(com.histmersion.config.ReviewManagerConfig.InferFilter(false))),
         // the scripted rules reviewer looks nothing up: ReviewArticleRunSuite holds the spot-checks
-        review = b.researchAgents.review.modify(_.spotChecks).setTo(0)
+        review = b.researchAgents.review.modify(_.spotChecks).setTo(com.histmersion.config.AgentReviewConfig.SpotChecks(0))
       )
     )
 
@@ -175,7 +175,7 @@ class ManagerRunSuite extends com.histmersion.db.DbSuite with RunTranscripts:
     // m1 has open MAJORs (selected first), m2 was never reviewed
     ReviewLedgerFixtures.put(
       ds,
-      absorb(Ledger(com.histmersion.domain.ReviewLedger.Ledger.Slug("zzagent_m1")), List(finding(Finding.Id("R1"), Reviewer.Rules), finding(Finding.Id("S1"), Reviewer.Skeptic)), com.histmersion.domain.automation.Run.Id("old"), com.histmersion.domain.ReviewLedger.Closure.Round(1))._1
+      absorb(Ledger(com.histmersion.domain.ReviewLedger.Ledger.Slug("zzagent_m1")), List(finding(Finding.Id("R1"), Reviewer.Rules), finding(Finding.Id("S1"), Reviewer.Skeptic)), com.histmersion.domain.automation.Run.Id.assume("old"), com.histmersion.domain.ReviewLedger.Closure.Round(1))._1
     )
     val out1 = a.managers.tick(t0)
     assert(out1.exists(_.value.contains("selected 2")), out1)
@@ -245,7 +245,7 @@ class ManagerRunSuite extends com.histmersion.db.DbSuite with RunTranscripts:
   test("omission churn no longer stops an article whose open critique pairs go down (§6.8)"):
     val (a, h) = handlers(PanelClient(Model)); seed(h, Slug("zzagent_m5"))
     // two critics of the cited source: the checklist has two open pairs
-    List("zzagent2020_critic", "zzagent2021_critic").map(com.histmersion.domain.library.Citekey(_)).foreach { ck =>
+    List("zzagent2020_critic", "zzagent2021_critic").map(com.histmersion.domain.library.Citekey.applyUnsafe(_)).foreach { ck =>
       assert(
         h.library.sources
           .put(
@@ -307,7 +307,7 @@ class ManagerRunSuite extends com.histmersion.db.DbSuite with RunTranscripts:
     // m3: no progress in one run (2 before, 2 after)
     ReviewLedgerFixtures.put(
       ds,
-      absorb(Ledger(com.histmersion.domain.ReviewLedger.Ledger.Slug("zzagent_m3")), List(finding(Finding.Id("R1"), Reviewer.Rules), finding(Finding.Id("R2"), Reviewer.Rules)), com.histmersion.domain.automation.Run.Id("x"), com.histmersion.domain.ReviewLedger.Closure.Round(1))._1
+      absorb(Ledger(com.histmersion.domain.ReviewLedger.Ledger.Slug("zzagent_m3")), List(finding(Finding.Id("R1"), Reviewer.Rules), finding(Finding.Id("R2"), Reviewer.Rules)), com.histmersion.domain.automation.Run.Id.assume("x"), com.histmersion.domain.ReviewLedger.Closure.Round(1))._1
     )
     val m3 = item(ManagerItem.Target("zzagent_m3"))
     connect(ds)(sql"UPDATE manager_items SET state = '{\"before\":2}'::jsonb WHERE id = ${m3.id}".update.run())
@@ -330,13 +330,13 @@ class ManagerRunSuite extends com.histmersion.db.DbSuite with RunTranscripts:
     assert(QueueRows.list(ds, Queue.Kind.Tasks, all = false).exists(_.text.value.contains("after 3 failed runs")))
 
   test("capacity: the global cap counts a person's runs; maxRuns; another writer on the article waits"):
-    val (a, h) = handlers(PanelClient(Model), baseCfg.modify(_.agents).setTo(baseCfg.agents.modify(_.maxConcurrentRuns).setTo(2)));
+    val (a, h) = handlers(PanelClient(Model), baseCfg.modify(_.agents).setTo(baseCfg.agents.modify(_.maxConcurrentRuns).setTo(com.histmersion.config.AgentsConfig.MaxConcurrentRuns(2))));
     seed(h, Slug("zzagent_c1"), Slug("zzagent_c2"), Slug("zzagent_c3"))
     activeReview(a, ManagerConfig(maxRuns = Some(com.histmersion.api.automation.Managers.ManagerConfig.MaxRuns(2))))
     // a person's run on c1 takes one of the two places and holds c1
     val mine = a.startRun(RunRequest(com.histmersion.api.automation.Agents.RunRequest.Pipeline("review-article"), com.histmersion.api.automation.Agents.RunRequest.Target("zzagent_c1"))).fold(e => fail(e.message.value), identity)
     List("zzagent_c1", "zzagent_c2", "zzagent_c3").foreach(s =>
-      a.managing.addItem(ReviewLight, EnqueueRequest(ReviewEnqueue,s))
+      a.managing.addItem(ReviewLight, EnqueueRequest(ReviewEnqueue, EnqueueRequest.Target(s)))
     )
     a.managers.tick(t0)
     assertEquals(
@@ -367,7 +367,7 @@ class ManagerRunSuite extends com.histmersion.db.DbSuite with RunTranscripts:
     val run = item(ManagerItem.Target("zzagent_p1")).runId.get
     assertEquals(connect(ds)(AgentRepo.get(run)).get.status, "queued")
     val p = a.managing.action(ReviewLight,com.histmersion.domain.automation.managers.ManagersControllers.Action("pause"), Some(com.histmersion.api.automation.Managers.ManagerInfo.PauseRuns(true))).fold(e => fail(e.message.value), identity)
-    assert(p.pauseRuns)
+    assert(p.pauseRuns.value)
     assertEquals(connect(ds)(AgentRepo.get(run)).get.status, "paused")
     // pausing it is not a settle: the item stays active
     a.managers.tick(t0)

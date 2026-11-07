@@ -139,9 +139,9 @@ class GoalAgentsRunSuite extends com.histmersion.db.DbSuite with com.histmersion
     val b = AppConfig.load()
     val m = Model.wire
     b.modify(
-      _.db).setTo(b.db.modify(_.url).setTo(testDb.get)).modify(_.agents).setTo(b.agents.modify(
-        _.enabled).setTo(true).modify(_.prices).setTo("scripted=1/2").modify(_.roles).setTo(b.agents.roles
-          .modify(_.extractor).setTo(m).modify(_.reviewer).setTo(m).modify(_.coldReader).setTo(m).modify(_.skeptic).setTo(m).modify(_.fixer).setTo(m).modify(_.planner).setTo(m).modify(_.writer).setTo(m)
+      _.db).setTo(b.db.modify(_.url).setTo(com.histmersion.config.DbConfig.Url(testDb.get))).modify(_.agents).setTo(b.agents.modify(
+        _.enabled).setTo(com.histmersion.config.AgentsConfig.Enabled(true)).modify(_.prices).setTo(com.histmersion.config.AgentsConfig.Prices("scripted=1/2")).modify(_.roles).setTo(b.agents.roles
+          .modify(_.extractor).setTo(com.histmersion.config.AgentRolesConfig.Extractor(m.value)).modify(_.reviewer).setTo(com.histmersion.config.AgentRolesConfig.Reviewer(m.value)).modify(_.coldReader).setTo(com.histmersion.config.AgentRolesConfig.ColdReader(m.value)).modify(_.skeptic).setTo(com.histmersion.config.AgentRolesConfig.Skeptic(m.value)).modify(_.fixer).setTo(com.histmersion.config.AgentRolesConfig.Fixer(m.value)).modify(_.planner).setTo(com.histmersion.config.AgentRolesConfig.Planner(m.value)).modify(_.writer).setTo(com.histmersion.config.AgentRolesConfig.Writer(m.value))
       )
     )
 
@@ -441,7 +441,7 @@ class GoalAgentsRunSuite extends com.histmersion.db.DbSuite with com.histmersion
       text(draftJson(onlyCk, reasons = s"""{"citekey":"$Ck2","reason":"Its isotope study dates a later trade."}"""))
     )
     val auto = baseCfg.modify(
-      _.agents).setTo(baseCfg.agents.modify(_.approvals).setTo(baseCfg.agents.approvals.modify(_.articlePublish).setTo("auto"))).modify(_.researchAgents).setTo(baseCfg.researchAgents.modify(_.compile).setTo(baseCfg.researchAgents.compile.modify(_.review).setTo(false))
+      _.agents).setTo(baseCfg.agents.modify(_.approvals).setTo(baseCfg.agents.approvals.modify(_.articlePublish).setTo(com.histmersion.config.AgentApprovalsConfig.Gate("auto")))).modify(_.researchAgents).setTo(baseCfg.researchAgents.modify(_.compile).setTo(baseCfg.researchAgents.compile.modify(_.review).setTo(com.histmersion.config.AgentCompileConfig.Review(false)))
     )
     val (a, h, _) = handlers(c, auto); seed(h)
     val run = start(a, RunRequest(CompileArticle, SlugTarget, title = Some(ZzTitle), topics = TinTopics))
@@ -513,7 +513,7 @@ class GoalAgentsRunSuite extends com.histmersion.db.DbSuite with com.histmersion
     val (a, h, _) =
       handlers(
         c,
-        baseCfg.modify(_.researchAgents).setTo(baseCfg.researchAgents.modify(_.compile).setTo(baseCfg.researchAgents.compile.modify(_.review).setTo(false))
+        baseCfg.modify(_.researchAgents).setTo(baseCfg.researchAgents.modify(_.compile).setTo(baseCfg.researchAgents.compile.modify(_.review).setTo(com.histmersion.config.AgentCompileConfig.Review(false)))
         )
       )
     seed(h)
@@ -543,7 +543,7 @@ class GoalAgentsRunSuite extends com.histmersion.db.DbSuite with com.histmersion
     val c = ScriptedClient(Model)
     compileScripts(c, draftJson(newBody))
     val auto = baseCfg.modify(
-      _.agents).setTo(baseCfg.agents.modify(_.approvals).setTo(baseCfg.agents.approvals.modify(_.articlePublish).setTo("auto"))).modify(_.researchAgents).setTo(baseCfg.researchAgents.modify(_.compile).setTo(baseCfg.researchAgents.compile.modify(_.review).setTo(false))
+      _.agents).setTo(baseCfg.agents.modify(_.approvals).setTo(baseCfg.agents.approvals.modify(_.articlePublish).setTo(com.histmersion.config.AgentApprovalsConfig.Gate("auto")))).modify(_.researchAgents).setTo(baseCfg.researchAgents.modify(_.compile).setTo(baseCfg.researchAgents.compile.modify(_.review).setTo(com.histmersion.config.AgentCompileConfig.Review(false)))
     )
     val (a, h, _) = handlers(c, auto); seed(h)
     val run = start(a, RunRequest(CompileArticle, SlugTarget, title = Some(ZzTitle), topics = TinTopics))
@@ -569,7 +569,7 @@ class GoalAgentsRunSuite extends com.histmersion.db.DbSuite with com.histmersion
     )
     assert(a.startRun(RunRequest(PlanGoal, RunRequest.Target("zzagent-nope"))).isLeft)
     assert(a.startRun(RunRequest(EnrichSource, CkTarget, goal = Some(com.histmersion.api.automation.Goal.Slug("zzagent-nope")))).isLeft)
-    val noWriter = baseCfg.modify(_.agents).setTo(baseCfg.agents.modify(_.roles).setTo(baseCfg.agents.roles.modify(_.writer).setTo("")))
+    val noWriter = baseCfg.modify(_.agents).setTo(baseCfg.agents.modify(_.roles).setTo(baseCfg.agents.roles.modify(_.writer).setTo(com.histmersion.config.AgentRolesConfig.Writer(""))))
     val (b, _, _) = handlers(c, noWriter)
     assert(
       b.startRun(RunRequest(CompileArticle, SlugTarget, title = Some(RunRequest.Title("x")), topics = List(RunRequest.Topics("t"))))

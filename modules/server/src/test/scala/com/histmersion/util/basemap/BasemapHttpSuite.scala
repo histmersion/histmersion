@@ -37,7 +37,7 @@ class BasemapHttpSuite extends com.histmersion.db.DbSuite:
   private def withServer(dir: Path, onDemand: Boolean = true)(body: String => Unit): Unit =
     val base = AppConfig.load()
     val cfg = base.modify(
-      _.db).setTo(base.db.modify(_.url).setTo(testDb.get)).modify(_.auth).setTo(base.auth.modify(_.apiKey).setTo("k3y")).modify(_.basemap).setTo(base.basemap.copy(
+      _.db).setTo(base.db.modify(_.url).setTo(com.histmersion.config.DbConfig.Url(testDb.get))).modify(_.auth).setTo(base.auth.modify(_.apiKey).setTo(com.histmersion.config.AuthConfig.ApiKey("k3y"))).modify(_.basemap).setTo(base.basemap.copy(
         dir = BasemapConfig.Dir(dir.toString),
         terrain = base.basemap.terrain.modify(_.onDemand).setTo(base.basemap.terrain.onDemand.modify(_.enabled).setTo(BasemapOnDemandConfig.Enabled(onDemand && base.basemap.terrain.onDemand.enabled.value))
         ),

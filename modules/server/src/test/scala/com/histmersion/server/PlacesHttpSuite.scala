@@ -79,7 +79,7 @@ class PlacesHttpSuite extends com.histmersion.db.DbSuite:
 
   test("import → search → detail → children → tree, all as of a year"):
     val base = AppConfig.load()
-    val cfg = base.modify(_.db).setTo(base.db.modify(_.url).setTo(testDb.get))
+    val cfg = base.modify(_.db).setTo(base.db.modify(_.url).setTo(com.histmersion.config.DbConfig.Url(testDb.get)))
     supervised {
       val b = Composition.server(cfg, com.histmersion.config.ServerConfig.Host("127.0.0.1"), com.histmersion.config.ServerConfig.Port(0)).start()
       val url = s"http://127.0.0.1:${b.port}"
@@ -123,7 +123,7 @@ class PlacesHttpSuite extends com.histmersion.db.DbSuite:
 
   test("a place id in the filter reaches sources through finding_places; an unknown one is a name"):
     val base = AppConfig.load()
-    val cfg = base.modify(_.db).setTo(base.db.modify(_.url).setTo(testDb.get))
+    val cfg = base.modify(_.db).setTo(base.db.modify(_.url).setTo(com.histmersion.config.DbConfig.Url(testDb.get)))
     supervised {
       val b = Composition.server(cfg, com.histmersion.config.ServerConfig.Host("127.0.0.1"), com.histmersion.config.ServerConfig.Port(0)).start()
       val url = s"http://127.0.0.1:${b.port}"
@@ -172,7 +172,7 @@ class PlacesHttpSuite extends com.histmersion.db.DbSuite:
 
   test("#716: counts=true says what place=<id> selects — the place and its descendants"):
     val base = AppConfig.load()
-    val cfg = base.modify(_.db).setTo(base.db.modify(_.url).setTo(testDb.get))
+    val cfg = base.modify(_.db).setTo(base.db.modify(_.url).setTo(com.histmersion.config.DbConfig.Url(testDb.get)))
     supervised {
       val b = Composition.server(cfg, com.histmersion.config.ServerConfig.Host("127.0.0.1"), com.histmersion.config.ServerConfig.Port(0)).start()
       val url = s"http://127.0.0.1:${b.port}"
@@ -202,7 +202,7 @@ class PlacesHttpSuite extends com.histmersion.db.DbSuite:
 
   test("#718: /api/about reports the build, health, job queue and store counts"):
     val base = AppConfig.load()
-    val cfg = base.modify(_.db).setTo(base.db.modify(_.url).setTo(testDb.get))
+    val cfg = base.modify(_.db).setTo(base.db.modify(_.url).setTo(com.histmersion.config.DbConfig.Url(testDb.get)))
     supervised {
       val b = Composition.server(cfg, com.histmersion.config.ServerConfig.Host("127.0.0.1"), com.histmersion.config.ServerConfig.Port(0), OfflineConverter()).start()
       val url = s"http://127.0.0.1:${b.port}"
@@ -232,7 +232,7 @@ class PlacesHttpSuite extends com.histmersion.db.DbSuite:
     java.nio.file.Files.createDirectories(d.resolve("backups"))
     java.nio.file.Files.write(d.resolve("backups/histmersion-20261001T100000Z.dump"), Array.fill[Byte](2048)(1))
     val cfg = base.modify(
-      _.db).setTo(base.db.modify(_.url).setTo(testDb.get)).modify(_.runtime).setTo(base.runtime.modify(_.dataDir).setTo(d.resolve("data").toString)).modify(_.backups).setTo(base.backups.modify(_.dir).setTo(d.resolve("backups").toString)).modify(_.converter).setTo(base.converter.modify(_.spoolDir).setTo(d.resolve("uploads").toString)).modify(_.bundles).setTo(base.bundles.modify(_.dir).setTo(d.resolve("bundles").toString)).modify(_.basemap).setTo(base.basemap.modify(_.dir).setTo(d.resolve("basemap").toString)).modify(_.places).setTo(base.places.modify(_.sources).setTo(base.places.sources.modify(_.dir).setTo(d.resolve("gazetteer").toString))).modify(_.storage).setTo(base.storage.modify(_.waitMillis).setTo(30000)
+      _.db).setTo(base.db.modify(_.url).setTo(com.histmersion.config.DbConfig.Url(testDb.get))).modify(_.runtime).setTo(base.runtime.modify(_.dataDir).setTo(com.histmersion.config.RuntimeConfig.DataDir(d.resolve("data").toString))).modify(_.backups).setTo(base.backups.modify(_.dir).setTo(com.histmersion.config.BackupsConfig.Dir(d.resolve("backups").toString))).modify(_.converter).setTo(base.converter.modify(_.spoolDir).setTo(com.histmersion.config.ConverterConfig.SpoolDir(d.resolve("uploads").toString))).modify(_.bundles).setTo(base.bundles.modify(_.dir).setTo(com.histmersion.config.BundlesConfig.Dir(d.resolve("bundles").toString))).modify(_.basemap).setTo(base.basemap.modify(_.dir).setTo(com.histmersion.config.BasemapConfig.Dir(d.resolve("basemap").toString))).modify(_.places).setTo(base.places.modify(_.sources).setTo(base.places.sources.modify(_.dir).setTo(com.histmersion.config.PlaceSourcesConfig.Dir(d.resolve("gazetteer").toString)))).modify(_.storage).setTo(base.storage.modify(_.waitMillis).setTo(com.histmersion.config.StorageConfig.WaitMillis(30000))
     )
     supervised {
       val b = Composition.server(cfg, com.histmersion.config.ServerConfig.Host("127.0.0.1"), com.histmersion.config.ServerConfig.Port(0), OfflineConverter()).start()
@@ -257,7 +257,7 @@ class PlacesHttpSuite extends com.histmersion.db.DbSuite:
   /** #987: a name added by hand and a place of one's own, over REST and MCP (`zzn_*`). */
   test("names added by hand and hand-added places: REST and MCP agree"):
     val base = AppConfig.load()
-    val cfg = base.modify(_.db).setTo(base.db.modify(_.url).setTo(testDb.get))
+    val cfg = base.modify(_.db).setTo(base.db.modify(_.url).setTo(com.histmersion.config.DbConfig.Url(testDb.get)))
     supervised {
       val b = Composition.server(cfg, com.histmersion.config.ServerConfig.Host("127.0.0.1"), com.histmersion.config.ServerConfig.Port(0)).start()
       val url = s"http://127.0.0.1:${b.port}"
@@ -347,7 +347,7 @@ class PlacesHttpSuite extends com.histmersion.db.DbSuite:
 
   test("V080: a kind and period set by hand — REST and MCP agree, a re-seed keeps it, a reset restores the source's"):
     val base = AppConfig.load()
-    val cfg = base.modify(_.db).setTo(base.db.modify(_.url).setTo(testDb.get))
+    val cfg = base.modify(_.db).setTo(base.db.modify(_.url).setTo(com.histmersion.config.DbConfig.Url(testDb.get)))
     supervised {
       val b = Composition.server(cfg, com.histmersion.config.ServerConfig.Host("127.0.0.1"), com.histmersion.config.ServerConfig.Port(0)).start()
       val url = s"http://127.0.0.1:${b.port}"
@@ -496,7 +496,7 @@ class PlacesHttpSuite extends com.histmersion.db.DbSuite:
 
   test("#1064: /api/places/sources is routed before /api/places/{id}; load refuses an unknown source"):
     val base = AppConfig.load()
-    val cfg = base.modify(_.db).setTo(base.db.modify(_.url).setTo(testDb.get))
+    val cfg = base.modify(_.db).setTo(base.db.modify(_.url).setTo(com.histmersion.config.DbConfig.Url(testDb.get)))
     supervised {
       val b = Composition.server(cfg, com.histmersion.config.ServerConfig.Host("127.0.0.1"), com.histmersion.config.ServerConfig.Port(0)).start()
       val url = s"http://127.0.0.1:${b.port}"

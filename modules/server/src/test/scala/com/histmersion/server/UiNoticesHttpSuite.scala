@@ -55,7 +55,7 @@ class UiNoticesHttpSuite extends com.histmersion.db.DbSuite:
 
   test("counts, news, marking read without the key, and the mark only moving forward"):
     val base = AppConfig.load()
-    val cfg = base.modify(_.db).setTo(base.db.modify(_.url).setTo(testDb.get)).modify(_.auth).setTo(base.auth.modify(_.apiKey).setTo("s3cret"))
+    val cfg = base.modify(_.db).setTo(base.db.modify(_.url).setTo(com.histmersion.config.DbConfig.Url(testDb.get))).modify(_.auth).setTo(base.auth.modify(_.apiKey).setTo(com.histmersion.config.AuthConfig.ApiKey("s3cret")))
     supervised {
       val b = Composition.server(cfg, com.histmersion.config.ServerConfig.Host("127.0.0.1"), com.histmersion.config.ServerConfig.Port(0)).start()
       val url = s"http://127.0.0.1:${b.port}/api"

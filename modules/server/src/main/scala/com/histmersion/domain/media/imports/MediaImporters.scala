@@ -92,9 +92,7 @@ object MediaImporters:
     }
 
   private def ordered(registered: List[Registries.MediaCollectionsKey]): List[Registries.MediaCollectionsKey] =
-    BuiltinMedia
-      .ordered(registered.map(k => BuiltinMedia.OrderedRegistered(k.value)))
-      .map(k => Registries.MediaCollectionsKey(k.value))
+    BuiltinMedia.ordered(registered)
 
   private def safe[A](a: => A): Option[A] =
     try Option(a)

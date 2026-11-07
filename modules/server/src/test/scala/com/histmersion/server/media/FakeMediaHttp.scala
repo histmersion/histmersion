@@ -54,7 +54,7 @@ object FakeMediaHttp:
     val slept = scala.collection.mutable.ListBuffer.empty[Polite.IntervalMs]
     // `var`: the fake clock, advanced by every recorded sleep
     var now = Polite.EpochMs(1_000_000L)
-    (Polite(http, c, ms => { slept += ms; now = Polite.EpochMs(now.value + ms.value) }, () => now, refusalBackoffMs), slept)
+    (new Polite(http, c, ms => { slept += ms; now = Polite.EpochMs(now.value + ms.value) }, () => now, refusalBackoffMs), slept)
 
   /** The first-party collection registered as `name`, as the host builds it: its plugin discovered on the class path
     * and supplied the host's settings `settings` (a `histmersion.conf` text: `histmersion.media.*`, and a keyed one's

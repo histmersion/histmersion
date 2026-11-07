@@ -134,7 +134,7 @@ class MediaHttpSuite extends com.histmersion.db.DbSuite:
     val fake = fakeProvider
     val h = MediaWiring(Deps(cfg, ds), fake)
     val dry = h.imports.importMedia(MediaImportRequest(place = Some(PlaceId))).fold(e => fail(e.message.value), identity)
-    assert(dry.dryRun)
+    assert(dry.dryRun.value)
     assertEquals(dry.byLicence.map(c => (c.key, c.allowed)), List(("CC-BY-NC-SA-4.0", false), ("CC-BY-SA-2.5", true)))
     assertEquals(AssetFixtures.thumbs(ds, com.histmersion.domain.media.imports.Target.TargetType("place"), PlaceTarget), Nil)
     val done =

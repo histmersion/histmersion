@@ -124,7 +124,7 @@ class ArticlesControllersSuite extends munit.FunSuite:
 
   test("a slug that is not one is refused; a strict write with a formatting error too, a lenient one carries it"):
     val c = controllers()
-    assertEquals(c.put(com.histmersion.domain.research.Slug("Not A Slug"), put).left.map(_.code), Left(Some(Write.CodeInvalid)))
+    assertEquals(c.put(com.histmersion.domain.research.Slug.assume("Not A Slug"), put).left.map(_.code), Left(Some(Write.CodeInvalid)))
     val messy = put.modify(_.body).setTo(Article.Body("<div> never closed\n"))
     assertEquals(c.put(com.histmersion.domain.research.Slug("zr_walls"), messy, strict = com.histmersion.domain.research.Article.StrictMode(true)).left.map(_.code), Left(Some(Write.CodeInvalid)))
     assertEquals(c.store.exists(com.histmersion.domain.research.Slug("zr_walls")), false)

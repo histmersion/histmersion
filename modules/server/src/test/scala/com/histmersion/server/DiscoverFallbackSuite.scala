@@ -85,7 +85,7 @@ class DiscoverFallbackSuite extends munit.FunSuite:
     def bytes(url: Http.Url, headers: Map[CoreQuota.HeaderName, CoreQuota.HeaderValue]) = json(url, headers).map(j => HttpAnswer.Body(j.noSpaces.getBytes("UTF-8")))
 
   test("meta through the Crossref fallback still knows a gold-OA work is open access"):
-    val withContact = cfg.modify(_.contactEmail).setTo("librarian@example.org")
+    val withContact = cfg.modify(_.contactEmail).setTo(com.histmersion.config.AcquireConfig.ContactEmail("librarian@example.org"))
     val http = OpenAlexBusy(withContact)
     val w = discovery(withContact, http).meta(com.histmersion.domain.library.Doi("10.1038/s41598-022-07284-3")).fold(e => fail(e.value), identity)
     assertEquals(w.venue, Some("Scientific Reports"))
@@ -95,7 +95,7 @@ class DiscoverFallbackSuite extends munit.FunSuite:
     assert(http.urls.exists(_.value.startsWith(withContact.unpaywall.url.value)), http.urls.toString)
 
   test("meta through the Crossref fallback without a contact leaves the access UNKNOWN, not closed"):
-    val noContact = cfg.modify(_.contactEmail).setTo("")
+    val noContact = cfg.modify(_.contactEmail).setTo(com.histmersion.config.AcquireConfig.ContactEmail(""))
     val http = OpenAlexBusy(noContact)
     val w = discovery(noContact, http).meta(com.histmersion.domain.library.Doi("10.1038/s41598-022-07284-3")).fold(e => fail(e.value), identity)
     assert(!w.isOa.value)

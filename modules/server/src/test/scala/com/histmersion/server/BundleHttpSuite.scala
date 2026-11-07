@@ -45,7 +45,7 @@ class BundleHttpSuite extends com.histmersion.db.DbSuite with com.histmersion.db
   private lazy val cfg =
     val base = AppConfig.load()
     base.modify(
-      _.db).setTo(base.db.modify(_.url).setTo(testDb.get)).modify(_.auth).setTo(base.auth.modify(_.apiKey).setTo(Key)).modify(_.bundles).setTo(base.bundles.modify(_.dir).setTo(work.toString)
+      _.db).setTo(base.db.modify(_.url).setTo(com.histmersion.config.DbConfig.Url(testDb.get))).modify(_.auth).setTo(base.auth.modify(_.apiKey).setTo(com.histmersion.config.AuthConfig.ApiKey(Key))).modify(_.bundles).setTo(base.bundles.modify(_.dir).setTo(com.histmersion.config.BundlesConfig.Dir(work.toString))
     )
 
   private def withServer(body: String => Unit): Unit =
@@ -306,7 +306,7 @@ class BundleHttpSuite extends com.histmersion.db.DbSuite with com.histmersion.db
       } finally c.close()
     exec(s"DROP DATABASE IF EXISTS $name WITH (FORCE)")
     exec(s"CREATE DATABASE $name")
-    val own = cfg.modify(_.db).setTo(cfg.db.modify(_.url).setTo(testDb.get.replaceFirst("/[^/?]+(\\?|$)", s"/$name$$1")))
+    val own = cfg.modify(_.db).setTo(cfg.db.modify(_.url).setTo(com.histmersion.config.DbConfig.Url(testDb.get.replaceFirst("/[^/?]+(\\?|$)", s"/$name$$1"))))
     def serve(body: String => Unit): Unit =
       supervised {
         val b = Composition.server(own, com.histmersion.config.ServerConfig.Host("127.0.0.1"), com.histmersion.config.ServerConfig.Port(0)).start()

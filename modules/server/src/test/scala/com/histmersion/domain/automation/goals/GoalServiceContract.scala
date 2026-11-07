@@ -192,7 +192,7 @@ abstract class GoalServiceContract extends EngineStoreSuite:
     assert(g(s).link(com.histmersion.domain.automation.Goal.Slug("zz-old"), com.histmersion.domain.automation.Goal.LinkKind.Query, com.histmersion.api.automation.Goal.Plans.GoalLink.Ref("tin"), None))
     assert(g(s).rename(com.histmersion.domain.automation.Goal.Slug("zz-old"), com.histmersion.domain.automation.Goal.Slug("zz-other")).isLeft)
     assert(g(s).rename(com.histmersion.domain.automation.Goal.Slug("zz-none"), com.histmersion.domain.automation.Goal.Slug("zz-x")).isLeft)
-    assertEquals(g(s).rename(com.histmersion.domain.automation.Goal.Slug(" zz-old "), com.histmersion.domain.automation.Goal.Slug("zz-new ")), Right(()))
+    assertEquals(g(s).rename(com.histmersion.domain.automation.Goal.Slug.assume(" zz-old "), com.histmersion.domain.automation.Goal.Slug.assume("zz-new ")), Right(()))
     assertEquals(g(s).get(com.histmersion.domain.automation.Goal.Slug("zz-old")), None)
     assertEquals(bare(s, DomainGoal.Slug("zz-new")).map(_.title), Some("Old"))
     assertEquals(bare(s, DomainGoal.Slug("zz-kid")).flatMap(_.parentSlug), Some("zz-new"))

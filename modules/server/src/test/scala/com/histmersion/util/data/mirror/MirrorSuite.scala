@@ -15,12 +15,12 @@ class MirrorSuite extends munit.FunSuite:
 
   private val sources = new Mirror.Note:
     val records: Mirror.Records = LibraryData.SourceNotes
-    def note(citekey: String): Either[Api.Error, String] = Right(s"source $citekey")
+    def note(citekey: com.histmersion.util.data.mirror.MirrorPlacement.RecordId): Either[Api.Error, com.histmersion.util.data.mirror.Frontmatter.NoteBody] = Right(com.histmersion.util.data.mirror.Frontmatter.NoteBody(s"source $citekey"))
 
   private val articles = new Mirror.Note:
     val records: Mirror.Records = ResearchData.ArticleNotes
-    def note(slug: String): Either[Api.Error, String] =
-      if slug == "gone" then Left(Api.Error(com.histmersion.api.Api.Error.Message("no such article"))) else Right(s"article $slug")
+    def note(slug: com.histmersion.util.data.mirror.MirrorPlacement.RecordId): Either[Api.Error, com.histmersion.util.data.mirror.Frontmatter.NoteBody] =
+      if slug == com.histmersion.util.data.mirror.MirrorPlacement.RecordId("gone") then Left(Api.Error(com.histmersion.api.Api.Error.Message("no such article"))) else Right(com.histmersion.util.data.mirror.Frontmatter.NoteBody(s"article $slug"))
 
   private val mirror = Mirror(Deps.data.mirror, List(sources, articles))
 

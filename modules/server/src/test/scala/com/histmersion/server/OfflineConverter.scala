@@ -13,21 +13,21 @@ import java.nio.file.Path
   * test can tell that a job reached the stub.
   */
 final class OfflineConverter extends ConverterClient:
-  private val seen = java.util.concurrent.ConcurrentLinkedQueue[String]()
+  private val seen = java.util.concurrent.ConcurrentLinkedQueue[ConverterClient.Filename]()
 
   /** The file names the jobs asked to convert, in order. */
-  def converted: List[String] =
+  def converted: List[ConverterClient.Filename] =
     import scala.jdk.CollectionConverters.*
     seen.asScala.toList
 
-  def health: Either[String, String] = Right("ok")
+  def health: Either[ConverterClient.Problem, ConverterClient.HealthSummary] = Right(ConverterClient.HealthSummary("ok"))
   def convert(
       file: com.histmersion.util.storage.Blob,
-      filename: String,
-      quality: Boolean
-  ): Either[String, ConvertedDoc] =
+      filename: ConverterClient.Filename,
+      quality: ConverterClient.HighQuality
+  ): Either[ConverterClient.Problem, ConvertedDoc] =
     seen.add(filename)
-    Left("offline: no converter in tests")
+    Left(ConverterClient.Problem("offline: no converter in tests"))
 
 object OfflineConverter:
   /** The file `p` as a converter is handed it. */

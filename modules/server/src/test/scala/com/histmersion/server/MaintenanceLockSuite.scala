@@ -31,7 +31,7 @@ class MaintenanceLockSuite extends com.histmersion.db.DbSuite:
   private val testDb = com.histmersion.db.TestDb.url
   override def munitIgnore: Boolean = testDb.isEmpty
 
-  private lazy val cfg = { val b = AppConfig.load(); b.modify(_.db).setTo(b.db.modify(_.url).setTo(testDb.get)) }
+  private lazy val cfg = { val b = AppConfig.load(); b.modify(_.db).setTo(b.db.modify(_.url).setTo(com.histmersion.config.DbConfig.Url(testDb.get))) }
   private lazy val deps =
     val ds = testPool(cfg.db)
     Migrate.run(ds)
@@ -40,13 +40,13 @@ class MaintenanceLockSuite extends com.histmersion.db.DbSuite:
   private lazy val h = ServerWiring(deps, NoConverter)
 
   private object NoConverter extends ConverterClient:
-    def health: Either[String, String] = Right("ok")
+    def health: Either[ConverterClient.Problem, ConverterClient.HealthSummary] = Right(ConverterClient.HealthSummary("ok"))
     def convert(
         file: com.histmersion.util.storage.Blob,
-        filename: String,
-        quality: Boolean
-    ): Either[String, ConvertedDoc] = Left(
-      "not used"
+        filename: ConverterClient.Filename,
+        quality: ConverterClient.HighQuality
+    ): Either[ConverterClient.Problem, ConvertedDoc] = Left(
+      ConverterClient.Problem("not used")
     )
 
   /** Run `f` while the maintenance lock is held, exactly as a restore holds it. */

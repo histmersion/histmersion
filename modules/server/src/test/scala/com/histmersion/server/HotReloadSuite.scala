@@ -33,7 +33,7 @@ class HotReloadSuite extends DbSuite:
   private val DbB = "histmersion_hotb_test"
 
   private lazy val base = AppConfig.load()
-  private lazy val admin = testPool(base.db.modify(_.url).setTo(testDb.get))
+  private lazy val admin = testPool(base.db.modify(_.url).setTo(com.histmersion.config.DbConfig.Url(testDb.get)))
   private def urlOf(name: String) = testDb.get.replaceFirst("/[^/?]+(\\?|$)", s"/$name$$1")
 
   private def exec(ds: DataSource, stmt: String): Unit =

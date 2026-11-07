@@ -59,7 +59,7 @@ class SchedulerDbSuite extends com.histmersion.db.DbSuite with RunTranscripts:
   override val munitTimeout = scala.concurrent.duration.Duration(180, "s")
 
   private val Model = ModelRef(ProviderKind.Local, com.histmersion.api.automation.Agents.ModelRef.Model("scripted"))
-  private val goals = (1 to 20).toList.map(i => DomainGoal.Slug(f"zzfocus-g$i%02d"))
+  private val goals = (1 to 20).toList.map(i => DomainGoal.Slug.applyUnsafe(f"zzfocus-g$i%02d"))
   private def g(i: Int) = goals(i - 1)
   private def ref(g: DomainGoal.Slug) = Goal.Ref(g.value)
   private def apiSlug(g: DomainGoal.Slug) = Goal.Slug(g.value)
@@ -82,11 +82,11 @@ class SchedulerDbSuite extends com.histmersion.db.DbSuite with RunTranscripts:
     val b = AppConfig.load()
     val m = Model.wire
     b.modify(
-      _.db).setTo(b.db.modify(_.url).setTo(testDb.get)).modify(_.agents).setTo(b.agents.modify(
-        _.enabled).setTo(true).modify(_.prices).setTo("scripted=1/2").modify(_.maxConcurrentRuns).setTo(3).modify(_.roles).setTo(b.agents.roles
-          .modify(_.extractor).setTo(m).modify(_.reviewer).setTo(m).modify(_.coldReader).setTo(m).modify(_.skeptic).setTo(m).modify(_.fixer).setTo(m).modify(_.planner).setTo(m).modify(_.writer).setTo(m)).modify(_.scheduler).setTo(b.agents.scheduler.modify(_.enabled).setTo(false).modify(_.strategy).setTo("goal-first").modify(_.minShare).setTo((0: _root_.scala.Double))).modify(_.autopilot).setTo(b.agents.autopilot.modify(_.backupHours).setTo(0).modify(_.lintHours).setTo(0).modify(_.ingestPerDay).setTo(100).modify(_.maxActiveGoals).setTo(3)
+      _.db).setTo(b.db.modify(_.url).setTo(com.histmersion.config.DbConfig.Url(testDb.get))).modify(_.agents).setTo(b.agents.modify(
+        _.enabled).setTo(com.histmersion.config.AgentsConfig.Enabled(true)).modify(_.prices).setTo(com.histmersion.config.AgentsConfig.Prices("scripted=1/2")).modify(_.maxConcurrentRuns).setTo(com.histmersion.config.AgentsConfig.MaxConcurrentRuns(3)).modify(_.roles).setTo(b.agents.roles
+          .modify(_.extractor).setTo(com.histmersion.config.AgentRolesConfig.Extractor(m.value)).modify(_.reviewer).setTo(com.histmersion.config.AgentRolesConfig.Reviewer(m.value)).modify(_.coldReader).setTo(com.histmersion.config.AgentRolesConfig.ColdReader(m.value)).modify(_.skeptic).setTo(com.histmersion.config.AgentRolesConfig.Skeptic(m.value)).modify(_.fixer).setTo(com.histmersion.config.AgentRolesConfig.Fixer(m.value)).modify(_.planner).setTo(com.histmersion.config.AgentRolesConfig.Planner(m.value)).modify(_.writer).setTo(com.histmersion.config.AgentRolesConfig.Writer(m.value))).modify(_.scheduler).setTo(b.agents.scheduler.modify(_.enabled).setTo(com.histmersion.config.AgentSchedulerConfig.Enabled(false)).modify(_.strategy).setTo(com.histmersion.config.AgentSchedulerConfig.Strategy("goal-first")).modify(_.minShare).setTo(com.histmersion.config.AgentSchedulerConfig.MinShare((0: _root_.scala.Double)))).modify(_.autopilot).setTo(b.agents.autopilot.modify(_.backupHours).setTo(com.histmersion.config.AgentAutopilotConfig.BackupHours(0)).modify(_.lintHours).setTo(com.histmersion.config.AgentAutopilotConfig.LintHours(0)).modify(_.ingestPerDay).setTo(com.histmersion.config.AgentAutopilotConfig.IngestPerDay(100)).modify(_.maxActiveGoals).setTo(com.histmersion.config.AgentAutopilotConfig.MaxActiveGoals(3))
       )).modify(_.libraryAgents).setTo(b.libraryAgents.modify(
-        _.seed).setTo(b.libraryAgents.seed.modify(_.minSources).setTo(2)).modify(_.managers).setTo(b.libraryAgents.managers.modify(_.watch).setTo(b.libraryAgents.managers.watch.modify(_.drainPerTick).setTo(50))
+        _.seed).setTo(b.libraryAgents.seed.modify(_.minSources).setTo(com.histmersion.config.AgentSeedConfig.MinSources(2))).modify(_.managers).setTo(b.libraryAgents.managers.modify(_.watch).setTo(b.libraryAgents.managers.watch.modify(_.drainPerTick).setTo(com.histmersion.config.WatchManagerConfig.DrainPerTick(50)))
       )
     )
 
@@ -127,7 +127,7 @@ class SchedulerDbSuite extends com.histmersion.db.DbSuite with RunTranscripts:
   override def afterEach(context: AfterEach): Unit = clean()
 
   private def doi(slug: DomainGoal.Slug) = com.histmersion.api.library.Doi(s"10.5555/$slug")
-  private def ck(d: String) = com.histmersion.domain.library.Citekey("zzfocus" + d.replaceAll("[^a-z0-9]", ""))
+  private def ck(d: String) = com.histmersion.domain.library.Citekey.applyUnsafe("zzfocus" + d.replaceAll("[^a-z0-9]", ""))
 
   /** 20 goals with a query each (no plan needed): g05 has an article to review, g10 enough sources. */
   private def seed(a: AgentsControllers, h: ServerWiring, up: StubUpstream): Unit =
@@ -135,7 +135,7 @@ class SchedulerDbSuite extends com.histmersion.db.DbSuite with RunTranscripts:
       assert(h.goals.put(s, Goal.Put(Goal.Title(s"Zz $s"))).isRight)
       assert(a.addGoalLink(s, LinkAdd(LinkKind.Query, LinkAdd.Ref(s"zzfocus query $s"))).isRight)
     }
-    List("zzfocus_s1", "zzfocus_s2").map(com.histmersion.domain.library.Citekey(_)).foreach { c =>
+    List("zzfocus_s1", "zzfocus_s2").map(com.histmersion.domain.library.Citekey.applyUnsafe(_)).foreach { c =>
       assert(
         h.library.sources
           .put(c, Source.Put(title = com.histmersion.api.library.Title(s"Zz $c"), year = (Some(2020)).map(com.histmersion.api.catalogue.Year.apply), topics = List(com.histmersion.api.library.Source.Topics("zzfocus_t")), body = Some(com.histmersion.api.library.Source.OcrMarkdown("Tin."))))
@@ -269,7 +269,7 @@ class SchedulerDbSuite extends com.histmersion.db.DbSuite with RunTranscripts:
       a.scheduler.set(AgentScheduler.SchedulerSet(com.histmersion.api.automation.AgentScheduler.SchedulerSet.Strategy("type-balanced"), Some(com.histmersion.api.automation.AgentScheduler.SchedulerSet.By("test")))).fold(e => fail(e.message.value), identity)
     assertEquals((sw.strategy, sw.strategyFrom), ("type-balanced", "person"))
     assert(QueueRepoLog.has(ds, "agent scheduler: strategy type-balanced"), "a worklog line")
-    val (b, _, _) = handlers(cfg.modify(_.agents).setTo(cfg.agents.modify(_.maxConcurrentRuns).setTo(6)))
+    val (b, _, _) = handlers(cfg.modify(_.agents).setTo(cfg.agents.modify(_.maxConcurrentRuns).setTo(com.histmersion.config.AgentsConfig.MaxConcurrentRuns(6))))
     clock.tick(b)
     val next = runs().map(r => (r.pipeline, r.target)).toSet -- Set(
       (RunInfo.Pipeline("propose-articles"), RunInfo.Target(g(20).value)),
@@ -294,7 +294,7 @@ class SchedulerDbSuite extends com.histmersion.db.DbSuite with RunTranscripts:
     assertEquals(runs(), Vector.empty, "a dry pass starts nothing")
 
   test("goal-plan manual: the plan's run waits for a person and holds no place; the next goal's work takes it"):
-    val one = cfg.modify(_.agents).setTo(cfg.agents.modify(_.maxConcurrentRuns).setTo(1))
+    val one = cfg.modify(_.agents).setTo(cfg.agents.modify(_.maxConcurrentRuns).setTo(com.histmersion.config.AgentsConfig.MaxConcurrentRuns(1)))
     val (a, h, up) = handlers(one); seed(a, h, up)
     val planned = DomainGoal.Slug("zzfocus-plan")
     assert(h.goals.put(planned, Goal.Put(com.histmersion.api.automation.Goal.Title("Zz a goal with no plan"))).isRight)
@@ -318,7 +318,7 @@ class SchedulerDbSuite extends com.histmersion.db.DbSuite with RunTranscripts:
     assert(a.scheduler.status().forPerson.value >= 1)
 
   test("gathering goals keep their place: a goal still gathering sources starts beside the pinned goal under review"):
-    val two = cfg.modify(_.agents).setTo(cfg.agents.modify(_.maxConcurrentRuns).setTo(2))
+    val two = cfg.modify(_.agents).setTo(cfg.agents.modify(_.maxConcurrentRuns).setTo(com.histmersion.config.AgentsConfig.MaxConcurrentRuns(2)))
     val (a, h, up) = handlers(two); seed(a, h, up)
     on(a)
     a.focus.set(FocusSet(com.histmersion.api.automation.Autopilot.FocusSet.Action("pin"), Some(apiSlug(g(5))))).fold(e => fail(e.message.value), identity)
@@ -331,7 +331,7 @@ class SchedulerDbSuite extends com.histmersion.db.DbSuite with RunTranscripts:
     assert(a.scheduler.status().started.exists(_.why.value.contains("gathering share")), a.scheduler.status().started)
 
   test("goal plans are decided by code whatever the focus, within the open sub-goals"):
-    val auto = cfg.modify(_.agents).setTo(cfg.agents.modify(_.approvals).setTo(cfg.agents.approvals.modify(_.goalPlan).setTo("auto")))
+    val auto = cfg.modify(_.agents).setTo(cfg.agents.modify(_.approvals).setTo(cfg.agents.approvals.modify(_.goalPlan).setTo(com.histmersion.config.AgentApprovalsConfig.Gate("auto"))))
     val (a, h, up) = handlers(auto); seed(a, h, up)
     on(a)
     Clock().tick(a)
@@ -350,7 +350,7 @@ class SchedulerDbSuite extends com.histmersion.db.DbSuite with RunTranscripts:
     "goal plans wait while too many planned goals are unfinished: no plan-goal run, none decided by code, a person still may"
   ):
     val auto = cfg.modify(_.agents).setTo(cfg.agents.modify(
-        _.approvals).setTo(cfg.agents.approvals.modify(_.goalPlan).setTo("auto")).modify(_.autopilot).setTo(cfg.agents.autopilot.modify(_.maxUnfinishedGoals).setTo(2)
+        _.approvals).setTo(cfg.agents.approvals.modify(_.goalPlan).setTo(com.histmersion.config.AgentApprovalsConfig.Gate("auto"))).modify(_.autopilot).setTo(cfg.agents.autopilot.modify(_.maxUnfinishedGoals).setTo(com.histmersion.config.AgentAutopilotConfig.MaxUnfinishedGoals(2))
       )
     )
     val (a, h, up) = handlers(auto); seed(a, h, up)
@@ -428,7 +428,7 @@ class SchedulerDbSuite extends com.histmersion.db.DbSuite with RunTranscripts:
 
   test("the daily caps scale with the backlog, up to the ceiling"):
     val scaled = cfg.modify(_.agents).setTo(cfg.agents.modify(_.approvals).setTo(cfg.agents.approvals.modify(
-          _.goalPlan).setTo("auto").modify(_.auto).setTo(cfg.agents.approvals.auto.modify(_.goalPlansPerDay).setTo(1).modify(_.goalPlansBacklogShare).setTo((0.5: _root_.scala.Double)).modify(_.goalPlansCeiling).setTo(3)
+          _.goalPlan).setTo(com.histmersion.config.AgentApprovalsConfig.Gate("auto")).modify(_.auto).setTo(cfg.agents.approvals.auto.modify(_.goalPlansPerDay).setTo(com.histmersion.config.AutoApprovalsConfig.GoalPlansPerDay(1)).modify(_.goalPlansBacklogShare).setTo(com.histmersion.config.AutoApprovalsConfig.GoalPlansBacklogShare((0.5: _root_.scala.Double))).modify(_.goalPlansCeiling).setTo(com.histmersion.config.AutoApprovalsConfig.GoalPlansCeiling(3))
         )
       )
     )
@@ -496,11 +496,11 @@ class SchedulerDbSuite extends com.histmersion.db.DbSuite with RunTranscripts:
     "seed before the plan: sourceless goals sweep their candidates (no model) and ingest legal open access within the caps"
   ):
     val (a, h, up) = handlers(); seed(a, h, up)
-    def cand(id: Source.Candidate.Id, goal: DomainGoal.Slug, oa: Boolean) =
+    def cand(id: Source.Candidate.Id, goal: DomainGoal.Slug, oa: Source.Candidate.IsOa) =
       Source.Candidate(id, Source.Candidate.Goal(goal.value), com.histmersion.api.library.Doi(s"10.5555/zzseed.$id"), com.histmersion.api.library.Title(s"Zz seed $id"), isOa = oa)
     up.sweepFinds = Map(
-      g(1).value -> List(cand(Source.Candidate.Id(1), g(1), oa = true), cand(Source.Candidate.Id(2), g(1), oa = false)),
-      g(2).value -> List(cand(Source.Candidate.Id(3), g(2), oa = true)),
+      g(1).value -> List(cand(Source.Candidate.Id(1), g(1), oa = Source.Candidate.IsOa(true)), cand(Source.Candidate.Id(2), g(1), oa = Source.Candidate.IsOa(false))),
+      g(2).value -> List(cand(Source.Candidate.Id(3), g(2), oa = Source.Candidate.IsOa(true))),
       g(3).value -> Nil,
       g(4).value -> Nil
     )

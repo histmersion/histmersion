@@ -261,7 +261,7 @@ abstract class SourceServiceContract extends LibraryStoreSuite:
     s =>
       val _ = s.sources.put(source(B, com.histmersion.api.library.Title("Cove")).modify(_.doi).setTo(Some(com.histmersion.api.library.Doi("10.5555/ZQ.Both"))), Me)
       val _ = s.sources.put(source(A, com.histmersion.api.library.Title("Walls")).modify(_.doi).setTo(Some(com.histmersion.api.library.Doi("10.5555/zq.both"))), Me)
-      assertEquals(s.sources.citekeyOfDoi(com.histmersion.domain.library.Doi(" 10.5555/zq.BOTH ")), Some(List(A, B).minBy(_.value)))
+      assertEquals(s.sources.citekeyOfDoi(com.histmersion.domain.library.Doi.assume(" 10.5555/zq.BOTH ")), Some(List(A, B).minBy(_.value)))
       assertEquals(s.sources.citekeyOfDoi(com.histmersion.domain.library.Doi("10.5555/zq.none")), None)
   }
 

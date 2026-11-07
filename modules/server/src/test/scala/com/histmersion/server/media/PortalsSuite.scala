@@ -232,7 +232,7 @@ class PortalsSuite extends munit.FunSuite:
     assertEquals((a.license, a.licenseUrl), ("CC-BY-4.0", Some("https://creativecommons.org/licenses/by/4.0")))
     assertEquals(a.author, Some("Martha Sharp Joukowsky"))
     assert(
-      a.credit.endsWith(
+      a.credit.value.endsWith(
         "In Petra Great Temple Excavations. Open Context. https://n2t.net/ark:/28722/k2xk8d17p. CC BY 4.0"
       ),
       a.credit

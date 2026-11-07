@@ -74,7 +74,7 @@ class BackupRestoreSuite extends com.histmersion.db.DbSuite:
     (prefix + "postgres", name, prefix + name)
 
   private def admin(sql: String): Unit =
-    val c = testPool(base.db.modify(_.url).setTo(adminUrl)).getConnection
+    val c = testPool(base.db.modify(_.url).setTo(com.histmersion.config.DbConfig.Url(adminUrl))).getConnection
     try {
       val s = c.createStatement();
       try { val _ = s.execute(sql) }
@@ -83,7 +83,7 @@ class BackupRestoreSuite extends com.histmersion.db.DbSuite:
 
   private lazy val cfg: AppConfig =
     base.modify(
-      _.db).setTo(base.db.modify(_.url).setTo(scratchUrl)).modify(_.backups).setTo(base.backups.modify(_.dir).setTo(backupDir.toString).modify(_.pgBinDir).setTo(pgBinDir.get)
+      _.db).setTo(base.db.modify(_.url).setTo(com.histmersion.config.DbConfig.Url(scratchUrl))).modify(_.backups).setTo(base.backups.modify(_.dir).setTo(com.histmersion.config.BackupsConfig.Dir(backupDir.toString)).modify(_.pgBinDir).setTo(com.histmersion.config.BackupsConfig.PgBinDir(pgBinDir.get))
     )
 
   private lazy val backupDir: Path = Files.createTempDirectory("histmersion-backup-e2e")

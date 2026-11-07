@@ -97,7 +97,7 @@ class AgentEngineSuite extends com.histmersion.db.DbSuite with RunTranscripts:
   private lazy val baseCfg =
     val b = AppConfig.load()
     b.modify(
-      _.db).setTo(b.db.modify(_.url).setTo(testDb.get)).modify(_.agents).setTo(b.agents.modify(_.enabled).setTo(true).modify(_.prices).setTo("scripted=1/2").modify(_.roles).setTo(b.agents.roles.modify(_.extractor).setTo(Model.wire))
+      _.db).setTo(b.db.modify(_.url).setTo(com.histmersion.config.DbConfig.Url(testDb.get))).modify(_.agents).setTo(b.agents.modify(_.enabled).setTo(com.histmersion.config.AgentsConfig.Enabled(true)).modify(_.prices).setTo(com.histmersion.config.AgentsConfig.Prices("scripted=1/2")).modify(_.roles).setTo(b.agents.roles.modify(_.extractor).setTo(com.histmersion.config.AgentRolesConfig.Extractor(Model.wire.value)))
     )
 
   private lazy val ds = testPool(baseCfg.db)
@@ -339,7 +339,7 @@ class AgentEngineSuite extends com.histmersion.db.DbSuite with RunTranscripts:
 
   test("refused up front: agents off, an unpriced model, an unknown pipeline, a missing source"):
     val c = ScriptedClient(Model)
-    val (off, h) = handlers(c, baseCfg.modify(_.agents).setTo(baseCfg.agents.modify(_.enabled).setTo(false)))
+    val (off, h) = handlers(c, baseCfg.modify(_.agents).setTo(baseCfg.agents.modify(_.enabled).setTo(com.histmersion.config.AgentsConfig.Enabled(false))))
     seed(h)
     assert(off.startRun(RunRequest(com.histmersion.api.automation.Agents.RunRequest.Pipeline("enrich-source"), ApiTarget)).left.exists(_.message.value.contains("off")))
     val (a, _) = handlers(c)
@@ -549,7 +549,7 @@ class AgentEngineSuite extends com.histmersion.db.DbSuite with RunTranscripts:
     // not again within prune-every-minutes, and never with keep-messages-days = 0
     assertEquals(a.engine.pruneTrace(), 0)
     val (keepAll, _) =
-      handlers(c, baseCfg.modify(_.agents).setTo(baseCfg.agents.modify(_.trace).setTo(baseCfg.agents.trace.modify(_.keepMessagesDays).setTo(0))))
+      handlers(c, baseCfg.modify(_.agents).setTo(baseCfg.agents.modify(_.trace).setTo(baseCfg.agents.trace.modify(_.keepMessagesDays).setTo(com.histmersion.config.AgentTraceConfig.KeepMessagesDays(0)))))
     assertEquals(keepAll.engine.pruneTrace(force = com.histmersion.domain.automation.agents.Engine.PruneTraceForce(true)), 0)
 
   // #882: a blocking approval decided after the step opened it but BEFORE the run reached `waiting`.
@@ -562,7 +562,7 @@ class AgentEngineSuite extends com.histmersion.db.DbSuite with RunTranscripts:
     val seen = mutable.ListBuffer.empty[Decided]
     val racing = new PipelineDef:
       def pipeline: Pipeline = Pipeline.EnrichSource
-      def run(ctx: RunCtx): Either[Halt, String] =
+      def run(ctx: RunCtx): Either[Halt, PipelineDef.Summary] =
         ctx.approval(com.histmersion.domain.automation.agents.AgentRepo.StepRecord.Name("publish"), ApprovalKind.ArticlePublish, com.histmersion.domain.automation.approvals.ApprovalQuery.Subject(Ck.value), ApprovalMode.Manual)(Right("""{"zz":1}""")) match
           case Left(w @ Halt.Wait(id, _)) =>
             // the person decides NOW: the run is still `running`, so the wake this triggers is a no-op
@@ -571,7 +571,7 @@ class AgentEngineSuite extends com.histmersion.db.DbSuite with RunTranscripts:
             assertEquals(connect(ds)(AgentRepo.get(ctx.run.id)).map(_.status), Some("running"))
             Left(w)
           case Left(other) => Left(other)
-          case Right(d)    => seen += d; Right("published")
+          case Right(d)    => seen += d; Right(PipelineDef.Summary("published"))
     val engine = Engine(ds, a.engine.cfg, a, a.engine.workflows.replaced(PipelineWorkflow.of(racing, a.definitions)))
     engine.execute(runId(run.id))
     // not stranded in `waiting`: the engine saw the decision after its transition and re-queued the run
@@ -591,10 +591,10 @@ class AgentEngineSuite extends com.histmersion.db.DbSuite with RunTranscripts:
     val entered = java.util.concurrent.CountDownLatch(1)
     val blocking = new PipelineDef:
       def pipeline: Pipeline = Pipeline.EnrichSource
-      def run(ctx: RunCtx): Either[Halt, String] =
+      def run(ctx: RunCtx): Either[Halt, PipelineDef.Summary] =
         entered.countDown()
         Thread.sleep(60_000) // interrupted by stop()
-        Right("unreachable")
+        Right(PipelineDef.Summary("unreachable"))
     def poolThreads = Thread.getAllStackTraces.keySet.asScala.filter(_.getName == "histmersion-agents").toList
     val before = poolThreads.toSet
     val engine = Engine(ds, a.engine.cfg, a, a.engine.workflows.replaced(PipelineWorkflow.of(blocking, a.definitions)))
@@ -611,7 +611,7 @@ class AgentEngineSuite extends com.histmersion.db.DbSuite with RunTranscripts:
 
   private val Haiku = ModelRef(ProviderKind.Local, com.histmersion.api.automation.Agents.ModelRef.Model("haiku-sim"))
   private lazy val evalCfg =
-    baseCfg.modify(_.agents).setTo(baseCfg.agents.modify(_.prices).setTo("scripted=1/2; haiku-sim=3/4").modify(_.autoEnrich).setTo(true))
+    baseCfg.modify(_.agents).setTo(baseCfg.agents.modify(_.prices).setTo(com.histmersion.config.AgentsConfig.Prices("scripted=1/2; haiku-sim=3/4")).modify(_.autoEnrich).setTo(com.histmersion.config.AgentsConfig.AutoEnrich(true)))
 
   /** A client per configured model, so a step's recorded model is the one its role asked for. */
   private def byModel(cs: ScriptedClient*): LlmClient.Factory =
@@ -728,20 +728,20 @@ class AgentEngineSuite extends com.histmersion.db.DbSuite with RunTranscripts:
     val fake = FakeCli("claude", List(ClaudeStreams.Init, result))
     val rt = CliRuntime(FakeCli.app(java.nio.file.Files.createTempDirectory("hm-agents-")), EngineContributions.roster)
     val Plan = ModelRef(ProviderKind.ClaudeCode, com.histmersion.api.automation.Agents.ModelRef.Model("haiku"))
-    val client = ClaudeCodeClient(Plan, baseCfg.agents.providers.claudeCode.modify(_.command).setTo(fake.script.toString), rt)
-    val cfg = evalCfg.modify(_.agents).setTo(evalCfg.agents.modify(_.roles).setTo(evalCfg.agents.roles.modify(_.extractor).setTo(Plan.wire)))
+    val client = ClaudeCodeClient(Plan, baseCfg.agents.providers.claudeCode.modify(_.command).setTo(com.histmersion.config.ClaudeCodeConfig.Command(fake.script.toString)), rt)
+    val cfg = evalCfg.modify(_.agents).setTo(evalCfg.agents.modify(_.roles).setTo(evalCfg.agents.roles.modify(_.extractor).setTo(com.histmersion.config.AgentRolesConfig.Extractor(Plan.wire.value))))
     val (a, h) = handlersFor((_, _) => Right(client), cfg); seed(h)
     val run = a.startRun(RunRequest(com.histmersion.api.automation.Agents.RunRequest.Pipeline("enrich-source"), ApiTarget)).fold(e => fail(e.message.value), identity)
     // one LLM step of the pipeline's own agent, so the fake's one answer fits it
     val notesOnly = new PipelineDef:
       def pipeline: Pipeline = Pipeline.EnrichSource
-      def run(ctx: RunCtx): Either[Halt, String] =
+      def run(ctx: RunCtx): Either[Halt, PipelineDef.Summary] =
         ctx.llm[EnrichSource.Notes, String](
           com.histmersion.domain.automation.agents.AgentRepo.StepRecord.Name("notes"),
           StepAgent.EnrichNotes,
           com.histmersion.domain.automation.agents.Prompt.UserText("Write the notes."),
           ResponseSchema.derived[EnrichSource.Notes]()
-        )((n, _) => Right(Checked(n.notes.value)))
+        )((n, _) => Right(Checked(n.notes.value))).map(PipelineDef.Summary(_))
     Engine(ds, a.engine.cfg, a, a.engine.workflows.replaced(PipelineWorkflow.of(notesOnly, a.definitions)))
       .execute(runId(run.id))
     assertEquals(connect(ds)(AgentRepo.get(run.id)).map(_.status), Some("done"))
@@ -775,19 +775,19 @@ class AgentEngineSuite extends com.histmersion.db.DbSuite with RunTranscripts:
     )
     val rt = CliRuntime(FakeCli.app(java.nio.file.Files.createTempDirectory("hm-agents-")), EngineContributions.roster)
     val Plan = ModelRef(ProviderKind.ClaudeCode, com.histmersion.api.automation.Agents.ModelRef.Model("sonnet"))
-    val client = ClaudeCodeClient(Plan, baseCfg.agents.providers.claudeCode.modify(_.command).setTo(fake.script.toString), rt)
-    val cfg = evalCfg.modify(_.agents).setTo(evalCfg.agents.modify(_.roles).setTo(evalCfg.agents.roles.modify(_.extractor).setTo(Plan.wire)))
+    val client = ClaudeCodeClient(Plan, baseCfg.agents.providers.claudeCode.modify(_.command).setTo(com.histmersion.config.ClaudeCodeConfig.Command(fake.script.toString)), rt)
+    val cfg = evalCfg.modify(_.agents).setTo(evalCfg.agents.modify(_.roles).setTo(evalCfg.agents.roles.modify(_.extractor).setTo(com.histmersion.config.AgentRolesConfig.Extractor(Plan.wire.value))))
     val (a, h) = handlersFor((_, _) => Right(client), cfg); seed(h)
     val run = a.startRun(RunRequest(com.histmersion.api.automation.Agents.RunRequest.Pipeline("enrich-source"), ApiTarget)).fold(e => fail(e.message.value), identity)
     val notesOnly = new PipelineDef:
       def pipeline: Pipeline = Pipeline.EnrichSource
-      def run(ctx: RunCtx): Either[Halt, String] =
+      def run(ctx: RunCtx): Either[Halt, PipelineDef.Summary] =
         ctx.llm[EnrichSource.Notes, String](
           com.histmersion.domain.automation.agents.AgentRepo.StepRecord.Name("notes"),
           StepAgent.EnrichNotes,
           com.histmersion.domain.automation.agents.Prompt.UserText("Write the notes."),
           ResponseSchema.derived[EnrichSource.Notes]()
-        )((n, _) => Right(Checked(n.notes.value)))
+        )((n, _) => Right(Checked(n.notes.value))).map(PipelineDef.Summary(_))
     Engine(ds, a.engine.cfg, a, a.engine.workflows.replaced(PipelineWorkflow.of(notesOnly, a.definitions)))
       .execute(runId(run.id))
     val detail = a.run(runId(run.id)).toOption.get
@@ -906,22 +906,22 @@ class AgentEngineSuite extends com.histmersion.db.DbSuite with RunTranscripts:
   /** One `notes` step of the pipeline's own agent, its output cap overridden when `cap` says so. */
   private def notesOnly(cap: Option[RunCtx.MaxTokens] = None): PipelineDef = new PipelineDef:
     def pipeline: Pipeline = Pipeline.EnrichSource
-    def run(ctx: RunCtx): Either[Halt, String] =
+    def run(ctx: RunCtx): Either[Halt, PipelineDef.Summary] =
       ctx.llm[EnrichSource.Notes, String](
         com.histmersion.domain.automation.agents.AgentRepo.StepRecord.Name("notes"),
         StepAgent.EnrichNotes,
         com.histmersion.domain.automation.agents.Prompt.UserText("Write the notes."),
         LibraryAnswers.notes,
         cap
-      )((n, _) => Right(Checked(n.notes.value)))
+      )((n, _) => Right(Checked(n.notes.value))).map(PipelineDef.Summary(_))
 
   /** A run of `pipeline` on the fake `claude`, configured with `agents.step.max-tokens = stepCap`. */
   private def claudeRun(fake: FakeCli.Fake, stepCap: AgentStepConfig.MaxTokens, pipeline: PipelineDef): (AgentsControllers, RunInfo.Id) =
     val rt = CliRuntime(FakeCli.app(java.nio.file.Files.createTempDirectory("hm-agents-")), EngineContributions.roster)
     val Plan = ModelRef(ProviderKind.ClaudeCode, com.histmersion.api.automation.Agents.ModelRef.Model("haiku"))
-    val client = ClaudeCodeClient(Plan, baseCfg.agents.providers.claudeCode.modify(_.command).setTo(fake.script.toString), rt)
+    val client = ClaudeCodeClient(Plan, baseCfg.agents.providers.claudeCode.modify(_.command).setTo(com.histmersion.config.ClaudeCodeConfig.Command(fake.script.toString)), rt)
     val cfg = evalCfg.modify(_.agents).setTo(evalCfg.agents.modify(
-        _.roles).setTo(evalCfg.agents.roles.modify(_.extractor).setTo(Plan.wire)).modify(_.step).setTo(evalCfg.agents.step.modify(_.maxTokens).setTo(stepCap)
+        _.roles).setTo(evalCfg.agents.roles.modify(_.extractor).setTo(com.histmersion.config.AgentRolesConfig.Extractor(Plan.wire.value))).modify(_.step).setTo(evalCfg.agents.step.modify(_.maxTokens).setTo(stepCap)
       )
     )
     val (a, h) = handlersFor((_, _) => Right(client), cfg); seed(h)
@@ -986,7 +986,7 @@ class AgentEngineSuite extends com.histmersion.db.DbSuite with RunTranscripts:
     c.scripts += Seq(AgentResponse(notesJson, Nil, StopReason.EndTurn, cached, Some("scripted")))
     val twoNotes = new PipelineDef:
       def pipeline: Pipeline = Pipeline.EnrichSource
-      def run(ctx: RunCtx): Either[Halt, String] =
+      def run(ctx: RunCtx): Either[Halt, PipelineDef.Summary] =
         for
           a <- ctx.llm[EnrichSource.Notes, String](
             com.histmersion.domain.automation.agents.AgentRepo.StepRecord.Name("notes-1"),
@@ -1000,7 +1000,7 @@ class AgentEngineSuite extends com.histmersion.db.DbSuite with RunTranscripts:
             com.histmersion.domain.automation.agents.Prompt.UserText("Write the notes."),
             LibraryAnswers.notes
           )((n, _) => Right(Checked(n.notes.value)))
-        yield a + b
+        yield PipelineDef.Summary(a + b)
     // 301k raw tokens per step against a 400k budget: counted in full the second step would not run
     val (a, h) = handlersFor((_, _) => Right(c)); seed(h)
     val run =
@@ -1013,7 +1013,7 @@ class AgentEngineSuite extends com.histmersion.db.DbSuite with RunTranscripts:
       "2 × (10k + 1k + 29k) = 80k budget tokens"
     )
     // counted in full (weight 1) the same run pauses before its second step
-    val full = evalCfg.modify(_.agents).setTo(evalCfg.agents.modify(_.budgets).setTo(evalCfg.agents.budgets.modify(_.cacheReadWeight).setTo((1.0: _root_.scala.Double))))
+    val full = evalCfg.modify(_.agents).setTo(evalCfg.agents.modify(_.budgets).setTo(evalCfg.agents.budgets.modify(_.cacheReadWeight).setTo(com.histmersion.config.AgentBudgetsConfig.CacheReadWeight(1.0))))
     val c2 = ScriptedClient(Model)
     c2.scripts += Seq(AgentResponse(notesJson, Nil, StopReason.EndTurn, cached, Some("scripted")))
     clean(); beforeEach(null)
@@ -1052,7 +1052,7 @@ class AgentEngineSuite extends com.histmersion.db.DbSuite with RunTranscripts:
   /** A pipeline whose one step starts a CLI that never answers (and a child of its own). */
   final private class Hang(dir: java.nio.file.Path) extends PipelineDef:
     val pipeline = Pipeline.EnrichSource
-    def run(ctx: RunCtx): Either[Halt, String] =
+    def run(ctx: RunCtx): Either[Halt, PipelineDef.Summary] =
       ctx.code[String](com.histmersion.domain.automation.agents.AgentRepo.StepRecord.Name("hang")) {
         val f = dir.resolve("cli")
         java.nio.file.Files
@@ -1060,7 +1060,7 @@ class AgentEngineSuite extends com.histmersion.db.DbSuite with RunTranscripts:
         f.toFile.setExecutable(true)
         val r = CliProcess.run(List(ClaudeCode.Argument(f.toString)), dir, _ => (), com.histmersion.server.agents.CliProcess.RunStdin(""), com.histmersion.server.agents.CliProcess.RunTimeoutSeconds(600), com.histmersion.server.agents.CliProcess.RunHint("hint"))
         Right(r.lines.mkString)
-      }
+      }.map(PipelineDef.Summary(_))
 
   /** Waits for the scripted process to write a pid; a minute, since every module's test JVMs may be running at once. */
   private def awaitFile(f: java.nio.file.Path): Long =

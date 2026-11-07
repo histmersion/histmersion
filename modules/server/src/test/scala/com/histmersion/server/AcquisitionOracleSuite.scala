@@ -63,7 +63,7 @@ class AcquisitionOracleSuite extends DbSuite:
 
   private val tmp = Files.createTempDirectory("histmersion-acquisition-oracle").toRealPath()
   private lazy val base = AppConfig.load()
-  private lazy val scratch = ScratchDatabases("histmersion_s10p", base.db.modify(_.url).setTo(testDb.get))
+  private lazy val scratch = ScratchDatabases("histmersion_s10p", base.db.modify(_.url).setTo(com.histmersion.config.DbConfig.Url(testDb.get)))
 
   override def afterSuite(): Unit =
     if testDb.isDefined then scratch.dropAll()
@@ -355,8 +355,8 @@ class AcquisitionOracleSuite extends DbSuite:
   final private class FixtureConverter extends com.histmersion.util.ocr.ConverterClient:
     private val Png =
       "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8z8BQDwAEhQGAhKmMIQAAAABJRU5ErkJggg=="
-    def health: Either[String, String] = Right("ok")
-    def convert(file: com.histmersion.util.storage.Blob, filename: String, quality: Boolean) =
+    def health: Either[com.histmersion.util.ocr.ConverterClient.Problem, com.histmersion.util.ocr.ConverterClient.HealthSummary] = Right(com.histmersion.util.ocr.ConverterClient.HealthSummary("ok"))
+    def convert(file: com.histmersion.util.storage.Blob, filename: com.histmersion.util.ocr.ConverterClient.Filename, quality: com.histmersion.util.ocr.ConverterClient.HighQuality) =
       Right(
         ConvertedDoc(
           com.histmersion.api.ocr.ConvertedDoc.Markdown(s"# Converted $filename\n\nA body of ${file.size} bytes (quality: $quality).\n\n![fig](assets/zq-fig.png)\n"),
@@ -411,7 +411,7 @@ class AcquisitionOracleSuite extends DbSuite:
       .fold(e => fail(e.value), identity)
     val c = loaded.config
     val cfg = c.modify(
-      _.db).setTo(base.db.modify(_.url).setTo(scratch.urlOf(s"histmersion_s10p_${name}_test"))).modify(_.backups).setTo(c.backups.modify(_.dir).setTo(tmp.resolve(s"$name-backups").toString)).modify(_.bundles).setTo(c.bundles.modify(_.dir).setTo(tmp.resolve(s"$name-bundles").toString)).modify(_.converter).setTo(c.converter.modify(_.spoolDir).setTo(tmp.resolve(s"$name-spool").toString)).modify(_.acquire).setTo(c.acquire.modify(_.spoolDir).setTo(tmp.resolve(s"$name-acquire").toString)).modify(_.init).setTo(c.init.modify(_.auto).setTo(false)).modify(_.runtime).setTo(c.runtime.modify(_.dataDir).setTo(tmp.resolve(s"$name-data").toString)).modify(_.basemap).setTo(c.basemap.modify(_.dir).setTo(tmp.resolve(s"$name-basemap").toString)
+      _.db).setTo(base.db.modify(_.url).setTo(scratch.urlOf(s"histmersion_s10p_${name}_test"))).modify(_.backups).setTo(c.backups.modify(_.dir).setTo(com.histmersion.config.BackupsConfig.Dir(tmp.resolve(s"$name-backups").toString))).modify(_.bundles).setTo(c.bundles.modify(_.dir).setTo(com.histmersion.config.BundlesConfig.Dir(tmp.resolve(s"$name-bundles").toString))).modify(_.converter).setTo(c.converter.modify(_.spoolDir).setTo(com.histmersion.config.ConverterConfig.SpoolDir(tmp.resolve(s"$name-spool").toString))).modify(_.acquire).setTo(c.acquire.modify(_.spoolDir).setTo(com.histmersion.config.AcquireConfig.SpoolDir(tmp.resolve(s"$name-acquire").toString))).modify(_.init).setTo(c.init.modify(_.auto).setTo(com.histmersion.config.InitConfig.Auto(false))).modify(_.runtime).setTo(c.runtime.modify(_.dataDir).setTo(com.histmersion.config.RuntimeConfig.DataDir(tmp.resolve(s"$name-data").toString))).modify(_.basemap).setTo(c.basemap.modify(_.dir).setTo(com.histmersion.config.BasemapConfig.Dir(tmp.resolve(s"$name-basemap").toString))
     )
     val core = com.histmersion.domain.library.acquisition.CoreBudget(() => java.time.Instant.now(java.time.Clock.systemUTC()))
     val http = com.histmersion.domain.library.acquisition.SttpHttp(cfg.acquire, tries = com.histmersion.pluginhost.PolicyHttp.Tries(1), clock = () => java.time.Instant.now(java.time.Clock.systemUTC()))
