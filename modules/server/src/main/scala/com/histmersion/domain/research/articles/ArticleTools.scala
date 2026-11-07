@@ -1,5 +1,6 @@
 package com.histmersion.domain.research.articles
 
+import com.histmersion.api.json.NewtypeCodecs.given
 import com.histmersion.api.aliases.AliasKinds
 
 import chimp.server.*

@@ -32,7 +32,7 @@ final class SourceProposals(
     * nor records it.
     */
   def propose(ctx: RunCtx, p: Proposal): Outcome =
-    ctx.write(s"${p.kind.wire} proposal: ${p.describe}", p.asJson)(propose(Some(com.histmersion.domain.automation.Run.Id(ctx.run.id.value)), p))(
+    ctx.write(s"${p.kind.wire} proposal: ${p.describe}", p.asJson)(propose(Some(com.histmersion.domain.automation.Run.Id.assume(ctx.run.id.value)), p))(
       Outcome.NotProposed(Outcome.NotProposed.What(p.describe.value))
     )
 

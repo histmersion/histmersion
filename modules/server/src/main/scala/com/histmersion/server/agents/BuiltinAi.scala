@@ -38,7 +38,7 @@ object BuiltinAi:
   /** The six built-in providers' plugins. */
   val pluginIds: Set[com.histmersion.util.plugins.Plugin.Id] = ProviderKind.values.map(pluginOf).toSet
 
-  def plugins: List[Plugin] = entries.map(e => HostProvided(e.plugin, _.aiProviders.add(Registry.AddId(e.kind.wire.value), e)))
+  def plugins: List[Plugin] = entries.map(e => HostProvided(e.plugin, _.aiProviders.add(Registry.AddId(e.kind.wire.value), e).left.map(m => Plugin.RegisterResultPart1(m.value))))
 
   /** Names a plugin's provider may not take. */
   val reserved: Set[com.histmersion.server.agents.BuiltinAi.Reserved] = ProviderKind.values.map(k => Reserved(k.wire.value)).toSet

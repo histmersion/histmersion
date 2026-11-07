@@ -335,10 +335,7 @@ final class ServerWiring(deps: Deps, converter: ConverterClient):
       com.histmersion.server.views.EventCardView.cited(
         eventLinks.context,
         (citekeys, limit) =>
-          research.articles.store.citing(
-            citekeys,
-            com.histmersion.domain.research.articles.ArticleRepo.Limit(limit.value)
-          )
+          research.articles.store.citing(citekeys, limit)
       ),
       (k, id) =>
         com.histmersion.domain.catalogue.Event.Id
@@ -349,7 +346,7 @@ final class ServerWiring(deps: Deps, converter: ConverterClient):
       () =>
         (
           PageSize.applyUnsafe(math.max(1, cfg.ui.events.mapLimit.value)),
-          com.histmersion.domain.catalogue.events.EventRepo.GeoTolerance(cfg.ui.events.outlineToleranceDeg.value)
+          com.histmersion.domain.catalogue.events.GeoTolerance(cfg.ui.events.outlineToleranceDeg.value)
         ),
       maintenance
     )
@@ -469,7 +466,7 @@ final class ServerWiring(deps: Deps, converter: ConverterClient):
             field,
             MarkdownLint.Context(
               article = MarkdownLint.Context.Article(article),
-              isCitekey = Some(t => isCitekey(com.histmersion.util.data.checks.CheckContext.FormatArg1Arg1(t.value)))
+              isCitekey = Some(isCitekey)
             )
           ),
       (record, text, token) =>
@@ -522,7 +519,7 @@ final class ServerWiring(deps: Deps, converter: ConverterClient):
         ),
       upstreamQuotas,
       now => Some(com.histmersion.server.agents.EngineContributions.work(agents).acquireRecheck.status(now)),
-      () => com.histmersion.server.instance.InstanceControllers.SetupDueResult(settings.setupDue)
+      () => settings.setupDue
     )
 
   /** The autopilot's page: the automation's status with the library's upstreams and its acquisition list's re-check. */

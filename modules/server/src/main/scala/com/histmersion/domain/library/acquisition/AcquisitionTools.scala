@@ -1,5 +1,6 @@
 package com.histmersion.domain.library.acquisition
 
+import com.histmersion.api.json.NewtypeCodecs.given
 import com.histmersion.config.*
 import com.histmersion.domain.*
 import com.histmersion.util.mcp.McpOut

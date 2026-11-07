@@ -119,7 +119,7 @@ object OpsTools:
   private def runQueue(h: ServerWiring, in: QueueInput): String =
     def render(list: String) =
       h.workListView.list(
-        com.histmersion.server.views.WorkListView.QueueName(list),
+        com.histmersion.domain.automation.worklists.WorkListControllers.KindOfList(list),
         com.histmersion.server.views.WorkListView.IncludeAll(in.all)
       ) match
         case Right(l) =>

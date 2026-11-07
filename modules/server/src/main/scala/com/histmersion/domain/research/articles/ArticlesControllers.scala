@@ -135,7 +135,7 @@ final class ArticlesControllers(
                 Caller.Local
               )
               .map(_ => ())
-        write.flatMap(_ => lint(slugOf(a))).map(_.modify(_.fixed).setTo(done))
+        write.flatMap(_ => lint(slugOf(a))).map(_.modify(_.fixed).setTo(done.map(com.histmersion.api.checks.FormatReport.Fixed(_))))
       }
 
   /** A whole body written by the mechanical pairing repair, guarded by the token it was computed against: whether it

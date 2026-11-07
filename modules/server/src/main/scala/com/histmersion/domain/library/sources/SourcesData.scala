@@ -44,7 +44,7 @@ object SourcesData:
         rule,
         SourceCheckRepo.Context.of(
           context.config,
-          context.format(ck => CheckContext.FormatArg1Result(Citekey.option(ck.value).exists(stored)))
+          context.format(ck => Citekey.option(ck.value).exists(stored))
         ),
         Lint.ItemLimit(maxItems.value)
       )

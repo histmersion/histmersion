@@ -40,8 +40,8 @@ private[events] object EventRepo:
 
   /** How many events the catalogue holds. */
 
-  type GeoTolerance = GeoTolerance.T
-  object GeoTolerance extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type GeoTolerance = com.histmersion.domain.catalogue.events.GeoTolerance
+  val GeoTolerance: com.histmersion.domain.catalogue.events.GeoTolerance.type = com.histmersion.domain.catalogue.events.GeoTolerance
 
   def count()(using DbCon): com.histmersion.domain.catalogue.events.EventRepo.EventCount = EventCount(sql"SELECT count(*)::int FROM events".query[Int].run().head.toLong)
 

@@ -1,5 +1,6 @@
 package com.histmersion.domain.library
 
+import com.histmersion.api.json.NewtypeCodecs.given
 import com.histmersion.api.aliases.AliasKinds
 
 import com.histmersion.api.library.SearchMarkdown

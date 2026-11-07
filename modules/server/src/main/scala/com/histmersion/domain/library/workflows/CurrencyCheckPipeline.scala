@@ -1,5 +1,6 @@
 package com.histmersion.domain.library.workflows
 
+import com.histmersion.api.json.NewtypeCodecs.given
 import io.scalaland.chimney.dsl.*
 
 import com.histmersion.domain.library.acquisition.Ident

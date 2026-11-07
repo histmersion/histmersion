@@ -45,7 +45,7 @@ trait AutomationHost:
   def probeSubject(citekey: com.histmersion.domain.library.Citekey): Either[Api.Error, ProbeAnswer]
 
   /** Whether a model's title names the record's (after normalisation). */
-  def sameTitle(answered: com.histmersion.domain.automation.workflows.AutomationHost.SameTitleAnswered, record: com.histmersion.domain.automation.workflows.AutomationHost.SameTitleRecord): Boolean
+  def sameTitle(answered: com.histmersion.domain.Title, record: com.histmersion.domain.Title): Boolean
 
   /** A goal plan's works looked up by DOI (the library's metadata: title, year, authors, whether the corpus holds it,
     * whether it is open access or retracted).
@@ -80,10 +80,6 @@ object AutomationHost:
   object LinkRefResultPart2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type LinkRefRaw = LinkRefRaw.T
   object LinkRefRaw extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type SameTitleAnswered = SameTitleAnswered.T
-  object SameTitleAnswered extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type SameTitleRecord = SameTitleRecord.T
-  object SameTitleRecord extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type VocabularyResult = VocabularyResult.T
   object VocabularyResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type VocabularyField = VocabularyField.T

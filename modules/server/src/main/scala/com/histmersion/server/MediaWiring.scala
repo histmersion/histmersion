@@ -84,19 +84,10 @@ object MediaWiring:
 
   /** A converter that makes no thumbnails (tests; a server whose sidecar is down still serves cards). */
   object NoThumbnails extends ConverterClient:
-    type Health = Health.T
-    object Health extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-    type Problem = Problem.T
-    object Problem extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-    type ConvertFilename = ConvertFilename.T
-    object ConvertFilename extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-    type ConvertQuality = ConvertQuality.T
-    object ConvertQuality extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
-
     def convert(
         file: com.histmersion.util.storage.Blob,
-        filename: com.histmersion.server.MediaWiring.NoThumbnails.ConvertFilename,
-        quality: com.histmersion.server.MediaWiring.NoThumbnails.ConvertQuality
-    ): Either[com.histmersion.server.MediaWiring.NoThumbnails.Problem, com.histmersion.api.ocr.ConvertedDoc] =
-      Left(com.histmersion.server.MediaWiring.NoThumbnails.Problem("no converter"))
-    def health: Either[com.histmersion.server.MediaWiring.NoThumbnails.Problem, com.histmersion.server.MediaWiring.NoThumbnails.Health] = Left(com.histmersion.server.MediaWiring.NoThumbnails.Problem("no converter"))
+        filename: ConverterClient.Filename,
+        quality: ConverterClient.HighQuality
+    ): Either[ConverterClient.Problem, com.histmersion.api.ocr.ConvertedDoc] =
+      Left(ConverterClient.Problem("no converter"))
+    def health: Either[ConverterClient.Problem, ConverterClient.HealthSummary] = Left(ConverterClient.Problem("no converter"))

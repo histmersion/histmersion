@@ -275,7 +275,7 @@ object Composition:
       def queueItem(id: CollectionLibrary.QueueItemId) =
         h.workListView
           .list(
-            com.histmersion.server.views.WorkListView.QueueName(Queue.Kind.Acquire.label.value),
+            com.histmersion.domain.automation.worklists.WorkListControllers.KindOfList(Queue.Kind.Acquire.label.value),
             all = com.histmersion.server.views.WorkListView.IncludeAll(true)
           )
           .map(_.items.find(_.id.value == id.value))
@@ -326,7 +326,7 @@ object Composition:
       FetchChain.AllowUnauthorised(cfg.allowUnauthorised.value),
       plugins = plugins.registered.flatMap(i => Plugin.Id.option(i.value))
     )
-    notes.foreach(n => scribe.info(n))
+    notes.foreach(n => scribe.info(n.value))
     scribe.info(chain.plan match
       case Nil  => "acquire: no source fetcher is registered — every fetch is a miss"
       case plan => s"acquire: chain ${plan.map(_._1).mkString(" → ")}")

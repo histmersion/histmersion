@@ -161,3 +161,9 @@ Master's `[a-z][a-z0-9]*_.+` refuses the seed's own bare ids (`anatolia`, `aegea
 - ServerAutomationHost.runTarget, linkRef, runOptions refuse with the parser's message instead of the old not-found wording; articleStore.exists false for an unparseable slug. Unchecked bridges from config and env values: ServerConfig.Host from HISTMERSION_BIND, ListName in OpsRoutes, OpsTools, ManagerSupervisor.
 - Visibility: ArticleService.citing takes private ArticleRepo.Limit; EventsControllers.mapView requires private EventRepo.GeoTolerance: public concepts needed.
 - Hot reload's `changed` typed Def.Name holds config keys. RelinkPlugins.check had (problems, notes) swapped: fixed. PluginKit.KitFile.Sha256 (constrained) vs api.Sha256.
+
+## From the server finisher
+
+- EventImports drops out-of-range lat/lon and EventImportService drops malformed Q-ids (accepted before); ServerAutomationHost.workLookup drops an invalid citekey; MarkTarget year conversions use toInt with no range check.
+- db changed after db tests passed: JobRepo, GeoTolerance, ArticleRepo.citing (PageSize). Rerun db tests.
+- Positional leftovers still to name: files TextFiles.ReadResult; AutomationHost LinkRefResultPart2 and siblings; plugin-api Plugin.RegisterResultPart1 and the rest.

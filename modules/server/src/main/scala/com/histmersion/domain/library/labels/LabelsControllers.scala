@@ -12,5 +12,5 @@ final class LabelsControllers(labels: LabelService, filters: SearchFilters):
       .toRight(Api.Error(Api.Error.Message(s"unknown facet field '$field' (one of: ${Facet.Field.all.mkString(", ")})")))
       .map { ff =>
         val paged = filters.page(f)
-        labels.facets(ff, prefix, paged, com.histmersion.PageSize(paged.limit.value), filters.scope(f))
+        labels.facets(ff, prefix, paged, com.histmersion.PageSize.assume(paged.limit.value), filters.scope(f))
       }

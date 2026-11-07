@@ -19,9 +19,5 @@ final class SourceTextFormatting(links: List[com.histmersion.api.text.WikiLinks.
     val (fixed, done) = MarkdownLint.fix(MarkdownLint.Scan.Text(text.value), field)
     (com.histmersion.domain.library.Source.Text(fixed.value), done.map(d => com.histmersion.domain.library.Source.Text(d.value)))
 
-  def refusal(issues: List[FormatIssue]): Option[com.histmersion.domain.research.articles.lint.SourceTextFormatting.Problem] =
-    MarkdownLint.refusal(issues).map(p => SourceTextFormatting.Problem(p.value))
-
-object SourceTextFormatting:
-  type Problem = Problem.T
-  object Problem extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  def refusal(issues: List[FormatIssue]): Option[SourceFormatting.Problem] =
+    MarkdownLint.refusal(issues).map(p => SourceFormatting.Problem(p.value))

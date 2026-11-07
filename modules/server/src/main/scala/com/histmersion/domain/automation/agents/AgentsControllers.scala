@@ -242,11 +242,11 @@ final class AgentsControllers(
 
   // ── plan pools ─────────────────────────────────────────────────────────────────────────────────
 
-  private def covers(p: PlanQuota.PoolId): List[PlanPools.ModelName] = p match
-    case PlanQuota.PoolId.ClaudePlan  => List(PlanPools.ModelName(s"${ProviderKind.ClaudeCode.wire}:*"))
+  private def covers(p: PlanQuota.PoolId): List[PlanQuota.PoolStatus.Covers] = p match
+    case PlanQuota.PoolId.ClaudePlan  => List(PlanQuota.PoolStatus.Covers(s"${ProviderKind.ClaudeCode.wire}:*"))
     case PlanQuota.PoolId.ChatgptPlan =>
-      PlanPools.ModelName(s"${ProviderKind.Codex.wire}:*") :: Option
-        .when(cfg.providers.opencode.chatgptLogin.value)(PlanPools.ModelName(s"${ProviderKind.Opencode.wire}:openai/*"))
+      PlanQuota.PoolStatus.Covers(s"${ProviderKind.Codex.wire}:*") :: Option
+        .when(cfg.providers.opencode.chatgptLogin.value)(PlanQuota.PoolStatus.Covers(s"${ProviderKind.Opencode.wire}:openai/*"))
         .toList
 
   /** `GET /api/agents/quota` — readable with agents off. Nothing is spent: the ChatGPT pool is read from the app-server
@@ -255,7 +255,7 @@ final class AgentsControllers(
   def quota: PlanQuota.QuotaInfo =
     val now = PlanQuotaRepo.EpochMillis(clock.millis())
     PlanQuota.QuotaInfo(
-      pools.statuses(covers, PlanPools.Instant(now.value)),
+      pools.statuses(covers, PlanQuota.Now(now.value)),
       picker.allowanceStatuses(now),
       Role.values.toList.filter(picker.fallthrough).map(r => PlanQuota.QuotaInfo.Fallthrough(r.wire.value)),
       PlanQuota.QuotaInfo.Now(java.time.Instant.ofEpochMilli(now.value).toString),
@@ -292,8 +292,8 @@ final class AgentsControllers(
             .map(e => Api.Error(Api.Error.Message(e.value)))
             .map(fs => Some(Some(fs.text)))
         case None => Right(None)
-      _ = in.hold.foreach(h => pools.hold(p, PlanPools.Held(h.value)))
-      _ = f.foreach(x => pools.setFloors(p, x.map(w => PlanPools.FloorsSpec(w.value))))
+      _ = in.hold.foreach(h => pools.hold(p, PlanQuotaRepo.Pool.Held(h.value)))
+      _ = f.foreach(x => pools.setFloors(p, x.map(w => PlanQuotaRepo.Pool.Floors(w.value))))
       st <- pools
         .statuses(covers)
         .find(_.pool == p.wire)
@@ -1168,7 +1168,7 @@ final class AgentsControllers(
                 answer = answer,
                 rawAnswer = ProbeResult.RawAnswer(LlmClient.rawAnswer(res.finalAnswer).take(2000)),
                 matchesRecord = ProbeResult.MatchesRecord(
-                  problems.isEmpty && answer.exists(a => host.sameTitle(com.histmersion.domain.automation.workflows.AutomationHost.SameTitleAnswered(a.title.value), com.histmersion.domain.automation.workflows.AutomationHost.SameTitleRecord(src.title.value)) && a.year == src.year)
+                  problems.isEmpty && answer.exists(a => host.sameTitle(com.histmersion.domain.Title(a.title.value), com.histmersion.domain.Title(src.title.value)) && a.year == src.year)
                 ),
                 toolCalls = toolCalls.map(ProbeResult.ToolCalls(_)),
                 iterations = ProbeResult.Iterations(res.iterations),

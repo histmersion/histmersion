@@ -23,7 +23,7 @@ object ArticlesData:
       val stored = ArticleCheckRepo.storedCitekey
       ArticleCheckRepo.report(
         rule,
-        context.format(ck => CheckContext.FormatArg1Result(com.histmersion.domain.library.Citekey.option(ck.value).exists(stored))),
+        context.format(ck => com.histmersion.domain.library.Citekey.option(ck.value).exists(stored)),
         ArticleCheckRepo.ReportMaxItems(maxItems.value)
       )
 

@@ -22,11 +22,11 @@ final class Workflows private (
   def definition(id: WorkflowId): Option[WorkflowDefinition] = byId.get(id)
 
   /** Every goal's linked items that exist, by goal, as the domains count them. */
-  def linked(): Map[ObjectiveProgress.LinkedResultPart1, List[ObjectiveProgress.LinkedResultPart2]] =
+  def linked(): Map[com.histmersion.domain.automation.Goal.Slug, List[com.histmersion.domain.research.Slug]] =
     objectives.flatMap(_.linked().toList).groupMap(_._1)(_._2).view.mapValues(_.flatten).toMap
 
   /** The linked items that count as finished. */
-  def finished(): Set[ObjectiveProgress.FinishedResult] = objectives.flatMap(_.finished()).toSet
+  def finished(): Set[com.histmersion.domain.research.Slug] = objectives.flatMap(_.finished()).toSet
 
   /** Every contributed tool's name, in the order of registration. */
   def toolNames: List[ToolName] = tools.map(_.name)

@@ -1,5 +1,6 @@
 package com.histmersion.domain.automation.managers
 
+import com.histmersion.api.json.NewtypeCodecs.given
 import com.histmersion.util.database.Transactor
 
 import com.augustnagro.magnum.{connect, transact}

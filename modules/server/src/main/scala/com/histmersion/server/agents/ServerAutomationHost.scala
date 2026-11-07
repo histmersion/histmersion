@@ -137,7 +137,17 @@ final class ServerAutomationHost(h: ServerWiring, upstream: () => AgentUpstream)
 
   def sameTitle(answered: com.histmersion.domain.Title, record: com.histmersion.domain.Title): Boolean = AgentVerify.sameTitle(answered, record)
 
-  def workLookup: PlanGoal.Lookup = doi => upstream().meta(doi).left.map(p => PlanGoal.Problem(p.value)).map(_.transformInto[PlanGoal.Work])
+  def workLookup: PlanGoal.Lookup = doi => upstream().meta(doi).left.map(p => PlanGoal.Problem(p.value)).map(w =>
+      PlanGoal.Work(
+        w.title.map(t => PlanGoal.Work.Title(t.value)),
+        w.year.map(y => com.histmersion.Year(y.value.toInt)),
+        w.authors.map(a => PlanGoal.Work.Authors(a.value)),
+        w.citekey.flatMap(c => com.histmersion.domain.library.Citekey.option(c.value)),
+        PlanGoal.Work.InDb(w.inDb.value),
+        PlanGoal.Work.IsOa(w.isOa.value),
+        PlanGoal.Work.IsRetracted(w.isRetracted.value)
+      )
+    )
   def vocabulary(field: AutomationHost.VocabularyField): List[AutomationHost.VocabularyResult] =
     h.library.labels
       .facets(Facet.Field.Wire(field.value), None, Filter())

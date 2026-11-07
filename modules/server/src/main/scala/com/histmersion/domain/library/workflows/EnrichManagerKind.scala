@@ -61,7 +61,7 @@ final class EnrichManagerKind(site: LibrarySite, a: AgentsControllers) extends M
     )
     asSource.map(s => (List(ManagerContext.ItemTarget(s.source.citekey.value)), List.empty[ManagerKindDefinition.ExpandSkipped])).orElse {
       val cited = com.histmersion.domain.research.Slug.option(text).toRight(Api.Error(Api.Error.Message(s"No article '$text'"))).flatMap(slug =>
-        site.articleSources(slug).map(_.map(x => Citekey.assume(x.value)))
+        site.articleSources(slug)
       ).orElse(
         com.histmersion.domain.automation.Goal.Slug.option(text).toRight(Api.Error(Api.Error.Message(s"No goal '$text'"))).flatMap(slug =>
           a.host.goal(slug).map(g => c.goalLinks(com.histmersion.domain.automation.Goal.Slug.assume(g.slug.value), Goal.Plans.LinkKind.Source).map(x => Citekey.assume(x.value)))
@@ -89,7 +89,7 @@ final class EnrichManagerKind(site: LibrarySite, a: AgentsControllers) extends M
       .flatMap(r =>
         com.histmersion.domain.automation.Run.State
           .parse(com.histmersion.domain.automation.Run.State.Wire(r.status.value))
-          .map(AutoEnrich.PriorRun(AutoEnrich.PriorRun.Id(r.id.value), _))
+          .map(AutoEnrich.PriorRun(AutoEnrich.PriorRun.Id.assume(r.id.value), _))
       )
 
   // ── auto-enrich ────────────────────────────────────────────────────────────────────────────────
@@ -126,7 +126,7 @@ final class EnrichManagerKind(site: LibrarySite, a: AgentsControllers) extends M
                     )
                     .fold(
                       e => AutoEnrich.notQueued(AutoEnrich.Reason(e.message.value)),
-                      r => AutoEnrich.queued(com.histmersion.domain.automation.Run.Id(r.id.value))
+                      r => AutoEnrich.queued(com.histmersion.domain.automation.Run.Id.assume(r.id.value))
                     )
                 )
       }

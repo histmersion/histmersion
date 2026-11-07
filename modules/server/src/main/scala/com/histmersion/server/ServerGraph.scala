@@ -197,7 +197,7 @@ object ServerGraph:
           .node[DataSource](
             Hot.Graph.Def.Name(Pool),
             keys = List(Hot.Graph.Def.Keys("histmersion.db")),
-            idle = ds => Hot.Graph.Def.Idle(Db.activeConnections(ds).value == 0)
+            idle = ds => Db.activeConnections(ds).value == 0
           ) { ctx =>
             val db = ctx.config.app.db
             for
@@ -221,7 +221,7 @@ object ServerGraph:
           Hot.Graph.Def.Name(QueryPool),
           deps = List(pool, mig),
           keys = List(Hot.Graph.Def.Keys("histmersion.query"), Hot.Graph.Def.Keys("histmersion.db")),
-          idle = r => Hot.Graph.Def.Idle(r.own.forall(Db.activeConnections(_).value == 0))
+          idle = r => r.own.forall(Db.activeConnections(_).value == 0)
         ) { ctx =>
           Right(readOnly(ctx.config.app, ctx(pool)))
         }

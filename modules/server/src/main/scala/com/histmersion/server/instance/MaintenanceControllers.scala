@@ -110,7 +110,7 @@ final class MaintenanceControllers(
     val before = backups.guardedRows
     for
       archive <- backups.resolve(PreparedBackup.File(req.file.value))
-      _ <- if req.force || before == 0 then Right(()) else Left(backups.refusal(before))
+      _ <- if req.force.value || before.value == 0 then Right(()) else Left(backups.refusal(before))
       r <- backups.restore(archive)
       // Every pooled connection now holds a session cache describing types the restore dropped;
       // PostGIS in particular fails outright on the next spatial query. Throw them away here,
@@ -134,7 +134,14 @@ final class MaintenanceControllers(
       // the restored versions of what the map's tiles read may be ones the kept tiles were cut under
       _ = clearOnRestore()
       v <- Migrate.validate(ds).left.map(m => Api.Error(Api.Error.Message(s"restored ${req.file}, but the schema does not validate: $m")))
-    yield RestoreResult(req.file, v, before, backups.guardedRows, r._1, r._2 ++ role)
+    yield RestoreResult(
+      req.file,
+      RestoreResult.SchemaVersion(v.value),
+      RestoreResult.SourcesBefore(before.value),
+      RestoreResult.SourcesAfter(backups.guardedRows.value),
+      RestoreResult.DurationMs(r._1.value),
+      r._2.map(n => RestoreResult.Warnings(n.value)) ++ role.map(RestoreResult.Warnings(_))
+    )
 
   /** The registered caches a restore makes stale, cleared: what this server holds of each. */
   private def clearOnRestore(): Unit =

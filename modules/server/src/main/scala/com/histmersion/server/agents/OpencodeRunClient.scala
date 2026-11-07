@@ -60,7 +60,7 @@ final class OpencodeRunClient(val model: ModelRef, cfg: OpencodeConfig, rt: CliR
           case Some(m) => throw ModelLimitReached(model, None, ModelLimitReached.Message(s"opencode run: $m".take(300)))
           case None    => CliOutcomes.result(
               o,
-              CliOutcomes.ResultUser(call.user.value),
+              call.user,
               call.schema,
               Some(ClaudeCode.ModelId(model.model.value))
             )

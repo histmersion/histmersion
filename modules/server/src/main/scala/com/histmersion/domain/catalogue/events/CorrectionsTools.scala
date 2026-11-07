@@ -1,5 +1,6 @@
 package com.histmersion.domain.catalogue.events
 
+import com.histmersion.api.json.NewtypeCodecs.given
 import chimp.server.*
 import com.histmersion.api.catalogue.Corrections
 import com.histmersion.util.mcp.McpOut
@@ -63,7 +64,7 @@ object CorrectionsTools:
                 imports.corrections(
                   in.status.map(s => com.histmersion.api.catalogue.Correction.StatusValue(s.value)),
                   e,
-                  in.limit.map(l => com.histmersion.PageSize(l.value)),
+                  in.limit.flatMap(l => com.histmersion.PageSize.option(l.value)),
                   None
                 )
               )

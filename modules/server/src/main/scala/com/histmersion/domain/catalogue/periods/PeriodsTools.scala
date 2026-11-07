@@ -1,5 +1,6 @@
 package com.histmersion.domain.catalogue.periods
 
+import com.histmersion.api.json.NewtypeCodecs.given
 import chimp.server.*
 import com.histmersion.api.catalogue.{HistoricalPeriod, PeriodsMarkdown}
 import com.histmersion.util.mcp.McpOut

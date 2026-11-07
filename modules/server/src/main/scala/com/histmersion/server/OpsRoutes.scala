@@ -35,7 +35,7 @@ object OpsRoutes:
       for
         g <- scoped(goal, "goal slug")(com.histmersion.domain.automation.Goal.Slug.either(_))
         j <- scoped(job, "job id")(com.histmersion.util.jobs.Job.Id.either(_))
-        r <- w.workListView.list(WorkListView.QueueName(list.value), WorkListView.IncludeAll(all), g, j)
+        r <- w.workListView.list(com.histmersion.domain.automation.worklists.WorkListControllers.KindOfList(list.value), WorkListView.IncludeAll(all), g, j)
       yield r
     ),
     OpsApi.queueAdd.serverLogic[Identity]((list, in) => w.workLists.add(com.histmersion.domain.automation.worklists.WorkListControllers.ListName(list.value), in)),

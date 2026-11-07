@@ -1,5 +1,6 @@
 package com.histmersion.domain.catalogue.evidence
 
+import com.histmersion.api.json.NewtypeCodecs.given
 import chimp.server.*
 import com.histmersion.api.Api
 import com.histmersion.api.catalogue.{EventLeads, EventLinksMarkdown, EventLinksRequest}

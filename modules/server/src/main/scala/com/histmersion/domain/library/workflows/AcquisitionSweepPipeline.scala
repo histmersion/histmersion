@@ -304,7 +304,7 @@ final class AcquisitionSweepPipeline(
         agents.managerStore.event(
           mid,
           ctx.run.managerItem,
-          Some(com.histmersion.domain.automation.Run.Id(ctx.run.id.value)),
+          Some(com.histmersion.domain.automation.Run.Id.assume(ctx.run.id.value)),
           Managers.ManagerEvent.Kind(Managers.Feed.Ingested),
           Managers.ManagerEvent.Text(
             s"[[${r.citekey}]] ingested (legal open access, ${r.pdf.fold("no file")(_.source.value)}): ${p.candidate.title} — https://doi.org/$doi"

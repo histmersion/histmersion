@@ -306,10 +306,10 @@ final class PlanPools(
     case PoolId.ClaudePlan =>
       val cc = cfg.providers.claudeCode
       val qc = cfg.quota.claudePlan
-      val argv = ClaudeCode.probeArgv(cc, ClaudeCode.ModelId(qc.probeModel.value))
+      val argv = ClaudeCode.probeArgv(cc, qc.probeModel)
       seams.runProbe(
         argv,
-        env => ClaudeCode.probeEnvironment(cc, ClaudeCode.ProbeEnvironmentMaxTokens(qc.probeMaxTokens.value), env),
+        env => ClaudeCode.probeEnvironment(cc, qc.probeMaxTokens, env),
         CliProcess.RunStdin(ClaudeCode.ProbePrompt),
         CliProcess.RunTimeoutSeconds(math.max(5, qc.probeTimeoutSeconds.value))
       ) match
@@ -414,7 +414,7 @@ final class PlanPools(
         PoolStatus.MaxCallsInFlight(math.max(1, poolCfg(p)._2)),
         ws,
         pool.planType.map(t => PoolStatus.PlanType(t.value)),
-        (problem.toList ++ modeProblem).map(_.value).reduceOption(_ + "; " + _).map(PoolStatus.Note(_)),
+        (problem.toList ++ modeProblem).map(_.value).reduceOption[String](_ + "; " + _).map(PoolStatus.Note(_)),
         available = PoolStatus.Available(missing.isEmpty),
         login = Some(
           PoolStatus.Login(
@@ -541,7 +541,7 @@ object PlanPools:
     * the plan.
     */
   def probeReadings(run: CliProcess.Run, now: PlanQuota.Now, cooldownMinutes: ClaudeCodeConfig.LimitCooldownMinutes): Either[Problem, List[Reading]] =
-    val o = ClaudeCode.parse(run.lines.map(l => ClaudeCode.ParseLines(l.value)))
+    val o = ClaudeCode.parse(run.lines)
     if o.readings.nonEmpty then
       Right(o.readings.map(_.modify(_.source).setTo(Source.Probe).modify(_.observedAt).setTo(Reading.ObservedAt(now.value))))
     else
@@ -554,7 +554,7 @@ object PlanPools:
               .getOrElse(now.value + math.max(1, cooldownMinutes.value).toLong * 60000L)
           Right(List(Reading(Reading.Limit("claude"), Reading.Kind("usage_limit"), Reading.UsedPct(100), Some(Reading.ResetsAt(until)), rejected = Reading.Rejected(true), Reading.ObservedAt(now.value), Source.Probe)))
         case None =>
-          val said = o.result.map(r => (r.text :: r.errors).filter(_.nonEmpty).mkString("; ")).filter(_.nonEmpty)
+          val said = o.result.map(r => (r.text.value :: r.errors.map(_.value)).filter(_.nonEmpty).mkString("; ")).filter(_.nonEmpty)
           Left(
             Problem(
               s"the probe printed no rate_limit_event (exit ${run.exit}" +

@@ -56,7 +56,7 @@ final class SourcesControllers(
     AssetLinks.toAbsolute(AssetLinks.Body(md), apiCk(citekey), AssetLinks.Url(cfg().server.publicUrl.value)).value
 
   private def issuesOf(summary: Option[Source.Summary], notes: Option[Source.Notes]): List[FormatIssue] =
-    formatting.issues(summary.map(s => FullSourceRow.Summary(s.value)), notes.map(n => SourceNote.Text(n.value)))
+    formatting.issues(summary.map(s => com.histmersion.domain.library.Source.Summary(s.value)), notes.map(n => SourceNote.Text(n.value)))
 
   /** THE citekey resolution (V027): the citekey a source has NOW, when `id` is an old one it was renamed from;
     * otherwise `id` unchanged (and a later lookup reports it unknown).
@@ -224,9 +224,9 @@ final class SourcesControllers(
       val ck = canonical(citekey)
       sources.load(ck).toRight(notFound(citekey)).flatMap { s =>
         val (summary, fs) =
-          s.summary.map(t => formatting.fix(SourceFormatting.Text(t.value), FormatField.Summary)).fold((None, Nil))((t, f) => (Some(t), f))
+          s.summary.map(t => formatting.fix(com.histmersion.domain.library.Source.Text(t.value), FormatField.Summary)).fold((None, Nil))((t, f) => (Some(t), f))
         val (notes, fn) =
-          s.notes.map(t => formatting.fix(SourceFormatting.Text(t.value), FormatField.Notes)).fold((None, Nil))((t, f) => (Some(t), f))
+          s.notes.map(t => formatting.fix(com.histmersion.domain.library.Source.Text(t.value), FormatField.Notes)).fold((None, Nil))((t, f) => (Some(t), f))
         val done = fs.map(f => "summary: " + f.value) ++ fn.map(f => "notes: " + f.value)
         val write =
           if done.isEmpty then Right(())

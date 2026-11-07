@@ -1,5 +1,6 @@
 package com.histmersion.domain.library.workflows
 
+import com.histmersion.api.json.NewtypeCodecs.given
 import com.histmersion.api.library.Filter
 import com.histmersion.api.VocabularyCodecs.given
 import hearth.kindlings.circederivation.KindlingsCodecAsObject

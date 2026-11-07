@@ -1,0 +1,61 @@
+## modules/server/src/main/scala/com/histmersion/domain/automation/agents/AgentsControllers.scala
+245:58 [E008] 245 |  private def covers(p: PlanQuota.PoolId): List[PlanPools.ModelName] = p match / |type ModelName is not a member of object com.histmersion.server.agents.PlanPools, but could be made available as an extension method. / |The following import might make progress towards fixing the problem:
+246:56 [E008] 246 |    case PlanQuota.PoolId.ClaudePlan  => List(PlanPools.ModelName(s"${ProviderKind.ClaudeCode.wire}:*")) / |value ModelName is not a member of object com.histmersion.server.agents.PlanPools, but could be made available as an extension method. / |The following import might make progress towards fixing the problem:
+249:67 [E008] 249 |        .when(cfg.providers.opencode.chatgptLogin.value)(PlanPools.ModelName(s"${ProviderKind.Opencode.wire}:openai/*")) / |value ModelName is not a member of object com.histmersion.server.agents.PlanPools, but could be made available as an extension method. / |The following import might make progress towards fixing the problem:
+258:39 [E008] 258 |      pools.statuses(covers, PlanPools.Instant(now.value)), / |value Instant is not a member of object com.histmersion.server.agents.PlanPools, but could be made available as an extension method. / |The following import might make progress towards fixing the problem:
+295:55 [E008] 295 |      _ = in.hold.foreach(h => pools.hold(p, PlanPools.Held(h.value))) / |value Held is not a member of object com.histmersion.server.agents.PlanPools, but could be made available as an extension method. / |The following import might make progress towards fixing the problem:
+296:65 [E008] 296 |      _ = f.foreach(x => pools.setFloors(p, x.map(w => PlanPools.FloorsSpec(w.value)))) / |value FloorsSpec is not a member of object com.histmersion.server.agents.PlanPools, but could be made available as an extension method. / |The following import might make progress towards fixing the problem:
+
+## modules/server/src/main/scala/com/histmersion/domain/automation/agents/ModelPicker.scala
+45:69 [E008] 45 |  private def poolInstant(now: PlanQuotaRepo.EpochMillis): PlanPools.Instant = PlanPools.Instant(now.value) / |type Instant is not a member of object com.histmersion.server.agents.PlanPools, but could be made available as an extension method. / |The following import might make progress towards fixing the problem:
+45:89 [E008] 45 |  private def poolInstant(now: PlanQuotaRepo.EpochMillis): PlanPools.Instant = PlanPools.Instant(now.value) / |value Instant is not a member of object com.histmersion.server.agents.PlanPools, but could be made available as an extension method. / |The following import might make progress towards fixing the problem:
+47:48 [E008] 47 |  private def poolModel(m: ModelRef): PlanPools.ModelName = PlanPools.ModelName(m.model.value) / |type ModelName is not a member of object com.histmersion.server.agents.PlanPools, but could be made available as an extension method. / |The following import might make progress towards fixing the problem:
+47:70 [E008] 47 |  private def poolModel(m: ModelRef): PlanPools.ModelName = PlanPools.ModelName(m.model.value) / |value ModelName is not a member of object com.histmersion.server.agents.PlanPools
+263:27 [E007] 263 |    else if plan.exists(!_._2.usable) then / |Found:    (_$17._2 : Nothing) / |Required: ?{ usable: ? } / |Note that implicit conversions were not tried because the result of an implicit conversion / |must be more specific than ?{ usable: ?{ unary_! : Boolean } }
+
+## modules/server/src/main/scala/com/histmersion/server/HttpApi.scala
+36:130 [E008] 36 |    UiApi.markSeen.serverLogic[Identity]((board, mark) => h.instance.markSeen(com.histmersion.server.instance.InstanceControllers.Board(board.value), mark)), / |value Board is not a member of object com.histmersion.server.instance.InstanceControllers
+59:101 [E008] 59 |    Api.resolveId.serverLogic[Identity](id => h.resolveView(com.histmersion.server.views.ResolveView.Reference(id.value))), / |value Reference is not a member of object com.histmersion.server.views.ResolveView
+115:69 [E008] 115 |            asOf.map(a => com.histmersion.server.views.PlaceCardView.AsOf(a.value)), / |value AsOf is not a member of object com.histmersion.server.views.PlaceCardView
+177:65 [E008] 177 |        before.map(b => com.histmersion.server.views.JobListView.Cursor(b.value)), / |value Cursor is not a member of object com.histmersion.server.views.JobListView
+178:63 [E008] 178 |        upTo.map(u => com.histmersion.server.views.JobListView.Cursor(u.value)) / |value Cursor is not a member of object com.histmersion.server.views.JobListView
+
+## modules/server/src/main/scala/com/histmersion/server/ServerWiring.scala
+340:53 [E173] 340 |            com.histmersion.domain.research.articles.ArticleRepo.Limit(limit.value) / |object ArticleRepo cannot be accessed as a member of com.histmersion.domain.research.articles.type from class ServerWiring. / |  private[articles] object ArticleRepo can only be accessed from package com.histmersion.domain.research.articles in / |  package com.histmersion.domain.research.
+352:50 [E173] 352 |          com.histmersion.domain.catalogue.events.EventRepo.GeoTolerance(cfg.ui.events.outlineToleranceDeg.value) / |object EventRepo cannot be accessed as a member of com.histmersion.domain.catalogue.events.type from class ServerWiring. / |  private[events] object EventRepo can only be accessed from package com.histmersion.domain.catalogue.events in / |  package com.histmersion.domain.catalogue.
+472:45 [E007] 472 |              isCitekey = Some(t => isCitekey(com.histmersion.util.data.checks.CheckContext.FormatArg1Arg1(t.value))) / |Found:    com.histmersion.util.data.checks.CheckContext.FormatArg1Result / |Required: Boolean
+525:64 [E008] 525 |      () => com.histmersion.server.instance.InstanceControllers.SetupDueResult(settings.setupDue) / |value SetupDueResult is not a member of object com.histmersion.server.instance.InstanceControllers
+
+## modules/server/src/main/scala/com/histmersion/server/agents/ClaudeCode.scala
+37:57 [E172] 37 |      ("type", "http".asJson) :: ("url", url.value.asJson) :: / |No given instance of type io.circe.Encoder[ / |  io.github.iltotore.iron.IronType[String, / |    io.github.iltotore.iron.constraint.any.Pure] / |] was found for parameter encoder of method asJson in class EncoderOps. / |I found:
+200:108 [E008] 200 |            .map(PlanPools.claudeReadings(_, com.histmersion.api.automation.PlanQuota.Source.Run, PlanPools.Instant(now))) / |value Instant is not a member of object com.histmersion.server.agents.PlanPools
+362:118 [E008] 362 |              readings ++= PlanPools.claudeReadings(i, com.histmersion.api.automation.PlanQuota.Source.Run, PlanPools.Instant(now)) / |value Instant is not a member of object com.histmersion.server.agents.PlanPools
+
+## modules/server/src/main/scala/com/histmersion/domain/automation/agents/AgentsTools.scala
+131:36 [E007] 130 |                        Paging / 131 |                          .olderLine(page, c => Paging.OlderLine.Text(s"call `run_status` again with the same filters and `before: \"$c\"`")) / |           Found:    Option[com.histmersion.api.Paging.OlderLine.Text] / |           Required: Option[com.histmersion.api.Paging.Cursor]
+165:34 [E007] 164 |                      Paging / 165 |                        .olderLine(page, c => Paging.OlderLine.Text(s"call `list_approvals` again with the same filters and `before: \"$c\"`")) / |           Found:    Option[com.histmersion.api.Paging.OlderLine.Text] / |           Required: Option[com.histmersion.api.Paging.Cursor]
+
+## modules/server/src/main/scala/com/histmersion/server/McpTools.scala
+124:73 [E008] 124 |                  in.before.map(com.histmersion.server.views.JobListView.Cursor(_)), / |value Cursor is not a member of object com.histmersion.server.views.JobListView
+134:38 [E007] 134 |                      Paging.olderLine(page, c => Paging.OlderLine.Text(s"call `job_status` again with the same filters and `before: \"$c\"`")) / |           Found:    Option[com.histmersion.api.Paging.OlderLine.Text] / |           Required: Option[com.histmersion.api.library.Ingest.JobAge]
+
+## modules/server/src/main/scala/com/histmersion/server/ServerGraph.scala
+200:39 [E008] 200 |            idle = ds => Hot.Graph.Def.Idle(Db.activeConnections(ds).value == 0) / |value Idle is not a member of object com.histmersion.server.hot.Hot.Graph.Def
+224:36 [E008] 224 |          idle = r => Hot.Graph.Def.Idle(r.own.forall(Db.activeConnections(_).value == 0)) / |value Idle is not a member of object com.histmersion.server.hot.Hot.Graph.Def
+
+## modules/server/src/main/scala/com/histmersion/server/instance/SeedControllers.scala
+33:90 [E007] 33 |        else Right(importer.run(SeedNoteFiles(dir, corpusRoot)(using deps.textFiles), req.force, cfg.limits.assetBytes)) / |   Found:    (req.force : com.histmersion.api.library.SeedRequest.Force) / |   Required: com.histmersion.domain.library².ingest.SeedImport.RunForce / |   where:    library  is a package in package com.histmersion.api / |             library² is a package in package com.histmersion.domain
+33:108 [E007] 33 |        else Right(importer.run(SeedNoteFiles(dir, corpusRoot)(using deps.textFiles), req.force, cfg.limits.assetBytes)) / |     Found:    (com.histmersion.config.AppConfig#limits.assetBytes : / |       com.histmersion.config.Limits.AssetBytes) / |     Required: com.histmersion.domain.library.ingest.SeedFolder.MaxBytes
+
+## modules/server/src/main/scala/com/histmersion/server/BackupWiring.scala
+16:114 [E008] 16 |          deps.environment.get(com.histmersion.config.Environment.VariablesKey("PATH")).map(v => StorageLocations.SearchPathPath(v.value)) / |value SearchPathPath is not a member of object com.histmersion.server.StorageLocations
+
+## modules/server/src/main/scala/com/histmersion/server/agents/AgentDoctor.scala
+347:14 [E007] 347 |        if cc.appServer then / |Found:    (cc.appServer : com.histmersion.config.CodexConfig.AppServer) / |Required: Boolean
+
+## modules/server/src/main/scala/com/histmersion/server/agents/CodexExecClient.scala
+109:26 [E008] 109 |              CliOutcomes.ResultUser(call.user.value), / |value ResultUser is not a member of object com.histmersion.server.agents.CliOutcomes
+
+## modules/server/src/main/scala/com/histmersion/server/agents/Refreshed.scala
+10:59 [E006] 10 |  def text: com.histmersion.server.agents.Refreshed.Text = Text(s"$mode: $detail") / |                                    Not found: Text - did you mean text?
+

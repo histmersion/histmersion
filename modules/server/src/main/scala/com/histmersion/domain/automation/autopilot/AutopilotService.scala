@@ -313,8 +313,8 @@ final class AutopilotService(
     val goals = agents.goals.all()
     val parentOf: Map[String, Option[String]] = goals.map(g => (g.slug.value: String) -> g.parentSlug.map(p => p.value: String)).toMap
     val managers = agents.managerStore.light()
-    val articles = agents.workflows.linked().map((k, v) => k.value -> v.map(_.value))
-    val passed = agents.workflows.finished().map(_.value)
+    val articles = agents.workflows.linked().map((k, v) => (k.value: String) -> v.map(a => a.value: String))
+    val passed = agents.workflows.finished().map(a => a.value: String)
     val status = collection.mutable.Map.from(goals.map(g => g.slug.value -> g.status))
     val order = goals.sortBy(g =>
       -AutopilotPolicy
@@ -480,8 +480,8 @@ final class AutopilotService(
     val managers = agents.managerStore.light()
     val pace = agents.managerStore.pace(now.minusSeconds(7L * 86400L))
     val links = agents.goals.linkCounts()
-    val arts = agents.workflows.linked().map((k, v) => k.value -> v.map(_.value))
-    val open = agents.approvalStore.openBySubject().map((k, v) => k.value -> v.value)
+    val arts = agents.workflows.linked().map((k, v) => (k.value: String) -> v.map(a => a.value: String))
+    val open = agents.approvalStore.openBySubject().map((k, v) => (k.value: String) -> v.value)
     def linkCount(g: Goal, kind: DomainGoal.LinkKind): Int =
       links.getOrElse((slugOf(g), kind.wire), RowCount(0)).value
     def brief(m: ManagerLight) =

@@ -170,7 +170,7 @@ object Supervisor:
     * backups dir other than the default, a pg-bin-dir) are kept.
     */
   private[server] def configure(cfg: AppConfig, l: Layout, explicitBind: Option[ServerConfig.Host] = None): AppConfig =
-    val dbName = Backup.parseJdbc(Backup.JdbcUrl(cfg.db.url.value)).toOption.map(_.database).filter(_.nonEmpty).getOrElse("histmersion")
+    val dbName = Backup.parseJdbc(Backup.JdbcUrl(cfg.db.url.value)).toOption.map(_.database.value).filter(_.nonEmpty).getOrElse("histmersion")
     cfg.copy(
       // a desktop install is private by default, so the bind address is loopback unless the user
       // says otherwise (set HISTMERSION_BIND=0.0.0.0 to share on the LAN — and set HISTMERSION_API_KEY then)
@@ -295,11 +295,11 @@ object Supervisor:
     val c = java.sql.DriverManager.getConnection(adminUrl, cfg.db.user.value, cfg.db.password.value)
     try
       val q = c.prepareStatement("SELECT 1 FROM pg_database WHERE datname = ?")
-      q.setString(1, target.database)
+      q.setString(1, target.database.value)
       if !q.executeQuery().next() then
-        val quoted = "\"" + target.database.replace("\"", "\"\"") + "\""
+        val quoted = "\"" + target.database.value.replace("\"", "\"\"") + "\""
         val _ = c.createStatement().execute(s"CREATE DATABASE $quoted")
-        scribe.info(s"runtime: created database ${target.database}")
+        scribe.info(s"runtime: created database ${target.database.value}")
     finally c.close()
 
   /** Run the converter; when it exits unexpectedly, restart it after 1, 2, 4 … 60 s (reset once a run has lasted a

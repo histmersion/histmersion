@@ -30,5 +30,5 @@ final class SeedControllers(deps: Deps, importer: => SeedImport):
         )
       SafePath.confine(corpusRoot, SafePath.Candidate(asked)).left.map(p => Api.Error(Api.Error.Message(p.value))).flatMap { dir =>
         if !Files.isDirectory(dir) then Left(Api.Error(Api.Error.Message(s"not a directory on the server: $dir")))
-        else Right(importer.run(SeedNoteFiles(dir, corpusRoot)(using deps.textFiles), req.force, cfg.limits.assetBytes))
+        else Right(importer.run(SeedNoteFiles(dir, corpusRoot)(using deps.textFiles), SeedImport.RunForce(req.force.value), com.histmersion.domain.library.ingest.SeedFolder.MaxBytes(cfg.limits.assetBytes.value)))
       }

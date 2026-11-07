@@ -128,7 +128,7 @@ object AgentsTools:
                         page,
                         f.qualifier.map(q => Agents.RunInfo.Status(q.value)),
                         Paging
-                          .olderLine(page, c => Paging.OlderLine.Text(s"call `run_status` again with the same filters and `before: \"$c\"`"))
+                          .olderLine(page, c => Paging.OlderLine.Text(s"call `run_status` again with the same filters and `before: \"$c\"`")).map(t => Paging.Cursor(t.value))
                       )
                   )
               )
@@ -162,7 +162,7 @@ object AgentsTools:
                       page,
                       f.qualifier.map(q => com.histmersion.api.automation.Approval.State.Wire(q.value)),
                       Paging
-                        .olderLine(page, c => Paging.OlderLine.Text(s"call `list_approvals` again with the same filters and `before: \"$c\"`"))
+                        .olderLine(page, c => Paging.OlderLine.Text(s"call `list_approvals` again with the same filters and `before: \"$c\"`")).map(t => Paging.Cursor(t.value))
                     )
                 )
             )

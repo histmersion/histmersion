@@ -43,7 +43,7 @@ final class ClaudeCodeClient(val model: ModelRef, cfg: ClaudeCodeConfig, rt: Cli
       val grant = Option.when(call.tools.nonEmpty)(rt.grant(call, call.agent, CliProcess.RunTimeoutSeconds(cfg.timeoutSeconds.value))).flatten
       try
         val mcp = grant.map(g =>
-          CliProcess.privateFile(dir.resolve("mcp.json"), ClaudeCode.mcpConfig(rt.agentMcpUrl, Some(g.token)).noSpaces)
+          CliProcess.privateFile(dir.resolve("mcp.json"), CliProcess.PrivateFileText(ClaudeCode.mcpConfig(rt.agentMcpUrl, Some(g.token)).noSpaces))
         )
         // the generated plugin and role settings, when they exist for this agent
         val plugin = for
@@ -67,7 +67,7 @@ final class ClaudeCodeClient(val model: ModelRef, cfg: ClaudeCodeConfig, rt: Cli
           launch,
           mcp,
           call.tools.map(t => ToolUse.Tool.assume(t.name)),
-          rt.definitions.tools.map(_.value),
+          rt.definitions.tools.map(t => ToolUse.Tool(t.value)),
           web
         )
         val pool = rt.pools

@@ -1,5 +1,6 @@
 package com.histmersion.domain.library.search
 
+import com.histmersion.api.json.NewtypeCodecs.given
 import chimp.server.*
 import com.histmersion.api.library.Query
 import com.histmersion.util.mcp.McpOut

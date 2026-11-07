@@ -33,7 +33,7 @@ final class HttpApi(
     Api.config.serverLogicSuccess[Identity](_ => h.instance.uiConfig),
     // the toolbar's counts and "something new" marks: REST only, like `config` (UiApi says why)
     UiApi.counters.serverLogicSuccess[Identity](_ => h.instance.uiCounters),
-    UiApi.markSeen.serverLogic[Identity]((board, mark) => h.instance.markSeen(com.histmersion.server.instance.InstanceControllers.Board(board.value), mark)),
+    UiApi.markSeen.serverLogic[Identity]((board, mark) => h.instance.markSeen(board, mark)),
     // the terrain base map: REST and the CLI only (BasemapApi says why); tiles before nothing else —
     // `basemap/fetch` is a POST, so the GET `basemap/{layer}/…` never shadows it
     BasemapApi.status.serverLogicSuccess[Identity](_ => h.basemap.status),
@@ -56,7 +56,7 @@ final class HttpApi(
     h.library.citations,
     Api.sourceArticles.serverLogic[Identity](ck => HttpApi.citekey(ck).flatMap(h.research.articles.sourceArticles)),
     OpsApi.lintMarkdown.serverLogicSuccess[Identity](in => h.formats.check(in)),
-    Api.resolveId.serverLogic[Identity](id => h.resolveView(com.histmersion.server.views.ResolveView.Reference(id.value))),
+    Api.resolveId.serverLogic[Identity](id => h.resolveView(com.histmersion.api.views.ResolvedId.Id(id.value))),
     Api.seed.serverLogic[Identity](req => h.seeding.seed(req)),
     // ── writes (plan §1.9a): the `export` route must precede `getSource`, which is a prefix of it ──
     Api.exportSource.serverLogic[Identity](ck =>
@@ -112,7 +112,7 @@ final class HttpApi(
         .flatMap(p =>
           h.placeCard(
             p,
-            asOf.map(a => com.histmersion.server.views.PlaceCardView.AsOf(a.value)),
+            asOf.map(a => com.histmersion.domain.DeepTime.SignedYear(a.value)),
             com.histmersion.server.views.PlaceCardView.WithCounts(counts.map(_.value).getOrElse(false))
           )
         )
@@ -174,8 +174,8 @@ final class HttpApi(
         f,
         java.time.Instant.now(deps.clock),
         limit.flatMap(l => com.histmersion.PageSize.option(l.value)),
-        before.map(b => com.histmersion.server.views.JobListView.Cursor(b.value)),
-        upTo.map(u => com.histmersion.server.views.JobListView.Cursor(u.value))
+        before.map(b => com.histmersion.api.Paging.Cursor(b.value)),
+        upTo.map(u => com.histmersion.api.Paging.Cursor(u.value))
       )
     )
   ) ++ com.histmersion.domain.media.MediaRoutes(

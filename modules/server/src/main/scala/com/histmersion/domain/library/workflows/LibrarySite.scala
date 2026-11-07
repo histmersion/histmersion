@@ -33,10 +33,10 @@ trait LibrarySite:
   def geocode(name: com.histmersion.domain.library.workflows.LibrarySite.PlaceName, hint: Geocode.KindHint, at: Option[Period]): Option[Geocode.Resolution]
 
   /** The sources the body of article `slug` cites, as its links resolve (research's article); why not, when none. */
-  def articleSources(slug: com.histmersion.domain.research.Slug): Either[Api.Error, List[com.histmersion.domain.library.workflows.LibrarySite.ArticleSources]]
+  def articleSources(slug: com.histmersion.domain.research.Slug): Either[Api.Error, List[com.histmersion.domain.library.Citekey]]
 
   /** The stored sources article `slug` cites, its record's list (none when there is no such article). */
-  def citedSources(slug: com.histmersion.domain.research.Slug): List[com.histmersion.domain.library.workflows.LibrarySite.CitedSource]
+  def citedSources(slug: com.histmersion.domain.research.Slug): List[com.histmersion.domain.library.Citekey]
 
   /** Whether an article has slug `slug`. */
   def articleExists(slug: com.histmersion.domain.research.Slug): Boolean
@@ -45,9 +45,5 @@ trait LibrarySite:
   def upstreamQuotas(now: Instant): List[UpstreamQuota]
 
 object LibrarySite:
-  type ArticleSources = ArticleSources.T
-  object ArticleSources extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type CitedSource = CitedSource.T
-  object CitedSource extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type PlaceName = PlaceName.T
   object PlaceName extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]

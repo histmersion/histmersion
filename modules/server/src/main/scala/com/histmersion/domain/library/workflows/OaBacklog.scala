@@ -131,7 +131,7 @@ final class OaBacklog(
           agents.managerStore.event(
             managerId,
             Some(id),
-            w.foundBy.map(r => com.histmersion.domain.automation.Run.Id(r.value)),
+            w.foundBy.map(r => com.histmersion.domain.automation.Run.Id.assume(r.value)),
             ManagerEvent.Kind(Feed.Evaluated),
             ManagerEvent.Text(
               s"$doi (ingest backlog): ${w.title.value.take(200)} — legal open access, waits for a day's ingest allowance"
@@ -509,7 +509,7 @@ final class OaBacklog(
                 agents.managerStore.event(
                   watcher,
                   Some(id),
-                  Some(com.histmersion.domain.automation.Run.Id(first.job.value)),
+                  Some(com.histmersion.domain.automation.Run.Id.assume(first.job.value)),
                   ManagerEvent.Kind(Feed.Evaluated),
                   ManagerEvent.Text(
                     s"${first.doi} (ingest backlog): moved from acquisition item #$item by repair-acquire ($by)"
