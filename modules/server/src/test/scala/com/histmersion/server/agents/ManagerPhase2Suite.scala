@@ -30,6 +30,8 @@ import sttp.ai.core.agent.*
 import java.time.Instant
 import com.histmersion.db.*
 import com.histmersion.api.automation.Goal
+import com.histmersion.domain.automation.{Goal as DomainGoal}
+import com.histmersion.domain.library.Citekey
 import com.histmersion.api.library.MetadataPatch
 import com.histmersion.api.library.Source
 import com.histmersion.api.research.Article
@@ -46,10 +48,21 @@ class ManagerPhase2Suite extends com.histmersion.db.DbSuite with RunTranscripts:
   override def munitIgnore: Boolean = testDb.isEmpty
   override val munitTimeout = scala.concurrent.duration.Duration(180, "s")
 
-  private val Tag = "zzmgr2"
-  private val Goal = "zzagent-goal2"
-  private val Ck = "zzagent2019_tin"
-  private val Ck2 = "zzagent2024_iso"
+  private val PutTag = Article.Put.Tags("zzmgr2")
+  private val IncludeTag = ManagerConfig.IncludeTags("zzmgr2")
+  private val Goal = DomainGoal.Slug("zzagent-goal2")
+  private val GoalSlug = com.histmersion.api.automation.Goal.Slug("zzagent-goal2")
+  private val GoalSubject = ApprovalInfo.Subject("zzagent-goal2")
+  private val Ck = Citekey("zzagent2019_tin")
+  private val Ck2 = Citekey("zzagent2024_iso")
+  private val Review = ManagerInfo.Id(ReviewId)
+  private val Enrich = ManagerInfo.Id(EnrichId)
+  private val InferKind = ManagerItem.Kind(InferFilter)
+  private val ReviewKind = ManagerItem.Kind(ArticleReview)
+  private val ProposeKind = ManagerItem.Kind(ProposeArticles)
+  private val CompileKind = ManagerItem.Kind(ArticleCompile)
+  private val EnrichKind = ManagerItem.Kind(SourceEnrich)
+  private val ExtendKind = ManagerItem.Kind(ArticleExtend)
   private val Model = ModelRef(ProviderKind.Local, com.histmersion.api.automation.Agents.ModelRef.Model("scripted"))
   private val Usage1 = Some(TokenUsage(Tokens(1000), Tokens(100), Tokens.Zero, Tokens.Zero))
   private val t0 = Instant.parse("2026-10-17T12:00:00Z")
@@ -107,7 +120,7 @@ class ManagerPhase2Suite extends com.histmersion.db.DbSuite with RunTranscripts:
             status = Some(Source.Status.Current),
             summary = Some(com.histmersion.api.library.Source.Summary("The Uluburun ship carried ten tons of copper and one ton of tin.")),
             body = Some(
-              "The Uluburun ship carried ten tons of copper and one ton of tin. Its cargo dates to about 1320 BCE."
+              Source.OcrMarkdown("The Uluburun ship carried ten tons of copper and one ton of tin. Its cargo dates to about 1320 BCE.")
             )
           )
         )
@@ -121,7 +134,7 @@ class ManagerPhase2Suite extends com.histmersion.db.DbSuite with RunTranscripts:
             title = com.histmersion.api.library.Title("Tin isotopes"),
             year = (Some(2024)).map(com.histmersion.api.catalogue.Year.apply),
             topics = List(com.histmersion.api.library.Source.Topics("zzagent_tin")),
-            body = Some("We show that the tin of the Uluburun cargo came from Central Asia, not Anatolia.")
+            body = Some(Source.OcrMarkdown("We show that the tin of the Uluburun cargo came from Central Asia, not Anatolia."))
           )
         )
         .isRight
@@ -155,11 +168,15 @@ class ManagerPhase2Suite extends com.histmersion.db.DbSuite with RunTranscripts:
        |
        |Where the tin was mined is open [[$Ck]].""".stripMargin
 
-  private def item(mid: String, kind: String, target: String): ManagerItem =
+  private def ref(g: DomainGoal.Slug) = com.histmersion.api.automation.Goal.Ref(g.value)
+  private def goalTarget(g: DomainGoal.Slug) = ManagerItem.Target(g.value)
+  private def ckTarget(c: Citekey) = ManagerItem.Target(c.value)
+
+  private def item(mid: ManagerInfo.Id, kind: ManagerItem.Kind, target: ManagerItem.Target): ManagerItem =
     connect(ds)(ManagerRepo.itemFor(mid, kind, target)).get
 
   private def why(r: RunInfo): String =
-    (r.error.toList ++ connect(ds)(AgentRepo.steps(r.id, com.histmersion.domain.automation.agents.AgentRepo.OutputChars(200)))
+    (r.error.toList ++ connect(ds)(AgentRepo.steps(ApiIds.job(r.id), com.histmersion.domain.automation.agents.AgentRepo.OutputChars(200)))
       .filter(_.error.isDefined)
       .map(s => s"${s.name}#${s.attempt}: ${s.error.get}"))
       .mkString("\n")
@@ -177,52 +194,53 @@ class ManagerPhase2Suite extends com.histmersion.db.DbSuite with RunTranscripts:
     )
     val (a, h) = handlers(c); seed(h)
     assert(
-      h.research.articles.put(com.histmersion.domain.research.Slug("zzagent_f1"), Article.Put(com.histmersion.api.research.Article.Title("Zz tin"), com.histmersion.api.research.Article.Kind.Wire("concept"), articleBody, tags = List(Tag))).isRight
+      h.research.articles.put(com.histmersion.domain.research.Slug("zzagent_f1"), Article.Put(Article.Title("Zz tin"), Article.Kind.Wire("concept"), Article.Body(articleBody), tags = List(PutTag))).isRight
     )
     a.managers.ensureDefaults()
     a.managing
       .update(
-        ReviewId,
+        ApiIds.manager(Review),
         ManagerUpdate(
-          Some(ManagerConfig(includeTags = Some(List(Tag)), inferFilter = Some(true), cooldownMinutes = Some(com.histmersion.api.automation.Managers.ManagerConfig.CooldownMinutes(0))))
+          Some(ManagerConfig(includeTags = Some(List(IncludeTag)), inferFilter = Some(ManagerConfig.InferFilter(true)), cooldownMinutes = Some(ManagerConfig.CooldownMinutes(0))))
         )
       )
-      .fold(e => fail(e.message), identity)
-    a.managing.action(ReviewId, com.histmersion.domain.automation.managers.ManagersControllers.Action("resume"), None).fold(e => fail(e.message), identity)
+      .fold(e => fail(e.message.value), identity)
+    a.managing.action(ApiIds.manager(Review), com.histmersion.domain.automation.managers.ManagersControllers.Action("resume"), None).fold(e => fail(e.message.value), identity)
     val out = a.managers.tick(t0)
-    assert(out.exists(_.contains("selected 2")), out)
-    val inf = item(ReviewId, InferFilter, "zzagent_f1")
-    val rev = item(ReviewId, ArticleReview, "zzagent_f1")
+    assert(out.exists(_.value.contains("selected 2")), out)
+    val inf = item(Review, InferKind, ManagerItem.Target("zzagent_f1"))
+    val rev = item(Review, ReviewKind, ManagerItem.Target("zzagent_f1"))
     assertEquals((inf.status, rev.status, inf.priority, rev.priority), ("active", "pending", 0, 0))
     val run = connect(ds)(AgentRepo.get(inf.runId.get)).get
     assertEquals((run.pipeline, run.origin), ("infer-filter", Some("manager")))
-    a.engine.execute(run.id)
+    a.engine.execute(ApiIds.run(run.id))
     val done = connect(ds)(AgentRepo.get(run.id)).get
     assertEquals(done.status, "done", why(done))
-    val failed = connect(ds)(AgentRepo.steps(run.id, com.histmersion.domain.automation.agents.AgentRepo.OutputChars(4000)))
-      .find(s => s.name == "propose" && s.status == "failed")
+    val failed = connect(ds)(AgentRepo.steps(ApiIds.job(run.id), com.histmersion.domain.automation.agents.AgentRepo.OutputChars(4000)))
+      .find(s => s.name.value == "propose" && s.status.value == "failed")
       .flatMap(_.error)
+      .map(_.value)
       .getOrElse("")
     assert(failed.contains("returns 0 sources"), failed)
     // the run left an approval and did not wait for it; the item waits, and so does the review
-    val appr = a.approvalsList(None, None).toOption.get.find(_.subject.contains("zzagent_f1")).get
+    val appr = a.approvalsList(None, None).toOption.get.find(_.subject.contains(ApprovalInfo.Subject("zzagent_f1"))).get
     assertEquals(appr.kind, "article-filter")
     assertEquals(appr.filter.map(p => (p.total, p.cited, p.citedIn)), Some((2, 2, 2)))
     a.managers.tick(t0)
-    assertEquals(item(ReviewId, InferFilter, "zzagent_f1").status, "held")
-    assertEquals(item(ReviewId, InferFilter, "zzagent_f1").hold.flatMap(_.untilApproval), Some(appr.id))
-    assertEquals(item(ReviewId, ArticleReview, "zzagent_f1").status, "pending", "the review waits for the filter")
+    assertEquals(item(Review, InferKind, ManagerItem.Target("zzagent_f1")).status, "held")
+    assertEquals(item(Review, InferKind, ManagerItem.Target("zzagent_f1")).hold.flatMap(_.untilApproval), Some(appr.id))
+    assertEquals(item(Review, ReviewKind, ManagerItem.Target("zzagent_f1")).status, "pending", "the review waits for the filter")
     assertEquals(ArticleFixtures.load(ds, com.histmersion.domain.research.Slug("zzagent_f1")).flatMap(_.filter), None, "nothing recorded before approval")
     // approve: the filter is recorded, the item done, the review dispatched
-    assertEquals(a.decide(appr.id, com.histmersion.domain.automation.Approval.Outcome("approve"), DecisionRequest()).map(_.state), Right("approved"))
+    assertEquals(a.decide(ApiIds.approval(appr.id), com.histmersion.domain.automation.Approval.Outcome("approve"), DecisionRequest()).map(_.state), Right("approved"))
     assertEquals(
       ArticleFixtures.load(ds, com.histmersion.domain.research.Slug("zzagent_f1")).flatMap(_.filter),
       Some(Article.Filter(topics = List(com.histmersion.api.library.Filter.Topics("zzagent_tin"))))
     )
     a.managers.tick(t0)
-    assertEquals(item(ReviewId, InferFilter, "zzagent_f1").status, "done")
-    assert(item(ReviewId, InferFilter, "zzagent_f1").outcome.exists(_.contains("approved")))
-    val r2 = item(ReviewId, ArticleReview, "zzagent_f1")
+    assertEquals(item(Review, InferKind, ManagerItem.Target("zzagent_f1")).status, "done")
+    assert(item(Review, InferKind, ManagerItem.Target("zzagent_f1")).outcome.exists(_.value.contains("approved")))
+    val r2 = item(Review, ReviewKind, ManagerItem.Target("zzagent_f1"))
     assertEquals(r2.status, "active")
     assertEquals(connect(ds)(AgentRepo.get(r2.runId.get)).map(_.pipeline), Some("review-article"))
 
@@ -235,20 +253,20 @@ class ManagerPhase2Suite extends com.histmersion.db.DbSuite with RunTranscripts:
       baseCfg.modify(_.agents).setTo(baseCfg.agents.modify(_.approvals).setTo(baseCfg.agents.approvals.modify(_.articleFilter).setTo("auto")))
     val (a, h) = handlers(c, auto); seed(h)
     assert(
-      h.research.articles.put(com.histmersion.domain.research.Slug("zzagent_f2"), Article.Put(com.histmersion.api.research.Article.Title("Zz tin"), com.histmersion.api.research.Article.Kind.Wire("concept"), articleBody, tags = List(Tag))).isRight
+      h.research.articles.put(com.histmersion.domain.research.Slug("zzagent_f2"), Article.Put(Article.Title("Zz tin"), Article.Kind.Wire("concept"), Article.Body(articleBody), tags = List(PutTag))).isRight
     )
-    val r = a.managing.enqueue(EnqueueRequest(com.histmersion.api.automation.Managers.EnqueueRequest.Kind("review"), com.histmersion.api.automation.Managers.EnqueueRequest.Target("zzagent_f2"))).fold(e => fail(e.message), identity)
-    a.managing.update(ReviewId, ManagerUpdate(Some(ManagerConfig(includeTags = Some(List(Tag))))))
+    val r = a.managing.enqueue(EnqueueRequest(EnqueueRequest.Kind("review"), EnqueueRequest.Target("zzagent_f2"))).fold(e => fail(e.message.value), identity)
+    a.managing.update(ApiIds.manager(Review), ManagerUpdate(Some(ManagerConfig(includeTags = Some(List(IncludeTag))))))
     assertEquals(r.items.map(_.kind), List(ArticleReview))
-    assertEquals(item(ReviewId, InferFilter, "zzagent_f2").priority, 10, "at the review's priority")
-    a.managing.action(ReviewId, com.histmersion.domain.automation.managers.ManagersControllers.Action("resume"), None)
+    assertEquals(item(Review, InferKind, ManagerItem.Target("zzagent_f2")).priority, 10, "at the review's priority")
+    a.managing.action(ApiIds.manager(Review), com.histmersion.domain.automation.managers.ManagersControllers.Action("resume"), None)
     a.managers.tick(t0)
-    val run = item(ReviewId, InferFilter, com.histmersion.domain.research.Slug("zzagent_f2")).runId.get
-    a.engine.execute(run)
+    val run = item(Review, InferKind, ManagerItem.Target("zzagent_f2")).runId.get
+    a.engine.execute(ApiIds.run(run))
     assertEquals(ArticleFixtures.load(ds, com.histmersion.domain.research.Slug("zzagent_f2")).flatMap(_.filter).map(_.topics), Some(List("zzagent_tin")))
     a.managers.tick(t0)
-    assertEquals(item(ReviewId, InferFilter, "zzagent_f2").status, "done")
-    assertEquals(item(ReviewId, ArticleReview, "zzagent_f2").status, "active")
+    assertEquals(item(Review, InferKind, ManagerItem.Target("zzagent_f2")).status, "done")
+    assertEquals(item(Review, ReviewKind, ManagerItem.Target("zzagent_f2")).status, "active")
 
   // ── the seeding manager ────────────────────────────────────────────────────────────────────────
 
@@ -276,32 +294,32 @@ class ManagerPhase2Suite extends com.histmersion.db.DbSuite with RunTranscripts:
     val (a, h) = handlers(c); seed(h)
     assert(h.research.articles.put(com.histmersion.domain.research.Slug("zzagent_old"), Article.Put(com.histmersion.api.research.Article.Title("Old"), com.histmersion.api.research.Article.Kind.Wire("concept"), com.histmersion.api.research.Article.Body("Old text."))).isRight)
     val m =
-      a.managing.create(ManagerCreate(com.histmersion.api.automation.Managers.ManagerCreate.Kind("seed"), Some(Goal), paused = Some(false))).fold(e => fail(e.message), identity)
-    assertEquals((m.id, m.kind, m.goal), (seedId(Goal), "seed", Some(Goal)))
-    assert(a.managing.create(ManagerCreate(com.histmersion.api.automation.Managers.ManagerCreate.Kind("seed"), Some(Goal))).isLeft, "one per area")
+      a.managing.create(ManagerCreate(ManagerCreate.Kind("seed"), Some(GoalSlug), paused = Some(ManagerCreate.Paused(false)))).fold(e => fail(e.message.value), identity)
+    assertEquals((m.id, m.kind, m.goal), (seedId(ref(Goal)), "seed", Some(Goal)))
+    assert(a.managing.create(ManagerCreate(ManagerCreate.Kind("seed"), Some(GoalSlug))).isLeft, "one per area")
     a.managers.tick(t0)
-    val prop = item(m.id, ProposeArticles, Goal)
+    val prop = item(m.id, ProposeKind, goalTarget(Goal))
     val run = connect(ds)(AgentRepo.get(prop.runId.get)).get
     assertEquals((run.pipeline, run.goal), ("propose-articles", Some(Goal)))
-    a.engine.execute(run.id)
+    a.engine.execute(ApiIds.run(run.id))
     assertEquals(connect(ds)(AgentRepo.get(run.id)).get.status, "done", why(connect(ds)(AgentRepo.get(run.id)).get))
-    val appr = a.approvalsList(None, None).toOption.get.find(_.subject.contains(Goal)).get
+    val appr = a.approvalsList(None, None).toOption.get.find(_.subject.contains(GoalSubject)).get
     assertEquals(appr.kind, "article-plan")
     val plan = appr.articles.get
     assertEquals(plan.articles.map(_.slug), List("zzagent_new"))
     assert(
-      plan.dropped.exists(_.contains("zzagent_old")) && plan.dropped.exists(_.contains("zzagent_thin")),
+      plan.dropped.exists(_.value.contains("zzagent_old")) && plan.dropped.exists(_.value.contains("zzagent_thin")),
       plan.dropped
     )
     a.managers.tick(t0)
-    assertEquals(item(m.id, ProposeArticles, Goal).status, "held")
+    assertEquals(item(m.id, ProposeKind, goalTarget(Goal)).status, "held")
     assert(
-      connect(ds)(ManagerRepo.itemFor(m.id, ArticleCompile, com.histmersion.domain.automation.managers.ManagerRepo.ItemRow.Target("zzagent_new"))).isEmpty,
+      connect(ds)(ManagerRepo.itemFor(m.id, CompileKind, ManagerRepo.ItemRow.Target("zzagent_new"))).isEmpty,
       "nothing compiled before approval"
     )
     // approve: one compile item, dispatched with chainReview off
-    assert(a.decide(appr.id, com.histmersion.domain.automation.Approval.Outcome("approve"), DecisionRequest()).isRight)
-    val compile = item(m.id, ArticleCompile, "zzagent_new")
+    assert(a.decide(ApiIds.approval(appr.id), com.histmersion.domain.automation.Approval.Outcome("approve"), DecisionRequest()).isRight)
+    val compile = item(m.id, CompileKind, ManagerItem.Target("zzagent_new"))
     assertEquals(compile.state.spec.map(_.filter.topics), Some(List("zzagent_tin")))
     c.scripts ++= List(
       Seq(text(extract("The Uluburun ship carried ten tons of copper and one ton of tin.", "The ship carried tin."))),
@@ -309,24 +327,24 @@ class ManagerPhase2Suite extends com.histmersion.db.DbSuite with RunTranscripts:
       Seq(text(draftJson(articleBody)))
     )
     a.managers.tick(t0)
-    assertEquals(item(m.id, ProposeArticles, Goal).status, "done")
-    val crun = connect(ds)(AgentRepo.get(item(m.id, ArticleCompile, "zzagent_new").runId.get)).get
+    assertEquals(item(m.id, ProposeKind, goalTarget(Goal)).status, "done")
+    val crun = connect(ds)(AgentRepo.get(item(m.id, CompileKind, ManagerItem.Target("zzagent_new")).runId.get)).get
     assertEquals(
       (crun.pipeline, crun.params.chainReview, crun.goal, crun.params.title),
       ("compile-article", Some(false), Some(Goal), Some("Zz new"))
     )
-    a.engine.execute(crun.id)
+    a.engine.execute(ApiIds.run(crun.id))
     assertEquals(connect(ds)(AgentRepo.get(crun.id)).get.status, "done", why(connect(ds)(AgentRepo.get(crun.id)).get))
     assert(
       connect(ds)(AgentRepo.list(None, com.histmersion.PageSize(50))).forall(r => !r.parent.contains(crun.id)),
       "the compile chained no review run"
     )
     a.managers.tick(t0)
-    assertEquals(item(m.id, ArticleCompile, "zzagent_new").status, "done")
-    val chained = item(ReviewId, ArticleReview, "zzagent_new")
+    assertEquals(item(m.id, CompileKind, ManagerItem.Target("zzagent_new")).status, "done")
+    val chained = item(Review, ReviewKind, ManagerItem.Target("zzagent_new"))
     assertEquals((chained.origin, chained.priority, chained.status), ("chain", 2, "pending"))
-    assertEquals(connect(ds)(ManagerRepo.get(ReviewId)).map(_.state), Some("paused"))
-    assert(connect(ds)(GoalLinkRepo.links(Goal)).exists(l => l.kind == LinkKind.Article && l.ref == "zzagent_new"))
+    assertEquals(connect(ds)(ManagerRepo.get(Review)).map(_.state), Some("paused"))
+    assert(connect(ds)(GoalLinkRepo.links(Goal)).exists(l => l.kind == LinkKind.Article && l.ref == GoalLink.Ref("zzagent_new")))
 
   test("seed: a rejected plan compiles nothing; Extend on a goal queues the next proposal"):
     val c = ScriptedClient(Model)
@@ -336,20 +354,20 @@ class ManagerPhase2Suite extends com.histmersion.db.DbSuite with RunTranscripts:
       )
     )
     val (a, h) = handlers(c); seed(h)
-    val r = a.managing.enqueue(EnqueueRequest(com.histmersion.api.automation.Managers.EnqueueRequest.Kind("seed"), Goal)).fold(e => fail(e.message), identity)
-    assertEquals((r.managerId, r.items.map(_.kind)), (seedId(Goal), List(ProposeArticles)))
-    assertEquals(connect(ds)(ManagerRepo.get(seedId(Goal))).map(_.state), Some("paused"))
-    a.managing.action(seedId(Goal), com.histmersion.domain.automation.managers.ManagersControllers.Action("resume"), None)
+    val r = a.managing.enqueue(EnqueueRequest(EnqueueRequest.Kind("seed"), EnqueueRequest.Target("zzagent-goal2"))).fold(e => fail(e.message.value), identity)
+    assertEquals((r.managerId, r.items.map(_.kind)), (seedId(ref(Goal)), List(ProposeArticles)))
+    assertEquals(connect(ds)(ManagerRepo.get(seedId(ref(Goal)))).map(_.state), Some("paused"))
+    a.managing.action(ApiIds.manager(seedId(ref(Goal))), com.histmersion.domain.automation.managers.ManagersControllers.Action("resume"), None)
     a.managers.tick(t0)
-    a.engine.execute(item(seedId(Goal), ProposeArticles, Goal).runId.get)
+    a.engine.execute(ApiIds.run(item(seedId(ref(Goal)), ProposeKind, goalTarget(Goal)).runId.get))
     a.managers.tick(t0)
-    val appr = a.approvalsList(None, None).toOption.get.find(_.subject.contains(Goal)).get
-    assert(a.decide(appr.id, com.histmersion.domain.automation.Approval.Outcome("reject"), DecisionRequest()).isRight)
+    val appr = a.approvalsList(None, None).toOption.get.find(_.subject.contains(GoalSubject)).get
+    assert(a.decide(ApiIds.approval(appr.id), com.histmersion.domain.automation.Approval.Outcome("reject"), DecisionRequest()).isRight)
     a.managers.tick(t0)
-    assertEquals(item(seedId(Goal), ProposeArticles, Goal).status, "stopped")
-    assert(connect(ds)(ManagerRepo.itemFor(seedId(Goal), ArticleCompile, com.histmersion.domain.automation.managers.ManagerRepo.ItemRow.Target("zzagent_r"))).isEmpty)
+    assertEquals(item(seedId(ref(Goal)), ProposeKind, goalTarget(Goal)).status, "stopped")
+    assert(connect(ds)(ManagerRepo.itemFor(seedId(ref(Goal)), CompileKind, ManagerRepo.ItemRow.Target("zzagent_r"))).isEmpty)
     // Extend again: the settled item is re-opened
-    assertEquals(a.managing.enqueue(EnqueueRequest(com.histmersion.api.automation.Managers.EnqueueRequest.Kind("seed"), Goal)).map(_.items.map(_.status)), Right(List("pending")))
+    assertEquals(a.managing.enqueue(EnqueueRequest(EnqueueRequest.Kind("seed"), EnqueueRequest.Target("zzagent-goal2"))).map(_.items.map(_.status)), Right(List("pending")))
 
   // ── the enrich manager (auto-enrich) ───────────────────────────────────────────────────────────
 
@@ -357,34 +375,34 @@ class ManagerPhase2Suite extends com.histmersion.db.DbSuite with RunTranscripts:
     val c = ScriptedClient(Model)
     val (a, h) = handlers(c, baseCfg.modify(_.agents).setTo(baseCfg.agents.modify(_.autoEnrich).setTo(true))); seed(h)
     val note = a.autoEnrich(Ck).getOrElse(fail("no note"))
-    assert(note.startsWith("enrichment queued: item #") && note.contains("paused"), note)
-    val i = item(EnrichId, SourceEnrich, Ck)
+    assert(note.value.startsWith("enrichment queued: item #") && note.value.contains("paused"), note)
+    val i = item(Enrich, EnrichKind, ckTarget(Ck))
     assertEquals((i.origin, i.status), ("ingest", "pending"))
     // a second ingest of the same source does not double it
     a.autoEnrich(Ck)
-    assertEquals(connect(ds)(ManagerRepo.counts(EnrichId)).pending, 1)
+    assertEquals(connect(ds)(ManagerRepo.counts(Enrich)).pending, 1)
     // the source got findings meanwhile: the manager settles the item without a run
     assert(
       h.library.sources.patch(Ck, com.histmersion.api.library.Source.Patch(notes = Some(com.histmersion.api.library.Source.Notes("enriched by hand")))).isRight
     )
-    a.managing.action(EnrichId, com.histmersion.domain.automation.managers.ManagersControllers.Action("resume"), None)
+    a.managing.action(ApiIds.manager(Enrich), com.histmersion.domain.automation.managers.ManagersControllers.Action("resume"), None)
     a.managers.tick(t0)
-    assertEquals(item(EnrichId, SourceEnrich, Ck).status, "done")
-    assert(item(EnrichId, SourceEnrich, Ck).outcome.exists(_.contains("already enriched")))
+    assertEquals(item(Enrich, EnrichKind, ckTarget(Ck)).status, "done")
+    assert(item(Enrich, EnrichKind, ckTarget(Ck)).outcome.exists(_.value.contains("already enriched")))
     // Enrich on an article: only its unenriched cited sources
-    assert(h.research.articles.put(com.histmersion.domain.research.Slug("zzagent_e1"), Article.Put(com.histmersion.api.research.Article.Title("Zz"), com.histmersion.api.research.Article.Kind.Wire("concept"), articleBody)).isRight)
-    val r = a.managing.enqueue(EnqueueRequest(com.histmersion.api.automation.Managers.EnqueueRequest.Kind("enrich"), com.histmersion.api.automation.Managers.EnqueueRequest.Target("zzagent_e1"))).fold(e => fail(e.message), identity)
+    assert(h.research.articles.put(com.histmersion.domain.research.Slug("zzagent_e1"), Article.Put(Article.Title("Zz"), Article.Kind.Wire("concept"), Article.Body(articleBody))).isRight)
+    val r = a.managing.enqueue(EnqueueRequest(EnqueueRequest.Kind("enrich"), EnqueueRequest.Target("zzagent_e1"))).fold(e => fail(e.message.value), identity)
     assertEquals(r.items.map(_.target), List(Ck2))
-    assert(r.skipped.exists(_.contains(Ck)), r.skipped)
+    assert(r.skipped.exists(_.value.contains(Ck.value)), r.skipped)
     a.managers.tick(t0)
-    val run = connect(ds)(AgentRepo.get(item(EnrichId, SourceEnrich, Ck2).runId.get)).get
-    assertEquals((run.pipeline, run.origin, run.managerId), ("enrich-source", Some("manager"), Some(EnrichId)))
+    val run = connect(ds)(AgentRepo.get(item(Enrich, EnrichKind, ckTarget(Ck2)).runId.get)).get
+    assertEquals((run.pipeline, run.origin, run.managerId), ("enrich-source", Some("manager"), Some(Enrich)))
     // with the managers off, auto-enrich queues a run at once, as before
     val off = baseCfg.modify(_.agents).setTo(baseCfg.agents.modify(_.autoEnrich).setTo(true).modify(_.managers).setTo(baseCfg.agents.managers.modify(_.enabled).setTo(false))
     )
     val (b, _) = handlers(c, off)
     connect(ds)(sql"DELETE FROM jobs WHERE kind = 'agent' AND target_id LIKE 'zzagent%'".update.run())
-    assert(b.autoEnrich(Ck2).exists(_.startsWith("enrichment queued: run ")), b.autoEnrich(Ck2))
+    assert(b.autoEnrich(Ck2).exists(_.value.startsWith("enrichment queued: run ")), b.autoEnrich(Ck2))
 
   // ── stale and extend ───────────────────────────────────────────────────────────────────────────
 
@@ -395,10 +413,10 @@ class ManagerPhase2Suite extends com.histmersion.db.DbSuite with RunTranscripts:
         .put(
           com.histmersion.domain.research.Slug("zzagent_s1"),
           Article.Put(
-            com.histmersion.api.research.Article.Title("Zz tin"),
-            com.histmersion.api.research.Article.Kind.Wire("concept"),
-            articleBody,
-            tags = List(Tag),
+            Article.Title("Zz tin"),
+            Article.Kind.Wire("concept"),
+            Article.Body(articleBody),
+            tags = List(PutTag),
             filter = Some(Article.Filter(topics = List(com.histmersion.api.library.Filter.Topics("zzagent_tin"))))
           )
         )
@@ -406,16 +424,16 @@ class ManagerPhase2Suite extends com.histmersion.db.DbSuite with RunTranscripts:
     )
     a.managers.ensureDefaults()
     a.managing.update(
-      ReviewId,
-      ManagerUpdate(Some(ManagerConfig(includeTags = Some(List(Tag)), staleAfterDays = Some(90))))
+      ApiIds.manager(Review),
+      ManagerUpdate(Some(ManagerConfig(includeTags = Some(List(IncludeTag)), staleAfterDays = Some(ManagerConfig.StaleAfterDays(90)))))
     )
-    a.managing.action(ReviewId, com.histmersion.domain.automation.managers.ManagersControllers.Action("resume"), None)
+    a.managing.action(ApiIds.manager(Review), com.histmersion.domain.automation.managers.ManagersControllers.Action("resume"), None)
     // it converged when its filter returned one source
     val (id, _) = transact(ds)(
       ManagerRepo.upsert(
-        ReviewId,
-        ArticleReview,
-        com.histmersion.domain.automation.managers.ManagerRepo.ItemRow.Target("zzagent_s1"),
+        Review,
+        ReviewKind,
+        ManagerRepo.ItemRow.Target("zzagent_s1"),
         ItemOrigin.Person,
         com.histmersion.domain.automation.managers.ManagerRepo.ItemRow.Priority(10),
         reopen = false,
@@ -428,8 +446,8 @@ class ManagerPhase2Suite extends com.histmersion.db.DbSuite with RunTranscripts:
     a.managers.tick(t0)
     val again = connect(ds)(ManagerRepo.item(id)).get
     assertEquals((again.priority, again.origin), (ReviewManagerPolicy.StalePriority, "selection"))
-    assert(again.outcome.exists(_.contains("its filter gained 1 source")), again.outcome)
-    assert(Set("pending", "active").contains(again.status), again.status)
+    assert(again.outcome.exists(_.value.contains("its filter gained 1 source")), again.outcome)
+    assert(Set("pending", "active").contains(again.status.value), again.status)
 
   test("extend: the article button queues an extension in the review manager; it compiles without a chained run"):
     val (a, h) = handlers(ScriptedClient(Model)); seed(h)
@@ -437,16 +455,16 @@ class ManagerPhase2Suite extends com.histmersion.db.DbSuite with RunTranscripts:
       h.research.articles
         .put(
           com.histmersion.domain.research.Slug("zzagent_x1"),
-          Article.Put(com.histmersion.api.research.Article.Title("Zz tin"), com.histmersion.api.research.Article.Kind.Wire("concept"), s"Tin [[$Ck]].", filter = Some(Article.Filter(topics = List(com.histmersion.api.library.Filter.Topics("zzagent_tin")))))
+          Article.Put(Article.Title("Zz tin"), Article.Kind.Wire("concept"), Article.Body(s"Tin [[$Ck]]."), filter = Some(Article.Filter(topics = List(com.histmersion.api.library.Filter.Topics("zzagent_tin")))))
         )
         .isRight
     )
-    val r = a.managing.enqueue(EnqueueRequest(com.histmersion.api.automation.Managers.EnqueueRequest.Kind("extend"), com.histmersion.api.automation.Managers.EnqueueRequest.Target("zzagent_x1"))).fold(e => fail(e.message), identity)
-    assertEquals((r.managerId, r.items.map(i => (i.kind, i.priority))), (ReviewId, List((ArticleExtend, 10))))
-    a.managing.update(ReviewId, ManagerUpdate(Some(ManagerConfig(includeTags = Some(List(Tag))))))
-    a.managing.action(ReviewId, com.histmersion.domain.automation.managers.ManagersControllers.Action("resume"), None)
+    val r = a.managing.enqueue(EnqueueRequest(EnqueueRequest.Kind("extend"), EnqueueRequest.Target("zzagent_x1"))).fold(e => fail(e.message.value), identity)
+    assertEquals((r.managerId, r.items.map(i => (i.kind, i.priority))), (Review, List((ArticleExtend, 10))))
+    a.managing.update(ApiIds.manager(Review), ManagerUpdate(Some(ManagerConfig(includeTags = Some(List(IncludeTag))))))
+    a.managing.action(ApiIds.manager(Review), com.histmersion.domain.automation.managers.ManagersControllers.Action("resume"), None)
     a.managers.tick(t0)
-    val run = connect(ds)(AgentRepo.get(item(ReviewId, ArticleExtend, "zzagent_x1").runId.get)).get
+    val run = connect(ds)(AgentRepo.get(item(Review, ExtendKind, ManagerItem.Target("zzagent_x1")).runId.get)).get
     assertEquals((run.pipeline, run.params.chainReview), ("compile-article", Some(false)))
-    assert(a.managing.enqueue(EnqueueRequest(com.histmersion.api.automation.Managers.EnqueueRequest.Kind("frobnicate"), com.histmersion.api.automation.Managers.EnqueueRequest.Target("x"))).isLeft)
-    assert(a.managing.addItem(seedId(Goal), EnqueueRequest(com.histmersion.api.automation.Managers.EnqueueRequest.Kind("compile"), com.histmersion.api.automation.Managers.EnqueueRequest.Target("zzagent_y"))).isLeft, "no such manager")
+    assert(a.managing.enqueue(EnqueueRequest(EnqueueRequest.Kind("frobnicate"), EnqueueRequest.Target("x"))).isLeft)
+    assert(a.managing.addItem(ApiIds.manager(seedId(ref(Goal))), EnqueueRequest(EnqueueRequest.Kind("compile"), EnqueueRequest.Target("zzagent_y"))).isLeft, "no such manager")

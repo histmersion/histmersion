@@ -25,12 +25,18 @@ class SpoolSuite extends munit.FunSuite:
   private val bytes = "%PDF-1.4".getBytes("UTF-8")
 
   /** The spool over `d`: the file each write names. */
-  private def write(d: Path, citekey: String, ext: String): Either[String, Path] =
+  private def write(d: Path, citekey: String, ext: Spool.Extension): Either[String, Path] =
     val spool = Spool(Storage.at(Location.Spool, d))
-    spool.write(citekey, ext, bytes).map(k => Path.of(spool.where(k)))
+    com.histmersion.domain.library.Citekey
+      .parse(citekey)
+      .left
+      .map(_.value)
+      .flatMap(ck =>
+        spool.write(ck, ext, Spool.Bytes(bytes)).left.map(_.value).map(k => Path.of(spool.where(k).value))
+      )
 
   tmp.test("a valid citekey writes inside the spool") { d =>
-    val p = write(d, "anthony2007_horse", "pdf")
+    val p = write(d, "anthony2007_horse", Spool.Extension("pdf"))
     assert(p.isRight, p.toString)
     assert(p.toOption.get.startsWith(d), p.toString)
     assertEquals(p.toOption.get.getFileName.toString, "paper.pdf")
@@ -41,7 +47,7 @@ class SpoolSuite extends munit.FunSuite:
     val outside = d.getParent.resolve("histmersion-spool-escaped")
     List("../histmersion-spool-escaped", "../../tmp/x", "/etc/histmersion", "a/../../b", "..")
       .foreach { evil =>
-        val r = write(d, evil, "pdf")
+        val r = write(d, evil, Spool.Extension("pdf"))
         assert(r.isLeft, s"'$evil' was NOT refused: $r")
       }
     assert(!Files.exists(outside), "the traversal must not have created a directory")
@@ -49,7 +55,7 @@ class SpoolSuite extends munit.FunSuite:
   }
 
   tmp.test("the extension is sanitised too — it is the other half of the file name") { d =>
-    val p = write(d, "x2020_y", "../../evil")
+    val p = write(d, "x2020_y", Spool.Extension("../../evil"))
     assert(p.isRight, p.toString)
     assert(p.toOption.get.startsWith(d), p.toString)
     assert(!p.toOption.get.toString.contains(".."), p.toString)

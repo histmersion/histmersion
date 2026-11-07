@@ -14,6 +14,11 @@ import com.histmersion.util.jobs.{Job, RunRow}
   * a person, for the focus), settled and dispatched; events; the reads over every manager at once.
   */
 abstract class ManagerServiceContract extends EngineStoreSuite:
+  private object Feeds:
+    val Ingested = ManagerEvent.Kind(Feed.Ingested)
+    val Evaluated = ManagerEvent.Kind(Feed.Evaluated)
+    val Started = ManagerEvent.Kind(Feed.Started)
+
   private def m(s: EngineStores) = s.managers
   private val t = Instant.parse("2026-11-03T06:00:00Z")
   private def goal(s: EngineStores, slug: Goal.Slug) = assert(
@@ -122,12 +127,12 @@ abstract class ManagerServiceContract extends EngineStoreSuite:
   stest("events counted by manager since a moment") { s =>
     assert(m(s).create(com.histmersion.api.automation.Managers.ManagerInfo.Id("watch:zz-a"), Kind.Watch, None, State.Active, ManagerConfig()))
     assert(m(s).create(com.histmersion.api.automation.Managers.ManagerInfo.Id("watch:zz-b"), Kind.Watch, None, State.Active, ManagerConfig()))
-    m(s).event(com.histmersion.api.automation.Managers.ManagerInfo.Id("watch:zz-a"), None, None, Feed.Ingested, com.histmersion.api.automation.Managers.ManagerEvent.Text("one"))
-    m(s).event(com.histmersion.api.automation.Managers.ManagerInfo.Id("watch:zz-a"), None, None, Feed.Ingested, com.histmersion.api.automation.Managers.ManagerEvent.Text("two"))
-    m(s).event(com.histmersion.api.automation.Managers.ManagerInfo.Id("watch:zz-b"), None, None, Feed.Ingested, com.histmersion.api.automation.Managers.ManagerEvent.Text("three"))
-    m(s).event(com.histmersion.api.automation.Managers.ManagerInfo.Id("watch:zz-b"), None, None, Feed.Evaluated, com.histmersion.api.automation.Managers.ManagerEvent.Text("not counted"))
-    assertEquals(m(s).countEventsBy(Feed.Ingested, Instant.EPOCH), Map("watch:zz-a" -> 2, "watch:zz-b" -> 1))
-    assertEquals(m(s).countEventsBy(Feed.Ingested, Instant.parse("2999-01-01T00:00:00Z")), Map.empty)
+    m(s).event(com.histmersion.api.automation.Managers.ManagerInfo.Id("watch:zz-a"), None, None, Feeds.Ingested, com.histmersion.api.automation.Managers.ManagerEvent.Text("one"))
+    m(s).event(com.histmersion.api.automation.Managers.ManagerInfo.Id("watch:zz-a"), None, None, Feeds.Ingested, com.histmersion.api.automation.Managers.ManagerEvent.Text("two"))
+    m(s).event(com.histmersion.api.automation.Managers.ManagerInfo.Id("watch:zz-b"), None, None, Feeds.Ingested, com.histmersion.api.automation.Managers.ManagerEvent.Text("three"))
+    m(s).event(com.histmersion.api.automation.Managers.ManagerInfo.Id("watch:zz-b"), None, None, Feeds.Evaluated, com.histmersion.api.automation.Managers.ManagerEvent.Text("not counted"))
+    assertEquals(m(s).countEventsBy(Feeds.Ingested, Instant.EPOCH), Map("watch:zz-a" -> 2, "watch:zz-b" -> 1))
+    assertEquals(m(s).countEventsBy(Feeds.Ingested, Instant.parse("2999-01-01T00:00:00Z")), Map.empty)
   }
 
   stest("the focus holds pending items only, and releases only its own holds") { s =>
@@ -154,14 +159,14 @@ abstract class ManagerServiceContract extends EngineStoreSuite:
     goal(s, Goal.Slug("zz-g"))
     assert(m(s).create(com.histmersion.api.automation.Managers.ManagerInfo.Id("watch:zz-g"), Kind.Watch, Some(com.histmersion.domain.automation.Goal.Slug("zz-g")), State.Active, ManagerConfig()))
     assert(m(s).create(com.histmersion.api.automation.Managers.ManagerInfo.Id("review"), Kind.Review, None, State.Active, ManagerConfig()))
-    m(s).event(com.histmersion.api.automation.Managers.ManagerInfo.Id("watch:zz-g"), None, None, Feed.Ingested, com.histmersion.api.automation.Managers.ManagerEvent.Text("one"))
-    m(s).event(com.histmersion.api.automation.Managers.ManagerInfo.Id("watch:zz-g"), None, None, Feed.Ingested, com.histmersion.api.automation.Managers.ManagerEvent.Text("two"))
-    m(s).event(com.histmersion.api.automation.Managers.ManagerInfo.Id("review"), None, None, Feed.Ingested, ManagerEvent.Text("x" * 3000))
-    assertEquals(m(s).lastEventOf(com.histmersion.api.automation.Managers.ManagerInfo.Id("watch:zz-g"), Feed.Ingested).map(_.text), Some("two"))
-    assertEquals(m(s).lastEventOf(com.histmersion.api.automation.Managers.ManagerInfo.Id("watch:zz-g"), Feed.Started), None)
+    m(s).event(com.histmersion.api.automation.Managers.ManagerInfo.Id("watch:zz-g"), None, None, Feeds.Ingested, com.histmersion.api.automation.Managers.ManagerEvent.Text("one"))
+    m(s).event(com.histmersion.api.automation.Managers.ManagerInfo.Id("watch:zz-g"), None, None, Feeds.Ingested, com.histmersion.api.automation.Managers.ManagerEvent.Text("two"))
+    m(s).event(com.histmersion.api.automation.Managers.ManagerInfo.Id("review"), None, None, Feeds.Ingested, ManagerEvent.Text("x" * 3000))
+    assertEquals(m(s).lastEventOf(com.histmersion.api.automation.Managers.ManagerInfo.Id("watch:zz-g"), Feeds.Ingested).map(_.text), Some("two"))
+    assertEquals(m(s).lastEventOf(com.histmersion.api.automation.Managers.ManagerInfo.Id("watch:zz-g"), Feeds.Started), None)
     assertEquals(m(s).get(com.histmersion.api.automation.Managers.ManagerInfo.Id("review")).flatMap(_.lastEvent).map(_.text.value.length), Some(2000))
-    assertEquals(m(s).countEventsAll(Feed.Ingested, Instant.parse("2000-01-01T00:00:00Z")), 3)
-    assertEquals(m(s).countEventsAll(Feed.Ingested, Instant.parse("2099-01-01T00:00:00Z")), 0)
+    assertEquals(m(s).countEventsAll(Feeds.Ingested, Instant.parse("2000-01-01T00:00:00Z")), 3)
+    assertEquals(m(s).countEventsAll(Feeds.Ingested, Instant.parse("2099-01-01T00:00:00Z")), 0)
     val (i, _) = m(s).upsert(com.histmersion.api.automation.Managers.ManagerInfo.Id("watch:zz-g"), ManagerItem.Kind(AcquisitionSweep), com.histmersion.api.automation.Managers.ManagerItem.Target("zz-g"), ItemOrigin.Selection, com.histmersion.api.automation.Managers.ManagerItem.Priority(0), reopen = false)
     val _ = m(s).upsert(com.histmersion.api.automation.Managers.ManagerInfo.Id("watch:zz-g"), ManagerItem.Kind(OaIngest), com.histmersion.api.automation.Managers.ManagerItem.Target("10.1/x"), ItemOrigin.Selection, com.histmersion.api.automation.Managers.ManagerItem.Priority(0), reopen = false)
     assertEquals(

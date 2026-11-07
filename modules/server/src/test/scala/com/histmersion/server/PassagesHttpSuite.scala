@@ -26,7 +26,7 @@ class PassagesHttpSuite extends com.histmersion.db.DbSuite:
   override def munitIgnore: Boolean = testDb.isEmpty
 
   private val Key = "k3y"
-  private val Ck = "zzpass2020_theseus"
+  private val Ck = com.histmersion.domain.library.Citekey("zzpass2020_theseus")
   private val New = "zzpass2021_theseus"
 
   private val Body =
@@ -93,7 +93,7 @@ class PassagesHttpSuite extends com.histmersion.db.DbSuite:
     )
     assertEquals(put.statusCode, 200, put.body)
 
-  private def passages(url: String, ck: String, q: String, extra: String = ""): PassageResult =
+  private def passages(url: String, ck: com.histmersion.domain.library.Citekey, q: String, extra: String = ""): PassageResult =
     val r = get(s"$url/api/sources/$ck/passages?q=${enc(q)}$extra")
     assertEquals(r.statusCode, 200, r.body)
     io.circe.parser.decode[PassageResult](r.body).fold(e => fail(s"$e: ${r.body}"), identity)
@@ -112,10 +112,10 @@ class PassagesHttpSuite extends com.histmersion.db.DbSuite:
       assertEquals((r.citekey, r.matches, r.total), (Ck, 2, 2))
       assertEquals(r.passages.map(_.heading), List(Some("Theseus > Burial"), Some("Theseus > Cult")))
       r.passages.foreach { p =>
-        val view = get(s"$url/api/sources/$Ck/view?section=body&offset=${p.offset}&chars=${p.text.length}")
+        val view = get(s"$url/api/sources/$Ck/view?section=body&offset=${p.offset}&chars=${p.text.value.length}")
         assertEquals(view.statusCode, 200, view.body)
-        assert(view.body.startsWith(p.text), s"offset ${p.offset}: ${view.body.take(200)} vs ${p.text}")
-        assert(p.matches.forall(m => p.text.substring(m.start, m.end).equalsIgnoreCase("skyros")), p)
+        assert(view.body.startsWith(p.text.value), s"offset ${p.offset}: ${view.body.take(200)} vs ${p.text}")
+        assert(p.matches.forall(m => p.text.value.substring(m.start.value, m.end.value).equalsIgnoreCase("skyros")), p)
       }
       // accents optional, and the heading of the second top-level section
       val h = passages(url, Ck, "Hattusa")

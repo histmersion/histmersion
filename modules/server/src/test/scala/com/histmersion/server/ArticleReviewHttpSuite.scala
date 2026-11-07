@@ -39,27 +39,27 @@ class ArticleReviewHttpSuite extends com.histmersion.db.DbSuite:
   private val RunA = "zzrev-run-a"
   private val RunB = "zzrev-run-b"
 
-  private def finding(id: String, r: Reviewer, s: Severity, problem: String) =
+  private def finding(id: Finding.Id, r: Reviewer, s: Severity, problem: Finding.Problem) =
     Finding(id, r, s, com.histmersion.domain.ReviewArticle.Finding.Kind("undefined-term"), com.histmersion.domain.ReviewArticle.Finding.Where("Background"), com.histmersion.domain.ReviewArticle.Finding.Quote(""), problem, com.histmersion.domain.ReviewArticle.Finding.Fix(""))
 
   private val ledger = Ledger(
-    Running,
+    Ledger.Slug(Running),
     List(
       Entry(
-        finding("R1", Reviewer.Rules, Severity.Major, "a decorative citation"),
-        RunA,
+        finding(Finding.Id("R1"), Reviewer.Rules, Severity.Major, Finding.Problem("a decorative citation")),
+        Entry.Run(RunA),
         com.histmersion.domain.ReviewLedger.Entry.Round(1),
         Status.Rejected,
-        closed = Some(Closure(com.histmersion.domain.ReviewLedger.Closure.By("fixer"), com.histmersion.domain.ReviewLedger.Closure.Round(1), RunA, com.histmersion.domain.ReviewLedger.Closure.Note("the record supports the sentence")))
+        closed = Some(Closure(com.histmersion.domain.ReviewLedger.Closure.By("fixer"), com.histmersion.domain.ReviewLedger.Closure.Round(1), Closure.Run(RunA), com.histmersion.domain.ReviewLedger.Closure.Note("the record supports the sentence")))
       ),
       Entry(
-        finding("C1", Reviewer.ColdReader, Severity.Minor, "term not defined"),
-        RunA,
+        finding(Finding.Id("C1"), Reviewer.ColdReader, Severity.Minor, Finding.Problem("term not defined")),
+        Entry.Run(RunA),
         com.histmersion.domain.ReviewLedger.Entry.Round(1),
         Status.Fixed,
-        closed = Some(Closure(com.histmersion.domain.ReviewLedger.Closure.By("cold-reader"), com.histmersion.domain.ReviewLedger.Closure.Round(2), RunA))
+        closed = Some(Closure(com.histmersion.domain.ReviewLedger.Closure.By("cold-reader"), com.histmersion.domain.ReviewLedger.Closure.Round(2), Closure.Run(RunA)))
       ),
-      Entry(finding("S1", Reviewer.Skeptic, Severity.Major, "a critique is missing"), RunB, com.histmersion.domain.ReviewLedger.Entry.Round(1))
+      Entry(finding(Finding.Id("S1"), Reviewer.Skeptic, Severity.Major, Finding.Problem("a critique is missing")), Entry.Run(RunB), com.histmersion.domain.ReviewLedger.Entry.Round(1))
     )
   )
 
@@ -111,14 +111,14 @@ class ArticleReviewHttpSuite extends com.histmersion.db.DbSuite:
         val (ls, lb) = get(s"$url/api/articles?title=Zz%20zzrev&limit=50")
         assertEquals(ls, 200, lb)
         val rows = io.circe.parser.decode[Article.List](lb).toOption.get.articles.map(a => a.slug -> a.review).toMap
-        val running = rows(Running).get
+        val running = rows(Article.Slug(Running)).get
         assertEquals(
           (running.state, running.label, running.round),
           (ReviewState.InReview, "in review · round 2", Some(2))
         )
         assertEquals((running.openMajors, running.openMinors, running.findings, running.runs), (1, 0, 3, 2))
         assert(running.detail.contains("Waiting for a person: approval #"), running.detail)
-        assertEquals(rows(Fresh).map(_.state), Some(ReviewState.Unreviewed))
+        assertEquals(rows(Article.Slug(Fresh)).map(_.state), Some(ReviewState.Unreviewed))
 
         // ── one article's review: history in run order, goals, approvals ─────────────────────
         val (rs, rb) = get(s"$url/api/articles/$Running/review")
@@ -130,7 +130,7 @@ class ArticleReviewHttpSuite extends com.histmersion.db.DbSuite:
         )
         assertEquals(r.rounds.head.startedAt, Some("2026-10-01T10:00:00Z"))
         assertEquals(r.rounds.head.findings.head.note, "the record supports the sentence")
-        assertEquals(r.goals, List(ReviewGoal(Goal, com.histmersion.api.research.ReviewGoal.Title("Zz review goal"), com.histmersion.api.research.ReviewGoal.Status("compiled"))))
+        assertEquals(r.goals, List(ReviewGoal(ReviewGoal.Slug(Goal), com.histmersion.api.research.ReviewGoal.Title("Zz review goal"), com.histmersion.api.research.ReviewGoal.Status("compiled"))))
         assertEquals(r.approvals.map(_.kind), List("article-filter"))
         assertEquals(get(s"$url/api/articles/zzrev-nothing/review")._1, 404)
         val fresh = io.circe.parser.decode[Article.ReviewView](get(s"$url/api/articles/$Fresh/review")._2).toOption.get

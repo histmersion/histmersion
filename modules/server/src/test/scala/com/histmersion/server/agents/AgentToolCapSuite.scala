@@ -47,12 +47,12 @@ class AgentToolCapSuite extends com.histmersion.db.DbSuite:
   private lazy val h = ServerWiring(deps, NoConverter)
 
   private object NoConverter extends ConverterClient:
-    def health: Either[String, String] = Right("ok")
+    def health: Either[ConverterClient.Problem, ConverterClient.HealthSummary] = Right(ConverterClient.HealthSummary("ok"))
     def convert(
         file: com.histmersion.util.storage.Blob,
-        filename: String,
-        quality: Boolean
-    ): Either[String, ConvertedDoc] = Left("not used")
+        filename: ConverterClient.Filename,
+        quality: ConverterClient.HighQuality
+    ): Either[ConverterClient.Problem, ConvertedDoc] = Left(ConverterClient.Problem("not used"))
 
   private val Body = (1 to 400).map(i => s"Paragraph $i of the book about serpents and heroes.").mkString("\n\n") +
     "\n\nThe hero slew the serpent at the end."
@@ -72,14 +72,14 @@ class AgentToolCapSuite extends com.histmersion.db.DbSuite:
       status = Some(Source.Status.Foundational),
       topics = List(com.histmersion.api.library.Source.Topics("dragon_slaying_myth"), com.histmersion.api.library.Source.Topics("pie_religion")),
       summary = Some(com.histmersion.api.library.Source.Summary("The book reconstructs the dragon-slaying formula.")),
-      body = Some(Body),
-      notes = Some(Notes),
+      body = Some(Source.OcrMarkdown(Body)),
+      notes = Some(com.histmersion.api.library.Source.Notes(Notes)),
       findings = List(
-        Finding.Input("The formula *gʷhen- dhgʷhim recurs across the traditions."),
-        Finding.Input("The formula is Proto-Indo-European.")
+        Finding.Input(com.histmersion.api.library.Finding.Claim("The formula *gʷhen- dhgʷhim recurs across the traditions.")),
+        Finding.Input(com.histmersion.api.library.Finding.Claim("The formula is Proto-Indo-European."))
       )
     )
-    assert(h.library.sources.put(Ck, put).isRight)
+    assert(h.library.sources.put(com.histmersion.domain.library.Citekey("zztool2020_dragon"), put).isRight)
   override def afterSuite(): Unit = if testDb.isDefined then clean()
 
   private def call(box: Toolbox, t: ToolName, args: Json): String =
@@ -95,13 +95,13 @@ class AgentToolCapSuite extends com.histmersion.db.DbSuite:
       com.histmersion.domain.library.workflows.LibraryAgentTools.GetSource,
       Json.obj("citekey" -> Ck.asJson)
     )
-    assert(full.length > Caps.resultMaxChars, s"the handler's own answer is long: ${full.length}")
+    assert(full.length > Caps.resultMaxChars.value, s"the handler's own answer is long: ${full.length}")
     val r = call(
       capped,
       com.histmersion.domain.library.workflows.LibraryAgentTools.GetSource,
       Json.obj("citekey" -> Ck.asJson, "section" -> "all".asJson)
     )
-    assert(r.length <= Caps.resultMaxChars, r.length)
+    assert(r.length <= Caps.resultMaxChars.value, r.length)
     assert(
       r.contains("The book reconstructs the dragon-slaying formula.") && r.contains(
         "The formula is Proto-Indo-European."
@@ -118,7 +118,7 @@ class AgentToolCapSuite extends com.histmersion.db.DbSuite:
       Json.obj("citekey" -> Ck.asJson, "section" -> "body".asJson)
     )
     assert(
-      r.length <= Caps.resultMaxChars && r.contains("Paragraph 1 of") && !r.contains("Paragraph 100 of"),
+      r.length <= Caps.resultMaxChars.value && r.contains("Paragraph 1 of") && !r.contains("Paragraph 100 of"),
       s"${r.length} ${r.take(300)} … ${r.takeRight(300)}"
     )
     assert(r.contains("more chars — pass offset=1200"), r.takeRight(120))
@@ -128,7 +128,7 @@ class AgentToolCapSuite extends com.histmersion.db.DbSuite:
         com.histmersion.domain.library.workflows.LibraryAgentTools.GetSource,
         Json.obj("citekey" -> Ck.asJson, "offset" -> 0.asJson, "chars" -> 50000.asJson)
       )
-    assert(asked.length <= Caps.resultMaxChars, s"an asked-for slice is held to the cap too: ${asked.length}")
+    assert(asked.length <= Caps.resultMaxChars.value, s"an asked-for slice is held to the cap too: ${asked.length}")
     val p =
       call(
         capped,

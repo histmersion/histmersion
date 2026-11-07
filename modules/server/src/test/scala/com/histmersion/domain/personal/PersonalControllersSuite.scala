@@ -16,6 +16,7 @@ import com.histmersion.api.catalogue.{Latitude, Longitude, Year}
 import java.time.{Clock, Instant, ZoneId, ZoneOffset}
 import java.util.concurrent.atomic.AtomicReference
 import com.histmersion.api.ItemKind
+import com.histmersion.api.library.Title
 import com.histmersion.domain.automation.Run
 
 /** What the endpoints answer, over the in-memory services: inputs checked, the codes the statuses come from, the
@@ -113,7 +114,7 @@ class PersonalControllersSuite extends munit.FunSuite:
     val clock = Ticking()
     val c = fixture(clock = clock)
     List("a", "b", "c").foreach { k =>
-      c.addBookmark(me, Bookmark.New(Target.item(ItemKind.Source, ItemKey(s"zz_$k")), title = Some(s"Zz $k"))); clock.tick()
+      c.addBookmark(me, Bookmark.New(Target.item(ItemKind.Source, ItemKey(s"zz_$k")), title = Some(Title(s"Zz $k")))); clock.tick()
     }
     assertEquals(c.listBookmarks(me, Some(com.histmersion.api.ItemKind.Wire("sources")), None, Some(com.histmersion.api.Paging.Limit(2))).map(_.map(_.title)), Right(List("Zz c", "Zz b")))
     assertEquals(c.listBookmarks(me, None, Some(com.histmersion.api.personal.PersonalApi.Search("zz B")), None).map(_.map(_.title)), Right(List("Zz b")))

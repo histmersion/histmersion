@@ -145,9 +145,11 @@ class GazetteerLoadSuite extends com.histmersion.db.DbSuite:
     assert(r.left.exists(_.value.contains("not pinned yet")), r.toString)
 
   test("the extracts default to the XDG cache directory; the LPF folder stays in the data directory"):
-    val cfg = base.modify(
-      _.places).setTo(base.places.modify(_.sources).setTo(base.places.sources.modify(_.dir).setTo(PlaceSourcesConfig.Dir("")).modify(_.lpfDir).setTo(PlaceSourcesConfig.LpfDir(""))).modify(_.runtime).setTo(base.runtime.modify(_.dataDir).setTo(RuntimeConfig.DataDir("/data"))
-    )
+    val cfg = base
+      .modify(_.places)
+      .setTo(base.places.modify(_.sources).setTo(base.places.sources.modify(_.dir).setTo(PlaceSourcesConfig.Dir("")).modify(_.lpfDir).setTo(PlaceSourcesConfig.LpfDir(""))))
+      .modify(_.runtime)
+      .setTo(base.runtime.modify(_.dataDir).setTo(RuntimeConfig.DataDir("/data")))
     val p = GazetteerPaths.of(cfg, Environment(Map(Environment.VariablesKey("HOME") -> Environment.VariablesValue("/home/u"), Environment.VariablesKey("XDG_CACHE_HOME") -> Environment.VariablesValue("/xc"))).lookup, com.histmersion.config.UserPaths.OsName("Linux"))
     assertEquals(p.extracts, Path.of("/xc/histmersion/gazetteer"))
     assertEquals(p.lpf, Path.of("/data/gazetteer/lpf"))

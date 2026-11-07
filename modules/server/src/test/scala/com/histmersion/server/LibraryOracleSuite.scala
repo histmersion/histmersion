@@ -142,7 +142,7 @@ class LibraryOracleSuite extends DbSuite:
       .flatMap(_.hcursor.downField("result").downField("content").downArray.downField("text").as[String].toOption)
       .getOrElse(s"${r.statusCode} $text")
 
-  private def exec(ds: DataSource, statement: String): Unit =
+  private def exec(ds: DataSource, statement: Sql.Text): Unit =
     connect(ds)(Sql.raw(statement).frag.update.run(): Unit)
 
   // ── the crafted collection ─────────────────────────────────────────────────────────────────
@@ -482,9 +482,9 @@ class LibraryOracleSuite extends DbSuite:
     )
     exec(
       ds,
-      """INSERT INTO goal_links (goal_slug, kind, ref, note) VALUES
+      Sql.Text("""INSERT INTO goal_links (goal_slug, kind, ref, note) VALUES
         |('zq-goal', 'source', 'zqalpha1990_tell', 'the walls'),
-        |('zq-goal', 'source', 'zqdelta2010_gone', 'the lost report')""".stripMargin
+        |('zq-goal', 'source', 'zqdelta2010_gone', 'the lost report')""".stripMargin)
     )
     val _ =
       step("a task mentioning delta", post(s"$url/api/queue/tasks", """{"text":"re-read [[zqdelta2010_gone]]"}"""))
@@ -904,8 +904,8 @@ class LibraryOracleSuite extends DbSuite:
       "SELECT uid::text, 'attestation:' || citekey || ':' || target_id FROM attestations",
       "SELECT uid::text, 'tombstone:' || kind FROM tombstones",
       "SELECT id::text, 'instance' FROM instance"
-    )
-    def run(q: String): List[(String, String)] =
+    ).map(Sql.Text(_))
+    def run(q: Sql.Text): List[(String, String)] =
       scala.util.Try(connect(ds)(Sql.raw(q).frag.query[(String, String)].run().toList)).getOrElse(Nil)
     queries.flatMap(run).distinctBy(_._1).toMap
 
@@ -963,7 +963,7 @@ class LibraryOracleSuite extends DbSuite:
     Tables
       .map { (t, cols) =>
         val rs = connect(ds)(
-          Sql.raw(s"""SELECT to_jsonb(x)::text FROM (SELECT $cols FROM "$t") x""").frag.query[String].run().toList
+          Sql.raw(Sql.Text(s"""SELECT to_jsonb(x)::text FROM (SELECT $cols FROM "$t") x""")).frag.query[String].run().toList
         )
         val normed = rs.map(r => json(r, names).linesIterator.map(_.trim).mkString(" ")).sorted
         (s"## $t ${normed.size} rows" :: normed).mkString("\n")
@@ -1273,8 +1273,8 @@ class LibraryOracleSuite extends DbSuite:
       )
     )
     // what the tables hold besides the writes: a stored original's digest twice, a body's chunks gone
-    exec(ds, "UPDATE sources SET sha256 = 'aa' || repeat('0', 62) WHERE citekey IN ('zxg2007_doia', 'zxh2008_doib')")
-    exec(ds, "DELETE FROM source_chunks WHERE citekey = 'zxi2009_stale'")
+    exec(ds, Sql.Text("UPDATE sources SET sha256 = 'aa' || repeat('0', 62) WHERE citekey IN ('zxg2007_doia', 'zxh2008_doib')"))
+    exec(ds, Sql.Text("DELETE FROM source_chunks WHERE citekey = 'zxi2009_stale'"))
     log.result()
 
   /** Every entry of a bundle: its name and size; a line file's lines; a blob by its length; the manifest without the
@@ -1320,14 +1320,14 @@ class LibraryOracleSuite extends DbSuite:
       "SELECT uid::text, 'finding:' || id FROM findings",
       "SELECT uid::text, 'tombstone:' || kind FROM tombstones",
       "SELECT alias_uid::text, 'alias-of:' || uid::text FROM uid_aliases"
-    )
-    def run(ds: DataSource, q: String): List[(String, String)] =
+    ).map(Sql.Text(_))
+    def run(ds: DataSource, q: Sql.Text): List[(String, String)] =
       scala.util.Try(connect(ds)(Sql.raw(q).frag.query[(String, String)].run().toList)).getOrElse(Nil)
     val records = dss.flatMap((_, ds) => queries.flatMap(run(ds, _)))
     val instances =
-      dss.flatMap((n, ds) => run(ds, "SELECT id::text, 'x' FROM instance").map((id, _) => id -> s"instance:$n"))
+      dss.flatMap((n, ds) => run(ds, Sql.Text("SELECT id::text, 'x' FROM instance")).map((id, _) => id -> s"instance:$n"))
     val merges = dss.flatMap((n, ds) =>
-      run(ds, "SELECT id::text, 'x' FROM merges ORDER BY created_at").zipWithIndex.map { case ((id, _), i) =>
+      run(ds, Sql.Text("SELECT id::text, 'x' FROM merges ORDER BY created_at")).zipWithIndex.map { case ((id, _), i) =>
         id -> s"merge:$n#${i + 1}"
       }
     )
@@ -1427,7 +1427,7 @@ class LibraryOracleSuite extends DbSuite:
     LibraryTables
       .map { (t, cols) =>
         val rs = connect(ds)(
-          Sql.raw(s"""SELECT to_jsonb(x)::text FROM (SELECT $cols FROM "$t") x""").frag.query[String].run().toList
+          Sql.raw(Sql.Text(s"""SELECT to_jsonb(x)::text FROM (SELECT $cols FROM "$t") x""")).frag.query[String].run().toList
         )
         val normed = rs.map(r => xjson(r, names).linesIterator.map(_.trim).mkString(" ")).sorted
         (s"## $t ${normed.size} rows" :: normed).mkString("\n")
@@ -1485,7 +1485,7 @@ class LibraryOracleSuite extends DbSuite:
     val decided = parser.decode[MergeResolutions](resolutions).fold(e => fail(e.toString), identity)
     val template =
       MergeResolutions.Text.template(parser.decode[MergePlan](p1).fold(e => fail(e.toString), identity), decided)
-    val read = ok(post(s"$url/api/merge/resolutions", template, "text/plain"))
+    val read = ok(post(s"$url/api/merge/resolutions", template.value, "text/plain"))
     val hash = field(p1, "planHash")
     val job = ok(post(s"$url/api/merge/apply", s"""{"bundle":"$sha","planHash":"$hash","resolutions":$resolutions}"""))
     val done = awaitApply(url, field(job, "job"))
@@ -1494,7 +1494,7 @@ class LibraryOracleSuite extends DbSuite:
     List(
       "the first plan" -> p0,
       "the plan, every issue answered" -> p1,
-      "the resolution file" -> template,
+      "the resolution file" -> template.value,
       "the resolution file read back" -> read,
       "applied" -> done,
       "merges" -> ml,
@@ -1540,7 +1540,7 @@ class LibraryOracleSuite extends DbSuite:
     val n = xnames(all)
     def shaOf(b: Array[Byte]) = com.histmersion.util.data.exchange.BundleFormat.sha256Hex(b)
     val names2 = issueNames(merged.map(_._2)) ++ n ++
-      Map(shaOf(whole) -> "BUNDLE-WHOLE", shaOf(first) -> "BUNDLE-FIRST", shaOf(part) -> "BUNDLE-PART")
+      Map(shaOf(whole).value -> "BUNDLE-WHOLE", shaOf(first).value -> "BUNDLE-FIRST", shaOf(part).value -> "BUNDLE-PART")
     // the resolution file lists its issues in the order of their ids
     def template(text: String): String =
       val (head, rest) = stamps(normalise(text, names2)).linesIterator.toList.span(_ != "resolve:")

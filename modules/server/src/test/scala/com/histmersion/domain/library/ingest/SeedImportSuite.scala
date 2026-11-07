@@ -2,6 +2,7 @@ package com.histmersion.domain.library.ingest
 
 import com.histmersion.testsupport.ComparedByValue.given
 
+import com.histmersion.RowCount
 import com.histmersion.api.ListPatch
 import com.histmersion.config.{AppConfig, DbConfig}
 import com.histmersion.domain.Caller
@@ -29,7 +30,7 @@ class SeedImportSuite extends com.histmersion.db.DbSuite:
     val d = testPool(AppConfig.load().db.copy(url = DbConfig.Url(testDb.get)))
     Migrate.run(d); d
   private lazy val sources = SourceService(Transactor(ds), SourceReferrers(Nil), () => SourceSettings(SourceSettings.ChunkChars(4000), SourceSettings.ToleranceKm(25.0)))
-  private lazy val seed = SeedImport(sources, (_, figures) => AssetService.AddedFigureCount(figures.size))
+  private lazy val seed = SeedImport(sources, (_, figures) => RowCount(figures.size))
 
   private def run(dir: java.nio.file.Path, force: SeedImport.RunForce = SeedImport.RunForce(false)) =
     seed.run(SeedNoteFiles(dir, None), force, SeedFolder.MaxBytes(1 << 20))

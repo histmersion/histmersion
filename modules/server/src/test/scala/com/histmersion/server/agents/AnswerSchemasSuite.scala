@@ -102,8 +102,8 @@ class AnswerSchemasSuite extends munit.FunSuite:
       unsupported ++ badFormat ++ bareRef ++ untyped ++ obj
     }
 
-  private def strict(s: ResponseSchema[?]): Json = parser.parse(Codex.outputSchemaJson(s)).toOption.get
-  private def derived(s: ResponseSchema[?]): Json = parser.parse(Codex.schemaJson(s)).toOption.get
+  private def strict(s: ResponseSchema[?]): Json = parser.parse(Codex.outputSchemaJson(s).value).toOption.get
+  private def derived(s: ResponseSchema[?]): Json = parser.parse(Codex.schemaJson(s).value).toOption.get
 
   test("every step schema has a name, and they are all listed"):
     assertEquals(allSchemas.map(_._1).distinct.size, allSchemas.size)
@@ -277,7 +277,7 @@ class AnswerSchemasSuite extends munit.FunSuite:
 
   private def decode(s: ResponseSchema[?], answer: Json): Either[AgentFailure, Any] =
     CliOutcomes
-      .result(CliOutcome(Vector.empty, Vector.empty, Some(answer.noSpaces), TokenUsage.Zero, None, com.histmersion.server.agents.CliOutcome.Turns(1)), com.histmersion.domain.automation.agents.LlmCall.User("u"), s, None)
+      .result(CliOutcome(Vector.empty, Vector.empty, Some(com.histmersion.server.agents.CliOutcome.FinalText(answer.noSpaces)), TokenUsage.Zero, None, com.histmersion.server.agents.CliOutcome.Turns(1)), com.histmersion.domain.automation.agents.LlmCall.User("u"), s, None)
       .finalAnswer
 
   test("a Codex answer (every optional field null) is valid under the strict schema; one leaving them out is not"):

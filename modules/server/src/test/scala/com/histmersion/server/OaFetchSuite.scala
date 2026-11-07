@@ -1,6 +1,10 @@
 package com.histmersion.server
 
-import com.histmersion.config.AppConfig
+import com.histmersion.testsupport.ComparedByValue.given
+
+import com.histmersion.config.{AcquireConfig, AppConfig}
+import com.histmersion.domain.CoreQuota
+import com.histmersion.pluginhost.HttpAnswer
 import com.histmersion.domain.library.acquisition.agent
 import com.histmersion.domain.library.acquisition.*
 import io.circe.Json
@@ -13,18 +17,18 @@ class OaFetchSuite extends munit.FunSuite:
 
   /** Answers nothing, records every URL asked for. */
   final private class RecordingHttp extends Http:
-    var urls: List[String] = Nil // a test double is the one place a var is the simplest thing
-    private def miss(url: String) = { urls = urls :+ url; Left(s"$url: offline") }
-    def json(url: String, headers: Map[String, String]): Either[String, Json] = miss(url)
-    def text(url: String, headers: Map[String, String]): Either[String, String] = miss(url)
-    def bytes(url: String, headers: Map[String, String]): Either[String, Array[Byte]] = miss(url)
+    var urls: List[Http.Url] = Nil // a test double is the one place a var is the simplest thing
+    private def miss(url: Http.Url) = { urls = urls :+ url; Left(Http.Problem(s"$url: offline")) }
+    def json(url: Http.Url, headers: Map[CoreQuota.HeaderName, CoreQuota.HeaderValue]): Either[Http.Problem, Json] = miss(url)
+    def text(url: Http.Url, headers: Map[CoreQuota.HeaderName, CoreQuota.HeaderValue]): Either[Http.Problem, Http.Text] = miss(url)
+    def bytes(url: Http.Url, headers: Map[CoreQuota.HeaderName, CoreQuota.HeaderValue]): Either[Http.Problem, HttpAnswer.Body] = miss(url)
 
-  private def acquire(email: String) = AppConfig.load().acquire.copy(contactEmail = email)
+  private def acquire(email: AcquireConfig.ContactEmail) = AppConfig.load().acquire.copy(contactEmail = email)
 
   private def loaded(text: String): com.histmersion.config.LoadedConfig =
-    AppConfig.loadWithUserText(org.ekrich.config.ConfigFactory.empty, text).fold(e => fail(e), identity)
+    AppConfig.loadWithUserText(org.ekrich.config.ConfigFactory.empty, text).fold(e => fail(e.value), identity)
 
-  private def asked(email: String): List[String] =
+  private def asked(email: AcquireConfig.ContactEmail): List[Http.Url] =
     val cfg = acquire(email)
     val http = RecordingHttp()
     val _ =
@@ -35,20 +39,20 @@ class OaFetchSuite extends munit.FunSuite:
     assertEquals(AppConfig.load().acquire.contact, None)
 
   test("without a contact: no mailto stub, no Unpaywall, and the other sources are still tried"):
-    val cfg = acquire("  ")
+    val cfg = acquire(AcquireConfig.ContactEmail("  "))
     assertEquals(cfg.contact, None)
     assert(!cfg.agent.contains("mailto"), cfg.agent)
-    val urls = asked("")
-    assert(!urls.exists(_.startsWith(cfg.unpaywall.url)), urls.mkString("\n"))
+    val urls = asked(AcquireConfig.ContactEmail(""))
+    assert(!urls.exists(_.value.startsWith(cfg.unpaywall.url.value)), urls.mkString("\n"))
     assert(urls.nonEmpty, "the fetch must still try the keyless sources")
-    assert(!urls.exists(_.contains("mailto=")), urls.mkString("\n"))
+    assert(!urls.exists(_.value.contains("mailto=")), urls.mkString("\n"))
 
   test("with a contact: it is a parameter where the API defines one, never in the User-Agent (#1946)"):
-    val cfg = acquire("someone@example.org")
+    val cfg = acquire(AcquireConfig.ContactEmail("someone@example.org"))
     assertEquals(cfg.agent, cfg.userAgent)
     assert(!cfg.agent.contains("someone"), cfg.agent)
-    val urls = asked("someone@example.org")
+    val urls = asked(AcquireConfig.ContactEmail("someone@example.org"))
     assert(
-      urls.exists(u => u.startsWith(cfg.unpaywall.url) && u.contains("email=someone@example.org")),
+      urls.exists(u => u.value.startsWith(cfg.unpaywall.url.value) && u.value.contains("email=someone@example.org")),
       urls.mkString("\n")
     )

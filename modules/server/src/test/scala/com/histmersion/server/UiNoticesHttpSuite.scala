@@ -40,7 +40,7 @@ class UiNoticesHttpSuite extends com.histmersion.db.DbSuite:
 
   override def beforeAll(): Unit =
     if testDb.isDefined then
-      lock = testPool(AppConfig.load().db.copy(url = testDb.get)).getConnection
+      lock = testPool(AppConfig.load().db.copy(url = com.histmersion.config.DbConfig.Url(testDb.get))).getConnection
       val st = lock.createStatement()
       try { val _ = st.execute(s"SELECT pg_advisory_lock($LockKey)") }
       finally st.close()
@@ -60,38 +60,38 @@ class UiNoticesHttpSuite extends com.histmersion.db.DbSuite:
       val b = Composition.server(cfg, com.histmersion.config.ServerConfig.Host("127.0.0.1"), com.histmersion.config.ServerConfig.Port(0)).start()
       val url = s"http://127.0.0.1:${b.port}/api"
       // `var`: the fixture's row, removed whatever the assertions did
-      var added = Option.empty[Int]
+      var added = Option.empty[com.histmersion.api.automation.Queue.QueueItem.Id]
       try
         val (s0, b0) = get(s"$url/ui/counters")
         assertEquals(s0, 200, b0)
         val before = decode(b0)
         assertEquals(before.boards.map(_.key), List("goals", "tasks", "approvals", "acquire", "log"))
-        assert(before.boards.filter(_.count.isDefined).map(_.key) == List("tasks", "approvals", "acquire"), b0)
-        val tasks0 = before.boards.find(_.key == "tasks").get
+        assert(before.boards.filter(_.count.isDefined).map(_.key.value) == List("tasks", "approvals", "acquire"), b0)
+        val tasks0 = before.boards.find(_.key.value == "tasks").get
 
         // read the backlog as it is: no key needed, and it is no longer new
         val (m0, mb0) = post(s"$url/ui/seen/tasks", "{}")
         assertEquals(m0, 200, mb0)
-        assert(!decode(mb0).boards.find(_.key == "tasks").get.fresh, mb0)
+        assert(!decode(mb0).boards.find(_.key.value == "tasks").get.fresh.value, mb0)
 
         // something lands in the backlog (a write that still needs the key)
         assertEquals(post(s"$url/queue/tasks", """{"text":"zz notice task"}""")._1, 401)
         val (as, ab) = post(s"$url/queue/tasks", """{"text":"zz notice task"}""", Some("s3cret"))
         assertEquals(as, 200, ab)
         added = io.circe.parser.decode[com.histmersion.api.automation.Queue.QueueItem](ab).toOption.map(_.id)
-        val after = decode(get(s"$url/ui/counters")._2).boards.find(_.key == "tasks").get
-        assertEquals(after.count, tasks0.count.map(_ + 1))
-        assert(after.fresh, after.toString)
+        val after = decode(get(s"$url/ui/counters")._2).boards.find(_.key.value == "tasks").get
+        assertEquals(after.count, tasks0.count.map(c => com.histmersion.api.instance.UiNotices.Counter.Count(c.value + 1)))
+        assert(after.fresh.value, after.toString)
         val latest = after.latest.getOrElse(fail("no latest"))
 
         // an older mark changes nothing; the window's own latest clears it
         val (o, ob) = post(s"$url/ui/seen/tasks", """{"at":"2000-01-01T00:00:00.000000Z"}""")
         assertEquals(o, 200, ob)
-        assert(decode(ob).boards.find(_.key == "tasks").get.fresh, ob)
+        assert(decode(ob).boards.find(_.key.value == "tasks").get.fresh.value, ob)
         val (m1, mb1) = post(s"$url/ui/seen/tasks", s"""{"at":"$latest"}""")
         assertEquals(m1, 200, mb1)
-        val read = decode(mb1).boards.find(_.key == "tasks").get
-        assert(!read.fresh, read.toString)
+        val read = decode(mb1).boards.find(_.key.value == "tasks").get
+        assert(!read.fresh.value, read.toString)
         assertEquals(read.seen, Some(latest))
 
         // refused: an unknown board, a malformed instant; a longer path is not the exemption

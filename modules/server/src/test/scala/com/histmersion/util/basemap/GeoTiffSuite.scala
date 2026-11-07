@@ -80,7 +80,7 @@ class GeoTiffSuite extends munit.FunSuite:
     assertEquals(g.runs(w, ByteCount(1)).map(_.rows), List(1, 1, 1, 1, 1), "a request holds a row at least")
 
   test("refused: big-endian, BigTIFF, compressed, unsigned, tiled, or no georeference"):
-    def why(b: Array[Byte]) = parsed(b).left.map(_.value).getOrElse(fail("read"))
+    def why(b: Array[Byte]) = parsed(b).left.getOrElse(fail("read")).value
     val ok = small()
     assert(why("MM".getBytes ++ ok.drop(2)).contains("little-endian"))
     assert(why(ok.updated(2, 43.toByte)).contains("BigTIFF"))

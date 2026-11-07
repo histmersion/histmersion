@@ -163,7 +163,7 @@ class ManagersHttpSuite extends com.histmersion.db.DbSuite:
         val (ss2, sb2) = get(s"$url/api/agents/stalls?days=0")
         assertEquals(ss2, 200, sb2)
         assert(
-          decode[com.histmersion.api.automation.Stalls.StallReport](sb2).exists(_.stalled.exists(_.slug == Goal)),
+          decode[com.histmersion.api.automation.Stalls.StallReport](sb2).exists(_.stalled.exists(_.slug.value == Goal)),
           sb2
         )
         val (dr, drb) = post(s"$url/api/agents/autopilot/drain", """{"on":true,"by":"test"}""")

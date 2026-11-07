@@ -1,8 +1,11 @@
 package com.histmersion.server.agents
 
+import com.histmersion.testsupport.ComparedByValue.given
+
 import hearth.kindlings.optics.syntax.*
 
 import com.histmersion.config.AppConfig
+import com.histmersion.domain.CodexRetention
 
 import java.nio.file.{Files, Path}
 import java.nio.file.attribute.FileTime
@@ -15,7 +18,7 @@ import java.util.concurrent.{CountDownLatch, TimeUnit}
 class CodexHomeSuite extends munit.FunSuite:
 
   private val Day = 24L * 60 * 60 * 1000
-  private val now = System.currentTimeMillis()
+  private val now = CodexRetention.NowMs(System.currentTimeMillis())
   private val cfg = AppConfig.load().agents.providers.codex
 
   private def home(): Path =
@@ -24,7 +27,7 @@ class CodexHomeSuite extends munit.FunSuite:
       val p = h.resolve(rel)
       Files.createDirectories(p.getParent)
       Files.writeString(p, body)
-      Files.setLastModifiedTime(p, FileTime.fromMillis(now - ageDays * Day))
+      Files.setLastModifiedTime(p, FileTime.fromMillis(now.value - ageDays * Day))
     file("sessions/2026/08/01/rollout-old.jsonl", 60)
     file("sessions/2026/10/22/rollout-new.jsonl", 1)
     file("archived_sessions/rollout-older.jsonl", 90)
@@ -45,8 +48,8 @@ class CodexHomeSuite extends munit.FunSuite:
   test("a pass deletes old transcripts and their empty folders, vacuums the SQLite files, keeps the login"):
     val h = home()
     try
-      val ran = scala.collection.mutable.ListBuffer.empty[List[String]]
-      val r = Codex.Home.retain(h, cfg, now, argv => { ran += argv; Right(com.histmersion.server.agents.Codex.Home.ExitCode(0)) })
+      val ran = scala.collection.mutable.ListBuffer.empty[List[Codex.Home.Argument]]
+      val r = Codex.Home.retain(h, cfg, now, argv => { ran += argv; Right(Codex.Home.ExitCode(0)) })
       assertEquals(r.skipped, None)
       assertEquals((r.deleted, r.freedBytes), (2, 200L))
       assert(!Files.exists(h.resolve("sessions/2026/08")), "the emptied month folder is gone")
@@ -62,7 +65,7 @@ class CodexHomeSuite extends munit.FunSuite:
         )
       )
       assertEquals(r.vacuumed.map(_._1), List("state_5.sqlite", "thread_history_1.sqlite"))
-      assert(r.summary.startsWith("2 transcripts deleted"), r.summary)
+      assert(r.summary.value.startsWith("2 transcripts deleted"), r.summary)
     finally cleanup(h)
 
   test("while a run holds the home the pass does nothing; afterwards it runs"):
@@ -75,10 +78,10 @@ class CodexHomeSuite extends munit.FunSuite:
       }
       assert(inRun.await(10, TimeUnit.SECONDS))
       val busy = Codex.Home.retain(h, cfg, now, _ => fail("no vacuum under a run"))
-      assert(busy.skipped.exists(_.contains("using the home")), busy.toString)
+      assert(busy.skipped.exists(_.value.contains("using the home")), busy.toString)
       assert(Files.exists(h.resolve("sessions/2026/08/01/rollout-old.jsonl")))
       done.countDown(); t.join()
-      assertEquals(Codex.Home.retain(h, cfg, now, _ => Right(com.histmersion.server.agents.Codex.Home.ExitCode(0))).deleted, 2)
+      assertEquals(Codex.Home.retain(h, cfg, now, _ => Right(Codex.Home.ExitCode(0))).deleted, 2)
     finally cleanup(h)
 
   test("keep-sessions-days 0 and vacuum off change nothing; a failing vacuum is reported, not thrown"):
@@ -86,7 +89,7 @@ class CodexHomeSuite extends munit.FunSuite:
     try
       val off = Codex.Home.retain(h, cfg.modify(_.keepSessionsDays).setTo(0).modify(_.vacuum).setTo(false), now, _ => fail("vacuum is off"))
       assertEquals((off.deleted, off.vacuumed), (0, Nil))
-      val bad = Codex.Home.retain(h, cfg.modify(_.keepSessionsDays).setTo(0), now, _ => Left(com.histmersion.server.agents.Codex.Home.Problem("sqlite3: not found")))
+      val bad = Codex.Home.retain(h, cfg.modify(_.keepSessionsDays).setTo(0), now, _ => Left(Codex.Home.Problem("sqlite3: not found")))
       assertEquals(bad.problems.size, 2, bad.toString)
-      assert(Codex.Home.retain(h.resolve("missing"), cfg, now).skipped.exists(_.contains("no Codex home")))
+      assert(Codex.Home.retain(h.resolve("missing"), cfg, now).skipped.exists(_.value.contains("no Codex home")))
     finally cleanup(h)

@@ -202,7 +202,7 @@ class PointAreaRepoSuite extends com.histmersion.db.DbSuite with com.histmersion
       "'Zzpa Thrace' resolves to the imported label, which takes no finding by name"
     )
     assertEquals(at(4), Set.empty[String], "'Eastern Zzpa Thracia' too, by its first reading")
-    val holders = connect(ds)(PointAreaRepo.holdersIn(kinds)).filter(l => Mine.contains(l.id.value)).map(l => l.id.value -> l).toMap
+    val holders = connect(ds)(PointAreaRepo.holdersIn(kinds)).filter(l => Mine.contains(l.id.value)).map(l => (l.id.value: String) -> l).toMap
     assertEquals(holders.keySet, Set(Region, Polity, Pinned, Curated))
     assertEquals((holders(Region).findings, holders(Region).alone), (1, 0))
     assertEquals((holders(Polity).findings, holders(Polity).alone, holders(Polity).dating), (1, 1, Dating.Dated))

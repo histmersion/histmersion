@@ -4,6 +4,7 @@ import com.histmersion.testsupport.ComparedByValue.given
 
 import com.histmersion.config.AppConfig
 import com.histmersion.domain.library.acquisition.agent
+import com.histmersion.domain.CoreQuota
 import com.histmersion.pluginhost.{Challenge, SttpTransport}
 import com.histmersion.domain.library.acquisition.*
 import com.sun.net.httpserver.{HttpExchange, HttpServer}
@@ -56,59 +57,59 @@ class HttpChallengeSuite extends munit.FunSuite:
   test("an Anubis page is no copy, asked once, whether it answers 200 or 403 (#2560)"):
     withServer { (base, seen) =>
       for path <- List("/anubis-200", "/anubis-403") do
-        val r = SttpHttp(cfg, tries = com.histmersion.pluginhost.PolicyHttp.Tries(3), clock = () => java.time.Instant.now(java.time.Clock.systemUTC())).bytes(s"$base$path")
-        assert(r.left.exists(_.contains("bot-protection challenge")), s"$path: $r")
+        val r = SttpHttp(cfg, tries = com.histmersion.pluginhost.PolicyHttp.Tries(3), clock = () => java.time.Instant.now(java.time.Clock.systemUTC())).bytes(Http.Url(s"$base$path"))
+        assert(r.left.exists(_.value.contains("bot-protection challenge")), s"$path: $r")
       assertEquals(seen.size, 2)
     }
 
   test("a 403 challenge page is no copy, asked once"):
     withServer { (base, seen) =>
-      val r = SttpHttp(cfg, tries = com.histmersion.pluginhost.PolicyHttp.Tries(3), clock = () => java.time.Instant.now(java.time.Clock.systemUTC())).bytes(s"$base/challenge-403")
-      assert(r.left.exists(_.contains("bot-protection challenge")), r.toString)
+      val r = SttpHttp(cfg, tries = com.histmersion.pluginhost.PolicyHttp.Tries(3), clock = () => java.time.Instant.now(java.time.Clock.systemUTC())).bytes(Http.Url(s"$base/challenge-403"))
+      assert(r.left.exists(_.value.contains("bot-protection challenge")), r.toString)
       assertEquals(seen.size, 1)
     }
 
   test("a 503 marked cf-mitigated: challenge is not retried either"):
     withServer { (base, seen) =>
-      val r = SttpHttp(cfg, tries = com.histmersion.pluginhost.PolicyHttp.Tries(3), clock = () => java.time.Instant.now(java.time.Clock.systemUTC())).bytes(s"$base/challenge-503")
-      assert(r.left.exists(_.contains("bot-protection challenge")), r.toString)
+      val r = SttpHttp(cfg, tries = com.histmersion.pluginhost.PolicyHttp.Tries(3), clock = () => java.time.Instant.now(java.time.Clock.systemUTC())).bytes(Http.Url(s"$base/challenge-503"))
+      assert(r.left.exists(_.value.contains("bot-protection challenge")), r.toString)
       assertEquals(seen.size, 1)
     }
 
   test("an ordinary 503 is still retried"):
     withServer { (base, seen) =>
-      assert(SttpHttp(cfg, tries = com.histmersion.pluginhost.PolicyHttp.Tries(2), clock = () => java.time.Instant.now(java.time.Clock.systemUTC())).bytes(s"$base/busy").isLeft)
+      assert(SttpHttp(cfg, tries = com.histmersion.pluginhost.PolicyHttp.Tries(2), clock = () => java.time.Instant.now(java.time.Clock.systemUTC())).bytes(Http.Url(s"$base/busy")).isLeft)
       assertEquals(seen.size, 2)
     }
 
   test("the product's User-Agent by default, without the contact; a caller's own replaces it"):
     withServer { (base, seen) =>
       val http = SttpHttp(cfg, clock = () => java.time.Instant.now(java.time.Clock.systemUTC()))
-      assertEquals(http.text(s"$base/default"), Right("ok"))
-      assertEquals(http.text(s"$base/public", Map("user-agent" -> cfg.publicUserAgent)), Right("ok"))
+      assertEquals(http.text(Http.Url(s"$base/default")), Right("ok"))
+      assertEquals(http.text(Http.Url(s"$base/public"), Map(CoreQuota.HeaderName("user-agent") -> CoreQuota.HeaderValue(cfg.publicUserAgent.value))), Right("ok"))
       val ua = seen.asScala.toMap
       assertEquals(ua.get("/default"), Some(cfg.agent))
       assert(!ua("/default").contains("someone"), "the contact never rides in a header (#1946)")
       assertEquals(ua.get("/public"), Some(cfg.publicUserAgent))
-      assert(!cfg.publicUserAgent.contains("someone"), cfg.publicUserAgent)
+      assert(!cfg.publicUserAgent.value.contains("someone"), cfg.publicUserAgent)
     }
 
   test("challenge detection: the interstitials, not ordinary refusals or pages"):
-    val page = JustAMoment.getBytes("UTF-8")
+    val page = Challenge.Body(JustAMoment.getBytes("UTF-8"))
     assert(Challenge.isChallenge(com.histmersion.domain.HttpPolicy.StatusCode(403), Map.empty, page))
     assert(Challenge.isChallenge(com.histmersion.domain.HttpPolicy.StatusCode(503), Map.empty, page))
-    assert(Challenge.isChallenge(com.histmersion.domain.HttpPolicy.StatusCode(200), Map("CF-Mitigated" -> "challenge"), Array.emptyByteArray))
+    assert(Challenge.isChallenge(com.histmersion.domain.HttpPolicy.StatusCode(200), Map(CoreQuota.HeaderName("CF-Mitigated") -> CoreQuota.HeaderValue("challenge")), Challenge.Body(Array.emptyByteArray)))
     assert(!Challenge.isChallenge(com.histmersion.domain.HttpPolicy.StatusCode(200), Map.empty, page)) // a 200 is judged by looksLikePdf, not here
-    assert(!Challenge.isChallenge(com.histmersion.domain.HttpPolicy.StatusCode(403), Map.empty, "<html><title>Forbidden</title></html>".getBytes("UTF-8")))
-    assert(!Challenge.isChallenge(com.histmersion.domain.HttpPolicy.StatusCode(503), Map.empty, "busy".getBytes("UTF-8")))
+    assert(!Challenge.isChallenge(com.histmersion.domain.HttpPolicy.StatusCode(403), Map.empty, Challenge.Body("<html><title>Forbidden</title></html>".getBytes("UTF-8"))))
+    assert(!Challenge.isChallenge(com.histmersion.domain.HttpPolicy.StatusCode(503), Map.empty, Challenge.Body("busy".getBytes("UTF-8"))))
     // Anubis: its challenge at any status; its markers inside a PDF, or a page merely naming it, are not one
-    val anubis = Anubis.getBytes("UTF-8")
+    val anubis = Challenge.Body(Anubis.getBytes("UTF-8"))
     assert(Challenge.isChallenge(com.histmersion.domain.HttpPolicy.StatusCode(200), Map.empty, anubis))
     assert(Challenge.isChallenge(com.histmersion.domain.HttpPolicy.StatusCode(401), Map.empty, anubis))
     assert(Challenge.isChallenge(com.histmersion.domain.HttpPolicy.StatusCode(403), Map.empty, anubis))
-    assert(!Challenge.isChallenge(com.histmersion.domain.HttpPolicy.StatusCode(200), Map.empty, ("%PDF-1.7\n" + Anubis).getBytes("ISO-8859-1")))
+    assert(!Challenge.isChallenge(com.histmersion.domain.HttpPolicy.StatusCode(200), Map.empty, Challenge.Body(("%PDF-1.7\n" + Anubis).getBytes("ISO-8859-1"))))
     assert(
-      !Challenge.isChallenge(com.histmersion.domain.HttpPolicy.StatusCode(200), Map.empty, "<html><p>Anubis, the jackal-headed god</p></html>".getBytes("UTF-8"))
+      !Challenge.isChallenge(com.histmersion.domain.HttpPolicy.StatusCode(200), Map.empty, Challenge.Body("<html><p>Anubis, the jackal-headed god</p></html>".getBytes("UTF-8")))
     )
 
   test("every acquisition request is pinned to HTTP/1.1, keeping its URI and headers"):

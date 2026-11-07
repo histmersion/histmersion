@@ -995,7 +995,7 @@ class ResearchOracleSuite extends DbSuite:
       "SELECT id::text, 'instance' FROM instance"
     )
     def run(q: String): List[(String, String)] =
-      scala.util.Try(connect(ds)(Sql.raw(q).frag.query[(String, String)].run().toList)).getOrElse(Nil)
+      scala.util.Try(connect(ds)(Sql.raw(Sql.Text(q)).frag.query[(String, String)].run().toList)).getOrElse(Nil)
     queries.flatMap(run).distinctBy(_._1).toMap
 
   /** uid → the record it names, over every database the exchange test made. */
@@ -1008,7 +1008,7 @@ class ResearchOracleSuite extends DbSuite:
       "SELECT alias_uid::text, 'alias-of:' || uid::text FROM uid_aliases"
     )
     def run(ds: DataSource, q: String): List[(String, String)] =
-      scala.util.Try(connect(ds)(Sql.raw(q).frag.query[(String, String)].run().toList)).getOrElse(Nil)
+      scala.util.Try(connect(ds)(Sql.raw(Sql.Text(q)).frag.query[(String, String)].run().toList)).getOrElse(Nil)
     val records = dss.flatMap((_, ds) => queries.flatMap(run(ds, _)))
     val instances =
       dss.flatMap((n, ds) => run(ds, "SELECT id::text, 'x' FROM instance").map((id, _) => id -> s"instance:$n"))
@@ -1152,7 +1152,7 @@ class ResearchOracleSuite extends DbSuite:
           if cs.isEmpty then Nil
           else
             connect(ds)(
-              Sql.raw(s"""SELECT to_jsonb(x)::text FROM (SELECT $cs FROM "$t") x""").frag.query[String].run().toList
+              Sql.raw(Sql.Text(s"""SELECT to_jsonb(x)::text FROM (SELECT $cs FROM "$t") x""")).frag.query[String].run().toList
             )
         val normed = rs.map(r => render(r, names).linesIterator.map(_.trim).mkString(" ")).sorted
         (s"## $t ${normed.size} rows" :: normed).mkString("\n")
@@ -1213,7 +1213,7 @@ class ResearchOracleSuite extends DbSuite:
     val imported = withServer("xcopy")(url => ok(postBytes(s"$url/api/bundle/import", whole)))
     val incremental = withServer("xinc")(url => ok(postBytes(s"$url/api/bundle/import", part)))
     val merged = withServer("xhome")(url => mergeInto(url, whole))
-    def shaOf(b: Array[Byte]) = com.histmersion.util.data.exchange.BundleFormat.sha256Hex(b)
+    def shaOf(b: Array[Byte]): String = com.histmersion.util.data.exchange.BundleFormat.sha256Hex(b).value
     val n = issueNames(merged.map(_._2)) ++ xnames(all) ++
       Map(shaOf(whole) -> "BUNDLE-WHOLE", shaOf(first) -> "BUNDLE-FIRST", shaOf(part) -> "BUNDLE-PART")
     def lines(text: String): String =
@@ -1250,7 +1250,7 @@ class ResearchOracleSuite extends DbSuite:
       val slugs = connect(home)(sql"SELECT slug FROM articles ORDER BY slug".query[String].run().toList)
       slugs.map(s => s"== the mirror's note of $s\n${get(s"$url/api/articles/$s/export")}\n").mkString
     }
-    def shaOf(b: Array[Byte]) = com.histmersion.util.data.exchange.BundleFormat.sha256Hex(b)
+    def shaOf(b: Array[Byte]): String = com.histmersion.util.data.exchange.BundleFormat.sha256Hex(b).value
     val n = issueNames(merged.map(_._2)) ++ xnames(all) ++
       Map(shaOf(whole) -> "BUNDLE-WHOLE", shaOf(first) -> "BUNDLE-FIRST")
     def lines(text: String): String =

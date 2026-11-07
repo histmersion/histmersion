@@ -12,6 +12,7 @@ import com.histmersion.util.database.Migrate
 import com.histmersion.util.jobs.JobRepo
 import com.histmersion.util.basemap.{BasemapFixtures, BasemapServiceSuite, RangeHttp}
 import com.histmersion.util.storage.Reservation
+import com.histmersion.{ByteCount, ByteOffset}
 import org.ekrich.config.ConfigFactory
 import ox.supervised
 
@@ -94,7 +95,7 @@ class DataTreeOracleSuite extends DbSuite:
   private def serverRun(): Unit =
     Files.createDirectories(configFile.getParent)
     Files.writeString(configFile, settingsText("limits.search = 5"))
-    val l = AppConfig.loadWithUserFile(env, Some(configFile)).fold(e => fail(e), identity)
+    val l = AppConfig.loadWithUserFile(env, Some(configFile)).fold(e => fail(e.value), identity)
     supervised {
       val b = Composition
         .server(
@@ -102,7 +103,7 @@ class DataTreeOracleSuite extends DbSuite:
           com.histmersion.config.ServerConfig.Host("127.0.0.1"),
           com.histmersion.config.ServerConfig.Port(0),
           OfflineConverter(),
-          source = Some((l, ConfigSource(() => AppConfig.loadWithUserFile(env, Some(configFile)))))
+          source = Some((l, ConfigSource(() => AppConfig.loadWithUserFile(env, Some(configFile)).left.map(p => ConfigSource.Problem(p.value)))))
         )
         .start()
       try
@@ -130,10 +131,10 @@ class DataTreeOracleSuite extends DbSuite:
     val src = Files.createTempDirectory("histmersion-data-tree-src")
     val v = BasemapFixtures.LocalRange(
       BasemapFixtures.vectorArchive(src.resolve("v.pmtiles"), com.histmersion.util.basemap.PmTiles.Zoom(5)),
-      builds = """[{"key":"20261018.pmtiles","size":1},{"key":"20261019.pmtiles","size":-1}]"""
+      builds = RangeHttp.ResponseText("""[{"key":"20261018.pmtiles","size":1},{"key":"20261019.pmtiles","size":-1}]""")
     )
     val t = BasemapFixtures.LocalRange(BasemapFixtures.terrainArchive(src.resolve("t.pmtiles"), com.histmersion.util.basemap.PmTiles.Zoom(5)))
-    val base = AppConfig.loadWithUserFile(env, Some(configFile)).fold(e => fail(e), identity).config
+    val base = AppConfig.loadWithUserFile(env, Some(configFile)).fold(e => fail(e.value), identity).config
     val cfg = base.modify(
       _.basemap).setTo(base.basemap.modify(
         _.requestGapMs).setTo(0).modify(_.bbox).setTo("22,35,29,41").modify(_.vector).setTo(base.basemap.vector.modify(
@@ -146,51 +147,51 @@ class DataTreeOracleSuite extends DbSuite:
       )
     )
     val router = new RangeHttp:
-      private def pick(url: String) = if url.startsWith("fake://v") then v else t
-      def text(url: String) =
-        if url == "fake://ne/ranges.geojson" then Right(BasemapServiceSuite.Ranges)
-        else if url == "fake://ne/rivers.geojson" then Right(BasemapServiceSuite.Rivers)
+      private def pick(url: RangeHttp.Url) = if url.value.startsWith("fake://v") then v else t
+      def text(url: RangeHttp.Url) =
+        if url.value == "fake://ne/ranges.geojson" then Right(BasemapServiceSuite.Ranges)
+        else if url.value == "fake://ne/rivers.geojson" then Right(BasemapServiceSuite.Rivers)
         else v.text(url)
-      def bytes(url: String, o: Long, l: Long) = pick(url).bytes(url, o, l)
-      def download(url: String, o: Long, l: Long, to: Reservation) = pick(url).download(url, o, l, to)
-      override def file(url: String) =
+      def bytes(url: RangeHttp.Url, o: ByteOffset, l: ByteCount) = pick(url).bytes(url, o, l)
+      def download(url: RangeHttp.Url, o: ByteOffset, l: ByteCount, to: Reservation) = pick(url).download(url, o, l, to)
+      override def file(url: RangeHttp.Url) =
         val Sea = "fake://sea/(\\d+)/(\\d+)/(\\d+).png".r
-        url match
-          case Sea(z, x, y) => Right(Option.when(x != "0")(s"PNG$z/$x/$y".getBytes))
-          case _            => Left(s"$url: unexpected")
+        url.value match
+          case Sea(z, x, y) => Right(Option.when(x != "0")(RangeHttp.ResponseBytes(s"PNG$z/$x/$y".getBytes)))
+          case _            => Left(RangeHttp.Problem(s"${url.value}: unexpected"))
     val ds =
       val d = testPool(cfg.db)
       Migrate.run(d); d
-    def await(id: String, left: Int = 400): JobInfo =
-      val j = Transactor(ds).read(JobRepo.get(id)).getOrElse(fail(s"no job $id"))
+    def await(id: com.histmersion.api.SpatialHierarchyResult.Job.Id, left: Int = 400): JobInfo =
+      val j = Transactor(ds).read(JobRepo.get(com.histmersion.util.jobs.Job.Id.applyUnsafe(id.value))).getOrElse(fail(s"no job $id"))
       if j.isTerminal || left == 0 then j else { Thread.sleep(25); await(id, left - 1) }
-    val svc = BasemapWiring.service(Deps(cfg, ds), () => router, _ => Long.MaxValue / 4)
+    val svc = BasemapWiring.service(Deps(cfg, ds), () => router, _ => ByteCount.applyUnsafe(Long.MaxValue / 4))
     def fetched(q: Basemap.FetchQuery): Unit =
-      val j = await(svc.fetch(q).fold(e => fail(e.message), _.id))
+      val j = await(svc.fetch(q).fold(e => fail(e.message.value), _.id))
       assert(j.succeeded, j.toString)
     fetched(Basemap.FetchQuery())
     fetched(Basemap.FetchQuery(focus = Some(com.histmersion.api.basemap.Basemap.Focus.Name("crete"))))
     fetched(Basemap.FetchQuery(layer = com.histmersion.api.basemap.Basemap.FetchQuery.Layer("terrain"), maxZoom = Some(com.histmersion.api.basemap.Basemap.Focus.MaxZoom(4)), bbox = Some(com.histmersion.api.BBox.Text("22.5,37.4,23.2,37.9"))))
     List(
-      ("vector", 4, 9L, 6L),
-      ("vector", 4, 0L, 0L),
-      ("terrain", 5, 0L, 0L),
-      ("terrain", 5, 1L, 1L),
-      ("bathymetry", 3, 4L, 3L)
+      (Basemap.Layer.Wire("vector"), Basemap.Zoom(4), Basemap.Tile.Column(9L), Basemap.Tile.Row(6L)),
+      (Basemap.Layer.Wire("vector"), Basemap.Zoom(4), Basemap.Tile.Column(0L), Basemap.Tile.Row(0L)),
+      (Basemap.Layer.Wire("terrain"), Basemap.Zoom(5), Basemap.Tile.Column(0L), Basemap.Tile.Row(0L)),
+      (Basemap.Layer.Wire("terrain"), Basemap.Zoom(5), Basemap.Tile.Column(1L), Basemap.Tile.Row(1L)),
+      (Basemap.Layer.Wire("bathymetry"), Basemap.Zoom(3), Basemap.Tile.Column(4L), Basemap.Tile.Row(3L))
     )
       .foreach((layer, z, x, y) => assert(svc.tile(layer, z, x, y).isRight, s"$layer $z/$x/$y"))
-    assert(svc.status.available)
+    assert(svc.status.available.value)
     assert(svc.remove(Basemap.RemoveQuery(com.histmersion.api.basemap.Basemap.RemoveQuery.Layer("none"), focus = Some(com.histmersion.api.basemap.Basemap.Focus.Name("crete")))).isRight)
 
   /** A file the acquisition spools for the converter. */
   private def spoolRun(): Unit =
-    val base = AppConfig.loadWithUserFile(env, Some(configFile)).fold(e => fail(e), identity).config
+    val base = AppConfig.loadWithUserFile(env, Some(configFile)).fold(e => fail(e.value), identity).config
     assert(
       _root_.com.histmersion.domain.library.acquisition.Spool(
           com.histmersion.util.storage.Storage
             .at(com.histmersion.util.storage.Location.Spool, StorageLocations.spool(base.acquire.spoolDir))
         )
-        .write(com.histmersion.domain.library.Citekey("zz_data_tree"), com.histmersion.domain.library.acquisition.Spool.Extension("pdf"), "%PDF-1.4 spooled".getBytes(UTF_8))
+        .write(com.histmersion.domain.library.Citekey("zz_data_tree"), com.histmersion.domain.library.acquisition.Spool.Extension("pdf"), com.histmersion.domain.library.acquisition.Spool.Bytes("%PDF-1.4 spooled".getBytes(UTF_8)))
         .isRight
     )
 

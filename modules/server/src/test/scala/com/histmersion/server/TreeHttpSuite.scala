@@ -51,11 +51,11 @@ class TreeHttpSuite extends munit.FunSuite:
   private val places = Lpf.render(
     List(
       Place.Input(
-        Place(com.histmersion.api.catalogue.Place.Id("zzg_world"), com.histmersion.api.catalogue.Place.Label("Zzg World"), com.histmersion.domain.catalogue.Place.Kind.Region),
+        Place(com.histmersion.api.catalogue.Place.Id("zzg_world"), com.histmersion.api.catalogue.Place.Label("Zzg World"), Place.KindValue(com.histmersion.domain.catalogue.Place.Kind.Region)),
         List(Place.Name(com.histmersion.api.catalogue.Place.Name.Value("Zzg World")))
       ),
       Place.Input(
-        Place(com.histmersion.api.catalogue.Place.Id("zzg_land"), com.histmersion.api.catalogue.Place.Label("Zzg Land"), com.histmersion.domain.catalogue.Place.Kind.Region),
+        Place(com.histmersion.api.catalogue.Place.Id("zzg_land"), com.histmersion.api.catalogue.Place.Label("Zzg Land"), Place.KindValue(com.histmersion.domain.catalogue.Place.Kind.Region)),
         List(Place.Name(com.histmersion.api.catalogue.Place.Name.Value("Zzg Land"))),
         List(Place.Relation(com.histmersion.api.catalogue.Place.Relation.ChildId("zzg_land"), com.histmersion.api.catalogue.Place.Relation.ParentId("zzg_world")))
       )

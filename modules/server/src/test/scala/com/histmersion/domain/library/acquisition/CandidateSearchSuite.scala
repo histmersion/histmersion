@@ -21,7 +21,7 @@ import com.histmersion.domain.library.workflows.WatchManagerKind
 import java.time.LocalDate
 import java.util.concurrent.ConcurrentLinkedQueue
 import com.histmersion.api.automation.{Goal, Queue}
-import com.histmersion.api.library.{Doi, Source, Title, WorkRef}
+import com.histmersion.api.library.{CandidateSweep, Doi, Source, Title, WorkRef}
 import com.histmersion.domain.library.search.Search
 
 /** The deterministic new-source search (#3761) over fake indexes: what a sweep stores, the watermarks it keeps,

@@ -32,6 +32,8 @@ import java.time.Instant
 import java.time.temporal.ChronoUnit
 import com.histmersion.db.*
 import com.histmersion.api.automation.{Goal, ManagersMarkdown, Queue}
+import com.histmersion.domain.automation.{Goal as DomainGoal}
+import com.histmersion.domain.library.Citekey
 import com.histmersion.api.library.{PdfInfo, Query, RepairAcquire, WorkRef}
 import com.histmersion.api.library.Ingest
 import com.histmersion.api.library.Source
@@ -49,10 +51,12 @@ class IngestBacklogDbSuite extends com.histmersion.db.DbSuite with RunTranscript
   override def munitIgnore: Boolean = testDb.isEmpty
   override val munitTimeout = scala.concurrent.duration.Duration(180, "s")
 
-  private val Goal = "zzagent-oa"
-  private val Goal2 = "zzagent-oa2"
+  private val Goal = DomainGoal.Slug("zzagent-oa")
+  private val Goal2 = DomainGoal.Slug("zzagent-oa2")
   private val Query = "zzagent oa tin"
   private val Query2 = "zzagent oa bronze"
+  private val QueryRef = LinkAdd.Ref(Query)
+  private val Query2Ref = LinkAdd.Ref(Query2)
   private val Model = ModelRef(ProviderKind.Local, com.histmersion.api.automation.Agents.ModelRef.Model("scripted"))
   private val Usage1 = Some(TokenUsage(Tokens(1000), Tokens(100), Tokens.Zero, Tokens.Zero))
 
@@ -97,16 +101,16 @@ class IngestBacklogDbSuite extends com.histmersion.db.DbSuite with RunTranscript
   override def beforeEach(context: BeforeEach): Unit = clean()
   override def afterEach(context: AfterEach): Unit = clean()
 
-  private def seed(a: AgentsControllers, h: ServerWiring, goal: String = Goal, query: String = Query): Unit =
+  private def seed(a: AgentsControllers, h: ServerWiring, goal: DomainGoal.Slug = Goal, query: LinkAdd.Ref = QueryRef): Unit =
     assert(
       h.goals
-        .put(goal, com.histmersion.api.automation.Goal.Put(s"Zz $goal", notes = Some("where the tin came from")))
+        .put(goal, com.histmersion.api.automation.Goal.Put(com.histmersion.api.automation.Goal.Title(s"Zz $goal"), notes = Some(com.histmersion.api.automation.Goal.Notes("where the tin came from"))))
         .isRight
     )
     assert(a.addGoalLink(goal, LinkAdd(LinkKind.Query, query)).isRight)
 
   private def doi(n: String) = s"10.5555/zzagent.$n"
-  private def work(n: String, oa: Boolean = true) =
+  private def work(n: String, oa: WorkRef.IsOa = WorkRef.IsOa(true)) =
     WorkRef(doi = (Some(doi(n))).map(com.histmersion.api.library.Doi.apply), title = (Some(s"Work $n")).map(com.histmersion.api.library.Title.apply), year = (Some(2023)).map(com.histmersion.api.catalogue.Year.apply), authors = (List("Zz")).map(com.histmersion.api.library.AuthorName.apply), isOa = oa)
   private def picks(ns: Seq[String]) =
     text(ns.map(n => s"""{"doi":"${doi(n)}","why":"fits $n"}""").mkString("""{"picks":[""", ",", "]}"))
@@ -119,39 +123,39 @@ class IngestBacklogDbSuite extends com.histmersion.db.DbSuite with RunTranscript
       assert(h.library.sources.put(ck, Source.Put(title = com.histmersion.api.library.Title(s"Ingested $d"), year = (Some(2023)).map(com.histmersion.api.catalogue.Year.apply), doi = (Some(d)).map(com.histmersion.api.library.Doi.apply))).isRight)
       Right(
         Ingest.Report(
-          ck,
-          Some(d),
-          Some(s"Ingested $d"),
+          com.histmersion.api.library.Citekey(ck.value),
+          Some(com.histmersion.api.library.Doi(d)),
+          Some(com.histmersion.api.library.Title(s"Ingested $d")),
           created = com.histmersion.api.library.Ingest.Report.Created(true),
-          Some(PdfInfo(com.histmersion.api.library.PdfInfo.Source("unpaywall"), Some(s"https://example.invalid/$d.pdf"), com.histmersion.api.ByteCount(2048), None)),
+          Some(PdfInfo(PdfInfo.Source("unpaywall"), Some(PdfInfo.Url(s"https://example.invalid/$d.pdf")), com.histmersion.api.ByteCount(2048), None)),
           com.histmersion.api.library.Ingest.Report.EdgesAdded(0),
           None,
           Nil
         )
       )
-  private def ck0(d: String) = "zzagent" + d.replaceAll("[^a-z0-9]", "")
+  private def ck0(d: String): Citekey = Citekey.assume("zzagent" + d.replaceAll("[^a-z0-9]", ""))
 
-  private def watcher(a: AgentsControllers, goal: String, perDay: Int, auto: Boolean = true): ManagerInfo =
+  private def watcher(a: AgentsControllers, goal: DomainGoal.Slug, perDay: ManagerConfig.AutoIngestPerDay, auto: ManagerConfig.AutoIngest = ManagerConfig.AutoIngest(true)): ManagerInfo =
     val m = a.managing
       .create(
         ManagerCreate(
-          com.histmersion.api.automation.Managers.ManagerCreate.Kind("watch"),
-          Some(goal),
-          ManagerConfig(sweeps = Some(List(com.histmersion.api.automation.Managers.Sweep.Wire("acquisition"))), autoIngest = Some(auto), autoIngestPerDay = Some(perDay)),
-          paused = Some(com.histmersion.api.automation.Managers.ManagerCreate.Paused(false))
+          ManagerCreate.Kind("watch"),
+          Some(com.histmersion.api.automation.Goal.Slug(goal.value)),
+          ManagerConfig(sweeps = Some(List(Sweep.Wire("acquisition"))), autoIngest = Some(auto), autoIngestPerDay = Some(perDay)),
+          paused = Some(ManagerCreate.Paused(false))
         )
       )
-      .fold(e => fail(e.message), identity)
+      .fold(e => fail(e.message.value), identity)
     m
 
-  private def sweepRun(mid: String, goal: String): RunInfo =
-    connect(ds)(AgentRepo.get(connect(ds)(ManagerRepo.itemFor(mid, AcquisitionSweep, goal)).get.runId.get)).get
+  private def sweepRun(mid: ManagerInfo.Id, goal: DomainGoal.Slug): RunInfo =
+    connect(ds)(AgentRepo.get(connect(ds)(ManagerRepo.itemFor(mid, ManagerItem.Kind(AcquisitionSweep), ManagerItem.Target(goal.value))).get.runId.get)).get
 
   private def acquire(h: ServerWiring): List[Queue.QueueItem] =
-    h.workListView.list(com.histmersion.domain.automation.worklists.WorkListControllers.KindOfList("acquire"), all = com.histmersion.server.views.WorkListView.IncludeAll(false)).toOption.get.items.filter(_.text.contains("zzagent"))
+    h.workListView.list(com.histmersion.domain.automation.worklists.WorkListControllers.KindOfList("acquire"), all = com.histmersion.server.views.WorkListView.IncludeAll(false)).toOption.get.items.filter(_.text.value.contains("zzagent"))
 
-  private def backlog(mid: String): List[ManagerItem] =
-    Transactor(ds).read(ManagerRepo.itemPage(mid, None, com.histmersion.Offset(0), com.histmersion.PageSize(500)))._1.filter(_.kind == OaIngest)
+  private def backlog(mid: ManagerInfo.Id): List[ManagerItem] =
+    Transactor(ds).read(ManagerRepo.itemPage(mid, None, com.histmersion.Offset(0), com.histmersion.PageSize(500)))._1.filter(_.kind == ManagerItem.Kind(OaIngest))
 
   private def ingestCalls(up: StubUpstream): List[String] =
     import scala.jdk.CollectionConverters.*
@@ -167,34 +171,34 @@ class IngestBacklogDbSuite extends com.histmersion.db.DbSuite with RunTranscript
     up.found = Map(Query -> ns.map(work(_)).toList)
     up.onIngest = legalIngest(h)
     val (b, hb, upb) = (a, h, up)
-    val m = watcher(b, Goal, perDay = 20)
+    val m = watcher(b, Goal, perDay = ManagerConfig.AutoIngestPerDay(20))
     val now = Instant.now()
     b.managers.tick(now)
     val run = sweepRun(m.id, Goal)
     assertEquals((run.params.autoIngest, run.params.oaBacklog), (Some(20), Some(true)))
-    b.engine.execute(run.id)
+    b.engine.execute(ApiIds.run(run.id))
     val done = connect(ds)(AgentRepo.get(run.id)).get
     assertEquals(done.status, "done", done.error)
     assertEquals(ingestCalls(upb).size, 20)
     assertEquals(backlog(m.id).map(_.status).distinct, List("pending"))
     assertEquals(backlog(m.id).size, 10)
     assertEquals(acquire(hb), Nil, "no legal open-access work reaches the person's acquisition list")
-    val closed = connect(ds)(AgentRepo.steps(run.id, com.histmersion.domain.automation.agents.AgentRepo.OutputChars(100000))).find(_.name == "close").flatMap(_.output).getOrElse("")
+    val closed = connect(ds)(AgentRepo.steps(ApiIds.job(run.id), com.histmersion.domain.automation.agents.AgentRepo.OutputChars(100000))).find(_.name.value == "close").flatMap(_.output).map(_.value).getOrElse("")
     assert(
       closed.contains("30 picked, 20 ingested") && closed.contains("10 to the ingest backlog") &&
         closed.contains(" 0 queued for acquisition"),
       closed
     )
     assertEquals(
-      connect(ds)(AgentRepo.steps(run.id, com.histmersion.domain.automation.agents.AgentRepo.OutputChars(100))).map(_.name),
+      connect(ds)(AgentRepo.steps(ApiIds.job(run.id), com.histmersion.domain.automation.agents.AgentRepo.OutputChars(100))).map(_.name),
       List("discover", "rank", "ingest", "backlog", "queue", "close")
     )
-    val first = backlog(m.id).minBy(_.id)
+    val first = backlog(m.id).minBy(_.id.value)
     assertEquals(first.state.oa.map(w => (w.goals, w.title, w.foundBy)), Some((List(Goal), "Work w21", Some(run.id))))
     // the same day: the allowance is spent, nothing drains; the status says when it will
     b.managers.tick(now)
     assertEquals(ingestCalls(upb).size, 20)
-    val info = b.managing.get(m.id).fold(e => fail(e.message), identity).manager
+    val info = b.managing.get(ApiIds.manager(m.id)).fold(e => fail(e.message.value), identity).manager
     assertEquals((info.backlog, info.backlogDays), (10, Some(1)))
     assert(
       ManagersMarkdown.line(info).contains("10 legal open-access works in the ingest backlog (~1 more day"),
@@ -208,11 +212,11 @@ class IngestBacklogDbSuite extends com.histmersion.db.DbSuite with RunTranscript
     up.found = Map(Query -> List(work("x1")))
     b.managing
       .patchItem(
-        m.id,
-        connect(ds)(ManagerRepo.itemFor(m.id, AcquisitionSweep, Goal)).get.id.toString,
-        ItemPatch(com.histmersion.api.automation.Managers.ItemPatch.Action("reopen"))
+        ApiIds.manager(m.id),
+        ManagerItem.Ref(connect(ds)(ManagerRepo.itemFor(m.id, ManagerItem.Kind(AcquisitionSweep), ManagerItem.Target(Goal.value))).get.id.toString),
+        ItemPatch(ItemPatch.Action("reopen"))
       )
-      .fold(e => fail(e.message), identity)
+      .fold(e => fail(e.message.value), identity)
     b.managers.tick(now)
     val again = sweepRun(m.id, Goal)
     assertEquals(
@@ -222,9 +226,9 @@ class IngestBacklogDbSuite extends com.histmersion.db.DbSuite with RunTranscript
     )
     assert(
       connect(ds)(ManagerRepo.events(m.id, None, com.histmersion.PageSize(50)))
-        .exists(e => e.kind == Feed.Started && e.text.contains("10 works wait in the ingest backlog first"))
+        .exists(e => e.kind.value == Feed.Started && e.text.value.contains("10 works wait in the ingest backlog first"))
     )
-    b.engine.execute(again.id)
+    b.engine.execute(ApiIds.run(again.id))
     assertEquals(backlog(m.id).size, 11)
     assertEquals(acquire(hb), Nil)
     // the next day: the backlog drains, the oldest first, a few each tick
@@ -236,16 +240,16 @@ class IngestBacklogDbSuite extends com.histmersion.db.DbSuite with RunTranscript
       List(s"ingest ${doi("w21")}", s"ingest ${doi("w22")}", s"ingest ${doi("w23")}")
     )
     assertEquals(ingestCalls(upb).last, s"ingest ${doi("x1")}", "the later find last")
-    assert(connect(ds)(GoalLinkRepo.links(Goal)).exists(l => l.kind == LinkKind.Source && l.ref == ck0(doi("w30"))))
+    assert(connect(ds)(GoalLinkRepo.links(Goal)).exists(l => l.kind == LinkKind.Source && l.ref == GoalLink.Ref(ck0(doi("w30")).value)))
     assertEquals(
       connect(ds)(ManagerRepo.events(m.id, None, com.histmersion.PageSize(200)))
-        .count(e => e.kind == Feed.Ingested && e.text.contains("from the backlog")),
+        .count(e => e.kind.value == Feed.Ingested && e.text.value.contains("from the backlog")),
       11
     )
     assert(
-      h.workListView.list(com.histmersion.domain.automation.worklists.WorkListControllers.KindOfList("log"), all = com.histmersion.server.views.WorkListView.IncludeAll(true)).toOption.get.items.exists(_.text.startsWith("ingest backlog: 3 ingested"))
+      h.workListView.list(com.histmersion.domain.automation.worklists.WorkListControllers.KindOfList("log"), all = com.histmersion.server.views.WorkListView.IncludeAll(true)).toOption.get.items.exists(_.text.value.startsWith("ingest backlog: 3 ingested"))
     )
-    assertEquals(b.managing.get(m.id).toOption.get.manager.backlog, 0)
+    assertEquals(b.managing.get(ApiIds.manager(m.id)).toOption.get.manager.backlog, 0)
 
   test(
     "one entry per DOI across watchers, linked to both goals; a work with no legal file goes to the acquisition list on its day"
@@ -253,45 +257,45 @@ class IngestBacklogDbSuite extends com.histmersion.db.DbSuite with RunTranscript
     val c = ScriptedClient(Model)
     c.scripts += Seq(picks(Seq("x", "y", "z")))
     c.scripts += Seq(picks(Seq("x")))
-    val (a, h, up) = handlers(c); seed(a, h); seed(a, h, Goal2, Query2)
-    up.found = Map(Query -> List(work("x"), work("y"), work("z", oa = false)), Query2 -> List(work("x")))
+    val (a, h, up) = handlers(c); seed(a, h); seed(a, h, Goal2, Query2Ref)
+    up.found = Map(Query -> List(work("x"), work("y"), work("z", oa = WorkRef.IsOa(false))), Query2 -> List(work("x")))
     up.onIngest = legalIngest(h, Set(doi("y")))
-    val w1 = watcher(a, Goal, perDay = 2)
-    val w2 = watcher(a, Goal2, perDay = 2)
+    val w1 = watcher(a, Goal, perDay = ManagerConfig.AutoIngestPerDay(2))
+    val w2 = watcher(a, Goal2, perDay = ManagerConfig.AutoIngestPerDay(2))
     // both spent today's allowance already
     List(w1, w2).foreach(w =>
       (1 to 2).foreach(_ =>
-        transact(ds)(ManagerRepo.event(w.id, None, None, Feed.Ingested, com.histmersion.domain.automation.managers.ManagerRepo.EventText("[[zzagent_earlier]] ingested")))
+        transact(ds)(ManagerRepo.event(w.id, None, None, ManagerRepo.EventKind(Feed.Ingested), ManagerRepo.EventText("[[zzagent_earlier]] ingested")))
       )
     )
     val now = Instant.now()
     a.managers.tick(now)
-    a.engine.execute(sweepRun(w1.id, Goal).id)
-    a.engine.execute(sweepRun(w2.id, Goal2).id)
+    a.engine.execute(ApiIds.run(sweepRun(w1.id, Goal).id))
+    a.engine.execute(ApiIds.run(sweepRun(w2.id, Goal2).id))
     assertEquals(ingestCalls(up), Nil)
     val open = Transactor(ds).read(ManagerRepo.backlogOpenIn())
-    assertEquals(open.map(_.target).sorted, List(doi("x"), doi("y")), "x once, though both goals found it")
-    val x = open.find(_.target == doi("x")).get
+    assertEquals(open.map(_.target.value).sorted, List(doi("x"), doi("y")), "x once, though both goals found it")
+    val x = open.find(_.target.value == doi("x")).get
     assertEquals((x.managerId, x.state.oa.map(_.goals)), (w1.id, Some(List(Goal, Goal2))))
-    assertEquals(acquire(h).map(i => Scheduling.dois(i.text)), List(Set(doi("z"))), "only the closed work")
+    assertEquals(acquire(h).map(i => Scheduling.dois(i.text.value)), List(Set(doi("z"))), "only the closed work")
     // the next day
     val tomorrow = now.plus(1, ChronoUnit.DAYS)
     a.managers.tick(tomorrow)
     a.managers.tick(tomorrow)
-    assertEquals(connect(ds)(ManagerRepo.itemFor(w1.id, OaIngest, doi("x"))).get.status, "done")
+    assertEquals(connect(ds)(ManagerRepo.itemFor(w1.id, ManagerItem.Kind(OaIngest), ManagerItem.Target(doi("x")))).get.status, "done")
     assert(
       List(Goal, Goal2).forall(g =>
-        connect(ds)(GoalLinkRepo.links(g)).exists(l => l.kind == LinkKind.Source && l.ref == ck0(doi("x")))
+        connect(ds)(GoalLinkRepo.links(g)).exists(l => l.kind == LinkKind.Source && l.ref == GoalLink.Ref(ck0(doi("x")).value))
       )
     )
-    val y = connect(ds)(ManagerRepo.itemFor(w1.id, OaIngest, doi("y"))).get
+    val y = connect(ds)(ManagerRepo.itemFor(w1.id, ManagerItem.Kind(OaIngest), ManagerItem.Target(doi("y")))).get
     assertEquals(y.status, "stopped")
-    assert(y.outcome.exists(_.contains("to the acquisition list")), y.outcome)
-    val ys = acquire(h).filter(i => Scheduling.dois(i.text).contains(doi("y")))
+    assert(y.outcome.exists(_.value.contains("to the acquisition list")), y.outcome)
+    val ys = acquire(h).filter(i => Scheduling.dois(i.text.value).map(_.value).contains(doi("y")))
     assertEquals(ys.size, 1)
-    assert(ys.head.text.contains("(open access)") && ys.head.text.contains(s"for goal $Goal"), ys.head.text)
+    assert(ys.head.text.value.contains("(open access)") && ys.head.text.value.contains(s"for goal $Goal"), ys.head.text)
     assert(
-      connect(ds)(GoalLinkRepo.links(Goal)).exists(l => l.kind == LinkKind.QueueItem && l.ref == ys.head.id.toString)
+      connect(ds)(GoalLinkRepo.links(Goal)).exists(l => l.kind == LinkKind.QueueItem && l.ref == GoalLink.Ref(ys.head.id.toString))
     )
     assertEquals(acquire(h).size, 2, "no duplicate acquisition item")
 
@@ -303,12 +307,12 @@ class IngestBacklogDbSuite extends com.histmersion.db.DbSuite with RunTranscript
         )
       )
     )
-    seed(a, h); seed(a, h, Goal2, Query2)
+    seed(a, h); seed(a, h, Goal2, Query2Ref)
     up.onIngest = legalIngest(h)
-    val w1 = watcher(a, Goal, perDay = 5)
-    val w2 = watcher(a, Goal2, perDay = 5)
-    (1 to 3).foreach(i => a.oaBacklog.add(w1.id, Goal, OaWork(doi(s"a$i"), s"A$i")))
-    (1 to 3).foreach(i => a.oaBacklog.add(w2.id, Goal2, OaWork(doi(s"b$i"), s"B$i")))
+    val w1 = watcher(a, Goal, perDay = ManagerConfig.AutoIngestPerDay(5))
+    val w2 = watcher(a, Goal2, perDay = ManagerConfig.AutoIngestPerDay(5))
+    (1 to 3).foreach(i => a.oaBacklog.add(w1.id, Goal, OaWork(com.histmersion.api.library.Doi(doi(s"a$i")), com.histmersion.api.library.Title(s"A$i"))))
+    (1 to 3).foreach(i => a.oaBacklog.add(w2.id, Goal2, OaWork(com.histmersion.api.library.Doi(doi(s"b$i")), com.histmersion.api.library.Title(s"B$i"))))
     connect(ds)(sql"UPDATE agent_autopilot SET enabled = true, last_ensure_at = now()".update.run())
     val now = Instant.now()
     a.managers.tick(now)
@@ -321,12 +325,12 @@ class IngestBacklogDbSuite extends com.histmersion.db.DbSuite with RunTranscript
     assertEquals(ingestCalls(up).size, 2)
     val st = a.managing.autopilot
     assertEquals((st.backlog, st.backlogDays), (4, Some(2)), "2 a day from tomorrow")
-    a.managing.action(w2.id, com.histmersion.domain.automation.managers.ManagersControllers.Action("pause"), None).fold(e => fail(e.message), identity)
+    a.managing.action(ApiIds.manager(w2.id), com.histmersion.domain.automation.managers.ManagersControllers.Action("pause"), None).fold(e => fail(e.message.value), identity)
     val tomorrow = now.plus(1, ChronoUnit.DAYS)
     (1 to 3).foreach(_ => a.managers.tick(tomorrow))
     assertEquals(ingestCalls(up).drop(2), List(s"ingest ${doi("a3")}"), "w2 paused: its backlog waits")
     assertEquals(
-      a.managing.get(w2.id).toOption.get.manager.backlogDays,
+      a.managing.get(ApiIds.manager(w2.id)).toOption.get.manager.backlogDays,
       None,
       "a paused watcher's backlog does not drain"
     )
@@ -337,71 +341,71 @@ class IngestBacklogDbSuite extends com.histmersion.db.DbSuite with RunTranscript
     val c = ScriptedClient(Model)
     c.scripts += Seq(picks(Seq("a", "b", "c")))
     val (a, h, up) = handlers(c); seed(a, h)
-    up.found = Map(Query -> List(work("a"), work("b", oa = false), work("c")))
+    up.found = Map(Query -> List(work("a"), work("b", oa = WorkRef.IsOa(false)), work("c")))
     up.onIngest = legalIngest(h)
     // the old behaviour: a watcher without auto-ingest queues every pick (the overflow looked the same)
-    val m = watcher(a, Goal, perDay = 5, auto = false)
+    val m = watcher(a, Goal, perDay = ManagerConfig.AutoIngestPerDay(5), auto = ManagerConfig.AutoIngest(false))
     // a person's own item, in the same words, linked to the goal by its DOI
     val mine = h.workLists
       .add(
         com.histmersion.domain.automation.worklists.WorkListControllers.ListName("acquire"),
         QueueAdd(
-          s"Zz (2023). Mine. https://doi.org/${doi("p")} (open access) — for goal $Goal: mine",
-          topic = Some(s"goal $Goal")
+          Queue.QueueItem.Text(s"Zz (2023). Mine. https://doi.org/${doi("p")} (open access) — for goal $Goal: mine"),
+          topic = Some(Queue.QueueItem.Topic(s"goal $Goal"))
         )
       )
       .toOption
       .get
-    assert(transact(ds)(GoalLinkRepo.link(Goal, LinkKind.QueueItem, mine.id.toString, Some(doi("p")))))
+    assert(transact(ds)(GoalLinkRepo.link(Goal, LinkKind.QueueItem, GoalLink.Ref(mine.id.toString), Some(GoalLink.Note(doi("p"))))))
     a.managers.tick(Instant.now())
-    a.engine.execute(sweepRun(m.id, Goal).id)
+    a.engine.execute(ApiIds.run(sweepRun(m.id, Goal).id))
     assertEquals(acquire(h).size, 4)
     // c reached the corpus meanwhile; the watcher now auto-ingests
     assert(
       h.library.sources.put(com.histmersion.domain.library.Citekey("zzagent2023_c"), Source.Put(title = com.histmersion.api.library.Title("C"), year = (Some(2023)).map(com.histmersion.api.catalogue.Year.apply), doi = (Some(doi("c"))).map(com.histmersion.api.library.Doi.apply))).isRight
     )
     a.managing
-      .update(m.id, ManagerUpdate(Some(m.config.copy(autoIngest = Some(com.histmersion.api.automation.Managers.ManagerConfig.AutoIngest(true))))))
-      .fold(e => fail(e.message), identity)
+      .update(ApiIds.manager(m.id), ManagerUpdate(Some(m.config.copy(autoIngest = Some(ManagerConfig.AutoIngest(true))))))
+      .fold(e => fail(e.message.value), identity)
 
     val dry = a.oaBacklog.repair(RepairRequest(dryRun = com.histmersion.api.library.RepairAcquire.RepairRequest.DryRun(true), Some(com.histmersion.api.automation.Activity.Actor("test"))))
     assertEquals(
-      dry.rows.map(r => (r.doi, r.action)).sortBy(_._1),
+      dry.rows.map(r => (r.doi, r.action)).sortBy(_._1.value),
       List(doi("a") -> RepairAcquire.Move, doi("b") -> RepairAcquire.Keep, doi("c") -> RepairAcquire.Remove)
     )
     assertEquals((dry.moved, dry.removed, dry.kept, dry.backlog), (1, 1, 1, 1))
-    assert(dry.untouched >= 1, "the person's item")
+    assert(dry.untouched.value >= 1, "the person's item")
     assertEquals(acquire(h).size, 4, "a dry run changes nothing")
     assertEquals(backlog(m.id), Nil)
-    assert(RepairAcquire.markdown(dry).contains("would move 1 legal open-access work"))
+    assert(RepairAcquire.markdown(dry).value.contains("would move 1 legal open-access work"))
 
     val done = a.oaBacklog.repair(RepairRequest(by = Some(com.histmersion.api.automation.Activity.Actor("test"))))
     assertEquals((done.moved, done.removed, done.kept), (1, 1, 1))
     val left = acquire(h)
     assertEquals(
-      left.map(i => Scheduling.dois(i.text)).toSet,
+      left.map(i => Scheduling.dois(i.text.value)).toSet,
       Set(Set(doi("b")), Set(doi("p"))),
       "the closed work and the person's stay"
     )
     val entry = backlog(m.id)
     assertEquals(entry.map(_.target), List(doi("a")))
     assertEquals(entry.head.state.oa.map(_.goals), Some(List(Goal)))
-    assert(entry.head.state.oa.flatMap(_.acquireText).exists(_.contains(doi("a"))), "its old wording kept")
-    assertEquals(done.rows.find(_.doi == doi("a")).flatMap(_.backlogItem), Some(entry.head.id))
+    assert(entry.head.state.oa.flatMap(_.acquireText).exists(_.value.contains(doi("a"))), "its old wording kept")
+    assertEquals(done.rows.find(_.doi.value == doi("a")).flatMap(_.backlogItem), Some(entry.head.id))
     assert(
       !connect(ds)(GoalLinkRepo.links(Goal)).exists(l =>
-        l.kind == LinkKind.QueueItem && !left.exists(_.id.toString == l.ref)
+        l.kind == LinkKind.QueueItem && !left.exists(i => GoalLink.Ref(i.id.toString) == l.ref)
       ),
       "no goal link to a removed item"
     )
-    assert(connect(ds)(GoalLinkRepo.links(Goal)).exists(l => l.kind == LinkKind.Source && l.ref == "zzagent2023_c"))
+    assert(connect(ds)(GoalLinkRepo.links(Goal)).exists(l => l.kind == LinkKind.Source && l.ref == GoalLink.Ref("zzagent2023_c")))
     assert(
       h.workListView
         .list(com.histmersion.domain.automation.worklists.WorkListControllers.KindOfList("log"), all = com.histmersion.server.views.WorkListView.IncludeAll(true))
         .toOption
         .get
         .items
-        .exists(_.text.startsWith("repair-acquire (test): 1 legal"))
+        .exists(_.text.value.startsWith("repair-acquire (test): 1 legal"))
     )
     // idempotent
     val again = a.oaBacklog.repair(RepairRequest())
@@ -413,18 +417,18 @@ class IngestBacklogDbSuite extends com.histmersion.db.DbSuite with RunTranscript
 
   test("the backlog in the repair's and the switch's answers; an entry steered by its DOI like any item"):
     val (a, h, _) = handlers(ScriptedClient(Model)); seed(a, h)
-    val m = watcher(a, Goal, perDay = 5)
-    a.oaBacklog.add(m.id, Goal, OaWork(doi("q"), com.histmersion.api.library.Title("Q")))
+    val m = watcher(a, Goal, perDay = ManagerConfig.AutoIngestPerDay(5))
+    a.oaBacklog.add(m.id, Goal, OaWork(com.histmersion.api.library.Doi(doi("q")), com.histmersion.api.library.Title("Q")))
     assertEquals(a.oaBacklog.repair(RepairRequest(dryRun = com.histmersion.api.library.RepairAcquire.RepairRequest.DryRun(true))).backlog, 1)
-    val on = a.managing.setAutopilot(AutopilotSet(on = com.histmersion.api.automation.Autopilot.AutopilotSet.On(true), Some(com.histmersion.api.automation.Autopilot.AutopilotSet.By("test")))).fold(e => fail(e.message), identity)
+    val on = a.managing.setAutopilot(AutopilotSet(on = com.histmersion.api.automation.Autopilot.AutopilotSet.On(true), Some(com.histmersion.api.automation.Autopilot.AutopilotSet.By("test")))).fold(e => fail(e.message.value), identity)
     assertEquals(on.backlog, 1)
     // a person can reprioritise or skip an entry like any item, by its DOI
     val i = a.managing
-      .patchItem(m.id, doi("q"), ItemPatch(com.histmersion.api.automation.Managers.ItemPatch.Action("priority"), priority = Some(com.histmersion.api.automation.Managers.ItemPatch.Priority(5))))
-      .fold(e => fail(e.message), identity)
+      .patchItem(ApiIds.manager(m.id), ManagerItem.Ref(doi("q")), ItemPatch(ItemPatch.Action("priority"), priority = Some(ItemPatch.Priority(5))))
+      .fold(e => fail(e.message.value), identity)
     assertEquals((i.kind, i.priority), (OaIngest, 5))
-    assert(a.managing.addItem(m.id, EnqueueRequest(com.histmersion.api.automation.Managers.EnqueueRequest.Kind("ingest"), com.histmersion.api.automation.Managers.EnqueueRequest.Target("not a doi"))).isLeft)
+    assert(a.managing.addItem(ApiIds.manager(m.id), EnqueueRequest(EnqueueRequest.Kind("ingest"), EnqueueRequest.Target("not a doi"))).isLeft)
     val added = a.managing
-      .addItem(m.id, EnqueueRequest(com.histmersion.api.automation.Managers.EnqueueRequest.Kind("ingest"), s"https://doi.org/${doi("r")}"))
-      .fold(e => fail(e.message), identity)
+      .addItem(ApiIds.manager(m.id), EnqueueRequest(EnqueueRequest.Kind("ingest"), EnqueueRequest.Target(s"https://doi.org/${doi("r")}")))
+      .fold(e => fail(e.message.value), identity)
     assertEquals((added.kind, added.target), (OaIngest, doi("r")))

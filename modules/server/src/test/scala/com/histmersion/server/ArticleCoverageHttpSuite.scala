@@ -11,7 +11,7 @@ import com.histmersion.domain.*
 import java.net.URI
 import java.net.http.{HttpClient, HttpRequest, HttpResponse}
 import com.histmersion.api.research.{ArticleMarkdown, Coverage, CritiqueState, DriftKind}
-import com.histmersion.api.library.Source
+import com.histmersion.api.library.{Citekey, Source}
 import com.histmersion.api.research.Article
 
 /** #958 — an article's coverage computed from its recorded filter against seeded sources, over every surface:
@@ -41,18 +41,18 @@ class ArticleCoverageHttpSuite extends com.histmersion.db.DbSuite:
   private val Plain = "zzcov_plain"
   private val Topic = "zzcov_tin_trade"
   // in the filter: two cited, three not (one with a reason, one without, one contested without)
-  private val Cited1 = "zzcov2016_tin"
-  private val Cited2 = "zzcov2019_wreck"
-  private val Why = "zzcov2001_egypt"
-  private val NoWhy = "zzcov2010_copper"
-  private val Dispute = "zzcov2024_iso"
+  private val Cited1 = Citekey("zzcov2016_tin")
+  private val Cited2 = Citekey("zzcov2019_wreck")
+  private val Why = Citekey("zzcov2001_egypt")
+  private val NoWhy = Citekey("zzcov2010_copper")
+  private val Dispute = Citekey("zzcov2024_iso")
   // outside the filter: a critic of a cited source, and a source the body cites from elsewhere
-  private val Critic = "zzcov2022_critic"
-  private val Outside = "zzcov2020_synoikism"
+  private val Critic = Citekey("zzcov2022_critic")
+  private val Outside = Citekey("zzcov2020_synoikism")
 
   private def source(
       url: String,
-      ck: String,
+      ck: Citekey,
       topics: List[String],
       status: String = "current",
       edges: String = "",
@@ -128,10 +128,10 @@ class ArticleCoverageHttpSuite extends com.histmersion.db.DbSuite:
         assertEquals(gs, 200, gb)
         val c = io.circe.parser.decode[Coverage](gb).fold(e => fail(e.getMessage), identity)
         assertEquals((c.total, c.checked), (5, 5))
-        assertEquals(c.cited.map(_.citekey), List(Cited1, Cited2).sorted)
+        assertEquals(c.cited.map(_.citekey), List(Cited1, Cited2).sortBy[String](_.value))
         assertEquals(
           c.notUsed.map(e => e.source.citekey -> e.reason),
-          List(Why -> Some("About Egypt, not the Aegean"), NoWhy -> None, Dispute -> None).sortBy(_._1)
+          List(Why -> Some("About Egypt, not the Aegean"), NoWhy -> None, Dispute -> None).sortBy[String](_._1.value)
         )
         assertEquals(c.citedOutside, List(Outside))
         assertEquals(c.statuses, List(StatusCount(Source.Status.Current, com.histmersion.api.StatusCount.Count(4)), StatusCount(Source.Status.Contested, com.histmersion.api.StatusCount.Count(1))))
@@ -140,7 +140,7 @@ class ArticleCoverageHttpSuite extends com.histmersion.db.DbSuite:
         assertEquals(
           c.drift,
           List(
-            Coverage.Drift(DriftKind.Unplaced, List(NoWhy, Dispute).sorted),
+            Coverage.Drift(DriftKind.Unplaced, List(NoWhy, Dispute).sortBy[String](_.value)),
             Coverage.Drift(DriftKind.ReasonForCited, List(Cited1))
           )
         )
@@ -148,7 +148,7 @@ class ArticleCoverageHttpSuite extends com.histmersion.db.DbSuite:
         // ── the article as every reader sees it: the generated sections after the body ────────
         val view = io.circe.parser.decode[Article.View](get(s"$url/api/articles/$Slug")._2).toOption.get
         assertEquals(view.coverage, Some(c))
-        assertEquals(view.article.body.trim, Body.trim, "the body never holds the generated sections")
+        assertEquals(view.article.body.value.trim, Body.trim, "the body never holds the generated sections")
         val md = ArticleMarkdown.article(view)
         val (notUsedAt, methodAt, citedAt) =
           (md.indexOf("## Not used"), md.indexOf("_Method: "), md.indexOf("## Sources cited"))
@@ -183,7 +183,7 @@ class ArticleCoverageHttpSuite extends com.histmersion.db.DbSuite:
           io.circe.Json.obj("text" -> io.circe.Json.fromString(exported), "force" -> io.circe.Json.True).noSpaces
         assertEquals(post(s"$url/api/articles/import", imp)._1, 200)
         val again = io.circe.parser.decode[Article.View](get(s"$url/api/articles/$Slug")._2).toOption.get
-        assertEquals(again.article.body.trim, Body.trim, "the import kept the body, not the generated block")
+        assertEquals(again.article.body.value.trim, Body.trim, "the import kept the body, not the generated block")
         assertEquals(again.coverage.map(_.reasons), Some(c.reasons), "and the reasons came back from the frontmatter")
 
         // ── MCP ───────────────────────────────────────────────────────────────────────────────

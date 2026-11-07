@@ -47,16 +47,16 @@ class PlacesHttpSuite extends com.histmersion.db.DbSuite:
   private val doc = Lpf.render(
     List(
       Place.Input(
-        Place(com.histmersion.api.catalogue.Place.Id("zzh_world"), com.histmersion.api.catalogue.Place.Label("Zzh World"), com.histmersion.domain.catalogue.Place.Kind.Region),
+        Place(com.histmersion.api.catalogue.Place.Id("zzh_world"), com.histmersion.api.catalogue.Place.Label("Zzh World"), Place.KindValue(com.histmersion.domain.catalogue.Place.Kind.Region)),
         List(Place.Name(com.histmersion.api.catalogue.Place.Name.Value("Zzh World")))
       ),
       Place.Input(
         Place(
           com.histmersion.api.catalogue.Place.Id("zzh_land"),
           com.histmersion.api.catalogue.Place.Label("Zzh Land"),
-          com.histmersion.domain.catalogue.Place.Kind.Region,
+          Place.KindValue(com.histmersion.domain.catalogue.Place.Kind.Region),
           Some(
-            """{"type":"Polygon","coordinates":[[[100.0,10.0],[110.0,10.0],[110.0,20.0],[100.0,20.0],[100.0,10.0]]]}"""
+            Place.Geometry("""{"type":"Polygon","coordinates":[[[100.0,10.0],[110.0,10.0],[110.0,20.0],[100.0,20.0],[100.0,10.0]]]}""")
           ),
           Some(Period(com.histmersion.api.catalogue.Year(-3000), com.histmersion.api.catalogue.Year(0)))
         ),
@@ -67,12 +67,12 @@ class PlacesHttpSuite extends com.histmersion.db.DbSuite:
         Place(
           com.histmersion.api.catalogue.Place.Id("zzh_polity"),
           com.histmersion.api.catalogue.Place.Label("Zzh Polity"),
-          com.histmersion.domain.catalogue.Place.Kind.Polity,
-          Some("""{"type":"Point","coordinates":[105.0,15.0]}"""),
+          Place.KindValue(com.histmersion.domain.catalogue.Place.Kind.Polity),
+          Some(Place.Geometry("""{"type":"Point","coordinates":[105.0,15.0]}""")),
           Some(Period(com.histmersion.api.catalogue.Year(-1400), com.histmersion.api.catalogue.Year(-1200)))
         ),
         List(Place.Name(com.histmersion.api.catalogue.Place.Name.Value("Zzh Polity"))),
-        List(Place.Relation(com.histmersion.api.catalogue.Place.Relation.ChildId("zzh_polity"), com.histmersion.api.catalogue.Place.Relation.ParentId("zzh_land"), Place.Relation.PartOf, Some(Period(com.histmersion.api.catalogue.Year(-1400), com.histmersion.api.catalogue.Year(-1200)))))
+        List(Place.Relation(com.histmersion.api.catalogue.Place.Relation.ChildId("zzh_polity"), com.histmersion.api.catalogue.Place.Relation.ParentId("zzh_land"), Place.Relation.Kind(Place.Relation.PartOf), Some(Period(com.histmersion.api.catalogue.Year(-1400), com.histmersion.api.catalogue.Year(-1200)))))
       )
     )
   )
@@ -152,16 +152,16 @@ class PlacesHttpSuite extends com.histmersion.db.DbSuite:
   private val countsDoc = Lpf.render(
     List(
       Place.Input(
-        Place(com.histmersion.api.catalogue.Place.Id("zzc_world"), com.histmersion.api.catalogue.Place.Label("Zzc World"), com.histmersion.domain.catalogue.Place.Kind.Region),
+        Place(com.histmersion.api.catalogue.Place.Id("zzc_world"), com.histmersion.api.catalogue.Place.Label("Zzc World"), Place.KindValue(com.histmersion.domain.catalogue.Place.Kind.Region)),
         List(Place.Name(com.histmersion.api.catalogue.Place.Name.Value("Zzc World")))
       ),
       Place.Input(
         Place(
           com.histmersion.api.catalogue.Place.Id("zzc_land"),
           com.histmersion.api.catalogue.Place.Label("Zzc Land"),
-          com.histmersion.domain.catalogue.Place.Kind.Region,
+          Place.KindValue(com.histmersion.domain.catalogue.Place.Kind.Region),
           Some(
-            """{"type":"Polygon","coordinates":[[[120.0,10.0],[130.0,10.0],[130.0,20.0],[120.0,20.0],[120.0,10.0]]]}"""
+            Place.Geometry("""{"type":"Polygon","coordinates":[[[120.0,10.0],[130.0,10.0],[130.0,20.0],[120.0,20.0],[120.0,10.0]]]}""")
           )
         ),
         List(Place.Name(com.histmersion.api.catalogue.Place.Name.Value("Zzc Land"))),
@@ -213,13 +213,16 @@ class PlacesHttpSuite extends com.histmersion.db.DbSuite:
       assertEquals(about.build.version, Version.version)
       // the AGPL's network clause: everyone using the server is offered the source of what is running
       assertEquals(about.build.licence, Some("AGPL-3.0-or-later"))
-      assertEquals(about.build.sourceUrl, Some(CorrespondingSource.url(cfg.server.sourceUrl, BuildMeta.gitCommit)))
+      assertEquals(
+        about.build.sourceUrl,
+        Some(CorrespondingSource.url(CorrespondingSource.Repository(cfg.server.sourceUrl.value), BuildMeta.gitCommit.map(CorrespondingSource.Commit(_))))
+      )
       assertEquals(about.health.db, "ok")
       assert(about.health.schemaVersion.isDefined, ab)
       val counts = about.counts.getOrElse(fail(s"no counts: $ab"))
-      assert(counts.places >= 2, ab) // at least the two imported above
-      assert(counts.sources >= 0 && counts.periods >= 0, ab)
-      assert(about.jobs.queued >= 0, ab)
+      assert(counts.places.value >= 2, ab) // at least the two imported above
+      assert(counts.sources.value >= 0 && counts.periods.value >= 0, ab)
+      assert(about.jobs.queued.value >= 0, ab)
       b.stop()
     }
 
@@ -237,11 +240,11 @@ class PlacesHttpSuite extends com.histmersion.db.DbSuite:
       val (as, ab) = get(s"$url/api/about")
       assertEquals(as, 200, ab)
       val st = io.circe.parser.decode[About](ab).fold(e => fail(s"$e: $ab"), identity).storage
-      assert(!st.measuring, ab)
-      val db = st.entries.find(_.key == "database").getOrElse(fail(s"no database entry: $ab"))
-      assert(db.bytes.exists(_ > 0) && db.detail.exists(_.endsWith("_test")), db)
-      assert(st.tables.nonEmpty && st.tables.size <= cfg.storage.topTables, st.tables)
-      val bk = st.entries.find(_.key == "backups").getOrElse(fail(ab))
+      assert(!st.measuring.value, ab)
+      val db = st.entries.find(_.key.value == "database").getOrElse(fail(s"no database entry: $ab"))
+      assert(db.bytes.exists(_.value > 0) && db.detail.exists(_.value.endsWith("_test")), db)
+      assert(st.tables.nonEmpty && st.tables.size <= cfg.storage.topTables.value, st.tables)
+      val bk = st.entries.find(_.key.value == "backups").getOrElse(fail(ab))
       assertEquals(bk.bytes, Some(2048L))
       assertEquals(st.backups.map(_.count), Some(1))
       assert(st.volumes.nonEmpty, ab)
@@ -269,8 +272,8 @@ class PlacesHttpSuite extends com.histmersion.db.DbSuite:
             Place(
               com.histmersion.api.catalogue.Place.Id("zzn_lake"),
               com.histmersion.api.catalogue.Place.Label("Zzn Sea"),
-              com.histmersion.domain.catalogue.Place.Kind.Feature,
-              Some("""{"type":"Point","coordinates":[140.5,-20.5]}""")
+              Place.KindValue(com.histmersion.domain.catalogue.Place.Kind.Feature),
+              Some(Place.Geometry("""{"type":"Point","coordinates":[140.5,-20.5]}"""))
             ),
             List(Place.Name(com.histmersion.api.catalogue.Place.Name.Value("Zzn Sea")))
           )
@@ -361,8 +364,8 @@ class PlacesHttpSuite extends com.histmersion.db.DbSuite:
             Place(
               com.histmersion.api.catalogue.Place.Id("zzo_regio"),
               com.histmersion.api.catalogue.Place.Label("Zzo Regio XII"),
-              com.histmersion.domain.catalogue.Place.Kind.Site,
-              Some("""{"type":"Point","coordinates":[141.5,-21.3]}""")
+              Place.KindValue(com.histmersion.domain.catalogue.Place.Kind.Site),
+              Some(Place.Geometry("""{"type":"Point","coordinates":[141.5,-21.3]}"""))
             ),
             List(Place.Name(com.histmersion.api.catalogue.Place.Name.Value("Zzo Regio XII")))
           )
@@ -429,8 +432,8 @@ class PlacesHttpSuite extends com.histmersion.db.DbSuite:
             Place(
               com.histmersion.api.catalogue.Place.Id("zzo_dup"),
               com.histmersion.api.catalogue.Place.Label("Withdrawn: Zzo Regio XII"),
-              com.histmersion.domain.catalogue.Place.Kind.Site,
-              Some("""{"type":"Point","coordinates":[141.5,-21.3]}""")
+              Place.KindValue(com.histmersion.domain.catalogue.Place.Kind.Site),
+              Some(Place.Geometry("""{"type":"Point","coordinates":[141.5,-21.3]}"""))
             ),
             List(Place.Name(com.histmersion.api.catalogue.Place.Name.Value("Withdrawn: Zzo Regio XII")))
           ),
@@ -438,8 +441,8 @@ class PlacesHttpSuite extends com.histmersion.db.DbSuite:
             Place(
               com.histmersion.api.catalogue.Place.Id("zzo_road"),
               com.histmersion.api.catalogue.Place.Label("Withdrawn: Untitled"),
-              com.histmersion.domain.catalogue.Place.Kind.Site,
-              Some("""{"type":"Point","coordinates":[141.7,-21.7]}""")
+              Place.KindValue(com.histmersion.domain.catalogue.Place.Kind.Site),
+              Some(Place.Geometry("""{"type":"Point","coordinates":[141.7,-21.7]}"""))
             ),
             List(Place.Name(com.histmersion.api.catalogue.Place.Name.Value("Withdrawn: Untitled")))
           )

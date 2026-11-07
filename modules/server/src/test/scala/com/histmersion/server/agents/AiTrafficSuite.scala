@@ -84,7 +84,7 @@ class AiTrafficSuite extends munit.FunSuite:
 
   private val search = AgentTool.fromFunction[AgentSearchInput]("search", "Search the corpus by its filters")(in =>
     s"""{"total":2,"query":${io.circe.Json
-        .fromString(in.query.getOrElse(""))
+        .fromString(in.query.map(_.value).getOrElse(""))
         .noSpaces},"hits":["zz2001_a","zz2002_b"]}"""
   )
   private val facets = AgentTool.fromFunction[AgentFacetsInput]("facets", "The values of one field")(in =>
@@ -99,14 +99,14 @@ class AiTrafficSuite extends munit.FunSuite:
 
   private def call[A](
       schema: ResponseSchema[A],
-      iterations: Int,
-      maxTokens: Int = 16000,
+      iterations: LlmCall.MaxIterations,
+      maxTokens: LlmCall.MaxTokens = LlmCall.MaxTokens(16000),
       offered: List[AgentTool[Identity, ?]] = tools,
       interceptors: List[AgentInterceptor[Identity]] = Nil
   ): LlmCall[A] =
     LlmCall[A](
       com.histmersion.domain.automation.agents.LlmCall.System("You are a careful research assistant. Answer with JSON only."),
-      "Classify the source.\n<source>Tin was essential for bronze.</source>",
+      LlmCall.User("Classify the source.\n<source>Tin was essential for bronze.</source>"),
       offered,
       schema,
       iterations,
@@ -157,7 +157,7 @@ class AiTrafficSuite extends munit.FunSuite:
   // ── one scenario ───────────────────────────────────────────────────────────────────────────────
 
   private def loaded(text: String): LoadedConfig =
-    AppConfig.loadWithUserText(ConfigFactory.empty, text).fold(e => fail(e), identity)
+    AppConfig.loadWithUserText(ConfigFactory.empty, text).fold(e => fail(e.value), identity)
 
   private def providers(port: Int, extra: String = "", key: Boolean = true): String =
     val k = if key then "api-key = \"k-test\"\n" else ""
@@ -183,7 +183,10 @@ class AiTrafficSuite extends munit.FunSuite:
     up.script(answers)
     val l = loaded(text)
     val g = ServerPlugins.load(l, core = com.histmersion.domain.library.acquisition.CoreBudget(() => java.time.Instant.now(java.time.Clock.systemUTC())))
-    val f = LlmClient.factory(CliRuntime(l.config, EngineContributions.roster), () => g.registries.aiProviders)
+    val f = LlmClient.factory(
+      CliRuntime(l.config, EngineContributions.roster),
+      () => g.registries.aiProviders.map((k, p) => com.histmersion.util.plugins.Plugin.Id.assume(k.value) -> p)
+    )
     val sb = StringBuilder(s"## $name\n")
     f(l.config.agents, ref) match
       case Left(why)     => sb ++= s"client: refused: $why\n"
@@ -231,7 +234,7 @@ class AiTrafficSuite extends munit.FunSuite:
           up,
           "anthropic: two tools, three iterations (the last without tools), a typed answer",
           sonnet,
-          call(LibraryAnswers.classification, 3),
+          call(LibraryAnswers.classification, LlmCall.MaxIterations(3)),
           List(
             claude(
               List(
@@ -260,7 +263,7 @@ class AiTrafficSuite extends munit.FunSuite:
           up,
           "anthropic: a natural stop on the second iteration, a tool the step does not allow",
           sonnet,
-          call(AnswerSchemas.probe, 6, maxTokens = 2000),
+          call(AnswerSchemas.probe, LlmCall.MaxIterations(6), maxTokens = LlmCall.MaxTokens(2000)),
           List(
             claude(
               claudeTool("toolu_09", "query", """{"sql":"DELETE FROM sources"}"""),
@@ -275,7 +278,7 @@ class AiTrafficSuite extends munit.FunSuite:
           up,
           "anthropic: no tools, an answer schema with a description, cut at the token limit",
           sonnet,
-          call(pingSchema, 2, maxTokens = 64, offered = Nil),
+          call(pingSchema, LlmCall.MaxIterations(2), maxTokens = LlmCall.MaxTokens(64), offered = Nil),
           List(claude(claudeText("""{"word":"po"""), "max_tokens", usage = claudeUsagePlain)),
           base
         ),
@@ -283,7 +286,7 @@ class AiTrafficSuite extends munit.FunSuite:
           up,
           "anthropic: an answer that is not the schema's",
           sonnet,
-          call(AnswerSchemas.probe, 1),
+          call(AnswerSchemas.probe, LlmCall.MaxIterations(1)),
           List(claude(claudeText("""{"title":"no citekey"}"""), "end_turn", usage = claudeUsagePlain)),
           base
         ),
@@ -291,7 +294,7 @@ class AiTrafficSuite extends munit.FunSuite:
           up,
           "anthropic: a model without structured output",
           ModelRef(ProviderKind.Anthropic, com.histmersion.api.automation.Agents.ModelRef.Model("claude-3-haiku-20240307")),
-          call(AnswerSchemas.probe, 2),
+          call(AnswerSchemas.probe, LlmCall.MaxIterations(2)),
           Nil,
           base
         ),
@@ -299,7 +302,7 @@ class AiTrafficSuite extends munit.FunSuite:
           up,
           "anthropic: HTTP 500",
           sonnet,
-          call(AnswerSchemas.probe, 2),
+          call(AnswerSchemas.probe, LlmCall.MaxIterations(2)),
           List(json(claudeError("api_error", "Internal server error"), 500)),
           base
         ),
@@ -307,7 +310,7 @@ class AiTrafficSuite extends munit.FunSuite:
           up,
           "anthropic: HTTP 529 overloaded",
           sonnet,
-          call(AnswerSchemas.probe, 2),
+          call(AnswerSchemas.probe, LlmCall.MaxIterations(2)),
           List(json(claudeError("overloaded_error", "Overloaded"), 529)),
           base
         ),
@@ -315,7 +318,7 @@ class AiTrafficSuite extends munit.FunSuite:
           up,
           "anthropic: HTTP 429 with retry-after",
           sonnet,
-          call(AnswerSchemas.probe, 2),
+          call(AnswerSchemas.probe, LlmCall.MaxIterations(2)),
           List(
             json(
               claudeError("rate_limit_error", "Number of request tokens has exceeded your per-minute rate limit"),
@@ -329,7 +332,7 @@ class AiTrafficSuite extends munit.FunSuite:
           up,
           "anthropic: HTTP 401",
           sonnet,
-          call(AnswerSchemas.probe, 2),
+          call(AnswerSchemas.probe, LlmCall.MaxIterations(2)),
           List(json(claudeError("authentication_error", "invalid x-api-key"), 401)),
           base
         ),
@@ -337,7 +340,7 @@ class AiTrafficSuite extends munit.FunSuite:
           up,
           "anthropic: an error answer that is not JSON",
           sonnet,
-          call(AnswerSchemas.probe, 2),
+          call(AnswerSchemas.probe, LlmCall.MaxIterations(2)),
           List(Answer(502, "<html>Bad Gateway</html>", List("Content-Type" -> "text/html"))),
           base
         ),
@@ -345,7 +348,7 @@ class AiTrafficSuite extends munit.FunSuite:
           up,
           "anthropic: a malformed body",
           sonnet,
-          call(AnswerSchemas.probe, 2),
+          call(AnswerSchemas.probe, LlmCall.MaxIterations(2)),
           List(json("""{"id":"msg_01zz","type":"message","content":"oops"""")),
           base
         ),
@@ -353,7 +356,7 @@ class AiTrafficSuite extends munit.FunSuite:
           up,
           "anthropic: a body missing its usage",
           sonnet,
-          call(AnswerSchemas.probe, 2),
+          call(AnswerSchemas.probe, LlmCall.MaxIterations(2)),
           List(
             json(
               s"""{"id":"msg_01zz","type":"message","role":"assistant","model":"claude-sonnet-4-5","content":[${claudeText(
@@ -367,16 +370,16 @@ class AiTrafficSuite extends munit.FunSuite:
           up,
           "anthropic: nothing listens",
           sonnet,
-          call(AnswerSchemas.probe, 2),
+          call(AnswerSchemas.probe, LlmCall.MaxIterations(2)),
           Nil,
           providers(up.port) + s"""histmersion.agents.providers.anthropic.base-url = "http://127.0.0.1:$closed"\n"""
         ).replace(s"127.0.0.1:$closed", "127.0.0.1:<closed>"),
-        scenario(up, "anthropic: no key", sonnet, call(AnswerSchemas.probe, 2), Nil, providers(up.port, key = false)),
+        scenario(up, "anthropic: no key", sonnet, call(AnswerSchemas.probe, LlmCall.MaxIterations(2)), Nil, providers(up.port, key = false)),
         scenario(
           up,
           "anthropic: a base URL that is not one",
           sonnet,
-          call(AnswerSchemas.probe, 2),
+          call(AnswerSchemas.probe, LlmCall.MaxIterations(2)),
           Nil,
           base + "histmersion.agents.providers.anthropic.base-url = \"http://127.0.0.1:port/x\"\n"
         ),
@@ -384,7 +387,7 @@ class AiTrafficSuite extends munit.FunSuite:
           up,
           "anthropic: a relative base URL",
           sonnet,
-          call(AnswerSchemas.probe, 2),
+          call(AnswerSchemas.probe, LlmCall.MaxIterations(2)),
           Nil,
           base + "histmersion.agents.providers.anthropic.base-url = \"not a url\"\n"
         ),
@@ -392,7 +395,7 @@ class AiTrafficSuite extends munit.FunSuite:
           up,
           "anthropic: the final answer forced on the second iteration",
           sonnet,
-          call(AnswerSchemas.probe, 5, interceptors = List(finishNow)),
+          call(AnswerSchemas.probe, LlmCall.MaxIterations(5), interceptors = List(finishNow)),
           List(
             claude(claudeTool("toolu_05", "facets", """{"field":"tags"}"""), "tool_use", usage = claudeUsagePlain),
             claude(claudeText(probe), "end_turn", usage = claudeUsagePlain)
@@ -403,7 +406,7 @@ class AiTrafficSuite extends munit.FunSuite:
           up,
           "anthropic: an error in a 200 answer",
           sonnet,
-          call(AnswerSchemas.probe, 2),
+          call(AnswerSchemas.probe, LlmCall.MaxIterations(2)),
           List(json(claudeError("overloaded_error", "Overloaded"))),
           base
         ),
@@ -411,7 +414,7 @@ class AiTrafficSuite extends munit.FunSuite:
           up,
           "anthropic: a 200 answer that is a JSON array",
           sonnet,
-          call(AnswerSchemas.probe, 2),
+          call(AnswerSchemas.probe, LlmCall.MaxIterations(2)),
           List(json("[]")),
           base
         ),
@@ -419,7 +422,7 @@ class AiTrafficSuite extends munit.FunSuite:
           up,
           "anthropic: an error answer with an empty body",
           sonnet,
-          call(AnswerSchemas.probe, 2),
+          call(AnswerSchemas.probe, LlmCall.MaxIterations(2)),
           List(Answer(500, "")),
           base
         ),
@@ -427,7 +430,7 @@ class AiTrafficSuite extends munit.FunSuite:
           up,
           "anthropic: no answer within timeout-seconds",
           sonnet,
-          call(AnswerSchemas.probe, 2),
+          call(AnswerSchemas.probe, LlmCall.MaxIterations(2)),
           List(Answer(200, "{}", delayMs = 2500)),
           base + "histmersion.agents.providers.anthropic.timeout-seconds = 1\n"
         ),
@@ -435,7 +438,7 @@ class AiTrafficSuite extends munit.FunSuite:
           up,
           "anthropic: a base URL with a trailing slash",
           sonnet,
-          call(AnswerSchemas.probe, 1),
+          call(AnswerSchemas.probe, LlmCall.MaxIterations(1)),
           List(claude(claudeText(probe), "end_turn", usage = claudeUsagePlain)),
           base + s"""histmersion.agents.providers.anthropic.base-url = "http://127.0.0.1:${up.port}/anthropic/"\n"""
         ),
@@ -443,7 +446,7 @@ class AiTrafficSuite extends munit.FunSuite:
           up,
           "anthropic: an ftp base URL",
           sonnet,
-          call(AnswerSchemas.probe, 2),
+          call(AnswerSchemas.probe, LlmCall.MaxIterations(2)),
           Nil,
           base + "histmersion.agents.providers.anthropic.base-url = \"ftp://127.0.0.1/x\"\n"
         ),
@@ -451,7 +454,7 @@ class AiTrafficSuite extends munit.FunSuite:
           up,
           "anthropic: switched off",
           sonnet,
-          call(AnswerSchemas.probe, 2),
+          call(AnswerSchemas.probe, LlmCall.MaxIterations(2)),
           Nil,
           base + "histmersion.plugins.ai-anthropic.enabled = false\n"
         ),
@@ -460,7 +463,7 @@ class AiTrafficSuite extends munit.FunSuite:
           up,
           "openai (strict tools): two tools, three iterations, a call without an id, a typed answer",
           gpt,
-          call(LibraryAnswers.classification, 3),
+          call(LibraryAnswers.classification, LlmCall.MaxIterations(3)),
           List(
             openai(
               openaiTools(
@@ -487,7 +490,7 @@ class AiTrafficSuite extends munit.FunSuite:
           up,
           "openai (strict tools off): a natural stop, an answer schema with a description",
           gpt,
-          call(pingSchema, 4, maxTokens = 500),
+          call(pingSchema, LlmCall.MaxIterations(4), maxTokens = LlmCall.MaxTokens(500)),
           List(
             openai(
               openaiTools(openaiCall(Some("call_zzC"), "facets", """{"field":"tags"}""")),
@@ -502,7 +505,7 @@ class AiTrafficSuite extends munit.FunSuite:
           up,
           "openai: cut at the token limit",
           gpt,
-          call(AnswerSchemas.probe, 2, maxTokens = 32),
+          call(AnswerSchemas.probe, LlmCall.MaxIterations(2), maxTokens = LlmCall.MaxTokens(32)),
           List(openai(openaiText("""{"citekey":"zz"""), "length", usage = openaiUsagePlain)),
           base
         ),
@@ -510,7 +513,7 @@ class AiTrafficSuite extends munit.FunSuite:
           up,
           "openai: a content filter stop",
           gpt,
-          call(AnswerSchemas.probe, 2),
+          call(AnswerSchemas.probe, LlmCall.MaxIterations(2)),
           List(openai("""{"role":"assistant","content":null}""", "content_filter", usage = openaiUsagePlain)),
           base
         ),
@@ -518,7 +521,7 @@ class AiTrafficSuite extends munit.FunSuite:
           up,
           "openai: HTTP 500",
           gpt,
-          call(AnswerSchemas.probe, 2),
+          call(AnswerSchemas.probe, LlmCall.MaxIterations(2)),
           List(
             json(
               openaiError("The server had an error while processing your request.", "server_error", "server_error"),
@@ -531,7 +534,7 @@ class AiTrafficSuite extends munit.FunSuite:
           up,
           "openai: HTTP 429 with retry-after",
           gpt,
-          call(AnswerSchemas.probe, 2),
+          call(AnswerSchemas.probe, LlmCall.MaxIterations(2)),
           List(
             json(
               openaiError("Rate limit reached for gpt-5 on tokens per min.", "tokens", "rate_limit_exceeded"),
@@ -545,7 +548,7 @@ class AiTrafficSuite extends munit.FunSuite:
           up,
           "openai: HTTP 401",
           gpt,
-          call(AnswerSchemas.probe, 2),
+          call(AnswerSchemas.probe, LlmCall.MaxIterations(2)),
           List(json(openaiError("Incorrect API key provided.", "invalid_request_error", "invalid_api_key"), 401)),
           base
         ),
@@ -553,7 +556,7 @@ class AiTrafficSuite extends munit.FunSuite:
           up,
           "openai: a malformed body",
           gpt,
-          call(AnswerSchemas.probe, 2),
+          call(AnswerSchemas.probe, LlmCall.MaxIterations(2)),
           List(json("""{"id":"chatcmpl-zz1","choices":"oops"}""")),
           base
         ),
@@ -561,7 +564,7 @@ class AiTrafficSuite extends munit.FunSuite:
           up,
           "openai: an error answer that is not JSON",
           gpt,
-          call(AnswerSchemas.probe, 2),
+          call(AnswerSchemas.probe, LlmCall.MaxIterations(2)),
           List(Answer(503, "upstream unavailable", List("Content-Type" -> "text/plain"))),
           base
         ),
@@ -569,7 +572,7 @@ class AiTrafficSuite extends munit.FunSuite:
           up,
           "openai: text beside a tool call, a call without a function name",
           gpt,
-          call(AnswerSchemas.probe, 3),
+          call(AnswerSchemas.probe, LlmCall.MaxIterations(3)),
           List(
             openai(
               s"""{"role":"assistant","content":"Checking the tags.","tool_calls":[${openaiCall(
@@ -588,7 +591,7 @@ class AiTrafficSuite extends munit.FunSuite:
           up,
           "openai: a 200 answer that is a JSON array",
           gpt,
-          call(AnswerSchemas.probe, 2),
+          call(AnswerSchemas.probe, LlmCall.MaxIterations(2)),
           List(json("[]")),
           base
         ),
@@ -596,7 +599,7 @@ class AiTrafficSuite extends munit.FunSuite:
           up,
           "openai: a choice without its role",
           gpt,
-          call(AnswerSchemas.probe, 2),
+          call(AnswerSchemas.probe, LlmCall.MaxIterations(2)),
           List(openai("""{"content":"x"}""", "stop", usage = openaiUsagePlain)),
           base
         ),
@@ -604,7 +607,7 @@ class AiTrafficSuite extends munit.FunSuite:
           up,
           "openai: an answer without its usage",
           gpt,
-          call(AnswerSchemas.probe, 2),
+          call(AnswerSchemas.probe, LlmCall.MaxIterations(2)),
           List(
             json(
               s"""{"id":"chatcmpl-zz1","object":"chat.completion","created":1761900000,"model":"gpt-5","choices":[{"index":0,"message":${openaiText(
@@ -618,7 +621,7 @@ class AiTrafficSuite extends munit.FunSuite:
           up,
           "openai: an error object without a message",
           gpt,
-          call(AnswerSchemas.probe, 2),
+          call(AnswerSchemas.probe, LlmCall.MaxIterations(2)),
           List(json("""{"error":{"type":"server_error","code":null}}""", 500)),
           base
         ),
@@ -626,7 +629,7 @@ class AiTrafficSuite extends munit.FunSuite:
           up,
           "openai: an error that is null",
           gpt,
-          call(AnswerSchemas.probe, 2),
+          call(AnswerSchemas.probe, LlmCall.MaxIterations(2)),
           List(json("""{"error":null}""", 500)),
           base
         ),
@@ -634,7 +637,7 @@ class AiTrafficSuite extends munit.FunSuite:
           up,
           "openai: HTTP 404 in another shape",
           gpt,
-          call(AnswerSchemas.probe, 2),
+          call(AnswerSchemas.probe, LlmCall.MaxIterations(2)),
           List(json("""{"statusCode":404,"message":"Resource not found"}""", 404)),
           base
         ),
@@ -642,17 +645,17 @@ class AiTrafficSuite extends munit.FunSuite:
           up,
           "openai: HTTP 400 with a long body",
           gpt,
-          call(AnswerSchemas.probe, 2),
+          call(AnswerSchemas.probe, LlmCall.MaxIterations(2)),
           List(Answer(400, "x" * 700)),
           base
         ),
-        scenario(up, "openai: no key", gpt, call(AnswerSchemas.probe, 2), Nil, providers(up.port, key = false)),
+        scenario(up, "openai: no key", gpt, call(AnswerSchemas.probe, LlmCall.MaxIterations(2)), Nil, providers(up.port, key = false)),
         // ── local ──
         scenario(
           up,
           "local (no key): two tools, two iterations",
           qwen,
-          call(AnswerSchemas.probe, 2),
+          call(AnswerSchemas.probe, LlmCall.MaxIterations(2)),
           List(
             openai(
               openaiTools(openaiCall(Some("call_1"), "search", """{"query":"tin"}""")),
@@ -668,7 +671,7 @@ class AiTrafficSuite extends munit.FunSuite:
           up,
           "local with a key and strict tools",
           qwen,
-          call(LibraryAnswers.findings, 1),
+          call(LibraryAnswers.findings, LlmCall.MaxIterations(1)),
           List(openai(openaiText("""{"findings":[]}"""), "stop", model = "qwen3-coder", usage = openaiUsagePlain)),
           base + "histmersion.agents.providers.local { api-key = \"k-local\", strict-tools = true }\n"
         ),
@@ -676,7 +679,7 @@ class AiTrafficSuite extends munit.FunSuite:
           up,
           "local: a base URL with a trailing slash",
           qwen,
-          call(AnswerSchemas.probe, 1),
+          call(AnswerSchemas.probe, LlmCall.MaxIterations(1)),
           List(openai(openaiText(probe), "stop", model = "qwen3-coder", usage = openaiUsagePlain)),
           base + s"""histmersion.agents.providers.local.base-url = "http://127.0.0.1:${up.port}/local/v1/"\n"""
         ),
@@ -684,7 +687,7 @@ class AiTrafficSuite extends munit.FunSuite:
           up,
           "local: nothing listens",
           qwen,
-          call(AnswerSchemas.probe, 2),
+          call(AnswerSchemas.probe, LlmCall.MaxIterations(2)),
           Nil,
           base + s"""histmersion.agents.providers.local.base-url = "http://127.0.0.1:$closed/v1"\n"""
         ).replace(s"127.0.0.1:$closed", "127.0.0.1:<closed>")
@@ -695,7 +698,9 @@ class AiTrafficSuite extends munit.FunSuite:
 
   /** The User-Agent the host's AI client sends (its policy: the project, never an e-mail). */
   private val hostAgent =
-    com.histmersion.domain.HttpPolicy.userAgent(s"Histmersion/${com.histmersion.api.instance.Version.version} (agents)")
+    com.histmersion.domain.HttpPolicy.userAgent(
+      com.histmersion.domain.HttpPolicy.UserAgent(s"Histmersion/${com.histmersion.api.instance.Version.version} (agents)")
+    )
 
   /** The transcript as the host's AI client sends it: the two headers that belonged to the transport the providers had
     * before (sttp's java.net.http backend: the JDK's default User-Agent and a gzip `Accept-Encoding`, which it decoded)

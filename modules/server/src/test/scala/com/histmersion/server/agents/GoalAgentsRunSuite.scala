@@ -14,7 +14,7 @@ import com.histmersion.domain.research.articles.ArticleFixtures
 import com.histmersion.domain.library.workflows.*
 
 import com.histmersion.domain.automation.agents.{AgentsControllers, Engine, LlmClient}
-import com.histmersion.domain.automation.managers.Zero
+import com.histmersion.domain.automation.managers.{ManagerLight, Zero}
 
 import com.augustnagro.magnum.*
 import com.histmersion.config.*
@@ -29,8 +29,15 @@ import io.circe.Json
 import sttp.ai.core.agent.*
 import com.histmersion.db.*
 import com.histmersion.api.automation.{AgentsApi, Goal}
+import com.histmersion.Year
+import com.histmersion.RowCount
+import com.histmersion.domain.automation.{Approval, Goal as DomainGoal, Run}
+import com.histmersion.domain.library.{Citekey, Doi}
+import com.histmersion.domain.library.search.Search
+import com.histmersion.util.jobs.Job
 import com.histmersion.api.library.{
   Assessment,
+  Candidates,
   CandidateSweep,
   DiscoverResult,
   FollowupRow,
@@ -49,46 +56,53 @@ final class StubUpstream extends AgentUpstream:
   @volatile var citing: Map[String, List[FollowupRow]] = Map.empty
   @volatile var found: Map[String, List[WorkRef]] = Map.empty
   val calls = java.util.concurrent.ConcurrentLinkedQueue[String]()
-  def meta(doi: String) = { calls.add(s"meta $doi"); metas.get(doi).toRight(s"$doi: not found upstream") }
-  def refs(citekey: String, apply: Boolean) = Left("not stubbed")
-  def assess(citekey: String, apply: Boolean) =
+  def meta(doi: Doi) = { calls.add(s"meta $doi"); metas.get(doi.value).toRight(AgentUpstream.Problem(s"$doi: not found upstream")) }
+  def refs(citekey: Citekey, apply: AgentUpstream.RefsApply) = Left(AgentUpstream.Problem("not stubbed"))
+  def assess(citekey: Citekey, apply: AgentUpstream.AssessApply) =
     calls.add(s"assess $citekey")
-    Right(Assessment(citekey, None, Some(citekey), None, None, None, com.histmersion.api.library.Assessment.IsRetracted(false), Nil, Nil, com.histmersion.api.library.Assessment.Flagged(false), com.histmersion.api.library.Assessment.Verdict("current"), com.histmersion.api.library.Assessment.Recommendation("fine")))
-  def followups(id: String, since: Option[Int], limit: Option[Int]) =
+    Right(Assessment(Assessment.Target(citekey.value), None, Some(com.histmersion.api.library.Citekey(citekey.value)), None, None, None, Assessment.IsRetracted(false), Nil, Nil, Assessment.Flagged(false), Assessment.Verdict("current"), Assessment.Recommendation("fine")))
+  def followups(id: AgentUpstream.FollowupsId, since: Option[Year], limit: Option[FollowupsInput.Limit]) =
     calls.add(s"followups $id")
-    val rows = citing.getOrElse(id, Nil)
-    Right(FollowupsResult(id, None, com.histmersion.api.library.FollowupsResult.Backend("stub"), rows.size, com.histmersion.api.library.FollowupsResult.EdgesAdded(0), rows))
-  def discover(query: String, limit: Int) =
+    val rows = citing.getOrElse(id.value, Nil)
+    Right(FollowupsResult(FollowupsResult.Target(id.value), None, FollowupsResult.Backend("stub"), FollowupsResult.Count(rows.size), FollowupsResult.EdgesAdded(0), rows))
+  def discover(query: Search.Query, limit: AgentUpstream.Limit) =
     calls.add(s"discover $query")
-    val ws = found.getOrElse(query, Nil)
-    Right(DiscoverResult(query, ws.size, ws))
+    val ws = found.getOrElse(query.value, Nil)
+    Right(DiscoverResult(DiscoverResult.Query(query.value), DiscoverResult.Count(ws.size), ws))
 
   /** A watcher's legal ingest: what `onIngest` answers (nothing connected by default). */
   @volatile var onIngest: String => Either[String, Ingest.Report] = _ => Left("not stubbed")
-  override def ingestLegal(doi: String) = { calls.add(s"ingest $doi"); onIngest(doi) }
+  override def ingestLegal(doi: Doi) = { calls.add(s"ingest $doi"); onIngest(doi.value).left.map(AgentUpstream.Problem(_)) }
 
   /** The deterministic candidate search: what each goal's sweep finds (not connected unless set). */
-  @volatile var sweepFinds: Map[String, List[com.histmersion.api.library.Source.Candidate]] = Map.empty
-  private val marked = java.util.concurrent.ConcurrentHashMap[Long, String]()
-  override def sweepCandidates(goal: String, dryRun: Boolean) =
+  @volatile var sweepFinds: Map[String, List[Source.Candidate]] = Map.empty
+  private val marked = java.util.concurrent.ConcurrentHashMap[Source.Candidate.Id, Candidates.State.Wire]()
+  override def sweepCandidates(goal: DomainGoal.Slug, dryRun: AgentUpstream.SweepCandidatesDryRun) =
     calls.add(s"sweep $goal")
     sweepFinds
-      .get(goal)
-      .toRight("the candidate search is not connected")
+      .get(goal.value)
+      .toRight(AgentUpstream.Problem("the candidate search is not connected"))
       .map(cs =>
-        CandidateSweep(goal, Nil, cs.size, cs.size, com.histmersion.api.library.CandidateSweep.Again(0), Map.empty, cs.count(c => !marked.containsKey(c.id)), dryRun)
+        CandidateSweep(CandidateSweep.Goal(goal.value), Nil, CandidateSweep.Found(cs.size), CandidateSweep.Added(cs.size), CandidateSweep.Again(0), Map.empty, CandidateSweep.Unseen(cs.count(c => !marked.containsKey(c.id))), CandidateSweep.DryRun(dryRun.value))
       )
-  override def candidates(goal: String, state: String, limit: Int) =
+  override def candidates(goal: DomainGoal.Slug, state: Candidates.State.Wire, limit: AgentUpstream.Limit) =
     Right(
       sweepFinds
-        .getOrElse(goal, Nil)
-        .map(c => c.modify(_.state).setTo(Option(marked.get(c.id)).getOrElse(c.state)))
-        .filter(_.state == state)
-        .take(limit)
+        .getOrElse(goal.value, Nil)
+        .map(c => c.modify(_.state).setTo(Option(marked.get(c.id)).map(w => Source.Candidate.State(w.value)).getOrElse(c.state)))
+        .filter(_.state == Source.Candidate.State(state.value))
+        .take(limit.value)
     )
-  override def markCandidates(ids: List[Long], state: String) =
+  override def markCandidates(ids: List[Source.Candidate.Id], state: Candidates.State.Wire) =
     ids.foreach(i => marked.put(i, state))
-    Right(ids.size)
+    Right(RowCount(ids.size))
+
+/** The domain ids of what the API answered with, for the suites that drive the engine and the repositories by hand. */
+object ApiIds:
+  def run(id: RunInfo.Id): Run.Id = Run.Id.assume(id.value)
+  def job(id: RunInfo.Id): Job.Id = Job.Id.assume(id.value)
+  def approval(id: ApprovalInfo.Id): Approval.Id = Approval.Id.assume(id.value)
+  def manager(id: com.histmersion.api.automation.Managers.ManagerInfo.Id): ManagerLight.Id = ManagerLight.Id(id.value)
 
 /** The P3 pipelines that WAIT for a person, end to end against a `*_test` database with a scripted model: plan-goal
   * (nothing is created before the plan is approved; approval re-queues the run, which applies exactly the approved
@@ -101,10 +115,23 @@ class GoalAgentsRunSuite extends com.histmersion.db.DbSuite with com.histmersion
   override def munitIgnore: Boolean = testDb.isEmpty
   override val munitTimeout = scala.concurrent.duration.Duration(120, "s")
 
-  private val Goal = "zzagent-goal"
-  private val Ck = "zzagent2019_tin"
-  private val Ck2 = "zzagent2024_iso"
-  private val Slug = "zzagent_tin"
+  private val Goal = DomainGoal.Slug("zzagent-goal")
+  private val GoalSlug = com.histmersion.api.automation.Goal.Slug("zzagent-goal")
+  private val GoalTarget = RunRequest.Target("zzagent-goal")
+  private val GoalSubject = ApprovalInfo.Subject("zzagent-goal")
+  private val Ck = Citekey("zzagent2019_tin")
+  private val ApiCk = com.histmersion.api.library.Citekey("zzagent2019_tin")
+  private val Ck2 = Citekey("zzagent2024_iso")
+  private val CkTarget = RunRequest.Target("zzagent2019_tin")
+  private val Slug = com.histmersion.domain.research.Slug("zzagent_tin")
+  private val SlugTarget = RunRequest.Target("zzagent_tin")
+  private val SlugSubject = ApprovalInfo.Subject("zzagent_tin")
+  private val SlugRef = GoalLink.Ref("zzagent_tin")
+  private val PlanGoal = RunRequest.Pipeline("plan-goal")
+  private val CompileArticle = RunRequest.Pipeline("compile-article")
+  private val EnrichSource = RunRequest.Pipeline("enrich-source")
+  private val ZzTitle = RunRequest.Title("Zz tin")
+  private val TinTopics = List(RunRequest.Topics("zzagent_tin"))
   private val Model = ModelRef(ProviderKind.Local, com.histmersion.api.automation.Agents.ModelRef.Model("scripted"))
   private val Usage1 = Some(TokenUsage(Tokens(1000), Tokens(100), Tokens.Zero, Tokens.Zero))
 
@@ -160,7 +187,7 @@ class GoalAgentsRunSuite extends com.histmersion.db.DbSuite with com.histmersion
             status = Some(Source.Status.Current),
             summary = Some(com.histmersion.api.library.Source.Summary("The Uluburun ship carried ten tons of copper and one ton of tin.")),
             body = Some(
-              "The Uluburun ship carried ten tons of copper and one ton of tin. Its cargo dates to about 1320 BCE."
+              Source.OcrMarkdown("The Uluburun ship carried ten tons of copper and one ton of tin. Its cargo dates to about 1320 BCE.")
             )
           )
         )
@@ -174,7 +201,7 @@ class GoalAgentsRunSuite extends com.histmersion.db.DbSuite with com.histmersion
             title = com.histmersion.api.library.Title("Tin isotopes"),
             year = (Some(2024)).map(com.histmersion.api.catalogue.Year.apply),
             topics = List(com.histmersion.api.library.Source.Topics("zzagent_tin")),
-            body = Some("We show that the tin of the Uluburun cargo came from Central Asia, not Anatolia.")
+            body = Some(Source.OcrMarkdown("We show that the tin of the Uluburun cargo came from Central Asia, not Anatolia."))
           )
         )
         .isRight
@@ -198,19 +225,19 @@ class GoalAgentsRunSuite extends com.histmersion.db.DbSuite with com.histmersion
     )
 
   private def start(a: AgentsControllers, req: RunRequest): RunInfo =
-    val run = a.startRun(req).fold(e => fail(e.message), identity)
-    a.engine.execute(run.id)
+    val run = a.startRun(req).fold(e => fail(e.message.value), identity)
+    a.engine.execute(ApiIds.run(run.id))
     connect(ds)(AgentRepo.get(run.id)).get
 
   /** Why a run stopped where it did: its error and every failed attempt's note. */
   private def why(r: RunInfo): String =
-    (r.error.toList ++ connect(ds)(AgentRepo.steps(r.id, com.histmersion.domain.automation.agents.AgentRepo.OutputChars(200)))
+    (r.error.toList ++ connect(ds)(AgentRepo.steps(ApiIds.job(r.id), com.histmersion.domain.automation.agents.AgentRepo.OutputChars(200)))
       .filter(_.error.isDefined)
       .map(s => s"${s.name}#${s.attempt}: ${s.error.get}"))
       .mkString("\n")
 
-  private def runAgain(a: AgentsControllers, id: String): RunInfo =
-    a.engine.execute(id)
+  private def runAgain(a: AgentsControllers, id: RunInfo.Id): RunInfo =
+    a.engine.execute(ApiIds.run(id))
     connect(ds)(AgentRepo.get(id)).get
 
   // ── plan-goal ──────────────────────────────────────────────────────────────────────────────────
@@ -227,7 +254,7 @@ class GoalAgentsRunSuite extends com.histmersion.db.DbSuite with com.histmersion
         doi = (Some("10.5555/zzagent.in")).map(com.histmersion.api.library.Doi.apply),
         title = (Some("Bronze Age tin")).map(com.histmersion.api.library.Title.apply),
         year = (Some(2019)).map(com.histmersion.api.catalogue.Year.apply),
-        citekey = (Some(Ck)).map(com.histmersion.api.library.Citekey.apply),
+        citekey = Some(ApiCk),
         inDb = com.histmersion.api.library.WorkRef.InDb(true)
       ),
       "10.5555/zzagent.out" -> WorkRef(
@@ -242,7 +269,7 @@ class GoalAgentsRunSuite extends com.histmersion.db.DbSuite with com.histmersion
     val c = ScriptedClient(Model)
     c.scripts ++= List(Seq(tool("facets", """{"field":"topics"}"""), text(planJson)))
     val (a, h, up) = handlers(c); seed(h); stubPlan(up)
-    val run = start(a, RunRequest(com.histmersion.api.automation.Agents.RunRequest.Pipeline("plan-goal"), Goal))
+    val run = start(a, RunRequest(PlanGoal, GoalTarget))
     assertEquals(run.status, "waiting", why(run))
     assertEquals((run.goal, run.targetKind), (Some(Goal), "goal"))
     // the planner was offered read tools only, and the DOIs were looked up before anyone saw them
@@ -252,19 +279,19 @@ class GoalAgentsRunSuite extends com.histmersion.db.DbSuite with com.histmersion
       up.calls.asScala.toList.filter(_.startsWith("meta")).sorted,
       List("meta 10.5555/zzagent.ghost", "meta 10.5555/zzagent.in", "meta 10.5555/zzagent.out")
     )
-    val open = a.approvalsList(None, None).toOption.get.filter(_.subject.contains(Goal))
+    val open = a.approvalsList(None, None).toOption.get.filter(_.subject.contains(GoalSubject))
     assertEquals(open.map(_.kind), List("goal-plan"))
     val plan = open.head.plan.get
     assertEquals(
       plan.works.map(w => (w.doi, w.inCorpus)),
       List(("10.5555/zzagent.in", true), ("10.5555/zzagent.out", false))
     )
-    assert(plan.dropped.exists(_.contains("10.5555/zzagent.ghost")), plan.dropped)
+    assert(plan.dropped.exists(_.value.contains("10.5555/zzagent.ghost")), plan.dropped)
     assert(!Transactor(ds).read(GoalRepo.exists(com.histmersion.domain.automation.Goal.Slug("zzagent-tin-mines"))), "nothing is created before approval")
     assertEquals(connect(ds)(GoalLinkRepo.links(Goal)), Nil)
 
     // approve: the run goes back to the queue and applies exactly the approved plan
-    val decided = a.decide(open.head.id, com.histmersion.domain.automation.Approval.Outcome("approve"), DecisionRequest(Some(com.histmersion.api.automation.Approval.Note("good plan")))).toOption.get
+    val decided = a.decide(ApiIds.approval(open.head.id), Approval.Outcome("approve"), DecisionRequest(Some(com.histmersion.api.automation.Approval.Note("good plan")))).toOption.get
     assertEquals(decided.state, "approved")
     assertEquals(connect(ds)(AgentRepo.get(run.id)).get.status, "queued")
     val done = runAgain(a, run.id)
@@ -276,39 +303,39 @@ class GoalAgentsRunSuite extends com.histmersion.db.DbSuite with com.histmersion
       links.map(l => (l.kind, l.ref)).filter(_._1 != LinkKind.QueueItem),
       List((LinkKind.Source, Ck), (LinkKind.Query, "Bronze Age tin isotopes"))
     )
-    val items = h.workListView.list(com.histmersion.domain.automation.worklists.WorkListControllers.KindOfList("acquire"), all = com.histmersion.server.views.WorkListView.IncludeAll(false)).toOption.get.items.filter(_.text.contains("zzagent.out"))
+    val items = h.workListView.list(com.histmersion.domain.automation.worklists.WorkListControllers.KindOfList("acquire"), all = com.histmersion.server.views.WorkListView.IncludeAll(false)).toOption.get.items.filter(_.text.value.contains("zzagent.out"))
     assertEquals(items.size, 1)
-    assert(items.head.text.contains("https://doi.org/10.5555/zzagent.out — for goal zzagent-goal"), items.head.text)
-    assert(links.exists(l => l.kind == LinkKind.QueueItem && l.ref == items.head.id.toString))
+    assert(items.head.text.value.contains("https://doi.org/10.5555/zzagent.out — for goal zzagent-goal"), items.head.text)
+    assert(links.exists(l => l.kind == LinkKind.QueueItem && l.ref == GoalLink.Ref(items.head.id.toString)))
     assert(
       a.goalView(Goal).toOption.get.plan.exists(_.queries == List("Bronze Age tin isotopes")),
       "the approved plan is kept"
     )
-    val steps = connect(ds)(AgentRepo.steps(run.id, com.histmersion.domain.automation.agents.AgentRepo.OutputChars(50))).map(_.name)
+    val steps = connect(ds)(AgentRepo.steps(ApiIds.job(run.id), com.histmersion.domain.automation.agents.AgentRepo.OutputChars(50))).map(_.name)
     assertEquals(steps, List("load", "propose", "verify", "approve", "apply"))
     // deciding twice is refused
-    assert(a.decide(open.head.id, com.histmersion.domain.automation.Approval.Outcome("reject"), DecisionRequest()).left.exists(_.code.contains(AgentsApi.CodeConflict)))
+    assert(a.decide(ApiIds.approval(open.head.id), Approval.Outcome("reject"), DecisionRequest()).left.exists(_.code.exists(_.value == AgentsApi.CodeConflict)))
 
   test("plan-goal: a rejected plan changes nothing; a cancelled waiting run rejects its approval"):
     val c = ScriptedClient(Model)
     c.scripts ++= List(Seq(text(planJson)), Seq(text(planJson)))
     val (a, h, up) = handlers(c); seed(h); stubPlan(up)
-    val run = start(a, RunRequest(com.histmersion.api.automation.Agents.RunRequest.Pipeline("plan-goal"), Goal))
-    val id = a.approvalsList(None, None).toOption.get.find(_.subject.contains(Goal)).get.id
-    assert(a.decide(id, com.histmersion.domain.automation.Approval.Outcome("reject"), DecisionRequest()).isRight)
+    val run = start(a, RunRequest(PlanGoal, GoalTarget))
+    val id = a.approvalsList(None, None).toOption.get.find(_.subject.contains(GoalSubject)).get.id
+    assert(a.decide(ApiIds.approval(id), Approval.Outcome("reject"), DecisionRequest()).isRight)
     val done = runAgain(a, run.id)
     assertEquals(done.status, "done", done.error)
-    assert(done.progress.exists(_.contains("rejected")), done.progress)
+    assert(done.progress.exists(_.value.contains("rejected")), done.progress)
     assert(!Transactor(ds).read(GoalRepo.exists(com.histmersion.domain.automation.Goal.Slug("zzagent-tin-mines"))))
     assertEquals(connect(ds)(GoalLinkRepo.links(Goal)), Nil)
-    assert(h.workListView.list(com.histmersion.domain.automation.worklists.WorkListControllers.KindOfList("acquire"), all = com.histmersion.server.views.WorkListView.IncludeAll(true)).toOption.get.items.forall(!_.text.contains("zzagent.out")))
+    assert(h.workListView.list(com.histmersion.domain.automation.worklists.WorkListControllers.KindOfList("acquire"), all = com.histmersion.server.views.WorkListView.IncludeAll(true)).toOption.get.items.forall(!_.text.value.contains("zzagent.out")))
 
-    val second = start(a, RunRequest(com.histmersion.api.automation.Agents.RunRequest.Pipeline("plan-goal"), Goal))
+    val second = start(a, RunRequest(PlanGoal, GoalTarget))
     assertEquals(second.status, "waiting")
-    assertEquals(a.control(second.id, com.histmersion.api.automation.Agents.Action("cancel"), None, None).map(_.status), Right("cancelled"))
-    val closed = TestRuns.approvals(ds).forStep(second.id, com.histmersion.domain.automation.agents.ApprovalService.StepSeq(4)).get
+    assertEquals(a.control(ApiIds.run(second.id), com.histmersion.api.automation.Agents.Action("cancel"), None, None).map(_.status), Right("cancelled"))
+    val closed = TestRuns.approvals(ds).forStep(ApiIds.job(second.id), com.histmersion.domain.automation.agents.ApprovalService.StepSeq(4)).get
     assertEquals(closed.state, "rejected")
-    assert(a.control(second.id, com.histmersion.api.automation.Agents.Action("resume"), None, None).isLeft)
+    assert(a.control(ApiIds.run(second.id), com.histmersion.api.automation.Agents.Action("resume"), None, None).isLeft)
 
   // ── compile-article ──────────────────────────────────────────────────────────────────────────────
 
@@ -350,11 +377,11 @@ class GoalAgentsRunSuite extends com.histmersion.db.DbSuite with com.histmersion
     val (a, h, _) = handlers(c); seed(h)
     val run = start(
       a,
-      RunRequest(com.histmersion.api.automation.Agents.RunRequest.Pipeline("compile-article"), Slug, title = Some("Zz tin"), topics = List("zzagent_tin"), goal = Some(Goal))
+      RunRequest(CompileArticle, SlugTarget, title = Some(ZzTitle), topics = TinTopics, goal = Some(GoalSlug))
     )
     assertEquals(run.status, "waiting", why(run))
     assert(h.research.articles.get(Slug).isLeft, "nothing is written before approval")
-    val steps = connect(ds)(AgentRepo.steps(run.id, com.histmersion.domain.automation.agents.AgentRepo.OutputChars(4000)))
+    val steps = connect(ds)(AgentRepo.steps(ApiIds.job(run.id), com.histmersion.domain.automation.agents.AgentRepo.OutputChars(4000)))
     assertEquals(
       steps.map(s => (s.name, s.status)),
       List(
@@ -367,37 +394,37 @@ class GoalAgentsRunSuite extends com.histmersion.db.DbSuite with com.histmersion
         ("draft", "done")
       )
     )
-    assert(steps.exists(s => s.name == "draft" && s.error.exists(_.contains("does not say it is contested"))), steps)
+    assert(steps.exists(s => s.name.value == "draft" && s.error.exists(_.value.contains("does not say it is contested"))), steps)
     // the extraction saw the record as data and was offered no tool; the writer only the dry run of its draft
     val offered = c.steps.map(_.flatMap(_.toolsOffered).map(_.name).toSet)
     assertEquals(offered.toSet, Set(Set.empty[String], Set("check_edits")))
     assert(offered.dropRight(2).forall(_.isEmpty), offered)
-    val appr = a.approvalsList(None, None).toOption.get.find(_.subject.contains(Slug)).get
+    val appr = a.approvalsList(None, None).toOption.get.find(_.subject.contains(SlugSubject)).get
     assertEquals(appr.kind, "article-publish")
     val d = appr.article.get
     assertEquals((d.mode, d.title, d.kind), (DraftMode.Create, "Zz tin", "concept"))
     assertEquals(d.cited.toSet, Set(Ck, Ck2))
     assertEquals(d.problems, Nil)
 
-    assert(a.decide(appr.id, com.histmersion.domain.automation.Approval.Outcome("approve"), DecisionRequest()).isRight)
+    assert(a.decide(ApiIds.approval(appr.id), Approval.Outcome("approve"), DecisionRequest()).isRight)
     val done = runAgain(a, run.id)
     assertEquals(done.status, "done", done.error)
-    assertEquals(h.research.articles.get(Slug).toOption.get.article.body.trim, newBody.trim)
+    assertEquals(h.research.articles.get(Slug).toOption.get.article.body.value.trim, newBody.trim)
     // the chained review: a review-article run with fix, started by this one, for the same goal
     val child = connect(ds)(AgentRepo.list(None, com.histmersion.PageSize(50))).find(r => r.parent.contains(run.id)).get
     assertEquals(
       (child.pipeline, child.target, child.params.fixes, child.origin, child.goal),
       ("review-article", Slug, true, Some("run"), Some(Goal))
     )
-    assert(connect(ds)(GoalLinkRepo.links(Goal)).exists(l => l.kind == LinkKind.Article && l.ref == Slug))
-    val log = h.workListView.list(com.histmersion.domain.automation.worklists.WorkListControllers.KindOfList("log"), all = com.histmersion.server.views.WorkListView.IncludeAll(true)).toOption.get.items.map(_.text).filter(_.contains(Slug))
-    assert(log.exists(_.contains("compiled a new article from 2 source(s)")), log)
+    assert(connect(ds)(GoalLinkRepo.links(Goal)).exists(l => l.kind == LinkKind.Article && l.ref == SlugRef))
+    val log = h.workListView.list(com.histmersion.domain.automation.worklists.WorkListControllers.KindOfList("log"), all = com.histmersion.server.views.WorkListView.IncludeAll(true)).toOption.get.items.map(_.text).filter(_.value.contains(Slug.value))
+    assert(log.exists(_.value.contains("compiled a new article from 2 source(s)")), log)
     // #958: the article records the run's filter, so its Not used list and Method note are generated
     assertEquals(
       ArticleFixtures.load(ds, Slug).flatMap(_.filter),
       Some(Article.Filter(topics = List(com.histmersion.api.library.Filter.Topics("zzagent_tin"))))
     )
-    val cov = h.research.articles.coverage(Slug).fold(e => fail(e.message), identity)
+    val cov = h.research.articles.coverage(Slug).fold(e => fail(e.message.value), identity)
     assertEquals((cov.total, cov.cited.map(_.citekey).toSet, cov.notUsed, cov.drift), (2, Set(Ck, Ck2), Nil, Nil))
 
   test(
@@ -417,18 +444,19 @@ class GoalAgentsRunSuite extends com.histmersion.db.DbSuite with com.histmersion
       _.agents).setTo(baseCfg.agents.modify(_.approvals).setTo(baseCfg.agents.approvals.modify(_.articlePublish).setTo("auto"))).modify(_.researchAgents).setTo(baseCfg.researchAgents.modify(_.compile).setTo(baseCfg.researchAgents.compile.modify(_.review).setTo(false))
     )
     val (a, h, _) = handlers(c, auto); seed(h)
-    val run = start(a, RunRequest(com.histmersion.api.automation.Agents.RunRequest.Pipeline("compile-article"), Slug, title = Some("Zz tin"), topics = List("zzagent_tin")))
+    val run = start(a, RunRequest(CompileArticle, SlugTarget, title = Some(ZzTitle), topics = TinTopics))
     assertEquals(run.status, "done", why(run))
-    val first = connect(ds)(AgentRepo.steps(run.id, com.histmersion.domain.automation.agents.AgentRepo.OutputChars(4000)))
-      .find(s => s.name == "draft" && s.status == "failed")
+    val first = connect(ds)(AgentRepo.steps(ApiIds.job(run.id), com.histmersion.domain.automation.agents.AgentRepo.OutputChars(4000)))
+      .find(s => s.name.value == "draft" && s.status.value == "failed")
       .flatMap(_.error)
+      .map(_.value)
       .getOrElse("")
     assert(
       first.contains("a Not used section: code generates it") && first.contains("a _Method_ note: code generates it"),
       first
     )
-    assertEquals(h.research.articles.get(Slug).toOption.get.article.body.trim, onlyCk.trim)
-    val cov = h.research.articles.coverage(Slug).fold(e => fail(e.message), identity)
+    assertEquals(h.research.articles.get(Slug).toOption.get.article.body.value.trim, onlyCk.trim)
+    val cov = h.research.articles.coverage(Slug).fold(e => fail(e.message.value), identity)
     assertEquals(
       cov.notUsed.map(e => (e.source.citekey, e.reason)),
       List((Ck2, Some("Its isotope study dates a later trade.")))
@@ -447,7 +475,7 @@ class GoalAgentsRunSuite extends com.histmersion.db.DbSuite with com.histmersion
     val current =
       s"Tin reached the Aegean [[$Ck]].\n\n## Disagreements\n\nNone recorded [[$Ck]].\n\n## Open questions\n\nOpen [[$Ck]]."
     val (a, h, _) = handlers(c); seed(h)
-    assert(h.research.articles.put(Slug, Article.Put(com.histmersion.api.research.Article.Title("Zz tin"), com.histmersion.api.research.Article.Kind.Wire("concept"), current)).isRight)
+    assert(h.research.articles.put(Slug, Article.Put(Article.Title("Zz tin"), Article.Kind.Wire("concept"), Article.Body(current))).isRight)
     c.scripts ++= List(
       Seq(text(extract("the tin of the Uluburun cargo came from Central Asia", "The tin came from Central Asia."))),
       Seq(
@@ -459,20 +487,20 @@ class GoalAgentsRunSuite extends com.histmersion.db.DbSuite with com.histmersion
         )
       )
     )
-    val run = start(a, RunRequest(com.histmersion.api.automation.Agents.RunRequest.Pipeline("compile-article"), Slug, topics = List("zzagent_tin")))
+    val run = start(a, RunRequest(CompileArticle, SlugTarget, topics = TinTopics))
     assertEquals(run.status, "waiting", why(run))
     // only the source the article does not cite yet was extracted
-    assertEquals(connect(ds)(AgentRepo.steps(run.id, com.histmersion.domain.automation.agents.AgentRepo.OutputChars(10))).map(_.name).count(_.startsWith("extract")), 1)
+    assertEquals(connect(ds)(AgentRepo.steps(ApiIds.job(run.id), com.histmersion.domain.automation.agents.AgentRepo.OutputChars(10))).map(_.name).count(_.value.startsWith("extract")), 1)
     // someone edits the article while the draft waits
     val theirs = current.replace("None recorded", "Nothing recorded")
-    assert(h.research.articles.patch(Slug, Article.Patch(body = Some(theirs))).isRight)
-    val id = a.approvalsList(None, None).toOption.get.find(_.subject.contains(Slug)).get.id
-    assert(a.decide(id, com.histmersion.domain.automation.Approval.Outcome("approve"), DecisionRequest()).isRight)
+    assert(h.research.articles.patch(Slug, Article.Patch(body = Some(Article.Body(theirs)))).isRight)
+    val id = a.approvalsList(None, None).toOption.get.find(_.subject.contains(SlugSubject)).get.id
+    assert(a.decide(ApiIds.approval(id), Approval.Outcome("approve"), DecisionRequest()).isRight)
     val done = runAgain(a, run.id)
     assertEquals(done.status, "done", done.error)
-    assertEquals(h.research.articles.get(Slug).toOption.get.article.body.trim, theirs.trim, "their text stands")
-    assert(done.warnings.exists(_.contains("NOT appended")), done.warnings)
-    assert(h.workListView.list(com.histmersion.domain.automation.worklists.WorkListControllers.KindOfList("tasks"), all = com.histmersion.server.views.WorkListView.IncludeAll(false)).toOption.get.items.exists(_.text.contains(s"[[$Slug]]")))
+    assertEquals(h.research.articles.get(Slug).toOption.get.article.body.value.trim, theirs.trim, "their text stands")
+    assert(done.warnings.exists(_.value.contains("NOT appended")), done.warnings)
+    assert(h.workListView.list(com.histmersion.domain.automation.worklists.WorkListControllers.KindOfList("tasks"), all = com.histmersion.server.views.WorkListView.IncludeAll(false)).toOption.get.items.exists(_.text.value.contains(s"[[$Slug]]")))
     assert(
       connect(ds)(AgentRepo.list(None, com.histmersion.PageSize(50))).forall(r => !r.parent.contains(run.id)),
       "no review of an unwritten article"
@@ -489,17 +517,17 @@ class GoalAgentsRunSuite extends com.histmersion.db.DbSuite with com.histmersion
         )
       )
     seed(h)
-    assert(h.research.articles.put(Slug, Article.Put(com.histmersion.api.research.Article.Title("Zz tin"), com.histmersion.api.research.Article.Kind.Wire("concept"), current)).isRight)
-    val added = s"A newer study is contested: [[$Ck2]] (contested) places the tin in Central Asia."
+    assert(h.research.articles.put(Slug, Article.Put(Article.Title("Zz tin"), Article.Kind.Wire("concept"), Article.Body(current))).isRight)
+    val added =s"A newer study is contested: [[$Ck2]] (contested) places the tin in Central Asia."
     c.scripts ++= List(
       Seq(text(extract("the tin of the Uluburun cargo came from Central Asia", "The tin came from Central Asia."))),
       Seq(text(draftJson(added, Some("## Disagreements"))))
     )
-    val run = start(a, RunRequest(com.histmersion.api.automation.Agents.RunRequest.Pipeline("compile-article"), Slug, topics = List("zzagent_tin")))
-    val id = a.approvalsList(None, None).toOption.get.find(_.subject.contains(Slug)).get.id
-    assert(a.decide(id, com.histmersion.domain.automation.Approval.Outcome("approve"), DecisionRequest()).isRight)
+    val run = start(a, RunRequest(CompileArticle, SlugTarget, topics = TinTopics))
+    val id = a.approvalsList(None, None).toOption.get.find(_.subject.contains(SlugSubject)).get.id
+    assert(a.decide(ApiIds.approval(id), Approval.Outcome("approve"), DecisionRequest()).isRight)
     assertEquals(runAgain(a, run.id).status, "done")
-    val body = h.research.articles.get(Slug).toOption.get.article.body
+    val body = h.research.articles.get(Slug).toOption.get.article.body.value
     assert(
       body.indexOf(added) > body.indexOf("## Disagreements") && body.indexOf(added) < body.indexOf("## Open questions"),
       body
@@ -518,10 +546,10 @@ class GoalAgentsRunSuite extends com.histmersion.db.DbSuite with com.histmersion
       _.agents).setTo(baseCfg.agents.modify(_.approvals).setTo(baseCfg.agents.approvals.modify(_.articlePublish).setTo("auto"))).modify(_.researchAgents).setTo(baseCfg.researchAgents.modify(_.compile).setTo(baseCfg.researchAgents.compile.modify(_.review).setTo(false))
     )
     val (a, h, _) = handlers(c, auto); seed(h)
-    val run = start(a, RunRequest(com.histmersion.api.automation.Agents.RunRequest.Pipeline("compile-article"), Slug, title = Some("Zz tin"), topics = List("zzagent_tin")))
+    val run = start(a, RunRequest(CompileArticle, SlugTarget, title = Some(ZzTitle), topics = TinTopics))
     assertEquals(run.status, "done", why(run))
     assert(h.research.articles.get(Slug).isRight)
-    val appr = a.approvalsList(Some(com.histmersion.domain.automation.approvals.ApprovalQuery.State("all")), None).toOption.get.find(_.subject.contains(Slug)).get
+    val appr = a.approvalsList(Some(com.histmersion.domain.automation.approvals.ApprovalQuery.State("all")), None).toOption.get.find(_.subject.contains(SlugSubject)).get
     assertEquals(appr.state, "approved")
 
   test(
@@ -529,24 +557,24 @@ class GoalAgentsRunSuite extends com.histmersion.db.DbSuite with com.histmersion
   ):
     val c = ScriptedClient(Model)
     val (a, h, _) = handlers(c); seed(h)
-    assert(a.startRun(RunRequest(com.histmersion.api.automation.Agents.RunRequest.Pipeline("compile-article"), Slug, title = Some("x"))).left.exists(_.message.contains("filter")))
-    assert(a.startRun(RunRequest(com.histmersion.api.automation.Agents.RunRequest.Pipeline("compile-article"), Slug, topics = List("t"))).left.exists(_.message.contains("title")))
-    assert(a.startRun(RunRequest(com.histmersion.api.automation.Agents.RunRequest.Pipeline("compile-article"), com.histmersion.api.automation.Agents.RunRequest.Target("Not A Slug"), title = Some(com.histmersion.api.automation.Agents.RunRequest.Title("x")), topics = List(com.histmersion.api.automation.Agents.RunRequest.Topics("t")))).isLeft)
+    assert(a.startRun(RunRequest(CompileArticle, SlugTarget, title = Some(RunRequest.Title("x")))).left.exists(_.message.value.contains("filter")))
+    assert(a.startRun(RunRequest(CompileArticle, SlugTarget, topics = List(RunRequest.Topics("t")))).left.exists(_.message.value.contains("title")))
+    assert(a.startRun(RunRequest(CompileArticle, RunRequest.Target("Not A Slug"), title = Some(RunRequest.Title("x")), topics = List(RunRequest.Topics("t")))).isLeft)
     assert(
-      a.startRun(RunRequest(com.histmersion.api.automation.Agents.RunRequest.Pipeline("compile-article"), Slug, title = Some("x"), topics = List("t"), kind = Some("BAD KIND")))
+      a.startRun(RunRequest(CompileArticle, SlugTarget, title = Some(RunRequest.Title("x")), topics = List(RunRequest.Topics("t")), kind = Some(RunRequest.Kind("BAD KIND"))))
         .isLeft
     )
     assert(
-      a.startRun(RunRequest(com.histmersion.api.automation.Agents.RunRequest.Pipeline("enrich-source"), Ck, query = Some("q"))).left.exists(_.message.contains("compile-article"))
+      a.startRun(RunRequest(EnrichSource, CkTarget, query = Some(RunRequest.Query("q")))).left.exists(_.message.value.contains("compile-article"))
     )
-    assert(a.startRun(RunRequest(com.histmersion.api.automation.Agents.RunRequest.Pipeline("plan-goal"), com.histmersion.api.automation.Agents.RunRequest.Target("zzagent-nope"))).isLeft)
-    assert(a.startRun(RunRequest(com.histmersion.api.automation.Agents.RunRequest.Pipeline("enrich-source"), Ck, goal = Some("zzagent-nope"))).isLeft)
+    assert(a.startRun(RunRequest(PlanGoal, RunRequest.Target("zzagent-nope"))).isLeft)
+    assert(a.startRun(RunRequest(EnrichSource, CkTarget, goal = Some(com.histmersion.api.automation.Goal.Slug("zzagent-nope")))).isLeft)
     val noWriter = baseCfg.modify(_.agents).setTo(baseCfg.agents.modify(_.roles).setTo(baseCfg.agents.roles.modify(_.writer).setTo("")))
     val (b, _, _) = handlers(c, noWriter)
     assert(
-      b.startRun(RunRequest(com.histmersion.api.automation.Agents.RunRequest.Pipeline("compile-article"), Slug, title = Some("x"), topics = List("t")))
+      b.startRun(RunRequest(CompileArticle, SlugTarget, title = Some(RunRequest.Title("x")), topics = List(RunRequest.Topics("t"))))
         .left
-        .exists(_.message.contains("writer"))
+        .exists(_.message.value.contains("writer"))
     )
 
   // ── #992: dry runs ───────────────────────────────────────────────────────────────────────────────
@@ -556,17 +584,17 @@ class GoalAgentsRunSuite extends com.histmersion.db.DbSuite with com.histmersion
     c.scripts ++= List(Seq(text(planJson)))
     val (a, h, up) = handlers(c); seed(h); stubPlan(up)
     val before = CorpusSnapshot.of(ds)
-    val run = start(a, RunRequest(com.histmersion.api.automation.Agents.RunRequest.Pipeline("plan-goal"), Goal, dryRun = Some(true)))
+    val run = start(a, RunRequest(PlanGoal, GoalTarget, dryRun = Some(RunRequest.DryRun(true))))
     assertEquals(run.status, "done", why(run))
     assertEquals(CorpusSnapshot.of(ds), before, "no approval, no sub-goal, no link, no queue item, no log line")
-    val steps = connect(ds)(AgentRepo.steps(run.id, com.histmersion.domain.automation.agents.AgentRepo.OutputChars(100000)))
+    val steps = connect(ds)(AgentRepo.steps(ApiIds.job(run.id), com.histmersion.domain.automation.agents.AgentRepo.OutputChars(100000)))
     assertEquals(steps.map(_.name), List("load", "propose", "verify", "approve", "apply"))
-    val approve = steps.find(_.name == "approve").get
+    val approve = steps.find(_.name.value == "approve").get
     assertEquals(approve.wouldWrite.map(_.what), List(s"goal-plan approval for $Goal (treated as approved)"))
-    assert(approve.output.exists(_.contains(Engine.DryRunApproval)), approve.output)
-    val apply = steps.find(_.name == "apply").get.wouldWrite
+    assert(approve.output.exists(_.value.contains(Engine.DryRunApproval)), approve.output)
+    val apply = steps.find(_.name.value == "apply").get.wouldWrite
     assertEquals(apply.map(_.what), List(s"apply the plan of goal $Goal: 1 sub-goal(s), 1 query(ies), 2 work(s)"))
-    assert(apply.head.payload.contains("zzagent-tin-mines"), apply.head.payload)
+    assert(apply.head.payload.value.contains("zzagent-tin-mines"), apply.head.payload)
 
   test(
     "compile-article dry run: the draft is treated as approved, the article it would create is on its step; no review run"
@@ -578,29 +606,29 @@ class GoalAgentsRunSuite extends com.histmersion.db.DbSuite with com.histmersion
     val run = start(
       a,
       RunRequest(
-        com.histmersion.api.automation.Agents.RunRequest.Pipeline("compile-article"),
-        Slug,
-        title = Some("Zz tin"),
-        topics = List("zzagent_tin"),
-        goal = Some(Goal),
-        dryRun = Some(true)
+        CompileArticle,
+        SlugTarget,
+        title = Some(ZzTitle),
+        topics = TinTopics,
+        goal = Some(GoalSlug),
+        dryRun = Some(RunRequest.DryRun(true))
       )
     )
     assertEquals(run.status, "done", why(run))
     assertEquals(CorpusSnapshot.of(ds), before, "no article, no approval, no goal link, no log line")
     assert(h.research.articles.get(Slug).isLeft)
-    val steps = connect(ds)(AgentRepo.steps(run.id, com.histmersion.domain.automation.agents.AgentRepo.OutputChars(100000)))
+    val steps = connect(ds)(AgentRepo.steps(ApiIds.job(run.id), com.histmersion.domain.automation.agents.AgentRepo.OutputChars(100000)))
     assertEquals(
-      steps.filter(_.status == "done").map(_.name),
+      steps.filter(_.status.value == "done").map(_.name),
       List("snapshot", "filter", "extract-1", "extract-2", "evidence", "draft", "approve", "write", "review", "close")
     )
-    val write = steps.find(_.name == "write").get.wouldWrite
+    val write = steps.find(_.name.value == "write").get.wouldWrite
     assertEquals(write.map(_.what), List(s"create article [[$Slug]]"))
     assert(
-      write.head.payload.contains("Tin reached the Aegean by sea") && write.head.payload.contains("zzagent_tin"),
+      write.head.payload.value.contains("Tin reached the Aegean by sea") && write.head.payload.value.contains("zzagent_tin"),
       write.head.payload
     )
-    assertEquals(steps.find(_.name == "close").get.wouldWrite.map(_.what), List("log line"))
+    assertEquals(steps.find(_.name.value == "close").get.wouldWrite.map(_.what), List("log line"))
     assert(
       connect(ds)(AgentRepo.list(None, com.histmersion.PageSize(50))).forall(r => !r.parent.contains(run.id)),
       "no review of an article that was not written"

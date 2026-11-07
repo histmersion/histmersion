@@ -11,6 +11,7 @@ import com.histmersion.api.research.{CitedSource, ReviewBadge, ReviewFinding, Re
 import com.histmersion.api.library.Source
 import com.histmersion.api.library.Finding
 import com.histmersion.api.research.Article
+import com.histmersion.api.text.WikiLinks
 
 /** The server's HTML pages, pure: the anchor/chip/badge atoms and the typed page models rendered from them. No database
   * — the link resolver is a Map.
@@ -34,12 +35,12 @@ class PagesSuite extends munit.FunSuite:
     Source.Status.Contested
   )
   private val topic = Article.Ref(com.histmersion.api.research.Article.Slug("bronze_age_collapse"), com.histmersion.api.research.Article.Title("The Bronze Age Collapse"), Some(com.histmersion.api.research.Article.SummaryText("Around 1200 BCE.")))
-  private val links: String => Option[LinkTarget] =
-    Map[String, LinkTarget](
-      "cline2014_year" -> cline,
-      "cline2014" -> cline,
-      "drews1993_end" -> drews,
-      "bronze_age_collapse" -> topic
+  private val links: WikiLinks.Occurrence.Target => Option[LinkTarget] =
+    Map[WikiLinks.Occurrence.Target, LinkTarget](
+      WikiLinks.Occurrence.Target("cline2014_year") -> cline,
+      WikiLinks.Occurrence.Target("cline2014") -> cline,
+      WikiLinks.Occurrence.Target("drews1993_end") -> drews,
+      WikiLinks.Occurrence.Target("bronze_age_collapse") -> topic
     ).get
 
   // ── atoms ─────────────────────────────────────────────────────────────────────────────────────
@@ -63,7 +64,7 @@ class PagesSuite extends munit.FunSuite:
 
   test("values from the database are escaped in every attribute and text node"):
     val evil = cline.modify(_.citekey).setTo("x\"><script>").modify(_.doi).setTo(Some("\"onmouseover=1"))
-    val html = HtmlRender.sourceRef(evil, com.histmersion.server.HtmlRender.Label("<b>"))
+    val html = HtmlRender.sourceRef(evil, com.histmersion.server.HtmlRender.Label("<b>")).value
     assert(!html.contains("<script>") && !html.contains("<b>") && !html.contains("\"onmouseover"), html)
 
   test("the readable label is author-year, or the title when there are no authors"):
@@ -71,20 +72,21 @@ class PagesSuite extends munit.FunSuite:
     assertEquals(HtmlRender.readable(cline.modify(_.authors).setTo(Nil)), cline.title)
 
   test("a chip never shows an underscore, and links the raw value into the web UI"):
-    val c = HtmlRender.chip(ChipField.Tag, com.histmersion.server.HtmlRender.Label("sea_peoples"))
+    val c = HtmlRender.chip(ChipField.Tag, com.histmersion.server.HtmlRender.Label("sea_peoples")).value
     assert(c.contains(">sea peoples</a>"), c)
     assert(c.contains("""href="/#tag=sea_peoples""""), c)
     assert(c.contains("""data-field="tag""""), c)
     assert(
       !HtmlRender
         .chips(ChipField.Topic, List(com.histmersion.server.HtmlRender.Label("bronze_age_collapse"), com.histmersion.server.HtmlRender.Label("trade_routes")))
+        .value
         .replaceAll("<[^>]*>", "")
         .contains("_")
     )
 
   test("a confidence badge is an icon plus its level's class, which the stylesheet colours"):
     Confidence.values.foreach { c =>
-      val b = HtmlRender.confidenceBadge(c)
+      val b = HtmlRender.confidenceBadge(c).value
       assert(b.contains("<svg"), b)
       assert(b.contains(s"conf-badge conf-${c.toString.toLowerCase}"), b)
       assert(!b.contains("style="), s"the colour is the stylesheet's: $b")
@@ -94,15 +96,15 @@ class PagesSuite extends munit.FunSuite:
     val f = Finding.Row(
       com.histmersion.api.library.Finding.Claim("Ugarit destroyed"),
       Some(com.histmersion.api.catalogue.Place.Region("Ugarit")),
-      Some(35.78),
-      Some(35.60),
+      Some(com.histmersion.api.catalogue.Longitude(35.78)),
+      Some(com.histmersion.api.catalogue.Latitude(35.60)),
       Some(com.histmersion.api.catalogue.Year(-1190)),
       Some(com.histmersion.api.catalogue.Year(-1185)),
       None,
       Nil,
       Some(Confidence.Medium)
     )
-    val html = HtmlRender.finding(f)
+    val html = HtmlRender.finding(f).value
     assert(html.contains("conf-medium"), html)
     assert(html.contains("Ugarit (35.60, 35.78)"), html)
     assert(html.contains("1190 BCE–1185 BCE"), html)
@@ -110,18 +112,20 @@ class PagesSuite extends munit.FunSuite:
   // ── prose ─────────────────────────────────────────────────────────────────────────────────────
 
   test("prose wikilinks become typed anchors: source (readable label), article (title), unresolved (text)"):
-    val out = Pages.linkProse(
-      "[[cline2014]] and [[bronze_age_collapse]] and [[nothing_here]] and [[drews1993_end|Drews]]",
-      links
-    )
-    assert(out.contains(HtmlRender.sourceRef(cline, "Cline 2014")), out)
-    assert(out.contains(HtmlRender.articleRef(topic)), out)
+    val out = Pages
+      .linkProse(
+        FullText.Shown.Markdown("[[cline2014]] and [[bronze_age_collapse]] and [[nothing_here]] and [[drews1993_end|Drews]]"),
+        links
+      )
+      .value
+    assert(out.contains(HtmlRender.sourceRef(cline, HtmlRender.Label("Cline 2014")).value), out)
+    assert(out.contains(HtmlRender.articleRef(topic).value), out)
     assert(out.contains("""<span class="dangling" title="unresolved link">nothing here</span>"""), out)
     assert(out.contains(">Drews</a>"), out)
 
   // ── article page ──────────────────────────────────────────────────────────────────────────────
 
-  private def articlePage(body: String, cited: List[CitedSource] = Nil) =
+  private def articlePage(body: Article.Body, cited: List[CitedSource] = Nil) =
     ArticlePage(
       Article.Row(
         com.histmersion.api.research.Article.Slug("sea_peoples"),
@@ -139,7 +143,7 @@ class PagesSuite extends munit.FunSuite:
     )
 
   test("citations are numbered by first appearance; 'Not used' entries get the same anchor, no number"):
-    val body =
+    val body = Article.Body(
       """# The Sea Peoples
         |
         |Drews argued it [[drews1993_end]]; Cline disagreed [[cline2014]], again [[drews1993_end]].
@@ -148,30 +152,30 @@ class PagesSuite extends munit.FunSuite:
         |
         |- **[[cline2014_year]]**: already cited above.
         |- **[[drews1993_end]]**: superseded.
-        |""".stripMargin
+        |""".stripMargin)
     val html = Pages.article(
       articlePage(
         body,
         List(
           CitedSource(
             com.histmersion.api.library.Citekey("cline2014_year"),
-            (Some(cline.title)).map(com.histmersion.api.library.Title.apply),
+            Some(cline.title),
             (Some(2014)).map(com.histmersion.api.catalogue.Year.apply),
             Some(Source.Status.Current),
             cline.authors,
             cline.doi
           ),
-          CitedSource(com.histmersion.api.library.Citekey("drews1993_end"), (Some(drews.title)).map(com.histmersion.api.library.Title.apply), (Some(1993)).map(com.histmersion.api.catalogue.Year.apply), Some(Source.Status.Contested), drews.authors)
+          CitedSource(com.histmersion.api.library.Citekey("drews1993_end"), Some(drews.title), (Some(1993)).map(com.histmersion.api.catalogue.Year.apply), Some(Source.Status.Contested), drews.authors)
         )
       ),
       links
-    )
+    ).value
     assert(
       html.contains(
         HtmlRender.sourceRef(
           drews,
-          "Drews 1993"
-        ) + """<sup class="cite-num"><a class="cite-jump" href="#cite-1">[1]</a></sup>"""
+          HtmlRender.Label("Drews 1993")
+        ).value + """<sup class="cite-num"><a class="cite-jump" href="#cite-1">[1]</a></sup>"""
       ),
       html
     )
@@ -179,13 +183,13 @@ class PagesSuite extends munit.FunSuite:
       html.contains(
         HtmlRender.sourceRef(
           cline,
-          "Cline 2014"
-        ) + """<sup class="cite-num"><a class="cite-jump" href="#cite-2">[2]</a></sup>"""
+          HtmlRender.Label("Cline 2014")
+        ).value + """<sup class="cite-num"><a class="cite-jump" href="#cite-2">[2]</a></sup>"""
       ),
       html
     )
     // under "Not used": the same anchor (so the same preview), bold, and no number
-    assert(html.contains("<strong>" + HtmlRender.sourceRef(cline, "Cline 2014") + "</strong>: already cited"), html)
+    assert(html.contains("<strong>" + HtmlRender.sourceRef(cline, HtmlRender.Label("Cline 2014")).value + "</strong>: already cited"), html)
     assertEquals("href=\"#cite-".r.findAllIn(html).size, 3, html)
     // the footer: numbered entries in number order, each with its identifier
     val footer = html.drop(html.indexOf("Sources cited"))
@@ -194,7 +198,7 @@ class PagesSuite extends munit.FunSuite:
     assert(footer.contains("""<code class="citekey">drews1993_end</code>"""), footer)
 
   test("the article's own title heading is rendered once, with the meta line under it"):
-    val html = Pages.article(articlePage("# The Sea Peoples\n\nprose"), links)
+    val html = Pages.article(articlePage(Article.Body("# The Sea Peoples\n\nprose")), links).value
     assertEquals("<h1>".r.findAllIn(html).size, 1, html)
     assert(html.contains("""<p class="article-meta-line">concept · """), html)
     assert(html.contains(">sea peoples</a>"), html)
@@ -202,11 +206,11 @@ class PagesSuite extends munit.FunSuite:
   test("a trailing hand-written Sources list is dropped under the generated footer"):
     val html = Pages.article(
       articlePage(
-        "# T\n\nprose [[drews1993_end]]\n\n## Sources\n\n- [[drews1993_end]]\n",
-        List(CitedSource(com.histmersion.api.library.Citekey("drews1993_end"), (Some(drews.title)).map(com.histmersion.api.library.Title.apply), (Some(1993)).map(com.histmersion.api.catalogue.Year.apply), Some(Source.Status.Contested), drews.authors))
+        Article.Body("# T\n\nprose [[drews1993_end]]\n\n## Sources\n\n- [[drews1993_end]]\n"),
+        List(CitedSource(com.histmersion.api.library.Citekey("drews1993_end"), Some(drews.title), (Some(1993)).map(com.histmersion.api.catalogue.Year.apply), Some(Source.Status.Contested), drews.authors))
       ),
       links
-    )
+    ).value
     assertEquals("<h2[^>]*>Sources".r.findAllIn(html).size, 1, html)
     assert(html.contains("""<h2 id="sources-cited">Sources cited ("""), html)
 
@@ -229,7 +233,7 @@ class PagesSuite extends munit.FunSuite:
   )
 
   test("no citations: no section at all, and no agent-worded 'No references recorded' text"):
-    val html = Pages.source(sourcePage, links)
+    val html = Pages.source(sourcePage, links).value
     assert(!html.contains("Cites") && !html.contains("Cited by"), html)
     assert(!html.contains("No references recorded"), html)
     assert(html.contains("""<span class="lbl">DOI</span> <a class="doi""""), html)
@@ -240,8 +244,8 @@ class PagesSuite extends munit.FunSuite:
     val f = Finding.Row(
       com.histmersion.api.library.Finding.Claim("Proto-Indo-European split early"),
       Some(com.histmersion.api.catalogue.Place.Region("south_caucasus")),
-      Some(45.0),
-      Some(41.0),
+      Some(com.histmersion.api.catalogue.Longitude(45.0)),
+      Some(com.histmersion.api.catalogue.Latitude(41.0)),
       Some(com.histmersion.api.catalogue.Year(-8120)),
       Some(com.histmersion.api.catalogue.Year(-6000)),
       Some(com.histmersion.api.library.Finding.PeriodName("early_neolithic")),
@@ -249,7 +253,7 @@ class PagesSuite extends munit.FunSuite:
       Some(Confidence.High),
       Some(com.histmersion.api.library.Finding.Significance("key_evidence"))
     )
-    val html = Pages.source(sourcePage.modify(_.findings).setTo(List(f)), links)
+    val html = Pages.source(sourcePage.modify(_.findings).setTo(List(f)), links).value
     assert(html.contains("south caucasus (41.00, 45.00)"), html)
     // Library's reading pane links "All N findings" here
     assert(html.contains("""<h2 id="findings">Findings (1)</h2>"""), html)
@@ -259,16 +263,16 @@ class PagesSuite extends munit.FunSuite:
     val p = sourcePage.modify(
       _.cites).setTo(List(Citation.ToSource(drews, com.histmersion.server.Citation.ToSource.Kind("challenges")), Citation.Unresolved(com.histmersion.server.Citation.Unresolved.Id("ghost2019_x"), com.histmersion.server.Citation.Unresolved.Kind("references")))).modify(_.citedBy).setTo(List(Citation.ToArticle(topic, None))
     )
-    val html = Pages.source(p, links)
+    val html = Pages.source(p, links).value
     assert(html.contains("""<h2 id="cites">Cites (2)</h2>"""), html)
     assert(html.contains("""<h2 id="cited-by">Cited by (1)</h2>"""), html)
-    assert(html.contains(HtmlRender.sourceRef(drews, "Drews 1993")), html)
+    assert(html.contains(HtmlRender.sourceRef(drews, HtmlRender.Label("Drews 1993")).value), html)
     assert(html.contains("""<span class="edge-kind">challenges</span>"""), html)
     assert(html.contains("not in the corpus yet"), html)
-    assert(html.contains(HtmlRender.articleRef(topic)), html)
+    assert(html.contains(HtmlRender.articleRef(topic).value), html)
 
   test("a standalone page loads the Scala.js bundle and names its page kind"):
-    val doc = com.histmersion.server.ArticleHtml.page(com.histmersion.domain.Title("T"), com.histmersion.server.HtmlRender.Html("<p>x</p>"), PageKind.Source)
+    val doc = com.histmersion.server.ArticleHtml.page(com.histmersion.domain.Title("T"), com.histmersion.server.HtmlRender.Html("<p>x</p>"), PageKind.Source).value
     assert(doc.contains("""<script src="/web/app.bundle.js"""), doc)
     assert(doc.contains("""data-page="source""""), doc)
     assert(!doc.contains("article.js") && !doc.contains("citations.js"), doc)
@@ -325,7 +329,7 @@ class PagesSuite extends munit.FunSuite:
   )
 
   test("the article page shows the review badge with its meaning, and the goals that link it, under the title"):
-    val html = Pages.article(articlePage("# The Sea Peoples\n\nText.").modify(_.review).setTo(Some(review)), links)
+    val html = Pages.article(articlePage(Article.Body("# The Sea Peoples\n\nText.")).modify(_.review).setTo(Some(review)), links).value
     assert(
       html.contains(
         """<span class="job-state review-state state-majors-open" title="Reviewed: 1 MAJOR finding is still open.">1 major open</span>"""
@@ -343,10 +347,10 @@ class PagesSuite extends munit.FunSuite:
       ),
       html
     )
-    assert(!Pages.article(articlePage("# The Sea Peoples\n\nText."), links).contains("article-review-line"))
+    assert(!Pages.article(articlePage(Article.Body("# The Sea Peoples\n\nText.")), links).value.contains("article-review-line"))
 
   test("the review history: collapsed, counted, run by run, each finding with reviewer, kind, place and fate"):
-    val html = Pages.reviewHistory(review)
+    val html = Pages.reviewHistory(review).value
     assert(
       html.startsWith(
         """<details class="review-history"><summary>Review history: 2 findings over 1 run, 1 still open</summary>"""

@@ -8,6 +8,8 @@ import com.histmersion.domain.library.acquisition.OpenAlexDiscovery
 
 import com.histmersion.config.AppConfig
 import com.histmersion.domain.library.acquisition.*
+import com.histmersion.domain.CoreQuota
+import com.histmersion.pluginhost.HttpAnswer
 import io.circe.Json
 
 /** OpenAlex pauses anonymous search under heavy load (HTTP 503, 2026-09-27): discovery must not go dark with it. The
@@ -30,28 +32,28 @@ class DiscoverFallbackSuite extends munit.FunSuite:
 
   /** OpenAlex answers 503; Crossref answers the captured page. Records what was asked. */
   final private class OpenAlexDown extends Http:
-    var urls: List[String] = Nil // a test double is the one place a var is the simplest thing
-    def json(url: String, headers: Map[String, String]): Either[String, Json] =
+    var urls: List[Http.Url] = Nil // a test double is the one place a var is the simplest thing
+    def json(url: Http.Url, headers: Map[CoreQuota.HeaderName, CoreQuota.HeaderValue]): Either[Http.Problem, Json] =
       urls = urls :+ url
-      if url.startsWith(cfg.crossref.url) then Right(crossrefPage) else Left(s"$url failed after 4 attempts: HTTP 503")
-    def text(url: String, headers: Map[String, String]) = Left("unused")
-    def bytes(url: String, headers: Map[String, String]) = json(url, headers).map(_.noSpaces.getBytes("UTF-8"))
+      if url.value.startsWith(cfg.crossref.url.value) then Right(crossrefPage) else Left(Http.Problem(s"$url failed after 4 attempts: HTTP 503"))
+    def text(url: Http.Url, headers: Map[CoreQuota.HeaderName, CoreQuota.HeaderValue]) = Left(Http.Problem("unused"))
+    def bytes(url: Http.Url, headers: Map[CoreQuota.HeaderName, CoreQuota.HeaderValue]) = json(url, headers).map(j => HttpAnswer.Body(j.noSpaces.getBytes("UTF-8")))
 
   test("when OpenAlex search is down, Crossref answers with the same kinds of work, from the same year"):
     val http = OpenAlexDown()
     val r = discovery(cfg, http).search(com.histmersion.domain.library.search.Search.Query("Mycenaean religion"), Some(com.histmersion.Year(2023)), None, com.histmersion.domain.library.acquisition.DiscoveryClient.SearchLimit(5))
     assertEquals(r.map(_.size), Right(3))
-    val asked = http.urls.find(_.startsWith(cfg.crossref.url)).getOrElse(fail("Crossref was not asked"))
+    val asked = http.urls.find(_.value.startsWith(cfg.crossref.url.value)).getOrElse(fail("Crossref was not asked")).value
     assert(asked.contains("from-pub-date%3A2023-01-01") || asked.contains("from-pub-date:2023-01-01"), asked)
     assert(asked.contains("query=Mycenaean"), asked)
 
   test("both down: the error names both upstreams"):
     val dead = new Http:
-      def json(url: String, headers: Map[String, String]) = Left(s"$url: HTTP 503")
-      def text(url: String, headers: Map[String, String]) = Left("unused")
-      def bytes(url: String, headers: Map[String, String]) = json(url, headers).map(_.noSpaces.getBytes("UTF-8"))
+      def json(url: Http.Url, headers: Map[CoreQuota.HeaderName, CoreQuota.HeaderValue]) = Left(Http.Problem(s"$url: HTTP 503"))
+      def text(url: Http.Url, headers: Map[CoreQuota.HeaderName, CoreQuota.HeaderValue]) = Left(Http.Problem("unused"))
+      def bytes(url: Http.Url, headers: Map[CoreQuota.HeaderName, CoreQuota.HeaderValue]) = json(url, headers).map(j => HttpAnswer.Body(j.noSpaces.getBytes("UTF-8")))
     val r = discovery(cfg, dead).search(com.histmersion.domain.library.search.Search.Query("x"), None, None, com.histmersion.domain.library.acquisition.DiscoveryClient.SearchLimit(5))
-    assert(r.left.exists(e => e.contains("openalex") && e.contains("Crossref")), r.toString)
+    assert(r.left.exists(e => e.value.contains("openalex") && e.value.contains("Crossref")), r.toString)
 
   // ── meta (#599): a gold-OA work read "no OA copy known" whenever OpenAlex's singleton lookup
   // failed and the record came from Crossref, which carries no access information at all ──
@@ -73,29 +75,29 @@ class DiscoverFallbackSuite extends munit.FunSuite:
 
   /** OpenAlex answers 503 (rate-limited); Crossref and Unpaywall answer. */
   final private class OpenAlexBusy(c: com.histmersion.config.AcquireConfig) extends Http:
-    var urls: List[String] = Nil // a test double is the one place a var is the simplest thing
-    def json(url: String, headers: Map[String, String]): Either[String, Json] =
+    var urls: List[Http.Url] = Nil // a test double is the one place a var is the simplest thing
+    def json(url: Http.Url, headers: Map[CoreQuota.HeaderName, CoreQuota.HeaderValue]): Either[Http.Problem, Json] =
       urls = urls :+ url
-      if url.startsWith(c.crossref.url) then Right(crossrefWork)
-      else if url.startsWith(c.unpaywall.url) then Right(unpaywallGold)
-      else Left(s"$url failed after 4 attempts: HTTP 503")
-    def text(url: String, headers: Map[String, String]) = Left("unused")
-    def bytes(url: String, headers: Map[String, String]) = json(url, headers).map(_.noSpaces.getBytes("UTF-8"))
+      if url.value.startsWith(c.crossref.url.value) then Right(crossrefWork)
+      else if url.value.startsWith(c.unpaywall.url.value) then Right(unpaywallGold)
+      else Left(Http.Problem(s"$url failed after 4 attempts: HTTP 503"))
+    def text(url: Http.Url, headers: Map[CoreQuota.HeaderName, CoreQuota.HeaderValue]) = Left(Http.Problem("unused"))
+    def bytes(url: Http.Url, headers: Map[CoreQuota.HeaderName, CoreQuota.HeaderValue]) = json(url, headers).map(j => HttpAnswer.Body(j.noSpaces.getBytes("UTF-8")))
 
   test("meta through the Crossref fallback still knows a gold-OA work is open access"):
     val withContact = cfg.modify(_.contactEmail).setTo("librarian@example.org")
     val http = OpenAlexBusy(withContact)
-    val w = discovery(withContact, http).meta(com.histmersion.domain.library.Doi("10.1038/s41598-022-07284-3")).fold(e => fail(e), identity)
+    val w = discovery(withContact, http).meta(com.histmersion.domain.library.Doi("10.1038/s41598-022-07284-3")).fold(e => fail(e.value), identity)
     assertEquals(w.venue, Some("Scientific Reports"))
-    assert(w.isOa, w.toString)
+    assert(w.isOa.value, w.toString)
     assertEquals(w.oaStatus, Some("gold"))
     assertEquals(w.oaUrl, Some("https://www.nature.com/articles/s41598-022-07284-3.pdf"))
-    assert(http.urls.exists(_.startsWith(withContact.unpaywall.url)), http.urls.toString)
+    assert(http.urls.exists(_.value.startsWith(withContact.unpaywall.url.value)), http.urls.toString)
 
   test("meta through the Crossref fallback without a contact leaves the access UNKNOWN, not closed"):
     val noContact = cfg.modify(_.contactEmail).setTo("")
     val http = OpenAlexBusy(noContact)
-    val w = discovery(noContact, http).meta(com.histmersion.domain.library.Doi("10.1038/s41598-022-07284-3")).fold(e => fail(e), identity)
-    assert(!w.isOa)
+    val w = discovery(noContact, http).meta(com.histmersion.domain.library.Doi("10.1038/s41598-022-07284-3")).fold(e => fail(e.value), identity)
+    assert(!w.isOa.value)
     assertEquals(w.oaStatus, None) // rendered as "OA status unknown", never "no OA copy known"
-    assert(!http.urls.exists(_.startsWith(noContact.unpaywall.url)), "Unpaywall refuses a request without an e-mail")
+    assert(!http.urls.exists(_.value.startsWith(noContact.unpaywall.url.value)), "Unpaywall refuses a request without an e-mail")

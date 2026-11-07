@@ -48,7 +48,7 @@ class RegistriesOracleSuite extends munit.FunSuite:
 
   test("job-kinds.txt: every job kind, its name, its controls and its subjects"):
     val lines = com.histmersion.api.RegisteredJobKinds.all.kinds.flatMap { k =>
-      val head = s"${k.value}\t${Wording.jobKindOf(k.value)}\tstoppable=${JobActions.Stoppable.contains(k.value)}"
+      val head = s"${k.value}\t${Wording.jobKindOf(k)}\tstoppable=${JobActions.Stoppable.contains(k)}"
       val subjects = details.map { (name, d) =>
         val j = JobInfo(id = com.histmersion.api.SpatialHierarchyResult.Job.Id("j"), kind = com.histmersion.api.jobs.JobKinds.Wire(k.value), status = com.histmersion.api.jobs.JobInfo.Status("done"), detail = Some(d))
         s"  $name\t${JobDetail.subject(j).getOrElse("-")}"

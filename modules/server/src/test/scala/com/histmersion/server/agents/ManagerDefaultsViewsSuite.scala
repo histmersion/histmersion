@@ -35,7 +35,7 @@ class ManagerDefaultsViewsSuite extends munit.FunSuite:
     enrich = SimpleManagerConfig(com.histmersion.config.SimpleManagerConfig.MaxRuns(11)),
     seed = SimpleManagerConfig(com.histmersion.config.SimpleManagerConfig.MaxRuns(12)),
     watch = SimpleManagerConfig(com.histmersion.config.SimpleManagerConfig.MaxRuns(13)),
-    dailyUsd = 2.5
+    dailyUsd = AgentManagersConfig.DailyUsd(2.5)
   )
 
   test(
@@ -47,7 +47,7 @@ class ManagerDefaultsViewsSuite extends munit.FunSuite:
         maxFailures = com.histmersion.domain.ManagerDefaults.MaxFailures(3),
         backoffMinutes = com.histmersion.domain.ManagerDefaults.BackoffMinutes(15),
         maxBackoffMinutes = com.histmersion.domain.ManagerDefaults.MaxBackoffMinutes(360),
-        dailyUsd = 2.5,
+        dailyUsd = ManagerDefaults.DailyUsd(2.5),
         review = ManagerRunDefaults(com.histmersion.domain.ManagerRunDefaults.MaxRuns(2)),
         enrich = ManagerRunDefaults(com.histmersion.domain.ManagerRunDefaults.MaxRuns(11)),
         seed = ManagerRunDefaults(com.histmersion.domain.ManagerRunDefaults.MaxRuns(12)),
@@ -92,7 +92,7 @@ class ManagerDefaultsViewsSuite extends munit.FunSuite:
   test("a seeding plan's checks: its article cap and least sources"):
     assertEquals(
       com.histmersion.domain.research.workflows.SeedManagerKind
-        .plan(AgentSeedConfig(maxArticles = com.histmersion.config.AgentSeedConfig.MaxArticles(6), minSources = com.histmersion.config.AgentSeedConfig.MinSources(5), maxOverlap = 0.5)),
+        .plan(AgentSeedConfig(maxArticles = com.histmersion.config.AgentSeedConfig.MaxArticles(6), minSources = com.histmersion.config.AgentSeedConfig.MinSources(5), maxOverlap = AgentSeedConfig.MaxOverlap(0.5))),
       SeedPlanDefaults(maxArticles = com.histmersion.domain.SeedPlanDefaults.MaxArticles(6), minSources = com.histmersion.domain.SeedPlanDefaults.MinSources(5))
     )
 
@@ -115,10 +115,10 @@ class ManagerDefaultsViewsSuite extends munit.FunSuite:
       strategy = com.histmersion.config.AgentSchedulerConfig.Strategy("goal-first"),
       agingHours = com.histmersion.config.AgentSchedulerConfig.AgingHours(12),
       maxWaitHours = com.histmersion.config.AgentSchedulerConfig.MaxWaitHours(48),
-      minShare = 0.1,
+      minShare = AgentSchedulerConfig.MinShare(0.1),
       typeWeights = com.histmersion.config.AgentSchedulerConfig.TypeWeights("review=5"),
       typePriorities = com.histmersion.config.AgentSchedulerConfig.TypePriorities("compile=9"),
-      gatheringSlots = 2
+      gatheringSlots = AgentSchedulerConfig.GatheringSlots(2)
     )
     assertEquals(
       ManagerDefaultsViews.scheduler(c),
@@ -126,10 +126,10 @@ class ManagerDefaultsViewsSuite extends munit.FunSuite:
         strategy = com.histmersion.domain.SchedulerDefaults.Strategy("goal-first"),
         agingHours = com.histmersion.domain.SchedulerDefaults.AgingHours(12),
         maxWaitHours = com.histmersion.domain.SchedulerDefaults.MaxWaitHours(48),
-        minShare = 0.1,
-        builtInWeights = AgentSchedulerConfig.DefaultWeights,
+        minShare = SchedulerDefaults.MinShare(0.1),
+        builtInWeights = SchedulerDefaults.BuiltInWeights(AgentSchedulerConfig.DefaultWeights.value),
         typeWeights = com.histmersion.domain.SchedulerDefaults.TypeWeights("review=5"),
-        builtInPriorities = AgentSchedulerConfig.DefaultPriorities,
+        builtInPriorities = SchedulerDefaults.BuiltInPriorities(AgentSchedulerConfig.DefaultPriorities.value),
         typePriorities = com.histmersion.domain.SchedulerDefaults.TypePriorities("compile=9"),
         gatheringSlots = com.histmersion.domain.SchedulerDefaults.GatheringSlots(2)
       )

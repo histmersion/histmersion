@@ -156,7 +156,7 @@ object BasemapFixtures:
       x <- 0L until (1L << z)
       y <- 0L until (1L << z)
     yield (PmTiles.tileId(PmTiles.Zoom(z), PmTiles.TileColumn(x), PmTiles.TileRow(y)), (PmTiles.Zoom(z), PmTiles.TileColumn(x), PmTiles.TileRow(y)))
-    all.sortBy(_._1.value).foreach { case (id, (z, x, y)) =>
+    all.sortBy[Long](_._1.value).foreach { case (id, (z, x, y)) =>
       w.add(id, PmTiles.TileBytes(PmTiles.compress(tile(z, x, y), c).value))
     }
     val meta = Json.obj(

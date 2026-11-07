@@ -8,7 +8,7 @@ import com.histmersion.api.Dataset
 import com.histmersion.config.*
 import com.histmersion.domain.*
 import com.histmersion.util.database.{Db, Migrate}
-import com.histmersion.domain.catalogue.periods.{PeriodsControllers, PeriodService}
+import com.histmersion.domain.catalogue.periods.{PeriodImports, PeriodService, PeriodSources, PeriodsControllers}
 import com.histmersion.util.data.maintenance.WriteGate
 import com.histmersion.util.database.Transactor
 import com.histmersion.util.jobs.JobRepo
@@ -16,7 +16,7 @@ import com.histmersion.util.jobs.JobRepo
 import com.augustnagro.magnum.*
 import java.nio.file.{Files, Path}
 import com.histmersion.db.*
-import com.histmersion.api.catalogue.{Period, PeriodO, PresetRegion, SkippedPeriod}
+import com.histmersion.api.catalogue.{HistoricalPeriod, Period, PeriodO, PresetRegion, SkippedPeriod}
 import com.histmersion.api.exchange.InitPlan
 import com.histmersion.api.jobs.JobState
 
@@ -47,16 +47,16 @@ class BootstrapSuite extends com.histmersion.db.DbSuite:
     Files.writeString(d.resolve("periods/periodo-seed.json"), seedText)
     d
 
-  private def bootstrap(dir: Path, net: String => Either[String, String] = _ => Right(dump)) =
+  private def bootstrap(dir: Path, net: HttpDownload.Url => Either[HttpDownload.Problem, HttpDownload.Text] = _ => Right(HttpDownload.Text(dump))) =
     val cfg = base.modify(_.db).setTo(base.db.modify(_.url).setTo(testDb.get)).modify(_.init).setTo(base.init.modify(_.dataDir).setTo(dir.toString))
     Bootstrap(Deps(cfg, ds), net)
 
   /** The periods as the server's controllers reach them, over `b`'s service and imports. */
   extension (b: Bootstrap)
     private def ctl: PeriodsControllers = PeriodsControllers(b.periods, b.periodImports, WriteGate())
-    def seedPeriods(replace: Boolean = false) = ctl.seed(Caller.Local, replace)
-    def period(id: String) = ctl.period(id)
-    def fetchPeriods(source: String, collections: List[String]) = ctl.fetch(Caller.Local, source, collections)
+    def seedPeriods(replace: PeriodImports.Replace = PeriodImports.Replace(false)) = ctl.seed(Caller.Local, replace)
+    def period(id: HistoricalPeriod.Id) = ctl.period(id)
+    def fetchPeriods(source: PeriodSources.PeriodoUrl, collections: List[PeriodSources.Collections]) = ctl.fetch(Caller.Local, source, collections)
 
   private lazy val periods = PeriodService(Transactor(ds))
 
@@ -68,7 +68,7 @@ class BootstrapSuite extends com.histmersion.db.DbSuite:
   override def afterSuite(): Unit = if testDb.nonEmpty then clean()
 
   test("periods seed imports the bundled presets: the BSA's Bronze Age → Minoan → phases"):
-    val r = bootstrap(dataDir()).seedPeriods().fold(e => fail(e.message), identity)
+    val r = bootstrap(dataDir()).seedPeriods().fold(e => fail(e.message.value), identity)
     assertEquals(r.periods, seedIds.size)
     assertEquals(r.roots, 0)
     // #771: the seed's two EAMENA Palaeolithic periods start in 14,000,000 BC — reported, not stored
@@ -76,11 +76,11 @@ class BootstrapSuite extends com.histmersion.db.DbSuite:
     assertEquals(r.skippedCount, 2)
     assertEquals(periods.get(com.histmersion.api.catalogue.HistoricalPeriod.Id("p0m64tdp282")), None)
     val b = bootstrap(dataDir())
-    val lm = b.period("p0ds9qjh4dh").fold(e => fail(e.message), identity) // Late Minoan (BSA)
+    val lm = b.period(HistoricalPeriod.Id("p0ds9qjh4dh")).fold(e => fail(e.message.value), identity) // Late Minoan (BSA)
     assertEquals(lm.period.period, Period(com.histmersion.api.catalogue.Year(-1700), com.histmersion.api.catalogue.Year(-1050)))
     assertEquals(lm.parent.map(_.label), Some("Bronze Age Minoan"))
     assert(lm.children.map(_.label).contains("Late Minoan I"), lm.children.toString)
-    assert(lm.period.authority.exists(_.startsWith("PeriodO p0ds9qjh4dh · The British School at Athens")))
+    assert(lm.period.authority.exists(_.value.startsWith("PeriodO p0ds9qjh4dh · The British School at Athens")))
     // the web timeline's presets are the seed's, each under its region heading
     val seed = PeriodO.parse(seedText).toOption.get
     assertEquals(r.presets, seed.presets.size)
@@ -94,65 +94,65 @@ class BootstrapSuite extends com.histmersion.db.DbSuite:
 
   test("a second seed is idempotent"):
     val before = periods.count()
-    bootstrap(dataDir()).seedPeriods().fold(e => fail(e.message), identity)
+    bootstrap(dataDir()).seedPeriods().fold(e => fail(e.message.value), identity)
     assertEquals(periods.count(), before)
 
   // the presets of an install seeded before V062 were the parentless rows, under ROAD's umbrella
   test("a newer bundled seed re-applies itself on start: old nesting undone, the presets become the seed's"):
     val b = bootstrap(dataDir())
-    b.seedPeriods().fold(e => fail(e.message), identity)
+    b.seedPeriods().fold(e => fail(e.message.value), identity)
     assertEquals(b.plan(fetch = false, onlyEmpty = true).periodPresets, false) // current: nothing to do
     // an older install: version 1, the BSA's Bronze Age under ROAD's, a preset the seed does not name
-    periods.setSeedVersion(Bootstrap.PeriodSeed, com.histmersion.domain.catalogue.periods.PeriodService.SeedVersion(1))
+    periods.setSeedVersion(PeriodService.SeedName(Bootstrap.PeriodSeed), com.histmersion.domain.catalogue.periods.PeriodService.SeedVersion(1))
     transact(ds):
       val _ = sql"UPDATE periods SET parent_id = 'p0s2rwkwbsz', preset = NULL WHERE id = 'p0ds9qjq7b2'".update.run()
       val _ = sql"UPDATE periods SET preset = 'broad' WHERE id = 'p0s2rwkwbsz'".update.run()
     assertEquals(b.plan(fetch = false, onlyEmpty = true).periodPresets, true)
-    b.seedPeriods().fold(e => fail(e.message), identity)
+    b.seedPeriods().fold(e => fail(e.message.value), identity)
     val bsa = periods.get(com.histmersion.api.catalogue.HistoricalPeriod.Id("p0ds9qjq7b2")).get
     assertEquals((bsa.parentId, bsa.preset), (None, Some(PresetRegion.Aegean)))
     assertEquals(periods.get(com.histmersion.api.catalogue.HistoricalPeriod.Id("p0s2rwkwbsz")).flatMap(_.preset), None)
-    assertEquals(periods.seedVersion(Bootstrap.PeriodSeed), PeriodO.parse(seedText).toOption.get.version)
+    assertEquals(periods.seedVersion(PeriodService.SeedName(Bootstrap.PeriodSeed)), PeriodO.parse(seedText).toOption.get.version)
     assertEquals(b.plan(fetch = false, onlyEmpty = true).periodPresets, false)
 
   test("a period fetch never takes a seed preset off the menu"):
     val b = bootstrap(dataDir())
-    b.seedPeriods().fold(e => fail(e.message), identity)
+    b.seedPeriods().fold(e => fail(e.message.value), identity)
     periods.write(List(periods.get(com.histmersion.api.catalogue.HistoricalPeriod.Id("p0ds9qjq7b2")).get.copy(preset = None)), Dataset.Seed)
     assertEquals(periods.get(com.histmersion.api.catalogue.HistoricalPeriod.Id("p0ds9qjq7b2")).flatMap(_.preset), Some(PresetRegion.Aegean))
 
   test("a missing seed is an error naming where it looked"):
     val r = bootstrap(Files.createTempDirectory("histmersion-empty")).seedPeriods()
-    assert(r.left.exists(_.message.contains("no period seed at")), r.toString)
+    assert(r.left.exists(_.message.value.contains("no period seed at")), r.toString)
 
   test("periods fetch periodo: the named collection only, under one authority node; re-runnable"):
-    var asked = List.empty[String] // a test double is the one place a var is the simplest thing
-    val b = bootstrap(dataDir(), url => { asked = asked :+ url; Right(dump) })
-    val r = b.fetchPeriods("periodo", List("zzqauth")).fold(e => fail(e.message), identity)
+    var asked = List.empty[HttpDownload.Url] // a test double is the one place a var is the simplest thing
+    val b = bootstrap(dataDir(), url => { asked = asked :+ url; Right(HttpDownload.Text(dump)) })
+    val r = b.fetchPeriods(PeriodSources.PeriodoUrl("periodo"), List(PeriodSources.Collections("zzqauth"))).fold(e => fail(e.message.value), identity)
     assertEquals(asked, List(base.periods.periodoUrl))
     assertEquals(r.periods, 4) // 3 periods + the authority node
     assertEquals(r.roots, 1)
     assertEquals(periods.get(com.histmersion.api.catalogue.HistoricalPeriod.Id("zzqother01")), None)
-    val node = b.period("zzqauth").fold(e => fail(e.message), identity)
+    val node = b.period(HistoricalPeriod.Id("zzqauth")).fold(e => fail(e.message.value), identity)
     assertEquals(node.period.label, "Zzq test chronology")
     assertEquals(node.period.period, Period(com.histmersion.api.catalogue.Year(-3000), com.histmersion.api.catalogue.Year(-500)))
     assertEquals(node.children.map(_.id).toSet, Set("zzqauthbronze", "zzqauthiron"))
     assertEquals(periods.get(com.histmersion.api.catalogue.HistoricalPeriod.Id("zzqauthlba")).flatMap(_.parentId), Some("zzqauthbronze"))
     // somebody moves a period; a re-fetch leaves it where it is
     transact(ds)(sql"UPDATE periods SET parent_id = NULL WHERE id = 'zzqauthiron'".update.run())
-    b.fetchPeriods("periodo", List("zzqauth")).fold(e => fail(e.message), identity)
+    b.fetchPeriods(PeriodSources.PeriodoUrl("periodo"), List(PeriodSources.Collections("zzqauth"))).fold(e => fail(e.message.value), identity)
     assertEquals(periods.get(com.histmersion.api.catalogue.HistoricalPeriod.Id("zzqauthiron")).flatMap(_.parentId), None)
 
   test("periods fetch: an unknown source, a missing collection and a dead network are errors"):
     val b = bootstrap(dataDir())
-    assert(b.fetchPeriods("chronontology", Nil).left.exists(_.message.contains("unknown period source")))
-    assert(b.fetchPeriods("periodo", List("zzqnope")).left.exists(_.message.contains("zzqnope")))
-    val dead = bootstrap(dataDir(), _ => Left("HTTP 503"))
-    assert(dead.fetchPeriods("periodo", List("zzqauth")).left.exists(_.message.contains("503")))
+    assert(b.fetchPeriods(PeriodSources.PeriodoUrl("chronontology"), Nil).left.exists(_.message.value.contains("unknown period source")))
+    assert(b.fetchPeriods(PeriodSources.PeriodoUrl("periodo"), List(PeriodSources.Collections("zzqnope"))).left.exists(_.message.value.contains("zzqnope")))
+    val dead = bootstrap(dataDir(), _ => Left(HttpDownload.Problem("HTTP 503")))
+    assert(dead.fetchPeriods(PeriodSources.PeriodoUrl("periodo"), List(PeriodSources.Collections("zzqauth"))).left.exists(_.message.value.contains("503")))
 
   test("init runs as a job: every step is attempted, a missing gazetteer seed is reported"):
     val b = bootstrap(dataDir())
-    val job = b.init(fetch = false).fold(e => fail(e.message), identity)
+    val job = b.init(fetch = false).fold(e => fail(e.message.value), identity)
     assertEquals(job.kind, Bootstrap.JobKind)
     val end = Iterator
       .continually { Thread.sleep(100); Transactor(ds).read(JobRepo.get(job.id)).get }
@@ -160,12 +160,12 @@ class BootstrapSuite extends com.histmersion.db.DbSuite:
       .find(_.isTerminal)
       .getOrElse(fail("the init job did not finish"))
     assertEquals(end.state, JobState.Failed)
-    assert(end.error.exists(_.contains("gazetteer: no gazetteer seed at")), end.toString)
-    assert(end.progress.exists(_.contains("period presets:")), end.toString) // the periods still went in
+    assert(end.error.exists(_.value.contains("gazetteer: no gazetteer seed at")), end.toString)
+    assert(end.progress.exists(_.value.contains("period presets:")), end.toString) // the periods still went in
     assert(Transactor(ds).read(JobRepo.list(None, com.histmersion.PageSize(50))).exists(_.id == job.id), "`histmersion jobs` lists it")
     // #770: the job says what it imports from the start; #771: and which period definitions it left out
     assertEquals(job.detail.flatMap(InitPlan.Detail.of), Some(InitPlan(gazetteer = com.histmersion.api.exchange.InitPlan.Gazetteer(true), periodPresets = com.histmersion.api.exchange.InitPlan.PeriodPresets(true))))
     assertEquals(end.detail.flatMap(InitPlan.Detail.of), job.detail.flatMap(InitPlan.Detail.of))
     assertEquals(end.detail.map(SkippedPeriod.SkippedCount.of), Some(2))
     assertEquals(end.detail.toList.flatMap(SkippedPeriod.Skipped.of(_).map(_.id)), List("p0m64tdgpvd", "p0m64tdp282"))
-    assert(end.progress.exists(_.contains("2 skipped")), end.toString)
+    assert(end.progress.exists(_.value.contains("2 skipped")), end.toString)

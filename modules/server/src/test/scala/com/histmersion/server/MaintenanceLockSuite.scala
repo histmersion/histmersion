@@ -61,7 +61,7 @@ class MaintenanceLockSuite extends com.histmersion.db.DbSuite:
     assertEquals(e.code, Some(Backup.CodeMaintenance), s"$name: ${e.message}")
 
   private val png =
-    AssetInput(com.histmersion.api.exchange.Bundle.Asset.FileName("f.png"), com.histmersion.api.exchange.Bundle.Asset.MimeText("image/png"), java.util.Base64.getEncoder.encodeToString(Array[Byte](1, 2, 3)), None, None, None)
+    AssetInput(com.histmersion.api.exchange.Bundle.Asset.FileName("f.png"), com.histmersion.api.exchange.Bundle.Asset.MimeText("image/png"), com.histmersion.api.media.AssetInput.Base64(java.util.Base64.getEncoder.encodeToString(Array[Byte](1, 2, 3))), None, None, None)
 
   test("every source write is refused while a restore holds the lock"):
     refused("put_source")(h.library.sources.put(com.histmersion.domain.library.Citekey("zzlock_src"), Source.Put(title = com.histmersion.api.library.Title("T"))))
@@ -82,7 +82,7 @@ class MaintenanceLockSuite extends com.histmersion.db.DbSuite:
 
   test("the gazetteer writes are refused"):
     refused("places/import")(
-      h.places.importPlaces(Caller.Local, None, None, """{"type":"FeatureCollection","features":[]}""")
+      h.places.importPlaces(Caller.Local, None, None, com.histmersion.domain.catalogue.places.PlacesControllers.DatasetBody("""{"type":"FeatureCollection","features":[]}"""))
     )
     refused("places/rebuild")(h.places.rebuild(Caller.Local))
     refused("places/names/add")(
@@ -92,7 +92,7 @@ class MaintenanceLockSuite extends com.histmersion.db.DbSuite:
       h.places.removeName(Caller.Local, com.histmersion.domain.catalogue.Place.Id("zzlock_place"), com.histmersion.api.catalogue.Place.NameRemove(com.histmersion.api.catalogue.Place.NameRemove.Name("X")))
     )
     refused("places/add")(
-      h.places.add(Caller.Local, com.histmersion.api.catalogue.Place.Add(com.histmersion.api.catalogue.Place.Add.Label("Zzlock"), Place.Kind.Site, com.histmersion.api.catalogue.Longitude(0), com.histmersion.api.catalogue.Latitude(0), com.histmersion.api.catalogue.Place.Add.Source("fixture")))
+      h.places.add(Caller.Local, com.histmersion.api.catalogue.Place.Add(com.histmersion.api.catalogue.Place.Add.Label("Zzlock"), com.histmersion.api.catalogue.Place.Add.Kind(Place.Kind.Site), com.histmersion.api.catalogue.Longitude(0), com.histmersion.api.catalogue.Latitude(0), com.histmersion.api.catalogue.Place.Add.Source("fixture")))
     )
 
   test("the ingest surface is refused"):

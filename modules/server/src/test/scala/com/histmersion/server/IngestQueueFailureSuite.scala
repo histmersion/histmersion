@@ -34,7 +34,7 @@ class IngestQueueFailureSuite extends com.histmersion.db.DbSuite:
     Migrate.run(ds)
     val converter = new ConverterClient:
       def health = Right(com.histmersion.util.ocr.ConverterClient.HealthSummary("ok"))
-      def convert(file: com.histmersion.util.storage.Blob, filename: String, quality: Boolean) =
+      def convert(file: com.histmersion.util.storage.Blob, filename: ConverterClient.Filename, quality: ConverterClient.HighQuality) =
         Right(ConvertedDoc(markdown = com.histmersion.api.ocr.ConvertedDoc.Markdown("# Fixture\n\nOCR succeeded."), pages = com.histmersion.api.ocr.ConvertedDoc.Pages(1), images = Nil))
     val deps = Deps(cfg, ds)
     val handler = IngestWiring(
@@ -45,8 +45,8 @@ class IngestQueueFailureSuite extends com.histmersion.db.DbSuite:
       _ => None
     )
     val jobs = com.histmersion.util.jobs.JobListing(ds, () => cfg)
-    val key = "zz_ingest_queue_failure"
-    val item = QueueRows.add(ds, Queue.Kind.Acquire, Queue.QueueAdd(text = key))
+    val key = com.histmersion.domain.library.Citekey("zz_ingest_queue_failure")
+    val item = QueueRows.add(ds, Queue.Kind.Acquire, Queue.QueueAdd(text = Queue.QueueItem.Text("zz_ingest_queue_failure")))
     val pdf = Files.createTempFile("ingest-queue-upload", ".pdf")
     Files.writeString(pdf, "%PDF-1.4 queue failure fixture")
     def sql(statement: String): Unit =
@@ -65,7 +65,7 @@ class IngestQueueFailureSuite extends com.histmersion.db.DbSuite:
       handler.queue.start()
       val accepted = handler.controllers
         .ingest(
-          Ingest.Params(key, Some(com.histmersion.api.exchange.Bundle.Asset.FileName("fixture.pdf")), force = true, acquireItem = Some(item.id)),
+          Ingest.Params(com.histmersion.api.library.Citekey("zz_ingest_queue_failure"), Some(com.histmersion.api.exchange.Bundle.Asset.FileName("fixture.pdf")), force = true, acquireItem = Some(item.id)),
           com.histmersion.domain.library.ingest.Upload.handed(com.histmersion.util.storage.HandedFile.snapshot(pdf.toFile))
         )
         .toOption
@@ -80,7 +80,7 @@ class IngestQueueFailureSuite extends com.histmersion.db.DbSuite:
       assertEquals(QueueRows.get(ds, item.id).map(_.status), Some(Queue.Open))
       assertEquals(job.state, JobState.Done, s"stored source but job error: ${job.error}")
       assertEquals(job.error, None)
-      assert(job.progress.exists(_.contains(s"acquisition item ${item.id} NOT ticked off")), job.toString)
+      assert(job.progress.exists(_.value.contains(s"acquisition item ${item.id} NOT ticked off")), job.toString)
     finally
       handler.queue.stop()
       sql("DROP TRIGGER IF EXISTS zz_ingest_reject_done ON queue_items")

@@ -43,11 +43,11 @@ class AutomationOracleSuite extends munit.FunSuite:
     MessageDigest.getInstance("SHA-256").digest(bytes).map(b => f"${b & 0xff}%02x").mkString
 
   test("agent-trees.txt: every generated file of every runtime, the definitions' fingerprint, the answer"):
-    val defs = AgentDefinitions(Prompts(""), EngineContributions.roster)
+    val defs = AgentDefinitions(Prompts(Prompts.OverrideDir("")), EngineContributions.roster)
     val out = Files.createTempDirectory("histmersion-agent-trees")
     val trees = AgentTrees(loaded.config, defs)
     val known = Generated.known(defs)
-    val res = trees.generate(known, AgentRuntime.Generated, Some(out)).fold(m => fail(m), identity)
+    val res = trees.generate(known, AgentRuntime.Generated, Some(out)).fold(m => fail(m.value), identity)
     val walk = Files.walk(out)
     val paths =
       try walk.iterator.asScala.toList.filter(p => p != out).sortBy(p => out.relativize(p).toString)
@@ -65,13 +65,13 @@ class AutomationOracleSuite extends munit.FunSuite:
     val head = List(
       s"definitions\t${res.definitions}",
       s"answer\truntimes=${res.runtimes.mkString(",")} files=${res.files} written=${res.written} removed=${res.removed}",
-      s"known tools\t${known.toList.sorted.mkString(",")}"
+      s"known tools\t${known.toList.sortBy(_.value).mkString(",")}"
     )
     check("agent-trees.txt", (head ++ lines).mkString("", "\n", "\n"))
 
   test("workflows.txt: every workflow the engine runs, its roles and the tools its agents may use"):
     val defs = Generated.defs()
-    val agents = defs.agents.sortBy(_.name).map(a => s"agent ${a.name}\ttools=${a.tools.map(_.value).mkString(",")}")
+    val agents = defs.agents.sortBy(_.name.value).map(a => s"agent ${a.name}\ttools=${a.tools.map(_.value).mkString(",")}")
     val pipelines = com.histmersion.domain.automation.Pipeline.values.toList.map { p =>
       s"workflow ${p.wire}\tv${p.version}\t${p.targetKind.wire}\troles=${p.roles.map(_.wire).mkString(",")}\n  ${p.describe}"
     }

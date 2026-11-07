@@ -51,7 +51,7 @@ class SettingsHttpSuite extends DbSuite:
 
   private def withServer(text: String, env: org.ekrich.config.Config = env)(run: String => Unit): Unit =
     Files.writeString(file, text)
-    val l = AppConfig.loadWithUserFile(env, Some(file)).fold(e => fail(e), identity)
+    val l = AppConfig.loadWithUserFile(env, Some(file)).fold(e => fail(e.value), identity)
     supervised {
       val b = Composition
         .server(
@@ -59,7 +59,7 @@ class SettingsHttpSuite extends DbSuite:
           com.histmersion.config.ServerConfig.Host("127.0.0.1"),
           com.histmersion.config.ServerConfig.Port(0),
           OfflineConverter(),
-          source = Some((l, ConfigSource(() => AppConfig.loadWithUserFile(env, Some(file)))))
+          source = Some((l, ConfigSource(() => AppConfig.loadWithUserFile(env, Some(file)).left.map(e => ConfigSource.Problem(e.value)))))
         )
         .start()
       try run(s"http://127.0.0.1:${b.port}")
