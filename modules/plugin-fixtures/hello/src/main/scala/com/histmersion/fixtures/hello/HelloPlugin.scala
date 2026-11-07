@@ -23,7 +23,7 @@ final class HelloPlugin extends Plugin:
       .left
       .map(e => s"greeter '${config.greeter}': ${e.getClass.getSimpleName}: ${e.getMessage}")
       .flatMap { greeter =>
-        ctx.log.info(s"hello: ${greeter.greet(config.greeting)} (${config.mirrors.size} mirror(s))")
+        ctx.log.info(Plugin.Log.InfoMessage(s"hello: ${greeter.greet(Greeter.GreetWho(config.greeting.value)).value} (${config.mirrors.size} mirror(s))"))
         ctx.sourceFetchers.add(_root_.com.histmersion.plugin.Registry.AddId("hello"), HelloFetcher(_root_.com.histmersion.fixtures.hello.HelloFetcher.Mirrors(config.mirrors.size)))
       }
 

@@ -8,9 +8,9 @@ final class HelloAiPlugin extends Plugin:
   val info = Plugin.Info(_root_.com.histmersion.plugin.Plugin.Info.Id("hello-ai"), _root_.com.histmersion.plugin.Plugin.Info.Version("0.1.0"), _root_.com.histmersion.plugin.Plugin.Info.SpiVersion(Spi.Version))
 
   def register(config: HelloAiConfig, ctx: Plugin.Context): Either[com.histmersion.fixtures.helloai.HelloAiPlugin.RegisterResultPart1, Unit] =
-    config.token.fold[Either[String, Boolean]](Right(false))(t => ctx.secret(t).map(_.nonEmpty)).flatMap { hasToken =>
+    config.token.fold[Either[String, Boolean]](Right(false))(t => ctx.secret(t).left.map(_.value).map(_.value.nonEmpty)).flatMap { hasToken =>
       ctx.log.info(_root_.com.histmersion.plugin.Plugin.Log.InfoMessage(s"hello-ai: ${config.replies.size} scripted repl(ies)${if hasToken then ", a token given" else ""}"))
-      ctx.aiProviders.add(config.name, HelloAiProvider(config.replies, _root_.com.histmersion.fixtures.helloai.HelloAiProvider.HasToken(hasToken)))
+      ctx.aiProviders.add(Registry.AddId(config.name.value), HelloAiProvider(config.replies, _root_.com.histmersion.fixtures.helloai.HelloAiProvider.HasToken(hasToken)))
     }
 
 object HelloAiPlugin:

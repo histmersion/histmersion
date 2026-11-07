@@ -6,7 +6,7 @@ import com.histmersion.plugin.Plugin.Config.given
 final class HelloAiProvider(replies: List[Reply], hasToken: HelloAiProvider.HasToken) extends AiProvider:
   val title = _root_.com.histmersion.plugin.AiProvider.TitleResult("Hello AI (scripted test provider)")
   override val description = _root_.com.histmersion.plugin.AiProvider.DescriptionResult("answers from its config; calls no model")
-  override val capabilities = AiCapabilities(tools = true, structuredOutput = false)
+  override val capabilities = AiCapabilities(tools = AiCapabilities.Tools(true), structuredOutput = AiCapabilities.StructuredOutput(false))
 
   override def check(model: String): Either[String, Unit] =
     Either.cond(model != "broken", (), "the model 'broken' cannot be built (a test of the check)")
@@ -23,23 +23,23 @@ final class HelloAiProvider(replies: List[Reply], hasToken: HelloAiProvider.HasT
     val usage = Some(AiUsage(input = _root_.com.histmersion.plugin.AiUsage.Input((100).toLong), output = _root_.com.histmersion.plugin.AiUsage.Output((20).toLong)))
     if request.model == _root_.com.histmersion.plugin.AiTurn.Request.Model("limited") then Left(AiFailure.LimitReached(_root_.com.histmersion.plugin.AiFailure.LimitReached.Message("hello-ai: usage limit reached")))
     else
-      val schema = request.answerSchema.getOrElse("")
-      replies.find(r => schema.contains(r.when)) match
+      val schema = request.answerSchema.fold("")(_.value)
+      replies.find(r => schema.contains(r.when.value)) match
         case None    => Left(AiFailure.Error(_root_.com.histmersion.plugin.AiFailure.Error.Message(s"no scripted reply for this step (${replies.size} repl(ies))")))
         case Some(r) =>
           val answered = request.messages.exists(_.isInstanceOf[AiMessage.ToolResult])
-          r.tool.filter(t => !answered && request.tools.exists(_.name == t)) match
+          r.tool.filter(t => !answered && request.tools.exists(_.name.value == t.value)) match
             case Some(t) =>
               Right(
                 AiTurn(
                   _root_.com.histmersion.plugin.AiTurn.Text(""),
-                  List(AiTool.Call(_root_.com.histmersion.plugin.AiTool.Call.Id("hello-1"), t, r.input.getOrElse("{}"))),
+                  List(AiTool.Call(_root_.com.histmersion.plugin.AiTool.Call.Id("hello-1"), AiTool.Call.Tool(t.value), AiTool.Call.Input(r.input.fold("{}")(_.value)))),
                   AiStop.ToolUse,
                   usage,
                   Some(_root_.com.histmersion.plugin.AiTurn.ServedBy(s"${request.model}-scripted"))
                 )
               )
-            case None => Right(AiTurn(r.text, Nil, AiStop.EndTurn, usage, Some(_root_.com.histmersion.plugin.AiTurn.ServedBy(s"${request.model}-scripted"))))
+            case None => Right(AiTurn(AiTurn.Text(r.text.value), Nil, AiStop.EndTurn, usage, Some(_root_.com.histmersion.plugin.AiTurn.ServedBy(s"${request.model}-scripted"))))
 
 object HelloAiProvider:
   type HasToken = HasToken.T
