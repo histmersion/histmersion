@@ -150,7 +150,7 @@ abstract class SourceServiceContract extends LibraryStoreSuite:
     assert(s.sources.bodyText(A).value.contains("The walls of Walls."))
     val last = s.sources.toc(A).last.heading
     assert(s.sources.bodyUnderHeading(A, SourceService.Heading(last.value.take(4).toUpperCase)).value.contains("The harbour of Walls."), last)
-    assertEquals(s.sources.bodyChunks(A).map(_.ord), s.sources.bodyChunks(A).map(_.ord).sortBy(_.value))
+    assertEquals(s.sources.bodyChunks(A).map(_.ord), s.sources.bodyChunks(A).map(_.ord).sortBy[Int](_.value))
     assert(s.sources.markdown(A).value.startsWith("# Walls"))
     assertEquals(s.sources.bodyText(com.histmersion.domain.library.Citekey("zqnone2000_x")), "")
     assertEquals(s.sources.bodyChunks(com.histmersion.domain.library.Citekey("zqnone2000_x")), Nil)

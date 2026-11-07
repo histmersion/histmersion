@@ -90,8 +90,8 @@ class HotReloadSuite extends DbSuite:
          |""".stripMargin
     )
 
-  private def loaded: LoadedConfig = AppConfig.loadWithUserFile(env, Some(file)).fold(e => fail(e), identity)
-  private val source = ConfigSource(() => AppConfig.loadWithUserFile(env, Some(file)))
+  private def loaded: LoadedConfig = AppConfig.loadWithUserFile(env, Some(file)).fold(e => fail(e.value), identity)
+  private val source = ConfigSource(() => AppConfig.loadWithUserFile(env, Some(file)).left.map(p => ConfigSource.Problem(p.value)))
 
   private val http = HttpClient.newBuilder().version(HttpClient.Version.HTTP_1_1).build()
   private def send(req: HttpRequest): (Int, String) =
@@ -145,10 +145,10 @@ class HotReloadSuite extends DbSuite:
     val entered = java.util.concurrent.Semaphore(0)
     val gate = CountDownLatch(1)
     def health = Right(com.histmersion.util.ocr.ConverterClient.HealthSummary("ok"))
-    def convert(file: com.histmersion.util.storage.Blob, filename: String, quality: Boolean) =
+    def convert(file: com.histmersion.util.storage.Blob, filename: ConverterClient.Filename, quality: ConverterClient.HighQuality) =
       entered.release()
       gate.await(60, TimeUnit.SECONDS)
-      Right(ConvertedDoc(markdown = s"# Converted\n\n$filename\n", pages = com.histmersion.api.ocr.ConvertedDoc.Pages(1), images = Nil, filename = Some(filename)))
+      Right(ConvertedDoc(markdown = ConvertedDoc.Markdown(s"# Converted\n\n$filename\n"), pages = com.histmersion.api.ocr.ConvertedDoc.Pages(1), images = Nil, filename = Some(ConvertedDoc.Filename(filename.value))))
 
   private def pdf(marker: String): Path =
     val p = Files.createTempFile(dir, "hot-", ".pdf")
@@ -156,7 +156,7 @@ class HotReloadSuite extends DbSuite:
 
   /** One query on database `db` over a connection of its own (no pool left behind on it). */
   private def on(db: String, q: String): Long =
-    val c = java.sql.DriverManager.getConnection(urlOf(db), base.db.user, base.db.password)
+    val c = java.sql.DriverManager.getConnection(urlOf(db), base.db.user.value, base.db.password.value)
     try
       val rs = c.createStatement().executeQuery(q)
       rs.next(); rs.getLong(1)

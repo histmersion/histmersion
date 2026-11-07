@@ -102,8 +102,8 @@ class ContractSnapshotSuite extends munit.FunSuite:
   test("toolbox.json: every agent tool, and each agent role's tools and answer schema"):
     val defs = Generated.defs()
     val tools = Json.obj(ToolboxOrder.names.map(t => t.value -> PromptBudget.toolJson(t))*)
-    val roles = Json.obj(defs.agents.sortBy(_.name).map { a =>
-      a.name -> Json.obj(
+    val roles = Json.obj(defs.agents.sortBy(_.name.value).map { a =>
+      a.name.value -> Json.obj(
         "tools" -> a.tools.map(t => t.value: String).asJson,
         "answer" -> PromptBudget.answers
           .get(a.name)

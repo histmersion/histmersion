@@ -27,7 +27,7 @@ class AgentsSettingsSuite extends munit.FunSuite:
   private given com.histmersion.util.system.JvmHome = com.histmersion.util.system.JvmHome(java.nio.file.Path.of("target/test-home").toAbsolutePath)
   test("agents are OFF by default and every key loads; env switches them on"):
     val cfg = AppConfig.load(org.ekrich.config.ConfigFactory.parseMap(java.util.Map.of()))
-    assert(!cfg.agents.enabled)
+    assert(!cfg.agents.enabled.value)
     assertEquals(cfg.agents.maxConcurrentRuns, 4)
     assertEquals(cfg.agents.roles.extractor, "")
     val on = AppConfig.load(
@@ -42,15 +42,16 @@ class AgentsSettingsSuite extends munit.FunSuite:
         )
       )
     )
-    assert(on.agents.enabled)
+    assert(on.agents.enabled.value)
     assertEquals(on.agents.role(com.histmersion.domain.automation.AgentRole.Extractor), "local:m")
     assert(!on.agents.providers.anthropic.toString.contains("sk-secret"), "the key must never be printed")
-    assert(cfg.agents.autoEnrich, "auto-enrich is on by default (it acts only with agents on)")
+    assert(cfg.agents.autoEnrich.value, "auto-enrich is on by default (it acts only with agents on)")
     assert(
       !AppConfig
         .load(org.ekrich.config.ConfigFactory.parseMap(java.util.Map.of("HISTMERSION_AGENTS_AUTO_ENRICH", "false")))
         .agents
         .autoEnrich
+        .value
     )
 
   test("P2 keys: approvals manual, review rounds, trace pruning and prompt overrides by default; env overrides"):
@@ -60,7 +61,7 @@ class AgentsSettingsSuite extends munit.FunSuite:
     assertEquals(cfg.researchAgents.review.maxRounds, 3)
     assertEquals(cfg.agents.trace.keepMessagesDays, 30)
     assertEquals(cfg.agents.promptsDir, "")
-    assert(cfg.libraryAgents.enrich.upstream)
+    assert(cfg.libraryAgents.enrich.upstream.value)
     val on = AppConfig.load(
       org.ekrich.config.ConfigFactory.parseMap(
         java.util.Map.of(
@@ -85,7 +86,7 @@ class AgentsSettingsSuite extends munit.FunSuite:
     assertEquals(cfg.agents.approvals.publishMode, com.histmersion.domain.automation.Approval.Mode.Manual)
     assertEquals(cfg.agents.roles.planner, "")
     assertEquals(cfg.agents.roles.writer, "")
-    assert(cfg.agents.scheduler.enabled && cfg.researchAgents.compile.review)
+    assert(cfg.agents.scheduler.enabled.value && cfg.researchAgents.compile.review.value)
     assertEquals(cfg.agents.plan.caps.works, 15)
     val on = AppConfig.load(
       org.ekrich.config.ConfigFactory.parseMap(
@@ -103,20 +104,20 @@ class AgentsSettingsSuite extends munit.FunSuite:
     )
     assertEquals(on.agents.approvals.publishMode, com.histmersion.domain.automation.Approval.Mode.Auto)
     assertEquals(on.agents.role(com.histmersion.domain.automation.AgentRole.Writer), "local:w")
-    assert(!on.agents.scheduler.enabled)
+    assert(!on.agents.scheduler.enabled.value)
     assertEquals(on.researchAgents.compile.maxSources, 5)
 
   test("config: claude-code is guarded by default (no API key, loopback only); chains and allowances load from env"):
     val cfg = AppConfig.load(org.ekrich.config.ConfigFactory.parseMap(java.util.Map.of()))
     val cc = cfg.agents.providers.claudeCode
     assertEquals(cc.command, "claude")
-    assert(!cc.useApiKey && !cc.allowNonLoopback)
+    assert(!cc.useApiKey.value && !cc.allowNonLoopback.value)
     assertEquals(
       cc.extraArgs,
       "",
       "the settings files stay out through --setting-sources, which keeps the plan login (§3a P2)"
     )
-    assert(cfg.agents.runtimes.claudeMod && cfg.agents.runtimes.generate && !cfg.agents.runtimes.interactiveMod)
+    assert(cfg.agents.runtimes.claudeMod.value && cfg.agents.runtimes.generate.value && !cfg.agents.runtimes.interactiveMod.value)
     assertEquals(cfg.agents.quota.claudePlan.maxCallsInFlight, 1)
     assertEquals(
       (cfg.agents.quota.claudePlan.refresh, cfg.agents.quota.claudePlan.probeModel),
@@ -124,7 +125,7 @@ class AgentsSettingsSuite extends munit.FunSuite:
       "a stale or missing Claude reading is refreshed by the probe (#989)"
     )
     assertEquals(cfg.agents.quota.fallthrough, "", "no chain falls from a plan to a paid key unless asked")
-    assert(!cfg.agents.providers.codex.useApiKey && !cfg.agents.providers.opencode.chatgptLogin)
+    assert(!cfg.agents.providers.codex.useApiKey.value && !cfg.agents.providers.opencode.chatgptLogin.value)
     assertEquals(cfg.agents.provider(com.histmersion.domain.automation.ProviderKind.Codex), None)
     assertEquals(cfg.agents.allowances, "")
     assertEquals(cfg.agents.provider(com.histmersion.domain.automation.ProviderKind.ClaudeCode), None, "claude-code is no HTTP provider")
@@ -143,12 +144,12 @@ class AgentsSettingsSuite extends munit.FunSuite:
       )
     )
     assertEquals(
-      parseChain(on.agents.role(com.histmersion.domain.automation.AgentRole.Extractor)).map(_.map(_.wire)),
+      parseChain(Chain.Spec(on.agents.role(com.histmersion.domain.automation.AgentRole.Extractor))).map(_.map(_.wire)),
       Right(List("claude-code:sonnet", "local:qwen"))
     )
-    assertEquals(parseAllowances(on.agents.allowances).map(_.map(_.text)), Right(List("2M tokens/5h, reserve 20%")))
+    assertEquals(parseAllowances(Allowance.Spec(on.agents.allowances.value)).map(_.map(_.text)), Right(List("2M tokens/5h, reserve 20%")))
     assertEquals(on.agents.providers.claudeCode.command, "/opt/homebrew/bin/claude")
-    assert(on.agents.providers.claudeCode.allowNonLoopback)
+    assert(on.agents.providers.claudeCode.allowNonLoopback.value)
 
   test("config: article-plan/goal-plan take auto or checked; article-publish only checked reaches the supervisor"):
     val c = AgentApprovalsConfig(com.histmersion.config.AgentApprovalsConfig.Gate("manual"), com.histmersion.config.AgentApprovalsConfig.Gate("manual"), com.histmersion.config.AgentApprovalsConfig.Gate("auto"), articlePlan = com.histmersion.config.AgentApprovalsConfig.Gate("Auto"), goalPlan = com.histmersion.config.AgentApprovalsConfig.Gate("checked"))

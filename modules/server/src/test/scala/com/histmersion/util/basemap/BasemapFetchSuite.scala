@@ -444,7 +444,7 @@ class BasemapFetchSuite extends munit.FunSuite:
     assertEquals(
       UserPaths.basemapDir(
         UserPaths.BasemapDir(cfg.basemap.dir.value),
-        cfg.init.dataDir,
+        RuntimeConfig.DataDir(cfg.init.dataDir.value),
         Map(Environment.VariablesKey("XDG_CACHE_HOME") -> Environment.VariablesValue("/x/cache")).get
       ),
       Path.of("/x/cache/histmersion/basemap")
@@ -452,7 +452,7 @@ class BasemapFetchSuite extends munit.FunSuite:
     assertEquals(
       UserPaths.basemapDir(
         UserPaths.BasemapDir("/y/maps"),
-        cfg.init.dataDir,
+        RuntimeConfig.DataDir(cfg.init.dataDir.value),
         Map.empty[Environment.VariablesKey, Environment.VariablesValue].get
       ),
       Path.of("/y/maps")

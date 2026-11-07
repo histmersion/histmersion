@@ -1,5 +1,7 @@
 package com.histmersion.server
 
+import com.histmersion.testsupport.ComparedByValue.given
+
 import com.histmersion.api.{ConfidenceStyle, MapStack, Palette, Wcag}
 import com.histmersion.config.*
 import com.histmersion.domain.*
@@ -12,7 +14,7 @@ import com.histmersion.api.research.ReviewState
   */
 class CssTokensSuite extends munit.FunSuite:
 
-  private val css = Static.read(com.histmersion.server.Static.ReadPath("web/style.css"))
+  private val css: String = Static.read(com.histmersion.server.Static.ReadPath("web/style.css")).value
 
   /** `--name: value` declarations in the `:root` blocks. */
   private val rootTokens: Map[String, String] =
@@ -23,7 +25,7 @@ class CssTokensSuite extends munit.FunSuite:
       .toMap
 
   test("every token the code names is defined on :root"):
-    val missing = Palette.allTokens.filterNot(rootTokens.contains)
+    val missing = Palette.allTokens.filterNot(token => rootTokens.contains(token.value))
     assertEquals(missing, Nil, "define these in modules/server/src/main/resources/web/style.css")
 
   test("the confidence colours are the ramp's midpoint desaturated exactly as the map's dots are"):
@@ -31,8 +33,8 @@ class CssTokensSuite extends munit.FunSuite:
     Confidence.values.foreach { c =>
       val level = c.toString.toLowerCase
       assertEquals(
-        rootTokens(Palette.confidence(level)).replace(" ", ""),
-        ConfidenceStyle.desaturate(mid.replace(" ", ""), c),
+        rootTokens(Palette.confidence(Confidence.Wire(level)).value).replace(" ", ""),
+        ConfidenceStyle.desaturate(ConfidenceStyle.Rgb(mid.replace(" ", "")), c),
         level
       )
     }
@@ -57,23 +59,24 @@ class CssTokensSuite extends munit.FunSuite:
   /** Colours the OSM tiles draw large areas in: land, water, forest, farmland, sand, built-up, and the HOT style's
     * land; the dark set is the same tiles as `.map-tiles-dark` draws them (inverted, 90%).
     */
-  private val lightTiles = List("#f2efe9", "#aad3df", "#add19e", "#eef0d5", "#fff1ba", "#e0dfdf", "#f8f4f0", "#c8facc")
-  private def darkened(c: (Int, Int, Int)): (Int, Int, Int) =
-    def d(v: Int) = ((255 - v) * 0.9).round.toInt
+  private val lightTiles =
+    List("#f2efe9", "#aad3df", "#add19e", "#eef0d5", "#fff1ba", "#e0dfdf", "#f8f4f0", "#c8facc").map(Wcag.Hex(_))
+  private def darkened(c: (Wcag.Channel, Wcag.Channel, Wcag.Channel)): (Wcag.Channel, Wcag.Channel, Wcag.Channel) =
+    def d(v: Wcag.Channel) = Wcag.Channel(((255 - v.value) * 0.9).round.toInt)
     (d(c._1), d(c._2), d(c._3))
 
   test("#1442: map names are AA on their halo and on every light and dark tile colour"):
-    def colour(t: String) = Wcag.hex(rootTokens(t)).getOrElse(fail(s"$t is not a hex colour: ${rootTokens(t)}"))
+    def colour(t: String) = Wcag.hex(Wcag.Hex(rootTokens(t))).getOrElse(fail(s"$t is not a hex colour: ${rootTokens(t)}"))
     val light = lightTiles.map(c => Wcag.hex(c).get)
     for (tone, tiles) <- List("light" -> light, "dark" -> light.map(darkened)) do
       val ink = colour(s"--map-label-ink-$tone")
       val halo = colour(s"--map-label-halo-$tone")
       val note = colour(s"--map-label-note-$tone")
-      assert(Wcag.contrast(ink, halo) >= 7.0, s"$tone: ink on halo ${Wcag.contrast(ink, halo)}")
-      assert(Wcag.contrast(note, halo) >= Wcag.AaText, s"$tone: note on halo ${Wcag.contrast(note, halo)}")
+      assert(Wcag.contrast(ink, halo).value >= 7.0, s"$tone: ink on halo ${Wcag.contrast(ink, halo)}")
+      assert(Wcag.contrast(note, halo).value >= Wcag.AaText.value, s"$tone: note on halo ${Wcag.contrast(note, halo)}")
       for t <- tiles do
-        assert(Wcag.contrast(ink, t) >= Wcag.AaText, s"$tone: ink on tile $t: ${Wcag.contrast(ink, t)}")
-        assert(Wcag.contrast(note, t) >= Wcag.AaText, s"$tone: note on tile $t: ${Wcag.contrast(note, t)}")
+        assert(Wcag.contrast(ink, t).value >= Wcag.AaText.value, s"$tone: ink on tile $t: ${Wcag.contrast(ink, t)}")
+        assert(Wcag.contrast(note, t).value >= Wcag.AaText.value, s"$tone: note on tile $t: ${Wcag.contrast(note, t)}")
 
   test("#1442: the dark tone swaps the names' colours, and names use the tone's tokens"):
     val dark =
@@ -149,14 +152,14 @@ class CssTokensSuite extends munit.FunSuite:
     )
 
   /** A theme's resolved colour: its own value, `var(--x)` followed, as a hex triple. */
-  private def colour(theme: Map[String, String], token: String): (Int, Int, Int) =
+  private def colour(theme: Map[String, String], token: String): (Wcag.Channel, Wcag.Channel, Wcag.Channel) =
     def resolve(t: String, depth: Int): String =
       val v = theme.getOrElse(t, rootTokens.getOrElse(t, fail(s"$t is not defined")))
       """^var\((--[\w-]+)\)$""".r
         .findFirstMatchIn(v)
         .fold(v)(m => if depth > 5 then v else resolve(m.group(1), depth + 1))
     val v = resolve(token, 0)
-    Wcag.hex(v).getOrElse(fail(s"$token is not a hex colour: $v"))
+    Wcag.hex(Wcag.Hex(v)).getOrElse(fail(s"$token is not a hex colour: $v"))
 
   private val light: Map[String, String] = rootTokens
   private val dark: Map[String, String] = rootTokens ++ darkChosen
@@ -192,8 +195,8 @@ class CssTokensSuite extends munit.FunSuite:
       "--sh-win",
       "--scrim"
     ) ++
-      Palette.statuses.map(Palette.status) ++ Palette.edgeKinds.map(Palette.edge) ++
-      Palette.goalStages.flatMap(s => List(Palette.goalStage(s), Palette.goalStageSoft(s)))
+      Palette.statuses.map(s => Palette.status(s).value) ++ Palette.edgeKinds.map(k => Palette.edge(k).value) ++
+      Palette.goalStages.flatMap(s => List(Palette.goalStage(s).value, Palette.goalStageSoft(s).value))
     assertEquals(themed.filterNot(darkChosen.contains), Nil)
     assertEquals(themed.filterNot(rootTokens.contains), Nil)
 
@@ -233,8 +236,8 @@ class CssTokensSuite extends munit.FunSuite:
   /** A control's edge, the focus ring and the source-status marks against what they sit on: 3:1. */
   private val componentPairs: List[(String, String)] =
     for
-      fg <- List("--control-line", "--accent") ++ Palette.statuses.map(Palette.status) ++ Palette.goalStages.map(
-        Palette.goalStage
+      fg <- List("--control-line", "--accent") ++ Palette.statuses.map(s => Palette.status(s).value) ++ Palette.goalStages.map(
+        s => Palette.goalStage(s).value
       )
       bg <- List("--bg", "--panel", "--sunk")
     yield fg -> bg
@@ -242,12 +245,12 @@ class CssTokensSuite extends munit.FunSuite:
   for (name, theme) <- List("light" -> light, "dark" -> dark) do
     test(s"$name theme: every text pair is WCAG 2.2 AA (4.5:1)"):
       val low =
-        textPairs.map((f, b) => (f, b, Wcag.contrast(colour(theme, f), colour(theme, b)))).filter(_._3 < Wcag.AaText)
+        textPairs.map((f, b) => (f, b, Wcag.contrast(colour(theme, f), colour(theme, b)).value)).filter(_._3 < Wcag.AaText.value)
       assertEquals(low.map((f, b, c) => f"$f on $b: $c%.2f"), Nil)
 
     test(s"$name theme: every control edge and status mark is WCAG 2.2 AA for components (3:1)"):
       val low =
-        componentPairs.map((f, b) => (f, b, Wcag.contrast(colour(theme, f), colour(theme, b)))).filter(_._3 < 3.0)
+        componentPairs.map((f, b) => (f, b, Wcag.contrast(colour(theme, f), colour(theme, b)).value)).filter(_._3 < 3.0)
       assertEquals(low.map((f, b, c) => f"$f on $b: $c%.2f"), Nil)
 
   /** The stylesheet's rules, without the token blocks and the font faces: what must NAME tokens. */
@@ -377,7 +380,7 @@ class CssTokensSuite extends munit.FunSuite:
     assert(!seeding.contains("danger") && !seeding.contains("health-down"), seeding)
 
   /** The colours a goal stage's badge is drawn with: its ground, its word and its mark, from its rules. */
-  private def stageLook(stage: String): (String, String, String) =
+  private def stageLook(stage: com.histmersion.api.automation.Goal.Status.All): (String, String, String) =
     def rule(sel: String) = ("""(?s)""" + java.util.regex.Pattern.quote(sel) + """ \{([^}]*)\}""").r
       .findFirstMatchIn(css)
       .map(_.group(1))
@@ -408,10 +411,10 @@ class CssTokensSuite extends munit.FunSuite:
       val (bg, fg, _) = looks(s)
       def tokenOf(v: String) = v.stripPrefix("var(").stripSuffix(")")
       val c = Wcag.contrast(colour(theme, tokenOf(fg)), colour(theme, tokenOf(bg)))
-      assert(c >= Wcag.AaText, f"$name: $s's word on its ground is $c%.2f")
+      assert(c.value >= Wcag.AaText.value, f"$name: $s's word on its ground is ${c.value}%.2f")
 
   test("#7381: a link is the accent in both themes, visited or not — never the browser's purple or pink"):
     assert(css.contains(":where(a) { color:var(--accent); }"), "every link takes the accent")
     assert(""":visited\s*\{""".r.findFirstIn(rules).isEmpty, "no rule gives visited links a colour of their own")
     for (name, theme) <- List("light" -> light, "dark" -> dark); bg <- List("--bg", "--panel", "--sunk") do
-      assert(Wcag.contrast(colour(theme, "--accent"), colour(theme, bg)) >= Wcag.AaText, s"$name: the link on $bg")
+      assert(Wcag.contrast(colour(theme, "--accent"), colour(theme, bg)).value >= Wcag.AaText.value, s"$name: the link on $bg")

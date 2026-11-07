@@ -53,7 +53,7 @@ abstract class AttestationServiceContract extends CatalogueStoreSuite:
     val patched = a.patch(first.id, Attestation.Patch(note = Some(com.histmersion.api.catalogue.Attestation.Note("changed")), page = Some(com.histmersion.api.catalogue.Attestation.Page("13")))).toOption.get
     assertEquals(patched, first.modify(_.note).setTo(Some("changed")).modify(_.page).setTo(Some("13")))
     assert(
-      a.patch(Attestation.Id(third.id.value + 100), Attestation.Patch(note = Some(com.histmersion.api.catalogue.Attestation.Note("x")))).left.exists(_.message.contains("No attestation"))
+      a.patch(Attestation.Id(third.id.value + 100), Attestation.Patch(note = Some(com.histmersion.api.catalogue.Attestation.Note("x")))).left.exists(_.message.value.contains("No attestation"))
     )
     assert(a.delete(second.id))
     assert(!a.delete(second.id))

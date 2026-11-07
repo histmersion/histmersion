@@ -17,7 +17,7 @@ object BackupFixtures:
         UserPaths(Environment.empty, com.histmersion.config.UserPaths.OsName(""))
       ),
       Processes(),
-      () => StorageLocations.searchPath(Option(System.getenv("PATH"))),
+      () => StorageLocations.searchPath(Option(System.getenv("PATH")).map(Environment.VariablesValue(_))),
       Transactor(org.postgresql.ds.PGSimpleDataSource()),
       Deps.data
     )

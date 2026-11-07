@@ -15,4 +15,4 @@ class ServerArgsSuite extends munit.FunSuite:
     assertEquals(ServerArgs.parse(List("serve")), Left("unknown argument 'serve'"))
     assertEquals(ServerArgs.parse(List("--self-check", "--help")), Left("one argument at most: --self-check --help"))
     assertEquals(ServerArgs.parse(List("--self-check", "x")), Left("one argument at most: --self-check x"))
-    assert(ServerArgs.Usage.contains("--self-check") && ServerArgs.Usage.contains("opens no database connection"))
+    assert(ServerArgs.Usage.value.contains("--self-check") && ServerArgs.Usage.value.contains("opens no database connection"))

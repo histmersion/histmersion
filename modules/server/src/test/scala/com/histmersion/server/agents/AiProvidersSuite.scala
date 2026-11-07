@@ -38,14 +38,22 @@ class AiProvidersSuite extends munit.FunSuite:
   private given com.histmersion.util.storage.Resources = com.histmersion.util.storage.Resources.classpath(getClass.getClassLoader)
   private given java.time.Clock = java.time.Clock.systemUTC()
   private given com.histmersion.util.system.JvmHome = com.histmersion.util.system.JvmHome(java.nio.file.Path.of("target/test-home").toAbsolutePath)
-  private val offline = new Plugin.Http { def get(u: String, h: Map[String, String]) = Left("offline") }
+  private val offline = new Plugin.Http:
+    def get(url: Plugin.Http.GetUrl, headers: Map[Plugin.Http.GetHeadersPart1, Plugin.Http.GetHeadersPart2]) =
+      Left(Plugin.Http.GetResultPart1("offline"))
+
+  /** The registry's providers as the engine reads them: keyed by plugin id. */
+  private def providersOf(
+      registered: ListMap[com.histmersion.pluginhost.Registries.AiProvidersKey, AiProvider]
+  ): ListMap[com.histmersion.util.plugins.Plugin.Id, AiProvider] =
+    registered.map((k, p) => com.histmersion.util.plugins.Plugin.Id.assume(k.value) -> p)
 
   /** A generation of `plugins` as the server builds one: the first-party plugins supplied the host's settings
     * (`reference.conf` under `env`) and allowed their reserved names.
     */
   private def build(plugins: List[Plugin], user: String = "", env: String = ""): Generation =
     val (u, e) = (ConfigFactory.parseString(user), ConfigFactory.parseString(env))
-    val reference = AppConfig.loadWithUserFile(e, None).fold(m => fail(m), _.merged)
+    val reference = AppConfig.loadWithUserFile(e, None).fold(m => fail(m.value), _.merged)
     val host = FirstPartySettings.hostView(reference, u, e, plugins)
     PluginHost.build(
       plugins,
@@ -62,27 +70,28 @@ class AiProvidersSuite extends munit.FunSuite:
     PluginHost
       .discover(getClass.getClassLoader)
       ._1
-      .filter(p => BuiltinAi.pluginIds(p.info.id)) ++ ServerPlugins.providers
+      .filter(p => com.histmersion.util.plugins.Plugin.Id.option(p.info.id.value).exists(BuiltinAi.pluginIds)) ++ ServerPlugins.providers
 
   /** What a scripted provider was asked, turn by turn. */
   final private class Scripted(
       answers: List[AiTurn.Request => Either[AiFailure, AiTurn]],
-      override val spendsPersonalPlan: Boolean = false,
-      checked: Either[String, Unit] = Right(())
+      override val spendsPersonalPlan: AiProvider.SpendsPersonalPlanResult = AiProvider.SpendsPersonalPlanResult(false),
+      checked: Either[AiProvider.CheckResultPart1, Unit] = Right(())
   ) extends AiProvider:
     val title = com.histmersion.plugin.AiProvider.TitleResult("Scripted")
     val asked = scala.collection.mutable.ArrayBuffer.empty[AiTurn.Request]
-    override def check(model: String) = checked
+    override def check(model: AiProvider.CheckModel) = checked
     def turn(r: AiTurn.Request, http: AiHttp) =
       asked += r
       answers.lift(asked.size - 1).getOrElse((_: AiTurn.Request) => Left(AiFailure.Error(com.histmersion.plugin.AiFailure.Error.Message("script exhausted"))))(r)
 
   /** A third-party plugin registering `provider` under `name`. */
-  final private class AiPlugin(name: String, provider: AiProvider, id: String = "zq-ai") extends Plugin:
+  final private class AiPlugin(name: Registry.AddId, provider: AiProvider, id: Plugin.Info.Id = Plugin.Info.Id("zq-ai")) extends Plugin:
     type Config = com.histmersion.util.plugins.HostProvided.NoSettings
-    val info = Plugin.Info(id, com.histmersion.plugin.Plugin.Info.Version("0.1.0"), Spi.Version)
+    val info = Plugin.Info(id, com.histmersion.plugin.Plugin.Info.Version("0.1.0"), Plugin.Info.SpiVersion(Spi.Version))
     override def defaultsResource = com.histmersion.plugin.Plugin.DefaultsResourceResult("zq-none.conf")
-    def register(c: Config, ctx: Plugin.Context) = ctx.aiProviders.add(name, provider)
+    def register(c: Config, ctx: Plugin.Context) =
+      ctx.aiProviders.add(name, provider).left.map(m => Plugin.RegisterResultPart1(m.value))
 
   private def on(id: String = "zq-ai") = s"histmersion.plugins.$id.enabled = true"
 
@@ -96,7 +105,7 @@ class AiProvidersSuite extends munit.FunSuite:
     val g = ServerPlugins.offline
     assert(g.report.ok, g.report.toString)
     assertEquals(g.registries.aiProviders.keySet, ProviderKind.values.map(_.wire).toSet)
-    assertEquals(g.report.plugins.find(_.id == "ai-claude-code").map(_.provides), Some(List("ai-provider:claude-code")))
+    assertEquals(g.report.plugins.find(_.id.value == "ai-claude-code").map(_.provides), Some(List("ai-provider:claude-code")))
     assertEquals(
       BuiltinAi.pluginIds,
       Set("ai-anthropic", "ai-openai", "ai-local", "ai-claude-code", "ai-codex", "ai-opencode")
@@ -110,7 +119,9 @@ class AiProvidersSuite extends munit.FunSuite:
       List("anthropic", "claude-code", "codex", "local", "openai", "opencode")
     )
     assertEquals(
-      g.report.plugins.filter(p => BuiltinAi.pluginIds(p.id)).map(p => (p.id, p.version, p.provides)),
+      g.report.plugins
+        .filter(p => com.histmersion.util.plugins.Plugin.Id.option(p.id.value).exists(BuiltinAi.pluginIds))
+        .map(p => (p.id, p.version, p.provides)),
       List(
         ("ai-anthropic", "0.1.0", List("ai-provider:anthropic")),
         ("ai-claude-code", "0.1.0", List("ai-provider:claude-code")),
@@ -120,53 +131,53 @@ class AiProvidersSuite extends munit.FunSuite:
         ("ai-opencode", "0.1.0", List("ai-provider:opencode"))
       )
     )
-    assertEquals(BuiltinAi.known(g.registries.aiProviders), Set.empty[String])
+    assertEquals(BuiltinAi.known(providersOf(g.registries.aiProviders)), Set.empty[String])
 
   test("a built-in switched off by config or by environment is out of the registry, and the lookup names its switch"):
     val byFile = build(builtins, "histmersion.plugins.ai-codex.enabled = false")
-    assertEquals(byFile.report.plugins.find(_.id == "ai-codex").map(_.state), Some("disabled"))
+    assertEquals(byFile.report.plugins.find(_.id.value == "ai-codex").map(_.state), Some("disabled"))
     assert(!byFile.registries.aiProviders.contains(com.histmersion.pluginhost.Registries.AiProvidersKey("codex")))
     assertEquals(
-      BuiltinAi.lookup(ProviderKind.Codex, byFile.registries.aiProviders),
+      BuiltinAi.lookup(ProviderKind.Codex, providersOf(byFile.registries.aiProviders)),
       Left("the codex provider is switched off (histmersion.plugins.ai-codex.enabled = false)")
     )
     val byEnv = build(builtins, env = "HISTMERSION_PLUGIN_AI_CLAUDE_CODE_ENABLED = false")
     assert(!byEnv.registries.aiProviders.contains(com.histmersion.pluginhost.Registries.AiProvidersKey("claude-code")) && byEnv.registries.aiProviders.contains(com.histmersion.pluginhost.Registries.AiProvidersKey("codex")))
     assert(
       BuiltinAi
-        .lookup(ProviderKind.Plugin(com.histmersion.api.automation.ProviderKind.Plugin.Name("gemini")), byEnv.registries.aiProviders)
+        .lookup(ProviderKind.Plugin(com.histmersion.api.automation.ProviderKind.Plugin.Name("gemini")), providersOf(byEnv.registries.aiProviders))
         .left
-        .exists(_.contains("no AI provider 'gemini'"))
+        .exists(_.value.contains("no AI provider 'gemini'"))
     )
 
   test("a third-party provider registers beside the built-ins; a host provider's name is refused"):
     val p = Scripted(Nil)
-    val g = build(builtins :+ AiPlugin("gemini", p), on())
-    assertEquals(g.report.plugins.find(_.id == "zq-ai").map(_.provides), Some(List("ai-provider:gemini")))
+    val g = build(builtins :+ AiPlugin(Registry.AddId("gemini"), p), on())
+    assertEquals(g.report.plugins.find(_.id.value == "zq-ai").map(_.provides), Some(List("ai-provider:gemini")))
     assertEquals(g.registries.aiProviders.keys.toList.last, "gemini")
-    assertEquals(BuiltinAi.known(g.registries.aiProviders), Set("gemini"))
-    val taken = build(builtins :+ AiPlugin("local", p), on())
+    assertEquals(BuiltinAi.known(providersOf(g.registries.aiProviders)), Set("gemini"))
+    val taken = build(builtins :+ AiPlugin(Registry.AddId("local"), p), on())
     assert(
-      taken.report.plugins.find(_.id == "zq-ai").flatMap(_.error).exists(_.contains("'local' is already registered")),
+      taken.report.plugins.find(_.id.value == "zq-ai").flatMap(_.error).exists(_.value.contains("'local' is already registered")),
       taken.report.toString
     )
     assert(taken.registries.aiProviders(com.histmersion.pluginhost.Registries.AiProvidersKey("local")) ne p, "the name stays the built-in plugin's")
     // nor once the host's own is switched off: the name stays the host's
-    val free = build(builtins :+ AiPlugin("local", p), on() + "\nhistmersion.plugins.ai-local.enabled = false")
+    val free = build(builtins :+ AiPlugin(Registry.AddId("local"), p), on() + "\nhistmersion.plugins.ai-local.enabled = false")
     assert(
       free.report.plugins
-        .find(_.id == "zq-ai")
+        .find(_.id.value == "zq-ai")
         .flatMap(_.error)
-        .exists(_.contains("one of Histmersion's own AI providers")),
+        .exists(_.value.contains("one of Histmersion's own AI providers")),
       free.report.toString
     )
     assert(!free.registries.aiProviders.contains(com.histmersion.pluginhost.Registries.AiProvidersKey("local")))
-    val bad = build(List(AiPlugin("Not_Kebab", p)), on())
-    assert(bad.report.plugins.head.error.exists(_.contains("an AI provider name is")), bad.report.toString)
+    val bad = build(List(AiPlugin(Registry.AddId("Not_Kebab"), p)), on())
+    assert(bad.report.plugins.head.error.exists(_.value.contains("an AI provider name is")), bad.report.toString)
 
   test("reload: only an HTTP provider's own agents.providers.<name> rebuilds an AI built-in; so does its own block"):
-    val g1 = build(builtins :+ AiPlugin("gemini", Scripted(Nil)), on())
-    assert(BuiltinAi.pluginIds.subsetOf(Plugins.carried(g1, List(com.histmersion.config.ConfigReload.ChangedKey("histmersion.acquire.chain"))).keySet))
+    val g1 = build(builtins :+ AiPlugin(Registry.AddId("gemini"), Scripted(Nil)), on())
+    assert(BuiltinAi.pluginIds.map(i => com.histmersion.plugin.Plugin.Info.Id(i.value)).subsetOf(Plugins.carried(g1, List(com.histmersion.config.ConfigReload.ChangedKey("histmersion.acquire.chain"))).keySet))
     assert(!Plugins.carried(g1, List(com.histmersion.config.ConfigReload.ChangedKey("histmersion.acquire.chain"))).contains(com.histmersion.plugin.Plugin.Info.Id("zq-ai")))
     val own = Plugins.carried(g1, List(com.histmersion.config.ConfigReload.ChangedKey("histmersion.plugins.ai-codex.enabled"))).keySet
     assert(!own(com.histmersion.plugin.Plugin.Info.Id("ai-codex")) && own(com.histmersion.plugin.Plugin.Info.Id("ai-local")) && own(com.histmersion.plugin.Plugin.Info.Id("zq-ai")))
@@ -182,7 +193,7 @@ class AiProvidersSuite extends munit.FunSuite:
   // ── the factory ────────────────────────────────────────────────────────────────────────────────
 
   test("the factory: a built-in provider runs its client; a switched-off one or an unknown one is refused"):
-    val reg = ServerPlugins.offline.registries.aiProviders
+    val reg = providersOf(ServerPlugins.offline.registries.aiProviders)
     val f = LlmClient.factory(rt(), () => reg, AiHttp.Offline)
     assert(f(app.agents, ModelRef(ProviderKind.Local, com.histmersion.api.automation.Agents.ModelRef.Model("qwen"))).exists(_.isInstanceOf[PluginAiClient]))
     // the HTTP providers' own checks over the settings the host supplied them (no key in reference.conf), as they read
@@ -199,7 +210,7 @@ class AiProvidersSuite extends munit.FunSuite:
       val r = ModelRef(k, com.histmersion.api.automation.Agents.ModelRef.Model("m/x"))
       assertEquals(f(app.agents, r).left.toOption, LlmClient.host(rt())(app.agents, r).left.toOption, k.wire)
     }
-    val off = LlmClient.factory(rt(), () => reg - com.histmersion.pluginhost.Registries.AiProvidersKey("local"), AiHttp.Offline)
+    val off = LlmClient.factory(rt(), () => reg - com.histmersion.util.plugins.Plugin.Id("local"), AiHttp.Offline)
     assertEquals(
       off(app.agents, ModelRef(ProviderKind.Local, com.histmersion.api.automation.Agents.ModelRef.Model("qwen"))).left.toOption,
       Some("local:qwen: the local provider is switched off (histmersion.plugins.ai-local.enabled = false)")
@@ -208,27 +219,34 @@ class AiProvidersSuite extends munit.FunSuite:
   test("the factory: a plugin provider becomes its client; its own check and the loopback rule apply"):
     val ref = ModelRef(ProviderKind.Plugin(com.histmersion.api.automation.ProviderKind.Plugin.Name("gemini")), com.histmersion.api.automation.Agents.ModelRef.Model("pro"))
     def f(p: AiProvider, host: String = "127.0.0.1") =
-      LlmClient.factory(rt(host), () => ServerPlugins.offline.registries.aiProviders + ("gemini" -> p), AiHttp.Offline)(
+      LlmClient.factory(
+        rt(host),
+        () => providersOf(ServerPlugins.offline.registries.aiProviders + (com.histmersion.pluginhost.Registries.AiProvidersKey("gemini") -> p)),
+        AiHttp.Offline
+      )(
         app.agents,
         ref
       )
     assert(f(Scripted(Nil)).exists(_.isInstanceOf[PluginAiClient]))
-    assertEquals(f(Scripted(Nil, checked = Left("no GEMINI key"))).left.toOption, Some("gemini:pro: no GEMINI key"))
-    assert(f(Scripted(Nil, spendsPersonalPlan = true), "0.0.0.0").left.exists(_.contains("beyond loopback")))
-    assert(f(Scripted(Nil, spendsPersonalPlan = true)).isRight)
+    assertEquals(f(Scripted(Nil, checked = Left(AiProvider.CheckResultPart1("no GEMINI key")))).left.toOption, Some("gemini:pro: no GEMINI key"))
+    assert(f(Scripted(Nil, spendsPersonalPlan = AiProvider.SpendsPersonalPlanResult(true)), "0.0.0.0").left.exists(_.value.contains("beyond loopback")))
+    assert(f(Scripted(Nil, spendsPersonalPlan = AiProvider.SpendsPersonalPlanResult(true))).isRight)
     // not registered (its plugin switched off since): refused, naming it
     assert(
       LlmClient
-        .factory(rt(), () => ServerPlugins.offline.registries.aiProviders, AiHttp.Offline)(app.agents, ref)
+        .factory(rt(), () => providersOf(ServerPlugins.offline.registries.aiProviders), AiHttp.Offline)(app.agents, ref)
         .left
-        .exists(_.contains("no AI provider 'gemini' is registered"))
+        .exists(_.value.contains("no AI provider 'gemini' is registered"))
     )
 
   // ── the host's loop over a plugin's turns ──────────────────────────────────────────────────────
 
   private val ping = AgentTool.fromFunction[Ping]("ping", "answers pong")(p => s"pong ${p.word}")
   private val ref = ModelRef(ProviderKind.Plugin(com.histmersion.api.automation.ProviderKind.Plugin.Name("gemini")), com.histmersion.api.automation.Agents.ModelRef.Model("pro"))
-  private def call(tools: List[AgentTool[sttp.shared.Identity, ?]] = List(ping), iterations: Int = 4) =
+  private def call(
+      tools: List[AgentTool[sttp.shared.Identity, ?]] = List(ping),
+      iterations: com.histmersion.domain.automation.agents.LlmCall.MaxIterations = com.histmersion.domain.automation.agents.LlmCall.MaxIterations(4)
+  ) =
     LlmCall[ProbeAnswer](
       com.histmersion.domain.automation.agents.LlmCall.System("SYSTEM"),
       com.histmersion.domain.automation.agents.LlmCall.User("USER <article>data</article>"),
@@ -242,8 +260,8 @@ class AiProvidersSuite extends munit.FunSuite:
   test("a plugin's turns run in the host's loop: the host's tool runs, the answer is decoded, each turn counted"):
     val p = Scripted(
       List(
-        _ => Right(AiTurn(com.histmersion.plugin.AiTurn.Text(""), List(AiTool.Call(com.histmersion.plugin.AiTool.Call.Id("c1"), com.histmersion.plugin.AiTool.Call.Tool("ping"), """{"word":"hi"}""")), AiStop.ToolUse, u)),
-        _ => Right(AiTurn("""{"citekey":"x2020","title":"X","year":2020}""", usage = u, servedBy = Some("pro-002")))
+        _ => Right(AiTurn(com.histmersion.plugin.AiTurn.Text(""), List(AiTool.Call(com.histmersion.plugin.AiTool.Call.Id("c1"), com.histmersion.plugin.AiTool.Call.Tool("ping"), com.histmersion.plugin.AiTool.Call.Input("""{"word":"hi"}"""))), AiStop.ToolUse, u)),
+        _ => Right(AiTurn(com.histmersion.plugin.AiTurn.Text("""{"citekey":"x2020","title":"X","year":2020}"""), usage = u, servedBy = Some("pro-002")))
       )
     )
     val r = PluginAiClient(ref, p, AiHttp.Offline).run(call())
@@ -256,8 +274,8 @@ class AiProvidersSuite extends munit.FunSuite:
     assertEquals((first.model, first.system, first.maxTokens, first.iteration), ("pro", "SYSTEM", 16000, 1))
     assertEquals(first.messages, List(AiMessage.User(com.histmersion.plugin.AiMessage.User.Text("USER <article>data</article>"))))
     assertEquals(first.tools.map(_.name), List("ping"))
-    assert(first.tools.head.inputSchema.contains("\"word\""), first.tools.head.inputSchema)
-    assert(first.answerSchema.exists(s => s.contains("\"citekey\"") && !s.contains("$schema")), first.answerSchema)
+    assert(first.tools.head.inputSchema.value.contains("\"word\""), first.tools.head.inputSchema)
+    assert(first.answerSchema.exists(s => s.value.contains("\"citekey\"") && !s.value.contains("$schema")), first.answerSchema)
     val second = p.asked(1)
     assertEquals(
       second.messages.collect { case m: AiMessage.ToolResult => m },
@@ -265,18 +283,18 @@ class AiProvidersSuite extends munit.FunSuite:
     )
     assertEquals(
       second.messages.collect { case AiMessage.Assistant(_, cs) => cs }.flatten,
-      List(AiTool.Call(com.histmersion.plugin.AiTool.Call.Id("c1"), com.histmersion.plugin.AiTool.Call.Tool("ping"), """{"word":"hi"}"""))
+      List(AiTool.Call(com.histmersion.plugin.AiTool.Call.Id("c1"), com.histmersion.plugin.AiTool.Call.Tool("ping"), com.histmersion.plugin.AiTool.Call.Input("""{"word":"hi"}""")))
     )
 
   test("a tool the step does not allow is never run for a plugin either; the last iteration offers no tools"):
     val p = Scripted(
       List(
         _ =>
-          Right(AiTurn(com.histmersion.plugin.AiTurn.Text(""), List(AiTool.Call(com.histmersion.plugin.AiTool.Call.Id("c1"), com.histmersion.plugin.AiTool.Call.Tool("query"), """{"sql":"DELETE FROM sources"}""")), AiStop.ToolUse, u)),
-        _ => Right(AiTurn("""{"citekey":"x","title":"X","year":null}""", usage = u))
+          Right(AiTurn(com.histmersion.plugin.AiTurn.Text(""), List(AiTool.Call(com.histmersion.plugin.AiTool.Call.Id("c1"), com.histmersion.plugin.AiTool.Call.Tool("query"), com.histmersion.plugin.AiTool.Call.Input("""{"sql":"DELETE FROM sources"}"""))), AiStop.ToolUse, u)),
+        _ => Right(AiTurn(com.histmersion.plugin.AiTurn.Text("""{"citekey":"x","title":"X","year":null}"""), usage = u))
       )
     )
-    val r = PluginAiClient(ref, p, AiHttp.Offline).run(call(iterations = 2))
+    val r = PluginAiClient(ref, p, AiHttp.Offline).run(call(iterations = com.histmersion.domain.automation.agents.LlmCall.MaxIterations(2)))
     assertEquals(r.finalAnswer, Right(ProbeAnswer(com.histmersion.api.library.Citekey("x"), com.histmersion.api.library.Title("X"), None)))
     assert(r.toolCalls.forall(_.output.toLowerCase.contains("not found")), r.toolCalls.toString)
     assertEquals(p.asked(1).tools, Nil, "the last allowed iteration must answer")
@@ -288,8 +306,8 @@ class AiProvidersSuite extends munit.FunSuite:
         seen.incrementAndGet(); next
     val p = Scripted(
       List(
-        _ => Right(AiTurn(com.histmersion.plugin.AiTurn.Text(""), List(AiTool.Call(com.histmersion.plugin.AiTool.Call.Id("c1"), com.histmersion.plugin.AiTool.Call.Tool("ping"), """{"word":"a"}""")), AiStop.ToolUse, u)),
-        _ => Right(AiTurn("""{"citekey":"x","title":"X","year":1}""", usage = u))
+        _ => Right(AiTurn(com.histmersion.plugin.AiTurn.Text(""), List(AiTool.Call(com.histmersion.plugin.AiTool.Call.Id("c1"), com.histmersion.plugin.AiTool.Call.Tool("ping"), com.histmersion.plugin.AiTool.Call.Input("""{"word":"a"}"""))), AiStop.ToolUse, u)),
+        _ => Right(AiTurn(com.histmersion.plugin.AiTurn.Text("""{"citekey":"x","title":"X","year":1}"""), usage = u))
       )
     )
     val _ = PluginAiClient(ref, p, AiHttp.Offline).run(call().copy(interceptors = List(count)))
@@ -334,12 +352,13 @@ class AiProvidersSuite extends munit.FunSuite:
     )
 
   /** A provider that asks for the loop's notes and verbatim failures, as the HTTP built-ins do. */
-  final private class Wired(answers: List[AiTurn.Request => Either[AiFailure, AiTurn]], checked: Either[String, Unit])
+  final private class Wired(answers: List[AiTurn.Request => Either[AiFailure, AiTurn]], checked: Either[AiProvider.CheckResultPart1, Unit])
       extends AiProvider:
     val title = com.histmersion.plugin.AiProvider.TitleResult("Wired")
     val asked = scala.collection.mutable.ArrayBuffer.empty[AiTurn.Request]
-    override def capabilities = AiCapabilities(iterationMarkers = true, verbatimFailures = true)
-    override def check(model: String) = checked
+    override def capabilities =
+      AiCapabilities(iterationMarkers = AiCapabilities.IterationMarkers(true), verbatimFailures = AiCapabilities.VerbatimFailures(true))
+    override def check(model: AiProvider.CheckModel) = checked
     def turn(r: AiTurn.Request, http: AiHttp) =
       asked += r
       answers.lift(asked.size - 1).getOrElse((_: AiTurn.Request) => Left(AiFailure.Error(com.histmersion.plugin.AiFailure.Error.Message("script exhausted"))))(r)
@@ -347,8 +366,8 @@ class AiProvidersSuite extends munit.FunSuite:
   test("the request options a provider asks for: the loop's notes, the rendered schema, reasoning, verbatim failures"):
     val p = Wired(
       List(
-        _ => Right(AiTurn(com.histmersion.plugin.AiTurn.Text(""), List(AiTool.Call(com.histmersion.plugin.AiTool.Call.Id("c1"), com.histmersion.plugin.AiTool.Call.Tool("ping"), """{"word":"hi"}""")), AiStop.ToolUse, u)),
-        _ => Right(AiTurn("""{"word":"pong"}""", usage = Some(AiUsage(com.histmersion.plugin.AiUsage.Input(10), com.histmersion.plugin.AiUsage.Output(5), reasoning = com.histmersion.plugin.AiUsage.Reasoning(3)))))
+        _ => Right(AiTurn(com.histmersion.plugin.AiTurn.Text(""), List(AiTool.Call(com.histmersion.plugin.AiTool.Call.Id("c1"), com.histmersion.plugin.AiTool.Call.Tool("ping"), com.histmersion.plugin.AiTool.Call.Input("""{"word":"hi"}"""))), AiStop.ToolUse, u)),
+        _ => Right(AiTurn(com.histmersion.plugin.AiTurn.Text("""{"word":"pong"}"""), usage = Some(AiUsage(com.histmersion.plugin.AiUsage.Input(10), com.histmersion.plugin.AiUsage.Output(5), reasoning = com.histmersion.plugin.AiUsage.Reasoning(3)))))
       ),
       Right(())
     )
@@ -360,24 +379,24 @@ class AiProvidersSuite extends munit.FunSuite:
     assertEquals(p.asked(1).messages.last, AiMessage.User(com.histmersion.plugin.AiMessage.User.Text("[Iteration 2 of 4]")))
     assertEquals(p.asked.head.messages, List(AiMessage.User(com.histmersion.plugin.AiMessage.User.Text("USER <article>data</article>"))))
     assertEquals(p.asked.head.answerDescription, Some("one word back"))
-    assert(p.asked.head.answerSchemaRendered.exists(_.startsWith("{\"$schema\":")), p.asked.head.answerSchemaRendered)
-    assert(!p.asked.head.answerSchema.exists(_.contains("$schema")))
+    assert(p.asked.head.answerSchemaRendered.exists(_.value.startsWith("{\"$schema\":")), p.asked.head.answerSchemaRendered)
+    assert(!p.asked.head.answerSchema.exists(_.value.contains("$schema")))
     // a third-party provider that asks for nothing sees neither the notes nor anything else new
     val plain = Scripted(
       List(
-        _ => Right(AiTurn(com.histmersion.plugin.AiTurn.Text(""), List(AiTool.Call(com.histmersion.plugin.AiTool.Call.Id("c1"), com.histmersion.plugin.AiTool.Call.Tool("ping"), """{"word":"hi"}""")), AiStop.ToolUse, u)),
-        _ => Right(AiTurn("""{"citekey":"x","title":"X","year":1}""", usage = u))
+        _ => Right(AiTurn(com.histmersion.plugin.AiTurn.Text(""), List(AiTool.Call(com.histmersion.plugin.AiTool.Call.Id("c1"), com.histmersion.plugin.AiTool.Call.Tool("ping"), com.histmersion.plugin.AiTool.Call.Input("""{"word":"hi"}"""))), AiStop.ToolUse, u)),
+        _ => Right(AiTurn(com.histmersion.plugin.AiTurn.Text("""{"citekey":"x","title":"X","year":1}"""), usage = u))
       )
     )
     val _ = PluginAiClient(ref, plain, AiHttp.Offline).run(call())
-    assert(!plain.asked(1).messages.exists { case AiMessage.User(t) => t.startsWith("[Iteration"); case _ => false })
+    assert(!plain.asked(1).messages.exists { case AiMessage.User(t) => t.value.startsWith("[Iteration"); case _ => false })
     // a verbatim failure is the run's whole error text; its check's refusal is not prefixed with the model
     val failing = Wired(List(_ => Left(AiFailure.Error(com.histmersion.plugin.AiFailure.Error.Message("RuntimeException: Claude API error: Overloaded")))), Right(()))
     assertEquals(
       AgentsControllers.attempt(ref)(PluginAiClient(ref, failing, AiHttp.Offline).run(call())).left.map(_.message),
       Left("the call to gemini:pro failed: RuntimeException: Claude API error: Overloaded")
     )
-    val refused = PluginAiClient.client(ref, Wired(Nil, Left("no Gemini key — set GEMINI_KEY")), AiHttp.Offline, com.histmersion.domain.automation.agents.PluginAiClient.Loopback(true))
+    val refused = PluginAiClient.client(ref, Wired(Nil, Left(AiProvider.CheckResultPart1("no Gemini key — set GEMINI_KEY"))), AiHttp.Offline, com.histmersion.domain.automation.agents.PluginAiClient.Loopback(true))
     assertEquals(refused.left.toOption, Some("no Gemini key — set GEMINI_KEY"))
     // any other provider's error names the model and the exception, as before
     val other = Scripted(List(_ => Left(AiFailure.Error(com.histmersion.plugin.AiFailure.Error.Message("HTTP 500")))))
@@ -389,4 +408,4 @@ class AiProvidersSuite extends munit.FunSuite:
   test("billing and quota: a plugin provider's model is metered, on no plan pool"):
     val m = ModelRef(ProviderKind.Plugin(com.histmersion.api.automation.ProviderKind.Plugin.Name("gemini")), com.histmersion.api.automation.Agents.ModelRef.Model("pro"))
     assertEquals(PlanQuota.poolOf(m, app.agents.logins), None)
-    assert(Prices.billing(Map("pro" -> Price(BigDecimal(0), BigDecimal(0))), m, None).isRight)
+    assert(Prices.billing(Map(com.histmersion.api.automation.Agents.ModelRef.Model("pro") -> Price(BigDecimal(0), BigDecimal(0))), m, None).isRight)

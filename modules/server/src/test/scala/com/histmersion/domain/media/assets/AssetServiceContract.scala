@@ -104,7 +104,7 @@ abstract class AssetServiceContract extends MediaStoreSuite:
     val a = s.assets
     val (uid, fresh) = a.save(picture(ProviderAsset.Key("k1"), license = ProviderAsset.License("")), (com.histmersion.domain.media.imports.Target.TargetType("place"), com.histmersion.domain.media.imports.Target.Id("zq_nowhere")))
     assert(fresh)
-    assertEquals(a.known(com.histmersion.domain.media.assets.AssetService.Provider("zq-provider"), List(com.histmersion.domain.media.assets.MediaItemRow.ProviderKey("k1"), com.histmersion.domain.media.assets.MediaItemRow.ProviderKey("k2"))), Map("k1" -> Known(uid, None)))
+    assertEquals(a.known(com.histmersion.domain.media.assets.AssetService.Provider("zq-provider"), List(com.histmersion.domain.media.assets.MediaItemRow.ProviderKey("k1"), com.histmersion.domain.media.assets.MediaItemRow.ProviderKey("k2"))), Map("k1" -> Known(Known.Uid(uid.value), None)))
     val (again, inserted) = a.save(picture(ProviderAsset.Key("k1"), kind = Some(ProviderAsset.Kind(AssetKind.Map))), (com.histmersion.domain.media.imports.Target.TargetType("place"), com.histmersion.domain.media.imports.Target.Id("zq_nowhere")))
     assertEquals((again, inserted), (uid, false))
     assertEquals(

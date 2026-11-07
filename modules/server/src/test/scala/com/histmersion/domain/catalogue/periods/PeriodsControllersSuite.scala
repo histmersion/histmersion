@@ -22,7 +22,7 @@ class PeriodsControllersSuite extends munit.FunSuite:
   ): PeriodsControllers =
     val periods = PeriodService.InMemory(AtomicReference(CatalogueState.empty))
     val imports =
-      PeriodImports(periods, () => PeriodSources(com.histmersion.domain.catalogue.periods.PeriodSources.PeriodoUrl("https://periodo.test/dump"), List(com.histmersion.domain.catalogue.periods.PeriodSources.Collections("zzqauth"))), seed, download)
+      new PeriodImports(periods, () => PeriodSources(com.histmersion.domain.catalogue.periods.PeriodSources.PeriodoUrl("https://periodo.test/dump"), List(com.histmersion.domain.catalogue.periods.PeriodSources.Collections("zzqauth"))), seed, download)
     PeriodsControllers(periods, imports, gate)
 
   test("a sent dump is grouped under its authorities; a period shows its parent and its parts"):

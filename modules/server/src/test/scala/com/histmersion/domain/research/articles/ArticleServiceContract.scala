@@ -51,7 +51,7 @@ abstract class ArticleServiceContract extends ResearchStoreSuite:
     assertEquals(view.backlinks, List(Backlink(com.histmersion.api.research.Backlink.Kind("article"), Backlink.Id("zr_index"), Some(com.histmersion.api.research.Backlink.Title("Index")))))
     assertEquals(view.sourcesCited, Nil)
     assertEquals(s.articles.view(Index).get.backlinks, Nil)
-    assertEquals(s.articles.slugs, List(Walls, Index).sorted)
+    assertEquals(s.articles.slugs, List(Walls, Index).sortBy[String](_.value))
     assert(s.articles.exists(Walls))
     assert(!s.articles.exists(com.histmersion.domain.research.Slug("zr_nothing")))
     assertEquals(s.articles.refs(List(Index, Slug.parse("ZR_WALLS").toOption.get, com.histmersion.domain.research.Slug("zr_nothing"))).map(_.slug), List(Index, Walls))

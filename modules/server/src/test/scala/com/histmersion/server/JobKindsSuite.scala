@@ -1,6 +1,7 @@
 package com.histmersion.server
 
 import com.histmersion.api.Wording
+import com.histmersion.api.jobs.JobKinds
 
 import java.nio.file.{Files, Path}
 import scala.jdk.CollectionConverters.*
@@ -12,19 +13,19 @@ class JobKindsSuite extends munit.FunSuite:
 
   test("the server's job kinds are the dictionary's"):
     val kinds = List(
-      com.histmersion.util.basemap.BasemapService.JobKind,
-      com.histmersion.api.catalogue.PlacesJobKinds.PlacesFetch.kind.value,
-      com.histmersion.api.catalogue.PlacesJobKinds.PlacesHierarchy.kind.value,
-      com.histmersion.domain.catalogue.events.EventImportsControllers.ImportJobKind,
-      com.histmersion.domain.catalogue.evidence.EventLinksControllers.CandidatesJobKind,
-      com.histmersion.domain.catalogue.places.SiteTypesControllers.SiteTypesJobKind,
-      com.histmersion.domain.catalogue.events.EventImportsControllers.RederiveJobKind,
-      com.histmersion.domain.media.imports.ImportsControllers.ImportJobKind,
-      com.histmersion.domain.media.covers.CoversControllers.CoversJobKind,
-      Bootstrap.JobKind
+      JobKinds.Wire(com.histmersion.util.basemap.BasemapService.JobKind.value),
+      com.histmersion.api.catalogue.PlacesJobKinds.PlacesFetch.kind,
+      com.histmersion.api.catalogue.PlacesJobKinds.PlacesHierarchy.kind,
+      JobKinds.Wire(com.histmersion.domain.catalogue.events.EventImportsControllers.ImportJobKind.value),
+      JobKinds.Wire(com.histmersion.domain.catalogue.evidence.EventLinksControllers.CandidatesJobKind.value),
+      JobKinds.Wire(com.histmersion.domain.catalogue.places.SiteTypesControllers.SiteTypesJobKind.value),
+      JobKinds.Wire(com.histmersion.domain.catalogue.events.EventImportsControllers.RederiveJobKind.value),
+      JobKinds.Wire(com.histmersion.domain.media.imports.ImportsControllers.ImportJobKind.value),
+      JobKinds.Wire(com.histmersion.domain.media.covers.CoversControllers.CoversJobKind.value),
+      JobKinds.Wire(Bootstrap.JobKind.value)
     )
     assertEquals(kinds.filterNot(k => com.histmersion.api.RegisteredJobKinds.all.parse(k).isDefined), Nil)
-    kinds.foreach(k => assert(Wording.jobKindOf(k) != k, k))
+    kinds.foreach(k => assert(Wording.jobKindOf(k) != k.value, k))
 
   test("no job kind is spelled as a literal outside the dictionary (a new one starts as a registered JobKind)"):
     val root = Path.of(sys.props.getOrElse("histmersion.repoRoot", "."))

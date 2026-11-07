@@ -28,7 +28,7 @@ class PmTilesSuite extends munit.FunSuite:
     val z = PmTiles.Zoom(4)
     val ids = for x <- 0L until 16L; y <- 0L until 16L yield PmTiles.tileId(z, PmTiles.TileColumn(x), PmTiles.TileRow(y))
     assertEquals(
-      ids.sortBy(_.value),
+      ids.sortBy[Long](_.value),
       (PmTiles.zoomBase(PmTiles.Zoom(4)).value until PmTiles.zoomBase(PmTiles.Zoom(5)).value).toVector
     )
 
@@ -117,7 +117,7 @@ class PmTilesSuite extends munit.FunSuite:
       PmTiles.tileId(PmTiles.Zoom(z), PmTiles.TileColumn(x), PmTiles.TileRow(y)),
       PmTiles.TileBytes(if z == 3 && x > 3 then Array[Byte](9, 9) else s"$z/$x/$y".getBytes)
     )
-    tiles.sortBy(_._1.value).foreach((id, b) => w.add(id, b))
+    tiles.sortBy[Long](_._1.value).foreach((id, b) => w.add(id, b))
     w.finish(template(PmTiles.Zoom(3)), Json.obj("name" -> Json.fromString("test")))
     val r = BasemapFixtures.open(out).fold(e => fail(e.value), identity)
     try

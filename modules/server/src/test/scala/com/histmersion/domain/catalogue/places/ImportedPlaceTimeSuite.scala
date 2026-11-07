@@ -279,7 +279,7 @@ class ImportedPlaceTimeSuite extends com.histmersion.db.DbSuite with com.histmer
     assert(found(LpfQuery, Some(DeepTime.SignedYear(-4000L))).contains(Place.Id("lpf_zzpt_1")), "an LPF 'until 1769' is as the dataset says")
     val d = PlaceFixtures.get(ds, com.histmersion.domain.catalogue.Place.Id("lpf_zzpt_1")).get.place
     assertEquals((d.periodStart, d.periodEnd, d.dating), (None, Some(1769L), Place.Dating.Stated))
-    assert(PlaceFixtures.get(ds, com.histmersion.domain.catalogue.Place.Id("zzpt_region")).get.hasBoundary)
+    assert(PlaceFixtures.get(ds, com.histmersion.domain.catalogue.Place.Id("zzpt_region")).get.hasBoundary.value)
     assertEquals(PlaceFixtures.get(ds, com.histmersion.domain.catalogue.Place.Id("zzpt_region")).get.place.dating, Place.Dating.Stated)
 
   test("the base layers draw an imported place only once a finding is attached"):

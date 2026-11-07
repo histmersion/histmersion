@@ -62,7 +62,7 @@ class AliasRuleHttpSuite extends com.histmersion.db.DbSuite with com.histmersion
 
   /** A previous run's rows and aliases must not be in the way. */
   private def clean(): Unit =
-    val ds = testPool(AppConfig.load().db.copy(url = testDb.get))
+    val ds = testPool(AppConfig.load().db.copy(url = DbConfig.Url(testDb.get)))
     com.augustnagro.magnum.transact(ds):
       import com.augustnagro.magnum.*
       sql"DELETE FROM attestations WHERE citekey LIKE 'zzalias%'".update.run()
@@ -181,8 +181,8 @@ class AliasRuleHttpSuite extends com.histmersion.db.DbSuite with com.histmersion
             Place(
               com.histmersion.api.catalogue.Place.Id("zz_alias_p1"),
               com.histmersion.api.catalogue.Place.Label("Zzalias Hill"),
-              com.histmersion.domain.catalogue.Place.Kind.Site,
-              Some("""{"type":"Point","coordinates":[30.5,39.5]}""")
+              Place.KindValue(Place.Kind.Site),
+              Some(Place.Geometry("""{"type":"Point","coordinates":[30.5,39.5]}"""))
             ),
             List(Place.Name(com.histmersion.api.catalogue.Place.Name.Value("Zzalias Hill")))
           )

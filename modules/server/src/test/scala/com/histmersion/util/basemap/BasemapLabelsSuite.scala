@@ -189,7 +189,7 @@ class BasemapLabelsSuite extends munit.FunSuite:
     )
     assert(BasemapLabels.inTile(world, com.histmersion.util.basemap.PmTiles.Zoom(2), com.histmersion.util.basemap.PmTiles.Zoom(8)) && !BasemapLabels.inTile(world, com.histmersion.util.basemap.PmTiles.Zoom(3), com.histmersion.util.basemap.PmTiles.Zoom(8)))
     val tiles = BasemapLabels.tiles(List(olympus, world, axios), com.histmersion.util.basemap.PmTiles.Zoom(8))
-    assertEquals(tiles.map(_._1), tiles.map(_._1).sortBy(_.value), "in tile-id order, as the archive is written")
+    assertEquals(tiles.map(_._1), tiles.map(_._1).sortBy[Long](_.value), "in tile-id order, as the archive is written")
     def at(z: PmTiles.Zoom, lon: Longitude, lat: Latitude) =
       val id = PmTiles.tileId(
         z,

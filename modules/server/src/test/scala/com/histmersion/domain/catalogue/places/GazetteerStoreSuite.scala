@@ -54,7 +54,7 @@ class GazetteerStoreSuite extends com.histmersion.db.DbSuite:
     PluginGazetteers.http(new HttpTransport:
       def get(url: HttpTransport.Url, headers: Map[CoreQuota.HeaderName, CoreQuota.HeaderValue]) = wire.get(HttpTransport.Url(loop.local(url.value)), headers))
 
-  private def importOnce(name: Registries.GazetteerSourcesKey): Either[String, Place.ImportResult] =
+  private def importOnce(name: Registries.GazetteerSourcesKey): Either[GazetteerImports.Problem, Place.ImportResult] =
     val db = com.histmersion.util.database.Transactor(ds)
     ImportRunner.fetchAndImport(
       sources(name),

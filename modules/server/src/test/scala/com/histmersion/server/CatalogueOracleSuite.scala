@@ -22,6 +22,7 @@ import com.histmersion.util.database.Sql
 import com.histmersion.db.*
 import com.histmersion.api.catalogue.{EventImportRequest, Geocode, Period}
 import com.histmersion.api.catalogue.Gazetteer
+import com.histmersion.api.SpatialHierarchyResult
 
 /** What the catalogue answers, on a crafted collection, recorded on the code before the catalogue moved into its own
   * domain: places and their names, overrides, merges, removals and renames, the hierarchy, footprints and the map's
@@ -126,7 +127,7 @@ class CatalogueOracleSuite extends DbSuite:
       .flatMap(_.hcursor.downField("result").downField("content").downArray.downField("text").as[String].toOption)
       .getOrElse(s"${r.statusCode} $text")
 
-  private def awaitJob(url: String, id: String, left: Int = 600): String =
+  private def awaitJob(url: String, id: SpatialHierarchyResult.Job.Id, left: Int = 600): String =
     val j = get(s"$url/api/jobs/$id")
     if j.contains("\"done\"") || j.contains("\"failed\"") || left == 0 then j
     else { Thread.sleep(100); awaitJob(url, id, left - 1) }
@@ -272,7 +273,7 @@ class CatalogueOracleSuite extends DbSuite:
       post(s"$url/api/places", """{"label":"","kind":"site","lon":1,"lat":2,"source":"x"}""")
     )
     val h = ok(step("places build-hierarchy", post(s"$url/api/places/build-hierarchy")))
-    val _ = step("places build-hierarchy job", awaitJob(url, field(h, "job")))
+    val _ = step("places build-hierarchy job", awaitJob(url, SpatialHierarchyResult.Job.Id(field(h, "job"))))
     val _ = step("places name add", post(s"$url/api/places/zz_hill/names", """{"name":"Zzhill Höyük","lang":"tr"}"""))
     val _ = step("places name add 2", post(s"$url/api/places/zz_port/names", """{"name":"Old Zzport"}"""))
     val _ = step("places name remove", post(s"$url/api/places/zz_port/names/remove", """{"name":"Old Zzport"}"""))
@@ -443,7 +444,7 @@ class CatalogueOracleSuite extends DbSuite:
         com.histmersion.domain.Caller.Local,
         EventImportRequest(com.histmersion.api.catalogue.EventImportRequest.Provider("gvp"), dryRun = com.histmersion.api.catalogue.EventImportRequest.DryRun(false), from = Some(com.histmersion.api.catalogue.EventImportRequest.From(-2000)), to = Some(com.histmersion.api.catalogue.EventImportRequest.To(-1000)))
       )
-      .fold(e => fail(e.message), identity)
+      .fold(e => fail(e.message.value), identity)
     val _ = step("events import gvp", awaitJob(url, job.id))
     val imported = connect(ds)(
       sql"SELECT id FROM events WHERE catalogue IS NOT NULL ORDER BY id".query[String].run().toList
@@ -500,7 +501,7 @@ class CatalogueOracleSuite extends DbSuite:
   private lazy val oracleLoaded: LoadedConfig =
     AppConfig
       .loadWithUserText(org.ekrich.config.ConfigFactory.empty, "histmersion.events.gvp.request-interval-ms = 0\n")
-      .fold(e => fail(e), identity)
+      .fold(e => fail(e.value), identity)
 
   // ── the reads ──────────────────────────────────────────────────────────────────────────────
 
@@ -737,12 +738,12 @@ class CatalogueOracleSuite extends DbSuite:
       "SELECT uid::text, 'attestation:' || citekey || ':' || target_id FROM attestations",
       "SELECT uid::text, 'tombstone:' || kind FROM tombstones",
       "SELECT alias_uid::text, 'alias-of:' || uid::text FROM uid_aliases"
-    )
-    def run(ds: DataSource, q: String): List[(String, String)] =
+    ).map(Sql.Text(_))
+    def run(ds: DataSource, q: Sql.Text): List[(String, String)] =
       scala.util.Try(connect(ds)(Sql.raw(q).frag.query[(String, String)].run().toList)).getOrElse(Nil)
     val records = dss.flatMap((_, ds) => queries.flatMap(run(ds, _)))
     val instances =
-      dss.flatMap((n, ds) => run(ds, "SELECT id::text, 'x' FROM instance").map((id, _) => id -> s"instance:$n"))
+      dss.flatMap((n, ds) => run(ds, Sql.Text("SELECT id::text, 'x' FROM instance")).map((id, _) => id -> s"instance:$n"))
     (records ++ instances).distinctBy(_._1).toMap
 
   private def normalise(text: String, names: Map[String, String]): String =
@@ -850,7 +851,7 @@ class CatalogueOracleSuite extends DbSuite:
       .map { t =>
         if !present(t) then s"## $t (no such table)"
         else
-          val rs = connect(ds)(Sql.raw(s"""SELECT to_jsonb(x)::text FROM "$t" x""").frag.query[String].run().toList)
+          val rs = connect(ds)(Sql.raw(Sql.Text(s"""SELECT to_jsonb(x)::text FROM "$t" x""")).frag.query[String].run().toList)
           val normed = rs.map(r => json(r, names).linesIterator.map(_.trim).mkString(" ")).sorted
           (s"## $t ${normed.size} rows" :: normed).mkString("\n")
       }
@@ -948,7 +949,7 @@ class CatalogueOracleSuite extends DbSuite:
       | "relations":[{"relationType":"gvp:broaderPartitive","relationTo":"zzs_nowhere"}]}
       |]}""".stripMargin
 
-  private val FixtureSha = "20af2b1dd68f5bce2a5c9ea67bb06862038a7e007eb2d7872a4dfdb763954e5b"
+  private val FixtureSha = Gazetteer.Extract.Sha256("20af2b1dd68f5bce2a5c9ea67bb06862038a7e007eb2d7872a4dfdb763954e5b")
 
   private def copyFixture(name: String, to: Path): Unit =
     val in = getClass.getResourceAsStream(s"/gazetteer/$name")
@@ -978,7 +979,7 @@ class CatalogueOracleSuite extends DbSuite:
         com.histmersion.api.catalogue.Gazetteer.Extract.Licence("CC BY 4.0"),
         Some(com.histmersion.api.catalogue.Gazetteer.Extract.Attribution("GeoNames (geonames.org)"))
       ),
-      Gazetteer.Extract(com.histmersion.api.catalogue.Gazetteer.Extract.Name("tgn"), com.histmersion.api.catalogue.Gazetteer.Extract.File("tgn-absent.ndjson.gz"), "0" * 64, com.histmersion.api.catalogue.Gazetteer.Extract.Bytes(1), com.histmersion.api.catalogue.Gazetteer.Extract.Features(1), com.histmersion.api.catalogue.Gazetteer.Extract.Version("fixture-2"), com.histmersion.api.catalogue.Gazetteer.Extract.Title("TGN fixture"), com.histmersion.api.catalogue.Gazetteer.Extract.Licence("ODC-By 1.0"))
+      Gazetteer.Extract(com.histmersion.api.catalogue.Gazetteer.Extract.Name("tgn"), com.histmersion.api.catalogue.Gazetteer.Extract.File("tgn-absent.ndjson.gz"), Gazetteer.Extract.Sha256("0" * 64), com.histmersion.api.catalogue.Gazetteer.Extract.Bytes(1), com.histmersion.api.catalogue.Gazetteer.Extract.Features(1), com.histmersion.api.catalogue.Gazetteer.Extract.Version("fixture-2"), com.histmersion.api.catalogue.Gazetteer.Extract.Title("TGN fixture"), com.histmersion.api.catalogue.Gazetteer.Extract.Licence("ODC-By 1.0"))
     )
     val _ = Files.writeString(d.resolve("gazetteer/extracts.json"), Gazetteer.Manifest(pins).asJson.spaces2, UTF_8)
     val extracts = tmp.resolve("gaz-extracts")
@@ -1002,7 +1003,7 @@ class CatalogueOracleSuite extends DbSuite:
     def job(name: String, answer: String): Unit =
       val started = step(name, answer)
       if started.startsWith("200 ") then
-        val _ = step(s"$name, the job", awaitJob(url, field(started, "id")))
+        val _ = step(s"$name, the job", awaitJob(url, SpatialHierarchyResult.Job.Id(field(started, "id"))))
     val _ = step("sources before", get(s"$url/api/places/sources"))
     job("init", post(s"$url/api/init"))
     val _ = step("places after the seed", get(s"$url/api/places?q=Zztell"))
@@ -1043,14 +1044,14 @@ class CatalogueOracleSuite extends DbSuite:
     tools.foreach((n, a) => step(s"tool $n ${a.noSpaces}", tool(url, n, a)))
     // the geocoder, as the enrichment and the checks ask it
     val asks = List(
-      ("Zztell", Geocode.KindHint.Site, Some(Period(com.histmersion.api.catalogue.Year(-1500), com.histmersion.api.catalogue.Year(-1400)))),
-      ("Zzhöyük", Geocode.KindHint.Unknown, None),
-      ("Zzcrossing", Geocode.KindHint.Site, None),
-      ("Zzvale", Geocode.KindHint.Region, Some(Period(com.histmersion.api.catalogue.Year(-1300), com.histmersion.api.catalogue.Year(-1200)))),
-      ("Eastern Zzshore", Geocode.KindHint.Region, None),
-      ("Zztell, Zzshore", Geocode.KindHint.Site, None),
-      ("Zzgaz Hattusas", Geocode.KindHint.Unknown, None),
-      ("Zznowhere", Geocode.KindHint.Unknown, None)
+      (Geocode.Attempt.Name("Zztell"), Geocode.KindHint.Site, Some(Period(com.histmersion.api.catalogue.Year(-1500), com.histmersion.api.catalogue.Year(-1400)))),
+      (Geocode.Attempt.Name("Zzhöyük"), Geocode.KindHint.Unknown, None),
+      (Geocode.Attempt.Name("Zzcrossing"), Geocode.KindHint.Site, None),
+      (Geocode.Attempt.Name("Zzvale"), Geocode.KindHint.Region, Some(Period(com.histmersion.api.catalogue.Year(-1300), com.histmersion.api.catalogue.Year(-1200)))),
+      (Geocode.Attempt.Name("Eastern Zzshore"), Geocode.KindHint.Region, None),
+      (Geocode.Attempt.Name("Zztell, Zzshore"), Geocode.KindHint.Site, None),
+      (Geocode.Attempt.Name("Zzgaz Hattusas"), Geocode.KindHint.Unknown, None),
+      (Geocode.Attempt.Name("Zznowhere"), Geocode.KindHint.Unknown, None)
     )
     asks.foreach { (name, hint, at) =>
       val r = Geocoding(com.histmersion.util.database.Transactor(ds)).resolve(name, hint, at, com.histmersion.domain.catalogue.places.GeocodeSettings.PlaceholderMin(4))
@@ -1083,7 +1084,7 @@ class CatalogueOracleSuite extends DbSuite:
     if j.contains("\"done\"") || j.contains("\"failed\"") || left == 0 then j
     else { Thread.sleep(100); applyJob(url, job, left - 1) }
 
-  private def exec(ds: DataSource, statement: String): Unit =
+  private def exec(ds: DataSource, statement: Sql.Text): Unit =
     connect(ds)(Sql.raw(statement).frag.update.run(): Unit)
 
   /** A source by its DOI: one work under two citekeys, so a merge pairs the two by the strong key. */
@@ -1198,8 +1199,8 @@ class CatalogueOracleSuite extends DbSuite:
       "home: event links ash confirmed",
       post(s"$homeUrl/api/events/zz_ashfall/links", """{"confirm":["zzvolc2004_ash"]}""")
     )
-    exec(home, "UPDATE places SET site_type = 'Q15661340', site_type_checked_at = now() WHERE id = 'zz_hill'")
-    exec(home, "UPDATE places SET site_type = 'Q839954', site_type_checked_at = now() WHERE id = 'zz_mound'")
+    exec(home, Sql.Text("UPDATE places SET site_type = 'Q15661340', site_type_checked_at = now() WHERE id = 'zz_hill'"))
+    exec(home, Sql.Text("UPDATE places SET site_type = 'Q839954', site_type_checked_at = now() WHERE id = 'zz_mound'"))
     val _ = step(
       "home: place both",
       post(
@@ -1216,7 +1217,7 @@ class CatalogueOracleSuite extends DbSuite:
     )
     exec(
       home,
-      "INSERT INTO periods (id, label, period, region, dataset) VALUES ('zz_age', 'The Zz age', '[-1500,-1001)', 'Zzland', 'local'), ('zz_dusk_h', 'The Zz dusk', '[-1200,-1001)', 'Zzland', 'local')"
+      Sql.Text("INSERT INTO periods (id, label, period, region, dataset) VALUES ('zz_age', 'The Zz age', '[-1500,-1001)', 'Zzland', 'local'), ('zz_dusk_h', 'The Zz dusk', '[-1200,-1001)', 'Zzland', 'local')")
     )
     val _ = step(
       "home: event tremor",
@@ -1276,7 +1277,7 @@ class CatalogueOracleSuite extends DbSuite:
     }
     val _ =
       step("cat: event links ash recomputed", post(s"$catUrl/api/events/zz_ashfall/links", """{"recompute":true}"""))
-    exec(cat, "UPDATE places SET site_type = 'Q839954', site_type_checked_at = now() WHERE id = 'zz_hill'")
+    exec(cat, Sql.Text("UPDATE places SET site_type = 'Q839954', site_type_checked_at = now() WHERE id = 'zz_hill'"))
     val _ = step("cat: place renamed", post(s"$catUrl/api/places/zz_port/rename", """{"to":"zz_harbour"}"""))
     val _ = step(
       "cat: place merged",
@@ -1303,7 +1304,7 @@ class CatalogueOracleSuite extends DbSuite:
     )
     exec(
       cat,
-      "INSERT INTO periods (id, label, period, region, dataset) VALUES ('zz_age', 'The Zz era', '[-1600,-1001)', 'Zzland', 'local'), ('zz_dusk_c', 'The Zz dusk', '[-1200,-1001)', 'Zzland', 'local')"
+      Sql.Text("INSERT INTO periods (id, label, period, region, dataset) VALUES ('zz_age', 'The Zz era', '[-1600,-1001)', 'Zzland', 'local'), ('zz_dusk_c', 'The Zz dusk', '[-1200,-1001)', 'Zzland', 'local')")
     )
     val _ = step(
       "cat: event quake",
@@ -1400,7 +1401,7 @@ class CatalogueOracleSuite extends DbSuite:
   private def exchangeRows(ds: DataSource, names: Map[String, String]): String =
     ExchangeTables
       .map { t =>
-        val rs = connect(ds)(Sql.raw(s"""SELECT to_jsonb(x)::text FROM "$t" x""").frag.query[String].run().toList)
+        val rs = connect(ds)(Sql.raw(Sql.Text(s"""SELECT to_jsonb(x)::text FROM "$t" x""")).frag.query[String].run().toList)
         val normed = rs.map(r => exchanged(json(r, names), names).linesIterator.map(_.trim).mkString(" ")).sorted
         (s"## $t ${normed.size} rows" :: normed).mkString("\n")
       }

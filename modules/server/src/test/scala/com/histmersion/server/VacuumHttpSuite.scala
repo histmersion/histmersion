@@ -40,7 +40,7 @@ class VacuumHttpSuite extends munit.FunSuite:
     io.circe.parser.decode[JobInfo](body).fold(e => fail(s"not a job: $body ($e)"), identity)
 
   /** Poll the job until it ends (a vacuum of two tiny tables takes well under a second). */
-  private def await(url: String, id: String, left: Int = 200): JobInfo =
+  private def await(url: String, id: com.histmersion.api.SpatialHierarchyResult.Job.Id, left: Int = 200): JobInfo =
     val (s, b) = get(s"$url/api/jobs/$id")
     assertEquals(s, 200, b)
     val j = job(b)
@@ -67,7 +67,7 @@ class VacuumHttpSuite extends munit.FunSuite:
       )
       val done = await(url, started.id)
       assertEquals((done.status, done.error), ("done", None), done.toString)
-      val summary = done.progress.getOrElse("")
+      val summary = done.progress.map(_.value).getOrElse("")
       assert(
         summary.startsWith("place_overrides: ") && summary.contains("; place_removals: ") && summary.contains(
           "dead rows"
@@ -98,7 +98,7 @@ class VacuumHttpSuite extends munit.FunSuite:
         else r
       val mb = mcp()
       assert(mb.contains(" · vacuum") && mb.contains("VACUUM of place_removals"), mb)
-      val id = "[0-9a-f-]{36}".r.findFirstIn(mb).getOrElse(fail(mb))
+      val id = com.histmersion.api.SpatialHierarchyResult.Job.Id("[0-9a-f-]{36}".r.findFirstIn(mb).getOrElse(fail(mb)))
       assertEquals(await(url, id).status, "done")
 
       b.stop()

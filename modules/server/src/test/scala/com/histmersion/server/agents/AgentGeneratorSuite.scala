@@ -21,7 +21,7 @@ class AgentGeneratorSuite extends munit.FunSuite:
   private given com.histmersion.util.storage.Resources = com.histmersion.util.storage.Resources.classpath(getClass.getClassLoader)
   private given java.time.Clock = java.time.Clock.systemUTC()
   private given com.histmersion.util.system.JvmHome = com.histmersion.util.system.JvmHome(java.nio.file.Path.of("target/test-home").toAbsolutePath)
-  private lazy val defs = AgentDefinitions(Prompts(""), EngineContributions.roster)
+  private lazy val defs = AgentDefinitions(Prompts(Prompts.OverrideDir("")), EngineContributions.roster)
   private lazy val d = Generated.defs()
   private def agent(s: StepAgent) = d.agents.find(_.name == s.wire).getOrElse(fail(s"no ${s.wire}"))
 
@@ -29,9 +29,12 @@ class AgentGeneratorSuite extends munit.FunSuite:
     StepAgent.values.foreach(s => assert(defs.agent(s).isRight, s"${s.wire}: ${defs.agent(s)}"))
     assertEquals(defs.agents.map(_.size), Right(StepAgent.values.length))
     assertEquals(defs.skills.map(_.size), Right(19))
-    assert(Prompts.bundled.contains("index.txt") || Prompts.bundled.nonEmpty)
+    assert(Prompts.bundled.map(_.value).contains("index.txt") || Prompts.bundled.nonEmpty)
     Prompts.bundled.foreach(rel =>
-      assert(Prompts("").load(rel).exists(_.trim.nonEmpty), s"missing or empty: agents/$rel")
+      assert(
+        Prompts(Prompts.OverrideDir("")).load(com.histmersion.util.storage.SafePath.Candidate(rel.value)).exists(_.trim.nonEmpty),
+        s"missing or empty: agents/$rel"
+      )
     )
 
   test("the manifest: role, tools, includes, interactive spec"):
@@ -104,15 +107,16 @@ class AgentGeneratorSuite extends munit.FunSuite:
     assert(wr.contains("never write those by hand") && wr.contains("histmersion article coverage <slug>"))
 
   test("a definition that names a tool an agent cannot have, or misses its name, is refused with why"):
-    val bad =
+    val bad = AgentDefinitions.Markdown(
       "---\nname: x\ndescription: d\nmodel-role: reviewer\ntools:\n  histmersion: [get_source, patch_source]\n---\nbody"
+    )
     assert(
       AgentDefinitions.parse(com.histmersion.domain.automation.agents.AgentDef.Name("x"), bad, ToolboxOrder.names).left.exists(_.contains("patch_source")),
       AgentDefinitions.parse(com.histmersion.domain.automation.agents.AgentDef.Name("x"), bad, ToolboxOrder.names)
     )
     assert(AgentDefinitions.parse(com.histmersion.domain.automation.agents.AgentDef.Name("y"), bad, ToolboxOrder.names).left.exists(_.contains("name 'x'")))
     assert(AgentDefinitions.parse(com.histmersion.domain.automation.agents.AgentDef.Name("x"), com.histmersion.domain.automation.agents.AgentDefinitions.Markdown("no header"), ToolboxOrder.names).isLeft)
-    val noRole = bad.replace("model-role: reviewer", "model-role: boss")
+    val noRole = AgentDefinitions.Markdown(bad.value.replace("model-role: reviewer", "model-role: boss"))
     assert(AgentDefinitions.parse(com.histmersion.domain.automation.agents.AgentDef.Name("x"), noRole, ToolboxOrder.names).left.exists(_.contains("model-role")))
 
   test("placeholders render per runtime"):
@@ -154,7 +158,7 @@ class AgentGeneratorSuite extends munit.FunSuite:
     val tree = AgentGenerator.claudeCode(d, Settings)
     d.agents.filter(_.runsOn(AgentRuntime.ClaudeCode)).foreach { a =>
       val file = tree(s"claude-code/headless/agents/${a.name}.md")
-      val body = AgentDefinitions.split(file).toOption.get._2
+      val body = AgentDefinitions.split(AgentDefinitions.Markdown(file)).toOption.get._2
       assertEquals(
         body,
         d.system(a, ToolStyle.Claude) + "\n",
@@ -325,7 +329,7 @@ class AgentGeneratorSuite extends munit.FunSuite:
     assert(Files.isRegularFile(dir.resolve("opencode/config/agents/enrich-classify.md")))
     assertEquals(rt.trees.codexHome, Some(dir.resolve("codex/home")))
     val unknown = rt.trees.generate(Set(com.histmersion.domain.automation.workflows.ToolName("get_source")))
-    assert(unknown.left.exists(_.contains("which is not an MCP tool")), "a placeholder naming nothing fails generation")
+    assert(unknown.left.exists(_.value.contains("which is not an MCP tool")), "a placeholder naming nothing fails generation")
 
 /** The checked-in `plugin/` and `.claude-plugin/marketplace.json` are the generator's interactive Claude Code flavour,
   * file for file. Out of date: `just plugin`.
@@ -344,13 +348,13 @@ class PluginTreeSuite extends munit.FunSuite:
       .get
 
   test("plugin/ is up to date with agents/ and skills/ (run `just plugin` when this fails)"):
-    val tree = PluginTree.tree(EngineContributions.roster).fold(m => fail(m), identity)
-    val stale = tree.toList.sortBy(_._1).collect {
-      case (rel, text) if !Files.isRegularFile(root.resolve(rel)) || Files.readString(root.resolve(rel)) != text => rel
+    val tree = PluginTree.tree(EngineContributions.roster).fold(m => fail(m.value), identity)
+    val stale = tree.toList.sortBy(_._1.value).collect {
+      case (rel, text) if !Files.isRegularFile(root.resolve(rel.value)) || Files.readString(root.resolve(rel.value)) != text => rel
     }
     assertEquals(stale, Nil)
     val extra = PluginTree.Owned
-      .map(root.resolve)
+      .map(o => root.resolve(o.value))
       .filter(Files.exists(_))
       .flatMap { d =>
         val all = Files.walk(d)
@@ -361,7 +365,7 @@ class PluginTreeSuite extends munit.FunSuite:
             .toList
         finally all.close()
       }
-      .filterNot(tree.contains)
+      .filterNot(p => tree.contains(com.histmersion.util.storage.SafePath.Candidate(p)))
     assertEquals(extra, Nil, "files in plugin/ the generator does not write")
 
   test("the interactive review agents are the hand-written definitions, byte for byte"):

@@ -313,7 +313,7 @@ class AcquisitionOracleSuite extends DbSuite:
 
   final private class ZqUnauthorisedPlugin extends spi.Plugin:
     type Config = ZqOracleConfig
-    val info = spi.Plugin.Info(com.histmersion.plugin.Plugin.Info.Id("zq-unauthorised"), com.histmersion.plugin.Plugin.Info.Version("0.1.0"), spi.Spi.Version)
+    val info = spi.Plugin.Info(com.histmersion.plugin.Plugin.Info.Id("zq-unauthorised"), com.histmersion.plugin.Plugin.Info.Version("0.1.0"), com.histmersion.plugin.Plugin.Info.SpiVersion(spi.Spi.Version))
     override def defaultsResource = com.histmersion.plugin.Plugin.DefaultsResourceResult("zq-none.conf")
     def register(c: ZqOracleConfig, ctx: spi.Plugin.Context) =
       ctx.sourceFetchers.add(
@@ -323,12 +323,12 @@ class AcquisitionOracleSuite extends DbSuite:
           def fetch(w: spi.WorkKey, c: spi.Fetch.Context) =
             unauthorisedAsked.incrementAndGet()
             spi.Fetch.Miss(com.histmersion.plugin.Fetch.Miss.Why("the zq fixture has no copy"))
-      )
+      ).left.map(e => spi.Plugin.RegisterResultPart1(e.value))
 
   /** An open fetcher a plugin adds: it has one work, and states that copy's licence. */
   final private class ZqShelfPlugin extends spi.Plugin:
     type Config = ZqOracleConfig
-    val info = spi.Plugin.Info(com.histmersion.plugin.Plugin.Info.Id("zq-shelf"), com.histmersion.plugin.Plugin.Info.Version("0.1.0"), spi.Spi.Version)
+    val info = spi.Plugin.Info(com.histmersion.plugin.Plugin.Info.Id("zq-shelf"), com.histmersion.plugin.Plugin.Info.Version("0.1.0"), com.histmersion.plugin.Plugin.Info.SpiVersion(spi.Spi.Version))
     override def defaultsResource = com.histmersion.plugin.Plugin.DefaultsResourceResult("zq-none.conf")
     def register(c: ZqOracleConfig, ctx: spi.Plugin.Context) =
       ctx.sourceFetchers.add(
@@ -341,13 +341,13 @@ class AcquisitionOracleSuite extends DbSuite:
                 spi.FetchedFile(
                   com.histmersion.plugin.FetchedFile.Source("zq-shelf"),
                   Some(com.histmersion.plugin.FetchedFile.Url("https://shelf.zq.example/licensed.pdf")),
-                  Fixtures.pdf("licensed"),
+                  com.histmersion.plugin.FetchedFile.Bytes(Fixtures.pdf("licensed")),
                   com.histmersion.plugin.FetchedFile.Extension("pdf"),
                   Some(spi.Licence("CC BY 4.0"))
                 )
               )
             else spi.Fetch.Miss(com.histmersion.plugin.Fetch.Miss.Why("the zq shelf has only one work"))
-      )
+      ).left.map(e => spi.Plugin.RegisterResultPart1(e.value))
 
   // ── the converter: every document converts, deterministically ──────────────────────────────
 
@@ -359,9 +359,9 @@ class AcquisitionOracleSuite extends DbSuite:
     def convert(file: com.histmersion.util.storage.Blob, filename: String, quality: Boolean) =
       Right(
         ConvertedDoc(
-          s"# Converted $filename\n\nA body of ${file.size} bytes (quality: $quality).\n\n![fig](assets/zq-fig.png)\n",
+          com.histmersion.api.ocr.ConvertedDoc.Markdown(s"# Converted $filename\n\nA body of ${file.size} bytes (quality: $quality).\n\n![fig](assets/zq-fig.png)\n"),
           pages = com.histmersion.api.ocr.ConvertedDoc.Pages(2),
-          images = List(ConvertedImage(com.histmersion.api.ocr.ConvertedImage.Name("zq-fig.png"), com.histmersion.api.ocr.ConvertedImage.Mime("image/png"), Png, Some(com.histmersion.api.media.ImageSize.Width(1)), Some(com.histmersion.api.media.ImageSize.Height(1))))
+          images = List(ConvertedImage(com.histmersion.api.ocr.ConvertedImage.Name("zq-fig.png"), com.histmersion.api.ocr.ConvertedImage.Mime("image/png"), com.histmersion.api.ocr.ConvertedImage.Base64(Png), Some(com.histmersion.api.media.ImageSize.Width(1)), Some(com.histmersion.api.media.ImageSize.Height(1))))
         )
       )
 
@@ -408,7 +408,7 @@ class AcquisitionOracleSuite extends DbSuite:
     CalibreFixture.refuseRealLibrary(lib.dir)
     val loaded = AppConfig
       .loadWithUserText(ConfigFactory.parseMap(Map.empty[String, String].asJava), userText(up, lib, allowUnauthorised))
-      .fold(e => fail(e), identity)
+      .fold(e => fail(e.value), identity)
     val c = loaded.config
     val cfg = c.modify(
       _.db).setTo(base.db.modify(_.url).setTo(scratch.urlOf(s"histmersion_s10p_${name}_test"))).modify(_.backups).setTo(c.backups.modify(_.dir).setTo(tmp.resolve(s"$name-backups").toString)).modify(_.bundles).setTo(c.bundles.modify(_.dir).setTo(tmp.resolve(s"$name-bundles").toString)).modify(_.converter).setTo(c.converter.modify(_.spoolDir).setTo(tmp.resolve(s"$name-spool").toString)).modify(_.acquire).setTo(c.acquire.modify(_.spoolDir).setTo(tmp.resolve(s"$name-acquire").toString)).modify(_.init).setTo(c.init.modify(_.auto).setTo(false)).modify(_.runtime).setTo(c.runtime.modify(_.dataDir).setTo(tmp.resolve(s"$name-data").toString)).modify(_.basemap).setTo(c.basemap.modify(_.dir).setTo(tmp.resolve(s"$name-basemap").toString)
@@ -935,7 +935,7 @@ class AcquisitionOracleSuite extends DbSuite:
     Tables
       .map { (t, cols) =>
         val rs = connect(ds)(
-          Sql.raw(s"""SELECT to_jsonb(x)::text FROM (SELECT $cols FROM "$t") x""").frag.query[String].run().toList
+          Sql.raw(Sql.Text(s"""SELECT to_jsonb(x)::text FROM (SELECT $cols FROM "$t") x""")).frag.query[String].run().toList
         )
         val normed = rs.map(r => json(r, port).linesIterator.map(_.trim).mkString(" ")).sorted
         (s"## $t ${normed.size} rows" :: normed).mkString("\n")

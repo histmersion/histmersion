@@ -541,7 +541,7 @@ class AgentEngineSuite extends com.histmersion.db.DbSuite with RunTranscripts:
       sql"""UPDATE agent_messages SET created_at = now() - interval '45 days'
             WHERE job_id = ${run.id} AND seq = (SELECT min(seq) FROM agent_messages WHERE job_id = ${run.id})""".update
         .run()
-    val firstSeq = connect(ds)(AgentRepo.messages(jobId(run.id))).map(_.seq).min
+    val firstSeq = connect(ds)(AgentRepo.messages(jobId(run.id))).map(_.seq).minBy[Int](_.value)
     val old = connect(ds)(AgentRepo.messages(jobId(run.id))).count(_.seq == firstSeq)
     assertEquals(a.engine.pruneTrace(force = com.histmersion.domain.automation.agents.Engine.PruneTraceForce(true)), old)
     assertEquals(connect(ds)(AgentRepo.messages(jobId(run.id))).size, before - old)

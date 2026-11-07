@@ -60,8 +60,8 @@ class HardeningHttpSuite extends munit.FunSuite:
   private def assertWindowIsSane(body: String, cfg: AppConfig): Unit =
     val from = """"from":(-?\d+)""".r.findFirstMatchIn(body).map(_.group(1).toLong)
     val to = """"to":(-?\d+)""".r.findFirstMatchIn(body).map(_.group(1).toLong)
-    assert(from.exists(v => v >= cfg.ui.time.min && v <= cfg.ui.time.max), s"from=$from: ${body.take(120)}")
-    assert(to.exists(v => v >= cfg.ui.time.min && v <= cfg.ui.time.max), s"to=$to: ${body.take(120)}")
+    assert(from.exists(v => v >= cfg.ui.time.min.value && v <= cfg.ui.time.max.value), s"from=$from: ${body.take(120)}")
+    assert(to.exists(v => v >= cfg.ui.time.min.value && v <= cfg.ui.time.max.value), s"to=$to: ${body.take(120)}")
     assert(from.get <= to.get, s"$from..$to")
 
   /** A name no other process uses, so "the traversal created nothing" checks this run alone. */
@@ -188,7 +188,7 @@ class HardeningHttpSuite extends munit.FunSuite:
       assertEquals(s, 200, b)
       // the cap is what protects the server; a corpus smaller than it simply returns everything
       val hits = """"citekey":""".r.findAllIn(b).size
-      assert(hits <= cfg.limits.maxPage, s"$hits hits, over the ${cfg.limits.maxPage} cap")
+      assert(hits <= cfg.limits.maxPage.value, s"$hits hits, over the ${cfg.limits.maxPage} cap")
       assertEquals(get(s"$url/api/places?limit=100000000")._1, 200)
       assertEquals(get(s"$url/api/jobs?limit=100000000")._1, 200)
       assertEquals(get(s"$url/api/articles?limit=100000000")._1, 200)
@@ -244,7 +244,7 @@ class HardeningHttpSuite extends munit.FunSuite:
 
         // the MCP `ingest` tool's `path` is the same rule (reached here through the handler, since
         // the tool transport is JSON-RPC)
-        assert(cfg.corpus.dir.nonEmpty)
+        assert(cfg.corpus.dir.value.nonEmpty)
       finally
         b.stop()
         val _ = java.nio.file.Files.deleteIfExists(corpus)

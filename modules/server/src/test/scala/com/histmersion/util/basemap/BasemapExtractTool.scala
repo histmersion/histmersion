@@ -285,7 +285,7 @@ object BasemapExtractTool:
       val ((x0, x1), (y0, y1)) = Basemap.tileRange(b, Basemap.Zoom(z))
       for x <- x0.value to x1.value; y <- y0.value to y1.value
       yield PmTiles.tileId(PmTiles.Zoom(z), PmTiles.TileColumn(x), PmTiles.TileRow(y))
-    }.sortBy(_.value)
+    }.sortBy[Long](_.value)
     ids.foreach { id =>
       val (z, x, y) = PmTiles.zxy(id)
       f.tile(z, x, y).toOption.flatten.foreach(w.add(id, _))

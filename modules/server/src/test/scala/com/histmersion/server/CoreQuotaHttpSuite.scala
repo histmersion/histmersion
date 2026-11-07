@@ -48,9 +48,9 @@ class CoreQuotaHttpSuite extends munit.FunSuite:
           limits,
           com.histmersion.domain.CoreQuota.StatusCode(429),
           Map(
-            "x-ratelimit-limit" -> "25",
-            "x-ratelimit-remaining" -> "0",
-            "x-ratelimit-retry-after" -> until.toString.replace("Z", "+0000")
+            CoreQuota.HeaderName("x-ratelimit-limit") -> CoreQuota.HeaderValue("25"),
+            CoreQuota.HeaderName("x-ratelimit-remaining") -> CoreQuota.HeaderValue("0"),
+            CoreQuota.HeaderName("x-ratelimit-retry-after") -> CoreQuota.HeaderValue(until.toString.replace("Z", "+0000"))
           )
         )
         val about = get(s"$url/api/about")

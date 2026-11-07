@@ -9,7 +9,7 @@ package com.histmersion.server
   */
 class WebAssetsSuite extends munit.FunSuite:
 
-  private def asset(name: String): String = Static.read(s"web/$name")
+  private def asset(name: String): String = Static.read(Static.ReadPath(s"web/$name")).value
 
   test("the page mounts the Scala.js app into #app and loads the bundle"):
     val html = asset("index.html")
@@ -17,7 +17,8 @@ class WebAssetsSuite extends munit.FunSuite:
     assert(html.contains("app.src = \"/web/app.bundle.js"), html)
 
   test("the web UI's pages, its items' pages and the old list addresses serve the app; anything else does not"):
-    def app(p: String) = com.histmersion.api.WebPaths.isApp(p.split('/').toList.filter(_.nonEmpty))
+    def app(p: String) =
+      com.histmersion.api.WebPaths.isApp(p.split('/').toList.filter(_.nonEmpty).map(com.histmersion.api.WebPaths.Segment(_)))
     List(
       "/",
       "/explore",
@@ -44,7 +45,7 @@ class WebAssetsSuite extends munit.FunSuite:
     val key = "localStorage.getItem(\"histmersion.theme\")"
     for (name, html) <- List(
         "index.html" -> asset("index.html"),
-        "a server page" -> ArticleHtml.page(com.histmersion.domain.Title("t"), com.histmersion.server.HtmlRender.Html("<p>b</p>"), PageKind.values.head)
+        "a server page" -> ArticleHtml.page(com.histmersion.domain.Title("t"), com.histmersion.server.HtmlRender.Html("<p>b</p>"), PageKind.values.head).value
       )
     do
       val at = html.indexOf(key)

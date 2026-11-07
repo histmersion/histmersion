@@ -47,19 +47,22 @@ class StorageProbeSuite extends munit.FunSuite:
         .modify(_.enabled).setTo(bundled).modify(_.home).setTo(d.resolve("install").toString).modify(_.dataDir).setTo(d.resolve("data").toString)).modify(_.backups).setTo(base.backups.modify(_.dir).setTo(d.resolve("data/backups").toString).modify(_.keep).setTo(3)).modify(_.converter).setTo(base.converter.modify(_.spoolDir).setTo(d.resolve("data/uploads").toString)).modify(_.bundles).setTo(base.bundles.modify(_.dir).setTo(d.resolve("data/bundles").toString)).modify(_.acquire).setTo(base.acquire.modify(_.spoolDir).setTo("")).modify(_.corpus).setTo(base.corpus.modify(_.dir).setTo("")).modify(_.basemap).setTo(base.basemap.modify(_.dir).setTo("")).modify(_.places).setTo(base.places.modify(_.sources).setTo(base.places.sources.modify(_.dir).setTo("").modify(_.lpfDir).setTo(""))).modify(_.agents).setTo(base.agents.modify(_.runtimes).setTo(base.agents.runtimes.modify(_.dir).setTo(""))
     )
 
-  private def env(d: Path): String => Option[String] =
-    Map("HOME" -> d.resolve("home").toString, "XDG_CACHE_HOME" -> d.resolve("cache").toString).get
+  private def env(d: Path): UserPaths.Lookup =
+    Map(
+      Environment.VariablesKey("HOME") -> Environment.VariablesValue(d.resolve("home").toString),
+      Environment.VariablesKey("XDG_CACHE_HOME") -> Environment.VariablesValue(d.resolve("cache").toString)
+    ).get
 
   tmp.test("every location comes from the config: data dir, cache dir, backups, originals, bundle"): d =>
     val cfg = config(d, bundled = true)
     val p = StorageLocations.measured(cfg, env(d), com.histmersion.config.UserPaths.OsName("Mac OS X"), None)
     assertEquals(
-      p.find(Location.Install).map(s => Path.of(s.where())),
+      p.find(Location.Install).map(s => Path.of(s.where().value)),
       Some(d.resolve("install").toAbsolutePath.normalize)
     )
     val locs = figures
       .spots(p, StorageLocations.install)
-      .map(l => l.key -> l.path.map(x => d.relativize(Path.of(x)).toString))
+      .map(l => l.key -> l.path.map(x => d.relativize(Path.of(x.value)).toString))
       .toMap
     assertEquals(locs(com.histmersion.util.data.diagnostics.ShownStore.Key("database-cluster")), Some("data/pg"))
     assertEquals(locs(com.histmersion.util.data.diagnostics.ShownStore.Key("backups")), Some("data/backups"))
@@ -79,7 +82,7 @@ class StorageProbeSuite extends munit.FunSuite:
     assert(!locs.contains(com.histmersion.util.data.diagnostics.ShownStore.Key("acquire-spool")) && !locs.contains(com.histmersion.util.data.diagnostics.ShownStore.Key("corpus")), locs) // not configured: nothing of ours
     // not bundled: no cluster, no install
     val dev =
-      figures.spots(StorageLocations.measured(config(d), env(d), com.histmersion.config.UserPaths.OsName("Linux"), None), StorageLocations.install).map(_.key)
+      figures.spots(StorageLocations.measured(config(d), env(d), com.histmersion.config.UserPaths.OsName("Linux"), None), StorageLocations.install).map(_.key.value)
     assert(!dev.contains("database-cluster") && !dev.contains("install") && !dev.contains("relink-kit"), dev)
 
   tmp.test("the leftovers: other cache folders are listed one by one, the rest of the data dir together"): d =>
@@ -89,9 +92,9 @@ class StorageProbeSuite extends munit.FunSuite:
     file(d.resolve("data/relink.conf"), 5)
     file(d.resolve("data/logs/server.log"), 5)
     val locs = figures.spots(StorageLocations.measured(config(d), env(d), com.histmersion.config.UserPaths.OsName("Linux"), None), StorageLocations.install)
-    assertEquals(locs.filter(_.key.startsWith("cache:")).map(_.key), List("cache:thumbs"))
-    val rest = locs.find(_.key == "data-other").getOrElse(fail(s"no data-other: $locs"))
-    assertEquals(rest.stores.map(s => Path.of(s.where()).getFileName.toString), List("relink.conf", "signing"))
+    assertEquals(locs.filter(_.key.value.startsWith("cache:")).map(_.key), List("cache:thumbs"))
+    val rest = locs.find(_.key.value == "data-other").getOrElse(fail(s"no data-other: $locs"))
+    assertEquals(rest.stores.map(s => Path.of(s.where().value).getFileName.toString), List("relink.conf", "signing"))
     assertEquals(rest.shown, None)
 
   tmp.test("measure: sizes, nesting, base-map files, backups usage, advice, volumes — and no database without one"):
@@ -109,8 +112,8 @@ class StorageProbeSuite extends munit.FunSuite:
       val p = StorageLocations.measured(cfg, env(d), com.histmersion.config.UserPaths.OsName("Linux"), None)
       val bs = BackupFixtures.service(cfg)
       val r =
-        figures.measure(p, StorageLocations.install, cfg, None, bs.list.left.map(_.message), MeasureBudget.unlimited)
-      def entry(k: String) = r.entries.find(_.key == k).getOrElse(fail(s"no $k: ${r.entries.map(_.key)}"))
+        figures.measure(p, StorageLocations.install, cfg, None, bs.list.left.map(_.message.value), MeasureBudget.unlimited)
+      def entry(k: String) = r.entries.find(_.key.value == k).getOrElse(fail(s"no $k: ${r.entries.map(_.key)}"))
       assertEquals(entry("backups").bytes, Some(7000L))
       assertEquals(entry("backups").shrink, Storage.Advice.shrink(com.histmersion.api.maintenance.Storage.Entry.Key("backups"), com.histmersion.api.maintenance.Storage.Advice.Keep(3)))
       assertEquals(r.backups, Some(BackupsUsage(com.histmersion.api.backup.BackupsUsage.Count(2), com.histmersion.api.ByteCount(7000L), Some(com.histmersion.api.backup.BackupsUsage.Newest("histmersion-20261002T100000Z.dump")), com.histmersion.api.backup.BackupsUsage.Keep(3))))
@@ -123,8 +126,8 @@ class StorageProbeSuite extends munit.FunSuite:
         entry("basemap").detail,
         Some("vector 2.0 MB · terrain download unfinished 1.0 kB · map cache 3.0 kB")
       )
-      assert(!r.entries.exists(_.key == "database"), r.entries)
-      assert(r.volumes.nonEmpty && r.entries.filter(_.exists).forall(_.volume.isDefined), r)
+      assert(!r.entries.exists(_.key.value == "database"), r.entries)
+      assert(r.volumes.nonEmpty && r.entries.filter(_.exists.value).forall(_.volume.isDefined), r)
       assertEquals(Storage.total(r.entries), 7000L + 7000L + 2000L + 2_004_000L)
       assert(r.measuredAt.isDefined && r.tookMillis.isDefined)
       assertEquals(r.problems, Nil)
@@ -138,19 +141,19 @@ class StorageProbeSuite extends munit.FunSuite:
       cfg,
       None,
       Right(Nil),
-      MeasureBudget(com.histmersion.util.storage.MeasureBudget.MaxEntries(5), Long.MaxValue)
+      MeasureBudget(com.histmersion.util.storage.MeasureBudget.MaxEntries(5), com.histmersion.util.storage.MeasureBudget.DeadlineNanos(Long.MaxValue))
     )
-    assert(r.entries.exists(_.partial), r.entries)
-    assert(r.problems.exists(_.contains("storage.max-entries")), r.problems)
+    assert(r.entries.exists(_.partial.value), r.entries)
+    assert(r.problems.exists(_.value.contains("storage.max-entries")), r.problems)
 
   // ── the cache ────────────────────────────────────────────────────────────────────────────────
 
-  private def report(n: Int) = Storage.Report(measuredAt = Some(s"m$n"))
+  private def report(n: Int) = Storage.Report(measuredAt = Some(Storage.Report.MeasuredAt(s"m$n")))
 
   test("the cache: the first request waits for the first measurement; then it is reused until the TTL"):
     val runs = AtomicInteger(0)
     var now = 0L
-    val c = StorageCache(() => () => report(runs.incrementAndGet()), () => com.histmersion.util.data.diagnostics.StorageCache.TimeToLive(60000L), () => now, r => r())
+    val c = StorageCache(() => () => report(runs.incrementAndGet()), () => com.histmersion.util.data.diagnostics.StorageCache.TimeToLive(60000L), () => com.histmersion.util.data.diagnostics.StorageCache.Instant(now), r => r())
     assertEquals(c.get(com.histmersion.util.data.diagnostics.StorageCache.WaitMillis(1000)).measuredAt, Some("m1"))
     now = 59999
     assertEquals(c.get(com.histmersion.util.data.diagnostics.StorageCache.WaitMillis(1000)).measuredAt, Some("m1"))

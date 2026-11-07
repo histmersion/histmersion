@@ -27,14 +27,14 @@ class ArticleQuerySuite extends munit.FunSuite:
 
   test("match control: hidden at zero, singular at one, points at the first mark"):
     assertEquals(ArticleHtml.matchNav(com.histmersion.server.ArticleHtml.MatchNavMatches(0)), "")
-    assert(ArticleHtml.matchNav(com.histmersion.server.ArticleHtml.MatchNavMatches(1)).contains("1 match ·"), ArticleHtml.matchNav(com.histmersion.server.ArticleHtml.MatchNavMatches(1)))
+    assert(ArticleHtml.matchNav(com.histmersion.server.ArticleHtml.MatchNavMatches(1)).value.contains("1 match ·"), ArticleHtml.matchNav(com.histmersion.server.ArticleHtml.MatchNavMatches(1)))
     val nav = ArticleHtml.matchNav(com.histmersion.server.ArticleHtml.MatchNavMatches(7))
-    assert(nav.contains("""data-matches="7""""), nav)
-    assert(nav.contains("7 matches"), nav)
-    assert(nav.contains("""href="#hl1""""), nav)
+    assert(nav.value.contains("""data-matches="7""""), nav)
+    assert(nav.value.contains("7 matches"), nav)
+    assert(nav.value.contains("""href="#hl1""""), nav)
 
   test("highlighting a rendered article never touches the citekey links it contains"):
-    val html = """<p>See <a href="/source/egypt_2020">egypt_2020</a> on Egypt.</p>"""
+    val html = Highlight.Html("""<p>See <a href="/source/egypt_2020">egypt_2020</a> on Egypt.</p>""")
     val (out, n) = Highlight(html, com.histmersion.domain.Highlight.ApplyQ("egypt"))
     assertEquals(n, 2) // the link TEXT and the word — not the href
-    assert(out.contains("""<a href="/source/egypt_2020">"""), out)
+    assert(out.value.contains("""<a href="/source/egypt_2020">"""), out)

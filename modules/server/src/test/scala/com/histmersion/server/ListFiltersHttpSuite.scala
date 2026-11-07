@@ -1,9 +1,11 @@
 package com.histmersion.server
 
+import com.histmersion.testsupport.ComparedByValue.given
+
 import hearth.kindlings.optics.syntax.*
 
 import com.augustnagro.magnum.*
-import com.histmersion.api.Paging
+import com.histmersion.api.{Paging, RowCount}
 import com.histmersion.config.*
 import com.histmersion.domain.*
 import ox.supervised
@@ -49,9 +51,9 @@ class ListFiltersHttpSuite extends com.histmersion.db.DbSuite:
       )
       .body
 
-  private def facets(h: Map[String, String]): Map[String, Map[String, Int]] =
+  private def facets(h: Map[String, String]): Map[ListFilters.FacetName, Map[ListFilters.Term, RowCount]] =
     h.get(ListFilters.FacetsHeader.toLowerCase)
-      .fold(Map.empty)(ListFilters.decodeFacets(_).map((f, vs) => f -> vs.toMap).toMap)
+      .fold(Map.empty)(ListFilters.decodeFacets(ListFilters.EncodedFacets(_)).map((f, vs) => f -> vs.toMap).toMap)
 
   override def afterSuite(): Unit =
     if testDb.nonEmpty then
@@ -103,11 +105,11 @@ class ListFiltersHttpSuite extends com.histmersion.db.DbSuite:
       )
       assertEquals(h1(Paging.TotalHeader.toLowerCase), "2")
       // the kind counts are taken under the state (open) but not the kind filter
-      assertEquals(facets(h1)("kind"), Map("goal-plan" -> 2, "article-publish" -> 1))
-      assertEquals(Paging.decodeCounts(h1(Paging.CountsHeader.toLowerCase)).toMap, Map("open" -> 2))
+      assertEquals(facets(h1)(ListFilters.FacetName("kind")), Map("goal-plan" -> 2, "article-publish" -> 1))
+      assertEquals(Paging.decodeCounts(com.histmersion.api.automation.Activity.Counts.Wire(h1(Paging.CountsHeader.toLowerCase))).toMap, Map("open" -> 2))
       val (_, ball, hall) = get(s"$url/api/agents/approvals?subject=$tag&state=all&kind=goal-plan,edge")
       assertEquals(hall(Paging.TotalHeader.toLowerCase), "3", ball.take(300))
-      assertEquals(facets(hall)("decidedBy"), Map("person" -> 1))
+      assertEquals(facets(hall)(ListFilters.FacetName("decidedBy")), Map("person" -> 1))
       val (bad, bb, _) = get(s"$url/api/agents/approvals?kind=bogus")
       assertEquals(bad, 400, bb)
       assert(bb.contains("unknown kind 'bogus'") && bb.contains("goal-plan"), bb)
@@ -115,8 +117,8 @@ class ListFiltersHttpSuite extends com.histmersion.db.DbSuite:
       val (s2, b2, h2) = get(s"$url/api/agents/runs?subject=$tag&pipeline=review-article")
       assertEquals(s2, 200, b2)
       assertEquals(h2(Paging.TotalHeader.toLowerCase), "2", b2.take(300))
-      assertEquals(facets(h2)("pipeline"), Map("review-article" -> 2, "enrich-source" -> 1))
-      assertEquals(facets(h2)("provider"), Map("codex" -> 1, "claude-code" -> 1))
+      assertEquals(facets(h2)(ListFilters.FacetName("pipeline")), Map("review-article" -> 2, "enrich-source" -> 1))
+      assertEquals(facets(h2)(ListFilters.FacetName("provider")), Map("codex" -> 1, "claude-code" -> 1))
       val (_, b3, h3) = get(s"$url/api/agents/runs?subject=$tag&provider=codex&status=done")
       assertEquals(h3(Paging.TotalHeader.toLowerCase), "2", b3.take(300))
       assertEquals(get(s"$url/api/agents/runs?since=someday")._1, 400)
@@ -126,7 +128,7 @@ class ListFiltersHttpSuite extends com.histmersion.db.DbSuite:
       assertEquals(s4, 200, b4)
       assertEquals(h4(Paging.TotalHeader.toLowerCase), "2", b4.take(300))
       // the kind facet over this run's jobs: its two ingests, its media import and its three agent runs
-      assertEquals(facets(h4)("kind"), Map("ingest" -> 2, "media-import" -> 1, "agent" -> 3))
+      assertEquals(facets(h4)(ListFilters.FacetName("kind")), Map("ingest" -> 2, "media-import" -> 1, "agent" -> 3))
       assertEquals(get(s"$url/api/jobs?status=stuck")._1, 400)
       assertEquals(get(s"$url/api/jobs?status=waiting&limit=1")._1, 200)
 

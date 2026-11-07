@@ -19,20 +19,21 @@ class ConverterClientSuite extends munit.FunSuite:
 
   private val base = AppConfig.load().converter
 
-  private def pc(pages: Int, scanned: Int = 0) = Some(ConverterClient.PageCount(pages, scanned))
+  private def pc(pages: ConverterClient.PageCount.Pages, scanned: ConverterClient.PageCount.Scanned = ConverterClient.PageCount.Scanned(0)) =
+    Some(ConverterClient.PageCount(pages, scanned))
 
   test("the timeout is the configured one, or pages × seconds-per-page when that is longer"):
     val c = base.modify(_.timeoutSeconds).setTo(600).modify(_.secondsPerPage).setTo(2).modify(_.secondsPerPageQuality).setTo(8).modify(_.secondsPerScannedPage).setTo(15)
     assertEquals(
-      ConverterClient.timeoutFor(ConverterWiring.settings(c), pc(10), quality = com.histmersion.util.ocr.ConverterClient.HighQuality(false)),
+      ConverterClient.timeoutFor(ConverterWiring.settings(c), pc(ConverterClient.PageCount.Pages(10)), quality = com.histmersion.util.ocr.ConverterClient.HighQuality(false)),
       Duration.ofSeconds(600)
     )
     assertEquals(
-      ConverterClient.timeoutFor(ConverterWiring.settings(c), pc(600), quality = com.histmersion.util.ocr.ConverterClient.HighQuality(false)),
+      ConverterClient.timeoutFor(ConverterWiring.settings(c), pc(ConverterClient.PageCount.Pages(600)), quality = com.histmersion.util.ocr.ConverterClient.HighQuality(false)),
       Duration.ofSeconds(1200)
     )
     assertEquals(
-      ConverterClient.timeoutFor(ConverterWiring.settings(c), pc(600), quality = com.histmersion.util.ocr.ConverterClient.HighQuality(true)),
+      ConverterClient.timeoutFor(ConverterWiring.settings(c), pc(ConverterClient.PageCount.Pages(600)), quality = com.histmersion.util.ocr.ConverterClient.HighQuality(true)),
       Duration.ofSeconds(4800)
     )
     assertEquals(ConverterClient.timeoutFor(ConverterWiring.settings(c), None, quality = com.histmersion.util.ocr.ConverterClient.HighQuality(true)), Duration.ofSeconds(600))
@@ -40,15 +41,15 @@ class ConverterClientSuite extends munit.FunSuite:
   test("scanned pages get the scanned rate: the 155-page scan that failed at 600 s now gets 2325 s"):
     val c = base.modify(_.timeoutSeconds).setTo(600).modify(_.secondsPerPage).setTo(2).modify(_.secondsPerPageQuality).setTo(8).modify(_.secondsPerScannedPage).setTo(15)
     assertEquals(
-      ConverterClient.timeoutFor(ConverterWiring.settings(c), pc(155, scanned = 155), quality = com.histmersion.util.ocr.ConverterClient.HighQuality(false)),
+      ConverterClient.timeoutFor(ConverterWiring.settings(c), pc(ConverterClient.PageCount.Pages(155), scanned = ConverterClient.PageCount.Scanned(155)), quality = com.histmersion.util.ocr.ConverterClient.HighQuality(false)),
       Duration.ofSeconds(2325)
     )
     assertEquals(
-      ConverterClient.timeoutFor(ConverterWiring.settings(c), pc(400, scanned = 100), quality = com.histmersion.util.ocr.ConverterClient.HighQuality(false)),
+      ConverterClient.timeoutFor(ConverterWiring.settings(c), pc(ConverterClient.PageCount.Pages(400), scanned = ConverterClient.PageCount.Scanned(100)), quality = com.histmersion.util.ocr.ConverterClient.HighQuality(false)),
       Duration.ofSeconds(300 * 2 + 100 * 15)
     )
     assertEquals(
-      ConverterClient.timeoutFor(ConverterWiring.settings(c), pc(10, scanned = 99), quality = com.histmersion.util.ocr.ConverterClient.HighQuality(false)),
+      ConverterClient.timeoutFor(ConverterWiring.settings(c), pc(ConverterClient.PageCount.Pages(10), scanned = ConverterClient.PageCount.Scanned(99)), quality = com.histmersion.util.ocr.ConverterClient.HighQuality(false)),
       Duration.ofSeconds(600),
       "scanned is capped at pages"
     )
@@ -91,7 +92,7 @@ class ConverterClientSuite extends munit.FunSuite:
   test("an older sidecar without /inspect: the plain timeout applies, and the error says it timed out"):
     withSidecar(pages = None, convertMs = 2000) { url =>
       val r = convert(url)
-      assert(r.left.exists(e => e.contains("did not finish within 1 s") && !e.contains("unreachable")), r.toString)
+      assert(r.left.exists(e => e.value.contains("did not finish within 1 s") && !e.value.contains("unreachable")), r.toString)
     }
 
 /** #692: what `/api/health` says about the sidecar, from the probe and the job it is converting. */

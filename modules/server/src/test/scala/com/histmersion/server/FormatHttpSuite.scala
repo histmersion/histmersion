@@ -125,7 +125,7 @@ class FormatHttpSuite extends com.histmersion.db.DbSuite with com.histmersion.db
       val fixed = decode[FormatReport](fb)
       assertEquals(fixed.fixed.size, 4, fixed.fixed.mkString("\n"))
       assertEquals(fixed.issues, Nil)
-      val body = decode[Article.View](get(s"$url/api/articles/$slug")._2).article.body
+      val body = decode[Article.View](get(s"$url/api/articles/$slug")._2).article.body.value
       assert(
         body.contains("**reliefs**") && body.contains("[the letters](https://example.org/x)") &&
           body.contains("and [[zz_fmt2020_source]].") && body.contains(":\n\n| Festival"),
@@ -147,7 +147,7 @@ class FormatHttpSuite extends com.histmersion.db.DbSuite with com.histmersion.db
       // the corpus rule sees it too
       val corpus = decode[Lint.LintReport](get(s"$url/api/lint?rule=article-markdown")._2)
       assert(
-        corpus.rules.head.items.exists(i => i.citekey == slug && i.detail.contains("heading-syntax")),
+        corpus.rules.head.items.exists(i => i.citekey.value == slug && i.detail.value.contains("heading-syntax")),
         corpus.toString
       )
 
@@ -189,7 +189,7 @@ class FormatHttpSuite extends com.histmersion.db.DbSuite with com.histmersion.db
   test("places rename: REST and MCP, the old id keeps resolving, a taken one is refused (#890)"):
     withServer { url =>
       // a previous run's renamed places and their old ids must not be in the way
-      val ds = testPool(AppConfig.load().db.copy(url = testDb.get))
+      val ds = testPool(AppConfig.load().db.copy(url = DbConfig.Url(testDb.get)))
       com.augustnagro.magnum.connect(ds):
         import com.augustnagro.magnum.*
         sql"DELETE FROM place_aliases WHERE alias LIKE 'zz_fmt_place%'".update.run()
@@ -200,8 +200,8 @@ class FormatHttpSuite extends com.histmersion.db.DbSuite with com.histmersion.db
             Place(
               com.histmersion.api.catalogue.Place.Id("zz_fmt_place_a"),
               com.histmersion.api.catalogue.Place.Label("Fmt A"),
-              com.histmersion.domain.catalogue.Place.Kind.Site,
-              Some("""{"type":"Point","coordinates":[30.0,39.0]}""")
+              Place.KindValue(com.histmersion.domain.catalogue.Place.Kind.Site),
+              Some(Place.Geometry("""{"type":"Point","coordinates":[30.0,39.0]}"""))
             ),
             List(Place.Name(com.histmersion.api.catalogue.Place.Name.Value("Fmt A")))
           ),
@@ -209,8 +209,8 @@ class FormatHttpSuite extends com.histmersion.db.DbSuite with com.histmersion.db
             Place(
               com.histmersion.api.catalogue.Place.Id("zz_fmt_place_other"),
               com.histmersion.api.catalogue.Place.Label("Fmt Other"),
-              com.histmersion.domain.catalogue.Place.Kind.Site,
-              Some("""{"type":"Point","coordinates":[31.0,39.0]}""")
+              Place.KindValue(com.histmersion.domain.catalogue.Place.Kind.Site),
+              Some(Place.Geometry("""{"type":"Point","coordinates":[31.0,39.0]}"""))
             ),
             List(Place.Name(com.histmersion.api.catalogue.Place.Name.Value("Fmt Other")))
           )

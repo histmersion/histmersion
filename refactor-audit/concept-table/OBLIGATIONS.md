@@ -222,3 +222,7 @@ The client table's new concepts were placed on same-named owners in other module
 - AgentEngineSuite compare: comma-separated ids (splitting moved to AgentsControllers.runIds); the test passes `Run.Id.assume("a,b")`.
 - ArticleServiceContract and ArticlesControllersSuite: `Slug("ZR_WALLS")` pre-normalised with Slug.parse in the test (test took over behaviour): send the raw upper-case value through the boundary; ArticleRepo.refs lowercasing now unreachable.
 - MergeApplyJobs planHash went from free String to Sha256: confirm against master that the plan hash is a SHA-256 hex.
+- SpoolSuite "an escaping citekey writes NOTHING, anywhere": Spool.write takes Citekey, so the second, path-level guard is no longer exercised. It is defence in depth against path traversal: keep it, and test it with `Citekey.assume` of a traversal string (a deliberate bypass to reach the second layer).
+- Ordering for newtypes: tests write `sortBy[Long](_.value)`, `.value >= ...` (Wcag.Ratio, tile ids, MessageInfo.Seq, slugs, citekeys). Lift Ordering once (G45).
+- "object X does not take parameters" for classes with a companion (Client, SourceProposals, PeriodImports, Prompts) worked around with `new`: find the real cause.
+- Public String left in src/main: Bootstrap.PeriodSeed, AcquireConfig.agent.

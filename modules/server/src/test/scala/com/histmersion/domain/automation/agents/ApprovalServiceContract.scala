@@ -90,7 +90,7 @@ abstract class ApprovalServiceContract extends EngineStoreSuite:
       )
       assertEquals(a(s).closeForRun(run, com.histmersion.domain.automation.agents.AgentRepo.CloseReason("rejected: the run was cancelled")), 1, "only the step's")
       assertEquals(
-        a(s).approval(plan.id).map(x => (x.state, x.result)),
+        a(s).approval(idOf(plan)).map(x => (x.state, x.result)),
         Some(("rejected", Some("rejected: the run was cancelled")))
       )
       assertEquals(a(s).closeForRun(run, com.histmersion.domain.automation.agents.AgentRepo.CloseReason("again")), 0)

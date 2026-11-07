@@ -41,7 +41,7 @@ class TimeZoneCheckSuite extends munit.FunSuite:
     val (ok, line) = TimeZoneCheck.jdk()
     assert(ok, line)
     assert(
-      line.matches("""time zones: \d{3} from the JDK's tzdb 20\d\d[a-z] · default \S+ · 7 offsets checked"""),
+      line.value.matches("""time zones: \d{3} from the JDK's tzdb 20\d\d[a-z] · default \S+ · 7 offsets checked"""),
       line
     )
 

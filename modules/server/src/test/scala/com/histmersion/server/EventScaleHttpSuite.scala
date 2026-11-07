@@ -10,7 +10,7 @@ import com.histmersion.api.views.EventDetail
 import io.circe.parser.decode
 import java.net.URI
 import java.net.http.{HttpClient, HttpRequest, HttpResponse}
-import com.histmersion.api.catalogue.EventGeo
+import com.histmersion.api.catalogue.{Event, EventGeo}
 
 /** An event's scale (#1440) over real HTTP and MCP: PUT and PATCH take it and refuse a value that is none, `auto`
   * forgets it, `GET /api/events/geo` answers (and is not read as the event `geo`), and the `patch_event` tool writes
@@ -38,7 +38,7 @@ class EventScaleHttpSuite extends munit.FunSuite:
         .build()
     )
 
-  private val Id = "zqes_http_battle"
+  private val Id = Event.Id("zqes_http_battle")
 
   test("PUT/PATCH/GET carry the scale; geo is the map feed; patch_event is the same over MCP"):
     val base = AppConfig.load()
@@ -88,7 +88,7 @@ class EventScaleHttpSuite extends munit.FunSuite:
         assert(mb.contains("**Scale:** local (derived)"), mb)
         val after = decode[EventDetail](get(s"$url/api/events/$Id")._2).fold(e => fail(e.getMessage), identity)
         assertEquals((after.event.scale, after.event.scaleStated), ("local", false))
-        assert(after.geometry.exists(_.contains("36.6")), after.geometry.toString)
+        assert(after.geometry.exists(_.value.contains("36.6")), after.geometry.toString)
         val (_, refused) = mcp(
           url,
           s"""{"jsonrpc":"2.0","id":3,"method":"tools/call","params":{"name":"patch_event","arguments":{"id":"$Id","lat":34.5}}}"""
@@ -136,7 +136,7 @@ class EventScaleHttpSuite extends munit.FunSuite:
         assert(
           decode[EventDetail](get(s"$url/api/events/$geoId")._2).toOption
             .flatMap(_.geometry)
-            .exists(_.contains("36.5")),
+            .exists(_.value.contains("36.5")),
           "a refused PATCH changes nothing"
         )
 

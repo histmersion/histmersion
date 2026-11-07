@@ -158,11 +158,14 @@ class CliClientsSuite extends munit.FunSuite:
         .run(call(rt, StepAgent.Skeptic))
     )
     assert(
-      Opencode.client(OcCfg, rt, ModelRef(ProviderKind.Opencode, com.histmersion.api.automation.Agents.ModelRef.Model("gpt-5"))).left.exists(_.contains("<provider>/<model>"))
+      Opencode.client(OcCfg, rt, ModelRef(ProviderKind.Opencode, com.histmersion.api.automation.Agents.ModelRef.Model("gpt-5"))).left.exists(_.value.contains("<provider>/<model>"))
     )
 
   test("the fence around a JSON answer is tolerated; plan limit wording is recognised"):
     assertEquals(CliOutcomes.stripFence("```json\n{\"a\":1}\n```"), "{\"a\":1}")
     assertEquals(CliOutcomes.stripFence("{\"a\":1}"), "{\"a\":1}")
-    assert(CliOutcomes.isLimit("You've hit your usage limit") && !CliOutcomes.isLimit("connection refused"))
+    assert(
+      CliOutcomes.isLimit(ClaudeCode.Limit.Message("You've hit your usage limit")) &&
+        !CliOutcomes.isLimit(ClaudeCode.Limit.Message("connection refused"))
+    )
     assertEquals(PoolId.ChatgptPlan.wire, "chatgpt-plan")

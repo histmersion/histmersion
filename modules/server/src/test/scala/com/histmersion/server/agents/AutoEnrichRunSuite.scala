@@ -35,7 +35,10 @@ class AutoEnrichRunSuite extends com.histmersion.db.DbSuite with RunTranscripts:
   override def munitIgnore: Boolean = testDb.isEmpty
   override val munitTimeout = scala.concurrent.duration.Duration(120, "s")
 
-  private val Ck = "zzautoenrich2020_tin"
+  private val Ck = com.histmersion.domain.library.Citekey("zzautoenrich2020_tin")
+  private val IngestCk = com.histmersion.api.library.Citekey("zzautoenrich2020_tin")
+  private val RunTarget = RunInfo.Target("zzautoenrich2020_tin")
+  private val ItemTarget = com.histmersion.api.automation.Managers.ManagerItem.Target("zzautoenrich2020_tin")
 
   private object Stub extends ConverterClient:
     def health = Right(com.histmersion.util.ocr.ConverterClient.HealthSummary("ok"))
@@ -44,7 +47,7 @@ class AutoEnrichRunSuite extends com.histmersion.db.DbSuite with RunTranscripts:
         ConvertedDoc(
           markdown = com.histmersion.api.ocr.ConvertedDoc.Markdown("# Tin\n\nThe Uluburun ship carried ten tons of copper.\n"),
           pages = com.histmersion.api.ocr.ConvertedDoc.Pages(1),
-          filename = Some(filename)
+          filename = Some(ConvertedDoc.Filename(filename))
         )
       )
 
@@ -92,16 +95,16 @@ class AutoEnrichRunSuite extends com.histmersion.db.DbSuite with RunTranscripts:
   /** Ingest the fixture file and wait for its job to settle. */
   private def ingest(h: ServerWiring): JobInfo =
     val accepted = h.ingest.controllers
-      .ingest(Ingest.Params(Ck, Some(com.histmersion.api.exchange.Bundle.Asset.FileName("tin.pdf"))), com.histmersion.domain.library.ingest.Upload.handed(com.histmersion.util.storage.HandedFile.snapshot(pdf.toFile)))
-      .fold(e => fail(e.message), identity)
+      .ingest(Ingest.Params(IngestCk, Some(com.histmersion.api.exchange.Bundle.Asset.FileName("tin.pdf"))), com.histmersion.domain.library.ingest.Upload.handed(com.histmersion.util.storage.HandedFile.snapshot(pdf.toFile)))
+      .fold(e => fail(e.message.value), identity)
     def go(n: Int): JobInfo =
-      val j = h.jobs.job(accepted.jobId).fold(e => fail(e.message), identity)
+      val j = h.jobs.job(accepted.jobId).fold(e => fail(e.message.value), identity)
       if j.isTerminal || n > 600 then j else { Thread.sleep(50); go(n + 1) }
     val j = go(0)
     assertEquals(j.state, JobState.Done, j.toString)
     j
 
-  private def runs: List[RunInfo] = connect(ds)(AgentRepo.forTarget(Pipeline.EnrichSource, Ck)).toList
+  private def runs: List[RunInfo] = connect(ds)(AgentRepo.forTarget(Pipeline.EnrichSource, RunTarget)).toList
 
   test("an ingest queues exactly one enrich-source run and says so; a second import of the same file queues none"):
     withHandlers() { h =>
@@ -110,13 +113,13 @@ class AutoEnrichRunSuite extends com.histmersion.db.DbSuite with RunTranscripts:
       assertEquals(rs.size, 1, rs)
       val run = rs.head
       assertEquals((run.status, run.origin, run.target), ("queued", Some(Origin.FromIngest.wire), Ck))
-      assert(job.progress.exists(_.contains(s"enrichment queued: run ${run.id}")), job.progress)
+      assert(job.progress.exists(_.value.contains(s"enrichment queued: run ${run.id}")), job.progress)
       assert(IngestMarkdown.job(job).contains(s"enrichment queued: run ${run.id}"), "jobs <id> shows it")
       // the same file again: the source is re-converted, the pending run covers it
       val again = ingest(h)
       assertEquals(runs.map(_.id), List(run.id))
       assert(
-        again.progress.exists(_.contains(s"enrichment not queued: enrich-source run ${run.id} is queued")),
+        again.progress.exists(_.value.contains(s"enrichment not queued: enrich-source run ${run.id} is queued")),
         again.progress
       )
     }
@@ -132,16 +135,16 @@ class AutoEnrichRunSuite extends com.histmersion.db.DbSuite with RunTranscripts:
         .connect(ds)(
           com.histmersion.domain.automation.managers.ManagerRepo
             .itemFor(
-              com.histmersion.api.automation.Managers.EnrichId,
-              com.histmersion.api.automation.Managers.SourceEnrich,
-              Ck
+              com.histmersion.api.automation.Managers.ManagerInfo.Id(com.histmersion.api.automation.Managers.EnrichId),
+              com.histmersion.api.automation.Managers.ManagerItem.Kind(com.histmersion.api.automation.Managers.SourceEnrich),
+              ItemTarget
             )
         )
         .getOrElse(fail("no item"))
       assertEquals((item.origin, item.status), ("ingest", "pending"))
       assert(
         job.progress.exists(p =>
-          p.contains(s"enrichment queued: item #${item.id} of the enrich manager") && p.contains("paused")
+          p.value.contains(s"enrichment queued: item #${item.id} of the enrich manager") && p.value.contains("paused")
         ),
         job.progress
       )
@@ -152,13 +155,13 @@ class AutoEnrichRunSuite extends com.histmersion.db.DbSuite with RunTranscripts:
     withHandlers(off) { h =>
       val job = ingest(h)
       assertEquals(runs, Nil)
-      assert(!job.progress.exists(_.contains("enrichment")), job.progress)
+      assert(!job.progress.exists(_.value.contains("enrichment")), job.progress)
     }
     val disabled = baseCfg.modify(_.agents).setTo(baseCfg.agents.modify(_.enabled).setTo(false))
     withHandlers(disabled) { h =>
       val job = ingest(h)
       assertEquals(runs, Nil)
-      assert(!job.progress.exists(_.contains("enrichment")), job.progress)
+      assert(!job.progress.exists(_.value.contains("enrichment")), job.progress)
     }
 
   test("an already-enriched source (it has findings) is converted again but not re-enriched"):
@@ -177,7 +180,7 @@ class AutoEnrichRunSuite extends com.histmersion.db.DbSuite with RunTranscripts:
       )
       val job = ingest(h)
       assertEquals(runs, Nil)
-      assert(job.progress.exists(_.contains("enrichment not queued: it already has 1 finding")), job.progress)
+      assert(job.progress.exists(_.value.contains("enrichment not queued: it already has 1 finding")), job.progress)
     }
 
   test("a chain with no model that can run is a note on the job — the ingest is done all the same"):
@@ -187,8 +190,8 @@ class AutoEnrichRunSuite extends com.histmersion.db.DbSuite with RunTranscripts:
       assertEquals(runs, Nil)
       assert(
         job.progress.exists(p =>
-          p.contains("enrichment not queued: no model of the extractor chain can run") &&
-            p.contains("has no price")
+          p.value.contains("enrichment not queued: no model of the extractor chain can run") &&
+            p.value.contains("has no price")
         ),
         job.progress
       )

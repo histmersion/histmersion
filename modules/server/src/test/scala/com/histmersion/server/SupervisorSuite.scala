@@ -16,7 +16,8 @@ class SupervisorSuite extends munit.FunSuite:
     val c = AppConfig.load()
     c.modify(_.backups).setTo(c.backups.modify(_.dir).setTo("backups").modify(_.pgBinDir).setTo(""))
   private def rc(home: String = "", data: String = "") = base.runtime.modify(_.enabled).setTo(true).modify(_.home).setTo(home).modify(_.dataDir).setTo(data)
-  private def env(m: (String, String)*): String => Option[String] = m.toMap.get
+  private def env(m: (String, String)*): UserPaths.Lookup =
+    m.map((k, v) => Environment.VariablesKey(k) -> Environment.VariablesValue(v)).toMap.get
 
   test("home defaults to the directory above the executable's bin/"):
     val l = Supervisor.layout(
@@ -48,11 +49,11 @@ class SupervisorSuite extends munit.FunSuite:
     val l = Supervisor.layout(rc("/h", "/d"), None, env(), com.histmersion.config.UserPaths.OsName("Linux"))
     assertEquals(l.map(x => (x.home, x.cluster, x.logs)), Right((Path.of("/h"), Path.of("/d/pg"), Path.of("/d/logs"))))
     assert(
-      Supervisor.layout(rc(), Some(Path.of("/b/bin/x")), env(), com.histmersion.config.UserPaths.OsName("Linux")).left.exists(_.contains("HISTMERSION_DATA_DIR"))
+      Supervisor.layout(rc(), Some(Path.of("/b/bin/x")), env(), com.histmersion.config.UserPaths.OsName("Linux")).left.exists(_.value.contains("HISTMERSION_DATA_DIR"))
     )
 
   test("postgres listens on loopback TCP only — no Unix socket (macOS caps its path at 103 bytes)"):
-    val o = Supervisor.pgOptions(com.histmersion.config.RuntimeConfig.PgPort(5433))
+    val o = Supervisor.pgOptions(com.histmersion.config.RuntimeConfig.PgPort(5433)).value
     assert(
       o.contains("-p 5433") && o.contains("listen_addresses=127.0.0.1") && o.contains("unix_socket_directories=''"),
       o
@@ -62,21 +63,21 @@ class SupervisorSuite extends munit.FunSuite:
     val GB = 1024L * 1024L * 1024L
     val auto = PgTuning(com.histmersion.config.PgTuning.SharedBuffers("auto"), com.histmersion.config.PgTuning.EffectiveCacheSize("auto"), com.histmersion.config.PgTuning.WorkMem("16MB"))
     assertEquals(
-      Supervisor.pgSettings(auto, Some(48 * GB)),
+      Supervisor.pgSettings(auto, Some(com.histmersion.ByteCount.applyUnsafe(48 * GB))),
       List("shared_buffers" -> "2048MB", "effective_cache_size" -> "24576MB", "work_mem" -> "16MB")
     )
     // RAM/16, never under initdb's 128 MB
-    assertEquals(Supervisor.pgSettings(auto, Some(8 * GB)).head, "shared_buffers" -> "512MB")
-    assertEquals(Supervisor.pgSettings(auto, Some(1 * GB)).head, "shared_buffers" -> "128MB")
+    assertEquals(Supervisor.pgSettings(auto, Some(com.histmersion.ByteCount.applyUnsafe(8 * GB))).head, "shared_buffers" -> "512MB")
+    assertEquals(Supervisor.pgSettings(auto, Some(com.histmersion.ByteCount.applyUnsafe(1 * GB))).head, "shared_buffers" -> "128MB")
     // the RAM unknown: `auto` is left to Postgres, an explicit size still applies
     assertEquals(Supervisor.pgSettings(auto, None), List("work_mem" -> "16MB"))
     assertEquals(Supervisor.pgSettings(PgTuning(com.histmersion.config.PgTuning.SharedBuffers("1GB"), com.histmersion.config.PgTuning.EffectiveCacheSize(""), com.histmersion.config.PgTuning.WorkMem("")), None), List("shared_buffers" -> "1GB"))
     // anything that is not a size never reaches the -o string
     assertEquals(
-      Supervisor.pgSettings(PgTuning(com.histmersion.config.PgTuning.SharedBuffers("1GB -c fsync=off"), com.histmersion.config.PgTuning.EffectiveCacheSize("lots"), com.histmersion.config.PgTuning.WorkMem("4 MB")), Some(GB)),
+      Supervisor.pgSettings(PgTuning(com.histmersion.config.PgTuning.SharedBuffers("1GB -c fsync=off"), com.histmersion.config.PgTuning.EffectiveCacheSize("lots"), com.histmersion.config.PgTuning.WorkMem("4 MB")), Some(com.histmersion.ByteCount.applyUnsafe(GB))),
       List("work_mem" -> "4MB")
     )
-    val o = Supervisor.pgOptions(com.histmersion.config.RuntimeConfig.PgPort(5433), List("shared_buffers" -> "2048MB", "work_mem" -> "16MB"))
+    val o = Supervisor.pgOptions(com.histmersion.config.RuntimeConfig.PgPort(5433), List("shared_buffers" -> "2048MB", "work_mem" -> "16MB")).value
     assert(o.endsWith(" -c shared_buffers=2048MB -c work_mem=16MB"), o)
     assertEquals(base.runtime.postgres, auto, "reference.conf: auto, auto, 16MB")
 

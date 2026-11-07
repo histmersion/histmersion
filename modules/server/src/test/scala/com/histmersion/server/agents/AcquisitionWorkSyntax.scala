@@ -13,4 +13,5 @@ extension (a: AgentsControllers)
   def oaBacklog: OaBacklog = EngineContributions.work(a).oaBacklog
   def autopilotPage(st: com.histmersion.api.automation.Autopilot.EngineStatus): String =
     EngineContributions.autopilot(a).page(st).markdown
-  def autoEnrich(citekey: String): Option[String] = EngineContributions.enrich(a).autoEnrich(citekey)
+  def autoEnrich(citekey: com.histmersion.domain.library.Citekey): Option[com.histmersion.domain.AutoEnrich.Note] =
+    EngineContributions.enrich(a).autoEnrich(citekey)

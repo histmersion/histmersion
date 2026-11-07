@@ -23,8 +23,8 @@ class OutboundTlsSuite extends munit.FunSuite:
   private def resource(name: String): String =
     new String(getClass.getResourceAsStream(s"/tls/$name").readAllBytes(), "US-ASCII")
 
-  private val rootPem = resource("harica-tls-rsa-root-2021.pem")
-  private val intermediatePem = resource("geant-tls-rsa-1.pem")
+  private val rootPem = HttpPolicy.PemText(resource("harica-tls-rsa-root-2021.pem"))
+  private val intermediatePem = HttpPolicy.PemText(resource("geant-tls-rsa-1.pem"))
 
   private def subject(c: X509Certificate) = c.getSubjectX500Principal.getName
 
@@ -36,7 +36,7 @@ class OutboundTlsSuite extends munit.FunSuite:
     scala.util.Try(CertPathValidator.getInstance("PKIX").validate(path, params)).isSuccess
 
   test("PEM blocks parse into certificates; junk around them is skipped"):
-    val cs = OutboundTls.certificates("keychain: \"/x\"\n" + rootPem + "\nnot a cert\n" + intermediatePem)
+    val cs = OutboundTls.certificates(HttpPolicy.PemText("keychain: \"/x\"\n" + rootPem + "\nnot a cert\n" + intermediatePem))
     assertEquals(
       cs.map(subject).map(_.takeWhile(_ != ',')),
       List("CN=HARICA TLS RSA Root CA 2021", "CN=GEANT TLS RSA 1")
@@ -54,7 +54,7 @@ class OutboundTlsSuite extends munit.FunSuite:
     assert(!validates(jdk, inter), "with the JDK's roots the intermediate does not chain")
     assert(validates(more, inter), "with the added root it does")
 
-  private val keychainOut = rootPem
+  private val keychainOut = rootPem.value
   private def fakeRun(seen: collection.mutable.Buffer[List[String]]): OutboundTls.Run = cmd =>
     seen += cmd
     Right(keychainOut)
@@ -64,21 +64,21 @@ class OutboundTlsSuite extends munit.FunSuite:
     val got = OutboundTls.configure(TlsConfig(systemTrust = com.histmersion.config.TlsConfig.SystemTrust(true), extraCaFile = com.histmersion.config.TlsConfig.ExtraCaFile("")), com.histmersion.domain.HttpPolicy.OsName("Mac OS X"), fakeRun(seen))
     val (_, line) = got.getOrElse(fail("configured"))
     assertEquals(seen.headOption.map(_.take(4)), Some(List("/usr/bin/security", "find-certificate", "-a", "-p")))
-    assert(line.contains("macOS system keychains: 1 root(s)"), line)
+    assert(line.value.contains("macOS system keychains: 1 root(s)"), line)
 
   test("an extra PEM file adds its roots; an unreadable one is named and the JDK's roots stay"):
     val dir = Files.createTempDirectory("tls")
     val pem = dir.resolve("extra.pem")
-    Files.writeString(pem, rootPem)
-    val (_, ok) = OutboundTls.configure(TlsConfig(com.histmersion.config.TlsConfig.SystemTrust(false), pem.toString), com.histmersion.domain.HttpPolicy.OsName("Linux")).getOrElse(fail("configured"))
-    assert(ok.contains(s"$pem: 1 root(s)"), ok)
-    val missing = dir.resolve("nope.pem").toString
+    Files.writeString(pem, rootPem.value)
+    val (_, ok) = OutboundTls.configure(TlsConfig(com.histmersion.config.TlsConfig.SystemTrust(false), TlsConfig.ExtraCaFile(pem.toString)), com.histmersion.domain.HttpPolicy.OsName("Linux")).getOrElse(fail("configured"))
+    assert(ok.value.contains(s"$pem: 1 root(s)"), ok)
+    val missing = TlsConfig.ExtraCaFile(dir.resolve("nope.pem").toString)
     val (_, bad) = OutboundTls.configure(TlsConfig(com.histmersion.config.TlsConfig.SystemTrust(false), missing), com.histmersion.domain.HttpPolicy.OsName("Linux")).getOrElse(fail("configured"))
-    assert(bad.contains(s"$missing: NOT used"), bad)
+    assert(bad.value.contains(s"$missing: NOT used"), bad)
     val empty = dir.resolve("empty.pem")
     Files.writeString(empty, "nothing here")
-    val (_, none) = OutboundTls.configure(TlsConfig(com.histmersion.config.TlsConfig.SystemTrust(false), empty.toString), com.histmersion.domain.HttpPolicy.OsName("Linux")).getOrElse(fail("configured"))
-    assert(none.contains("holds no PEM certificate"), none)
+    val (_, none) = OutboundTls.configure(TlsConfig(com.histmersion.config.TlsConfig.SystemTrust(false), TlsConfig.ExtraCaFile(empty.toString)), com.histmersion.domain.HttpPolicy.OsName("Linux")).getOrElse(fail("configured"))
+    assert(none.value.contains("holds no PEM certificate"), none)
 
   test("off by default: no custom context, the HTTP client keeps its own"):
     val cfg = AppConfig.load().acquire.tls

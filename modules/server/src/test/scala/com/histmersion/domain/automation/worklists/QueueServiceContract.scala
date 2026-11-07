@@ -59,7 +59,7 @@ abstract class QueueServiceContract(name: String) extends com.histmersion.db.DbS
 
   private def importFile(q: QueueService, kind: Kind, text: Queue.FileText): (Int, Int) =
     val c = q.replace(kind, Queue.parse(kind, text), ImportMode.Replace)
-    (c.written, c.removed)
+    (c.written.value, c.removed.value)
 
   private def exported(q: QueueService, kind: Kind) = Queue.render(kind, q.list(kind, QueueScope.All))
   private def open(q: QueueService, kind: Kind) = q.list(kind, QueueScope.Open)

@@ -104,7 +104,7 @@ abstract class ConfigFileWriterSuite(fileAt: Path => SettingsFile) extends munit
     val o = writer(f)
       .write(List(set(K("backups.keep"), num(9))), None, literalConsent = com.histmersion.config.edit.SettingPolicy.LiteralConsent(false))
       .fold(e => fail(e.message.value), identity)
-    assert(o.created)
+    assert(o.created.value)
     assertEquals(o.backup, None)
     assert(read(f).startsWith(ConfigFileWriter.NewFileHeader.value))
     assertEquals(ConfigFactory.parseFile(f.toFile).getInt("histmersion.backups.keep"), 9)

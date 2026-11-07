@@ -29,7 +29,8 @@ class TilesHttpSuite extends munit.FunSuite:
     (r.statusCode, r.body, opt(r.headers.firstValue("ETag")), opt(r.headers.firstValue("Content-Type")))
   private def opt(o: java.util.Optional[String]): Option[String] = if o.isPresent then Some(o.get) else None
 
-  private val (lon, lat) = (100.0, -70.0)
+  private val lon = com.histmersion.Longitude(100.0)
+  private val lat = com.histmersion.Latitude(-70.0)
 
   private def withServer(f: (String, javax.sql.DataSource) => Unit): Unit =
     val base = AppConfig.load()
@@ -40,7 +41,7 @@ class TilesHttpSuite extends munit.FunSuite:
       connect(ds):
         val _ = sql"DELETE FROM places WHERE id LIKE 'zztilehttp%'".update.run()
         val _ = sql"""INSERT INTO places (id, label, kind, period, geom) VALUES
-                      ('zztilehttp_a', 'Zztilehttp A', 'site', int8range(-2000, -1500, '[]'), ST_SetSRID(ST_MakePoint($lon, $lat), 4326))""".update
+                      ('zztilehttp_a', 'Zztilehttp A', 'site', int8range(-2000, -1500, '[]'), ST_SetSRID(ST_MakePoint(${lon.value: Double}, ${lat.value: Double}), 4326))""".update
           .run()
       supervised {
         val b = Composition.server(cfg, com.histmersion.config.ServerConfig.Host("127.0.0.1"), com.histmersion.config.ServerConfig.Port(0)).start()

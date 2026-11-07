@@ -2,7 +2,7 @@ package com.histmersion.server
 
 import com.histmersion.testsupport.ComparedByValue.given
 
-import com.histmersion.config.{SeaFloorSource, UserPaths}
+import com.histmersion.config.{Environment, SeaFloorSource, UserPaths}
 import com.histmersion.util.basemap.{RetryWait, SeaFloorGrid}
 
 import java.nio.file.Path
@@ -31,5 +31,5 @@ class BasemapWiringSuite extends munit.FunSuite:
 
   test("basemap.dir, else the per-user cache's basemap, else init.data-dir's"):
     assertEquals(UserPaths.basemapDir(com.histmersion.config.UserPaths.BasemapDir(" /y/maps "), com.histmersion.config.RuntimeConfig.DataDir("/d"), _ => None), Path.of("/y/maps"))
-    assertEquals(UserPaths.basemapDir(com.histmersion.config.UserPaths.BasemapDir(""), com.histmersion.config.RuntimeConfig.DataDir("/d"), Map("HOME" -> "/h").get), Path.of("/h/.cache/histmersion/basemap"))
+    assertEquals(UserPaths.basemapDir(com.histmersion.config.UserPaths.BasemapDir(""), com.histmersion.config.RuntimeConfig.DataDir("/d"), Map(Environment.VariablesKey("HOME") -> Environment.VariablesValue("/h")).get), Path.of("/h/.cache/histmersion/basemap"))
     assertEquals(UserPaths.basemapDir(com.histmersion.config.UserPaths.BasemapDir(""), com.histmersion.config.RuntimeConfig.DataDir("/d"), _ => None), Path.of("/d/basemap"))
