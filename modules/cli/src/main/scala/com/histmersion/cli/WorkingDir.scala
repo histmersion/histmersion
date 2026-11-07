@@ -9,14 +9,11 @@ package com.histmersion.cli
   * there). Pure.
   */
 object WorkingDir:
-  type Problem = Problem.T
-  object Problem extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-
   /** What GraalVM's `SystemPropertiesSupport` says when `getcwd` fails. */
 
   private val Marker = "Could not determine current working directory"
 
-  val message: com.histmersion.cli.WorkingDir.Problem =
+  val message: String =
     "error: histmersion cannot read the directory it was started in.\n" +
       "  On macOS this is privacy protection: the folder (e.g. under ~/Documents) is off limits to this terminal.\n" +
       "  Either grant the terminal access in System Settings → Privacy & Security → Files and Folders\n" +

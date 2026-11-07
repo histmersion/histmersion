@@ -4,7 +4,8 @@ import com.histmersion.config.*
 
 import java.nio.file.{Files, Path}
 import scala.jdk.CollectionConverters.*
-import com.histmersion.api.library.NoteImport
+import com.histmersion.api.exchange.Bundle
+import com.histmersion.api.library.{Citekey, NoteImport}
 import com.histmersion.api.media.{AssetInput, AssetLinks}
 
 /** Host-side note handling for `histmersion seed` / `put` / `export` (plan §1.9a, §2.5).
@@ -15,11 +16,6 @@ import com.histmersion.api.media.{AssetInput, AssetLinks}
   * corpus) still goes through `POST /api/seed`.
   */
 object Notes:
-
-  type BodyText = _root_.com.histmersion.cli.FileFormat.Text
-  val BodyText: _root_.com.histmersion.cli.FileFormat.Text.type = _root_.com.histmersion.cli.FileFormat.Text
-  type MdPathText = _root_.com.histmersion.cli.FileFormat.Text
-  val MdPathText: _root_.com.histmersion.cli.FileFormat.Text.type = _root_.com.histmersion.cli.FileFormat.Text
 
   def markdownFiles(dir: Path): List[Path] =
     val s = Files.list(dir)
@@ -32,24 +28,24 @@ object Notes:
   def toImport(file: Path, force: com.histmersion.api.Api.Overwrite): NoteImport =
     val text = Files.readString(file)
     NoteImport(
-      text = text,
-      citekey = Some(file.getFileName.toString.stripSuffix(".md")),
+      text = NoteImport.Text(text),
+      citekey = Some(Citekey(file.getFileName.toString.stripSuffix(".md"))),
       body = body(file, text),
-      mtime = Some(Files.getLastModifiedTime(file).toMillis),
-      force = force
+      mtime = Some(NoteImport.Mtime(Files.getLastModifiedTime(file).toMillis)),
+      force = NoteImport.Force(force.value)
     )
 
   /** The converted full text this note points at via `md_path`, resolved relative to the repo root = three parents up
     * from `wiki/sources/<citekey>.md` — the same rule `Frontmatter.parseFile` uses.
     */
-  private def body(file: Path, text: com.histmersion.cli.Notes.BodyText): Option[com.histmersion.domain.AutoEnrich.Note.Body] =
+  private def body(file: Path, text: String): Option[NoteImport.Body] =
     mdPath(text).flatMap { rel =>
       Option(file.toAbsolutePath.getParent)
         .flatMap(p => Option(p.getParent))
         .flatMap(p => Option(p.getParent))
         .map(_.resolve(rel))
         .filter(Files.isRegularFile(_))
-        .map(Files.readString)
+        .map(f => NoteImport.Body(Files.readString(f)))
     }
 
   /** The note's figures on disk — `<md_path's dir>/figures/…`, or the `md/<citekey>/figures` convention when the note
@@ -57,7 +53,7 @@ object Notes:
     * are sent in bounded batches through `POST /api/sources/{ck}/assets` rather than inside the note, which keeps
     * request sizes sane. Sorted and capped, so one pathological directory cannot stall a seed.
     */
-  def figures(file: Path, citekey: com.histmersion.plugin.FetchedFile.Source.Citekey, maxBytes: com.histmersion.api.ByteCount, maxCount: com.histmersion.api.Paging.Limit): List[AssetInput] =
+  def figures(file: Path, citekey: Citekey, maxBytes: com.histmersion.api.ByteCount, maxCount: com.histmersion.api.Paging.Limit): List[AssetInput] =
     val text = scala.util.Try(Files.readString(file)).getOrElse("")
     val root = Option(file.toAbsolutePath.getParent)
       .flatMap(p => Option(p.getParent))
@@ -65,32 +61,32 @@ object Notes:
     val dir = root.map(r =>
       mdPath(text)
         .map(rel => r.resolve(rel).getParent.resolve("figures"))
-        .getOrElse(r.resolve("md").resolve(citekey).resolve("figures"))
+        .getOrElse(r.resolve("md").resolve(citekey.value).resolve("figures"))
     )
     dir.filter(Files.isDirectory(_)).toList.flatMap { d =>
       val s = Files.list(d)
       val files =
         try s.iterator.asScala.filter(Files.isRegularFile(_)).toList.sortBy(_.getFileName.toString)
         finally s.close()
-      files.take(maxCount).flatMap { f =>
+      files.take(maxCount.value).flatMap { f =>
         val name = AssetLinks.safeName(f.getFileName.toString)
-        val mime = AssetLinks.mimeOf(name)
-        if !mime.startsWith("image/") then None
+        val mime = AssetLinks.mimeOf(Bundle.Asset.Extension(name.value))
+        if !mime.value.startsWith("image/") then None
         else
           scala.util
             .Try(Files.readAllBytes(f))
             .toOption
-            .filter(b => b.nonEmpty && b.length <= maxBytes)
-            .map(b => AssetInput(name, mime, java.util.Base64.getEncoder.encodeToString(b)))
+            .filter(b => b.nonEmpty && b.length <= maxBytes.value)
+            .map(b => AssetInput(Bundle.Asset.FileName(name.value), mime, AssetInput.Base64(java.util.Base64.getEncoder.encodeToString(b))))
       }
     }
 
   private val MdPath = """(?m)^md_path:\s*["']?([^"'\r\n]+)["']?\s*$""".r
 
-  private def mdPath(text: com.histmersion.cli.Notes.MdPathText): Option[com.histmersion.domain.AutoEnrich.Note.Path] =
+  private def mdPath(text: String): Option[String] =
     frontmatter(text).flatMap(MdPath.findFirstMatchIn(_)).map(_.group(1).trim).filter(_.nonEmpty)
 
-  private def frontmatter(text: com.histmersion.cli.FileFormat.Text): Option[com.histmersion.cli.FileFormat.Frontmatter] =
+  private def frontmatter(text: String): Option[String] =
     val t = text.stripPrefix("﻿")
     if !t.startsWith("---") then None
     else

@@ -17,15 +17,11 @@ import com.histmersion.util.console.Console
   * there.
   */
 object DeleteCmd:
-  type Problem = Problem.T
-  object Problem extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-
-
   final case class Args(citekey: Args.Citekey, apply: Args.Apply, json: Args.Json)
 
   object Args:
-    type Citekey = com.histmersion.plugin.FetchedFile.Source.Citekey
-    val Citekey: _root_.com.histmersion.plugin.FetchedFile.Source.Citekey.type = _root_.com.histmersion.plugin.FetchedFile.Source.Citekey
+    type Citekey = com.histmersion.api.library.Citekey
+    val Citekey: _root_.com.histmersion.api.library.Citekey.type = _root_.com.histmersion.api.library.Citekey
     type Apply = com.histmersion.api.Api.Apply
     val Apply: _root_.com.histmersion.api.Api.Apply.type = _root_.com.histmersion.api.Api.Apply
     type Json = com.histmersion.cli.Cli.JsonOutput
@@ -36,7 +32,7 @@ object DeleteCmd:
       Opts.argument[String]("citekey"),
       Opts.flag("apply", "Delete it (without this flag, a dry run lists what would go and what refuses it)").orFalse,
       Output.jsonFlag
-    ).mapN((ck, apply, json) => Args(ck.trim, apply, json))
+    ).mapN((ck, apply, json) => Args(Args.Citekey(ck.trim), Args.Apply(apply), json))
 
   def command(using console: Console) : Opts[Client => Either[Cli.Error, Unit]] =
     Opts.subcommand(
@@ -50,34 +46,40 @@ object DeleteCmd:
     * person has deleted since. Not a number, or no library: unchecked, with why.
     */
   def calibreCheck(
-      calibreId: com.histmersion.plugin.FetchedFile.Source.CalibreId,
+      calibreId: Source.CalibreId,
       libraryExists: => Boolean,
       library: com.histmersion.cli.Calibre.LibraryDir,
-      byId: com.histmersion.cli.Calibre.Book.Id => Either[com.histmersion.cli.DeleteCmd.Problem, Option[Calibre.Book]]
+      byId: com.histmersion.cli.Calibre.Book.Id => Either[com.histmersion.cli.Calibre.Problem, Option[Calibre.Book]]
   ): CalibreEntryCheck =
-    calibreId.trim.toIntOption match
-      case None                      => CalibreEntryCheck.Unchecked(s"'$calibreId' is not a Calibre id")
-      case Some(_) if !libraryExists => CalibreEntryCheck.Unchecked(s"no Calibre library at $library")
-      case Some(id)                  =>
-        byId(id) match
+    calibreId.value.trim.toIntOption match
+      case None => CalibreEntryCheck.Unchecked(CalibreEntryCheck.Unchecked.Reason(s"'$calibreId' is not a Calibre id"))
+      case Some(_) if !libraryExists =>
+        CalibreEntryCheck.Unchecked(CalibreEntryCheck.Unchecked.Reason(s"no Calibre library at $library"))
+      case Some(id) =>
+        byId(Calibre.Book.Id(id)) match
           case Right(Some(_)) => CalibreEntryCheck.Present
           case Right(None)    => CalibreEntryCheck.Missing
-          case Left(e)        => CalibreEntryCheck.Unchecked(e.linesIterator.nextOption().getOrElse(e).take(200))
+          case Left(e) =>
+            CalibreEntryCheck.Unchecked(
+              CalibreEntryCheck.Unchecked.Reason(e.value.linesIterator.nextOption().getOrElse(e.value).take(200))
+            )
 
   def run(c: Client, a: Args)(using console: Console) : Either[Cli.Error, Unit] =
     c.deleteSource(a.citekey, a.apply).flatMap { d =>
       lazy val check = d.calibreId.map { id =>
         val cfg = Settings.app.cli.calibre
         val lib = Calibre(cfg)
-        calibreCheck(id, lib.libraryExists, cfg.library, lib.byId)
+        calibreCheck(id, lib.libraryExists, Calibre.LibraryDir(cfg.library.value), lib.byId)
       }
-      Output.emit(a.json, d)(Source.Delete.markdown(_, check))
+      Output.emit(a.json, d)(Source.Delete.markdown(_, check).value)
       // a refused dry run is not a success: a script that goes on to `--apply` would fail anyway
-      if d.refused then Left(Cli.Error(Source.Delete.refusal(d.citekey, d.blockers), exitCode = ExitCode.Refused))
+      if d.refused then Left(Cli.Error(Cli.Error.Message(Source.Delete.refusal(d.citekey, d.blockers).value), exitCode = ExitCode.Refused))
       else if d.filesFailed.nonEmpty then
         Left(
           Cli.Error(
-            s"deleted, but ${Plural.count(d.filesFailed.size, com.histmersion.api.Plural.CountSingular("stored file"))} could not be removed",
+            Cli.Error.Message(
+              s"deleted, but ${Plural.count(Plural.CountN(d.filesFailed.size.toLong), com.histmersion.api.Plural.CountSingular("stored file"))} could not be removed"
+            ),
             exitCode = ExitCode.Refused
           )
         )

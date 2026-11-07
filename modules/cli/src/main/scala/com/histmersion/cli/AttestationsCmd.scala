@@ -22,14 +22,22 @@ object AttestationsCmd:
       Opts.option[Int]("offset", "Skip this many (the list's footer names the next offset)").orNone
     )
       .mapN { (ck, tt, ti, limit, offset) => (c: Client) =>
-        c.listAttestations(Api.AttestationQuery(ck, tt, ti, limit, offset))
+        c.listAttestations(
+          Api.AttestationQuery(
+            ck.map(com.histmersion.api.library.Citekey(_)),
+            tt.map(Api.AttestationQuery.TargetType(_)),
+            ti.map(Api.AttestationQuery.TargetId(_)),
+            limit.map(Api.AttestationQuery.Limit(_)),
+            offset.map(Api.AttestationQuery.Offset(_))
+          )
+        )
           .map(r => Cli.out.println(AttestationsMarkdown.attestationList(r)))
       }
   }
 
   private def showCmd (using console: Console) = Opts.subcommand("show", "One attestation by id") {
     Opts.argument[Long]("id").map { id => (c: Client) =>
-      c.getAttestation(id).map(a => Cli.out.println(AttestationsMarkdown.attestation(a)))
+      c.getAttestation(Attestation.Id(id)).map(a => Cli.out.println(AttestationsMarkdown.attestation(a)))
     }
   }
 
@@ -44,14 +52,24 @@ object AttestationsCmd:
       Opts.option[String]("note", "Note").orNone
     )
       .mapN { (ck, tt, ti, quote, page, chunk, note) => (c: Client) =>
-        c.createAttestation(Attestation.Put(ck, tt, ti, quote = quote, page = page, chunkOrd = chunk, note = note))
+        c.createAttestation(
+          Attestation.Put(
+            com.histmersion.api.library.Citekey(ck),
+            Attestation.TargetType(tt),
+            Attestation.TargetId(ti),
+            quote = quote.map(Attestation.Quote(_)),
+            page = page.map(Attestation.Page(_)),
+            chunkOrd = chunk.map(Attestation.ChunkOrd(_)),
+            note = note.map(Attestation.Note(_))
+          )
+        )
           .map(a => Cli.out.println(AttestationsMarkdown.attestation(a)))
       }
   }
 
   private def rmCmd (using console: Console) = Opts.subcommand("rm", "Delete an attestation by id") {
     Opts.argument[Long]("id").map { id => (c: Client) =>
-      c.deleteAttestation(id).map(d => Cli.out.println(s"Deleted attestation #${d.id}."))
+      c.deleteAttestation(Attestation.Id(id)).map(d => Cli.out.println(s"Deleted attestation #${d.id}."))
     }
   }
 

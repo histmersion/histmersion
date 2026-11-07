@@ -16,13 +16,13 @@ object ConfigCmd:
   ) {
     Opts.unit.map(_ =>
       (_: Client) =>
-        val located = UserPaths.configFile(AppConfig.lookup(org.ekrich.config.ConfigFactory.systemEnvironment()))
+        val located = UserPaths.configFile(Environment.of(org.ekrich.config.ConfigFactory.systemEnvironment()).lookup)
         located match
-          case None    => Left(Cli.Error(s"no config file location: HOME is unset (set ${UserPaths.ConfigEnv})"))
+          case None    => Left(Cli.Error(Cli.Error.Message(s"no config file location: HOME is unset (set ${UserPaths.ConfigEnv})")))
           case Some(p) =>
             Cli.out.println(p)
             AppConfig.loadWithUserFile(org.ekrich.config.ConfigFactory.systemEnvironment(), Some(p)) match
-              case Left(err) => Left(Cli.Error(err))
+              case Left(err) => Left(Cli.Error(Cli.Error.Message(err.value)))
               case Right(l)  =>
                 if !Files.exists(p) then Cli.err.println("(not there yet: the defaults and the environment apply)")
                 else

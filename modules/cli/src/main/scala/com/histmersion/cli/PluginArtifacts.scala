@@ -24,7 +24,7 @@ object PluginArtifacts:
 
   /** `group::name:version`, as scala-cli and `histmersion plugin add` write a Scala 3 artifact. */
   def coordinates(name: com.histmersion.cli.PluginArtifacts.CoordinatesName): com.histmersion.cli.PluginArtifacts.Coordinates =
-    s"${PluginBuildVersions.organization}::$name:${PluginBuildVersions.histmersion}"
+    Coordinates(s"${PluginBuildVersions.organization}::$name:${PluginBuildVersions.histmersion}")
 
   /** A file of the artifact relative to the repository's root:
     * `com/histmersion/histmersion-plugin-api_3/<v>/…<suffix>`.
@@ -32,4 +32,4 @@ object PluginArtifacts:
   def path(name: com.histmersion.cli.PluginArtifacts.PathName, suffix: String): com.histmersion.cli.PluginArtifacts.Path =
     val artifact = s"${name}_3"
     val version = PluginBuildVersions.histmersion
-    s"${PluginBuildVersions.organization.replace('.', '/')}/$artifact/$version/$artifact-$version$suffix"
+    Path(s"${PluginBuildVersions.organization.replace('.', '/')}/$artifact/$version/$artifact-$version$suffix")

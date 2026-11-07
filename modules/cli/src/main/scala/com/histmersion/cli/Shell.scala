@@ -25,9 +25,12 @@ object Shell:
           val out = new String(p.getInputStream.readAllBytes, "UTF-8")
           val err = new String(p.getErrorStream.readAllBytes, "UTF-8")
           val rc = p.waitFor()
-          if rc == 0 then Right(out) else Left(s"${cmd.head} exited $rc: ${err.trim.take(400)}")
+          if rc == 0 then Right(out) else Left(Problem(s"${cmd.head} exited $rc: ${err.trim.take(400)}"))
         }
-        .fold(e => Left(s"${cmd.headOption.getOrElse("command")} could not be run: ${e.getMessage}"), identity)
+        .fold[Either[Problem, String]](
+          e => Left(Problem(s"${cmd.headOption.getOrElse("command")} could not be run: ${e.getMessage}")),
+          identity
+        )
 
     def isRunning(processMatch: com.histmersion.cli.Shell.ProcessMatch): Boolean =
-      run(List("pgrep", "-f", processMatch)).exists(_.trim.nonEmpty)
+      run(List("pgrep", "-f", processMatch.value)).exists(_.trim.nonEmpty)

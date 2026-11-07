@@ -13,7 +13,8 @@ import java.time.Instant
 import java.time.temporal.ChronoUnit
 import scala.jdk.CollectionConverters.*
 import com.histmersion.util.plugins.PluginKit
-import com.histmersion.api.plugins.{PluginJar, PluginSet, PluginsMarkdown, PluginsReport}
+import com.histmersion.api.Sha256
+import com.histmersion.api.plugins.{PluginDescription, PluginFile, PluginJar, PluginSet, PluginsMarkdown, PluginsReport}
 import com.histmersion.util.console.Console
 
 /** `histmersion plugin …` — the plugins of the LOCAL install (docs/research-plugins.md §7). These commands manage files
@@ -24,10 +25,10 @@ final class PluginOps(using console: Console)(
     install: LocalInstall,
     cfg: CliPluginsConfig,
     run: Runner = Runner.System,
-    confirm: PluginOps.ConfirmArg1 => PluginOps.ConfirmResult = PluginOps.ask
+    confirm: Cli.Question => Boolean = PluginOps.ask
 ):
 
-  private def err(msg: com.histmersion.cli.PluginOps.Problem, code: com.histmersion.cli.Cli.Error.ExitCode = ExitCode.Refused) = Cli.Error(msg, exitCode = code)
+  private def err(msg: String, code: Cli.Error.ExitCode = ExitCode.Refused) = Cli.Error(Cli.Error.Message(msg), exitCode = code)
 
   // ── the directory ─────────────────────────────────────────────────────────────────────────────
 
@@ -53,7 +54,7 @@ final class PluginOps(using console: Console)(
     Files.writeString(tmp, PluginKit.renderIndex(i) + "\n")
     val _ = Files.move(tmp, install.index, StandardCopyOption.REPLACE_EXISTING, StandardCopyOption.ATOMIC_MOVE)
 
-  private def digestOf(p: Path, algorithm: com.histmersion.cli.PluginOps.DigestAlgorithm): com.histmersion.cli.PluginOps.Digest =
+  private def digestOf(p: Path, algorithm: String): String =
     val md = MessageDigest.getInstance(algorithm)
     val in = Files.newInputStream(p)
     try
@@ -62,15 +63,17 @@ final class PluginOps(using console: Console)(
     finally in.close()
     md.digest().map(b => f"$b%02x").mkString
 
-  def sha256(p: Path): com.histmersion.api.Sha256 = digestOf(p, com.histmersion.cli.PluginOps.DigestAlgorithm("SHA-256"))
+  def sha256(p: Path): Sha256 = Sha256(digestOf(p, "SHA-256"))
 
-  def dirEntries: List[(com.histmersion.cli.PluginOps.EntryName, com.histmersion.cli.PluginOps.EntryContent)] = jars.map(j => j.getFileName.toString -> sha256(j))
+  private def installedSha256(p: Path): PluginKit.Installed.Sha256 = PluginKit.sha256Hex(Files.readAllBytes(p))
+
+  def dirEntries: List[(PluginJar.File, Sha256)] = jars.map(j => PluginJar.File(j.getFileName.toString) -> sha256(j))
 
   /** The POMs beside the jars and the dependency jars `lib/classpath` lists (as `lib/<name>`), with their SHA-256: what
     * a relink links besides the jars.
     */
-  def dependencyEntries: List[(com.histmersion.cli.PluginOps.EntryName, com.histmersion.cli.PluginOps.EntryContent)] =
-    val poms = jars.map(pomOf).filter(Files.isRegularFile(_)).map(p => p.getFileName.toString -> sha256(p))
+  def dependencyEntries: List[(PluginFile.File, Sha256)] =
+    val poms = jars.map(pomOf).filter(Files.isRegularFile(_)).map(p => PluginFile.File(p.getFileName.toString) -> sha256(p))
     val listed = scala.util
       .Try(Files.readAllLines(install.lib.resolve("classpath")).asScala.toList)
       .getOrElse(Nil)
@@ -78,14 +81,14 @@ final class PluginOps(using console: Console)(
       .filter(_.nonEmpty)
       .map(install.lib.resolve)
       .filter(Files.isRegularFile(_))
-    poms ++ listed.map(d => s"lib/${d.getFileName}" -> sha256(d))
+    poms ++ listed.map(d => PluginFile.File(s"lib/${d.getFileName}") -> sha256(d))
 
   def installedSet: Option[PluginSet] =
     if Files.isRegularFile(install.record) then PluginKit.parseSet(Files.readString(install.record)).toOption else None
 
-  def spiVersion: Either[Cli.Error, com.histmersion.cli.PluginOps.SpiVersion] =
+  def spiVersion: Either[Cli.Error, PluginSet.SpiVersion] =
     if !Files.isRegularFile(install.kitJson) then Left(err(s"no kit manifest at ${install.kitJson}"))
-    else PluginKit.parseKit(Files.readString(install.kitJson)).map(_.spiVersion).left.map(err(_))
+    else PluginKit.parseKit(Files.readString(install.kitJson)).map(_.spiVersion).left.map(p => err(p.value))
 
   // ── describe (the kit's pluginTool on a JVM, through histmersion-relink) ───────────────────────
 
@@ -98,15 +101,15 @@ final class PluginOps(using console: Console)(
         PluginKit
           .parseJars(json)
           .left
-          .map(err(_))
+          .map(p => err(p.value))
           .flatMap(_.headOption.toRight(err(s"${jar.getFileName}: nothing described")))
 
   // ── fetching ──────────────────────────────────────────────────────────────────────────────────
 
-  private def curl(url: com.histmersion.cli.PluginOps.Url, to: Path): Either[com.histmersion.cli.PluginOps.Problem, Unit] =
-    run.capture(List(cfg.curl, "-fsSL", "--retry", "2", "-o", to.toString, url)) match
+  private def curl(url: String, to: Path): Either[String, Unit] =
+    run.capture(List(cfg.curl.value, "-fsSL", "--retry", "2", "-o", to.toString, url)) match
       case Right(_)      => Right(())
-      case Left((22, _)) => Left(s"$url: not found (HTTP error)")
+      case Left((rc, _)) if rc.value == 22 => Left(s"$url: not found (HTTP error)")
       case Left((rc, e)) => Left(s"$url: curl exited $rc ${e.linesIterator.toList.lastOption.getOrElse("")}".trim)
 
   /** The POM beside a jar, as the plugin keeps it: `x-1.0.jar` → `x-1.0.pom`. */
@@ -115,23 +118,23 @@ final class PluginOps(using console: Console)(
   /** The jar at `to`, its signature beside it when there is one (`<to>.asc`), and the POM published with it (`<to minus
     * .jar>.pom`, which lists the plugin's dependencies) when there is one.
     */
-  private def fetch(origin: Origin, to: Path, wantAsc: com.histmersion.cli.PluginOps.Signature, repos: List[com.histmersion.cli.PluginOps.Repo]): Either[Cli.Error, com.histmersion.cli.PluginOps.Path] =
+  private def fetch(origin: Origin, to: Path, wantAsc: Boolean, repos: List[String]): Either[Cli.Error, String] =
     origin match
       case Origin.File(path) =>
-        val p = Path.of(path)
+        val p = Path.of(path.value)
         if !Files.isRegularFile(p) then Left(err(s"no such file: $path", ExitCode.Usage))
         else
           Files.copy(p, to, StandardCopyOption.REPLACE_EXISTING)
-          val asc = Path.of(path + ".asc")
+          val asc = Path.of(path.value + ".asc")
           if Files.isRegularFile(asc) then
             Files.copy(asc, Path.of(to.toString + ".asc"), StandardCopyOption.REPLACE_EXISTING)
           if Files.isRegularFile(pomOf(p)) then Files.copy(pomOf(p), pomOf(to), StandardCopyOption.REPLACE_EXISTING)
           Right(p.toAbsolutePath.normalize.toString)
       case Origin.Url(url) =>
-        curl(url, to).left.map(err(_)).map { _ =>
-          if wantAsc then curl(url + ".asc", Path.of(to.toString + ".asc")).left.foreach(_ => ())
-          if url.endsWith(".jar") then curl(url.stripSuffix(".jar") + ".pom", pomOf(to)).left.foreach(_ => ())
-          url
+        curl(url.value, to).left.map(err(_)).map { _ =>
+          if wantAsc then curl(url.value + ".asc", Path.of(to.toString + ".asc")).left.foreach(_ => ())
+          if url.value.endsWith(".jar") then curl(url.value.stripSuffix(".jar") + ".pom", pomOf(to)).left.foreach(_ => ())
+          url.value
         }
       case Origin.Maven(c) => maven(c, to, wantAsc, repos)
 
@@ -139,8 +142,8 @@ final class PluginOps(using console: Console)(
     * the checksum the repository publishes beside it (SHA-256 when there is one, else SHA-1, which Maven Central always
     * has). The dependencies the POM lists are the resolver's (`histmersion-relink --resolve`).
     */
-  private def maven(c: Coordinates, to: Path, wantAsc: com.histmersion.cli.PluginOps.Signature, repos: List[com.histmersion.cli.PluginOps.Repo]): Either[Cli.Error, com.histmersion.cli.PluginOps.Path] =
-    def one(repo: com.histmersion.cli.PluginOps.Repo): Either[com.histmersion.cli.PluginOps.Problem, com.histmersion.cli.PluginOps.Path] =
+  private def maven(c: Coordinates, to: Path, wantAsc: Boolean, repos: List[String]): Either[Cli.Error, String] =
+    def one(repo: String): Either[String, String] =
       val url = c.jarUrl(repo)
       for
         _ <- curl(url, to)
@@ -158,7 +161,7 @@ final class PluginOps(using console: Console)(
       .left
       .map(errs => err(s"$c: not resolved from ${repos.mkString(", ")}: ${errs.mkString("; ")}"))
 
-  private def checksum(url: com.histmersion.cli.PluginOps.Url, jar: Path): Either[com.histmersion.cli.PluginOps.Problem, Unit] =
+  private def checksum(url: String, jar: Path): Either[String, Unit] =
     val sum = Path.of(jar.toString + ".sum")
     try
       curl(url + ".sha256", sum)
@@ -176,21 +179,21 @@ final class PluginOps(using console: Console)(
   // ── commands ──────────────────────────────────────────────────────────────────────────────────
 
   /** The repositories an `add` looks in: the ones named for it first, then the configured ones. */
-  private def repositories(o: AddOptions): List[com.histmersion.cli.PluginOps.Repo] = (o.repos ++ cfg.repos).distinct
+  private def repositories(o: AddOptions): List[String] = (o.repos.map(_.value) ++ cfg.repos.map(_.value)).distinct
 
-  private def repoArgs(repos: List[com.histmersion.cli.PluginOps.Repo]): List[com.histmersion.cli.PluginOps.Arg] = repos.flatMap(r => List(com.histmersion.cli.PluginOps.Arg("--repo"), r))
+  private def repoArgs(repos: List[String]): List[String] = repos.flatMap(r => List("--repo", r))
 
   /** The dependencies `jar`'s POM lists, resolved against what the server ships into `lib`: the lines the resolver
     * reports, or why the plugin is refused (a library the server ships at an older version than the plugin needs) or
     * could not be resolved.
     */
-  private def dependencies(jar: Path, lib: Path, repos: List[com.histmersion.cli.PluginOps.Repo]): Either[Cli.Error, List[com.histmersion.cli.PluginOps.Dependency]] =
+  private def dependencies(jar: Path, lib: Path, repos: List[String]): Either[Cli.Error, List[String]] =
     run.capture(
       install.relink.toString :: "--resolve" :: "--lib" :: lib.toString :: repoArgs(repos) ::: List(jar.toString),
       install.env
     ) match
       case Right(report) => Right(report.linesIterator.map(_.trim).filter(_.nonEmpty).toList)
-      case Left((2, e))  =>
+      case Left((rc, e)) if rc.value == 2 =>
         val reasons =
           e.linesIterator.map(_.trim).filter(_.startsWith("refused:")).map(_.stripPrefix("refused:").trim).toList
         val shown = if reasons.nonEmpty then reasons else e.linesIterator.map(_.trim).filter(_.nonEmpty).toList
@@ -200,7 +203,7 @@ final class PluginOps(using console: Console)(
   /** Resolve the dependencies of every installed plugin into `lib/` again, after the set changed. The relink does it
     * too, so a failure here (no network) only warns.
     */
-  private def resolveInstalled(repos: List[com.histmersion.cli.PluginOps.Repo]): Unit =
+  private def resolveInstalled(repos: List[String]): Unit =
     run.capture(install.relink.toString :: "--resolve" :: repoArgs(repos), install.env) match
       case Right(_)     => ()
       case Left((_, e)) =>
@@ -212,15 +215,19 @@ final class PluginOps(using console: Console)(
     * refuse what cannot be linked, show what it is and needs, install it under `<id>-<version>.jar` (replacing an older
     * version of the same plugin), its POM beside it and its dependencies in `lib/`.
     */
-  def add(arg: com.histmersion.cli.PluginOps.Arg, o: AddOptions): Either[Cli.Error, PluginJar] =
-    PluginKit.origin(arg, a => Files.isRegularFile(Path.of(a))).left.map(err(_, ExitCode.Usage)).flatMap(addFrom(_, o))
+  def add(arg: String, o: AddOptions): Either[Cli.Error, PluginJar] =
+    PluginKit
+      .origin(arg, a => Files.isRegularFile(Path.of(a)))
+      .left
+      .map(p => err(p.value, ExitCode.Usage))
+      .flatMap(addFrom(_, o))
 
   /** The name the plugin is staged under: the one it is published with, which the resolver's report and refusals name.
     */
-  private def stagedName(origin: Origin): com.histmersion.cli.PluginOps.FileName =
+  private def stagedName(origin: Origin): String =
     val raw = origin match
-      case Origin.File(path) => Option(Path.of(path).getFileName).map(_.toString).getOrElse("plugin.jar")
-      case Origin.Url(url)   => url.split('/').lastOption.filter(_.endsWith(".jar")).getOrElse("plugin.jar")
+      case Origin.File(path) => Option(Path.of(path.value).getFileName).map(_.toString).getOrElse("plugin.jar")
+      case Origin.Url(url)   => url.value.split('/').lastOption.filter(_.endsWith(".jar")).getOrElse("plugin.jar")
       case Origin.Maven(c)   => s"${c.artifact}-${c.version}.jar"
     raw.replaceAll("[^A-Za-z0-9._+\\-]", "_")
 
@@ -232,17 +239,17 @@ final class PluginOps(using console: Console)(
     val asc = Path.of(stage.toString + ".asc")
     val lib = work.resolve("lib")
     val repos = repositories(o)
-    val verifying = install.signingOn || o.verify
+    val verifying = install.signingOn || o.verify.value
     try
       for
         source <- fetch(origin, stage, wantAsc = verifying, repos)
         sha = sha256(stage)
         _ <- o.sha256
-          .map(_.trim.toLowerCase)
-          .filter(_ != sha)
+          .map(_.value.trim.toLowerCase)
+          .filter(_ != sha.value)
           .map(w => err(s"SHA-256 mismatch: expected $w, got $sha — not installed"))
           .toLeft(())
-        signer <- signature(stage, asc, verifying, o.unsigned)
+        signer <- signature(stage, asc, verifying, o.unsigned.value)
         spi <- spiVersion
         deps <- dependencies(stage, lib, repos)
         jar <- describe(stage, Some(lib))
@@ -251,35 +258,48 @@ final class PluginOps(using console: Console)(
         ids = jar.plugins.map(_.id).toSet
         // another version of the same plugin is REPLACED; any other jar's ids are taken
         replaced = jars
-          .filter(j => PluginKit.idsOf(j.getFileName.toString, idx).exists(ids))
-          .map(_.getFileName.toString)
+          .map(j => PluginJar.File(j.getFileName.toString))
+          .filter(f => PluginKit.idsOf(f, idx).exists(ids))
         taken = jars
-          .map(_.getFileName.toString)
+          .map(j => PluginJar.File(j.getFileName.toString))
           .filterNot(f => replaced.contains(f) || f == name)
-          .flatMap(f => PluginKit.idsOf(f, idx).map(_ -> f))
+          .flatMap(f => PluginKit.idsOf(f, idx).map(_ -> f.value))
           .toMap
         _ <- PluginKit.refusals(jar.modify(_.file).setTo(name), spi, taken) match
           case Nil      => Right(())
           case problems => Left(err(s"refused:\n${problems.map("  - " + _).mkString("\n")}"))
-        _ <- signer.fold(Right(()))(fpr => PluginKit.checkSigner(jar.plugins.map(_.id), fpr, idx).left.map(err(_)))
+        _ <- signer.fold(Right(()))(fpr => PluginKit.checkSigner(jar.plugins.map(_.id), fpr, idx).left.map(p => err(p.value)))
         _ = show(jar.modify(_.file).setTo(name), sha, source, signer, replaced, deps)
         _ <- Either.cond(
-          o.yes || confirm(s"Install ${jar.plugins.map(p => s"${p.id} ${p.version}").mkString(", ")}?"),
+          o.yes || confirm(Cli.Question(s"Install ${jar.plugins.map(p => s"${p.id} ${p.version}").mkString(", ")}?")),
           (),
           err("not installed (answer y, or pass --yes when there is no terminal)", ExitCode.Usage)
         )
       yield
         replaced.filterNot(_ == name).foreach { f =>
-          Files.deleteIfExists(install.plugins.resolve(f))
-          Files.deleteIfExists(pomOf(install.plugins.resolve(f)))
+          Files.deleteIfExists(install.plugins.resolve(f.value))
+          Files.deleteIfExists(pomOf(install.plugins.resolve(f.value)))
         }
-        val target = install.plugins.resolve(name)
+        val target = install.plugins.resolve(name.value)
         Files.move(stage, target, StandardCopyOption.REPLACE_EXISTING)
         if Files.isRegularFile(pomOf(stage)) then
           Files.move(pomOf(stage), pomOf(target), StandardCopyOption.REPLACE_EXISTING)
         else Files.deleteIfExists(pomOf(target))
         val now = Instant.now().truncatedTo(ChronoUnit.SECONDS).toString
-        writeIndex(replaced.foldLeft(idx)(_.drop(_)).put(Installed(name, sha, source, now, jar.plugins, signer)))
+        writeIndex(
+          replaced
+            .foldLeft(idx)(_.drop(_))
+            .put(
+              Installed(
+                name,
+                installedSha256(target),
+                Installed.Source(source),
+                Installed.AddedAt(now),
+                jar.plugins,
+                signer
+              )
+            )
+        )
         resolveInstalled(repos)
         resign()
         Cli.out.println(s"installed $target")
@@ -296,9 +316,9 @@ final class PluginOps(using console: Console)(
   private def signature(
       jar: Path,
       asc: Path,
-      verifying: com.histmersion.cli.PluginOps.Verify,
-      unsigned: com.histmersion.cli.PluginOps.Unsigned
-  ): Either[Cli.Error, Option[com.histmersion.cli.PluginOps.Message]] =
+      verifying: Boolean,
+      unsigned: Boolean
+  ): Either[Cli.Error, Option[Installed.Signer]] =
     if !verifying then Right(None)
     else if !Files.isRegularFile(asc) then
       if unsigned then {
@@ -312,17 +332,17 @@ final class PluginOps(using console: Console)(
         )
     else
       run.capture(List(install.signing.toString, "verify-file", jar.toString, asc.toString), install.env) match
-        case Right(fpr)               => Right(Some(fpr.trim))
+        case Right(fpr)               => Right(Some(Installed.Signer(fpr.trim)))
         case Left((_, e)) if unsigned =>
           Cli.out.println(s"warning: signature not verified ($e) — installed anyway (--unsigned)"); Right(None)
         case Left((_, e)) => Left(err(s"signature not verified: $e"))
 
   private def show(
       jar: PluginJar,
-      sha: String,
+      sha: Sha256,
       source: String,
-      signer: Option[String],
-      replaced: List[String],
+      signer: Option[Installed.Signer],
+      replaced: List[PluginJar.File],
       dependencies: List[String]
   ): Unit =
     jar.plugins.foreach { p =>
@@ -357,14 +377,16 @@ final class PluginOps(using console: Console)(
         case Left((_, e)) => Cli.out.println(s"warning: the plugins manifest was not re-signed: $e")
 
   /** `plugin rm`: by plugin id or file name. */
-  def rm(what: com.histmersion.cli.PluginOps.RmWhat): Either[Cli.Error, List[com.histmersion.cli.PluginOps.RmResultPart2]] =
+  def rm(what: String): Either[Cli.Error, List[PluginJar.File]] =
     val idx = index
-    val hits = jars.map(_.getFileName.toString).filter(f => f == what || PluginKit.idsOf(f, idx).contains(what))
+    val hits = jars
+      .map(j => PluginJar.File(j.getFileName.toString))
+      .filter(f => f.value == what || PluginKit.idsOf(f, idx).contains(PluginDescription.Id(what)))
     if hits.isEmpty then Left(err(s"no installed plugin '$what' (histmersion plugin list)", ExitCode.Usage))
     else
       hits.foreach { f =>
-        Files.deleteIfExists(install.plugins.resolve(f))
-        Files.deleteIfExists(pomOf(install.plugins.resolve(f)))
+        Files.deleteIfExists(install.plugins.resolve(f.value))
+        Files.deleteIfExists(pomOf(install.plugins.resolve(f.value)))
       }
       writeIndex(hits.foldLeft(idx)(_.drop(_)))
       resolveInstalled(Nil)
@@ -373,11 +395,11 @@ final class PluginOps(using console: Console)(
       Right(hits)
 
   /** `plugin list`: every jar of the directory, what it holds, whether the installed binary has it. */
-  def list(running: Option[PluginsReport]): List[com.histmersion.cli.PluginOps.Listing] =
+  def list(running: Option[PluginsReport]): List[String] =
     val idx = index
     val linked = installedSet.map(_.jars.map(j => j.file -> j.sha256).toMap).getOrElse(Map.empty)
     val rows = jars.map { j =>
-      val f = j.getFileName.toString
+      val f = PluginJar.File(j.getFileName.toString)
       val sha = sha256(j)
       val entry = idx.jars.find(_.file == f)
       val what = entry
@@ -396,9 +418,9 @@ final class PluginOps(using console: Console)(
         .fold("")(e => s" · from ${e.source}") + entry.flatMap(_.signer).fold("")(s => s" · signed $s")
     }
     val gone = linked.keys
-      .filterNot(f => jars.exists(_.getFileName.toString == f))
+      .filterNot(f => jars.exists(_.getFileName.toString == f.value))
       .toList
-      .sorted
+      .sortBy(_.value)
       .map(f => s"- $f — removed from the directory, still in the binary")
     val deps =
       scala.util.Try(Files.readAllLines(install.lib.resolve("classpath")).asScala.count(_.trim.nonEmpty)).getOrElse(0)
@@ -412,7 +434,7 @@ final class PluginOps(using console: Console)(
       (if firstParty.isEmpty then Nil else "" :: "## Built into every binary" :: "" :: firstParty)
 
   /** `plugin status`: the directory, the installed binary and the running server compared. */
-  def status(running: Option[PluginsReport], serverAnswered: com.histmersion.cli.PluginOps.ServerAnswered): (PluginKit.SetStatus, List[com.histmersion.cli.PluginOps.Message]) =
+  def status(running: Option[PluginsReport], serverAnswered: Boolean): (PluginKit.SetStatus, List[String]) =
     val st = PluginKit.status(dirEntries, installedSet, running.flatMap(_.set), serverAnswered, dependencyEntries)
     val kit = PluginKit.parseKit(scala.util.Try(Files.readString(install.kitJson)).getOrElse("")).toOption
     val signing = run
@@ -427,65 +449,18 @@ final class PluginOps(using console: Console)(
         PluginKit.statusLines(st, serverAnswered)) ++ signing
     )
 
-  def rebuild(args: List[com.histmersion.cli.PluginOps.Arg]): Either[Cli.Error, Unit] =
+  def rebuild(args: List[String]): Either[Cli.Error, Unit] =
     run.interactive(install.relink.toString :: args, install.env) match
-      case 0  => Right(())
+      case rc if rc.value == 0 => Right(())
       case rc =>
         Left(
           Cli.Error(
-            s"histmersion-relink exited $rc (log: ${install.data.resolve("logs").resolve("relink.log")})",
-            exitCode = if rc == 1 then ExitCode.Usage else ExitCode.Refused
+            Cli.Error.Message(s"histmersion-relink exited $rc (log: ${install.data.resolve("logs").resolve("relink.log")})"),
+            exitCode = if rc.value == 1 then ExitCode.Usage else ExitCode.Refused
           )
         )
 
 object PluginOps:
-  type Arg = Arg.T
-  object Arg extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type Dependency = Dependency.T
-  object Dependency extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type Digest = Digest.T
-  object Digest extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type DigestAlgorithm = DigestAlgorithm.T
-  object DigestAlgorithm extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type EntryContent = EntryContent.T
-  object EntryContent extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type EntryName = EntryName.T
-  object EntryName extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type FileName = FileName.T
-  object FileName extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type Listing = Listing.T
-  object Listing extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type Message = Message.T
-  object Message extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type Path = Path.T
-  object Path extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type Problem = Problem.T
-  object Problem extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type Repo = Repo.T
-  object Repo extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type ServerAnswered = ServerAnswered.T
-  object ServerAnswered extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type Signature = Signature.T
-  object Signature extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type SpiVersion = SpiVersion.T
-  object SpiVersion extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type Unsigned = Unsigned.T
-  object Unsigned extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type Url = Url.T
-  object Url extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type Verify = Verify.T
-  object Verify extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
   /** Ask on the terminal; no terminal = no. */
-
-  type ConfirmArg1 = com.histmersion.cli.Cli.Question
-  val ConfirmArg1: _root_.com.histmersion.cli.Cli.Question.type = _root_.com.histmersion.cli.Cli.Question
-  type ConfirmResult = ConfirmResult.T
-  object ConfirmResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
-
-  type RmResultPart2 = RmResultPart2.T
-  object RmResultPart2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type RmWhat = RmWhat.T
-  object RmWhat extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-
-  def ask(question: com.histmersion.cli.Cli.Question)(using console: Console): Boolean =
-    console.readTerminalLine(s"$question [y/N] ").map(_.trim.toLowerCase).exists(a => a == "y" || a == "yes")
+  def ask(question: Cli.Question)(using console: Console): Boolean =
+    console.readTerminalLine(Console.Prompt(s"$question [y/N] ")).map(_.value.trim.toLowerCase).exists(a => a == "y" || a == "yes")

@@ -1,6 +1,7 @@
 package com.histmersion.web
 
 import com.histmersion.api.HtmlAtoms
+import com.histmersion.api.research.Article
 import com.raquo.laminar.api.L
 import com.raquo.laminar.api.L.*
 
@@ -10,17 +11,12 @@ import scala.scalajs.js
   * ([[HtmlAtoms.articleLink]]), so [[Preview]] previews it the same everywhere.
   */
 object ArticleLink:
-  type Href = Href.T
-  object Href extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type ApplySlug = _root_.com.histmersion.web.ApiClient.ArticleSlug
-  val ApplySlug: _root_.com.histmersion.web.ApiClient.ArticleSlug.type = _root_.com.histmersion.web.ApiClient.ArticleSlug
+  def href(slug: Article.Slug): String = s"/article/${HtmlAtoms.segment(slug.value)}"
 
-  def href(slug: com.histmersion.web.ApiClient.ArticleSlug): com.histmersion.web.ArticleLink.Href = s"/article/${HtmlAtoms.segment(slug)}"
-
-  def apply(slug: com.histmersion.web.ArticleLink.ApplySlug, label: String): HtmlElement =
+  def apply(slug: Article.Slug, label: String): HtmlElement =
     a(
       cls := "art-ref",
-      dataAttr("slug") := slug,
+      dataAttr("slug") := slug.value,
       L.href := href(slug),
       label,
       onClick --> { ev =>

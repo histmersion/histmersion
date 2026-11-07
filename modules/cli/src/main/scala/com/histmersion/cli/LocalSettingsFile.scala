@@ -1,7 +1,7 @@
 package com.histmersion.cli
 
 import com.histmersion.config.AppConfig
-import com.histmersion.config.edit.{ConfigFileState, FileVersion, SettingError, SettingsFile}
+import com.histmersion.config.edit.{ConfigFileState, FileVersion, SettingError, SettingsFile, WriteOutcome}
 import org.ekrich.config.{Config, ConfigFactory}
 
 import java.io.IOException
@@ -12,7 +12,7 @@ import java.nio.file.{AtomicMoveNotSupportedException, Files, LinkOption, Path, 
 /** The settings file at `path` on this machine's disk, as `histmersion config` changes it without a server. */
 final class LocalSettingsFile(val path: Path) extends SettingsFile:
 
-  def shown: com.histmersion.cli.LocalSettingsFile.Path = path.toString
+  def shown: SettingsFile.Shown = SettingsFile.Shown(path.toString)
 
   /** The file a symbolic link at `path` points to (the new text is written beside it), else `path`. */
   private def target: Path = if Files.isSymbolicLink(path) then path.toRealPath() else path
@@ -21,41 +21,45 @@ final class LocalSettingsFile(val path: Path) extends SettingsFile:
     try
       if !Files.exists(path) then
         Right(ConfigFileState(None, FileVersion.Missing, ConfigFactory.empty, AppConfig.writtenIn(path)))
-      else if !Files.isRegularFile(path) then Left(SettingError.NoFile(s"$path is not a file"))
+      else if !Files.isRegularFile(path) then Left(SettingError.NoFile(SettingError.NoFile.Why(s"$path is not a file")))
       else
-        val text = Files.readString(path, StandardCharsets.UTF_8)
+        val text = ConfigFileState.Text(Files.readString(path, StandardCharsets.UTF_8))
         parse(path).map(c => ConfigFileState(Some(text), FileVersion.of(Some(text)), c, AppConfig.writtenIn(path)))
-    catch case e: IOException => Left(SettingError.Io(e.getMessage))
+    catch case e: IOException => Left(SettingError.Io(SettingError.Io.Why(e.getMessage)))
 
-  def replace(text: com.histmersion.cli.LocalSettingsFile.Text, existed: Boolean)(
+  def replace(text: ConfigFileState.Text, existed: SettingsFile.Existed)(
       check: SettingsFile.Staged => Either[SettingError, Unit]
-  ): Either[SettingError, Option[String]] =
+  ): Either[SettingError, Option[WriteOutcome.Backup]] =
     val dir = target.toAbsolutePath.getParent
     try
       Files.createDirectories(dir)
       val temp = Files.createTempFile(dir, s".${path.getFileName}.", ".tmp")
       try
-        Files.writeString(temp, text, StandardCharsets.UTF_8)
+        Files.writeString(temp, text.value, StandardCharsets.UTF_8)
         val staged = SettingsFile.Staged(
           parse(temp),
           AppConfig.writtenIn(temp),
-          env => AppConfig.loadWithUserFile(env, Some(temp)).left.map(_.replace(temp.toString, path.toString))
+          env =>
+            AppConfig
+              .loadWithUserFile(env, Some(temp))
+              .left
+              .map(m => SettingError.Problem(m.value.replace(temp.toString, path.toString)))
         )
         for
           _ <- check(staged)
-          bak <- backup(existed)
-          _ <- move(temp, existed)
+          bak <- backup(existed.value)
+          _ <- move(temp, existed.value)
         yield bak
       finally
         val _ = Files.deleteIfExists(temp)
-    catch case e: IOException => Left(SettingError.Io(e.getMessage))
+    catch case e: IOException => Left(SettingError.Io(SettingError.Io.Why(e.getMessage)))
 
-  private def backup(existed: Boolean): Either[SettingError, Option[com.histmersion.cli.LocalSettingsFile.Path]] =
+  private def backup(existed: Boolean): Either[SettingError, Option[WriteOutcome.Backup]] =
     if !existed then Right(None)
     else
       val bak = path.resolveSibling(s"${path.getFileName}.bak")
       Files.copy(path, bak, StandardCopyOption.REPLACE_EXISTING, StandardCopyOption.COPY_ATTRIBUTES)
-      Right(Some(bak.toString))
+      Right(Some(WriteOutcome.Backup(bak.toString)))
 
   /** The new file in place in one step, with the old one's permissions (a file holding a reference to a password may be
     * readable by its owner alone).
@@ -73,11 +77,5 @@ final class LocalSettingsFile(val path: Path) extends SettingsFile:
     AppConfig
       .parseUserFile(file)
       .left
-      .map(m => SettingError.Unreadable(m.replace(file.toString, path.toString)))
-      .flatMap(_.toRight(SettingError.Unreadable(s"$path: no such file")))
-
-object LocalSettingsFile:
-  type Path = Path.T
-  object Path extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type Text = Text.T
-  object Text extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+      .map(m => SettingError.Unreadable(SettingError.Unreadable.Why(m.value.replace(file.toString, path.toString))))
+      .flatMap(_.toRight(SettingError.Unreadable(SettingError.Unreadable.Why(s"$path: no such file"))))

@@ -11,8 +11,6 @@ import java.nio.file.Path
 object PluginTemplate:
   type ClassName = ClassName.T
   object ClassName extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type Path = Path.T
-  object Path extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
 
   final case class Request(
@@ -46,33 +44,44 @@ object PluginTemplate:
 
   val ServicesPath = "resources/META-INF/services/com.histmersion.plugin.Plugin"
 
-  def defaultsPath(id: PluginId): com.histmersion.cli.PluginTemplate.Path = s"resources/META-INF/histmersion/plugins/${id.value}.conf"
+  def defaultsPath(id: PluginId): TemplateFile.Path = TemplateFile.Path(s"resources/META-INF/histmersion/plugins/${id.value}.conf")
 
   /** GraalVM's convention, `META-INF/native-image/<group>/<artifact>/`: the published organization and name, so no two
     * jars' metadata files share a path.
     */
-  def nativeMetadataPath(id: PluginId, pkg: ScalaPackage): com.histmersion.cli.PluginTemplate.Path =
-    s"resources/META-INF/native-image/${pkg.value}/${id.value}/reachability-metadata.json"
+  def nativeMetadataPath(id: PluginId, pkg: ScalaPackage): TemplateFile.Path =
+    TemplateFile.Path(s"resources/META-INF/native-image/${pkg.value}/${id.value}/reachability-metadata.json")
 
   def pluginClass(id: PluginId): com.histmersion.cli.PluginTemplate.ClassName =
-    if id.typeName.endsWith("Plugin") then id.typeName else s"${id.typeName}Plugin"
+    val typeName = id.typeName.value
+    ClassName(if typeName.endsWith("Plugin") then typeName else s"${typeName}Plugin")
 
-  def contributionClass(id: PluginId, kind: PluginKind): com.histmersion.cli.PluginTemplate.ClassName = s"${id.typeName}${kind.classSuffix}"
+  def contributionClass(id: PluginId, kind: PluginKind): com.histmersion.cli.PluginTemplate.ClassName =
+    ClassName(s"${id.typeName}${kind.classSuffix}")
 
   def files(r: Request): List[TemplateFile] =
     val name = r.id.typeName
     val core = List(
-      TemplateFile(ProjectFile, fill(r, directives(r))),
-      TemplateFile(s"$name.scala", fill(r, header(r) + KindSources.main(r.kind))),
-      TemplateFile(s"$name.test.scala", fill(r, header(r) + KindSources.test(r.kind) + packagingSuite)),
-      TemplateFile(com.histmersion.cli.TemplateFile.Path("README.md"), fill(r, readme)),
-      TemplateFile(com.histmersion.cli.TemplateFile.Path(".gitignore"), s"/$PublishDir/\n/*.jar\n.scala-build/\n.bsp/\n/target/\n"),
-      TemplateFile(ServicesPath, s"${r.pkg.value}.${pluginClass(r.id)}\n"),
-      TemplateFile(defaultsPath(r.id), fill(r, KindSources.defaults(r.kind))),
-      TemplateFile(nativeMetadataPath(r.id, r.pkg), nativeMetadata(r))
+      TemplateFile(TemplateFile.Path(ProjectFile), TemplateFile.Content(fill(r, directives(r)))),
+      TemplateFile(TemplateFile.Path(s"$name.scala"), TemplateFile.Content(fill(r, header(r) + KindSources.main(r.kind)))),
+      TemplateFile(
+        TemplateFile.Path(s"$name.test.scala"),
+        TemplateFile.Content(fill(r, header(r) + KindSources.test(r.kind) + packagingSuite))
+      ),
+      TemplateFile(TemplateFile.Path("README.md"), TemplateFile.Content(fill(r, readme))),
+      TemplateFile(
+        TemplateFile.Path(".gitignore"),
+        TemplateFile.Content(s"/$PublishDir/\n/*.jar\n.scala-build/\n.bsp/\n/target/\n")
+      ),
+      TemplateFile(TemplateFile.Path(ServicesPath), TemplateFile.Content(s"${r.pkg.value}.${pluginClass(r.id)}\n")),
+      TemplateFile(defaultsPath(r.id), TemplateFile.Content(fill(r, KindSources.defaults(r.kind)))),
+      TemplateFile(nativeMetadataPath(r.id, r.pkg), TemplateFile.Content(nativeMetadata(r)))
     )
-    if r.agentNotes then
-      core ++ List(TemplateFile("AGENTS.md", fill(r, agentNotes(r))), TemplateFile("CLAUDE.md", "@AGENTS.md\n"))
+    if r.agentNotes.value then
+      core ++ List(
+        TemplateFile(TemplateFile.Path("AGENTS.md"), TemplateFile.Content(fill(r, agentNotes(r)))),
+        TemplateFile(TemplateFile.Path("CLAUDE.md"), TemplateFile.Content("@AGENTS.md\n"))
+      )
     else core
 
   /** The build, in one file for every source: the server's Scala; the plugin API and the platform from the repository,
@@ -122,18 +131,18 @@ object PluginTemplate:
   private def fill(r: Request, text: String): String =
     List(
       "@id@" -> r.id.value,
-      "@Name@" -> r.id.typeName,
-      "@Plugin@" -> pluginClass(r.id),
-      "@Contribution@" -> contributionClass(r.id, r.kind),
+      "@Name@" -> r.id.typeName.value,
+      "@Plugin@" -> pluginClass(r.id).value,
+      "@Contribution@" -> contributionClass(r.id, r.kind).value,
       "@package@" -> r.pkg.value,
-      "@kind@" -> r.kind.name,
-      "@provides@" -> r.kind.provides,
-      "@metadata@" -> nativeMetadataPath(r.id, r.pkg).stripPrefix("resources/"),
+      "@kind@" -> r.kind.name.value,
+      "@provides@" -> r.kind.provides.value,
+      "@metadata@" -> nativeMetadataPath(r.id, r.pkg).value.stripPrefix("resources/"),
       "@repository@" -> r.repository.directive,
-      "@api@" -> PluginArtifacts.coordinates(PluginArtifacts.Api),
-      "@platform@" -> PluginArtifacts.coordinates(PluginArtifacts.Platform),
-      "@testkit@" -> PluginArtifacts.coordinates(PluginArtifacts.Testkit),
-      "@apiSources@" -> PluginArtifacts.path(PluginArtifacts.Api, "-sources.jar"),
+      "@api@" -> PluginArtifacts.coordinates(PluginArtifacts.CoordinatesName(PluginArtifacts.Api)).value,
+      "@platform@" -> PluginArtifacts.coordinates(PluginArtifacts.CoordinatesName(PluginArtifacts.Platform)).value,
+      "@testkit@" -> PluginArtifacts.coordinates(PluginArtifacts.CoordinatesName(PluginArtifacts.Testkit)).value,
+      "@apiSources@" -> PluginArtifacts.path(PluginArtifacts.PathName(PluginArtifacts.Api), "-sources.jar").value,
       "@coordinates@" -> s"${r.pkg.value}::${r.id.value}:$FirstVersion",
       "@publishDir@" -> PublishDir,
       "@projectProperty@" -> ProjectProperty

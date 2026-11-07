@@ -12,6 +12,9 @@ import com.histmersion.api.library.Edge
 import com.histmersion.api.library.Source
 import com.histmersion.api.catalogue.Period
 import com.histmersion.api.library.Finding
+import com.histmersion.api.library.{Citekey, Title}
+import com.histmersion.api.catalogue.Year
+import com.histmersion.api.Write
 
 /** Assemble a [[SourcePatch]] from `histmersion patch` flags.
   *
@@ -25,27 +28,24 @@ object Patches:
   type NotesFile = NotesFile.T
   object NotesFile extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
-  type ParsePeriodS = _root_.com.histmersion.cli.ArticlePatches.CsvText
-  val ParsePeriodS: _root_.com.histmersion.cli.ArticlePatches.CsvText.type = _root_.com.histmersion.cli.ArticlePatches.CsvText
-
   def build(
-      json: Option[com.histmersion.domain.research.Article.PatchJson],
-      tagsAdd: Option[com.histmersion.domain.research.Article.TagsAdd],
-      tagsRemove: Option[com.histmersion.domain.research.Article.TagsRemove],
-      tagsReplace: Option[com.histmersion.domain.research.Article.TagsReplace],
-      topics: Option[com.histmersion.domain.research.Article.Topics],
-      regions: Option[com.histmersion.domain.research.Article.Regions],
-      summary: Option[com.histmersion.domain.research.Article.Summary],
+      json: Option[String],
+      tagsAdd: Option[String],
+      tagsRemove: Option[String],
+      tagsReplace: Option[String],
+      topics: Option[String],
+      regions: Option[String],
+      summary: Option[Source.Summary],
       status: Option[Source.Status],
-      title: Option[com.histmersion.domain.research.Article.Title],
+      title: Option[Title],
       notesFile: Option[com.histmersion.cli.Patches.NotesFile],
-      period: Option[com.histmersion.domain.research.Article.Period],
+      period: Option[String],
       bodyFile: Option[com.histmersion.cli.Patches.BodyFile],
-      addFindings: List[com.histmersion.domain.ReviewArticle.Finding.Spec],
-      removeFindings: List[com.histmersion.domain.ReviewArticle.Finding.Spec],
-      ifUpdatedAt: Option[com.histmersion.domain.research.Article.UpdatedAt],
-      addEdges: List[com.histmersion.domain.library.Edge.Spec] = Nil,
-      removeEdges: List[com.histmersion.domain.library.Edge.Spec] = Nil
+      addFindings: List[String],
+      removeFindings: List[String],
+      ifUpdatedAt: Option[Source.UpdatedAt],
+      addEdges: List[String] = Nil,
+      removeEdges: List[String] = Nil
   ): Either[Cli.Error, com.histmersion.api.library.Source.Patch] =
     for
       base <- json.fold[Either[Cli.Error, com.histmersion.api.library.Source.Patch]](
@@ -55,18 +55,18 @@ object Patches:
       eAdd <- traverse(addEdges)(parseEdge("--add-edge", _))
       eRem <- traverse(removeEdges)(parseEdge("--remove-edge", _))
       p <- period.fold[Either[Cli.Error, Option[Period.Input]]](Right(base.period))(parsePeriod(_).map(Some(_)))
-      notes <- notesFile.fold[Either[Cli.Error, Option[String]]](Right(base.notes))(
-        readFile("--notes-file", _).map(Some(_))
+      notes <- notesFile.fold[Either[Cli.Error, Option[Source.Notes]]](Right(base.notes))(f =>
+        readFile("--notes-file", f.value).map(t => Some(Source.Notes(t)))
       )
-      body <- bodyFile.fold[Either[Cli.Error, Option[String]]](Right(base.body))(
-        readFile("--body-file", _).map(Some(_))
+      body <- bodyFile.fold[Either[Cli.Error, Option[Source.OcrMarkdown]]](Right(base.body))(f =>
+        readFile("--body-file", f.value).map(t => Some(Source.OcrMarkdown(t)))
       )
-      meta = mergeMetadata(base.metadata, title.map(com.histmersion.api.library.Title.apply), status)
+      meta = mergeMetadata(base.metadata, title, status)
       tags = mergeTags(base.tags, tagsAdd, tagsRemove, tagsReplace)
       finds = mergeFindings(base.findings, adds, removeFindings)
       edges = mergeEdges(base.edges, eAdd, eRem)
     yield base.modify(
-      _.metadata).setTo(meta).modify(_.summary).setTo(summary.orElse(base.summary)).modify(_.notes).setTo(notes).modify(_.body).setTo(body).modify(_.topics).setTo(topics.map(csv).orElse(base.topics)).modify(_.regions).setTo(regions.map(csv).orElse(base.regions)).modify(_.period).setTo(p).modify(_.tags).setTo(tags).modify(_.findings).setTo(finds).modify(_.edges).setTo(edges).modify(_.ifUpdatedAt).setTo(ifUpdatedAt.orElse(base.ifUpdatedAt)
+      _.metadata).setTo(meta).modify(_.summary).setTo(summary.orElse(base.summary)).modify(_.notes).setTo(notes).modify(_.body).setTo(body).modify(_.topics).setTo(topics.map(csv(_).map(Source.Topics(_))).orElse(base.topics)).modify(_.regions).setTo(regions.map(csv(_).map(Source.Regions(_))).orElse(base.regions)).modify(_.period).setTo(p).modify(_.tags).setTo(tags).modify(_.findings).setTo(finds).modify(_.edges).setTo(edges).modify(_.ifUpdatedAt).setTo(ifUpdatedAt.orElse(base.ifUpdatedAt)
     )
 
   // ── part merges: a flag wins over the same part of --json, absent parts stay absent ────────────
@@ -78,26 +78,26 @@ object Patches:
 
   private def mergeTags(
       base: Option[ListPatch],
-      add: Option[com.histmersion.domain.research.Article.TagsAdd],
-      remove: Option[com.histmersion.domain.research.Article.TagsRemove],
-      replace: Option[com.histmersion.domain.research.Article.TagsReplace]
+      add: Option[String],
+      remove: Option[String],
+      replace: Option[String]
   ) =
     if add.isEmpty && remove.isEmpty && replace.isEmpty then base
     else
       val l = base.getOrElse(ListPatch())
       Some(
         ListPatch(
-          add = add.fold(l.add)(csv),
-          remove = remove.fold(l.remove)(csv),
-          replace = replace.map(csv).orElse(l.replace)
+          add = add.fold(l.add)(csvItems),
+          remove = remove.fold(l.remove)(csvItems),
+          replace = replace.map(csvItems).orElse(l.replace)
         )
       )
 
-  private def mergeFindings(base: Option[FindingsPatch], add: List[Finding.Input], remove: List[com.histmersion.domain.ReviewArticle.Finding.Spec]) =
+  private def mergeFindings(base: Option[FindingsPatch], add: List[Finding.Input], remove: List[String]) =
     if add.isEmpty && remove.isEmpty then base
     else
       val f = base.getOrElse(FindingsPatch())
-      Some(f.modify(_.add).setTo(f.add ++ add).modify(_.remove).setTo(f.remove ++ remove))
+      Some(f.modify(_.add).setTo(f.add ++ add).modify(_.remove).setTo(f.remove ++ remove.map(FindingsPatch.Remove(_))))
 
   private def mergeEdges(
       base: Option[EdgesPatch],
@@ -110,46 +110,48 @@ object Patches:
       Some(e.modify(_.add).setTo(e.add ++ add).modify(_.remove).setTo(e.remove ++ remove))
 
   // ── parsing ──────────────────────────────────────────────────────────────────────────────────
-  private def csv(s: com.histmersion.cli.ArticlePatches.CsvText): List[com.histmersion.api.Write.ListItem] = s.split(",").map(_.trim).filter(_.nonEmpty).toList
+  private def csv(s: String): List[String] = s.split(",").map(_.trim).filter(_.nonEmpty).toList
+
+  private def csvItems(s: String): List[Write.ListItem] = csv(s).map(Write.ListItem(_))
 
   private def parse[A: io.circe.Decoder](flag: String, s: String): Either[Cli.Error, A] =
     decode[A](s).left.map(e =>
-      Cli.Error(s"$flag: not valid JSON for this option (${e.getMessage})", exitCode = ExitCode.Usage)
+      Cli.Error(Cli.Error.Message(s"$flag: not valid JSON for this option (${e.getMessage})"), exitCode = ExitCode.Usage)
     )
 
   /** `--add-edge refutes:heggarty2023_language` — an edge FROM the patched source, so only the kind and the target are
     * given.
     */
-  private[cli] def parseEdge(flag: String, s: com.histmersion.domain.library.Edge.Spec): Either[Cli.Error, com.histmersion.api.library.Edge.Input] =
+  private[cli] def parseEdge(flag: String, s: String): Either[Cli.Error, com.histmersion.api.library.Edge.Input] =
     s.split(":", 2).map(_.trim) match
       case Array(k, dst) if dst.nonEmpty =>
         Edge.Kind
-          .fromWire(k)
-          .map(com.histmersion.api.library.Edge.Input(dst, _))
+          .fromWire(Edge.Kind.Wire(k))
+          .map(Edge.Input(Citekey(dst), _))
           .toRight(
             Cli.Error(
-              s"$flag: unknown edge kind '$k' (one of: ${Edge.Kind.allWire.mkString(", ")})",
+              Cli.Error.Message(s"$flag: unknown edge kind '$k' (one of: ${Edge.Kind.allWire.mkString(", ")})"),
               exitCode = ExitCode.Usage
             )
           )
       case _ =>
         Left(
           Cli.Error(
-            s"$flag: expected '<kind>:<citekey>', e.g. 'challenges:lord1968_oralpoet', got '$s'",
+            Cli.Error.Message(s"$flag: expected '<kind>:<citekey>', e.g. 'challenges:lord1968_oralpoet', got '$s'"),
             exitCode = ExitCode.Usage
           )
         )
 
-  private def parsePeriod(s: com.histmersion.cli.Patches.ParsePeriodS): Either[Cli.Error, Period.Input] =
+  private def parsePeriod(s: String): Either[Cli.Error, Period.Input] =
     csv(s).map(_.toLongOption) match
-      case List(Some(a), Some(b)) => Right(Period.Input(a, b))
-      case _ => Left(Cli.Error(s"--period: expected 'start,end' as signed years, got '$s'", exitCode = ExitCode.Usage))
+      case List(Some(a), Some(b)) => Right(Period.Input(Year(a), Year(b)))
+      case _ => Left(Cli.Error(Cli.Error.Message(s"--period: expected 'start,end' as signed years, got '$s'"), exitCode = ExitCode.Usage))
 
   /** A file a flag names, read whole — a large body (a book's OCR) cannot travel through `--json`. */
-  private def readFile(flag: String, file: com.histmersion.cli.ArticlePatches.TextFile): Either[Cli.Error, com.histmersion.cli.ArticlePatches.FileContent] =
+  private def readFile(flag: String, file: String): Either[Cli.Error, String] =
     val p = Path.of(file)
     if Files.isRegularFile(p) then Right(Files.readString(p))
-    else Left(Cli.Error(s"$flag: no such file: $file", exitCode = ExitCode.Usage))
+    else Left(Cli.Error(Cli.Error.Message(s"$flag: no such file: $file"), exitCode = ExitCode.Usage))
 
   private def traverse[A, B](as: List[A])(f: A => Either[Cli.Error, B]): Either[Cli.Error, List[B]] =
     as.foldLeft[Either[Cli.Error, List[B]]](Right(Nil))((acc, a) => acc.flatMap(bs => f(a).map(bs :+ _)))

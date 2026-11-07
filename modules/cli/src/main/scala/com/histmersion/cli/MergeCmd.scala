@@ -6,7 +6,7 @@ import com.histmersion.api.exchange.EditionsPolicy
 
 import cats.syntax.all.*
 import com.monovore.decline.*
-import com.histmersion.api.Plural
+import com.histmersion.api.{Api, Paging, Plural}
 import com.histmersion.config.*
 
 import java.nio.file.{Files, Path}
@@ -16,6 +16,7 @@ import com.histmersion.api.exchange.{
   MergeApplyRequest,
   MergeApplyResult,
   MergeDecision,
+  MergeResolution,
   MergeJobState,
   MergeMarkdown,
   MergePolicy,
@@ -31,54 +32,60 @@ import com.histmersion.util.console.Console
   * bundle.
   */
 object MergeCmd:
-  type Problem = Problem.T
-  object Problem extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-
   /** `--resolutions`, `--resolve ID=decision`…, `--editions`, as given. */
 
-  final case class ResolutionFlags(file: Option[ResolutionFlags.File], resolve: List[ResolutionFlags.Resolve], editions: Option[ResolutionFlags.Editions]):
+  final case class ResolutionFlags(file: Option[ResolutionFlags.File], resolve: List[MergeResolutions.Text.Flag], editions: Option[ResolutionFlags.Editions]):
     def isEmpty: Boolean = file.isEmpty && resolve.isEmpty && editions.isEmpty
 
   object ResolutionFlags:
 
     type File = File.T
     object File extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-    type Resolve = Resolve.T
-    object Resolve extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
     type Editions = Editions.T
     object Editions extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
   val resolutionOpts: Opts[ResolutionFlags] =
     (
-      Opts.option[String]("resolutions", "A resolution file (YAML; start one with merge plan --write-template)").orNone,
+      Opts
+        .option[String]("resolutions", "A resolution file (YAML; start one with merge plan --write-template)")
+        .orNone
+        .map(_.map(ResolutionFlags.File(_))),
       Opts
         .options[String](
           "resolve",
           "Decide one issue: ID=decision, e.g. S-3c1e7a2b=keep-left (repeatable; overrides the file)"
         )
-        .orEmpty,
-      Opts.option[String]("editions", "Answer every edition (year-gap) question at once: merge or separate").orNone
+        .orEmpty
+        .map(_.map(MergeResolutions.Text.Flag(_))),
+      Opts
+        .option[String]("editions", "Answer every edition (year-gap) question at once: merge or separate")
+        .orNone
+        .map(_.map(ResolutionFlags.Editions(_)))
     ).mapN(ResolutionFlags.apply)
 
   /** The file, then the flags over it. Every bad line is reported at once. Reads the file; else pure. */
   def resolutions(f: ResolutionFlags): Either[Cli.Error, MergeResolutions] =
-    val fromFile: Either[List[com.histmersion.cli.MergeCmd.Problem], MergeResolutions] = f.file match
+    val fromFile: Either[List[MergeResolutions.Text.Problem], MergeResolutions] = f.file match
       case None    => Right(MergeResolutions())
       case Some(p) =>
-        val path = Path.of(p)
-        if !Files.isRegularFile(path) then Left(List(s"no such file: $p"))
-        else MergeResolutionsFile.parse(Files.readString(path)).left.map(_.map(e => s"$p: $e"))
+        val path = Path.of(p.value)
+        if !Files.isRegularFile(path) then Left(List(MergeResolutions.Text.Problem(s"no such file: $p")))
+        else
+          MergeResolutionsFile
+            .parse(MergeResolutionsFile.Text(Files.readString(path)))
+            .left
+            .map(_.map(e => MergeResolutions.Text.Problem(s"$p: $e")))
     val flags = f.resolve.map(MergeResolutionsFile.flag)
-    val editions: Either[com.histmersion.cli.MergeCmd.Problem, Option[EditionsPolicy]] = f.editions match
+    val editions: Either[MergeResolutions.Text.Problem, Option[EditionsPolicy]] = f.editions match
       case None    => Right(None)
       case Some(e) =>
         EditionsPolicy.values
-          .find(_.toString.equalsIgnoreCase(e.trim))
+          .find(_.toString.equalsIgnoreCase(e.value.trim))
           .map(Some(_))
-          .toRight(s"--editions $e: expected merge or separate")
+          .toRight(MergeResolutions.Text.Problem(s"--editions $e: expected merge or separate"))
     val errors =
       fromFile.left.toOption.getOrElse(Nil) ++ flags.flatMap(_.left.toOption) ++ editions.left.toOption.toList
-    if errors.nonEmpty then Left(Cli.Error(errors.mkString("\n"), exitCode = ExitCode.Usage))
+    if errors.nonEmpty then Left(Cli.Error(Cli.Error.Message(errors.mkString("\n")), exitCode = ExitCode.Usage))
     else
       Right(
         fromFile.toOption.get.overriddenBy(
@@ -91,12 +98,12 @@ object MergeCmd:
     */
   def withTexts(r: MergeResolutions): Either[Cli.Error, MergeResolutions] =
     val read = r.resolve.map { x =>
-      MergeDecision.parse(x.decision).toOption.filter(_.kind == MergeDecision.Kind.File).flatMap(_.argument) match
+      MergeDecision.parse(MergeDecision.Wire(x.decision.value)).toOption.filter(_.kind == MergeDecision.Kind.File).flatMap(_.argument) match
         case None => Right(x)
         // the resolution file carries the text itself (`texts:`, written by the web review screen)
         case Some(_) if x.text.isDefined => Right(x)
         case Some(p)                     =>
-          val path = Path.of(p)
+          val path = Path.of(p.value)
           if !Files.isRegularFile(path) then Left(s"${x.issue}: file:$p — no such file")
           else
             scala.util
@@ -104,10 +111,10 @@ object MergeCmd:
               .toEither
               .left
               .map(e => s"${x.issue}: file:$p — ${e.getMessage}")
-              .map(t => x.modify(_.text).setTo(Some(t)))
+              .map(t => x.modify(_.text).setTo(Some(MergeResolution.Text(t))))
     }
     val errors = read.flatMap(_.left.toOption)
-    if errors.nonEmpty then Left(Cli.Error(errors.mkString("\n"), exitCode = ExitCode.Usage))
+    if errors.nonEmpty then Left(Cli.Error(Cli.Error.Message(errors.mkString("\n")), exitCode = ExitCode.Usage))
     else Right(r.modify(_.resolve).setTo(read.flatMap(_.toOption)))
 
   /** Upload the bundle; refuse what is not one. */
@@ -115,7 +122,9 @@ object MergeCmd:
     c.uploadBundle(f).flatMap { u =>
       if u.manifest.isEmpty then
         Left(
-          Cli.Error(s"${f.getPath} is not a readable bundle: ${u.problems.mkString("; ")}", exitCode = ExitCode.Refused)
+          Cli.Error(
+            Cli.Error.Message(s"${f.getPath} is not a readable bundle: ${u.problems.mkString("; ")}"),
+            exitCode = ExitCode.Refused)
         )
       else Right(u)
     }
@@ -138,16 +147,16 @@ object MergeCmd:
     ).mapN { (file, flags, template, all, json) => (c: Client) =>
       val p = Path.of(file)
       for
-        _ <- Either.cond(Files.isRegularFile(p), (), Cli.Error(s"no such file: $file", exitCode = ExitCode.Usage))
+        _ <- Either.cond(Files.isRegularFile(p), (), Cli.Error(Cli.Error.Message(s"no such file: $file"), exitCode = ExitCode.Usage))
         res <- resolutions(flags)
         u <- upload(c, p.toFile)
         plan <- c.mergePlan(MergePlan.Request(u.sha256, res))
         _ <- template.fold[Either[Cli.Error, Unit]](Right(())) { t =>
           scala.util
-            .Try(Files.writeString(Path.of(t), MergeResolutionsFile.template(plan, res)))
+            .Try(Files.writeString(Path.of(t), MergeResolutionsFile.template(plan, res).value))
             .toEither
             .left
-            .map(e => Cli.Error(s"could not write $t: ${e.getMessage}", exitCode = ExitCode.Usage))
+            .map(e => Cli.Error(Cli.Error.Message(s"could not write $t: ${e.getMessage}"), exitCode = ExitCode.Usage))
             .map(_ => ())
         }
         _ = Output.emit(json, plan)(MergeMarkdown.plan(_, all))
@@ -155,7 +164,7 @@ object MergeCmd:
         _ <- Either.cond(
           plan.problems.isEmpty && plan.resolutionErrors.isEmpty,
           (),
-          Cli.Error("the plan has problems or unusable resolutions (listed above)", exitCode = ExitCode.Refused)
+          Cli.Error(Cli.Error.Message("the plan has problems or unusable resolutions (listed above)"), exitCode = ExitCode.Refused)
         )
       yield ()
     }
@@ -178,7 +187,7 @@ object MergeCmd:
     ).mapN { (file, flags, expected, yes) => (c: Client) =>
       val p = Path.of(file)
       for
-        _ <- Either.cond(Files.isRegularFile(p), (), Cli.Error(s"no such file: $file", exitCode = ExitCode.Usage))
+        _ <- Either.cond(Files.isRegularFile(p), (), Cli.Error(Cli.Error.Message(s"no such file: $file"), exitCode = ExitCode.Usage))
         res0 <- resolutions(flags)
         res <- withTexts(res0)
         u <- upload(c, p.toFile)
@@ -188,12 +197,12 @@ object MergeCmd:
           (), {
             Cli.out.println(MergeMarkdown.plan(plan))
             Cli.Error(
-              "the merge cannot be applied yet: decide what is open (listed above), then apply again",
+              Cli.Error.Message("the merge cannot be applied yet: decide what is open (listed above), then apply again"),
               exitCode = ExitCode.Refused
             )
           }
         )
-        hash = expected.map(_.trim).getOrElse(plan.planHash)
+        hash = expected.map(h => MergePlan.PlanHash(h.trim)).getOrElse(plan.planHash)
         _ <- Either.cond(
           yes || plan.changes == 0 ||
             Cli.confirm(
@@ -201,12 +210,12 @@ object MergeCmd:
                 s"${Plural.count(plan.changes, "change")})? A backup is taken first."
             ),
           (),
-          Cli.Error("aborted", exitCode = ExitCode.Usage)
+          Cli.Error(Cli.Error.Message("aborted"), exitCode = ExitCode.Usage)
         )
         job <- c.mergeApply(MergeApplyRequest(u.sha256, hash, res))
         r <- follow(c, job)
         _ = Cli.out.println(MergeMarkdown.applied(r))
-        _ <- Either.cond(r.applied, (), Cli.Error("the merge was not applied (see above)", exitCode = ExitCode.Refused))
+        _ <- Either.cond(r.applied, (), Cli.Error(Cli.Error.Message("the merge was not applied (see above)"), exitCode = ExitCode.Refused))
       yield ()
     }
   }
@@ -219,20 +228,27 @@ object MergeCmd:
   def follow(c: Client, j: MergeApplyJob)(using console: Console): Either[Cli.Error, MergeApplyResult] =
     j.state match
       case MergeJobState.Done =>
-        j.result.toRight(Cli.Error(s"merge apply ${j.job}: done, but no result", exitCode = ExitCode.Refused))
+        j.result.toRight(Cli.Error(Cli.Error.Message(s"merge apply ${j.job}: done, but no result"), exitCode = ExitCode.Refused))
       case MergeJobState.Failed =>
-        Left(Cli.Error(j.error.getOrElse(s"merge apply ${j.job} failed"), exitCode = ExitCode.Refused))
+        Left(
+          Cli.Error(
+            Cli.Error.Message(j.error.fold(s"merge apply ${j.job} failed")(_.value)),
+            exitCode = ExitCode.Refused
+          )
+        )
       // the server restarted under it: nothing is half applied, but whether it committed is in `merge list`
       case MergeJobState.Interrupted =>
         Left(
           Cli.Error(
-            s"merge apply ${j.job}: ${j.error.getOrElse(MergeApplyJob.InterruptedText)}",
+            Cli.Error.Message(
+              s"merge apply ${j.job}: ${j.error.fold(MergeApplyJob.InterruptedText.value)(_.value)}"
+            ),
             exitCode = ExitCode.Refused
           )
         )
       case MergeJobState.Running =>
         JobFollow.Progress.line(
-          s"merge apply ${j.job.take(8)}: running (${j.elapsedMs / 1000}s — the backup comes first)"
+          s"merge apply ${j.job.value.take(8)}: running (${j.elapsedMs.value / 1000}s — the backup comes first)"
         )
         Thread.sleep(PollMs.toLong)
         c.mergeApplyStatus(j.job) match
@@ -244,14 +260,14 @@ object MergeCmd:
   private def listCmd(using console: Console) =
     Opts.subcommand("list", "The merges this collection took in, newest first") {
       (Opts.option[Int]("limit", "How many (default 50)").orNone, Output.jsonFlag).mapN { (limit, json) => (c: Client) =>
-        c.merges(limit).map(ms => Output.emit(json, ms)(MergeMarkdown.merges))
+        c.merges(limit.map(Paging.Limit(_))).map(ms => Output.emit(json, ms)(MergeMarkdown.merges))
       }
     }
 
   private def showCmd(using console: Console) =
     Opts.subcommand("show", "One merge: its report, the resolutions it was given, the decisions it remembers") {
       (Opts.argument[String]("merge-id"), Output.jsonFlag).mapN { (id, json) => (c: Client) =>
-        c.mergeDetail(id).map(d => Output.emit(json, d)(MergeMarkdown.detail))
+        c.mergeDetail(Api.Merge.Id(id)).map(d => Output.emit(json, d)(MergeMarkdown.detail))
       }
     }
 
@@ -265,7 +281,7 @@ object MergeCmd:
       Opts.option[Int]("limit", "How many rows (default 200)").orNone,
       Output.jsonFlag
     ).mapN { (uid, merge, limit, json) => (c: Client) =>
-      c.mergeLedger(uid, merge, limit).map(l => Output.emit(json, l)(MergeMarkdown.ledger))
+      c.mergeLedger(uid, merge.map(Api.Merge.Id(_)), limit.map(Paging.Limit(_))).map(l => Output.emit(json, l)(MergeMarkdown.ledger))
     }
   }
 

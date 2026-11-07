@@ -1,6 +1,6 @@
 package com.histmersion.web
 
-import com.histmersion.api.{ServiceState, Wording}
+import com.histmersion.api.{ByteCount, ServiceState, Wording}
 import com.raquo.laminar.api.L.*
 
 import scala.scalajs.concurrent.JSExecutionContext.Implicits.queue
@@ -20,84 +20,70 @@ object AboutView:
   /** One line of the panel. `state` marks a health check with its badge; `depth` > 0 is a location inside the one above
     * it (the Storage section); `href` makes the value a link.
     */
-  type CheckLabel = _root_.com.histmersion.web.AboutView.Row.Label
-  val CheckLabel: _root_.com.histmersion.web.AboutView.Row.Label.type = _root_.com.histmersion.web.AboutView.Row.Label
-
   final case class Row(
-      label: Row.Label,
-      value: Row.Value,
+      label: String,
+      value: String,
       state: Option[ServiceState] = None,
-      detail: Option[Row.Detail] = None,
-      depth: Row.Depth = com.histmersion.web.AboutView.Row.Depth(0),
-      href: Option[Row.Href] = None
+      detail: Option[String] = None,
+      depth: Int = 0,
+      href: Option[String] = None
   )
 
-  object Row:
-    type Label = Label.T
-    object Label extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-    type Value = Value.T
-    object Value extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-    type Detail = Detail.T
-    object Detail extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-    type Depth = Depth.T
-    object Depth extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
-    type Href = Href.T
-    object Href extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  final case class Section(title: Section.Title, rows: List[Row])
-
-  object Section:
-    type Title = Title.T
-    object Title extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  final case class Section(title: String, rows: List[Row])
 
   /** A health text as a row: its state, and the text itself as the detail unless it only says "ok". */
-  private[web] def check(label: com.histmersion.web.AboutView.CheckLabel, text: Option[com.histmersion.web.AboutView.Row.Detail]): Row =
-    val st = ServiceState.of(text)
+  private[web] def check(label: String, text: Option[String]): Row =
+    val st = ServiceState.of(text.map(ServiceState.Wire(_)))
     Row(label, st.label, Some(st), text.map(_.trim).filter(t => t.nonEmpty && !t.equalsIgnoreCase(st.label)))
 
   /** The panel's content, as data — so what it says is a unit test. */
   def sections(a: About): List[Section] =
     val b = a.build
     val build = Section(
-      com.histmersion.web.AboutView.Section.Title("Server"),
+      "Server",
       List(
-        Row(com.histmersion.web.AboutView.Row.Label("version"), s"${a.name} ${b.version}"),
-        Row(com.histmersion.web.AboutView.Row.Label("commit"), b.gitCommit.fold("unknown")(c => if b.dirty then s"$c (with uncommitted changes)" else c)),
-        Row(com.histmersion.web.AboutView.Row.Label("commit date"), b.commitDate.getOrElse("unknown")),
-        Row(com.histmersion.web.AboutView.Row.Label("licence"), b.licence.getOrElse("unknown")),
+        Row("version", s"${a.name} ${b.version}"),
+        Row("commit", b.gitCommit.fold("unknown")(c => if b.dirty.value then s"$c (with uncommitted changes)" else s"$c")),
+        Row("commit date", b.commitDate.fold("unknown")(_.value)),
+        Row("licence", b.licence.fold("unknown")(_.value)),
         Row(
-          com.histmersion.web.AboutView.Row.Label("source"),
+          "source",
           b.sourceUrl.fold("unknown")(_ => "the code of this version"),
-          href = b.sourceUrl,
-          detail = b.sourceUrl
+          href = b.sourceUrl.map(_.value),
+          detail = b.sourceUrl.map(_.value)
         ),
-        Row(com.histmersion.web.AboutView.Row.Label("schema version"), a.health.schemaVersion.getOrElse("unknown")),
+        Row("schema version", a.health.schemaVersion.fold("unknown")(_.value)),
         Row(
-          com.histmersion.web.AboutView.Row.Label("config file"),
-          a.configFile.path.fold("none")(_ => if a.configFile.loaded then "read" else "not found"),
+          "config file",
+          a.configFile.path.fold("none")(_ => if a.configFile.loaded.value then "read" else "not found"),
           detail = a.configFile.path.map(p =>
-            if a.configFile.unknownKeys.isEmpty then p
+            if a.configFile.unknownKeys.isEmpty then s"$p"
             else s"$p · ignored unknown: ${a.configFile.unknownKeys.mkString(", ")}"
           )
         )
       )
     )
     val health = Section(
-      com.histmersion.web.AboutView.Section.Title("Health"),
+      "Health",
       List(
-        Row(com.histmersion.web.AboutView.Row.Label("overall"), a.health.status, Some(ServiceState.of(Some(a.health.status)))),
-        check(com.histmersion.web.AboutView.CheckLabel("database"), Some(a.health.db)),
-        check(com.histmersion.web.AboutView.CheckLabel("converter"), a.health.converter)
+        Row(
+          "overall",
+          a.health.status.value,
+          Some(ServiceState.of(Some(ServiceState.Wire(a.health.status.value))))
+        ),
+        check("database", Some(a.health.db.value)),
+        check("converter", a.health.converter.map(_.value))
       )
     )
     val j = a.jobs
-    val jobs = Section(com.histmersion.web.AboutView.Section.Title("Job queue"), JobState.values.toList.map(s => Row(s.wire, j.of(s).toString)))
+    val jobs = Section("Job queue", JobState.values.toList.map(s => Row(s.wire.value, j.of(s).toString)))
     val backup = Section(
-      com.histmersion.web.AboutView.Section.Title("Backups"),
+      "Backups",
       List(
-        a.lastBackup.fold(Row(com.histmersion.web.AboutView.Row.Label("last backup"), com.histmersion.web.AboutView.Row.Value("none yet")))(bk =>
+        a.lastBackup.fold(Row("last backup", "none yet"))(bk =>
           Row(
             "last backup",
-            a.lastBackupAgeSeconds.fold("unknown age")(s => s"${AboutMarkdown.age(s)} ago"),
+            a.lastBackupAgeSeconds.fold("unknown age")(s => s"${AboutMarkdown.age(s.value.toLong)} ago"),
             detail = Some(s"${bk.file} · ${Backup.humanBytes(bk.bytes)}")
           )
         )
@@ -105,20 +91,20 @@ object AboutView:
     )
     val store = a.counts.toList.map(c =>
       Section(
-        com.histmersion.web.AboutView.Section.Title("Store"),
+        "Store",
         List(
-          Row(com.histmersion.web.AboutView.Row.Label("sources"), c.sources.toString),
-          Row(com.histmersion.web.AboutView.Row.Label("findings"), c.findings.toString),
-          Row(com.histmersion.web.AboutView.Row.Label("articles"), c.articles.toString),
-          Row(com.histmersion.web.AboutView.Row.Label("events"), c.events.toString),
-          Row(com.histmersion.web.AboutView.Row.Label("gazetteer places"), c.places.toString),
-          Row(com.histmersion.web.AboutView.Row.Label("periods"), c.periods.toString),
-          Row(com.histmersion.web.AboutView.Row.Label("period presets"), c.presets.toString)
+          Row("sources", c.sources.toString),
+          Row("findings", c.findings.toString),
+          Row("articles", c.articles.toString),
+          Row("events", c.events.toString),
+          Row("gazetteer places", c.places.toString),
+          Row("periods", c.periods.toString),
+          Row("period presets", c.presets.toString)
         )
       )
     )
     val problems = Option.when(a.problems.nonEmpty)(
-      Section(if a.problems.size == 1 then com.histmersion.web.AboutView.Section.Title("Problem") else com.histmersion.web.AboutView.Section.Title("Problems"), a.problems.map(p => Row(com.histmersion.web.AboutView.Row.Label(""), p)))
+      Section(if a.problems.size == 1 then "Problem" else "Problems", a.problems.map(p => Row("", p.value)))
     )
     List(build, health, jobs, backup) ++ store ++ storage(a.storage) ++ plugins(a.plugins).toList ++ problems.toList
 
@@ -127,34 +113,34 @@ object AboutView:
     * window asks again).
     */
   private[web] def storage(r: Storage.Report): List[Section] =
-    if r.entries.isEmpty && !r.measuring && r.problems.isEmpty then Nil
+    if r.entries.isEmpty && !r.measuring.value && r.problems.isEmpty then Nil
     else
       val when = (r.ageSeconds.map(_.value.toLong).map(s => s"measured ${AboutMarkdown.age(s)} ago") ++
-        Option.when(r.measuring)("measuring…")).mkString(" · ")
+        Option.when(r.measuring.value)("measuring…")).mkString(" · ")
       val total = Option.when(r.entries.nonEmpty)(
-        Row(com.histmersion.web.AboutView.Row.Label("in all"), Backup.humanBytes(Storage.total(r.entries).value.toLong), detail = Option.when(when.nonEmpty)(when))
+        Row("in all", Backup.humanBytes(ByteCount(Storage.total(r.entries).value.toLong)), detail = Option.when(when.nonEmpty)(when))
       )
       val rows = Storage.shown(r.entries).map { (e, depth) =>
         Row(
-          if e.host == "server" then e.label else s"${e.label} (this machine)",
+          if e.host.value == "server" then e.label.value else s"${e.label} (this machine)",
           Storage.size(e),
-          state = Option.when(e.partial)(ServiceState.Busy),
+          state = Option.when(e.partial.value)(ServiceState.Busy),
           detail = Option(Storage.details(r, e) ++ e.path.toList).filter(_.nonEmpty).map(_.mkString(" · ")),
-          depth = depth
+          depth = depth.value
         )
       }
-      val waiting = Option.when(r.entries.isEmpty && r.measuring)(Row(com.histmersion.web.AboutView.Row.Label(""), com.histmersion.web.AboutView.Row.Value("measuring…")))
+      val waiting = Option.when(r.entries.isEmpty && r.measuring.value)(Row("", "measuring…"))
       val disks = r.volumes.map { v =>
         val low = v.freeBytes.value.toLong < r.lowFreeBytes.value.toLong
         Row(
-          v.id,
-          s"${Backup.humanBytes(v.freeBytes.value.toLong)} free",
+          v.id.value,
+          s"${Backup.humanBytes(ByteCount(v.freeBytes.value.toLong))} free",
           state = Some(if low then ServiceState.Down else ServiceState.Ok),
-          detail = Some(s"of ${Backup.humanBytes(v.totalBytes.value.toLong)}")
+          detail = Some(s"of ${Backup.humanBytes(ByteCount(v.totalBytes.value.toLong))}")
         )
       }
-      val notes = r.hints.map(h => Row(com.histmersion.web.AboutView.Row.Label(""), h)) ++ r.problems.map(p => Row(com.histmersion.web.AboutView.Row.Label(""), p))
-      List(Section(com.histmersion.web.AboutView.Section.Title("Storage"), total.toList ++ waiting.toList ++ rows)) ++
+      val notes = r.hints.map(h => Row("", h.value)) ++ r.problems.map(p => Row("", p.value))
+      List(Section("Storage", total.toList ++ waiting.toList ++ rows)) ++
         Option.when(disks.nonEmpty || notes.nonEmpty)(Section("Disk space", disks ++ notes)).toList
 
   /** The plugins in this binary (#2018): one row each — its id, what became of it (a badge: registered ok, disabled
@@ -165,9 +151,9 @@ object AboutView:
   private[web] def plugins(r: PluginsReport): Option[Section] =
     Option.when(r.plugins.nonEmpty || r.warnings.nonEmpty)(
       Section(
-        com.histmersion.web.AboutView.Section.Title("Plugins"),
+        "Plugins",
         r.plugins.map { p =>
-          val st = PluginState.parse(p.state) match
+          val st = PluginState.parse(PluginState.Wire(p.state.value)) match
             case Some(PluginState.Registered)                   => ServiceState.Ok
             case Some(PluginState.Failed | PluginState.Refused) => ServiceState.Down
             case _                                              => ServiceState.Unknown
@@ -178,8 +164,13 @@ object AboutView:
             p.error,
             Option.when(p.warnings.nonEmpty)(p.warnings.mkString("; "))
           ).flatten.mkString(" · ")
-          Row(Wording.plugin(p.id), Wording.capitalize(p.state), Some(st), Some(s"${p.id} · $detail"))
-        } ++ r.warnings.map(w => Row(com.histmersion.web.AboutView.Row.Label(""), w))
+          Row(
+            Wording.plugin(Wording.PluginId(p.id.value)),
+            Wording.capitalize(p.state.value),
+            Some(st),
+            Some(s"${p.id} · $detail")
+          )
+        } ++ r.warnings.map(w => Row("", w.value))
       )
     )
 
@@ -207,7 +198,7 @@ object AboutView:
           e => failure.set(Some(e.getMessage)),
           a => {
             failure.set(None); about.set(Some(a))
-            if a.storage.measuring && polls < MaxPolls then
+            if a.storage.measuring.value && polls < MaxPolls then
               polls += 1
               val _ = scala.scalajs.js.timers.setTimeout(PollMs)(if mounted then load())
           }

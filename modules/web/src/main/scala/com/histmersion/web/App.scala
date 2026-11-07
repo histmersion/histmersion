@@ -14,22 +14,19 @@ import com.histmersion.api.instance.UiConfig
 import com.histmersion.api.library.{Filter, GeoHit}
 
 object App:
-  type FindingCount = FindingCount.T
-  object FindingCount extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
-
   /** Drops the answers to a superseded load ([[Latest]]). */
 
   private val latest = Latest()
   private var timer: Int = 0
   private var totalKey: Option[String] = None
-  private var totalCount: com.histmersion.api.Paging.Page.Total = com.histmersion.api.Paging.Page.Total(0)
+  private var totalCount: Int = 0
   private var lastParams: Option[String] = None
   private var config: UiConfig = uninitialized
   private var cachedFindings: List[GeoHit] = Nil
   private var cachedNonTimeKey: String = ""
 
   /** How many findings are kept for time-only redraws ([[Diagnostics]]). */
-  def keptFindings: com.histmersion.web.App.FindingCount = cachedFindings.length
+  def keptFindings: BoundedCache.Stats.Entries = BoundedCache.Stats.Entries(cachedFindings.length)
 
   def init(): Unit =
     dom.console.log("Histmersion: init")
@@ -46,17 +43,17 @@ object App:
       Viewport.init(ui)
       MobileChrome.install()
       Auth.init(ui.writeKeyRequired)
-      RunsView.enabled.set(ui.agentsEnabled)
+      RunsView.enabled.set(RunsView.Enabled(ui.agentsEnabled.value))
       Notices.install(ui)
       MergeView.configure(ui)
       MapRegionsView.configure(ui)
 
-      com.histmersion.web.settings.DownloadJobs.configure(ui.jobPollMs)
+      com.histmersion.web.settings.DownloadJobs.configure(com.histmersion.web.settings.DownloadJobs.ConfigureMs(ui.jobPollMs.value))
 
       Router.init()
       marks.MyItems.load()
       // a first run (no setup done, a settings file of nothing): the setup first, wherever the address points
-      if ui.setupDue && Router.now() != Route.Setup && !com.histmersion.web.setup.SetupPage.left then
+      if ui.setupDue.value && Router.now() != Route.Setup && !com.histmersion.web.setup.SetupPage.left then
         Router.go(Route.Setup, push = com.histmersion.web.Router.Push(false))
       val appEl = div(
         cls := "histmersion-app",
@@ -68,7 +65,7 @@ object App:
         styleAttr <-- ResultsPanel.width.signal.map(w => s"--sidebar-w:${w}px"),
         // the filter panel lies over the map: folded or open, the map keeps its size; its corners' controls
         // move clear of it (the stylesheet's `--filters-w`)
-        cls("filters-folded") <-- FilterBar.folded.signal,
+        cls("filters-folded") <-- FilterBar.folded.signal.map(_.value),
         cls("on-library-list") <-- Router.route.map(r => filtersShown(r) && r != Route.Explore),
         TopBar.element(ui),
         // Explore stays laid out under the other pages, hidden and out of the keyboard's way, so the map
@@ -113,7 +110,7 @@ object App:
       // every tab's count is shown: the lists load at once, and each refetches only when its query changed
       ArticlesTab.load()
       EventsTab.load()
-      TreeTab.show(SidebarTab.Sources.key)
+      TreeTab.show(SidebarTab.Sources.key.value)
       MapLists.refresh(ui)
       MapLists.follow(ui)
 
@@ -147,7 +144,7 @@ object App:
   private def loadTagline(): Unit =
     ApiClient.sources(Filter(limit = com.histmersion.api.library.Filter.Limit(1))).foreach { r =>
       Option(dom.document.getElementById("tagline")).foreach { el =>
-        el.textContent = s"${Plural.count(r.total.value, "source")} · search, then read"
+        el.textContent = s"${Plural.count(Plural.CountN(r.total.value), Plural.CountSingular("source"))} · search, then read"
       }
     }
 
@@ -155,10 +152,10 @@ object App:
     val f = UiState.toFilter()
     js.JSON.stringify(
       js.Dynamic.literal(
-        q = f.q.orNull,
-        title = f.title.orNull,
-        from = f.period.map(_.start.toDouble).getOrElse(0.0),
-        to = f.period.map(_.end.toDouble).getOrElse(0.0),
+        q = f.q.map(x => x.value: String).orNull,
+        title = f.title.map(x => x.value: String).orNull,
+        from = f.period.map(_.start.value.toDouble).getOrElse(0.0),
+        to = f.period.map(_.end.value.toDouble).getOrElse(0.0),
         tags = f.tags.mkString(","),
         authors = f.authors.mkString(","),
         topics = f.topics.mkString(","),
@@ -166,8 +163,8 @@ object App:
         places = f.places.mkString(","),
         sort = f.sort.toString,
         bbox = f.bbox.map(b => s"${b.minLon},${b.minLat},${b.maxLon},${b.maxLat}").orNull,
-        yearFrom = f.years.map(_.start.toDouble).getOrElse(0.0),
-        yearTo = f.years.map(_.end.toDouble).getOrElse(0.0)
+        yearFrom = f.years.map(_.start.value.toDouble).getOrElse(0.0),
+        yearTo = f.years.map(_.end.value.toDouble).getOrElse(0.0)
       )
     )
 
@@ -175,8 +172,8 @@ object App:
     val f = UiState.toFilter()
     js.JSON.stringify(
       js.Dynamic.literal(
-        q = f.q.orNull,
-        title = f.title.orNull,
+        q = f.q.map(x => x.value: String).orNull,
+        title = f.title.map(x => x.value: String).orNull,
         tags = f.tags.mkString(","),
         authors = f.authors.mkString(","),
         topics = f.topics.mkString(","),
@@ -184,25 +181,25 @@ object App:
         places = f.places.mkString(","),
         sort = f.sort.toString,
         bbox = f.bbox.map(b => s"${b.minLon},${b.minLat},${b.maxLon},${b.maxLat}").orNull,
-        yearFrom = f.years.map(_.start.toDouble).getOrElse(0.0),
-        yearTo = f.years.map(_.end.toDouble).getOrElse(0.0)
+        yearFrom = f.years.map(_.start.value.toDouble).getOrElse(0.0),
+        yearTo = f.years.map(_.end.value.toDouble).getOrElse(0.0)
       )
     )
 
   private def quickRender(): Unit =
-    val a = UiState.from.now().getOrElse(config.time.defaultFrom)
-    val b = UiState.to.now().getOrElse(config.time.defaultTo)
+    val a = UiState.from.now().getOrElse(config.time.defaultFrom.value)
+    val b = UiState.to.now().getOrElse(config.time.defaultTo.value)
     quickRenderRange(a, b)
 
-  private def quickRenderRange(a: com.histmersion.api.Years.Astronomical, b: com.histmersion.api.Years.Astronomical): Unit =
+  private def quickRenderRange(a: Long, b: Long): Unit =
     if cachedFindings.nonEmpty then
       val filtered = cachedFindings.filter { pt =>
-        pt.periodStart.forall(_ <= b) && pt.periodEnd.forall(_ >= a)
+        pt.periodStart.forall(_.value <= b) && pt.periodEnd.forall(_.value >= a)
       }
-      MapView.render(filtered, (a, b))
+      MapView.render(filtered, (com.histmersion.api.catalogue.Period.Start(a), com.histmersion.api.catalogue.Period.End(b)))
 
   def quickRenderIfCached(from: com.histmersion.api.Years.Astronomical, to: com.histmersion.api.Years.Astronomical): Unit =
-    quickRenderRange(from, to)
+    quickRenderRange(from.value, to.value)
 
   /** The map drawn for the span `[from, to]` again, from the findings held — after playback, which drew its frames'
     * windows: the findings, the legend's years, the tiled layers and the boundaries all of the whole span, as before it
@@ -210,8 +207,8 @@ object App:
     */
   def restoreSpan(from: com.histmersion.api.Years.Astronomical, to: com.histmersion.api.Years.Astronomical): Unit =
     MapView.render(
-      cachedFindings.filter(pt => pt.periodStart.forall(_ <= to) && pt.periodEnd.forall(_ >= from)),
-      (from, to)
+      cachedFindings.filter(pt => pt.periodStart.forall(_.value <= to.value) && pt.periodEnd.forall(_.value >= from.value)),
+      (com.histmersion.api.catalogue.Period.Start(from.value), com.histmersion.api.catalogue.Period.End(to.value))
     )
 
   private def schedule(): Unit =
@@ -223,11 +220,11 @@ object App:
         quickRender()
         lastParams = Some(key)
         dom.window.clearTimeout(timer)
-        timer = dom.window.setTimeout(() => load(), config.debounce.reloadMs * 2)
+        timer = dom.window.setTimeout(() => load(), config.debounce.reloadMs.value * 2)
       else
         lastParams = Some(key)
         dom.window.clearTimeout(timer)
-        timer = dom.window.setTimeout(() => load(), UiState.reloadDelay(config.debounce.reloadMs))
+        timer = dom.window.setTimeout(() => load(), UiState.reloadDelay(UiState.ReloadDelayNormalMs(config.debounce.reloadMs.value)))
 
   private def load(): Unit =
     val mine = latest.start()
@@ -235,8 +232,8 @@ object App:
     val f = UiState.toFilter()
     val fNoBox = UiState.toFilter(except = Set(com.histmersion.web.UiState.ToFilterExcept("bbox")))
     val inView = UiState.inView.now()
-    val a = UiState.from.now().getOrElse(config.time.defaultFrom)
-    val b = UiState.to.now().getOrElse(config.time.defaultTo)
+    val a = UiState.from.now().getOrElse(config.time.defaultFrom.value)
+    val b = UiState.to.now().getOrElse(config.time.defaultTo.value)
 
     statusVar.set("loading…")
     ResultsList.busy(com.histmersion.web.ResultsList.Busy(true))
@@ -255,7 +252,7 @@ object App:
       if latest.isCurrent(mine) then
         cachedFindings = points
         cachedNonTimeKey = nonTimeParamsKey()
-        MapView.render(points, (a, b))
+        MapView.render(points, (com.histmersion.api.catalogue.Period.Start(a), com.histmersion.api.catalogue.Period.End(b)))
     }
 
     // a failed load ends the "loading…" state with what went wrong, instead of leaving it there
@@ -268,14 +265,14 @@ object App:
             ResultsList.renderSources(
               result,
               ResultsList.SourceRenderOpts(
-                findings = points.length,
-                total = totalCount,
-                inView = inView,
+                findings = ResultsList.SourceRenderOpts.Findings(points.length),
+                total = ResultsList.SourceRenderOpts.Total(totalCount),
+                inView = ResultsList.SourceRenderOpts.InView(inView),
                 params = Some(sourceFilter)
               )
             )
             statusVar.set("")
           },
-          m => { statusVar.set(""); ResultsList.failed(s"Could not list sources: $m") }
+          m => { statusVar.set(""); ResultsList.failed(ResultsList.Problem(s"Could not list sources: $m")) }
         )
     }

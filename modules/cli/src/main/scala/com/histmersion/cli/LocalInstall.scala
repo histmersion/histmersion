@@ -23,40 +23,40 @@ final case class LocalInstall(home: Path, data: Path):
 
   /** The Maven repository a plugin compiles against: the plugin API and the plugin platform (`maven/`). */
   def mavenRepo: Path = home.resolve("maven")
-  def apiJar: Path = mavenRepo.resolve(PluginArtifacts.path(PluginArtifacts.Api, ".jar"))
-  def apiSources: Path = mavenRepo.resolve(PluginArtifacts.path(PluginArtifacts.Api, "-sources.jar"))
-  def apiPom: Path = mavenRepo.resolve(PluginArtifacts.path(PluginArtifacts.Api, ".pom"))
+  def apiJar: Path = mavenRepo.resolve(PluginArtifacts.path(PluginArtifacts.PathName(PluginArtifacts.Api), ".jar").value)
+  def apiSources: Path = mavenRepo.resolve(PluginArtifacts.path(PluginArtifacts.PathName(PluginArtifacts.Api), "-sources.jar").value)
+  def apiPom: Path = mavenRepo.resolve(PluginArtifacts.path(PluginArtifacts.PathName(PluginArtifacts.Api), ".pom").value)
 
   /** The plugins' own dependencies, which `histmersion-relink --resolve` installs. */
   def lib: Path = plugins.resolve("lib")
 
   /** What the scripts need to act on THIS install and data directory, whatever the caller's environment. */
-  def env: Map[com.histmersion.cli.LocalInstall.EnvVariable, com.histmersion.cli.LocalInstall.EnvSetting] = Map("HISTMERSION_HOME" -> home.toString, "HISTMERSION_DATA_DIR" -> data.toString)
+  def env: Map[com.histmersion.cli.LocalInstall.EnvVariable, com.histmersion.cli.LocalInstall.EnvSetting] =
+    Map(
+      com.histmersion.cli.LocalInstall.EnvVariable("HISTMERSION_HOME") -> com.histmersion.cli.LocalInstall.EnvSetting(home.toString),
+      com.histmersion.cli.LocalInstall.EnvVariable("HISTMERSION_DATA_DIR") -> com.histmersion.cli.LocalInstall.EnvSetting(data.toString)
+    )
 
 object LocalInstall:
-  type DataDir = DataDir.T
-  object DataDir extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type EnvSetting = EnvSetting.T
   object EnvSetting extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type EnvVariable = EnvVariable.T
   object EnvVariable extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type OsName = OsName.T
-  object OsName extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   /** The install: `cli.plugins.install-dir`, else the one this executable sits in (`<home>/bin/histmersion`, through
     * the `~/bin` symlink), else the platform default. It must hold the relink kit.
     */
 
   def locate(
       cfg: CliPluginsConfig,
-      dataDir: com.histmersion.cli.LocalInstall.DataDir,
-      env: com.histmersion.cli.LocalInstall.EnvVariable => Option[com.histmersion.cli.LocalInstall.EnvSetting],
-      osName: com.histmersion.cli.LocalInstall.OsName,
+      dataDir: RuntimeConfig.DataDir,
+      env: UserPaths.Lookup,
+      osName: UserPaths.OsName,
       exe: Option[Path]
-  ): Either[com.histmersion.cli.LocalInstall.DataDir, LocalInstall] =
+  ): Either[Cli.Error.Message, LocalInstall] =
     def kitAt(p: Path) = Files.isRegularFile(p.resolve("bin").resolve("histmersion-relink"))
-    val home = env(com.histmersion.cli.LocalInstall.EnvVariable("HOME")).getOrElse("")
+    val home = env(Environment.VariablesKey("HOME")).map(_.value).getOrElse("")
     val configured = Option(cfg.installDir)
-      .map(_.trim)
+      .map(_.value.trim)
       .filter(_.nonEmpty)
       .map(p => Path.of(if p == "~" || p.startsWith("~/") then home + p.drop(1) else p))
     val fromExe = exe
@@ -65,17 +65,19 @@ object LocalInstall:
       .flatMap(b => Option(b.getParent))
       .filter(kitAt)
     val default =
-      if osName.toLowerCase.contains("mac") then Path.of(home, "Applications", "Histmersion")
+      if UserPaths.isMac(osName) then Path.of(home, "Applications", "Histmersion")
       else Path.of(home, ".local", "opt", "histmersion")
     val install = configured.orElse(fromExe).getOrElse(default)
     for
       d <- UserPaths
         .dataDir(dataDir, env, osName)
-        .toRight("no data directory (HOME is unset; set HISTMERSION_DATA_DIR)")
+        .toRight(Cli.Error.Message("no data directory (HOME is unset; set HISTMERSION_DATA_DIR)"))
       _ <- Either.cond(
         kitAt(install),
         (),
-        s"no Histmersion install with a relink kit at $install " +
-          "(set cli.plugins.install-dir / HISTMERSION_INSTALL_DIR, or install a bundle built with the kit)"
+        Cli.Error.Message(
+          s"no Histmersion install with a relink kit at $install " +
+            "(set cli.plugins.install-dir / HISTMERSION_INSTALL_DIR, or install a bundle built with the kit)"
+        )
       )
     yield LocalInstall(install.toAbsolutePath.normalize, d.toAbsolutePath.normalize)

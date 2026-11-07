@@ -13,10 +13,6 @@ enum PluginKind(val name: PluginKind.Name, val classSuffix: PluginKind.ClassSuff
   case SecretVault extends PluginKind(com.histmersion.cli.PluginKind.Name("secret-vault"), com.histmersion.cli.PluginKind.ClassSuffix("Vault"), com.histmersion.cli.PluginKind.Provides("secret-vault"))
 
 object PluginKind:
-  type Problem = Problem.T
-  object Problem extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type Text = Text.T
-  object Text extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type Name = Name.T
   object Name extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type ClassSuffix = ClassSuffix.T
@@ -26,5 +22,5 @@ object PluginKind:
 
 
   val names: String = values.map(_.name).mkString(", ")
-  def parse(raw: com.histmersion.cli.PluginKind.Text): Either[com.histmersion.cli.PluginKind.Problem, PluginKind] =
-    values.find(_.name == raw.trim).toRight(s"unknown plugin kind '$raw' (one of: $names)")
+  def parse(raw: String): Either[String, PluginKind] =
+    values.find(_.name.value == raw.trim).toRight(s"unknown plugin kind '$raw' (one of: $names)")

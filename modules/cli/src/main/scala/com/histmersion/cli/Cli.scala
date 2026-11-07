@@ -19,7 +19,8 @@ import com.histmersion.api.checks.FormatMarkdown
 import com.histmersion.api.instance.{AboutMarkdown, Version}
 import com.histmersion.api.library.{PassagesMarkdown, SeedRequest, SeedResult}
 import com.histmersion.api.maintenance.{Vacuum, VacuumPlan}
-import com.histmersion.domain.library.Edge
+import com.histmersion.api.library.{Citekey, Edge}
+import com.histmersion.api.library.Histogram
 import com.histmersion.api.library.Source
 import com.histmersion.api.library.Facet
 import sttp.client4.*
@@ -94,8 +95,8 @@ object Cli:
             a,
             c.serverUrl,
             Settings.app,
-            k => Option(java.lang.System.getenv(k)),
-            java.lang.System.getProperty("os.name", ""),
+            k => Option(java.lang.System.getenv(k.value)).map(Environment.VariablesValue(_)),
+            UserPaths.OsName(java.lang.System.getProperty("os.name", "")),
             exe
           )
           Output.emit(json, withLocal)(AboutMarkdown.render)
@@ -118,8 +119,8 @@ object Cli:
     (Opts.argument[String]("dir").withDefault(""), Opts.flag("force", "Overwrite rows newer than the files").orFalse)
       .mapN { (dir, force) => (c: Client) =>
         Option(dir).filter(_.nonEmpty).map(Path.of(_)).filter(Files.isDirectory(_)) match
-          case Some(p) => hostSeed(c, p, force)
-          case None    => c.seed(SeedRequest(dir, force)).map(report) // server-side (bind-mounted) corpus
+          case Some(p) => hostSeed(c, p, Api.Overwrite(force))
+          case None    => c.seed(SeedRequest(SeedRequest.Dir(dir), SeedRequest.Force(force))).map(report) // server-side (bind-mounted) corpus
       }
   }
 
@@ -146,7 +147,13 @@ object Cli:
         skipped: List[String]
     )(using console: Console): SeedResult =
       rest match
-        case Nil       => SeedResult(imported, failed, com.histmersion.api.library.SeedResult.EdgesResolved(0), skipped)
+        case Nil =>
+          SeedResult(
+            SeedResult.Imported(imported),
+            failed.map(SeedResult.Failed(_)),
+            com.histmersion.api.library.SeedResult.EdgesResolved(0),
+            skipped.map(SeedResult.Skipped(_))
+          )
         case f :: tail =>
           val ck = f.getFileName.toString.stripSuffix(".md")
           Cli.out.println(s"$number/$total $ck")
@@ -154,15 +161,21 @@ object Cli:
             case Right(r) =>
               // the server cannot see the host's `md/<ck>/figures`, so the CLI uploads them (plan §1.8)
               val figureFailure =
-                if r.imported == 0 then None
+                if r.imported.value == 0 then None
                 else
-                  Notes.figures(f, ck, FigureBytes, FigureCount) match
+                  Notes.figures(f, Citekey(ck), FigureBytes, FigureCount) match
                     case Nil => None
-                    case fs  => c.putAssets(ck, fs).left.toOption.map(e => s"$ck (figures): ${e.message}")
-              loop(tail, number + 1, imported + r.imported, failed ++ r.failed ++ figureFailure, skipped ++ r.skipped)
+                    case fs  => c.putAssets(Citekey(ck), fs).left.toOption.map(e => s"$ck (figures): ${e.message}")
+              loop(
+                tail,
+                number + 1,
+                imported + r.imported.value,
+                failed ++ r.failed.map(_.value) ++ figureFailure,
+                skipped ++ r.skipped.map(_.value)
+              )
             case Left(e) => loop(tail, number + 1, imported, failed :+ s"$ck: ${e.message}", skipped)
     val acc = loop(files, 1, 0, Nil, Nil)
-    val done = c.resolveEdges.map(e => report(acc.modify(_.edgesResolved).setTo(e.resolved)))
+    val done = c.resolveEdges.map(e => report(acc.modify(_.edgesResolved).setTo(SeedResult.EdgesResolved(e.resolved.value))))
     layout.root.fold(done)(root =>
       done.map(_ => ArticleCli.report(ArticleCli.importAll(c, root, force, Set(ArticleCli.WikiLayout.SourcesDir))))
     )
@@ -170,15 +183,15 @@ object Cli:
   /** Host-side caps on what `seed` uploads per note. Deliberately conservative: the SERVER enforces its own
     * `limits.asset-bytes`, this only keeps one request from becoming enormous.
     */
-  private val FigureBytes = 8L * 1024 * 1024
-  private val FigureCount = 200
+  private val FigureBytes = com.histmersion.api.ByteCount(8L * 1024 * 1024)
+  private val FigureCount = com.histmersion.api.Paging.Limit(200)
 
   private def put(using console: Console) =
     Opts.subcommand("put", "Send ONE note file (frontmatter + body) as a full create/replace") {
       Opts.argument[String]("file.md").map { file => (c: Client) =>
         val p = Path.of(file)
         if !Files.isRegularFile(p) then
-          Left(com.histmersion.cli.Cli.Error(s"no such file: $file", exitCode = ExitCode.Usage))
+          Left(com.histmersion.cli.Cli.Error(Cli.Error.Message(s"no such file: $file"), exitCode = ExitCode.Usage))
         // an explicit `put` is always deliberate → force past the "newer in DB" guard
         else c.importNote(Notes.toImport(p, force = com.histmersion.api.Api.Overwrite(true))).map(report)
       }
@@ -200,12 +213,17 @@ object Cli:
       val sources = srcDir.map(Path.of(_)).getOrElse(placed(out, MirrorPlacement.SourceFiles))
       val articles = artDir.map(Path.of(_)).getOrElse(placed(out, MirrorPlacement.ArticleFiles))
       val _ = Files.createDirectories(sources)
-      (if only.nonEmpty then Right(only) else c.citekeys).flatMap { ks =>
+      (if only.nonEmpty then Right(only.map(Citekey(_))) else c.citekeys).flatMap { ks =>
         val total = ks.size
         val failed = ks.zipWithIndex.flatMap { (ck, i) =>
           Cli.out.println(s"${i + 1}/$total $ck")
           c.exportSource(ck) match
-            case Right(text) => val _ = Files.writeString(sources.resolve(MirrorPlacement.noteFile(ck)), text); None
+            case Right(text) =>
+              val _ = Files.writeString(
+                sources.resolve(MirrorPlacement.noteFile(MirrorPlacement.RecordId(ck.value)).value),
+                text.value
+              )
+              None
             case Left(e)     => Some(s"$ck: ${e.message}")
         }
         Cli.out.println(s"exported ${total - failed.size} note(s) to $sources, failed ${failed.size}")
@@ -225,7 +243,7 @@ object Cli:
           if failed.nonEmpty then
             Left(
               com.histmersion.cli.Cli
-                .Error(s"${failed.size} of $total source(s) could not be exported", exitCode = ExitCode.Refused)
+                .Error(Cli.Error.Message(s"${failed.size} of $total source(s) could not be exported"), exitCode = ExitCode.Refused)
             )
           else if only.nonEmpty then Right(())
           else ArticleCli.exportAll(c, articles).map(_ => ())
@@ -235,7 +253,7 @@ object Cli:
   }
 
   /** The directory a kind's notes go in under the export's directory, as the mirror's layout places them. */
-  private def placed(out: Path, placement: MirrorPlacement): Path = placement.directory.fold(out)(out.resolve)
+  private def placed(out: Path, placement: MirrorPlacement): Path = placement.directory.fold(out)(d => out.resolve(d.value))
 
   /** Delete `<sources>/<alias>.md` for every old citekey (V027). Best effort: a server without the alias endpoint, or a
     * file that cannot be removed, is reported and does not fail the export.
@@ -266,7 +284,7 @@ object Cli:
         .option[String]("status", Source.Status.values.map(_.wire).mkString("|"))
         .mapValidated(v =>
           Source.Status.values
-            .find(_.wire == v.trim.toLowerCase)
+            .find(_.wire.value == v.trim.toLowerCase)
             .toValidNel(s"unknown status '$v' (one of: ${Source.Status.values.map(_.wire).mkString(", ")})")
         )
         .orNone,
@@ -319,20 +337,20 @@ object Cli:
             tRep,
             tops,
             regs,
-            summary,
+            summary.map(Source.Summary(_)),
             status,
-            title,
-            notesFile,
+            title.map(com.histmersion.api.library.Title(_)),
+            notesFile.map(Patches.NotesFile(_)),
             period,
-            bodyFile,
+            bodyFile.map(Patches.BodyFile(_)),
             addF,
             remF,
-            ifUpd,
+            ifUpd.map(Source.UpdatedAt(_)),
             addE.toList,
             remE.toList
           )
           .flatMap(p =>
-            c.patchSource(ck, p, strict).map { sw =>
+            c.patchSource(Citekey(ck), p, Cli.Strict(strict)).map { sw =>
               Cli.out.println(
                 SourcesMarkdown.source(sw.source, sw.findings.toVector, false) + FormatMarkdown.notice(sw.formatting)
               )
@@ -370,7 +388,7 @@ object Cli:
       FilterFlags.opts,
       Output.jsonFlag
     ).mapN { (q, group, depth, asOf, samples, unit, brief, f0, json) => (c: Client) =>
-      val f = f0.modify(_.q).setTo(q.map(_.trim).filter(_.nonEmpty))
+      val f = f0.modify(_.q).setTo(q.map(_.trim).filter(_.nonEmpty).map(com.histmersion.api.library.Filter.Q(_)))
       group.map(_.trim).filter(_.nonEmpty) match
         case None =>
           c.sources(f).map { r =>
@@ -382,11 +400,20 @@ object Cli:
             case None =>
               Left(
                 com.histmersion.cli.Cli
-                  .Error(s"unknown --group '$by' (${GroupAxes.mkString(" | ")})", exitCode = ExitCode.Usage)
+                  .Error(Cli.Error.Message(s"unknown --group '$by' (${GroupAxes.mkString(" | ")})"), exitCode = ExitCode.Usage)
               )
             case Some(axes) =>
-              c.aggregate(Api.AggregateQuery.tree(axes.mkString(","), f, unit, depth, asOf, samples))
-                .map(h => Output.emit(json, h)(SearchMarkdown.tree(_, unit.getOrElse("sources"))))
+              c.aggregate(
+                Api.AggregateQuery.tree(
+                  Api.AggregateQuery.By(axes.mkString(",")),
+                  f,
+                  unit.map(Api.AggregateQuery.TreeUnit(_)),
+                  depth.map(Api.AggregateQuery.Depth(_)),
+                  asOf.map(Api.AggregateQuery.TreeAsOf(_)),
+                  samples.map(Api.AggregateQuery.TreeSamples(_))
+                )
+              )
+                .map(h => Output.emit(json, h)(SearchMarkdown.tree(_, SearchMarkdown.TreeUnit(unit.getOrElse("sources")))))
     }
   }
 
@@ -402,8 +429,12 @@ object Cli:
       FilterFlags.opts,
       Output.jsonFlag
     ).mapN { (field, prefix, q, f, json) => (c: Client) =>
-      c.facets(field, prefix, f.modify(_.q).setTo(q.map(_.trim).filter(_.nonEmpty)))
-        .map(rows => Output.emit(json, rows)(rs => SearchMarkdown.facets(field, rs.toVector)))
+      c.facets(
+        Api.Facets.Field(field),
+        prefix.map(Api.Facets.Prefix(_)),
+        f.modify(_.q).setTo(q.map(_.trim).filter(_.nonEmpty).map(com.histmersion.api.library.Filter.Q(_)))
+      )
+        .map(rows => Output.emit(json, rows)(rs => SearchMarkdown.facets(Facet.FieldText(field), rs.toVector)))
     }
   }
 
@@ -413,17 +444,17 @@ object Cli:
   @annotation.tailrec
   private def reindexLoop(
       c: Client,
-      after: Option[String],
+      after: Option[Api.Reindex.Scope],
       sources: Int,
       chunks: Int
   )(using console: Console): Either[com.histmersion.cli.Cli.Error, Unit] =
     c.reindex(after, None) match
       case Left(e)  => Left(e)
       case Right(r) =>
-        val (s, ch) = (sources + r.sources, chunks + r.chunks)
-        if r.remaining > 0 && r.lastCitekey.isDefined then
+        val (s, ch) = (sources + r.sources.value, chunks + r.chunks.value)
+        if r.remaining.value > 0 && r.lastCitekey.isDefined then
           Cli.err.print(s"\rreindexing… $s source(s), $ch chunk(s), ${r.remaining} to go")
-          reindexLoop(c, r.lastCitekey, s, ch)
+          reindexLoop(c, r.lastCitekey.map(k => Api.Reindex.Scope(k.value)), s, ch)
         else
           if sources > 0 then Cli.err.print("\r" + " " * 60 + "\r")
           Cli.out.println(s"reindexed $s source(s) → $ch chunk(s)")
@@ -451,7 +482,7 @@ object Cli:
         Output.jsonFlag
       ).mapN { (ck, full, section, heading, offset, chars, json) => (c: Client) =>
         if section.isDefined || heading.isDefined || offset.isDefined || chars.isDefined then
-          if json then
+          if json.value then
             Left(
               com.histmersion.cli.Cli.Error(
                 com.histmersion.cli.Cli.Error.Message("--json prints the whole record; drop --section/--heading/--offset/--chars"),
@@ -459,10 +490,19 @@ object Cli:
               )
             )
           else
-            c.sourceView(Api.SourceViewQuery(ck, full, section, heading, offset, chars))
+            c.sourceView(
+              Api.SourceViewQuery(
+                Citekey(ck),
+                Api.SourceViewQuery.FullText(full),
+                section.map(Api.SourceViewQuery.Section(_)),
+                heading.map(Api.SourceViewQuery.Heading(_)),
+                offset.map(Api.SourceViewQuery.Offset(_)),
+                chars.map(Api.SourceViewQuery.Chars(_))
+              )
+            )
               .map(value => Cli.out.println(value))
         else
-          c.getSource(ck)
+          c.getSource(Citekey(ck))
             .map(sw =>
               Output.emit(json, if full then sw else sw.modify(_.source.ocrMarkdown).setTo(None))(sw =>
                 SourcesMarkdown.source(sw.source, sw.findings.toVector, full)
@@ -487,7 +527,15 @@ object Cli:
       Opts.option[Int]("limit", "Show at most this many passages (default 10, max 50)").orNone,
       Opts.option[Int]("context", "Characters of context around each match (default 600, max 3000)").orNone
     ).mapN { (ck, q, regex, limit, context) => (c: Client) =>
-      c.passages(Api.PassagesQuery(ck, q, regex, limit, context)).map(r => Cli.out.println(PassagesMarkdown.render(r)))
+      c.passages(
+        Api.PassagesQuery(
+          Citekey(ck),
+          Api.PassagesQuery.Q(q),
+          Api.PassagesQuery.Regex(regex),
+          limit.map(Api.PassagesQuery.Limit(_)),
+          context.map(Api.PassagesQuery.Context(_))
+        )
+      ).map(r => Cli.out.println(PassagesMarkdown.render(r)))
     }
   }
 
@@ -502,7 +550,7 @@ object Cli:
         Output.jsonFlag
       )
         .mapN { (region, f, json) => (c: Client) =>
-          c.findingsPage(Api.FindingsQuery(f, region)).map(p => Output.emit(json, p)(SearchMarkdown.geoPage))
+          c.findingsPage(Api.FindingsQuery(f, region.map(Api.FindingsQuery.Region(_)))).map(p => Output.emit(json, p)(SearchMarkdown.geoPage))
         }
     }
 
@@ -517,9 +565,13 @@ object Cli:
       FilterFlags.opts,
       Output.jsonFlag
     ).mapN { (q, region, unit, f0, json) => (c: Client) =>
-      val f = f0.modify(_.q).setTo(q.map(_.trim).filter(_.nonEmpty)).modify(_.places).setTo(f0.places ++ region.toList)
-      c.aggregate(Api.AggregateQuery.time(f, unit))
-        .map(h => Output.emit(json, h)(SearchMarkdown.histogram(_, unit.getOrElse("sources"))))
+      val f = f0
+        .modify(_.q)
+        .setTo(q.map(_.trim).filter(_.nonEmpty).map(com.histmersion.api.library.Filter.Q(_)))
+        .modify(_.places)
+        .setTo(f0.places ++ region.toList.map(com.histmersion.api.library.Filter.Places(_)))
+      c.aggregate(Api.AggregateQuery.time(f, unit.map(Api.AggregateQuery.TimeUnit(_))))
+        .map(h => Output.emit(json, h)(SearchMarkdown.histogram(_, Histogram.Unit(unit.getOrElse("sources")))))
     }
   }
 
@@ -541,15 +593,18 @@ object Cli:
                 // the name comes back over the wire, so it is validated here too before it becomes a
                 // path on THIS machine — the same gate the server applies to it
                 Backup
-                  .safeName(r.file)
+                  .safeName(Backup.Name(r.file.value))
                   .left
                   .map(m =>
-                    com.histmersion.cli.Cli.Error(s"server returned an odd file name: $m", exitCode = ExitCode.Refused)
+                    com.histmersion.cli.Cli.Error(
+                      Cli.Error.Message(s"server returned an odd file name: $m"),
+                      exitCode = ExitCode.Refused
+                    )
                   )
                   .flatMap { name =>
                     val dir = Path.of(d)
                     val _ = Files.createDirectories(dir)
-                    c.downloadBackup(name, dir.resolve(name).toFile)
+                    c.downloadBackup(Backup.Name(name.value), dir.resolve(name.value).toFile)
                       .map(f => Cli.out.println(s"downloaded → ${f.getAbsolutePath}"))
                   }
           }
@@ -572,9 +627,9 @@ object Cli:
       Opts.flag("force", "Overwrite a database that still holds sources").orFalse,
       Opts.flag("yes", "Do not ask for confirmation").orFalse
     ).mapN { (file, force, yes) => (c: Client) =>
-      if !yes && !confirm(s"Restore '$file' into the server's database? This DROPS what is there.")
+      if !yes && !confirm(Cli.Question(s"Restore '$file' into the server's database? This DROPS what is there."))
       then Left(com.histmersion.cli.Cli.Error(com.histmersion.cli.Cli.Error.Message("aborted"), exitCode = ExitCode.Usage))
-      else c.restore(RestoreRequest(file, force)).map(r => Cli.out.println(Markdown.restored(r)))
+      else c.restore(RestoreRequest(RestoreRequest.File(file), RestoreRequest.Force(force))).map(r => Cli.out.println(Markdown.restored(r)))
     }
   }
 
@@ -584,7 +639,7 @@ object Cli:
   private[cli] def confirm(question: com.histmersion.cli.Cli.Question)(using console: Console): Boolean =
     Cli.err.print(s"$question [y/N] ")
     Cli.err.flush()
-    Option(console.readLine()).map(_.trim.toLowerCase).exists(a => a == "y" || a == "yes")
+    Option(console.readLine()).map(_.value.trim.toLowerCase).exists(a => a == "y" || a == "yes")
 
   private def neighbors(using console: Console) = Opts.subcommand(
     "neighbors",
@@ -595,7 +650,8 @@ object Cli:
       Opts.options[String]("kind", "Filter by edge kind (repeatable)").orEmpty,
       Output.jsonFlag
     ).mapN { (ck, kinds, json) => (c: Client) =>
-      c.neighbors(ck, kinds).map(rows => Output.emit(json, rows)(rs => SourcesMarkdown.neighbors(ck, rs.toVector)))
+      c.neighbors(Citekey(ck), kinds.map(Edge.Kind.Wire(_)))
+        .map(rows => Output.emit(json, rows)(rs => SourcesMarkdown.neighbors(Citekey(ck), rs.toVector)))
     }
   }
 
@@ -606,7 +662,7 @@ object Cli:
         Opts.option[Int]("depth", "BFS depth 0–4 (default 2)").orNone,
         Output.jsonFlag
       ).mapN { (ck, depth, json) => (c: Client) =>
-        c.graph(ck, depth).map(g => Output.emit(json, g)(SourcesMarkdown.graph))
+        c.graph(Citekey(ck), depth.map(Source.Graph.DepthCount(_))).map(g => Output.emit(json, g)(SourcesMarkdown.graph))
       }
     }
 
@@ -619,7 +675,9 @@ object Cli:
       Opts.option[Long]("since", "Only show contradictions from citing papers published from this year on").orNone,
       Output.jsonFlag
     ).mapN { (ck, since, json) => (c: Client) =>
-      c.contradictions(ck, since).map(r => Output.emit(json, r)(SourcesMarkdown.contradictions(_, ck)))
+      val key = ck.map(Citekey(_))
+      c.contradictions(key, since.map(Api.AggregateQuery.AsOf(_)))
+        .map(r => Output.emit(json, r)(SourcesMarkdown.contradictions(_, key)))
     }
   }
 
@@ -638,7 +696,7 @@ object Cli:
           Opts.flag("no-wait", "Print the job id and return instead of following it").orFalse
         )
           .mapN { (analyze, tables, noWait) => (c: Client) =>
-            c.vacuum(Vacuum.Request(analyze, tables)).flatMap { j =>
+            c.vacuum(Vacuum.Request(Vacuum.Request.Analyze(analyze), tables.map(Vacuum.Request.Tables(_)))).flatMap { j =>
               Cli.out.println(
                 s"vacuum job `${j.id}` started: ${j.detail.flatMap(VacuumPlan.Detail.of).map(Vacuum.describe).getOrElse("")} " +
                   "(`histmersion jobs` lists it)"
@@ -651,7 +709,7 @@ object Cli:
 
   private[cli] def command(using
       console: Console
-  ): Command[(Option[com.histmersion.cli.Cli.Problem], Option[com.histmersion.cli.Cli.Message], Client => Either[com.histmersion.cli.Cli.Error, Unit])] =
+  ): Command[(Option[String], Option[String], Client => Either[com.histmersion.cli.Cli.Error, Unit])] =
     Command(name = "histmersion", header = "Histmersion — CLI over the Histmersion server (MCP twin)") {
       (
         serverOpt,
@@ -700,18 +758,18 @@ object Cli:
         if isHelp then { Cli.out.println(help); sys.exit(0) }
         else { Cli.err.println(help.toString); sys.exit(1) }
       case Right((server, tok, run)) =>
-        val url = server.getOrElse(Settings.app.cli.serverUrl)
+        val url = server.getOrElse(Settings.app.cli.serverUrl.value)
         val token = tok.orElse(Option(System.getenv("HISTMERSION_TOKEN")).filter(_.nonEmpty))
-        run(Client(url, token)) match
+        run(Client(Client.ServerUrl(url), token.map(Client.Token(_)))) match
           case Right(())                               => ()
-          case Left(e) if WorkingDir.denied(e.message) => Cli.err.println(WorkingDir.message); sys.exit(3)
-          case Left(e)                                 => Cli.err.println(s"error: ${e.message}"); sys.exit(e.exitCode)
+          case Left(e) if WorkingDir.denied(e.message.value) => Cli.err.println(WorkingDir.message); sys.exit(3)
+          case Left(e)                                 => Cli.err.println(s"error: ${e.message}"); sys.exit(e.exitCode.value)
 
   /** A user-facing failure: message + process exit code (1 = usage, 2 = server said no, 3 = unreachable). */
-  final case class Error(message: Error.Message, exitCode: Error.ExitCode = ExitCode.Unreachable)
+  final case class Error(message: Error.Message, exitCode: ExitCode = ExitCode.Unreachable)
 
   object Error:
     type Message = Message.T
     object Message extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-    type ExitCode = ExitCode.T
-    object ExitCode extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type ExitCode = com.histmersion.cli.ExitCode
+    val ExitCode: _root_.com.histmersion.cli.ExitCode.type = _root_.com.histmersion.cli.ExitCode

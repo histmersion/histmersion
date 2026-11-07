@@ -6,6 +6,7 @@ import com.histmersion.api.personal.*
 
 import java.nio.file.{Files, Path}
 import com.histmersion.api.ItemKind
+import com.histmersion.api.library.Title
 import com.histmersion.util.console.Console
 
 /** `histmersion notes list|show|add|edit|rm` — your notes (Markdown), each left on an item or a place on the map.
@@ -26,24 +27,24 @@ object NotesCmd:
       Opts.option[Int]("limit", s"How many (default ${PersonalIds.DefaultLimit})").orNone,
       Output.jsonFlag
     ).mapN { (kind, item, q, limit, json) => (c: Client) =>
-      c.call(PersonalApi.notes)((kind, item, q, limit)).map(ns => Output.emit(json, ns)(PersonalMarkdown.notes))
+      c.call(PersonalApi.notes)((kind.map(ItemKind.Wire(_)), item.map(ItemKey(_)), q.map(PersonalApi.Search(_)), limit)).map(ns => Output.emit(json, ns)(PersonalMarkdown.notes))
     }
   }
 
   private def show (using console: Console) = Opts.subcommand("show", "One note in full") {
     (Opts.argument[String]("id"), Output.jsonFlag).mapN { (id, json) => (c: Client) =>
-      c.call(PersonalApi.note)(id).map(n => Output.emit(json, n)(PersonalMarkdown.note))
+      c.call(PersonalApi.note)(Note.Id(id)).map(n => Output.emit(json, n)(PersonalMarkdown.note))
     }
   }
 
-  private def text(inline: Option[com.histmersion.domain.AutoEnrich.Note.Text], file: Option[com.histmersion.domain.AutoEnrich.Note.File]): Either[Cli.Error, Note.Text] =
+  private def text(inline: Option[String], file: Option[String]): Either[Cli.Error, Note.Text] =
     (inline, file) match
       case (Some(t), None) => Right(Note.Text(t))
       case (None, Some(f)) =>
         val p = Path.of(f)
         if Files.isRegularFile(p) then Right(Note.Text(Files.readString(p)))
-        else Left(Cli.Error(s"no such file: $f", exitCode = ExitCode.Usage))
-      case _ => Left(Cli.Error("give the note's text with --text or --file (one of them)", exitCode = ExitCode.Usage))
+        else Left(Cli.Error(Cli.Error.Message(s"no such file: $f"), exitCode = ExitCode.Usage))
+      case _ => Left(Cli.Error(Cli.Error.Message("give the note's text with --text or --file (one of them)"), exitCode = ExitCode.Usage))
 
   private val textOpts = (
     Opts.option[String]("text", "The note (Markdown)").orNone,
@@ -65,7 +66,7 @@ object NotesCmd:
       for
         t <- TargetFlags.target(raw)
         x <- text(inline, file)
-        n <- c.call(PersonalApi.addNote)(Note.New(t, x, title))
+        n <- c.call(PersonalApi.addNote)(Note.New(t, x, title.map(Title(_))))
       yield Output.emit(json, n)(n => s"Noted on ${n.title} (id `${n.id.value}`).")
     }
   }
@@ -74,14 +75,14 @@ object NotesCmd:
     (Opts.argument[String]("id"), textOpts._1, textOpts._2, Output.jsonFlag).mapN {
       (id, inline, file, json) => (c: Client) =>
         text(inline, file)
-          .flatMap(x => c.call(PersonalApi.editNote)((id, Note.Edit(x))))
+          .flatMap(x => c.call(PersonalApi.editNote)((Note.Id(id), Note.Edit(x))))
           .map(n => Output.emit(json, n)(n => s"Changed the note on ${n.title}."))
     }
   }
 
   private def rm (using console: Console) = Opts.subcommand("rm", "Remove a note (its id, from `notes list`)") {
     (Opts.argument[String]("id"), Output.jsonFlag).mapN { (id, json) => (c: Client) =>
-      c.call(PersonalApi.removeNote)(id).map(n => Output.emit(json, n)(n => s"Removed the note on ${n.title}."))
+      c.call(PersonalApi.removeNote)(Note.Id(id)).map(n => Output.emit(json, n)(n => s"Removed the note on ${n.title}."))
     }
   }
 

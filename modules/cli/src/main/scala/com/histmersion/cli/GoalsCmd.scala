@@ -11,7 +11,10 @@ import com.histmersion.config.*
 import com.histmersion.api.automation.Agents.RunRequest
 import com.histmersion.api.automation.Goal.Plans.*
 import com.histmersion.api.automation.{Agents, AgentsApi, AgentsMarkdown}
-import com.histmersion.domain.automation.Goal
+import com.histmersion.api.automation.Goal
+import com.histmersion.api.catalogue.Year
+import com.histmersion.api.library.Citekey
+import com.histmersion.api.research.ReviewGoal
 import com.histmersion.util.console.Console
 
 object GoalsCmd:
@@ -24,14 +27,18 @@ object GoalsCmd:
       Output.jsonFlag
     )
       .mapN { (status, limit, offset, json) => (c: Client) =>
-        c.listGoals(Api.GoalQuery(status, limit, offset))
+        c.listGoals(Api.GoalQuery(
+          status.map(Api.GoalQuery.Status(_)),
+          limit.map(Api.GoalQuery.Limit(_)),
+          offset.map(Api.GoalQuery.Offset(_))
+        ))
           .map(r => Output.emit(json, r)(GoalsMarkdown.goalList))
       }
   }
 
   private def get (using console: Console) = Opts.subcommand("get", "Show one goal: sub-goals, links, schedules, approved plan") {
     (Opts.argument[String]("slug"), Output.jsonFlag).mapN { (slug, json) => (c: Client) =>
-      c.call(AgentsApi.goalView)(slug).map(v => Output.emit(json, v)(AgentsMarkdown.goalView))
+      c.call(AgentsApi.goalView)(ReviewGoal.Slug(slug)).map(v => Output.emit(json, v)(AgentsMarkdown.goalView))
     }
   }
 
@@ -52,14 +59,14 @@ object GoalsCmd:
     )
       .mapN { (slug, title, status, notes, budget, from, to) => (c: Client) =>
         c.patchGoal(
-          slug,
+          Goal.Uid(slug),
           com.histmersion.api.automation.Goal.Patch(
-            title = title,
-            status = status,
-            notes = notes,
-            budgetUsd = budget,
-            periodStart = from,
-            periodEnd = to
+            title = title.map(Goal.Title(_)),
+            status = status.map(Goal.StatusValue(_)),
+            notes = notes.map(Goal.Notes(_)),
+            budgetUsd = budget.map(Goal.Patch.BudgetUsd(_)),
+            periodStart = from.map(Year(_)),
+            periodEnd = to.map(Year(_))
           )
         ).map(g => Cli.out.println(GoalsMarkdown.goal(g)))
       }
@@ -77,7 +84,12 @@ object GoalsCmd:
         .orNone,
       AgentCmd.followOpt
     ).mapN { (slug, model, budget, fol) => (c: Client) =>
-      c.call(AgentsApi.startRun)(RunRequest(Agents.Pipeline.PlanGoal.wire, slug, model, budget))
+      c.call(AgentsApi.startRun)(RunRequest(
+        RunRequest.Pipeline(Agents.Pipeline.PlanGoal.wire.value),
+        RunRequest.Target(slug),
+        model.map(RunRequest.Model(_)),
+        budget.map(RunRequest.BudgetUsd(_))
+      ))
         .flatMap(r => if fol then AgentCmd.follow(c, r.id, "") else Right(Cli.out.println(AgentsMarkdown.runLine(r))))
     }
   }
@@ -92,7 +104,7 @@ object GoalsCmd:
         Opts.option[Int]("item", "A queue item id").map(i => LinkKind.QueueItem -> i.toString)
     (Opts.argument[String]("slug"), target, Opts.option[String]("note", "Why it is linked").orNone).mapN {
       (slug, t, note) => (c: Client) =>
-        c.call(AgentsApi.addGoalLink)((slug, LinkAdd(t._1, t._2, note))).map(l => Cli.out.println(AgentsMarkdown.linkLine(l)))
+        c.call(AgentsApi.addGoalLink)((ReviewGoal.Slug(slug), LinkAdd(t._1, LinkAdd.Ref(t._2), note.map(LinkAdd.Note(_))))).map(l => Cli.out.println(AgentsMarkdown.linkLine(l)))
     }
   }
 
@@ -101,10 +113,10 @@ object GoalsCmd:
       Opts.argument[String]("slug"),
       Opts
         .argument[String]("kind")
-        .validate(s"kind is one of ${LinkKind.values.map(_.wire).mkString(", ")}")(k => LinkKind.parse(k).isDefined),
+        .validate(s"kind is one of ${LinkKind.values.map(_.wire).mkString(", ")}")(k => LinkKind.parse(LinkKind.Wire(k)).isDefined),
       Opts.argument[String]("ref")
     ).mapN { (slug, kind, ref) => (c: Client) =>
-      c.call(AgentsApi.removeGoalLink)((slug, kind, ref))
+      c.call(AgentsApi.removeGoalLink)((ReviewGoal.Slug(slug), LinkKind.Wire(kind), Citekey(ref)))
         .map(r => Cli.out.println(if r.removed then "unlinked" else "there was no such link"))
     }
   }
@@ -117,7 +129,7 @@ object GoalsCmd:
     val kinds = ScheduleKind.values.map(_.wire).mkString(", ")
     (
       Opts.argument[String]("slug"),
-      Opts.argument[String]("kind").validate(s"kind is one of $kinds")(k => ScheduleKind.parse(k).isDefined),
+      Opts.argument[String]("kind").validate(s"kind is one of $kinds")(k => ScheduleKind.parse(ScheduleKind.Wire(k)).isDefined),
       (Opts.flag("remove", "Delete the schedule").map(_ => None) orElse
         (
           Opts.option[String](
@@ -131,10 +143,16 @@ object GoalsCmd:
       .mapN { (slug, kind, set) => (c: Client) =>
         set match
           case None =>
-            c.call(AgentsApi.removeSchedule)((slug, kind))
+            c.call(AgentsApi.removeSchedule)((ReviewGoal.Slug(slug), ScheduleKind.Wire(kind)))
               .map(r => Cli.out.println(if r.removed then "removed" else "there was no such schedule"))
           case Some((cron, off, budget)) =>
-            c.call(AgentsApi.setSchedule)((slug, kind, ScheduleSet(cron, enabled = !off, budget)))
+            c.call(AgentsApi.setSchedule)(
+              (
+                ReviewGoal.Slug(slug),
+                ScheduleKind.Wire(kind),
+                ScheduleSet(ScheduleSet.Cron(cron), enabled = ScheduleSet.Enabled(!off), budget.map(ScheduleSet.BudgetUsd(_)))
+              )
+            )
               .map(s => Cli.out.println(AgentsMarkdown.scheduleLine(s)))
       }
   }
