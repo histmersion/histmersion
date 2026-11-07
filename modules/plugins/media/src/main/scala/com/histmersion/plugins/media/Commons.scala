@@ -3,7 +3,8 @@ package com.histmersion.plugins.media
 import com.histmersion.upstreams.media.MediaText
 import io.circe.Json
 import com.histmersion.plugin.*
-import com.histmersion.upstreams.wikidata.{WikidataEntities, WikidataStatement}
+import com.histmersion.upstreams.landing.RepositoryLanding
+import com.histmersion.upstreams.wikidata.{WikidataEntities, WikidataItem, WikidataStatement}
 import hearth.kindlings.sconfigderivation.ConfigReader
 
 /** Wikimedia Commons, read through the action API's `prop=imageinfo` with `extmetadata`: URL building and parsing.
@@ -40,18 +41,23 @@ object Commons:
     * `File:Lions-Gate-Mycenae.jpg`): underscores are spaces, and the first letter is upper case.
     */
   def fileTitle(name: com.histmersion.plugins.media.Commons.File.Title): com.histmersion.plugins.media.Commons.File.Title =
-    val n = name.trim.stripPrefix("File:").stripPrefix("file:").replace('_', ' ').replaceAll("\\s+", " ").trim
-    if n.isEmpty then com.histmersion.plugins.media.Commons.File.Title("") else "File:" + n.head.toUpper + n.tail
+    val n = name.value.trim.stripPrefix("File:").stripPrefix("file:").replace('_', ' ').replaceAll("\\s+", " ").trim
+    if n.isEmpty then com.histmersion.plugins.media.Commons.File.Title("") else com.histmersion.plugins.media.Commons.File.Title("File:" + n.head.toUpper + n.tail)
 
   /** Pure: the `imageinfo` URL for a batch of titles, with the rendition `width`; `meta` adds the licence fields (the
     * thumbnail call needs only the URL). `maxlag` 0 = not sent.
     */
-  def imageInfoUrl(api: com.histmersion.plugin.Plugin.Http.GetUrl, titles: List[com.histmersion.plugins.media.Commons.File.Title], width: com.histmersion.plugins.media.Commons.File.Width, maxlag: com.histmersion.plugins.media.Commons.Settings.Maxlag, meta: com.histmersion.plugins.media.Commons.ImageInfoUrlMeta): com.histmersion.plugin.Plugin.Http.GetUrl =
-    val props = if meta then "url|size|mime|extmetadata" else "url|size|mime"
-    val ext = if meta then s"&iiextmetadatafilter=${MetaFields.mkString("|").enc}&iiextmetadatalanguage=en" else ""
-    val lag = if maxlag > 0 then s"&maxlag=$maxlag" else ""
-    s"$api?action=query&format=json&formatversion=2&prop=imageinfo&iiprop=${props.enc}&iiurlwidth=$width" +
-      s"$ext&titles=${titles.mkString("|").enc}$lag"
+  def imageInfoUrl(api: com.histmersion.plugins.media.Commons.Settings.ApiUrl, titles: List[com.histmersion.plugins.media.Commons.File.Title], width: com.histmersion.plugins.media.Commons.File.Width, maxlag: com.histmersion.plugins.media.Commons.Settings.Maxlag, meta: com.histmersion.plugins.media.Commons.ImageInfoUrlMeta): com.histmersion.plugin.Plugin.Http.GetUrl =
+    val props = if meta.value then "url|size|mime|extmetadata" else "url|size|mime"
+    val ext = if meta.value then s"&iiextmetadatafilter=${MetaFields.map(_.value).mkString("|").enc}&iiextmetadatalanguage=en" else ""
+    val lag = if maxlag.value > 0 then s"&maxlag=${maxlag.value}" else ""
+    Plugin.Http.GetUrl(
+      s"${api.value}?action=query&format=json&formatversion=2&prop=imageinfo&iiprop=${props.enc}&iiurlwidth=${width.value}" +
+        s"$ext&titles=${titles.map(_.value).mkString("|").enc}$lag"
+    )
+
+  private def untracked(url: String): String =
+    MediaText.stripTracking(RepositoryLanding.Candidate.Url(url)).value
 
   /** Pure: the files of an `imageinfo` answer, keyed by the title ASKED for (the API's `normalized` list maps an asked
     * title to its canonical one). A file Commons does not have is `Left("missing on Commons")`; an API error is `Left`
@@ -62,7 +68,9 @@ object Commons:
     c.downField("error").focus match
       case Some(err) =>
         Left(
-          s"${err.hcursor.get[String]("code").getOrElse("error")}: ${err.hcursor.get[String]("info").getOrElse("")}".trim
+          Problem(
+            s"${err.hcursor.get[String]("code").getOrElse("error")}: ${err.hcursor.get[String]("info").getOrElse("")}".trim
+          )
         )
       case None =>
         val q = c.downField("query")
@@ -100,29 +108,29 @@ object Commons:
                         .orElse(j.asNumber.map(_.toString))
                         .orElse(j.asBoolean.map(_.toString))
                     )
-                    .map(k -> _)
+                    .map(v => File.MetaKey(k) -> File.MetaValue(v))
                 }
                 .toMap
               (for
                 url <- i.get[String]("url").toOption
                 page <- i.get[String]("descriptionurl").toOption
               yield com.histmersion.plugins.media.Commons.File(
-                title,
-                page,
-                MediaText.stripTracking(url),
-                i.get[String]("thumburl").toOption.map(MediaText.stripTracking),
-                i.get[Int]("thumbwidth").toOption,
-                i.get[Int]("thumbheight").toOption,
-                i.get[String]("mime").getOrElse("application/octet-stream"),
-                i.get[Int]("width").toOption,
-                i.get[Int]("height").toOption,
-                i.get[Long]("size").toOption,
+                File.Title(title),
+                File.PageUrl(page),
+                File.OriginalUrl(untracked(url)),
+                i.get[String]("thumburl").toOption.map(u => File.RenditionUrl(untracked(u))),
+                i.get[Int]("thumbwidth").toOption.map(File.RenditionWidth(_)),
+                i.get[Int]("thumbheight").toOption.map(File.RenditionHeight(_)),
+                File.Mime(i.get[String]("mime").getOrElse("application/octet-stream")),
+                i.get[Int]("width").toOption.map(File.Width(_)),
+                i.get[Int]("height").toOption.map(File.Height(_)),
+                i.get[Long]("size").toOption.map(File.Size(_)),
                 meta
               ))
                 .toRight(com.histmersion.plugins.media.Commons.Problem("no file URL in the answer"))
           (title :: normalized.getOrElse(title, Nil)).map(_ -> entry)
         }
-        Right(pages.toMap)
+        Right(pages.map((t, e) => File.Title(t) -> e).toMap)
 
   /** `depicts`: pictures that DEPICT an event, from Wikimedia Commons: for each event with a Wikidata item,
     *   1. the works its item lists as `P1299 depicted by` (a painting, a relief) — each work's own image (P18) — when
@@ -133,42 +141,57 @@ object Commons:
     */
   final class Depictions(media: MediaSettings, licences: LicenceReader) extends MediaCollection:
     val title = com.histmersion.plugin.MediaCollection.TitleResult("Commons depictions")
-    override val description =
+    override val description = com.histmersion.plugin.MediaCollection.DescriptionResult(
       "Pictures that depict events: Wikimedia Commons files whose structured data says P180 'depicts' the event's " +
         "Wikidata item, and the images of the works its item lists as P1299 'depicted by'; licence read from Commons"
-    val role = MediaCollection.Depiction
+    )
+    val role = MediaItem.Role(MediaCollection.Depiction)
     override def matchRule = MediaMatchRule.Own
     override def asks = Set(MediaTarget.Events)
-    override def requestIntervalMs = media.requestIntervalMs
+    override def requestIntervalMs = com.histmersion.plugin.MediaCollection.RequestIntervalMsResult(media.requestIntervalMs.value)
+
+    private def entitiesUrl(ids: List[WikidataId], wikidata: WikidataSettings): Plugin.Http.GetUrl =
+      Plugin.Http.GetUrl(
+        WikidataEntities
+          .url(
+            WikidataEntities.Api(wikidata.apiUrl.value),
+            ids.map(i => WikidataItem.Id(i.value)),
+            WikidataEntities.Maxlag(wikidata.maxlag.value)
+          )
+          .value
+      )
 
     def search(place: MediaPlace, http: Plugin.Http) = Left(com.histmersion.plugin.MediaCollection.SearchResultPart1("the depictions are about events"))
 
     override def searchTargets(places: List[MediaPlace], events: List[MediaEvent], http: Plugin.Http): MediaFound =
-      val asked = events.flatMap(e => e.wikidata.map(q => (e, q.value)))
+      val asked = events.flatMap(e => e.wikidata.map(q => (e, q)))
       val wikidata = media.wikidata
       val qids = asked.map(_._2).distinct
 
       // 1. P1299 on the events' items, then P18 of the works named
       val byItem =
-        if !media.depicts.depictedBy || asked.isEmpty then Nil
+        if !media.depicts.depictedBy.value || asked.isEmpty then Nil
         else
-          qids.grouped(wikidata.batch.max(1)).toList.map { ids =>
-            ids -> http.askJson(WikidataEntities.url(wikidata.apiUrl, ids, wikidata.maxlag)).flatMap { j =>
+          qids.grouped(wikidata.batch.value.max(1)).toList.map { ids =>
+            ids -> http.askJson(entitiesUrl(ids, wikidata)).flatMap { j =>
               j.hcursor.downField("error").focus.fold(Right(j))(_ => Left("Wikidata error"))
             }
           }
       val depictedBy = byItem.flatMap(_._2.toOption).map(Depicts.depictedBy).flatMap(_.toList).toMap
       val works = depictedBy.values.flatten.toList.distinct
-      val workAnswers = works.grouped(wikidata.batch.max(1)).toList.map { ids =>
+      val workAnswers = works.grouped(wikidata.batch.value.max(1)).toList.map { ids =>
         ids -> http
-          .askJson(WikidataEntities.url(wikidata.apiUrl, ids, wikidata.maxlag))
-          .flatMap(WikidataEntities.items(_, Set("P18")))
+          .askJson(entitiesUrl(ids, wikidata))
+          .flatMap(WikidataEntities.items(_, Set(WikidataStatement.Property("P18"))))
       }
       val workImage: Map[com.histmersion.plugin.WikidataId, com.histmersion.plugins.media.Commons.File.Title] = workAnswers
         .flatMap(_._2.toOption)
         .flatMap(_.toList)
         .flatMap((q, item) =>
-          WikidataStatement.best(item.statements, 1).headOption.map(st => q -> Commons.fileTitle(st.file))
+          WikidataStatement
+            .best(item.statements, WikidataStatement.BestPer(1))
+            .headOption
+            .map(st => WikidataId(q.value) -> Commons.fileTitle(File.Title(st.file.value)))
         )
         .toMap
 
@@ -188,10 +211,10 @@ object Commons:
         val fromWorks = depictedBy
           .getOrElse(q, Nil)
           .flatMap(workImage.get)
-          .filter(_.nonEmpty)
+          .filter(_.value.nonEmpty)
           .map(f => (Depicts.DepictedBy, f))
         val fromFiles = depicts.getOrElse(e.id, Nil).map(f => (Depicts.Depicts, Commons.fileTitle(f)))
-        (fromWorks ++ fromFiles).distinctBy(_._2).take(media.depicts.perEvent.max(0)).zipWithIndex.map {
+        (fromWorks ++ fromFiles).distinctBy(_._2).take(media.depicts.perEvent.value.max(0)).zipWithIndex.map {
           case ((p, f), i) => (e, q, p, f, i)
         }
       }
@@ -201,22 +224,25 @@ object Commons:
       MediaFound(
         uses = found.map((e, q, p, f, i) =>
           MediaUse(
-            MediaTarget.Id(MediaTarget.Events, e.id),
+            eventTarget(e),
             files(f),
-            i,
-            Some(p),
-            WikidataId.option(q),
-            note = Some(s"$p ${if p == Depicts.Depicts then "depicts" else "depicted by"} $q")
+            MediaUse.Rank(i),
+            Some(MediaUse.Statement(p)),
+            Some(q),
+            note = Some(MediaUse.Note(s"$p ${if p == Depicts.Depicts then "depicts" else "depicted by"} ${q.value}"))
           )
         ),
-        asked = asked.map((e, _) => MediaTarget.Id(MediaTarget.Events, e.id)),
-        unanswered =
-          asked.filter((_, q) => unanswered(q)).map((e, _) => MediaTarget.Id(MediaTarget.Events, e.id)).toSet,
-        read = depictedBy.size + workImage.size,
-        failed = byItem.collect { case (ids, Left(err)) => s"Wikidata ${ids.head}…: $err" } ++
-          workAnswers.collect { case (ids, Left(err)) => s"Wikidata works ${ids.head}…: $err" } ++
-          searches.collect { case (e, q, Left(err)) => s"Commons search for ${e.id} ($q): $err" } ++ judged
+        asked = asked.map((e, _) => eventTarget(e)),
+        unanswered = asked.filter((_, q) => unanswered(q)).map((e, _) => eventTarget(e)).toSet,
+        read = MediaFound.Read(depictedBy.size + workImage.size),
+        failed = (byItem.collect { case (ids, Left(err)) => s"Wikidata ${ids.head.value}…: $err" } ++
+          workAnswers.collect { case (ids, Left(err)) => s"Wikidata works ${ids.head.value}…: $err" } ++
+          searches.collect { case (e, q, Left(err)) => s"Commons search for ${e.id.value} (${q.value}): $err" })
+          .map(MediaFound.Failed(_)) ++ judged.map(j => MediaFound.Failed(j.value))
       )
+
+    private def eventTarget(e: MediaEvent): MediaTarget.Id =
+      MediaTarget.Id(MediaTarget.Events, MediaTarget.Id.Value(e.id.value))
 
     override def completeAll(items: List[MediaItem], http: Plugin.Http): MediaCompleted =
       Files(http, media, licences).thumbnails(items)
@@ -230,16 +256,15 @@ object Commons:
     type Problem = Problem.T
     object Problem extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
-    type SearchUrlLimit = SearchUrlLimit.T
-    object SearchUrlLimit extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
-
     val Depicts = "P180"
     val DepictedBy = "P1299"
 
-    def searchUrl(api: com.histmersion.plugin.Plugin.Http.GetUrl, qid: com.histmersion.plugin.WikidataId, limit: com.histmersion.plugins.media.Commons.Depicts.SearchUrlLimit, maxlag: com.histmersion.plugins.media.Commons.Settings.Maxlag): com.histmersion.plugin.Plugin.Http.GetUrl =
-      val lag = if maxlag > 0 then s"&maxlag=$maxlag" else ""
-      s"$api?action=query&format=json&formatversion=2&list=search&srnamespace=6&srlimit=${limit.max(1)}" +
-        s"&srsearch=${s"haswbstatement:$Depicts=$qid".enc}$lag"
+    def searchUrl(api: com.histmersion.plugins.media.Commons.Settings.ApiUrl, qid: com.histmersion.plugin.WikidataId, limit: com.histmersion.plugins.media.DepictsSettings.SearchLimit, maxlag: com.histmersion.plugins.media.Commons.Settings.Maxlag): com.histmersion.plugin.Plugin.Http.GetUrl =
+      val lag = if maxlag.value > 0 then s"&maxlag=${maxlag.value}" else ""
+      Plugin.Http.GetUrl(
+        s"${api.value}?action=query&format=json&formatversion=2&list=search&srnamespace=6&srlimit=${limit.value.max(1)}" +
+          s"&srsearch=${s"haswbstatement:$Depicts=${qid.value}".enc}$lag"
+      )
 
     /** Pure: the file titles of a search answer, in its order; an API error is a `Left`. */
     def titles(json: Json): Either[com.histmersion.plugins.media.Commons.Depicts.Problem, List[com.histmersion.plugins.media.Commons.File.Title]] =
@@ -247,7 +272,9 @@ object Commons:
       c.downField("error").focus match
         case Some(err) =>
           Left(
-            s"${err.hcursor.get[String]("code").getOrElse("error")}: ${err.hcursor.get[String]("info").getOrElse("")}".trim
+            Problem(
+              s"${err.hcursor.get[String]("code").getOrElse("error")}: ${err.hcursor.get[String]("info").getOrElse("")}".trim
+            )
           )
         case None =>
           Right(
@@ -259,6 +286,7 @@ object Commons:
               .flatten
               .flatMap(_.hcursor.get[String]("title").toOption)
               .filter(_.startsWith("File:"))
+              .map(File.Title(_))
           )
 
     /** Pure: the items an entity names under `P1299 depicted by`, per entity asked, best rank first. */
@@ -286,7 +314,7 @@ object Commons:
               .filter(_.matches("Q[1-9][0-9]*"))
               .map(id => (if rank == "preferred" then 0 else 1, id))
           }
-          key -> ids.sortBy(_._1).map(_._2).distinct
+          WikidataId(key) -> ids.sortBy(_._1).map(_._2).distinct.map(WikidataId(_))
         }
         .toMap
 
@@ -343,17 +371,17 @@ object Commons:
     def imageInfo(
         titles: List[com.histmersion.plugins.media.Commons.File.Title],
         width: com.histmersion.plugins.media.Commons.File.Width,
-        meta: com.histmersion.plugins.media.Commons.Files.ImageInfoMeta
-    ): (Map[com.histmersion.plugins.media.Commons.Files.Problem, Either[com.histmersion.plugins.media.Commons.Files.Problem, File]], List[com.histmersion.plugins.media.Commons.File.Title]) =
+        meta: com.histmersion.plugins.media.Commons.ImageInfoUrlMeta
+    ): (Map[File.Title, Either[Problem, File]], List[Problem]) =
       val answers = titles
-        .grouped(media.commons.batch.max(1))
+        .grouped(media.commons.batch.value.max(1))
         .toList
         .map { batch =>
           http
             .askJson(Commons.imageInfoUrl(media.commons.apiUrl, batch, width, media.commons.maxlag, meta))
             .flatMap(Commons.imageInfo)
             .left
-            .map(e => s"Commons ${batch.head}…: $e")
+            .map(e => Problem(s"Commons ${batch.head.value}…: $e"))
         }
       (answers.flatMap(_.toOption).flatMap(_.toList).toMap, answers.flatMap(_.left.toOption))
 
@@ -362,81 +390,87 @@ object Commons:
       * Commons marks non-free, whose licence is unreadable or all rights reserved, or whose licence requires an author
       * it does not name, is withheld with that reason.
       */
-    def items(titles: List[com.histmersion.plugins.media.Commons.File.Title]): (Map[com.histmersion.plugins.media.Commons.File.Title, MediaItem], List[com.histmersion.plugins.media.Commons.Files.Problem]) =
-      val (infos, failed) = imageInfo(titles, media.displayPx, meta = com.histmersion.plugins.media.Commons.Files.ImageInfoMeta(true))
+    def items(titles: List[com.histmersion.plugins.media.Commons.File.Title]): (Map[com.histmersion.plugins.media.Commons.File.Title, MediaItem], List[Problem]) =
+      val (infos, failed) = imageInfo(titles, File.Width(media.displayPx.value), ImageInfoUrlMeta(true))
       (titles.map(t => t -> item(t, infos.get(t))).toMap, failed)
 
-    private def item(title: com.histmersion.plugins.media.Commons.File.Title, answer: Option[Either[com.histmersion.plugins.media.Commons.Files.Problem, File]]): MediaItem =
-      val bare = MediaItem(title, title.stripPrefix("File:"), com.histmersion.plugin.MediaItem.PageUrl(""), None, Left(com.histmersion.plugin.MediaItem.RightsPart1("no answer from Commons")))
+    private def item(title: com.histmersion.plugins.media.Commons.File.Title, answer: Option[Either[Problem, File]]): MediaItem =
+      val bare = MediaItem(
+        MediaItem.Key(title.value),
+        MediaItem.Title(title.value.stripPrefix("File:")),
+        com.histmersion.plugin.MediaItem.PageUrl(""),
+        None,
+        Left(com.histmersion.plugin.MediaItem.RightsPart1("no answer from Commons"))
+      )
       answer match
         case None              => bare
-        case Some(Left(why))   => bare.copy(rights = Left(why))
+        case Some(Left(why))   => bare.copy(rights = Left(MediaItem.RightsPart1(why.value)))
         case Some(Right(info)) =>
-          def field(k: com.histmersion.plugins.media.Commons.Files.Key) = info.meta.get(k).map(MediaText.plain(_)).filter(_.nonEmpty)
-          val licence = licences.readFirst(info.meta.get(com.histmersion.plugins.media.Commons.File.MetaKey("License")).toList ++ field("LicenseShortName").toList)
-          val required = info.meta.get(com.histmersion.plugins.media.Commons.File.MetaKey("AttributionRequired")).exists(_.trim.equalsIgnoreCase("true")) ||
-            licence.needsAttribution
-          val author = field(com.histmersion.plugins.media.Commons.Files.Key("Attribution")).orElse(field("Artist"))
+          def field(k: File.MetaKey): Option[String] =
+            info.meta.get(k).map(v => MediaText.plain(MediaText.Html(v.value)).value).filter(_.nonEmpty)
+          val licence = licences.readFirst(
+            (info.meta.get(File.MetaKey("License")).map(_.value).toList ++ field(File.MetaKey("LicenseShortName")).toList)
+              .map(LicenceReader.ReadFirstStatements(_))
+          )
+          val required = info.meta.get(File.MetaKey("AttributionRequired")).exists(_.value.trim.equalsIgnoreCase("true")) ||
+            licence.needsAttribution.value
+          val author = field(File.MetaKey("Attribution")).orElse(field(File.MetaKey("Artist")))
           val refused =
-            if info.meta.get(com.histmersion.plugins.media.Commons.File.MetaKey("NonFree")).exists(_.trim.equalsIgnoreCase("true")) then Some("marked non-free on Commons")
-            else if licence.family == Licence.Read.Unknown then
-              Some(if licence.id.isEmpty then "no licence stated" else s"licence not recognised (${licence.id})")
-            else if licence.family == Licence.Read.AllRights then Some("all rights reserved")
+            if info.meta.get(File.MetaKey("NonFree")).exists(_.value.trim.equalsIgnoreCase("true")) then Some("marked non-free on Commons")
+            else if licence.family.value == Licence.Read.Unknown then
+              Some(if licence.id.value.isEmpty then "no licence stated" else s"licence not recognised (${licence.id.value})")
+            else if licence.family.value == Licence.Read.AllRights then Some("all rights reserved")
             else if required && author.isEmpty then Some("no author to credit")
             else None
-          val name = field(com.histmersion.plugins.media.Commons.Files.Key("LicenseShortName")).getOrElse(licence.id)
+          val name = field(File.MetaKey("LicenseShortName")).getOrElse(licence.id.value)
           val rights =
-            if refused.isDefined then MediaRights(Licence(licence.id))
+            if refused.isDefined then MediaRights(Licence(licence.id.value))
             else
               MediaRights(
-                Licence(licence.id),
+                Licence(licence.id.value),
                 info.meta
-                  .get(com.histmersion.plugins.media.Commons.File.MetaKey("LicenseUrl"))
-                  .map(_.trim)
+                  .get(File.MetaKey("LicenseUrl"))
+                  .map(_.value.trim)
                   .filter(_.nonEmpty)
-                  .map(u => if u.startsWith("//") then "https:" + u else u),
-                author,
-                (author.toList :+ name :+ "via Wikimedia Commons").mkString(", ")
+                  .map(u => MediaRights.LicenceUrl(if u.startsWith("//") then "https:" + u else u)),
+                author.map(MediaRights.Author(_)),
+                MediaRights.Credit((author.toList :+ name :+ "via Wikimedia Commons").mkString(", "))
               )
           bare.copy(
-            pageUrl = info.pageUrl,
-            imageUrl = Some(info.renditionUrl.getOrElse(info.originalUrl)),
+            pageUrl = MediaItem.PageUrl(info.pageUrl.value),
+            imageUrl = Some(MediaItem.ImageUrl(info.renditionUrl.map(_.value).getOrElse(info.originalUrl.value))),
             rights = Right(rights),
-            originalUrl = Some(info.originalUrl),
-            withheld = refused,
+            originalUrl = Some(MediaItem.OriginalUrl(info.originalUrl.value)),
+            withheld = refused.map(MediaItem.Withheld(_)),
             rendition = Some(
               MediaRendition(
-                info.mime,
-                info.renditionWidth.orElse(info.width),
-                info.renditionHeight.orElse(info.height),
-                bytes = if info.renditionUrl.isEmpty then info.size else None
+                MediaRendition.Mime(info.mime.value),
+                info.renditionWidth.map(_.value).orElse(info.width.map(_.value)).map(MediaRendition.Width(_)),
+                info.renditionHeight.map(_.value).orElse(info.height.map(_.value)).map(MediaRendition.Height(_)),
+                bytes = if info.renditionUrl.isEmpty then info.size.map(s => MediaRendition.Bytes(s.value)) else None
               )
             )
           )
 
     /** The items to store with their thumbnails — Commons' own `thumb-px` renditions, asked in batches. */
     def thumbnails(items: List[MediaItem]): MediaCompleted =
-      val (infos, failed) = imageInfo(items.map(_.key), media.thumbPx, meta = com.histmersion.plugins.media.Commons.Files.ImageInfoMeta(false))
+      val (infos, failed) = imageInfo(items.map(i => File.Title(i.key.value)), File.Width(media.thumbPx.value), ImageInfoUrlMeta(false))
       MediaCompleted(
         items.flatMap { it =>
-          infos.get(it.key).flatMap(_.toOption).map { i =>
+          infos.get(File.Title(it.key.value)).flatMap(_.toOption).map { i =>
             it.key -> it.copy(
-              thumbUrl = i.renditionUrl,
-              rendition = it.rendition.map(_.copy(thumbWidth = i.renditionWidth, thumbHeight = i.renditionHeight))
+              thumbUrl = i.renditionUrl.map(u => MediaItem.ThumbUrl(u.value)),
+              rendition = it.rendition.map(
+                _.copy(
+                  thumbWidth = i.renditionWidth.map(w => MediaRendition.ThumbWidth(w.value)),
+                  thumbHeight = i.renditionHeight.map(h => MediaRendition.ThumbHeight(h.value))
+                )
+              )
             )
           }
         }.toMap,
-        failed
+        failed.map(f => MediaCompleted.Failed(f.value))
       )
-
-  object Files:
-    type Key = Key.T
-    object Key extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-    type Problem = Problem.T
-    object Problem extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-
-    type ImageInfoMeta = ImageInfoMeta.T
-    object ImageInfoMeta extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
   /** `histmersion.media.commons`: the action API, titles per `imageinfo` call, and `maxlag`. */
   final case class Settings(apiUrl: Settings.ApiUrl, batch: Settings.Batch, maxlag: Settings.Maxlag) derives ConfigReader

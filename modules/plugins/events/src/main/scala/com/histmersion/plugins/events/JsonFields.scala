@@ -17,22 +17,23 @@ object JsonFields:
   object Year extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
   def str(c: ACursor, k: com.histmersion.plugins.events.JsonFields.Key): Option[com.histmersion.plugins.events.JsonFields.Text] =
-    c.downField(k).focus.flatMap(j => j.asString.orElse(j.asNumber.map(_.toString))).map(_.trim).filter(_.nonEmpty)
+    c.downField(k.value).focus.flatMap(j => j.asString.orElse(j.asNumber.map(_.toString))).map(_.trim).filter(_.nonEmpty).map(t => Text(t))
 
   def long(c: ACursor, k: com.histmersion.plugins.events.JsonFields.Key): Option[com.histmersion.plugins.events.JsonFields.Integer] =
-    c.downField(k)
+    c.downField(k.value)
       .focus
       .flatMap(j =>
         j.asNumber
           .map(n => n.toLong.getOrElse(n.toDouble.toLong))
           .orElse(j.asString.flatMap(_.trim.toLongOption))
       )
+      .map(n => Integer(n))
 
   def dbl(c: ACursor, k: com.histmersion.plugins.events.JsonFields.Key): Option[com.histmersion.plugins.events.JsonFields.Decimal] =
-    c.downField(k).focus.flatMap(j => j.asNumber.map(_.toDouble).orElse(j.asString.flatMap(_.trim.toDoubleOption)))
+    c.downField(k.value).focus.flatMap(j => j.asNumber.map(_.toDouble).orElse(j.asString.flatMap(_.trim.toDoubleOption))).map(d => Decimal(d))
 
   /** A year as the SPI states it; `None` beyond what a `Year` holds. */
-  def year(y: com.histmersion.plugins.events.JsonFields.Year): Option[Year] = Option.when(y.isValidInt)(Year(y.toInt))
+  def year(y: com.histmersion.plugins.events.JsonFields.Year): Option[com.histmersion.plugin.Year] = Option.when(y.value.isValidInt)(com.histmersion.plugin.Year(y.value.toInt))
 
-  def latitude(l: Option[com.histmersion.plugin.Latitude]): Option[Latitude] = l.flatMap(Latitude.option)
-  def longitude(l: Option[com.histmersion.plugin.Longitude]): Option[Longitude] = l.flatMap(Longitude.option)
+  def latitude(l: Option[com.histmersion.plugins.events.JsonFields.Decimal]): Option[Latitude] = l.flatMap(d => Latitude.option(d.value))
+  def longitude(l: Option[com.histmersion.plugins.events.JsonFields.Decimal]): Option[Longitude] = l.flatMap(d => Longitude.option(d.value))

@@ -28,9 +28,6 @@ object AnthropicAnswer:
   type Problem = Problem.T
   object Problem extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
-  type OptionalIntResultPart2 = OptionalIntResultPart2.T
-  object OptionalIntResultPart2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
-
   type Status = Status.T
   object Status extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type Body = Body.T
@@ -59,20 +56,15 @@ object AnthropicAnswer:
     * type is not a message.
     */
   private enum Block:
-    case Text(text: Block.Text.Value)
+    case Text(text: AiTurn.Text)
     case ToolUse(call: AiTool.Call)
     case Other
-
-  object Block:
-    object Text:
-      type Value = Value.T
-      object Value extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
   private val Known = Set("image", "tool_result", "document", "web_search_tool_result")
 
   private val block: Decoder[Block] = Decoder.instance { c =>
     c.downField("type").as[Option[String]].flatMap {
-      case Some("text")     => objectAt(c).flatMap(_ => c.downField("text").as[String]).map(Block.Text(_root_.com.histmersion.plugins.ai.AnthropicAnswer.Block.Text.Value(_)))
+      case Some("text")     => objectAt(c).flatMap(_ => c.downField("text").as[String]).map(s => Block.Text(AiTurn.Text(s)))
       case Some("thinking") => objectAt(c).flatMap(_ => c.downField("thinking").as[String]).map(_ => Block.Other)
       case Some(t @ ("tool_use" | "server_tool_use")) =>
         for
@@ -87,7 +79,7 @@ object AnthropicAnswer:
     }
   }
 
-  private def optionalInt(c: ACursor): Either[DecodingFailure, Option[com.histmersion.plugins.ai.AnthropicAnswer.OptionalIntResultPart2]] = c.as[Option[Int]]
+  private def optionalInt(c: ACursor): Either[DecodingFailure, Option[Int]] = c.as[Option[Int]]
 
   private val usage: Decoder[AiUsage] = Decoder.instance { c =>
     for
@@ -114,7 +106,7 @@ object AnthropicAnswer:
       _ <- c.downField("stop_sequence").as[Option[String]]
       u <- c.downField("usage").as(using usage)
     yield AiTurn(
-      blocks.collectFirst { case Block.Text(t) => t }.getOrElse(""),
+      blocks.collectFirst { case Block.Text(t) => t }.getOrElse(AiTurn.Text("")),
       blocks.collect { case Block.ToolUse(call) => call },
       stop match
         case Some("end_turn") | None => AiStop.EndTurn

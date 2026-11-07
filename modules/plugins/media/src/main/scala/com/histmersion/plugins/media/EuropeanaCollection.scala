@@ -8,7 +8,7 @@ import com.histmersion.plugin.*
   * they carry, else by the museum rule's names. The aggregators, institutions and `dc:type`s the collection excludes
   * (natural-history specimens) are refused, and so is an object made after `max-year`.
   */
-final class EuropeanaCollection(conf: CollectionSettings, key: Option[EuropeanaCollection.Key], licences: LicenceReader)
+final class EuropeanaCollection(conf: CollectionSettings, key: Option[KeyedCollection.Key], licences: LicenceReader)
     extends KeyedCollection(conf, com.histmersion.plugins.media.KeyedCollection.Plugin("media-europeana"), key, com.histmersion.plugins.media.KeyedCollection.Needs("a Europeana personal API key"), com.histmersion.plugins.media.KeyedCollection.Settings("media.europeana")):
   val title = com.histmersion.plugin.MediaCollection.TitleResult("Europeana images")
   override val description = described(
@@ -18,31 +18,26 @@ final class EuropeanaCollection(conf: CollectionSettings, key: Option[EuropeanaC
       "media.europeana.max-year are refused; needs a personal API key " +
       "(histmersion.plugins.media-europeana.api-key, a secret reference)"
   )
-  override def matchRule = MediaMatchRule.PlaceIds(Set(Europeana.Spatial))
+  override def matchRule = MediaMatchRule.PlaceIds(Set(MediaMatchRule.PlaceIds.Deeper(Europeana.Spatial)))
   private val exclusions = Europeana.Exclusions(
-    CollectionSettings.items(conf.excludeProviders),
-    CollectionSettings.items(conf.excludeDataProviders),
-    CollectionSettings.items(conf.excludeTypes)
+    CollectionSettings.items(conf.excludeProviders).map(i => Europeana.Exclusions.Providers(i.value)),
+    CollectionSettings.items(conf.excludeDataProviders).map(i => Europeana.Exclusions.DataProviders(i.value)),
+    CollectionSettings.items(conf.excludeTypes).map(i => Europeana.Exclusions.Types(i.value))
   )
-  private def headers = Map(Europeana.KeyHeader -> apiKey)
+  private def headers = Map(Plugin.Http.GetHeadersPart1(Europeana.KeyHeader) -> Plugin.Http.GetHeadersPart2(apiKey.value))
 
-  def search(place: MediaPlace, http: Plugin.Http): Either[com.histmersion.plugins.media.EuropeanaCollection.Problem, List[Either[com.histmersion.plugin.MediaItem.Key, MediaItem]]] =
+  def search(place: MediaPlace, http: Plugin.Http): Either[MediaCollection.SearchResultPart1, List[Either[MediaCollection.SearchResultPart2Part1, MediaItem]]] =
     http
       .askJson(Europeana.searchUrl(conf.apiUrl, place.label, conf.candidates, exclusions), headers)
-      .flatMap(Europeana.records(_, conf.apiUrl, licences, exclusions))
+      .flatMap(j => Europeana.records(j, conf.apiUrl, licences, exclusions).left.map(_.value))
       .left
-      .map(explain)
+      .map(e => MediaCollection.SearchResultPart1(explain(KeyedCollection.Problem(e)).value))
+      .map(_.map(_.left.map(e => MediaCollection.SearchResultPart2Part1(e.value))))
 
-  override def complete(item: MediaItem, http: Plugin.Http): Either[String, MediaItem] =
+  override def complete(item: MediaItem, http: Plugin.Http): Either[MediaCollection.CompleteResultPart1, MediaItem] =
     http
-      .askJson(Europeana.recordUrl(conf.apiUrl, "/" + item.key), headers)
-      .flatMap(Europeana.item(_, item, licences, exclusions))
+      .askJson(Europeana.recordUrl(conf.apiUrl, item.key), headers)
+      .flatMap(j => Europeana.item(j, item, licences, exclusions).left.map(_.value))
       .left
-      .map(explain)
-
-object EuropeanaCollection:
-  type Problem = Problem.T
-  object Problem extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type Key = Key.T
-  object Key extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+      .map(e => MediaCollection.CompleteResultPart1(explain(KeyedCollection.Problem(e)).value))
 

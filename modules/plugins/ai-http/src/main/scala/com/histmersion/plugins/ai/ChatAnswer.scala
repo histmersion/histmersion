@@ -94,18 +94,18 @@ object ChatAnswer:
     yield ()
   }
 
-  private val function: Decoder[(com.histmersion.plugin.AiTool.Call.Tool, Option[com.histmersion.plugin.AiTool.Call.Input])] = product { c =>
+  private val function: Decoder[(AiTool.Call.Input, Option[AiTool.Call.Tool])] = product { c =>
     for
       args <- c.downField("arguments").as[String]
       name <- c.downField("name").as[Option[String]]
-    yield (_root_.com.histmersion.plugin.AiTool.Call.Tool(args), (name).map(refactorValue2 => _root_.com.histmersion.plugin.AiTool.Call.Input(refactorValue2)))
+    yield (AiTool.Call.Input(args), name.map(AiTool.Call.Tool(_)))
   }
 
-  private val toolCall: Decoder[(Option[com.histmersion.plugin.AiTool.Call.Id], (com.histmersion.plugin.AiTool.Call.Tool, Option[com.histmersion.plugin.AiTool.Call.Input]))] = Decoder.instance { c =>
+  private val toolCall: Decoder[(Option[AiTool.Call.Id], (AiTool.Call.Input, Option[AiTool.Call.Tool]))] = Decoder.instance { c =>
     for
       id <- c.downField("id").as[Option[String]]
       f <- c.downField("function").as(using function)
-    yield ((id).map(refactorValue3 => _root_.com.histmersion.plugin.AiTool.Call.Id(refactorValue3)), { val refactorTuple = f; (_root_.com.histmersion.plugin.AiTool.Call.Tool((refactorTuple._1).value), (refactorTuple._2).map(refactorValue4 => _root_.com.histmersion.plugin.AiTool.Call.Input((refactorValue4).value))) })
+    yield (id.map(AiTool.Call.Id(_)), f)
   }
 
   private val audio: Decoder[Unit] = product { c =>
@@ -118,18 +118,18 @@ object ChatAnswer:
   }
 
   private val message: Decoder[(com.histmersion.plugin.AiMessage.Assistant.Text, List[AiTool.Call])] = product { c =>
-    given Decoder[(Option[String], (String, Option[String]))] = toolCall
+    given Decoder[(Option[AiTool.Call.Id], (AiTool.Call.Input, Option[AiTool.Call.Tool]))] = toolCall
     for
       content <- orDefault(c.downField("content"), "")
       _ <- c.downField("refusal").as[Option[String]]
-      calls <- orDefault(c.downField("tool_calls"), Seq.empty[(Option[String], (String, Option[String]))])
+      calls <- orDefault(c.downField("tool_calls"), Seq.empty[(Option[AiTool.Call.Id], (AiTool.Call.Input, Option[AiTool.Call.Tool]))])
       _ <- c.downField("role").as[String]
       _ <- c.downField("function_call").as(using Decoder.decodeOption(using function))
       _ <- c.downField("audio").as(using Decoder.decodeOption(using audio))
     yield (
       _root_.com.histmersion.plugin.AiMessage.Assistant.Text(content),
       calls.toList.zipWithIndex.map { case ((id, (args, name)), i) =>
-        AiTool.Call(_root_.com.histmersion.plugin.AiTool.Call.Id(id.getOrElse(s"call_$i")), _root_.com.histmersion.plugin.AiTool.Call.Tool(name.getOrElse("unknown")), _root_.com.histmersion.plugin.AiTool.Call.Input(args))
+        AiTool.Call(id.getOrElse(AiTool.Call.Id(s"call_$i")), name.getOrElse(AiTool.Call.Tool("unknown")), args)
       }
     )
   }
@@ -190,10 +190,11 @@ object ChatAnswer:
         first.map(_._1).getOrElse(com.histmersion.plugin.AiTurn.Text("")),
         first.map(_._2).getOrElse(Nil),
         first.map(_._3) match
-          case Some(refactorPattern) | None if (refactorPattern.value == "stop")                   => AiStop.EndTurn
-          case Some(refactorPattern2 | refactorPattern3) if (refactorPattern2.value == "tool_calls") && (refactorPattern3.value == "function_calls") => AiStop.ToolUse
-          case Some(refactorPattern4) if (refactorPattern4.value == "length")                        => AiStop.MaxTokens
-          case Some(_)                               => AiStop.Other
+          case None                                                                 => AiStop.EndTurn
+          case Some(reason) if reason.value == "stop"                               => AiStop.EndTurn
+          case Some(reason) if reason.value == "tool_calls" || reason.value == "function_calls" => AiStop.ToolUse
+          case Some(reason) if reason.value == "length"                             => AiStop.MaxTokens
+          case Some(_)                                                              => AiStop.Other
         ,
         Some(u),
         Some(_root_.com.histmersion.plugin.AiTurn.ServedBy(model))

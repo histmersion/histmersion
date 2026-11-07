@@ -4,9 +4,7 @@ package com.histmersion.plugins.media
 import com.histmersion.plugin.Plugin
 final class AicPlugin extends MediaPlugin("media-aic"):
   type Config = MediaPlugin.Config
-  def register(c: MediaPlugin.Config, ctx: Plugin.Context): Either[com.histmersion.plugins.media.AicPlugin.Problem, Unit] =
+  def register(c: MediaPlugin.Config, ctx: Plugin.Context): Either[com.histmersion.plugin.Plugin.RegisterResultPart1, Unit] =
     ctx.mediaCollections.add(com.histmersion.plugin.Registry.AddId("aic"), ArtInstituteCollection(c.media.aic, c.media.thumbPx))
-
-object AicPlugin:
-  type Problem = Problem.T
-  object Problem extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+      .left
+      .map(e => Plugin.RegisterResultPart1(e.value))

@@ -10,23 +10,29 @@ import hearth.kindlings.sconfigderivation.ConfigReader
   * (`api-key`). Registered without a key, the collection is listed and its import says what is missing; it is never
   * asked.
   */
-abstract class KeyedPlugin(id: KeyedPlugin.Id, name: KeyedPlugin.Name) extends MediaPlugin(id):
+abstract class KeyedPlugin(id: KeyedPlugin.Id, name: KeyedPlugin.Name) extends MediaPlugin(id.value):
   type Config = KeyedPlugin.Config
 
   /** The collection over the media settings and the key, when one is set. */
   protected def collection(c: KeyedPlugin.Config, key: Option[com.histmersion.plugins.media.KeyedCollection.Key], ctx: Plugin.Context): MediaCollection
 
-  def register(c: KeyedPlugin.Config, ctx: Plugin.Context): Either[com.histmersion.plugins.media.KeyedPlugin.Problem, Unit] =
+  def register(c: KeyedPlugin.Config, ctx: Plugin.Context): Either[Plugin.RegisterResultPart1, Unit] =
     c.apiKey
-      .fold[Either[String, Option[String]]](Right(None))(s =>
-        ctx.secret(s).map(v => Option(v).map(_.trim).filter(_.nonEmpty))
+      .fold[Either[Plugin.RegisterResultPart1, Option[KeyedCollection.Key]]](Right(None))(s =>
+        ctx
+          .secret(s)
+          .left
+          .map(e => Plugin.RegisterResultPart1(e.value))
+          .map(v => Option(v).map(_.value.trim).filter(_.nonEmpty).map(KeyedCollection.Key(_)))
       )
-      .flatMap(key => ctx.mediaCollections.add(name, collection(c, key, ctx)))
+      .flatMap(key =>
+        ctx.mediaCollections
+          .add(com.histmersion.plugin.Registry.AddId(name.value), collection(c, key, ctx))
+          .left
+          .map(e => Plugin.RegisterResultPart1(e.value))
+      )
 
 object KeyedPlugin:
-  type Problem = Problem.T
-  object Problem extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-
   /** A key-gated collection's settings: `api-key`, the key as a SECRET REFERENCE (`env:<NAME>`, a vault's), never the
     * key; `null` = none, and the collection is then not asked. Its other settings are Histmersion's own `media.*`.
     */

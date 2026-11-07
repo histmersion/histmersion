@@ -8,12 +8,10 @@ import com.histmersion.plugin.Plugin
   */
 final class ArchiveOrgPlugin extends FetcherPlugin("archive-org"):
   type Config = HostAcquire
-  def register(c: HostAcquire, ctx: Plugin.Context): Either[com.histmersion.plugins.fetchers.ArchiveOrgPlugin.Problem, Unit] =
+  def register(c: HostAcquire, ctx: Plugin.Context): Either[Plugin.RegisterResultPart1, Unit] =
     lazy val archive = ArchiveOrg(c.acquire.archiveOrg, ctx.http)
     ctx.sourceFetchers
       .add(com.histmersion.plugin.Registry.AddId("archive-org"), ArchiveOrgFetcher(() => archive))
-      .flatMap(_ => ctx.sourceCollections.add("archive-org", ArchiveOrgCollection(() => archive)))
-
-object ArchiveOrgPlugin:
-  type Problem = Problem.T
-  object Problem extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+      .flatMap(_ => ctx.sourceCollections.add(com.histmersion.plugin.Registry.AddId("archive-org"), ArchiveOrgCollection(() => archive)))
+      .left
+      .map(e => Plugin.RegisterResultPart1(e.value))

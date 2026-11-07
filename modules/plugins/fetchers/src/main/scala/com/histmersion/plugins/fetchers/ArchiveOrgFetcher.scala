@@ -15,12 +15,14 @@ final class ArchiveOrgFetcher(client: () => ArchiveOrg) extends SourceFetcher:
       case None     => Fetch.Miss(com.histmersion.plugin.Fetch.Miss.Why("archive-org needs an archive.org identifier"))
       case Some(id) =>
         val archive = client()
-        archive.info(id) match
-          case Left(e)                         => Fetch.Miss(e)
-          case Right(item) if item.lendingOnly =>
-            Fetch.Refused(s"'${item.identifier}' is a lending-only item — borrow it on archive.org")
+        archive.info(com.histmersion.upstreams.ArchiveId(id.value)) match
+          case Left(e)                         => Fetch.Miss(Fetch.Miss.Why(e.value))
+          case Right(item) if item.lendingOnly.value =>
+            Fetch.Refused(Fetch.Refused.Why(s"'${item.identifier}' is a lending-only item — borrow it on archive.org"))
           case Right(item) =>
-            AcquireParse.pickArchiveFile(item.files, work.format) match
-              case None       => Fetch.Miss(s"'${item.identifier}' has no epub/pdf file to download")
+            AcquireParse.pickArchiveFile(item.files, work.format.map(f => AcquireParse.WantedFileKind(f.value))) match
+              case None       => Fetch.Miss(Fetch.Miss.Why(s"'${item.identifier}' has no epub/pdf file to download"))
               case Some(file) =>
-                archive.download(item.identifier, file.name).fold(Fetch.Miss(_), Fetch.Found(_))
+                archive
+                  .download(com.histmersion.upstreams.ArchiveId(item.identifier.value), ArchiveOrg.DownloadFile(file.name.value))
+                  .fold[Fetch](e => Fetch.Miss(Fetch.Miss.Why(e.value)), Fetch.Found(_))

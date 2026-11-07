@@ -16,14 +16,8 @@ import java.util.Locale
 object OpenContext:
   type Cite = Cite.T
   object Cite extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type Context = Context.T
-  object Context extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type Integer = Integer.T
-  object Integer extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type Key = Key.T
-  object Key extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type LicenceId = LicenceId.T
-  object LicenceId extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type ContextLabel = ContextLabel.T
+  object ContextLabel extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type Problem = Problem.T
   object Problem extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type Project = Project.T
@@ -39,54 +33,58 @@ object OpenContext:
   type Attributes = AttributesValue
   type AttributesValue = AttributesValue.T
   object AttributesValue extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type SearchUrlRows = SearchUrlRows.T
-  object SearchUrlRows extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
   val Attributes: com.histmersion.plugins.media.OpenContext.Attributes =
-    List("dc-terms-license", "dc-terms-spatial", "dc-terms-creator", "dc-terms-subject").mkString(",")
+    AttributesValue(List("dc-terms-license", "dc-terms-spatial", "dc-terms-creator", "dc-terms-subject").mkString(","))
 
   /** The record fields finer than a country: the context path below its first two levels. */
-  val Context = "context"
-  val Region = "region"
-  val Spatial = "dc-terms:spatial"
+  val Context: MediaItem.GeographyPart1 = MediaItem.GeographyPart1("context")
+  val Region: MediaItem.GeographyPart1 = MediaItem.GeographyPart1("region")
+  val Spatial: MediaItem.GeographyPart1 = MediaItem.GeographyPart1("dc-terms:spatial")
 
-  def searchUrl(api: com.histmersion.plugin.Plugin.Http.GetUrl, name: com.histmersion.plugin.CollectionQuery.Text, rows: com.histmersion.plugins.media.OpenContext.SearchUrlRows): com.histmersion.plugin.Plugin.Http.GetUrl =
-    s"${api.stripSuffix("/")}/query/.json?type=media&cat=oc-gen-image&q=${name.enc}&rows=${rows.max(1)}" +
-      s"&attributes=${Attributes.enc}&add-attribute-uris=1&response=${"metadata,uri-meta".enc}"
+  def searchUrl(api: CollectionSettings.ApiUrl, name: MediaPlace.Label, rows: CollectionSettings.Candidates): Plugin.Http.GetUrl =
+    Plugin.Http.GetUrl(
+      s"${api.value.stripSuffix("/")}/query/.json?type=media&cat=oc-gen-image&q=${name.value.enc}&rows=${rows.value.max(1)}" +
+        s"&attributes=${Attributes.value.enc}&add-attribute-uris=1&response=${"metadata,uri-meta".enc}"
+    )
 
-  def itemUrl(api: com.histmersion.plugin.Plugin.Http.GetUrl, uuid: com.histmersion.plugins.media.OpenContext.Uuid): com.histmersion.plugin.Plugin.Http.GetUrl = s"${api.stripSuffix("/")}/media/${uuid.enc}.json"
+  def itemUrl(api: CollectionSettings.ApiUrl, uuid: Uuid): Plugin.Http.GetUrl = Plugin.Http.GetUrl(s"${api.value.stripSuffix("/")}/media/${uuid.value.enc}.json")
 
-  private val Uuid = """.*/media/([0-9a-fA-F-]{36})/?$""".r
+  private val UuidPattern = """.*/media/([0-9a-fA-F-]{36})/?$""".r
 
   /** Pure: the uuid of a media URI (`http://opencontext.org/media/084e8977-…`). */
-  def uuidOf(uri: com.histmersion.plugin.Plugin.Http.GetUrl): Option[com.histmersion.plugins.media.OpenContext.Uuid] = uri.trim match
-    case Uuid(u) => Some(u.toLowerCase(Locale.ROOT))
-    case _       => None
+  def uuidOf(uri: Plugin.Http.GetUrl): Option[Uuid] = uri.value.trim match
+    case UuidPattern(u) => Some(Uuid(u.toLowerCase(Locale.ROOT)))
+    case _              => None
 
   private val HumanRemains = "human remains"
   private val Withheld = "human remains (Open Context flags them; not shown)"
 
   /** Pure: the short name of a licence label (`Attribution 4.0 International (CC BY 4.0)` → `CC BY 4.0`). */
-  def shortLicence(label: com.histmersion.plugin.Licence, id: com.histmersion.plugins.media.OpenContext.LicenceId): com.histmersion.plugin.Licence =
+  def shortLicence(label: Licence, id: Licence.Read.Id): Licence =
     """\(([^()]+)\)\s*$""".r
-      .findFirstMatchIn(label)
-      .map(_.group(1).trim)
-      .getOrElse(if label.trim.nonEmpty then label.trim else id)
+      .findFirstMatchIn(label.value)
+      .map(m => Licence(m.group(1).trim))
+      .getOrElse(if label.value.trim.nonEmpty then Licence(label.value.trim) else Licence(id.value))
 
   /** Pure: the records of a search answer, in its order. */
-  def records(json: Json, licences: LicenceReader): Either[com.histmersion.plugins.media.OpenContext.Problem, List[Either[com.histmersion.plugin.MediaItem.Key, MediaItem]]] =
+  def records(json: Json, licences: LicenceReader): Either[Problem, List[Either[Problem, MediaItem]]] =
     val c = json.hcursor
     c.downField("oc-api:has-results").focus.flatMap(_.asArray) match
       case Some(rows) => Right(rows.toList.map(record(_, licences)))
       // no results: Open Context leaves the list out
       case None if c.long("totalResults").isDefined => Right(Nil)
-      case None => Left(c.str("error").orElse(c.str("message")).getOrElse("no results in the answer"))
+      case None => Left(Problem(c.str("error").orElse(c.str("message")).getOrElse("no results in the answer")))
 
   /** Pure: one search record. Its rights are its own licence (or why it has none). */
-  def record(json: Json, licences: LicenceReader): Either[com.histmersion.plugins.media.OpenContext.Problem, MediaItem] =
+  def record(json: Json, licences: LicenceReader): Either[Problem, MediaItem] =
     val c = json.hcursor
-    c.str("uri").flatMap(uuidOf).orElse(c.str("href").flatMap(uuidOf)).toRight("no media uri").map { uuid =>
-      val title = c.str("label").getOrElse(uuid)
+    c.str("uri")
+      .flatMap(u => uuidOf(Plugin.Http.GetUrl(u)))
+      .orElse(c.str("href").flatMap(u => uuidOf(Plugin.Http.GetUrl(u))))
+      .toRight(Problem("no media uri"))
+      .map { uuid =>
+      val title = c.str("label").getOrElse(uuid.value)
       val context = c.str("context label").getOrElse("")
       val project = c.str("project label")
       val creators = c.strs("Creator")
@@ -95,41 +93,50 @@ object OpenContext:
       val page = c.str("href").getOrElse(s"https://opencontext.org/media/$uuid")
       val licUrl = c.strs("License [URI]").headOption
       val licLabel = c.strs("License").headOption.getOrElse("")
-      val rights: Either[com.histmersion.plugins.media.OpenContext.Problem, MediaRights] = licUrl match
-        case None    => Left("no licence on the record")
+      val rights: Either[MediaItem.RightsPart1, MediaRights] = licUrl match
+        case None    => Left(MediaItem.RightsPart1("no licence on the record"))
         case Some(u) =>
-          val lic = licences.readUrl(u)
-          if lic.family == Licence.Read.Unknown then Left(s"licence not readable ($u)")
+          val lic = licences.readUrl(LicenceReader.ReadUrlUrl(u))
+          if lic.family.value == Licence.Read.Unknown then Left(MediaItem.RightsPart1(s"licence not readable ($u)"))
           else
             Right(
               MediaRights(
                 Licence(u),
-                Some(u),
-                Option.when(creators.nonEmpty)(creators.mkString(", ")),
-                credit(title, context, creators, year, project, cite, shortLicence(licLabel, lic.id))
+                Some(MediaRights.LicenceUrl(u)),
+                Option.when(creators.nonEmpty)(MediaRights.Author(creators.mkString(", "))),
+                credit(
+                  MediaItem.Title(title),
+                  ContextLabel(context),
+                  creators.map(MediaRights.Author(_)),
+                  year.map(Year(_)),
+                  project.map(Project(_)),
+                  cite.map(Cite(_)),
+                  shortLicence(Licence(licLabel), lic.id)
+                )
               )
             )
       val segs = context.split("/").toList.map(_.trim).filter(_.nonEmpty)
       val (regions, deeper) = segs.splitAt(2)
       // the site and its named parts; excavation units (`I`, `Lot 2631`, `Trench 94`, `2631.1`) name no place
-      val geo = deeper.filterNot(unitSegment).reverse.map(Context -> _) ++ regions.reverse.map(Region -> _) ++
-        c.strs("Spatial Coverage").map(Spatial -> _)
-      val ids = c.strs("Spatial Coverage [URI]").flatMap(GazetteerUri.of).distinct
+      val geo = deeper.filterNot(d => unitSegment(Segment(d))).reverse.map(d => Context -> MediaItem.GeographyPart2(d)) ++
+        regions.reverse.map(d => Region -> MediaItem.GeographyPart2(d)) ++
+        c.strs("Spatial Coverage").map(d => Spatial -> MediaItem.GeographyPart2(d))
+      val ids = c.strs("Spatial Coverage [URI]").flatMap(u => GazetteerUri.of(GazetteerPlace.Id(u))).distinct
       val image = c.str("item category").forall(_.equalsIgnoreCase("Image media"))
       val withheld = Option.when(
         c.bool("oc-api:human-remains-related").contains(true) ||
           c.strs("Subject").exists(_.toLowerCase(Locale.ROOT).contains(HumanRemains))
-      )(Withheld)
+      )(MediaItem.Withheld(Withheld))
       val period = Period.range(num(c, "early bce/ce"), num(c, "late bce/ce"))
       val thumb = c.str("thumbnail").filter(_ => image)
       // the search names only the thumbnail; the stored rendition is the item's preview ([[item]])
       MediaItem(
-        uuid,
-        title,
-        page,
-        thumb,
+        MediaItem.Key(uuid.value),
+        MediaItem.Title(title),
+        MediaItem.PageUrl(page),
+        thumb.map(MediaItem.ImageUrl(_)),
         rights,
-        thumbUrl = thumb,
+        thumbUrl = thumb.map(MediaItem.ThumbUrl(_)),
         geography = geo,
         period = period,
         ids = ids,
@@ -182,12 +189,12 @@ object OpenContext:
     * (`2631.1`, `Trench 42`, `A`, `I`: the live map has a place called "I"), or one named by a unit word (`Locus none
     * provided`, `Area`, `Survey`, `Stray Finds`)?
     */
-  def unitSegment(seg: com.histmersion.plugins.media.OpenContext.Segment): Boolean =
-    val s = seg.trim
+  def unitSegment(seg: Segment): Boolean =
+    val s = seg.value.trim
     val first = s.split("\\s+").headOption.getOrElse("").toLowerCase(Locale.ROOT).stripSuffix(".")
     s.exists(_.isDigit) || s.length <= 2 || Roman.matches(s) || UnitWords(first)
 
-  private def num(c: ACursor, k: com.histmersion.plugins.media.OpenContext.Key): Option[com.histmersion.plugins.media.OpenContext.Integer] =
+  private def num(c: ACursor, k: String): Option[Long] =
     c.downField(k)
       .focus
       .flatMap(j => j.asNumber.map(_.toDouble).orElse(j.asString.flatMap(_.trim.toDoubleOption)))
@@ -198,7 +205,7 @@ object OpenContext:
     */
   def credit(
       title: com.histmersion.plugin.MediaItem.Title,
-      context: com.histmersion.plugins.media.OpenContext.Context,
+      context: ContextLabel,
       creators: List[com.histmersion.plugin.MediaRights.Author],
       year: Option[com.histmersion.plugins.media.OpenContext.Year],
       project: Option[com.histmersion.plugins.media.OpenContext.Project],
@@ -206,20 +213,22 @@ object OpenContext:
       licence: com.histmersion.plugin.Licence
   ): com.histmersion.plugin.MediaRights.Credit =
     val who = if creators.isEmpty then "" else creators.mkString(", ") + year.fold("")(y => s" ($y)") + ". "
-    val what = s"\"$title${if context.nonEmpty then s" from $context" else ""}\"."
-    (List(who + what) ++ project.map(p => s"In $p.") ++ List("Open Context.") ++ cite.map(_ + ".") :+ licence)
-      .mkString(" ")
+    val what = s"\"$title${if context.value.nonEmpty then s" from $context" else ""}\"."
+    MediaRights.Credit(
+      (List(who + what) ++ project.map(p => s"In $p.") ++ List("Open Context.") ++ cite.map(_.value + ".") :+ licence.value)
+        .mkString(" ")
+    )
 
   /** Pure: a record completed from its media item — the preview to store, the thumbnail, the original — with the
     * licence read AGAIN from the item: a missing or different licence refuses it.
     */
-  def item(json: Json, rec: MediaItem, licences: LicenceReader): Either[com.histmersion.plugins.media.OpenContext.Problem, MediaItem] =
+  def item(json: Json, rec: MediaItem, licences: LicenceReader): Either[Problem, MediaItem] =
     val c = json.hcursor
     val files = c.downField("oc-gen:has-files").focus.flatMap(_.asArray).toList.flatten.flatMap { f =>
       val h = f.hcursor
       for t <- h.str("type"); u <- h.str("id") yield t -> u
     }
-    def file(t: com.histmersion.plugin.CollectionFile.Format) = files.find(_._1 == t).map(_._2)
+    def file(t: String) = files.find(_._1 == t).map(_._2)
     val stated = c
       .downField("dc-terms:license")
       .focus
@@ -234,22 +243,22 @@ object OpenContext:
       .toList
       .flatten
       .flatMap(l => l.hcursor.str("label"))
-    if !c.str("category").forall(_ == "oc-gen:image") then Left(com.histmersion.plugins.media.OpenContext.Problem("not an image"))
-    else if subjects.exists(_.toLowerCase(Locale.ROOT).contains(HumanRemains)) then Left(Withheld)
+    if !c.str("category").forall(_ == "oc-gen:image") then Left(Problem("not an image"))
+    else if subjects.exists(_.toLowerCase(Locale.ROOT).contains(HumanRemains)) then Left(Problem(Withheld))
     else
-      rec.rights.flatMap { r =>
-        val searched = licences.readUrl(r.licence.value)
-        stated.headOption.map(licences.readUrl) match
-          case None                           => Left("no licence on the media item")
+      rec.rights.left.map(e => Problem(e.value)).flatMap { r =>
+        val searched = licences.readUrl(LicenceReader.ReadUrlUrl(r.licence.value))
+        stated.headOption.map(u => licences.readUrl(LicenceReader.ReadUrlUrl(u))) match
+          case None                           => Left(Problem("no licence on the media item"))
           case Some(l) if l.id != searched.id =>
-            Left(s"the media item's licence (${l.id}) differs from the search's (${searched.id})")
+            Left(Problem(s"the media item's licence (${l.id}) differs from the search's (${searched.id})"))
           case Some(_) =>
-            file(com.histmersion.plugin.CollectionFile.Format("oc-gen:preview")).orElse(file("oc-gen:thumbnail")).toRight("no preview file on the media item").map {
+            file("oc-gen:preview").orElse(file("oc-gen:thumbnail")).toRight(Problem("no preview file on the media item")).map {
               preview =>
                 rec.copy(
-                  imageUrl = Some(preview),
-                  thumbUrl = file("oc-gen:thumbnail").orElse(rec.thumbUrl),
-                  originalUrl = file("oc-gen:fullfile").orElse(file("oc-gen:ia-fullfille"))
+                  imageUrl = Some(MediaItem.ImageUrl(preview)),
+                  thumbUrl = file("oc-gen:thumbnail").map(MediaItem.ThumbUrl(_)).orElse(rec.thumbUrl),
+                  originalUrl = file("oc-gen:fullfile").orElse(file("oc-gen:ia-fullfille")).map(MediaItem.OriginalUrl(_))
                 )
             }
       }

@@ -9,17 +9,20 @@ final case class Dated(notBefore: Option[Year], beginBy: Option[Year], endFrom: 
 object Dated:
   def of(s: CatalogDating.Span): Dated =
     Dated(
-      s.notBefore.flatMap(JsonFields.year),
-      s.beginBy.flatMap(JsonFields.year),
-      s.endFrom.flatMap(JsonFields.year),
-      s.notAfter.flatMap(JsonFields.year)
+      s.notBefore.flatMap(year),
+      s.beginBy.flatMap(year),
+      s.endFrom.flatMap(year),
+      s.notAfter.flatMap(year)
     )
+
+  /** A year as the SPI states it; `None` beyond what a `Year` holds. */
+  def year(y: CatalogDating.HistoricalYear): Option[Year] = Option.when(y.value.isValidInt)(Year(y.value.toInt))
 
   /** The span an event states, as the dating rules read it. */
   def span(e: CatalogueEvent): CatalogDating.Span =
     CatalogDating.Span(
-      e.notBefore.map(_.value.toLong),
-      e.beginBy.map(_.value.toLong),
-      e.endFrom.map(_.value.toLong),
-      e.notAfter.map(_.value.toLong)
+      e.notBefore.map(y => CatalogDating.HistoricalYear(y.value.toLong)),
+      e.beginBy.map(y => CatalogDating.HistoricalYear(y.value.toLong)),
+      e.endFrom.map(y => CatalogDating.HistoricalYear(y.value.toLong)),
+      e.notAfter.map(y => CatalogDating.HistoricalYear(y.value.toLong))
     )

@@ -4,9 +4,8 @@ package com.histmersion.plugins.media
 import com.histmersion.plugin.Plugin
 final class MetPlugin extends MediaPlugin("media-met"):
   type Config = MediaPlugin.Config
-  def register(c: MediaPlugin.Config, ctx: Plugin.Context): Either[com.histmersion.plugins.media.MetPlugin.Problem, Unit] =
-    ctx.mediaCollections.add(com.histmersion.plugin.Registry.AddId("met"), MetCollection(c.media.met))
-
-object MetPlugin:
-  type Problem = Problem.T
-  object Problem extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  def register(c: MediaPlugin.Config, ctx: Plugin.Context): Either[Plugin.RegisterResultPart1, Unit] =
+    ctx.mediaCollections
+      .add(com.histmersion.plugin.Registry.AddId("met"), MetCollection(c.media.met))
+      .left
+      .map(e => Plugin.RegisterResultPart1(e.value))

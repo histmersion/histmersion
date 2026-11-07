@@ -31,32 +31,32 @@ object AnthropicRequest:
     messages(r.messages).map { msgs =>
       val tools = Option.when(r.tools.nonEmpty)(
         Json.fromValues(r.tools.map { t =>
-          val raw = parse(t.inputSchema).getOrElse(Json.obj())
+          val raw = parse(t.inputSchema.value).getOrElse(Json.obj())
           Json.obj(
-            "name" -> Json.fromString(t.name),
-            "description" -> Json.fromString(t.description),
+            "name" -> Json.fromString(t.name.value),
+            "description" -> Json.fromString(t.description.value),
             "input_schema" -> SchemaJson(raw).objectTyped.json
           )
         })
       )
-      val schema = r.answerSchemaRendered.orElse(r.answerSchema).flatMap(s => parse(s).toOption)
+      val schema = r.answerSchemaRendered.map(_.value).orElse(r.answerSchema.map(_.value)).flatMap(s => parse(s).toOption)
       val output = schema.map(s =>
         Json.obj(
           "format" -> Json.obj("type" -> Json.fromString("json_schema"), "schema" -> SchemaJson(s).closed.json)
         )
       )
       val fields = List(
-        "model" -> Some(Json.fromString(r.model)),
+        "model" -> Some(Json.fromString(r.model.value)),
         "messages" -> Some(Json.fromValues(msgs)),
-        "system" -> Some(Json.fromString(r.system)),
-        "max_tokens" -> Some(Json.fromInt(if (r.maxTokens).value > 0 then r.maxTokens else DefaultMaxTokens)),
+        "system" -> Some(Json.fromString(r.system.value)),
+        "max_tokens" -> Some(Json.fromInt(if r.maxTokens.value > 0 then r.maxTokens.value else DefaultMaxTokens)),
         "tools" -> tools,
         "output_config" -> output
       ).collect { case (k, Some(v)) => k -> v }
       AnthropicRequest(Json.fromFields(fields))
     }
 
-  private def text(t: com.histmersion.plugin.AiMessage.User.Text): Json = Json.obj("text" -> Json.fromString((t).value), "type" -> Json.fromString("text"))
+  private def text(t: String): Json = Json.obj("text" -> Json.fromString(t), "type" -> Json.fromString("text"))
 
   private def message(role: com.histmersion.plugins.ai.AnthropicRequest.Role, content: List[Json]): Json =
     Json.obj("role" -> Json.fromString((role).value), "content" -> Json.fromValues(content))
@@ -65,11 +65,11 @@ object AnthropicRequest:
     @annotation.tailrec
     def go(rest: List[AiMessage], acc: List[Json]): Either[com.histmersion.plugins.ai.AnthropicRequest.Problem, List[Json]] = rest match
       case Nil                                      => Right(acc.reverse)
-      case AiMessage.User(t) :: tail                => go(tail, message(_root_.com.histmersion.plugins.ai.AnthropicRequest.Role("user"), List(text(t))) :: acc)
+      case AiMessage.User(t) :: tail                => go(tail, message(_root_.com.histmersion.plugins.ai.AnthropicRequest.Role("user"), List(text(t.value))) :: acc)
       case AiMessage.ToolResult(id, _, out) :: tail =>
         val block = Json.obj(
-          "tool_use_id" -> Json.fromString(id),
-          "content" -> Json.fromString(out),
+          "tool_use_id" -> Json.fromString(id.value),
+          "content" -> Json.fromString(out.value),
           "type" -> Json.fromString("tool_result")
         )
         go(tail, message(_root_.com.histmersion.plugins.ai.AnthropicRequest.Role("user"), List(block)) :: acc)
@@ -77,7 +77,7 @@ object AnthropicRequest:
         toolUses(calls.map(c => (c.id, c.tool, c.input)), Nil) match
           case Left(why)   => Left(why)
           case Right(uses) =>
-            go(tail, message(_root_.com.histmersion.plugins.ai.AnthropicRequest.Role("assistant"), (if t.nonEmpty then List(text(t)) else Nil) ++ uses) :: acc)
+            go(tail, message(_root_.com.histmersion.plugins.ai.AnthropicRequest.Role("assistant"), (if t.value.nonEmpty then List(text(t.value)) else Nil) ++ uses) :: acc)
     go(ms, Nil).map(dropNulls)
 
   @annotation.tailrec

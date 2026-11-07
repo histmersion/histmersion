@@ -5,7 +5,7 @@ import com.histmersion.plugin.Plugin
 final class ArxivPlugin extends FetcherPlugin("arxiv"):
   type Config = HostAcquire
   def register(c: HostAcquire, ctx: Plugin.Context): Either[com.histmersion.plugins.fetchers.ArxivPlugin.Problem, Unit] =
-    ctx.sourceFetchers.add(com.histmersion.plugin.Registry.AddId("arxiv"), ArxivFetcher(c.acquire, () => ctx.http))
+    ctx.sourceFetchers.add(com.histmersion.plugin.Registry.AddId("arxiv"), ArxivFetcher(c.acquire, () => ctx.http)).left.map(e => ArxivPlugin.Problem(e.value))
 
 object ArxivPlugin:
   type Problem = Problem.T

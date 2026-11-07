@@ -5,7 +5,7 @@ import com.histmersion.plugin.Plugin
 final class NoaaPlugin extends EventsPlugin("events-noaa"):
   type Config = NoaaConfig
   def register(c: NoaaConfig, ctx: Plugin.Context): Either[com.histmersion.plugins.events.NoaaPlugin.Problem, Unit] =
-    ctx.eventCatalogues.add(com.histmersion.plugin.Registry.AddId("noaa"), NoaaCatalogue(c.events.noaa))
+    ctx.eventCatalogues.add(com.histmersion.plugin.Registry.AddId("noaa"), NoaaCatalogue(c.events.noaa)).left.map(e => NoaaPlugin.Problem(e.value))
 
 object NoaaPlugin:
   type Problem = Problem.T

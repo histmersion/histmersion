@@ -13,11 +13,16 @@ import com.histmersion.plugin.*
   *   its settings' path (`media.met`), named when it is switched off
   */
 abstract class MuseumCollection(conf: CollectionSettings, provider: MuseumCollection.Provider, key: MuseumCollection.Key) extends MediaCollection:
-  override def perPlace: Int = conf.perPlace
-  override def requestIntervalMs: Int = conf.requestIntervalMs
-  override def refusalBackoffMs: List[Long] = conf.refusalBackoffMs
-  override def check: Either[String, Unit] =
-    Either.cond(conf.enabled, (), s"$provider is switched off ($key.enabled = false)")
+  override def perPlace: com.histmersion.plugin.MediaCollection.PerPlaceResult = com.histmersion.plugin.MediaCollection.PerPlaceResult(conf.perPlace.value)
+  override def requestIntervalMs: com.histmersion.plugin.MediaCollection.RequestIntervalMsResult = com.histmersion.plugin.MediaCollection.RequestIntervalMsResult(conf.requestIntervalMs.value)
+  override def refusalBackoffMs: List[com.histmersion.plugin.MediaCollection.RefusalBackoffMsResult] =
+    conf.refusalBackoffMs.map(ms => com.histmersion.plugin.MediaCollection.RefusalBackoffMsResult(ms.value))
+  override def check: Either[com.histmersion.plugin.MediaCollection.CheckResultPart1, Unit] =
+    Either.cond(
+      conf.enabled.value,
+      (),
+      com.histmersion.plugin.MediaCollection.CheckResultPart1(s"${provider.value} is switched off (${key.value}.enabled = false)")
+    )
 
 object MuseumCollection:
   type Provider = Provider.T

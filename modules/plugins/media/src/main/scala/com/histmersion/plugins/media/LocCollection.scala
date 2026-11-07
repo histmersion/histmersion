@@ -15,77 +15,72 @@ final class LocCollection(conf: CollectionSettings, thumbPx: LocCollection.Thumb
     extends MuseumCollection(conf, com.histmersion.plugins.media.MuseumCollection.Provider("Library of Congress"), com.histmersion.plugins.media.MuseumCollection.Key("media.loc")):
   val title = com.histmersion.plugin.MediaCollection.TitleResult("Library of Congress maps")
   override val description =
-    "Historical maps from the Library of Congress, Geography and Map Division: public domain only (rights " +
-      "'No known restrictions' and dated by media.loc.max-year), linked as role map to the places their " +
-      "locations name"
-  val role = MediaCollection.Map
-  override def matchRule = MediaMatchRule.Map(Year(conf.maxYear))
+    MediaCollection.DescriptionResult(
+      "Historical maps from the Library of Congress, Geography and Map Division: public domain only (rights " +
+        "'No known restrictions' and dated by media.loc.max-year), linked as role map to the places their " +
+        "locations name"
+    )
+  val role = MediaCollection.RoleResult(MediaCollection.Map)
+  override def matchRule = MediaMatchRule.Map(Year(conf.maxYear.value))
 
-  private def explain(e: com.histmersion.plugins.media.LocCollection.Problem): com.histmersion.plugins.media.LocCollection.Explanation =
+  private def explain(e: String): String =
     if e.contains("HTTP 403") then
       s"$e — loc.gov refuses automated clients with a bot challenge at the moment; not worked around"
     else e
 
-  def search(place: MediaPlace, http: Plugin.Http): Either[com.histmersion.plugins.media.LocCollection.Problem, List[Either[com.histmersion.plugin.MediaItem.Key, MediaItem]]] =
+  def search(place: MediaPlace, http: Plugin.Http): Either[MediaCollection.SearchResultPart1, List[Either[MediaCollection.SearchResultPart2Part1, MediaItem]]] =
     http
       .askJson(LocCollection.searchUrl(conf.apiUrl, place.label, conf.candidates))
-      .flatMap(LocCollection.results)
+      .flatMap(j => LocCollection.results(j).left.map(_.value))
       .left
       .map(explain)
       .map(
-        _.take(conf.candidates.max(0)).map(id =>
+        _.take(conf.candidates.value.max(0)).map(id =>
           http
             .askJson(LocCollection.itemUrl(conf.apiUrl, id))
-            .flatMap(LocCollection.record(_, conf.apiUrl, conf.maxYear, conf.displayPx, thumbPx))
+            .flatMap(j => LocCollection.record(j, conf.apiUrl, conf.maxYear, conf.displayPx, thumbPx).left.map(_.value))
             .left
-            .map(e => s"item $id: ${explain(e)}")
+            .map(e => MediaCollection.SearchResultPart2Part1(s"item $id: ${explain(e)}"))
         )
       )
+      .left
+      .map(MediaCollection.SearchResultPart1(_))
 
 object LocCollection:
   type Date = Date.T
   object Date extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type Explanation = Explanation.T
-  object Explanation extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type Problem = Problem.T
   object Problem extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
   type ThumbPx = com.histmersion.plugins.media.MediaSettings.ThumbPx
   val ThumbPx: _root_.com.histmersion.plugins.media.MediaSettings.ThumbPx.type = _root_.com.histmersion.plugins.media.MediaSettings.ThumbPx
 
-  type SearchUrlLimit = SearchUrlLimit.T
-  object SearchUrlLimit extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type ResultsResultPart2 = ResultsResultPart2.T
-  object ResultsResultPart2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type RecordMaxYear = RecordMaxYear.T
-  object RecordMaxYear extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  def searchUrl(base: CollectionSettings.ApiUrl, name: MediaPlace.Label, limit: CollectionSettings.Candidates): Plugin.Http.GetUrl =
+    Plugin.Http.GetUrl(s"${base.value.stripSuffix("/")}/maps/?q=${name.value.enc}&fo=json&c=${limit.value.max(1)}&fa=${"partof:geography and map division".enc}")
 
-  def searchUrl(base: com.histmersion.plugin.Plugin.Http.GetUrl, name: com.histmersion.plugin.CollectionQuery.Text, limit: com.histmersion.plugins.media.LocCollection.SearchUrlLimit): com.histmersion.plugin.Plugin.Http.GetUrl =
-    s"${base.stripSuffix("/")}/maps/?q=${name.enc}&fo=json&c=${limit.max(1)}&fa=${"partof:geography and map division".enc}"
-
-  def itemUrl(base: com.histmersion.plugin.Plugin.Http.GetUrl, id: com.histmersion.plugin.MediaItem.Key): com.histmersion.plugin.Plugin.Http.GetUrl = s"${base.stripSuffix("/")}/item/${id.enc}/?fo=json"
+  def itemUrl(base: CollectionSettings.ApiUrl, id: MediaItem.Key): Plugin.Http.GetUrl = Plugin.Http.GetUrl(s"${base.value.stripSuffix("/")}/item/${id.value.enc}/?fo=json")
 
   private val ItemId = """.*/item/([^/?#]+)/?.*""".r
 
   /** Pure: the item id of a result's `id`/`url` (`http://www.loc.gov/item/2007627513/` → `2007627513`). */
-  def itemId(url: com.histmersion.plugin.Plugin.Http.GetUrl): Option[com.histmersion.plugin.MediaItem.Key] = url match
-    case ItemId(id) => Some(id)
+  def itemId(url: Plugin.Http.GetUrl): Option[MediaItem.Key] = url.value match
+    case ItemId(id) => Some(MediaItem.Key(id))
     case _          => None
 
   /** Pure: the item ids of a search answer, in its order. */
-  def results(json: Json): Either[com.histmersion.plugins.media.LocCollection.Problem, List[com.histmersion.plugins.media.LocCollection.ResultsResultPart2]] =
+  def results(json: Json): Either[Problem, List[MediaItem.Key]] =
     val c = json.hcursor
     c.downField("results").focus.flatMap(_.asArray) match
-      case None     => Left(com.histmersion.plugins.media.LocCollection.Problem("no results in the answer"))
+      case None     => Left(Problem("no results in the answer"))
       case Some(rs) =>
         Right(rs.toList.flatMap { r =>
           val h = r.hcursor
-          (h.str("id").toList ++ h.str("url").toList).flatMap(itemId).headOption
+          (h.str("id").toList ++ h.str("url").toList).flatMap(u => itemId(Plugin.Http.GetUrl(u))).headOption
         }.distinct)
 
   /** Pure: the years in a date string (`1890`, `[ca. 1880]`, `1906-1910` → its range). */
-  def yearsOf(date: com.histmersion.plugins.media.LocCollection.Date): Option[Period] =
-    val ys = """(?<![0-9])([0-9]{4})(?![0-9])""".r.findAllMatchIn(date).map(_.group(1).toLong).toList
+  def yearsOf(date: Date): Option[Period] =
+    val ys = """(?<![0-9])([0-9]{4})(?![0-9])""".r.findAllMatchIn(date.value).map(_.group(1).toLong).toList
     ys.headOption.flatMap(_ => Period.span(ys.min, ys.max))
 
   private val NoKnown = "no known restrictions"
@@ -93,23 +88,23 @@ object LocCollection:
   /** Pure: one item answer. `maxYear` is the public-domain boundary; `displayPx`/`thumbPx` choose among the item's JPEG
     * files (the largest no wider than display, the smallest no narrower than thumb).
     */
-  def record(json: Json, base: com.histmersion.plugin.Plugin.Http.GetUrl, maxYear: com.histmersion.plugins.media.LocCollection.RecordMaxYear, displayPx: com.histmersion.plugins.media.MediaSettings.DisplayPx, thumbPx: com.histmersion.plugins.media.MediaSettings.ThumbPx): Either[com.histmersion.plugins.media.LocCollection.Problem, MediaItem] =
+  def record(json: Json, base: CollectionSettings.ApiUrl, maxYear: CollectionSettings.MaxYear, displayPx: CollectionSettings.DisplayPx, thumbPx: com.histmersion.plugins.media.MediaSettings.ThumbPx): Either[Problem, MediaItem] =
     val item = json.hcursor.downField("item")
-    if item.focus.isEmpty then Left(com.histmersion.plugins.media.LocCollection.Problem("no item in the answer"))
+    if item.focus.isEmpty then Left(Problem("no item in the answer"))
     else
       val c = item
       val id = c
         .str("id")
-        .flatMap(itemId)
-        .orElse(c.str("url").flatMap(itemId))
-        .orElse(c.str("library_of_congress_control_number"))
-      id.toRight("no item id").map { key =>
-        val title = c.str("title").getOrElse(key)
+        .flatMap(u => itemId(Plugin.Http.GetUrl(u)))
+        .orElse(c.str("url").flatMap(u => itemId(Plugin.Http.GetUrl(u))))
+        .orElse(c.str("library_of_congress_control_number").map(MediaItem.Key(_)))
+      id.toRight(Problem("no item id")).map { key =>
+        val title = c.str("title").getOrElse(key.value)
         val advisory = (c.strs("rights_advisory") ++ c.strs("rights")).mkString(" ")
         val date = c.str("date").orElse(c.strs("dates").headOption)
-        val period = date.flatMap(yearsOf)
+        val period = date.flatMap(d => yearsOf(Date(d)))
         val creator = c.strs("contributor_names").headOption.orElse(c.strs("creator").headOption)
-        val page = s"${base.stripSuffix("/")}/item/$key/"
+        val page = s"${base.value.stripSuffix("/")}/item/${key.value}/"
         val credit =
           (List(Some(title), creator).flatten :+ "Library of Congress, Geography and Map Division").mkString(", ")
         val files = json.hcursor
@@ -131,27 +126,27 @@ object LocCollection:
             yield (u, h.long("width").getOrElse(0L))
           }
         val display =
-          files.filter(_._2 <= displayPx).sortBy(-_._2).headOption.orElse(files.sortBy(_._2).headOption).map(_._1)
-        val thumb = files.filter(_._2 >= thumbPx).sortBy(_._2).headOption.map(_._1)
+          files.filter(_._2 <= displayPx.value).sortBy(-_._2).headOption.orElse(files.sortBy(_._2).headOption).map(_._1)
+        val thumb = files.filter(_._2 >= thumbPx.value).sortBy(_._2).headOption.map(_._1)
         val original = files.sortBy(-_._2).headOption.map(_._1)
-        val rights =
+        val rights: Either[MediaItem.RightsPart1, MediaRights] =
           if !advisory.toLowerCase(Locale.ROOT).contains(NoKnown) then
-            Left(if advisory.isEmpty then "no rights statement" else "rights not \"No known restrictions\"")
-          else if period.isEmpty then Left("no date on the map")
-          else if period.exists(_.end.value > maxYear) then Left(s"made after $maxYear (may be in copyright)")
+            Left(MediaItem.RightsPart1(if advisory.isEmpty then "no rights statement" else "rights not \"No known restrictions\""))
+          else if period.isEmpty then Left(MediaItem.RightsPart1("no date on the map"))
+          else if period.exists(_.end.value > maxYear.value) then Left(MediaItem.RightsPart1(s"made after ${maxYear.value} (may be in copyright)"))
           else
             Right(
-              MediaRights.publicDomain(creator, credit, Some("https://www.loc.gov/legal/understanding-copyright/"))
+              MediaRights.publicDomain(creator.map(MediaRights.Author(_)), MediaRights.Credit(credit), Some(MediaRights.LicenceUrl("https://www.loc.gov/legal/understanding-copyright/")))
             )
         MediaItem(
           key,
-          title,
-          page,
-          display,
+          MediaItem.Title(title),
+          MediaItem.PageUrl(page),
+          display.map(MediaItem.ImageUrl(_)),
           rights,
-          thumbUrl = thumb,
-          originalUrl = original,
-          geography = c.strs("location").map("location" -> _),
+          thumbUrl = thumb.map(MediaItem.ThumbUrl(_)),
+          originalUrl = original.map(MediaItem.OriginalUrl(_)),
+          geography = c.strs("location").map(l => MediaItem.GeographyPart1("location") -> MediaItem.GeographyPart2(l)),
           period = period
         )
       }

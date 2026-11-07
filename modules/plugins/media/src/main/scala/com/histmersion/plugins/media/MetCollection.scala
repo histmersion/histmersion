@@ -12,22 +12,24 @@ import io.circe.Json
 final class MetCollection(conf: CollectionSettings)
     extends MuseumCollection(conf, com.histmersion.plugins.media.MuseumCollection.Provider("The Metropolitan Museum of Art"), com.histmersion.plugins.media.MuseumCollection.Key("media.met")):
   val title = com.histmersion.plugin.MediaCollection.TitleResult("Met objects")
-  override val description = "The Metropolitan Museum of Art (CC0, isPublicDomain)" + MetCollection.Museum
-  val role = MediaCollection.Object
+  override val description = MediaCollection.DescriptionResult("The Metropolitan Museum of Art (CC0, isPublicDomain)" + MetCollection.Museum)
+  val role = MediaCollection.RoleResult(MediaCollection.Object)
 
-  def search(place: MediaPlace, http: Plugin.Http): Either[com.histmersion.plugins.media.MetCollection.Problem, List[Either[com.histmersion.plugin.MediaItem.Key, MediaItem]]] =
+  def search(place: MediaPlace, http: Plugin.Http): Either[MediaCollection.SearchResultPart1, List[Either[MediaCollection.SearchResultPart2Part1, MediaItem]]] =
     http
       .askJson(MetCollection.searchUrl(conf.apiUrl, place.label, conf.candidates))
-      .flatMap(MetCollection.ids)
+      .flatMap(j => MetCollection.ids(j).left.map(_.value))
       .map(
-        _.take(conf.candidates.max(0)).map(id =>
+        _.take(conf.candidates.value.max(0)).map(id =>
           http
             .askJson(MetCollection.objectUrl(conf.apiUrl, id))
-            .flatMap(MetCollection.record)
+            .flatMap(j => MetCollection.record(j).left.map(_.value))
             .left
-            .map(e => s"object $id: $e")
+            .map(e => MediaCollection.SearchResultPart2Part1(s"object $id: $e"))
         )
       )
+      .left
+      .map(MediaCollection.SearchResultPart1(_))
 
 object MetCollection:
   type ObjectId = ObjectId.T
@@ -36,62 +38,57 @@ object MetCollection:
   object Problem extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type Year = Year.T
   object Year extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  /** What every museum's description adds: what it takes and how a dry run shows it. */
-  type SearchUrlLimit = SearchUrlLimit.T
-  object SearchUrlLimit extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type GeographyFields = GeographyFieldsValue
-  type GeographyFieldsValue = GeographyFieldsValue.T
-  object GeographyFieldsValue extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
+  /** What every museum's description adds: what it takes and how a dry run shows it. */
   val Museum = " — Open Access objects only (as the record itself says), tied to a place on the map " +
     "when the object's most specific place field names it (and no other) and its dates overlap the place's; " +
     "--dry-run lists the matches with their reasons"
 
   /** Pure: the search for objects with images from a place: `q` and `geoLocation` both the name. */
-  def searchUrl(api: com.histmersion.plugin.Plugin.Http.GetUrl, name: com.histmersion.plugin.CollectionQuery.Text, limit: com.histmersion.plugins.media.MetCollection.SearchUrlLimit): com.histmersion.plugin.Plugin.Http.GetUrl =
-    s"${api.stripSuffix("/")}/v1.1/search?hasImages=true&geoLocation=${name.enc}&q=${name.enc}&limit=${limit.max(1)}"
+  def searchUrl(api: CollectionSettings.ApiUrl, name: MediaPlace.Label, limit: CollectionSettings.Candidates): Plugin.Http.GetUrl =
+    Plugin.Http.GetUrl(s"${api.value.stripSuffix("/")}/v1.1/search?hasImages=true&geoLocation=${name.value.enc}&q=${name.value.enc}&limit=${limit.value.max(1)}")
 
-  def objectUrl(api: com.histmersion.plugin.Plugin.Http.GetUrl, id: com.histmersion.plugins.media.MetCollection.ObjectId): com.histmersion.plugin.Plugin.Http.GetUrl = s"${api.stripSuffix("/")}/v1/objects/$id"
+  def objectUrl(api: CollectionSettings.ApiUrl, id: ObjectId): Plugin.Http.GetUrl = Plugin.Http.GetUrl(s"${api.value.stripSuffix("/")}/v1/objects/$id")
 
   /** Pure: the object ids of a search answer (`objectIDs` may be `null` when nothing matched). */
-  def ids(json: Json): Either[com.histmersion.plugins.media.MetCollection.Problem, List[com.histmersion.plugins.media.MetCollection.ObjectId]] =
+  def ids(json: Json): Either[Problem, List[ObjectId]] =
     val c = json.hcursor
     c.str("message")
       .filter(_ => c.downField("objectIDs").focus.isEmpty)
-      .map(Left(_))
+      .map(m => Left(Problem(m)))
       .getOrElse(
-        Right(c.downField("objectIDs").focus.flatMap(_.asArray).toList.flatten.flatMap(_.asNumber.flatMap(_.toLong)))
+        Right(c.downField("objectIDs").focus.flatMap(_.asArray).toList.flatten.flatMap(_.asNumber.flatMap(_.toLong)).map(ObjectId(_)))
       )
 
   /** Pure: astronomical year → the corpus' signed year (0 → 1 BCE = -1, -1399 → -1400). */
-  def year(astronomical: com.histmersion.plugins.media.MetCollection.Year): com.histmersion.plugins.media.MetCollection.Year = if astronomical <= 0 then astronomical - 1 else astronomical
+  def year(astronomical: Year): Year = if astronomical.value <= 0 then Year(astronomical.value - 1) else astronomical
 
   /** The geography fields, most specific first. */
-  val GeographyFields: List[com.histmersion.plugins.media.MetCollection.GeographyFields] =
-    List(com.histmersion.plugins.media.MetCollection.GeographyFieldsValue("excavation"), com.histmersion.plugins.media.MetCollection.GeographyFieldsValue("locus"), com.histmersion.plugins.media.MetCollection.GeographyFieldsValue("locale"), com.histmersion.plugins.media.MetCollection.GeographyFieldsValue("city"), com.histmersion.plugins.media.MetCollection.GeographyFieldsValue("county"), com.histmersion.plugins.media.MetCollection.GeographyFieldsValue("state"), com.histmersion.plugins.media.MetCollection.GeographyFieldsValue("subregion"), com.histmersion.plugins.media.MetCollection.GeographyFieldsValue("region"), com.histmersion.plugins.media.MetCollection.GeographyFieldsValue("river"), com.histmersion.plugins.media.MetCollection.GeographyFieldsValue("country"))
+  val GeographyFields: List[MediaItem.GeographyPart1] =
+    List("excavation", "locus", "locale", "city", "county", "state", "subregion", "region", "river", "country").map(MediaItem.GeographyPart1(_))
 
   /** Pure: one object. Not public domain → its rights are a `Left`. */
-  def record(json: Json): Either[com.histmersion.plugins.media.MetCollection.Problem, MediaItem] =
+  def record(json: Json): Either[Problem, MediaItem] =
     val c = json.hcursor
-    c.long("objectID").toRight(c.str("message").getOrElse("no objectID")).map { id =>
+    c.long("objectID").toRight(Problem(c.str("message").getOrElse("no objectID"))).map { id =>
       val title = c.str("title").orElse(c.str("objectName")).getOrElse(s"Object $id")
       val artist = c.str("artistDisplayName")
       val page = c.str("objectURL").getOrElse(s"https://www.metmuseum.org/art/collection/search/$id")
       val credit = (List(Some(title), artist).flatten :+ "The Metropolitan Museum of Art" :+ "CC0").mkString(", ")
-      val rights =
-        if c.bool("isPublicDomain").contains(true) then Right(MediaRights.cc0(artist, credit))
-        else Left("not Open Access (isPublicDomain is false)")
+      val rights: Either[MediaItem.RightsPart1, MediaRights] =
+        if c.bool("isPublicDomain").contains(true) then Right(MediaRights.cc0(artist.map(MediaRights.Author(_)), MediaRights.Credit(credit)))
+        else Left(MediaItem.RightsPart1("not Open Access (isPublicDomain is false)"))
       val period = Period
-        .range(c.long("objectBeginDate").map(year), c.long("objectEndDate").map(year))
-        .filterNot(_ == Period.point(Year(-1)))
+        .range(c.long("objectBeginDate").map(d => year(Year(d)).value), c.long("objectEndDate").map(d => year(Year(d)).value))
+        .filterNot(_ == Period.point(com.histmersion.plugin.Year(-1)))
       MediaItem(
-        id.toString,
-        title,
-        page,
-        c.str("primaryImageSmall").orElse(c.str("primaryImage")),
+        MediaItem.Key(id.toString),
+        MediaItem.Title(title),
+        MediaItem.PageUrl(page),
+        c.str("primaryImageSmall").orElse(c.str("primaryImage")).map(MediaItem.ImageUrl(_)),
         rights,
-        originalUrl = c.str("primaryImage"),
-        geography = GeographyFields.flatMap(f => c.str(f).map(f -> _)),
+        originalUrl = c.str("primaryImage").map(MediaItem.OriginalUrl(_)),
+        geography = GeographyFields.flatMap(f => c.str(f.value).map(v => f -> MediaItem.GeographyPart2(v))),
         period = period
       )
     }
