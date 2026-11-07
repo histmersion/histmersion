@@ -311,8 +311,8 @@ class EventCatalogRepoSuite extends com.histmersion.db.DbSuite:
         com.histmersion.api.catalogue.Attestation.TargetType(AttestationTarget.Event),
         com.histmersion.api.catalogue.Attestation.TargetId("zztest_b"),
         quote = Some(com.histmersion.api.catalogue.Attestation.Quote("Zqecian eruption")),
-        charStart = Some(10),
-        charEnd = Some(26)
+        charStart = Some(com.histmersion.api.catalogue.Attestation.CharStart(10)),
+        charEnd = Some(com.histmersion.api.catalogue.Attestation.CharEnd(26))
       )
     )
     assertEquals(EventFixtures.tierAndNames(ds, BEventRow.Id("zztest_b")).map(_._1), Some(EventTier.Attested))

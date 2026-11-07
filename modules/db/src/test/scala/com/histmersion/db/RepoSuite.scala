@@ -62,7 +62,7 @@ class RepoSuite extends com.histmersion.db.DbSuite:
 
   test("upsert → get round-trip, int8range bounds inclusive"):
     SourceFixtures.upsert(ds, src, AppConfig.load().limits.chunkChars.value)
-    val (d, fs) = SourceFixtures.get(ds, "zz_test_source").get
+    val (d, fs) = SourceFixtures.get(ds, com.histmersion.domain.library.Citekey("zz_test_source")).get
     assertEquals((d.periodStart, d.periodEnd), (Some(-2000L), Some(-1500L)))
     assertEquals(d.authors, List("A", "B"))
     assertEquals(fs.head.lon, Some(32.0))
@@ -70,14 +70,14 @@ class RepoSuite extends com.histmersion.db.DbSuite:
 
   test("findingsFor (the map feed): period overlap + bbox"):
     SourceFixtures.upsert(ds, src, AppConfig.load().limits.chunkChars.value)
-    val box = Filter(bbox = Some(BBox(Longitude(30.0), Latitude(38.0), Longitude(34.0), Latitude(40.0))), limit = 10)
+    val box = Filter(bbox = Some(BBox(Longitude(30.0), Latitude(38.0), Longitude(34.0), Latitude(40.0))), limit = com.histmersion.api.library.Filter.Limit(10))
     val hit = FindingFixtures.findingsFor(ds, box.modify(_.period).setTo(Some(Period(Year(-1750), Year(-1750)))))
     val miss = FindingFixtures.findingsFor(ds, box.modify(_.period).setTo(Some(Period(Year(-1000), Year(-900)))))
     assert(hit.exists(_.citekey.value == "zz_test_source")); assert(!miss.exists(_.citekey.value == "zz_test_source"))
 
   test("the map feed says what each finding's source is (core.SourceKinds): its DOI, else its provenance"):
     SourceFixtures.upsert(ds, src.modify(_.doi).setTo(Some("10.1007/978-3-030-12345-6_7")), AppConfig.load().limits.chunkChars.value)
-    val box = Filter(bbox = Some(BBox(Longitude(30.0), Latitude(38.0), Longitude(34.0), Latitude(40.0))), period = Some(Period(com.histmersion.api.catalogue.Year(-1750), com.histmersion.api.catalogue.Year(-1750))), limit = 10)
+    val box = Filter(bbox = Some(BBox(Longitude(30.0), Latitude(38.0), Longitude(34.0), Latitude(40.0))), period = Some(Period(com.histmersion.api.catalogue.Year(-1750), com.histmersion.api.catalogue.Year(-1750))), limit = com.histmersion.api.library.Filter.Limit(10))
     def kind = FindingFixtures.findingsFor(ds, box).find(_.citekey.value == "zz_test_source").flatMap(_.sourceKind)
     assertEquals(kind, Some(Source.Kinds.Chapter))
     SourceFixtures.upsert(ds, src.modify(_.doi).setTo(None).modify(_.provenance).setTo(Some("calibre")), AppConfig.load().limits.chunkChars.value)
@@ -89,6 +89,6 @@ class RepoSuite extends com.histmersion.db.DbSuite:
     SourceFixtures.upsert(ds, src, AppConfig.load().limits.chunkChars.value)
     assert(
       CitationFixtures
-        .neighbors(ds, "zz_test_source")
+        .neighbors(ds, com.histmersion.domain.library.Citekey("zz_test_source"))
         .exists(n => n.direction.value == "out" && n.citekey.value == "zz_other" && n.target == NeighborTarget.Unresolved)
     )

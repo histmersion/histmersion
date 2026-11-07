@@ -87,7 +87,7 @@ class EdgeRepoSuite extends com.histmersion.db.DbSuite:
       Vector((slug, NeighborTarget.Article, Some("A topic")))
     )
     // `kinds` narrows every branch
-    assertEquals(CitationFixtures.neighbors(ds, a, List("refutes")), Vector.empty)
+    assertEquals(CitationFixtures.neighbors(ds, a, List(com.histmersion.domain.library.Edge.Kind.Wire("refutes"))), Vector.empty)
 
   test("edges/resolve promotes a unique short form and leaves an ambiguous one parked"):
     val a = s"${Prefix}a2020_x"
@@ -105,12 +105,12 @@ class EdgeRepoSuite extends com.histmersion.db.DbSuite:
     List(b, c, d).foreach(k => put(source(k)))
     put(source(a, edges = List(Edge(com.histmersion.api.library.Citekey(a), com.histmersion.api.library.Citekey(b), com.histmersion.api.library.Edge.Kind("references")), Edge(com.histmersion.api.library.Citekey(a), com.histmersion.api.library.Citekey("not_a_source_topic"), com.histmersion.api.library.Edge.Kind("references")))))
     put(source(c, edges = List(Edge(com.histmersion.api.library.Citekey(c), com.histmersion.api.library.Citekey(a), com.histmersion.api.library.Edge.Kind("challenges")), Edge(com.histmersion.api.library.Citekey(c), com.histmersion.api.library.Citekey(d), com.histmersion.api.library.Edge.Kind("references")))))
-    val g1 = CitationFixtures.graph(ds, a, 1)
+    val g1 = CitationFixtures.graph(ds, a, com.histmersion.api.library.Source.Graph.Depth(1))
     assertEquals(g1.nodes.map(_.id).toSet, Set(a, b, c))
     assertEquals(g1.links.map(l => (l.source, l.target)).toSet, Set(a -> b, c -> a))
     val ids = g1.nodes.map(_.id).toSet
     assert(g1.links.forall(l => ids(l.source) && ids(l.target)), g1)
-    val g2 = CitationFixtures.graph(ds, a, 2)
+    val g2 = CitationFixtures.graph(ds, a, com.histmersion.api.library.Source.Graph.Depth(2))
     assertEquals(g2.nodes.map(_.id).toSet, Set(a, b, c, d))
     assertEquals(g2.nodes.find(_.id == d).map(_.depth), Some(2))
-    assertEquals(CitationFixtures.graph(ds, a, 0).links, Nil)
+    assertEquals(CitationFixtures.graph(ds, a, com.histmersion.api.library.Source.Graph.Depth(0)).links, Nil)

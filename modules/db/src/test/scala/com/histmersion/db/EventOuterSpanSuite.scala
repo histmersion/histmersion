@@ -80,13 +80,13 @@ class EventOuterSpanSuite extends com.histmersion.db.DbSuite:
     put("zqos_case_closed", TimeSpan(Some(com.histmersion.api.catalogue.Year(-1210)), None, None, Some(com.histmersion.api.catalogue.Year(-1190))))
     def geoIds(p: Period) =
       EventFixtures
-        .geo(ds, Filter(period = Some(p)), PlaceScope.empty, Some("Zqos zqos_case_"), None, None, None, 100, 0.01)
+        .geo(ds, Filter(period = Some(p)), PlaceScope.empty, Some(com.histmersion.domain.catalogue.events.EventSelection.Text("Zqos zqos_case_")), None, None, None, com.histmersion.PageSize(100), 0.01)
         .events
         .map(_.id)
         .toSet
     def listIds(p: Period) =
       EventFixtures
-        .list(ds, Filter(period = Some(p)), PlaceScope.empty, Some("Zqos zqos_case_"), None, None, None, 100, 0)
+        .list(ds, Filter(period = Some(p)), PlaceScope.empty, Some(com.histmersion.domain.catalogue.events.EventSelection.Text("Zqos zqos_case_")), None, None, None, com.histmersion.PageSize(100), com.histmersion.Offset(0))
         .events
         .map(_.id)
         .toSet

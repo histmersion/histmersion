@@ -90,14 +90,14 @@ class EventCorrectionsRepoSuite extends com.histmersion.db.DbSuite:
     put("zqcr_approx", TimeSpan(Some(com.histmersion.api.catalogue.Year(-1800)), None, None, Some(com.histmersion.api.catalogue.Year(-1400))))
     put("zqcr_imprecise", TimeSpan(Some(com.histmersion.api.catalogue.Year(-4000)), None, None, Some(com.histmersion.api.catalogue.Year(1000))))
     val f = Filter(period = Some(Period(com.histmersion.api.catalogue.Year(-1700), com.histmersion.api.catalogue.Year(-1500))))
-    val geo = EventFixtures.geo(ds, f, PlaceScope.empty, Some("Zqcr zqcr_"), None, None, None, 100, 0.01)
+    val geo = EventFixtures.geo(ds, f, PlaceScope.empty, Some(com.histmersion.domain.catalogue.events.EventSelection.Text("Zqcr zqcr_")), None, None, None, com.histmersion.PageSize(100), 0.01)
     assertEquals(
       geo.events.map(g => g.id -> g.precision).toSet,
       Set("zqcr_precise" -> EventPrecision.Precise, "zqcr_approx" -> EventPrecision.Approximate)
     )
     assert(geo.imprecise >= 1, geo.imprecise.toString)
     val listed = EventFixtures
-      .list(ds, f, PlaceScope.empty, Some("Zqcr zqcr_"), None, None, None, 100, 0)
+      .list(ds, f, PlaceScope.empty, Some(com.histmersion.domain.catalogue.events.EventSelection.Text("Zqcr zqcr_")), None, None, None, com.histmersion.PageSize(100), com.histmersion.Offset(0))
       .events
       .map(e => e.id -> e.precision)
       .toMap
@@ -160,7 +160,7 @@ class EventCorrectionsRepoSuite extends com.histmersion.db.DbSuite:
     EventFixtures.save(ds, CatalogMerge.place(List(r), EventFixtures.stored(ds), CatalogMerge.Tolerance(com.histmersion.domain.catalogue.events.CatalogMerge.Tolerance.Km(60), com.histmersion.domain.catalogue.events.CatalogMerge.Tolerance.Years(30))))
   private def event = EventFixtures.get(ds, Id).get
   private def corrections =
-    EventFixtures.corrections(ds, Correction.Target.Event, Some(Id), Some("active"), 50, 0).corrections ++
+    EventFixtures.corrections(ds, Correction.Target.Event, Some(Id), Some(com.histmersion.api.catalogue.Correction.StatusValue("active")), com.histmersion.PageSize(50), com.histmersion.Offset(0)).corrections ++
       EventFixtures.corrections(ds, Correction.Target.Event, Some(Id), Some("conflict"), 50, 0).corrections ++
       EventFixtures.corrections(ds, Correction.Target.Event, Some(Id), Some("agreed"), 50, 0).corrections
 
@@ -216,7 +216,7 @@ class EventCorrectionsRepoSuite extends com.histmersion.db.DbSuite:
     assertEquals(c.corrections, Correction.Counts(conflicts = com.histmersion.api.catalogue.Correction.Counts.Conflicts(1)))
     assertEquals(event.event.description, Some("my note"))
     val conflict = EventFixtures
-      .corrections(ds, Correction.Target.Event, None, Some("conflict"), 50, 0)
+      .corrections(ds, Correction.Target.Event, None, Some(com.histmersion.api.catalogue.Correction.StatusValue("conflict")), com.histmersion.PageSize(50), com.histmersion.Offset(0))
       .corrections
       .filter(_.targetId == Id)
     assertEquals(
@@ -248,19 +248,19 @@ class EventCorrectionsRepoSuite extends com.histmersion.db.DbSuite:
     )
     // an event compiled from sources records nothing: no import rewrites it
     put("zqcr_compiled", TimeSpan(Some(com.histmersion.api.catalogue.Year(1)), Some(com.histmersion.api.catalogue.Year(1)), Some(com.histmersion.api.catalogue.Year(1)), Some(com.histmersion.api.catalogue.Year(1))))
-    assert(EventFixtures.patch(ds, "zqcr_compiled", EventPatch(label = Some(com.histmersion.api.catalogue.EventSummary.Label("x")))).isRight)
-    assertEquals(EventFixtures.corrections(ds, Correction.Target.Event, Some("zqcr_compiled"), None, 10, 0).total, 0)
+    assert(EventFixtures.patch(ds, com.histmersion.domain.catalogue.events.BEventRow.Id("zqcr_compiled"), EventPatch(label = Some(com.histmersion.api.catalogue.EventSummary.Label("x")))).isRight)
+    assertEquals(EventFixtures.corrections(ds, Correction.Target.Event, Some(com.histmersion.api.catalogue.Correction.TargetId("zqcr_compiled")), None, com.histmersion.PageSize(10), com.histmersion.Offset(0)).total, 0)
     // rename: the corrections follow the event
-    assert(EventFixtures.rename(ds, Id, "zzcr_renamed").isRight)
+    assert(EventFixtures.rename(ds, Id, com.histmersion.domain.catalogue.events.BEventRow.Id("zzcr_renamed")).isRight)
     assertEquals(
       EventFixtures
-        .corrections(ds, Correction.Target.Event, Some("zzcr_renamed"), None, 10, 0)
+        .corrections(ds, Correction.Target.Event, Some(com.histmersion.api.catalogue.Correction.TargetId("zzcr_renamed")), None, com.histmersion.PageSize(10), com.histmersion.Offset(0))
         .corrections
         .map(_.field),
       List(EventFields.Span)
     )
     // the renamed event is still refreshed from its owner record, the correction applied
     val _ = reimport(upstream0)
-    assertEquals(EventFixtures.get(ds, "zzcr_renamed").map(_.event.timeSpan), Some(mine))
-    assert(EventFixtures.delete(ds, "zzcr_renamed"))
-    assertEquals(EventFixtures.corrections(ds, Correction.Target.Event, Some("zzcr_renamed"), None, 10, 0).total, 0)
+    assertEquals(EventFixtures.get(ds, com.histmersion.domain.catalogue.events.BEventRow.Id("zzcr_renamed")).map(_.event.timeSpan), Some(mine))
+    assert(EventFixtures.delete(ds, com.histmersion.domain.catalogue.events.BEventRow.Id("zzcr_renamed")))
+    assertEquals(EventFixtures.corrections(ds, Correction.Target.Event, Some(com.histmersion.api.catalogue.Correction.TargetId("zzcr_renamed")), None, com.histmersion.PageSize(10), com.histmersion.Offset(0)).total, 0)

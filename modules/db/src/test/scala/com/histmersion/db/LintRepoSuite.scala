@@ -267,8 +267,8 @@ class LintRepoSuite extends com.histmersion.db.DbSuite:
       SourceCheckFixtures.run(
         ds,
         List(Lint.rule(Lint.Rule.Name(NoFindings)).get),
-        maxItems = 2,
-        suggestions = 3,
+        maxItems = com.histmersion.api.checks.Lint.ItemLimit(2),
+        suggestions = com.histmersion.api.checks.Lint.ItemLimit(3),
         format = checker,
         geocode = geo
       )

@@ -220,7 +220,7 @@ class TileRepoSuite extends com.histmersion.db.DbSuite:
       "int8range(1200, 1400, '[]')",
       props = """{"heritage": {"id": "Q3"}, "registers": []}"""
     )
-    val r = PlaceFixtures.get(ds, "zztile_r1").get.record
+    val r = PlaceFixtures.get(ds, com.histmersion.domain.catalogue.Place.Id("zztile_r1")).get.record
     assertEquals(r.dateSource, Some("wikidata-p571"))
     assertEquals(r.periods, List("Byzantine"))
     assertEquals(r.designations, List(Place.Designation(com.histmersion.api.catalogue.Place.Designation.Id("Q2"), Some(com.histmersion.api.catalogue.Place.Designation.Label("listed monument")), Some(com.histmersion.api.catalogue.Place.Designation.Start("1922")), None)))
@@ -228,7 +228,7 @@ class TileRepoSuite extends com.histmersion.db.DbSuite:
       r.registers,
       List(Place.Register(com.histmersion.api.catalogue.Place.Register.Property("P1936"), com.histmersion.api.catalogue.Place.Register.Id("99")), Place.Register(com.histmersion.api.catalogue.Place.Register.Property("P2186"), com.histmersion.api.catalogue.Place.Register.Id("GR-1")), Place.Register(com.histmersion.api.catalogue.Place.Register.Property("P2186"), com.histmersion.api.catalogue.Place.Register.Id("GR-2")))
     )
-    assert(PlaceFixtures.get(ds, "zztile_r2").get.record.isEmpty)
+    assert(PlaceFixtures.get(ds, com.histmersion.domain.catalogue.Place.Id("zztile_r2")).get.record.isEmpty)
 
   test("grouping: a tile of more items than it keeps alone counts them by cell, and the counts add up to every item"):
     // 900 sites on a 30 × 30 grid 0.01° apart: more than a tile keeps alone
@@ -294,7 +294,7 @@ class TileRepoSuite extends com.histmersion.db.DbSuite:
       ).filter(_.startsWith("zztile"))
     assertEquals(events(-1295, -1295), Set("zztile_e1"))
     assertEquals(events(-1500, 0), Set("zztile_e1", "zztile_e2"))
-    assertEquals(EventFixtures.geoOf(ds, List("zztile_e1")).get("zztile_e1").map(_.label), Some("Zztile battle"))
+    assertEquals(EventFixtures.geoOf(ds, List(com.histmersion.domain.catalogue.events.BEventRow.Id("zztile_e1"))).get(com.histmersion.domain.catalogue.events.BEventRow.Id("zztile_e1")).map(_.label), Some("Zztile battle"))
     // an event with no known date: only when asked for, marked, whatever the span
     connect(ds):
       val _ = sql"""INSERT INTO events (id, label, kind, geom)
@@ -319,7 +319,7 @@ class TileRepoSuite extends com.histmersion.db.DbSuite:
     def media(window: Option[(Long, Long)], license: Option[String] = None) =
       connect(ds)(
         TileRepo.cells(
-          AssetFixtures.tileCandidates(None, Some("zztile"), license, window, TileRepo.envelope(c)),
+          AssetFixtures.tileCandidates(None, Some(com.histmersion.domain.media.assets.MediaItemRow.Provider("zztile")), license, window, TileRepo.envelope(c)),
           c,
           grid
         )

@@ -255,8 +255,8 @@ class QueryRepoSuite extends com.histmersion.db.DbSuite:
       assertEquals(QueryAccess.provision(ds, qc), Right(()), "idempotent")
       val q = testQueryPool(dbCfg, qc)
       assertEquals(Db.canConnect(q), Right(()))
-      assert(SearchFixtures.run(q, s"SELECT title FROM sources WHERE citekey = '$ck'", 5000, 10, 100).isRight)
-      assert(SearchFixtures.run(q, s"DELETE FROM sources WHERE citekey = '$ck'", 5000, 10, 100).isLeft)
+      assert(SearchFixtures.run(q, s"SELECT title FROM sources WHERE citekey = '$ck'", com.histmersion.util.database.Transactor.TimeoutMs(5000), com.histmersion.domain.library.search.QueryRepo.MaxRows(10), com.histmersion.domain.library.search.QueryRepo.MaxCellChars(100)).isRight)
+      assert(SearchFixtures.run(q, s"DELETE FROM sources WHERE citekey = '$ck'", com.histmersion.util.database.Transactor.TimeoutMs(5000), com.histmersion.domain.library.search.QueryRepo.MaxRows(10), com.histmersion.domain.library.search.QueryRepo.MaxCellChars(100)).isLeft)
       assert(probeExists)
     finally
       scala.util.Try(admin(s"DROP OWNED BY $role")); scala.util.Try(admin(s"DROP ROLE IF EXISTS $role"))

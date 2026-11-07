@@ -107,7 +107,7 @@ class EventScaleRepoSuite extends com.histmersion.db.DbSuite with Bounded:
   private def summary(id: String): EventSummary = EventFixtures.get(ds, id).getOrElse(fail(s"no $id")).event
 
   private def geo(): EventGeo.List =
-    val all = EventFixtures.geo(ds, Filter(), PlaceScope.empty, Some("Zqes"), None, None, None, 1000, 0.01)
+    val all = EventFixtures.geo(ds, Filter(), PlaceScope.empty, Some(com.histmersion.domain.catalogue.events.EventSelection.Text("Zqes")), None, None, None, com.histmersion.PageSize(1000), 0.01)
     all.modify(_.events).setTo(all.events.filter(_.id.startsWith("zqes")))
 
   test("V078: the scale column takes local, regional or nothing — and nothing else"):
@@ -153,7 +153,7 @@ class EventScaleRepoSuite extends com.histmersion.db.DbSuite with Bounded:
     assert(!summary("zqes_migration").scaleStated)
     // the list carries the same
     val listed = EventFixtures
-      .list(ds, Filter(), PlaceScope.empty, Some("Zqes"), None, None, None, 100, 0)
+      .list(ds, Filter(), PlaceScope.empty, Some(com.histmersion.domain.catalogue.events.EventSelection.Text("Zqes")), None, None, None, com.histmersion.PageSize(100), com.histmersion.Offset(0))
       .events
       .map(e => e.id -> e.scale)
       .toMap
@@ -162,12 +162,12 @@ class EventScaleRepoSuite extends com.histmersion.db.DbSuite with Bounded:
 
   test("a stated scale wins; a patch states one, and `auto` forgets it"):
     assertEquals((summary("zqes_stated").scale, summary("zqes_stated").scaleStated), ("regional", true))
-    assertEquals(EventFixtures.patch(ds, "zqes_stated", EventPatch(scale = Some(com.histmersion.api.catalogue.EventSummary.Scale("auto")))), Right(()))
+    assertEquals(EventFixtures.patch(ds, com.histmersion.domain.catalogue.events.BEventRow.Id("zqes_stated"), EventPatch(scale = Some(com.histmersion.api.catalogue.EventSummary.Scale("auto")))), Right(()))
     assertEquals((summary("zqes_stated").scale, summary("zqes_stated").scaleStated), ("local", false))
-    assertEquals(EventFixtures.patch(ds, "zqes_stated", EventPatch(scale = Some(com.histmersion.api.catalogue.EventSummary.Scale("Regional")))), Right(()))
+    assertEquals(EventFixtures.patch(ds, com.histmersion.domain.catalogue.events.BEventRow.Id("zqes_stated"), EventPatch(scale = Some(com.histmersion.api.catalogue.EventSummary.Scale("Regional")))), Right(()))
     assertEquals((summary("zqes_stated").scale, summary("zqes_stated").scaleStated), ("regional", true))
     // a patch of something else keeps it
-    assertEquals(EventFixtures.patch(ds, "zqes_stated", EventPatch(description = Some(com.histmersion.api.catalogue.EventSummary.Description("d")))), Right(()))
+    assertEquals(EventFixtures.patch(ds, com.histmersion.domain.catalogue.events.BEventRow.Id("zqes_stated"), EventPatch(description = Some(com.histmersion.api.catalogue.EventSummary.Description("d")))), Right(()))
     assertEquals(summary("zqes_stated").scale, "regional")
 
   test("the map feed: the anchor, the outline of a regional area only, the unplaced count"):

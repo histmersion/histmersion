@@ -181,13 +181,13 @@ class GazetteerNamesSuite extends com.histmersion.db.DbSuite with Bounded:
 
   test("a name added by hand survives a re-seed; an import never deletes it, and the seed's own are replaced"):
     val before = names(Galilee)
-    val r = PlaceFixtures.addName(ds, Galilee, "Kinnereth", "en").fold(e => fail(e.message), identity)
+    val r = PlaceFixtures.addName(ds, Galilee, com.histmersion.domain.catalogue.places.PlaceRepo.Name("Kinnereth"), com.histmersion.domain.catalogue.places.PlaceRepo.Lang("en")).fold(e => fail(e.message), identity)
     assertEquals((r.changed, r.wasImported, r.label), (true, false, "Sea of Galilee"))
     // a name the seed already gives becomes manual: kept even when a later seed drops it
-    val again = PlaceFixtures.addName(ds, Galilee, "Sea of Tiberias", "en").fold(e => fail(e.message), identity)
+    val again = PlaceFixtures.addName(ds, Galilee, com.histmersion.domain.catalogue.places.PlaceRepo.Name("Sea of Tiberias"), com.histmersion.domain.catalogue.places.PlaceRepo.Lang("en")).fold(e => fail(e.message), identity)
     assertEquals((again.changed, again.wasImported), (true, true))
     assertEquals(
-      PlaceFixtures.addName(ds, Galilee, "Kinnereth", "en").map(_.changed),
+      PlaceFixtures.addName(ds, Galilee, com.histmersion.domain.catalogue.places.PlaceRepo.Name("Kinnereth"), com.histmersion.domain.catalogue.places.PlaceRepo.Lang("en")).map(_.changed),
       Right(false),
       "adding twice changes nothing"
     )
@@ -207,19 +207,19 @@ class GazetteerNamesSuite extends com.histmersion.db.DbSuite with Bounded:
 
     // removal: only a name added by hand; an imported one is refused
     assertEquals(
-      PlaceFixtures.removeName(ds, Galilee, "Lake Tiberias", "en").left.map(_.code),
+      PlaceFixtures.removeName(ds, Galilee, com.histmersion.domain.catalogue.places.PlaceRepo.Name("Lake Tiberias"), com.histmersion.domain.catalogue.places.PlaceRepo.Lang("en")).left.map(_.code),
       Left(Some(Write.CodeInvalid))
     )
     assertEquals(
-      PlaceFixtures.removeName(ds, Galilee, "Kinnereth", "").left.map(_.code),
+      PlaceFixtures.removeName(ds, Galilee, com.histmersion.domain.catalogue.places.PlaceRepo.Name("Kinnereth"), com.histmersion.domain.catalogue.places.PlaceRepo.Lang("")).left.map(_.code),
       Left(Some(Write.CodeNotFound))
     )
-    assert(PlaceFixtures.removeName(ds, Galilee, "Kinnereth", "en").isRight)
-    assert(PlaceFixtures.removeName(ds, Galilee, "Sea of Tiberias", "en").isRight)
+    assert(PlaceFixtures.removeName(ds, Galilee, com.histmersion.domain.catalogue.places.PlaceRepo.Name("Kinnereth"), com.histmersion.domain.catalogue.places.PlaceRepo.Lang("en")).isRight)
+    assert(PlaceFixtures.removeName(ds, Galilee, com.histmersion.domain.catalogue.places.PlaceRepo.Name("Sea of Tiberias"), com.histmersion.domain.catalogue.places.PlaceRepo.Lang("en")).isRight)
     val _ = PlaceFixtures.upsertPlaces(ds, seed)
     assertEquals(names(Galilee), before, "after removing them, a re-seed restores exactly the seed's names")
     assertEquals(
-      PlaceFixtures.addName(ds, "zzgn_no_such_place", "X", "").left.map(_.code),
+      PlaceFixtures.addName(ds, com.histmersion.domain.catalogue.Place.Id("zzgn_no_such_place"), com.histmersion.domain.catalogue.places.PlaceRepo.Name("X"), com.histmersion.domain.catalogue.places.PlaceRepo.Lang("")).left.map(_.code),
       Left(Some(Write.CodeNotFound))
     )
 
@@ -297,7 +297,7 @@ class GazetteerNamesSuite extends com.histmersion.db.DbSuite with Bounded:
     )
     assert(ps.find(_.region == "northern Levant").exists(_.to.isApproximate))
 
-    val rep = SourceCheckFixtures.run(ds, List(Lint.rule(Lint.FindingUnplaced).get), 500, 3, (_, _, _) => Nil, settings)
+    val rep = SourceCheckFixtures.run(ds, List(Lint.rule(Lint.FindingUnplaced).get), com.histmersion.api.checks.Lint.ItemLimit(500), com.histmersion.api.checks.Lint.ItemLimit(3), (_, _, _) => Nil, settings)
     val items = rep.rules.head.items.filter(_.citekey == Ck)
     assertEquals(items.size, 3, items)
     assert(items.exists(_.detail.startsWith(s"$Ck#4: 'Kraków' → Kraków [$Krakow]")), items)
