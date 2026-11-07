@@ -56,7 +56,7 @@ final class PleiadesPictures(media: MediaSettings, licences: LicenceReader) exte
         .distinctBy(_._3)
         .take(conf.perPlace.value.max(0))
         .zipWithIndex
-        .map { case ((pid, l, f), i) => (p, f, i, s"Pleiades place ${pid.value} links it (${l.citation.value})") }
+        .map { case ((pid, l, f), i) => (p, f, i, s"Pleiades place ${pid} links it (${l.citation.value})") }
     }
     val (files, judged) = Commons.Files(http, media, licences).items(found.map(_._2).distinct)
     MediaFound(
