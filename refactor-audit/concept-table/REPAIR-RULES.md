@@ -61,3 +61,7 @@ A test must not take over behaviour from the code under test. If a test expected
 ## Repositories and SQL (db, plugin-host)
 
 SQL is a boundary: `Param.S(x.value)`, SQL fragments as plain String and row-to-type reads may use `.value` and raw constructors. A repository's public methods take and return concepts. Rows hold what the database holds, so reading a row must accept every value the old code accepted: a newtype with a constraint must not start rejecting stored data (read it the way the old code did and report the case). Use domain types (`com.histmersion.domain...`), never add a new reference to `com.histmersion.api...` in `db` or `plugin-host`. In a repository, a positional type such as `RecordAppliedPart1` means the real concept of that column: check the column in the SQL rather than trusting the parameter order. Multi-valued tables, `?` order and SQL text must stay byte-identical.
+
+## Plugins
+
+A plugin module sees only `plugin-api` (`com.histmersion.plugin...`), its own types and, for bundled plugins, `upstreams`. It never sees `domain` or `api`. Parsing an upstream's JSON and building its URLs are boundaries. Positional leftovers in `plugin-api` (`GetHeadersPart1`) stay as they are for now: use them, do not edit `plugin-api`, and list them. A plugin's own positional leftovers get real names. Tests make no real network calls.
