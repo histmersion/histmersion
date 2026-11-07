@@ -202,7 +202,7 @@ object ManagersView:
     val sweeps = list(g(com.histmersion.web.ManagersView.ConfigKey("sweeps")), com.histmersion.web.ManagersView.Separator(",")).map(ws => ws.map(w => Sweep.parse(w).toRight(w)))
     val infer = for
       i <- onOff(com.histmersion.web.ManagersView.ConfigKey("inferFilter"), com.histmersion.web.ManagersView.ConfigLabel("infer filter"))
-      ai <- onOff("autoIngest", "ingest legal open access")
+      ai <- onOff(com.histmersion.web.ManagersView.ConfigKey("autoIngest"), com.histmersion.web.ManagersView.ConfigLabel("ingest legal open access"))
       aa <- onOff("autoApprove", "decide its approvals by code checks")
       _ <- sweeps.toList.flatten
         .collectFirst { case Left(w) => w }

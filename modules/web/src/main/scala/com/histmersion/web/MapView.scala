@@ -846,7 +846,7 @@ object MapView:
             key =
               f => PlaybackAreas.key(keyOf(f), dynPeriod(f.properties).map(_._1), dynPeriod(f.properties).map(_._2)),
             label = f => dynStr(f.properties.label).getOrElse("unnamed"),
-            wrapClass = f => placeClasses("hd-map-label-wrap", dynStr(f.properties.basis)),
+            wrapClass = f => placeClasses(com.histmersion.web.MapView.ClassName("hd-map-label-wrap"), dynStr(f.properties.basis)),
             place = f =>
               polityPlaces.get(
                 PlaybackAreas.key(keyOf(f), dynPeriod(f.properties).map(_._1), dynPeriod(f.properties).map(_._2))
@@ -892,7 +892,7 @@ object MapView:
             areas,
             key = keyOf,
             label = f => dynStr(f.properties.label).getOrElse("unnamed"),
-            wrapClass = f => placeClasses("hd-map-label-wrap", dynStr(f.properties.basis)),
+            wrapClass = f => placeClasses(com.histmersion.web.MapView.ClassName("hd-map-label-wrap"), dynStr(f.properties.basis)),
             place = f => polityPlaces.get(keyOf(f)),
             asOf = () => spanMid(),
             // once its name is placed nothing here reads the outline: the map holds its own copy

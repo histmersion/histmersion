@@ -49,7 +49,7 @@ object MapLibreEngine extends MapEngine:
               webgl2 = gl2.isDefined
             )
       }
-      .getOrElse(Capabilities(webgl = false, software = true, renderer = "", webgl2 = false))
+      .getOrElse(Capabilities(webgl = com.histmersion.web.map.Capabilities.Webgl(false), software = com.histmersion.web.map.Capabilities.Software(true), renderer = com.histmersion.web.map.Capabilities.Renderer(""), webgl2 = com.histmersion.web.map.Capabilities.Webgl2(false)))
 
   /** MapLibre GL JS 6 draws every map — vector and raster — with WebGL 2 only. */
   override def unsupported(c: Capabilities): Option[String] = Capabilities.withoutWebgl2(c)

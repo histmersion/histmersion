@@ -561,7 +561,7 @@ object PlacesInput:
             ensureKnown(id)
             Chip(
               chipText(id, describe),
-              prefix = Some("place: "),
+              prefix = Some(com.histmersion.web.Chip.Prefix("place: ")),
               extraCls = "place",
               remove = Some { () =>
                 val _ = UiState.togglePlace(id)

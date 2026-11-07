@@ -375,12 +375,12 @@ object Preview:
         d.sources.map(s =>
           Item(s.title.getOrElse(s.citekey) + s.quote.fold("")(q => s" — “$q”"), citekey = Some(s.citekey))
         ),
-        kind = "sources"
+        kind = com.histmersion.web.Preview.Section.Kind("sources")
       ),
       Section(
         com.histmersion.web.Preview.Section.Title("Articles citing those sources"),
         d.articles.map(a => Item(a.title, slug = Some(a.slug))),
-        kind = "articles"
+        kind = com.histmersion.web.Preview.Section.Kind("articles")
       ),
       Section(
         com.histmersion.web.Preview.Section.Title("Findings near it"),
@@ -390,7 +390,7 @@ object Preview:
             citekey = Some(f.citekey)
           )
         ),
-        kind = "findings"
+        kind = com.histmersion.web.Preview.Section.Kind("findings")
       ),
       Section(
         com.histmersion.web.Preview.Section.Title("Possibly discussed in"),
@@ -422,7 +422,7 @@ object Preview:
             Item(a.label, command = Some(a.command), query = a.query.filter(_ => a.kind == "discover"))
           )
         ),
-        kind = "leads"
+        kind = com.histmersion.web.Preview.Section.Kind("leads")
       )
     ).filter(_.items.nonEmpty)
 
@@ -861,8 +861,8 @@ object Preview:
   /** Pin `t`'s card at `anchor` — replacing any pinned card and the hover card. From the keyboard the focus moves into
     * the card (its ✕ first, then its links), and back to `owner` when it closes.
     */
-  def pin(t: Target, anchor: () => Option[Anchor], owner: Option[dom.Element] = None, keyboard: com.histmersion.web.Preview.KeyboardDriven = false): Unit =
-    unpin(restoreFocus = false)
+  def pin(t: Target, anchor: () => Option[Anchor], owner: Option[dom.Element] = None, keyboard: com.histmersion.web.Preview.KeyboardDriven = com.histmersion.web.Preview.KeyboardDriven(false)): Unit =
+    unpin(restoreFocus = com.histmersion.web.Preview.RestoreFocus(false))
     hide()
     val box = document.createElement("div").asInstanceOf[dom.HTMLElement]
     box.className = "cite-tooltip place-tip is-pinned"
@@ -893,12 +893,12 @@ object Preview:
         box.setAttribute("aria-label", c.title)
         measure(p)
         reposition()
-      case Failure(_) if pinned.contains(p) => unpin(restoreFocus = false)
+      case Failure(_) if pinned.contains(p) => unpin(restoreFocus = com.histmersion.web.Preview.RestoreFocus(false))
       case _                                => ()
     }
 
   /** Close the pinned card; from the keyboard, the focus returns to what pinned it. */
-  def unpin(restoreFocus: com.histmersion.web.Preview.RestoreFocus = true): Unit =
+  def unpin(restoreFocus: com.histmersion.web.Preview.RestoreFocus = com.histmersion.web.Preview.RestoreFocus(true)): Unit =
     pinned.foreach { p =>
       pinned = None
       p.observer.foreach { o =>
@@ -1034,7 +1034,7 @@ object Preview:
         "search the literature",
         onClick --> { _ =>
           found.set(Some(Left("searching…")))
-          ApiClient.discover(q, 5).onComplete {
+          ApiClient.discover(q, com.histmersion.api.Paging.Limit(5)).onComplete {
             case Success(r) => found.set(Some(Right(r)))
             case Failure(e) => found.set(Some(Left(s"no answer: ${e.getMessage}")))
           }

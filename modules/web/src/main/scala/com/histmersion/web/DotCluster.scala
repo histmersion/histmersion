@@ -96,7 +96,7 @@ object DotCluster:
   def mixed(c: Contents): Boolean = c.counts.count(_._2 > 0) > 1
 
   /** How far a bubble's rings reach outside its disc, px: a dark line, the white coin ring, a dark line. */
-  val Ring: com.histmersion.web.DotCluster.Ring = 5
+  val Ring: com.histmersion.web.DotCluster.Ring = com.histmersion.web.DotCluster.Ring(5)
 
   /** Pure: a bubble's outline (#1647) — square when it holds events only, tabbed when events are among other kinds,
     * round otherwise.
@@ -111,7 +111,7 @@ object DotCluster:
   val SquareCorner: com.histmersion.web.DotCluster.SquareCorner = 4.0
 
   /** The side of the square tab of a bubble with events among other kinds, px. */
-  val Tab: com.histmersion.web.DotCluster.Tab = 8
+  val Tab: com.histmersion.web.DotCluster.Tab = com.histmersion.web.DotCluster.Tab(8)
 
   /** Pure: a bubble's markup — its count on a disc of diameter `d` in its colour (`ends`: the colours of the oldest and
     * the newest of its dates, the same when they agree), ringed by a dark line, a white coin ring and a dark line, and
@@ -139,7 +139,7 @@ object DotCluster:
     val r = d / 2.0
     // the disc and its rings, each `out` px beyond the disc's edge: circles, or (events only) rounded
     // squares whose corners round by the same distance out — concentric either way
-    def ring(cls: com.histmersion.web.DotCluster.RingClass, out: com.histmersion.web.DotCluster.RingOutset, extra: com.histmersion.web.DotCluster.RingExtraClass = "") = form match
+    def ring(cls: com.histmersion.web.DotCluster.RingClass, out: com.histmersion.web.DotCluster.RingOutset, extra: com.histmersion.web.DotCluster.RingExtraClass = com.histmersion.web.DotCluster.RingExtraClass("")) = form match
       case BubbleForm.Events =>
         val h = r + out
         s"""<rect class="$cls" x="${c - h}" y="${c - h}" width="${2 * h}" height="${2 * h}" rx="${SquareCorner + out}"$extra/>"""
@@ -153,7 +153,7 @@ object DotCluster:
       s"""<svg class="hd-bubble" viewBox="0 0 $s $s" aria-hidden="true" focusable="false">""" +
         s"""<defs><linearGradient id="$id" x1="0" y1="0" x2="1" y2="1">""" +
         """<stop offset="0" class="hd-bubble-g0"/><stop offset="1" class="hd-bubble-g1"/></linearGradient></defs>""" +
-        ring("hd-bubble-fill", 0, s""" fill="url(#$id)"""") +
+        ring(com.histmersion.web.DotCluster.RingClass("hd-bubble-fill"), com.histmersion.web.DotCluster.RingOutset(0), s""" fill="url(#$id)"""") +
         ring("hd-bubble-line", com.histmersion.web.DotCluster.RingOutset(0).5) + ring("hd-bubble-coin", 2.5) + ring("hd-bubble-line", 4.5) + tab +
         "</svg>"
     val classes = List("hd-dot hd-cluster", form.cls, extraClass).filter(_.nonEmpty).mkString(" ")
@@ -180,7 +180,7 @@ object DotCluster:
   /** A card pinned under a list row (`row`): the row is its owner, so the click that pinned it does not count as a
     * click outside it.
     */
-  def pinUnder(t: Preview.Target, row: dom.Element, keyboard: com.histmersion.web.DotCluster.ByKeyboard = false): Unit =
+  def pinUnder(t: Preview.Target, row: dom.Element, keyboard: com.histmersion.web.DotCluster.ByKeyboard = com.histmersion.web.DotCluster.ByKeyboard(false)): Unit =
     Preview.pin(
       t,
       () =>

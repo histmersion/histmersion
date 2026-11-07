@@ -89,5 +89,5 @@ object LibraryLists:
   def everything(): Future[com.histmersion.api.RowCount] =
     ApiClient
       .sources(Filter(limit = com.histmersion.api.library.Filter.Limit(1)))
-      .zip(ApiClient.articles(Api.ArticleQuery(Filter(limit = 1))))
+      .zip(ApiClient.articles(Api.ArticleQuery(Filter(limit = com.histmersion.api.library.Filter.Limit(1)))))
       .map((s, a) => com.histmersion.api.RowCount(s.total.value + a.total.value))

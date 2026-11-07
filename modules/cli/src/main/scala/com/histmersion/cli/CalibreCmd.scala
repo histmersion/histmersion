@@ -294,14 +294,14 @@ object CalibreCmd:
             c,
             Path.of(file.value),
             ck,
-            quality = false,
-            force = false,
+            quality = com.histmersion.api.library.Ingest.Params.Quality(false),
+            force = com.histmersion.api.library.Ingest.Params.Force(false),
             title = None,
             authors = Nil,
             year = None,
             doi = None,
             noWait = noWait || json.value,
-            provenance = Some("calibre"),
+            provenance = Some(com.histmersion.api.library.Source.Provenance("calibre")),
             acquireItem = item
           )
     yield ()
