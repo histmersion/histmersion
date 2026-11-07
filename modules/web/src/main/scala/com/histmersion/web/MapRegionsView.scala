@@ -15,32 +15,17 @@ import com.histmersion.api.basemap.Basemap
   * REST: `GET /api/basemap`, `POST /api/basemap/fetch`, `GET /api/jobs/{id}`, `DELETE /api/basemap`.
   */
 object MapRegionsView:
-  type DryRun = DryRun.T
-  object DryRun extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type Id = Id.T
-  object Id extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type Name = Name.T
-  object Name extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type Problem = Problem.T
-  object Problem extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type StartDryRun = _root_.com.histmersion.web.MapRegionsView.DryRun
-  val StartDryRun: _root_.com.histmersion.web.MapRegionsView.DryRun.type = _root_.com.histmersion.web.MapRegionsView.DryRun
-  type CanDownload = CanDownload.T
-  object CanDownload extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type Busy = Busy.T
-  object Busy extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
-
   import MapRegions.*
 
   private var jobPollMs = 1000 // set from /api/config before any window opens
 
-  def configure(ui: UiConfig): Unit = jobPollMs = math.max(200, ui.jobPollMs)
+  def configure(ui: UiConfig): Unit = jobPollMs = math.max(200, ui.jobPollMs.value)
 
   private val status = Var(Option.empty[Basemap.Status])
-  private val pick = Var("configured")
-  private val box = Var("")
+  private val pick = Var(RegionChoice.Id("configured"))
+  private val box = Var(com.histmersion.api.BBox.Text(""))
   private val content = Var(Content.Map)
-  private val depth = Var("")
+  private val depth = Var(ZoomText(""))
   private val job = Var(Option.empty[JobInfo])
 
   /** The fetch whose dry run succeeded last: downloading asks for the same, so its size was seen. */
@@ -59,28 +44,28 @@ object MapRegionsView:
           e => error.set(Some(e.getMessage)),
           s => {
             status.set(Some(s))
-            if box.now().isEmpty then box.set(s.bbox)
+            if box.now().value.isEmpty then box.set(s.bbox)
           }
         )
       )
 
-  private def namedOf(id: com.histmersion.web.MapRegionsView.Id): Option[com.histmersion.web.MapRegionsView.Name] =
-    status.now().flatMap(_.regions.find(_.name == id)).map(_.name)
+  private def namedOf(id: RegionChoice.Id): Option[Basemap.Focus.Name] =
+    status.now().flatMap(_.regions.find(_.name.value == id.value)).map(_.name)
 
-  private def current(dryRun: com.histmersion.web.MapRegionsView.DryRun): Either[com.histmersion.web.MapRegionsView.Problem, Basemap.FetchQuery] =
+  private def current(dryRun: Basemap.FetchQuery.DryRun): Either[Basemap.Problem, Basemap.FetchQuery] =
     request(box.now(), content.now(), namedOf(pick.now()), depth.now(), dryRun)
 
-  private def choose(id: com.histmersion.web.MapRegionsView.Id): Unit =
+  private def choose(id: RegionChoice.Id): Unit =
     pick.set(id)
     status.now().toList.flatMap(choices).find(_.id == id).flatMap(_.bbox).foreach(box.set)
     checked.set(None)
 
-  private def start(dryRun: com.histmersion.web.MapRegionsView.StartDryRun): Unit =
+  private def start(dryRun: Basemap.FetchQuery.DryRun): Unit =
     current(dryRun) match
-      case Left(m)  => error.set(Some(m))
+      case Left(m)  => error.set(Some(m.value))
       case Right(q) =>
         error.set(None)
-        follow(ApiClient.basemapFetch(q), Option.when(dryRun)(q))
+        follow(ApiClient.basemapFetch(q), Option.when(dryRun.value)(q))
 
   /** Follow the job until it ends; a dry run that succeeds marks its fetch as checked. */
   private def follow(started: Future[JobInfo], dry: Option[Basemap.FetchQuery]): Unit =
@@ -110,13 +95,13 @@ object MapRegionsView:
       .basemapRemove(q)
       .onComplete(_.fold(e => error.set(Some(e.getMessage)), _ => { confirmAll.set(false); load() }))
 
-  private val canDownload: Signal[com.histmersion.web.MapRegionsView.CanDownload] =
+  private val canDownload: Signal[Boolean] =
     checked.signal.combineWith(box.signal, content.signal, depth.signal, pick.signal, job.signal, Auth.writable).map {
       (ok, _, _, _, _, j, writable) =>
-        writable && !j.exists(!_.isTerminal) && ok.exists(q => current(dryRun = com.histmersion.web.MapRegionsView.DryRun(false)).toOption.contains(q))
+        writable && !j.exists(!_.isTerminal) && ok.exists(q => current(dryRun = Basemap.FetchQuery.DryRun(false)).toOption.contains(q))
     }
 
-  private val busy: Signal[com.histmersion.web.MapRegionsView.Busy] = job.signal.map(_.exists(!_.isTerminal))
+  private val busy: Signal[Boolean] = job.signal.map(_.exists(!_.isTerminal))
 
   def panel: HtmlElement =
     div(
@@ -135,11 +120,11 @@ object MapRegionsView:
             "region",
             select(
               cls := "field map-region-pick",
-              children <-- status.signal.map(_.toList.flatMap(choices).map(c => option(value := c.id, c.label))),
+              children <-- status.signal.map(_.toList.flatMap(choices).map(c => option(value := c.id.value, c.label.value))),
               // the options are made again when the status is read again: the choice is set again after them
               controlled(
-                value <-- status.signal.combineWith(pick.signal).map(_._2),
-                onChange.mapToValue --> (choose(_))
+                value <-- status.signal.combineWith(pick.signal).map(_._2.value),
+                onChange.mapToValue --> (v => choose(RegionChoice.Id(v)))
               )
             )
           )
@@ -153,8 +138,8 @@ object MapRegionsView:
               cls := "field map-region-bbox",
               placeholder := "minLon,minLat,maxLon,maxLat or world",
               controlled(
-                value <-- box.signal,
-                onInput.mapToValue --> { v => box.set(v); pick.set(OwnBox); checked.set(None) }
+                value <-- box.signal.map(_.value),
+                onInput.mapToValue --> { v => box.set(com.histmersion.api.BBox.Text(v)); pick.set(RegionChoice.Id(OwnBox)); checked.set(None) }
               )
             )
           )
@@ -165,10 +150,10 @@ object MapRegionsView:
             "download",
             select(
               cls := "field map-region-content",
-              Content.values.toList.map(c => option(value := c.toString, c.label)),
+              Content.values.toList.map(c => option(value := c.toString, c.label.value)),
               controlled(
                 value <-- content.signal.map(_.toString),
-                onChange.mapToValue --> { v => content.set(Content.parse(v)); checked.set(None) }
+                onChange.mapToValue --> { v => content.set(Content.parse(Content.Name(v))); checked.set(None) }
               )
             )
           )
@@ -181,7 +166,7 @@ object MapRegionsView:
               typ := "text",
               cls := "field map-region-zoom",
               placeholder := "as configured",
-              controlled(value <-- depth.signal, onInput.mapToValue --> { v => depth.set(v); checked.set(None) })
+              controlled(value <-- depth.signal.map(_.value), onInput.mapToValue --> { v => depth.set(ZoomText(v)); checked.set(None) })
             )
           )
         ),
@@ -193,7 +178,7 @@ object MapRegionsView:
             cls := "btn map-region-check",
             "check the size",
             disabled <-- busy,
-            onClick --> (_ => start(dryRun = com.histmersion.web.MapRegionsView.StartDryRun(true)))
+            onClick --> (_ => start(dryRun = Basemap.FetchQuery.DryRun(true)))
           ),
           button(
             typ := "button",
@@ -201,7 +186,7 @@ object MapRegionsView:
             "download",
             title := "check the size first",
             disabled <-- canDownload.map(!_),
-            onClick --> (_ => start(dryRun = com.histmersion.web.MapRegionsView.StartDryRun(false)))
+            onClick --> (_ => start(dryRun = Basemap.FetchQuery.DryRun(false)))
           )
         )
       ),
@@ -209,7 +194,7 @@ object MapRegionsView:
     )
 
   private def jobView(j: JobInfo): HtmlElement =
-    val dry = j.detail.flatMap(JobDetail.Purpose.of).exists(_.startsWith("dry run"))
+    val dry = j.detail.flatMap(JobDetail.Purpose.of).exists(_.value.startsWith("dry run"))
     val state = if j.succeeded then ServiceState.Ok else if j.isTerminal then ServiceState.Down else ServiceState.Busy
     div(
       cls := "map-region-job",
@@ -218,20 +203,20 @@ object MapRegionsView:
           cls := s"about-state state-${state.label}",
           if dry then s"size check: ${j.status}" else s"download: ${j.status}"
         ),
-        j.detail.flatMap(JobDetail.Purpose.of).map(a => span(cls := "about-detail muted", a))
+        j.detail.flatMap(JobDetail.Purpose.of).map(a => span(cls := "about-detail muted", a.value))
       ),
-      j.error.map(e => p(cls := "form-error", role := "alert", e)),
-      j.progress.filter(_ => !j.isTerminal).map(t => p(cls := "muted map-region-progress", t)),
+      j.error.map(e => p(cls := "form-error", role := "alert", e.value)),
+      j.progress.filter(_ => !j.isTerminal).map(t => p(cls := "muted map-region-progress", t.value)),
       Option
         .when(j.isTerminal)(j.progress)
         .flatten
         .map(t =>
           div(
             cls := "map-region-sizes",
-            sizes(t).map { l =>
+            sizes(SizesText(t.value)).map { l =>
               div(
-                p(cls := "map-region-layer", l.line),
-                Option.when(l.zooms.nonEmpty)(ul(cls := "map-region-zooms", l.zooms.map(z => li(z))))
+                p(cls := "map-region-layer", l.line.value),
+                Option.when(l.zooms.nonEmpty)(ul(cls := "map-region-zooms", l.zooms.map(z => li(z.value))))
               )
             }
           )
@@ -240,7 +225,7 @@ object MapRegionsView:
 
   /** What is downloaded now: the map's region and each detailed-relief region, each with its remove. */
   private def downloaded(s: Basemap.Status): HtmlElement =
-    val map = s.layers.find(l => l.layer == Basemap.Layer.Vector.wire && l.present)
+    val map = s.layers.find(l => l.layer == Basemap.Layer.Vector.wire && l.present.value)
     val focus = s.layers.find(_.layer == Basemap.Layer.Terrain.wire).toList.flatMap(_.focus)
     dl(
       cls := "about-rows map-regions-downloaded",
@@ -251,7 +236,7 @@ object MapRegionsView:
             span(s"${m.bbox.getOrElse("")}, zoom ≤ ${m.maxZoom.getOrElse(0)}"),
             span(
               cls := "about-detail muted",
-              s"${Backup.humanBytes(s.layers.filter(_.present).map(_.bytes).sum)} in all"
+              s"${Backup.humanBytes(com.histmersion.api.ByteCount(s.layers.filter(_.present.value).map(_.bytes.value).sum))} in all"
             ),
             button(
               typ := "button",
@@ -271,7 +256,7 @@ object MapRegionsView:
             button(
               typ := "button",
               cls := "btn btn--sm map-region-remove",
-              dataAttr("region") := f.name,
+              dataAttr("region") := f.name.value,
               "remove",
               disabled <-- Auth.writable.combineWith(busy).map((w, b) => !w || b),
               onClick --> (_ => remove(Basemap.RemoveQuery(com.histmersion.api.basemap.Basemap.RemoveQuery.Layer("none"), focus = Some(f.name))))

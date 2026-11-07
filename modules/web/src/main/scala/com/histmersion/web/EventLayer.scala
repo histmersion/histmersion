@@ -69,7 +69,7 @@ object EventLayer:
     latest.onCurrent(ApiClient.eventsGeo(query))(_.foreach { list =>
       if running then
         items = EventPlayback.playable(list.events)
-        anchors = items.sortBy(_._2._1.value).groupMap((e, _) => EventPlayback.anchorKey(e))((e, _) => e.id)
+        anchors = items.sortBy(t => t._2._1.value: Long).groupMap((e, _) => EventPlayback.anchorKey(e))((e, _) => e.id)
         lastFrame.foreach((ph, yps) => frame(ph, yps))
     })(using scala.scalajs.concurrent.JSExecutionContext.Implicits.queue)
 

@@ -54,11 +54,11 @@ object Theme:
 
   /** Choose `c`: remembered, applied, announced. */
   def choose(c: ThemeChoice): Unit =
-    if c == ThemeChoice.System then Store.Browser.remove(StorageKey) else Store.Browser.put(StorageKey, c.wire)
+    if c == ThemeChoice.System then Store.Browser.remove(StorageKey) else Store.Browser.put(StorageKey, c.wire.value)
     apply(c)
 
   private def apply(c: ThemeChoice): Unit =
-    Try(dom.document.documentElement.setAttribute(Attribute, c.wire))
+    Try(dom.document.documentElement.setAttribute(Attribute, c.wire.value))
     chosen.set(c)
     changed()
 
@@ -71,10 +71,10 @@ object Theme:
     button(
       typ := "button",
       cls := "btn btn--ghost btn--icon theme-btn",
-      dataAttr("theme-choice") <-- choice.map(_.wire),
-      aria.label <-- choice.map(ThemeChoice.tooltip),
-      title <-- choice.map(ThemeChoice.tooltip),
+      dataAttr("theme-choice") <-- choice.map(_.wire.value),
+      aria.label <-- choice.map(c => ThemeChoice.tooltip(c).value),
+      title <-- choice.map(c => ThemeChoice.tooltip(c).value),
       child <-- choice.map(c => Icon(c.icon)),
-      span(cls := "theme-label", child.text <-- choice.map(_.label)),
+      span(cls := "theme-label", child.text <-- choice.map(_.label.value)),
       onClick --> (_ => choose(ThemeChoice.next(chosen.now())))
     )

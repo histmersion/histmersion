@@ -15,28 +15,12 @@ import org.scalajs.dom
   * link opens on the map).
   */
 object MobileChrome:
-  type DeltaX = DeltaX.T
-  object DeltaX extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type DeltaY = DeltaY.T
-  object DeltaY extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type HiddenCount = HiddenCount.T
-  object HiddenCount extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type Name = Name.T
   object Name extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type SpanLabel = SpanLabel.T
   object SpanLabel extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
   /** A drawer: which edge it comes from. */
-  type SwipesInDx = _root_.com.histmersion.web.MobileChrome.DeltaX
-  val SwipesInDx: _root_.com.histmersion.web.MobileChrome.DeltaX.type = _root_.com.histmersion.web.MobileChrome.DeltaX
-  type SwipesInDy = _root_.com.histmersion.web.MobileChrome.DeltaY
-  val SwipesInDy: _root_.com.histmersion.web.MobileChrome.DeltaY.type = _root_.com.histmersion.web.MobileChrome.DeltaY
-  type SwipesOutDx = _root_.com.histmersion.web.MobileChrome.DeltaX
-  val SwipesOutDx: _root_.com.histmersion.web.MobileChrome.DeltaX.type = _root_.com.histmersion.web.MobileChrome.DeltaX
-  type SwipesOutDy = _root_.com.histmersion.web.MobileChrome.DeltaY
-  val SwipesOutDy: _root_.com.histmersion.web.MobileChrome.DeltaY.type = _root_.com.histmersion.web.MobileChrome.DeltaY
-  type TimelineOpen = TimelineOpen.T
-  object TimelineOpen extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
   enum Drawer(val edge: Edge):
     case Filters extends Drawer(Edge.Left)
@@ -52,22 +36,22 @@ object MobileChrome:
   val SwipeRatio = 1.5
 
   /** Is a gesture of (`dx`, `dy`) a horizontal swipe TOWARDS the middle from `edge` (so, opening)? */
-  def swipesIn(edge: Edge, dx: com.histmersion.web.MobileChrome.SwipesInDx, dy: com.histmersion.web.MobileChrome.SwipesInDy): Boolean =
+  def swipesIn(edge: Edge, dx: Double, dy: Double): Boolean =
     horizontal(dx, dy) && (edge match
       case Edge.Left  => dx > 0
       case Edge.Right => dx < 0)
 
   /** …and back out towards `edge` (so, closing the drawer that came from it)? */
-  def swipesOut(edge: Edge, dx: com.histmersion.web.MobileChrome.SwipesOutDx, dy: com.histmersion.web.MobileChrome.SwipesOutDy): Boolean =
+  def swipesOut(edge: Edge, dx: Double, dy: Double): Boolean =
     horizontal(dx, dy) && (edge match
       case Edge.Left  => dx < 0
       case Edge.Right => dx > 0)
 
-  private def horizontal(dx: com.histmersion.web.MobileChrome.DeltaX, dy: com.histmersion.web.MobileChrome.DeltaY) =
+  private def horizontal(dx: Double, dy: Double) =
     math.abs(dx) >= SwipeMinPx && math.abs(dx) > SwipeRatio * math.abs(dy)
 
   /** The filters that are set but not visible in the bar (the search is): the ☰ badge. */
-  def hiddenFilterCount(chips: List[UiState.ActiveChip]): com.histmersion.web.MobileChrome.HiddenCount = chips.count(_.key != UiState.q.key)
+  def hiddenFilterCount(chips: List[UiState.ActiveChip]): Int = chips.count(_.key != UiState.q.key)
 
   /** Whether the timeline is unfolded when the page comes into `mode`: on a tablet, whose map keeps most of the screen
     * with it open; on a phone it waits for ⏱.
@@ -80,7 +64,7 @@ object MobileChrome:
   val drawer: Var[Option[Drawer]] = Var(None)
 
   /** Whether the timeline is unfolded under the bar. */
-  val timelineOpen: Var[com.histmersion.web.MobileChrome.TimelineOpen] = Var(com.histmersion.web.MobileChrome.TimelineOpen(false))
+  val timelineOpen: Var[Boolean] = Var(false)
 
   def open(d: Drawer): Unit = drawer.set(Some(d))
   def close(): Unit = drawer.set(None)
@@ -117,7 +101,7 @@ object MobileChrome:
         // the same state as the filter bar's box: typing in either is typing in both
         controlled(
           value <-- UiState.q.signal.map(_.getOrElse("")),
-          onInput.mapToValue --> UiState.setSearch
+          onInput.mapToValue --> (v => UiState.setSearch(com.histmersion.api.Api.Search.Text(v)))
         ),
         onKeyDown --> { e => if e.key == "Enter" then e.target.asInstanceOf[dom.HTMLElement].blur() }
       ),
@@ -128,7 +112,7 @@ object MobileChrome:
         aria.expanded <-- timelineOpen.signal,
         title <-- timelineOpen.signal.map(o => if o then "hide the timeline" else "show the timeline"),
         cls("active") <-- timelineOpen.signal,
-        span(cls := "mb-span", child.text <-- spanLabel(config)),
+        span(cls := "mb-span", child.text <-- spanLabel(config).map(_.value)),
         onClick --> (_ => timelineOpen.update(!_))
       ),
       button(
@@ -139,7 +123,7 @@ object MobileChrome:
         aria.expanded <-- drawer.signal.map(_.contains(Drawer.MapTools)),
         // the tools in that drawer: a window there has something new (Notices)
         cls("has-news") <-- Notices.anyFresh(b =>
-          b != com.histmersion.api.instance.UiNotices.Board.Approvals || RunsView.enabled.now()
+          b != com.histmersion.api.instance.UiNotices.Board.Approvals || RunsView.enabled.now().value
         ),
         Icon(Icon.Layers),
         onClick --> (_ => toggle(Drawer.MapTools))
@@ -151,14 +135,14 @@ object MobileChrome:
     */
   private def spanLabel(config: UiConfig): Signal[com.histmersion.web.MobileChrome.SpanLabel] =
     UiState.from.signal.combineWith(UiState.to.signal).map { (a, b) =>
-      Fmt.periodStr(a.getOrElse(config.time.defaultFrom), b.getOrElse(config.time.defaultTo))
+      SpanLabel(Fmt.periodStr(com.histmersion.api.catalogue.Year(a.getOrElse(config.time.defaultFrom.value)), com.histmersion.api.catalogue.Year(b.getOrElse(config.time.defaultTo.value))).value)
     }
 
   /** A drawer's heading: its name and a close button. */
   def drawerHead(name: com.histmersion.web.MobileChrome.Name): HtmlElement =
     div(
       cls := "drawer-head",
-      span(cls := "drawer-title", name),
+      span(cls := "drawer-title", name.value),
       button(
         typ := "button",
         cls := "btn btn--bare btn--icon drawer-close",

@@ -14,33 +14,24 @@ import com.histmersion.api.library.{Filter, GeoHit}
 
 object TimelinePlayback:
 
-  type Speeds = SpeedsValue
-  type SpeedsValue = SpeedsValue.T
-  object SpeedsValue extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type SpeedWordsS = _root_.com.histmersion.web.TimelinePlayback.SpeedLabelS
-  val SpeedWordsS: _root_.com.histmersion.web.TimelinePlayback.SpeedLabelS.type = _root_.com.histmersion.web.TimelinePlayback.SpeedLabelS
-  type SpeedLabelS = SpeedLabelS.T
-  object SpeedLabelS extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type ParseSpeedResult = ParseSpeedResult.T
-  object ParseSpeedResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type OverlayWasOn = OverlayWasOn.T
-  object OverlayWasOn extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type Speed = Speed.T
+  object Speed extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
   private val playing = Var(false)
-  private val playhead = Var(0L)
-  private val speed = Var(1.0)
+  private val playhead = Var(com.histmersion.api.Years.Astronomical(0L))
+  private val speed = Var(Speed(1.0))
   private val windowHalf = Var(Layout.playbackWindowHalf)
 
   private var frameId: Int = 0
-  private var lastTs: com.histmersion.web.ResearchOverview.EpochMillis = 0.0
+  private var lastTs: com.histmersion.web.ResearchOverview.EpochMillis = com.histmersion.web.ResearchOverview.EpochMillis(0.0)
   private var spanFrom: com.histmersion.api.Years.Astronomical = com.histmersion.api.Years.Astronomical(0)
   private var spanTo: com.histmersion.api.Years.Astronomical = com.histmersion.api.Years.Astronomical(0)
 
   /** The playback speeds offered, slowest first; 1× plays the shown span in `Layout.playbackDuration`. */
-  private[web] val Speeds: List[com.histmersion.web.TimelinePlayback.Speeds] = List(0.25, 0.5, 1.0, 2.0, 4.0)
+  private[web] val Speeds: List[Speed] = List(0.25, 0.5, 1.0, 2.0, 4.0).map(Speed(_))
 
   /** How a speed reads in the menu: in plain words. Pure. */
-  private[web] def speedWords(s: com.histmersion.web.TimelinePlayback.SpeedWordsS): com.histmersion.api.UiLabels.Text = s match
+  private[web] def speedWords(s: Speed): com.histmersion.api.UiLabels.Text = s.value match
     case 0.25 => com.histmersion.api.UiLabels.Text("Very slow")
     case 0.5  => com.histmersion.api.UiLabels.Text("Slow")
     case 1.0  => com.histmersion.api.UiLabels.Text("Normal speed")
@@ -49,14 +40,15 @@ object TimelinePlayback:
     case _    => speedLabel(s)
 
   /** `0.25×`, `1×`: a speed's option value. Pure. */
-  private[web] def speedLabel(s: com.histmersion.web.TimelinePlayback.SpeedLabelS): com.histmersion.api.UiLabels.Text =
-    val n = if s == math.rint(s) then s.toLong.toString else BigDecimal(s).bigDecimal.stripTrailingZeros.toPlainString
-    s"$n×"
+  private[web] def speedLabel(s: Speed): com.histmersion.api.UiLabels.Text =
+    val v = s.value
+    val n = if v == math.rint(v) then v.toLong.toString else BigDecimal(v).bigDecimal.stripTrailingZeros.toPlainString
+    com.histmersion.api.UiLabels.Text(s"$n×")
 
   /** The speed an option stands for; one that is not offered is refused. Pure. */
-  private[web] def parseSpeed(label: com.histmersion.api.UiLabels.Text): Option[com.histmersion.web.TimelinePlayback.ParseSpeedResult] = Speeds.find(speedLabel(_) == label.trim)
+  private[web] def parseSpeed(label: com.histmersion.api.UiLabels.Text): Option[Speed] = Speeds.find(speedLabel(_).value == label.value.trim)
 
-  private val playheadPos = Var(Option.empty[Long])
+  private val playheadPos = Var(Option.empty[com.histmersion.api.Years.Astronomical])
 
   def playheadSignal: Signal[Option[com.histmersion.api.Years.Astronomical]] = playheadPos.signal
   def playheadNow: Option[com.histmersion.api.Years.Astronomical] = playheadPos.now()
@@ -89,8 +81,8 @@ object TimelinePlayback:
           else if paused.now() then
             paused.set(false)
             playing.set(true)
-            lastTs = 0.0
-            tick(0.0)
+            lastTs = com.histmersion.web.ResearchOverview.EpochMillis(0.0)
+            tick(com.histmersion.web.ResearchOverview.EpochMillis(0.0))
           else start()
         }
       ),
@@ -111,27 +103,27 @@ object TimelinePlayback:
         title := "playback speed",
         aria.label := "playback speed",
         controlled(
-          value <-- speed.signal.map(speedLabel),
-          onChange.mapToValue --> { v => parseSpeed(v).foreach(speed.set) }
+          value <-- speed.signal.map(sp => speedLabel(sp).value),
+          onChange.mapToValue --> { v => parseSpeed(com.histmersion.api.UiLabels.Text(v)).foreach(speed.set) }
         ),
-        Speeds.map(s => option(value := speedLabel(s), speedWords(s)))
+        Speeds.map(s => option(value := speedLabel(s).value, speedWords(s).value))
       ),
       htmlTag("span")(
         cls := "tl-play-year",
         child.text <-- playheadPos.signal.map {
-          case Some(ph) => Fmt.yr(ph)
+          case Some(ph) => Fmt.yr(com.histmersion.api.catalogue.Year(ph.value)).value
           case None     => ""
         }
       )
     )
 
-  private var overlayWasOn: com.histmersion.web.TimelinePlayback.OverlayWasOn = com.histmersion.web.TimelinePlayback.OverlayWasOn(false)
+  private var overlayWasOn: Boolean = false
 
   private def start(): Unit =
     val (sf, st) = TimelineView.currentSpan
     spanFrom = sf
     spanTo = st
-    if playhead.now() < sf || playhead.now() >= st then playhead.set(sf)
+    if playhead.now().value < sf.value || playhead.now().value >= st.value then playhead.set(sf)
     // playback reads the polities: boundaries go on for its duration (the toggle shows it) and
     // back off afterwards unless the reader had them on already
     overlayWasOn = UiState.layers.now().contains(MapLayer.Boundaries)
@@ -139,10 +131,10 @@ object TimelinePlayback:
     MapView.setPlaybackMode(com.histmersion.web.MapView.Playback(true))
     // the filter's events over the span played, fetched once; each frame then draws them locally
     if eventsConfig != null then
-      EventLayer.start(eventsConfig, Api.EventQuery(UiState.toFilter().copy(period = Some(Period(sf, st)))))
+      EventLayer.start(eventsConfig, Api.EventQuery(UiState.toFilter().copy(period = Some(Period(com.histmersion.api.catalogue.Year(sf.value), com.histmersion.api.catalogue.Year(st.value))))))
     playing.set(true)
-    lastTs = 0.0
-    tick(0.0)
+    lastTs = com.histmersion.web.ResearchOverview.EpochMillis(0.0)
+    tick(com.histmersion.web.ResearchOverview.EpochMillis(0.0))
 
   private def pause(): Unit =
     playing.set(false)
@@ -163,25 +155,29 @@ object TimelinePlayback:
 
   private def tick(ts: com.histmersion.web.ResearchOverview.EpochMillis): Unit =
     if playing.now() then
-      if lastTs == 0.0 then lastTs = ts
-      val dt = (ts - lastTs) / 1000.0
+      if lastTs.value == 0.0 then lastTs = ts
+      val dt = (ts.value - lastTs.value) / 1000.0
       lastTs = ts
 
-      val totalYears = (spanTo - spanFrom).toDouble
-      val yearsPerSecond = totalYears / Layout.playbackDuration * speed.now()
+      val totalYears = (spanTo.value - spanFrom.value).toDouble
+      val yearsPerSecond = totalYears / Layout.playbackDuration * speed.now().value
       val advance = (yearsPerSecond * dt).toLong.max(1)
-      val next = playhead.now() + advance
+      val next = com.histmersion.api.Years.Astronomical(playhead.now().value + advance)
 
-      if next >= spanTo then
+      if next.value >= spanTo.value then
         playhead.set(spanTo)
         playheadPos.set(Some(spanTo))
         stop()
       else
         playhead.set(next)
         playheadPos.set(Some(next))
-        EventLayer.frame(next, yearsPerSecond)
-        feed.frame(next, yearsPerSecond)
-        frameId = dom.window.requestAnimationFrame((t: Double) => tick(t))
+        EventLayer.frame(
+          com.histmersion.api.catalogue.Year(next.value),
+          com.histmersion.web.EventLayer.YearsPerSecond(yearsPerSecond)
+        )
+        feed.frame(next, com.histmersion.web.PlaybackBuckets.YearsPerSecond(yearsPerSecond))
+
+        frameId = dom.window.requestAnimationFrame((t: Double) => tick(com.histmersion.web.ResearchOverview.EpochMillis(t)))
 
   /** The map follows the playhead from findings fetched ahead ([[PlaybackFeed]], #3764): it asked for each frame's
     * window (~60 requests a second) and re-drew the map whenever an answer came, so the map changed at the rate answers
@@ -210,30 +206,42 @@ object TimelinePlayback:
       filter = None
 
     def frame(ph: com.histmersion.api.Years.Astronomical, yearsPerSecond: com.histmersion.web.PlaybackBuckets.YearsPerSecond): Unit =
-      val wh = windowHalf.now()
+      val half = windowHalf.now()
+      val wh = PlaybackFeed.WindowHalfYears(half.value)
       val f = UiState.toFilter()
       // the filter changed while it played: what is held was asked with the old one
       if !filter.contains(f) then { reset(); filter = Some(f) }
-      val chunk = PlaybackFeed.chunkYears(wh, yearsPerSecond, Layout.playbackFetchSeconds)
+      val chunk = PlaybackFeed.chunkYears(wh, yearsPerSecond, PlaybackBuckets.Seconds(Layout.playbackFetchSeconds.value))
       if !asking && dom.window.performance.now() >= retryAt then
         PlaybackFeed.next(coveredTo, ph, wh, chunk, spanTo).foreach(ask(f, _))
-      if coveredTo.exists(_ >= ph + wh) then
-        MapView.playFrame(PlaybackFeed.inWindow(held, ph - wh, ph + wh), (ph - wh, ph + wh), ph, yearsPerSecond)
+      if coveredTo.exists(_.value >= ph.value + half.value) then
+        val lo = ph.value - half.value
+        val hi = ph.value + half.value
+        MapView.playFrame(
+          PlaybackFeed.inWindow(
+            held,
+            com.histmersion.api.Years.Astronomical(lo),
+            com.histmersion.api.Years.Astronomical(hi)
+          ),
+          (com.histmersion.api.catalogue.Period.Start(lo), com.histmersion.api.catalogue.Period.End(hi)),
+          com.histmersion.api.catalogue.Year(ph.value),
+          MapView.YearsPerSecond(yearsPerSecond.value)
+        )
 
     private def ask(f: Filter, period: (com.histmersion.api.Years.Astronomical, com.histmersion.api.Years.Astronomical)): Unit =
       asking = true
       val mine = generation
       val q =
-        Api.FindingsQuery.of(f.modify(_.period).setTo(Some(Period(period._1, period._2))).modify(_.limit).setTo(Layout.playbackFetchLimit))
+        Api.FindingsQuery.of(f.modify(_.period).setTo(Some(Period(com.histmersion.api.catalogue.Year(period._1.value), com.histmersion.api.catalogue.Year(period._2.value)))).modify(_.limit).setTo(Filter.Limit(Layout.playbackFetchLimit.value)))
       ApiClient.findings(q).onComplete { r =>
         if mine == generation then
           asking = false
           r match
             case scala.util.Success(points) =>
-              val lo = playhead.now() - windowHalf.now()
+              val lo = com.histmersion.api.Years.Astronomical(playhead.now().value - windowHalf.now().value)
               val known = held.toSet
               held = PlaybackFeed.keep(held, lo).toVector ++ points.filterNot(known.contains)
-              coveredTo = Some(PlaybackFeed.covered(period, points, Layout.playbackFetchLimit))
+              coveredTo = Some(PlaybackFeed.covered(period, points, com.histmersion.api.Paging.Limit(Layout.playbackFetchLimit.value)))
             case scala.util.Failure(_) =>
               retryAt = dom.window.performance.now() + 1000
       }

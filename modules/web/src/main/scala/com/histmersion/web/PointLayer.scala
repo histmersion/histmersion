@@ -11,12 +11,12 @@ import scala.scalajs.js
   * a click or Enter activates it; switched off, it keeps the last content and shows it again when switched on. The same
   * code for every kind.
   */
-final class PointLayer[A](val kind: PointKind[A], set: () => PointSet[Dot], asOf: () => Option[PointLayer.AsOfResult]):
+final class PointLayer[A](val kind: PointKind[A], set: () => PointSet[Dot], asOf: () => Option[com.histmersion.api.Years.Astronomical]):
   // `var`s: what was shown last (shown again when the layer is switched back on), whether it is on, and
   // its points in the cluster layer, by key
   private var last: Option[(Iterable[A], (com.histmersion.api.Years.Astronomical, com.histmersion.api.Years.Astronomical))] = None
   private var attached = false
-  private val live = scala.collection.mutable.LinkedHashMap.empty[String, Dot]
+  private val live = scala.collection.mutable.LinkedHashMap.empty[PointSet.Key, Dot]
   private val prefix = s"${kind.dot.ordinal}|"
 
   def isAttached: Boolean = attached
@@ -36,12 +36,15 @@ final class PointLayer[A](val kind: PointKind[A], set: () => PointSet[Dot], asOf
     val (lat, lon) = kind.at(d.item.asInstanceOf[A])
     LatLon(lat, lon)
 
+  private def dotSpan(span: (com.histmersion.api.Years.Astronomical, com.histmersion.api.Years.Astronomical)): (Dot.SpanPart1, Dot.SpanPart2) =
+    (Dot.SpanPart1(span._1.value), Dot.SpanPart2(span._2.value))
+
   /** Show `items` for `span` (remembered while the layer is off). */
   def show(items: Iterable[A], span: (com.histmersion.api.Years.Astronomical, com.histmersion.api.Years.Astronomical)): Unit =
     last = Some((items, span))
     if attached then
-      val next = scala.collection.mutable.LinkedHashMap.empty[String, A]
-      items.filter(kind.keep).foreach(a => next.getOrElseUpdate(prefix + kind.key(a), a))
+      val next = scala.collection.mutable.LinkedHashMap.empty[PointSet.Key, A]
+      items.filter(kind.keep).foreach(a => next.getOrElseUpdate(PointSet.Key(prefix + kind.key(a).value), a))
       val gone = live.keys.filterNot(next.contains).toList
       gone.foreach(live.remove)
       set().remove(gone)
@@ -53,17 +56,17 @@ final class PointLayer[A](val kind: PointKind[A], set: () => PointSet[Dot], asOf
       next.foreach { (k, a) =>
         live.get(k) match
           case None =>
-            val d = Dot(k, this, a, span, kind.member(a))
+            val d = Dot(Dot.Key(k.value), this, a, dotSpan(span), kind.member(a))
             live(k) = d
             fresh += d
           case Some(d) =>
             val was = d.item.asInstanceOf[A]
-            if !(d.span == span && was == a) then
+            if !(d.span == dotSpan(span) && was == a) then
               val sameLook = PointMarker.signature(kind, was) == PointMarker.signature(kind, a)
               val member = kind.member(a)
               if member != d.member then reshaped = true
               d.item = a
-              d.span = span
+              d.span = dotSpan(span)
               d.member = member
               restyled = true
               if sameLook then set().drawnAlone(k).foreach(m => kind.recolour(m, a, span))
@@ -79,14 +82,20 @@ final class PointLayer[A](val kind: PointKind[A], set: () => PointSet[Dot], asOf
     val a = d.item.asInstanceOf[A]
     val (w, h) = kind.box
     val el = DomMarker.element(
-      s"hd-point-wrap hd-point-wrap--${kind.shape.cls}",
-      PointMarker.html(kind, a, kind.fill(a, d.span))
+      DomMarker.ElementCls(s"hd-point-wrap hd-point-wrap--${kind.shape.cls}"),
+      DomMarker.ElementHtml(
+        PointMarker.html(
+          kind,
+          a,
+          kind.fill(a, (com.histmersion.api.Years.Astronomical(d.span._1.value), com.histmersion.api.Years.Astronomical(d.span._2.value)))
+        )
+      )
     )
-    kind.title(a).foreach(t => el.setAttribute("title", t))
-    if fadeIn then el.classList.add(FadingLayer.fadeIn.value)
-    val m = DomMarker(at(d).lat, at(d).lon, el, Some((w, h)))
+    kind.title(a).foreach(t => el.setAttribute("title", t.value))
+    if fadeIn.value then el.classList.add(FadingLayer.fadeIn.value)
+    val m = DomMarker(at(d).lat, at(d).lon, el, Some((DomMarker.BoxSize(w.value), DomMarker.BoxSize(h.value))))
     val z = kind.zIndex(a)
-    if z != 0 then m.setZ(z)
+    if z.value != 0 then m.setZ(DomMarker.ZIndex(z.value))
     def current: A = d.item.asInstanceOf[A]
     PlaceHover.bindPoint(
       m,
@@ -97,14 +106,11 @@ final class PointLayer[A](val kind: PointKind[A], set: () => PointSet[Dot], asOf
     m
 
   /** Its row in a bubble's list chosen. */
-  def open(d: Dot, row: dom.Element): Unit = kind.open(d.key, d.item.asInstanceOf[A], row)
+  def open(d: Dot, row: dom.Element): Unit = kind.open(PointKind.PointKey(d.key.value), d.item.asInstanceOf[A], row)
 
 object PointLayer:
   type FadeIn = FadeIn.T
   object FadeIn extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
   /** Does dot `d` already show `a` for `span`? Then a reload that brings it again leaves it. */
-  type AsOfResult = com.histmersion.api.Years.Astronomical
-  val AsOfResult: _root_.com.histmersion.api.Years.Astronomical.type = _root_.com.histmersion.api.Years.Astronomical
 
-
-  private[web] def same[A](d: Dot, a: A, span: (com.histmersion.api.Years.Astronomical, com.histmersion.api.Years.Astronomical)): Boolean = d.span == span && d.item == a
+  private[web] def same[A](d: Dot, a: A, span: (com.histmersion.api.Years.Astronomical, com.histmersion.api.Years.Astronomical)): Boolean = d.span == ((Dot.SpanPart1(span._1.value), Dot.SpanPart2(span._2.value))) && d.item == a

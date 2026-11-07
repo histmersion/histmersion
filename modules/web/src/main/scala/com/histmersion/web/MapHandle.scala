@@ -25,14 +25,14 @@ object MapHandle:
             s.setView(
               ll(at),
               MapSurface.Zoom(z),
-              animate = opts.exists(o => !js.isUndefined(o.animate) && o.animate.asInstanceOf[Boolean])
+              animate = MapSurface.SetViewAnimate(opts.exists(o => !js.isUndefined(o.animate) && o.animate.asInstanceOf[Boolean]))
             )
       ): js.Function3[js.Array[Double], Double, js.UndefOr[js.Dynamic], Unit],
       setZoom = (
           (z: Double, opts: js.UndefOr[js.Dynamic]) =>
             s.setZoom(
               MapSurface.Zoom(z),
-              animate = !opts.exists(o => !js.isUndefined(o.animate) && !o.animate.asInstanceOf[Boolean])
+              animate = MapSurface.SetZoomAnimate(!opts.exists(o => !js.isUndefined(o.animate) && !o.animate.asInstanceOf[Boolean]))
             )
       ): js.Function2[Double, js.UndefOr[js.Dynamic], Unit],
       getZoom = (() => s.zoom.value): js.Function0[Double],
@@ -41,7 +41,7 @@ object MapHandle:
       getBounds = (() => {
         val b = s.bounds; js.Dynamic.literal(south = b.south.value, west = b.west.value, north = b.north.value, east = b.east.value)
       }): js.Function0[js.Dynamic],
-      panBy = ((d: js.Array[Double]) => s.panBy(d(0), d(1))): js.Function1[js.Array[Double], Unit],
+      panBy = ((d: js.Array[Double]) => s.panBy(MapSurface.PanByDx(d(0)), MapSurface.PanByDy(d(1)))): js.Function1[js.Array[Double], Unit],
       latLngToContainerPoint = ((at: js.Array[Double]) => {
         val p = s.project(ll(at)); js.Dynamic.literal(x = p.x.value, y = p.y.value)
       }): js.Function1[js.Array[Double], js.Dynamic],
@@ -54,7 +54,7 @@ object MapHandle:
           (at: js.Array[Double], text: String) => {
             val _ = s.popup(
               ll(at),
-              s"""<div class="hd-popup-content zz-test-popup">${Fmt.esc(text)}</div>""",
+              MapSurface.PopupHtml(s"""<div class="hd-popup-content zz-test-popup">${Fmt.esc(text)}</div>"""),
               com.histmersion.web.map.MapSurface.PopupCls("")
             )
           }

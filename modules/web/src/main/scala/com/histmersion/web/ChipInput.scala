@@ -36,7 +36,7 @@ object ChipInput:
       /** Transient preview of a hovered suggestion; `None` ends it. Never touches the chips. */
       onPreview: Option[com.histmersion.web.Chip.Choice] => Unit = _ => (),
       /** How a value reads on its chip and in the suggestions. */
-      display: com.histmersion.web.Chip.Choice => Config.DisplayResult = v => Config.DisplayResult(Label.display(Label.Text(v.value)).value),
+      display: com.histmersion.web.Chip.Choice => Config.DisplayResult = v => Config.DisplayResult(com.histmersion.api.library.Label.display(com.histmersion.api.library.Label.Text(v.value)).value),
       /** The classes of a value's mark, if it has one (a source status's `st-<status>`: the status code). */
       mark: com.histmersion.web.Chip.Choice => Option[Config.MarkResult] = _ => None
   )
@@ -59,7 +59,13 @@ object ChipInput:
   /** A CONTROLLED chip input: it shows `values` (a UiState field's signal) and reports every change through
     * `config.onChange` — it keeps no list of its own, so it cannot drift from the state.
     */
-  def apply(config: Config, values: StrictSignal[List[com.histmersion.web.Chip.Choice]]): HtmlElement =
+  def apply(config: Config, values: StrictSignal[List[com.histmersion.web.Chip.Choice]]): HtmlElement = view(config, values, () => values.now())
+
+  /** [[apply]] over a UiState field's values, which are plain text. */
+  def ofStrings(config: Config, values: StrictSignal[List[String]]): HtmlElement =
+    view(config, values.map(_.map(com.histmersion.web.Chip.Choice(_))), () => values.now().map(com.histmersion.web.Chip.Choice(_)))
+
+  private def view(config: Config, values: Signal[List[com.histmersion.web.Chip.Choice]], now: () => List[com.histmersion.web.Chip.Choice]): HtmlElement =
     seq += 1
     val id = s"chips-${config.field}-$seq"
 
@@ -96,7 +102,7 @@ object ChipInput:
         else inputEl.removeAttribute("aria-activedescendant")
 
     def open(rows: List[Facet]): Unit =
-      val currentValues = values.now()
+      val currentValues = now()
       val filtered = rows.filter(r => r.value.value != null && !currentValues.contains(com.histmersion.web.Chip.Choice(r.value.value)))
       if filtered.isEmpty then close()
       else
@@ -129,12 +135,12 @@ object ChipInput:
       if inputEl != null then
         inputEl.setAttribute("aria-expanded", "false")
         inputEl.removeAttribute("aria-activedescendant")
-      if v.nonEmpty && !values.now().contains(com.histmersion.web.Chip.Choice(v)) then config.onChange(values.now() :+ com.histmersion.web.Chip.Choice(v))
+      if v.nonEmpty && !now().contains(com.histmersion.web.Chip.Choice(v)) then config.onChange(now() :+ com.histmersion.web.Chip.Choice(v))
       // commit first, then drop the preview: the filter stays identical, so nothing reloads twice
       endPreview()
 
     def removeAt(i: Int): Unit =
-      config.onChange(values.now().zipWithIndex.collect { case (v, j) if j != i => v })
+      config.onChange(now().zipWithIndex.collect { case (v, j) if j != i => v })
 
     div(
       cls := "field chips",
@@ -208,9 +214,9 @@ object ChipInput:
               e.preventDefault()
               e.stopPropagation()
               close()
-          else if key == "Backspace" && inputEl != null && inputEl.value.isEmpty && values.now().nonEmpty then
+          else if key == "Backspace" && inputEl != null && inputEl.value.isEmpty && now().nonEmpty then
             e.preventDefault()
-            removeAt(values.now().length - 1)
+            removeAt(now().length - 1)
         }
       ),
       // suggestion dropdown

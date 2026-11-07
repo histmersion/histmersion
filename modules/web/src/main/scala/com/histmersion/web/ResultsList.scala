@@ -49,20 +49,20 @@ object ResultsList:
 
   /** How many sources the filter selects (the Sources tab's count), once answered. */
   val total: Var[Option[com.histmersion.api.RowCount]] = Var(None)
-  private val countText = Var("")
+  private val countText = Var(com.histmersion.api.UiLabels.Text(""))
   private val isBusy = Var(false)
   private val isError = Var(false)
 
   /** The "show more" button's label (none while a cluster is picked or every source is shown), and whether its page is
     * on its way.
     */
-  private val moreLabel = Var(Option.empty[String])
+  private val moreLabel = Var(Option.empty[com.histmersion.api.UiLabels.Text])
   private val moreLoading = Var(false)
 
   val element: HtmlElement =
     div(
       cls := "results-container",
-      ResultsPaging.countBar(countText.signal, isBusy.signal, isError.signal, id = Some("count")),
+      ResultsPaging.countBar(countText.signal, isBusy.signal.map(b => ResultsPaging.Loading(b)), isError.signal.map(b => ResultsPaging.Failed(b)), id = Some("count")),
       div(
         idAttr := "list",
         cls <-- isBusy.signal.map(b => if b then "list is-busy" else "list"),
@@ -84,17 +84,17 @@ object ResultsList:
               if nextIdx >= 0 && nextIdx < rows.length then rows(nextIdx).asInstanceOf[dom.HTMLElement].focus()
         }
       ),
-      ResultsPaging.moreButton(moreLabel.signal, moreLoading.signal, () => more())
+      ResultsPaging.moreButton(moreLabel.signal, moreLoading.signal.map(b => ResultsPaging.Loading(b)), () => more())
     )
 
   def busy(on: com.histmersion.web.ResultsList.Busy): Unit =
-    isBusy.set(on)
-    if on then isError.set(false)
+    isBusy.set(on.value)
+    if on.value then isError.set(false)
 
   def failed(msg: com.histmersion.web.ResultsList.Problem): Unit =
     isError.set(true)
     isBusy.set(false)
-    countText.set(if msg.nonEmpty then msg else "failed to load — retrying on the next change")
+    countText.set(com.histmersion.api.UiLabels.Text(if msg.value.nonEmpty then msg.value else "failed to load — retrying on the next change"))
 
   def renderSources(result: SearchResult, opts: SourceRenderOpts): Unit =
     last = Some(LastSources(result, opts))
@@ -126,14 +126,14 @@ object ResultsList:
     // on a phone the list is a sheet at the bottom: a picked cluster must be where the reader looks
     if Viewport.narrowNow && UiState.sheet.now() == Sheet.Peek then UiState.set(UiState.sheet := Sheet.Half)()
     val bySource = scala.collection.mutable.LinkedHashMap
-      .empty[String, (String, String, scala.collection.mutable.ListBuffer[GeoHit])]
+      .empty[com.histmersion.api.library.Citekey, (com.histmersion.api.library.Citekey, GeoHit.Title, scala.collection.mutable.ListBuffer[GeoHit])]
     items.foreach { pt =>
       val entry =
         bySource.getOrElseUpdate(pt.citekey, (pt.citekey, pt.title, scala.collection.mutable.ListBuffer.empty))
       entry._3 += pt
     }
 
-    val sorted = bySource.values.toList.sortBy(g => (-g._3.size, g._1))
+    val sorted = bySource.values.toList.sortBy(g => (-g._3.size, g._1.value))
 
     val header = div(
       cls := "pick-head",
@@ -147,7 +147,7 @@ object ResultsList:
             case _                       => content.set(Nil)
         }
       ),
-      div(cls := "pick-title", title),
+      div(cls := "pick-title", title.value),
       onZoom match
         case Some(fn) =>
           button(
@@ -161,17 +161,17 @@ object ResultsList:
 
     val rows = sorted.map { case (ck, ttl, pts) =>
       val per = Fmt.periodStr(
-        pts.flatMap(_.periodStart).minOption,
-        pts.flatMap(_.periodEnd).maxOption
+        pts.flatMap(_.periodStart).minByOption(_.value),
+        pts.flatMap(_.periodEnd).maxByOption(_.value)
       )
       div(
         cls := "hit hit-source",
         role := "button",
         tabIndex := 0,
-        div(cls := "ck", pickIcon(CardIcons.GenericSource, "finding"), SourceLink(ck, pts.head.doi)),
-        div(cls := "title", ttl),
-        div(cls := "meta", s"${plural(pts.size, com.histmersion.api.Plural.Noun.Singular("finding"))}" + (if per.nonEmpty then s" · $per" else "")),
-        div(cls := "claim", Fmt.clip(pts.head.claim, com.histmersion.api.Markdown.CharLimit(140))),
+        div(cls := "ck", pickIcon(Glyphs.Name(CardIcons.GenericSource), "finding"), SourceLink(ck, pts.head.doi)),
+        div(cls := "title", ttl.value),
+        div(cls := "meta", s"${plural(pts.size, "finding")}" + (if per.value.nonEmpty then s" · $per" else "")),
+        div(cls := "claim", Fmt.clip(pts.head.claim.value, com.histmersion.api.Markdown.CharLimit(140))),
         onClick --> { _ => ArticleModal.open(ck, Map("q" -> UiState.q.now().getOrElse(""))) },
         onKeyDown --> { ev =>
           if ev.key == "Enter" || ev.key == " " then
@@ -185,11 +185,11 @@ object ResultsList:
     moreLabel.set(None)
 
   /** A kind's icon at the head of a picked row, as a card's title has it. */
-  private def pickIcon(icon: String, kind: String): HtmlElement =
+  private def pickIcon(icon: Glyphs.Name, kind: String): HtmlElement =
     span(
       cls := "cite-tip-icon pick-icon",
       title := kind,
-      onMountCallback(ctx => ctx.thisNode.ref.innerHTML = Glyphs.svg(icon))
+      onMountCallback(ctx => ctx.thisNode.ref.innerHTML = Glyphs.svg(icon).value)
     )
 
   /** A picked dot that is not a finding: its icon, its name, its kind and years; a click or Enter opens it. */
@@ -199,8 +199,8 @@ object ResultsList:
       role := "button",
       tabIndex := 0,
       dataAttr("dot-kind") := entry.kind.toString.toLowerCase,
-      div(cls := "title", pickIcon(entry.icon, entry.kind.one), entry.label),
-      Option.when(entry.note.nonEmpty)(div(cls := "meta", entry.note)),
+      div(cls := "title", pickIcon(Glyphs.Name(entry.icon.value), entry.kind.one.value), entry.label.value),
+      Option.when(entry.note.value.nonEmpty)(div(cls := "meta", entry.note.value)),
       onClick --> { ev => open(ev.currentTarget.asInstanceOf[dom.Element]) },
       onKeyDown --> { ev =>
         if ev.key == "Enter" || ev.key == " " then
@@ -209,35 +209,38 @@ object ResultsList:
       }
     )
 
-  private def plural(n: com.histmersion.api.RowCount, word: com.histmersion.api.Plural.Noun.Singular): com.histmersion.api.Plural.Phrase = s"$n $word${if n == 1 then "" else "s"}"
+  private def plural(n: Int, word: String): String = s"$n $word${if n == 1 then "" else "s"}"
 
   private def snippetHtml(text: com.histmersion.api.UiLabels.Text): String =
-    val cleaned = text.replaceAll("\\s+", " ").trim
+    val cleaned = text.value.replaceAll("\\s+", " ").trim
     Fmt.esc(cleaned).replaceAll("\\*\\*(.+?)\\*\\*", "<mark>$1</mark>")
 
   private def countLine(): com.histmersion.api.UiLabels.Text =
     val findings = pageOpts match
-      case Some(o) if o.inView => s"${Plural.count(o.findings, com.histmersion.api.Plural.CountSingular("finding"))} in view / ${o.total} total"
-      case Some(o)             => Plural.count(o.findings, com.histmersion.api.Plural.CountSingular("finding"))
-      case None                => ""
+      case Some(o) if o.inView.value => s"${Plural.count(Plural.Count(o.findings.value.toLong), com.histmersion.api.Plural.CountSingular("finding"))} in view / ${o.total} total"
+      case Some(o)                   => Plural.count(Plural.Count(o.findings.value.toLong), com.histmersion.api.Plural.CountSingular("finding")).value
+      case None                      => ""
     ResultsPaging.countLine(
-      pageHits.length,
-      pageTotal.value,
+      com.histmersion.api.Paging.Shown(pageHits.length),
+      com.histmersion.api.Paging.Page.Total(pageTotal.value),
       com.histmersion.api.Plural.Noun.Singular("source"),
-      extras = List(findings, ResultsPaging.span(UiState.from.now(), UiState.to.now()))
+      extras = List(
+        com.histmersion.api.UiLabels.Text(findings),
+        ResultsPaging.span(UiState.from.now().map(com.histmersion.api.catalogue.Year(_)), UiState.to.now().map(com.histmersion.api.catalogue.Year(_)))
+      )
     )
 
   /** The next page's size: the request's own limit (at least 20). */
-  private def pageSize: com.histmersion.api.Paging.Limit = pageParams.fold(20)(p => math.max(p.limit, 20))
+  private def pageSize: com.histmersion.api.Paging.Limit = com.histmersion.api.Paging.Limit(pageParams.fold(20)(p => math.max(p.limit.value, 20)))
 
   private def nextLabel(): Option[com.histmersion.api.UiLabels.Text] =
-    pageParams.flatMap(_ => ResultsPaging.moreLabel(pageTotal.value - pageHits.length, pageSize))
+    pageParams.flatMap(_ => ResultsPaging.moreLabel(com.histmersion.api.RowCount(pageTotal.value - pageHits.length), ResultsPaging.PageNumber(pageSize.value)))
 
   /** "show more": the next page from the server, appended; a failure says so in the count line. */
   private def more(): Unit =
     pageParams.foreach { params =>
       moreLoading.set(true)
-      ApiClient.sources(params.modify(_.offset).setTo(pageHits.length)).onComplete {
+      ApiClient.sources(params.modify(_.offset).setTo(Filter.Offset(pageHits.length))).onComplete {
         case scala.util.Success(r) =>
           pageTotal = r.total
           pageHits = pageHits ++ r.hits
@@ -247,7 +250,7 @@ object ResultsList:
           moreLabel.set(nextLabel())
         case scala.util.Failure(e) =>
           moreLoading.set(false)
-          failed(s"Could not list more sources: ${Option(e.getMessage).getOrElse(e.toString)}")
+          failed(Problem(s"Could not list more sources: ${Option(e.getMessage).getOrElse(e.toString)}"))
       }
     }
 
@@ -259,11 +262,11 @@ object ResultsList:
     val period = Fmt.periodStr(src.periodStart, src.periodEnd)
     val meta = List(
       src.year.map(_.value.toInt).map(_.toString),
-      Some(src.status.wire),
-      Some(period).filter(_.nonEmpty)
+      Some(src.status.wire.value),
+      Some(period.value).filter(_.nonEmpty)
     ).flatten.map(Fmt.esc).mkString(" · ")
 
-    val why = h.why.filterNot(w => "(?i)^period\\b".r.findFirstIn(w).isDefined)
+    val why = h.why.filterNot(w => "(?i)^period\\b".r.findFirstIn(w.value).isDefined)
     val matched = h.matched
     val shownMatches = matched.take(2)
 
@@ -271,19 +274,19 @@ object ResultsList:
       cls := "hit hit-source",
       role := "button",
       tabIndex := 0,
-      div(cls := "ck", SourceLink(src.citekey.value.toString, src.doi.map(_.value))),
+      div(cls := "ck", SourceLink(src.citekey, src.doi)),
       a(
         cls := "title row-link",
-        href := SourceLink.href(src.citekey.value.toString),
+        href := SourceLink.href(src.citekey),
         src.title.value,
-        onClick --> { ev => if Router.plain(ev) then { ev.preventDefault(); openSource(src.citekey.value.toString, inPanel) } }
+        onClick --> { ev => if Router.plain(ev) then { ev.preventDefault(); openSource(src.citekey, inPanel) } }
       ),
       div(cls := "meta", meta),
       src.snippet
-        .filter(_.nonEmpty)
-        .map(s => div(cls := "snip", onMountCallback(ctx => ctx.thisNode.ref.innerHTML = snippetHtml(s))))
+        .filter(_.value.nonEmpty)
+        .map(s => div(cls := "snip", onMountCallback(ctx => ctx.thisNode.ref.innerHTML = snippetHtml(com.histmersion.api.UiLabels.Text(s.value)))))
         .getOrElse(emptyNode),
-      if why.nonEmpty then ul(cls := "why", why.map(w => li(w)))
+      if why.nonEmpty then ul(cls := "why", why.map(w => li(w.value)))
       else emptyNode,
       if matched.nonEmpty then
         div(
@@ -291,13 +294,13 @@ object ResultsList:
           span(cls := "lbl", "matches:"),
           ul(
             shownMatches.map { m =>
-              val mwhy = m.why.filterNot(w => "(?i)^period\\b".r.findFirstIn(w).isDefined)
+              val mwhy = m.why.filterNot(w => "(?i)^period\\b".r.findFirstIn(w.value).isDefined)
               li(
-                span(cls := "claim", Fmt.clip(m.claim, com.histmersion.api.Markdown.CharLimit(160))),
-                Fmt.periodStr(m.periodStart, m.periodEnd) match
+                span(cls := "claim", Fmt.clip(m.claim.value, com.histmersion.api.Markdown.CharLimit(160))),
+                Fmt.periodStr(m.periodStart, m.periodEnd).value match
                   case "" => emptyNode
                   case p  => span(cls := "p", s" $p"),
-                m.regionName.filter(_.nonEmpty).map(r => span(cls := "rg", s" ${Fmt.display(r)}")).getOrElse(emptyNode),
+                m.regionName.filter(_.value.nonEmpty).map(r => span(cls := "rg", s" ${Fmt.display(com.histmersion.api.UiLabels.Text(r.value))}")).getOrElse(emptyNode),
                 if mwhy.nonEmpty then span(cls := "mwhy", s" ${mwhy.mkString(", ")}") else emptyNode
               )
             } ++ (if matched.length > shownMatches.length then
@@ -307,31 +310,33 @@ object ResultsList:
         )
       else emptyNode,
       marks.RowActions(
-        marks.ItemRef.source(src.citekey.value.toString, src.title.value),
-        SourceLink.href(src.citekey.value.toString),
-        List(src.authors.map(_.value).take(3).mkString(", "), src.year.map(_.value.toInt).fold("")(_.toString)).filter(_.nonEmpty).mkString(", ")
+        marks.ItemRef.source(WindowKey.Source.Citekey(src.citekey.value), marks.ItemRef.Title(src.title.value)),
+        marks.ItemRef.Href(SourceLink.href(src.citekey)),
+        com.histmersion.web.library.TableRow.Byline(
+          List(src.authors.map(_.value).take(3).mkString(", "), src.year.map(_.value.toInt).fold("")(_.toString)).filter(_.nonEmpty).mkString(", ")
+        )
       ),
       onClick --> { ev =>
         val inLink = Option(ev.target.asInstanceOf[dom.Element].closest("a, button")).isDefined
-        if !inLink then openSource(src.citekey.value.toString, inPanel)
+        if !inLink then openSource(src.citekey, inPanel)
       },
       onKeyDown --> { ev =>
         if (ev.key == "Enter" || ev.key == " ") && ev.target == ev.currentTarget then
           ev.preventDefault()
-          openSource(src.citekey.value.toString, inPanel)
+          openSource(src.citekey, inPanel)
       }
     )
 
   private def openSource(ck: com.histmersion.web.Preview.Target.Source.Citekey, inPanel: com.histmersion.web.ResultsList.InPanel): Unit =
-    if inPanel then ResultsPanel.show(Preview.Target.Source(ck))
+    if inPanel.value then ResultsPanel.show(Preview.Target.Source(ck))
     else ArticleModal.open(ck, Map("q" -> UiState.q.now().getOrElse("")))
 
   private def emptyState(): HtmlElement =
     val chips = UiState.activeChips()
     val causes = scala.collection.mutable.ListBuffer.empty[String]
     if UiState.inView.now() then causes += "the map viewport (\"only sources in view\" is on)"
-    causes += s"the span ${Fmt.yr(UiState.from.now())} → ${Fmt.yr(UiState.to.now())}"
-    if chips.nonEmpty then causes += s"${plural(chips.length, com.histmersion.api.Plural.Noun.Singular("filter"))} below"
+    causes += s"the span ${Fmt.yr(UiState.from.now().map(com.histmersion.api.catalogue.Year(_)))} → ${Fmt.yr(UiState.to.now().map(com.histmersion.api.catalogue.Year(_)))}"
+    if chips.nonEmpty then causes += s"${plural(chips.length, "filter")} below"
 
     div(
       cls := "empty",
@@ -344,22 +349,22 @@ object ResultsList:
             if c.key == UiState.placeIds.key then
               li(
                 child <-- PlacesInput
-                  .chipTextSignal(c.value)
+                  .chipTextSignal(Pages.PlaceId(c.value.value))
                   .map(t =>
                     Chip(
-                      t,
-                      prefix = Some(s"${c.label}: "),
-                      extraCls = "place",
-                      remove = Some(() => UiState.removeChip(c.key, c.value))
+                      Chip.Text(t.value),
+                      prefix = Some(Chip.Prefix(s"${c.label}: ")),
+                      extraCls = Chip.ExtraClass("place"),
+                      remove = Some(() => UiState.removeChip(UiState.RemoveChipKey(c.key.value), UiState.FilterTerm(c.value.value)))
                     )
                   )
               )
             else
               li(
                 Chip(
-                  c.shown.getOrElse(Fmt.displayTag(c.value)),
-                  prefix = Some(s"${c.label}: "),
-                  remove = Some(() => UiState.removeChip(c.key, c.value))
+                  Chip.Text(c.shown.map(_.value).getOrElse(Fmt.displayTag(Fmt.DisplayTagS(c.value.value)).value)),
+                  prefix = Some(Chip.Prefix(s"${c.label}: ")),
+                  remove = Some(() => UiState.removeChip(UiState.RemoveChipKey(c.key.value), UiState.FilterTerm(c.value.value)))
                 )
               )
           }

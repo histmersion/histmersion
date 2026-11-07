@@ -22,54 +22,44 @@ object PlaceGlyph:
   object GeometryType extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type LabelHidden = LabelHidden.T
   object LabelHidden extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type PlaceKind = PlaceKind.T
-  object PlaceKind extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type ZoomLevel = ZoomLevel.T
   object ZoomLevel extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
   /** Pure: the glyph for a place of `kind` whose GeoJSON geometry type is `geometryType`. */
-  type NoBoundary = NoBoundaryValue
-  type NoBoundaryValue = NoBoundaryValue.T
-  object NoBoundaryValue extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type People = PeopleValue
-  type PeopleValue = PeopleValue.T
-  object PeopleValue extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type LabelMarkerLabel = _root_.com.histmersion.api.UiLabels.Text
   val LabelMarkerLabel: _root_.com.histmersion.api.UiLabels.Text.type = _root_.com.histmersion.api.UiLabels.Text
-  type LabelMarkerKind = _root_.com.histmersion.web.PlaceGlyph.PlaceKind
-  val LabelMarkerKind: _root_.com.histmersion.web.PlaceGlyph.PlaceKind.type = _root_.com.histmersion.web.PlaceGlyph.PlaceKind
   type LabelMarkerHidden = _root_.com.histmersion.web.PlaceGlyph.LabelHidden
   val LabelMarkerHidden: _root_.com.histmersion.web.PlaceGlyph.LabelHidden.type = _root_.com.histmersion.web.PlaceGlyph.LabelHidden
 
-  def of(kind: com.histmersion.web.PlaceGlyph.PlaceKind, geometryType: com.histmersion.web.PlaceGlyph.GeometryType): PlaceGlyph =
-    val point = geometryType == "Point" || geometryType == "MultiPoint"
+  def of(kind: Place.Summary.Kind, geometryType: com.histmersion.web.PlaceGlyph.GeometryType): PlaceGlyph =
+    val point = geometryType.value == "Point" || geometryType.value == "MultiPoint"
     if !point then Area
     else if Place.Shape.isArea(kind) || Place.Shape.isPeople(kind) then Label
     else Dot
 
   /** The words under a point-only region's name. */
-  val NoBoundary: com.histmersion.web.PlaceGlyph.NoBoundary = com.histmersion.web.PlaceGlyph.NoBoundary("no boundary yet")
+  val NoBoundary: Place.Card.Note = Place.Card.Note("no boundary yet")
 
   /** The words under a people's name. */
-  val People: com.histmersion.web.PlaceGlyph.People = com.histmersion.web.PlaceGlyph.People("people")
+  val People: Place.Card.Note = Place.Card.Note("people")
 
   /** Pure: the label's markup (escaped) for a place of `kind`; `hidden` starts it culled, for a label the map's name
     * pass ([[MapLabels]]) shows — it then fades and grows in.
     */
   def labelHtml(
       label: com.histmersion.api.UiLabels.Text,
-      kind: com.histmersion.web.PlaceGlyph.PlaceKind = com.histmersion.api.catalogue.Place.Kind.Region,
+      kind: Place.Summary.Kind = Place.Summary.Kind(Place.Kind.Region),
       hidden: com.histmersion.web.PlaceGlyph.LabelHidden = com.histmersion.web.PlaceGlyph.LabelHidden(false)
   ): String =
     val (note, title) =
       if Place.Shape.isPeople(kind) then (People, Place.Shape.PeopleNote) else (NoBoundary, Place.Shape.NoBoundaryNote)
-    val cls = if hidden then "hd-area-point is-culled" else "hd-area-point"
-    s"""<span class="$cls" title="${Fmt.esc(label)} — $title">""" +
-      s"""<span class="hd-area-point-name">${Fmt.esc(label)}</span>""" +
-      s"""<span class="hd-area-point-note">$note</span></span>"""
+    val cls = if hidden.value then "hd-area-point is-culled" else "hd-area-point"
+    s"""<span class="$cls" title="${Fmt.esc(label.value)} — ${title.value}">""" +
+      s"""<span class="hd-area-point-name">${Fmt.esc(label.value)}</span>""" +
+      s"""<span class="hd-area-point-note">${note.value}</span></span>"""
 
   /** Pure: is the map zoomed out too far for point-only region labels? */
-  def far(zoom: com.histmersion.web.PlaceGlyph.ZoomLevel): Boolean = zoom < Layout.areaLabelMinZoom
+  def far(zoom: com.histmersion.web.PlaceGlyph.ZoomLevel): Boolean = zoom.value < Layout.areaLabelMinZoom.value
 
   /** The label marker of a point-only region at (`lat`, `lon`). Its look is `.hd-area-point`; it is drawn in the
     * area-points pane (a region's name: above the shapes, below every dot).
@@ -78,16 +68,16 @@ object PlaceGlyph:
       lat: com.histmersion.api.Geo.Latitude,
       lon: com.histmersion.api.Geo.Longitude,
       label: com.histmersion.web.PlaceGlyph.LabelMarkerLabel,
-      kind: com.histmersion.web.PlaceGlyph.LabelMarkerKind = com.histmersion.api.catalogue.Place.Kind.Region,
+      kind: Place.Summary.Kind = Place.Summary.Kind(Place.Kind.Region),
       wrapClass: String = "hd-area-point-wrap",
       hidden: com.histmersion.web.PlaceGlyph.LabelMarkerHidden = com.histmersion.web.PlaceGlyph.LabelMarkerHidden(false)
   ): DomMarker =
-    DomMarker(lat, lon, DomMarker.element(wrapClass, labelHtml(label, kind, hidden)))
+    DomMarker(lat, lon, DomMarker.element(DomMarker.ElementCls(wrapClass), DomMarker.ElementHtml(labelHtml(label, kind, hidden))))
 
   /** Keep the map container's `map-far` class equal to [[far]] of its zoom (the stylesheet hides point-only region
     * labels under it).
     */
   def followZoom(map: MapSurface): Unit =
-    def sync(): Unit = map.container.classList.toggle("map-far", far(math.round(map.zoom).toInt))
+    def sync(): Unit = map.container.classList.toggle("map-far", far(PlaceGlyph.ZoomLevel(math.round(map.zoom.value).toInt)))
     sync()
     val _ = map.on(MapEventKind.ZoomEnd)(_ => sync())

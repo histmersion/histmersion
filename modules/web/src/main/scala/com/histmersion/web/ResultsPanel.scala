@@ -21,13 +21,13 @@ object ResultsPanel:
   /** The width, px: the one this browser kept, else the default. */
 
 
-  val width: Var[com.histmersion.web.ResultsWidth.Width] = Var(ResultsWidth.clamp(ResultsWidth.stored.getOrElse(Layout.sidebarDefault.value), viewport))
+  val width: Var[com.histmersion.web.ResultsWidth.Width] = Var(ResultsWidth.clamp(ResultsWidth.stored.getOrElse(ResultsWidth.Width(Layout.sidebarDefault.value.value)), viewport))
 
-  private def viewport: com.histmersion.web.ResultsWidth.ViewportWidth = scala.util.Try(dom.window.innerWidth).getOrElse(Double.MaxValue)
+  private def viewport: com.histmersion.web.ResultsWidth.ViewportWidth = ResultsWidth.ViewportWidth(scala.util.Try(dom.window.innerWidth).getOrElse(Double.MaxValue))
 
   private def resizeTo(w: com.histmersion.web.ResultsWidth.Width, keep: com.histmersion.web.ResultsPanel.KeepWidth): Unit =
     width.set(ResultsWidth.clamp(w, viewport))
-    if keep then ResultsWidth.keep(width.now())
+    if keep.value then ResultsWidth.keep(width.now())
 
   /** The item whose detail replaces the results. */
   val selected: Var[Option[Preview.Target]] = Var(None)
@@ -39,24 +39,24 @@ object ResultsPanel:
 
   def back(): Unit = selected.set(None)
 
-  def activeTab: SidebarTab = SidebarTab.of(UiState.tab.now())
-  private def activeTabSignal: Signal[SidebarTab] = UiState.tab.signal.map(SidebarTab.of)
+  def activeTab: SidebarTab = SidebarTab.of(UiState.tab.now().map(SidebarTab.Key(_)))
+  private def activeTabSignal: Signal[SidebarTab] = UiState.tab.signal.map(k => SidebarTab.of(k.map(SidebarTab.Key(_))))
 
   def setActiveTab(t: SidebarTab): Unit =
     selected.set(None)
-    UiState.set(UiState.tab := Some(t.key))(push = true)
+    UiState.set(UiState.tab := Some(t.key.value))(push = true)
 
   private val sorts = List("relevance", "cited", "period", "year", "title")
 
   /** Pure: a tab's label with its count, when known. */
-  def tabLabel(label: com.histmersion.api.UiLabels.Text, count: Option[com.histmersion.api.RowCount]): com.histmersion.api.UiLabels.Text = count.fold(label)(n => s"$label $n")
+  def tabLabel(label: com.histmersion.api.UiLabels.Text, count: Option[com.histmersion.api.RowCount]): com.histmersion.api.UiLabels.Text = count.fold(label)(n => com.histmersion.api.UiLabels.Text(s"$label $n"))
 
   private def counts(t: SidebarTab): Signal[Option[com.histmersion.api.RowCount]] = t match
     case SidebarTab.Sources  => ResultsList.total.signal
     case SidebarTab.Articles => ArticlesTab.total
     case SidebarTab.Events   => EventsTab.total
-    case SidebarTab.Places   => MapLists.places.signal.map(s => Some(com.histmersion.api.RowCount(s.total)))
-    case SidebarTab.Pictures => MapLists.pictures.signal.map(s => Some(com.histmersion.api.RowCount(s.total)))
+    case SidebarTab.Places   => MapLists.places.signal.map(s => Some(com.histmersion.api.RowCount(s.total.value)))
+    case SidebarTab.Pictures => MapLists.pictures.signal.map(s => Some(com.histmersion.api.RowCount(s.total.value)))
 
   private def scope: HtmlElement =
     div(
@@ -112,14 +112,14 @@ object ResultsPanel:
         tabIndex := 0,
         aria.orientation := "vertical",
         aria.label := "Width of the results (← wider, → narrower)",
-        aria.valueMin := ResultsWidth.min.toDouble,
-        aria.valueMax <-- width.signal.map(_ => ResultsWidth.max(dom.window.innerWidth).toDouble),
-        aria.valueNow <-- width.signal.map(_.toDouble),
+        aria.valueMin := ResultsWidth.min.value.toDouble,
+        aria.valueMax <-- width.signal.map(_ => ResultsWidth.max(ResultsWidth.ViewportWidth(dom.window.innerWidth)).value.toDouble),
+        aria.valueNow <-- width.signal.map(_.value.toDouble),
         title := "Drag, or use ← and →, to change the width of the results",
         onKeyDown --> { ev =>
-          ResultsWidth.step(width.now(), ev.key, ev.shiftKey, dom.window.innerWidth).foreach { w =>
+          ResultsWidth.step(width.now(), ResultsWidth.KeyName(ev.key), ResultsWidth.ShiftHeld(ev.shiftKey), ResultsWidth.StepViewport(dom.window.innerWidth)).foreach { w =>
             ev.preventDefault()
-            resizeTo(w, keep = true)
+            resizeTo(w, keep = KeepWidth(true))
           }
         },
         onPointerDown --> { ev =>
@@ -129,7 +129,7 @@ object ResultsPanel:
           val target = ev.target.asInstanceOf[dom.HTMLElement]
           target.setPointerCapture(ev.pointerId)
           val move = { (me: dom.PointerEvent) =>
-            resizeTo(startW - (me.clientX - startX).toInt, keep = com.histmersion.web.ResultsPanel.KeepWidth(false))
+            resizeTo(ResultsWidth.Width(startW.value - (me.clientX - startX).toInt), keep = com.histmersion.web.ResultsPanel.KeepWidth(false))
           }: js.Function1[dom.PointerEvent, Unit]
           val up = { (_: dom.PointerEvent) =>
             target.removeEventListener("pointermove", move)
@@ -155,10 +155,10 @@ object ResultsPanel:
             button(
               typ := "button",
               role := "tab",
-              dataAttr("tab") := t.key,
+              dataAttr("tab") := t.key.value,
               cls <-- activeTabSignal.map(a => if a == t then "tab active" else "tab"),
               aria.selected <-- activeTabSignal.map(_ == t),
-              span(cls := "tab-label", t.label),
+              span(cls := "tab-label", t.label.value),
               child.maybe <-- counts(t).map(_.map(n => span(cls := "tab-count", n.toString))),
               onClick --> { _ => setActiveTab(t) }
             )
@@ -227,7 +227,7 @@ object ResultsPanel:
       onPointerUp --> { ev =>
         sheetOf(ev).foreach(_.classList.remove("sheet-dragging"))
         val next =
-          if dragged then Sheet.nearest((h - ev.clientY) / h, px("--sheet-peek") / h, 1 - px("--sheet-full-gap") / h)
+          if dragged then Sheet.nearest(Sheet.Fraction((h - ev.clientY) / h), Sheet.Fraction(px("--sheet-peek") / h), Sheet.Fraction(1 - px("--sheet-full-gap") / h))
           else Sheet.next(UiState.sheet.now())
         UiState.set(UiState.sheet := next)()
       }

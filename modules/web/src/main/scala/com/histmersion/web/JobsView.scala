@@ -28,8 +28,8 @@ object JobsView:
     val MaxMs: Int = com.histmersion.web.Poll.MaxMs
 
     /** The delay before the next poll, or `None` to stop: no job left to wait for. */
-    def next(previous: Option[Int], jobs: List[JobInfo], changed: Boolean): Option[Int] =
-      com.histmersion.web.Poll.next(previous, jobs.exists(!_.isTerminal), changed)
+    def next(previous: Option[com.histmersion.web.Poll.Revision], jobs: List[JobInfo], changed: com.histmersion.web.Poll.DataChanged): Option[com.histmersion.web.Poll.Revision] =
+      com.histmersion.web.Poll.next(previous, com.histmersion.web.Poll.LiveMode(jobs.exists(!_.isTerminal)), changed)
 
   /** Is any job still queued or running — anywhere in the table (the server's counts), not just among the rows a filter
     * shows; the rows' own states when the server sent no counts.
@@ -97,7 +97,7 @@ object JobsView:
   /** What a job without a citekey is about, from its stored [[JobDetail]] (#770): an init job names what it imports.
     * `None` for a job that has a citekey, or no detail.
     */
-  def what(j: JobInfo): Option[String] =
+  def what(j: JobInfo): Option[com.histmersion.api.jobs.JobKinds.Subject] =
     if j.citekey.isDefined then None else JobDetail.subject(j)
 
   /** The period definitions an import left out (#771): how many, and which. */
@@ -152,7 +152,7 @@ object JobsView:
   private val list = PolledList[JobInfo](
     fetch = (upTo, before) => ApiClient.jobs(currentFilter(), Some(Paging.Limit(Limit)), upTo = upTo, before = before),
     id = j => PolledList.ItemId(j.id.value),
-    live = live,
+    live = (rows, page) => PolledList.LiveResult(live(rows, page)),
     after = (cur, rows) => if ticksOff(cur.rows, rows) then QueueView.changed.emit(Queue.Kind.Acquire)
   )
   private def listing = list.listing
@@ -198,7 +198,7 @@ object JobsView:
       ),
       list.errorLine(com.histmersion.api.UiLabels.Text("Could not list jobs")),
       child.maybe <-- shownSignal.combineWith(list.loaded.signal).map { (l, filter, isLoaded) =>
-        Option.when(isLoaded && l.rows.nonEmpty)(
+        Option.when(isLoaded.value && l.rows.nonEmpty)(
           p(
             cls := "muted list-heading",
             ListPaging.heading(
@@ -206,13 +206,13 @@ object JobsView:
               com.histmersion.api.Plural.Noun.Singular("job"),
               filter.map(_.wire.value),
               _.status.value,
-              filter.map(stateLabel).toList ++ currentFilter().normalized.kind.map(kindLabel)
+              filter.map(stateLabel).toList ++ currentFilter().normalized.kind.map(k => kindLabel(k.value))
             )
           )
         )
       },
       child.maybe <-- shownSignal.combineWith(list.loaded.signal).map { (l, filter, isLoaded) =>
-        if !isLoaded then Some(p(cls := "muted", "Loading…"))
+        if !isLoaded.value then Some(p(cls := "muted", "Loading…"))
         else
           Option.when(l.rows.isEmpty)(
             p(
@@ -274,7 +274,7 @@ object JobsView:
           j.citekey match
             case Some(ck) if subjectStored(j) => SourceLink(Preview.Target.Source.Citekey(ck.value))
             case Some(ck)                     => code(cls := "job-ck", title := "not stored yet", ck.value)
-            case None                         => what(j).fold(emptyNode)(w => span(cls := "job-what", w)),
+            case None                         => what(j).fold(emptyNode)(w => span(cls := "job-what", w.value)),
           span(cls := "muted", s" · ${kindLabel(j.kind.value)}"),
           j.acquireItem.map(i =>
             span(

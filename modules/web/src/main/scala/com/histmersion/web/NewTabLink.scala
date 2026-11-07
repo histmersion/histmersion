@@ -14,7 +14,7 @@ object NewTabLink:
   def apply(href0: com.histmersion.web.NewTabLink.Href, what: com.histmersion.web.NewTabLink.Label): HtmlElement =
     a(
       cls := "btn btn--bare btn--icon btn--sm new-tab",
-      href := href0,
+      href := href0.value,
       target := "_blank",
       rel := "noopener",
       title := s"Open “$what” in a new tab",

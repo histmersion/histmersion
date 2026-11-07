@@ -22,7 +22,7 @@ object Sheet:
   object Wire extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
 
-  def fromWire(s: String): Option[Sheet] = values.find(_.wire == s.trim.toLowerCase)
+  def fromWire(s: String): Option[Sheet] = values.find(_.wire == Wire(s.trim.toLowerCase))
 
   /** A tap on the handle: one step up, and from the top back down to the strip. */
   def next(s: Sheet): Sheet = s match
@@ -34,4 +34,4 @@ object Sheet:
     * full sheet's fractions. Pure.
     */
   def nearest(fraction: com.histmersion.web.Sheet.Fraction, peek: com.histmersion.web.Sheet.Fraction, full: com.histmersion.web.Sheet.Fraction): Sheet =
-    List(Peek -> peek, Half -> 0.5, Full -> full).minBy((_, f) => math.abs(f - fraction))._1
+    List[(Sheet, Double)](Peek -> peek.value, Half -> 0.5, Full -> full.value).minBy((_, f) => math.abs(f - fraction.value))._1

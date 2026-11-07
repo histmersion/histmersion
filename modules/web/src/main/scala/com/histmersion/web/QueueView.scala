@@ -27,23 +27,15 @@ object QueueView:
   object Done extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type GroupCount = GroupCount.T
   object GroupCount extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type Identifier = Identifier.T
-  object Identifier extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type ItemIsTarget = ItemIsTarget.T
   object ItemIsTarget extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type ItemText = ItemText.T
-  object ItemText extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type Problem = Problem.T
   object Problem extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type TopicName = TopicName.T
-  object TopicName extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type Writes = Writes.T
   object Writes extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
   /** A run of an item's text: the queue items are short Markdown lines. */
 
-  type RenderGroupTopic = _root_.com.histmersion.web.QueueView.TopicName
-  val RenderGroupTopic: _root_.com.histmersion.web.QueueView.TopicName.type = _root_.com.histmersion.web.QueueView.TopicName
   type RenderGroupTopicsId = String
   type RenderItemTopicsId = String
 
@@ -82,8 +74,8 @@ object QueueView:
       type Citekey = com.histmersion.web.Preview.Target.Source.Citekey
       val Citekey: _root_.com.histmersion.web.Preview.Target.Source.Citekey.type = _root_.com.histmersion.web.Preview.Target.Source.Citekey
     object Ident:
-      type Id = com.histmersion.web.QueueView.Identifier
-      val Id: _root_.com.histmersion.web.QueueView.Identifier.type = _root_.com.histmersion.web.QueueView.Identifier
+      type Id = com.histmersion.web.IdentLink.Id
+      val Id: _root_.com.histmersion.web.IdentLink.Id.type = _root_.com.histmersion.web.IdentLink.Id
 
   /** What differs between the three windows; everything else is shared.
     *
@@ -101,17 +93,17 @@ object QueueView:
       empty: Spec.Empty,
       untitled: Spec.Untitled,
       openNoun: Spec.OpenNoun,
-      showDone: Option[Field[Spec.ShowDone]],
-      tick: (Spec.TickPart1, Spec.TickPart2)
+      showDone: Option[Field[Boolean]],
+      tick: (Spec.TickDone, Spec.TickReopen)
   ):
     /** Whether items carry a checkbox; the worklog's do not. */
-    def checkable: Boolean = kind.checkboxes
+    def checkable: Boolean = kind.checkboxes.value
 
     /** Whether an item can be edited and deleted here; the worklog is only added to. */
-    def editable: Boolean = kind.checkboxes
+    def editable: Boolean = kind.checkboxes.value
 
     /** Whether an item carries a reason (why it is wanted); a worklog entry is its own record. */
-    def reasons: Boolean = kind.checkboxes
+    def reasons: Boolean = kind.checkboxes.value
 
     /** Whether an item is fulfilled by a source — uploaded, or linked to one in the corpus. */
     def fulfils: Boolean = kind == Queue.Kind.Acquire
@@ -124,12 +116,10 @@ object QueueView:
     object Untitled extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
     type OpenNoun = OpenNoun.T
     object OpenNoun extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-    type ShowDone = ShowDone.T
-    object ShowDone extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
-    type TickPart1 = TickPart1.T
-    object TickPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-    type TickPart2 = TickPart2.T
-    object TickPart2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type TickDone = TickDone.T
+    object TickDone extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type TickReopen = TickReopen.T
+    object TickReopen extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
   def spec(kind: Queue.Kind): Spec = kind match
     case Queue.Kind.Acquire =>
@@ -140,7 +130,7 @@ object QueueView:
         com.histmersion.web.QueueView.Spec.Untitled("Uncategorised"),
         com.histmersion.web.QueueView.Spec.OpenNoun("to get"),
         Some(UiState.acquireDone),
-        (com.histmersion.web.QueueView.Spec.TickPart1("mark as got"), com.histmersion.web.QueueView.Spec.TickPart2("mark as still to get"))
+        (com.histmersion.web.QueueView.Spec.TickDone("mark as got"), com.histmersion.web.QueueView.Spec.TickReopen("mark as still to get"))
       )
     case Queue.Kind.Tasks =>
       Spec(
@@ -150,10 +140,10 @@ object QueueView:
         com.histmersion.web.QueueView.Spec.Untitled("Uncategorised"),
         com.histmersion.web.QueueView.Spec.OpenNoun("open"),
         Some(UiState.tasksDone),
-        (com.histmersion.web.QueueView.Spec.TickPart1("mark as done"), com.histmersion.web.QueueView.Spec.TickPart2("mark as still open"))
+        (com.histmersion.web.QueueView.Spec.TickDone("mark as done"), com.histmersion.web.QueueView.Spec.TickReopen("mark as still open"))
       )
     case Queue.Kind.Log =>
-      Spec(kind, Icon.Log, com.histmersion.web.QueueView.Spec.Empty("Nothing in the worklog."), com.histmersion.web.QueueView.Spec.Untitled("Undated"), com.histmersion.web.QueueView.Spec.OpenNoun(""), None, (com.histmersion.web.QueueView.Spec.TickPart1(""), com.histmersion.web.QueueView.Spec.TickPart2("")))
+      Spec(kind, Icon.Log, com.histmersion.web.QueueView.Spec.Empty("Nothing in the worklog."), com.histmersion.web.QueueView.Spec.Untitled("Undated"), com.histmersion.web.QueueView.Spec.OpenNoun(""), None, (com.histmersion.web.QueueView.Spec.TickDone(""), com.histmersion.web.QueueView.Spec.TickReopen("")))
 
   // ── pure parts ──────────────────────────────────────────────────────────────────────────────────
 
@@ -166,30 +156,32 @@ object QueueView:
   def segments(text: com.histmersion.api.UiLabels.Text): List[Seg] =
     val out = List.newBuilder[Seg]
     var last = 0
-    Token.findAllMatchIn(text).foreach { m =>
-      if m.start > last then out += Seg.Text(text.substring(last, m.start))
-      out += (if m.group(1) != null then Seg.Bold(m.group(1))
-              else if m.group(2) != null then Seg.Italic(m.group(2))
-              else if m.group(3) != null then Seg.Cite(m.group(3))
-              else if m.group(4) != null then Seg.Url(m.group(4))
-              else if m.group(5) != null then Seg.Doi(m.group(5))
-              else Seg.Ident(m.group(6)))
+    val raw = text.value
+    Token.findAllMatchIn(raw).foreach { m =>
+      if m.start > last then out += Seg.Text(com.histmersion.api.UiLabels.Text(raw.substring(last, m.start)))
+      out += (if m.group(1) != null then Seg.Bold(com.histmersion.api.UiLabels.Text(m.group(1)))
+              else if m.group(2) != null then Seg.Italic(com.histmersion.api.UiLabels.Text(m.group(2)))
+              else if m.group(3) != null then Seg.Cite(Seg.Cite.Citekey(m.group(3)))
+              else if m.group(4) != null then Seg.Url(Seg.Url.Value(m.group(4)))
+              else if m.group(5) != null then Seg.Doi(Seg.Doi.Value(m.group(5)))
+              else Seg.Ident(Seg.Ident.Id(m.group(6))))
       last = m.end
     }
-    if last < text.length then out += Seg.Text(text.substring(last))
+    if last < raw.length then out += Seg.Text(com.histmersion.api.UiLabels.Text(raw.substring(last)))
     out.result()
 
   /** A topic path (`**Group** > sub_topic`) as its heading and the path above it, readable; `untitled` stands in for an
     * item with no topic.
     */
-  def heading(topic: Option[com.histmersion.web.QueueView.TopicName], untitled: com.histmersion.api.UiLabels.Text = com.histmersion.api.UiLabels.Text("Uncategorised")): (com.histmersion.api.UiLabels.Text, List[com.histmersion.api.UiLabels.Text]) =
+  def heading(topic: Option[Queue.QueueItem.Topic], untitled: com.histmersion.api.UiLabels.Text = com.histmersion.api.UiLabels.Text("Uncategorised")): (com.histmersion.api.UiLabels.Text, List[com.histmersion.api.UiLabels.Text]) =
     val parts = topic
+      .map(_.value)
       .getOrElse("")
       .split(" > ")
       .toList
       .map(_.trim.stripPrefix("**").stripSuffix("**").trim)
       .filter(_.nonEmpty)
-      .map(Wording.heading)
+      .map(h => com.histmersion.api.UiLabels.Text(Wording.heading(h)))
     parts match
       case Nil => (untitled, Nil)
       case ps  => (ps.last, ps.init)
@@ -199,19 +191,24 @@ object QueueView:
   /** The day a worklog group is about: the date its topic starts with (a range such as `2026-06-24/25` keeps its first
     * day), else the day its newest entry was written; `""` when neither is known, which sorts last.
     */
-  def logDate(topic: Option[com.histmersion.web.QueueView.TopicName], items: List[Queue.QueueItem]): com.histmersion.api.UiLabels.Text =
-    topic.map(_.trim) match
-      case Some(LeadingDate(d)) => d
-      case _                    => items.flatMap(_.createdAt).maxOption.map(_.take(10)).getOrElse(com.histmersion.api.UiLabels.Text(""))
+  def logDate(topic: Option[Queue.QueueItem.Topic], items: List[Queue.QueueItem]): com.histmersion.api.UiLabels.Text =
+    topic.map(_.value.trim) match
+      case Some(LeadingDate(d)) => com.histmersion.api.UiLabels.Text(d)
+      case _                    =>
+        items
+          .flatMap(_.createdAt)
+          .maxOption
+          .map(c => com.histmersion.api.UiLabels.Text(c.value.take(10)))
+          .getOrElse(com.histmersion.api.UiLabels.Text(""))
 
   /** The items grouped by topic, each group in id order. The checkbox lists keep the groups in the order their first
     * item was added; the worklog puts the newest date first (ties: file order).
     */
-  def groups(kind: Queue.Kind, items: List[Queue.QueueItem]): List[(Option[com.histmersion.web.QueueView.TopicName], List[Queue.QueueItem])] =
+  def groups(kind: Queue.Kind, items: List[Queue.QueueItem]): List[(Option[Queue.QueueItem.Topic], List[Queue.QueueItem])] =
     val gs = items.groupBy(_.topic).toList.map((t, is) => t -> is.sortBy(_.id))
-    if kind.checkboxes then gs.sortBy((_, is) => is.head.id)
+    if kind.checkboxes.value then gs.sortBy((_, is) => is.head.id)
     else
-      gs.sortBy((t, is) => (logDate(t, is), is.head.id))(using
+      gs.sortBy((t, is) => (logDate(t, is).value, is.head.id.value))(using
         Ordering.Tuple2(using Ordering.String.reverse, Ordering.Int)
       )
 
@@ -219,13 +216,13 @@ object QueueView:
     */
   def summary(spec: Spec, items: List[Queue.QueueItem]): com.histmersion.api.UiLabels.Text =
     if spec.checkable then
-      val done = items.count(_.status == Queue.Done)
-      s"${items.size - done} ${spec.openNoun}" + (if done > 0 then s" · $done done" else "")
+      val done = items.count(_.status.value == Queue.Done)
+      com.histmersion.api.UiLabels.Text(s"${items.size - done} ${spec.openNoun}" + (if done > 0 then s" · $done done" else ""))
     else
       val days = items.map(_.topic).distinct.size
-      s"${plural(items.size, com.histmersion.api.Plural.Noun.Singular("entry"), com.histmersion.api.Plural.Noun.Plural("entries"))} · ${plural(days, com.histmersion.api.Plural.Noun.Singular("day"), com.histmersion.api.Plural.Noun.Plural("days"))}"
+      com.histmersion.api.UiLabels.Text(s"${plural(items.size, "entry", "entries")} · ${plural(days, "day", "days")}")
 
-  private def plural(n: com.histmersion.api.RowCount, one: com.histmersion.api.Plural.Noun.Singular, many: com.histmersion.api.Plural.Noun.Plural): com.histmersion.api.Plural.Phrase = s"$n ${if n == 1 then one else many}"
+  private def plural(n: Int, one: String, many: String): String = s"$n ${if n == 1 then one else many}"
 
   // ── writing: add · edit · fulfil (pure) ─────────────────────────────────────────────────────────
 
@@ -237,8 +234,8 @@ object QueueView:
   /** The write that ticks `item` off as fulfilled by the source `citekey` — the core rule ([[Queue.fulfil]]) the
     * server's OCR job applies too, addressed to the item.
     */
-  def fulfil(item: Queue.QueueItem, citekey: com.histmersion.web.Preview.Target.Source.Citekey): (com.histmersion.api.RowCount, Queue.QueuePatch) =
-    item.id -> Queue.fulfil(item, citekey)
+  def fulfil(item: Queue.QueueItem, citekey: com.histmersion.web.Preview.Target.Source.Citekey): (Queue.QueueItem.Id, Queue.QueuePatch) =
+    item.id -> Queue.fulfil(item, com.histmersion.api.library.Citekey(citekey.value))
 
   /** The add form, as typed. */
   final case class AddDraft(text: AddDraft.Text = com.histmersion.web.QueueView.AddDraft.Text(""), topic: AddDraft.Topic = com.histmersion.web.QueueView.AddDraft.Topic(""), reason: AddDraft.Reason = com.histmersion.web.QueueView.AddDraft.Reason(""))
@@ -257,40 +254,40 @@ object QueueView:
     * no topic joins today's date, server-side); the worklog takes no reason.
     */
   def validateAdd(sp: Spec, d: AddDraft): Either[com.histmersion.web.QueueView.Problem, Queue.QueueAdd] =
-    if d.text.trim.isEmpty then Left(EmptyText)
+    if d.text.value.trim.isEmpty then Left(Problem(EmptyText))
     else
       Right(
         Queue.QueueAdd(
-          text = d.text.strip,
-          topic = Some(d.topic.trim).filter(_.nonEmpty),
-          reason = Some(d.reason.trim).filter(_ => sp.reasons).filter(_.nonEmpty)
+          text = Queue.QueueItem.Text(d.text.value.strip),
+          topic = Some(d.topic.value.trim).filter(_.nonEmpty).map(Queue.QueueItem.Topic(_)),
+          reason = Some(d.reason.value.trim).filter(_ => sp.reasons).filter(_.nonEmpty).map(Queue.QueueItem.Reason(_))
         )
       )
 
   /** The patch an inline edit makes: only what changed (`None` = nothing did); a blank topic moves the item out of its
     * group; a blank text is refused.
     */
-  def editPatch(item: Queue.QueueItem, text: com.histmersion.web.QueueView.ItemText, topic: com.histmersion.web.QueueView.TopicName): Either[com.histmersion.web.QueueView.Problem, Option[Queue.QueuePatch]] =
-    if text.trim.isEmpty then Left(EmptyText)
+  def editPatch(item: Queue.QueueItem, text: Queue.QueueItem.Text, topic: Queue.QueueItem.Topic): Either[com.histmersion.web.QueueView.Problem, Option[Queue.QueuePatch]] =
+    if text.value.trim.isEmpty then Left(Problem(EmptyText))
     else
-      val t = text.strip
-      val tp = topic.trim
-      val newText = Option.when(t != item.text)(t)
-      val newTopic = Option.when(Some(tp).filter(_.nonEmpty) != item.topic)(tp)
+      val t = text.value.strip
+      val tp = topic.value.trim
+      val newText = Option.when(t != item.text.value)(Queue.QueueItem.Text(t))
+      val newTopic = Option.when(Some(tp).filter(_.nonEmpty) != item.topic.map(_.value))(Queue.QueueItem.Topic(tp))
       Right(Option.when(newText.isDefined || newTopic.isDefined)(Queue.QueuePatch(text = newText, topic = newTopic)))
 
   /** The topics to offer while one is typed: those the list already uses, in the order they first appear, matching what
     * is typed (case and underscores aside), without the one typed exactly.
     */
-  def topicSuggestions(items: List[Queue.QueueItem], typed: com.histmersion.api.Api.Search.Text, limit: com.histmersion.api.Paging.Limit = com.histmersion.api.Paging.Limit(12)): List[com.histmersion.web.QueueView.TopicName] =
-    def norm(s: com.histmersion.web.QueueView.TopicName) = Label.display(s).toLowerCase.trim
-    val q = norm(typed)
+  def topicSuggestions(items: List[Queue.QueueItem], typed: com.histmersion.api.Api.Search.Text, limit: com.histmersion.api.Paging.Limit = com.histmersion.api.Paging.Limit(12)): List[Queue.QueueItem.Topic] =
+    def norm(s: String) = Label.display(Label.Text(s)).value.toLowerCase.trim
+    val q = norm(typed.value)
     items
       .sortBy(_.id)
       .flatMap(_.topic)
       .distinct
-      .filter(t => norm(t).contains(q) && t != typed.trim)
-      .take(limit)
+      .filter(t => norm(t.value).contains(q) && t.value != typed.value.trim)
+      .take(limit.value)
 
   // ── view ────────────────────────────────────────────────────────────────────────────────────────
 
@@ -304,10 +301,10 @@ object QueueView:
     val sp = spec(kind)
     val recheck = Var(Option.empty[Either[String, Acquire.Checks.RecheckResult]])
     val items = Var(List.empty[Queue.QueueItem])
-    val checks = Var(Map.empty[Int, Acquire.Checks.AcquireCheck])
-    val goals = Var(Map.empty[Int, List[Queue.GoalRef]])
+    val checks = Var(Map.empty[Queue.QueueItem.Id, Acquire.Checks.AcquireCheck])
+    val goals = Var(Map.empty[Queue.QueueItem.Id, List[Queue.GoalRef]])
     // the item a link pointed at (`?item=`): marked, and scrolled to once it is listed
-    val target = targetItem(org.scalajs.dom.window.location.search)
+    val target = targetItem(com.histmersion.api.Api.Search.Text(org.scalajs.dom.window.location.search))
     var scrolled = false
     val loaded = Var(false)
     val failure = Var(Option.empty[String])
@@ -317,12 +314,13 @@ object QueueView:
     // a list without a done state is listed whole; the others follow their "show done" switch
     def load(): Unit =
       val all = sp.showDone.fold(true)(_.now())
-      goal.fold(ApiClient.queueList(kind.label, all))(g => ApiClient.queueForGoal(kind.label, g, all)).onComplete { r =>
+      val list = ApiClient.QueueName(kind.label.value)
+      goal.fold(ApiClient.queueList(list, ApiClient.All(all)))(g => ApiClient.queueForGoal(list, ApiClient.GoalSlug(g.value), ApiClient.All(all))).onComplete { r =>
         r.fold(
           e => failure.set(Some(s"Could not load the list: ${e.getMessage}")),
           l =>
             failure.set(None)
-            items.set(l.items.filterNot(_.status == Queue.Note))
+            items.set(l.items.filterNot(_.status.value == Queue.Note))
             checks.set(l.checks.map(c => c.item -> c).toMap)
             goals.set(l.goals.map(g => g.item -> g.goals).toMap)
             loaded.set(true)
@@ -354,19 +352,24 @@ object QueueView:
     val ops = Ops(
       setDone = (item, d) =>
         write(
-          s"update item ${item.id}",
-          ApiClient.queuePatch(item.id, Queue.QueuePatch(status = Some(if d then Queue.Done else Queue.Open)))
+          com.histmersion.api.UiLabels.Text(s"update item ${item.id}"),
+          ApiClient.queuePatch(
+            ApiClient.QueueItemId(item.id.value),
+            Queue.QueuePatch(status = Some(Queue.QueueItem.Status(if d.value then Queue.Done else Queue.Open)))
+          )
         )(),
-      edit = (item, p, after) => write(s"edit item ${item.id}", ApiClient.queuePatch(item.id, p))(_ => after()),
-      delete = item => write(s"delete item ${item.id}", ApiClient.queueDelete(item.id))(),
+      edit = (item, p, after) =>
+        write(com.histmersion.api.UiLabels.Text(s"edit item ${item.id}"), ApiClient.queuePatch(ApiClient.QueueItemId(item.id.value), p))(_ => after()),
+      delete = item =>
+        write(com.histmersion.api.UiLabels.Text(s"delete item ${item.id}"), ApiClient.queueDelete(ApiClient.QueueItemId(item.id.value)))(),
       fulfil = (item, ck) =>
         val (id, p) = fulfil(item, ck)
-        write(s"tick item $id off", ApiClient.queuePatch(id, p))()
+        write(com.histmersion.api.UiLabels.Text(s"tick item $id off"), ApiClient.queuePatch(ApiClient.QueueItemId(id.value), p))()
       ,
       recheck = item =>
         write(
-          s"re-check item ${item.id}",
-          ApiClient.acquireRecheck(Acquire.Checks.RecheckRequest(id = Some(item.id), by = Some(com.histmersion.api.library.Acquire.Checks.RecheckRequest.By("web"))))
+          com.histmersion.api.UiLabels.Text(s"re-check item ${item.id}"),
+          ApiClient.acquireRecheck(Acquire.Checks.RecheckRequest(id = Some(Acquire.Checks.RecheckRequest.Id(item.id.value)), by = Some(com.histmersion.api.library.Acquire.Checks.RecheckRequest.By("web"))))
         )(r => recheck.set(Some(Right(r))))
     )
 
@@ -388,14 +391,14 @@ object QueueView:
         idAttr := topicsId,
         children <-- items.signal.map(its =>
           topicSuggestions(its, com.histmersion.api.Api.Search.Text(""), limit = com.histmersion.api.Paging.Limit(200)).map(t =>
-            option(value := t, htmlAttr("label", com.raquo.laminar.codecs.StringAsIsCodec) := topicLabel(t))
+            option(value := t.value, htmlAttr("label", com.raquo.laminar.codecs.StringAsIsCodec) := topicLabel(t).value)
           )
         )
       ),
       div(
         cls := "pane-bar",
-        sp.showDone.map(f => LayerToggle(sp.icon, com.histmersion.web.LayerToggle.Label("show done"), f.signal, v => UiState.set(f := v)())),
-        LayerToggle(Icon.Edit, if sp.editable then com.histmersion.web.LayerToggle.Label("add item") else com.histmersion.web.LayerToggle.Label("add entry"), adding.signal, adding.set),
+        sp.showDone.map(f => LayerToggle(sp.icon, "show done", f.signal, v => UiState.set(f := v)())),
+        LayerToggle(Icon.Edit, if sp.editable then "add item" else "add entry", adding.signal, adding.set),
         Option.when(sp.fulfils && goal.isEmpty)(
           button(
             typ := "button",
@@ -405,13 +408,13 @@ object QueueView:
             onClick --> (_ => recheckAll())
           )
         ),
-        span(cls := "muted", child.text <-- items.signal.map(summary(sp, _)))
+        span(cls := "muted", child.text <-- items.signal.map(its => summary(sp, its).value))
       ),
       goal.map(g =>
         p(
           cls := "muted queue-goal",
           "Only the items of the goal ",
-          RouteLink(Route.Goal(g), Wording.humanize(g)),
+          RouteLink(Route.Goal(com.histmersion.api.automation.Goal.Slug(g.value)), Wording.humanize(Wording.Id(g.value))),
           " · ",
           RouteLink(
             if kind == Queue.Kind.Acquire then Route.Research(ResearchSection.Acquire)
@@ -431,7 +434,7 @@ object QueueView:
             )(j =>
               span(
                 "Re-check running as ",
-                RouteLink(Route.Job(j.id.value), s"job ${j.id.value.take(8)}"),
+                RouteLink(Route.Job(Pages.JobId(j.id.value)), s"job ${j.id.value.take(8)}"),
                 " — it closes what it finds; ",
                 RouteLink(Route.Activity(ActivityTab.Jobs), "follow it in Activity"),
                 "."
@@ -450,7 +453,7 @@ object QueueView:
             sp,
             items.signal,
             topicsId,
-            (in, reset) => write(com.histmersion.api.UiLabels.Text("add the item"), ApiClient.queueAdd(kind.label, in))(_ => reset()),
+            (in, reset) => write(com.histmersion.api.UiLabels.Text("add the item"), ApiClient.queueAdd(ApiClient.QueueName(kind.label.value), in))(_ => reset()),
             () => adding.set(false)
           )
         )
@@ -458,7 +461,7 @@ object QueueView:
       child.maybe <-- failure.signal.map(_.map(m => p(cls := "form-error", role := "alert", m))),
       child <-- items.signal.combineWith(loaded.signal, checks.signal, goals.signal).map { (its, ok, cs, gs) =>
         if !ok then p(cls := "muted", "Loading…")
-        else if its.isEmpty then p(cls := "muted", sp.empty)
+        else if its.isEmpty then p(cls := "muted", sp.empty.value)
         else
           div(
             cls := "queue-groups",
@@ -483,9 +486,9 @@ object QueueView:
     val FulfilArg2: _root_.com.histmersion.web.Preview.Target.Source.Citekey.type = _root_.com.histmersion.web.Preview.Target.Source.Citekey
 
   /** A topic path as the suggestion list shows it: readable, the levels joined by `›`. */
-  private def topicLabel(t: com.histmersion.web.QueueView.TopicName): com.histmersion.api.UiLabels.Text =
+  private def topicLabel(t: Queue.QueueItem.Topic): com.histmersion.api.UiLabels.Text =
     val (last, path) = heading(Some(t))
-    (path :+ last).mkString(" › ")
+    com.histmersion.api.UiLabels.Text((path :+ last).mkString(" › "))
 
   private def addForm(
       sp: Spec,
@@ -498,7 +501,7 @@ object QueueView:
     val error = Var(Option.empty[String])
     def submit(): Unit =
       validateAdd(sp, draft.now()) match
-        case Left(m)   => error.set(Some(m))
+        case Left(m)   => error.set(Some(m.value))
         case Right(in) =>
           error.set(None)
           // the topic stays: the next item usually goes under the same one
@@ -516,8 +519,8 @@ object QueueView:
                             else if sp.editable then "what is left to do"
                             else "what was done"),
             controlled(
-              value <-- draft.signal.map(_.text),
-              onInput.mapToValue --> (v => draft.update(_.modify(_.text).setTo(v)))
+              value <-- draft.signal.map(_.text.value),
+              onInput.mapToValue --> (v => draft.update(_.modify(_.text).setTo(AddDraft.Text(v))))
             )
           )
         )
@@ -532,8 +535,8 @@ object QueueView:
             listId := topicsId,
             placeholder := (if sp.editable then "optional — groups the item" else "optional — today when left empty"),
             controlled(
-              value <-- draft.signal.map(_.topic),
-              onInput.mapToValue --> (v => draft.update(_.modify(_.topic).setTo(v)))
+              value <-- draft.signal.map(_.topic.value),
+              onInput.mapToValue --> (v => draft.update(_.modify(_.topic).setTo(AddDraft.Topic(v))))
             )
           )
         )
@@ -548,8 +551,8 @@ object QueueView:
               cls := "field",
               placeholder := "optional — why it is wanted",
               controlled(
-                value <-- draft.signal.map(_.reason),
-                onInput.mapToValue --> (v => draft.update(_.modify(_.reason).setTo(v)))
+                value <-- draft.signal.map(_.reason.value),
+                onInput.mapToValue --> (v => draft.update(_.modify(_.reason).setTo(AddDraft.Reason(v))))
               )
             )
           )
@@ -571,23 +574,23 @@ object QueueView:
 
   private def renderGroup(
       sp: Spec,
-      topic: Option[com.histmersion.web.QueueView.RenderGroupTopic],
+      topic: Option[Queue.QueueItem.Topic],
       its: List[Queue.QueueItem],
       ops: Ops,
       topicsId: com.histmersion.web.QueueView.RenderGroupTopicsId,
-      checks: Map[com.histmersion.web.QueueView.GroupCount, Acquire.Checks.AcquireCheck],
-      goals: Map[com.histmersion.web.QueueView.GroupCount, List[Queue.GoalRef]],
-      target: Option[com.histmersion.api.automation.Goal.Plans.GoalLink.QueueNumber]
+      checks: Map[Queue.QueueItem.Id, Acquire.Checks.AcquireCheck],
+      goals: Map[Queue.QueueItem.Id, List[Queue.GoalRef]],
+      target: Option[Queue.QueueItem.Id]
   ): HtmlElement =
     val (title, path) = heading(topic, sp.untitled)
     div(
       cls := "queue-group",
       if path.nonEmpty then div(cls := "group-path muted", path.mkString(" › ")) else emptyNode,
-      h3(cls := "group-topic", title),
+      h3(cls := "group-topic", title.value),
       ul(
         cls := "queue-items",
         its.map(i =>
-          renderItem(sp, i, ops, topicsId, checks.get(i.id), goals.getOrElse(i.id, Nil), target.contains(i.id))
+          renderItem(sp, i, ops, topicsId, checks.get(i.id), goals.getOrElse(i.id, Nil), ItemIsTarget(target.contains(i.id)))
         )
       )
     )
@@ -601,22 +604,22 @@ object QueueView:
       goals: List[Queue.GoalRef],
       isTarget: com.histmersion.web.QueueView.ItemIsTarget
   ): HtmlElement =
-    val done = item.status == Queue.Done
+    val done = item.status.value == Queue.Done
     val mode = Var(Mode.Idle)
     li(
       cls := "queue-item",
       idAttr := itemAnchor(item.id),
       cls("done") := done,
-      cls("is-target") := isTarget,
+      cls("is-target") := isTarget.value,
       if sp.checkable then
         label(
           cls := "item-check",
           input(
             typ := "checkbox",
-            aria.label := (if done then sp.tick._2 else sp.tick._1),
+            aria.label := (if done then sp.tick._2.value else sp.tick._1.value),
             checked := done,
             disabled <-- Auth.writable.map(!_),
-            onChange.mapToChecked --> (v => ops.setDone(item, v))
+            onChange.mapToChecked --> (v => ops.setDone(item, Done(v)))
           )
         )
       else emptyNode,
@@ -624,14 +627,14 @@ object QueueView:
         cls := "item-body",
         child <-- mode.signal.map {
           case Mode.Editing => editForm(item, ops, topicsId, () => mode.set(Mode.Idle))
-          case _            => div(cls := "item-text", segments(item.text).map(render))
+          case _            => div(cls := "item-text", segments(com.histmersion.api.UiLabels.Text(item.text.value)).map(render))
         },
-        item.reason.filter(_.trim.nonEmpty).map(r => div(cls := "item-reason muted", segments(r).map(render))),
-        item.doneAt.filter(_ => done).map(d => div(cls := "item-reason muted", s"done ${d.take(10)}")),
+        item.reason.filter(_.value.trim.nonEmpty).map(r => div(cls := "item-reason muted", segments(com.histmersion.api.UiLabels.Text(r.value)).map(render))),
+        item.doneAt.filter(_ => done).map(d => div(cls := "item-reason muted", s"done ${d.value.take(10)}")),
         check
           .filter(_ => !done)
           .map(c =>
-            div(cls := "item-reason muted", title := s"checked ${c.checks} time(s)", segments(c.reason).map(render))
+            div(cls := "item-reason muted", title := s"checked ${c.checks} time(s)", segments(com.histmersion.api.UiLabels.Text(c.reason.value)).map(render))
           ),
         Option.when(goals.nonEmpty)(
           div(
@@ -640,11 +643,12 @@ object QueueView:
             goals
               .map(g =>
                 WinLink(
-                  WindowKey.Goal(g.slug),
-                  title := g.slug,
+                  WindowKey.Goal(WindowKey.Goal.Slug(g.slug.value)),
+                  title := g.slug.value,
                   Option(g.title)
-                    .filter(_.trim.nonEmpty)
-                    .getOrElse(Wording.humanize(g.slug))
+                    .filter(_.value.trim.nonEmpty)
+                    .map(_.value)
+                    .getOrElse(Wording.humanize(Wording.Id(g.slug.value)))
                 )
               )
               .flatMap(l => List[Modifier[HtmlElement]](", ", l))
@@ -691,10 +695,10 @@ object QueueView:
   /** Who wrote an item and who ticked it off: the agent run or background job, each a link to its page. */
   private def provenance(item: Queue.QueueItem): Option[HtmlElement] =
     val parts = item.createdBy
-      .map(id => span("Written by ", RouteLink(Route.Job(id), s"agent work or job ${id.take(8)}")))
+      .map(id => span("Written by ", RouteLink(Route.Job(Pages.JobId(id.value)), s"agent work or job ${id.value.take(8)}")))
       .toList ++
       item.closedBy
-        .map(id => span("ticked off by ", RouteLink(Route.Job(id), s"agent work or job ${id.take(8)}")))
+        .map(id => span("ticked off by ", RouteLink(Route.Job(Pages.JobId(id.value)), s"agent work or job ${id.value.take(8)}")))
         .toList
     Option.when(parts.nonEmpty)(
       div(cls := "item-provenance muted", parts.flatMap(p => List[Modifier[HtmlElement]](" · ", p)).drop(1))
@@ -707,7 +711,7 @@ object QueueView:
       cls := "job-items",
       onMountCallback(_ =>
         scala.concurrent.Future
-          .sequence(Queue.Kind.values.toList.map(k => ApiClient.queueOfJob(k.label, jobId)))
+          .sequence(Queue.Kind.values.toList.map(k => ApiClient.queueOfJob(ApiClient.QueueName(k.label.value), ApiClient.JobId(jobId.value))))
           .onComplete(r => found.set(Some(r.toOption.toList.flatten.flatMap(_.items))))
       ),
       child <-- found.signal.map {
@@ -720,8 +724,8 @@ object QueueView:
               is.map { i =>
                 val kind = Queue.Kind.parse(i.list).getOrElse(Queue.Kind.Log)
                 li(
-                  span(cls := "muted", if i.closedBy.contains(jobId) then "ticked off · " else "wrote · "),
-                  QueueItemLink(kind, i.id, s"${listName(kind)}: ${i.text.take(120)}")
+                  span(cls := "muted", if i.closedBy.exists(_.value == jobId.value) then "ticked off · " else "wrote · "),
+                  QueueItemLink(kind, com.histmersion.api.automation.Goal.Plans.GoalLink.QueueNumber(i.id.value), s"${listName(kind)}: ${i.text.value.take(120)}")
                 )
               }
             )
@@ -730,35 +734,36 @@ object QueueView:
     )
 
   /** The id of an item's row, which a link to it scrolls to. */
-  def itemAnchor(id: com.histmersion.api.automation.Goal.Plans.GoalLink.QueueNumber): String = s"queue-item-$id"
+  def itemAnchor(id: Queue.QueueItem.Id): String = s"queue-item-$id"
 
   /** The item a link to the list points at (`?item=12`). Pure. */
-  def targetItem(search: com.histmersion.api.Api.Search.Text): Option[com.histmersion.api.automation.Goal.Plans.GoalLink.QueueNumber] =
-    Option(search)
+  def targetItem(search: com.histmersion.api.Api.Search.Text): Option[Queue.QueueItem.Id] =
+    Option(search.value)
       .map(_.stripPrefix("?"))
       .getOrElse("")
       .split('&')
       .toList
       .collectFirst { case kv if kv.startsWith("item=") => kv.drop(5) }
       .flatMap(_.toIntOption)
+      .map(Queue.QueueItem.Id(_))
 
   /** A small button on an item; a write is disabled while writes are not allowed. */
   private def actionButton(text: com.histmersion.api.UiLabels.Text, act: () => Unit, write: com.histmersion.web.QueueView.Writes = com.histmersion.web.QueueView.Writes(true)): HtmlElement =
     button(
       typ := "button",
       cls := "btn btn--sm",
-      text,
-      if write then disabled <-- Auth.writable.map(!_) else emptyMod,
+      text.value,
+      if write.value then disabled <-- Auth.writable.map(!_) else emptyMod,
       onClick --> (_ => act())
     )
 
   private def editForm(item: Queue.QueueItem, ops: Ops, topicsId: String, close: () => Unit): HtmlElement =
     val text = Var(item.text)
-    val topic = Var(item.topic.getOrElse(""))
+    val topic = Var(item.topic.getOrElse(Queue.QueueItem.Topic("")))
     val error = Var(Option.empty[String])
     def save(): Unit =
       editPatch(item, text.now(), topic.now()) match
-        case Left(m)        => error.set(Some(m))
+        case Left(m)        => error.set(Some(m.value))
         case Right(None)    => close()
         case Right(Some(p)) => ops.edit(item, p, close)
     div(
@@ -767,7 +772,7 @@ object QueueView:
         cls := "field",
         rows := 3,
         aria.label := "item text",
-        controlled(value <-- text.signal, onInput.mapToValue --> text.writer)
+        controlled(value <-- text.signal.map(_.value), onInput.mapToValue.map(Queue.QueueItem.Text(_)) --> text.writer)
       ),
       input(
         typ := "text",
@@ -775,7 +780,7 @@ object QueueView:
         listId := topicsId,
         aria.label := "topic",
         placeholder := "topic — empty moves it out of its group",
-        controlled(value <-- topic.signal, onInput.mapToValue --> topic.writer)
+        controlled(value <-- topic.signal.map(_.value), onInput.mapToValue.map(Queue.QueueItem.Topic(_)) --> topic.writer)
       ),
       child.maybe <-- error.signal.map(_.map(m => div(cls := "field-error", role := "alert", m))),
       div(
@@ -797,9 +802,9 @@ object QueueView:
     val hits = Var(Option.empty[List[SearchHit]])
     val problem = Var(Option.empty[String])
     def search(q: com.histmersion.api.Api.Search.Text): Unit =
-      if q.trim.isEmpty then hits.set(Some(Nil))
+      if q.value.trim.isEmpty then hits.set(Some(Nil))
       else
-        ApiClient.sources(Filter(q = Some(q.trim), limit = 8)).onComplete { r =>
+        ApiClient.sources(Filter(q = Some(Filter.Q(q.value.trim)), limit = Filter.Limit(8))).onComplete { r =>
           // a slow answer to an older query must not replace the current one
           if query.now() == q then
             r.fold(
@@ -815,7 +820,7 @@ object QueueView:
         cls := "field",
         aria.label := "search the corpus for the source",
         placeholder := "title, author or DOI of the source",
-        controlled(value <-- query.signal, onInput.mapToValue --> query.writer),
+        controlled(value <-- query.signal.map(_.value), onInput.mapToValue.map(com.histmersion.api.Api.Search.Text(_)) --> query.writer),
         query.signal.changes.debounce(250) --> (q => search(q))
       ),
       child.maybe <-- problem.signal.map(_.map(m => div(cls := "field-error", role := "alert", m))),
@@ -835,7 +840,7 @@ object QueueView:
                   span(cls := "hit-title", h.title.value),
                   h.year.map(y => span(cls := "muted", s" ($y)")),
                   span(cls := "muted hit-key", " · ", code(h.citekey.value)),
-                  onClick --> (_ => { ops.fulfil(item, h.citekey.value); close() })
+                  onClick --> (_ => { ops.fulfil(item, Preview.Target.Source.Citekey(h.citekey.value)); close() })
                 )
               )
             )
@@ -845,10 +850,10 @@ object QueueView:
     )
 
   private def render(s: Seg): Modifier[HtmlElement] = s match
-    case Seg.Text(t)   => t
-    case Seg.Bold(t)   => b(t)
-    case Seg.Italic(t) => em(t)
-    case Seg.Doi(d)    => a(cls := "doi-link", href := s"https://doi.org/$d", target := "_blank", rel := "noopener", d)
-    case Seg.Url(u)    => a(href := u, target := "_blank", rel := "noopener", u)
+    case Seg.Text(t)   => t.value
+    case Seg.Bold(t)   => b(t.value)
+    case Seg.Italic(t) => em(t.value)
+    case Seg.Doi(d)    => a(cls := "doi-link", href := s"https://doi.org/$d", target := "_blank", rel := "noopener", d.value)
+    case Seg.Url(u)    => a(href := u.value, target := "_blank", rel := "noopener", u.value)
     case Seg.Cite(ck)  => SourceLink(ck)
     case Seg.Ident(id) => IdentLink(id)

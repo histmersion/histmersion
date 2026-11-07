@@ -18,4 +18,4 @@ object PageWidth:
   object Label extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
 
-  def fromWire(s: com.histmersion.web.PageWidth.Wire): PageWidth = values.find(_.wire == Option(s).fold("")(_.trim.toLowerCase)).getOrElse(Reading)
+  def fromWire(s: com.histmersion.web.PageWidth.Wire): PageWidth = values.find(_.wire.value == Option(s).fold("")(_.value.trim.toLowerCase)).getOrElse(Reading)

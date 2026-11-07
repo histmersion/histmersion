@@ -312,7 +312,7 @@ object ApprovalsView:
 
   private def stateButtons: HtmlElement =
     def count(l: ListPaging.Listing[ApprovalInfo], s: Approval.State.Wire) =
-      ListPaging.count(l, Option.when(s.value != "all")(ListPaging.State(s.value)), a => ListPaging.State(a.state.value))
+      ListPaging.count(l, Option.when(s.value != "all")(s.value), a => a.state.value)
     div(
       cls := "btn-group jobs-filter approvals-state",
       States.map { s =>

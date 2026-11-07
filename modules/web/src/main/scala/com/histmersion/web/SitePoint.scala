@@ -14,16 +14,16 @@ final case class SitePoint(
     kind: SitePoint.Kind,
     siteType: Option[SitePoint.SiteType],
     basis: Option[SitePoint.Basis],
-    lat: SitePoint.Lat,
-    lon: SitePoint.Lon,
-    period: Option[(SitePoint.PeriodPart1, SitePoint.PeriodPart2)],
+    lat: LatLon.Lat,
+    lon: LatLon.Lon,
+    period: Option[(PlaybackAreas.FractionalYear, PlaybackAreas.FractionalYear)],
     undated: SitePoint.Undated = com.histmersion.web.SitePoint.Undated(false)
 ):
-  def name: com.histmersion.api.UiLabels.Text = if label.nonEmpty then label else id.getOrElse("site")
-  def mid: Option[com.histmersion.web.PlaybackAreas.FractionalYear] = period.map((a, b) => (a + b) / 2)
+  def name: com.histmersion.api.UiLabels.Text = com.histmersion.api.UiLabels.Text(if label.value.nonEmpty then label.value else id.fold("site")(_.value))
+  def mid: Option[com.histmersion.web.PlaybackAreas.FractionalYear] = period.map((a, b) => PlaybackAreas.FractionalYear((a.value + b.value) / 2))
 
   /** Its type, when it is one the map knows. */
-  def known: Option[SiteTypes.SiteType] = siteType.flatMap(SiteTypes.get)
+  def known: Option[SiteTypes.SiteType] = siteType.flatMap(t => SiteTypes.get(SiteTypes.SiteType.Id(t.value)))
 
 object SitePoint:
 
@@ -37,14 +37,6 @@ object SitePoint:
   object SiteType extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type Basis = Basis.T
   object Basis extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type Lat = Lat.T
-  object Lat extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type Lon = Lon.T
-  object Lon extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type PeriodPart1 = PeriodPart1.T
-  object PeriodPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type PeriodPart2 = PeriodPart2.T
-  object PeriodPart2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type Undated = Undated.T
   object Undated extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
@@ -57,14 +49,14 @@ object SitePoint:
     val ps = p.selectDynamic("periodStart")
     val pe = p.selectDynamic("periodEnd")
     val period = if js.isUndefined(ps) || js.isUndefined(pe) || ps == null || pe == null then None
-    else Some((ps.asInstanceOf[Double], pe.asInstanceOf[Double]))
+    else Some((PlaybackAreas.FractionalYear(ps.asInstanceOf[Double]), PlaybackAreas.FractionalYear(pe.asInstanceOf[Double])))
     SitePoint(
-      str(p.id),
-      str(p.label).getOrElse(""),
-      str(p.kind).getOrElse(Place.Kind.Site),
-      str(p.siteType),
-      str(p.basis),
-      c.selectDynamic("1").asInstanceOf[Double],
-      c.selectDynamic("0").asInstanceOf[Double],
+      str(p.id).map(Id(_)),
+      Label(str(p.label).getOrElse("")),
+      Kind(str(p.kind).getOrElse(Place.Kind.Site)),
+      str(p.siteType).map(SiteType(_)),
+      str(p.basis).map(Basis(_)),
+      LatLon.Lat(c.selectDynamic("1").asInstanceOf[Double]),
+      LatLon.Lon(c.selectDynamic("0").asInstanceOf[Double]),
       period
     )

@@ -20,7 +20,7 @@ for i, l in enumerate(t):
         body.append(x[:170])
     byfile[m.group(2)].append(f"{m.group(3)}:{m.group(4)} [{m.group(1) or '-'}] " + ' / '.join(body[:6]))
 RANK = ['/util/', '/domain/personal/', '/domain/library/', '/domain/catalogue/', '/domain/media/', '/domain/research/', '/domain/automation/', '/server/']
-FIRST = ('ManagerKindDefinition', 'ManagerContext', 'PipelineDef', 'RunCtx', 'Pipelines.scala', 'CheckRule', 'MapLayer', 'BasemapJobs', 'McpOut', 'LibraryState', 'AcquisitionState', 'CatalogueState')
+FIRST = ('ManagerKindDefinition', 'ManagerContext', 'PipelineDef', 'RunCtx', 'Pipelines.scala', 'CheckRule', 'MapLayer', 'BasemapJobs', 'McpOut', 'LibraryState', 'AcquisitionState', 'CatalogueState', 'web/ApiClient.scala', 'web/UiState.scala', 'web/Years.scala', 'web/Layout.scala', 'web/ResultsPaging.scala', 'cli/Client.scala')
 def rank(f):
     if any(k in f for k in FIRST):
         return (-1, '', f)

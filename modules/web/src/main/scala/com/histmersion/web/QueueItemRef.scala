@@ -63,11 +63,16 @@ object QueueItemRef:
   )
 
   /** Pure: the parts of an item's first line, as far as they can be told. */
-  def parse(text: com.histmersion.api.Api.Search.Text): Ref =
-    val line = text.linesIterator.nextOption().getOrElse("").replace("**", "").trim
+  def parse(text: Queue.QueueItem.Text): Ref =
+    val line = text.value.linesIterator.nextOption().getOrElse("").replace("**", "").trim
     line match
       case AuthorYear(who, year, title, venue) =>
-        Ref(authorsOf(who.split(""",\s+""").toList)._1, clean(title), year.toIntOption, firstDoi(venue))
+        Ref(
+          authorsOf(who.split(""",\s+""").toList)._1.map(Ref.Authors(_)),
+          clean(title).map(Ref.Title(_)),
+          year.toIntOption.map(Ref.Year(_)),
+          firstDoi(venue)
+        )
       case _ =>
         val cited = line.take(topLevelDash(line))
         val paren = Paren.findAllMatchIn(cited).find(m => !m.group(0).matches(EdMark))
@@ -82,10 +87,15 @@ object QueueItemRef:
           .getOrElse(("", ""))
         val parts = head.split(""",\s+""").toList.filter(_.nonEmpty)
         val (authors, rest) = if parts.size < 2 then (Nil, parts) else authorsOf(parts)
-        Ref(authors, clean(rest.mkString(", ")), Year.findFirstMatchIn(pub).map(_.group(1).toInt), leadingDoi(slot))
+        Ref(
+          authors.map(Ref.Authors(_)),
+          clean(rest.mkString(", ")).map(Ref.Title(_)),
+          Year.findFirstMatchIn(pub).map(m => Ref.Year(m.group(1).toInt)),
+          leadingDoi(slot)
+        )
 
   /** Where the citation ends: the first ` — ` that is not inside a parenthesis. */
-  private def topLevelDash(s: com.histmersion.api.Api.Search.Text): Int =
+  private def topLevelDash(s: String): Int =
     var depth = 0
     var i = 0
     var cut = s.length
@@ -100,10 +110,10 @@ object QueueItemRef:
   /** The leading comma-parts that are names, and what is left (the title). The first part is always a name; a following
     * part joins it when it is the initials of a `Surname, I.` or another group of names joined by `&`.
     */
-  private def authorsOf(parts: List[com.histmersion.web.QueueItemRef.Ref.Authors]): (List[com.histmersion.web.QueueItemRef.Ref.Authors], List[com.histmersion.web.QueueItemRef.Ref.Authors]) =
-    def names(group: com.histmersion.web.QueueItemRef.Ref.Authors): List[com.histmersion.web.QueueItemRef.Ref.Authors] =
+  private def authorsOf(parts: List[String]): (List[String], List[String]) =
+    def names(group: String): List[String] =
       group.replaceAll(EdMark, " ").split("""\s+&\s+""").toList.map(_.trim).filter(_.nonEmpty)
-    def isGroup(p: com.histmersion.web.QueueItemRef.Ref.Authors): Boolean =
+    def isGroup(p: String): Boolean =
       p.contains(" & ") && !p.contains(":") &&
         p.replaceAll(EdMark, " ").split("""\s+""").forall(w => w == "&" || w.headOption.exists(_.isUpper))
     parts match
@@ -123,27 +133,33 @@ object QueueItemRef:
           else go = false
         (acc.toList, left)
 
-  private def clean(s: com.histmersion.api.Api.Search.Text): Option[com.histmersion.api.UiLabels.Text] =
+  private def clean(s: String): Option[String] =
     Some(s.trim.stripPrefix("*").stripSuffix("*").trim).filter(_.nonEmpty)
 
   /** The DOI that OPENS a slot (`10.…`, `doi 10.…`, `JSTOR 10.…`), else none. */
-  private def leadingDoi(slot: com.histmersion.api.Api.Search.Text): Option[com.histmersion.web.QueueItemRef.Ref.Doi] =
-    QueueView.segments(slot.trim.replaceFirst(DoiLead, "")).headOption.collect { case QueueView.Seg.Doi(d) => d }
+  private def leadingDoi(slot: String): Option[com.histmersion.web.QueueItemRef.Ref.Doi] =
+    QueueView
+      .segments(com.histmersion.api.UiLabels.Text(slot.trim.replaceFirst(DoiLead, "")))
+      .headOption
+      .collect { case QueueView.Seg.Doi(d) => Ref.Doi(d.value) }
 
-  private def firstDoi(s: com.histmersion.api.Api.Search.Text): Option[com.histmersion.web.QueueItemRef.Ref.Doi] =
-    QueueView.segments(s).collectFirst { case QueueView.Seg.Doi(d) => d }
+  private def firstDoi(s: String): Option[com.histmersion.web.QueueItemRef.Ref.Doi] =
+    QueueView.segments(com.histmersion.api.UiLabels.Text(s)).collectFirst { case QueueView.Seg.Doi(d) => Ref.Doi(d.value) }
 
   /** A citekey in the corpus's `surnameYEAR_word` shape, through [[UploadView.suggestCitekey]] so it is always a valid
     * one.
     */
   def citekey(r: Ref): Option[com.histmersion.web.Preview.Target.Source.Citekey] =
-    val surname = r.authors.headOption.flatMap(_.split("""\s+""").lastOption).map(_.replace(".", ""))
-    val word = r.title.flatMap(t => words(t).find(w => w.length > 2 && !Stop(w.toLowerCase)))
+    val surname = r.authors.headOption.flatMap(_.value.split("""\s+""").lastOption).map(_.replace(".", ""))
+    val word = r.title.flatMap(t => words(t.value).find(w => w.length > 2 && !Stop(w.toLowerCase)))
     val raw = List(surname.map(_ + r.year.fold("")(_.toString)), word).flatten.mkString(" ")
-    Option.when(raw.nonEmpty)(raw).flatMap(UploadView.suggestCitekey)
+    Option
+      .when(raw.nonEmpty)(raw)
+      .flatMap(k => UploadView.suggestCitekey(com.histmersion.api.Api.FileName(k)))
+      .map(c => com.histmersion.web.Preview.Target.Source.Citekey(c.value))
 
   /** The runs of letters in `s`. */
-  private def words(s: com.histmersion.api.Api.Search.Text): List[com.histmersion.api.UiLabels.Text] =
+  private def words(s: String): List[String] =
     s.foldLeft(List(""))((acc, c) => if c.isLetter then (acc.head + c) :: acc.tail else "" :: acc)
       .reverse
       .filter(_.nonEmpty)
@@ -152,11 +168,11 @@ object QueueItemRef:
   def uploadDraft(item: Queue.QueueItem): UploadView.Draft =
     val r = parse(item.text)
     UploadView.Draft(
-      citekey = citekey(r).getOrElse(""),
-      title = r.title.getOrElse(""),
-      authors = r.authors,
-      year = r.year.fold("")(_.toString),
-      doi = r.doi.getOrElse(""),
+      citekey = UploadView.Draft.Citekey(citekey(r).map(_.value).getOrElse("")),
+      title = UploadView.Draft.Title(r.title.map(_.value).getOrElse("")),
+      authors = r.authors.map(a => UploadView.Draft.Authors(a.value)),
+      year = UploadView.Draft.Year(r.year.fold("")(_.toString)),
+      doi = UploadView.Draft.Doi(r.doi.map(_.value).getOrElse("")),
       forItem = Some(item)
     )
 
@@ -165,8 +181,10 @@ object QueueItemRef:
     */
   def searchQuery(item: Queue.QueueItem): com.histmersion.api.Api.Search.Text =
     val r = parse(item.text)
-    r.title
-      .map(_.split("""[:.]""").head.trim)
-      .filter(_.nonEmpty)
-      .orElse(r.authors.headOption)
-      .getOrElse(item.text.linesIterator.nextOption().getOrElse("").take(60).trim)
+    com.histmersion.api.Api.Search.Text(
+      r.title
+        .map(_.value.split("""[:.]""").head.trim)
+        .filter(_.nonEmpty)
+        .orElse(r.authors.headOption.map(_.value))
+        .getOrElse(item.text.value.linesIterator.nextOption().getOrElse("").take(60).trim)
+    )

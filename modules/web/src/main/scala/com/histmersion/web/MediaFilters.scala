@@ -11,16 +11,10 @@ import com.histmersion.api.media.MediaCount
   * server's counts (`/api/media/facets`, fetched once when the layer is first shown).
   */
 object MediaFilters:
-  type Choice = Choice.T
-  object Choice extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type ChoiceLabel = ChoiceLabel.T
   object ChoiceLabel extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type Disabled = Disabled.T
-  object Disabled extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type FieldName = FieldName.T
   object FieldName extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type Reason = Reason.T
-  object Reason extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
   val providers: Var[List[MediaCount]] = Var(Nil)
   val licences: Var[List[MediaCount]] = Var(Nil)
@@ -40,28 +34,28 @@ object MediaFilters:
   /** Pure: a menu's options — "all", then each value with its count, the one chosen kept even when the counts no longer
     * list it.
     */
-  def options(counts: List[MediaCount], chosen: Option[com.histmersion.web.MediaFilters.Choice], label: com.histmersion.web.MediaFilters.Choice => com.histmersion.web.MediaFilters.ChoiceLabel): List[(com.histmersion.web.MediaFilters.Choice, com.histmersion.web.MediaFilters.ChoiceLabel)] =
-    val listed = counts.map(c => c.key -> s"${label(c.key)} (${c.n})")
+  def options(counts: List[MediaCount], chosen: Option[MediaCount.Key], label: MediaCount.Key => ChoiceLabel): List[(MediaCount.Key, ChoiceLabel)] =
+    val listed = counts.map(c => c.key -> ChoiceLabel(s"${label(c.key)} (${c.n})"))
     val kept = chosen.filterNot(c => counts.exists(_.key == c)).map(c => c -> label(c)).toList
-    ("" -> "all") :: (listed ++ kept)
+    (MediaCount.Key("") -> ChoiceLabel("all")) :: (listed ++ kept)
 
   def select(
       name: com.histmersion.web.MediaFilters.FieldName,
-      field: Field[Option[com.histmersion.web.MediaFilters.FieldName]],
+      field: Field[Option[String]],
       counts: Signal[List[MediaCount]],
-      label: com.histmersion.web.MediaFilters.Choice => com.histmersion.web.MediaFilters.ChoiceLabel,
-      disabled: Signal[com.histmersion.web.MediaFilters.Disabled] = Val(com.histmersion.web.MediaFilters.Disabled(false)),
-      why: com.histmersion.web.MediaFilters.Reason = com.histmersion.web.MediaFilters.Reason("")
+      label: MediaCount.Key => ChoiceLabel,
+      disabled: Signal[Boolean] = Val(false),
+      why: com.histmersion.web.IconSelect.Reason = com.histmersion.web.IconSelect.Reason("")
   ): HtmlElement =
     IconSelect(
-      s"media $name",
+      IconSelect.Name(s"media $name"),
       field,
       counts.combineWith(field.signal).map { (cs, chosen) =>
-        options(cs, chosen, label).map((v, t) =>
+        options(cs, chosen.map(MediaCount.Key(_)), label).map((v, t) =>
           IconSelect.Opt(
-            v,
-            t,
-            if v.isEmpty then LayerFilters.layerIcon(PointKinds.Media)
+            IconSelect.Opt.Value(v.value),
+            IconSelect.Opt.Label(t.value),
+            if v.value.isEmpty then LayerFilters.layerIcon(PointKinds.Media)
             else LayerFilters.badge(Shape.Photo, CardIcons.Media)
           )
         )

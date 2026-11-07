@@ -88,7 +88,7 @@ object FilterBar:
             Some(com.histmersion.api.Api.Facets.Prefix(prefix.value)),
             UiState.toFilter(except = Set(UiState.ToFilterExcept(c.state.key.value)))
           )
-          .map(_.take(config.facetSuggestions)),
+          .map(_.take(config.facetSuggestions.value)),
       onChange = values => UiState.set(c.state := values.map(_.value))(),
       onPreview = v => UiState.setPreview(v.map(x => UiState.Preview(UiState.Preview.Key(c.state.key.value), UiState.Preview.Value(x.value)))),
       // a status reads as the status code: its mark and its word
@@ -97,7 +97,7 @@ object FilterBar:
         else v => ChipInput.Config.DisplayResult(Label.display(Label.Text(v.value)).value),
       mark = v => Option.when(c.state.key == UiState.status.key)(ChipInput.Config.MarkResult(s"st-${v.value.trim.toLowerCase}"))
     )
-    div(cls := "f", label(c.label.value), ChipInput(chipConfig, c.state.signal))
+    div(cls := "f", label(c.label.value), ChipInput.ofStrings(chipConfig, c.state.signal))
 
   /** The period's two ends: the timeline's span, written as years (`500 BCE`, `-500`, `1200`). */
   private def periodField(config: UiConfig): HtmlElement =

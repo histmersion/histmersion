@@ -16,10 +16,6 @@ import com.histmersion.api.instance.UiConfig
   * acquired) and its history (the goal's slice of Activity).
   */
 object GoalPage:
-  type AcquireCount = AcquireCount.T
-  object AcquireCount extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type BacklogCount = BacklogCount.T
-  object BacklogCount extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type DaysText = DaysText.T
   object DaysText extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type LastCheck = LastCheck.T
@@ -28,8 +24,6 @@ object GoalPage:
   object LinkTarget extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type Millis = Millis.T
   object Millis extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type ProducedCount = ProducedCount.T
-  object ProducedCount extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type ScheduleText = ScheduleText.T
   object ScheduleText extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
@@ -113,15 +107,15 @@ object GoalPage:
     val view = Var(Option.empty[Either[String, GoalView]])
     val managers = Var(List.empty[ManagerInfo])
     val items = Var(List.empty[ManagerItem])
-    val backlog = Var(Option.empty[BacklogCount])
-    val acquire = Var(Option.empty[AcquireCount])
+    val backlog = Var(Option.empty[com.histmersion.api.RowCount])
+    val acquire = Var(Option.empty[com.histmersion.api.RowCount])
     val note = Var(Option.empty[HeaderNote])
     val editing = Var(false)
 
     def load(): Unit =
       ApiClient.goalView(ApiClient.GoalSlug(slug.value)).onComplete(r => view.set(Some(r.toEither.left.map(_.getMessage))))
-      ApiClient.queueForGoal(ApiClient.QueueName(Queue.Kind.Tasks.label.value), ApiClient.GoalSlug(slug.value)).foreach(l => backlog.set(Some(BacklogCount(l.items.size))))
-      ApiClient.queueForGoal(ApiClient.QueueName(Queue.Kind.Acquire.label.value), ApiClient.GoalSlug(slug.value)).foreach(l => acquire.set(Some(AcquireCount(l.items.size))))
+      ApiClient.queueForGoal(ApiClient.QueueName(Queue.Kind.Tasks.label.value), ApiClient.GoalSlug(slug.value)).foreach(l => backlog.set(Some(com.histmersion.api.RowCount(l.items.size))))
+      ApiClient.queueForGoal(ApiClient.QueueName(Queue.Kind.Acquire.label.value), ApiClient.GoalSlug(slug.value)).foreach(l => acquire.set(Some(com.histmersion.api.RowCount(l.items.size))))
       if ui.agentsEnabled.value then
         ApiClient.managers.foreach { all =>
           val mine = all.filter(_.goal.contains(slug))
@@ -244,7 +238,7 @@ object GoalPage:
               is.filter(i => i.kind.value == Managers.CurrencyCheck && i.status.value == "done").map(_.updatedAt.value).maxOption.map(LastCheck(_))
             val parts = List(
               if paused(ms) then Some("Paused") else None,
-              Option.when(pr.total > 0)(s"${pr.done} of ${pr.total} steps done"),
+              Option.when(pr.total.value > 0)(s"${pr.done} of ${pr.total} steps done"),
               schedule(v, watcher, lastCheck, ScheduleNowMs(js.Date.now())).map(_.value)
             ).flatten
             if parts.isEmpty then "" else parts.mkString(" · ", " · ", "")
@@ -353,13 +347,13 @@ object GoalPage:
 
   private def produced(
       v: GoalView,
-      backlog: Signal[Option[com.histmersion.web.GoalPage.BacklogCount]],
-      acquire: Signal[Option[com.histmersion.web.GoalPage.AcquireCount]],
+      backlog: Signal[Option[com.histmersion.api.RowCount]],
+      acquire: Signal[Option[com.histmersion.api.RowCount]],
       slug: com.histmersion.web.GoalPage.ProducedSlug
   ): HtmlElement =
     val articles = v.links.filter(_.kind == LinkKind.Article)
     val sources = v.links.count(_.kind == LinkKind.Source)
-    def countLink(n: Signal[Option[com.histmersion.web.GoalPage.ProducedCount]], one: com.histmersion.api.Plural.Noun.Singular, many: com.histmersion.api.Plural.Noun.Plural, to: com.histmersion.web.GoalPage.LinkTarget) =
+    def countLink(n: Signal[Option[com.histmersion.api.RowCount]], one: com.histmersion.api.Plural.Noun.Singular, many: com.histmersion.api.Plural.Noun.Plural, to: com.histmersion.web.GoalPage.LinkTarget) =
       a(
         href := to.value,
         child.text <-- n.map(_.fold("…")(c => if c.value == 1 then s"1 $one" else s"$c $many")),
@@ -390,7 +384,7 @@ object GoalPage:
         span(
           a(
             href := libraryOf(slug).value,
-            Plural.count(Plural.CountN(sources), com.histmersion.api.Plural.CountSingular("source")),
+            Plural.count(Plural.CountN(sources), com.histmersion.api.Plural.CountSingular("source")).value,
             onClick --> { ev =>
               if Router.plain(ev) then {
                 ev.preventDefault(); showFiltered(slug, Route.Library(LibrarySection.Sources))

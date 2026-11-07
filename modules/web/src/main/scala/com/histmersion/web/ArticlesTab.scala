@@ -19,8 +19,8 @@ object ArticlesTab:
 
   private val tab = FilterTab[Api.ArticleQuery, Article.Summary](
     name = com.histmersion.web.FilterTab.Name("articles"),
-    singular = com.histmersion.web.FilterTab.Singular("article"),
-    noun = com.histmersion.web.FilterTab.Noun("articles"),
+    singular = Plural.Noun.Singular("article"),
+    noun = Plural.Noun.Plural("articles"),
     query = () => UiState.articleQuery(),
     fetch = (q, offset) =>
       ApiClient
@@ -37,7 +37,7 @@ object ArticlesTab:
   def pane: HtmlElement = tab.pane
 
   /** How many the list holds, once it has an answer (its tab's count). */
-  val total: Signal[Option[com.histmersion.api.RowCount]] = tab.state.signal.map(s => Option.when(s.loaded)(com.histmersion.api.RowCount(math.max(s.total.value, s.rows.size))))
+  val total: Signal[Option[com.histmersion.api.RowCount]] = tab.state.signal.map(s => Option.when(s.loaded.value)(com.histmersion.api.RowCount(math.max(s.total.value, s.rows.size))))
 
   /** An article's row: its link (in Explore's results a plain click shows its detail there; elsewhere it opens its
     * window) and "open in a new tab".

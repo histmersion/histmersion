@@ -22,6 +22,6 @@ object Poll:
     * started from this page) goes back to the quick delay.
     */
   def next(previous: Option[com.histmersion.web.Poll.Revision], live: com.histmersion.web.Poll.LiveMode, changed: com.histmersion.web.Poll.DataChanged): Option[com.histmersion.web.Poll.Revision] =
-    if !live then None
-    else if changed then Some(FirstMs)
-    else Some(previous.fold(FirstMs)(p => math.min(MaxMs, math.round(p * Factor).toInt)))
+    if !live.value then None
+    else if changed.value then Some(Revision(FirstMs))
+    else Some(Revision(previous.fold(FirstMs)(p => math.min(MaxMs, math.round(p.value * Factor).toInt))))

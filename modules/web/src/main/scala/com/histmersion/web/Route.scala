@@ -30,19 +30,19 @@ enum Route:
   /** The address of the page — without the hash, which carries the filters and the open windows. */
   def path: String = this match
     case Explore       => "/explore"
-    case Library(s)    => sub("/library", s.slug)
-    case Research(s)   => sub("/research", s.slug)
+    case Library(s)    => sub("/library", s.slug.value)
+    case Research(s)   => sub("/research", s.slug.value)
     case Activity(t)   => sub("/research/activity", t.slug)
-    case Goal(slug)    => s"/research/goals/${HtmlAtoms.segment(slug)}"
-    case Settings(s)   => sub("/settings", s.slug)
+    case Goal(slug)    => s"/research/goals/${HtmlAtoms.segment(slug.value)}"
+    case Settings(s)   => sub("/settings", s.slug.value)
     case Setup         => "/setup"
     case Source(ck)    => SourceLink.href(ck)
-    case Article(slug) => ArticleLink.href(slug)
-    case Place(id)     => s"/place/${HtmlAtoms.segment(id)}"
-    case Event(id)     => s"/event/${HtmlAtoms.segment(id)}"
-    case Run(id)       => s"/run/${HtmlAtoms.segment(id)}"
-    case Manager(id)   => s"/manager/${HtmlAtoms.segment(id)}"
-    case Job(id)       => s"/job/${HtmlAtoms.segment(id)}"
+    case Article(slug) => ArticleLink.href(com.histmersion.api.research.Article.Slug(slug.value))
+    case Place(id)     => s"/place/${HtmlAtoms.segment(id.value)}"
+    case Event(id)     => s"/event/${HtmlAtoms.segment(id.value)}"
+    case Run(id)       => s"/run/${HtmlAtoms.segment(id.value)}"
+    case Manager(id)   => s"/manager/${HtmlAtoms.segment(id.value)}"
+    case Job(id)       => s"/job/${HtmlAtoms.segment(id.value)}"
 
   private def sub(base: String, slug: String): String = if slug.isEmpty then base else s"$base/$slug"
 
@@ -131,9 +131,9 @@ object Route:
       case "library" :: rest =>
         rest match
           case Nil     => Some(Library(LibrarySection.Sources))
-          case List(s) => LibrarySection.values.find(x => x.slug == s && s.nonEmpty).map(Library(_))
+          case List(s) => LibrarySection.values.find(x => x.slug.value == s && s.nonEmpty).map(Library(_))
           case _       => None
-      case List("research", "goals", slug)  => Some(Goal(slug))
+      case List("research", "goals", slug)  => Some(Goal(com.histmersion.api.automation.Goal.Slug(slug)))
       case "research" :: "activity" :: rest =>
         rest match
           case Nil     => Some(Activity(ActivityTab.Everything))
@@ -144,22 +144,22 @@ object Route:
           case Nil     => Some(Research(ResearchSection.Overview))
           case List(s) =>
             ResearchSection.values
-              .find(x => x.slug == s && s.nonEmpty && x != ResearchSection.Activity)
+              .find(x => x.slug.value == s && s.nonEmpty && x != ResearchSection.Activity)
               .map(Research(_))
           case _ => None
       case "settings" :: rest =>
         rest match
           case Nil     => Some(Settings(SettingsSection.General))
-          case List(s) => SettingsSection.values.find(_.slug == s).map(Settings(_))
+          case List(s) => SettingsSection.values.find(_.slug.value == s).map(Settings(_))
           case _       => None
       case List("setup")         => Some(Setup)
-      case List("source", ck)    => Some(Source(ck))
-      case List("article", slug) => Some(Article(slug))
-      case List("place", id)     => Some(Place(id))
-      case List("event", id)     => Some(Event(id))
-      case List("run", id)       => Some(Run(id))
-      case List("manager", id)   => Some(Manager(id))
-      case List("job", id)       => Some(Job(id))
+      case List("source", ck)    => Some(Source(Preview.Target.Source.Citekey(ck)))
+      case List("article", slug) => Some(Article(Preview.Item.Slug(slug)))
+      case List("place", id)     => Some(Place(Pages.PlaceId(id)))
+      case List("event", id)     => Some(Event(Pages.EventId(id)))
+      case List("run", id)       => Some(Run(RunId(id)))
+      case List("manager", id)   => Some(Manager(ManagerId(id)))
+      case List("job", id)       => Some(Job(Pages.JobId(id)))
       case _                     => None
 
   /** The page that took over a window of the old toolbar; `None` for a window of one item (a run, a goal, a source…),
@@ -183,18 +183,18 @@ object Route:
 
   /** The page of an item that also opens as a window — what a link to it points at, for a new tab. */
   def ofItem(key: WindowKey): Option[Route] = key match
-    case WindowKey.Source(ck)    => Some(Source(ck))
-    case WindowKey.Article(slug) => Some(Article(slug))
-    case WindowKey.Run(id)       => Some(Run(id))
-    case WindowKey.Goal(slug)    => Some(Goal(slug))
-    case WindowKey.Manager(id)   => Some(Manager(id))
+    case WindowKey.Source(ck)    => Some(Source(Preview.Target.Source.Citekey(ck.value)))
+    case WindowKey.Article(slug) => Some(Article(Preview.Item.Slug(slug.value)))
+    case WindowKey.Run(id)       => Some(Run(RunId(id.value)))
+    case WindowKey.Goal(slug)    => Some(Goal(com.histmersion.api.automation.Goal.Slug(slug.value)))
+    case WindowKey.Manager(id)   => Some(Manager(ManagerId(id.value)))
     case _                       => None
 
   /** The window this page also opens as ("pin as window"), if it has one. */
   def window(r: Route): Option[WindowKey] = r match
-    case Run(id)     => Some(WindowKey.Run(id))
-    case Goal(slug)  => Some(WindowKey.Goal(slug))
-    case Manager(id) => Some(WindowKey.Manager(id))
+    case Run(id)     => Some(WindowKey.Run(WindowKey.Run.Id(id.value)))
+    case Goal(slug)  => Some(WindowKey.Goal(WindowKey.Goal.Slug(slug.value)))
+    case Manager(id) => Some(WindowKey.Manager(WindowKey.Manager.Id(id.value)))
     case _           => None
 
   /** The watched list a page shows ([[Notices]]: opening it marks its news read), as its old window. */
@@ -214,7 +214,7 @@ object Route:
       .orElse(ofWindow(key))
       .orElse(Option.when(key == WindowKey.ApiKey)(Settings(SettingsSection.Keys)))
       .map(_.path)
-      .getOrElse(s"${Explore.path}#open=${js.URIUtils.encodeURIComponent(key.wire)}")
+      .getOrElse(s"${Explore.path}#open=${js.URIUtils.encodeURIComponent(key.wire.value)}")
 
   /** The page of a list item: the list, scrolled to the item and marked (`?item=`). */
   def queueItem(kind: Queue.Kind, id: com.histmersion.api.automation.Goal.Plans.GoalLink.QueueNumber): String =
@@ -239,7 +239,7 @@ object Route:
       case List("about") => Some(Settings(SettingsSection.About))
       case List("storage") | List("settings", "storage") | List("settings", "map-regions") =>
         Some(Settings(SettingsSection.Data))
-      case List(list) => Queue.Kind.values.find(_.label == list).flatMap(k => ofWindow(WindowKey.ofQueue(k)))
+      case List(list) => Queue.Kind.values.find(_.label.value == list).flatMap(k => ofWindow(WindowKey.ofQueue(k)))
       case _          => None
     val (toolWindows, items) = open.partition(ofWindow(_).isDefined)
     if byPath.isEmpty && toolWindows.isEmpty then None

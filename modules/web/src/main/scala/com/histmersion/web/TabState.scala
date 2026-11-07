@@ -17,15 +17,21 @@ final case class TabState[Row](
 ):
 
   /** Rows the list does not show yet — loaded or still on the server. */
-  def left: com.histmersion.api.RowCount = math.max(0, math.max(total.value, rows.size) - shown.value)
+  def left: com.histmersion.api.RowCount = com.histmersion.api.RowCount(math.max(0, math.max(total.value, rows.size) - shown.value))
 
   /** The "show more" label ([[ResultsPaging.moreLabel]]); `None` when every row is shown. */
   def moreLabel(page: com.histmersion.web.ResultsPaging.PageNumber): Option[com.histmersion.api.UiLabels.Text] = ResultsPaging.moreLabel(left, page)
 
   /** The count line ([[ResultsPaging.countLine]]); `loading…` before the first answer. */
   def countLine(singular: com.histmersion.api.Plural.Noun.Singular, plural: com.histmersion.api.Plural.Noun.Plural): com.histmersion.api.UiLabels.Text =
-    if !loaded then com.histmersion.api.UiLabels.Text("loading…")
-    else ResultsPaging.countLine(shown.value, math.max(total.value, rows.size), singular, plural, extras)
+    if !loaded.value then com.histmersion.api.UiLabels.Text("loading…")
+    else ResultsPaging.countLine(
+        com.histmersion.api.Paging.Shown(shown.value),
+        com.histmersion.api.Paging.Page.Total(math.max(total.value, rows.size)),
+        singular,
+        plural,
+        extras.map(e => com.histmersion.api.UiLabels.Text(e.value))
+      )
 
 object TabState:
   type Problem = Problem.T
@@ -38,14 +44,14 @@ object TabState:
   object Error extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type Loaded = Loaded.T
   object Loaded extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type Extras = Extras.T
-  object Extras extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type Extras = TabPage.Extras
+  val Extras: TabPage.Extras.type = TabPage.Extras
 
   def loading[Row](s: TabState[Row]): TabState[Row] = s.copy(loading = com.histmersion.web.TabState.Loading(true), error = None)
 
   /** The first page of a query's answer. */
   def first[Row](p: TabPage[Row], page: com.histmersion.web.ResultsPaging.PageNumber): TabState[Row] =
-    TabState(p.rows, p.total, com.histmersion.api.RowCount(math.min(page, p.rows.size)), loaded = true, extras = p.extras)
+    TabState(p.rows, p.total, com.histmersion.api.RowCount(math.min(page.value, p.rows.size)), loaded = true, extras = p.extras)
 
   /** A further page from the server, appended (what "show more" asked for once the loaded rows ran out). */
   def appended[Row](s: TabState[Row], p: TabPage[Row], page: com.histmersion.web.ResultsPaging.PageNumber): TabState[Row] =
@@ -53,7 +59,7 @@ object TabState:
     s.copy(
       rows = rows,
       total = p.total,
-      shown = com.histmersion.api.RowCount(math.min(s.shown.value + page, rows.size)),
+      shown = com.histmersion.api.RowCount(math.min(s.shown.value + page.value, rows.size)),
       loading = com.histmersion.web.TabState.Loading(false),
       error = None,
       extras = p.extras
@@ -61,12 +67,12 @@ object TabState:
 
   /** A request failed: loading ends, the error is shown, the rows already there stay. */
   def failed[Row](s: TabState[Row], message: com.histmersion.web.TabState.Problem): TabState[Row] =
-    s.copy(loading = com.histmersion.web.TabState.Loading(false), error = Some(message), loaded = com.histmersion.web.TabState.Loaded(true))
+    s.copy(loading = com.histmersion.web.TabState.Loading(false), error = Some(com.histmersion.web.TabState.Error(message.value)), loaded = com.histmersion.web.TabState.Loaded(true))
 
   /** "show more": reveal the next `page` loaded rows, or — when the loaded rows run out before the total —
     * `Left(offset)`, the next page to ask the server for (rows past the first fetch used to be unreachable).
     */
   def more[Row](s: TabState[Row], page: com.histmersion.web.ResultsPaging.PageNumber): Either[com.histmersion.web.ResultsPaging.PageNumber, TabState[Row]] =
-    if s.shown.value + page <= s.rows.size || s.rows.size >= s.total.value then
-      Right(s.copy(shown = com.histmersion.api.RowCount(math.min(s.shown.value + page, s.rows.size))))
-    else Left(s.rows.size)
+    if s.shown.value + page.value <= s.rows.size || s.rows.size >= s.total.value then
+      Right(s.copy(shown = com.histmersion.api.RowCount(math.min(s.shown.value + page.value, s.rows.size))))
+    else Left(com.histmersion.web.ResultsPaging.PageNumber(s.rows.size))

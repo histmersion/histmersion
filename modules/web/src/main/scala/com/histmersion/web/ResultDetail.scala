@@ -15,10 +15,10 @@ object ResultDetail:
   /** Pure: an item's own page. */
 
   def pageOf(t: Preview.Target): com.histmersion.api.UiLabels.Text = t match
-    case Preview.Target.Source(ck)    => Route.Source(ck).path
-    case Preview.Target.Article(slug) => Route.Article(slug).path
-    case Preview.Target.Place(id, _)  => Route.Place(id).path
-    case Preview.Target.Event(id)     => Route.Event(id).path
+    case Preview.Target.Source(ck)    => com.histmersion.api.UiLabels.Text(Route.Source(ck).path)
+    case Preview.Target.Article(slug) => com.histmersion.api.UiLabels.Text(Route.Article(slug).path)
+    case Preview.Target.Place(id, _)  => com.histmersion.api.UiLabels.Text(Route.Place(id).path)
+    case Preview.Target.Event(id)     => com.histmersion.api.UiLabels.Text(Route.Event(id).path)
 
   /** Pure: what the item is, for the actions' names. */
   def kindOf(t: Preview.Target): com.histmersion.api.UiLabels.Text = t match
@@ -28,24 +28,24 @@ object ResultDetail:
     case _: Preview.Target.Event   => com.histmersion.api.UiLabels.Text("event")
 
   private def pin(t: Preview.Target, from: dom.Element): Unit = t match
-    case Preview.Target.Source(ck)    => WindowManager.open(WindowKey.Source(ck))
-    case Preview.Target.Article(slug) => WindowManager.open(WindowKey.Article(slug))
+    case Preview.Target.Source(ck)    => WindowManager.open(WindowKey.Source(WindowKey.Source.Citekey(ck.value)))
+    case Preview.Target.Article(slug) => WindowManager.open(WindowKey.Article(WindowKey.Article.Slug(slug.value)))
     case _                            =>
       val r = from.getBoundingClientRect()
-      Preview.pin(t, () => Some(Preview.Anchor.At(r.left - 360, r.top)))
+      Preview.pin(t, () => Some(Preview.Anchor.At(Preview.Anchor.At.X(r.left - 360), Preview.Anchor.At.Y(r.top))))
 
   def element(t: Preview.Target): HtmlElement =
     val card = Var(Option.empty[Either[String, Preview.Card]])
     val record = Var(Option.empty[Place.Record])
     div(
       cls := "result-detail",
-      dataAttr("kind") := kindOf(t),
+      dataAttr("kind") := kindOf(t).value,
       onMountCallback { _ =>
         Preview
           .fetch(t)
           .onComplete(r => card.set(Some(r.toEither.left.map(e => Option(e.getMessage).getOrElse(e.toString)))))
         t match
-          case Preview.Target.Place(id, asOf) => ApiClient.place(id, asOf).foreach(d => record.set(Some(d.record)))
+          case Preview.Target.Place(id, asOf) => ApiClient.place(Place.Id(id.value), asOf.map(a => com.histmersion.api.Api.AggregateQuery.AsOf(a.value))).foreach(d => record.set(Some(d.record)))
           case _                              => ()
       },
       div(
@@ -68,7 +68,7 @@ object ResultDetail:
           ),
           a(
             cls := "btn btn--sm detail-tab",
-            href := pageOf(t),
+            href := pageOf(t).value,
             target := "_blank",
             rel := "noopener",
             Icon(Icon.NewTab),
@@ -78,12 +78,15 @@ object ResultDetail:
       ),
       // the item's own marks once its card says what it is called
       child.maybe <-- card.signal.map(_.flatMap(_.toOption).map { c =>
-        val ref = marks.ItemRef.of(t, c.title)
+        val ref = marks.ItemRef.of(t, marks.ItemRef.OfTitle(c.title.value))
         marks.MyItems.opened(ref)
         div(
           cls := "detail-marks",
-          com.histmersion.web.ui.ContextMenu.on(s"Actions: ${c.title}", () => marks.ItemMenu.entries(ref, c.byline)),
-          marks.ItemActions(ref, c.byline)
+          com.histmersion.web.ui.ContextMenu.on(
+            com.histmersion.web.ui.ContextMenu.OnTitle(s"Actions: ${c.title}"),
+            () => marks.ItemMenu.entries(ref, marks.ItemMenu.EntriesByline(c.byline.value))
+          ),
+          marks.ItemActions(ref, com.histmersion.web.library.TableRow.Byline(c.byline.value))
         )
       }),
       child <-- card.signal.map {
@@ -91,7 +94,7 @@ object ResultDetail:
         case Some(Left(m))  => p(cls := "form-error", role := "alert", s"Could not read it: $m")
         case Some(Right(c)) => div(cls := "cite-tooltip detail-card", Preview.cardView(c))
       },
-      child.maybe <-- card.signal.map(_.flatMap(_.toOption).map(c => marks.NoteList.on(marks.ItemRef.of(t, c.title)))),
+      child.maybe <-- card.signal.map(_.flatMap(_.toOption).map(c => marks.NoteList.on(marks.ItemRef.of(t, marks.ItemRef.OfTitle(c.title.value))))),
       child.maybe <-- record.signal.map(_.filterNot(_.isEmpty).map(recordView))
     )
 
@@ -100,7 +103,7 @@ object ResultDetail:
     div(
       cls := "place-record",
       r.dateSource.map(s =>
-        p(cls := "place-record-line", span(cls := "muted", "Dates from: "), Place.Record.dateSourceText(s))
+        p(cls := "place-record-line", span(cls := "muted", "Dates from: "), Place.Record.dateSourceText(s).value)
       ),
       Option.when(r.periods.nonEmpty)(
         p(cls := "place-record-line", span(cls := "muted", "Time periods: "), r.periods.mkString(", "))
@@ -115,7 +118,7 @@ object ResultDetail:
                 href := s"https://www.wikidata.org/wiki/${d.id}",
                 target := "_blank",
                 rel := "noopener",
-                d.label.getOrElse(d.id)
+                d.label.map(_.value).getOrElse(d.id.value)
               ),
               Option.when(when.nonEmpty)(span(cls := "muted", s" ($when)"))
             )
@@ -123,6 +126,6 @@ object ResultDetail:
         )
       ),
       Option.when(r.registers.nonEmpty)(
-        div(h3(cls := "place-record-title", "Listed in"), ul(r.registers.map(g => li(s"${g.name}: ", code(g.id)))))
+        div(h3(cls := "place-record-title", "Listed in"), ul(r.registers.map(g => li(s"${g.name}: ", code(g.id.value)))))
       )
     )

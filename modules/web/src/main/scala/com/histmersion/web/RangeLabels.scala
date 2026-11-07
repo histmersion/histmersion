@@ -20,20 +20,11 @@ object RangeLabels:
   val Gap = 6.0
 
   /** The width of `text` at the overview's 8 px label font (tabular digits; a rough upper bound). */
-  def width(text: com.histmersion.api.UiLabels.Text): com.histmersion.web.RangeLabels.ElementSize = text.length * 5.0
+  def width(text: com.histmersion.api.UiLabels.Text): com.histmersion.web.RangeLabels.ElementSize = ElementSize(text.value.length * 5.0)
 
   /** One label: its left edge `x` and width `w` (drawn with `text-anchor: start` at `x`). */
-  final case class Label(text: Label.Text, x: Label.X, w: Label.W):
-    def end: com.histmersion.web.RangeLabels.ScreenPixels = x + w
-
-  object Label:
-
-    type Text = Text.T
-    object Text extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-    type X = X.T
-    object X extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
-    type W = W.T
-    object W extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  final case class Label(text: com.histmersion.api.UiLabels.Text, x: ScreenPixels, w: ElementSize):
+    def end: com.histmersion.web.RangeLabels.ScreenPixels = ScreenPixels(x.value + w.value)
 
   enum Placement:
     case Inside(from: Label, to: Label)
@@ -42,23 +33,26 @@ object RangeLabels:
 
   /** The placement for a selection from `x0` to `x1` (px, `x0 ≤ x1`) in a bar `barW` wide. */
   def place(fromText: com.histmersion.api.UiLabels.Text, toText: com.histmersion.api.UiLabels.Text, x0: com.histmersion.web.RangeLabels.ScreenPixels, x1: com.histmersion.web.RangeLabels.ScreenPixels, barW: com.histmersion.web.RangeLabels.ElementSize): Placement =
-    val wf = width(fromText)
-    val wt = width(toText)
-    if x0 + Pad + wf + Gap <= x1 - Pad - wt then
-      Placement.Inside(Label(fromText, x0 + Pad, wf), Label(toText, x1 - Pad - wt, wt))
+    val wf: Double = width(fromText).value
+    val wt: Double = width(toText).value
+    val a0: Double = x0.value
+    val a1: Double = x1.value
+    val bw: Double = barW.value
+    if a0 + Pad + wf + Gap <= a1 - Pad - wt then
+      Placement.Inside(Label(fromText, ScreenPixels(a0 + Pad), ElementSize(wf)), Label(toText, ScreenPixels(a1 - Pad - wt), ElementSize(wt)))
     else
       // outside the handles, each pushed back into the bar at its end — and the other one pushed on
       // past it (still on its own side) when that end pushed them together
-      val fromX0 = math.max(0.0, x0 - Pad - wf)
-      val toX0 = math.min(barW - wt, x1 + Pad)
+      val fromX0 = math.max(0.0, a0 - Pad - wf)
+      val toX0 = math.min(bw - wt, a1 + Pad)
       val (fromX, toX) =
         if fromX0 + wf + Gap <= toX0 then (fromX0, toX0)
         else if fromX0 == 0.0 then (fromX0, fromX0 + wf + Gap)
         else (toX0 - Gap - wf, toX0)
-      if fromX >= 0.0 && toX + wt <= barW && fromX + wf + Gap <= toX then
-        Placement.Outside(Label(fromText, fromX, wf), Label(toText, toX, wt))
+      if fromX >= 0.0 && toX + wt <= bw && fromX + wf + Gap <= toX then
+        Placement.Outside(Label(fromText, ScreenPixels(fromX), ElementSize(wf)), Label(toText, ScreenPixels(toX), ElementSize(wt)))
       else
-        val text = s"$fromText – $toText"
-        val w = width(text)
-        val x = ((x0 + x1) / 2 - w / 2).max(0.0).min(math.max(0.0, barW - w))
-        Placement.Joined(Label(text, x, w))
+        val text = com.histmersion.api.UiLabels.Text(s"$fromText – $toText")
+        val w: Double = width(text).value
+        val x = ((a0 + a1) / 2 - w / 2).max(0.0).min(math.max(0.0, bw - w))
+        Placement.Joined(Label(text, ScreenPixels(x), ElementSize(w)))

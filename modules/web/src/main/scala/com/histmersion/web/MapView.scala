@@ -20,40 +20,22 @@ import com.histmersion.api.catalogue.Place
 import com.histmersion.api.library.Source
 
 object MapView:
-  type BoxHeight = BoxHeight.T
-  object BoxHeight extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type BoxWidth = BoxWidth.T
-  object BoxWidth extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type ClassName = ClassName.T
   object ClassName extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type Color = Color.T
   object Color extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type DotCount = DotCount.T
   object DotCount extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type Fade = Fade.T
-  object Fade extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type HoldsCell = HoldsCell.T
   object HoldsCell extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type Html = Html.T
   object Html extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type Key = Key.T
-  object Key extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type Label = Label.T
   object Label extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type MaxDot = MaxDot.T
-  object MaxDot extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type Mid = Mid.T
   object Mid extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type MidSum = MidSum.T
-  object MidSum extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type Normalized = Normalized.T
-  object Normalized extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type Playback = Playback.T
   object Playback extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type RangeHigh = RangeHigh.T
-  object RangeHigh extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type RangeLow = RangeLow.T
-  object RangeLow extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type Ring = Ring.T
   object Ring extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type Separation = Separation.T
@@ -62,86 +44,18 @@ object MapView:
   object ShowSources extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type SourceLabel = SourceLabel.T
   object SourceLabel extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type SpanEnd = SpanEnd.T
-  object SpanEnd extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type SpanStart = SpanStart.T
-  object SpanStart extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type Text = Text.T
-  object Text extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type Title = Title.T
   object Title extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type YearsPerSecond = YearsPerSecond.T
   object YearsPerSecond extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
 
-  type Radius = Radius.T
-  object Radius extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type Playhead = Playhead.T
-  object Playhead extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type PlayFrameSpanPart1 = _root_.com.histmersion.api.catalogue.Period.Start
-  val PlayFrameSpanPart1: _root_.com.histmersion.api.catalogue.Period.Start.type = _root_.com.histmersion.api.catalogue.Period.Start
-  type PlayFrameSpanPart2 = _root_.com.histmersion.api.catalogue.Period.End
-  val PlayFrameSpanPart2: _root_.com.histmersion.api.catalogue.Period.End.type = _root_.com.histmersion.api.catalogue.Period.End
-  type RestylePlayAreasSpanPart1 = _root_.com.histmersion.api.catalogue.Period.Start
-  val RestylePlayAreasSpanPart1: _root_.com.histmersion.api.catalogue.Period.Start.type = _root_.com.histmersion.api.catalogue.Period.Start
-  type RestylePlayAreasSpanPart2 = _root_.com.histmersion.api.catalogue.Period.End
-  val RestylePlayAreasSpanPart2: _root_.com.histmersion.api.catalogue.Period.End.type = _root_.com.histmersion.api.catalogue.Period.End
-  type AddPlayAreasSpanPart1 = _root_.com.histmersion.api.catalogue.Period.Start
-  val AddPlayAreasSpanPart1: _root_.com.histmersion.api.catalogue.Period.Start.type = _root_.com.histmersion.api.catalogue.Period.Start
-  type AddPlayAreasSpanPart2 = _root_.com.histmersion.api.catalogue.Period.End
-  val AddPlayAreasSpanPart2: _root_.com.histmersion.api.catalogue.Period.End.type = _root_.com.histmersion.api.catalogue.Period.End
-  type GradientBgSpanPart1 = _root_.com.histmersion.api.catalogue.Period.Start
-  val GradientBgSpanPart1: _root_.com.histmersion.api.catalogue.Period.Start.type = _root_.com.histmersion.api.catalogue.Period.Start
-  type GradientBgSpanPart2 = _root_.com.histmersion.api.catalogue.Period.End
-  val GradientBgSpanPart2: _root_.com.histmersion.api.catalogue.Period.End.type = _root_.com.histmersion.api.catalogue.Period.End
   type GradientOfMids = _root_.com.histmersion.web.MapView.Mid
   val GradientOfMids: _root_.com.histmersion.web.MapView.Mid.type = _root_.com.histmersion.web.MapView.Mid
-  type GradientOfSpanPart1 = _root_.com.histmersion.api.catalogue.Period.Start
-  val GradientOfSpanPart1: _root_.com.histmersion.api.catalogue.Period.Start.type = _root_.com.histmersion.api.catalogue.Period.Start
-  type GradientOfSpanPart2 = _root_.com.histmersion.api.catalogue.Period.End
-  val GradientOfSpanPart2: _root_.com.histmersion.api.catalogue.Period.End.type = _root_.com.histmersion.api.catalogue.Period.End
   type RampEndsMids = _root_.com.histmersion.web.MapView.Mid
   val RampEndsMids: _root_.com.histmersion.web.MapView.Mid.type = _root_.com.histmersion.web.MapView.Mid
-  type RampEndsSpanPart1 = _root_.com.histmersion.api.catalogue.Period.Start
-  val RampEndsSpanPart1: _root_.com.histmersion.api.catalogue.Period.Start.type = _root_.com.histmersion.api.catalogue.Period.Start
-  type RampEndsSpanPart2 = _root_.com.histmersion.api.catalogue.Period.End
-  val RampEndsSpanPart2: _root_.com.histmersion.api.catalogue.Period.End.type = _root_.com.histmersion.api.catalogue.Period.End
-  type RadiusForResult = RadiusForResult.T
-  object RadiusForResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type MaxDotRadiusResult = MaxDotRadiusResult.T
-  object MaxDotRadiusResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type ClusterRadiusResult = ClusterRadiusResult.T
-  object ClusterRadiusResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type LoadEventsSpanPart1 = _root_.com.histmersion.api.catalogue.Period.Start
-  val LoadEventsSpanPart1: _root_.com.histmersion.api.catalogue.Period.Start.type = _root_.com.histmersion.api.catalogue.Period.Start
-  type LoadEventsSpanPart2 = _root_.com.histmersion.api.catalogue.Period.End
-  val LoadEventsSpanPart2: _root_.com.histmersion.api.catalogue.Period.End.type = _root_.com.histmersion.api.catalogue.Period.End
-  type TileSpanSpanPart1 = _root_.com.histmersion.api.catalogue.Period.Start
-  val TileSpanSpanPart1: _root_.com.histmersion.api.catalogue.Period.Start.type = _root_.com.histmersion.api.catalogue.Period.Start
-  type TileSpanSpanPart2 = _root_.com.histmersion.api.catalogue.Period.End
-  val TileSpanSpanPart2: _root_.com.histmersion.api.catalogue.Period.End.type = _root_.com.histmersion.api.catalogue.Period.End
-  type RenderSpanPart1 = _root_.com.histmersion.api.catalogue.Period.Start
-  val RenderSpanPart1: _root_.com.histmersion.api.catalogue.Period.Start.type = _root_.com.histmersion.api.catalogue.Period.Start
-  type RenderSpanPart2 = _root_.com.histmersion.api.catalogue.Period.End
-  val RenderSpanPart2: _root_.com.histmersion.api.catalogue.Period.End.type = _root_.com.histmersion.api.catalogue.Period.End
-  type ViridisAtSpanPart1 = _root_.com.histmersion.api.catalogue.Period.Start
-  val ViridisAtSpanPart1: _root_.com.histmersion.api.catalogue.Period.Start.type = _root_.com.histmersion.api.catalogue.Period.Start
-  type ViridisAtSpanPart2 = _root_.com.histmersion.api.catalogue.Period.End
-  val ViridisAtSpanPart2: _root_.com.histmersion.api.catalogue.Period.End.type = _root_.com.histmersion.api.catalogue.Period.End
-  type LoadOverlaySpanPart1 = _root_.com.histmersion.api.catalogue.Period.Start
-  val LoadOverlaySpanPart1: _root_.com.histmersion.api.catalogue.Period.Start.type = _root_.com.histmersion.api.catalogue.Period.Start
-  type LoadOverlaySpanPart2 = _root_.com.histmersion.api.catalogue.Period.End
-  val LoadOverlaySpanPart2: _root_.com.histmersion.api.catalogue.Period.End.type = _root_.com.histmersion.api.catalogue.Period.End
-  type LoadMediaSpanPart1 = _root_.com.histmersion.api.catalogue.Period.Start
-  val LoadMediaSpanPart1: _root_.com.histmersion.api.catalogue.Period.Start.type = _root_.com.histmersion.api.catalogue.Period.Start
-  type LoadMediaSpanPart2 = _root_.com.histmersion.api.catalogue.Period.End
-  val LoadMediaSpanPart2: _root_.com.histmersion.api.catalogue.Period.End.type = _root_.com.histmersion.api.catalogue.Period.End
-  type LoadSitesSpanPart1 = _root_.com.histmersion.api.catalogue.Period.Start
-  val LoadSitesSpanPart1: _root_.com.histmersion.api.catalogue.Period.Start.type = _root_.com.histmersion.api.catalogue.Period.Start
-  type LoadSitesSpanPart2 = _root_.com.histmersion.api.catalogue.Period.End
-  val LoadSitesSpanPart2: _root_.com.histmersion.api.catalogue.Period.End.type = _root_.com.histmersion.api.catalogue.Period.End
 
-  private var radius: com.histmersion.web.MapView.Radius = Layout.markerRadiusDefault
+  private var radius: Int = Layout.markerRadiusDefault.value
   private val pickerMax = Layout.pickerMax
   private val fitMaxZoom = Layout.fitMaxZoom
   private var currentSpan: (com.histmersion.api.catalogue.Period.Start, com.histmersion.api.catalogue.Period.End) = (com.histmersion.api.catalogue.Period.Start(0L), com.histmersion.api.catalogue.Period.End(1L))
@@ -168,7 +82,7 @@ object MapView:
   private var playbackMode: com.histmersion.web.MapView.Playback = com.histmersion.web.MapView.Playback(false)
   // `var`s: the tiles' settings (from the page's config), and playback's speed (its time buckets)
   private[web] var tilesConfig: MapTilesUiConfig = MapTilesUiConfig()
-  private var playYearsPerSecond: com.histmersion.web.MapView.YearsPerSecond = 0.0
+  private var playYearsPerSecond: com.histmersion.web.MapView.YearsPerSecond = com.histmersion.web.MapView.YearsPerSecond(0.0)
 
   /** The map's ONE cluster layer, for every kind of point ([[PointLayer]]): what is near on screen is one bubble,
     * whatever it is. Regions never join.
@@ -177,14 +91,14 @@ object MapView:
     paneOf = d => TheMap.pane(d.layer.kind.pane),
     pane = () => TheMap.pane(MapStack.Pane.Markers),
     surface = () => TheMap.surface,
-    key = _.key,
+    key = d => PointSet.KeyResult(d.key.value),
     at = _.at,
-    radius = () => clusterRadius(maxDotRadius, PointKinds.all.map(_.box)).toDouble,
-    single = (d, fadeIn) => if d.member.aggregate then bubbleMarker(Seq(d)) else d.layer.render(d, fadeIn),
+    radius = () => PointSet.RadiusResult(clusterRadius(maxDotRadius, PointKinds.all.map(_.box)).toDouble),
+    single = (d, fadeIn) => if d.member.aggregate then bubbleMarker(Seq(d)) else d.layer.render(d, PointLayer.FadeIn(fadeIn.value)),
     bubble = ds => bubbleMarker(ds),
-    animateMax = Layout.clusterAnimateMax,
-    exitMs = Layout.exitAnimMs,
-    fadeOut = FadingLayer.fadeOut.value,
+    animateMax = PointSet.AnimateMax(Layout.clusterAnimateMax.value),
+    exitMs = PointSet.ExitMs(Layout.exitAnimMs.value),
+    fadeOut = PointSet.FadeOut(FadingLayer.fadeOut.value.value),
     repaint = (m, ds) => repaintBubble(m, ds)
   )
 
@@ -194,27 +108,21 @@ object MapView:
   private lazy val polities: ShapeSet = TheMap.surface.shapes(
     com.histmersion.web.map.MapSurface.ShapesId("polities"),
     ShapeStyle(
-      fillOpacity = 0.1,
-      lineWidth = 1.5,
-      lineOpacity = 0.8,
+      fillOpacity = ShapeStyle.FillOpacity(0.1),
+      lineWidth = ShapeStyle.LineWidth(1.5),
+      lineOpacity = ShapeStyle.LineOpacity(0.8),
       dash = List(3, 2),
       dashedLineOpacity = Some(0.6),
       interactive = true
     )
   )
   // what each drawn polity is (the shape under the pointer answers as this place) and its point labels
-  private val polityPlaces = scala.collection.mutable.HashMap.empty[String, (String, String, String)]
+  private val polityPlaces = scala.collection.mutable.HashMap.empty[PlaceHover.PlaceId, (PlaceHover.PlaceId, com.histmersion.api.UiLabels.Text, PlaceHover.PlaceKind)]
   private val pointLabels = scala.collection.mutable.LinkedHashMap.empty[String, DomMarker]
   private var overlayOn = false
 
   /** An overlay's switch: how it goes on and off the map, and how it loads the span. */
-  final private case class Slot(attach: () => Unit, detach: () => Unit, load: ((Slot.LoadArg1Part1, Slot.LoadArg1Part2)) => Unit)
-
-  object Slot:
-    type LoadArg1Part1 = LoadArg1Part1.T
-    object LoadArg1Part1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
-    type LoadArg1Part2 = LoadArg1Part2.T
-    object LoadArg1Part2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  final private case class Slot(attach: () => Unit, detach: () => Unit, load: ((com.histmersion.api.catalogue.Period.Start, com.histmersion.api.catalogue.Period.End)) => Unit)
 
   private def slot(l: MapLayer): Slot = l match
     case MapLayer.Boundaries => Slot(() => overlayOn = true, () => clearOverlay(), loadOverlay)
@@ -243,7 +151,7 @@ object MapView:
   /** A popup at a map point (a finding's, a picture's). */
   def popup(lat: com.histmersion.api.catalogue.Latitude, lon: com.histmersion.api.catalogue.Longitude, html: com.histmersion.web.MapView.Html): Unit =
     if TheMap.isUp then {
-      val _ = TheMap.surface.popup(LatLon(lat, lon), s"""<div class="hd-popup-content">$html</div>""")
+      val _ = TheMap.surface.popup(LatLon(LatLon.Lat(lat.value), LatLon.Lon(lon.value)), MapSurface.PopupHtml(s"""<div class="hd-popup-content">$html</div>"""))
     }
 
   /** Playback starts or stops. Its states are drawn from every state fetched while it plays (#3764, [[PlaybackAreas]]).
@@ -253,55 +161,52 @@ object MapView:
   def setPlaybackMode(on: com.histmersion.web.MapView.Playback): Unit =
     val was = playbackMode
     playbackMode = on
-    if was && !on then playAreas.clear()
+    if was.value && !on.value then playAreas.clear()
 
   // ── playback (#3764): every frame draws from what is held; nothing is fetched or re-made per frame ──
 
   /** A playback state as drawn: its outline (kept here: the names' placement drops the feature's), its years, its look
     * and the place it is.
     */
-  final private case class PlayArea(feature: js.Dynamic, geometry: js.Any, start: PlayArea.Start, end: PlayArea.End, dashed: PlayArea.Dashed)
+  final private case class PlayArea(feature: js.Dynamic, geometry: js.Any, start: PlaybackAreas.FractionalYear, end: PlaybackAreas.FractionalYear, dashed: Boolean)
 
-  object PlayArea:
-    type Start = Start.T
-    object Start extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
-    type End = End.T
-    object End extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
-    type Dashed = Dashed.T
-    object Dashed extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  private val playAreas = scala.collection.mutable.LinkedHashMap.empty[String, PlayArea]
+  private val playAreas = scala.collection.mutable.LinkedHashMap.empty[PlaybackAreas.AreaKey, PlayArea]
   // `var`s: how far ahead of the playhead the states are fetched, and how long one fades (years); the playhead
   private var playLead: com.histmersion.api.catalogue.Year = com.histmersion.api.catalogue.Year(0L)
-  private var playFade: com.histmersion.web.MapView.Fade = 0.0
-  private var playhead: com.histmersion.web.MapView.Playhead = 0.0
+  private var playFade: PlaybackAreas.FadeYears = PlaybackAreas.FadeYears(0.0)
+  private var playhead: PlaybackAreas.FractionalYear = PlaybackAreas.FractionalYear(0.0)
 
   /** One playback frame: the findings of the window `span` and the states at playhead `ph`, played at `yearsPerSecond`.
     * The findings are diffed (only the colour of a kept one changes); the states are recoloured and faded in place.
     */
-  def playFrame(points: List[GeoHit], span: (com.histmersion.web.MapView.PlayFrameSpanPart1, com.histmersion.web.MapView.PlayFrameSpanPart2), ph: com.histmersion.api.catalogue.Year, yearsPerSecond: com.histmersion.web.MapView.YearsPerSecond): Unit =
-    playLead = (yearsPerSecond * Layout.playbackLeadSeconds).toLong
+  def playFrame(points: List[GeoHit], span: (com.histmersion.api.catalogue.Period.Start, com.histmersion.api.catalogue.Period.End), ph: com.histmersion.api.catalogue.Year, yearsPerSecond: com.histmersion.web.MapView.YearsPerSecond): Unit =
+    playLead = com.histmersion.api.catalogue.Year((yearsPerSecond.value * Layout.playbackLeadSeconds.value).toLong)
     playYearsPerSecond = yearsPerSecond
-    playFade = math.max(1.0, yearsPerSecond * Layout.playbackAreaFadeSeconds)
-    playhead = ph.toDouble
+    playFade = PlaybackAreas.FadeYears(math.max(1.0, yearsPerSecond.value * Layout.playbackAreaFadeSeconds.value))
+    playhead = PlaybackAreas.FractionalYear(ph.value.toDouble)
     render(points, span)
     if TheMap.isUp && overlayOn then restylePlayAreas(span)
 
-  private def restylePlayAreas(span: (com.histmersion.web.MapView.RestylePlayAreasSpanPart1, com.histmersion.web.MapView.RestylePlayAreasSpanPart2)): Unit =
+  private def restylePlayAreas(span: (com.histmersion.api.catalogue.Period.Start, com.histmersion.api.catalogue.Period.End)): Unit =
     playAreas.foreach { (k, a) =>
-      val alpha = PlaybackAreas.step(PlaybackAreas.alpha(playhead, a.start, a.end, playFade))
-      polities.restyle(k, viridisAt((a.start + a.end) / 2, span), if a.dashed then alpha * 0.6 else alpha)
+      val alpha = PlaybackAreas.step(PlaybackAreas.alpha(playhead, a.start, a.end, playFade)).value
+      polities.restyle(
+        ShapeFeature.Id(k.value),
+        ShapeFeature.Colour(viridisAt(Mid((a.start.value + a.end.value) / 2), span).value),
+        ShapeFeature.Alpha(if a.dashed then alpha * 0.6 else alpha)
+      )
     }
 
   /** A year's states fetched in playback: added to those held (the ones over for longer than a fade let go), the shapes
     * sent to the map only when that changed what is held.
     */
-  private def addPlayAreas(features: js.Array[js.Dynamic], span: (com.histmersion.web.MapView.AddPlayAreasSpanPart1, com.histmersion.web.MapView.AddPlayAreasSpanPart2), keyOf: js.Dynamic => com.histmersion.web.MapView.Key): Unit =
+  private def addPlayAreas(features: js.Array[js.Dynamic], span: (com.histmersion.api.catalogue.Period.Start, com.histmersion.api.catalogue.Period.End), keyOf: js.Dynamic => String): Unit =
     def byFindings(f: js.Dynamic) =
-      dynStr(f.properties.basis).flatMap(Place.TimeBasis.parse).contains(Place.TimeBasis.Findings)
+      dynStr(f.properties.basis).map(Place.TimeBasis.Wire(_)).flatMap(Place.TimeBasis.parse).contains(Place.TimeBasis.Findings)
     val before = playAreas.keySet.toSet
     playAreas.filterInPlace { (k, a) =>
       val keep = PlaybackAreas.live(playhead, a.end, playFade)
-      if !keep then polityPlaces.remove(k)
+      if !keep then polityPlaces.remove(PlaceHover.PlaceId(k.value))
       keep
     }
     features.foreach { f =>
@@ -310,99 +215,102 @@ object MapView:
         .selectDynamic("type")
         .toString != "MultiPoint"
       dynPeriod(f.properties).foreach { (a, b) =>
-        val k = PlaybackAreas.key(keyOf(f), Some(a), Some(b))
+        val k = PlaybackAreas.key(PlaybackAreas.AreaKey(keyOf(f)), Some(PlaybackAreas.FractionalYear(a)), Some(PlaybackAreas.FractionalYear(b)))
         if isArea && !playAreas.contains(k) && PlaybackAreas.live(playhead, b, playFade) then
-          playAreas(k) = PlayArea(f, g, a, b, byFindings(f))
+          playAreas(k) = PlayArea(f, g, PlaybackAreas.FractionalYear(a), PlaybackAreas.FractionalYear(b), byFindings(f))
           dynStr(f.properties.id).foreach(id =>
-            polityPlaces(k) =
-              (id, dynStr(f.properties.label).getOrElse("unnamed"), dynStr(f.properties.kind).getOrElse("polity"))
+            polityPlaces(PlaceHover.PlaceId(k.value)) =
+              (PlaceHover.PlaceId(id), com.histmersion.api.UiLabels.Text(dynStr(f.properties.label).getOrElse("unnamed")), PlaceHover.PlaceKind(dynStr(f.properties.kind).getOrElse("polity")))
           )
       }
     }
     if playAreas.keySet != before then
       polities.set(playAreas.toSeq.map { (k, a) =>
-        val alpha = PlaybackAreas.step(PlaybackAreas.alpha(playhead, a.start, a.end, playFade))
+        val alpha = PlaybackAreas.step(PlaybackAreas.alpha(playhead, a.start, a.end, playFade)).value
         ShapeFeature(
-          k,
+          ShapeFeature.Id(k.value),
           a.geometry,
-          viridisAt((a.start + a.end) / 2, span),
-          dashed = a.dashed,
-          alpha = if a.dashed then alpha * 0.6 else alpha
+          ShapeFeature.Colour(viridisAt(Mid((a.start.value + a.end.value) / 2), span).value),
+          dashed = ShapeFeature.Dashed(a.dashed),
+          alpha = ShapeFeature.Alpha(if a.dashed then alpha * 0.6 else alpha)
         )
       })
 
   private[web] def midOf(pt: GeoHit): Option[com.histmersion.web.MapView.Mid] =
-    for a <- pt.periodStart; b <- pt.periodEnd yield (a + b).toDouble / 2
+    for a <- pt.periodStart; b <- pt.periodEnd yield Mid((a.value + b.value).toDouble / 2)
 
   private[web] def avgMid(items: Iterable[GeoHit]): Option[com.histmersion.web.MapView.Mid] =
     val points = items.iterator
-    @tailrec def loop(sum: com.histmersion.web.MapView.MidSum, n: Int): Option[com.histmersion.web.MapView.Mid] =
+    @tailrec def loop(sum: Double, n: Int): Option[com.histmersion.web.MapView.Mid] =
       if points.hasNext then
         midOf(points.next()) match
-          case Some(m) => loop(sum + m, n + 1)
+          case Some(m) => loop(sum + m.value, n + 1)
           case None    => loop(sum, n)
-      else if n > 0 then Some(sum / n)
+      else if n > 0 then Some(Mid(sum / n))
       else None
     loop(0.0, 0)
 
   private[web] def colorFor(mid: Option[com.histmersion.web.MapView.Mid], span: (com.histmersion.api.catalogue.Period.Start, com.histmersion.api.catalogue.Period.End), certainty: Certainty): com.histmersion.web.MapView.Color =
-    val lo = span._1.min(span._2).toDouble
-    val hi = span._1.max(span._2).toDouble
+    val lo = span._1.value.min(span._2.value).toDouble
+    val hi = span._1.value.max(span._2.value).toDouble
     val base = mid match
       case None    => Fmt.color(com.histmersion.web.Fmt.ColorT(0))
-      case Some(m) => Fmt.color(if hi == lo then 0.5 else (m - lo) / (hi - lo))
-    Certainty.desaturate(base, certainty)
+      case Some(m) => Fmt.color(Fmt.ColorT(if hi == lo then 0.5 else (m.value - lo) / (hi - lo)))
+    tinted(base, certainty)
 
-  private[web] def midRange(items: Iterable[GeoHit]): Option[(com.histmersion.web.MapView.RangeLow, com.histmersion.web.MapView.RangeHigh)] = rangeOf(items.flatMap(midOf))
+  private def tinted(base: com.histmersion.api.Wcag.Hex, certainty: Certainty): com.histmersion.web.MapView.Color =
+    Color(Certainty.desaturate(com.histmersion.api.ConfidenceStyle.Rgb(base.value), certainty).value)
+
+  private[web] def midRange(items: Iterable[GeoHit]): Option[(com.histmersion.web.MapView.Mid, com.histmersion.web.MapView.Mid)] = rangeOf(items.flatMap(midOf))
 
   /** Pure: the least and the greatest of `mids`. */
-  private[web] def rangeOf(mids: Iterable[com.histmersion.web.MapView.Mid]): Option[(com.histmersion.web.MapView.RangeLow, com.histmersion.web.MapView.RangeHigh)] =
+  private[web] def rangeOf(mids: Iterable[com.histmersion.web.MapView.Mid]): Option[(com.histmersion.web.MapView.Mid, com.histmersion.web.MapView.Mid)] =
     // `var`s: one pass over what may be thousands of mids, during a drag
     var lo = Double.MaxValue
     var hi = Double.MinValue
     for m <- mids do
-      if m < lo then lo = m
-      if m > hi then hi = m
-    if lo <= hi then Some((lo, hi)) else None
+      if m.value < lo then lo = m.value
+      if m.value > hi then hi = m.value
+    if lo <= hi then Some((Mid(lo), Mid(hi))) else None
 
   /** The CSS background VALUE for a group of findings: flat when they agree, a gradient across their period midpoints
     * when they do not.
     */
-  private[web] def gradientBg(items: Iterable[GeoHit], span: (com.histmersion.web.MapView.GradientBgSpanPart1, com.histmersion.web.MapView.GradientBgSpanPart2), certainty: Certainty): com.histmersion.web.MapView.Color =
+  private[web] def gradientBg(items: Iterable[GeoHit], span: (com.histmersion.api.catalogue.Period.Start, com.histmersion.api.catalogue.Period.End), certainty: Certainty): com.histmersion.web.MapView.Color =
     gradientOf(items.flatMap(midOf), span, certainty)
 
   /** Pure: the same over the midpoints of any dated dots — a mixed bubble's findings, sites, events and pictures alike
     * (the undated have no say).
     */
-  private[web] def gradientOf(mids: Iterable[com.histmersion.web.MapView.GradientOfMids], span: (com.histmersion.web.MapView.GradientOfSpanPart1, com.histmersion.web.MapView.GradientOfSpanPart2), certainty: Certainty): com.histmersion.web.MapView.Color =
+  private[web] def gradientOf(mids: Iterable[com.histmersion.web.MapView.GradientOfMids], span: (com.histmersion.api.catalogue.Period.Start, com.histmersion.api.catalogue.Period.End), certainty: Certainty): com.histmersion.web.MapView.Color =
     rampEnds(mids, span, certainty) match
       case (a, b) if a == b => a
-      case (a, b)           => s"linear-gradient(135deg,$a,$b)"
+      case (a, b)           => Color(s"linear-gradient(135deg,$a,$b)")
 
   /** Pure: the colours of the oldest and the newest of `mids` on the ramp (desaturated by `certainty`); the undated
     * colour twice when none is dated.
     */
-  private[web] def rampEnds(mids: Iterable[com.histmersion.web.MapView.RampEndsMids], span: (com.histmersion.web.MapView.RampEndsSpanPart1, com.histmersion.web.MapView.RampEndsSpanPart2), certainty: Certainty): (com.histmersion.web.MapView.Color, com.histmersion.web.MapView.Color) =
+  private[web] def rampEnds(mids: Iterable[com.histmersion.web.MapView.RampEndsMids], span: (com.histmersion.api.catalogue.Period.Start, com.histmersion.api.catalogue.Period.End), certainty: Certainty): (com.histmersion.web.MapView.Color, com.histmersion.web.MapView.Color) =
     rangeOf(mids) match
       case None =>
         val c = colorFor(None, span, certainty)
         (c, c)
       case Some((lo, hi)) =>
-        val sLo = span._1.min(span._2).toDouble
-        val sHi = span._1.max(span._2).toDouble
-        def norm(v: com.histmersion.web.MapView.Mid): com.histmersion.web.MapView.Normalized = if sHi == sLo then 0.5 else (v - sLo) / (sHi - sLo)
-        (Certainty.desaturate(Fmt.color(norm(lo)), certainty), Certainty.desaturate(Fmt.color(norm(hi)), certainty))
+        val sLo = span._1.value.min(span._2.value).toDouble
+        val sHi = span._1.value.max(span._2.value).toDouble
+        def norm(v: com.histmersion.web.MapView.Mid): com.histmersion.web.Fmt.ColorT = Fmt.ColorT(if sHi == sLo then 0.5 else (v.value - sLo) / (sHi - sLo))
+        (tinted(Fmt.color(norm(lo)), certainty), tinted(Fmt.color(norm(hi)), certainty))
 
-  private def radiusFor(n: com.histmersion.web.MapView.DotCount): com.histmersion.web.MapView.RadiusForResult =
-    if n > 1 then radius + 4 + 3 * n.toString.length else radius
+  private def radiusFor(n: com.histmersion.web.MapView.DotCount): Int =
+    if n.value > 1 then radius + 4 + 3 * n.value.toString.length else radius
 
-  private def maxDotRadius: com.histmersion.web.MapView.MaxDotRadiusResult = radiusFor(com.histmersion.web.MapView.DotCount(999))
+  private def maxDotRadius: Int = radiusFor(com.histmersion.web.MapView.DotCount(999))
 
   /** Pure: how near (px) two points' centres are when they join a bubble — the widest bubble's diameter (`maxDot` its
     * radius), or the largest marker box if that is wider: two markers drawn apart never overlap.
     */
-  private[web] def clusterRadius(maxDot: com.histmersion.web.MapView.MaxDot, boxes: Iterable[(com.histmersion.web.MapView.BoxWidth, com.histmersion.web.MapView.BoxHeight)]): com.histmersion.web.MapView.ClusterRadiusResult =
-    math.max(2 * maxDot, boxes.map((w, h) => math.max(w, h)).maxOption.getOrElse(0))
+  private[web] def clusterRadius(maxDot: Int, boxes: Iterable[(com.histmersion.web.PointKind.BoxPixels, com.histmersion.web.PointKind.BoxPixels)]): Int =
+    math.max(2 * maxDot, boxes.map((w, h) => math.max(w.value, h.value)).maxOption.getOrElse(0))
 
   // `var`: the next bubble's gradient id (unique on the page)
   private var bubbleSeq = 0
@@ -515,7 +423,7 @@ object MapView:
   private def spiderSeparation: com.histmersion.web.MapView.Separation = PointKinds.all.map(k => math.max(k.box._1, k.box._2)).max + 8
 
   def init(ui: UiConfig): HtmlElement =
-    radius = ui.markerRadius
+    radius = ui.markerRadius.value
     tilesConfig = ui.mapTiles
     BaseMaps.configure(ui)
     // the span the page opens on (UiState is restored before this mounts): the overlays switched on
@@ -657,7 +565,7 @@ object MapView:
     if legendEl != null then
       Option(legendEl.querySelector(".hd-key-slot")).foreach(_.innerHTML = MapKey.html(events, sites, undated))
 
-  private def loadEvents(span: (com.histmersion.web.MapView.LoadEventsSpanPart1, com.histmersion.web.MapView.LoadEventsSpanPart2)): Unit = EventMarkers.load(tileSpan(span), span)
+  private def loadEvents(span: (com.histmersion.api.catalogue.Period.Start, com.histmersion.api.catalogue.Period.End)): Unit = EventMarkers.load(tileSpan(span), span)
 
   /** Pure: the span the tiled layers are asked for — the span itself, or in playback the playhead's window widened to
     * whole time buckets ([[PlaybackBuckets]]), so their tiles change once a bucket.
@@ -671,7 +579,7 @@ object MapView:
     val ordered = (span._1.min(span._2), span._1.max(span._2))
     if playback then PlaybackBuckets.widen(ordered, PlaybackBuckets.years(yearsPerSecond, bucketSeconds)) else ordered
 
-  private def tileSpan(span: (com.histmersion.web.MapView.TileSpanSpanPart1, com.histmersion.web.MapView.TileSpanSpanPart2)): (com.histmersion.api.catalogue.Period.Start, com.histmersion.api.catalogue.Period.End) =
+  private def tileSpan(span: (com.histmersion.api.catalogue.Period.Start, com.histmersion.api.catalogue.Period.End)): (com.histmersion.api.catalogue.Period.Start, com.histmersion.api.catalogue.Period.End) =
     tileSpanOf(span, playbackMode, playYearsPerSecond, tilesConfig.playbackBucketSeconds)
 
   /** The tiled layers on the map (sites, pictures, events). */
@@ -691,7 +599,7 @@ object MapView:
     * finding (its source's card answers the hover, [[hoverSource]]): never a citekey.
     */
   private[web] def markerTitle(items: List[GeoHit]): Option[com.histmersion.web.MapView.Title] =
-    Option.when(items.size > 1)(s"${items.size} findings here")
+    Option.when(items.size > 1)(Title(s"${items.size} findings here"))
 
   /** Pure: the source whose card a dot's hover shows — its one finding's; none for coincident findings (the first of
     * several would misdescribe the spot: their list opens on a click).
@@ -704,10 +612,10 @@ object MapView:
   private[web] def markerLabel(pt: GeoHit): com.histmersion.web.MapView.Label =
     val title = Option(pt.title).map(_.trim).filter(_.nonEmpty).getOrElse(SourceLink.idLabel(pt.citekey, pt.doi))
     val period = Fmt.periodStr(pt.periodStart, pt.periodEnd)
-    if period.isEmpty then title else s"$title ($period)"
+    Label(if period.value.isEmpty then title else s"$title ($period)")
 
   /** The findings of `span` (the filter's, a playback frame's): their points, as every kind's. */
-  def render(points: List[GeoHit], span: (com.histmersion.web.MapView.RenderSpanPart1, com.histmersion.web.MapView.RenderSpanPart2)): Unit =
+  def render(points: List[GeoHit], span: (com.histmersion.api.catalogue.Period.Start, com.histmersion.api.catalogue.Period.End)): Unit =
     currentSpan = span
     if TheMap.isUp then
       updateLegend(span)
@@ -718,7 +626,7 @@ object MapView:
       if layerSync.attached.exists(waitsForQuiet(_, UiState.areaPick.now(), playbackMode)) then reloadQuiet(span)
 
   /** Bring the point `key` out of its bubble (zooming in as far as it takes), then `andThen`. */
-  private[web] def reveal(key: com.histmersion.web.MapView.Key, andThen: () => Unit): Unit =
+  private[web] def reveal(key: PointSet.Key, andThen: () => Unit): Unit =
     if TheMap.isUp then dots.zoomToShow(key, andThen)
 
   /** Overlay layers follow the map at most once per `Layout.layerReloadMs`, so a timeline drag (which renders on every
@@ -785,7 +693,7 @@ object MapView:
     case _: GeoTime.Within => Layout.overlayRangeFetchLimit
     case _                 => Layout.overlayFetchLimit
 
-  private def placesGeoCached(kind: com.histmersion.api.catalogue.Place.Kind.Wire, time: GeoTime, limit: com.histmersion.api.Paging.Limit): scala.concurrent.Future[com.histmersion.web.MapView.Text] =
+  private def placesGeoCached(kind: com.histmersion.api.catalogue.Place.Kind.Wire, time: GeoTime, limit: com.histmersion.api.Paging.Limit): scala.concurrent.Future[String] =
     import scala.scalajs.concurrent.JSExecutionContext.Implicits.queue
     val k = (kind, time)
     geoCache.get(k) match
@@ -800,28 +708,28 @@ object MapView:
         }
         f
 
-  private def dynStr(v: js.Dynamic): Option[com.histmersion.web.MapView.Text] =
+  private def dynStr(v: js.Dynamic): Option[String] =
     if js.isUndefined(v) || v == null then None else Some(v.toString)
 
-  private def dynPeriod(props: js.Dynamic): Option[(com.histmersion.web.MapView.SpanStart, com.histmersion.web.MapView.SpanEnd)] =
+  private def dynPeriod(props: js.Dynamic): Option[(Double, Double)] =
     val ps = props.selectDynamic("periodStart")
     val pe = props.selectDynamic("periodEnd")
     if js.isUndefined(ps) || js.isUndefined(pe) || ps == null || pe == null then None
     else Some((ps.asInstanceOf[Double], pe.asInstanceOf[Double]))
 
-  private[web] def viridisAt(mid: com.histmersion.web.MapView.Mid, span: (com.histmersion.web.MapView.ViridisAtSpanPart1, com.histmersion.web.MapView.ViridisAtSpanPart2)): com.histmersion.web.MapView.Color =
-    val sLo = span._1.min(span._2).toDouble
-    val sHi = span._1.max(span._2).toDouble
-    Fmt.color(if sHi == sLo then 0.5 else ((mid - sLo) / (sHi - sLo)).max(0).min(1))
+  private[web] def viridisAt(mid: com.histmersion.web.MapView.Mid, span: (com.histmersion.api.catalogue.Period.Start, com.histmersion.api.catalogue.Period.End)): com.histmersion.web.MapView.Color =
+    val sLo = span._1.value.min(span._2.value).toDouble
+    val sHi = span._1.value.max(span._2.value).toDouble
+    Color(Fmt.color(Fmt.ColorT(if sHi == sLo then 0.5 else ((mid.value - sLo) / (sHi - sLo)).max(0).min(1))).value)
 
-  private def loadOverlay(span: (com.histmersion.web.MapView.LoadOverlaySpanPart1, com.histmersion.web.MapView.LoadOverlaySpanPart2)): Unit =
-    val mid = (span._1 + span._2) / 2
+  private def loadOverlay(span: (com.histmersion.api.catalogue.Period.Start, com.histmersion.api.catalogue.Period.End)): Unit =
+    val mid = (span._1.value + span._2.value) / 2
     overlayReqId += 1
     val myId = overlayReqId
     val time0 = areaTime(span, UiState.areaPick.now(), playbackMode)
     // in playback the year ahead of the playhead (the states it reaches next are held before it does)
     val time = time0 match
-      case GeoTime.At(y) if playbackMode && playAreas.nonEmpty => GeoTime.At(y + playLead)
+      case GeoTime.At(y) if playbackMode && playAreas.nonEmpty => GeoTime.At(com.histmersion.api.catalogue.Year(y.value + playLead.value))
       case t                                                   => t
     val playing = playbackMode
     placesGeoCached(com.histmersion.api.catalogue.Place.Kind.Wire("polity"), time, overlayLimit(time)).foreach { geojson =>
@@ -831,7 +739,7 @@ object MapView:
           def keyOf(f: js.Dynamic) = dynStr(f.properties.id).orElse(dynStr(f.properties.label)).getOrElse("?")
           addPlayAreas(features, currentSpan, keyOf)
           val shown = playAreas.toSeq
-            .filter((_, a) => PlaybackAreas.alpha(playhead, a.start, a.end, playFade) > 0)
+            .filter((_, a) => PlaybackAreas.alpha(playhead, a.start, a.end, playFade).value > 0)
             .map(_._2.feature)
           val (points, _) = features.toList.partition { f =>
             val g = f.geometry
@@ -843,14 +751,10 @@ object MapView:
           MapLabels.attach()
           MapLabels.syncAreas(
             shown,
-            key =
-              f => PlaybackAreas.key(keyOf(f), dynPeriod(f.properties).map(_._1), dynPeriod(f.properties).map(_._2)),
-            label = f => dynStr(f.properties.label).getOrElse("unnamed"),
-            wrapClass = f => placeClasses(com.histmersion.web.MapView.ClassName("hd-map-label-wrap"), dynStr(f.properties.basis)),
-            place = f =>
-              polityPlaces.get(
-                PlaybackAreas.key(keyOf(f), dynPeriod(f.properties).map(_._1), dynPeriod(f.properties).map(_._2))
-              ),
+            key = f => MapLabels.Key(areaKeyOf(keyOf, f).value),
+            label = f => MapLabels.Label(dynStr(f.properties.label).getOrElse("unnamed")),
+            wrapClass = f => MapLabels.WrapClass(placeClasses(com.histmersion.web.MapView.ClassName("hd-map-label-wrap"), dynStr(f.properties.basis).map(Place.TimeBasis.Wire(_))).value),
+            place = f => polityPlaces.get(PlaceHover.PlaceId(areaKeyOf(keyOf, f).value)),
             asOf = () => spanMid()
           )
         else
@@ -858,9 +762,9 @@ object MapView:
           val sorted = features.toList.sortBy(f => dynPeriod(f.properties).map((a, b) => a - b).getOrElse(99999.0))
           def keyOf(f: js.Dynamic) = dynStr(f.properties.id).orElse(dynStr(f.properties.label)).getOrElse("?")
           def colorOf(f: js.Dynamic): com.histmersion.web.MapView.Color =
-            viridisAt(dynPeriod(f.properties).map((a, b) => (a + b) / 2).getOrElse(mid.toDouble), span)
+            viridisAt(Mid(dynPeriod(f.properties).map((a, b) => (a + b) / 2).getOrElse(mid.toDouble)), span)
           def byFindings(f: js.Dynamic) =
-            dynStr(f.properties.basis).flatMap(Place.TimeBasis.parse).contains(Place.TimeBasis.Findings)
+            dynStr(f.properties.basis).map(Place.TimeBasis.Wire(_)).flatMap(Place.TimeBasis.parse).contains(Place.TimeBasis.Findings)
           def isPoint(f: js.Dynamic) =
             val g = f.geometry
             !js.isUndefined(g) && g != null && (g.selectDynamic("type").toString == "Point" || g
@@ -870,18 +774,18 @@ object MapView:
           polityPlaces.clear()
           sorted.foreach(f =>
             dynStr(f.properties.id).foreach(id =>
-              polityPlaces(keyOf(f)) =
-                (id, dynStr(f.properties.label).getOrElse("unnamed"), dynStr(f.properties.kind).getOrElse("polity"))
+              polityPlaces(PlaceHover.PlaceId(keyOf(f))) =
+                (PlaceHover.PlaceId(id), com.histmersion.api.UiLabels.Text(dynStr(f.properties.label).getOrElse("unnamed")), PlaceHover.PlaceKind(dynStr(f.properties.kind).getOrElse("polity")))
             )
           )
           polities.set(
             areas.map(f =>
               ShapeFeature(
-                keyOf(f),
+                ShapeFeature.Id(keyOf(f)),
                 f.geometry,
-                colorOf(f),
-                dashed = byFindings(f),
-                alpha = if byFindings(f) then 0.6 else 1.0
+                ShapeFeature.Colour(colorOf(f).value),
+                dashed = ShapeFeature.Dashed(byFindings(f)),
+                alpha = ShapeFeature.Alpha(if byFindings(f) then 0.6 else 1.0)
               )
             )
           )
@@ -890,18 +794,25 @@ object MapView:
           MapLabels.attach()
           MapLabels.syncAreas(
             areas,
-            key = keyOf,
-            label = f => dynStr(f.properties.label).getOrElse("unnamed"),
-            wrapClass = f => placeClasses(com.histmersion.web.MapView.ClassName("hd-map-label-wrap"), dynStr(f.properties.basis)),
-            place = f => polityPlaces.get(keyOf(f)),
+            key = f => MapLabels.Key(keyOf(f)),
+            label = f => MapLabels.Label(dynStr(f.properties.label).getOrElse("unnamed")),
+            wrapClass = f => MapLabels.WrapClass(placeClasses(com.histmersion.web.MapView.ClassName("hd-map-label-wrap"), dynStr(f.properties.basis).map(Place.TimeBasis.Wire(_))).value),
+            place = f => polityPlaces.get(PlaceHover.PlaceId(keyOf(f))),
             asOf = () => spanMid(),
             // once its name is placed nothing here reads the outline: the map holds its own copy
             release = dropGeometry
           )
     }(using scala.scalajs.concurrent.JSExecutionContext.Implicits.queue)
 
+  private def areaKeyOf(keyOf: js.Dynamic => String, f: js.Dynamic): PlaybackAreas.AreaKey =
+    PlaybackAreas.key(
+      PlaybackAreas.AreaKey(keyOf(f)),
+      dynPeriod(f.properties).map(p => PlaybackAreas.FractionalYear(p._1)),
+      dynPeriod(f.properties).map(p => PlaybackAreas.FractionalYear(p._2))
+    )
+
   /** A polity or region with only a point has no boundary yet: its NAME, never a pin or a dot. */
-  private def syncPointLabels(points: List[js.Dynamic], keyOf: js.Dynamic => com.histmersion.web.MapView.Key): Unit =
+  private def syncPointLabels(points: List[js.Dynamic], keyOf: js.Dynamic => String): Unit =
     val pane = TheMap.pane(MapStack.Pane.AreaPoints)
     val want = points.map(f => keyOf(f) -> f).toMap
     pointLabels.filterInPlace { (k, m) =>
@@ -949,7 +860,7 @@ object MapView:
     * never reads as a place known to exist then.
     */
   def placeClasses(base: com.histmersion.web.MapView.ClassName, basis: Option[com.histmersion.api.catalogue.Place.TimeBasis.Wire]): com.histmersion.web.MapView.ClassName =
-    if basis.flatMap(Place.TimeBasis.parse).contains(Place.TimeBasis.Findings) then s"$base $ByFindingsClass" else base
+    if basis.flatMap(Place.TimeBasis.parse).contains(Place.TimeBasis.Findings) then ClassName(s"$base $ByFindingsClass") else base
 
   val ByFindingsClass = "hd-by-findings"
 
@@ -963,7 +874,7 @@ object MapView:
   private[web] def tileFilter(span: (com.histmersion.api.catalogue.Period.Start, com.histmersion.api.catalogue.Period.End)): Filter = Filter(period = Some(Period(span._1, span._2)))
 
   /** Every picture of the span, by provider and licence. */
-  private def loadMedia(span: (com.histmersion.web.MapView.LoadMediaSpanPart1, com.histmersion.web.MapView.LoadMediaSpanPart2)): Unit =
+  private def loadMedia(span: (com.histmersion.api.catalogue.Period.Start, com.histmersion.api.catalogue.Period.End)): Unit =
     mediaLayer.load(
       ApiClient.tileTemplate(
         TilesApi.TileQuery(
@@ -980,7 +891,7 @@ object MapView:
     )
 
   /** Every site of the span, of the type the site-type menu (#1449) keeps. */
-  private def loadSites(span: (com.histmersion.web.MapView.LoadSitesSpanPart1, com.histmersion.web.MapView.LoadSitesSpanPart2)): Unit =
+  private def loadSites(span: (com.histmersion.api.catalogue.Period.Start, com.histmersion.api.catalogue.Period.End)): Unit =
     sitesLayer.load(
       ApiClient.tileTemplate(
         TilesApi.TileQuery(

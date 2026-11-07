@@ -12,9 +12,6 @@ object TiledPoints:
     * before that the read no longer has (the map let their tile go) and that `keep` (near the view).
     */
 
-  type MaxZoomResult = com.histmersion.api.catalogue.MapTilesUiConfig.MaxZoom
-  val MaxZoomResult: _root_.com.histmersion.api.catalogue.MapTilesUiConfig.MaxZoom.type = _root_.com.histmersion.api.catalogue.MapTilesUiConfig.MaxZoom
-
 
   def merge[A](fresh: Seq[A], was: Seq[A], key: A => String, keep: A => Boolean): Seq[A] =
     val now = fresh.iterator.map(key).toSet
@@ -30,7 +27,7 @@ final class TiledPoints[A](
     val items: PointLayer[A],
     dot: DotKind,
     decode: TilePointFeature => Option[A],
-    maxZoom: () => TiledPoints.MaxZoomResult
+    maxZoom: () => com.histmersion.api.catalogue.MapTilesUiConfig.MaxZoom
 ):
   val cells: PointLayer[TileCellPoint] = PointLayer(CellKind(dot), () => MapView.dots, () => MapView.spanMid())
   // `var`s: the URL template and span asked for, whether the layer is on, the map's tiles once made, the
@@ -43,9 +40,16 @@ final class TiledPoints[A](
   // the tiles' URL and the zoom what is shown was read at
   private var readAt: Option[(Option[String], Int)] = None
 
+  private def tileTemplate: Option[com.histmersion.api.basemap.BasemapApi.TileTemplate] =
+    template.map(com.histmersion.api.basemap.BasemapApi.TileTemplate(_))
+
   private def source: Option[PointTiles] =
     if tiles.isEmpty && TheMap.isUp then
-      val t = TheMap.surface.pointTiles(s"tiles-${layer.wire}", layer.wire, maxZoom())
+      val t = TheMap.surface.pointTiles(
+        MapSurface.LayerId(s"tiles-${layer.wire}"),
+        MapSurface.LayerId(layer.wire.value),
+        MapSurface.PointTilesMaxZoom(maxZoom().value)
+      )
       t.onChange(() => if on then read())
       tiles = Some(t)
     tiles
@@ -57,7 +61,7 @@ final class TiledPoints[A](
       on = true
       items.attach()
       cells.attach()
-      source.foreach(_.setTiles(template))
+      source.foreach(_.setTiles(tileTemplate))
 
   def detach(): Unit =
     if on then
@@ -66,13 +70,13 @@ final class TiledPoints[A](
       tiles.foreach(_.setTiles(None))
       items.detach()
       cells.detach()
-      changed.update(_ + 1)
+      changed.update(r => com.histmersion.web.Poll.Revision(r.value + 1))
 
   /** The tiles of `url` (the span and options in it), drawn for `s`. */
   def load(url: String, s: (com.histmersion.api.Years.Astronomical, com.histmersion.api.Years.Astronomical)): Unit =
     template = Some(url)
     span = s
-    if on then source.foreach(_.setTiles(template))
+    if on then source.foreach(_.setTiles(tileTemplate))
 
   /** What is shown recoloured for `s` (the span moved; the tiles for it come later). */
   def recolour(s: (com.histmersion.api.Years.Astronomical, com.histmersion.api.Years.Astronomical)): Unit =
@@ -90,21 +94,26 @@ final class TiledPoints[A](
     tiles.filter(_.loaded).foreach { t =>
       val (cs, is) = t.features.partition(TileDecode.isCell)
       val fresh = (is.flatMap(decode), cs.map(TileDecode.cell(_, dot)))
-      val at = (template, math.floor(TheMap.surface.zoom).toInt)
+      val at = (template, math.floor(TheMap.surface.zoom.value).toInt)
       shown =
         if !readAt.contains(at) then fresh
         else
           val s = TheMap.surface
-          val margin = math.max(s.size._1, s.size._2)
+          val margin = com.histmersion.web.map.Clustering.InViewMargin(math.max(s.size._1.value, s.size._2.value))
           def near(p: (com.histmersion.api.Geo.Latitude, com.histmersion.api.Geo.Longitude)) = Clustering.inView(s, LatLon(p._1, p._2), margin)
           (
-            TiledPoints.merge(fresh._1, shown._1, items.kind.key, a => near(items.kind.at(a))),
-            TiledPoints.merge(fresh._2, shown._2, (c: TileCellPoint) => c.key, c => near((c.lat, c.lon)))
+            TiledPoints.merge(fresh._1, shown._1, a => items.kind.key(a).value, a => near(items.kind.at(a))),
+            TiledPoints.merge(
+              fresh._2,
+              shown._2,
+              (c: TileCellPoint) => c.key.value,
+              c => near((com.histmersion.api.Geo.Latitude(c.lat.value), com.histmersion.api.Geo.Longitude(c.lon.value)))
+            )
           )
       readAt = Some(at)
       items.show(shown._1, span)
       cells.show(shown._2, span)
-      changed.update(_ + 1)
+      changed.update(r => com.histmersion.web.Poll.Revision(r.value + 1))
     }
 
   /** Ticks whenever what is shown changes (a tile read, the layer switched off): the lists of what is on the map follow
@@ -120,7 +129,16 @@ final class TiledPoints[A](
     else
       val s = TheMap.surface
       def seen(p: (com.histmersion.api.Geo.Latitude, com.histmersion.api.Geo.Longitude)) = Clustering.inView(s, LatLon(p._1, p._2), com.histmersion.web.map.Clustering.InViewMargin(0))
-      (shown._1.filter(a => seen(items.kind.at(a))), shown._2.filter(c => seen((c.lat, c.lon))).map(_.n).sum)
+      (
+        shown._1.filter(a => seen(items.kind.at(a))),
+        com.histmersion.api.RowCount(
+          shown._2
+            .filter(c => seen((com.histmersion.api.Geo.Latitude(c.lat.value), com.histmersion.api.Geo.Longitude(c.lon.value))))
+            .map(_.n.value)
+            .sum
+        )
+      )
 
   /** How many items and cells are shown, and the items the cells count (diagnostics). */
-  def counts: (com.histmersion.api.RowCount, com.histmersion.api.RowCount, com.histmersion.api.RowCount) = (shown._1.size, shown._2.size, shown._2.map(_.n).sum)
+  def counts: (com.histmersion.api.RowCount, com.histmersion.api.RowCount, com.histmersion.api.RowCount) =
+    (com.histmersion.api.RowCount(shown._1.size), com.histmersion.api.RowCount(shown._2.size), com.histmersion.api.RowCount(shown._2.map(_.n.value).sum))

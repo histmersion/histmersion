@@ -185,3 +185,9 @@ Reported by client and server agents; each is wrapped `X(v.value)` at the call s
 - web component signatures back to plain String/Int/Boolean as master and tests have them (JobsView.Poll, ago, row; LayerToggle.apply; Latest; LatestOnly; ListFilterBar; Fmt.esc/clip; MapLabels internals). G1 review: UI internals or concepts?
 - GoalsView.newArea lost the client-side slug check (server 400, as decided). GraphPanel.legend no longer drops unknown link kinds because GraphLink.kind is now an enum: check the decoder of an unknown kind.
 - Two api types for one concept: AgentsMarkdown/IngestMarkdown take State.Wire, Status, JobStatus, JobAge where cli has ListFilters.Qualifier and OlderLine.Text; Client takes ReviewGoal.Slug for article slugs; Api.EventQuery.Kind/Tier vs TilesApi.TileQuery.Kind/Tier; EventGeo.Precision vs EventSummary.Precision; Api.Job.Id vs SpatialHierarchyResult.Job.Id; Wcag.Hex vs ConfidenceStyle.Rgb; UiLabels.Text vs Label.Text. `ui.CssClass.value` returns a positional ValueResult.
+
+## From client wave 3 (must check: years)
+
+- Astronomical vs historical years in web: TimelinePlayback wraps raw astronomical years as `Year(ph.value)` and Period.Start without conversion; PlaybackFeed, PlaybackBuckets.widen keep raw arithmetic. If astronomical year 0 is 1 BCE and catalogue.Year has no year 0, every BCE year shown or sent is off by one. Compare each conversion with 7e197c2b and with Years.parseIso's fromAstronomical; give the web one year type per meaning (Years.Astronomical for arithmetic, catalogue.Year only at display/API).
+- MergeView: MergeResolution.Decision is typed Kind.Wire but should hold the full decision wire.
+- Preview.creditLine had licence and URL swapped: fixed.

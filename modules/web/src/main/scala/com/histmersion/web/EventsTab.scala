@@ -35,7 +35,7 @@ object EventsTab:
   def pane: HtmlElement = tab.pane
 
   /** How many the list holds, once it has an answer (its tab's count). */
-  val total: Signal[Option[com.histmersion.api.RowCount]] = tab.state.signal.map(s => Option.when(s.loaded)(com.histmersion.api.RowCount(math.max(s.total.value, s.rows.size))))
+  val total: Signal[Option[com.histmersion.api.RowCount]] = tab.state.signal.map(s => Option.when(s.loaded.value)(com.histmersion.api.RowCount(math.max(s.total.value, s.rows.size))))
 
   /** Pure: a row's date — the stated dating where there is one (`250 CE ± 2500 (tephrochronology)`), else its
     * four-point span.
