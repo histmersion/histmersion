@@ -83,8 +83,8 @@ object MapLists:
 
   // ── the state, following the map and the filter ───────────────────────────────────────────────────
 
-  val places: Var[MapListState] = Var(MapListState(Nil, 0, ""))
-  val pictures: Var[MapListState] = Var(MapListState(Nil, 0, ""))
+  val places: Var[MapListState] = Var(MapListState(Nil, com.histmersion.web.MapListState.Total(0), com.histmersion.web.MapListState.Note("")))
+  val pictures: Var[MapListState] = Var(MapListState(Nil, com.histmersion.web.MapListState.Total(0), com.histmersion.web.MapListState.Note("")))
   private val placesLatest = Latest()
   private val picturesLatest = Latest()
 
@@ -114,8 +114,8 @@ object MapLists:
           sRows,
           sRows.size + sCounted,
           if UiState.layers.now()(MapLayer.Sites) then
-            countLine(sRows.size, sRows.size + sCounted, "place", "places", onMap = true)
-          else "Turn on Sites under Layers to list the places on the map."
+            countLine(sRows.size, sRows.size + sCounted, com.histmersion.api.Plural.Noun.Singular("place"), com.histmersion.api.Plural.Noun.Plural("places"), onMap = com.histmersion.web.MapLists.OnMap(true))
+          else com.histmersion.web.MapListState.Note("Turn on Sites under Layers to list the places on the map.")
         )
       )
       val (ms, mCounted) = MapView.mediaLayer.inViewNow()
@@ -125,8 +125,8 @@ object MapLists:
           mRows,
           mRows.size + mCounted,
           if UiState.layers.now()(MapLayer.Media) then
-            countLine(mRows.size, mRows.size + mCounted, "picture", "pictures", onMap = true)
-          else "Turn on Media under Layers to list the pictures on the map."
+            countLine(mRows.size, mRows.size + mCounted, com.histmersion.api.Plural.Noun.Singular("picture"), com.histmersion.api.Plural.Noun.Plural("pictures"), onMap = com.histmersion.web.MapLists.OnMap(true))
+          else com.histmersion.web.MapListState.Note("Turn on Media under Layers to list the pictures on the map.")
         )
       )
     else
@@ -150,7 +150,7 @@ object MapLists:
             ),
           m => places.set(MapListState(Nil, 0, s"Could not list places: $m"))
         )
-      case None => places.set(MapListState(Nil, 0, "Type words in the filters to find places by name everywhere."))
+      case None => places.set(MapListState(Nil, com.histmersion.web.MapListState.Total(0), com.histmersion.web.MapListState.Note("Type words in the filters to find places by name everywhere.")))
     val f = UiState.toFilter()
     picturesLatest(
       ApiClient.mediaGeo(

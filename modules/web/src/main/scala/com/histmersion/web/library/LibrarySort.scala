@@ -6,11 +6,11 @@ import com.histmersion.api.library.Sort
   * the reader names an order of publication here, not a ranking of the map's results.
   */
 enum LibrarySort(val wire: LibrarySort.Wire, val label: LibrarySort.Label, val sort: Sort):
-  case Relevance extends LibrarySort("relevance", "Relevance", Sort.Relevance)
-  case Newest extends LibrarySort("newest", "Newest publication", Sort.Year)
-  case Oldest extends LibrarySort("oldest", "Oldest publication", Sort.Oldest)
-  case Title extends LibrarySort("title", "Title", Sort.Title)
-  case PeriodStart extends LibrarySort("period", "Period start", Sort.PeriodStart)
+  case Relevance extends LibrarySort(com.histmersion.web.library.LibrarySort.Wire("relevance"), com.histmersion.web.library.LibrarySort.Label("Relevance"), Sort.Relevance)
+  case Newest extends LibrarySort(com.histmersion.web.library.LibrarySort.Wire("newest"), com.histmersion.web.library.LibrarySort.Label("Newest publication"), Sort.Year)
+  case Oldest extends LibrarySort(com.histmersion.web.library.LibrarySort.Wire("oldest"), com.histmersion.web.library.LibrarySort.Label("Oldest publication"), Sort.Oldest)
+  case Title extends LibrarySort(com.histmersion.web.library.LibrarySort.Wire("title"), com.histmersion.web.library.LibrarySort.Label("Title"), Sort.Title)
+  case PeriodStart extends LibrarySort(com.histmersion.web.library.LibrarySort.Wire("period"), com.histmersion.web.library.LibrarySort.Label("Period start"), Sort.PeriodStart)
 
 object LibrarySort:
   /** Pure: the order an address names; relevance for none, or for one it does not know. */

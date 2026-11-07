@@ -6,16 +6,16 @@ import com.histmersion.api.instance.MapStartConfig
   * open-access finder on or off.
   */
 final case class SetupChoices(
-    email: SetupChoices.Email = "",
+    email: SetupChoices.Email = com.histmersion.web.setup.SetupChoices.Email(""),
     finders: Map[SetupChoices.FindersKey, SetupChoices.FindersValue] = Map.empty,
-    area: Option[SetupChoices.Area] = Some("world"),
+    area: Option[SetupChoices.Area] = Some(com.histmersion.web.setup.SetupChoices.Area("world")),
     start: MapStartConfig = MapStartConfig(),
-    boundaries: SetupChoices.Boundaries = true,
-    events: SetupChoices.Events = true,
-    pictures: SetupChoices.Pictures = false,
-    morePlaces: SetupChoices.MorePlaces = false,
-    agents: SetupChoices.Agents = false,
-    calibre: SetupChoices.Calibre = ""
+    boundaries: SetupChoices.Boundaries = com.histmersion.web.setup.SetupChoices.Boundaries(true),
+    events: SetupChoices.Events = com.histmersion.web.setup.SetupChoices.Events(true),
+    pictures: SetupChoices.Pictures = com.histmersion.web.setup.SetupChoices.Pictures(false),
+    morePlaces: SetupChoices.MorePlaces = com.histmersion.web.setup.SetupChoices.MorePlaces(false),
+    agents: SetupChoices.Agents = com.histmersion.web.setup.SetupChoices.Agents(false),
+    calibre: SetupChoices.Calibre = com.histmersion.web.setup.SetupChoices.Calibre("")
 )
 
 object SetupChoices:

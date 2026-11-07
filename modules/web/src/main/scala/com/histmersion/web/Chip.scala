@@ -25,7 +25,7 @@ object Chip:
       remove: Option[() => Unit] = None,
       prefix: Option[com.histmersion.web.Chip.Prefix] = None,
       tip: Option[com.histmersion.web.Chip.Tip] = None,
-      extraCls: com.histmersion.web.Chip.ExtraClass = "",
+      extraCls: com.histmersion.web.Chip.ExtraClass = com.histmersion.web.Chip.ExtraClass(""),
       mods: Modifier[HtmlElement]*
   ): HtmlElement =
     span(

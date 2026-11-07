@@ -53,7 +53,7 @@ object PeriodsCmd:
           val r = file.map(Path.of(_)) match
             case None               => c.seedPeriods(replace)
             case Some(_) if replace =>
-              Left(Cli.Error("--replace applies to the bundled seed, not to --file", exitCode = ExitCode.Usage))
+              Left(Cli.Error(com.histmersion.cli.Cli.Error.Message("--replace applies to the bundled seed, not to --file"), exitCode = ExitCode.Usage))
             case Some(f) if !Files.isRegularFile(f) => Left(Cli.Error(s"no such file: $f", exitCode = ExitCode.Usage))
             case Some(f)                            => c.importPeriods(Nil, Files.readString(f), Dataset.Seed)
           r.map(x => Cli.out.println(PeriodsMarkdown.imported(x)))

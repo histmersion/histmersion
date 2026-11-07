@@ -131,22 +131,22 @@ object TreeTab:
           div(cls := "empty", p("nothing to group — widen the span or remove a chip"))
         )
       )
-    else treeContent.set(roots.map(b => renderNode(b, 0, data)))
+    else treeContent.set(roots.map(b => renderNode(b, com.histmersion.web.TreeTab.RenderNodeDepth(0), data)))
 
   /** The count line, in the sidebar's one form ([[ResultsPaging]]): every source is in the tree, so
     * `285 sources · 12 periods · 1475 BCE → 1465 BCE` (`· as of <year>` for regions).
     */
   def countLine(data: TimeHistogram, roots: com.histmersion.api.RowCount, from: com.histmersion.api.Years.Astronomical, to: com.histmersion.api.Years.Astronomical): com.histmersion.api.UiLabels.Text =
     val groups =
-      if data.by == "region" then Plural.count(roots.toLong, "region") else Plural.count(roots.toLong, "period")
+      if data.by == "region" then Plural.count(roots.toLong, com.histmersion.api.Plural.CountSingular("region")) else Plural.count(roots.toLong, com.histmersion.api.Plural.CountSingular("period"))
     ResultsPaging.countLine(
       data.total,
       data.total,
-      "source",
+      com.histmersion.api.Plural.Noun.Singular("source"),
       extras = List(groups, ResultsPaging.span(Some(from), Some(to))) ++ data.asOf.map(a => s"as of ${Fmt.yr(a)}")
     )
 
-  private def unitWord(n: com.histmersion.api.RowCount): com.histmersion.api.Plural.Phrase = if n == 1 then "1 source" else s"$n sources"
+  private def unitWord(n: com.histmersion.api.RowCount): com.histmersion.api.Plural.Phrase = if n == 1 then com.histmersion.api.Plural.Phrase("1 source") else s"$n sources"
 
   private def renderNode(b: Bucket, depth: com.histmersion.web.TreeTab.RenderNodeDepth, data: TimeHistogram): HtmlElement =
     val expanded = Var(false)
@@ -227,7 +227,7 @@ object TreeTab:
       expanded.set(opening)
       if !opening || filled.now() then ()
       else
-        filled.set(true)
+        filled.set(com.histmersion.web.TreeTab.Filled(true))
         if b.children.nonEmpty || b.samples.nonEmpty then fillWith(b.children, b.samples, depth + 1, data, kidElements)
         else
           kidElements.set(
@@ -278,13 +278,13 @@ object TreeTab:
     if b.kind == "time" then
       val narrowed = f.modify(_.period).setTo(for a <- b.start; b2 <- b.end yield Period(a, b2))
       ApiClient.aggregate(
-        Api.AggregateQuery.tree("time", narrowed, depth = Some(cfg.treeDepth), samples = Some(cfg.treeSamples))
+        Api.AggregateQuery.tree(com.histmersion.api.Api.AggregateQuery.By("time"), narrowed, depth = Some(cfg.treeDepth), samples = Some(cfg.treeSamples))
       )
     else
       val narrowed = f.modify(_.places).setTo(b.placeId.toList)
       ApiClient.aggregate(
         Api.AggregateQuery
-          .tree("region", narrowed, depth = Some(cfg.treeDepth), asOf = data.asOf, samples = Some(cfg.treeSamples))
+          .tree(com.histmersion.api.Api.AggregateQuery.By("region"), narrowed, depth = Some(cfg.treeDepth), asOf = data.asOf, samples = Some(cfg.treeSamples))
       )
 
   private def act(b: Bucket): Unit =

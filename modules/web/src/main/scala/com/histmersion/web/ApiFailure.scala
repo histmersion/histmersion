@@ -29,7 +29,7 @@ object ApiFailure:
     ApiFailure(
       status,
       decoded.getOrElse(Api.Error(status match
-        case 401 | 403 => "the server refused the change: an API key is required"
-        case 0         => "the server could not be reached"
+        case 401 | 403 => com.histmersion.api.Api.Error.Message("the server refused the change: an API key is required")
+        case 0         => com.histmersion.api.Api.Error.Message("the server could not be reached")
         case s         => s"unexpected response from the server (HTTP $s)"))
     )

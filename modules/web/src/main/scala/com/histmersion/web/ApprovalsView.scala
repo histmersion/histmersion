@@ -92,7 +92,7 @@ object ApprovalsView:
         s"${a.citekey} ${a.edgeKind.map(_.replace('_', ' ')).getOrElse("?")} ${a.target.getOrElse("?")}"
       case Some(ApprovalKind.GoalPlan) =>
         val p = a.plan
-        s"plan for goal ${a.subject.getOrElse("?")}: ${Plural.count(p.fold(0)(_.subGoals.size), "sub-goal")}, " +
+        s"plan for goal ${a.subject.getOrElse("?")}: ${Plural.count(p.fold(0)(_.subGoals.size), com.histmersion.api.Plural.CountSingular("sub-goal"))}, " +
           s"${Plural.count(p.fold(0)(_.queries.size), "query", "queries")}, ${Plural.count(p.fold(0)(_.works.size), "work")}"
       case Some(ApprovalKind.ArticlePublish) =>
         a.article match
@@ -102,7 +102,7 @@ object ApprovalsView:
       case Some(ApprovalKind.ArticleFilter) =>
         s"record the coverage filter of ${a.subject.getOrElse("?")}: ${a.filter.fold("?")(_.filter.line)}"
       case Some(ApprovalKind.ArticlePlan) =>
-        s"compile ${Plural.count(a.articles.fold(0)(_.articles.size), "new article")} for goal ${a.subject.getOrElse("?")}"
+        s"compile ${Plural.count(a.articles.fold(0)(_.articles.size), com.histmersion.api.Plural.CountSingular("new article"))} for goal ${a.subject.getOrElse("?")}"
       case Some(ApprovalKind.HintEffect) =>
         s"manager ${a.subject.getOrElse("?")}: ${a.hintEffect.fold("an action")(p => ManagersMarkdown.effect(p.effect))}"
       case None => s"${a.kind} on ${a.subject.getOrElse(a.citekey)}"
@@ -165,7 +165,7 @@ object ApprovalsView:
       .sortBy(-_._2)
       .map((k, n) => s"$n ${kindLabel(k).toLowerCase}")
       .mkString(", ")
-    s"${if d == Decision.Approve then "Approve" else "Reject"} ${Plural.count(as.size, "approval")} ($kinds)? " +
+    s"${if d == Decision.Approve then "Approve" else "Reject"} ${Plural.count(as.size, com.histmersion.api.Plural.CountSingular("approval"))} ($kinds)? " +
       "Each is decided as if its own button were pressed, one after another, with the same checks."
 
   /** Who decided an approval, as its row says it (nothing while it is open). */
@@ -174,7 +174,7 @@ object ApprovalsView:
   /** The self-check line of a draft. */
   def selfCheck(d: Goal.Plans.ArticleDraft): String =
     if d.problems.isEmpty then "The code self-check found nothing."
-    else s"The code self-check still found ${Plural.count(d.problems.size, "problem")} after the writer's last attempt:"
+    else s"The code self-check still found ${Plural.count(d.problems.size, com.histmersion.api.Plural.CountSingular("problem"))} after the writer's last attempt:"
 
   /** A plan, as a person weighs it: sub-goals, queries, works (in the corpus or to acquire), dropped. */
   private[web] def planBlock(plan: Goal.Plans.Plan): HtmlElement =
@@ -220,7 +220,7 @@ object ApprovalsView:
       p(
         cls := "muted",
         s"${d.kind} · \"${d.title}\"" + d.section.fold("")(s => s" · under $s") +
-          s" · cites ${Plural.count(d.cited.size, "source")} · ${d.filter}"
+          s" · cites ${Plural.count(d.cited.size, com.histmersion.api.Plural.CountSingular("source"))} · ${d.filter}"
       ),
       p(cls := (if d.problems.isEmpty then "form-ok" else "run-paused"), selfCheck(d)),
       Option.when(d.problems.nonEmpty)(ul(d.problems.map(x => li(x)))),
@@ -253,7 +253,7 @@ object ApprovalsView:
   private val list = PolledList[ApprovalInfo](
     fetch = (upTo, before) => ApiClient.approvals(currentFilter(), Some(Limit), upTo = upTo, before = before),
     id = key,
-    live = (_, _) => false
+    live = (_, _) => com.histmersion.web.PolledList.LiveResult(false)
   )
   private val busy = Var(Set.empty[Long])
 
@@ -295,7 +295,7 @@ object ApprovalsView:
       busy.update(_ -- as.map(_.id))
       selected.set(Set.empty)
       list.failure.set(
-        Option.when(errs.nonEmpty)(s"${Plural.count(errs.size, "approval")} not decided: ${errs.mkString("; ")}")
+        Option.when(errs.nonEmpty)(s"${Plural.count(errs.size, com.histmersion.api.Plural.CountSingular("approval"))} not decided: ${errs.mkString("; ")}")
       )
       refresh()
       Notices.ownWrite(com.histmersion.api.instance.UiNotices.Board.Approvals)
@@ -391,7 +391,7 @@ object ApprovalsView:
         div(
           p(
             cls := "muted",
-            s"Waiting for a person: ${Plural.count(x.total, "approval")}" +
+            s"Waiting for a person: ${Plural.count(x.total, com.histmersion.api.Plural.CountSingular("approval"))}" +
               (if x.heldForPerson > 0 then s", ${Plural.count(x.heldForPerson, "manager item")} held for a person"
                else "") +
               " — pick a kind, then decide the shown ones at once."
@@ -432,22 +432,22 @@ object ApprovalsView:
       div(
         cls := "toolbar list-filters",
         ListFilterBar.chips(
-          "kind",
-          list.listing.signal.map(_.page.facet("kind")),
+          com.histmersion.web.ListFilterBar.Label("kind"),
+          list.listing.signal.map(_.page.facet(com.histmersion.api.library.Facet.Name("kind"))),
           UiState.approvalKinds,
           hint = kindMeaning,
           about = "Show only approvals of the kinds picked (any of them): what the change is."
         ),
         ListFilterBar.chips(
-          "decided by",
-          list.listing.signal.map(_.page.facet("decidedBy")),
+          com.histmersion.web.ListFilterBar.Label("decided by"),
+          list.listing.signal.map(_.page.facet(com.histmersion.api.library.Facet.Name("decidedBy"))),
           UiState.approvalBy,
           hint = decidedByMeaning,
           about = "Show only approvals decided the ways picked (any of them)."
         ),
         div(
           cls := "btn-group",
-          ListFilterBar.text("subject: a goal, article, manager or citekey", UiState.approvalSubject),
+          ListFilterBar.text(com.histmersion.web.ListFilterBar.Label("subject: a goal, article, manager or citekey"), UiState.approvalSubject),
           ListFilterBar.clearButton(filterFields)
         )
       ),
@@ -465,7 +465,7 @@ object ApprovalsView:
             cls := "muted list-heading",
             ListPaging.heading(
               l,
-              "approval",
+              com.histmersion.api.Plural.Noun.Singular("approval"),
               Option.when(st != "all")(st),
               _.state,
               Option.when(st != "all")(stateLabel(st)).toList ++ f.normalized.kind.map(kindLabel)

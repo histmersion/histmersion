@@ -21,8 +21,8 @@ object FileFormat:
     val lines = text.split("\n", -1).toList
     if lines.headOption.map(_.trim).contains("---") then
       lines.drop(1).indexWhere(_.trim == "---") match
-        case -1 => ("", text)
+        case -1 => (com.histmersion.cli.FileFormat.Frontmatter(""), text)
         case i  =>
           val head = lines.take(i + 2).mkString("\n") + "\n"
           (head, text.drop(head.length))
-    else ("", text)
+    else (com.histmersion.cli.FileFormat.Frontmatter(""), text)

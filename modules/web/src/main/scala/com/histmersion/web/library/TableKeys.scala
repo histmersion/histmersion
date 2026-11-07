@@ -8,8 +8,8 @@ object TableKeys:
   /** A key the list answers by moving its choice: ↓ one row on, ↑ one row back. */
 
   def delta(key: com.histmersion.web.library.TableRow.Key): Option[com.histmersion.web.library.TableKeys.RowDelta] = key match
-    case "ArrowDown" => Some(1)
-    case "ArrowUp"   => Some(-1)
+    case "ArrowDown" => Some(com.histmersion.web.library.TableKeys.RowDelta(1))
+    case "ArrowUp"   => Some(com.histmersion.web.library.TableKeys.RowDelta(-1))
     case _           => None
 
   /** The row chosen after moving `delta` rows from `current` among `rows`, held at the ends; with no choice on this

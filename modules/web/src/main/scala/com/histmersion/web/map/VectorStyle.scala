@@ -6,8 +6,8 @@ import scala.scalajs.js
 
 /** The two vector styles drawn from the server's own extracts (docs/research-map-styles.md). */
 enum VectorStyle(val id: VectorStyle.Id, val label: VectorStyle.Label):
-  case Readable extends VectorStyle("readable", "Readable")
-  case Physical extends VectorStyle("physical", "Physical")
+  case Readable extends VectorStyle(com.histmersion.web.map.VectorStyle.Id("readable"), com.histmersion.web.map.VectorStyle.Label("Readable"))
+  case Physical extends VectorStyle(com.histmersion.web.map.VectorStyle.Id("physical"), com.histmersion.web.map.VectorStyle.Label("Physical"))
 
 object VectorStyle:
   type Id = Id.T

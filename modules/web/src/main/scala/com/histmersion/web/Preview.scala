@@ -185,7 +185,7 @@ object Preview:
     object Tier extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
   /** One titled list on a card. */
-  final case class Section(title: Section.Title, items: List[Item], note: Option[Section.Note] = None, kind: Section.Kind = "")
+  final case class Section(title: Section.Title, items: List[Item], note: Option[Section.Note] = None, kind: Section.Kind = com.histmersion.web.Preview.Section.Kind(""))
 
   object Section:
     type Title = Title.T
@@ -305,17 +305,17 @@ object Preview:
       identifier = p.id.value,
       status = None,
       chips = Nil,
-      where = if d.parents.isEmpty then "" else "part of " + d.parents.map(_.label).mkString(", "),
+      where = if d.parents.isEmpty then com.histmersion.web.Preview.Card.Where("") else "part of " + d.parents.map(_.label).mkString(", "),
       summary = description,
       facts = Option.when(d.datedByFindings)(com.histmersion.api.catalogue.Place.TimeBasis.FindingsNote).toList ++
         d.shapeNotes ++
         datasetOf(p).map(s => s"source: $s").toList ++
         d.counts.toList.map(c =>
           List(
-            plural(c.sources, "source"),
-            plural(c.findings, "finding"),
-            plural(c.articles, "article"),
-            plural(c.events, "event")
+            plural(c.sources, com.histmersion.api.Plural.Noun.Singular("source")),
+            plural(c.findings, com.histmersion.api.Plural.Noun.Singular("finding")),
+            plural(c.articles, com.histmersion.api.Plural.Noun.Singular("article")),
+            plural(c.events, com.histmersion.api.Plural.Noun.Singular("event"))
           ).mkString(" · ")
         ),
       links = links,
@@ -341,7 +341,7 @@ object Preview:
         .filter(_.nonEmpty)
         .map(t => if t.length > SummaryChars then t.take(SummaryChars - 1) + "…" else t),
       links = d.wikidata
-        .flatMap(q => com.histmersion.api.catalogue.Place.Link.url("wikidata", q).map(u => s"Wikidata $q" -> u))
+        .flatMap(q => com.histmersion.api.catalogue.Place.Link.url(com.histmersion.api.catalogue.Place.Link.UrlScheme("wikidata"), q).map(u => s"Wikidata $q" -> u))
         .toList,
       facts = eventFacts(d, years),
       media = d.media.headOption,
@@ -371,40 +371,40 @@ object Preview:
     def km(x: com.histmersion.web.Preview.DistanceKm) = s"${math.round(x)} km"
     List(
       Section(
-        "Attested by",
+        com.histmersion.web.Preview.Section.Title("Attested by"),
         d.sources.map(s =>
           Item(s.title.getOrElse(s.citekey) + s.quote.fold("")(q => s" — “$q”"), citekey = Some(s.citekey))
         ),
         kind = "sources"
       ),
       Section(
-        "Articles citing those sources",
+        com.histmersion.web.Preview.Section.Title("Articles citing those sources"),
         d.articles.map(a => Item(a.title, slug = Some(a.slug))),
         kind = "articles"
       ),
       Section(
-        "Findings near it",
+        com.histmersion.web.Preview.Section.Title("Findings near it"),
         d.findings.map(f =>
           Item(
-            s"${km(f.km)}, ${if f.yearGap == 0 then "same time" else s"${f.yearGap} yrs apart"}: ${Fmt.clip(f.claim, 90)}",
+            s"${km(f.km)}, ${if f.yearGap == 0 then "same time" else s"${f.yearGap} yrs apart"}: ${Fmt.clip(f.claim, com.histmersion.api.Markdown.CharLimit(90))}",
             citekey = Some(f.citekey)
           )
         ),
         kind = "findings"
       ),
       Section(
-        "Possibly discussed in",
+        com.histmersion.web.Preview.Section.Title("Possibly discussed in"),
         d.candidates.map(c =>
           Item(
             c.title.getOrElse(c.citekey.value.toString) + (if c.reasons.isEmpty then "" else s" — ${c.reasons.mkString("; ")}"),
             citekey = Some(c.citekey.value.toString)
           )
         ),
-        note = Some("unconfirmed — proposed from findings near it and passages naming it"),
-        kind = "candidates"
+        note = Some(com.histmersion.web.Preview.Section.Note("unconfirmed — proposed from findings near it and passages naming it")),
+        kind = com.histmersion.web.Preview.Section.Kind("candidates")
       ),
       Section(
-        "Catalogue",
+        com.histmersion.web.Preview.Section.Title("Catalogue"),
         d.catalogue.map(c =>
           Item(
             s"${c.title} ${c.providerId}" + EventLeads.size(c.vei, c.magnitude).fold("")(s => s" ($s)") +
@@ -412,11 +412,11 @@ object Preview:
             href = Some(c.url).filter(_.nonEmpty)
           )
         ),
-        note = Option.when(d.tier == EventTier.Catalogue)("known only from a catalogue: a research lead, not evidence"),
-        kind = "catalogue"
+        note = Option.when(d.tier == EventTier.Catalogue)(com.histmersion.web.Preview.Section.Note("known only from a catalogue: a research lead, not evidence")),
+        kind = com.histmersion.web.Preview.Section.Kind("catalogue")
       ),
       Section(
-        "Leads",
+        com.histmersion.web.Preview.Section.Title("Leads"),
         d.leads.flatMap(l =>
           Item(l.text) :: l.actions.map(a =>
             Item(a.label, command = Some(a.command), query = a.query.filter(_ => a.kind == "discover"))
@@ -466,10 +466,10 @@ object Preview:
   def forget(ck: com.histmersion.web.Preview.Target.Source.Citekey): Unit = { val _ = sourceCache.remove(ck) }
 
   def fetch(t: Target): Future[Card] = t match
-    case Target.Source(ck)      => cached(sourceCache, ck)(ApiClient.getSource(ck, body = false).map(card))
-    case Target.Article(slug)   => cached(articleCache, slug)(ApiClient.getArticle(slug, brief = true).map(card))
+    case Target.Source(ck)      => cached(sourceCache, ck)(ApiClient.getSource(ck, body = com.histmersion.web.ApiClient.IncludeBody(false)).map(card))
+    case Target.Article(slug)   => cached(articleCache, slug)(ApiClient.getArticle(slug, brief = com.histmersion.web.ApiClient.Brief(true)).map(card))
     case Target.Place(id, asOf) =>
-      cached(placeCache, s"$id@${asOf.getOrElse("")}")(ApiClient.place(id, asOf, counts = true).map(card))
+      cached(placeCache, s"$id@${asOf.getOrElse("")}")(ApiClient.place(id, asOf, counts = com.histmersion.web.ApiClient.Counts(true)).map(card))
     case Target.Event(id) => cached(eventCache, id)(ApiClient.getEvent(id).map(card))
 
   // ── the one handler ──────────────────────────────────────────────────────────────────────────
@@ -514,7 +514,7 @@ object Preview:
   /** A click on a place chip pins its card under it (its ✕ stops the click: removing is not reading). */
   private def onDocClick(e: dom.MouseEvent): Unit =
     placeAnchorOf(e.target) match
-      case Some(el) if !e.defaultPrevented => pinUnder(el, keyboard = false)
+      case Some(el) if !e.defaultPrevented => pinUnder(el, keyboard = com.histmersion.web.Preview.PinUnderKeyboard(false))
       case _                               =>
         // a click anywhere else in the page, away from the pinned card and what pinned it, lets it go
         // (a click on the map is the map's to judge: it may land on another place, [[PlaceHover]])
@@ -523,11 +523,11 @@ object Preview:
             pinned.exists(p => p.box.contains(n) || p.owner.exists(_.contains(n))) ||
             n.isInstanceOf[dom.Element] && n.asInstanceOf[dom.Element].closest(".map-container") != null
           case _ => false
-        if !inside then unpin(restoreFocus = false)
+        if !inside then unpin(restoreFocus = com.histmersion.web.Preview.RestoreFocus(false))
 
   private def pinUnder(el: dom.Element, keyboard: com.histmersion.web.Preview.PinUnderKeyboard): Unit =
     targetOfElement(el).foreach { t =>
-      if isPinned(t) && !keyboard then unpin(restoreFocus = false)
+      if isPinned(t) && !keyboard then unpin(restoreFocus = com.histmersion.web.Preview.RestoreFocus(false))
       else
         pin(
           t,
@@ -575,7 +575,7 @@ object Preview:
           if PinRules.activates(e.key) then
             chipItself(e.target).foreach { el =>
               e.preventDefault()
-              pinUnder(el, keyboard = true)
+              pinUnder(el, keyboard = com.histmersion.web.Preview.PinUnderKeyboard(true))
             }
       )
       document.addEventListener(
@@ -840,11 +840,10 @@ object Preview:
   ):
     // `var`: the card's size, measured when its content arrives — a pan re-places it every frame
     // and must not force a layout each time
-    var size: (com.histmersion.web.Preview.ElementSize, com.histmersion.web.Preview.ElementSize) = (0, 0)
+    var size: (com.histmersion.web.Preview.ElementSize, com.histmersion.web.Preview.ElementSize) = (com.histmersion.web.Preview.ElementSize(0), com.histmersion.web.Preview.ElementSize(0))
     // `var`: re-measures the card when its content changes size (see `observe`)
     var observer: Option[js.Dynamic] = None
 
-  object Pinned:
 
   // `var`: at most one card is pinned
   private var pinned: Option[Pinned] = None

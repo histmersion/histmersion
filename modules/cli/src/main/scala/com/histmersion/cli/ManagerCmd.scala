@@ -119,20 +119,20 @@ object ManagerCmd:
       verb.trim.toLowerCase match
         case "mode" =>
           rest match
-            case List(m) => status(c.call(AutopilotApi.setMode)(AgentMode.ModeSet(m, Some("cli"))))
-            case _ => Left(Cli.Error("autopilot mode takes one of: working, finish, pause", exitCode = ExitCode.Usage))
+            case List(m) => status(c.call(AutopilotApi.setMode)(AgentMode.ModeSet(m, Some(com.histmersion.api.automation.AgentMode.ModeSet.By("cli")))))
+            case _ => Left(Cli.Error(com.histmersion.cli.Cli.Error.Message("autopilot mode takes one of: working, finish, pause"), exitCode = ExitCode.Usage))
         case _ if rest.nonEmpty && verb.trim.toLowerCase != "focus" =>
           Left(
             Cli.Error(s"autopilot $verb takes no further arguments (${rest.mkString(" ")})", exitCode = ExitCode.Usage)
           )
         case "status"  => status(c.call(AutopilotApi.autopilot)(()))
-        case "on"      => status(c.call(AutopilotApi.setAutopilot)(Autopilot.AutopilotSet(on = true, Some("cli"))))
-        case "off"     => status(c.call(AutopilotApi.setAutopilot)(Autopilot.AutopilotSet(on = false, Some("cli"))))
-        case "drain"   => status(c.call(AutopilotApi.drain)(Autopilot.DrainSet(on = true, Some("cli"))))
-        case "undrain" => status(c.call(AutopilotApi.drain)(Autopilot.DrainSet(on = false, Some("cli"))))
+        case "on"      => status(c.call(AutopilotApi.setAutopilot)(Autopilot.AutopilotSet(on = com.histmersion.api.automation.Autopilot.AutopilotSet.On(true), Some(com.histmersion.api.automation.Autopilot.AutopilotSet.By("cli")))))
+        case "off"     => status(c.call(AutopilotApi.setAutopilot)(Autopilot.AutopilotSet(on = com.histmersion.api.automation.Autopilot.AutopilotSet.On(false), Some(com.histmersion.api.automation.Autopilot.AutopilotSet.By("cli")))))
+        case "drain"   => status(c.call(AutopilotApi.drain)(Autopilot.DrainSet(on = com.histmersion.api.automation.Autopilot.DrainSet.On(true), Some(com.histmersion.api.automation.Autopilot.DrainSet.By("cli")))))
+        case "undrain" => status(c.call(AutopilotApi.drain)(Autopilot.DrainSet(on = com.histmersion.api.automation.Autopilot.DrainSet.On(false), Some(com.histmersion.api.automation.Autopilot.DrainSet.By("cli")))))
         case "repair-acquire" =>
           c.call(com.histmersion.api.library.AcquisitionWorkApi.repairAcquire)(
-            RepairAcquire.RepairRequest(dry, Some("cli"))
+            RepairAcquire.RepairRequest(dry, Some(com.histmersion.api.automation.Activity.Actor("cli")))
           ).map(r => Output.emit(json, r)(RepairAcquire.markdown))
         case "focus" =>
           focusRequest(rest)
@@ -185,10 +185,10 @@ object ManagerCmd:
         case ("why", List(item)) =>
           c.call(ManagersApi.schedulerWhy)(item).map(w => Output.emit(json, w)(AgentSchedulerMarkdown.why))
         case ("strategy", List(name)) =>
-          c.call(ManagersApi.setScheduler)(AgentScheduler.SchedulerSet(name, Some("cli")))
+          c.call(ManagersApi.setScheduler)(AgentScheduler.SchedulerSet(name, Some(com.histmersion.api.automation.AgentScheduler.SchedulerSet.By("cli"))))
             .map(s => Output.emit(json, s)(AgentSchedulerMarkdown.status))
-        case ("why", _)      => usage("scheduler why takes one item: its id, or the target of an open item")
-        case ("strategy", _) => usage("scheduler strategy takes one name: type-balanced, goal-first or default")
+        case ("why", _)      => usage(com.histmersion.cli.ManagerCmd.Problem("scheduler why takes one item: its id, or the target of an open item"))
+        case ("strategy", _) => usage(com.histmersion.cli.ManagerCmd.Problem("scheduler strategy takes one name: type-balanced, goal-first or default"))
         case (v, _) if Set("status", "queue")(v) => usage(s"scheduler $v takes no further arguments")
         case (other, _) => usage(s"unknown scheduler verb '$other' (status, queue, why, strategy)")
     }
@@ -235,7 +235,7 @@ object ManagerCmd:
       Opts.flag("dry-run", "List what it would decide; decide nothing").orFalse,
       Output.jsonFlag
     ).mapN { (d, kind, subject, ids, note, limit, dry, json) => (c: Client) =>
-      c.call(ManagersApi.decideAll)(ApprovalDigest.BulkDecide(d, kind, subject, ids, note, dry, limit, Some("cli")))
+      c.call(ManagersApi.decideAll)(ApprovalDigest.BulkDecide(d, kind, subject, ids, note, dry, limit, Some(com.histmersion.api.automation.ApprovalDigest.BulkDecide.By("cli"))))
         .map(r => Output.emit(json, r)(ApprovalDigestMarkdown.bulk))
     }
   }
@@ -251,7 +251,7 @@ object ManagerCmd:
       case List(v @ ("pin" | "unpin"), g) => Right(Some(Autopilot.FocusSet(v, Some(g), by = Some("cli"))))
       case List("priority", g, n)         =>
         num(n).map(p => Some(Autopilot.FocusSet("priority", Some(g), Some(p), Some("cli"))))
-      case List("max", "default") => Right(Some(Autopilot.FocusSet("max", by = Some("cli"))))
+      case List("max", "default") => Right(Some(Autopilot.FocusSet(com.histmersion.api.automation.Autopilot.FocusSet.Action("max"), by = Some("cli"))))
       case List("max", n)         =>
         num(n).flatMap(m =>
           if m < 0 then usage("focus max takes 0 (no cap) or more, or `default`")
@@ -302,17 +302,17 @@ object ManagerCmd:
           .flag("runs", "Pause its runs in flight too")
           .orFalse
           .map(r =>
-            (c, id) => c.call(ManagersApi.action)((id, "pause", Some(r))).map(m => Cli.out.println(ManagersMarkdown.line(m)))
+            (c, id) => c.call(ManagersApi.action)((id, com.histmersion.api.automation.ManagersApi.ActionPart1Part2("pause"), Some(r))).map(m => Cli.out.println(ManagersMarkdown.line(m)))
           )
       ) orElse
       verb("resume", "Start runs again (and resume the runs a pause --runs paused)")(
         Opts.unit.map(_ =>
-          (c, id) => c.call(ManagersApi.action)((id, "resume", None)).map(m => Cli.out.println(ManagersMarkdown.line(m)))
+          (c, id) => c.call(ManagersApi.action)((id, com.histmersion.api.automation.ManagersApi.ActionPart1Part2("resume"), None)).map(m => Cli.out.println(ManagersMarkdown.line(m)))
         )
       ) orElse
       verb("stop", "Cancel its runs in flight and its open items")(
         Opts.unit.map(_ =>
-          (c, id) => c.call(ManagersApi.action)((id, "stop", None)).map(m => Cli.out.println(ManagersMarkdown.line(m)))
+          (c, id) => c.call(ManagersApi.action)((id, com.histmersion.api.automation.ManagersApi.ActionPart1Part2("stop"), None)).map(m => Cli.out.println(ManagersMarkdown.line(m)))
         )
       ) orElse
       verb(
@@ -330,7 +330,7 @@ object ManagerCmd:
         )
           .mapN { (text, item, once, suggest) => (c, id) =>
             c.call(ManagersApi.addHint)(
-              (id, HintAdd(text, item, Some(once), None, Some("cli"), suggest = Some(suggest)))
+              (id, HintAdd(text, item, Some(once), None, Some(com.histmersion.api.automation.Managers.HintAdd.Author("cli")), suggest = Some(suggest)))
             ).map(h => Cli.out.println(ManagersMarkdown.hint(h)))
           }
       ) orElse
@@ -351,22 +351,22 @@ object ManagerCmd:
           Opts.option[String]("until-source", "A DOI or citekey").orNone,
           Opts.option[String]("reason", "Why").orNone
         ).mapN { (t, u, s, r) => (c, id) =>
-          itemPatch(c, id, t, ItemPatch("hold", until = u, untilSource = s, reason = r))
+          itemPatch(c, id, t, ItemPatch(com.histmersion.api.automation.Managers.ItemPatch.Action("hold"), until = u, untilSource = s, reason = r))
         }
       ) orElse
       verb("release", "Release a held item")(
-        target.map(t => (c, id) => itemPatch(c, id, t, ItemPatch("release")))
+        target.map(t => (c, id) => itemPatch(c, id, t, ItemPatch(com.histmersion.api.automation.Managers.ItemPatch.Action("release"))))
       ) orElse
       verb("skip", "Stop an item as skipped (its run, if any, is cancelled)")(
         (target, Opts.option[String]("reason", "Why").orNone)
-          .mapN((t, r) => (c, id) => itemPatch(c, id, t, ItemPatch("skip", reason = r)))
+          .mapN((t, r) => (c, id) => itemPatch(c, id, t, ItemPatch(com.histmersion.api.automation.Managers.ItemPatch.Action("skip"), reason = r)))
       ) orElse
       verb("reopen", "Bring a settled item back (its runs counted from zero)")(
-        target.map(t => (c, id) => itemPatch(c, id, t, ItemPatch("reopen")))
+        target.map(t => (c, id) => itemPatch(c, id, t, ItemPatch(com.histmersion.api.automation.Managers.ItemPatch.Action("reopen"))))
       ) orElse
       verb("priority", "Set an item's priority (higher first)")(
         (target, Opts.argument[Int]("priority")).mapN((t, p) =>
-          (c, id) => itemPatch(c, id, t, ItemPatch("priority", priority = Some(p)))
+          (c, id) => itemPatch(c, id, t, ItemPatch(com.histmersion.api.automation.Managers.ItemPatch.Action("priority"), priority = Some(p)))
         )
       ) orElse
       verb(

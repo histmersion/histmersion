@@ -32,7 +32,7 @@ object SettingsStore:
     ApiClient.settings().onComplete(r => page.set(Some(r.toEither.left.map(message))))
 
   /** `changes` written against the version read; the page is read again either way. */
-  def save(changes: List[ConfigEdit.Change], literalConsent: com.histmersion.web.settings.SettingsStore.SaveLiteralConsent = false): Future[ConfigEdit.Written] =
+  def save(changes: List[ConfigEdit.Change], literalConsent: com.histmersion.web.settings.SettingsStore.SaveLiteralConsent = com.histmersion.web.settings.SettingsStore.SaveLiteralConsent(false)): Future[ConfigEdit.Written] =
     val w = ConfigEdit.Write(changes, version = now.map(_.version), literalConsent = literalConsent)
     val f = ApiClient.writeSettings(w)
     f.onComplete { r =>

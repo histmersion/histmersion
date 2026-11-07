@@ -53,7 +53,7 @@ final class PointSet[D](
   private var awaitingMoves: Option[(LatLon, com.histmersion.web.map.PointSet.Zoom)] = None
 
   /** How many zooms have animated (the browser regressions read it through the diagnostics). */
-  var animations: com.histmersion.web.map.PointSet.Animations = 0
+  var animations: com.histmersion.web.map.PointSet.Animations = com.histmersion.web.map.PointSet.Animations(0)
 
   def size: com.histmersion.web.map.PointSet.PointCount = items.size
   def keys: Iterable[com.histmersion.web.map.PointSet.Key] = items.keys
@@ -62,8 +62,8 @@ final class PointSet[D](
   private def install(): Unit =
     if !installed && surface() != null then
       installed = true
-      surface().on(MapEventKind.ZoomEnd)(_ => layout(animate = true))
-      surface().on(MapEventKind.MoveEnd)(_ => layout(animate = true))
+      surface().on(MapEventKind.ZoomEnd)(_ => layout(animate = com.histmersion.web.map.PointSet.LayoutAnimate(true)))
+      surface().on(MapEventKind.MoveEnd)(_ => layout(animate = com.histmersion.web.map.PointSet.LayoutAnimate(true)))
       surface().on(MapEventKind.Resize)(_ => schedule())
       // a fanned-out bubble folds back when the map zooms, on Escape, and on a press anywhere else on the map
       // (not on its own markers, nor in a popup one of them opened)
@@ -165,7 +165,7 @@ final class PointSet[D](
       val bubble = bubbles.get(s"${ks.head}|${ks.size}").filter(_._2 == ks).map(_._1)
       bubble.foreach(_.el.classList.add(Spiderfy.Fanned))
       val members = ds.zip(offsets).map { (k, off) =>
-        val m = single(items(k), false)
+        val m = single(items(k), com.histmersion.web.map.PointSet.SingleArg2(false))
         m.setLatLng(c.lat, c.lon)
         m.el.classList.add(Spiderfy.Member)
         m.el.style.setProperty("--sx", s"${off._1}px")
@@ -234,7 +234,7 @@ final class PointSet[D](
     if awaitingMoves.isDefined then { val _ = dom.window.requestAnimationFrame(_ => scheduled()) }
     else
       queued = false
-      layout(animate = false)
+      layout(animate = com.histmersion.web.map.PointSet.LayoutAnimate(false))
 
   /** The groups at the map's zoom (again only when the zoom or the points changed), and the elements of those in view.
     */
@@ -265,8 +265,8 @@ final class PointSet[D](
           val still = sp.keys.forall(items.contains) && sp.bubble.forall(b => bubbles.values.exists(_._1 eq b))
           if !still then unspiderfy()
         }
-      measure("hd-points-group", t0, t1)
-      measure("hd-points-draw", t1, dom.window.performance.now())
+      measure(com.histmersion.web.map.PointSet.MeasureName("hd-points-group"), t0, t1)
+      measure(com.histmersion.web.map.PointSet.MeasureName("hd-points-draw"), t1, dom.window.performance.now())
 
   /** What a layout cost, for the browser's performance panel (the latest of each). */
   private def measure(name: com.histmersion.web.map.PointSet.MeasureName, t0: com.histmersion.web.map.PointSet.Timestamp, t1: com.histmersion.web.map.PointSet.Timestamp): Unit =
@@ -375,7 +375,7 @@ final class PointSet[D](
         case Some(was) if s.center == view._1 && s.zoom == view._2 =>
           val t0 = dom.window.performance.now()
           animate(was, fresh.toList, gone.toList)
-          measure("hd-points-moves", t0, dom.window.performance.now())
+          measure(com.histmersion.web.map.PointSet.MeasureName("hd-points-moves"), t0, dom.window.performance.now())
         case _ => gone.foreach((m, mp, _) => mp.remove(m))
     val mine = { drawGeneration += 1; drawGeneration }
     def slice(): Unit =

@@ -10,10 +10,10 @@ import com.histmersion.api.library.Finding
   * from.
   */
 enum DotKind(val one: DotKind.One, val many: DotKind.Many):
-  case Finding extends DotKind("finding", "findings")
-  case Site extends DotKind("site", "sites")
-  case Event extends DotKind("event", "events")
-  case Media extends DotKind("picture", "pictures")
+  case Finding extends DotKind(com.histmersion.web.DotKind.One("finding"), com.histmersion.web.DotKind.Many("findings"))
+  case Site extends DotKind(com.histmersion.web.DotKind.One("site"), com.histmersion.web.DotKind.Many("sites"))
+  case Event extends DotKind(com.histmersion.web.DotKind.One("event"), com.histmersion.web.DotKind.Many("events"))
+  case Media extends DotKind(com.histmersion.web.DotKind.One("picture"), com.histmersion.web.DotKind.Many("pictures"))
 
 object DotKind:
   type One = One.T

@@ -18,9 +18,9 @@ object ArticlesTab:
     */
 
   private val tab = FilterTab[Api.ArticleQuery, Article.Summary](
-    name = "articles",
-    singular = "article",
-    noun = "articles",
+    name = com.histmersion.web.FilterTab.Name("articles"),
+    singular = com.histmersion.web.FilterTab.Singular("article"),
+    noun = com.histmersion.web.FilterTab.Noun("articles"),
     query = () => UiState.articleQuery(),
     fetch = (q, offset) =>
       ApiClient
@@ -29,7 +29,7 @@ object ArticlesTab:
           TabPage(r.articles, r.total, kindCounts(r.kinds) :+ ResultsPaging.span(UiState.from.now(), UiState.to.now()))
         ),
     render = renderArticle(_, inPanel = true),
-    empty = "No articles relate to the current filter.",
+    empty = com.histmersion.web.FilterTab.Empty("No articles relate to the current filter."),
     page = Layout.tabPage,
     debounceMs = () => UiState.reloadDelay(Layout.tabReloadMs)
   )
@@ -66,7 +66,7 @@ object ArticlesTab:
         art.summary
           .filter(_.nonEmpty)
           .map { s =>
-            div(cls := "article-summary", Fmt.clip(stripMd(s), 120))
+            div(cls := "article-summary", Fmt.clip(stripMd(s), com.histmersion.api.Markdown.CharLimit(120)))
           }
           .getOrElse(emptyNode),
         if art.tags.nonEmpty then div(cls := "article-tags", art.tags.filter(_.nonEmpty).map(t => Chip.value(t)))
@@ -78,7 +78,7 @@ object ArticlesTab:
   def kindCounts(kinds: List[Article.KindCount]): List[String] =
     Article.List
       .byKind(kinds)
-      .map(k => Plural.count(k.count.toLong, k.kind, if k.kind.endsWith("x") then k.kind + "es" else ""))
+      .map(k => Plural.count(k.count.toLong, k.kind, if k.kind.endsWith("x") then k.kind + "es" else com.histmersion.api.Plural.CountPlural("")))
 
   /** An article's review state as a coloured badge, what it means on hover. */
   def reviewBadge(b: ReviewBadge): HtmlElement =

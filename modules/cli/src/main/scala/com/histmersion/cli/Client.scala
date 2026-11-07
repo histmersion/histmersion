@@ -151,7 +151,7 @@ final class Client(val serverUrl: Client.ServerUrl, token: Option[Client.Token] 
   def sources(f: Filter): Either[Cli.Error, SearchResult] = call(Api.sources)(f)
   def facets(field: com.histmersion.api.Api.Facets.Field, prefix: Option[com.histmersion.api.Api.Facets.Prefix], f: Filter): Either[Cli.Error, List[Facet]] =
     call(Api.facets)((field, prefix, f))
-  def getSource(ck: com.histmersion.plugin.FetchedFile.Source.Citekey): Either[Cli.Error, Source.WithFindings] = call(Api.getSource)((ck, true))
+  def getSource(ck: com.histmersion.plugin.FetchedFile.Source.Citekey): Either[Cli.Error, Source.WithFindings] = call(Api.getSource)((ck, com.histmersion.api.Api.SourceViewQuery.FullText(true)))
   def findings(q: Api.FindingsQuery): Either[Cli.Error, List[GeoHit]] = call(Api.findings)(q)
   def findingsPage(q: Api.FindingsQuery): Either[Cli.Error, GeoHitPage] = call(Api.findingsPage)(q)
   def aggregate(q: Api.AggregateQuery): Either[Cli.Error, TimeHistogram] = call(Api.aggregate)(q)
@@ -228,9 +228,9 @@ final class Client(val serverUrl: Client.ServerUrl, token: Option[Client.Token] 
     call(Api.renamePlace)((id, LabelRename(to)))
 
   // ── writes (plan §1.9a) ─────────────────────────────────────────────────────────────────────
-  def putSource(ck: com.histmersion.plugin.FetchedFile.Source.Citekey, in: Source.Put, strict: com.histmersion.cli.Cli.Strict = false): Either[Cli.Error, Source.WithFindings] =
+  def putSource(ck: com.histmersion.plugin.FetchedFile.Source.Citekey, in: Source.Put, strict: com.histmersion.cli.Cli.Strict = com.histmersion.cli.Cli.Strict(false)): Either[Cli.Error, Source.WithFindings] =
     call(Api.putSource)((ck, in, strict))
-  def patchSource(ck: com.histmersion.plugin.FetchedFile.Source.Citekey, p: Source.Patch, strict: com.histmersion.cli.Cli.Strict = false): Either[Cli.Error, Source.WithFindings] =
+  def patchSource(ck: com.histmersion.plugin.FetchedFile.Source.Citekey, p: Source.Patch, strict: com.histmersion.cli.Cli.Strict = com.histmersion.cli.Cli.Strict(false)): Either[Cli.Error, Source.WithFindings] =
     call(Api.patchSource)((ck, p, strict))
   // the formatting lint of agent-written Markdown
   def lintSource(ck: com.histmersion.plugin.FetchedFile.Source.Citekey): Either[Cli.Error, FormatReport] = call(Api.lintSource)(ck)
@@ -286,7 +286,7 @@ final class Client(val serverUrl: Client.ServerUrl, token: Option[Client.Token] 
       to: Option[com.histmersion.cli.Periods.To]
   ): Either[Cli.Error, List[HistoricalPeriod]] = call(Api.periods)((q, region, from, to))
   def period(id: com.histmersion.api.catalogue.Period.Id): Either[Cli.Error, Period.Detail] = call(Api.period)(id)
-  def seedPeriods(replace: com.histmersion.api.Api.Overwrite = false): Either[Cli.Error, Period.ImportResult] = call(Api.seedPeriods)(replace)
+  def seedPeriods(replace: com.histmersion.api.Api.Overwrite = com.histmersion.api.Api.Overwrite(false)): Either[Cli.Error, Period.ImportResult] = call(Api.seedPeriods)(replace)
   def importPeriods(
       collections: List[com.histmersion.cli.Periods.Collection],
       body: com.histmersion.cli.Periods.Body,
@@ -328,10 +328,10 @@ final class Client(val serverUrl: Client.ServerUrl, token: Option[Client.Token] 
 
   // ── articles: the compiled wiki (plan §5.2 stream 2.7) ──────────────────────────────────────
   def listArticles(q: Api.ArticleQuery): Either[Cli.Error, Article.List] = call(Api.articles)(q)
-  def getArticle(slug: com.histmersion.domain.research.Article.Slug): Either[Cli.Error, Article.View] = call(Api.getArticle)((slug, false))
-  def putArticle(slug: com.histmersion.domain.research.Article.Slug, in: Article.Put, strict: com.histmersion.cli.Cli.Strict = false): Either[Cli.Error, Article.View] =
+  def getArticle(slug: com.histmersion.domain.research.Article.Slug): Either[Cli.Error, Article.View] = call(Api.getArticle)((slug, com.histmersion.api.research.Article.FullText(false)))
+  def putArticle(slug: com.histmersion.domain.research.Article.Slug, in: Article.Put, strict: com.histmersion.cli.Cli.Strict = com.histmersion.cli.Cli.Strict(false)): Either[Cli.Error, Article.View] =
     call(Api.putArticle)((slug, in, strict))
-  def patchArticle(slug: com.histmersion.domain.research.Article.Slug, p: Article.Patch, strict: com.histmersion.cli.Cli.Strict = false): Either[Cli.Error, Article.View] =
+  def patchArticle(slug: com.histmersion.domain.research.Article.Slug, p: Article.Patch, strict: com.histmersion.cli.Cli.Strict = com.histmersion.cli.Cli.Strict(false)): Either[Cli.Error, Article.View] =
     call(Api.patchArticle)((slug, p, strict))
   def deleteArticle(slug: com.histmersion.domain.research.Article.Slug): Either[Cli.Error, Article.Deleted] = call(Api.deleteArticle)(slug)
   def articleCoverage(slug: com.histmersion.domain.research.Article.Slug): Either[Cli.Error, Coverage] = call(Api.articleCoverage)(slug)

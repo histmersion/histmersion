@@ -22,7 +22,7 @@ object App:
   private val latest = Latest()
   private var timer: Int = 0
   private var totalKey: Option[String] = None
-  private var totalCount: com.histmersion.api.Paging.Page.Total = 0
+  private var totalCount: com.histmersion.api.Paging.Page.Total = com.histmersion.api.Paging.Page.Total(0)
   private var lastParams: Option[String] = None
   private var config: UiConfig = uninitialized
   private var cachedFindings: List[GeoHit] = Nil
@@ -57,7 +57,7 @@ object App:
       marks.MyItems.load()
       // a first run (no setup done, a settings file of nothing): the setup first, wherever the address points
       if ui.setupDue && Router.now() != Route.Setup && !com.histmersion.web.setup.SetupPage.left then
-        Router.go(Route.Setup, push = false)
+        Router.go(Route.Setup, push = com.histmersion.web.Router.Push(false))
       val appEl = div(
         cls := "histmersion-app",
         cls("is-setup") <-- Router.route.map(_ == Route.Setup),
@@ -145,7 +145,7 @@ object App:
     span(idAttr := "status", child.text <-- statusVar.signal)
 
   private def loadTagline(): Unit =
-    ApiClient.sources(Filter(limit = 1)).foreach { r =>
+    ApiClient.sources(Filter(limit = com.histmersion.api.library.Filter.Limit(1))).foreach { r =>
       Option(dom.document.getElementById("tagline")).foreach { el =>
         el.textContent = s"${Plural.count(r.total.value, "source")} · search, then read"
       }
@@ -233,13 +233,13 @@ object App:
     val mine = latest.start()
 
     val f = UiState.toFilter()
-    val fNoBox = UiState.toFilter(except = Set("bbox"))
+    val fNoBox = UiState.toFilter(except = Set(com.histmersion.web.UiState.ToFilterExcept("bbox")))
     val inView = UiState.inView.now()
     val a = UiState.from.now().getOrElse(config.time.defaultFrom)
     val b = UiState.to.now().getOrElse(config.time.defaultTo)
 
     statusVar.set("loading…")
-    ResultsList.busy(true)
+    ResultsList.busy(com.histmersion.web.ResultsList.Busy(true))
 
     // ALL AT ONCE: the map feed, the page of sources and (in view) the feed without the viewport.
     // The sources used to be asked for only once the findings had arrived — a whole round trip and

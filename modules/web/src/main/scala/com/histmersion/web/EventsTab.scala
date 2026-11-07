@@ -18,16 +18,16 @@ object EventsTab:
     */
 
   private val tab = FilterTab[Api.EventQuery, EventSummary](
-    name = "events",
-    singular = "event",
-    noun = "events",
+    name = com.histmersion.web.FilterTab.Name("events"),
+    singular = com.histmersion.web.FilterTab.Singular("event"),
+    noun = com.histmersion.web.FilterTab.Noun("events"),
     query = () => UiState.eventQuery(),
     fetch = (q, offset) =>
       ApiClient
         .events(q.modify(_.filter.offset).setTo(offset))
         .map(r => TabPage(r.events, r.total, List(ResultsPaging.span(UiState.from.now(), UiState.to.now())))),
     render = renderEvent,
-    empty = "No events relate to the current filter.",
+    empty = com.histmersion.web.FilterTab.Empty("No events relate to the current filter."),
     page = Layout.tabPage,
     debounceMs = () => UiState.reloadDelay(Layout.tabReloadMs)
   )
@@ -91,7 +91,7 @@ object EventsTab:
       evt.description
         .filter(_.nonEmpty)
         .map { d =>
-          div(cls := "event-desc", Fmt.clip(d, 120))
+          div(cls := "event-desc", Fmt.clip(d, com.histmersion.api.Markdown.CharLimit(120)))
         }
         .getOrElse(emptyNode),
       evt.citekey

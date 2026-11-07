@@ -12,7 +12,6 @@ import com.histmersion.api.media.{MediaGeoHit, MediaThumb}
 /** The pure half of the tiled layers: a tile feature as the app's own point records. */
 object TileDecode:
   type LongK = String
-  val LongK: String.type = String
 
   private def str(p: js.Dictionary[js.Any], k: String): Option[String] =
     p.get(k).filter(v => v != null && !js.isUndefined(v)).map(_.toString)

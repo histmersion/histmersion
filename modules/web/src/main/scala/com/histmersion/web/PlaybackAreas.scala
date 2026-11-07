@@ -30,7 +30,7 @@ object PlaybackAreas:
   /** Pure: the alpha drawn — `a` in steps of 1/`steps`, so a frame restyles only the states whose look changed (the map
     * recolours a state per change).
     */
-  def step(a: com.histmersion.web.PlaybackAreas.Opacity, steps: com.histmersion.web.PlaybackAreas.StepCount = 20): com.histmersion.web.PlaybackAreas.Opacity = math.round(a * steps).toDouble / steps
+  def step(a: com.histmersion.web.PlaybackAreas.Opacity, steps: com.histmersion.web.PlaybackAreas.StepCount = com.histmersion.web.PlaybackAreas.StepCount(20)): com.histmersion.web.PlaybackAreas.Opacity = math.round(a * steps).toDouble / steps
 
   /** Pure: a playback state's key: its place and its years (one place's versions are different shapes). */
   def key(id: com.histmersion.web.PlaybackAreas.AreaKey, start: Option[com.histmersion.web.PlaybackAreas.FractionalYear], end: Option[com.histmersion.web.PlaybackAreas.FractionalYear]): com.histmersion.web.PlaybackAreas.AreaKey =

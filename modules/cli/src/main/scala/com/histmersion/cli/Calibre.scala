@@ -33,21 +33,21 @@ final class Calibre(cfg: CalibreCliConfig, shell: Shell = Shell.System):
   private def libArgs = List("--with-library", cfg.library)
 
   /** The Calibre GUI holds an exclusive lock on the library for writes. */
-  def guiRunning: Boolean = shell.isRunning("/Applications/calibre.app/Contents/MacOS/calibre")
+  def guiRunning: Boolean = shell.isRunning(com.histmersion.cli.Shell.ProcessMatch("/Applications/calibre.app/Contents/MacOS/calibre"))
 
   def libraryExists: Boolean = Files.isRegularFile(Path.of(cfg.library, "metadata.db"))
 
   // ── reading ─────────────────────────────────────────────────────────────────────────────────
 
-  def search(query: com.histmersion.api.Api.Search.Text, limit: com.histmersion.api.Paging.Limit = 20): Either[com.histmersion.cli.Calibre.Problem, List[com.histmersion.cli.Calibre.Book]] =
+  def search(query: com.histmersion.api.Api.Search.Text, limit: com.histmersion.api.Paging.Limit = com.histmersion.api.Paging.Limit(20)): Either[com.histmersion.cli.Calibre.Problem, List[com.histmersion.cli.Calibre.Book]] =
     viaCalibredb(Some(query), limit).orElse(viaSqlite(Some(query), None, limit))
 
   /** The whole library (read-only), for the audit: one listing instead of a call per entry. */
-  def all(limit: com.histmersion.api.Paging.Limit = 1000000): Either[com.histmersion.cli.Calibre.Problem, List[com.histmersion.cli.Calibre.Book]] =
+  def all(limit: com.histmersion.api.Paging.Limit = com.histmersion.api.Paging.Limit(1000000)): Either[com.histmersion.cli.Calibre.Problem, List[com.histmersion.cli.Calibre.Book]] =
     viaCalibredb(None, limit).orElse(viaSqlite(None, None, limit))
 
   def byId(id: com.histmersion.cli.Calibre.Book.Id): Either[com.histmersion.cli.Calibre.Problem, Option[com.histmersion.cli.Calibre.Book]] =
-    viaCalibredb(Some(s"id:$id"), 1)
+    viaCalibredb(Some(s"id:$id"), com.histmersion.api.Paging.Limit(1))
       .map(_.find(_.id == id))
       .orElse(viaSqlite(None, Some(id), 1).map(_.headOption))
 
@@ -306,7 +306,7 @@ object Calibre:
     if current.exists(_.trim.nonEmpty) then None else fromCalibre
 
   /** The formats `calibre push --replace` puts into an entry: the two the corpus imports. */
-  val ReplaceableFormats: List[com.histmersion.cli.Calibre.ReplaceableFormats] = List("pdf", "epub")
+  val ReplaceableFormats: List[com.histmersion.cli.Calibre.ReplaceableFormats] = List(com.histmersion.cli.Calibre.ReplaceableFormatsValue("pdf"), com.histmersion.cli.Calibre.ReplaceableFormatsValue("epub"))
 
   def formatOf(file: Path): Either[com.histmersion.cli.Calibre.Problem, com.histmersion.cli.Calibre.Book.Format] =
     val ext = file.getFileName.toString.reverse.takeWhile(_ != '.').reverse.toLowerCase
@@ -408,9 +408,9 @@ object Calibre:
     */
   def mergeIdentifiers(current: Map[com.histmersion.api.library.CollectionEntry.IdentifiersKey, com.histmersion.cli.Calibre.MergeIdentifiersCurrentPart2], doi: Option[com.histmersion.api.library.Doi], isbn: Option[com.histmersion.api.library.CalibreGap.Isbn]): Map[com.histmersion.api.library.CollectionEntry.IdentifiersKey, com.histmersion.cli.Calibre.MergeIdentifiersResultPart2] =
     def ok(v: String) = v.trim.nonEmpty && !v.contains(",")
-    val sameDoi = (d: String) => current.get("doi").exists(_.trim.equalsIgnoreCase(d))
+    val sameDoi = (d: String) => current.get(com.histmersion.api.library.CollectionEntry.IdentifiersKey("doi")).exists(_.trim.equalsIgnoreCase(d))
     current ++ doi.map(_.trim).filter(ok).filterNot(sameDoi).map("doi" -> _) ++
-      isbn.map(_.trim).filter(ok).filterNot(_ => current.get("isbn").exists(_.trim.nonEmpty)).map("isbn" -> _)
+      isbn.map(_.trim).filter(ok).filterNot(_ => current.get(com.histmersion.api.library.CollectionEntry.IdentifiersKey("isbn")).exists(_.trim.nonEmpty)).map("isbn" -> _)
 
   /** `type:value,type:value`, as `--field identifiers:` takes it, in a stable order. */
   def identifiersValue(ids: Map[com.histmersion.api.library.CollectionEntry.IdentifiersKey, com.histmersion.cli.Calibre.IdentifiersValueIdsPart2]): com.histmersion.cli.Calibre.IdentifiersValueResult =
@@ -496,7 +496,7 @@ object Calibre:
       else
         val verb = if applied then "updated" else "would change"
         (List(
-          s"### ${changing.size} Calibre ${com.histmersion.api.Plural.noun(changing.size, "entry", "entries")} $verb · $upToDate up to date",
+          s"### ${changing.size} Calibre ${com.histmersion.api.Plural.noun(changing.size, com.histmersion.api.Plural.Noun.Singular("entry"), com.histmersion.api.Plural.Noun.Plural("entries"))} $verb · $upToDate up to date",
           "",
           "| id | citekey | field | Calibre | record | |",
           "|---:|---|---|---|---|---|"
@@ -508,7 +508,7 @@ object Calibre:
 
   /** The fields `calibre set` may write. Formats, covers and the file itself are Calibre's business. */
   val SettableFields: List[com.histmersion.cli.Calibre.SettableFields] =
-    List("title", "authors", "publisher", "pubdate", "languages", "identifiers", "tags", "comments", "series")
+    List(com.histmersion.cli.Calibre.SettableFieldsValue("title"), com.histmersion.cli.Calibre.SettableFieldsValue("authors"), com.histmersion.cli.Calibre.SettableFieldsValue("publisher"), com.histmersion.cli.Calibre.SettableFieldsValue("pubdate"), com.histmersion.cli.Calibre.SettableFieldsValue("languages"), com.histmersion.cli.Calibre.SettableFieldsValue("identifiers"), com.histmersion.cli.Calibre.SettableFieldsValue("tags"), com.histmersion.cli.Calibre.SettableFieldsValue("comments"), com.histmersion.cli.Calibre.SettableFieldsValue("series"))
 
   /** `calibredb set_metadata` for [[Calibre.set]], or why it is refused: an unknown field, nothing to set, or a
     * blank/"Unknown" title or author (the metadata guard).
@@ -528,7 +528,7 @@ object Calibre:
         (),
         s"cannot set ${unknown.mkString(", ")} — settable: ${SettableFields.mkString(", ")}"
       )
-      _ <- value("title").fold(Right(()))(t => Either.cond(!isBlank(t), (), "refusing a blank or Unknown title"))
+      _ <- value(com.histmersion.api.library.CollectionFieldValue.Name("title")).fold(Right(()))(t => Either.cond(!isBlank(t), (), "refusing a blank or Unknown title"))
       _ <- value("authors").fold(Right(()))(a =>
         Either.cond(a.split("&").map(_.trim).forall(x => !isBlank(x)), (), "refusing a blank or Unknown author")
       )
@@ -583,13 +583,13 @@ object Calibre:
           c.downField("id").as[Int].toOption.map { id =>
             com.histmersion.cli.Calibre.Book(
               id = id,
-              title = s("title").getOrElse(""),
-              authors = splitAuthors(s("authors").getOrElse("")),
-              pubdate = s("pubdate"),
-              publisher = s("publisher"),
-              tags = s("tags").toList.flatMap(_.split(",")).map(_.trim).filter(_.nonEmpty),
-              comments = s("comments"),
-              identifiers = s("identifiers").toList
+              title = s(com.histmersion.api.library.CollectionFieldValue.Name("title")).getOrElse(""),
+              authors = splitAuthors(s(com.histmersion.api.library.CollectionFieldValue.Name("authors")).getOrElse("")),
+              pubdate = s(com.histmersion.api.library.CollectionFieldValue.Name("pubdate")),
+              publisher = s(com.histmersion.api.library.CollectionFieldValue.Name("publisher")),
+              tags = s(com.histmersion.api.library.CollectionFieldValue.Name("tags")).toList.flatMap(_.split(",")).map(_.trim).filter(_.nonEmpty),
+              comments = s(com.histmersion.api.library.CollectionFieldValue.Name("comments")),
+              identifiers = s(com.histmersion.api.library.CollectionFieldValue.Name("identifiers")).toList
                 .flatMap(_.split(","))
                 .flatMap { p =>
                   p.split(":", 2) match
@@ -597,12 +597,12 @@ object Calibre:
                     case _           => None
                 }
                 .toMap,
-              formats = s("formats").toList
+              formats = s(com.histmersion.api.library.CollectionFieldValue.Name("formats")).toList
                 .flatMap(_.split("\\|"))
                 .map(_.trim)
                 .filter(_.nonEmpty)
                 .map(f => Path.of(libraryDir, f).toString),
-              cover = s("cover").map(f => Path.of(libraryDir, f).toString)
+              cover = s(com.histmersion.api.library.CollectionFieldValue.Name("cover")).map(f => Path.of(libraryDir, f).toString)
             )
           }
         })
@@ -667,18 +667,18 @@ object Calibre:
   /** Where the file a push would add comes from, as `calibre gaps`/`sync` report it (`original`). */
   enum GapOriginal(val label: GapOriginal.Label):
     /** `<cli.calibre.originals-dir>/<citekey>/paper.*` on this host. */
-    case Local extends GapOriginal("local")
+    case Local extends GapOriginal(com.histmersion.cli.Calibre.GapOriginal.Label("local"))
 
     /** The original the server stores (`GET /api/sources/{ck}/original`). */
-    case Stored extends GapOriginal("stored")
+    case Stored extends GapOriginal(com.histmersion.cli.Calibre.GapOriginal.Label("stored"))
 
     /** The server did not say (an older server): counted, and the push tries. */
-    case Unknown extends GapOriginal("unknown")
+    case Unknown extends GapOriginal(com.histmersion.cli.Calibre.GapOriginal.Label("unknown"))
 
     /** No file anywhere — a metadata-only record (a citation-graph stub, a record with an abstract and no fetched
       * file). Nothing to push, so not a Calibre gap: it belongs on the acquire list.
       */
-    case Missing extends GapOriginal("none")
+    case Missing extends GapOriginal(com.histmersion.cli.Calibre.GapOriginal.Label("none"))
 
   object GapOriginal:
     type Label = Label.T
@@ -713,7 +713,7 @@ object Calibre:
 
   /** The informational line for the records with no fetched file — never a gap. */
   def uncountedLine(n: Int): String =
-    s"$n ${Plural.noun(n, "record")} without a fetched file — not counted; see the acquire list " +
+    s"$n ${Plural.noun(n, com.histmersion.api.Plural.Noun.Singular("record"))} without a fetched file — not counted; see the acquire list " +
       "(`histmersion queue acquire`); `--json` lists them."
 
   /** `calibre gaps` as Markdown: the counted gaps as a table, then one line for the records with no fetched file (never
@@ -759,7 +759,7 @@ object Calibre:
     * added that are not in the corpus yet.
     */
   def markdownUnlinked(books: List[com.histmersion.cli.Calibre.Book], total: com.histmersion.api.Paging.Page.Total): com.histmersion.cli.Calibre.Markdown =
-    if books.isEmpty then "_Every Calibre entry is linked to a source._"
+    if books.isEmpty then com.histmersion.cli.Calibre.Markdown("_Every Calibre entry is linked to a source._")
     else
       val lines = books.map { b =>
         val who = b.authors.take(3).mkString(", ") + (if b.authors.sizeIs > 3 then " et al." else "")
@@ -769,7 +769,7 @@ object Calibre:
       }
       val shown = if total > books.size then s"${books.size} of $total" else books.size.toString
       (List(
-        s"### $shown Calibre ${com.histmersion.api.Plural.noun(total, "entry", "entries")} not linked to any source (newest first)",
+        s"### $shown Calibre ${com.histmersion.api.Plural.noun(total, com.histmersion.api.Plural.Noun.Singular("entry"), com.histmersion.api.Plural.Noun.Plural("entries"))} not linked to any source (newest first)",
         ""
       )
         ++ lines ++ List(
@@ -780,7 +780,7 @@ object Calibre:
 
   /** Render a Calibre search result as Markdown (the CLI's own output — the server never sees these). */
   def markdownSearch(books: List[com.histmersion.cli.Calibre.Book]): com.histmersion.cli.Calibre.Markdown =
-    if books.isEmpty then "_No matching books in the Calibre library._"
+    if books.isEmpty then com.histmersion.cli.Calibre.Markdown("_No matching books in the Calibre library._")
     else
       val rows = books.map { b =>
         val fmts = b.formats.flatMap(_.split("\\.").lastOption).map(_.toUpperCase).distinct.mkString(", ")
@@ -897,8 +897,8 @@ object Calibre:
       .filter(_.forall(_.isDigit))
       .flatMap(_.toIntOption)
       .filter(_ >= Acquire.MinCitekeyYear)
-    def doi: Option[com.histmersion.api.library.Doi] = identifiers.get("doi")
-    def isbn: Option[com.histmersion.api.library.CalibreGap.Isbn] = identifiers.get("isbn")
+    def doi: Option[com.histmersion.api.library.Doi] = identifiers.get(com.histmersion.cli.Calibre.Book.IdentifiersKey("doi"))
+    def isbn: Option[com.histmersion.api.library.CalibreGap.Isbn] = identifiers.get(com.histmersion.cli.Calibre.Book.IdentifiersKey("isbn"))
 
     /** The file to import: the requested format, else PDF, else EPUB (both carry a text layer). */
     def pick(format: Option[com.histmersion.cli.Calibre.Book.Format]): Option[com.histmersion.cli.Calibre.Book.Format] =
@@ -947,13 +947,13 @@ object Calibre:
 
   /** A field `calibre update` writes, by its `calibredb set_metadata --field` name. */
   enum Field(val name: Field.Name):
-    case Title extends Field("title")
-    case Authors extends Field("authors")
-    case Pubdate extends Field("pubdate")
-    case Identifiers extends Field("identifiers")
-    case Tags extends Field("tags")
-    case Publisher extends Field("publisher")
-    case Comments extends Field("comments")
+    case Title extends Field(com.histmersion.cli.Calibre.Field.Name("title"))
+    case Authors extends Field(com.histmersion.cli.Calibre.Field.Name("authors"))
+    case Pubdate extends Field(com.histmersion.cli.Calibre.Field.Name("pubdate"))
+    case Identifiers extends Field(com.histmersion.cli.Calibre.Field.Name("identifiers"))
+    case Tags extends Field(com.histmersion.cli.Calibre.Field.Name("tags"))
+    case Publisher extends Field(com.histmersion.cli.Calibre.Field.Name("publisher"))
+    case Comments extends Field(com.histmersion.cli.Calibre.Field.Name("comments"))
 
   object Field:
     type Name = com.histmersion.api.library.CollectionFieldValue.Name

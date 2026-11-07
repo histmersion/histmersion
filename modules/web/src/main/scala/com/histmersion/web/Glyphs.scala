@@ -83,7 +83,7 @@ object Glyphs:
   /** Pure: an icon as an inline `<svg>` (`.glyph`: size and stroke in the stylesheet; colour `currentColor`), or empty
     * for an unknown name.
     */
-  def svg(name: com.histmersion.web.Glyphs.Name, extraClass: com.histmersion.web.Glyphs.ExtraClass = ""): com.histmersion.web.Glyphs.Svg =
+  def svg(name: com.histmersion.web.Glyphs.Name, extraClass: com.histmersion.web.Glyphs.ExtraClass = com.histmersion.web.Glyphs.ExtraClass("")): com.histmersion.web.Glyphs.Svg =
     inner.get(name).fold("") { body =>
       val cls = if extraClass.isEmpty then "glyph" else s"glyph $extraClass"
       s"""<svg class="$cls" viewBox="0 0 24 24" aria-hidden="true" focusable="false">$body</svg>"""

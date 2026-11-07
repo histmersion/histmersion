@@ -57,8 +57,8 @@ object MapFold:
       "keydown",
       (e: dom.KeyboardEvent) =>
         if e.key == "Escape" && box.classList.contains(Open) then
-          set(box, false)
-          changed(false)
+          set(box, com.histmersion.web.MapFold.Open(false))
+          changed(com.histmersion.web.MapFold.Changed(false))
           Option(box.querySelector("button[aria-expanded]")).foreach(_.asInstanceOf[dom.HTMLElement].focus())
     )
 

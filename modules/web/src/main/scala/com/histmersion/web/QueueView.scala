@@ -45,9 +45,7 @@ object QueueView:
   type RenderGroupTopic = _root_.com.histmersion.web.QueueView.TopicName
   val RenderGroupTopic: _root_.com.histmersion.web.QueueView.TopicName.type = _root_.com.histmersion.web.QueueView.TopicName
   type RenderGroupTopicsId = String
-  val RenderGroupTopicsId: String.type = String
   type RenderItemTopicsId = String
-  val RenderItemTopicsId: String.type = String
 
   enum Seg:
     case Text(s: Seg.Text.S)

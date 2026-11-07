@@ -31,7 +31,7 @@ object StartPlace:
 
   def zoomFor(b: GeoBounds): com.histmersion.web.map.MapStart.Zoom =
     val span = math.max(b.east - b.west, (b.north - b.south) * 1.4)
-    if span <= 0.01 then 9
+    if span <= 0.01 then com.histmersion.web.map.MapStart.Zoom(9)
     else math.max(2.0, math.min(10.0, math.floor(math.log(360.0 / span) / math.log(2)) + 1))
 
   /** The centre and zoom of a place's geometry (GeoJSON), when it has one. */
@@ -53,14 +53,14 @@ object StartPlace:
   private def round(v: com.histmersion.web.map.MapStart.Coordinate): com.histmersion.web.map.MapStart.Rounded =
     BigDecimal(v).setScale(4, BigDecimal.RoundingMode.HALF_UP).bigDecimal.stripTrailingZeros.toPlainString
 
-  def chooser(choice: Var[MapStartConfig], name: com.histmersion.web.settings.StartPlace.ChooserName, showLegend: com.histmersion.web.settings.StartPlace.ChooserShowLegend = true): HtmlElement =
+  def chooser(choice: Var[MapStartConfig], name: com.histmersion.web.settings.StartPlace.ChooserName, showLegend: com.histmersion.web.settings.StartPlace.ChooserShowLegend = com.histmersion.web.settings.StartPlace.ChooserShowLegend(true)): HtmlElement =
     val query = Var("")
     val hits = Var(List.empty[Place.Hit])
     val problem = Var(Option.empty[String])
     def search(q: com.histmersion.web.settings.AdvancedSection.Query): Unit =
       query.set(q)
       if q.trim.length >= 2 then
-        ApiClient.places(Some(q.trim), None, Some(6)).foreach(hs => if query.now() == q then hits.set(hs))
+        ApiClient.places(Some(q.trim), None, Some(com.histmersion.api.Paging.Limit(6))).foreach(hs => if query.now() == q then hits.set(hs))
       else hits.set(Nil)
     def pick(h: Place.Hit): Unit =
       ApiClient.place(h.id, None).foreach { d =>

@@ -50,8 +50,8 @@ object MediaFilters:
       field: Field[Option[com.histmersion.web.MediaFilters.FieldName]],
       counts: Signal[List[MediaCount]],
       label: com.histmersion.web.MediaFilters.Choice => com.histmersion.web.MediaFilters.ChoiceLabel,
-      disabled: Signal[com.histmersion.web.MediaFilters.Disabled] = Val(false),
-      why: com.histmersion.web.MediaFilters.Reason = ""
+      disabled: Signal[com.histmersion.web.MediaFilters.Disabled] = Val(com.histmersion.web.MediaFilters.Disabled(false)),
+      why: com.histmersion.web.MediaFilters.Reason = com.histmersion.web.MediaFilters.Reason("")
   ): HtmlElement =
     IconSelect(
       s"media $name",

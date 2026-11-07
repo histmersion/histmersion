@@ -114,23 +114,23 @@ object SourceEditor:
     val authors = Option.when(d.authors != orig.authors.map(_.value))(d.authors)
     val yr = d.year.trim match
       case "" =>
-        if orig.year.map(_.value.toInt).isDefined then errs += Field.Year -> cannotClear("the year")
+        if orig.year.map(_.value.toInt).isDefined then errs += Field.Year -> cannotClear(com.histmersion.api.UiLabels.Text("the year"))
         None
       case y =>
         y.toIntOption.filter(v => v > 0 && v < 3000) match
           case Some(v) => Option.when(!orig.year.map(_.value.toInt).contains(v))(v)
           case None    => errs += Field.Year -> s"'$y' is not a publication year (e.g. 2007)"; None
-    val venue = text(d.venue, orig.venue.map(_.value), Field.Venue, "the venue")
-    val doi = text(d.doi, orig.doi.map(_.value), Field.Doi, "the DOI")
+    val venue = text(d.venue, orig.venue.map(_.value), Field.Venue, com.histmersion.api.UiLabels.Text("the venue"))
+    val doi = text(d.doi, orig.doi.map(_.value), Field.Doi, com.histmersion.api.UiLabels.Text("the DOI"))
     doi.foreach(v => if !v.matches("^10\\.\\S+/\\S+$") then errs += Field.Doi -> s"'$v' is not a DOI (10.…/…)")
     val status = Option.when(d.status != orig.status)(d.status)
-    val summary = text(d.summary, orig.summary, Field.Summary, "the summary")
+    val summary = text(d.summary, orig.summary, Field.Summary, com.histmersion.api.UiLabels.Text("the summary"))
 
     val period = (year(d.periodStart), year(d.periodEnd)) match
       case (Left(e), _)               => errs += Field.Period -> e; None
       case (_, Left(e))               => errs += Field.Period -> e; None
       case (Right(None), Right(None)) =>
-        if orig.periodStart.isDefined then errs += Field.Period -> cannotClear("the period")
+        if orig.periodStart.isDefined then errs += Field.Period -> cannotClear(com.histmersion.api.UiLabels.Text("the period"))
         None
       case (Right(Some(a)), Right(Some(b))) =>
         if a > b then {
@@ -191,7 +191,7 @@ object SourceEditor:
     val saving = Var(false)
 
     def load(then0: Option[String] = None): Unit =
-      ApiClient.getSource(ck, body = false).onComplete { r =>
+      ApiClient.getSource(ck, body = com.histmersion.web.ApiClient.IncludeBody(false)).onComplete { r =>
         r.fold(
           e => errors.set(List(Field.Form -> s"Could not load $ck: ${e.getMessage}")),
           sw =>
@@ -239,7 +239,7 @@ object SourceEditor:
       })
 
     def edit(f: Draft => Draft): Unit = draft.update(_.map(f))
-    def textIn(get: Draft => com.histmersion.api.UiLabels.Text, set: (Draft, com.histmersion.api.UiLabels.Text) => Draft, hint: com.histmersion.api.UiLabels.Text = "") =
+    def textIn(get: Draft => com.histmersion.api.UiLabels.Text, set: (Draft, com.histmersion.api.UiLabels.Text) => Draft, hint: com.histmersion.api.UiLabels.Text = com.histmersion.api.UiLabels.Text("")) =
       input(
         typ := "text",
         cls := "field",
@@ -262,7 +262,7 @@ object SourceEditor:
           field = Facet.Field.label(facet),
           label = Facet.Field.label(facet),
           placeholder = hint,
-          debounceMs = 150,
+          debounceMs = com.histmersion.web.ChipInput.Config.DebounceMs(150),
           getSuggestions = prefix => ApiClient.facets(Facet.Field.label(facet), Some(prefix), Filter()),
           onChange = vs => zoomed.set(vs)
         ),
@@ -294,18 +294,18 @@ object SourceEditor:
         hidden <-- draft.signal.map(_.isEmpty),
         onSubmit.preventDefault --> (_ => if Auth.writableNow then save()),
         p(cls := "muted", "Editing ", SourceLink(ck), " — only what you change is sent."),
-        field("title", Field.Title, textIn(_.title, (d, v) => d.modify(_.title).setTo(v))),
+        field(com.histmersion.web.SourceEditor.FieldName("title"), Field.Title, textIn(_.title, (d, v) => d.modify(_.title).setTo(v))),
         div(
           cls := "form-field",
           label("authors"),
-          chips(Facet.Field.Authors, _.authors, (d, v) => d.modify(_.authors).setTo(v), "add an author…"),
+          chips(Facet.Field.Authors, _.authors, (d, v) => d.modify(_.authors).setTo(v), com.histmersion.api.UiLabels.Text("add an author…")),
           errorFor(Field.Authors)
         ),
         div(
           cls := "form-pair",
-          field("year", Field.Year, textIn(_.year, (d, v) => d.modify(_.year).setTo(v), "e.g. 2007")),
+          field(com.histmersion.web.SourceEditor.FieldName("year"), Field.Year, textIn(_.year, (d, v) => d.modify(_.year).setTo(v), com.histmersion.api.UiLabels.Text("e.g. 2007"))),
           field(
-            "status",
+            com.histmersion.web.SourceEditor.FieldName("status"),
             Field.Status,
             select(
               cls := "field",
@@ -317,24 +317,24 @@ object SourceEditor:
             )
           )
         ),
-        field("venue", Field.Venue, textIn(_.venue, (d, v) => d.modify(_.venue).setTo(v))),
-        field("DOI", Field.Doi, textIn(_.doi, (d, v) => d.modify(_.doi).setTo(v), "10.…")),
+        field(com.histmersion.web.SourceEditor.FieldName("venue"), Field.Venue, textIn(_.venue, (d, v) => d.modify(_.venue).setTo(v))),
+        field(com.histmersion.web.SourceEditor.FieldName("DOI"), Field.Doi, textIn(_.doi, (d, v) => d.modify(_.doi).setTo(v), com.histmersion.api.UiLabels.Text("10.…"))),
         div(
           cls := "form-field",
           label("topics"),
-          chips(Facet.Field.Topics, _.topics, (d, v) => d.modify(_.topics).setTo(v), "add a topic…"),
+          chips(Facet.Field.Topics, _.topics, (d, v) => d.modify(_.topics).setTo(v), com.histmersion.api.UiLabels.Text("add a topic…")),
           errorFor(Field.Topics)
         ),
         div(
           cls := "form-field",
           label("regions"),
-          chips(Facet.Field.Places, _.regions, (d, v) => d.modify(_.regions).setTo(v), "add a region…"),
+          chips(Facet.Field.Places, _.regions, (d, v) => d.modify(_.regions).setTo(v), com.histmersion.api.UiLabels.Text("add a region…")),
           errorFor(Field.Regions)
         ),
         div(
           cls := "form-field",
           label("tags"),
-          chips(Facet.Field.Tags, _.tags, (d, v) => d.modify(_.tags).setTo(v), "add a tag…"),
+          chips(Facet.Field.Tags, _.tags, (d, v) => d.modify(_.tags).setTo(v), com.histmersion.api.UiLabels.Text("add a tag…")),
           errorFor(Field.Tags)
         ),
         div(
@@ -344,19 +344,19 @@ object SourceEditor:
             cls := "form-pair",
             label(
               "from",
-              textIn(_.periodStart, (d, v) => d.modify(_.periodStart).setTo(v), "e.g. 1300 BCE"),
+              textIn(_.periodStart, (d, v) => d.modify(_.periodStart).setTo(v), com.histmersion.api.UiLabels.Text("e.g. 1300 BCE")),
               yearEcho(_.periodStart)
             ),
             label(
               "to",
-              textIn(_.periodEnd, (d, v) => d.modify(_.periodEnd).setTo(v), "e.g. 1100 BCE"),
+              textIn(_.periodEnd, (d, v) => d.modify(_.periodEnd).setTo(v), com.histmersion.api.UiLabels.Text("e.g. 1100 BCE")),
               yearEcho(_.periodEnd)
             )
           ),
           errorFor(Field.Period)
         ),
         field(
-          "summary",
+          com.histmersion.web.SourceEditor.FieldName("summary"),
           Field.Summary,
           textArea(
             cls := "field",

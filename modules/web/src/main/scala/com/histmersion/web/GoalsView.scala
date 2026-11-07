@@ -80,7 +80,7 @@ object GoalsView:
       byParent.getOrElse(parent, Nil).sortBy(_.slug).filterNot(g => seen(g.slug)).flatMap { g =>
         (g, depth) :: walk(Some(g.slug), depth + 1, seen + g.slug)
       }
-    walk(None, 0, Set.empty)
+    walk(None, com.histmersion.web.GoalsView.Depth(0), Set.empty)
 
   /** What each goal stage means, in the order a goal moves through them; the legend above the tree and the tooltip of
     * every status badge.
@@ -98,8 +98,8 @@ object GoalsView:
 
   /** What the schedule editor starts from: the schedule's own cron, else a sensible default. */
   def defaultCron(k: ScheduleKind): com.histmersion.api.automation.Goal.Plans.GoalSchedule.Cron = k match
-    case ScheduleKind.Currency    => "@weekly"
-    case ScheduleKind.Acquisition => "@monthly"
+    case ScheduleKind.Currency    => com.histmersion.api.automation.Goal.Plans.GoalSchedule.Cron("@weekly")
+    case ScheduleKind.Acquisition => com.histmersion.api.automation.Goal.Plans.GoalSchedule.Cron("@monthly")
 
   /** The links of one kind. */
   def linksOf(ls: List[GoalLink], k: LinkKind): List[GoalLink] = ls.filter(_.kind == k)
@@ -143,16 +143,16 @@ object GoalsView:
       tags: com.histmersion.api.automation.Goal.Tags,
       plan: com.histmersion.web.GoalsView.NewAreaPlan,
       seed: com.histmersion.web.GoalsView.NewAreaSeed,
-      watch: com.histmersion.web.GoalsView.Watch = false,
-      autoIngest: com.histmersion.api.automation.Managers.ManagerConfig.AutoIngest = false,
-      perDay: com.histmersion.web.GoalsView.PerDay = ""
+      watch: com.histmersion.web.GoalsView.Watch = com.histmersion.web.GoalsView.Watch(false),
+      autoIngest: com.histmersion.api.automation.Managers.ManagerConfig.AutoIngest = com.histmersion.api.automation.Managers.ManagerConfig.AutoIngest(false),
+      perDay: com.histmersion.web.GoalsView.PerDay = com.histmersion.web.GoalsView.PerDay("")
   ): Either[com.histmersion.api.automation.Goal.Slug, NewArea] =
     val t = title.trim
     val s = Option(slug.trim).filter(_.nonEmpty).getOrElse(slugify(t))
     val cap = perDay.trim
-    if t.isEmpty then Left("a research area needs a title")
+    if t.isEmpty then Left(com.histmersion.api.automation.Goal.Slug("a research area needs a title"))
     else if watch && autoIngest && cap.nonEmpty && cap.toIntOption.forall(_ < 0) then
-      Left("ingests a day: a whole number")
+      Left(com.histmersion.api.automation.Goal.Slug("ingests a day: a whole number"))
     else
       val ok = s
       val w = Option.when(watch)(
@@ -187,9 +187,9 @@ object GoalsView:
     def made(id: com.histmersion.web.GoalsView.ItemId, resume: com.histmersion.web.GoalsView.ResumeNote) =
       if active(id) then s"$id created active (the autopilot is on)" else s"$id created paused — resume it $resume"
     s"research area ${a.slug} created" + (if planned then "; the planner is running (its plan waits for you)" else "") +
-      seeded.fold("")(id => s"; seeding manager ${made(id, "to propose its articles")}") +
+      seeded.fold("")(id => s"; seeding manager ${made(id, com.histmersion.web.GoalsView.ResumeNote("to propose its articles"))}") +
       watched.fold("")(id =>
-        s"; watcher ${made(id, "for its weekly sweeps")}" +
+        s"; watcher ${made(id, com.histmersion.web.GoalsView.ResumeNote("for its weekly sweeps"))}" +
           (if a.watch.exists(_.autoIngest.contains(true)) then " (it ingests legal open-access finds)" else "")
       )
 
@@ -234,7 +234,7 @@ object GoalsView:
     )
 
   /** A goal's status as a coloured badge, its meaning on hover. */
-  def badge(status: com.histmersion.web.GoalsView.BadgeStatus, text: com.histmersion.web.GoalsView.BadgeText = ""): HtmlElement =
+  def badge(status: com.histmersion.web.GoalsView.BadgeStatus, text: com.histmersion.web.GoalsView.BadgeText = com.histmersion.web.GoalsView.BadgeText("")): HtmlElement =
     span(
       cls := s"job-state goal-status state-$status",
       meaning(status).map(m => title := m),
@@ -332,16 +332,16 @@ object GoalsView:
         else
           div(
             cls := "goal-new-form",
-            div(cls := "form-row", field(name, "title", "title"), field(slug, "slug", "slug (from the title)")),
+            div(cls := "form-row", field(name, com.histmersion.web.GoalsView.FieldName("title"), com.histmersion.web.GoalsView.Hint("title")), field(slug, com.histmersion.web.GoalsView.FieldName("slug"), com.histmersion.web.GoalsView.Hint("slug (from the title)"))),
             div(
               cls := "form-row",
-              field(notes, "notes", "what it should establish (optional)"),
-              field(tags, "tags", "tags, comma-separated (optional)")
+              field(notes, com.histmersion.web.GoalsView.FieldName("notes"), com.histmersion.web.GoalsView.Hint("what it should establish (optional)")),
+              field(tags, com.histmersion.web.GoalsView.FieldName("tags"), com.histmersion.web.GoalsView.Hint("tags, comma-separated (optional)"))
             ),
             div(
               cls := "form-row goal-new-options",
-              box(plan, "plan (sub-goals, queries, works)"),
-              box(seed, "seed (propose and compile its articles)"),
+              box(plan, com.histmersion.web.GoalsView.Label("plan (sub-goals, queries, works)")),
+              box(seed, com.histmersion.web.GoalsView.Label("seed (propose and compile its articles)")),
               label(
                 cls := "goal-on",
                 title := "a weekly acquisition sweep (a model picks what to acquire) and a currency check",
@@ -559,7 +559,7 @@ object GoalsView:
               cls := "link-btn goal-unlink",
               "unlink",
               disabled <-- busy,
-              onClick --> (_ => write("unlink")(ApiClient.removeGoalLink(slug, l.kind, l.ref)))
+              onClick --> (_ => write(com.histmersion.web.GoalsView.WriteLabel("unlink"))(ApiClient.removeGoalLink(slug, l.kind, l.ref)))
             )
           )
         )

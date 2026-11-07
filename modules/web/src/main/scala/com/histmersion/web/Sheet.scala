@@ -11,9 +11,9 @@ import scala.scalajs.js
   * or all of it but the search bar. The heights are the stylesheet's.
   */
 enum Sheet(val wire: Sheet.Wire):
-  case Peek extends Sheet("peek")
-  case Half extends Sheet("half")
-  case Full extends Sheet("full")
+  case Peek extends Sheet(com.histmersion.web.Sheet.Wire("peek"))
+  case Half extends Sheet(com.histmersion.web.Sheet.Wire("half"))
+  case Full extends Sheet(com.histmersion.web.Sheet.Wire("full"))
 
 object Sheet:
   type Fraction = Fraction.T

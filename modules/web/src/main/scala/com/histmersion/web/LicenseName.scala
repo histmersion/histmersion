@@ -32,23 +32,23 @@ object LicenseName:
 
   /** The licence's name: `CC BY-SA 3.0`, `CC0 1.0`, `Public domain`; an id it does not know, as stored. */
   def label(id: com.histmersion.web.LicenseName.Id): com.histmersion.web.LicenseName.Label = id.trim match
-    case Cc0()               => "CC0 1.0"
+    case Cc0()               => com.histmersion.web.LicenseName.Label("CC0 1.0")
     case Cc(kind, ver, port) =>
       List(Some("CC"), Some(kind.toUpperCase), Option(ver), Option(port).map(_.toUpperCase)).flatten.mkString(" ")
-    case Pdm() => "Public Domain Mark 1.0"
-    case Pd()  => "Public domain"
+    case Pdm() => com.histmersion.web.LicenseName.Label("Public Domain Mark 1.0")
+    case Pd()  => com.histmersion.web.LicenseName.Label("Public domain")
     case other => other
 
   /** Where the licence's text is, for the ids it knows (Creative Commons' own pages). */
   def url(id: com.histmersion.web.LicenseName.UrlId): Option[com.histmersion.web.LicenseName.Url] = id.trim match
-    case Cc0()                              => Some("https://creativecommons.org/publicdomain/zero/1.0/")
+    case Cc0()                              => Some(com.histmersion.web.LicenseName.Url("https://creativecommons.org/publicdomain/zero/1.0/"))
     case Cc(kind, ver, port) if ver != null =>
       Some(
         s"https://creativecommons.org/licenses/${kind.toLowerCase}/$ver/" + Option(port).fold("")(p =>
           s"${p.toLowerCase}/"
         )
       )
-    case Pdm() => Some("https://creativecommons.org/publicdomain/mark/1.0/")
+    case Pdm() => Some(com.histmersion.web.LicenseName.Url("https://creativecommons.org/publicdomain/mark/1.0/"))
     case _     => None
 
   /** The name and the link a picture's licence is shown with: the record's own link first. */

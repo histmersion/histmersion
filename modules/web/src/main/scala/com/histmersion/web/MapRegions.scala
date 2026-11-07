@@ -24,10 +24,10 @@ object MapRegions:
 
   enum Content(val label: Content.Label):
     /** Every layer of the map for the box: it takes the place of the region downloaded now. */
-    case Map extends Content("the map, every layer (in place of the region downloaded now)")
+    case Map extends Content(com.histmersion.web.MapRegions.Content.Label("the map, every layer (in place of the region downloaded now)"))
 
     /** The relief from the extract's depth to the on-demand depth, kept beside the map until removed. */
-    case Relief extends Content("the detailed relief, kept beside the map")
+    case Relief extends Content(com.histmersion.web.MapRegions.Content.Label("the detailed relief, kept beside the map"))
 
   object Content:
     type Name = Name.T
@@ -53,13 +53,13 @@ object MapRegions:
 
   /** The configured region first — the whole world by default, then listed once, as itself. */
   def choices(s: Basemap.Status): List[RegionChoice] =
-    val world = RegionChoice("world", "the whole world", Some("world"))
+    val world = RegionChoice(com.histmersion.web.MapRegions.RegionChoice.Id("world"), com.histmersion.web.MapRegions.RegionChoice.Label("the whole world"), Some(com.histmersion.web.MapRegions.RegionChoice.Bbox("world")))
     val configured =
       if s.bbox.trim.equalsIgnoreCase("world") then
         world.modify(_.id).setTo("configured").modify(_.label).setTo("the configured region (the whole world)")
-      else RegionChoice("configured", s"the configured region (${s.bbox})", Some(s.bbox))
+      else RegionChoice(com.histmersion.web.MapRegions.RegionChoice.Id("configured"), s"the configured region (${s.bbox})", Some(s.bbox))
     List(configured) ++ s.regions.map(r => RegionChoice(r.name, s"${r.name} (${r.bbox})", Some(r.bbox))) ++
-      Option.unless(configured.bbox == world.bbox)(world).toList ++ List(RegionChoice(OwnBox, "a box of my own", None))
+      Option.unless(configured.bbox == world.bbox)(world).toList ++ List(RegionChoice(OwnBox, com.histmersion.web.MapRegions.RegionChoice.Label("a box of my own"), None))
 
   /** The fetch for a box, what it holds, the named region it is (if it is one) and the depth typed (blank: the
     * configured one). A relief download is a focus region: the named one, or one named after its box.

@@ -1,9 +1,9 @@
 package com.histmersion.web.ui
 
 enum AggregateBy(val param: AggregateBy.Param):
-  case Time extends AggregateBy("time")
-  case Region extends AggregateBy("region")
-  case TimeRegion extends AggregateBy("time,region")
+  case Time extends AggregateBy(com.histmersion.web.ui.AggregateBy.Param("time"))
+  case Region extends AggregateBy(com.histmersion.web.ui.AggregateBy.Param("region"))
+  case TimeRegion extends AggregateBy(com.histmersion.web.ui.AggregateBy.Param("time,region"))
 
 object AggregateBy:
   type Param = Param.T

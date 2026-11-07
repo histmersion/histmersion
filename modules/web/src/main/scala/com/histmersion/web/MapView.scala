@@ -144,7 +144,7 @@ object MapView:
   private var radius: com.histmersion.web.MapView.Radius = Layout.markerRadiusDefault
   private val pickerMax = Layout.pickerMax
   private val fitMaxZoom = Layout.fitMaxZoom
-  private var currentSpan: (com.histmersion.api.catalogue.Period.Start, com.histmersion.api.catalogue.Period.End) = (0L, 1L)
+  private var currentSpan: (com.histmersion.api.catalogue.Period.Start, com.histmersion.api.catalogue.Period.End) = (com.histmersion.api.catalogue.Period.Start(0L), com.histmersion.api.catalogue.Period.End(1L))
   private var legendEl: dom.HTMLElement = uninitialized
   private var overlayReqId: Int = 0
   // the four kinds of point (docs/map-layers.md): ONE layer implementation, four descriptors, one
@@ -165,7 +165,7 @@ object MapView:
     TileDecode.media,
     () => tilesConfig.maxZoom
   )
-  private var playbackMode: com.histmersion.web.MapView.Playback = false
+  private var playbackMode: com.histmersion.web.MapView.Playback = com.histmersion.web.MapView.Playback(false)
   // `var`s: the tiles' settings (from the page's config), and playback's speed (its time buckets)
   private[web] var tilesConfig: MapTilesUiConfig = MapTilesUiConfig()
   private var playYearsPerSecond: com.histmersion.web.MapView.YearsPerSecond = 0.0
@@ -192,7 +192,7 @@ object MapView:
     * a place the time view shows only through findings dated then is dashed and fainter.
     */
   private lazy val polities: ShapeSet = TheMap.surface.shapes(
-    "polities",
+    com.histmersion.web.map.MapSurface.ShapesId("polities"),
     ShapeStyle(
       fillOpacity = 0.1,
       lineWidth = 1.5,
@@ -271,7 +271,7 @@ object MapView:
     object Dashed extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
   private val playAreas = scala.collection.mutable.LinkedHashMap.empty[String, PlayArea]
   // `var`s: how far ahead of the playhead the states are fetched, and how long one fades (years); the playhead
-  private var playLead: com.histmersion.api.catalogue.Year = 0L
+  private var playLead: com.histmersion.api.catalogue.Year = com.histmersion.api.catalogue.Year(0L)
   private var playFade: com.histmersion.web.MapView.Fade = 0.0
   private var playhead: com.histmersion.web.MapView.Playhead = 0.0
 
@@ -349,7 +349,7 @@ object MapView:
     val lo = span._1.min(span._2).toDouble
     val hi = span._1.max(span._2).toDouble
     val base = mid match
-      case None    => Fmt.color(0)
+      case None    => Fmt.color(com.histmersion.web.Fmt.ColorT(0))
       case Some(m) => Fmt.color(if hi == lo then 0.5 else (m - lo) / (hi - lo))
     Certainty.desaturate(base, certainty)
 
@@ -396,7 +396,7 @@ object MapView:
   private def radiusFor(n: com.histmersion.web.MapView.DotCount): com.histmersion.web.MapView.RadiusForResult =
     if n > 1 then radius + 4 + 3 * n.toString.length else radius
 
-  private def maxDotRadius: com.histmersion.web.MapView.MaxDotRadiusResult = radiusFor(999)
+  private def maxDotRadius: com.histmersion.web.MapView.MaxDotRadiusResult = radiusFor(com.histmersion.web.MapView.DotCount(999))
 
   /** Pure: how near (px) two points' centres are when they join a bubble — the widest bubble's diameter (`maxDot` its
     * radius), or the largest marker box if that is wider: two markers drawn apart never overlap.
@@ -411,7 +411,7 @@ object MapView:
   private[web] def ringOf(n: com.histmersion.web.MapView.DotCount, spanYears: Option[com.histmersion.api.Years.Astronomical]): com.histmersion.web.MapView.Ring =
     if n == 1 && spanYears.exists(_ > 0) then
       math.max(1, math.min(4, math.round(math.log10(spanYears.get.toDouble + 1) * 1.3).toInt))
-    else 0
+    else com.histmersion.web.MapView.Ring(0)
 
   /** One finding's popup: the source link (identifier label, preview on hover, window on click), title, period, claim
     * and its confidence badge — the same atoms as the server's pages.
@@ -437,7 +437,7 @@ object MapView:
       .filter(_.nonEmpty)
       .mkString(" ")
     val el = DomMarker.element(
-      "hd-dot-wrap",
+      com.histmersion.web.map.DomMarker.ElementCls("hd-dot-wrap"),
       DotCluster.bubbleHtml(
         n,
         d,
@@ -479,8 +479,8 @@ object MapView:
       val s = TheMap.surface
       // at least one level deeper: a cell's items, all at one point, still part at the deepest tile
       if b.north - b.south < 1e-9 && b.east - b.west < 1e-9 then
-        s.setView(LatLon(b.south, b.west), math.min(s.maxZoom, s.zoom + 2), animate = true)
-      else s.fitBounds(b, 40, s.maxZoom)
+        s.setView(LatLon(b.south, b.west), math.min(s.maxZoom, s.zoom + 2), animate = com.histmersion.web.map.MapSurface.SetViewAnimate(true))
+      else s.fitBounds(b, com.histmersion.web.map.MapSurface.FitBoundsPadding(40), s.maxZoom)
 
   /** A bubble chosen: its list, or (too many to list, or some only counted in a tile's cell) the map zoomed in on it. A
     * bubble no zoom parts — its dots at one spot, or the deepest zoom reached — is also fanned out around its spot
@@ -490,7 +490,7 @@ object MapView:
     val all = DotCluster.contents(ds)
     val pts = ds.map(_.at)
     val b = GeoBounds(pts.map(_.lat).min, pts.map(_.lon).min, pts.map(_.lat).max, pts.map(_.lon).max)
-    def zoomIn(): Unit = if all.counted then zoomInto(b :: all.cells) else TheMap.surface.fitBounds(b, 40, fitMaxZoom)
+    def zoomIn(): Unit = if all.counted then zoomInto(b :: all.cells) else TheMap.surface.fitBounds(b, com.histmersion.web.map.MapSurface.FitBoundsPadding(40), fitMaxZoom)
     val deepest = TheMap.surface.zoom >= TheMap.surface.maxZoom - 0.01
     // a tile's cell is only counted: zooming in fetches its dots, wherever they stand
     val inseparable = deepest || (!all.counted && Clustering.onePlace(pts))
@@ -537,7 +537,7 @@ object MapView:
         val _ = surface.on(MapEventKind.MoveEnd)(_ =>
           com.histmersion.web.map.MapStart.remember(ui.mapStart, surface.center, surface.zoom)
         )
-        PlaceHover.shapes("polities", PlaceHover.Places(polityPlaces.get, spanMid))
+        PlaceHover.shapes(com.histmersion.web.PlaceHover.ShapeSetName("polities"), PlaceHover.Places(polityPlaces.get, spanMid))
         addLegend(surface)
         PlaceHover.install(surface)
         PlaceGlyph.followZoom(surface)
@@ -634,11 +634,11 @@ object MapView:
       s"""<i class="is-unstated" style="--c:var(--conf-unstated)" title="$unstated"></i>""" +
         s"""<span class="hd-conf-range">$unstated</span>"""
     legendEl.innerHTML = MapFold.toggleHtml(
-      "hd-legend-toggle",
-      "hd-legend-body",
-      "map legend",
+      com.histmersion.web.MapFold.ClassName("hd-legend-toggle"),
+      com.histmersion.web.MapFold.ControlsId("hd-legend-body"),
+      com.histmersion.web.MapFold.Label("map legend"),
       s"""<span class="hd-ramp hd-ramp--mini" aria-hidden="true">$ramp</span><span>legend</span>""",
-      open = false
+      open = com.histmersion.web.MapFold.Open(false)
     ) +
       """<div class="hd-legend-body" id="hd-legend-body">""" +
       s"""<div class="hd-ramp">$ramp</div>""" +
@@ -824,7 +824,7 @@ object MapView:
       case GeoTime.At(y) if playbackMode && playAreas.nonEmpty => GeoTime.At(y + playLead)
       case t                                                   => t
     val playing = playbackMode
-    placesGeoCached("polity", time, overlayLimit(time)).foreach { geojson =>
+    placesGeoCached(com.histmersion.api.catalogue.Place.Kind.Wire("polity"), time, overlayLimit(time)).foreach { geojson =>
       if myId == overlayReqId && overlayOn && TheMap.isUp && playing == playbackMode then
         val features = js.JSON.parse(geojson).features.asInstanceOf[js.Array[js.Dynamic]]
         if playing then
@@ -929,8 +929,8 @@ object MapView:
           lon,
           label,
           kind,
-          placeClasses("hd-area-point-wrap", dynStr(p.basis)),
-          hidden = true
+          placeClasses(com.histmersion.web.MapView.ClassName("hd-area-point-wrap"), dynStr(p.basis)),
+          hidden = com.histmersion.web.PlaceGlyph.LabelMarkerHidden(true)
         )
         dynStr(p.id).foreach(id => PlaceHover.bind(m, id, label, kind, spanMid))
         MapLabels.trackPoint(m, dynStr(p.id).getOrElse(label)) // thinned with the area names
@@ -968,9 +968,9 @@ object MapView:
       ApiClient.tileTemplate(
         TilesApi.TileQuery(
           TileLayer.Media.wire,
-          0,
-          0,
-          0,
+          com.histmersion.api.catalogue.TilesApi.TileQuery.Z(0),
+          com.histmersion.api.catalogue.TilesApi.TileQuery.X(0),
+          com.histmersion.api.catalogue.TilesApi.TileQuery.Y(0),
           tileFilter(tileSpan(span)),
           provider = UiState.mediaProvider.now(),
           license = UiState.mediaLicense.now()
@@ -985,9 +985,9 @@ object MapView:
       ApiClient.tileTemplate(
         TilesApi.TileQuery(
           TileLayer.Sites.wire,
-          0,
-          0,
-          0,
+          com.histmersion.api.catalogue.TilesApi.TileQuery.Z(0),
+          com.histmersion.api.catalogue.TilesApi.TileQuery.X(0),
+          com.histmersion.api.catalogue.TilesApi.TileQuery.Y(0),
           tileFilter(tileSpan(span)),
           siteType = UiState.siteType.now(),
           undated = Option.when(UiState.sitesUndated.now())(true)

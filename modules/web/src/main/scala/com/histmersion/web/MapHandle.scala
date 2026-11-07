@@ -49,7 +49,7 @@ object MapHandle:
       /** A popup at `[lat, lon]` with this text (what a finding's click opens). */
       openPopup = (
           (at: js.Array[Double], text: String) => {
-            val _ = s.popup(ll(at), s"""<div class="hd-popup-content zz-test-popup">${Fmt.esc(text)}</div>""", "")
+            val _ = s.popup(ll(at), s"""<div class="hd-popup-content zz-test-popup">${Fmt.esc(text)}</div>""", com.histmersion.web.map.MapSurface.PopupCls(""))
           }
       ): js.Function2[js.Array[Double], String, Unit],
       getSize = (() => { val (w, h) = s.size; js.Dynamic.literal(x = w, y = h) }): js.Function0[js.Dynamic],

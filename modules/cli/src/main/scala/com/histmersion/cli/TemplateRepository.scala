@@ -17,4 +17,3 @@ enum TemplateRepository:
     case MavenLocal   => "m2Local"
     case Remote(repo) => repo.value
 
-object TemplateRepository:

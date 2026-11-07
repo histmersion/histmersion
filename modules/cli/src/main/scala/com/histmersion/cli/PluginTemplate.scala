@@ -65,8 +65,8 @@ object PluginTemplate:
       TemplateFile(ProjectFile, fill(r, directives(r))),
       TemplateFile(s"$name.scala", fill(r, header(r) + KindSources.main(r.kind))),
       TemplateFile(s"$name.test.scala", fill(r, header(r) + KindSources.test(r.kind) + packagingSuite)),
-      TemplateFile("README.md", fill(r, readme)),
-      TemplateFile(".gitignore", s"/$PublishDir/\n/*.jar\n.scala-build/\n.bsp/\n/target/\n"),
+      TemplateFile(com.histmersion.cli.TemplateFile.Path("README.md"), fill(r, readme)),
+      TemplateFile(com.histmersion.cli.TemplateFile.Path(".gitignore"), s"/$PublishDir/\n/*.jar\n.scala-build/\n.bsp/\n/target/\n"),
       TemplateFile(ServicesPath, s"${r.pkg.value}.${pluginClass(r.id)}\n"),
       TemplateFile(defaultsPath(r.id), fill(r, KindSources.defaults(r.kind))),
       TemplateFile(nativeMetadataPath(r.id, r.pkg), nativeMetadata(r))

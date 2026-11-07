@@ -23,10 +23,10 @@ object Ago:
     def n(v: com.histmersion.web.marks.Ago.Amount, one: com.histmersion.web.marks.Ago.Unit) =
       val k = math.floor(v).toInt
       s"$k $one${if k == 1 then "" else "s"} ago"
-    if s < 60 then "just now"
-    else if s < 3600 then n(s / 60, "minute")
-    else if s < 86400 then n(s / 3600, "hour")
-    else if s < 86400 * 14 then n(s / 86400, "day")
+    if s < 60 then com.histmersion.web.marks.Ago.Phrase("just now")
+    else if s < 3600 then n(s / 60, com.histmersion.web.marks.Ago.Unit("minute"))
+    else if s < 86400 then n(s / 3600, com.histmersion.web.marks.Ago.Unit("hour"))
+    else if s < 86400 * 14 then n(s / 86400, com.histmersion.web.marks.Ago.Unit("day"))
     else isoDate.take(10)
 
   /** An ISO time's milliseconds, NaN for none. */

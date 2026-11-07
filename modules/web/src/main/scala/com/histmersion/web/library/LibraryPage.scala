@@ -58,8 +58,8 @@ object LibraryPage:
           navTag(
             cls := "library-tabs",
             aria.label := "What to list",
-            tab(LibrarySection.Sources, "Sources", LibraryLists.sources.signal.map(_.total), section),
-            tab(LibrarySection.Articles, "Articles", LibraryLists.articles.signal.map(_.total), section)
+            tab(LibrarySection.Sources, com.histmersion.web.library.LibraryPage.TabLabel("Sources"), LibraryLists.sources.signal.map(_.total), section),
+            tab(LibrarySection.Articles, com.histmersion.web.library.LibraryPage.TabLabel("Articles"), LibraryLists.articles.signal.map(_.total), section)
           ),
           div(cls := "library-head-end", filtersButton(ui), AddSources.menu)
         ),
@@ -140,14 +140,14 @@ object LibraryPage:
         cls := "btn btn--sm library-prev",
         "‹ Previous",
         disabled <-- page.map(!_.hasPrevious),
-        onClick --> (_ => turn(section, back = true))
+        onClick --> (_ => turn(section, back = com.histmersion.web.library.LibraryPage.TurnBack(true)))
       ),
       button(
         typ := "button",
         cls := "btn btn--sm library-next",
         "Next ›",
         disabled <-- page.map(!_.hasNext),
-        onClick --> (_ => turn(section, back = false))
+        onClick --> (_ => turn(section, back = com.histmersion.web.library.LibraryPage.TurnBack(false)))
       )
     )
 

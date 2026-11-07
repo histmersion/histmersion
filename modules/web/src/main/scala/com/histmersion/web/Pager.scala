@@ -19,7 +19,7 @@ object Pager:
   val ApplyLimit: _root_.com.histmersion.api.Paging.Limit.type = _root_.com.histmersion.api.Paging.Limit
 
   def range(offset: com.histmersion.api.Offset, shown: com.histmersion.api.Paging.Shown, total: com.histmersion.api.Paging.Page.Total): com.histmersion.web.Pager.RangeText =
-    if total <= 0 || shown <= 0 then "none"
+    if total <= 0 || shown <= 0 then com.histmersion.web.Pager.RangeText("none")
     else s"${offset + 1}–${offset + shown} of $total"
 
   /** The offset of the previous page (never below 0), and of the next one (None past the end). Pure. */

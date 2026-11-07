@@ -46,13 +46,13 @@ object Pages:
   private def page(ui: UiConfig, r: Route, search: com.histmersion.web.Pages.UrlQuery): HtmlElement = r match
     case Route.Explore     => div()
     case Route.Library(s)  => libraryPage(ui, s)
-    case Route.Settings(s) => layout("Settings sections", settingsSide(s), Some(s.label), settings(ui, s))
+    case Route.Settings(s) => layout(com.histmersion.api.UiLabels.Text("Settings sections"), settingsSide(s), Some(s.label), settings(ui, s))
     case Route.Setup       => com.histmersion.web.setup.SetupPage.element(ui)
     case Route.Place(id)   => single(placePage(id))
     case Route.Event(id)   => single(eventPage(id))
     case Route.Source(_) | Route.Article(_) => single(p(cls := "muted", "Loading…"))
     case _                                  =>
-      layout("Research sections", researchSide(ui, r), None, research(ui, r, ActivityView.param(search, "goal")))
+      layout(com.histmersion.api.UiLabels.Text("Research sections"), researchSide(ui, r), None, research(ui, r, ActivityView.param(search, com.histmersion.web.ActivityView.ParamName("goal"))))
 
   // ── the frame ───────────────────────────────────────────────────────────────────────────────────
 
@@ -151,16 +151,16 @@ object Pages:
         case ResearchSection.Overview  => ResearchOverview.pane(ui)
         case ResearchSection.Decisions =>
           if ui.agentsEnabled then ApprovalsView.pane
-          else agentsOff("Nothing waits for a decision: the research agents are off on this server.")
+          else agentsOff(com.histmersion.api.UiLabels.Text("Nothing waits for a decision: the research agents are off on this server."))
         case ResearchSection.Goals   => GoalsView.pane
         case ResearchSection.Backlog => QueueView.pane(Queue.Kind.Tasks, goal)
         case ResearchSection.Acquire => QueueView.pane(Queue.Kind.Acquire, goal)
         case ResearchSection.Models  =>
           if ui.agentsEnabled then ModelsView.pane
-          else agentsOff("No AI models are used: the research agents are off on this server.")
+          else agentsOff(com.histmersion.api.UiLabels.Text("No AI models are used: the research agents are off on this server."))
         case ResearchSection.Activity => RunsView.pane
       section(Router.title(r), body)
-    case Route.Activity(t) => section("Activity", activity(ui, t, goal))
+    case Route.Activity(t) => section(com.histmersion.api.UiLabels.Text("Activity"), activity(ui, t, goal))
     case Route.Goal(slug)  => item(r, GoalPage.pane(ui, slug))
     case Route.Run(id)     => item(r, RunsView.runPane(id))
     case Route.Manager(id) => item(r, ManagersView.managerPane(id))
@@ -189,7 +189,7 @@ object Pages:
         t match
           case ActivityTab.Runs =>
             if ui.agentsEnabled then RunsView.pane
-            else agentsOff("No agent runs: the research agents are off on this server.")
+            else agentsOff(com.histmersion.api.UiLabels.Text("No agent runs: the research agents are off on this server."))
           case ActivityTab.Worklog => QueueView.pane(Queue.Kind.Log)
           case _                   => JobsView.pane
       )
@@ -238,11 +238,11 @@ object Pages:
         case None          => p(cls := "muted", "Loading…")
         case Some(Left(m)) => p(cls := "form-error", role := "alert", s"Could not read job $id: $m")
         case Some(Right(j)) if j.kind == com.histmersion.api.automation.AgentJobKinds.Agent.kind =>
-          Router.go(Route.Run(j.id.value), push = false)
+          Router.go(Route.Run(j.id.value), push = com.histmersion.web.Router.Push(false))
           p(cls := "muted", "Loading…")
         case Some(Right(j)) =>
           Router.retitle(Route.Job(id), Wording.jobKindOf(j.kind.value))
-          div(ul(cls := "job-list", JobsView.row(j, mine = false)), jobControls(j), QueueView.ofJob(j.id.value))
+          div(ul(cls := "job-list", JobsView.row(j, mine = com.histmersion.web.JobsView.Mine(false))), jobControls(j), QueueView.ofJob(j.id.value))
       },
       p(RouteLink(Route.Activity(ActivityTab.JobList), "All background jobs"))
     )
@@ -250,18 +250,18 @@ object Pages:
   /** Pause, resume and cancel of a long background job, on its page. */
   private def jobControls(j: JobInfo): HtmlElement =
     val e = com.histmersion.api.automation.Activity.Entry(
-      s"job:${j.id}", "job", j.createdAt, state = j.status, what = j.kind.value, job = Some(j.id.value)
+      s"job:${j.id}", com.histmersion.api.automation.Activity.Entry.Kind("job"), j.createdAt, state = j.status, what = j.kind.value, job = Some(j.id.value)
     )
     ActivityView.actions(e) match
       case Nil => div()
       case _   =>
-        ul(cls := "activity-list job-controls", ActivityView.row(e, () => Router.go(Route.Job(j.id.value), push = false)))
+        ul(cls := "activity-list job-controls", ActivityView.row(e, () => Router.go(Route.Job(j.id.value), push = com.histmersion.web.Router.Push(false))))
 
   // ── Settings ────────────────────────────────────────────────────────────────────────────────────
 
   private def settingsSide(on: SettingsSection): List[Modifier[HtmlElement]] =
     val (common, rare) = SettingsSection.values.toList.partition(!_.rare)
-    common.map(s => sideLink(Route.Settings(s), s.label, s == on)) ++ List(group("Rarely needed")) ++
+    common.map(s => sideLink(Route.Settings(s), s.label, s == on)) ++ List(group(com.histmersion.api.UiLabels.Text("Rarely needed"))) ++
       rare.map(s => sideLink(Route.Settings(s), s.label, s == on)) ++
       List(RouteLink(Route.Setup, cls := "side-link setup-again", span(cls := "side-label", "Run the setup again")))
 

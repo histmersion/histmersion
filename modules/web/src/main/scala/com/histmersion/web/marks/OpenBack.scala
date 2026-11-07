@@ -34,17 +34,17 @@ object OpenBack:
         Router.go(Route.Explore)
         t.view.foreach(v => UiState.loadHash(v.value))
         span(t)
-        UiState.set()(push = true)
+        UiState.set()(push = com.histmersion.web.UiState.SetPush(true))
         at(t)
       case ItemKind.Point =>
         Router.go(Route.Explore)
         span(t)
-        UiState.set()(push = true)
+        UiState.set()(push = com.histmersion.web.UiState.SetPush(true))
         at(t)
       case ItemKind.Period =>
         Router.go(Route.Explore)
         span(t)
-        UiState.set()(push = true)
+        UiState.set()(push = com.histmersion.web.UiState.SetPush(true))
 
   private def span(t: Target): Unit =
     for a <- t.from; b <- t.to do

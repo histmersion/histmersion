@@ -54,7 +54,7 @@ object TableRow:
       authors(s.authors.map(_.value)),
       s.year.map(_.value.toInt),
       Some(s.status),
-      "",
+      com.histmersion.web.library.TableRow.Kind(""),
       YearFmt.period(s.periodStart, s.periodEnd),
       SourceLink.href(s.citekey.value.toString)
     )

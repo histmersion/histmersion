@@ -52,7 +52,7 @@ object CalibreCmd:
 
   /** The server's `calibre` collection, when the server runs it (see the object's description). */
   private def server(c: Client): Option[CollectionsClient] =
-    Some(CollectionsClient(c, "calibre")).filter(_.onServer)
+    Some(CollectionsClient(c, com.histmersion.cli.CollectionsClient.Name("calibre"))).filter(_.onServer)
 
   // ── search ──────────────────────────────────────────────────────────────────────────────────
 
@@ -93,7 +93,7 @@ object CalibreCmd:
       json: com.histmersion.cli.Cli.JsonOutput
   )(using console: Console): Either[Cli.Error, Unit] =
     if !unlinked then
-      calibre(c).search(q.getOrElse(""), max).left.map(fail).map { books =>
+      calibre(c).search(q.getOrElse(com.histmersion.api.Api.Search.Text("")), max).left.map(fail).map { books =>
         Output.emit(json, books.map(com.histmersion.cli.Calibre.Json.Book.of))(_ => Calibre.markdownSearch(books))
       }
     else
@@ -118,7 +118,7 @@ object CalibreCmd:
       Either.cond(
         !q.truncated,
         q.rows.flatMap(_.headOption.flatten).flatMap(_.toIntOption).toSet,
-        fail("too many linked sources for one query — raise query.max-rows")
+        fail(com.histmersion.cli.Cli.Problem("too many linked sources for one query — raise query.max-rows"))
       )
     }
 
@@ -274,11 +274,11 @@ object CalibreCmd:
 
   /** The imported book's cover, best-effort: a line saying what happened, never a failure. */
   private def importCover(c: Client, ck: com.histmersion.plugin.FetchedFile.Source.Citekey, book: com.histmersion.cli.Calibre.Book)(using console: Console): Unit =
-    MediaCovers.one(c, ck, book, dryRun = false) match
+    MediaCovers.one(c, ck, book, dryRun = com.histmersion.cli.Cli.DryRun(false)) match
       case MediaCovers.Outcome.Uploaded(_)             => Cli.out.println(s"Cover: from the Calibre library")
       case MediaCovers.Outcome.AskOpenLibrary(_, isbn) =>
         c.mediaCovers(
-          MediaCoversRequest(dryRun = false, citekey = Some(ck), illustrations = false, isbn = Some(isbn))
+          MediaCoversRequest(dryRun = com.histmersion.api.library.RepairAcquire.RepairRequest.DryRun(false), citekey = Some(ck), illustrations = false, isbn = Some(isbn))
         ) match
           case Right(r) if r.covers > 0 => Cli.out.println(s"Cover: from Open Library (ISBN $isbn)")
           case _ => Cli.out.println(s"Cover: none (no cover file in Calibre, none at Open Library)")
@@ -299,7 +299,7 @@ object CalibreCmd:
     target match
       case ImportTarget.Update(_) =>
         for
-          current <- c.call(Api.getSource)((ck, false))
+          current <- c.call(Api.getSource)((ck, com.histmersion.api.Api.SourceViewQuery.FullText(false)))
           res <- c.patchSource(
             ck,
             Source.Patch(
@@ -555,7 +555,7 @@ object CalibreCmd:
   private def linkedRecords(c: Client): Either[Cli.Error, List[LinkedRecord]] =
     for
       q <- c.query("SELECT citekey, calibre_id FROM sources WHERE calibre_id ~ '^[0-9]+$' ORDER BY citekey")
-      _ <- Either.cond(!q.truncated, (), fail("too many linked sources for one query — raise query.max-rows"))
+      _ <- Either.cond(!q.truncated, (), fail(com.histmersion.cli.Cli.Problem("too many linked sources for one query — raise query.max-rows")))
       keys = q.rows.collect { case List(Some(ck), Some(id)) => ck -> id.toInt }
       recs <- keys.traverse((ck, id) => AcquireClient(c).calibreMeta(ck).map(s => LinkedRecord(ck, id, pushMeta(s))))
     yield recs
@@ -619,7 +619,7 @@ object CalibreCmd:
         "SELECT citekey, calibre_id, title, array_to_string(authors, '|') AS authors, year " +
           "FROM sources WHERE calibre_id ~ '^[0-9]+$' ORDER BY citekey"
       )
-      _ <- Either.cond(!q.truncated, (), fail("too many linked sources for one query — raise query.max-rows"))
+      _ <- Either.cond(!q.truncated, (), fail(com.histmersion.cli.Cli.Problem("too many linked sources for one query — raise query.max-rows")))
       recs = q.rows.flatMap {
         case List(Some(ck), Some(id), title, authors, year) =>
           Some(

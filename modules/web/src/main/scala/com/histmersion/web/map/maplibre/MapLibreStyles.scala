@@ -47,7 +47,7 @@ object MapLibreStyles:
   /** A copy of a JSON value. */
   private def copy(v: js.Any): js.Dynamic = js.JSON.parse(js.JSON.stringify(v)).asInstanceOf[js.Dynamic]
 
-  private def background(): com.histmersion.web.map.ShapeStyle.Colour = ThemeTokens("--bg")
+  private def background(): com.histmersion.web.map.ShapeStyle.Colour = ThemeTokens(com.histmersion.web.ui.ThemeTokens.Name("--bg"))
 
   /** The page's own background and nothing else. */
   def blank(): js.Object =
@@ -74,9 +74,9 @@ object MapLibreStyles:
         val s = resolve(copy(d), v.status, v.lang, v.names, v.reduced, origin, v.seaDepth)
         if withContours then
           Future.delegate(contours(s, v.status, origin)).map(_ => s: js.Any).recover { case _ =>
-            drop(s, "contours"); s
+            drop(s, com.histmersion.web.map.MapSurface.LayerId("contours")); s
           }
-        else { drop(s, "contours"); Future.successful(s) }
+        else { drop(s, com.histmersion.web.map.MapSurface.LayerId("contours")); Future.successful(s) }
       }
 
   /** The credits a style owes: each source's `attribution` that a layer drawn (not `visibility: none`) reads, once
@@ -143,7 +143,7 @@ object MapLibreStyles:
     * are traced from (the extract's relief alone is too coarse for them).
     */
   private def deeperRelief(s: Basemap.Status): Option[Basemap.LayerInfo] =
-    info(s, "terrain").filter(i => i.focus.nonEmpty || i.onDemand.exists(_.enabled))
+    info(s, com.histmersion.web.map.MapSurface.LayerId("terrain")).filter(i => i.focus.nonEmpty || i.onDemand.exists(_.enabled))
 
   /** Take source `id` and every layer drawing it out of style `s`. */
   def drop(s: js.Dynamic, id: com.histmersion.web.map.MapSurface.LayerId): Unit =
@@ -166,7 +166,7 @@ object MapLibreStyles:
       names: com.histmersion.web.map.BaseMapSpec.Vector.Names,
       reduced: com.histmersion.web.map.BaseMapSpec.Vector.Reduced,
       origin: com.histmersion.web.map.maplibre.MapLibreStyles.ResolveOrigin,
-      seaDepth: com.histmersion.web.map.BaseMapSpec.Vector.SeaDepth = true
+      seaDepth: com.histmersion.web.map.BaseMapSpec.Vector.SeaDepth = com.histmersion.web.map.BaseMapSpec.Vector.SeaDepth(true)
   ): js.Dynamic =
     val meta = s.metadata.selectDynamic("histmersion:sources").asInstanceOf[js.Dictionary[String]]
     js.Object.keys(s.sources.asInstanceOf[js.Object]).foreach { id =>
@@ -210,7 +210,7 @@ object MapLibreStyles:
     val key = if lang == "local" then "name" else s"name:$lang"
     s.layers.asInstanceOf[js.Array[js.Dynamic]].foreach { l =>
       if !js.isUndefined(l.layout) && !js.isUndefined(l.layout.`text-field`) then
-        l.layout.`text-field` = replaceString(l.layout.`text-field`, "name:{lang}", key)
+        l.layout.`text-field` = replaceString(l.layout.`text-field`, com.histmersion.web.map.maplibre.MapLibreStyles.Text("name:{lang}"), key)
     }
     val faces = s.selectDynamic("font-faces")
     if !js.isUndefined(faces) then

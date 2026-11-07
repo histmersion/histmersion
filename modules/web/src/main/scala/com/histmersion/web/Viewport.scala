@@ -39,9 +39,9 @@ object Viewport:
   object Narrow extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
   enum Mode(val wire: Mode.Wire):
-    case Narrow extends Mode("narrow")
-    case Tablet extends Mode("narrow")
-    case Wide extends Mode("wide")
+    case Narrow extends Mode(com.histmersion.web.Viewport.Mode.Wire("narrow"))
+    case Tablet extends Mode(com.histmersion.web.Viewport.Mode.Wire("narrow"))
+    case Wide extends Mode(com.histmersion.web.Viewport.Mode.Wire("wide"))
 
   object Mode:
     type Wire = Wire.T

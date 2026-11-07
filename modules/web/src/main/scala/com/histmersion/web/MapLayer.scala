@@ -12,13 +12,13 @@ import scala.scalajs.js
 
 /** An overlay the map can show. The wire name is how it is persisted in [[UiState]]. */
 enum MapLayer(val wire: MapLayer.Wire, val label: MapLayer.Label, val icon: Icon):
-  case Boundaries extends MapLayer("boundaries", "Boundaries", Icon.Region)
-  case Sites extends MapLayer("sites", "Sites", Icon.PointSite)
-  case Media extends MapLayer("media", "Media", Icon.PointMedia)
-  case Events extends MapLayer("events", "Events", Icon.PointEvent)
+  case Boundaries extends MapLayer(com.histmersion.web.MapLayer.Wire("boundaries"), com.histmersion.web.MapLayer.Label("Boundaries"), Icon.Region)
+  case Sites extends MapLayer(com.histmersion.web.MapLayer.Wire("sites"), com.histmersion.web.MapLayer.Label("Sites"), Icon.PointSite)
+  case Media extends MapLayer(com.histmersion.web.MapLayer.Wire("media"), com.histmersion.web.MapLayer.Label("Media"), Icon.PointMedia)
+  case Events extends MapLayer(com.histmersion.web.MapLayer.Wire("events"), com.histmersion.web.MapLayer.Label("Events"), Icon.PointEvent)
 
   /** The person's own notes left at places on the map (off until switched on). */
-  case Notes extends MapLayer("notes", "My notes", Icon.Note)
+  case Notes extends MapLayer(com.histmersion.web.MapLayer.Wire("notes"), com.histmersion.web.MapLayer.Label("My notes"), Icon.Note)
 
 object MapLayer:
   type Wire = Wire.T

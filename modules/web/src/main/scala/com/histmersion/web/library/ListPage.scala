@@ -7,8 +7,8 @@ final case class ListPage[Row](
     rows: List[Row] = Nil,
     offset: com.histmersion.api.Offset = com.histmersion.api.Offset(0),
     total: com.histmersion.api.RowCount = com.histmersion.api.RowCount(0),
-    loaded: ListPage.Loaded = false,
-    loading: ListPage.Loading = false,
+    loaded: ListPage.Loaded = com.histmersion.web.library.ListPage.Loaded(false),
+    loading: ListPage.Loading = com.histmersion.web.library.ListPage.Loading(false),
     error: Option[ListPage.Error] = None
 ):
 
@@ -52,6 +52,6 @@ object ListPage:
 
   /** Pure: the line over the table — `1–50 of 1,026`; `No sources` for an empty answer, `Loading…` before the first. */
   def rangeLine(p: ListPage[?], noun: com.histmersion.web.library.ListPage.RangeLineNoun): com.histmersion.web.library.ListPage.RangeLabel =
-    if !p.loaded then "Loading…"
+    if !p.loaded then com.histmersion.web.library.ListPage.RangeLabel("Loading…")
     else if p.total.value == 0 || p.rows.isEmpty then s"No $noun"
     else s"${grouped(p.offset.value + 1)}–${grouped(p.offset.value + p.rows.size)} of ${grouped(p.total.value)}"

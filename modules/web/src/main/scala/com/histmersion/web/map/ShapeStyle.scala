@@ -16,7 +16,7 @@ final case class ShapeStyle(
     dash: List[ShapeStyle.Dash] = Nil,
     dashedLineOpacity: Option[ShapeStyle.DashedLineOpacity] = None,
     circleRadius: ShapeStyle.CircleRadius = 0.0,
-    interactive: ShapeStyle.Interactive = false
+    interactive: ShapeStyle.Interactive = com.histmersion.web.map.ShapeStyle.Interactive(false)
 )
 
 object ShapeStyle:

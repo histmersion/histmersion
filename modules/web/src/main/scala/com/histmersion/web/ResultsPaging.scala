@@ -20,7 +20,7 @@ object ResultsPaging:
     * `no things` for none; then the tab's own `extras`, each after a ` · `.
     */
 
-  def countLine(shown: com.histmersion.api.Paging.Shown, total: com.histmersion.api.Paging.Page.Total, singular: com.histmersion.api.Plural.Noun.Singular, plural: com.histmersion.api.Plural.Noun.Plural = "", extras: List[com.histmersion.api.UiLabels.Text] = Nil): com.histmersion.api.UiLabels.Text =
+  def countLine(shown: com.histmersion.api.Paging.Shown, total: com.histmersion.api.Paging.Page.Total, singular: com.histmersion.api.Plural.Noun.Singular, plural: com.histmersion.api.Plural.Noun.Plural = com.histmersion.api.Plural.Noun.Plural(""), extras: List[com.histmersion.api.UiLabels.Text] = Nil): com.histmersion.api.UiLabels.Text =
     val many = if plural.nonEmpty then plural else singular + "s"
     val head =
       if total <= 0 then s"no $many"

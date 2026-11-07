@@ -9,9 +9,9 @@ import scala.scalajs.js
   * default), always animate, or never.
   */
 enum MapMotion(val wire: MapMotion.Wire, val label: MapMotion.Label):
-  case System extends MapMotion("system", "Follow the system")
-  case Always extends MapMotion("always", "Always animate")
-  case Never extends MapMotion("never", "Never animate")
+  case System extends MapMotion(com.histmersion.web.map.MapMotion.Wire("system"), com.histmersion.web.map.MapMotion.Label("Follow the system"))
+  case Always extends MapMotion(com.histmersion.web.map.MapMotion.Wire("always"), com.histmersion.web.map.MapMotion.Label("Always animate"))
+  case Never extends MapMotion(com.histmersion.web.map.MapMotion.Wire("never"), com.histmersion.web.map.MapMotion.Label("Never animate"))
 
 object MapMotion:
   type MotionAttribute = MotionAttribute.T
@@ -50,4 +50,4 @@ object MapMotion:
     case Never  => Some(true)
 
   /** Pure: the value of the root element's `data-map-motion`, which the stylesheet's map animations read. */
-  def attribute(animates: com.histmersion.web.map.MapMotion.AttributeAnimates): com.histmersion.web.map.MapMotion.MotionAttribute = if animates then "animate" else "still"
+  def attribute(animates: com.histmersion.web.map.MapMotion.AttributeAnimates): com.histmersion.web.map.MapMotion.MotionAttribute = if animates then com.histmersion.web.map.MapMotion.MotionAttribute("animate") else com.histmersion.web.map.MapMotion.MotionAttribute("still")

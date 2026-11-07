@@ -62,7 +62,7 @@ final class PluginOps(using console: Console)(
     finally in.close()
     md.digest().map(b => f"$b%02x").mkString
 
-  def sha256(p: Path): com.histmersion.api.Sha256 = digestOf(p, "SHA-256")
+  def sha256(p: Path): com.histmersion.api.Sha256 = digestOf(p, com.histmersion.cli.PluginOps.DigestAlgorithm("SHA-256"))
 
   def dirEntries: List[(com.histmersion.cli.PluginOps.EntryName, com.histmersion.cli.PluginOps.EntryContent)] = jars.map(j => j.getFileName.toString -> sha256(j))
 
@@ -178,7 +178,7 @@ final class PluginOps(using console: Console)(
   /** The repositories an `add` looks in: the ones named for it first, then the configured ones. */
   private def repositories(o: AddOptions): List[com.histmersion.cli.PluginOps.Repo] = (o.repos ++ cfg.repos).distinct
 
-  private def repoArgs(repos: List[com.histmersion.cli.PluginOps.Repo]): List[com.histmersion.cli.PluginOps.Arg] = repos.flatMap(r => List("--repo", r))
+  private def repoArgs(repos: List[com.histmersion.cli.PluginOps.Repo]): List[com.histmersion.cli.PluginOps.Arg] = repos.flatMap(r => List(com.histmersion.cli.PluginOps.Arg("--repo"), r))
 
   /** The dependencies `jar`'s POM lists, resolved against what the server ships into `lib`: the lines the resolver
     * reports, or why the plugin is refused (a library the server ships at an older version than the plugin needs) or

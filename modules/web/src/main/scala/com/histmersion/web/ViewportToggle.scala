@@ -84,7 +84,7 @@ object ViewportToggle:
   val LayerCount: com.histmersion.web.ViewportToggle.LayerCount = 1 + MapLayer.values.length
 
   /** Whether the layers panel is open (a wide screen: on a phone it is the map & tools drawer). */
-  val open: Var[com.histmersion.web.ViewportToggle.Open] = Var(false)
+  val open: Var[com.histmersion.web.ViewportToggle.Open] = Var(com.histmersion.web.ViewportToggle.Open(false))
 
   private val onCount: Signal[com.histmersion.web.ViewportToggle.OnCount] =
     UiState.sources.signal.combineWith(UiState.layers.signal).map((src, ls) => (if src then 1 else 0) + ls.size)
@@ -107,19 +107,19 @@ object ViewportToggle:
       case MapLayer.Boundaries => List(areaPickSelect)
       case MapLayer.Sites      =>
         List(
-          IconSelect("site type", UiState.siteType, Val(LayerFilters.siteTypes)),
-          undatedBox(UiState.sitesUndated, "sites")
+          IconSelect(com.histmersion.web.IconSelect.Name("site type"), UiState.siteType, Val(LayerFilters.siteTypes)),
+          undatedBox(UiState.sitesUndated, com.histmersion.web.ViewportToggle.UndatedBoxWhat("sites"))
         )
       case MapLayer.Media =>
         List(
-          MediaFilters.select("provider", UiState.mediaProvider, MediaFilters.providers.signal, MediaProvider.title),
-          MediaFilters.select("licence", UiState.mediaLicense, MediaFilters.licences.signal, LicenseName.label)
+          MediaFilters.select(com.histmersion.web.MediaFilters.FieldName("provider"), UiState.mediaProvider, MediaFilters.providers.signal, MediaProvider.title),
+          MediaFilters.select(com.histmersion.web.MediaFilters.FieldName("licence"), UiState.mediaLicense, MediaFilters.licences.signal, LicenseName.label)
         )
       case MapLayer.Events =>
         List(
-          IconSelect("event kind", UiState.eventKind, Val(LayerFilters.eventKinds)),
-          IconSelect("tier", UiState.eventTier, Val(LayerFilters.tiers)),
-          undatedBox(UiState.eventsUndated, "events")
+          IconSelect(com.histmersion.web.IconSelect.Name("event kind"), UiState.eventKind, Val(LayerFilters.eventKinds)),
+          IconSelect(com.histmersion.web.IconSelect.Name("tier"), UiState.eventTier, Val(LayerFilters.tiers)),
+          undatedBox(UiState.eventsUndated, com.histmersion.web.ViewportToggle.UndatedBoxWhat("events"))
         )
       case MapLayer.Notes => Nil
     div(
@@ -149,7 +149,7 @@ object ViewportToggle:
     )
 
   // `var`: the pending debounce timer of the moveend handler below
-  private var timer: com.histmersion.web.ViewportToggle.Timer = 0
+  private var timer: com.histmersion.web.ViewportToggle.Timer = com.histmersion.web.ViewportToggle.Timer(0)
 
   /** "On the map" (only the sources in the map's view) or "Everywhere": the results follow the map's view while it is
     * on.
@@ -184,7 +184,7 @@ object ViewportToggle:
         aria.label := "Map layers",
         cls("is-open") <-- open.signal,
         // on a phone this panel is the map & tools drawer, and this its heading
-        MobileChrome.drawerHead("map & tools"),
+        MobileChrome.drawerHead(com.histmersion.web.MobileChrome.Name("map & tools")),
         div(
           cls := "layers-head",
           h2(cls := "layers-title", "Layers"),
@@ -193,7 +193,7 @@ object ViewportToggle:
             cls := "btn btn--bare btn--icon",
             aria.label := "close the layers",
             "✕",
-            onClick --> (_ => open.set(false))
+            onClick --> (_ => open.set(com.histmersion.web.ViewportToggle.Open(false)))
           )
         ),
         div(
@@ -225,14 +225,14 @@ object ViewportToggle:
         val inner = Option(e.target)
           .collect { case el: dom.Element => el }
           .exists(_.closest(".map-options-anchor, .icon-select") != null)
-        if e.key == "Escape" && open.now() && !Viewport.narrowNow && !inner then open.set(false)
+        if e.key == "Escape" && open.now() && !Viewport.narrowNow && !inner then open.set(com.histmersion.web.ViewportToggle.Open(false))
       },
       documentEvents(_.onPointerDown) --> { e =>
         val t = e.target.asInstanceOf[dom.Element]
         if open.now() && !Viewport.narrowNow && t != null && t.closest(
             ".layers-anchor, .icon-select-menu, .map-options"
           ) == null
-        then open.set(false)
+        then open.set(com.histmersion.web.ViewportToggle.Open(false))
       },
       onMountUnmountCallbackWithState(
         mount = _ =>
@@ -264,7 +264,7 @@ object ViewportToggle:
                 // minLon > maxLon means the saved viewport crossed the antimeridian: the map needs
                 // a monotonically increasing east bound.
                 val east = if parts(0) > parts(2) then parts(2) + 360 else parts(2)
-                map.fitBounds(GeoBounds(parts(1), parts(0), parts(3), east), 0, map.maxZoom, animate = false)
+                map.fitBounds(GeoBounds(parts(1), parts(0), parts(3), east), com.histmersion.web.map.MapSurface.FitBoundsPadding(0), map.maxZoom, animate = com.histmersion.web.map.MapSurface.FitBoundsAnimate(false))
               else UiState.set(UiState.bbox := Some(bboxOf(map)))()
             sub
           },

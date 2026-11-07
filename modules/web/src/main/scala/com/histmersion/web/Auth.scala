@@ -42,10 +42,10 @@ object Auth:
   private[web] def currentHeader: Option[(com.histmersion.web.Auth.HeaderName, com.histmersion.web.Auth.HeaderText)] = header(UiState.apiKey.now())
 
   /** Set when the server refused the key we sent (or refused a write because we sent none). */
-  val refused: Var[com.histmersion.web.Auth.Refused] = Var(false)
+  val refused: Var[com.histmersion.web.Auth.Refused] = Var(com.histmersion.web.Auth.Refused(false))
 
   def useKey(key: com.histmersion.web.Auth.ApiKey): Unit =
-    refused.set(false)
+    refused.set(com.histmersion.web.Auth.Refused(false))
     UiState.set(UiState.apiKey := Some(key.trim).filter(_.nonEmpty))()
 
   def forget(): Unit = UiState.set(UiState.apiKey := None)()
@@ -54,7 +54,7 @@ object Auth:
     * been given a key since the page loaded, so it is now known to be required.
     */
   private[web] def rejected(): Unit =
-    refused.set(true)
+    refused.set(com.histmersion.web.Auth.Refused(true))
     required.set(true)
     forget()
     WindowManager.open(WindowKey.ApiKey)

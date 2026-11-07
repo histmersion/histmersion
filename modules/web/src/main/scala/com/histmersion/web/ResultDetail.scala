@@ -22,10 +22,10 @@ object ResultDetail:
 
   /** Pure: what the item is, for the actions' names. */
   def kindOf(t: Preview.Target): com.histmersion.api.UiLabels.Text = t match
-    case _: Preview.Target.Source  => "source"
-    case _: Preview.Target.Article => "article"
-    case _: Preview.Target.Place   => "place"
-    case _: Preview.Target.Event   => "event"
+    case _: Preview.Target.Source  => com.histmersion.api.UiLabels.Text("source")
+    case _: Preview.Target.Article => com.histmersion.api.UiLabels.Text("article")
+    case _: Preview.Target.Place   => com.histmersion.api.UiLabels.Text("place")
+    case _: Preview.Target.Event   => com.histmersion.api.UiLabels.Text("event")
 
   private def pin(t: Preview.Target, from: dom.Element): Unit = t match
     case Preview.Target.Source(ck)    => WindowManager.open(WindowKey.Source(ck))

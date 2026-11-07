@@ -60,7 +60,7 @@ object Router:
         if open != UiState.open.now() then UiState.open.set(open)
         UiState.navigate(
           to.path + (if Route.parse(path).contains(to) then window.location.search else ""),
-          push = false
+          push = com.histmersion.web.UiState.NavigatePush(false)
         )
         query.set(window.location.search)
         show(to)
@@ -77,7 +77,7 @@ object Router:
     dom.document.title = s"${title(r)} · Histmersion"
 
   /** Go to page `r`: a step in the history, unless `push` is false. */
-  def go(r: Route, push: com.histmersion.web.Router.Push = true, search: com.histmersion.web.Pages.UrlQuery = ""): Unit =
+  def go(r: Route, push: com.histmersion.web.Router.Push = com.histmersion.web.Router.Push(true), search: com.histmersion.web.Pages.UrlQuery = com.histmersion.web.Pages.UrlQuery("")): Unit =
     if r.serverPage then window.location.assign(r.path)
     else
       UiState.navigate(r.path + search, push)
@@ -105,17 +105,17 @@ object Router:
 
   /** A page's name, before its content has said a better one. */
   def title(r: Route): com.histmersion.api.UiLabels.Text = r match
-    case Route.Explore     => "Explore"
-    case Route.Library(s)  => if s == LibrarySection.Sources then "Library" else s.label
-    case Route.Research(s) => if s == ResearchSection.Overview then "Research" else s.label
+    case Route.Explore     => com.histmersion.api.UiLabels.Text("Explore")
+    case Route.Library(s)  => if s == LibrarySection.Sources then com.histmersion.api.UiLabels.Text("Library") else s.label
+    case Route.Research(s) => if s == ResearchSection.Overview then com.histmersion.api.UiLabels.Text("Research") else s.label
     case Route.Activity(t) => t.label
     case Route.Settings(s) => s.label
-    case Route.Setup       => "Set up Histmersion"
+    case Route.Setup       => com.histmersion.api.UiLabels.Text("Set up Histmersion")
     case Route.Goal(slug)  => s"Goal · ${com.histmersion.api.Wording.humanize(slug)}"
-    case Route.Run(_)      => "Agent run"
+    case Route.Run(_)      => com.histmersion.api.UiLabels.Text("Agent run")
     case Route.Manager(id) => com.histmersion.api.Wording.manager(id)
-    case Route.Job(_)      => "Background job"
-    case Route.Place(_)    => "Place"
-    case Route.Event(_)    => "Event"
-    case Route.Source(_)   => "Source"
-    case Route.Article(_)  => "Article"
+    case Route.Job(_)      => com.histmersion.api.UiLabels.Text("Background job")
+    case Route.Place(_)    => com.histmersion.api.UiLabels.Text("Place")
+    case Route.Event(_)    => com.histmersion.api.UiLabels.Text("Event")
+    case Route.Source(_)   => com.histmersion.api.UiLabels.Text("Source")
+    case Route.Article(_)  => com.histmersion.api.UiLabels.Text("Article")

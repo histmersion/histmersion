@@ -211,7 +211,7 @@ final private[maplibre] class GlShapes(gl: GlMap, val id: GlShapes.Id, val look:
     (a eq b) || {
       def sig(g: js.Any): com.histmersion.web.map.maplibre.GlShapes.GeometrySignature =
         val d = g.asInstanceOf[js.Dynamic]
-        if js.isUndefined(d) || d == null then ""
+        if js.isUndefined(d) || d == null then com.histmersion.web.map.maplibre.GlShapes.GeometrySignature("")
         else
           val sb = StringBuilder(d.selectDynamic("type").toString)
           def walk(c: js.Dynamic, depth: com.histmersion.web.map.maplibre.GlShapes.SameGeometrySigWalkDepth): Unit =
@@ -222,7 +222,7 @@ final private[maplibre] class GlShapes(gl: GlMap, val id: GlShapes.Id, val look:
                 if js.typeOf(arr(0)) == "number" then sb.append(':').append(arr.mkString(","))
                 else { walk(arr(0), depth + 1); if arr.length > 1 then walk(arr(arr.length - 1), depth + 1) }
               sb.append(']')
-          walk(d.coordinates, 0)
+          walk(d.coordinates, com.histmersion.web.map.maplibre.GlShapes.SameGeometrySigWalkDepth(0))
           sb.toString
       sig(a) == sig(b)
     }

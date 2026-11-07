@@ -35,9 +35,9 @@ object BackupsSection:
       cls := "settings-section",
       onMountCallback(_ => load()),
       SettingsForm(
-        "How many to keep",
+        com.histmersion.web.settings.SettingsForm.ApplyTitle("How many to keep"),
         Some("Each backup is a full copy of the database; the oldest are deleted after a new one."),
-        List(SettingsForm.Item("backups.keep", Some("Backups kept"), Some("0 keeps every one.")))
+        List(SettingsForm.Item(com.histmersion.web.settings.SettingsForm.Item.Key("backups.keep"), Some(com.histmersion.web.settings.SettingsForm.Item.Name("Backups kept")), Some(com.histmersion.web.settings.SettingsForm.Item.Help("0 keeps every one."))))
       ),
       sectionTag(
         cls := "settings-card",

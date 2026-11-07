@@ -43,7 +43,7 @@ object ConfigCmd:
       c.configReload.flatMap { r =>
         Output.emit(json, r)(ReloadMarkdown.report)
         if r.errors.isEmpty then Right(())
-        else Left(Cli.Error("the config was not reloaded", exitCode = ExitCode.Refused))
+        else Left(Cli.Error(com.histmersion.cli.Cli.Error.Message("the config was not reloaded"), exitCode = ExitCode.Refused))
       }
     }
   }

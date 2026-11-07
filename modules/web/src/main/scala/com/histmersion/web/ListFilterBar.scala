@@ -90,7 +90,7 @@ object ListFilterBar:
       field: Field[List[com.histmersion.web.ListFilterBar.FieldName]],
       show: com.histmersion.web.ListFilterBar.Choice => com.histmersion.web.ListFilterBar.ChoiceLabel = UiLabels.label,
       hint: com.histmersion.web.ListFilterBar.Hint => Option[com.histmersion.web.ListFilterBar.Hint] = _ => None,
-      about: com.histmersion.web.ListFilterBar.About = ""
+      about: com.histmersion.web.ListFilterBar.About = com.histmersion.web.ListFilterBar.About("")
   ): HtmlElement =
     val items =
       counts.combineWith(field.signal).map((c, sel) => chipItems(c, sel).map((v, n) => (v, n, sel.contains(v))))
@@ -124,7 +124,7 @@ object ListFilterBar:
       field: Field[Option[com.histmersion.web.ListFilterBar.FieldName]],
       show: com.histmersion.web.ListFilterBar.Choice => com.histmersion.web.ListFilterBar.ChoiceLabel = UiLabels.label,
       hint: com.histmersion.web.ListFilterBar.Hint => Option[com.histmersion.web.ListFilterBar.Hint] = _ => None,
-      about: com.histmersion.web.ListFilterBar.About = ""
+      about: com.histmersion.web.ListFilterBar.About = com.histmersion.web.ListFilterBar.About("")
   ): HtmlElement =
     select(
       cls := "field list-select",

@@ -46,9 +46,9 @@ object ActivityView:
   def when(e: Entry, hm: com.histmersion.web.ActivityView.Clock): com.histmersion.web.ActivityView.When = e.entryKind match
     case Some(EntryKind.Run | EntryKind.Job) =>
       e.state match
-        case "running"   => "Running"
-        case "queued"    => "Waiting its turn"
-        case "waiting"   => "Waits for you"
+        case "running"   => com.histmersion.web.ActivityView.When("Running")
+        case "queued"    => com.histmersion.web.ActivityView.When("Waiting its turn")
+        case "waiting"   => com.histmersion.web.ActivityView.When("Waits for you")
         case "paused"    => s"Paused · $hm"
         case "failed"    => s"Problem · $hm"
         case "cancelled" => s"Cancelled · $hm"
@@ -68,9 +68,9 @@ object ActivityView:
     if !controllable || e.job.isEmpty then Nil
     else
       e.state match
-        case "running"            => List("pause", "cancel")
-        case "paused"             => List("resume", "cancel")
-        case "queued" | "waiting" => List("cancel")
+        case "running"            => List(com.histmersion.web.ActivityView.Action("pause"), com.histmersion.web.ActivityView.Action("cancel"))
+        case "paused"             => List(com.histmersion.web.ActivityView.Action("resume"), com.histmersion.web.ActivityView.Action("cancel"))
+        case "queued" | "waiting" => List(com.histmersion.web.ActivityView.Action("cancel"))
         case _                    => Nil
 
   /** What the row says it is, in words: agent work, a background job, a note, a decision. */
@@ -307,7 +307,7 @@ object ActivityView:
           RouteLink(Route.Activity(tab), "show everything")
         )
       ),
-      list(feed, "Nothing here yet."),
+      list(feed, com.histmersion.web.ActivityView.Message("Nothing here yet.")),
       details(ui)
     )
 
@@ -325,17 +325,17 @@ object ActivityView:
   /** The overview's few latest entries, linking to the whole list. */
   def short(limit: com.histmersion.api.Paging.Limit): HtmlElement =
     val feed = Feed(Activity.Show.Everything, None, limit)
-    div(cls := "activity-short", polled(feed), list(feed, "Nothing has happened yet."))
+    div(cls := "activity-short", polled(feed), list(feed, com.histmersion.web.ActivityView.Message("Nothing has happened yet.")))
 
   /** A goal's slice of the list. */
   def history(goal: com.histmersion.api.automation.Goal.Slug, limit: com.histmersion.api.Paging.Limit): HtmlElement =
     val feed = Feed(Activity.Show.Everything, Some(goal), limit)
-    div(cls := "activity-history", polled(feed), list(feed, "Nothing has happened for this goal yet."))
+    div(cls := "activity-history", polled(feed), list(feed, com.histmersion.web.ActivityView.Message("Nothing has happened for this goal yet.")))
 
   /** The overview's chips: each a link to the whole list, shown that way. */
   def shortChips(ui: UiConfig): HtmlElement =
     val counts = Var(Activity.Counts())
     div(
-      onMountCallback(_ => ApiClient.activity(None, None, None, Some(1), None).foreach(p => counts.set(p.counts))),
+      onMountCallback(_ => ApiClient.activity(None, None, None, Some(com.histmersion.api.Paging.Limit(1)), None).foreach(p => counts.set(p.counts))),
       chips(ui, None, None, counts.signal)
     )

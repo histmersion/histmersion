@@ -52,7 +52,7 @@ object EventLayer:
         fillOpacity = 0.06,
         lineWidth = 1.5,
         lineOpacity = 0.55,
-        colour = Some(com.histmersion.web.ui.ThemeTokens("--accent")),
+        colour = Some(com.histmersion.web.ui.ThemeTokens(com.histmersion.web.ui.ThemeTokens.Name("--accent"))),
         dash = List(2.7, 2.7)
       )
     )
@@ -153,12 +153,12 @@ object EventLayer:
         }
       }
       .getOrElse(false)
-    val el = DomMarker.element("hd-event-wrap", EventPlayback.html(e, a))
+    val el = DomMarker.element(com.histmersion.web.map.DomMarker.ElementCls("hd-event-wrap"), EventPlayback.html(e, a))
     val marker = DomMarker(e.lat.value, e.lon.value, el)
     // a regional label under the local ones: the battle stays readable inside its war
     marker.setZ(if e.scale == EventScale.Regional then 1 else 2)
     pane.add(marker)
-    val s = Shown(marker, outline, a, 0)
+    val s = Shown(marker, outline, a, com.histmersion.web.EventLayer.Shown.Slot(0))
     MapLabels.trackEvent(e.id, marker, EventPlayback.rank(e, start), () => nameOf(s))
     s
 
@@ -178,7 +178,7 @@ object EventLayer:
   /** The visibility, as `--a` on the label and the outline's own. */
   private def setAlpha(id: com.histmersion.api.catalogue.Event.Id, s: Shown, a: com.histmersion.web.EventLayer.Alpha): Unit =
     labelOf(s).foreach(_.style.setProperty("--a", a.toString))
-    if s.outline then outlines.foreach(_.restyle(id.value, "", a))
+    if s.outline then outlines.foreach(_.restyle(id.value, com.histmersion.web.map.ShapeFeature.Colour(""), a))
 
   /** The stacking slot, as `--i`, on the label. */
   private def setSlot(s: Shown, slot: com.histmersion.web.EventLayer.Slot): Unit =

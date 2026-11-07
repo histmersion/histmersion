@@ -56,9 +56,9 @@ object SetupPage:
   def choicesOf(p: ConfigEdit.Page, ui: UiConfig): SetupChoices =
     def text(k: com.histmersion.web.setup.SetupPage.ChoicesOfTextK) = p.field(k).flatMap(_.effective).map(v => Draft.plain(Some(v)))
     SetupChoices(
-      email = text("acquire.contact-email").getOrElse(""),
+      email = text(com.histmersion.web.setup.SetupPage.ChoicesOfTextK("acquire.contact-email")).getOrElse(""),
       finders = FindersSection.finders(ui).map(f => f.id -> f.enabled).toMap,
-      area = text("basemap.bbox").orElse(Some("world")),
+      area = text(com.histmersion.web.setup.SetupPage.ChoicesOfTextK("basemap.bbox")).orElse(Some("world")),
       start = ui.mapStart,
       agents = text("agents.enabled").exists(Draft.isOn),
       calibre = text("cli.calibre.library-dir").getOrElse("")
@@ -66,7 +66,7 @@ object SetupPage:
 
   /** The areas offered (`basemap.setup-areas`). */
   def areasOf(p: ConfigEdit.Page): List[MapArea] =
-    p.field("basemap.setup-areas").flatMap(_.effective).toList.flatMap { json =>
+    p.field(com.histmersion.api.settings.ConfigEdit.Field.Key("basemap.setup-areas")).flatMap(_.effective).toList.flatMap { json =>
       scala.util.Try(js.JSON.parse(json).asInstanceOf[js.Array[String]].toList).getOrElse(Nil).flatMap(MapArea.parse)
     }
 
@@ -200,7 +200,7 @@ object SetupPage:
                   "Skip the rest, use the defaults",
                   title := "Saves what you chose so far; downloads nothing",
                   disabled <-- working.signal.combineWith(Auth.writable).map((b, w) => b || !w),
-                  onClick --> (_ => finish(download = false))
+                  onClick --> (_ => finish(download = com.histmersion.web.setup.SetupPage.ElementFinishDownload(false)))
                 )
             },
             child <-- step.signal.combineWith(finished.signal).map {
@@ -217,7 +217,7 @@ object SetupPage:
                   cls := "btn btn--primary setup-continue setup-finish",
                   child.text <-- working.signal.map(w => if w then "Saving…" else "Finish and start the downloads"),
                   disabled <-- working.signal.combineWith(Auth.writable).map((b, w) => b || !w),
-                  onClick --> (_ => finish(download = true))
+                  onClick --> (_ => finish(download = com.histmersion.web.setup.SetupPage.ElementFinishDownload(true)))
                 )
               case (s, None) =>
                 button(
@@ -240,7 +240,7 @@ object SetupPage:
 
   private def startDownload(d: SetupDownload): Future[com.histmersion.web.setup.SetupPage.Message] = d match
     case SetupDownload.Map(area)  => ApiClient.basemapFetch(Basemap.FetchQuery(bbox = Some(area))).map(_ => "started")
-    case SetupDownload.Boundaries => ApiClient.initData(fetch = true).map(_ => "started")
+    case SetupDownload.Boundaries => ApiClient.initData(fetch = com.histmersion.web.ApiClient.Fetch(true)).map(_ => "started")
     case SetupDownload.Events     =>
       ApiClient
         .eventCatalogues()
@@ -249,7 +249,7 @@ object SetupPage:
             .sequence(cs.map(_.id).filter(Set("gvp", "noaa")).map(ApiClient.importEvents))
             .map(js => s"${js.size} started")
         )
-    case SetupDownload.Pictures   => ApiClient.importMedia("wikidata").map(_ => "started")
+    case SetupDownload.Pictures   => ApiClient.importMedia(com.histmersion.web.ApiClient.Provider("wikidata")).map(_ => "started")
     case SetupDownload.MorePlaces =>
       Future.sequence(List("geonames", "wikidata").map(ApiClient.loadPlaces)).map(_ => "started")
 
@@ -317,7 +317,7 @@ object SetupPage:
               .map(f =>
                 check(
                   Wording.plugin(f.id),
-                  "",
+                  com.histmersion.web.setup.SetupPage.CheckDetail(""),
                   choices.signal.map(_.finders.getOrElse(f.id, f.enabled)),
                   b => choices.update(c => c.modify(_.finders).using(_ + (f.id -> b)))
                 )
@@ -363,7 +363,7 @@ object SetupPage:
             },
             p(cls := "muted", child.text <-- free.map(_.fold("")(b => s"Free on this disk: ${Backup.humanBytes(b)}")))
           ),
-          StartPlace.chooser(start, "setup-start")
+          StartPlace.chooser(start, com.histmersion.web.settings.StartPlace.ChooserName("setup-start"))
         )
       case SetupStep.Background =>
         div(
@@ -374,7 +374,7 @@ object SetupPage:
             legend("What to download"),
             check(
               SetupDownload.Boundaries.label,
-              "Borders of states through time, and the periods of the timeline.",
+              com.histmersion.web.setup.SetupPage.CheckDetail("Borders of states through time, and the periods of the timeline."),
               choices.signal.map(_.boundaries),
               b => choices.update(_.modify(_.boundaries).setTo(b))
             ),
@@ -386,13 +386,13 @@ object SetupPage:
             ),
             check(
               SetupDownload.Pictures.label,
-              "Pictures of the places on the map, each with its licence.",
+              com.histmersion.web.setup.SetupPage.CheckDetail("Pictures of the places on the map, each with its licence."),
               choices.signal.map(_.pictures),
               b => choices.update(_.modify(_.pictures).setTo(b))
             ),
             check(
               SetupDownload.MorePlaces.label,
-              "Several gigabytes; more modern places to search for.",
+              com.histmersion.web.setup.SetupPage.CheckDetail("Several gigabytes; more modern places to search for."),
               choices.signal.map(_.morePlaces),
               b => choices.update(_.modify(_.morePlaces).setTo(b))
             )
@@ -406,8 +406,8 @@ object SetupPage:
               "else works without them. Which model and which key they use is chosen later, in Settings › AI agents."
           ),
           check(
-            "Run research agents on this server",
-            "They start when the server is next restarted.",
+            com.histmersion.web.setup.SetupPage.CheckText("Run research agents on this server"),
+            com.histmersion.web.setup.SetupPage.CheckDetail("They start when the server is next restarted."),
             choices.signal.map(_.agents),
             b => choices.update(_.modify(_.agents).setTo(b))
           )

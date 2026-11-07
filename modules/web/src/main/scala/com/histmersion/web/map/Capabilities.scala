@@ -8,7 +8,7 @@ import scala.scalajs.js
   * then breaks the interaction budgets (docs/research-map-styles.md §3.2) and the app draws its cheapest map.
   * `renderer` is the string it was told.
   */
-final case class Capabilities(webgl: Capabilities.Webgl, software: Capabilities.Software, renderer: Capabilities.Renderer, webgl2: Capabilities.Webgl2 = true)
+final case class Capabilities(webgl: Capabilities.Webgl, software: Capabilities.Software, renderer: Capabilities.Renderer, webgl2: Capabilities.Webgl2 = com.histmersion.web.map.Capabilities.Webgl2(true))
 
 object Capabilities:
   /** Pure: why an engine that needs WebGL 2 cannot draw in a browser with `c`, or None when it can. */
@@ -24,7 +24,7 @@ object Capabilities:
 
   def withoutWebgl2(c: Capabilities): Option[com.histmersion.web.map.Capabilities.Renderer] =
     if !c.webgl then Some("this browser draws no WebGL (it is turned off, or its graphics driver is blocked)")
-    else if !c.webgl2 then Some("this browser draws WebGL 1 only, not WebGL 2")
+    else if !c.webgl2 then Some(com.histmersion.web.map.Capabilities.Renderer("this browser draws WebGL 1 only, not WebGL 2"))
     else None
 
   /** Pure: a WebGL renderer string that names a software rasteriser. */

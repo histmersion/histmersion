@@ -17,7 +17,7 @@ final case class SitePoint(
     lat: SitePoint.Lat,
     lon: SitePoint.Lon,
     period: Option[(SitePoint.PeriodPart1, SitePoint.PeriodPart2)],
-    undated: SitePoint.Undated = false
+    undated: SitePoint.Undated = com.histmersion.web.SitePoint.Undated(false)
 ):
   def name: com.histmersion.api.UiLabels.Text = if label.nonEmpty then label else id.getOrElse("site")
   def mid: Option[com.histmersion.web.PlaybackAreas.FractionalYear] = period.map((a, b) => (a + b) / 2)

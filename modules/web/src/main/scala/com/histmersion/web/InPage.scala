@@ -50,7 +50,7 @@ object InPage:
       .foreach(_.asInstanceOf[js.Dynamic].scrollIntoView(js.Dynamic.literal(behavior = "smooth", block = "center")))
 
   /** The index of the match after `current` among `count`, wrapping — pure. */
-  def nextIndex(current: com.histmersion.web.InPage.Index, count: com.histmersion.web.InPage.Count): com.histmersion.web.InPage.Index = if count <= 0 then -1 else (current + 1) % count
+  def nextIndex(current: com.histmersion.web.InPage.Index, count: com.histmersion.web.InPage.Count): com.histmersion.web.InPage.Index = if count <= 0 then com.histmersion.web.InPage.Index(-1) else (current + 1) % count
 
   /** Step to the next `<mark id="hl…">`, remembering the position on the root. */
   def nextMatch(root: dom.Element): Unit =

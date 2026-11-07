@@ -29,7 +29,7 @@ object BookmarksCmd:
       "period (`period --from -1200 --to -1150 --label 'the crisis years'`)"
   ) {
     (
-      TargetFlags.opts(ItemKind.Bookmarkable, views = true),
+      TargetFlags.opts(ItemKind.Bookmarkable, views = com.histmersion.cli.TargetFlags.Views(true)),
       Opts.option[String]("label", "Your name for it").orNone,
       Opts.option[String]("title", "What the item is called, when the collection does not hold it").orNone,
       Output.jsonFlag

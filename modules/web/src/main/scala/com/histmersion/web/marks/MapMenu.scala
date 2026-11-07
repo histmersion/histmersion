@@ -29,12 +29,12 @@ object MapMenu:
   type PointZoom = PointZoom.T
   object PointZoom extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
-  val locked: Var[com.histmersion.web.marks.MapMenu.Locked] = Var(false)
+  val locked: Var[com.histmersion.web.marks.MapMenu.Locked] = Var(com.histmersion.web.marks.MapMenu.Locked(false))
 
   def setLocked(on: com.histmersion.web.marks.MapMenu.SetLockedOn, surface: MapSurface): Unit =
     locked.set(on)
     surface.setLocked(on)
-    Flash.say(if on then "The map is locked: it does not move until you unlock it." else "The map moves again.")
+    Flash.say(if on then com.histmersion.web.ui.Flash.Text("The map is locked: it does not move until you unlock it.") else com.histmersion.web.ui.Flash.Text("The map moves again."))
 
   /** A point on the map, as a target. Pure. */
   def point(at: LatLon, zoom: com.histmersion.web.marks.MapMenu.PointZoom, span: Option[(com.histmersion.api.Years.Astronomical, com.histmersion.api.Years.Astronomical)]): Target =
@@ -58,28 +58,28 @@ object MapMenu:
     val here = point(at, surface.zoom, spanNow)
     List(
       ContextMenu.Entry(
-        "Bookmark this place",
+        com.histmersion.web.ui.ContextMenu.Entry.Label("Bookmark this place"),
         () =>
           writing(
             MyItems
-              .add(here.modify(_.from).setTo(None).modify(_.to).setTo(None), None, "Place on the map")
+              .add(here.modify(_.from).setTo(None).modify(_.to).setTo(None), None, com.histmersion.api.library.Title("Place on the map"))
               .foreach(_ => Flash.say("Bookmarked the place: it is in My library › Bookmarks."))
           )
       ),
-      ContextMenu.Entry("Add a note here", () => NoteEditor.write(here, "Place on the map")),
+      ContextMenu.Entry(com.histmersion.web.ui.ContextMenu.Entry.Label("Add a note here"), () => NoteEditor.write(here, com.histmersion.web.marks.NoteEditor.WriteTitle("Place on the map"))),
       ContextMenu.Separator,
       ContextMenu.Entry(
-        if locked.now() then "Unlock the map" else "Lock the map",
+        if locked.now() then com.histmersion.web.ui.ContextMenu.Entry.Label("Unlock the map") else com.histmersion.web.ui.ContextMenu.Entry.Label("Lock the map"),
         () => setLocked(!locked.now(), surface),
         pressed = Some(locked.now())
       ),
       ContextMenu.Entry(
-        "Start the map here",
+        com.histmersion.web.ui.ContextMenu.Entry.Label("Start the map here"),
         () => writing(startHere(surface, at)),
         hint = Some("Where the map opens, for everyone who opens Histmersion from this server")
       ),
       ContextMenu.Entry(
-        "Bookmark this view of the map",
+        com.histmersion.web.ui.ContextMenu.Entry.Label("Bookmark this view of the map"),
         () => SavedViews.save(SavedViews.suggestedName(UiState.q.now(), UiState.from.now(), UiState.to.now()))
       )
     )
@@ -91,13 +91,13 @@ object MapMenu:
       at.lat,
       wrap(at.lon),
       math.round(surface.zoom * 10) / 10.0,
-      "the view I chose"
+      com.histmersion.api.instance.MapStartConfig.Label("the view I chose")
     )
     SettingsStore
       .save(StartPlace.changes(c).map((k, v) => ConfigEdit.Change(k, Some(v))))
       .onComplete(r =>
         Flash.say(
-          r.fold(e => s"The start was not saved: ${SettingsStore.message(e)}", _ => "The map opens here from now on.")
+          r.fold(e => s"The start was not saved: ${SettingsStore.message(e)}", _ => com.histmersion.web.ui.Flash.Text("The map opens here from now on."))
         )
       )
 
@@ -112,7 +112,7 @@ object MapMenu:
           e.preventDefault()
           val r = box.getBoundingClientRect()
           val at = surface.unproject(ScreenPt(e.clientX - r.left, e.clientY - r.top))
-          ContextMenu.show("Map actions", entries(surface, at), e.clientX, e.clientY, Some(box))
+          ContextMenu.show(com.histmersion.web.ui.ContextMenu.ShowTitle("Map actions"), entries(surface, at), e.clientX, e.clientY, Some(box))
       }
     )
     box.addEventListener(
@@ -123,7 +123,7 @@ object MapMenu:
           e.preventDefault()
           val r = box.getBoundingClientRect()
           ContextMenu.show(
-            "Map actions",
+            com.histmersion.web.ui.ContextMenu.ShowTitle("Map actions"),
             entries(surface, surface.center),
             r.left + r.width / 2,
             r.top + r.height / 2,
@@ -134,7 +134,7 @@ object MapMenu:
     val ctrl = dom.document.createElement("div").asInstanceOf[dom.HTMLElement]
     ctrl.className = "map-actions-ctrl"
     surface.addControl(ctrl, Corner.TopLeft)
-    val _ = render(ctrl, ContextMenu.button("Map actions", () => entries(surface, surface.center), "map-actions-btn"))
+    val _ = render(ctrl, ContextMenu.button(com.histmersion.web.ui.ContextMenu.ButtonTitle("Map actions"), () => entries(surface, surface.center), com.histmersion.web.ui.ContextMenu.ButtonExtraCls("map-actions-btn")))
     val _ = render(
       box,
       div(
@@ -143,6 +143,6 @@ object MapMenu:
         role := "status",
         Icon(Icon.Lock),
         span("The map is locked"),
-        button(typ := "button", cls := "btn btn--sm map-unlock", "Unlock", onClick --> (_ => setLocked(false, surface)))
+        button(typ := "button", cls := "btn btn--sm map-unlock", "Unlock", onClick --> (_ => setLocked(com.histmersion.web.marks.MapMenu.SetLockedOn(false), surface)))
       )
     )

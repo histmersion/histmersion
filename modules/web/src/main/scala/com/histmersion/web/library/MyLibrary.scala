@@ -39,7 +39,7 @@ object MyLibrary:
   private def refresh(): Unit =
     LibraryLists.everything().foreach(n => everything.set(Some(n)))
     ApiClient
-      .unread("source", 1, 0)
+      .unread(com.histmersion.web.ApiClient.Kind("source"), com.histmersion.api.Paging.Limit(1), com.histmersion.api.Offset(0))
       .zip(ApiClient.unread("article", 1, 0))
       .foreach((s, a) => unread.set(Some(com.histmersion.api.RowCount(s.total + a.total))))
 

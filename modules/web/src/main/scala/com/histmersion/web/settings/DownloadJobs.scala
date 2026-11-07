@@ -35,7 +35,7 @@ object DownloadJobs:
   /** Read again now (after a download was started here). */
   def refresh(): Unit =
     ApiClient
-      .jobs(ListFilters.JobFilter(status = List("running", "queued", "paused"), kind = Kinds.map(_.value)), Some(20))
+      .jobs(ListFilters.JobFilter(status = List(com.histmersion.api.jobs.JobState.Wire("running"), com.histmersion.api.jobs.JobState.Wire("queued"), com.histmersion.api.jobs.JobState.Wire("paused")), kind = Kinds.map(_.value)), Some(com.histmersion.api.Paging.Limit(20)))
       .foreach { (js, _) =>
         jobs.set(js)
         if mounted && js.exists(_.status != "paused") then
@@ -56,7 +56,7 @@ object DownloadJobs:
             cls := "activity-list download-jobs-list",
             js.map { j =>
               val e = Entry(
-                s"job:${j.id}", "job", j.createdAt, state = j.status, what = j.kind.value,
+                s"job:${j.id}", com.histmersion.api.automation.Activity.Entry.Kind("job"), j.createdAt, state = j.status, what = j.kind.value,
                 text = j.progress.getOrElse(""), job = Some(j.id.value)
               )
               ActivityView.row(e, () => refresh())

@@ -30,7 +30,7 @@ object LayerFilters:
   def layerIcon(k: PointKind[?]): com.histmersion.web.LayerFilters.Icon = Icon.html(k.icon)
 
   val eventKinds: List[IconSelect.Opt] =
-    IconSelect.Opt("", "all", layerIcon(PointKinds.Events)) :: EventTaxonomy.groups.flatMap { g =>
+    IconSelect.Opt(com.histmersion.web.IconSelect.Opt.Value(""), com.histmersion.web.IconSelect.Opt.Label("all"), layerIcon(PointKinds.Events)) :: EventTaxonomy.groups.flatMap { g =>
       val under = Some(s"$g events")
       IconSelect.Opt(g, s"all $g", layerIcon(PointKinds.Events), under) ::
         EventTaxonomy.kinds
@@ -47,21 +47,21 @@ object LayerFilters:
     case _ => None
 
   val tiers: List[IconSelect.Opt] = List(
-    IconSelect.Opt("", "all", Icon.html(Icon.TierPair), hint = Some("Every event, attested or not.")),
+    IconSelect.Opt(com.histmersion.web.IconSelect.Opt.Value(""), com.histmersion.web.IconSelect.Opt.Label("all"), Icon.html(Icon.TierPair), hint = Some("Every event, attested or not.")),
     IconSelect.Opt(
       EventTier.Attested,
-      "attested by a source",
+      com.histmersion.web.IconSelect.Opt.Label("attested by a source"),
       """<span class="hd-badge hd-badge--square hd-ev hd-ev--attested opt-badge"></span>""",
       hint = tierMeaning(EventTier.Attested)
     ),
     IconSelect.Opt(
       EventTier.Catalogue,
-      "catalogue only",
+      com.histmersion.web.IconSelect.Opt.Label("catalogue only"),
       """<span class="hd-badge hd-badge--square hd-ev hd-ev--catalogue opt-badge"></span>""",
       hint = tierMeaning(EventTier.Catalogue)
     )
   )
   val siteTypes: List[IconSelect.Opt] =
-    IconSelect.Opt("", "all", layerIcon(PointKinds.Sites)) :: SiteTypes.all.map(t =>
+    IconSelect.Opt(com.histmersion.web.IconSelect.Opt.Value(""), com.histmersion.web.IconSelect.Opt.Label("all"), layerIcon(PointKinds.Sites)) :: SiteTypes.all.map(t =>
       IconSelect.Opt(t.id, t.label, badge(Shape.Circle, t.icon))
     )

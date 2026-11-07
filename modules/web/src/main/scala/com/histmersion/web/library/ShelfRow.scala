@@ -78,7 +78,7 @@ object ShelfRow:
       Target.item(m.kind, m.id.value),
       m.title,
       m.kind.label,
-      if m.read then "Read" else "Not read yet",
+      if m.read then com.histmersion.web.library.ShelfRow.Line("Read") else com.histmersion.web.library.ShelfRow.Line("Not read yet"),
       m.openedAt.fold("")(o => s"opened ${ago(o)}"),
       !m.read
     )
@@ -92,8 +92,8 @@ object ShelfRow:
       List(TableRow.authors(u.authors), u.year.fold("")(_.toString), YearFmt.period(u.periodStart, u.periodEnd))
         .filter(_.nonEmpty)
         .mkString(" · "),
-      "",
-      unread = true
+      com.histmersion.web.library.ShelfRow.When(""),
+      unread = com.histmersion.web.library.ShelfRow.Unread(true)
     )
 
   /** "Recently opened": the marks opened, last first. Pure. */

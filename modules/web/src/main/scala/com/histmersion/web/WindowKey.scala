@@ -72,21 +72,21 @@ enum WindowKey:
     case Article(slug)  => s"article:$slug"
     case Graph(ck)      => s"graph:$ck"
     case EditSource(ck) => s"edit:$ck"
-    case Jobs           => "jobs"
-    case Upload         => "upload"
-    case Acquire        => "acquire"
-    case Tasks          => "tasks"
-    case Log            => "log"
-    case ApiKey         => "key"
-    case About          => "about"
-    case Runs           => "runs"
+    case Jobs           => com.histmersion.web.WindowKey.Wire("jobs")
+    case Upload         => com.histmersion.web.WindowKey.Wire("upload")
+    case Acquire        => com.histmersion.web.WindowKey.Wire("acquire")
+    case Tasks          => com.histmersion.web.WindowKey.Wire("tasks")
+    case Log            => com.histmersion.web.WindowKey.Wire("log")
+    case ApiKey         => com.histmersion.web.WindowKey.Wire("key")
+    case About          => com.histmersion.web.WindowKey.Wire("about")
+    case Runs           => com.histmersion.web.WindowKey.Wire("runs")
     case Run(id)        => s"run:$id"
-    case Models         => "models"
-    case Approvals      => "approvals"
-    case Goals          => "goals"
+    case Models         => com.histmersion.web.WindowKey.Wire("models")
+    case Approvals      => com.histmersion.web.WindowKey.Wire("approvals")
+    case Goals          => com.histmersion.web.WindowKey.Wire("goals")
     case Goal(slug)     => s"goal:$slug"
-    case Merge          => "merge"
-    case Managers       => "managers"
+    case Merge          => com.histmersion.web.WindowKey.Wire("merge")
+    case Managers       => com.histmersion.web.WindowKey.Wire("managers")
     case Manager(id)    => s"manager:$id"
 
   /** The citekey or slug a window is about, if any. */
@@ -101,25 +101,25 @@ enum WindowKey:
     * it is loaded, `WindowManager.retitle`). Sentence case; never an identifier, which the title's tooltip carries.
     */
   def initialTitle: com.histmersion.web.WindowKey.Title = this match
-    case Source(_)     => "Source"
-    case Article(_)    => "Article"
-    case Graph(_)      => "Citation graph"
-    case EditSource(_) => "Edit a source"
-    case Jobs          => "Background jobs"
-    case Upload        => "Upload for OCR"
-    case Acquire       => "To acquire"
-    case Tasks         => "Backlog"
-    case Log           => "Worklog"
-    case ApiKey        => "API key"
-    case About         => "About Histmersion"
-    case Runs          => "Agent runs"
-    case Run(_)        => "Agent run"
-    case Models        => "AI models and limits"
-    case Approvals     => "Approvals"
-    case Goals         => "Research goals"
+    case Source(_)     => com.histmersion.web.WindowKey.Title("Source")
+    case Article(_)    => com.histmersion.web.WindowKey.Title("Article")
+    case Graph(_)      => com.histmersion.web.WindowKey.Title("Citation graph")
+    case EditSource(_) => com.histmersion.web.WindowKey.Title("Edit a source")
+    case Jobs          => com.histmersion.web.WindowKey.Title("Background jobs")
+    case Upload        => com.histmersion.web.WindowKey.Title("Upload for OCR")
+    case Acquire       => com.histmersion.web.WindowKey.Title("To acquire")
+    case Tasks         => com.histmersion.web.WindowKey.Title("Backlog")
+    case Log           => com.histmersion.web.WindowKey.Title("Worklog")
+    case ApiKey        => com.histmersion.web.WindowKey.Title("API key")
+    case About         => com.histmersion.web.WindowKey.Title("About Histmersion")
+    case Runs          => com.histmersion.web.WindowKey.Title("Agent runs")
+    case Run(_)        => com.histmersion.web.WindowKey.Title("Agent run")
+    case Models        => com.histmersion.web.WindowKey.Title("AI models and limits")
+    case Approvals     => com.histmersion.web.WindowKey.Title("Approvals")
+    case Goals         => com.histmersion.web.WindowKey.Title("Research goals")
     case Goal(slug)    => s"Goal · ${com.histmersion.api.Wording.humanize(slug)}"
-    case Merge         => "Merge another collection"
-    case Managers      => "Agent managers"
+    case Merge         => com.histmersion.web.WindowKey.Title("Merge another collection")
+    case Managers      => com.histmersion.web.WindowKey.Title("Agent managers")
     case Manager(id)   => com.histmersion.api.Wording.manager(id)
 
   /** The page this window mirrors, for "open in a new tab": a source's or an article's standalone page, a run's, a

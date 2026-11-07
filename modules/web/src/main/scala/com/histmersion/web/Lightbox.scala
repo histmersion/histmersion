@@ -79,13 +79,13 @@ object Lightbox:
     Item(
       attr(Full).filter(_.nonEmpty).getOrElse(src),
       alt,
-      a("title"),
-      a("credit"),
-      a("author"),
-      a("license"),
-      a("license-url"),
-      a("source-url"),
-      a("provider")
+      a(com.histmersion.web.Lightbox.AttrKey("title")),
+      a(com.histmersion.web.Lightbox.AttrKey("credit")),
+      a(com.histmersion.web.Lightbox.AttrKey("author")),
+      a(com.histmersion.web.Lightbox.AttrKey("license")),
+      a(com.histmersion.web.Lightbox.AttrKey("license-url")),
+      a(com.histmersion.web.Lightbox.AttrKey("source-url")),
+      a(com.histmersion.web.Lightbox.AttrKey("provider"))
     )
 
   /** Pure: the caption under the picture (escaped): its title, then the credit (and the author when the credit does not
@@ -106,7 +106,7 @@ object Lightbox:
         )} ↗</a>"""
     }
     val line = List(who, lic, page).flatten
-    if title.isEmpty && line.isEmpty then ""
+    if title.isEmpty && line.isEmpty then com.histmersion.web.Lightbox.CaptionHtml("")
     else
       s"""<figcaption class="lightbox-caption">${title.getOrElse("")}""" +
         (if line.isEmpty then ""

@@ -32,4 +32,3 @@ object Store:
     def put(key: String, value: String): Unit = m(key) = value
     def remove(key: String): Unit = { val _ = m.remove(key) }
 
-  object Memory:

@@ -43,7 +43,7 @@ object IngestCmd:
       acquireItem: Option[com.histmersion.domain.EnrichSource.Closed.Acquire.ItemNumber] = None
   ) : Either[Cli.Error, Unit] =
     if citekey.trim.isEmpty then
-      Left(Cli.Error("uploading a file needs --citekey to store it under", exitCode = ExitCode.Usage))
+      Left(Cli.Error(com.histmersion.cli.Cli.Error.Message("uploading a file needs --citekey to store it under"), exitCode = ExitCode.Usage))
     // Refused HERE, not by the server: a zero-length request body leaves the server's netty
     // connection mis-framed, so the NEXT upload on it reads as empty too (see
     // ZeroLengthUploadSuite). Never sending one keeps that hazard off our own wire entirely.
@@ -104,7 +104,7 @@ object IngestCmd:
 
   private def controls (using console: Console) =
     control(
-      "pause",
+      com.histmersion.api.Api.JobControl.Action("pause"),
       "Pause a long background job (a picture or event import, a base-map download, an acquisition " +
         "re-check, the init job's gazetteer loads) after the part it is on — or an agent run; it keeps what it did"
     ) orElse

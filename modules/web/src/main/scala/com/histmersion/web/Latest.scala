@@ -12,7 +12,7 @@ import scala.util.{Failure, Success, Try}
   */
 final class Latest:
   // `var`: the newest ticket handed out
-  private var newest: com.histmersion.web.Latest.Ticket = 0
+  private var newest: com.histmersion.web.Latest.Ticket = com.histmersion.web.Latest.Ticket(0)
 
   /** A new request: the tickets handed out before it are superseded. */
   def start(): com.histmersion.web.Latest.Ticket = { newest += 1; newest }

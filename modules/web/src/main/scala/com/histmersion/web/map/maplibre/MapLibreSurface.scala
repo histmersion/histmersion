@@ -185,7 +185,7 @@ final class MapLibreSurface(el: dom.HTMLElement, maxZoom0: MapLibreSurface.MaxZo
       .toOption
       .map(_ => Option(gl.getLayoutProperty(id, "visibility")).filterNot(js.isUndefined).fold("visible")(_.toString))
   def baseMapDrawn(id: com.histmersion.web.map.MapSurface.LayerId): com.histmersion.web.map.MapSurface.DrawnCount =
-    if gl.getLayer(id).isEmpty then 0
+    if gl.getLayer(id).isEmpty then com.histmersion.web.map.MapSurface.DrawnCount(0)
     else
       gl.queryRenderedFeatures(
         js.undefined.asInstanceOf[js.Array[Double]],
@@ -196,16 +196,16 @@ final class MapLibreSurface(el: dom.HTMLElement, maxZoom0: MapLibreSurface.MaxZo
   // ── events ───────────────────────────────────────────────────────────────────────────────────
 
   private def name(k: MapEventKind): com.histmersion.web.map.maplibre.MapLibreSurface.EventName = k match
-    case MapEventKind.MoveStart    => "movestart"
-    case MapEventKind.Move         => "move"
-    case MapEventKind.MoveEnd      => "moveend"
-    case MapEventKind.ZoomStart    => "zoomstart"
-    case MapEventKind.ZoomEnd      => "zoomend"
-    case MapEventKind.Resize       => "resize"
-    case MapEventKind.Click        => "click"
-    case MapEventKind.PointerMove  => "mousemove"
-    case MapEventKind.PointerOut   => "mouseout"
-    case MapEventKind.BaseMapReady => "hd-basemap"
+    case MapEventKind.MoveStart    => com.histmersion.web.map.maplibre.MapLibreSurface.EventName("movestart")
+    case MapEventKind.Move         => com.histmersion.web.map.maplibre.MapLibreSurface.EventName("move")
+    case MapEventKind.MoveEnd      => com.histmersion.web.map.maplibre.MapLibreSurface.EventName("moveend")
+    case MapEventKind.ZoomStart    => com.histmersion.web.map.maplibre.MapLibreSurface.EventName("zoomstart")
+    case MapEventKind.ZoomEnd      => com.histmersion.web.map.maplibre.MapLibreSurface.EventName("zoomend")
+    case MapEventKind.Resize       => com.histmersion.web.map.maplibre.MapLibreSurface.EventName("resize")
+    case MapEventKind.Click        => com.histmersion.web.map.maplibre.MapLibreSurface.EventName("click")
+    case MapEventKind.PointerMove  => com.histmersion.web.map.maplibre.MapLibreSurface.EventName("mousemove")
+    case MapEventKind.PointerOut   => com.histmersion.web.map.maplibre.MapLibreSurface.EventName("mouseout")
+    case MapEventKind.BaseMapReady => com.histmersion.web.map.maplibre.MapLibreSurface.EventName("hd-basemap")
 
   // the base map's "drawn" listeners (our own event: the first `idle` after a new style)
   private val ready = mutable.ListBuffer.empty[MapEvent => Unit]
@@ -296,7 +296,7 @@ final class MapLibreSurface(el: dom.HTMLElement, maxZoom0: MapLibreSurface.MaxZo
               val _ = dom.window.setTimeout(() => if mine == generation && !leaving then make(retry = false), 1000)
             } else dom.console.error(s"the base map could not be made: ${e.getMessage}")
       }
-    make(retry = true)
+    make(retry = com.histmersion.web.map.maplibre.MapLibreSurface.SetBaseMapMakeRetry(true))
 
   // ── shapes ───────────────────────────────────────────────────────────────────────────────────
 

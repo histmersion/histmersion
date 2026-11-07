@@ -11,4 +11,3 @@ trait ScreenPoint extends js.Object:
   val x: com.histmersion.web.map.ScreenPt.X = js.native
   val y: com.histmersion.web.map.ScreenPt.Y = js.native
 
-object ScreenPoint:
