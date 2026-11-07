@@ -1,0 +1,475 @@
+## modules/web/src/main/scala/com/histmersion/web/Icon.scala
+98:10 [E007] 98 |          "M5 3.5h14a1.5 1.5 0 0 1 1.5 1.5v14a1.5 1.5 0 0 1-1.5 1.5H5a1.5 1.5 0 0 1-1.5-1.5V5A1.5 1.5 0 0 1 5 3.5z", / |Found:    ( / |  "M5 3.5h14a1.5 1.5 0 0 1 1.5 1.5v14a1.5 1.5 0 0 1-1.5 1.5H5a1.5 1.5 0 0 1-1.5-1.5V5A1.5 1.5 0 0 1 5 3.5z" / |   : String) / |Required: com.histmersion.web.Icon.Paths.T
+95:7 [-] 95 |  case PointEvent / |       enum case does not extend its enum class Icon
+191:4 [E007] 191 |    s"""<svg class="icon" viewBox="0 0 24 24" aria-hidden="true">${i.paths / |    Found:    String / |    Required: com.histmersion.web.Icon.Html / 192 |        .map(d => s"""<path d="$d"/>""") / 193 |        .mkString}</svg>"""
+201:41 [E007] 201 |      i.paths.map(d => svg.path(svg.d := d)) / |                        Found:    (d : com.histmersion.web.Icon.Paths) / |                        Required: String
+
+## modules/web/src/main/scala/com/histmersion/web/IconSelect.scala
+62:19 [E008] 62 |    val p = prefix.toLowerCase / |value toLowerCase is not a member of com.histmersion.web.IconSelect.Prefix
+67:24 [E008] 67 |        .map(i => (from + i) % n) / |         value + is not a member of com.histmersion.web.IconSelect.Index
+68:33 [E008] 68 |        .find(i => opts(i).label.toLowerCase.startsWith(p)) / |value toLowerCase is not a member of com.histmersion.web.IconSelect.Opt.Label
+69:38 [E007] 69 |        .orElse(Option.when(opts.lift(from).exists(_.label.toLowerCase.startsWith(p)))(from)) / |                 Found:    (from : com.histmersion.web.IconSelect.Index) / |                 Required: Int
+74:7 [E172] 74 |    if n == 0 then None / |Values of types com.histmersion.web.IconSelect.Step and Int cannot be compared with == or !=
+77:13 [E172] 77 |        case "ArrowDown" => Some((at + 1).min(n - 1)) / |Values of types String and com.histmersion.web.IconSelect.Key cannot be compared with == or !=
+77:37 [E008] 77 |        case "ArrowDown" => Some((at + 1).min(n - 1)) / |         value + is not a member of com.histmersion.web.IconSelect.Index
+78:13 [E172] 78 |        case "ArrowUp"   => Some((at - 1).max(0)) / |Values of types String and com.histmersion.web.IconSelect.Key cannot be compared with == or !=
+78:37 [E008] 78 |        case "ArrowUp"   => Some((at - 1).max(0)) / |         value - is not a member of com.histmersion.web.IconSelect.Index
+79:13 [E172] 79 |        case "Home"      => Some(com.histmersion.web.IconSelect.Index(0)) / |Values of types String and com.histmersion.web.IconSelect.Key cannot be compared with == or !=
+80:13 [E172] 80 |        case "End"       => Some(n - 1) / |Values of types String and com.histmersion.web.IconSelect.Key cannot be compared with == or !=
+80:35 [E008] 80 |        case "End"       => Some(n - 1) / |          value - is not a member of com.histmersion.web.IconSelect.Step
+91:13 [E053] 91 |      field: Field[Option[com.histmersion.web.IconSelect.Field]], / |      com.histmersion.web.IconSelect.Field does not take type parameters
+109:101 [E008] 109 |    def chosenIndex(): com.histmersion.web.IconSelect.Index = opts.now().indexWhere(_.value == field.now().getOrElse("")).max(0) / |     value now is not a member of com.histmersion.web.IconSelect.Field
+118:29 [E007] 118 |          Preview.underFit(r.left, r.top, r.bottom, r.width, w, h, dom.window.innerWidth, dom.window.innerHeight) / |                    Found:    Double / |                    Required: com.histmersion.web.Preview.ScreenPixels
+118:37 [E007] 118 |          Preview.underFit(r.left, r.top, r.bottom, r.width, w, h, dom.window.innerWidth, dom.window.innerHeight) / |                     Found:    Double / |                     Required: com.histmersion.web.Preview.UnderFitTop
+118:44 [E007] 118 |          Preview.underFit(r.left, r.top, r.bottom, r.width, w, h, dom.window.innerWidth, dom.window.innerHeight) / |                  Found:    Double / |                  Required: com.histmersion.web.Preview.UnderFitBottom
+118:54 [E007] 118 |          Preview.underFit(r.left, r.top, r.bottom, r.width, w, h, dom.window.innerWidth, dom.window.innerHeight) / |                     Found:    Double / |                     Required: com.histmersion.web.Preview.ElementSize
+118:61 [E007] 118 |          Preview.underFit(r.left, r.top, r.bottom, r.width, w, h, dom.window.innerWidth, dom.window.innerHeight) / |                     Found:    (w : Double) / |                     Required: com.histmersion.web.Preview.ElementSize
+118:64 [E007] 118 |          Preview.underFit(r.left, r.top, r.bottom, r.width, w, h, dom.window.innerWidth, dom.window.innerHeight) / |                       Found:    (h : Double) / |                       Required: com.histmersion.web.Preview.UnderFitH
+118:78 [E007] 118 |          Preview.underFit(r.left, r.top, r.bottom, r.width, w, h, dom.window.innerWidth, dom.window.innerHeight) / |                   Found:    Double / |                   Required: com.histmersion.web.Preview.ViewportWidth
+118:101 [E007] 118 |          Preview.underFit(r.left, r.top, r.bottom, r.width, w, h, dom.window.innerWidth, dom.window.innerHeight) / |                      Found:    Double / |                      Required: com.histmersion.web.Preview.UnderFitVh
+131:28 [E007] 131 |      active.set(chosenIndex()) / |                 Found:    com.histmersion.web.IconSelect.Index / |                 Required: Int
+148:19 [E008] 148 |        if refocus && buttonEl != null then buttonEl.focus() / |    value && is not a member of com.histmersion.web.IconSelect.Refocus
+151:22 [E007] 151 |      opts.now().lift(i).foreach(o => UiState.set(field := Option(o.value).filter(_.nonEmpty))()) / |                  Found:    (i : com.histmersion.web.IconSelect.Index) / |                  Required: Int
+156:13 [E007] 156 |      step(e.key, active.now(), n) match / |           Found:    String / |           Required: com.histmersion.web.IconSelect.Key
+156:28 [E007] 156 |      step(e.key, active.now(), n) match / |                  Found:    Int / |                  Required: com.histmersion.web.IconSelect.Index
+156:32 [E007] 156 |      step(e.key, active.now(), n) match / |                         Found:    (n : Int) / |                         Required: com.histmersion.web.IconSelect.Step
+159:21 [E007] 159 |          active.set(i) / |        Found:    (com.raquo.laminar.api.L.i : / |          com.raquo.laminar.tags.HtmlTag[org.scalajs.dom.HTMLElement]) / |        Required: Int
+163:71 [E007] 163 |            case "Enter" | " " => e.preventDefault(); choose(active.now()) / |                        Found:    Int / |                        Required: com.histmersion.web.IconSelect.Index
+170:72 [E007] 170 |              typeAhead(opts.now(), if typed.length == 1 then active.now() else (active.now() - 1 + n) % n, typed) / |                        Found:    Int / |                        Required: com.histmersion.web.IconSelect.Index
+170:80 [E007] 170 |              typeAhead(opts.now(), if typed.length == 1 then active.now() else (active.now() - 1 + n) % n, typed) / |                        Found:    Int / |                        Required: com.histmersion.web.IconSelect.Index
+170:108 [E007] 170 |              typeAhead(opts.now(), if typed.length == 1 then active.now() else (active.now() - 1 + n) % n, typed) / |                       Found:    (typed : String) / |                       Required: com.histmersion.web.IconSelect.Prefix
+175:36 [E008] 175 |      opts.signal.combineWith(field.signal).map((os, v) => os.find(_.value == v.getOrElse("")).orElse(os.headOption)) / |  value signal is not a member of com.histmersion.web.IconSelect.Field
+183:22 [E007] 183 |        aria.label := name, / |                Found:    (name : com.histmersion.web.IconSelect.Name) / |                Required: String
+184:41 [E008] 184 |        title <-- disabled.map(d => if d && why.nonEmpty then s"$name — $why" else name), / |   value && is not a member of com.histmersion.web.IconSelect.Disabled
+184:48 [E008] 184 |        title <-- disabled.map(d => if d && why.nonEmpty then s"$name — $why" else name), / |value nonEmpty is not a member of com.histmersion.web.IconSelect.Reason
+184:83 [E007] 184 |        title <-- disabled.map(d => if d && why.nonEmpty then s"$name — $why" else name), / |                Found:    (name : com.histmersion.web.IconSelect.Name) / |                Required: String
+185:86 [E007] 185 |        htmlAttr("disabled", com.raquo.laminar.codecs.BooleanAsAttrPresenceCodec) <-- disabled, / |Found:    (disabled : / |  com.raquo.airstream.core.Signal[com.histmersion.web.IconSelect.Disabled]) / |Required: com.raquo.airstream.core.Source[Boolean]
+210:22 [E007] 210 |        aria.label := name, / |                Found:    (name : com.histmersion.web.IconSelect.Name) / |                Required: String
+214:51 [E008] 214 |        children <-- opts.signal.combineWith(field.signal).map { (os, v) => / |  value signal is not a member of com.histmersion.web.IconSelect.Field
+238:29 [E007] 238 |      disabled --> { d => if d then close(refocus = com.histmersion.web.IconSelect.Refocus(false)) }, / |             Found:    (d : com.histmersion.web.IconSelect.Disabled.T) / |             Required: Boolean
+
+## modules/web/src/main/scala/com/histmersion/web/IdentLink.scala
+29:98 [E007] 29 |    BoundedCache[String, scala.concurrent.Future[Option[Resolved]]](com.histmersion.web.ui.Layout.identCacheSize) / |               Found:    (com.histmersion.web.ui.Layout.identCacheSize : / |                 com.histmersion.web.ui.Layout.IdentCacheSize) / |               Required: com.histmersion.web.BoundedCache.MaxEntries
+51:65 [E007] 51 |        case Some(Some(Resolved.Source(r)))        => SourceLink(r.citekey.value.toString, r.doi.map(_.value), Some(r.shortCite)) / |                   Found:    String / |                   Required: com.histmersion.web.SourceLink.ApplyCitekey
+51:103 [E007] 51 |        case Some(Some(Resolved.Source(r)))        => SourceLink(r.citekey.value.toString, r.doi.map(_.value), Some(r.shortCite)) / |                      Found:    io.github.iltotore.iron.IronType[String, / |                        io.github.iltotore.iron.constraint.any.Pure] / |                      Required: com.histmersion.web.SourceLink.Doi.T
+51:118 [E007] 51 |        case Some(Some(Resolved.Source(r)))        => SourceLink(r.citekey.value.toString, r.doi.map(_.value), Some(r.shortCite)) / |              Found:    com.histmersion.api.library.Source.Ref.ShortCite / |              Required: com.histmersion.api.UiLabels.Text.T
+52:66 [E007] 52 |        case Some(Some(Resolved.Article(sl, tit))) => ArticleLink(sl, tit) / |  Found:    (sl : com.histmersion.web.IdentLink.Resolved.Article.Slug) / |  Required: com.histmersion.api.research.Article².Slug / |  where:    Article  is a object in object Resolved / |            Article² is a object in package com.histmersion.api.research
+52:70 [E007] 52 |        case Some(Some(Resolved.Article(sl, tit))) => ArticleLink(sl, tit) / |  Found:    (tit : com.histmersion.web.IdentLink.Resolved.Article.Title) / |  Required: String
+53:73 [E007] 53 |        case _                                     => span(Label.display(id)) / |                       Found:    (id : com.histmersion.web.IdentLink.Id) / |                       Required: com.histmersion.api.library.Label.Text
+
+## modules/web/src/main/scala/com/histmersion/web/InPage.scala
+27:31 [E008] 27 |    Option(href).filter(h => h.startsWith("#") && h.length > 1).map(_.drop(1)) / |   value startsWith is not a member of com.histmersion.web.InPage.Href.T
+27:70 [E008] 27 |    Option(href).filter(h => h.startsWith("#") && h.length > 1).map(_.drop(1)) / |         value drop is not a member of com.histmersion.web.InPage.Href.T
+40:41 [E007] 40 |                fragmentOf(a.getAttribute("href")).foreach { id => / |                           Found:    String / |                           Required: com.histmersion.web.InPage.Href
+49:43 [E008] 49 |    Option(root.querySelector(s"[id=\"${id.replace("\"", "")}\"]")) / |          value replace is not a member of com.histmersion.web.InPage.Id
+53:145 [E008] 53 |  def nextIndex(current: com.histmersion.web.InPage.Index, count: com.histmersion.web.InPage.Count): com.histmersion.web.InPage.Index = if count <= 0 then com.histmer / |value <= is not a member of com.histmersion.web.InPage.Count - did you mean count.!=? or perhaps count.==?
+53:206 [E008] 53 |  def nextIndex(current: com.histmersion.web.InPage.Index, count: com.histmersion.web.InPage.Count): com.histmersion.web.InPage.Index = if count <= 0 then com.histmer / |             value + is not a member of com.histmersion.web.InPage.Index
+59:25 [E007] 59 |    val next = nextIndex(cur, marks.length) / |                         Found:    (cur : Int) / |                         Required: com.histmersion.web.InPage.Index
+59:36 [E007] 59 |    val next = nextIndex(cur, marks.length) / |                              Found:    Int / |                              Required: com.histmersion.web.InPage.Count
+
+## modules/web/src/main/scala/com/histmersion/web/JobsView.scala
+64:19 [E006] 64 |    type FirstMs = FirstMsValue / |                   Not found: type FirstMsValue
+65:17 [E006] 65 |    type MaxMs = MaxMsValue / |                 Not found: type MaxMsValue
+72:36 [E007] 72 |      com.histmersion.web.Poll.next(previous, jobs.exists(!_.isTerminal), changed) / |  Found:    (previous : Option[com.histmersion.web.JobsView.Poll.Delay]) / |  Required: Option[com.histmersion.web.Poll².Revision] / |  where:    Poll  is a object in object JobsView / |            Poll² is a object in package com.histmersion.web
+72:57 [E007] 72 |      com.histmersion.web.Poll.next(previous, jobs.exists(!_.isTerminal), changed) / |                             Found:    Boolean / |                             Required: com.histmersion.web.Poll.LiveMode
+72:74 [E007] 72 |      com.histmersion.web.Poll.next(previous, jobs.exists(!_.isTerminal), changed) / |         Found:    (changed : com.histmersion.web.JobsView.Poll.Changed) / |         Required: com.histmersion.web.Poll².DataChanged / |         where:    Poll  is a object in object JobsView / |                   Poll² is a object in package com.histmersion.web
+79:36 [E007] 79 |    else page.count(JobState.Queued.wire) + page.count(JobState.Running.wire) > 0 / |                    Found:    com.histmersion.api.jobs.JobState.Wire / |                    Required: com.histmersion.api.Paging.Page.CountState
+100:53 [E007] 100 |    ListFilters.JobFilter(status.toList.map(_.wire), kinds, since, until, subject) / |Found:    (kinds : List[com.histmersion.api.Jobs.Filter]) / |Required: List[com.histmersion.api.automation.ListFilters.JobFilter.Kind]
+109:40 [E007] 109 |    jobs.groupMapReduce(_.state)(_ => 1)(_ + _) / |Found:    Map[com.histmersion.api.jobs.JobState, Int] / |Required: Map[com.histmersion.api.jobs.JobState, com.histmersion.web.JobsView.StateCount]
+112:113 [E007] 112 |  def kindLabel(kind: com.histmersion.web.JobsView.Kind): com.histmersion.api.ItemKind.Label = Wording.jobKindOf(kind) / |                  Found:    (kind : com.histmersion.web.JobsView.Kind) / |                  Required: com.histmersion.api.jobs.JobKinds.Wire
+116:53 [E007] 116 |    com.histmersion.api.RegisteredJobKinds.all.parse(kind).map(_.meaning.value) / |                  Found:    (kind : com.histmersion.web.JobsView.Kind) / |                  Required: com.histmersion.api.jobs.JobKinds.Wire
+122:29 [E007] 122 |    case JobState.Done    => "Finished without an error; an ingest's source is stored now." / |Found:    ("Finished without an error; an ingest\'s source is stored now." : String) / |Required: com.histmersion.web.JobsView.StateMeaning
+124:6 [E007] 124 |      "Ended with the error shown on its row, was cancelled before it started, or was interrupted by a server restart." / |Found:    ( / |  "Ended with the error shown on its row, was cancelled before it started, or was interrupted by a server restart." / |   : String) / |Required: com.histmersion.web.JobsView.StateMeaning
+126:6 [E007] 126 |      "A person paused it after one of its parts; resumed, it goes on with the parts it had not done." / |Found:    ( / |  "A person paused it after one of its parts; resumed, it goes on with the parts it had not done." / |   : String) / |Required: com.histmersion.web.JobsView.StateMeaning
+133:59 [E007] 133 |    if j.citekey.isDefined then None else JobDetail.subject(j) / |           Found:    Option[com.histmersion.api.jobs.JobKinds.Subject] / |           Required: Option[com.histmersion.web.JobsView.What]
+137:53 [E008] 137 |    j.detail.filter(SkippedPeriod.SkippedCount.of(_) > 0).map { d => / |value > is not a member of com.histmersion.api.catalogue.Period.ImportResult.SkippedCount
+139:50 [E008] 139 |      val more = SkippedPeriod.SkippedCount.of(d) - ids.size / |value - is not a member of com.histmersion.api.catalogue.Period.ImportResult.SkippedCount
+140:60 [E007] 140 |      s"skipped ${Plural.count(SkippedPeriod.SkippedCount.of(d), com.histmersion.api.Plural.CountSingular("period definition"))}: ${ids.mkString(", ")}" + / |Found:    com.histmersion.api.catalogue.Period.ImportResult.SkippedCount / |Required: com.histmersion.api.Plural.CountN
+144:89 [E007] 144 |  def stateLabel(s: JobState): com.histmersion.web.JobsView.StateLabel = Wording.jobState(s) / |                     Found:    String / |                     Required: com.histmersion.web.JobsView.StateLabel
+153:33 [E008] 153 |    val s = math.max(0L, ((nowMs - thenMs) / 1000).toLong) / |        value - is not a member of com.histmersion.web.JobsView.Millis
+154:19 [E007] 154 |    if s < 60 then s"$s s ago" / |                   Found:    String / |                   Required: com.histmersion.web.JobsView.AgoText
+160:26 [E007] 160 |    val t = js.Date.parse(iso) / |                    Found:    (iso : com.histmersion.web.JobsView.Iso) / |                    Required: String
+161:11 [E008] 161 |    if iso.isEmpty || t.isNaN then com.histmersion.web.JobsView.AgoText("") else ago(t, js.Date.now()) / |     value isEmpty is not a member of com.histmersion.web.JobsView.Iso
+161:99 [E007] 161 |    if iso.isEmpty || t.isNaN then com.histmersion.web.JobsView.AgoText("") else ago(t, js.Date.now()) / |                         Found:    Double / |                         Required: com.histmersion.web.JobsView.Millis
+175:26 [E007] 175 |      UiState.jobKinds.now(), / |      Found:    List[String] / |      Required: List[com.histmersion.api.Jobs.Filter]
+176:26 [E007] 176 |      UiState.jobSince.now(), / |Found:    Option[String] / |Required: Option[com.histmersion.api.automation.ListFilters.JobFilter.Since]
+177:26 [E007] 177 |      UiState.jobUntil.now(), / |Found:    Option[String] / |Required: Option[com.histmersion.api.automation.ListFilters.JobFilter.Until]
+178:28 [E007] 178 |      UiState.jobSubject.now() / |Found:    Option[String] / |Required: Option[com.histmersion.api.automation.ListFilters.JobFilter.Subject]
+185:67 [E007] 185 |    fetch = (upTo, before) => ApiClient.jobs(currentFilter(), Some(Limit), upTo = upTo, before = before), / |                  Found:    (com.histmersion.web.JobsView.Limit : Int) / |                  Required: com.histmersion.api.Paging.Limit².T / |                  where:    Limit  is a value in object JobsView / |                            Limit² is a object in object Paging
+186:14 [E007] 186 |    id = _.id.value, / |         Found:    io.github.iltotore.iron.IronType[String, / |           io.github.iltotore.iron.constraint.any.Pure] / |         Required: com.histmersion.web.PolledList.IdResult
+187:11 [E007] 187 |    live = live, / |           Found:    Boolean / |           Required: com.histmersion.web.PolledList.LiveResult
+197:21 [E007] 197 |    started.set(Some(jobId)) / |                Found:    (jobId : com.histmersion.web.JobsView.JobId) / |                Required: String
+217:41 [E007] 217 |          listing.signal.map(_.page.facet(com.histmersion.api.library.Facet.Name("kind"))), / |             Found:    List[(com.histmersion.api.library.Facet.Value, / |               com.histmersion.api.library.Facet.Count)] / |             Required: List[(com.histmersion.web.ListFilterBar.Choice, / |               com.histmersion.web.ListFilterBar.Count)]
+218:18 [E007] 218 |          UiState.jobKinds, / |Found:    (com.histmersion.web.UiState.jobKinds : com.histmersion.web.Field[List[String]]) / |Required: com.histmersion.web.Field[List[com.histmersion.web.ListFilterBar.FieldName]]
+219:10 [E007] 219 |          kindLabel, / |          Found:    (kind : com.histmersion.web.ListFilterBar.Choice) / |          Required: com.histmersion.web.JobsView.Kind
+220:10 [E007] 220 |          kindMeaning, / |          Found:    (kind : com.histmersion.web.ListFilterBar.Hint) / |          Required: com.histmersion.web.JobsView.Kind
+221:18 [E007] 221 |          about = "Show only jobs of the kinds picked (any of them); none picked shows every kind." / |Found:    ( / |  "Show only jobs of the kinds picked (any of them); none picked shows every kind." / |   : String) / |Required: com.histmersion.web.ListFilterBar.About
+225:117 [E007] 225 |          ListFilterBar.text(com.histmersion.web.ListFilterBar.Label("subject: a citekey, a target, an id"), UiState.jobSubject), / |Found:    (com.histmersion.web.UiState.jobSubject : / |  com.histmersion.web.Field[Option[String]]) / |Required: com.histmersion.web.Field[Option[com.histmersion.web.ListFilterBar.Text]]
+226:100 [E007] 226 |          ListFilterBar.day(com.histmersion.web.ListFilterBar.Label("started on or after"), UiState.jobSince), / |Found:    (com.histmersion.web.UiState.jobSince : / |  com.histmersion.web.Field[Option[String]]) / |Required: com.histmersion.web.Field[Option[com.histmersion.web.ListFilterBar.Date]]
+227:101 [E007] 227 |          ListFilterBar.day(com.histmersion.web.ListFilterBar.Label("started on or before"), UiState.jobUntil), / |Found:    (com.histmersion.web.UiState.jobUntil : / |  com.histmersion.web.Field[Option[String]]) / |Required: com.histmersion.web.Field[Option[com.histmersion.web.ListFilterBar.Date]]
+233:29 [E008] 233 |        Option.when(isLoaded && l.rows.nonEmpty)( / |   value && is not a member of com.histmersion.web.PolledList.Loaded.T
+239:27 [E007] 239 |              filter.map(_.wire), / |                      Found:    com.histmersion.api.jobs.JobState.Wire / |                      Required: com.histmersion.web.ListPaging.State.T
+240:16 [E007] 240 |              _.status, / |     Found:    (_$21.status : com.histmersion.api.jobs.JobInfo.Status) / |     Required: com.histmersion.web.ListPaging.State
+241:83 [E007] 241 |              filter.map(stateLabel).toList ++ currentFilter().normalized.kind.map(kindLabel) / |Found:    com.histmersion.web.JobsView.Kind => com.histmersion.api.ItemKind.Label.T / |Required: com.histmersion.api.automation.ListFilters.JobFilter.Kind => / |  com.histmersion.api.ItemKind.Label.T
+247:11 [E008] 247 |        if !isLoaded then Some(p(cls := "muted", "Loading…")) / |value unary_! is not a member of com.histmersion.web.PolledList.Loaded.T
+253:84 [E008] 253 |              else filter.fold("No background jobs yet.")(s => s"No ${stateLabel(s).toLowerCase} jobs.") / |value toLowerCase is not a member of com.histmersion.web.JobsView.StateLabel
+265:58 [E007] 265 |          .split(identity)((key, _, _) => row(key._1, key._2)) / |                           Found:    (key._2 : Boolean) / |                           Required: com.histmersion.web.JobsView.Mine
+281:62 [E007] 281 |        title := value.fold("Every job, whatever its state.")(stateMeaning), / |                   Found:    com.histmersion.web.JobsView.StateMeaning / |                   Required: String
+283:13 [E007] 283 |        span(label), / |Found:    (label : com.histmersion.web.JobsView.ButtonLabel) / |Required: com.raquo.laminar.modifiers.Modifier[ / |  com.raquo.laminar.nodes.ReactiveHtmlElement[org.scalajs.dom.HTMLSpanElement]]
+284:43 [E008] 284 |        child.text <-- count.map(n => if n > 0 then s" ${Paging.grouped(n)}" else ""), / |    value > is not a member of com.histmersion.web.JobsView.StateCount
+284:72 [E007] 284 |        child.text <-- count.map(n => if n > 0 then s" ${Paging.grouped(n)}" else ""), / |               Found:    (n : com.histmersion.web.JobsView.StateCount) / |               Required: com.histmersion.api.Paging.GroupSize
+291:117 [E007] 291 |      btn(com.histmersion.web.JobsView.ButtonLabel("All"), None, listing.signal.map(l => ListPaging.count(l, None, _.status))), / |     Found:    (_$26.status : com.histmersion.api.jobs.JobInfo.Status) / |     Required: com.histmersion.web.ListPaging.State
+293:22 [E007] 293 |        btn(stateLabel(s), Some(s), listing.signal.map(l => ListPaging.count(l, Some(s.wire), _.status))) / |            Found:    com.histmersion.web.JobsView.StateLabel / |            Required: com.histmersion.web.JobsView.ButtonLabel
+293:87 [E007] 293 |        btn(stateLabel(s), Some(s), listing.signal.map(l => ListPaging.count(l, Some(s.wire), _.status))) / |                      Found:    com.histmersion.api.jobs.JobState.Wire / |                      Required: com.histmersion.web.ListPaging.State.T
+293:96 [E007] 293 |        btn(stateLabel(s), Some(s), listing.signal.map(l => ListPaging.count(l, Some(s.wire), _.status))) / |     Found:    (_$27.status : com.histmersion.api.jobs.JobInfo.Status) / |     Required: com.histmersion.web.ListPaging.State
+300:25 [E007] 300 |      cls("job-mine") := mine, / |                  Found:    (mine : com.histmersion.web.JobsView.Mine) / |                  Required: Boolean
+301:73 [E007] 301 |      span(cls := s"job-state state-${j.state.wire}", title := stateLabel(j.state), stateLabel(j.state)), / |                     Found:    com.histmersion.web.JobsView.StateLabel / |                     Required: String
+301:94 [E007] 301 |      span(cls := s"job-state state-${j.state.wire}", title := stateLabel(j.state), stateLabel(j.state)), / |Found:    com.histmersion.web.JobsView.StateLabel / |Required: com.raquo.laminar.modifiers.Modifier[ / |  com.raquo.laminar.nodes.ReactiveHtmlElement[org.scalajs.dom.HTMLSpanElement]]
+307:63 [E007] 307 |            case Some(ck) if subjectStored(j) => SourceLink(ck.value) / |                 Found:    io.github.iltotore.iron.IronType[String, / |                   io.github.iltotore.iron.constraint.any.Pure] / |                 Required: com.histmersion.web.SourceLink.ApplyCitekey
+309:102 [E007] 309 |            case None                         => what(j).fold(emptyNode)(w => span(cls := "job-what", w)), / |Found:    (w : com.histmersion.web.JobsView.What) / |Required: com.raquo.laminar.modifiers.Modifier[ / |  com.raquo.laminar.nodes.ReactiveHtmlElement[org.scalajs.dom.HTMLSpanElement]]
+310:55 [E007] 310 |          span(cls := "muted", s" · ${kindLabel(j.kind.value)}"), / |                    Found:    io.github.iltotore.iron.IronType[String, / |                      io.github.iltotore.iron.constraint.any.Pure] / |                    Required: com.histmersion.web.JobsView.Kind
+317:16 [E007] 317 |                i, / |Found:    (i : com.histmersion.api.automation.Queue.QueueItem.Id) / |Required: com.histmersion.api.automation.Goal.Plans.GoalLink.QueueNumber
+325:28 [E008] 325 |        j.progress.filter(_.nonEmpty).map(pr => div(cls := "job-progress", pr)), / |value nonEmpty is not a member of com.histmersion.api.jobs.JobInfo.Progress
+325:75 [E007] 325 |        j.progress.filter(_.nonEmpty).map(pr => div(cls := "job-progress", pr)), / |Found:    (pr : com.histmersion.api.jobs.JobInfo.Progress) / |Required: com.raquo.laminar.modifiers.Modifier[ / |  com.raquo.laminar.nodes.ReactiveHtmlElement[org.scalajs.dom.HTMLDivElement]]
+326:25 [E008] 326 |        j.error.filter(_.nonEmpty).map(e => div(cls := "job-error", e)), / |value nonEmpty is not a member of com.histmersion.api.jobs.JobInfo.Error
+326:68 [E007] 326 |        j.error.filter(_.nonEmpty).map(e => div(cls := "job-error", e)), / |Found:    (e : com.histmersion.api.jobs.JobInfo.Error) / |Required: com.raquo.laminar.modifiers.Modifier[ / |  com.raquo.laminar.nodes.ReactiveHtmlElement[org.scalajs.dom.HTMLDivElement]]
+334:12 [E007] 334 |            l / |Found:    (l : com.histmersion.web.JobsView.SkippedLine) / |Required: com.raquo.laminar.modifiers.Modifier[ / |  com.raquo.laminar.nodes.ReactiveHtmlElement[org.scalajs.dom.HTMLDivElement]]
+341:39 [E007] 341 |            WinLink(WindowKey.Run(j.id.value), title := s"agent run ${j.id}", s"run ${j.id.value.take(8)}") / |                    Found:    io.github.iltotore.iron.IronType[String, / |                      io.github.iltotore.iron.constraint.any.Pure] / |                    Required: com.histmersion.web.WindowKey.Run.Id
+342:40 [E007] 342 |          else RouteLink(Route.Job(j.id.value), cls := "link-btn", title := s"job ${j.id}", s"job ${j.id.value.take(8)}"), / |                    Found:    io.github.iltotore.iron.IronType[String, / |                      io.github.iltotore.iron.constraint.any.Pure] / |                    Required: com.histmersion.web.Route.Job.Id
+343:39 [E008] 343 |          Option(j.createdAt).filter(_.nonEmpty).map(c => span(title := c, s" · started ${agoOf(c)}")), / |value nonEmpty is not a member of com.histmersion.api.jobs.JobInfo.CreatedAt.T
+343:72 [E007] 343 |          Option(j.createdAt).filter(_.nonEmpty).map(c => span(title := c, s" · started ${agoOf(c)}")), / |          Found:    (c : com.histmersion.api.jobs.JobInfo.CreatedAt.T) / |          Required: String
+343:96 [E007] 343 |          Option(j.createdAt).filter(_.nonEmpty).map(c => span(title := c, s" · started ${agoOf(c)}")), / |          Found:    (c : com.histmersion.api.jobs.JobInfo.CreatedAt.T) / |          Required: com.histmersion.web.JobsView.Iso
+345:27 [E008] 345 |            .filter(u => u.nonEmpty && u != j.createdAt) / |value nonEmpty is not a member of com.histmersion.api.jobs.JobInfo.UpdatedAt.T
+346:36 [E007] 346 |            .map(u => span(title := u, s" · updated ${agoOf(u)}")) / |          Found:    (u : com.histmersion.api.jobs.JobInfo.UpdatedAt.T) / |          Required: String
+346:60 [E007] 346 |            .map(u => span(title := u, s" · updated ${agoOf(u)}")) / |          Found:    (u : com.histmersion.api.jobs.JobInfo.UpdatedAt.T) / |          Required: com.histmersion.web.JobsView.Iso
+
+## modules/web/src/main/scala/com/histmersion/web/LabelMotion.scala
+62:10 [E008] 62 |    if dt <= 0 then (x, v) / |value <= is not a member of com.histmersion.web.LabelMotion.Step - did you mean dt.!=? or perhaps dt.==?
+64:22 [E134] 64 |      val omega = 2.0 / smooth / |None of the overloaded alternatives of method / in class Double with types / | (x: Double): Double / | (x: Float): Double / | (x: Long): Double / | (x: Int): Double
+67:21 [E008] 67 |      val change = x - target / |     value - is not a member of com.histmersion.web.LabelMotion.Position
+68:20 [E008] 68 |      val temp = (v + omega * change) * dt / |     value + is not a member of com.histmersion.web.LabelMotion.Velocity
+69:18 [E008] 69 |      val nv = (v - omega * temp) * e / |     value - is not a member of com.histmersion.web.LabelMotion.Velocity
+70:22 [E008] 70 |      val nx = target + (change + temp) * e / |       value + is not a member of com.histmersion.web.LabelMotion.Target
+72:17 [E008] 72 |      if (target - x > 0) == (nx > target) then (target, 0.0) else (nx, nv) / |       value - is not a member of com.histmersion.web.LabelMotion.Target
+72:49 [E007] 72 |      if (target - x > 0) == (nx > target) then (target, 0.0) else (nx, nv) / |             Found:    (target : com.histmersion.web.LabelMotion.Target) / |             Required: com.histmersion.web.LabelMotion.Position.T
+72:57 [E007] 72 |      if (target - x > 0) == (nx > target) then (target, 0.0) else (nx, nv) / |                    Found:    (0.0d : Double) / |                    Required: com.histmersion.web.LabelMotion.Velocity.T
+61:243 [E007] 61 |  def damp(x: com.histmersion.web.LabelMotion.Position, v: com.histmersion.web.LabelMotion.Velocity, target: com.histmersion.web.LabelMotion.Target, dt: com.histmersi / |          Found:    (com.histmersion.web.LabelMotion.SmoothSec : Double) / |          Required: com.histmersion.web.LabelMotion.Smoothing
+78:9 [E007] 78 |      if reduced then Motion(target, com.histmersion.web.LabelMotion.Motion.Vx(0), com.histmersion.web.LabelMotion.Motion.Vy(0)) / |         Found:    (reduced : com.histmersion.web.LabelMotion.Reduced) / |         Required: Boolean
+80:30 [E007] 80 |        val (x, vx1) = damp(p.x, vx, target.x, dt) / |   Found:    (Motion.this.p.x : com.histmersion.web.LabelPlacement.Pt.X) / |   Required: com.histmersion.web.LabelMotion.Position
+80:33 [E007] 80 |        val (x, vx1) = damp(p.x, vx, target.x, dt) / |  Found:    (Motion.this.vx : com.histmersion.web.LabelMotion.Motion.Vx) / |  Required: com.histmersion.web.LabelMotion.Velocity
+80:44 [E007] 80 |        val (x, vx1) = damp(p.x, vx, target.x, dt) / |          Found:    (target.x : com.histmersion.web.LabelPlacement.Pt.X) / |          Required: com.histmersion.web.LabelMotion.Target
+81:30 [E007] 81 |        val (y, vy1) = damp(p.y, vy, target.y, dt) / |   Found:    (Motion.this.p.y : com.histmersion.web.LabelPlacement.Pt.Y) / |   Required: com.histmersion.web.LabelMotion.Position
+81:33 [E007] 81 |        val (y, vy1) = damp(p.y, vy, target.y, dt) / |  Found:    (Motion.this.vy : com.histmersion.web.LabelMotion.Motion.Vy) / |  Required: com.histmersion.web.LabelMotion.Velocity
+81:44 [E007] 81 |        val (y, vy1) = damp(p.y, vy, target.y, dt) / |          Found:    (target.y : com.histmersion.web.LabelPlacement.Pt.Y) / |          Required: com.histmersion.web.LabelMotion.Target
+93:19 [E008] 93 |      math.abs(p.x - target.x) * scale < RestPx && math.abs(p.y - target.y) * scale < RestPx && / |      value - is not a member of com.histmersion.web.LabelPlacement.Pt.X
+109:48 [E008] 109 |    val step = if FadeSec <= 0 then 1.0 else dt / FadeSec / |       value / is not a member of com.histmersion.web.LabelMotion.Step
+110:7 [E007] 110 |    if shown then math.min(1.0, a + step) else math.max(0.0, a - step) / |       Found:    (shown : com.histmersion.web.LabelMotion.Shown) / |       Required: Boolean
+110:34 [E008] 110 |    if shown then math.min(1.0, a + step) else math.max(0.0, a - step) / |      value + is not a member of com.histmersion.web.LabelMotion.Alpha
+110:63 [E008] 110 |    if shown then math.min(1.0, a + step) else math.max(0.0, a - step) / |      value - is not a member of com.histmersion.web.LabelMotion.Alpha
+116:7 [E007] 116 |    if reduced then 1.0 / |       Found:    (reduced : com.histmersion.web.LabelMotion.Reduced) / |       Required: Boolean
+116:20 [E007] 116 |    if reduced then 1.0 / |                    Found:    (1.0d : Double) / |                    Required: com.histmersion.web.LabelMotion.Scale
+118:21 [E134] 118 |      val e = 1 - (1 - a) * (1 - a) // ease-out / |None of the overloaded alternatives of method - in class Int with types / | (x: Double): Double / | (x: Float): Float / | (x: Long): Long / | (x: Int): Int
+126:7 [E007] 126 |    if reduced then 1.0 else math.pow(2, (zoom - settled) * ZoomFollow) / |       Found:    (reduced : com.histmersion.web.LabelMotion.Reduced) / |       Required: Boolean
+126:20 [E007] 126 |    if reduced then 1.0 else math.pow(2, (zoom - settled) * ZoomFollow) / |                    Found:    (1.0d : Double) / |                    Required: com.histmersion.web.LabelMotion.Scale
+126:47 [E008] 126 |    if reduced then 1.0 else math.pow(2, (zoom - settled) * ZoomFollow) / |       value - is not a member of com.histmersion.web.LabelMotion.Zoom
+133:15 [E008] 133 |    if reduced || before <= 0 || after <= 0 then 1.0 else s * before / after / |   value || is not a member of com.histmersion.web.LabelMotion.Reduced
+133:25 [E008] 133 |    if reduced || before <= 0 || after <= 0 then 1.0 else s * before / after / |value <= is not a member of com.histmersion.web.LabelMotion.Position - did you mean before.!=? or perhaps before.==?
+133:49 [E007] 133 |    if reduced || before <= 0 || after <= 0 then 1.0 else s * before / after / |                    Found:    (1.0d : Double) / |                    Required: com.histmersion.web.LabelMotion.Position
+133:60 [E008] 133 |    if reduced || before <= 0 || after <= 0 then 1.0 else s * before / after / |      value * is not a member of com.histmersion.web.LabelMotion.Scale
+
+## modules/web/src/main/scala/com/histmersion/web/LabelPlacement.scala
+104:59 [E008] 104 |    def w: com.histmersion.web.LabelPlacement.Width = maxX - minX / |value - is not a member of com.histmersion.web.LabelPlacement.Rect.MaxX
+105:60 [E008] 105 |    def h: com.histmersion.web.LabelPlacement.Height = maxY - minY / |value - is not a member of com.histmersion.web.LabelPlacement.Rect.MaxY
+106:32 [E008] 106 |    def isEmpty: Boolean = minX > maxX || minY > maxY / |value > is not a member of com.histmersion.web.LabelPlacement.Rect.MinX
+107:39 [E008] 107 |    def contains(p: Pt): Boolean = p.x >= minX && p.x <= maxX && p.y >= minY && p.y <= maxY / |value >= is not a member of com.histmersion.web.LabelPlacement.Pt.X - did you mean x.!=? or perhaps x.==?
+108:44 [E008] 108 |    def intersects(o: Rect): Boolean = minX <= o.maxX && o.minX <= maxX && minY <= o.maxY && o.minY <= maxY / |value <= is not a member of com.histmersion.web.LabelPlacement.Rect.MinX - did you mean minX.!=? or perhaps minX.==?
+109:40 [E008] 109 |    def within(o: Rect): Boolean = minX >= o.minX && maxX <= o.maxX && minY >= o.minY && maxY <= o.maxY / |value >= is not a member of com.histmersion.web.LabelPlacement.Rect.MinX - did you mean minX.!=? or perhaps minX.==?
+112:126 [E008] 112 |    def inset(dx: com.histmersion.web.LabelPlacement.InsetX, dy: com.histmersion.web.LabelPlacement.InsetY): Rect = Rect(minX + dx, minY + dy, maxX - dx, maxY - dy) / |value + is not a member of com.histmersion.web.LabelPlacement.Rect.MinX
+112:137 [E008] 112 |    def inset(dx: com.histmersion.web.LabelPlacement.InsetX, dy: com.histmersion.web.LabelPlacement.InsetY): Rect = Rect(minX + dx, minY + dy, maxX - dx, maxY - dy) / |value + is not a member of com.histmersion.web.LabelPlacement.Rect.MinY
+112:148 [E008] 112 |    def inset(dx: com.histmersion.web.LabelPlacement.InsetX, dy: com.histmersion.web.LabelPlacement.InsetY): Rect = Rect(minX + dx, minY + dy, maxX - dx, maxY - dy) / |value - is not a member of com.histmersion.web.LabelPlacement.Rect.MaxX
+112:159 [E008] 112 |    def inset(dx: com.histmersion.web.LabelPlacement.InsetX, dy: com.histmersion.web.LabelPlacement.InsetY): Rect = Rect(minX + dx, minY + dy, maxX - dx, maxY - dy) / |value - is not a member of com.histmersion.web.LabelPlacement.Rect.MaxY
+115:50 [E134] 115 |    def clamp(p: Pt): Pt = Pt(math.max(minX, math.min(maxX, p.x)), math.max(minY, math.min(maxY, p.y))) / |None of the overloaded alternatives of method min in package scala.math with types / | (x: Double, y: Double): Double / | (x: Float, y: Float): Float / | (x: Long, y: Long): Long / | (x: Int, y: Int): Int
+115:87 [E134] 115 |    def clamp(p: Pt): Pt = Pt(math.max(minX, math.min(maxX, p.x)), math.max(minY, math.min(maxY, p.y))) / |None of the overloaded alternatives of method min in package scala.math with types / | (x: Double, y: Double): Double / | (x: Float, y: Float): Float / | (x: Long, y: Long): Long / | (x: Int, y: Int): Int
+135:15 [E008] 135 |        if p.x < x0 then x0 = p.x / |    value < is not a member of com.histmersion.web.LabelPlacement.Pt.X
+135:32 [E007] 135 |        if p.x < x0 then x0 = p.x / |             Found:    (p.x : com.histmersion.web.LabelPlacement.Pt.X) / |             Required: Double
+136:15 [E008] 136 |        if p.x > x1 then x1 = p.x / |    value > is not a member of com.histmersion.web.LabelPlacement.Pt.X
+136:32 [E007] 136 |        if p.x > x1 then x1 = p.x / |             Found:    (p.x : com.histmersion.web.LabelPlacement.Pt.X) / |             Required: Double
+137:15 [E008] 137 |        if p.y < y0 then y0 = p.y / |    value < is not a member of com.histmersion.web.LabelPlacement.Pt.Y
+137:32 [E007] 137 |        if p.y < y0 then y0 = p.y / |             Found:    (p.y : com.histmersion.web.LabelPlacement.Pt.Y) / |             Required: Double
+138:15 [E008] 138 |        if p.y > y1 then y1 = p.y / |    value > is not a member of com.histmersion.web.LabelPlacement.Pt.Y
+138:32 [E007] 138 |        if p.y > y1 then y1 = p.y / |             Found:    (p.y : com.histmersion.web.LabelPlacement.Pt.Y) / |             Required: Double
+140:11 [E007] 140 |      Rect(x0, y0, x1, y1) / |           Found:    (x0 : Double) / |           Required: com.histmersion.web.LabelPlacement.Rect.MinX
+140:15 [E007] 140 |      Rect(x0, y0, x1, y1) / |               Found:    (y0 : Double) / |               Required: com.histmersion.web.LabelPlacement.Rect.MinY
+140:19 [E007] 140 |      Rect(x0, y0, x1, y1) / |                Found:    (x1 : Double) / |                Required: com.histmersion.web.LabelPlacement.Rect.MaxX
+140:23 [E007] 140 |      Rect(x0, y0, x1, y1) / |                Found:    (y1 : Double) / |                Required: com.histmersion.web.LabelPlacement.Rect.MaxY
+147:52 [E134] 147 |    val phi = math.toRadians(math.max(-MaxLat, math.min(MaxLat, lat))) / |None of the overloaded alternatives of method min in package scala.math with types / | (x: Double, y: Double): Double / | (x: Float, y: Float): Float / | (x: Long, y: Long): Long / | (x: Int, y: Int): Int
+148:12 [E008] 148 |    Pt((lon + 180.0) / 360.0 * World, (1.0 - math.log(math.tan(phi) + 1.0 / math.cos(phi)) / math.Pi) / 2.0 * World) / |        value + is not a member of com.histmersion.api.Geo.Longitude
+148:38 [E007] 148 |    Pt((lon + 180.0) / 360.0 * World, (1.0 - math.log(math.tan(phi) + 1.0 / math.cos(phi)) / math.Pi) / 2.0 * World) / |                     Found:    Double / |                     Required: com.histmersion.web.LabelPlacement.Pt.Y
+152:18 [E008] 152 |    val lon = p.x / World * 360.0 - 180.0 / |    value / is not a member of com.histmersion.web.LabelPlacement.Pt.X
+153:36 [E134] 153 |    val n = math.Pi - 2.0 * math.Pi * p.y / World / |None of the overloaded alternatives of method * in class Double with types / | (x: Double): Double / | (x: Float): Double / | (x: Long): Double / | (x: Int): Double
+154:19 [E007] 154 |    (math.toDegrees(math.atan(math.sinh(n))), lon) / |     Found:    Double / |     Required: com.histmersion.api.Geo.Latitude.T
+158:25 [E007] 158 |    if r.length < 3 then 0.0 / |                     Found:    (0.0d : Double) / |                     Required: com.histmersion.web.LabelPlacement.Area
+164:10 [E008] 164 |        s += (r(j).x - r(i).x) * (r(j).y + r(i).y) / |value += is not a member of Double - did you mean Double.!=? or perhaps Double.<=?
+164:21 [E008] 164 |        s += (r(j).x - r(i).x) * (r(j).y + r(i).y) / |    value - is not a member of com.histmersion.web.LabelPlacement.Pt.X
+167:6 [E007] 167 |      math.abs(s) / 2.0 / |      Found:    Double / |      Required: com.histmersion.web.LabelPlacement.Area
+171:37 [E008] 171 |    p.headOption.fold(0.0)(ringArea) - p.drop(1).map(ringArea).sum / |value - is not a member of Double | com.histmersion.web.LabelPlacement.Area.T
+171:66 [E172] 171 |    p.headOption.fold(0.0)(ringArea) - p.drop(1).map(ringArea).sum / |No given instance of type Numeric[B] was found for parameter num of method sum in trait IterableOnceOps / |where:    B is a type variable with constraint >: com.histmersion.web.LabelPlacement.Area.T
+177:49 [E172] 177 |    val ps = pts.distinct.sortBy(p => (p.x, p.y)).toVector / |No given instance of type Ordering[ / |  (com.histmersion.web.LabelPlacement.Pt.X, / |    com.histmersion.web.LabelPlacement.Pt.Y) / |] was found for parameter ord of method sortBy in trait SeqOps. / |I found:
+180:86 [E008] 180 |      def cross(o: Pt, a: Pt, b: Pt): com.histmersion.web.LabelPlacement.Cross = (a.x - o.x) * (b.y - o.y) - (a.y - o.y) * (b.x - o.x) / |    value - is not a member of com.histmersion.web.LabelPlacement.Pt.X
+215:66 [E134] 215 |    def extent0: com.histmersion.web.LabelPlacement.Extent = math.max(bbox0.w, bbox0.h) / |None of the overloaded alternatives of method max in package scala.math with types / | (x: Double, y: Double): Double / | (x: Float, y: Float): Float / | (x: Long, y: Long): Long / | (x: Int, y: Int): Int
+237:43 [E007] 237 |      .map(_.map(_.map((la, lo) => project(la, lo)).toVector).toVector) / |              Found:    (la : com.histmersion.web.LabelPlacement.Pt.X) / |              Required: com.histmersion.api.Geo.Latitude
+237:47 [E007] 237 |      .map(_.map(_.map((la, lo) => project(la, lo)).toVector).toVector) / |              Found:    (lo : com.histmersion.web.LabelPlacement.Pt.Y) / |              Required: com.histmersion.api.Geo.Longitude
+244:27 [E172] 244 |      val total = areas.sum / |No given instance of type Numeric[B] was found for parameter num of method sum in trait IterableOnceOps / |where:    B is a type variable with constraint >: com.histmersion.web.LabelPlacement.Area.T
+245:46 [E172] 245 |      val largest = areas.indices.maxBy(areas) / |No given instance of type Ordering[com.histmersion.web.LabelPlacement.Area.T] was found for parameter ord of method maxBy in trait IterableOnceOps. / |I found: / |    scala.math.Ordering.ordered[com.histmersion.web.LabelPlacement.Area.T]( / |      /* missing */ / |        summon[
+247:63 [E008] 247 |      val archipelago = projected.length > 1 && areas(largest) < DominantShare * total / |  value < is not a member of com.histmersion.web.LabelPlacement.Area.T
+265:79 [E007] 265 |  def thin(r: Vector[Pt], max: com.histmersion.web.LabelPlacement.PointLimit = MaxRingPoints): Vector[Pt] = / |    Found:    (com.histmersion.web.LabelPlacement.MaxRingPoints : Int) / |    Required: com.histmersion.web.LabelPlacement.PointLimit
+282:83 [E007] 282 |  def anchor(poly: Poly, precision: com.histmersion.web.LabelPlacement.Precision = 0.0, maxProbes: com.histmersion.web.LabelPlacement.ProbeLimit = MaxProbes): Pt = / |                Found:    (0.0d : Double) / |                Required: com.histmersion.web.LabelPlacement.Precision
+282:147 [E007] 282 |  def anchor(poly: Poly, precision: com.histmersion.web.LabelPlacement.Precision = 0.0, maxProbes: com.histmersion.web.LabelPlacement.ProbeLimit = MaxProbes): Pt = / |        Found:    (com.histmersion.web.LabelPlacement.MaxProbes : Int) / |        Required: com.histmersion.web.LabelPlacement.ProbeLimit
+253:17 [E007] 253 |      Some(Shape(lat, lon, home, size0, box, parts, archipelago = h.length >= 3)) / |                Found:    (lat : com.histmersion.api.Geo.Latitude) / |                Required: com.histmersion.web.LabelPlacement.Shape.Lat
+253:22 [E007] 253 |      Some(Shape(lat, lon, home, size0, box, parts, archipelago = h.length >= 3)) / |                Found:    (lon : com.histmersion.api.Geo.Longitude) / |                Required: com.histmersion.web.LabelPlacement.Shape.Lon
+253:66 [E007] 253 |      Some(Shape(lat, lon, home, size0, box, parts, archipelago = h.length >= 3)) / |        Found:    Boolean / |        Required: com.histmersion.web.LabelPlacement.Shape.Archipelago
+256:30 [E007] 256 |    val rings = p.map(thin(_, ViewRingPoints)) / |   Found:    (com.histmersion.web.LabelPlacement.ViewRingPoints : Int) / |   Required: com.histmersion.web.LabelPlacement.PointLimit
+266:16 [E134] 266 |    if r.length <= max then r / |None of the overloaded alternatives of method <= in class Int with types / | (x: Double): Boolean / | (x: Float): Boolean / | (x: Long): Boolean / | (x: Int): Boolean
+268:45 [E134] 268 |      val step = math.ceil(r.length.toDouble / max).toInt / |None of the overloaded alternatives of method / in class Double with types / | (x: Double): Double / | (x: Float): Double / | (x: Long): Double / | (x: Int): Double
+285:33 [E172] 285 |    val minX = outer.map(_.x).min / |No given instance of type Ordering[B] was found for parameter ord of method min in trait IterableOnceOps. / |I found: / |    scala.math.Ordering.ordered[B]( / |      /* missing */summon[scala.math.Ordering.AsComparable[B]]) / |But no implicit values were found that match type scala.math.Ordering.AsComparable[B]
+286:33 [E172] 286 |    val maxX = outer.map(_.x).max / |No given instance of type Ordering[B] was found for parameter ord of method max in trait IterableOnceOps. / |I found: / |    scala.math.Ordering.ordered[B]( / |      /* missing */summon[scala.math.Ordering.AsComparable[B]]) / |But no implicit values were found that match type scala.math.Ordering.AsComparable[B]
+287:33 [E172] 287 |    val minY = outer.map(_.y).min / |No given instance of type Ordering[B] was found for parameter ord of method min in trait IterableOnceOps. / |I found: / |    scala.math.Ordering.ordered[B]( / |      /* missing */summon[scala.math.Ordering.AsComparable[B]]) / |But no implicit values were found that match type scala.math.Ordering.AsComparable[B]
+288:33 [E172] 288 |    val maxY = outer.map(_.y).max / |No given instance of type Ordering[B] was found for parameter ord of method max in trait IterableOnceOps. / |I found: / |    scala.math.Ordering.ordered[B]( / |      /* missing */summon[scala.math.Ordering.AsComparable[B]]) / |But no implicit values were found that match type scala.math.Ordering.AsComparable[B]
+294:35 [E008] 294 |      val tolerance = if precision > 0 then precision else math.max(w, h) / 100.0 / |value > is not a member of com.histmersion.web.LabelPlacement.Precision
+300:42 [E007] 300 |        val d: Double = signedDistanceFlat(x, y, flat) / |           Found:    com.histmersion.web.LabelPlacement.SignedDistance / |           Required: Double
+301:35 [E008] 301 |        val max: Double = d + half * math.sqrt(2) / |                              value * is not a member of Cell.Half
+314:56 [E007] 314 |      var best = centroidCell(outer).map((x, y) => Cell(x, y, 0)).getOrElse(Cell(minX + w / 2, minY + h / 2, 0)) / |              Found:    (x : com.histmersion.web.LabelPlacement.CellX) / |              Required: com.histmersion.web.LabelPlacement.Pt.X
+314:59 [E007] 314 |      var best = centroidCell(outer).map((x, y) => Cell(x, y, 0)).getOrElse(Cell(minX + w / 2, minY + h / 2, 0)) / |              Found:    (y : com.histmersion.web.LabelPlacement.CellY) / |              Required: com.histmersion.web.LabelPlacement.Pt.Y
+314:62 [E007] 314 |      var best = centroidCell(outer).map((x, y) => Cell(x, y, 0)).getOrElse(Cell(minX + w / 2, minY + h / 2, 0)) / |                                                   Found:    (0 : Int) / |                                                   Required: Cell.Half
+314:109 [E007] 314 |      var best = centroidCell(outer).map((x, y) => Cell(x, y, 0)).getOrElse(Cell(minX + w / 2, minY + h / 2, 0)) / |                                                   Found:    (0 : Int) / |                                                   Required: Cell.Half
+315:49 [E007] 315 |      val box = Cell(minX + w / 2, minY + h / 2, 0) / |                                                 Found:    (0 : Int) / |                                                 Required: Cell.Half
+318:37 [E134] 318 |      while queue.nonEmpty && probes < maxProbes do / |None of the overloaded alternatives of method < in class Int with types / | (x: Double): Boolean / | (x: Float): Boolean / | (x: Long): Boolean / | (x: Int): Boolean
+323:25 [E008] 323 |          val q = c.half / 2 / |                  value / is not a member of Cell.Half
+324:33 [E008] 324 |          queue.enqueue(Cell(c.x - q, c.y - q, q)) / |    value - is not a member of com.histmersion.web.LabelPlacement.Pt.X
+324:42 [E008] 324 |          queue.enqueue(Cell(c.x - q, c.y - q, q)) / |    value - is not a member of com.histmersion.web.LabelPlacement.Pt.Y
+325:33 [E008] 325 |          queue.enqueue(Cell(c.x + q, c.y - q, q)) / |    value + is not a member of com.histmersion.web.LabelPlacement.Pt.X
+325:42 [E008] 325 |          queue.enqueue(Cell(c.x + q, c.y - q, q)) / |    value - is not a member of com.histmersion.web.LabelPlacement.Pt.Y
+326:33 [E008] 326 |          queue.enqueue(Cell(c.x - q, c.y + q, q)) / |    value - is not a member of com.histmersion.web.LabelPlacement.Pt.X
+326:42 [E008] 326 |          queue.enqueue(Cell(c.x - q, c.y + q, q)) / |    value + is not a member of com.histmersion.web.LabelPlacement.Pt.Y
+327:33 [E008] 327 |          queue.enqueue(Cell(c.x + q, c.y + q, q)) / |    value + is not a member of com.histmersion.web.LabelPlacement.Pt.X
+327:42 [E008] 327 |          queue.enqueue(Cell(c.x + q, c.y + q, q)) / |    value + is not a member of com.histmersion.web.LabelPlacement.Pt.Y
+339:18 [E008] 339 |      val f = a.x * b.y - b.x * a.y / |    value * is not a member of com.histmersion.web.LabelPlacement.Pt.X
+340:8 [E008] 340 |      x += (a.x + b.x) * f / |value += is not a member of Double - did you mean Double.!=? or perhaps Double.<=?
+340:16 [E008] 340 |      x += (a.x + b.x) * f / |    value + is not a member of com.histmersion.web.LabelPlacement.Pt.X
+341:8 [E008] 341 |      y += (a.y + b.y) * f / |value += is not a member of Double - did you mean Double.!=? or perhaps Double.<=?
+341:16 [E008] 341 |      y += (a.y + b.y) * f / |    value + is not a member of com.histmersion.web.LabelPlacement.Pt.Y
+345:38 [E007] 345 |    if area == 0 then None else Some((x / area, y / area)) / |                  Found:    Double / |                  Required: com.histmersion.web.LabelPlacement.CellX.T
+345:48 [E007] 345 |    if area == 0 then None else Some((x / area, y / area)) / |                  Found:    Double / |                  Required: com.histmersion.web.LabelPlacement.CellY.T
+355:32 [E007] 355 |      r.foreach { p => a(i) = p.x; a(i + 1) = p.y; i += 2 } / |             Found:    (p.x : com.histmersion.web.LabelPlacement.Pt.X) / |             Required: Double
+355:48 [E007] 355 |      r.foreach { p => a(i) = p.x; a(i + 1) = p.y; i += 2 } / |             Found:    (p.y : com.histmersion.web.LabelPlacement.Pt.Y) / |             Required: Double
+375:15 [E134] 375 |        if (ay > y) != (by > y) && x < (bx - ax) * (y - ay) / (by - ay) + ax then inside = !inside / |None of the overloaded alternatives of method > in class Double with types / | (x: Double): Boolean / | (x: Float): Boolean / | (x: Long): Boolean / | (x: Int): Boolean
+376:32 [E007] 376 |        val d = segDistSq(x, y, ax, ay, bx, by) / |                     Found:    (ax : Double) / |                     Required: com.histmersion.web.LabelPlacement.Pt.X
+376:36 [E007] 376 |        val d = segDistSq(x, y, ax, ay, bx, by) / |                     Found:    (ay : Double) / |                     Required: com.histmersion.web.LabelPlacement.Pt.Y
+376:40 [E007] 376 |        val d = segDistSq(x, y, ax, ay, bx, by) / |                     Found:    (bx : Double) / |                     Required: com.histmersion.web.LabelPlacement.Pt.X
+376:44 [E007] 376 |        val d = segDistSq(x, y, ax, ay, bx, by) / |                     Found:    (by : Double) / |                     Required: com.histmersion.web.LabelPlacement.Pt.Y
+381:4 [E007] 381 |    (if inside then 1 else -1) * math.sqrt(minSq) / |    Found:    Double / |    Required: com.histmersion.web.LabelPlacement.SignedDistance
+386:16 [E008] 386 |    val dx = bx - x / |    value - is not a member of com.histmersion.web.LabelPlacement.Pt.X
+387:16 [E008] 387 |    val dy = by - y / |    value - is not a member of com.histmersion.web.LabelPlacement.Pt.Y
+389:19 [E008] 389 |      val t = ((px - x) * dx + (py - y) * dy) / (dx * dx + dy * dy) / |    value - is not a member of com.histmersion.web.LabelPlacement.Pt.X
+391:29 [E008] 391 |      else if t > 0 then { x += dx * t; y += dy * t } / |value += is not a member of com.histmersion.web.LabelPlacement.Pt.X - did you mean X.!=? or perhaps X.==?
+391:42 [E008] 391 |      else if t > 0 then { x += dx * t; y += dy * t } / |value += is not a member of com.histmersion.web.LabelPlacement.Pt.Y - did you mean Y.!=? or perhaps Y.==?
+392:16 [E008] 392 |    val ex = px - x / |    value - is not a member of com.histmersion.web.LabelPlacement.Pt.X
+393:16 [E008] 393 |    val ey = py - y / |    value - is not a member of com.histmersion.web.LabelPlacement.Pt.Y
+419:28 [E007] 419 |    val scale = math.pow(2, zoom) / |            Found:    (zoom : com.histmersion.web.LabelPlacement.Zoom) / |            Required: Double
+420:25 [E007] 420 |    val side = math.sqrt(size0) * scale / |    Found:    (size0 : com.histmersion.web.LabelPlacement.Shape.Size0) / |    Required: Double
+421:15 [E008] 421 |    if extent0 * scale < MinExtentPx then None / |  value * is not a member of com.histmersion.web.LabelPlacement.Extent
+467:34 [E008] 467 |    val inner = view.inset((halfW + EdgePadPx) / scale, (halfH + EdgePadPx) / scale) / |value + is not a member of com.histmersion.web.LabelPlacement.PlaceHalfW
+467:63 [E008] 467 |    val inner = view.inset((halfW + EdgePadPx) / scale, (halfH + EdgePadPx) / scale) / |value + is not a member of com.histmersion.web.LabelPlacement.PlaceHalfH
+473:48 [E134] 473 |          val p = anchor(piece, ViewPrecisionPx / scale, ViewProbes) / |None of the overloaded alternatives of method / in class Double with types / | (x: Double): Double / | (x: Float): Double / | (x: Long): Double / | (x: Int): Double
+473:57 [E007] 473 |          val p = anchor(piece, ViewPrecisionPx / scale, ViewProbes) / |       Found:    (com.histmersion.web.LabelPlacement.ViewProbes : Int) / |       Required: com.histmersion.web.LabelPlacement.ProbeLimit
+475:60 [E008] 475 |            case Some(q) if signedDistance(q.x, q.y, piece) >= KeepShare * signedDistance(p.x, p.y, piece) => Some(q) / |value >= is not a member of com.histmersion.web.LabelPlacement.SignedDistance - did you mean SignedDistance.!=? or perhaps SignedDistance.==?
+475:73 [E134] 475 |            case Some(q) if signedDistance(q.x, q.y, piece) >= KeepShare * signedDistance(p.x, p.y, piece) => Some(q) / |None of the overloaded alternatives of method * in class Double with types / | (x: Double): Double / | (x: Float): Double / | (x: Long): Double / | (x: Int): Double
+490:31 [E134] 490 |        x0 = math.min(x0, math.max(b.minX, r.minX)) / |None of the overloaded alternatives of method max in package scala.math with types / | (x: Double, y: Double): Double / | (x: Float, y: Float): Float / | (x: Long, y: Long): Long / | (x: Int, y: Int): Int
+491:31 [E134] 491 |        y0 = math.min(y0, math.max(b.minY, r.minY)) / |None of the overloaded alternatives of method max in package scala.math with types / | (x: Double, y: Double): Double / | (x: Float, y: Float): Float / | (x: Long, y: Long): Long / | (x: Int, y: Int): Int
+492:31 [E134] 492 |        x1 = math.max(x1, math.min(b.maxX, r.maxX)) / |None of the overloaded alternatives of method min in package scala.math with types / | (x: Double, y: Double): Double / | (x: Float, y: Float): Float / | (x: Long, y: Long): Long / | (x: Int, y: Int): Int
+493:31 [E134] 493 |        y1 = math.max(y1, math.min(b.maxY, r.maxY)) / |None of the overloaded alternatives of method min in package scala.math with types / | (x: Double, y: Double): Double / | (x: Float, y: Float): Float / | (x: Long, y: Long): Long / | (x: Int, y: Int): Int
+495:9 [E007] 495 |    Rect(x0, y0, x1, y1) / |         Found:    (x0 : Double) / |         Required: com.histmersion.web.LabelPlacement.Rect.MinX
+495:13 [E007] 495 |    Rect(x0, y0, x1, y1) / |             Found:    (y0 : Double) / |             Required: com.histmersion.web.LabelPlacement.Rect.MinY
+495:17 [E007] 495 |    Rect(x0, y0, x1, y1) / |                Found:    (x1 : Double) / |                Required: com.histmersion.web.LabelPlacement.Rect.MaxX
+495:21 [E007] 495 |    Rect(x0, y0, x1, y1) / |                Found:    (y1 : Double) / |                Required: com.histmersion.web.LabelPlacement.Rect.MaxY
+503:39 [E008] 503 |      val q = inner.clamp(Pt((box.minX + box.maxX) / 2, (box.minY + box.maxY) / 2)) / |value + is not a member of com.histmersion.web.LabelPlacement.Rect.MinX
+503:66 [E008] 503 |      val q = inner.clamp(Pt((box.minX + box.maxX) / 2, (box.minY + box.maxY) / 2)) / |value + is not a member of com.histmersion.web.LabelPlacement.Rect.MinY
+504:47 [E008] 504 |      val gx = math.max(0.0, math.max(box.minX - q.x, q.x - box.maxX) * scale - halfW) / |value - is not a member of com.histmersion.web.LabelPlacement.Rect.MinX
+505:47 [E008] 505 |      val gy = math.max(0.0, math.max(box.minY - q.y, q.y - box.maxY) * scale - halfH) / |value - is not a member of com.histmersion.web.LabelPlacement.Rect.MinY
+514:34 [E008] 514 |    val inner = view.inset((halfW + EdgePadPx) / scale, (halfH + EdgePadPx) / scale) / |value + is not a member of com.histmersion.web.LabelPlacement.GlideHalfW
+514:63 [E008] 514 |    val inner = view.inset((halfW + EdgePadPx) / scale, (halfH + EdgePadPx) / scale) / |value + is not a member of com.histmersion.web.LabelPlacement.GlideHalfH
+537:15 [E008] 537 |          if a > bestArea then / |    value > is not a member of com.histmersion.web.LabelPlacement.Area
+539:23 [E007] 539 |            bestArea = a / |               Found:    (a : com.histmersion.web.LabelPlacement.Area) / |               Required: Double
+570:86 [E008] 570 |    def atX(x: com.histmersion.web.LabelPlacement.Pt.X)(a: Pt, b: Pt): Pt = Pt(x, a.y + (b.y - a.y) * (x - a.x) / (b.x - a.x)) / |    value + is not a member of com.histmersion.web.LabelPlacement.Pt.Y
+570:93 [E008] 570 |    def atX(x: com.histmersion.web.LabelPlacement.Pt.X)(a: Pt, b: Pt): Pt = Pt(x, a.y + (b.y - a.y) * (x - a.x) / (b.x - a.x)) / |    value - is not a member of com.histmersion.web.LabelPlacement.Pt.Y
+571:83 [E008] 571 |    def atY(y: com.histmersion.web.LabelPlacement.Pt.Y)(a: Pt, b: Pt): Pt = Pt(a.x + (b.x - a.x) * (y - a.y) / (b.y - a.y), y) / |    value + is not a member of com.histmersion.web.LabelPlacement.Pt.X
+571:90 [E008] 571 |    def atY(y: com.histmersion.web.LabelPlacement.Pt.Y)(a: Pt, b: Pt): Pt = Pt(a.x + (b.x - a.x) * (y - a.y) / (b.y - a.y), y) / |    value - is not a member of com.histmersion.web.LabelPlacement.Pt.X
+572:27 [E008] 572 |    val l = edge(ring, _.x >= r.minX, atX(r.minX)) / |value >= is not a member of com.histmersion.web.LabelPlacement.Pt.X - did you mean x.!=? or perhaps x.==?
+572:44 [E007] 572 |    val l = edge(ring, _.x >= r.minX, atX(r.minX)) / |     Found:    (r.minX : com.histmersion.web.LabelPlacement.Rect.MinX) / |     Required: com.histmersion.web.LabelPlacement.Pt.X
+573:25 [E008] 573 |    val rt = edge(l, _.x <= r.maxX, atX(r.maxX)) / |value <= is not a member of com.histmersion.web.LabelPlacement.Pt.X - did you mean x.!=? or perhaps x.==?
+573:42 [E007] 573 |    val rt = edge(l, _.x <= r.maxX, atX(r.maxX)) / |     Found:    (r.maxX : com.histmersion.web.LabelPlacement.Rect.MaxX) / |     Required: com.histmersion.web.LabelPlacement.Pt.X
+574:25 [E008] 574 |    val t = edge(rt, _.y >= r.minY, atY(r.minY)) / |value >= is not a member of com.histmersion.web.LabelPlacement.Pt.Y - did you mean y.!=? or perhaps y.==?
+574:42 [E007] 574 |    val t = edge(rt, _.y >= r.minY, atY(r.minY)) / |     Found:    (r.minY : com.histmersion.web.LabelPlacement.Rect.MinY) / |     Required: com.histmersion.web.LabelPlacement.Pt.Y
+575:16 [E008] 575 |    edge(t, _.y <= r.maxY, atY(r.maxY)) / |value <= is not a member of com.histmersion.web.LabelPlacement.Pt.Y - did you mean y.!=? or perhaps y.==?
+575:33 [E007] 575 |    edge(t, _.y <= r.maxY, atY(r.maxY)) / |     Found:    (r.maxY : com.histmersion.web.LabelPlacement.Rect.MaxY) / |     Required: com.histmersion.web.LabelPlacement.Pt.Y
+615:32 [E008] 615 |      val x0 = math.floor((b.cx - b.w / 2 - pad) / cell).toInt / |  value - is not a member of com.histmersion.web.LabelPlacement.Box.Cx
+615:38 [E008] 615 |      val x0 = math.floor((b.cx - b.w / 2 - pad) / cell).toInt / |   value / is not a member of com.histmersion.web.LabelPlacement.Box.W
+616:32 [E008] 616 |      val x1 = math.floor((b.cx + b.w / 2 + pad) / cell).toInt / |  value + is not a member of com.histmersion.web.LabelPlacement.Box.Cx
+616:38 [E008] 616 |      val x1 = math.floor((b.cx + b.w / 2 + pad) / cell).toInt / |   value / is not a member of com.histmersion.web.LabelPlacement.Box.W
+617:32 [E008] 617 |      val y0 = math.floor((b.cy - b.h / 2 - pad) / cell).toInt / |  value - is not a member of com.histmersion.web.LabelPlacement.Box.Cy
+617:38 [E008] 617 |      val y0 = math.floor((b.cy - b.h / 2 - pad) / cell).toInt / |   value / is not a member of com.histmersion.web.LabelPlacement.Box.H
+618:32 [E008] 618 |      val y1 = math.floor((b.cy + b.h / 2 + pad) / cell).toInt / |  value + is not a member of com.histmersion.web.LabelPlacement.Box.Cy
+618:38 [E008] 618 |      val y1 = math.floor((b.cy + b.h / 2 + pad) / cell).toInt / |   value / is not a member of com.histmersion.web.LabelPlacement.Box.H
+619:19 [-] 619 |      for gx <- x0 to x1; gy <- y0 to y1 yield (gx, gy) / |Alphanumeric method to is not declared infix; it should not be used as infix operator. / |Instead, use method syntax .to(...) or backticked identifier `to`. / |The latter can be rewritten automatically under -rewrite -source 3.4-migration.
+621:20 [E008] 621 |      math.abs(a.cx - b.cx) * 2 < a.w + b.w + 2 * pad && math.abs(a.cy - b.cy) * 2 < a.h + b.h + 2 * pad / |  value - is not a member of com.histmersion.web.LabelPlacement.Box.Cx
+622:32 [E008] 622 |    for b <- boxes.sortBy(b => (-b.rank, b.key)) do / |value unary_- is not a member of com.histmersion.web.LabelPlacement.Box.Rank
+622:48 [E172] 622 |    for b <- boxes.sortBy(b => (-b.rank, b.key)) do / |No given instance of type Ordering[(T1, T2)] was found for parameter ord of method sortBy in trait SeqOps. / |I found: / |    scala.math.Ordering.Tuple2[T1, T2]( / |      /* ambiguous: both object Int in object Ordering and object Short in object Ordering match type Ordering[T1] */ / |        summon[Ordering[T1]],
+627:4 [E007] 627 |    kept.toSet / |    Found:    Set[String] / |    Required: Set[com.histmersion.web.LabelPlacement.Box.Key]
+611:80 [E007] 611 |  def cull(boxes: Seq[Box], cell: com.histmersion.web.LabelPlacement.CellSize = 128.0, shown: com.histmersion.web.LabelPlacement.Box.Key => Boolean = _ => true): Set / |                 Found:    (128.0d : Double) / |                 Required: com.histmersion.web.LabelPlacement.CellSize
+
+## modules/web/src/main/scala/com/histmersion/web/Latest.scala
+18:60 [E008] 18 |  def start(): com.histmersion.web.Latest.Ticket = { newest += 1; newest } / |value += is not a member of com.histmersion.web.Latest.Ticket - did you mean Ticket.!=? or perhaps Ticket.==?
+43:79 [E007] 43 |    case Failure(e) => failed(Option(e.getMessage).filter(_.nonEmpty).getOrElse(e.toString)) / |                            Found:    String / |                            Required: com.histmersion.web.Latest.Problem
+
+## modules/web/src/main/scala/com/histmersion/web/LatestOnly.scala
+18:7 [E007] 18 |    if busy then waiting = Some(a) / |  Found:    (LatestOnly.this.busy : com.histmersion.web.LatestOnly.Busy) / |  Required: Boolean
+
+## modules/web/src/main/scala/com/histmersion/web/LayerFilters.scala
+27:79 [E007] 27 |    s"""<span class="hd-badge hd-badge--${shape.cls} opt-badge">${Glyphs.badge(glyph)}</span>""" / |              Found:    (glyph : com.histmersion.web.LayerFilters.Glyph) / |              Required: com.histmersion.web.Glyphs.BadgeName
+30:79 [E008] 30 |  def layerIcon(k: PointKind[?]): com.histmersion.web.LayerFilters.Icon = Icon.html(k.icon) / |value html is not a member of object com.histmersion.web.LayerFilters.Icon
+38:37 [E007] 38 |          .map(k => IconSelect.Opt(k.kind, k.label, badge(Shape.Square, k.icon), under)) / |    Found:    (k.kind : com.histmersion.api.catalogue.EventSummary.Kind) / |    Required: com.histmersion.web.IconSelect.Opt.Value
+38:45 [E007] 38 |          .map(k => IconSelect.Opt(k.kind, k.label, badge(Shape.Square, k.icon), under)) / |Found:    (k.label : com.histmersion.api.catalogue.EventTaxonomy.Kind.Label) / |Required: com.histmersion.web.IconSelect.Opt.Label
+38:74 [E007] 38 |          .map(k => IconSelect.Opt(k.kind, k.label, badge(Shape.Square, k.icon), under)) / |Found:    (k.icon : com.histmersion.api.catalogue.EventTaxonomy.Kind.Icon) / |Required: com.histmersion.web.LayerFilters.Glyph
+38:81 [E007] 38 |          .map(k => IconSelect.Opt(k.kind, k.label, badge(Shape.Square, k.icon), under)) / |              Found:    (under : Some[String]) / |              Required: Option[com.histmersion.web.IconSelect.Opt.Group]
+35:21 [E007] 35 |      IconSelect.Opt(g, s"all $g", layerIcon(PointKinds.Events), under) :: / |  Found:    (g : com.histmersion.api.catalogue.EventTaxonomy.Kind.Group) / |  Required: com.histmersion.web.IconSelect.Opt.Value
+35:24 [E007] 35 |      IconSelect.Opt(g, s"all $g", layerIcon(PointKinds.Events), under) :: / |                      Found:    String / |                      Required: com.histmersion.web.IconSelect.Opt.Label
+35:44 [E007] 35 |      IconSelect.Opt(g, s"all $g", layerIcon(PointKinds.Events), under) :: / |                       Found:    com.histmersion.web.LayerFilters.Icon / |                       Required: com.histmersion.web.IconSelect.Opt.Icon
+35:65 [E007] 35 |      IconSelect.Opt(g, s"all $g", layerIcon(PointKinds.Events), under) :: / |              Found:    (under : Some[String]) / |              Required: Option[com.histmersion.web.IconSelect.Opt.Group]
+33:123 [E007] 33 |    IconSelect.Opt(com.histmersion.web.IconSelect.Opt.Value(""), com.histmersion.web.IconSelect.Opt.Label("all"), layerIcon(PointKinds.Events)) :: EventTaxonomy.group / |                       Found:    com.histmersion.web.LayerFilters.Icon / |                       Required: com.histmersion.web.IconSelect.Opt.Icon
+43:9 [E172] 43 |    case EventTier.Attested => / |Values of types String and com.histmersion.api.Api.EventQuery.Tier cannot be compared with == or !=
+44:11 [E007] 44 |      Some("Events a source in the corpus attests: its own record, or an attestation linked to it.") / |Found:    ( / |  "Events a source in the corpus attests: its own record, or an attestation linked to it." / |   : String) / |Required: com.histmersion.web.LayerFilters.TierMeaning.T
+45:9 [E172] 45 |    case EventTier.Catalogue => / |Values of types String and com.histmersion.api.Api.EventQuery.Tier cannot be compared with == or !=
+46:11 [E007] 46 |      Some("Events only an external catalogue knows; no source in the corpus attests them yet.") / |Found:    ( / |  "Events only an external catalogue knows; no source in the corpus attests them yet." / |   : String) / |Required: com.histmersion.web.LayerFilters.TierMeaning.T
+50:119 [E008] 50 |    IconSelect.Opt(com.histmersion.web.IconSelect.Opt.Value(""), com.histmersion.web.IconSelect.Opt.Label("all"), Icon.html(Icon.TierPair), hint = Some("Every event,  / |value html is not a member of object com.histmersion.web.LayerFilters.Icon
+50:129 [E008] 50 |    IconSelect.Opt(com.histmersion.web.IconSelect.Opt.Value(""), com.histmersion.web.IconSelect.Opt.Label("all"), Icon.html(Icon.TierPair), hint = Some("Every event,  / |value TierPair is not a member of object com.histmersion.web.LayerFilters.Icon
+55:35 [E007] 55 |      hint = tierMeaning(EventTier.Attested) / |   Found:    (com.histmersion.api.catalogue.EventTier.Attested : String) / |   Required: com.histmersion.api.Api.EventQuery.Tier
+52:16 [E007] 52 |      EventTier.Attested, / |   Found:    (com.histmersion.api.catalogue.EventTier.Attested : String) / |   Required: com.histmersion.web.IconSelect.Opt.Value
+54:6 [E007] 54 |      """<span class="hd-badge hd-badge--square hd-ev hd-ev--attested opt-badge"></span>""", / |Found:    ( / |  "<span class=\"hd-badge hd-badge--square hd-ev hd-ev--attested opt-badge\"></span>" / |   : String) / |Required: com.histmersion.web.IconSelect.Opt.Icon
+61:35 [E007] 61 |      hint = tierMeaning(EventTier.Catalogue) / |  Found:    (com.histmersion.api.catalogue.EventTier.Catalogue : String) / |  Required: com.histmersion.api.Api.EventQuery.Tier
+58:16 [E007] 58 |      EventTier.Catalogue, / |  Found:    (com.histmersion.api.catalogue.EventTier.Catalogue : String) / |  Required: com.histmersion.web.IconSelect.Opt.Value
+60:6 [E007] 60 |      """<span class="hd-badge hd-badge--square hd-ev hd-ev--catalogue opt-badge"></span>""", / |Found:    ( / |  "<span class=\"hd-badge hd-badge--square hd-ev hd-ev--catalogue opt-badge\"></span>" / |   : String) / |Required: com.histmersion.web.IconSelect.Opt.Icon
+66:23 [E007] 66 |      IconSelect.Opt(t.id, t.label, badge(Shape.Circle, t.icon)) / |  Found:    (t.id : com.histmersion.api.catalogue.SiteTypes.SiteType.Id) / |  Required: com.histmersion.web.IconSelect.Opt.Value
+66:29 [E007] 66 |      IconSelect.Opt(t.id, t.label, badge(Shape.Circle, t.icon)) / |Found:    (t.label : com.histmersion.api.catalogue.SiteTypes.SiteType.Label) / |Required: com.histmersion.web.IconSelect.Opt.Label
+66:58 [E007] 66 |      IconSelect.Opt(t.id, t.label, badge(Shape.Circle, t.icon)) / |Found:    (t.icon : com.histmersion.api.catalogue.SiteTypes.SiteType.Icon) / |Required: com.histmersion.web.LayerFilters.Glyph
+65:123 [E007] 65 |    IconSelect.Opt(com.histmersion.web.IconSelect.Opt.Value(""), com.histmersion.web.IconSelect.Opt.Label("all"), layerIcon(PointKinds.Sites)) :: SiteTypes.all.map(t  / |                       Found:    com.histmersion.web.LayerFilters.Icon / |                       Required: com.histmersion.web.IconSelect.Opt.Icon
+
+## modules/web/src/main/scala/com/histmersion/web/LayerToggle.scala
+21:15 [E007] 21 |      title := label, / |               Found:    (label : com.histmersion.web.LayerToggle.Label) / |               Required: String
+23:11 [E007] 23 |      span(label), / |Found:    (label : com.histmersion.web.LayerToggle.Label) / |Required: com.raquo.laminar.modifiers.Modifier[ / |  com.raquo.laminar.nodes.ReactiveHtmlElement[org.scalajs.dom.HTMLSpanElement]]
+24:56 [E008] 24 |      onClick.compose(_.sample(on)) --> (current => set(!current)) / |   value unary_! is not a member of com.histmersion.web.LayerToggle.On.T
+
+## modules/web/src/main/scala/com/histmersion/web/LicenseName.scala
+34:96 [E008] 34 |  def label(id: com.histmersion.web.LicenseName.Id): com.histmersion.web.LicenseName.Label = id.trim match / |        value trim is not a member of com.histmersion.web.LicenseName.Id
+37:28 [E006] 37 |      List(Some("CC"), Some(kind.toUpperCase), Option(ver), Option(port).map(_.toUpperCase)).flatten.mkString(" ") / |                            Not found: kind - did you mean link?
+37:54 [E006] 37 |      List(Some("CC"), Some(kind.toUpperCase), Option(ver), Option(port).map(_.toUpperCase)).flatten.mkString(" ") / |                                                      Not found: ver
+37:67 [E006] 37 |      List(Some("CC"), Some(kind.toUpperCase), Option(ver), Option(port).map(_.toUpperCase)).flatten.mkString(" ") / |                  Not found: port - did you mean Short? or perhaps Spot?
+43:103 [E008] 43 |  def url(id: com.histmersion.web.LicenseName.UrlId): Option[com.histmersion.web.LicenseName.Url] = id.trim match / |     value trim is not a member of com.histmersion.web.LicenseName.UrlId
+45:32 [E006] 45 |    case Cc(kind, ver, port) if ver != null => / |                                Not found: ver
+47:49 [E006] 47 |        s"https://creativecommons.org/licenses/${kind.toLowerCase}/$ver/" + Option(port).fold("")(p => / |                                    Not found: kind - did you mean link?
+47:68 [E006] 47 |        s"https://creativecommons.org/licenses/${kind.toLowerCase}/$ver/" + Option(port).fold("")(p => / |                                                          Not found: ver
+56:31 [E008] 56 |    (label(id), recorded.map(_.trim).filter(_.nonEmpty).orElse(url(id))) / |  value trim is not a member of com.histmersion.web.LicenseName.Recorded
+56:46 [E008] 56 |    (label(id), recorded.map(_.trim).filter(_.nonEmpty).orElse(url(id))) / |                                   value nonEmpty is not a member of Any
+62:53 [E007] 62 |        s"""<a class="media-license" href="${Fmt.esc(u)}" target="_blank" rel="noopener license">${Fmt.esc(name)}</a>""" / |                   Found:    (u : com.histmersion.web.LicenseName.Url.T) / |                   Required: com.histmersion.web.Fmt.Text
+62:107 [E007] 62 |        s"""<a class="media-license" href="${Fmt.esc(u)}" target="_blank" rel="noopener license">${Fmt.esc(name)}</a>""" / |              Found:    (name : com.histmersion.web.LicenseName.Label.T) / |              Required: com.histmersion.web.Fmt.Text
+63:69 [E007] 63 |      case (name, None) => s"""<span class="media-license">${Fmt.esc(name)}</span>""" / |              Found:    (name : com.histmersion.web.LicenseName.Label.T) / |              Required: com.histmersion.web.Fmt.Text
+
+## modules/web/src/main/scala/com/histmersion/web/Lightbox.scala
+68:31 [E007] 68 |    s""" $Full="${Fmt.esc(item.src)}"""" + keys / |            Found:    (item.src : com.histmersion.web.Lightbox.Item.Src) / |            Required: com.histmersion.web.Fmt.Text
+78:58 [E007] 78 |    def a(k: com.histmersion.web.Lightbox.AttrKey) = attr(s"data-lb-$k").map(_.trim).filter(_.nonEmpty) / |                          Found:    String / |                          Required: com.histmersion.web.Lightbox.AttrKey
+80:11 [E007] 80 |      attr(Full).filter(_.nonEmpty).getOrElse(src), / |           Found:    (com.histmersion.web.Lightbox.Full : String) / |           Required: com.histmersion.web.Lightbox.AttrKey
+95:75 [E007] 95 |    val title = i.title.map(t => s"""<div class="lightbox-title">${Fmt.esc(t)}</div>""") / |                 Found:    (t : com.histmersion.web.Lightbox.Item.Title) / |                 Required: com.histmersion.web.Fmt.Text
+97:36 [E008] 97 |      case (Some(c), Some(a)) if !c.contains(a) => Some(s"${Fmt.esc(a)} · ${Fmt.esc(c)}") / |value contains is not a member of com.histmersion.web.Lightbox.Item.Credit.T
+97:68 [E007] 97 |      case (Some(c), Some(a)) if !c.contains(a) => Some(s"${Fmt.esc(a)} · ${Fmt.esc(c)}") / |              Found:    (a : com.histmersion.web.Lightbox.Item.Author.T) / |              Required: com.histmersion.web.Fmt.Text
+97:84 [E007] 97 |      case (Some(c), Some(a)) if !c.contains(a) => Some(s"${Fmt.esc(a)} · ${Fmt.esc(c)}") / |              Found:    (c : com.histmersion.web.Lightbox.Item.Credit.T) / |              Required: com.histmersion.web.Fmt.Text
+98:64 [E007] 98 |      case (Some(c), _)                         => Some(Fmt.esc(c)) / |              Found:    (c : com.histmersion.web.Lightbox.Item.Credit.T) / |              Required: com.histmersion.web.Fmt.Text
+99:64 [E007] 99 |      case (None, Some(a))                      => Some(Fmt.esc(a)) / |              Found:    (a : com.histmersion.web.Lightbox.Item.Author.T) / |              Required: com.histmersion.web.Fmt.Text
+101:50 [E007] 101 |    val lic = i.license.map(l => LicenseName.html(l, i.licenseUrl)) / |             Found:    (l : com.histmersion.web.Lightbox.Item.License) / |             Required: com.histmersion.web.LicenseName.HtmlId
+101:55 [E007] 101 |    val lic = i.license.map(l => LicenseName.html(l, i.licenseUrl)) / |Found:    (i.licenseUrl : Option[com.histmersion.web.Lightbox.Item.LicenseUrl]) / |Required: Option[com.histmersion.web.LicenseName.HtmlRecorded]
+103:33 [E007] 103 |      val where = i.provider.map(MediaProvider.title).filter(_.nonEmpty).fold("the source")(p => p) / |               Found:    com.histmersion.api.media.MediaProvider.Id => / |                 com.histmersion.api.media.MediaProvider.Info.Title.T / |               Required: com.histmersion.web.Lightbox.Item.Provider => / |                 com.histmersion.api.media.MediaProvider.Info.Title.T
+104:53 [E007] 104 |      s"""<a class="lightbox-source" href="${Fmt.esc(u)}" target="_blank" rel="noopener">view on ${Fmt.esc( / |           Found:    (u : com.histmersion.web.Lightbox.Item.SourceUrl) / |           Required: com.histmersion.web.Fmt.Text
+111:6 [E007] 111 |      s"""<figcaption class="lightbox-caption">${title.getOrElse("")}""" + / |      Found:    String / |      Required: com.histmersion.web.Lightbox.CaptionHtml / 112 |        (if line.isEmpty then "" / 113 |         else s"""<div class="lightbox-credit">${line.mkString(" · ")}</div>""") + "</figcaption>"
+119:18 [E008] 119 |    full.exists(_.nonEmpty) || (src != null && src.contains("/assets/")) / |value nonEmpty is not a member of com.histmersion.web.Lightbox.FullSrc
+119:32 [E172] 119 |    full.exists(_.nonEmpty) || (src != null && src.contains("/assets/")) / |Values of types com.histmersion.web.Lightbox.Item.Src and Null cannot be compared with == or !=
+119:51 [E008] 119 |    full.exists(_.nonEmpty) || (src != null && src.contains("/assets/")) / |value contains is not a member of com.histmersion.web.Lightbox.Item.Src
+132:61 [E007] 132 |      val take = imgEl.closest(".lightbox") == null && opens(src, full) / |                       Found:    (src : String) / |                       Required: com.histmersion.web.Lightbox.Item.Src
+132:66 [E007] 132 |      val take = imgEl.closest(".lightbox") == null && opens(src, full) / |                Found:    (full : Option[String]) / |                Required: Option[com.histmersion.web.Lightbox.FullSrc]
+136:54 [E007] 136 |        open(fromAttrs(k => Option(imgEl.getAttribute(k)), src, Option(imgEl.getAttribute("alt")).getOrElse(""))) / |                  Found:    (k : com.histmersion.web.Lightbox.AttrKey) / |                  Required: String
+136:59 [E007] 136 |        open(fromAttrs(k => Option(imgEl.getAttribute(k)), src, Option(imgEl.getAttribute("alt")).getOrElse(""))) / |                       Found:    (src : String) / |                       Required: com.histmersion.web.Lightbox.Item.Src
+136:107 [E007] 136 |        open(fromAttrs(k => Option(imgEl.getAttribute(k)), src, Option(imgEl.getAttribute("alt")).getOrElse(""))) / |                   Found:    String / |                   Required: com.histmersion.web.Lightbox.FromAttrsAlt
+145:79 [E008] 145 |    box.setAttribute("aria-label", item.title.orElse(Option(item.alt).filter(_.nonEmpty)).getOrElse("figure")) / |value nonEmpty is not a member of com.histmersion.web.Lightbox.Item.Alt.T
+149:19 [E007] 149 |    img.src = item.src / |          Found:    (item.src : com.histmersion.web.Lightbox.Item.Src) / |          Required: String
+150:17 [E172] 150 |    img.alt = if item.alt != null then item.alt else "" / |Values of types com.histmersion.web.Lightbox.Item.Alt and Null cannot be compared with == or !=
+150:44 [E007] 150 |    img.alt = if item.alt != null then item.alt else "" / |          Found:    (item.alt : com.histmersion.web.Lightbox.Item.Alt) / |          Required: String
+152:51 [E007] 152 |    fig.insertAdjacentHTML("beforeend", captionHtml(item)) / |                    Found:    com.histmersion.web.Lightbox.CaptionHtml / |                    Required: String
+
+## modules/web/src/main/scala/com/histmersion/web/ListFilterBar.scala
+48:4 [E007] 48 |    counts ++ selected.filterNot(v => counts.exists(_._1 == v)).map(_ -> 0) / |    Found:    List[(com.histmersion.web.ListFilterBar.Choice, / |      com.histmersion.web.ListFilterBar.Count | Int)] / |    Required: List[(com.histmersion.web.ListFilterBar.ChipLabel, / |      com.histmersion.web.ListFilterBar.Count)]
+55:121 [E008] 55 |  def typed(s: com.histmersion.web.ListFilterBar.Text): Option[com.histmersion.web.ListFilterBar.Text] = Option(s).map(_.trim).filter(_.nonEmpty) / |  value trim is not a member of com.histmersion.web.ListFilterBar.Text.T
+55:134 [E007] 55 |  def typed(s: com.histmersion.web.ListFilterBar.Text): Option[com.histmersion.web.ListFilterBar.Text] = Option(s).map(_.trim).filter(_.nonEmpty) / |Found:    (_$5 : Nothing) / |Required: ?{ nonEmpty: ? } / |Note that implicit conversions were not tried because the result of an implicit conversion / |must be more specific than ?{ nonEmpty: Boolean }
+58:123 [E008] 58 |  def date(s: com.histmersion.web.ListFilterBar.DateS): Option[com.histmersion.web.ListFilterBar.Date] = typed(s).filter(_.matches("""\d{4}-\d{2}-\d{2}""")) / | value matches is not a member of com.histmersion.web.ListFilterBar.Text
+62:9 [E008] 62 |    if n > 0 then s"${show(v)} (${Paging.grouped(n)})" else show(v) / |      value > is not a member of com.histmersion.web.ListFilterBar.Count
+62:49 [E007] 62 |    if n > 0 then s"${show(v)} (${Paging.grouped(n)})" else show(v) / |                 Found:    (n : com.histmersion.web.ListFilterBar.Count) / |                 Required: com.histmersion.api.Paging.GroupSize
+61:205 [E007] 61 |  def optionLabel(v: com.histmersion.web.ListFilterBar.Choice, n: com.histmersion.web.ListFilterBar.Count, show: com.histmersion.web.ListFilterBar.Choice => com.histm / |               Found:    (id : com.histmersion.web.ListFilterBar.Choice) / |               Required: com.histmersion.api.UiLabels.Key
+79:10 [E007] 79 |    (hint(v).toList ++ id.toList) match / |          Found:    (v : com.histmersion.web.ListFilterBar.Choice) / |          Required: com.histmersion.web.ListFilterBar.Hint
+96:68 [E007] 96 |      counts.combineWith(field.signal).map((c, sel) => chipItems(c, sel).map((v, n) => (v, n, sel.contains(v)))) / |     Found:    (sel : List[com.histmersion.web.ListFilterBar.FieldName]) / |     Required: List[com.histmersion.web.ListFilterBar.Choice]
+100:20 [E007] 100 |      aria.label := label, / |           Found:    (label : com.histmersion.web.ListFilterBar.Label) / |           Required: String
+101:27 [E007] 101 |      dataAttr("facet") := label, / |           Found:    (label : com.histmersion.web.ListFilterBar.Label) / |           Required: String
+102:37 [E007] 102 |      cls("is-hidden") <-- items.map(_.isEmpty), / |Found:    (_$8 : Nothing) / |Required: ?{ isEmpty: ? } / |Note that implicit conversions were not tried because the result of an implicit conversion / |must be more specific than ?{ isEmpty: B } / |where:    B is a type variable with constraint <: Boolean
+103:62 [E008] 103 |      span(cls := "list-facet-label muted", Option.when(about.nonEmpty)(title := about), Wording.capitalize(label)), / |value nonEmpty is not a member of com.histmersion.web.ListFilterBar.About
+103:81 [E007] 103 |      span(cls := "list-facet-label muted", Option.when(about.nonEmpty)(title := about), Wording.capitalize(label)), / |           Found:    (about : com.histmersion.web.ListFilterBar.About) / |           Required: String
+103:108 [E007] 103 |      span(cls := "list-facet-label muted", Option.when(about.nonEmpty)(title := about), Wording.capitalize(label)), / |           Found:    (label : com.histmersion.web.ListFilterBar.Label) / |           Required: String
+104:33 [E008] 104 |      children <-- items.split(_._1) { (v, _, item) => / |                               value _1 is not a member of Any
+108:31 [E007] 108 |          dataAttr("value") := v, / |                               Found:    (v : Any) / |                               Required: String
+109:18 [E007] 109 |          tooltip(v, show, hint).map(h => title := h), / |                  Found:    (v : Any) / |                  Required: com.histmersion.web.ListFilterBar.Choice
+110:38 [E008] 110 |          aria.pressed <-- item.map(_._3.toString), / |                                    value _3 is not a member of Any
+111:20 [E007] 111 |          span(show(v)), / |                    Found:    (v : Any) / |                    Required: com.histmersion.web.ListFilterBar.Choice
+112:81 [E008] 112 |          span(cls := "btn-count", child.text <-- item.map(t => Paging.grouped(t._2))), / |                                       value _2 is not a member of Any
+112:85 [E172] 112 |          span(cls := "btn-count", child.text <-- item.map(t => Paging.grouped(t._2))), / |Implicit instance of RenderableText[com.histmersion.api.catalogue.CatalogRecord.Group.Label.T] not found. If you want to render `com.histmersion.api.catalogue.CatalogRec
+113:66 [E007] 113 |          onClick --> (_ => UiState.set(field := toggled(field.now(), v))()) / |           Found:    List[com.histmersion.web.ListFilterBar.FieldName] / |           Required: List[com.histmersion.web.ListFilterBar.Choice]
+113:70 [E007] 113 |          onClick --> (_ => UiState.set(field := toggled(field.now(), v))()) / |                    Found:    (v : Any) / |                    Required: com.histmersion.web.ListFilterBar.Choice
+115:7 [E172] 115 |      } / |Ambiguous given instances: both object SetSplittable in object Splittable and object ScalaJsArraySplittable in object Splittable match type com.raquo.airstream.split.Spl
+91:104 [E007] 91 |      show: com.histmersion.web.ListFilterBar.Choice => com.histmersion.web.ListFilterBar.ChoiceLabel = UiLabels.label, / |               Found:    (id : com.histmersion.web.ListFilterBar.Choice) / |               Required: com.histmersion.api.UiLabels.Key
+131:20 [E007] 131 |      aria.label := label, / |           Found:    (label : com.histmersion.web.ListFilterBar.Label) / |           Required: String
+132:27 [E007] 132 |      dataAttr("facet") := label, / |           Found:    (label : com.histmersion.web.ListFilterBar.Label) / |           Required: String
+133:24 [E008] 133 |      Option.when(about.nonEmpty)(title := about), / |value nonEmpty is not a member of com.histmersion.web.ListFilterBar.About
+133:43 [E007] 133 |      Option.when(about.nonEmpty)(title := about), / |           Found:    (about : com.histmersion.web.ListFilterBar.About) / |           Required: String
+136:27 [E007] 136 |          chipItems(c, sel.toList).map((v, n) => / |           Found:    List[com.histmersion.web.ListFilterBar.FieldName] / |           Required: List[com.histmersion.web.ListFilterBar.Choice]
+145:63 [E007] 145 |      onChange.mapToValue --> (v => UiState.set(field := typed(v))()) / |                      Found:    (v : String) / |                      Required: com.histmersion.web.ListFilterBar.Text
+125:104 [E007] 125 |      show: com.histmersion.web.ListFilterBar.Choice => com.histmersion.web.ListFilterBar.ChoiceLabel = UiLabels.label, / |             Found:    (id : com.histmersion.web.ListFilterBar.Choice) / |             Required: com.histmersion.api.UiLabels.Key
+157:21 [E007] 157 |      placeholder := label, / |           Found:    (label : com.histmersion.web.ListFilterBar.Label) / |           Required: String
+158:20 [E007] 158 |      aria.label := label, / |           Found:    (label : com.histmersion.web.ListFilterBar.Label) / |           Required: String
+159:33 [E007] 159 |      controlled(value <-- draft.signal, onInput.mapToValue --> draft.writer), / |Found:    (draft.signal : / |  com.raquo.airstream.state.StrictSignal[com.histmersion.web.ListFilterBar.Text / |    | String] / |) / |Required: com.raquo.airstream.core.Source[String]
+160:55 [E007] 160 |      field.signal.changes --> (v => if typed(draft.now()) != v then draft.set(v.getOrElse(""))), / |             Found:    com.histmersion.web.ListFilterBar.Text | String / |             Required: com.histmersion.web.ListFilterBar.Text
+161:76 [E007] 161 |      draft.signal.changes.debounce(math.max(0, typingMs)) --> (s => commit(s)), / |     Found:    (s : com.histmersion.web.ListFilterBar.Text.T | String) / |     Required: com.histmersion.web.ListFilterBar.Text
+162:67 [E007] 162 |      onKeyDown.filter(_.key == "Enter") --> (_ => commit(draft.now())) / |             Found:    com.histmersion.web.ListFilterBar.Text | String / |             Required: com.histmersion.web.ListFilterBar.Text
+170:20 [E007] 170 |      aria.label := label, / |           Found:    (label : com.histmersion.web.ListFilterBar.Label) / |           Required: String
+171:15 [E007] 171 |      title := label, / |           Found:    (label : com.histmersion.web.ListFilterBar.Label) / |           Required: String
+172:44 [E007] 172 |      value <-- field.signal.map(_.getOrElse("")), / |             Found:    com.histmersion.web.ListFilterBar.Date | String / |             Required: String
+173:62 [E007] 173 |      onChange.mapToValue --> (v => UiState.set(field := date(v))()) / |                     Found:    (v : String) / |                     Required: com.histmersion.web.ListFilterBar.DateS
+
+## modules/web/src/main/scala/com/histmersion/web/ListPaging.scala
+73:11 [E007] 73 |    if cur.extended then cur.rows.lastOption.map(id) else None / |Found:    (cur.extended : com.histmersion.web.ListPaging.Listing.Extended) / |Required: Boolean
+87:26 [E007] 87 |    Paging.heading(l.rows.size, count(l, state, stateOf), singular) + / |                   Found:    Int / |                   Required: com.histmersion.api.Paging.ShownCount
+87:37 [E007] 87 |    Paging.heading(l.rows.size, count(l, state, stateOf), singular) + / |                         Found:    com.histmersion.web.ListPaging.Count / |                         Required: com.histmersion.api.Paging.Page.Total
+94:58 [E007] 94 |    if l.page.counts.nonEmpty then state.fold(l.page.all)(l.page.count) / |Found:    com.histmersion.api.Paging.Page.CountState => / |  com.histmersion.api.Paging.Page.Total | com.histmersion.api.Paging.Count.T / |Required: com.histmersion.web.ListPaging.State => com.histmersion.api.Paging.Page.Total | / |  com.histmersion.api.Paging.Count.T
+95:32 [E007] 95 |    else state.fold(l.rows.size)(s => l.rows.count(stateOf(_) == s)) / |         Found:    Int / |         Required: com.histmersion.web.ListPaging.Count
+102:40 [E008] 102 |      cls("is-hidden") <-- hasOlder.map(!_), / |value unary_! is not a member of com.histmersion.web.ListPaging.HasOlder
+106:21 [E007] 106 |        disabled <-- busy, / |Found:    (busy : com.raquo.airstream.core.Signal[com.histmersion.web.ListPaging.Busy]) / |Required: com.raquo.airstream.core.Source[Boolean]
+107:40 [E007] 107 |        child.text <-- busy.map(b => if b then "Loading older…" else "Show older"), / |                   Found:    (b : com.histmersion.web.ListPaging.Busy) / |                   Required: Boolean
+
+## modules/web/src/main/scala/com/histmersion/web/ManagerPolicyText.scala
+16:86 [E008] 16 |  def isDate(s: com.histmersion.web.ManagerPolicyText.Text): Boolean = Date.matches(s.trim) / |value trim is not a member of com.histmersion.web.ManagerPolicyText.Text
+
+## modules/web/src/main/scala/com/histmersion/web/ManagersHandlersText.scala
+26:26 [E008] 26 |      c.dailyUsd.filter(_ > 0).map(u => s"$u USD a day") / |value > is not a member of com.histmersion.api.automation.Managers.ManagerConfig.DailyUsd
+
