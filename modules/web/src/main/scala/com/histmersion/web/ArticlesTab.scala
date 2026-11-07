@@ -45,7 +45,7 @@ object ArticlesTab:
   private[web] def renderArticle(art: Article.Summary, inPanel: Boolean = false): HtmlElement =
     li(
       cls := "article-row",
-      marks.RowActions(marks.ItemRef.article(marks.ItemRef.ArticleSlug(art.slug.value), marks.ItemRef.ArticleTitle(art.title.value)), marks.ItemRef.Href(Route.Article(Route.Article.Slug(art.slug.value)).path), com.histmersion.web.library.TableRow.Byline(Fmt.display(com.histmersion.api.UiLabels.Text(art.kind.value)).value)),
+      marks.RowActions(marks.ItemRef.article(art.slug, com.histmersion.api.library.Title(art.title.value)), marks.ItemRef.Href(Route.Article(Route.Article.Slug(art.slug.value)).path), Fmt.display(com.histmersion.api.UiLabels.Text(art.kind.value)).value),
       a(
         href := Route.Article(Route.Article.Slug(art.slug.value)).path,
         cls := "article-link",

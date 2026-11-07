@@ -55,7 +55,7 @@ object NoteMarkers:
       }
 
   private def marker(n: Note): DomMarker =
-    val el = DomMarker.element(com.histmersion.web.map.DomMarker.ElementCls("hd-note-marker"), com.histmersion.web.map.DomMarker.ElementHtml(Icon.html(Icon.Note).value))
+    val el = DomMarker.element("hd-note-marker", Icon.html(Icon.Note).value)
     el.setAttribute("tabindex", "0")
     el.setAttribute("role", "button")
     el.setAttribute("data-note", n.id.value)

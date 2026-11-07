@@ -32,7 +32,7 @@ object MapHandle:
           (z: Double, opts: js.UndefOr[js.Dynamic]) =>
             s.setZoom(
               MapSurface.Zoom(z),
-              animate = MapSurface.SetZoomAnimate(!opts.exists(o => !js.isUndefined(o.animate) && !o.animate.asInstanceOf[Boolean]))
+              animate = MapSurface.SetViewAnimate(!opts.exists(o => !js.isUndefined(o.animate) && !o.animate.asInstanceOf[Boolean]))
             )
       ): js.Function2[Double, js.UndefOr[js.Dynamic], Unit],
       getZoom = (() => s.zoom.value): js.Function0[Double],

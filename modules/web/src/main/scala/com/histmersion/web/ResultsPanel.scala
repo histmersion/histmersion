@@ -70,7 +70,7 @@ object ResultsPanel:
         aria.pressed <-- UiState.inView.signal.map(_.toString),
         "On the map",
         title := "Only what lies in the map's view",
-        onClick --> (_ => ViewportToggle.setInView(com.histmersion.web.ViewportToggle.SetInViewOn(true)))
+        onClick --> (_ => ViewportToggle.setInView(true))
       ),
       button(
         typ := "button",
@@ -79,7 +79,7 @@ object ResultsPanel:
         aria.pressed <-- UiState.inView.signal.map(v => (!v).toString),
         "Everywhere",
         title := "Wherever it is",
-        onClick --> (_ => ViewportToggle.setInView(com.histmersion.web.ViewportToggle.SetInViewOn(false)))
+        onClick --> (_ => ViewportToggle.setInView(false))
       )
     )
 

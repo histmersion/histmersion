@@ -36,15 +36,14 @@ object ReadingPane:
 
   private def readSource(ck: com.histmersion.api.library.Citekey): Future[SourceReading] =
     cached(sourceReads, ck.value) {
-      val key = ApiClient.Citekey(ck.value)
-      val record = ApiClient.getSource(key, body = com.histmersion.web.ApiClient.IncludeBody(false))
-      val edges = ApiClient.neighbors(key)
-      val articles = ApiClient.sourceArticles(key)
+      val record = ApiClient.getSource(ck, body = com.histmersion.api.Api.SourceViewQuery.FullText(false))
+      val edges = ApiClient.neighbors(ck)
+      val articles = ApiClient.sourceArticles(ck)
       for r <- record; e <- edges; a <- articles yield SourceReading(r, CitationCounts.of(e, a.size))
     }
 
   private def readArticle(slug: Article.Slug): Future[Article.View] =
-    cached(articleReads, slug.value)(ApiClient.getArticle(ApiClient.ArticleSlug(slug.value), brief = com.histmersion.web.ApiClient.Brief(true)))
+    cached(articleReads, slug.value)(ApiClient.getArticle(slug, brief = Article.FullText(true)))
 
   def element(section: LibrarySection, chosen: Signal[Option[com.histmersion.api.personal.ItemKey]]): HtmlElement =
     htmlTag("aside")(
@@ -144,10 +143,10 @@ object ReadingPane:
         .flatMap(_.toOption)
         .flatMap(r => bounds(r.source.findings))
         .foreach(b => TheMap.surface.fitBounds(b, com.histmersion.web.map.MapSurface.FitBoundsPadding(40), com.histmersion.web.map.MapSurface.MaxZoom(Layout.fitMaxZoom.value)))
-    val ref0 = marks.ItemRef.source(ck, row.map(_.title.value).getOrElse(ck.value))
+    val ref0 = marks.ItemRef.source(ck, row.map(_.title).getOrElse(com.histmersion.api.library.Title(ck.value)))
     // the item's own title once its record is read (the row is not on the page when the address chose it)
     val ref = reading.signal
-      .map(_.flatMap(_.toOption).fold(ref0)(r => marks.ItemRef.source(ck, r.source.source.title.value)))
+      .map(_.flatMap(_.toOption).fold(ref0)(r => marks.ItemRef.source(ck, r.source.source.title)))
       .distinct
     val byline = row.fold("")(h =>
       List(TableRow.authors(h.authors.map(_.value)), h.year.map(_.value.toInt).fold("")(_.toString)).filter(_.nonEmpty).mkString(", ")
@@ -156,7 +155,7 @@ object ReadingPane:
       cls := "reading-item",
       dataAttr("key") := ck.value,
       com.histmersion.web.ui.ContextMenu
-        .on(s"Actions: ${ref0.title}", () => marks.ItemMenu.entries(refNow(reading, ref0), byline)),
+        .on(com.histmersion.web.ui.ContextMenu.OnTitle(s"Actions: ${ref0.title}"), () => marks.ItemMenu.entries(refNow(reading, ref0), byline)),
       onMountCallback { _ =>
         readSource(ck).onComplete { r =>
           reading.set(Some(r.toEither.left.map(message)))
@@ -206,11 +205,11 @@ object ReadingPane:
         ul(all.take(Layout.readingFindings.value).map { f =>
           li(
             cls := "reading-finding",
-            f.claim,
+            f.claim.value,
             Option.when(YearFmt.period(f.periodStart, f.periodEnd).nonEmpty)(
               span(cls := "lib-period", s" ${YearFmt.period(f.periodStart, f.periodEnd)}")
             ),
-            f.regionName.filter(_.trim.nonEmpty).map(r => span(cls := "muted", s" · ${Fmt.display(r)}"))
+            f.regionName.filter(_.value.trim.nonEmpty).map(r => span(cls := "muted", s" · ${Fmt.display(com.histmersion.api.UiLabels.Text(r.value))}"))
           )
         }),
         Option.when(all.size > Layout.readingFindings.value)(
@@ -247,15 +246,15 @@ object ReadingPane:
     def showOnMap(): Unit =
       Router.go(Route.Explore)
       ResultsPanel.show(Preview.Target.Article(Preview.Target.Article.Slug(slug.value)))
-    val ref0 = marks.ItemRef.article(slug, row.map(_.title.value).getOrElse(slug.value))
+    val ref0 = marks.ItemRef.article(slug, com.histmersion.api.library.Title(row.map(_.title.value).getOrElse(slug.value)))
     def refOf(v: Option[Either[com.histmersion.web.ErrorLine.Problem, Article.View]]) =
-      v.flatMap(_.toOption).fold(ref0)(a => marks.ItemRef.article(slug, a.article.title.value))
+      v.flatMap(_.toOption).fold(ref0)(a => marks.ItemRef.article(slug, com.histmersion.api.library.Title(a.article.title.value)))
     val ref = reading.signal.map(refOf).distinct
     div(
       cls := "reading-item",
       dataAttr("key") := slug.value,
       com.histmersion.web.ui.ContextMenu
-        .on(s"Actions: ${ref0.title}", () => marks.ItemMenu.entries(refOf(reading.now()), "")),
+        .on(com.histmersion.web.ui.ContextMenu.OnTitle(s"Actions: ${ref0.title}"), () => marks.ItemMenu.entries(refOf(reading.now()), "")),
       onMountCallback { _ =>
         readArticle(slug).onComplete { r =>
           reading.set(Some(r.toEither.left.map(message)))
@@ -301,7 +300,7 @@ object ReadingPane:
     reading
       .now()
       .flatMap(_.toOption)
-      .fold(ref0)(r => marks.ItemRef.source(ref0.target.itemKey.map(k => com.histmersion.api.library.Citekey(k.value)).getOrElse(com.histmersion.api.library.Citekey("")), r.source.source.title.value))
+      .fold(ref0)(r => marks.ItemRef.source(ref0.target.itemKey.map(k => com.histmersion.api.library.Citekey(k.value)).getOrElse(com.histmersion.api.library.Citekey("")), r.source.source.title))
 
   private def message(e: Throwable): com.histmersion.web.ErrorLine.Problem =
     com.histmersion.web.ErrorLine.Problem(Option(e.getMessage).filter(_.nonEmpty).getOrElse(e.toString))

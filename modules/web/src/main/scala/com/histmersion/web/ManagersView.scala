@@ -370,8 +370,8 @@ object ManagersView:
             buttons.map((kind, icon, label, tip) =>
               WriteButton(
                 icon,
-                com.histmersion.web.WriteButton.ApplyLabel(label.value),
-                com.histmersion.web.WriteButton.ApplyTip(tip.value),
+                label.value,
+                tip.value,
                 () => go(kind)
               )
             )
@@ -637,15 +637,15 @@ object ManagersView:
             if on then
               WriteButton(
                 Icon.Managers,
-                com.histmersion.web.WriteButton.ApplyLabel("Pause"),
-                com.histmersion.web.WriteButton.ApplyTip("Pause the seeding managers and watchers the autopilot runs"),
+                "Pause",
+                "Pause the seeding managers and watchers the autopilot runs",
                 () => flip(com.histmersion.api.automation.Autopilot.AutopilotSet.On(false))
               )
             else
               WriteButton(
                 Icon.Managers,
-                com.histmersion.web.WriteButton.ApplyLabel("Start working"),
-                com.histmersion.web.WriteButton.ApplyTip("every research goal gets an active seeding manager and watcher and moves from planned to reviewed by itself"),
+                "Start working",
+                "every research goal gets an active seeding manager and watcher and moves from planned to reviewed by itself",
                 () => flip(com.histmersion.api.automation.Autopilot.AutopilotSet.On(true))
               )
           )
@@ -656,15 +656,15 @@ object ManagersView:
             case Some(_) =>
               WriteButton(
                 Icon.Managers,
-                com.histmersion.web.WriteButton.ApplyLabel(Wording.Undrain),
-                com.histmersion.web.WriteButton.ApplyTip("The scheduler admits work again (undrain)"),
+                Wording.Undrain,
+                "The scheduler admits work again (undrain)",
                 () => drain(com.histmersion.api.automation.Autopilot.DrainSet.On(false))
               )
             case None =>
               WriteButton(
                 Icon.Managers,
-                com.histmersion.web.WriteButton.ApplyLabel(Wording.Drain),
-                com.histmersion.web.WriteButton.ApplyTip("Before a deploy: nothing new starts while the runs in flight finish; no manager is paused (drain)"),
+                Wording.Drain,
+                "Before a deploy: nothing new starts while the runs in flight finish; no manager is paused (drain)",
                 () => drain(com.histmersion.api.automation.Autopilot.DrainSet.On(true))
               )
           }

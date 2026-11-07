@@ -3,7 +3,7 @@ package com.histmersion.web
 import hearth.kindlings.optics.syntax.*
 
 import com.raquo.laminar.api.L.*
-import com.histmersion.api.{Api, Plural}
+import com.histmersion.api.{Api, Plural, Years}
 import org.scalajs.dom
 
 import scala.concurrent.Future
@@ -14,26 +14,8 @@ import com.histmersion.api.instance.UiConfig
 import com.histmersion.api.library.{Bucket, TimeHistogram}
 
 object TreeTab:
-  type Depth = Depth.T
-  object Depth extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type Expanded = Expanded.T
-  object Expanded extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type Filled = Filled.T
-  object Filled extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type Openable = Openable.T
-  object Openable extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
-
-  type Axis = Axis.T
-  object Axis extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type RenderNodeDepth = _root_.com.histmersion.web.TreeTab.Depth
-  val RenderNodeDepth: _root_.com.histmersion.web.TreeTab.Depth.type = _root_.com.histmersion.web.TreeTab.Depth
-  type ToggleDepth = _root_.com.histmersion.web.TreeTab.Depth
-  val ToggleDepth: _root_.com.histmersion.web.TreeTab.Depth.type = _root_.com.histmersion.web.TreeTab.Depth
-  type FillWithDepth = _root_.com.histmersion.web.TreeTab.Depth
-  val FillWithDepth: _root_.com.histmersion.web.TreeTab.Depth.type = _root_.com.histmersion.web.TreeTab.Depth
-
   private var config: Option[UiConfig] = None
-  private var axis: Option[com.histmersion.web.TreeTab.Axis] = None
+  private var axis: Option[Api.AggregateQuery.By] = None
   private var lastData: Option[TimeHistogram] = None
 
   /** Drops the answers to a superseded load ([[Latest]]). */
@@ -42,7 +24,7 @@ object TreeTab:
   private var lastParams: Option[String] = None
 
   private val treeContent = Var[List[HtmlElement]](Nil)
-  private val countText = Var("")
+  private val countText = Var(com.histmersion.api.UiLabels.Text(""))
   private val loading = Var(false)
   private val failed = Var(false)
 
@@ -50,14 +32,14 @@ object TreeTab:
     div(
       cls := "tree-pane",
       idAttr := "tree-pane",
-      ResultsPaging.countBar(countText.signal, loading.signal, failed.signal, id = Some("tree-count")),
+      ResultsPaging.countBar(countText.signal, loading.signal.map(ResultsPaging.Loading(_)), failed.signal.map(ResultsPaging.Failed(_)), id = Some("tree-count")),
       div(idAttr := "tree-list", cls := "tree-list", children <-- treeContent.signal)
     )
 
   def show(tab: String): Unit =
     val mine = tab match
-      case "bytime"   => Some("time")
-      case "byregion" => Some("region")
+      case "bytime"   => Some(Api.AggregateQuery.By("time"))
+      case "byregion" => Some(Api.AggregateQuery.By("region"))
       case _          => None
     axis = mine
     mine match
@@ -78,12 +60,12 @@ object TreeTab:
       else
         lastParams = Some(key)
         dom.window.clearTimeout(timer)
-        val ms = config.flatMap(c => Option(c.debounce.reloadMs)).getOrElse(0)
-        timer = dom.window.setTimeout(() => load(), UiState.reloadDelay(ms))
+        val ms = config.flatMap(c => Option(c.debounce.reloadMs)).map(_.value).getOrElse(0)
+        timer = dom.window.setTimeout(() => load(), UiState.reloadDelay(UiState.ReloadDelayNormalMs(ms)).value)
 
   private def paramsKey(): String =
     val f = UiState.toFilter()
-    s"${axis.getOrElse("")}:${f.hashCode}"
+    s"${axis.fold("")(_.value)}:${f.hashCode}"
 
   def load(): Unit =
     config match
@@ -92,37 +74,43 @@ object TreeTab:
         if axis.isEmpty then ()
         else
           val mine = latest.start()
-          if countText.now().isEmpty then countText.set("loading…") else loading.set(true)
+          if countText.now().value.isEmpty then countText.set(com.histmersion.api.UiLabels.Text("loading…")) else loading.set(true)
           failed.set(false)
           doLoad(cfg, mine)
 
   private def doLoad(cfg: UiConfig, mine: Int): Unit =
-    val by = axis.getOrElse("time")
+    val by = axis.getOrElse(Api.AggregateQuery.By("time"))
     val f = UiState.toFilter()
-    val asOf = if by == "region" then for a <- UiState.from.now(); b <- UiState.to.now() yield (a + b) / 2
-    else None
+    val asOf =
+      if by.value == "region" then for a <- UiState.from.now(); b <- UiState.to.now() yield Api.AggregateQuery.AsOf((a + b) / 2)
+      else None
 
     ApiClient
       .aggregate(
         Api.AggregateQuery.tree(
           by = by,
           filter = f,
-          depth = Some(cfg.treeDepth),
+          depth = Some(Api.AggregateQuery.Depth(cfg.treeDepth.value)),
           asOf = asOf,
-          samples = Some(cfg.treeSamples)
+          samples = Some(Api.AggregateQuery.Samples(cfg.treeSamples.value))
         )
       )
       .onComplete { r =>
         if latest.isCurrent(mine) then
           loading.set(false)
-          latest.answer(r, showTree, m => { failed.set(true); countText.set(s"Could not group the sources: $m") })
+          latest.answer(r, showTree, m => { failed.set(true); countText.set(com.histmersion.api.UiLabels.Text(s"Could not group the sources: $m")) })
       }
 
   private def showTree(data: TimeHistogram): Unit =
     lastData = Some(data)
     val roots = data.tree
     countText.set(
-      countLine(data, roots.size, UiState.from.now().getOrElse(data.from), UiState.to.now().getOrElse(data.to))
+      countLine(
+        data,
+        com.histmersion.api.RowCount(roots.size),
+        Years.Astronomical(UiState.from.now().getOrElse(data.from.value)),
+        Years.Astronomical(UiState.to.now().getOrElse(data.to.value))
+      )
     )
 
     if roots.isEmpty then
@@ -131,38 +119,41 @@ object TreeTab:
           div(cls := "empty", p("nothing to group — widen the span or remove a chip"))
         )
       )
-    else treeContent.set(roots.map(b => renderNode(b, com.histmersion.web.TreeTab.RenderNodeDepth(0), data)))
+    else treeContent.set(roots.map(b => renderNode(b, 0, data)))
 
   /** The count line, in the sidebar's one form ([[ResultsPaging]]): every source is in the tree, so
     * `285 sources · 12 periods · 1475 BCE → 1465 BCE` (`· as of <year>` for regions).
     */
   def countLine(data: TimeHistogram, roots: com.histmersion.api.RowCount, from: com.histmersion.api.Years.Astronomical, to: com.histmersion.api.Years.Astronomical): com.histmersion.api.UiLabels.Text =
     val groups =
-      if data.by == "region" then Plural.count(roots.toLong, com.histmersion.api.Plural.CountSingular("region")) else Plural.count(roots.toLong, com.histmersion.api.Plural.CountSingular("period"))
+      if data.by.value == "region" then Plural.count(Plural.CountN(roots.value.toLong), com.histmersion.api.Plural.CountSingular("region")) else Plural.count(Plural.CountN(roots.value.toLong), com.histmersion.api.Plural.CountSingular("period"))
     ResultsPaging.countLine(
-      data.total,
-      data.total,
+      com.histmersion.api.Paging.Shown(data.total.value),
+      com.histmersion.api.Paging.Page.Total(data.total.value),
       com.histmersion.api.Plural.Noun.Singular("source"),
-      extras = List(groups, ResultsPaging.span(Some(from), Some(to))) ++ data.asOf.map(a => s"as of ${Fmt.yr(a)}")
+      extras = List(
+        com.histmersion.api.UiLabels.Text(groups.value),
+        ResultsPaging.span(Some(com.histmersion.api.catalogue.Year(from.value)), Some(com.histmersion.api.catalogue.Year(to.value)))
+      ) ++ data.asOf.map(a => com.histmersion.api.UiLabels.Text(s"as of ${Fmt.yr(a)}"))
     )
 
-  private def unitWord(n: com.histmersion.api.RowCount): com.histmersion.api.Plural.Phrase = if n == 1 then com.histmersion.api.Plural.Phrase("1 source") else s"$n sources"
+  private def unitWord(n: Bucket.Count): com.histmersion.api.Plural.Phrase = if n.value == 1 then com.histmersion.api.Plural.Phrase("1 source") else com.histmersion.api.Plural.Phrase(s"${n.value} sources")
 
-  private def renderNode(b: Bucket, depth: com.histmersion.web.TreeTab.RenderNodeDepth, data: TimeHistogram): HtmlElement =
+  private def renderNode(b: Bucket, depth: Int, data: TimeHistogram): HtmlElement =
     val expanded = Var(false)
     val childrenFilled = Var(false)
     val kidElements = Var[List[HtmlElement]](Nil)
     val kids = b.children
-    val openable = kids.nonEmpty || b.kind == "time" || b.placeId.isDefined
+    val openable = kids.nonEmpty || b.kind.value == "time" || b.placeId.isDefined
 
-    val overStr = if b.overlap > 0 then
-      val noun = if kids.exists(_.kind == "time") then "period" else "subregion"
+    val overStr = if b.overlap.value > 0 then
+      val noun = if kids.exists(_.kind.value == "time") then "period" else "subregion"
       s" · ${b.overlap} in more than one $noun"
     else ""
 
-    val perStr = if b.kind == "time" then "" else Fmt.periodStr(b.start, b.end)
+    val perStr = if b.kind.value == "time" then "" else Fmt.periodStr(b.start, b.end).value
 
-    val contestedStr = if b.contested && !b.label.toLowerCase.contains("contested") then " (contested)"
+    val contestedStr = if b.contested.value && !b.label.value.toLowerCase.contains("contested") then " (contested)"
     else ""
 
     val alsoStr = if b.alsoUnder.nonEmpty then s" (also under ${b.alsoUnder.mkString(", ")})"
@@ -172,7 +163,7 @@ object TreeTab:
       cls := "tnode",
       styleAttr := s"--tdepth: $depth",
       div(
-        cls := s"trow t-${b.kind}" + (if b.key == "unlocated" then " t-unlocated" else ""),
+        cls := s"trow t-${b.kind}" + (if b.key.value == "unlocated" then " t-unlocated" else ""),
         tabIndex := 0,
         span(
           cls := "twist",
@@ -180,10 +171,10 @@ object TreeTab:
         ),
         span(
           cls := "tlabel",
-          b.label + contestedStr,
+          b.label.value + contestedStr,
           onClick --> { _ => act(b) }
         ),
-        span(cls := "tcount", unitWord(b.count)),
+        span(cls := "tcount", unitWord(b.count).value),
         span(
           cls := "tmeta",
           overStr +
@@ -214,12 +205,12 @@ object TreeTab:
 
   private def toggle(
       b: Bucket,
-      depth: com.histmersion.web.TreeTab.ToggleDepth,
+      depth: Int,
       data: TimeHistogram,
-      expanded: Var[com.histmersion.web.TreeTab.Expanded],
-      filled: Var[com.histmersion.web.TreeTab.Filled],
+      expanded: Var[Boolean],
+      filled: Var[Boolean],
       kidElements: Var[List[HtmlElement]],
-      openable: com.histmersion.web.TreeTab.Openable
+      openable: Boolean
   ): Unit =
     if !openable then ()
     else
@@ -227,7 +218,7 @@ object TreeTab:
       expanded.set(opening)
       if !opening || filled.now() then ()
       else
-        filled.set(com.histmersion.web.TreeTab.Filled(true))
+        filled.set(true)
         if b.children.nonEmpty || b.samples.nonEmpty then fillWith(b.children, b.samples, depth + 1, data, kidElements)
         else
           kidElements.set(
@@ -246,7 +237,7 @@ object TreeTab:
   private def fillWith(
       kids: List[Bucket],
       samples: List[Bucket.Sample],
-      depth: com.histmersion.web.TreeTab.FillWithDepth,
+      depth: Int,
       data: TimeHistogram,
       kidElements: Var[List[HtmlElement]]
   ): Unit =
@@ -256,14 +247,14 @@ object TreeTab:
     else Nil
     kidElements.set(kidNodes ++ sampleNodes ++ empty)
 
-  private def renderSample(s: Bucket.Sample, depth: com.histmersion.web.TreeTab.Depth): HtmlElement =
+  private def renderSample(s: Bucket.Sample, depth: Int): HtmlElement =
     div(
       cls := "tsample",
       styleAttr := s"--tdepth: $depth",
       tabIndex := 0,
       span(cls := "ck", SourceLink(s.citekey)),
       " ",
-      span(cls := "title", s.title),
+      span(cls := "title", s.title.value),
       onClick --> { _ => ArticleModal.open(s.citekey, Map("q" -> UiState.q.now().getOrElse(""))) },
       onKeyDown --> { ev =>
         if ev.key == "Enter" || ev.key == " " then
@@ -275,22 +266,28 @@ object TreeTab:
   private def subtree(b: Bucket, data: TimeHistogram): Future[TimeHistogram] =
     val cfg = config.getOrElse(throw new Exception("no config"))
     val f = UiState.toFilter()
-    if b.kind == "time" then
+    if b.kind.value == "time" then
       val narrowed = f.modify(_.period).setTo(for a <- b.start; b2 <- b.end yield Period(a, b2))
       ApiClient.aggregate(
-        Api.AggregateQuery.tree(com.histmersion.api.Api.AggregateQuery.By("time"), narrowed, depth = Some(cfg.treeDepth), samples = Some(cfg.treeSamples))
+        Api.AggregateQuery.tree(com.histmersion.api.Api.AggregateQuery.By("time"), narrowed, depth = Some(Api.AggregateQuery.Depth(cfg.treeDepth.value)), samples = Some(Api.AggregateQuery.Samples(cfg.treeSamples.value)))
       )
     else
       val narrowed = f.modify(_.places).setTo(b.placeId.toList)
       ApiClient.aggregate(
         Api.AggregateQuery
-          .tree(com.histmersion.api.Api.AggregateQuery.By("region"), narrowed, depth = Some(cfg.treeDepth), asOf = data.asOf, samples = Some(cfg.treeSamples))
+          .tree(
+            com.histmersion.api.Api.AggregateQuery.By("region"),
+            narrowed,
+            depth = Some(Api.AggregateQuery.Depth(cfg.treeDepth.value)),
+            asOf = data.asOf.map(a => Api.AggregateQuery.AsOf(a.value)),
+            samples = Some(Api.AggregateQuery.Samples(cfg.treeSamples.value))
+          )
       )
 
   private def act(b: Bucket): Unit =
-    if b.kind == "time" then
-      for a <- b.start; b2 <- b.end do UiState.set(UiState.from := Some(a), UiState.to := Some(b2))()
+    if b.kind.value == "time" then
+      for a <- b.start; b2 <- b.end do UiState.set(UiState.from := Some(a.value), UiState.to := Some(b2.value))()
     else
       b.placeId.foreach { pid =>
-        PlacesInput.preview(pid, lastData.flatMap(_.asOf))
+        PlacesInput.preview(PlacesInput.PlaceId(pid.value), lastData.flatMap(_.asOf).map(y => Years.Astronomical(y.value)))
       }

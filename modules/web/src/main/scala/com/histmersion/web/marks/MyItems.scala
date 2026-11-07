@@ -61,10 +61,10 @@ object MyItems:
     }
 
   def remove(b: Bookmark): Future[Bookmark] =
-    tracked(ApiClient.removeBookmark(ApiClient.BookmarkId(b.id.value)))(_ => bookmarks.update(_.filterNot(_.id == b.id)))
+    tracked(ApiClient.removeBookmark(b.id))(_ => bookmarks.update(_.filterNot(_.id == b.id)))
 
   def rename(b: Bookmark, label: Option[Bookmark.Label]): Future[Bookmark] =
-    tracked(ApiClient.editBookmark(ApiClient.BookmarkId(b.id.value), Bookmark.Edit(label)))(n =>
+    tracked(ApiClient.editBookmark(b.id, Bookmark.Edit(label)))(n =>
       bookmarks.update(_.map(x => if x.id == n.id then n else x))
     )
 
@@ -82,19 +82,19 @@ object MyItems:
     tracked(ApiClient.addNote(Note.New(target, text, Some(title))))(n => notes.update(n :: _))
 
   def editNote(n: Note, text: Note.Text): Future[Note] =
-    tracked(ApiClient.editNote(ApiClient.NoteId(n.id.value), Note.Edit(text, Some(n.updatedAt))))(m =>
+    tracked(ApiClient.editNote(n.id, Note.Edit(text, Some(n.updatedAt))))(m =>
       notes.update(ns => m :: ns.filterNot(_.id == m.id))
     )
 
   def removeNote(n: Note): Future[Note] =
-    tracked(ApiClient.removeNote(ApiClient.NoteId(n.id.value)))(_ => notes.update(_.filterNot(_.id == n.id)))
+    tracked(ApiClient.removeNote(n.id))(_ => notes.update(_.filterNot(_.id == n.id)))
 
   // ── read marks ──────────────────────────────────────────────────────────────────────────────────
 
   def isRead(ref: ItemRef): Signal[Boolean] =
-    ref.identity.fold(Val(false): Signal[Boolean])(i => marks.signal.map(_.get(i).exists(_.read)))
+    ref.identity.fold(Val(false): Signal[Boolean])(i => marks.signal.map(_.get(i).exists(_.read.value)))
 
-  def readNow(identity: Target.Identity): Boolean = marks.now().get(identity).exists(_.read)
+  def readNow(identity: Target.Identity): Boolean = marks.now().get(identity).exists(_.read.value)
 
   def setRead(ref: ItemRef, read: ReadMark.Read): Unit =
     ref.target.itemKey.foreach { key =>

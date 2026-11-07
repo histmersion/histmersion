@@ -529,7 +529,7 @@ object RunsView:
       run.item.changes.collect { case Some(d) => d.run.pipeline } --> (pl =>
         WindowManager.retitle(
           WindowKey.Run(WindowKey.Run.Id(id.value)),
-          WindowManager.WinState.Title(s"Agent run · ${pipelineLabel(pl).value}")
+          com.histmersion.api.UiLabels.Text(s"Agent run · ${pipelineLabel(pl).value}")
         )
       )
     )

@@ -138,7 +138,7 @@ object TopBar:
         inApp,
         cls := "pill agent-pill",
         cls("is-working") := g.on.value && g.running.value > 0,
-        cls("is-paused") := !g.on.value || (g.draining && g.running.value == 0),
+        cls("is-paused") := !g.on.value || (g.draining.value && g.running.value == 0),
         title := g.wording,
         span(cls := "pill-dot", aria.hidden := true),
         span(cls := "pill-text", g.wording)

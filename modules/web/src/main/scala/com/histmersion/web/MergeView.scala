@@ -751,7 +751,7 @@ object MergeView:
       cls := "merge-map",
       onMountUnmountCallback(
         mount = ctx =>
-          val m = Engines.surface(ctx.thisNode.ref, Engines.MaxZoom(tiles.fold(12.0)(_._2.value.toDouble)), _ => None)
+          val m = Engines.surface(ctx.thisNode.ref, MapSurface.MaxZoom(tiles.fold(12.0)(_._2.value.toDouble)), _ => None)
           m.setBaseMap(BaseMaps.current)
           val geoms = List("left" -> left, "right" -> right).collect { case (who, Some(g)) =>
             val geo = js.JSON.parse(g)

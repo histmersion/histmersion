@@ -62,7 +62,7 @@ object WindowManager:
             mins.map { w =>
               button(
                 cls := "btn btn--sm wm-taskbar-btn",
-                w.title,
+                w.title.value,
                 onClick --> { _ => restore(w.id) }
               )
             }
@@ -156,7 +156,7 @@ object WindowManager:
       case WindowKey.Source(_) | WindowKey.Article(_) =>
         val id = key.subject.getOrElse("")
         val fetchUrl = buildUrl(key, fragment = true, extraParams)
-        ApiClient.fetchHtml(fetchUrl).foreach { html =>
+        ApiClient.fetchHtml(ApiClient.Url(fetchUrl)).foreach { html =>
           val contentEl = document.getElementById(s"wm-content-$wid")
           if contentEl != null then
             contentEl.innerHTML = html

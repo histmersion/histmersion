@@ -29,7 +29,7 @@ object ThemeTokens:
 
   // `var`s: the caches, filled on first use and emptied by `refresh`
   private var cache = Map.empty[Name, CssText]
-  private var rampCache = Option.empty[Vector[(Int, Int, Int)]]
+  private var rampCache = Option.empty[Vector[(com.histmersion.api.Wcag.Channel, com.histmersion.api.Wcag.Channel, com.histmersion.api.Wcag.Channel)]]
 
   def refresh(): Unit =
     cache = Map.empty

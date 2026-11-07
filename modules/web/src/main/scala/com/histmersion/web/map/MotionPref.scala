@@ -59,13 +59,13 @@ object MotionPref:
   def systemReduced: Boolean = { install(); systemNow.value }
 
   /** Should the map animate now? */
-  def animate(): Boolean = MapMotion.animates(choice, SystemReduced(systemReduced))
+  def animate(): Boolean = MapMotion.animates(choice, systemReduced)
 
   /** Whether the map animates, as it changes. */
-  val animates: Signal[com.histmersion.web.map.MotionPref.Animates] = state.signal.map((m, r) => com.histmersion.web.map.MotionPref.Animates(MapMotion.animates(m, r)))
+  val animates: Signal[com.histmersion.web.map.MotionPref.Animates] = state.signal.map((m, r) => com.histmersion.web.map.MotionPref.Animates(MapMotion.animates(m, r.value)))
 
   /** Whether the menu says the map is still because the system asks for it. */
-  val heldBySystem: Signal[com.histmersion.web.map.MotionPref.HeldBySystem] = state.signal.map((m, r) => com.histmersion.web.map.MotionPref.HeldBySystem(MapMotion.heldBySystem(m, r)))
+  val heldBySystem: Signal[com.histmersion.web.map.MotionPref.HeldBySystem] = state.signal.map((m, r) => com.histmersion.web.map.MotionPref.HeldBySystem(MapMotion.heldBySystem(m, r.value)))
 
   /** For a test: the system's setting as if the browser had reported it. */
   private[web] def systemChanged(reduced: com.histmersion.web.map.MotionPref.SystemReduced): Unit =
@@ -76,4 +76,4 @@ object MotionPref:
   private def changed(): Unit =
     state.set((choiceNow, systemNow))
     if js.typeOf(js.Dynamic.global.document) != "undefined" then
-      Try(dom.document.documentElement.setAttribute("data-map-motion", MapMotion.attribute(Animates(animate())).value))
+      Try(dom.document.documentElement.setAttribute("data-map-motion", MapMotion.attribute(animate())))

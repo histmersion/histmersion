@@ -306,7 +306,7 @@ object MapLabels:
     DomMarker(
       s.lat,
       s.lon,
-      DomMarker.element(DomMarker.ElementCls(wrapClass.value), DomMarker.ElementHtml(s"""<span class="hd-map-label is-culled" style="--o:0">${Fmt.esc(label.value)}</span>"""))
+      DomMarker.element(wrapClass.value, s"""<span class="hd-map-label is-culled" style="--o:0">${Fmt.esc(label.value)}</span>""")
     )
 
   // ── shapes ─────────────────────────────────────────────────────────────────────────────────────

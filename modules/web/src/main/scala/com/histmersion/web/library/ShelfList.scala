@@ -32,7 +32,7 @@ object ShelfList:
   private def hrefOf(r: ShelfRow, shelf: Shelf): String =
     (sectionOf(r.target.kind), r.target.itemKey) match
       case (Some(s), Some(k)) => LibraryAddress.href(s, Some(k), shelf)
-      case _                  => ItemRef.back(r.target)
+      case _                  => ItemRef.back(r.target).value
 
   def element(shelf: Shelf, section: LibrarySection, chosen: Signal[Option[ItemKey]]): HtmlElement =
     val unread = Var(Option.empty[Either[String, UnreadPage]])
@@ -40,7 +40,7 @@ object ShelfList:
     def readUnread(): Unit =
       val kind = if section == LibrarySection.Articles then ItemKind.Article else ItemKind.Source
       ApiClient
-        .unread(ApiClient.Kind(kind.wire.value), com.histmersion.api.Paging.Limit(Layout.libraryPage.value), com.histmersion.api.Offset(offset.now()))
+        .unread(kind.wire, com.histmersion.api.Paging.Limit(Layout.libraryPage.value), com.histmersion.api.Offset(offset.now()))
         .onComplete(r =>
           unread.set(Some(r.toEither.left.map(e => Option(e.getMessage).getOrElse("the server could not be reached"))))
         )
