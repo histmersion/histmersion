@@ -15,7 +15,9 @@ import com.augustnagro.magnum.*
 object TombstoneBundleRepo:
 
   def tombstones(scope: BundleScope)(using DbCon): Vector[com.histmersion.api.exchange.Bundle.Tombstone] =
-    (Sql.raw(s"SELECT uid, kind, origin, ${ts("deleted_at")} FROM tombstones WHERE ") ++
+    (Sql.raw(Sql.Text(s"SELECT uid, kind, origin, ${ts("deleted_at")} FROM tombstones WHERE ")) ++
       where(scope, "uid", "deleted_at") ++ " ORDER BY uid").frag.query[BTombstoneRow].run().flatMap { r =>
-      Bundle.Kind.fromWire(r.kind).map(com.histmersion.api.exchange.Bundle.Tombstone(r.uid, _, r.origin, r.deletedAt))
+      Bundle.Kind
+        .fromWire(Bundle.Kind.Wire(r.kind.value))
+        .map(kind => Bundle.Tombstone(r.uid, kind, r.origin, Bundle.Tombstone.DeletedAt(r.deletedAt.value)))
     }

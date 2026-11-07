@@ -16,9 +16,9 @@ import com.histmersion.api.exchange.Bundle
 private[links] object AssetLinkBundleRepo:
 
   def assetLinks(scope: BundleScope)(using DbCon): Vector[Bundle.AssetLink] =
-    (Sql.raw(s"""SELECT l.uid, l.origin, x.uid, l.relation, l.target_type, l.target_id,
+    (Sql.raw(Sql.RawText(s"""SELECT l.uid, l.origin, x.uid, l.relation, l.target_type, l.target_id,
                        ${targetUid("l.target_type", "l.target_id")}, l.xywh, l.notes, ${ts("l.updated_at")}
-                FROM asset_links l JOIN assets x ON x.citekey = l.citekey AND x.name = l.asset_name WHERE """) ++
+                FROM asset_links l JOIN assets x ON x.citekey = l.citekey AND x.name = l.asset_name WHERE """)) ++
       where(scope, "l.uid", "l.updated_at") ++ " ORDER BY l.uid").frag
       .query[(UUID, UUID, UUID, String, String, String, Option[UUID], Option[String], Option[String], String)]
       .run()

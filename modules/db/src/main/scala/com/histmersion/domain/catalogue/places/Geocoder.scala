@@ -9,6 +9,7 @@ import com.histmersion.domain.*
 import com.histmersion.api.catalogue.Geocode.{Attempt, Candidate, KindHint, Move, Placement, Resolution}
 
 import com.augustnagro.magnum.*
+import com.histmersion.util.database.NewtypeColumns.given
 import javax.sql.DataSource
 import com.histmersion.util.database.Sql
 import com.histmersion.api.catalogue.{Geocode, Period}
@@ -31,8 +32,8 @@ private[places] object Geocoder:
     * only 1935–1956), so the time rule of [[Geocode.rank]] reads the name's dates too. `tier` is who brought the place
     * in ([[Geocode.tierOf]]).
     */
-  def candidates(key: com.histmersion.domain.catalogue.places.BPlaceNameRow.Name, within: Option[com.histmersion.domain.catalogue.places.Geocoder.Placed.Region])(using DbCon): List[Candidate] =
-    if key.isEmpty then Nil
+  def candidates(key: Geocode.Key, within: Option[com.histmersion.api.catalogue.Place.Id])(using DbCon): List[Candidate] =
+    if key.value.isEmpty then Nil
     else
       sql"""WITH hit AS (
               SELECT id, true AS by_label, NULL::bigint AS nlo, NULL::bigint AS nhi
@@ -67,19 +68,19 @@ private[places] object Geocoder:
     * name (nothing is ever guessed).
     */
   def resolve(
-      name: com.histmersion.domain.catalogue.places.BPlaceNameRow.Name,
+      name: Attempt.Name,
       hint: KindHint,
       at: Option[Period],
       placeholderMin: com.histmersion.domain.catalogue.places.GeocodeSettings.PlaceholderMin
   )(using DbCon): Option[Resolution] =
     resolveIn(name, hint, at, placeholderMin)
 
-  def resolveIn(name: com.histmersion.domain.catalogue.places.BPlaceNameRow.Name, hint: KindHint, at: Option[Period], placeholderMin: com.histmersion.domain.catalogue.places.GeocodeSettings.PlaceholderMin)(using
+  def resolveIn(name: Attempt.Name, hint: KindHint, at: Option[Period], placeholderMin: com.histmersion.domain.catalogue.places.GeocodeSettings.PlaceholderMin)(using
       DbCon
   ): Option[Resolution] =
-    Geocode.attempts(name).iterator.flatMap(a => attempt(name.trim, a, hint, at, placeholderMin)).nextOption()
+    Geocode.attempts(name).iterator.flatMap(a => attempt(Resolution.Asked(name.value.trim), a, hint, at, placeholderMin)).nextOption()
 
-  private def attempt(asked: com.histmersion.domain.catalogue.places.BPlaceNameRow.Name, a: Attempt, hint: KindHint, at: Option[Period], min: com.histmersion.domain.catalogue.places.GeocodeSettings.PlaceholderMin)(using
+  private def attempt(asked: Resolution.Asked, a: Attempt, hint: KindHint, at: Option[Period], min: com.histmersion.domain.catalogue.places.GeocodeSettings.PlaceholderMin)(using
       DbCon
   ): Option[Resolution] =
     // the place a qualifier names ("…, Croatia"), or that stands in for an unknown one, is an AREA
@@ -105,18 +106,19 @@ private[places] object Geocoder:
           .query[(Double, Double)]
           .run()
           .headOption
-          .fold(r)((lon, lat) => r.copy(lon = lon, lat = lat))
+          .fold(r)((lon, lat) => r.copy(lon = com.histmersion.api.catalogue.Longitude(lon), lat = com.histmersion.api.catalogue.Latitude(lat)))
 
-  private def chosen(asked: com.histmersion.domain.catalogue.places.BPlaceNameRow.Name, a: Attempt, h: KindHint, at: Option[Period], min: com.histmersion.domain.catalogue.places.GeocodeSettings.PlaceholderMin)(using
+  private def chosen(asked: Resolution.Asked, a: Attempt, h: KindHint, at: Option[Period], min: com.histmersion.domain.catalogue.places.GeocodeSettings.PlaceholderMin)(using
       DbCon
   ): Option[Resolution] =
+    val pm = Geocode.Placeholder.Min(min.value)
     a.within match
-      case None     => Geocode.choose(asked, a, Geocode.rank(candidates(a.key, None), h, at, min), min)
+      case None     => Geocode.choose(asked, a, Geocode.rank(candidates(a.key, None), h, at, pm), pm)
       case Some(in) =>
         Geocode
-          .rank(candidates(Geocode.key(in), None).filter(_.dimension == 2), KindHint.Region, at, min)
+          .rank(candidates(Geocode.key(in.value), None).filter(_.dimension == 2), KindHint.Region, at, pm)
           .headOption
-          .flatMap(w => Geocode.choose(asked, a, Geocode.rank(candidates(a.key, Some(w.id)), h, at, min), min))
+          .flatMap(w => Geocode.choose(asked, a, Geocode.rank(candidates(a.key, Some(w.id)), h, at, pm), pm))
 
   // ── the repair ─────────────────────────────────────────────────────────────────────────────────
 
@@ -190,14 +192,29 @@ private[places] object Geocoder:
     */
   def movesIn(s: GeocodeSettings)(using DbCon): List[Move] =
     Sql
-      .raw(legacySql)
+      .raw(Sql.RawText(legacySql))
       .frag
       .query[Placed]
       .run()
       .toList
       .flatMap { p =>
-        resolveIn(p.name, KindHint.Unknown, Geocode.periodOf(p.from, p.to), s.placeholderMin)
-          .map(r => Move(p.id, p.citekey, p.name, p.region, p.lon, p.lat, r))
+        resolveIn(
+          Attempt.Name(p.name.value),
+          KindHint.Unknown,
+          Geocode.periodOf(p.from.map(f => com.histmersion.api.catalogue.Year(f.value)), p.to.map(t => com.histmersion.api.catalogue.Year(t.value))),
+          s.placeholderMin
+        )
+          .map(r =>
+            Move(
+              com.histmersion.api.library.Finding.Id(p.id.value),
+              com.histmersion.api.library.Citekey(p.citekey.value),
+              Move.Asked(p.name.value),
+              p.region.map(g => Move.Region(g.value)),
+              Move.FromLon(p.lon.value),
+              Move.FromLat(p.lat.value),
+              r
+            )
+          )
       }
       .filter(Geocode.worthMoving(_, s.repairKm))
 
@@ -218,11 +235,11 @@ private[places] object Geocoder:
                 AND abs(ST_X(geom) - ${m.fromLon}) < 1e-7 AND abs(ST_Y(geom) - ${m.fromLat}) < 1e-7""".update
           .run() > 0
       }
-      moved.map(_.citekey).distinct.foreach { ck =>
+      moved.map(_.citekey).distinct.flatMap(c => com.histmersion.domain.library.Citekey.option(c.value)).foreach { ck =>
         val _ = sql"UPDATE sources SET updated_at = now() WHERE citekey = $ck".update.run()
         val _ = FindingPlaceRepo.materialiseFor(ck, toleranceKm)
       }
-      moved.size
+      com.histmersion.RowCount(moved.size)
 
   // ── the fill (#987) ─────────────────────────────────────────────────────────────────────────────
 
@@ -251,9 +268,21 @@ private[places] object Geocoder:
     * is never listed. Read-only.
     */
   def placementsIn(s: GeocodeSettings)(using DbCon): List[Placement] =
-    Sql.raw(unplacedSql).frag.query[Unplaced].run().toList.flatMap { u =>
-      resolveIn(u.region, KindHint.Unknown, Geocode.periodOf(u.from, u.to), s.placeholderMin)
-        .map(r => Placement(u.id, u.citekey, u.region, r))
+    Sql.raw(Sql.RawText(unplacedSql)).frag.query[Unplaced].run().toList.flatMap { u =>
+      resolveIn(
+        Attempt.Name(u.region.value),
+        KindHint.Unknown,
+        Geocode.periodOf(u.from.map(f => com.histmersion.api.catalogue.Year(f.value)), u.to.map(t => com.histmersion.api.catalogue.Year(t.value))),
+        s.placeholderMin
+      )
+        .map(r =>
+          Placement(
+            com.histmersion.api.library.Finding.Id(u.id.value),
+            com.histmersion.api.library.Citekey(u.citekey.value),
+            Placement.Region(u.region.value),
+            r
+          )
+        )
     }
 
   def placements(s: GeocodeSettings)(using DbCon): List[Placement] = placementsIn(s)
@@ -270,8 +299,8 @@ private[places] object Geocoder:
               WHERE id = ${p.findingId} AND geom IS NULL AND btrim(coalesce(region_name, '')) = ${p.region}""".update
           .run() > 0
       }
-      placed.map(_.citekey).distinct.foreach { ck =>
+      placed.map(_.citekey).distinct.flatMap(c => com.histmersion.domain.library.Citekey.option(c.value)).foreach { ck =>
         val _ = sql"UPDATE sources SET updated_at = now() WHERE citekey = $ck".update.run()
         val _ = FindingPlaceRepo.materialiseFor(ck, toleranceKm)
       }
-      placed.size
+      com.histmersion.RowCount(placed.size)

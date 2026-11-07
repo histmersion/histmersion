@@ -10,28 +10,25 @@ import com.augustnagro.magnum.*
   * the connection it is given.
   */
 private[figures] object FigureRepo:
-  type Apply = Apply.T
-  object Apply extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
-
-
   private val figureCandidates =
     """FROM assets a JOIN sources s ON s.citekey = a.citekey
        WHERE a.provider IS NULL AND (a.license IS NULL OR btrim(a.license) = '')
          AND s.license IS NOT NULL AND btrim(s.license) <> ''"""
 
   /** Count (and with `apply`, write) the figures with no licence whose source records one. */
-  def fillLicences(apply: com.histmersion.domain.media.figures.FigureRepo.Apply)(using DbCon): FigureLicenceFill =
+  def fillLicences(apply: FigureLicenceFill.Applied)(using DbCon): FigureLicenceFill =
     val by = Sql
-      .raw(s"SELECT a.citekey, count(*)::int $figureCandidates GROUP BY a.citekey ORDER BY 2 DESC, 1")
+      .raw(Sql.RawText(s"SELECT a.citekey, count(*)::int $figureCandidates GROUP BY a.citekey ORDER BY 2 DESC, 1"))
       .frag
-      .query[(String, Int)]
+      .query[(MediaCount.Key, MediaCount.N)]
       .run()
       .toList
       .map(MediaCount(_, _))
-    val candidates = by.map(_.n).sum
-    val updated =
-      if !apply then 0
+    val candidates = FigureLicenceFill.Candidates(by.map(_.n.value).sum)
+    val updated = FigureLicenceFill.Updated(
+      if !apply.value then 0
       else sql"""UPDATE assets a SET license = btrim(s.license) FROM sources s
             WHERE s.citekey = a.citekey AND a.provider IS NULL AND (a.license IS NULL OR btrim(a.license) = '')
               AND s.license IS NOT NULL AND btrim(s.license) <> ''""".update.run()
+    )
     FigureLicenceFill(candidates, updated, apply, by)

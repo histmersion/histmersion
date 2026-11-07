@@ -37,8 +37,8 @@ object AssetsCarried extends CarriedKind:
     val rs = AssetBundleRepo.assets(scope).toList
     val as = rs.map(AssetBundleRepo.line)
     CarriedOut(
-      BundleFormat.ndjson(as.map(BundleFormat.stamp(_).line)),
-      as.map(_.updatedAt).maxOption,
+      CarriedOut.Payload(BundleFormat.ndjson(as.map(BundleFormat.stamp(_).line))),
+      as.map(_.updatedAt.value).maxOption.map(CarriedOut.AsOf(_)),
       rs.map(r => BlobOut(r.sha, r.bytes, AssetBundleRepo.bytes(r.uid)))
     )
 
@@ -48,12 +48,12 @@ object AssetsCarried extends CarriedKind:
 
   override def blobIn(
       use: BlobUse,
-      sha256: String,
+      sha256: com.histmersion.Sha256,
       writer: BundleImport.Writer,
       files: ContentStore
   ): Option[BlobSink] = use match
     case BlobUse.AssetBytes(u) =>
-      Some(BlobSink.Held(bytes => AssetBundleRepo.write(writer, writer.once(AssetBundleRepo.byUid)(u), Some(bytes))))
+      Some(BlobSink.Held(bytes => AssetBundleRepo.write(writer, writer.once(AssetBundleRepo.byUid)(u), Some(AssetBytesRow.Bytes(bytes)))))
     case _ => None
 
   override val rowsIn: List[RowsIn] =

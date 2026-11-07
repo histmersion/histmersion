@@ -7,19 +7,19 @@ import io.circe.Json
 
 /** A `corrections` row: a person's value for one field, with what upstream said then and at the last refresh. */
 final private[events] case class CorrectionRow(
-    id: CorrectionRow.Id,
-    targetKind: CorrectionRow.TargetKind,
-    targetId: CorrectionRow.TargetId,
-    field: CorrectionRow.Field,
-    value: CorrectionRow.Value,
-    upstreamValue: CorrectionRow.UpstreamValue,
-    status: CorrectionRow.Status,
-    upstream: Option[CorrectionRow.Upstream],
-    upstreamNow: Option[CorrectionRow.UpstreamNow],
-    createdAt: CorrectionRow.CreatedAt,
-    checkedAt: Option[CorrectionRow.CheckedAt]
+    id: Correction.Id,
+    targetKind: Correction.TargetKind,
+    targetId: Correction.TargetId,
+    field: Correction.Field,
+    value: Correction.Value,
+    upstreamValue: Correction.UpstreamValue,
+    status: Correction.StatusValue,
+    upstream: Option[Correction.Upstream],
+    upstreamNow: Option[Correction.UpstreamNow],
+    createdAt: Correction.CreatedAt,
+    checkedAt: Option[Correction.CheckedAt]
 ) derives DbCodec:
-  def toDto(label: Option[com.histmersion.domain.catalogue.events.CorrectionRow.Label] = None): Correction =
+  def toDto(label: Option[Correction.Label] = None): Correction =
     Correction(
       id,
       targetKind,
@@ -34,31 +34,5 @@ final private[events] case class CorrectionRow(
       createdAt,
       checkedAt
     )
-  def json(s: String): Json = Jsonb.read[Json](s).getOrElse(Json.Null)
-
-object CorrectionRow:
-  type Label = Label.T
-  object Label extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-
-  type Id = Id.T
-  object Id extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type TargetKind = TargetKind.T
-  object TargetKind extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type TargetId = TargetId.T
-  object TargetId extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type Field = Field.T
-  object Field extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type Value = Value.T
-  object Value extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type UpstreamValue = UpstreamValue.T
-  object UpstreamValue extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type Status = Status.T
-  object Status extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type Upstream = Upstream.T
-  object Upstream extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type UpstreamNow = UpstreamNow.T
-  object UpstreamNow extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type CreatedAt = CreatedAt.T
-  object CreatedAt extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type CheckedAt = CheckedAt.T
-  object CheckedAt extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  def valueJson: Json = Jsonb.read[Json](Jsonb.JsonText(value.value)).getOrElse(Json.Null)
+  def upstreamValueJson: Json = Jsonb.read[Json](Jsonb.JsonText(upstreamValue.value)).getOrElse(Json.Null)

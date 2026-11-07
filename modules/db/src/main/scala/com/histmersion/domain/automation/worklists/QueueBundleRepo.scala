@@ -15,9 +15,9 @@ import com.histmersion.api.exchange.Bundle
 private[worklists] object QueueBundleRepo:
 
   def queue(scope: BundleScope)(using DbCon): Vector[Bundle.QueueItem] =
-    (Sql.raw(s"""SELECT q.uid, q.origin, q.list, q.text, q.topic, q.status, q.reason,
+    (Sql.raw(Sql.RawText(s"""SELECT q.uid, q.origin, q.list, q.text, q.topic, q.status, q.reason,
                        ${ts("q.created_at")}, ${ts("q.done_at")}, ${ts("q.updated_at")}
-                FROM queue_items q WHERE """) ++ where(scope, "q.uid", "q.updated_at") ++ " ORDER BY q.uid").frag
+                FROM queue_items q WHERE """)) ++ where(scope, "q.uid", "q.updated_at") ++ " ORDER BY q.uid").frag
       .query[BQueueRow]
       .run()
       .map { r =>

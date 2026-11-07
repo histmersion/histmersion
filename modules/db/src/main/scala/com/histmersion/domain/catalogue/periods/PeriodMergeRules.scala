@@ -30,7 +30,7 @@ object PeriodMergeRules extends MergeRules:
   )(using DbCon): MergePlanner.Input =
     val ownUids = in.local.periods.map(_.uid).toSet
     val added = localized.periods.filterNot(p => ownUids(p.uid))
-    val idsHere = PeriodBundleRepo.present(added.map(_.id))
-    val matches = PeriodBundleRepo.matchPeriods(added.filterNot(p => idsHere(p.id)))
+    val idsHere = PeriodBundleRepo.present(added.map(p => BPeriodRow.Id(p.id.value)))
+    val matches = PeriodBundleRepo.matchPeriods(added.filterNot(p => idsHere(BPeriodRow.Id(p.id.value))))
     val rows = PeriodBundleRepo.periods(BundleScope.All, (idsHere ++ matches.values).toList).toList
     in.modify(_.local.periods).setTo(rows).modify(_.periodMatches).setTo(matches)

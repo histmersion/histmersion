@@ -42,11 +42,17 @@ object Db:
   /** The APPLICATION pool: owns the schema, runs the migrations, serves every repo. */
   type PooledUrl = _root_.com.histmersion.util.database.Db.JdbcUrl
   val PooledUrl: _root_.com.histmersion.util.database.Db.JdbcUrl.type = _root_.com.histmersion.util.database.Db.JdbcUrl
-  type DatabaseSettingsPart2 = DatabaseSettingsPart2.T
-  object DatabaseSettingsPart2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type SettingValue = SettingValue.T
+  object SettingValue extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
   def pool(cfg: DbConfig): HikariDataSource =
-    pooled(cfg.url, cfg.user, cfg.password, cfg.pool.max, com.histmersion.util.database.Db.PoolName("histmersion"))
+    pooled(
+      PooledUrl(cfg.url.value),
+      Login(cfg.user.value),
+      Password(cfg.password.value),
+      PoolMax(cfg.pool.max.value),
+      PoolName("histmersion")
+    )
 
   /** Build a pool the way a NATIVE IMAGE can.
     *
@@ -66,12 +72,12 @@ object Db:
     */
   def pooled(url: com.histmersion.util.database.Db.PooledUrl, user: com.histmersion.util.database.Db.Login, password: com.histmersion.util.database.Db.Password, max: com.histmersion.util.database.Db.PoolMax, name: com.histmersion.util.database.Db.PoolName): HikariDataSource =
     val pg = PGSimpleDataSource()
-    pg.setUrl(url)
-    pg.setUser(user)
-    pg.setPassword(password)
+    pg.setUrl(url.value)
+    pg.setUser(user.value)
+    pg.setPassword(password.value)
     val ds = HikariDataSource()
     ds.setDataSource(pg)
-    ds.setMaximumPoolSize(math.max(1, max))
+    ds.setMaximumPoolSize(math.max(1, max.value))
     // idle connections are not free on the Postgres side, and a test run opens a pool per suite;
     // keep one warm and let the rest go.
     ds.setMinimumIdle(1)
@@ -80,13 +86,13 @@ object Db:
 
   /** The database a JDBC URL names (`jdbc:postgresql://h:p/NAME?…`), for a pool's name in the log. */
   private[histmersion] def databaseOf(url: com.histmersion.util.database.Db.JdbcUrl): com.histmersion.util.database.Db.DatabaseName =
-    url.takeWhile(_ != '?').reverse.takeWhile(_ != '/').reverse
+    DatabaseName(url.value.takeWhile(_ != '?').reverse.takeWhile(_ != '/').reverse)
 
   /** Connections the pool behind `ds` has lent out now (0 for a pool that has not started, or no pool at all). A
     * retired pool is closed only when this is 0.
     */
   def activeConnections(ds: DataSource): com.histmersion.util.database.Db.ActiveConnections =
-    hikari(ds).flatMap(p => Option(p.getHikariPoolMXBean)).map(_.getActiveConnections).getOrElse(0)
+    ActiveConnections(hikari(ds).flatMap(p => Option(p.getHikariPoolMXBean)).map(_.getActiveConnections).getOrElse(0))
 
   private def hikari(ds: DataSource): Option[HikariDataSource] =
     ds match
@@ -106,8 +112,11 @@ object Db:
     * went from 17 ms to 1.5 s on the sixth hover (2026-10-09), and a place-name search from 0.1 s to minutes. Every
     * statement here is small next to its planning, so each is planned for its own values.
     */
-  private[histmersion] val databaseSettings: List[(com.histmersion.util.database.Db.SettingName, com.histmersion.util.database.Db.DatabaseSettingsPart2)] =
-    List("random_page_cost" -> "1.1", "plan_cache_mode" -> "force_custom_plan")
+  private[histmersion] val databaseSettings: List[(com.histmersion.util.database.Db.SettingName, com.histmersion.util.database.Db.SettingValue)] =
+    List(
+      SettingName("random_page_cost") -> SettingValue("1.1"),
+      SettingName("plan_cache_mode") -> SettingValue("force_custom_plan")
+    )
 
   def ensureDatabaseSettings(ds: DataSource): Unit =
     val c = ds.getConnection()
@@ -167,4 +176,4 @@ object Db:
       val c = ds.getConnection
       try Right(())
       finally c.close()
-    catch case e: Throwable => Left(Option(e.getMessage).getOrElse(e.getClass.getSimpleName))
+    catch case e: Throwable => Left(Problem(Option(e.getMessage).getOrElse(e.getClass.getSimpleName)))

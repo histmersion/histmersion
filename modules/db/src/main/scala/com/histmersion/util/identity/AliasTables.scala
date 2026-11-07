@@ -10,11 +10,8 @@ final class AliasTables(val tables: List[AliasTable]):
   def get(kind: AliasKind): Option[AliasTable] = byKind.get(kind)
 
   /** The identifier a record of `kind` answers to now; `id` itself for a kind nobody registered. */
-  def current(ds: DataSource, kind: AliasKind, id: com.histmersion.util.identity.AliasTables.Id): com.histmersion.util.identity.AliasTables.Id = get(kind).fold(id.trim)(_.current(ds, id))
+  def current(ds: DataSource, kind: AliasKind, id: AliasTable.Id): AliasTable.Id = get(kind).fold(AliasTable.Id(id.value.trim))(_.current(ds, id))
 
   /** The identifier an old one of `kind` was renamed to, when it is one. */
-  def renamedTo(ds: DataSource, kind: AliasKind, id: com.histmersion.util.identity.AliasTables.Id): Option[com.histmersion.util.identity.AliasTables.Id] = get(kind).flatMap(_.renamedTo(ds, id))
+  def renamedTo(ds: DataSource, kind: AliasKind, id: AliasTable.Id): Option[AliasTable.Id] = get(kind).flatMap(_.renamedTo(ds, id))
 
-object AliasTables:
-  type Id = Id.T
-  object Id extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]

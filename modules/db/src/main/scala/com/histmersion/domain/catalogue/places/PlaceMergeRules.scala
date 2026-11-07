@@ -36,14 +36,14 @@ object PlaceMergeRules extends MergeRules:
     // …and a place of ours the bundle renamed: whether its new id is some other place's here (#888)
     val ownIds = in.local.places.map(p => p.uid -> p.id).toMap
     val renamedIds = localized.places.filter(p => ownIds.get(p.uid).exists(_ != p.id)).map(_.id)
-    val idsHere = PlaceBundleRepo.present(added.map(_.id) ++ renamedIds)
-    val matches = PlaceBundleRepo.matchPlaces(added.filterNot(p => idsHere(p.id)), settings)
+    val idsHere = PlaceBundleRepo.present((added.map(_.id) ++ renamedIds).map(id => BPlaceRow.Id(id.value)))
+    val matches = PlaceBundleRepo.matchPlaces(added.filterNot(p => idsHere(BPlaceRow.Id(p.id.value))), settings)
     val rows = PlaceBundleRepo.places(BundleScope.All, (idsHere ++ matches.values).toList).toList
-    val pointedAt = (bundle.events.flatMap(_.placeId) ++ matches.values).distinct
+    val pointedAt = (bundle.events.flatMap(_.placeId).map(id => BPlaceRow.Id(id.value)) ++ matches.values).distinct
     in.modify(_.labels.places)
-      .setTo(PlaceBundleRepo.placesNamed(bundle.placeAliases.map(_.alias)))
+      .setTo(PlaceBundleRepo.placesNamed(bundle.placeAliases.map(a => BPlaceRow.Id(a.alias.value))))
       .modify(_.labels.placeAliases)
-      .setTo(PlaceBundleRepo.oldIdsNamed(bundle.places.map(_.id) ++ bundle.placeAliases.map(_.alias)))
+      .setTo(PlaceBundleRepo.oldIdsNamed((bundle.places.map(_.id.value) ++ bundle.placeAliases.map(_.alias.value)).map(BPlaceRow.Id(_))))
       .modify(_.local.places)
       .setTo(rows)
       .modify(_.placeMatches)

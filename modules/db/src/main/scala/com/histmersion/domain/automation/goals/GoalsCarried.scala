@@ -25,7 +25,7 @@ object GoalsCarried:
     Bundle.Kind.Goal,
     TableName("goals"),
     List(rows(42)(GoalBundleRepo.goalRenamesIn), rows(48)(GoalBundleRepo.goalsIn))
-  )(scope => GoalBundleRepo.goals(scope).toList)(_.updatedAt, (es, ls) => es.modify(_.goals).setTo(ls))
+  )(scope => GoalBundleRepo.goals(scope).toList)(g => CarriedKind.RecordsClock(g.updatedAt.value), (es, ls) => es.modify(_.goals).setTo(ls))
 
   val aliases: CarriedKind =
     CarriedKind.owned[com.histmersion.api.exchange.Bundle.GoalAlias](
@@ -33,6 +33,6 @@ object GoalsCarried:
       BundleEntry("entities/goal-aliases.ndjson"),
       List(rows(49)(GoalBundleRepo.goalAliasesIn))
     )(scope => GoalBundleRepo.goalAliases(scope).toList)(
-      a => Some(a.createdAt),
+      a => Some(CarriedKind.OwnedClock(a.createdAt.value)),
       (es, ls) => es.modify(_.goalAliases).setTo(ls)
     )

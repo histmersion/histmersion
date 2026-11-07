@@ -30,6 +30,7 @@ private[workflows] object SourceApprovalRepo:
       .query[Long]
       .run()
       .headOption
+      .map(com.histmersion.domain.ManagerPolicy.ApprovalId(_))
 
   def proposedBefore(
       kind: ApprovalKind,
@@ -41,4 +42,4 @@ private[workflows] object SourceApprovalRepo:
     sql"""SELECT 1 FROM approvals WHERE kind = ${kind.wire} AND citekey = $citekey
           AND coalesce(status, '') = ${status.fold("")(_.wire)}
           AND coalesce(edge_kind, '') = ${edgeKind.fold("")(Edge.Kind.wireOf)}
-          AND coalesce(target, '') = ${target.getOrElse("")} LIMIT 1""".query[Int].run().nonEmpty
+          AND coalesce(target, '') = ${target.fold("")(_.value)} LIMIT 1""".query[Int].run().nonEmpty

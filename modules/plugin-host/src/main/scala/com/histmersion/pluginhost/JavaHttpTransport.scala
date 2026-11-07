@@ -10,38 +10,33 @@ import scala.jdk.CollectionConverters.*
   * percent-encoded). `timeoutSeconds` bounds the wait for an answer, `connectSeconds` (when given; else the same) the
   * connection.
   */
-final class JavaHttpTransport(timeoutSeconds: => Int, connectSeconds: Option[JavaHttpTransport.ConnectSeconds] = None)
+final class JavaHttpTransport(timeoutSeconds: => HttpTransport.TimeoutSeconds, connectSeconds: Option[JavaHttpTransport.ConnectSeconds] = None)
     extends HttpTransport: // by name: read per request
   private val client = HttpClient
     .newBuilder()
     .followRedirects(HttpClient.Redirect.NORMAL)
-    .connectTimeout(Duration.ofSeconds(connectSeconds.getOrElse(timeoutSeconds).toLong.max(1)))
+    .connectTimeout(Duration.ofSeconds(connectSeconds.map(_.value).getOrElse(timeoutSeconds.value).toLong.max(1)))
     .version(HttpClient.Version.HTTP_1_1)
     .build()
 
-  def get(url: com.histmersion.pluginhost.HttpTransport.Url, headers: Map[com.histmersion.domain.CoreQuota.HeaderName, com.histmersion.pluginhost.JavaHttpTransport.GetHeadersPart2]): Either[com.histmersion.pluginhost.JavaHttpTransport.Problem, HttpAnswer] =
+  def get(url: HttpTransport.Url, headers: Map[com.histmersion.domain.CoreQuota.HeaderName, HttpTransport.GetHeadersPart2]): Either[HttpTransport.Problem, HttpAnswer] =
     scala.util
       .Try {
-        val b = HttpRequest.newBuilder(URI.create(url)).GET().timeout(Duration.ofSeconds(timeoutSeconds.toLong.max(1)))
-        headers.foreach((k, v) => b.header(k, v))
+        val b = HttpRequest.newBuilder(URI.create(url.value)).GET().timeout(Duration.ofSeconds(timeoutSeconds.value.toLong.max(1)))
+        headers.foreach((k, v) => b.header(k.value, v.value))
         val resp = client.send(b.build(), HttpResponse.BodyHandlers.ofByteArray())
         val hs = resp
           .headers()
           .map()
           .asScala
           .toMap
-          .flatMap((k, vs) => vs.asScala.headOption.map(v => k.toLowerCase(Locale.ROOT) -> v))
-        HttpAnswer(resp.statusCode(), hs, resp.body())
+          .flatMap((k, vs) => vs.asScala.headOption.map(v => com.histmersion.domain.CoreQuota.HeaderName(k.toLowerCase(Locale.ROOT)) -> com.histmersion.domain.CoreQuota.HeaderValue(v)))
+        HttpAnswer(HttpAnswer.Code(resp.statusCode()), hs, HttpAnswer.Body(resp.body()))
       }
       .toEither
       .left
-      .map(e => s"$url unreachable: ${e.getClass.getSimpleName}: ${e.getMessage}")
+      .map(e => HttpTransport.Problem(s"${url.value} unreachable: ${e.getClass.getSimpleName}: ${e.getMessage}"))
 
 object JavaHttpTransport:
-  type Problem = Problem.T
-  object Problem extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type ConnectSeconds = ConnectSeconds.T
   object ConnectSeconds extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
-
-  type GetHeadersPart2 = GetHeadersPart2.T
-  object GetHeadersPart2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]

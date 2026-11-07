@@ -21,10 +21,10 @@ private[assets] object AssetBundleRepo:
 
 
   def assets(scope: BundleScope)(using DbCon): Vector[AssetBundleRow] =
-    (Sql.raw(s"""SELECT x.uid, x.origin, s.uid, x.name, x.mime, x.sha256, length(x.bytes)::bigint,
+    (Sql.raw(Sql.Text(s"""SELECT x.uid, x.origin, s.uid, x.name, x.mime, x.sha256, length(x.bytes)::bigint,
                        x.width, x.height, x.kind, x.caption, x.license, encode(ST_AsEWKB(x.geom), 'hex'),
                        ${rangeCols("x.period")}, ${ts("x.updated_at")}
-                FROM assets x JOIN sources s ON s.citekey = x.citekey WHERE """) ++
+                FROM assets x JOIN sources s ON s.citekey = x.citekey WHERE """)) ++
       where(scope, "x.uid", "x.updated_at") ++ " ORDER BY x.uid").frag.query[AssetBundleRow].run()
 
   def line(r: AssetBundleRow): Bundle.Asset =
@@ -32,24 +32,28 @@ private[assets] object AssetBundleRepo:
       r.uid,
       r.origin,
       r.sourceUid,
-      r.name,
-      r.mime,
-      r.sha,
-      r.width,
-      r.height,
-      r.kind,
-      r.caption,
-      r.license,
-      r.geom,
-      range(r.pNull, r.pLo, r.pHi),
-      r.updatedAt
+      Bundle.Asset.Name(r.name.value),
+      Bundle.Asset.Mime(r.mime.value),
+      com.histmersion.api.Sha256(r.sha.value),
+      r.width.map(w => Bundle.Asset.Width(w.value)),
+      r.height.map(h => Bundle.Asset.Height(h.value)),
+      r.kind.map(k => Bundle.Asset.Kind(k.value)),
+      r.caption.map(c => Bundle.Asset.Caption(c.value)),
+      r.license.map(l => Bundle.Asset.License(l.value)),
+      r.geom.map(g => Bundle.Asset.Geom(g.value)),
+      range(
+        com.histmersion.util.data.exchange.Bundle.RangeIsNull(r.pNull.value),
+        r.pLo.map(lo => com.histmersion.util.data.exchange.Bundle.RangeLower(lo.value)),
+        r.pHi.map(hi => com.histmersion.util.data.exchange.Bundle.RangeUpper(hi.value))
+      ),
+      Bundle.Asset.UpdatedAt(r.updatedAt.value)
     )
 
   /** The bytes of one asset, written as a blob. */
   def bytes(uid: UUID)(using DbCon): java.io.OutputStream => Unit =
     out =>
       out.write(
-        Sql.of(com.histmersion.util.database.Sql.OfText("SELECT bytes FROM assets WHERE uid = ?::uuid"), Param.S(uid.toString)).frag.query[Array[Byte]].run().head
+        Sql.of(Sql.OfText("SELECT bytes FROM assets WHERE uid = ?::uuid"), Param.S(Param.S.V(uid.toString))).frag.query[Array[Byte]].run().head
       )
 
   // ── in ───────────────────────────────────────────────────────────────────────────────────────
@@ -60,7 +64,7 @@ private[assets] object AssetBundleRepo:
   /** Asset metadata whose bytes are already here (same sha): no blob needed. */
   def metadataIn(w: BundleImport.Writer): Unit =
     val localSha = w.local.assets.map(a => a.uid -> a.sha256).toMap
-    w.es.assets.filter(a => w.writes(a.uid) && localSha.get(a.uid).contains(a.sha256)).foreach(write(w, _, None))
+    w.es.assets.filter(a => w.writes(a.uid).value && localSha.get(a.uid).contains(a.sha256)).foreach(write(w, _, None))
 
   /** One asset written: with its bytes when they came in the bundle, else its metadata over the row here. */
   def write(w: BundleImport.Writer, a: Bundle.Asset, bytes: Option[com.histmersion.domain.media.assets.AssetBytesRow.Bytes]): Unit =
@@ -98,5 +102,5 @@ private[assets] object AssetBundleRepo:
                WHERE s.uid = ANY(${sourceUids.map(_.toString).distinct}::uuid[])"""
         .query[(UUID, String, UUID)]
         .run()
-        .map((s, n, u) => (s, n) -> u)
+        .map((s, n, u) => (s, AssetBundleRow.Name(n)) -> u)
         .toMap

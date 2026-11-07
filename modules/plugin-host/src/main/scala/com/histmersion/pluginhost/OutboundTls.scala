@@ -58,7 +58,7 @@ object OutboundTls:
     HttpPolicy
       .pemCertificates(pem)
       .flatMap(der =>
-        scala.util.Try(cf.generateCertificate(new ByteArrayInputStream(der))).toOption.collect {
+        scala.util.Try(cf.generateCertificate(new ByteArrayInputStream(der.value))).toOption.collect {
           case c: X509Certificate => c
         }
       )
@@ -67,20 +67,23 @@ object OutboundTls:
   def roots(t: HttpPolicy.Trust, run: Run = run, read: Read = read): Either[com.histmersion.pluginhost.OutboundTls.Problem, List[X509Certificate]] = t match
     case HttpPolicy.Trust.Jdk              => Right(Nil)
     case HttpPolicy.Trust.Keychains(paths) =>
-      val found = paths.filter(p => Files.exists(Path.of(p)))
-      if found.isEmpty then Left(s"none of the keychains ${paths.mkString(", ")} exists")
-      else run(List("/usr/bin/security", "find-certificate", "-a", "-p") ++ found).map(certificates)
+      val found = paths.filter(p => Files.exists(Path.of(p.value)))
+      if found.isEmpty then Left(Problem(s"none of the keychains ${paths.map(_.value).mkString(", ")} exists"))
+      else
+        run(List("/usr/bin/security", "find-certificate", "-a", "-p") ++ found.map(_.value)).left
+          .map(Problem(_))
+          .map(text => certificates(HttpPolicy.PemText(text)))
     case HttpPolicy.Trust.Bundle(paths) =>
       paths
-        .map(Path.of(_))
+        .map(p => Path.of(p.value))
         .find(Files.isRegularFile(_))
-        .toRight(s"no CA bundle at ${paths.mkString(", ")}")
-        .flatMap(read)
-        .map(certificates)
+        .toRight(Problem(s"no CA bundle at ${paths.map(_.value).mkString(", ")}"))
+        .flatMap(read(_).left.map(Problem(_)))
+        .map(text => certificates(HttpPolicy.PemText(text)))
     case HttpPolicy.Trust.PemFile(path) =>
-      read(Path.of(path)).flatMap { text =>
-        val cs = certificates(text)
-        if cs.isEmpty then Left(s"$path holds no PEM certificate") else Right(cs)
+      read(Path.of(path.value)).left.map(Problem(_)).flatMap { text =>
+        val cs = certificates(HttpPolicy.PemText(text))
+        if cs.isEmpty then Left(Problem(s"${path.value} holds no PEM certificate")) else Right(cs)
       }
 
   /** The JDK's default trust manager. */
@@ -117,23 +120,23 @@ object OutboundTls:
     */
   def configure(
       cfg: TlsConfig,
-      osName: com.histmersion.domain.HttpPolicy.OsName = System.getProperty("os.name", ""),
+      osName: com.histmersion.domain.HttpPolicy.OsName = HttpPolicy.OsName(System.getProperty("os.name", "")),
       run: Run = run,
       read: Read = read
   ): Option[(SSLContext, com.histmersion.pluginhost.OutboundTls.Summary)] =
     Option.when(cfg.custom) {
-      val sources = HttpPolicy.trust(cfg.systemTrust, cfg.extraCa, osName).filterNot(_ == HttpPolicy.Trust.Jdk)
+      val sources = HttpPolicy.trust(HttpPolicy.SystemTrust(cfg.systemTrust.value), cfg.extraCa.map(f => HttpPolicy.Trust.PemFile.Path(f.value)), osName).filterNot(_ == HttpPolicy.Trust.Jdk)
       val got = sources.map(s => s -> roots(s, run, read))
       val extra = got.flatMap(_._2.toOption).flatten
       val notes = got.map {
         case (s, Right(cs)) => s"${describe(s)}: ${cs.size} root(s)"
         case (s, Left(e))   => s"${describe(s)}: NOT used ($e)"
       }
-      context(extra) -> s"acquire TLS trusts the JDK's roots + ${notes.mkString("; ")}"
+      context(extra) -> Summary(s"acquire TLS trusts the JDK's roots + ${notes.mkString("; ")}")
     }
 
   private def describe(t: HttpPolicy.Trust): com.histmersion.pluginhost.OutboundTls.Summary = t match
     case HttpPolicy.Trust.Jdk          => com.histmersion.pluginhost.OutboundTls.Summary("the JDK")
     case HttpPolicy.Trust.Keychains(_) => com.histmersion.pluginhost.OutboundTls.Summary("the macOS system keychains")
     case HttpPolicy.Trust.Bundle(_)    => com.histmersion.pluginhost.OutboundTls.Summary("the system CA bundle")
-    case HttpPolicy.Trust.PemFile(p)   => p
+    case HttpPolicy.Trust.PemFile(p)   => Summary(p.value)

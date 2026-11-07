@@ -34,14 +34,10 @@ import javax.sql.DataSource
   * exported next time like any other change. Then the ledger and the `merges` row ([[MergeRepo.record]]).
   */
 object BundleImporter:
-  type Applied = Applied.T
-  object Applied extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type BackupFile = BackupFile.T
   object BackupFile extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type IssueName = IssueName.T
   object IssueName extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type Problem = Problem.T
-  object Problem extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
 
 
@@ -68,19 +64,29 @@ object BundleImporter:
           )
         catch case a: ImportAbort => Right(failed(m, opts, a.problems))
 
-  private def failed(m: Bundle.Manifest, opts: ImportOptions, problems: List[com.histmersion.util.data.exchange.BundleImporter.Problem]): Bundle.ImportResult =
-    Bundle.ImportResult(m.bundleId, m.instance, opts.dryRun, applied = com.histmersion.api.exchange.Bundle.ImportResult.Applied(false), Nil, com.histmersion.api.exchange.Bundle.ImportResult.Blobs(0), problems, Nil, Nil)
+  private def failed(m: Bundle.Manifest, opts: ImportOptions, problems: List[ImportAbort.Problem]): Bundle.ImportResult =
+    Bundle.ImportResult(
+      m.bundleId,
+      m.instance,
+      Bundle.ImportResult.DryRun(opts.dryRun.value),
+      applied = Bundle.ImportResult.Applied(false),
+      Nil,
+      Bundle.ImportResult.Blobs(0),
+      problems.map(p => Bundle.ImportResult.Problems(p.value)),
+      Nil,
+      Nil
+    )
 
   /** The issue as a problem line names it. */
   private def named(i: MergeIssue): com.histmersion.util.data.exchange.BundleImporter.IssueName =
-    s"${i.id} ${i.entity.wire} ${i.right.orElse(i.left).fold("")(_.label)} — ${i.title}"
+    IssueName(s"${i.id} ${i.entity.wire} ${i.right.orElse(i.left).fold("")(_.label)} — ${i.title}")
 
   /** What the decided rows do, per kind of record, for the kinds they touch. */
   private def counted(decided: List[MergePlanner.Row]): List[Bundle.KindCounts] =
     com.histmersion.api.exchange.Bundle.Kind.values.toList
       .map(k => BundlePlan.counts(k, decided.filter(_.kind == k).map(_.decision)))
       .filter(c =>
-        c.inserted + c.updated + c.unchanged + c.keptLocal + c.conflicts + c.deleted + c.skippedDeleted + c.held > 0
+        c.inserted.value + c.updated.value + c.unchanged.value + c.keptLocal.value + c.conflicts.value + c.deleted.value + c.skippedDeleted.value + c.held.value > 0
       )
 
   // ── pass 1: plan, validate, write the rows ───────────────────────────────────────────────────
@@ -114,46 +120,48 @@ object BundleImporter:
 
     // ── what holds it up: the plan's problems, its open issues, decisions only merge apply can do ──
     val holding = plan.issues.filter(_.open)
-    val problems = plan.problems ++
-      holding.map(i => s"${named(i)}: open — decide it (`merge plan --write-template`)") ++
-      plan.resolutionErrors.map(e => s"resolution $e") ++ planned.needsApply
+    val problems: List[String] = plan.problems.map(_.value) ++
+      holding.map(i => s"${named(i).value}: open — decide it (`merge plan --write-template`)") ++
+      plan.resolutionErrors.map(e => s"resolution ${e.value}") ++ planned.needsApply.map(_.value)
     val conflictIssues =
       plan.issues.filter(i =>
         i.kind == MergeIssue.Kind.ChangedBothSides || i.kind == MergeIssue.Kind.DeletedThereChangedHere
       )
-    val conflicts = conflictIssues.map(i => named(i) + i.decision.fold(" — open")(d => s" — decided ${d.wire}"))
+    val conflicts = conflictIssues.map(i =>
+      Bundle.ImportResult.Conflicts(named(i).value + i.decision.fold(" — open")(d => s" — decided ${d.wire}"))
+    )
     val counts = counted(decided)
     val needed = neededBlobs(es, writes)
     val shown =
-      holding ++ plan.issues.filter(i => i.decision.isDefined && planned.needsApply.exists(_.startsWith(i.id)))
-    def result(applied: com.histmersion.util.data.exchange.BundleImporter.Applied, mergeId: Option[UUID]) =
+      holding ++ plan.issues.filter(i => i.decision.isDefined && planned.needsApply.exists(_.value.startsWith(i.id.value)))
+    def result(applied: Bundle.ImportResult.Applied, mergeId: Option[UUID]) =
       Bundle.ImportResult(
         m.bundleId,
         m.instance,
-        opts.dryRun,
+        Bundle.ImportResult.DryRun(opts.dryRun.value),
         applied,
         counts,
-        if applied then needed.size else com.histmersion.api.exchange.Bundle.ImportResult.Blobs(0),
-        problems,
+        if applied.value then Bundle.ImportResult.Blobs(needed.size) else Bundle.ImportResult.Blobs(0),
+        problems.map(Bundle.ImportResult.Problems(_)),
         conflicts,
-        planned.notes,
+        planned.notes.map(n => Bundle.ImportResult.Notes(n.value)),
         mergeId,
         shown,
-        Some(plan.planHash)
+        Some(Bundle.ImportResult.PlanHash(plan.planHash.value))
       )
 
-    if problems.nonEmpty || opts.dryRun then result(applied = com.histmersion.util.data.exchange.BundleImporter.Applied(false), None)
+    if problems.nonEmpty || opts.dryRun.value then result(applied = Bundle.ImportResult.Applied(false), None)
     else
       writeAll(bundle, input, planned, opts, files, kinds)
       val mergeId = MergeRepo.record(
         m,
         bundleSha,
-        ownBundle,
+        BundlePlan.EntityOwnBundle(ownBundle),
         decided,
-        result(applied = com.histmersion.util.data.exchange.BundleImporter.Applied(true), None).asJson,
-        result(applied = com.histmersion.util.data.exchange.BundleImporter.Applied(true), None).changed
+        result(applied = Bundle.ImportResult.Applied(true), None).asJson,
+        com.histmersion.RowCount(result(applied = Bundle.ImportResult.Applied(true), None).changed.value)
       )
-      result(applied = com.histmersion.util.data.exchange.BundleImporter.Applied(true), mergeId)
+      result(applied = Bundle.ImportResult.Applied(true), mergeId)
 
   /** Every kind's steps over the decided lines: the rows, the blobs, what hangs off them and the derived state. Inside
     * the caller's transaction; the importing flag is left on.
@@ -173,7 +181,17 @@ object BundleImporter:
     val needed = neededBlobs(es, writes)
     MergeRepo.importing(com.histmersion.util.data.exchange.MergeRepo.Importing(true))
     val w =
-      BundleImport.Writer(es, decided, decisionOf, writes, input.local, planned.skipAliases, planned.apply, opts, kinds)
+      BundleImport.Writer(
+        es,
+        decided,
+        decisionOf,
+        u => BundleImport.Writer.WritesResult(writes(u)),
+        input.local,
+        planned.skipAliases.map(c => BundleImport.Writer.SkipAliases(c.value)),
+        planned.apply,
+        opts,
+        kinds
+      )
     kinds.steps(ImportStage.Rows).foreach(_.write(w))
     // ── pass 2: the blobs ──
     if needed.nonEmpty then
@@ -189,6 +207,7 @@ object BundleImporter:
     es.blobRefs.view
       .mapValues(_.filter(u => writes(u.record)))
       .filter(_._2.nonEmpty)
+      .flatMap((sha, uses) => com.histmersion.Sha256.option(sha.value).map(_ -> uses))
       .toMap
 
   /** Stream the bundle's blobs and hand the ones `needed` names to the kinds that own their uses; every failure is
@@ -201,29 +220,30 @@ object BundleImporter:
       w: BundleImport.Writer,
       files: ContentStore,
       kinds: CarriedKinds
-  ): List[com.histmersion.Sha256] =
+  ): List[ImportAbort.Problem] =
     val tar = BundleTar.Reader(in)
-    val failures = List.newBuilder[String]
+    val failures = List.newBuilder[ImportAbort.Problem]
     @annotation.tailrec
     def loop(): Unit =
       tar.next() match
-        case Left(e)        => failures += e
+        case Left(e)        => failures += ImportAbort.Problem(e.value)
         case Right(None)    => ()
         case Right(Some(e)) =>
-          Bundle.blobSha(e.name).flatMap(sha => needed.get(sha).map(sha -> _)) match
+          Bundle.blobSha(e.name.value).flatMap(a => com.histmersion.Sha256.option(a.value)).flatMap(sha => needed.get(sha).map(sha -> _)) match
             case None              => ()
             case Some((sha, uses)) =>
               val sinks = uses.flatMap(kinds.sink(_, sha, w, files))
               val held = sinks.collect { case BlobSink.Held(write) => write }
               val streamed = sinks.collect { case BlobSink.Streamed(store) => store }
-              if held.isEmpty then streamed.foreach(store => store(tar.stream).foreach(failures += _))
+              if held.isEmpty then streamed.foreach(store => store(tar.stream).foreach(f => failures += ImportAbort.Problem(f.toString)))
               else
                 val bytes = tar.readAll()
                 val actual = BundleFormat.sha256Hex(bytes)
-                if actual != sha then failures += s"blob $sha: its content hashes to $actual"
+                if actual.value != sha.value then
+                  failures += ImportAbort.Problem(s"blob ${sha.value}: its content hashes to ${actual.value}")
                 else
                   held.foreach(_(bytes))
-                  streamed.foreach(store => store(java.io.ByteArrayInputStream(bytes)).foreach(failures += _))
+                  streamed.foreach(store => store(java.io.ByteArrayInputStream(bytes)).foreach(f => failures += ImportAbort.Problem(f.toString)))
           loop()
     loop()
     failures.result()
@@ -282,7 +302,7 @@ object BundleImporter:
           )
         catch
           case a: ImportAbort =>
-            Right(MergeApplyResult(m.bundleId, m.instance, applied = com.histmersion.api.exchange.MergeApplyResult.Applied(false), planHash, problems = a.problems))
+            Right(MergeApplyResult(m.bundleId, m.instance, applied = MergeApplyResult.Applied(false), MergeApplyResult.PlanHash(planHash.value), problems = a.problems.map(p => MergeApplyResult.Problems(p.value))))
 
   private def applyIn(
       bundle: ByteSource,
@@ -304,36 +324,36 @@ object BundleImporter:
     val plan = planned.plan
     val noText = plan.issues.filter(i =>
       i.condition.isEmpty && i.decision.exists(_.kind == MergeDecision.Kind.File) &&
-        !resolutions.resolve.exists(r => r.issue.trim == i.id && r.text.isDefined)
+        !resolutions.resolve.exists(r => r.issue.value.trim == i.id.value && r.text.isDefined)
     )
-    val problems = plan.problems ++
+    val problems: List[String] = plan.problems.map(_.value) ++
       Option
-        .when(plan.planHash != planHash.trim)(
-          s"the plan is ${plan.planHash}, not $planHash: this collection, the bundle or the resolutions changed since " +
+        .when(plan.planHash.value != planHash.value.trim)(
+          s"the plan is ${plan.planHash.value}, not ${planHash.value}: this collection, the bundle or the resolutions changed since " +
             "it was planned — plan again, review it, and apply that plan"
         )
         .toList ++
-      plan.open.map(i => s"${named(i)}: open — decide it (`merge plan --write-template`)") ++
-      plan.resolutionErrors.map(e => s"resolution $e") ++
+      plan.open.map(i => s"${named(i).value}: open — decide it (`merge plan --write-template`)") ++
+      plan.resolutionErrors.map(e => s"resolution ${e.value}") ++
       noText.map(i => s"${i.id}: ${i.decision.get.wire} — the merged text was not sent (the CLI reads the file)")
     val counts = counted(planned.rows)
     val base = MergeApplyResult(
       m.bundleId,
       m.instance,
-      applied = com.histmersion.api.exchange.MergeApplyResult.Applied(false),
-      plan.planHash,
+      applied = MergeApplyResult.Applied(false),
+      MergeApplyResult.PlanHash(plan.planHash.value),
       counts = counts,
       tally = planned.apply.tally,
-      problems = problems,
+      problems = problems.map(MergeApplyResult.Problems(_)),
       issues = plan.open,
-      notes = planned.notes
+      notes = planned.notes.map(n => MergeApplyResult.Notes(n.value))
     )
     if problems.nonEmpty then base
-    else if plan.changes == 0 then base.modify(_.applied).setTo(true).modify(_.replanChanges).setTo(Some(0)).modify(_.tally).setTo(MergeTally())
+    else if plan.changes.value == 0 then base.modify(_.applied).setTo(true).modify(_.replanChanges).setTo(Some(0)).modify(_.tally).setTo(MergeTally())
     else
       backup() match
         case Left(e) =>
-          base.modify(_.problems).setTo(List(s"the backup before the merge failed, nothing was written: $e"))
+          base.modify(_.problems).setTo(List(MergeApplyResult.Problems(s"the backup before the merge failed, nothing was written: $e")))
         case Right(dump) =>
           writeAll(bundle, input, planned, opts, files, kinds)
           val ap = planned.apply
@@ -341,23 +361,30 @@ object BundleImporter:
           MergeRepo.tombstone(ap.tombstones)
           val folded = planned.rows.filter(r => r.decision == Decision.FastForward && ap.touch(r.uid))
           folded.groupBy(_.kind).foreach((k, rs) => MergeRepo.touch(kinds.tableOf(k), rs.map(_.uid).distinct))
-          val report = base.modify(_.applied).setTo(true).modify(_.backup).setTo(Some(dump)).modify(_.problems).setTo(Nil)
+          val report = base.modify(_.applied).setTo(true).modify(_.backup).setTo(Some(MergeApplyResult.Backup(dump))).modify(_.problems).setTo(Nil)
           val mergeId = MergeRepo
             .record(
               m,
               bundleSha,
-              input.ownBundle,
+              BundlePlan.EntityOwnBundle(input.ownBundle),
               planned.rows,
               report.asJson,
-              report.changed + plan.changes,
-              Some((plan.planHash, dump, Jsonb.write(resolutions)))
+              com.histmersion.RowCount(report.changed.value + plan.changes.value),
+              Some((MergeRow.AppliedAt(plan.planHash.value), MergeRow.Backup(dump), MergeRow.FromLabel(Jsonb.write(resolutions).value)))
             )
-            .getOrElse(throw ImportAbort(List("the merge wrote nothing")))
+            .getOrElse(throw ImportAbort(List(ImportAbort.Problem("the merge wrote nothing"))))
           MergeRepo.redirect(ap.folds, mergeId)
-          MergeRepo.remember(ap.remember, mergeId)
-          val (reviews, logEntry) = followUps.recordIn(m, input.fromLabel, mergeId, ap, counts, dump)
+          MergeRepo.remember(ap.remember.map((id, d) => MergeRepo.DecisionKey(id.value) -> d), mergeId)
+          val (reviews, logEntry) = followUps.recordIn(
+            m,
+            MergeFollowUps.FromRecordRef(input.fromLabel.value),
+            mergeId,
+            ap,
+            counts,
+            MergeFollowUps.DumpRecordRef(dump)
+          )
           // the same bundle, planned again over what was just written: nothing should be left to do
           val (_, again) = MergePlans.plan(bundle, m, loaded, resolutions, merge, files, opts.chunkChars, kinds, rules)
           report.modify(
-            _.mergeId).setTo(Some(mergeId)).modify(_.reviews).setTo(reviews).modify(_.logEntry).setTo(Some(logEntry)).modify(_.replanChanges).setTo(Some(again.plan.changes)
+            _.mergeId).setTo(Some(mergeId)).modify(_.reviews).setTo(reviews).modify(_.logEntry).setTo(Some(logEntry)).modify(_.replanChanges).setTo(Some(MergeApplyResult.ReplanChanges(again.plan.changes.value))
           )

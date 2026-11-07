@@ -16,7 +16,7 @@ object ReservedNames:
     * under.
     */
   val mediaCollections: Set[com.histmersion.pluginhost.ReservedNames.Name] =
-    Set(
+    Set[String](
       "wikidata",
       "depicts",
       "met",
@@ -34,11 +34,11 @@ object ReservedNames:
       "oc",
       "si",
       "smithsonian-open-access"
-    ) ++
-      MediaProvider.all ++ Set(MediaProvider.CommonsDepicts, MediaProvider.Pleiades)
+    ).map(Name(_)) ++
+      MediaProvider.all.map(id => Name(id.value)) ++ Set(MediaProvider.CommonsDepicts, MediaProvider.Pleiades).map(Name(_))
 
   /** The built-in event catalogues and their aliases. */
-  val eventCatalogues: Set[com.histmersion.pluginhost.ReservedNames.Name] = CatalogProvider.all.toSet ++ Set("smithsonian", "volcano", "ncei", "wd")
+  val eventCatalogues: Set[com.histmersion.pluginhost.ReservedNames.Name] = CatalogProvider.all.map(id => Name(id.value)).toSet ++ Set("smithsonian", "volcano", "ncei", "wd").map(Name(_))
 
   /** The first-party plugins: Histmersion's own, in every image. A plugin is first-party when its id is one of these
     * and it was loaded from the image's own class path, not from the plugin set a relink added; a reserved name of a
@@ -84,11 +84,11 @@ object ReservedNames:
     * PeriodO, the bundled extracts): a plugin's source under one of them would be taken for the host's own.
     */
   val gazetteerSources: Set[com.histmersion.pluginhost.ReservedNames.Name] =
-    Set("cliopatria", "awmc", "chronontology", "land", "periodo") ++
-      com.histmersion.api.catalogue.Gazetteer.Kind.values.map(_.wire).toSet
+    Set("cliopatria", "awmc", "chronontology", "land", "periodo").map(Name(_)) ++
+      com.histmersion.api.catalogue.Gazetteer.Kind.values.map(k => Name(k.wire.value)).toSet
 
   /** Histmersion's own source collections: the Calibre library and archive.org. */
   val sourceCollections: Set[com.histmersion.pluginhost.ReservedNames.Name] = Set(com.histmersion.pluginhost.ReservedNames.Name("calibre"), com.histmersion.pluginhost.ReservedNames.Name("archive-org"))
 
   /** The built-in AI providers. */
-  val aiProviders: Set[com.histmersion.pluginhost.ReservedNames.Name] = Agents.ProviderKind.values.map(_.wire).toSet
+  val aiProviders: Set[com.histmersion.pluginhost.ReservedNames.Name] = Agents.ProviderKind.values.map(k => Name(k.wire.value)).toSet

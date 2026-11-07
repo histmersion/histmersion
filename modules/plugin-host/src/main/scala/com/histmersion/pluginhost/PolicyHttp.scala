@@ -1,6 +1,7 @@
 package com.histmersion.pluginhost
 
 import com.histmersion.config.AppConfig
+import com.histmersion.domain.CoreQuota
 import com.histmersion.domain.HttpPolicy
 import sttp.client4.*
 
@@ -17,96 +18,86 @@ import com.histmersion.plugin.Plugin
   * request; `sleep` and `clock` are parameters so a test does not wait.
   */
 final class PolicyHttp(
-    userAgent: PolicyHttp.UserAgent,
+    userAgent: HttpPolicy.UserAgent,
     transport: HttpTransport,
-    tries: PolicyHttp.Tries = com.histmersion.pluginhost.PolicyHttp.Tries(4),
-    maxRetryAfterSeconds: PolicyHttp.MaxRetryAfterSeconds = com.histmersion.pluginhost.PolicyHttp.MaxRetryAfterSeconds(60),
-    sleep: PolicyHttp.SleepArg1 => Unit = ms => Thread.sleep(ms),
+    tries: PolicyHttp.Tries = PolicyHttp.Tries(4),
+    maxRetryAfterSeconds: HttpPolicy.MaxRetryAfterSeconds = HttpPolicy.MaxRetryAfterSeconds(60),
+    sleep: HttpPolicy.Step.Wait.Ms => Unit = ms => Thread.sleep(ms.value),
     clock: () => java.time.Instant = () => java.time.Instant.now(),
     log: HostLog = HostLog.scribe
 ):
 
-  private val maxRetries = (tries - 1).max(0)
+  private val maxRetries = HttpPolicy.MaxRetries((tries.value - 1).max(0))
+
+  /** The headers as sent: a caller's own `User-Agent` replaces the configured one; either goes through
+    * [[HttpPolicy.userAgent]], so neither can carry an e-mail.
+    */
+  private def identified(headers: Map[CoreQuota.HeaderName, CoreQuota.HeaderValue]): Map[CoreQuota.HeaderName, CoreQuota.HeaderValue] =
+    val ua = headers.collectFirst {
+      case (k, v) if k.value.equalsIgnoreCase(PolicyHttp.UserAgent.value) => HttpPolicy.UserAgent(v.value)
+    }
+    headers.filterNot(_._1.value.equalsIgnoreCase(PolicyHttp.UserAgent.value)) +
+      (PolicyHttp.UserAgent -> CoreQuota.HeaderValue(HttpPolicy.userAgent(ua.getOrElse(userAgent)).value))
 
   /** One GET: the body of a 2xx answer, or why there is none. A caller's own `User-Agent` replaces the configured one;
     * either goes through [[HttpPolicy.userAgent]], so neither can carry an e-mail.
     */
-  def bytes(url: com.histmersion.pluginhost.HttpTransport.Url, headers: Map[com.histmersion.domain.CoreQuota.HeaderName, com.histmersion.pluginhost.PolicyHttp.BytesHeadersPart2] = Map.empty): Either[com.histmersion.pluginhost.PolicyHttp.Problem, com.histmersion.pluginhost.PolicyHttp.BytesResultPart2] =
-    val ua = headers.collectFirst { case (k, v) if k.equalsIgnoreCase(PolicyHttp.UserAgent) => v }
-    val sent = headers.filterNot(_._1.equalsIgnoreCase(PolicyHttp.UserAgent)) +
-      (PolicyHttp.UserAgent -> HttpPolicy.userAgent(ua.getOrElse(userAgent)))
-    def again(n: com.histmersion.domain.HttpPolicy.Attempt, ms: com.histmersion.domain.HttpPolicy.Step.Wait.Ms, why: com.histmersion.pluginhost.PolicyHttp.Reason): Either[com.histmersion.pluginhost.PolicyHttp.Problem, com.histmersion.pluginhost.PolicyHttp.BytesAgainResultPart2] =
-      log.warn(s"acquire: $why — retrying $url in ${ms}ms")
+  def bytes(url: HttpTransport.Url, headers: Map[CoreQuota.HeaderName, CoreQuota.HeaderValue] = Map.empty): Either[HttpTransport.Problem, HttpAnswer.Body] =
+    val sent = identified(headers)
+    def again(n: HttpPolicy.Attempt, ms: HttpPolicy.Step.Wait.Ms, why: String): Either[HttpTransport.Problem, HttpAnswer.Body] =
+      log.warn(HostLog.Line(s"acquire: $why — retrying $url in ${ms}ms"))
       sleep(ms)
-      attempt(n + 1)
-    def attempt(n: com.histmersion.domain.HttpPolicy.Attempt): Either[com.histmersion.pluginhost.PolicyHttp.Problem, com.histmersion.pluginhost.PolicyHttp.BytesAttemptResultPart2] =
+      attempt(HttpPolicy.Attempt(n.value + 1))
+    def attempt(n: HttpPolicy.Attempt): Either[HttpTransport.Problem, HttpAnswer.Body] =
       transport.get(url, sent) match
         case Left(unreachable) =>
-          if n < maxRetries then again(n, HttpPolicy.backoffMs(n), unreachable) else Left(unreachable)
+          if n.value < maxRetries.value then again(n, HttpPolicy.backoffMs(n), unreachable.value) else Left(unreachable)
         case Right(answer) =>
-          val code = answer.code
+          val code = HttpPolicy.StatusCode(answer.code.value)
           if Challenge.isChallenge(code, answer.headers, answer.body) then
-            Left(s"$url: HTTP $code bot-protection challenge — treated as no copy")
+            Left(HttpTransport.Problem(s"$url: HTTP $code bot-protection challenge — treated as no copy"))
           else
-            HttpPolicy.decide(code, answer.header(com.histmersion.domain.CoreQuota.HeaderName("Retry-After")), n, maxRetries, maxRetryAfterSeconds, clock()) match
+            HttpPolicy.decide(code, answer.header(CoreQuota.HeaderName("Retry-After")).map(v => HttpPolicy.RetryAfter(v.value)), n, maxRetries, maxRetryAfterSeconds, clock()) match
               case HttpPolicy.Step.Accept                                    => Right(answer.body)
-              case HttpPolicy.Step.Wait(ms, why)                             => again(n, ms, why)
-              case HttpPolicy.Step.GiveUp(why) if HttpPolicy.Throttled(code) => Left(s"$url failed: $why")
-              case HttpPolicy.Step.GiveUp(_) => Left(s"$url: HTTP $code ${new String(answer.body.take(200), "UTF-8")}")
-    attempt(com.histmersion.domain.HttpPolicy.Attempt(0))
+              case HttpPolicy.Step.Wait(ms, why)                             => again(n, ms, why.value)
+              case HttpPolicy.Step.GiveUp(why) if HttpPolicy.Throttled(code) => Left(HttpTransport.Problem(s"$url failed: $why"))
+              case HttpPolicy.Step.GiveUp(_) =>
+                Left(HttpTransport.Problem(s"$url: HTTP $code ${new String(answer.body.value.take(200), "UTF-8")}"))
+    attempt(HttpPolicy.Attempt(0))
 
   /** One GET with the policy's identity and NO retry: the answer as it came, a slow-down or an error included, with its
     * headers — for an upstream whose own budget decides when to ask again (CORE's rate-limit headers), where a retry
     * would spend what the budget is keeping.
     */
-  def once(url: com.histmersion.pluginhost.HttpTransport.Url, headers: Map[com.histmersion.domain.CoreQuota.HeaderName, com.histmersion.pluginhost.PolicyHttp.OnceHeadersPart2] = Map.empty): Either[com.histmersion.pluginhost.PolicyHttp.Problem, HttpAnswer] =
-    val ua = headers.collectFirst { case (k, v) if k.equalsIgnoreCase(PolicyHttp.UserAgent) => v }
-    transport.get(
-      url,
-      headers.filterNot(_._1.equalsIgnoreCase(PolicyHttp.UserAgent)) +
-        (PolicyHttp.UserAgent -> HttpPolicy.userAgent(ua.getOrElse(userAgent)))
-    )
+  def once(url: HttpTransport.Url, headers: Map[CoreQuota.HeaderName, CoreQuota.HeaderValue] = Map.empty): Either[HttpTransport.Problem, HttpAnswer] =
+    transport.get(url, identified(headers))
 
   /** The client as the plugin SPI lends it: plugins get bytes, and parse what they asked for; a call an upstream's
     * budget meters is sent [[once]], answered with its status and headers.
     */
   def plugin: Plugin.Http = new Plugin.Http:
-    def get(url: com.histmersion.pluginhost.HttpTransport.Url, headers: Map[com.histmersion.domain.CoreQuota.HeaderName, com.histmersion.pluginhost.PolicyHttp.PluginGetHeadersPart2]) = bytes(url, headers)
-    override def fetch(url: String, headers: Map[String, String]) =
-      once(url, headers).map(a => Plugin.HttpResponse(a.code, a.headers, a.body))
+    private def sent(headers: Map[Plugin.Http.GetHeadersPart1, Plugin.Http.GetHeadersPart2]) =
+      headers.map((k, v) => CoreQuota.HeaderName(k.value) -> CoreQuota.HeaderValue(v.value))
+    def get(url: Plugin.Http.GetUrl, headers: Map[Plugin.Http.GetHeadersPart1, Plugin.Http.GetHeadersPart2]) =
+      bytes(HttpTransport.Url(url.value), sent(headers)).left
+        .map(e => Plugin.Http.GetResultPart1(e.value))
+        .map(b => Plugin.HttpResponse.Body(b.value))
+    override def fetch(url: Plugin.Http.FetchUrl, headers: Map[Plugin.Http.FetchHeadersPart1, Plugin.Http.FetchHeadersPart2]) =
+      once(HttpTransport.Url(url.value), sent(headers)).left
+        .map(e => Plugin.Http.FetchResultPart1(e.value))
+        .map(a =>
+          Plugin.HttpResponse(
+            Plugin.HttpResponse.Status(a.code.value),
+            a.headers.map((k, v) => Plugin.HttpResponse.HeadersKey(k.value) -> Plugin.HttpResponse.HeadersValue(v.value)),
+            Plugin.HttpResponse.Body(a.body.value)
+          )
+        )
 
 object PolicyHttp:
-  type Problem = Problem.T
-  object Problem extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type Reason = Reason.T
-  object Reason extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type BytesAgainResultPart2 = BytesAgainResultPart2.T
-  object BytesAgainResultPart2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Array[_root_.scala.Byte], _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type BytesAttemptResultPart2 = BytesAttemptResultPart2.T
-  object BytesAttemptResultPart2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Array[_root_.scala.Byte], _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type PluginGetHeadersPart2 = PluginGetHeadersPart2.T
-  object PluginGetHeadersPart2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-
-  type BytesResultPart2 = BytesResultPart2.T
-  object BytesResultPart2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Array[_root_.scala.Byte], _root_.io.github.iltotore.iron.constraint.any.Pure]
-
-  type UserAgent = UserAgent.T
-  object UserAgent extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type Tries = Tries.T
   object Tries extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type MaxRetryAfterSeconds = MaxRetryAfterSeconds.T
-  object MaxRetryAfterSeconds extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type SleepArg1 = SleepArg1.T
-  object SleepArg1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
-  type BytesHeadersPart2 = BytesHeadersPart2.T
-  object BytesHeadersPart2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type OnceHeadersPart2 = OnceHeadersPart2.T
-  object OnceHeadersPart2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type AcquisitionSleepArg1 = AcquisitionSleepArg1.T
-  object AcquisitionSleepArg1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
-
-  val UserAgent = "User-Agent"
+  val UserAgent: CoreQuota.HeaderName = CoreQuota.HeaderName("User-Agent")
 
   /** The acquisition client of a configuration — the ONE client every plugin's `ctx.http`, every built-in fetcher and
     * every metadata lookup of a generation share: `acquire.user-agent`, and the media politeness's patience with
@@ -115,17 +106,17 @@ object PolicyHttp:
   def acquisition(
       cfg: AppConfig,
       transport: HttpTransport,
-      sleep: com.histmersion.pluginhost.PolicyHttp.AcquisitionSleepArg1 => Unit = ms => Thread.sleep(ms),
+      sleep: HttpPolicy.Step.Wait.Ms => Unit = ms => Thread.sleep(ms.value),
       log: HostLog = HostLog.scribe
   ): PolicyHttp =
     PolicyHttp(
-      cfg.acquire.userAgent,
+      HttpPolicy.UserAgent(cfg.acquire.userAgent.value),
       transport,
-      maxRetryAfterSeconds = cfg.media.maxRetryAfterSeconds,
+      maxRetryAfterSeconds = HttpPolicy.MaxRetryAfterSeconds(cfg.media.maxRetryAfterSeconds.value),
       sleep = sleep,
       log = log
     )
 
   /** The transport the acquisition client sends on: `acquire.timeout-seconds`, `acquire.tls`'s trust. */
   def acquisitionTransport(cfg: AppConfig): HttpTransport =
-    SttpTransport(cfg.acquire.timeoutSeconds, OutboundTls.configure(cfg.acquire.tls).map(_._1))
+    SttpTransport(SttpTransport.TimeoutSeconds(cfg.acquire.timeoutSeconds.value), OutboundTls.configure(cfg.acquire.tls).map(_._1))

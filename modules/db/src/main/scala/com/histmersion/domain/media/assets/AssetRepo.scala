@@ -5,6 +5,7 @@ import com.histmersion.util.database.RangeSql
 import com.histmersion.api.Write
 
 import com.histmersion.util.database.given
+import com.histmersion.util.database.NewtypeColumns.given
 import com.augustnagro.magnum.*
 import com.histmersion.api.media.{AssetDetail, AssetInfo, AssetPatch}
 import com.histmersion.api.Api
@@ -34,7 +35,7 @@ private[assets] object AssetRepo:
   def replace(citekey: com.histmersion.domain.library.Citekey, assets: List[NewFigure])(using DbCon): com.histmersion.RowCount =
     val incoming = NewFigure.dedupe(assets)
     val existing = sql"SELECT name, sha256 FROM assets WHERE citekey = $citekey ORDER BY name"
-      .query[(String, String)]
+      .query[(NewFigure.Name, com.histmersion.Sha256)]
       .run()
       .toList
     val plan = Reconciled.of(existing, incoming.map(a => a.name -> a.sha256))
@@ -69,7 +70,7 @@ private[assets] object AssetRepo:
   private def insert(citekey: com.histmersion.domain.library.Citekey, assets: List[NewFigure], replaceExisting: com.histmersion.domain.media.assets.AssetRepo.ReplaceExisting)(using DbCon): com.histmersion.RowCount =
     assets.foreach { a =>
       val sha = a.sha256
-      if replaceExisting then
+      if replaceExisting.value then
         // an unchanged picture is not rewritten: its row (and `updated_at`) stays as it was
         sql"""INSERT INTO assets (citekey, name, mime, bytes, sha256, width, height)
               VALUES ($citekey, ${a.name}, ${a.mime}, ${a.bytes}, $sha, ${a.width}, ${a.height})
@@ -82,14 +83,23 @@ private[assets] object AssetRepo:
               VALUES ($citekey, ${a.name}, ${a.mime}, ${a.bytes}, $sha, ${a.width}, ${a.height})
               ON CONFLICT (citekey, name) DO NOTHING""".update.run()
     }
-    assets.size
+    com.histmersion.RowCount(assets.size)
 
   def list(citekey: com.histmersion.domain.library.Citekey)(using DbCon): Vector[AssetInfo] =
     sql"""SELECT name, mime, length(bytes), sha256, width, height
           FROM assets WHERE citekey = $citekey ORDER BY name"""
       .query[AssetInfoRow]
       .run()
-      .map(r => AssetInfo(r.name, r.mime, r.bytes, com.histmersion.api.Sha256(r.sha256), r.width, r.height))
+      .map(r =>
+        AssetInfo(
+          AssetInfo.Name(r.name.value),
+          AssetInfo.Mime(r.mime.value),
+          com.histmersion.api.ByteCount(r.bytes.value.toLong),
+          com.histmersion.api.Sha256(r.sha256.value),
+          r.width.map(w => AssetInfo.Width(w.value)),
+          r.height.map(h => AssetInfo.Height(h.value))
+        )
+      )
 
   /** The bytes to stream, with the mime type to serve them as. */
   def read(citekey: com.histmersion.domain.library.Citekey, name: com.histmersion.domain.media.assets.AssetInfoRow.Name)(using DbCon): Option[(com.histmersion.domain.media.assets.AssetBytesRow.Mime, com.histmersion.domain.media.assets.AssetBytesRow.Bytes)] =
@@ -100,7 +110,7 @@ private[assets] object AssetRepo:
       .map(r => (r.mime, r.bytes))
 
   def count(citekey: com.histmersion.domain.library.Citekey)(using DbCon): com.histmersion.RowCount =
-    sql"SELECT count(*) FROM assets WHERE citekey = $citekey".query[Int].run().headOption.getOrElse(0)
+    sql"SELECT count(*) FROM assets WHERE citekey = $citekey".query[Int].run().headOption.map(com.histmersion.RowCount(_)).getOrElse(com.histmersion.RowCount(0))
 
   def exists(citekey: com.histmersion.domain.library.Citekey, name: com.histmersion.domain.media.assets.AssetInfoRow.Name)(using DbCon): Boolean =
     sql"SELECT 1 FROM assets WHERE citekey = $citekey AND name = $name".query[Int].run().nonEmpty
@@ -116,19 +126,19 @@ private[assets] object AssetRepo:
       .headOption
       .map { r =>
         AssetDetail(
-          r.name,
-          r.mime,
-          r.bytes,
-          r.sha256,
-          r.width,
-          r.height,
-          r.kind,
-          r.caption,
-          r.license,
-          r.lat,
-          r.lon,
-          r.periodStart,
-          r.periodEnd
+          com.histmersion.api.exchange.Bundle.Asset.FileName(r.name.value),
+          com.histmersion.api.exchange.Bundle.Asset.MimeText(r.mime.value),
+          com.histmersion.api.ByteCount(r.bytes.value.toLong),
+          com.histmersion.api.Sha256(r.sha256.value),
+          r.width.map(w => com.histmersion.api.media.ImageSize.Width(w.value)),
+          r.height.map(h => com.histmersion.api.media.ImageSize.Height(h.value)),
+          r.kind.map(k => com.histmersion.api.media.MediaItem.Kind(k.value)),
+          r.caption.map(c => com.histmersion.api.media.MediaItem.Caption(c.value)),
+          r.license.map(l => com.histmersion.api.media.MediaItem.License(l.value)),
+          r.lat.map(l => com.histmersion.api.catalogue.Latitude(l.value)),
+          r.lon.map(l => com.histmersion.api.catalogue.Longitude(l.value)),
+          r.periodStart.map(y => com.histmersion.api.catalogue.Year(y.value.toLong)),
+          r.periodEnd.map(y => com.histmersion.api.catalogue.Year(y.value.toLong))
         )
       }
 
@@ -136,7 +146,7 @@ private[assets] object AssetRepo:
     * alone replacing that bound ([[RangeSql.merge]]). The figure must exist.
     */
   def patch(citekey: com.histmersion.domain.library.Citekey, name: com.histmersion.domain.media.assets.AssetInfoRow.Name, p: AssetPatch)(using DbCon): Either[Api.Error, Unit] =
-    if !exists(citekey, name) then Left(Api.Error(s"No asset '$citekey/$name'", Some(Write.CodeNotFound)))
+    if !exists(citekey, name) then Left(Api.Error(Api.Error.Message(s"No asset '${citekey.value}/${name.value}'"), Some(Api.Error.Code(Write.CodeNotFound))))
     else
       p.kind.foreach(v => sql"UPDATE assets SET kind = $v WHERE citekey = $citekey AND name = $name".update.run())
       p.caption.foreach(v => sql"UPDATE assets SET caption = $v WHERE citekey = $citekey AND name = $name".update.run())
@@ -151,9 +161,18 @@ private[assets] object AssetRepo:
           .query[(Option[Long], Option[Long])]
           .run()
           .head
-      RangeSql.merge(stored, p.periodStart, p.periodEnd, s"asset '$citekey/$name'").getOrElse(Right(stored)).map {
+      val storedBounds = (
+        stored._1.map(com.histmersion.domain.DeepTime.SignedYear(_)),
+        stored._2.map(com.histmersion.domain.DeepTime.SignedYear(_))
+      )
+      RangeSql.merge(
+        storedBounds,
+        p.periodStart.map(y => com.histmersion.domain.DeepTime.SignedYear(y.value)),
+        p.periodEnd.map(y => com.histmersion.domain.DeepTime.SignedYear(y.value)),
+        s"asset '${citekey.value}/${name.value}'"
+      ).getOrElse(Right(storedBounds)).map {
         (s, e) =>
-          if (s, e) != stored then
+          if (s, e) != storedBounds then
             val range = RangeSql.literal(s, e)
             sql"UPDATE assets SET period = $range::int8range WHERE citekey = $citekey AND name = $name".update.run()
       }

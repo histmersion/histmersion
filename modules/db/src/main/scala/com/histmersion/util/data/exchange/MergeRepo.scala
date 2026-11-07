@@ -22,6 +22,7 @@ import com.histmersion.domain.MergePlanner.Fold
 import com.histmersion.util.data.exchange.BundlePlan.Ledger
 
 import com.augustnagro.magnum.*
+import com.histmersion.util.database.NewtypeColumns.given
 import java.util.UUID
 import com.histmersion.api.Api
 
@@ -54,21 +55,21 @@ object MergeRepo:
     MergeInfo(
       r.id,
       r.bundleId,
-      r.bundleSha256,
-      com.histmersion.api.exchange.Bundle.Instance(r.fromInstance, r.fromLabel),
-      r.appliedAt,
-      r.planHash,
-      r.backup,
-      r.ledgerRows,
-      r.redirects
+      MergeInfo.BundleSha256(r.bundleSha256.value),
+      com.histmersion.api.exchange.Bundle.Instance(r.fromInstance, r.fromLabel.map(l => Bundle.Instance.Label(l.value))),
+      MergeInfo.AppliedAt(r.appliedAt.value),
+      r.planHash.map(h => MergeInfo.PlanHash(h.value)),
+      r.backup.map(b => MergeInfo.Backup(b.value)),
+      MergeInfo.LedgerRows(r.ledgerRows.value),
+      MergeInfo.Redirects(r.redirects.value)
     )
 
   /** The merges, newest first. */
   def list(limit: com.histmersion.PageSize)(using DbCon): List[MergeInfo] =
     Sql
       .of(
-        s"SELECT $mergeCols FROM merges m ORDER BY m.applied_at DESC, m.id DESC LIMIT ?",
-        Param.I(math.max(1, limit))
+        Sql.OfText(s"SELECT $mergeCols FROM merges m ORDER BY m.applied_at DESC, m.id DESC LIMIT ?"),
+        Param.I(Param.I.V(math.max(1, limit.value)))
       )
       .frag
       .query[MergeRow]
@@ -78,19 +79,19 @@ object MergeRepo:
 
   /** One merge by its id or an unambiguous prefix of it: `Left` when none, or several, match. */
   def find(idOrPrefix: com.histmersion.util.data.exchange.MergeRepo.MergeIdOrPrefix)(using DbCon): Either[Api.Error, MergeRow] =
-    val p = idOrPrefix.trim.toLowerCase(java.util.Locale.ROOT)
+    val p = idOrPrefix.value.trim.toLowerCase(java.util.Locale.ROOT)
     if p.isEmpty || !p.forall(c => c.isDigit || (c >= 'a' && c <= 'f') || c == '-') then
       Left(
         Api.Error(
-          s"'$idOrPrefix' is not a merge id (the id `merge list` prints, or its first characters)",
-          Some(Write.CodeInvalid)
+          Api.Error.Message(s"'$idOrPrefix' is not a merge id (the id `merge list` prints, or its first characters)"),
+          Some(Api.Error.Code(Write.CodeInvalid))
         )
       )
     else
       Sql
         .of(
-          s"SELECT $mergeCols FROM merges m WHERE m.id::text LIKE ? ORDER BY m.applied_at DESC LIMIT 2",
-          Param.S(p + "%")
+          Sql.OfText(s"SELECT $mergeCols FROM merges m WHERE m.id::text LIKE ? ORDER BY m.applied_at DESC LIMIT 2"),
+          Param.S(Param.S.V(p + "%"))
         )
         .frag
         .query[MergeRow]
@@ -98,9 +99,19 @@ object MergeRepo:
         .toList match
         case List(r) => Right(r)
         case Nil     =>
-          Left(Api.Error(s"no merge '$idOrPrefix' (`histmersion merge list` lists them)", Some(Write.CodeNotFound)))
+          Left(
+            Api.Error(
+              Api.Error.Message(s"no merge '$idOrPrefix' (`histmersion merge list` lists them)"),
+              Some(Api.Error.Code(Write.CodeNotFound))
+            )
+          )
         case _ =>
-          Left(Api.Error(s"'$idOrPrefix' names more than one merge — give more of its id", Some(Write.CodeInvalid)))
+          Left(
+            Api.Error(
+              Api.Error.Message(s"'$idOrPrefix' names more than one merge — give more of its id"),
+              Some(Api.Error.Code(Write.CodeInvalid))
+            )
+          )
 
   /** One merge with its report (an apply's or an import's, as written), its resolutions and the decisions it left to
     * remember.
@@ -111,7 +122,7 @@ object MergeRepo:
         .query[(String, Option[String])]
         .run()
         .head
-      val json = Jsonb.read[io.circe.Json](report)
+      val json = Jsonb.read[io.circe.Json](Jsonb.JsonText(report))
       // an apply wrote a MergeApplyResult (it has `applied` and `tally`), an import a BundleImportResult
       val applied = json.filter(_.hcursor.downField("tally").succeeded).flatMap(_.as[MergeApplyResult].toOption)
       val imported = if applied.isDefined then None
@@ -120,8 +131,14 @@ object MergeRepo:
         .query[(String, String)]
         .run()
         .toList
-        .map((i, d) => MergeResolution(i, d))
-      MergeDetail(info(r), applied, imported, resolutions.flatMap(Jsonb.read[MergeResolutions]), remembered)
+        .map((i, d) => MergeResolution(MergeResolution.Issue(i), MergeResolution.Decision(d)))
+      MergeDetail(
+        info(r),
+        applied,
+        imported,
+        resolutions.flatMap(t => Jsonb.read[MergeResolutions](Jsonb.JsonText(t))),
+        remembered
+      )
     }
 
   /** The ledger rows of one record (a uid — the bundle's or the one here — or a citekey), of one merge, or the latest
@@ -133,8 +150,8 @@ object MergeRepo:
     val label = rules.ledgerLabelSql
     val select = s"""SELECT l.foreign_uid, l.kind, l.merge_id, l.foreign_rev, l.local_uid, $label, l.local_rev_after,
                             l.decision, ${ts("l.recorded_at")} FROM merge_ledger l"""
-    def asUid(s: com.histmersion.util.data.exchange.MergeRepo.UidText): Option[UUID] = scala.util.Try(UUID.fromString(s.trim)).toOption
-    val target: Either[Api.Error, Option[UUID]] = uid.map(_.trim).filter(_.nonEmpty) match
+    def asUid(s: String): Option[UUID] = scala.util.Try(UUID.fromString(s.trim)).toOption
+    val target: Either[Api.Error, Option[UUID]] = uid.map(_.value.trim).filter(_.nonEmpty) match
       case None    => Right(None)
       case Some(u) =>
         asUid(u)
@@ -142,33 +159,39 @@ object MergeRepo:
                 UNION ALL SELECT s.uid FROM source_aliases a JOIN sources s ON s.citekey = a.citekey WHERE a.alias = $u
                 LIMIT 1""".query[UUID].run().headOption)
           .map(Some(_))
-          .toRight(Api.Error(s"'$u' is neither a uid nor a citekey here", Some(Write.CodeNotFound)))
+          .toRight(
+            Api.Error(
+              Api.Error.Message(s"'$u' is neither a uid nor a citekey here"),
+              Some(Api.Error.Code(Write.CodeNotFound))
+            )
+          )
     for
       t <- target
-      m <- merge.map(_.trim).filter(_.nonEmpty) match
+      m <- merge.map(_.value.trim).filter(_.nonEmpty) match
         case None    => Right(None)
-        case Some(x) => find(x).map(r => Some(r.id))
+        case Some(x) => find(MergeIdOrPrefix(x)).map(r => Some(r.id))
     yield
-      val n = math.max(1, limit)
+      val n = math.max(1, limit.value)
       val rows = (t, m) match
         case (Some(u), _) =>
           // the record's own row, and those of every bundle uid that redirects to it
           Sql.of(
-            s"""$select WHERE l.foreign_uid = ?::uuid OR l.local_uid = ?::uuid
+            Sql.OfText(s"""$select WHERE l.foreign_uid = ?::uuid OR l.local_uid = ?::uuid
                      OR l.foreign_uid IN (SELECT alias_uid FROM uid_aliases WHERE uid = ?::uuid)
-                     ORDER BY l.recorded_at DESC, l.foreign_uid LIMIT ?""",
-            Param.S(u.toString),
-            Param.S(u.toString),
-            Param.S(u.toString),
-            Param.I(n)
+                     ORDER BY l.recorded_at DESC, l.foreign_uid LIMIT ?"""),
+            Param.S(Param.S.V(u.toString)),
+            Param.S(Param.S.V(u.toString)),
+            Param.S(Param.S.V(u.toString)),
+            Param.I(Param.I.V(n))
           )
         case (None, Some(mid)) =>
           Sql.of(
-            s"$select WHERE l.merge_id = ?::uuid ORDER BY l.kind, l.foreign_uid LIMIT ?",
-            Param.S(mid.toString),
-            Param.I(n)
+            Sql.OfText(s"$select WHERE l.merge_id = ?::uuid ORDER BY l.kind, l.foreign_uid LIMIT ?"),
+            Param.S(Param.S.V(mid.toString)),
+            Param.I(Param.I.V(n))
           )
-        case _ => Sql.of(s"$select ORDER BY l.recorded_at DESC, l.foreign_uid LIMIT ?", Param.I(n))
+        case _ =>
+          Sql.of(Sql.OfText(s"$select ORDER BY l.recorded_at DESC, l.foreign_uid LIMIT ?"), Param.I(Param.I.V(n)))
       val entries = rows.frag
         .query[LedgerRow]
         .run()
@@ -176,14 +199,14 @@ object MergeRepo:
         .map(r =>
           com.histmersion.api.research.LedgerRow(
             r.foreignUid,
-            r.kind,
+            com.histmersion.api.research.LedgerRow.Kind(r.kind.value),
             r.mergeId,
-            r.foreignRev,
+            com.histmersion.api.research.LedgerRow.ForeignRev(r.foreignRev.value),
             r.localUid,
-            r.label,
-            r.localRevAfter,
-            r.decision,
-            r.recordedAt
+            r.label.map(l => com.histmersion.api.research.LedgerRow.Label(l.value)),
+            r.localRevAfter.map(l => com.histmersion.api.research.LedgerRow.LocalRevAfter(l.value)),
+            com.histmersion.api.research.LedgerRow.Decision(r.decision.value),
+            com.histmersion.api.research.LedgerRow.RecordedAt(r.recordedAt.value)
           )
         )
       val redirects = t.toList.flatMap { u =>
@@ -192,21 +215,32 @@ object MergeRepo:
           .query[(UUID, UUID, String, Option[UUID])]
           .run()
           .toList
-          .map((a, b, k, mid) => UidRedirect(a, b, k, mid))
+          .map((a, b, k, mid) => UidRedirect(a, b, UidRedirect.Kind(k), mid))
       }
-      MergeLedger(uid.orElse(merge), entries, redirects)
+      MergeLedger(
+        uid.map(u => MergeLedger.Query(u.value)).orElse(merge.map(m => MergeLedger.Query(m.value))),
+        entries,
+        redirects
+      )
 
   // ── the review screen's draft (V051) ──────────────────────────────────────────────────────────
 
   def session(bundle: com.histmersion.util.data.exchange.MergeRepo.BundleName)(using DbCon): MergeSession =
     Sql
-      .of(s"SELECT resolutions::text, ${ts("updated_at")} FROM merge_sessions WHERE bundle = ?", Param.S(bundle))
+      .of(
+        Sql.OfText(s"SELECT resolutions::text, ${ts("updated_at")} FROM merge_sessions WHERE bundle = ?"),
+        Param.S(Param.S.V(bundle.value))
+      )
       .frag
       .query[(String, String)]
       .run()
       .headOption
-      .flatMap((r, at) => Jsonb.read[MergeResolutions](r).map(MergeSession(bundle, _, Some(at))))
-      .getOrElse(MergeSession(bundle))
+      .flatMap((r, at) =>
+        Jsonb
+          .read[MergeResolutions](Jsonb.JsonText(r))
+          .map(MergeSession(MergeSession.Bundle(bundle.value), _, Some(MergeSession.UpdatedAt(at))))
+      )
+      .getOrElse(MergeSession(MergeSession.Bundle(bundle.value)))
 
   def putSession(bundle: com.histmersion.util.data.exchange.MergeRepo.BundleName, r: MergeResolutions)(using DbCon): MergeSession =
     val json = Jsonb.write(r)
@@ -225,7 +259,7 @@ object MergeRepo:
 
   /** While on, rows keep the clocks the bundle gives them: the change-clock triggers stand aside. */
   def importing(on: com.histmersion.util.data.exchange.MergeRepo.Importing)(using DbCon): Unit =
-    val _ = sql"SELECT set_config('histmersion.importing', ${if on then "on" else "off"}, true)".query[String].run()
+    val _ = sql"SELECT set_config('histmersion.importing', ${if on.value then "on" else "off"}, true)".query[String].run()
 
   /** Record what was merged — only what changed in the ledger, and a `merges` row only when the import changed anything
     * at all, so importing the same bundle twice writes nothing. The ledger is keyed by the BUNDLE's uid and names the
@@ -242,19 +276,19 @@ object MergeRepo:
   )(using DbCon): Option[UUID] =
     val existing = sql"""SELECT foreign_uid, foreign_rev, local_rev_after FROM merge_ledger
                          WHERE foreign_uid = ANY(${decided.map(_.foreignUid.toString)}::uuid[])"""
-      .query[(UUID, String, Option[String])]
+      .query[(UUID, Ledger.ForeignRev, Option[Ledger.LocalRevAfter])]
       .run()
       .map((u, f, l) => u -> Ledger(f, l))
       .toMap
-    val rows = if ownBundle then Nil
+    val rows = if ownBundle.value then Nil
     else
       decided.flatMap { d =>
         BundlePlan
-          .ledgerAfter(d.decision, d.foreignRev, d.localizedRev, d.localRev, d.tombstone)
+          .ledgerAfter(d.decision, d.foreignRev, d.localizedRev, d.localRev, BundlePlan.Local.Tombstoned(d.tombstone.value))
           .filterNot(l => existing.get(d.foreignUid).contains(l))
           .map(d -> _)
       }
-    if rows.isEmpty && changed == 0 then None
+    if rows.isEmpty && changed.value == 0 then None
     else
       val (hash, backup, res) = (applied.map(_._1), applied.map(_._2), applied.map(_._3))
       val id = sql"""INSERT INTO merges (bundle_id, bundle_sha256, from_instance, from_label, report, plan_hash, backup,
@@ -283,7 +317,10 @@ object MergeRepo:
   /** A merge's own change of rows it folded into: their clocks move. */
   def touch(table: com.histmersion.util.data.TableName, uids: List[UUID])(using DbCon): Unit =
     Sql
-      .of(s"UPDATE ${table.value} SET updated_at = now() WHERE uid = ANY(?::uuid[])", Param.A(uids.map(_.toString)))
+      .of(
+        Sql.OfText(s"UPDATE ${table.value} SET updated_at = now() WHERE uid = ANY(?::uuid[])"),
+        Param.A(uids.map(u => Param.A.V(u.toString)))
+      )
       .frag
       .update
       .run()

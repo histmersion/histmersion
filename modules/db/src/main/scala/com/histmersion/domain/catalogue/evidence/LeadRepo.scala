@@ -20,14 +20,14 @@ private[evidence] object LeadRepo:
   def attestingSources(id: com.histmersion.domain.catalogue.evidence.LeadRow.Id)(using DbCon): List[EventSourceRef] =
     val own = sql"""SELECT s.citekey, s.title, s.year FROM events e JOIN sources s ON s.citekey = e.citekey
                       WHERE e.id = $id"""
-      .query[(String, Option[String], Option[Int])]
+      .query[(com.histmersion.api.library.Citekey, Option[EventSourceRef.Title], Option[com.histmersion.api.catalogue.Year])]
       .run()
       .toList
       .map((ck, t, y) => EventSourceRef(ck, t, y, com.histmersion.api.catalogue.EventSourceRef.Via("citekey")))
     val att = sql"""SELECT DISTINCT ON (a.citekey) a.citekey, s.title, s.year, a.quote
                       FROM attestations a JOIN sources s ON s.citekey = a.citekey
                       WHERE a.target_type = 'event' AND a.target_id = $id ORDER BY a.citekey, a.id"""
-      .query[(String, Option[String], Option[Int], Option[String])]
+      .query[(com.histmersion.api.library.Citekey, Option[EventSourceRef.Title], Option[com.histmersion.api.catalogue.Year], Option[EventSourceRef.Quote])]
       .run()
       .toList
       .map((ck, t, y, q) => EventSourceRef(ck, t, y, com.histmersion.api.catalogue.EventSourceRef.Via("attestation"), q))
@@ -54,7 +54,7 @@ private[evidence] object LeadRepo:
               ON f.geom IS NOT NULL AND ev.pt IS NOT NULL AND ev.span IS NOT NULL
              AND NOT lower_inf(f.period) AND NOT upper_inf(f.period)
              AND f.geom && ${SqlLiteral(EventSql.boxAround(com.histmersion.domain.catalogue.events.EventSql.Point("ev.pt"), km))}
-             AND ST_DWithin(f.geom::geography, ev.pt::geography, ${km * 1000.0})
+             AND ST_DWithin(f.geom::geography, ev.pt::geography, ${km.value * 1000.0})
              AND f.period && int8range(${SqlLiteral(RangeSql.start("ev.span"))} - $years, ${SqlLiteral(
         RangeSql.end("ev.span")
       )} + $years, '[]')
@@ -69,9 +69,9 @@ private[evidence] object LeadRepo:
     */
   def leadRows(where: Sql, km: com.histmersion.domain.catalogue.events.CatalogMerge.Tolerance.Km, years: com.histmersion.domain.catalogue.events.CatalogMerge.Tolerance.Years, limit: com.histmersion.PageSize, offset: com.histmersion.Offset)(using DbCon): (com.histmersion.RowCount, List[LeadRow]) =
     val total = (Sql.raw(
-      "SELECT count(*)::int FROM events e LEFT JOIN places ep ON ep.id = e.place_id WHERE "
+      Sql.RawText("SELECT count(*)::int FROM events e LEFT JOIN places ep ON ep.id = e.place_id WHERE ")
     ) ++ where).frag.query[Int].run().head
-    val rows = (Sql.raw(s"""SELECT e.id, e.label, e.kind, e.not_before, e.begin_by, e.end_from, e.not_after,
+    val rows = (Sql.raw(Sql.RawText(s"""SELECT e.id, e.label, e.kind, e.not_before, e.begin_by, e.end_from, e.not_after,
                  ${EventSql.TierSql} AS tier,
                  (SELECT max(c.vei) FROM event_catalogue c WHERE c.event_id = e.id),
                  (SELECT max(c.magnitude) FROM event_catalogue c WHERE c.event_id = e.id),
@@ -86,15 +86,17 @@ private[evidence] object LeadRepo:
                  (SELECT count(*)::int FROM event_link_candidates k WHERE k.event_id = e.id AND k.status = 'proposed'),
                  (SELECT count(*)::int FROM event_link_candidates k WHERE k.event_id = e.id AND k.status = 'confirmed')
                FROM events e LEFT JOIN places ep ON ep.id = e.place_id
-               CROSS JOIN LATERAL (SELECT ${EventSql.AnchorSql} AS pt) a WHERE """) ++ where ++
+               CROSS JOIN LATERAL (SELECT ${EventSql.AnchorSql} AS pt) a WHERE """)) ++ where ++
       Sql.raw(
-        s" ORDER BY (${EventSql.TierSql}) = '${EventTier.Catalogue}' DESC," +
-          " (SELECT coalesce(max(c.vei), 0) + coalesce(max(c.magnitude), 0) FROM event_catalogue c WHERE c.event_id = e.id) DESC," +
-          " coalesce(e.not_before, e.begin_by), e.id"
+        Sql.RawText(
+          s" ORDER BY (${EventSql.TierSql}) = '${EventTier.Catalogue}' DESC," +
+            " (SELECT coalesce(max(c.vei), 0) + coalesce(max(c.magnitude), 0) FROM event_catalogue c WHERE c.event_id = e.id) DESC," +
+            " coalesce(e.not_before, e.begin_by), e.id"
+        )
       ) ++
-      Sql.of(" LIMIT ? OFFSET ?", Param.I(limit.max(1)), Param.I(offset.max(0))))
+      Sql.of(Sql.OfText(" LIMIT ? OFFSET ?"), Param.I(Param.I.V(limit.value.max(1))), Param.I(Param.I.V(offset.value.max(0)))))
     // the three `?` of the findings count come first in the text
-    val withParams = Sql(rows.text, List(Param.D(km * 1000.0), Param.L(years), Param.L(years)) ++ rows.params)
+    val withParams = Sql(rows.text, List(Param.D(Param.D.V(km.value * 1000.0)), Param.L(Param.L.V(years.value)), Param.L(Param.L.V(years.value))) ++ rows.params)
     (com.histmersion.RowCount(total), withParams.frag.query[LeadRow].run().toList)
 
   /** Catalogue events an article's period and region hold: those overlapping `period` within `km` of one of `citekeys`'
@@ -111,7 +113,7 @@ private[evidence] object LeadRepo:
   )(using DbCon): List[(com.histmersion.domain.catalogue.events.BEventRow.Id, com.histmersion.domain.library.Citekey, com.histmersion.domain.catalogue.events.BEventRow.Label, TimeSpan, List[com.histmersion.domain.catalogue.events.BEventRow.Label], Option[com.histmersion.domain.catalogue.evidence.LeadRow.Attesting], Option[com.histmersion.domain.catalogue.evidence.LeadRow.Magnitude], com.histmersion.domain.catalogue.evidence.LeadRow.FindingsNear, com.histmersion.domain.catalogue.evidence.LeadRow.Tier)] =
     if citekeys.isEmpty then Nil
     else
-      val (p0, p1) = period.getOrElse((Long.MinValue / 4, Long.MaxValue / 4))
+      val (p0, p1) = period.map((a, b) => (a.value, b.value)).getOrElse((Long.MinValue / 4, Long.MaxValue / 4))
       sql"""WITH fs AS (
                 SELECT f.geom, f.period FROM findings f
                 WHERE f.citekey = ANY($citekeys::text[]) AND f.geom IS NOT NULL
@@ -121,13 +123,13 @@ private[evidence] object LeadRepo:
                      (SELECT max(c.vei) FROM event_catalogue c WHERE c.event_id = e.id),
                      (SELECT max(c.magnitude) FROM event_catalogue c WHERE c.event_id = e.id),
                      (SELECT count(*)::int FROM fs
-                        WHERE ST_DWithin(fs.geom::geography, e.geom::geography, ${km * 1000.0})),
+                        WHERE ST_DWithin(fs.geom::geography, e.geom::geography, ${km.value * 1000.0})),
                      coalesce(e.catalogue, '')
               FROM events e
               WHERE e.catalogue IS NOT NULL AND e.geom IS NOT NULL AND e.outer_span && int8range($p0, $p1, '[]')
                 AND (e.kind = 'war' OR EXISTS (SELECT 1 FROM event_catalogue c WHERE c.event_id = e.id
                        AND (c.vei >= $minVei OR c.magnitude >= $minMagnitude)))
-                AND EXISTS (SELECT 1 FROM fs WHERE ST_DWithin(fs.geom::geography, e.geom::geography, ${km * 1000.0}))
+                AND EXISTS (SELECT 1 FROM fs WHERE ST_DWithin(fs.geom::geography, e.geom::geography, ${km.value * 1000.0}))
               ORDER BY 11 DESC, e.id LIMIT $limit"""
         .query[
           (

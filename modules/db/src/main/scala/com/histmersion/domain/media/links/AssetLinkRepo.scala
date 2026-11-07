@@ -8,9 +8,6 @@ import com.histmersion.api.media.AssetLink
   * it was taken, what it illustrates, whose page it is. Every method runs on the connection it is given.
   */
 private[links] object AssetLinkRepo:
-  type LinkId = LinkId.T
-  object LinkId extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
-
 
   given DbCodec[AssetLink] = DbCodec.derived
 
@@ -36,8 +33,8 @@ private[links] object AssetLinkRepo:
     val id = sql"""INSERT INTO asset_links (citekey, asset_name, relation, target_type, target_id, xywh, notes)
           VALUES (${in.citekey}, ${in.assetName}, ${in.relation}, ${in.targetType}, ${in.targetId},
                   ${in.xywh}, ${in.notes})
-          RETURNING id""".query[Long].run().head
+          RETURNING id""".query[AssetLink.Id].run().head
     AssetLink(id, in.citekey, in.assetName, in.relation, in.targetType, in.targetId, in.xywh, in.notes)
 
-  def delete(id: com.histmersion.domain.media.links.AssetLinkRepo.LinkId)(using DbCon): Boolean =
+  def delete(id: AssetLink.Id)(using DbCon): Boolean =
     sql"DELETE FROM asset_links WHERE id = $id".update.run() > 0

@@ -9,16 +9,14 @@ trait HostLog:
   def plugin: com.histmersion.plugin.Plugin.Log =
     val self = this
     new com.histmersion.plugin.Plugin.Log:
-      def info(message: com.histmersion.pluginhost.HostLog.LogMessage): Unit = self.info(message)
-      def warn(message: com.histmersion.pluginhost.HostLog.LogMessage): Unit = self.warn(message)
+      def info(message: com.histmersion.plugin.Plugin.Log.InfoMessage): Unit = self.info(HostLog.Line(message.value))
+      def warn(message: com.histmersion.plugin.Plugin.Log.WarnMessage): Unit = self.warn(HostLog.Line(message.value))
 
 object HostLog:
   type Line = Line.T
   object Line extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type LogMessage = LogMessage.T
-  object LogMessage extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
 
   val scribe: HostLog = new HostLog:
-    def info(line: com.histmersion.pluginhost.HostLog.Line): Unit = _root_.scribe.info(line)
-    def warn(line: com.histmersion.pluginhost.HostLog.Line): Unit = _root_.scribe.warn(line)
+    def info(line: com.histmersion.pluginhost.HostLog.Line): Unit = _root_.scribe.info(line.value)
+    def warn(line: com.histmersion.pluginhost.HostLog.Line): Unit = _root_.scribe.warn(line.value)

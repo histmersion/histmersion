@@ -17,7 +17,7 @@ final class JobSourceReferrer extends SourceReferrer:
     RenamedReferences(
       List(
         "jobs.citekey" -> sql"UPDATE jobs SET citekey = ${rename.to} WHERE citekey = ${rename.from}".update.run()
-      ).collect { case (t, n) if n > 0 => Rename.Count(t, n) }
+      ).collect { case (t, n) if n > 0 => Rename.Count(Rename.Count.Table(t), Rename.Count.Rows(n)) }
     )
 
   override def report(source: SourceKeys)(using DbCon): DeleteReport =
@@ -27,7 +27,7 @@ final class JobSourceReferrer extends SourceReferrer:
             WHERE status IN ('queued', 'running', 'paused', 'waiting')
               AND (citekey = ANY($keys::text[]) OR (target_kind = 'source' AND target_id = ANY($keys::text[])))
             ORDER BY created_at"""
-        .query[(String, String)]
+        .query[(DeleteBlocker.Id, DeleteBlocker.Title)]
         .run()
         .toList
         .map((id, k) => DeleteBlocker(DeleteBlocker.Kind.Job, id, Some(k)))

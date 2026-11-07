@@ -8,6 +8,7 @@ import com.histmersion.domain.library.sources.referrers.{DeleteReport, SourceKey
 import com.histmersion.util.database.given
 
 import com.augustnagro.magnum.*
+import com.histmersion.util.database.NewtypeColumns.given
 import com.histmersion.api.library.{DeleteCount, DeletePart, Edge}
 import com.histmersion.api.Api
 import com.histmersion.api.library.Source
@@ -23,28 +24,27 @@ import com.histmersion.api.library.Source
   * the source back.
   */
 private[sources] object SourceDeleteRepo:
-  type LogTopic = LogTopic.T
-  object LogTopic extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-
   /** Delete `requested`, unless something refuses it. `files` names the stored originals the service removes after the
     * commit (they are part of the answer and the log line); `logTopic` is the log entry's heading (today's date).
     */
-  type KeysOfKeys = _root_.com.histmersion.domain.library.sources.referrers.SourceKeys.Keys
-  val KeysOfKeys: _root_.com.histmersion.domain.library.sources.referrers.SourceKeys.Keys.type = _root_.com.histmersion.domain.library.sources.referrers.SourceKeys.Keys
-
-  def applyIn(requested: com.histmersion.domain.library.Citekey, logTopic: com.histmersion.domain.library.sources.SourceDeleteRepo.LogTopic, files: SourceDeletePlan => List[String], referrers: SourceReferrers)(
+  def applyIn(requested: com.histmersion.domain.library.Citekey, logTopic: SourceReferrers.Day, files: SourceDeletePlan => List[Source.Deletion.Files], referrers: SourceReferrers)(
       using DbCon
   ): Either[Api.Error, SourceDeletePlan] =
     val _ = sql"SELECT citekey FROM sources WHERE citekey = $requested FOR UPDATE".query[String].run()
     planIn(requested, referrers).flatMap { p0 =>
       val d0 = p0.deletion
-      if d0.refused then Left(Api.Error(Source.Delete.refusal(d0.citekey, d0.blockers), Some(Write.CodeInvalid)))
+      if d0.refused then Left(
+          Api.Error(
+            Api.Error.Message(Source.Delete.refusal(d0.citekey, d0.blockers).value),
+            Some(Api.Error.Code(Write.CodeInvalid))
+          )
+        )
       else
         val p = p0.modify(_.deletion).setTo(d0.modify(_.files).setTo(files(p0)))
-        val source = keysOf(p.deletion.citekey, p.keys)
+        val source = keysOf(requested, p.keys.flatMap(k => com.histmersion.domain.library.Citekey.option(k.value)))
         deleteNow(p, source, referrers)
         val d = p.deletion.modify(_.applied).setTo(true)
-        val log = referrers.recorded(source, Source.Delete.logText(d), logTopic)
+        val log = referrers.recorded(source, SourceReferrers.Line(Source.Delete.logText(d).value), logTopic)
         Right(p.modify(_.deletion).setTo(d.modify(_.logEntry).setTo(log)))
     }
 
@@ -57,7 +57,7 @@ private[sources] object SourceDeleteRepo:
     type CalibreId = CalibreId.T
     object CalibreId extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
-  private def keysOf(ck: com.histmersion.domain.library.Citekey, keys: List[com.histmersion.domain.library.sources.SourceDeleteRepo.KeysOfKeys])(using DbCon): SourceKeys =
+  private def keysOf(ck: com.histmersion.domain.library.Citekey, keys: List[com.histmersion.domain.library.Citekey])(using DbCon): SourceKeys =
     SourceKeys(ck, keys, targets => SourceRepo.resolveAliases(targets))
 
   def planIn(requested: com.histmersion.domain.library.Citekey, referrers: SourceReferrers)(using DbCon): Either[Api.Error, SourceDeletePlan] =
@@ -68,12 +68,15 @@ private[sources] object SourceDeleteRepo:
       case None =>
         Left(sql"SELECT citekey FROM source_aliases WHERE alias = $requested".query[String].run().headOption match
           case Some(now) =>
-            Api.Error(s"'$requested' is an old citekey of '$now' — delete '$now' instead", Some(Write.CodeInvalid))
-          case None => Write.notFound(requested))
+            Api.Error(
+              Api.Error.Message(s"'$requested' is an old citekey of '$now' — delete '$now' instead"),
+              Some(Api.Error.Code(Write.CodeInvalid))
+            )
+          case None => Write.notFound(com.histmersion.api.library.Citekey(requested.value)))
       case Some(r) =>
         val ck = r.citekey
         val aliases = sql"""SELECT alias FROM source_aliases WHERE citekey = $ck ORDER BY alias COLLATE "C""""
-          .query[String]
+          .query[com.histmersion.domain.library.Citekey]
           .run()
           .toList
         val keys = ck :: aliases
@@ -84,23 +87,38 @@ private[sources] object SourceDeleteRepo:
           .query[(String, String, String)]
           .run()
           .toList
-          .map((s, d, k) => Edge(com.histmersion.api.library.Citekey(s), com.histmersion.api.library.Citekey(d), k))
-        val report = referrers.report(DeleteReport(counts = counts(ck, aliases.size, edgesIn.size)), keysOf(ck, keys))
+          .flatMap((s, d, k) =>
+            Edge.Kind
+              .fromWire(Edge.Kind.Wire(k))
+              .map(kind => Edge(com.histmersion.api.library.Citekey(s), com.histmersion.api.library.Citekey(d), kind))
+          )
+        val report = referrers.report(
+          DeleteReport(counts = counts(ck, com.histmersion.RowCount(aliases.size), com.histmersion.RowCount(edgesIn.size))),
+          keysOf(ck, keys)
+        )
         val d = Source.Deletion(
-          citekey = ck,
-          title = r.title,
+          citekey = com.histmersion.api.library.Citekey(ck.value),
+          title = com.histmersion.api.library.Title(r.title.value),
           applied = com.histmersion.api.library.Source.Deletion.Applied(false),
           blockers = report.blockers,
           counts = report.counts,
-          aliases = aliases,
+          aliases = aliases.map(a => Source.Deletion.Aliases(a.value)),
           edgesIn = edgesIn,
           coverage = report.coverage,
           mentions = report.mentions,
-          calibreId = r.calibreId.map(_.trim).filter(_.nonEmpty)
+          calibreId = r.calibreId.map(_.value.trim).filter(_.nonEmpty).map(Source.CalibreId(_))
         )
-        Right(SourceDeletePlan(d, r.sha256.map(_.trim).filter(_.nonEmpty), shared, keys, report))
+        Right(
+          SourceDeletePlan(
+            d,
+            r.sha256,
+            SourceDeletePlan.ShaShared(shared),
+            keys.map(k => SourceDeletePlan.Keys(k.value)),
+            report
+          )
+        )
 
-  private def n(q: Frag)(using DbCon): com.histmersion.RowCount = q.query[Int].run().headOption.getOrElse(0)
+  private def n(q: Frag)(using DbCon): com.histmersion.RowCount = com.histmersion.RowCount(q.query[Int].run().headOption.getOrElse(0))
 
   /** What of the library goes with the source. */
   private def counts(ck: com.histmersion.domain.library.Citekey, aliases: com.histmersion.RowCount, edgesIn: com.histmersion.RowCount)(using DbCon): List[DeleteCount] =
@@ -115,7 +133,7 @@ private[sources] object SourceDeleteRepo:
       Aliases -> aliases,
       Identifiers -> n(sql"""SELECT count(*)::int FROM source_identifiers i JOIN sources s ON s.uid = i.source_uid
                                WHERE s.citekey = $ck""")
-    ).collect { case (p, rows) if rows > 0 => DeleteCount(p, rows) }
+    ).collect { case (p, rows) if rows.value > 0 => DeleteCount(p, DeleteCount.Rows(rows.value)) }
 
   private def deleteNow(p: SourceDeletePlan, source: SourceKeys, referrers: SourceReferrers)(using DbCon): Unit =
     val ck = p.deletion.citekey

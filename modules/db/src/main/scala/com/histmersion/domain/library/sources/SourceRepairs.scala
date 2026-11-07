@@ -24,24 +24,29 @@ final class SourceRepairs(db: Transactor):
       chunkChars: com.histmersion.util.ocr.Chunker.ChunkMaxChars,
       after: Option[com.histmersion.domain.library.Citekey] = None,
       maxSources: Option[com.histmersion.domain.library.sources.SourceRepairs.MaxSources] = None,
-      maxChars: com.histmersion.domain.library.sources.SourceRepairs.MaxChars = Long.MaxValue
+      maxChars: SourceRepairs.MaxChars = SourceRepairs.MaxChars(Long.MaxValue)
   ): ReindexResult =
     val pending = db.read(SourceRepo.bodiesAfter(after))
-    val take = SourceRepairs.budget(pending, maxChars).take(maxSources.getOrElse(Int.MaxValue)) match
+    val take = SourceRepairs.budget(pending, maxChars).take(maxSources.map(_.value).getOrElse(Int.MaxValue)) match
       case Nil   => pending.take(1).map(_._1).toList
       case batch => batch
     val counts = take.map(ck => db.transact(SourceRepo.rechunk(ck, chunkChars)))
-    ReindexResult(take.size, counts.sum, take.lastOption, pending.size - take.size)
+    ReindexResult(
+      ReindexResult.Sources(take.size),
+      ReindexResult.Chunks(counts.map(_.value).sum),
+      take.lastOption.map(ck => com.histmersion.api.library.Citekey(ck.value)),
+      ReindexResult.Remaining(pending.size - take.size)
+    )
 
   /** Rebuild every chunk in one go (tests, offline tools) — no budget, so it can run for minutes. */
   def reindexAll(chunkChars: com.histmersion.util.ocr.Chunker.ChunkMaxChars): ReindexResult =
     @annotation.tailrec
-    def go(after: Option[com.histmersion.domain.library.Citekey], sources: com.histmersion.RowCount, chunks: com.histmersion.RowCount): ReindexResult =
+    def go(after: Option[com.histmersion.domain.library.Citekey], sources: Int, chunks: Int): ReindexResult =
       val r = reindexChunks(chunkChars, after)
-      val (s, c) = (sources + r.sources, chunks + r.chunks)
-      if r.remaining > 0 && r.lastCitekey.isDefined then go(r.lastCitekey, s, c)
-      else ReindexResult(s, c, r.lastCitekey, r.remaining)
-    go(None, com.histmersion.RowCount(0), com.histmersion.RowCount(0))
+      val (s, c) = (sources + r.sources.value, chunks + r.chunks.value)
+      if r.remaining.value > 0 && r.lastCitekey.isDefined then go(r.lastCitekey.map(ck => com.histmersion.domain.library.Citekey.assume(ck.value)), s, c)
+      else ReindexResult(ReindexResult.Sources(s), ReindexResult.Chunks(c), r.lastCitekey, r.remaining)
+    go(None, 0, 0)
 
   /** Re-chunk the sources that have a body but no full-text chunks (`stale-chunks`).
     *
@@ -49,7 +54,7 @@ final class SourceRepairs(db: Transactor):
     * and always does at least one source, so repeated calls make progress. Returns the same shape as `/api/reindex`,
     * with `remaining` = stale sources still untouched.
     */
-  def reindexStale(chunkChars: com.histmersion.util.ocr.Chunker.ChunkMaxChars, maxChars: com.histmersion.domain.library.sources.SourceRepairs.MaxChars): ReindexResult =
+  def reindexStale(chunkChars: com.histmersion.util.ocr.Chunker.ChunkMaxChars, maxChars: SourceRepairs.MaxChars): ReindexResult =
     val pending = db.read(SourceCheckRepo.stale())
     val take = SourceRepairs.budget(pending, maxChars) match
       case Nil   => pending.take(1).map(_._1).toList
@@ -59,60 +64,63 @@ final class SourceRepairs(db: Transactor):
     // going. A skipped source stays stale, so the next `lint` reports it again — nothing is hidden.
     val done = take.map(ck => scala.util.Try(db.transact(SourceRepo.rechunk(ck, chunkChars))))
     done.zip(take).foreach {
-      case (scala.util.Failure(e), ck) => scribe.warn(s"reindex of $ck skipped: ${e.getMessage}")
+      case (scala.util.Failure(e), ck) => scribe.warn(s"reindex of ${ck.value} skipped: ${e.getMessage}")
       case _                           => ()
     }
     val ok = done.collect { case scala.util.Success(n) => n }
-    ReindexResult(ok.size, ok.sum, take.lastOption, pending.size - take.size)
+    ReindexResult(
+      ReindexResult.Sources(ok.size),
+      ReindexResult.Chunks(ok.map(_.value).sum),
+      take.lastOption.map(ck => com.histmersion.api.library.Citekey(ck.value)),
+      ReindexResult.Remaining(pending.size - take.size)
+    )
 
   // ── the safe fixes of `lint --fix`, each as the part of the result it reports ─────────────────
 
   /** `unresolved-short-citekeys`: unify the unambiguous short edge targets. */
   def resolveEdgesFix(): LintFixResult =
     val resolved = db.transact(SourceRepo.resolveEdges())
-    LintFixResult(List(s"resolve-edges: $resolved edge target(s) rewritten"), resolved, com.histmersion.api.checks.Lint.LintFixResult.SourcesReindexed(0), com.histmersion.api.checks.Lint.LintFixResult.ChunksWritten(0), com.histmersion.api.checks.Lint.LintFixResult.Remaining(0))
+    LintFixResult(List(LintFixResult.Applied(s"resolve-edges: ${resolved.value} edge target(s) rewritten")), LintFixResult.EdgesResolved(resolved.value), com.histmersion.api.checks.Lint.LintFixResult.SourcesReindexed(0), com.histmersion.api.checks.Lint.LintFixResult.ChunksWritten(0), com.histmersion.api.checks.Lint.LintFixResult.Remaining(0))
 
   /** `stale-chunks`: re-chunk a bounded batch of the sources with a body and no chunks. */
   def reindexFix(cfg: AppConfig): LintFixResult =
-    val r = reindexStale(cfg.limits.chunkChars, cfg.limits.reindexChars)
-    val left = if r.remaining > 0 then s", ${r.remaining} still stale" else ""
+    val r = reindexStale(com.histmersion.util.ocr.Chunker.ChunkMaxChars(cfg.limits.chunkChars.value), SourceRepairs.MaxChars(cfg.limits.reindexChars.value))
+    val left = if r.remaining.value > 0 then s", ${r.remaining.value} still stale" else ""
     LintFixResult(
-      List(s"reindex: ${r.sources} source(s) → ${r.chunks} chunk(s)$left"),
+      List(LintFixResult.Applied(s"reindex: ${r.sources.value} source(s) → ${r.chunks.value} chunk(s)$left")),
       com.histmersion.api.checks.Lint.LintFixResult.EdgesResolved(0),
-      r.sources,
-      r.chunks,
-      r.remaining
+      LintFixResult.SourcesReindexed(r.sources.value),
+      LintFixResult.ChunksWritten(r.chunks.value),
+      LintFixResult.Remaining(r.remaining.value)
     )
 
   /** `finding-geocode`: move the findings the rule lists to the place the current geocoder chooses. */
   def regeocodeFix(cfg: AppConfig): LintFixResult =
     val s = SourceCheckRepo.geocodeOf(cfg)
-    val moved = db.transact(FindingPlacement.move(FindingPlacement.movesIn(s), s.toleranceKm))
+    val moved = db.transact(FindingPlacement.move(FindingPlacement.movesIn(s), FindingPlacement.Implementation.ToleranceKm(s.toleranceKm.value)))
     LintFixResult(
-      List(s"$FindingGeocode: $moved finding(s) moved to the place the current geocoder chooses"),
+      List(LintFixResult.Applied(s"$FindingGeocode: ${moved.value} finding(s) moved to the place the current geocoder chooses")),
       com.histmersion.api.checks.Lint.LintFixResult.EdgesResolved(0),
       com.histmersion.api.checks.Lint.LintFixResult.SourcesReindexed(0),
       com.histmersion.api.checks.Lint.LintFixResult.ChunksWritten(0),
       com.histmersion.api.checks.Lint.LintFixResult.Remaining(0),
-      findingsRegeocoded = moved
+      findingsRegeocoded = LintFixResult.FindingsRegeocoded(moved.value)
     )
 
   /** `finding-unplaced`: give the findings the rule lists the point of the place they name. */
   def placeFix(cfg: AppConfig): LintFixResult =
     val s = SourceCheckRepo.geocodeOf(cfg)
-    val placed = db.transact(FindingPlacement.place(FindingPlacement.placementsIn(s), s.toleranceKm))
+    val placed = db.transact(FindingPlacement.place(FindingPlacement.placementsIn(s), FindingPlacement.Implementation.ToleranceKm(s.toleranceKm.value)))
     LintFixResult(
-      List(s"$FindingUnplaced: $placed finding(s) given the point of the place they name"),
+      List(LintFixResult.Applied(s"$FindingUnplaced: ${placed.value} finding(s) given the point of the place they name")),
       com.histmersion.api.checks.Lint.LintFixResult.EdgesResolved(0),
       com.histmersion.api.checks.Lint.LintFixResult.SourcesReindexed(0),
       com.histmersion.api.checks.Lint.LintFixResult.ChunksWritten(0),
       com.histmersion.api.checks.Lint.LintFixResult.Remaining(0),
-      findingsPlaced = placed
+      findingsPlaced = LintFixResult.FindingsPlaced(placed.value)
     )
 
 object SourceRepairs:
-  type CharsSpent = CharsSpent.T
-  object CharsSpent extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type MaxChars = MaxChars.T
   object MaxChars extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type MaxSources = MaxSources.T
@@ -121,9 +129,9 @@ object SourceRepairs:
   /** The citekeys of `pending` (in order) whose bodies fit in `maxChars` together. */
 
 
-  def budget(pending: Vector[(com.histmersion.domain.library.Citekey, com.histmersion.RowCount)], maxChars: com.histmersion.domain.library.sources.SourceRepairs.MaxChars): List[String] =
+  def budget(pending: Vector[(com.histmersion.domain.library.Citekey, SourceRepo.BodyChars)], maxChars: SourceRepairs.MaxChars): List[com.histmersion.domain.library.Citekey] =
     @annotation.tailrec
-    def loop(rest: List[(com.histmersion.domain.library.Citekey, com.histmersion.RowCount)], spent: com.histmersion.domain.library.sources.SourceRepairs.CharsSpent, out: List[String]): List[String] = rest match
-      case (ck, len) :: tail if spent + len.toLong <= maxChars => loop(tail, spent + len.toLong, ck :: out)
-      case _                                                   => out.reverse
-    loop(pending.toList, com.histmersion.domain.library.sources.SourceRepairs.CharsSpent(0L), Nil)
+    def loop(rest: List[(com.histmersion.domain.library.Citekey, SourceRepo.BodyChars)], spent: Long, out: List[com.histmersion.domain.library.Citekey]): List[com.histmersion.domain.library.Citekey] = rest match
+      case (ck, len) :: tail if spent + len.value.toLong <= maxChars.value => loop(tail, spent + len.value.toLong, ck :: out)
+      case _                                                               => out.reverse
+    loop(pending.toList, 0L, Nil)

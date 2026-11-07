@@ -26,7 +26,7 @@ final class EventSourceReferrer extends SourceReferrer:
         "event_edges.citekey" -> sql"UPDATE event_edges SET citekey = $to WHERE citekey = $from".update.run(),
         "event_participants.citekey" ->
           sql"UPDATE event_participants SET citekey = $to WHERE citekey = $from".update.run()
-      ).collect { case (t, n) if n > 0 => Rename.Count(t, n) }
+      ).collect { case (t, n) if n > 0 => Rename.Count(Rename.Count.Table(t), Rename.Count.Rows(n)) }
     )
 
   override def report(source: SourceKeys)(using DbCon): DeleteReport =
@@ -35,19 +35,19 @@ final class EventSourceReferrer extends SourceReferrer:
       .query[(String, String)]
       .run()
       .toList
-      .map((id, l) => DeleteBlocker(DeleteBlocker.Kind.Event, id, Some(l)))
+      .map((id, l) => DeleteBlocker(DeleteBlocker.Kind.Event, DeleteBlocker.Id(id), Some(DeleteBlocker.Title(l))))
     val relations = sql"""SELECT src_id, kind, dst_id FROM event_edges WHERE citekey = ANY($keys::text[])
                           ORDER BY src_id, kind, dst_id"""
       .query[(String, String, String)]
       .run()
       .toList
-      .map((s, k, d) => DeleteBlocker(DeleteBlocker.Kind.EventEdge, s"$s $k $d"))
+      .map((s, k, d) => DeleteBlocker(DeleteBlocker.Kind.EventEdge, DeleteBlocker.Id(s"$s $k $d")))
     val participants = sql"""SELECT event_id, actor FROM event_participants WHERE citekey = ANY($keys::text[])
                              ORDER BY event_id, actor"""
       .query[(String, String)]
       .run()
       .toList
-      .map((e, a) => DeleteBlocker(DeleteBlocker.Kind.EventParticipant, e, Some(a)))
+      .map((e, a) => DeleteBlocker(DeleteBlocker.Kind.EventParticipant, DeleteBlocker.Id(e), Some(DeleteBlocker.Title(a))))
     val datings = sql"SELECT count(*)::int FROM event_datings WHERE citekey = ANY($keys::text[])"
       .query[Int]
       .run()
@@ -55,7 +55,7 @@ final class EventSourceReferrer extends SourceReferrer:
       .getOrElse(0)
     DeleteReport(
       blockers = events ++ relations ++ participants,
-      counts = List(DeletePart.EventDatings -> datings).collect { case (p, rows) if rows > 0 => DeleteCount(p, rows) }
+      counts = List(DeletePart.EventDatings -> datings).collect { case (p, rows) if rows > 0 => DeleteCount(p, DeleteCount.Rows(rows)) }
     )
 
   override def deleting(source: SourceKeys, report: DeleteReport)(using DbCon): Unit =

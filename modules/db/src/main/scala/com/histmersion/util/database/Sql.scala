@@ -13,9 +13,9 @@ import com.augustnagro.magnum.Frag
   * `ILIKE`.
   */
 final case class Sql(text: Sql.Text, params: List[Param] = Nil):
-  def ++(that: Sql): Sql = Sql(text + that.text, params ++ that.params)
-  def ++(raw: String): Sql = Sql(text + raw, params)
-  def wrap(pre: String, post: String): Sql = Sql(pre + text + post, params)
+  def ++(that: Sql): Sql = Sql(Sql.Text(text.value + that.text.value), params ++ that.params)
+  def ++(raw: String): Sql = Sql(Sql.Text(text.value + raw), params)
+  def wrap(pre: String, post: String): Sql = Sql(Sql.Text(pre + text.value + post), params)
 
   /** This fragment, then a query written with Magnum's `sql""` — how a shared fragment (the window of a time-filtered
     * place view, `PlaceRepo.timeWindowCte`) heads such a query. Parameters bind in text order: this fragment's, then
@@ -24,7 +24,7 @@ final case class Sql(text: Sql.Text, params: List[Param] = Nil):
   def ++(that: Frag): Frag =
     val ps = params
     Frag(
-      text + that.sqlString,
+      text.value + that.sqlString,
       ps.map(Sql.value) ++ that.params,
       (stmt: java.sql.PreparedStatement, pos: Int) => that.writer.write(stmt, Sql.bind(stmt, pos, ps))
     )
@@ -32,7 +32,7 @@ final case class Sql(text: Sql.Text, params: List[Param] = Nil):
   /** Hand off to Magnum. `Frag.params` is only used for logging; the writer does the binding. */
   def frag: Frag =
     val ps = params
-    Frag(text, ps.map(Sql.value), (stmt: java.sql.PreparedStatement, pos: Int) => Sql.bind(stmt, pos, ps))
+    Frag(text.value, ps.map(Sql.value), (stmt: java.sql.PreparedStatement, pos: Int) => Sql.bind(stmt, pos, ps))
 
 object Sql:
   type RawText = _root_.com.histmersion.util.database.Sql.Text
@@ -43,26 +43,26 @@ object Sql:
   type Text = Text.T
   object Text extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
-  val empty: Sql = Sql(com.histmersion.util.database.Sql.Text(""), Nil)
-  def raw(text: com.histmersion.util.database.Sql.RawText): Sql = Sql(text, Nil)
-  def of(text: com.histmersion.util.database.Sql.OfText, ps: Param*): Sql = Sql(text, ps.toList)
+  val empty: Sql = Sql(Text(""), Nil)
+  def raw(text: Text): Sql = Sql(text, Nil)
+  def of(text: Text, ps: Param*): Sql = Sql(text, ps.toList)
 
   private def value(p: Param): Any = p match
-    case Param.S(v) => v
-    case Param.L(v) => v
-    case Param.I(v) => v
-    case Param.D(v) => v
-    case Param.A(v) => v
+    case Param.S(v) => v.value
+    case Param.L(v) => v.value
+    case Param.I(v) => v.value
+    case Param.D(v) => v.value
+    case Param.A(v) => v.map(_.value)
 
   private def bind(stmt: java.sql.PreparedStatement, pos: Int, ps: List[Param]): Int =
     var i = pos
     ps.foreach { p =>
       p match
-        case Param.S(v) => stmt.setString(i, v)
-        case Param.L(v) => stmt.setLong(i, v)
-        case Param.I(v) => stmt.setInt(i, v)
-        case Param.D(v) => stmt.setDouble(i, v)
-        case Param.A(v) => stmt.setArray(i, stmt.getConnection.createArrayOf("text", v.toArray[AnyRef]))
+        case Param.S(v) => stmt.setString(i, v.value)
+        case Param.L(v) => stmt.setLong(i, v.value)
+        case Param.I(v) => stmt.setInt(i, v.value)
+        case Param.D(v) => stmt.setDouble(i, v.value)
+        case Param.A(v) => stmt.setArray(i, stmt.getConnection.createArrayOf("text", v.map(_.value).toArray[AnyRef]))
       i += 1
     }
     i

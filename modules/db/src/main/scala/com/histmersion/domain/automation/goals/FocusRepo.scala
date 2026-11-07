@@ -60,10 +60,10 @@ object FocusRepo:
 
   def goals()(using DbCon): List[GoalRow] =
     Sql
-      .raw(s"""SELECT g.slug, g.title, g.parent_slug, g.status, ${at("g.created_at")},
+      .raw(Sql.Text(s"""SELECT g.slug, g.title, g.parent_slug, g.status, ${at("g.created_at")},
                        coalesce(f.active, false), coalesce(f.pinned, false), coalesce(f.priority, 0),
                        ${at("f.since")}, f.why, ${at("f.left_at")}, f.left_why
-                FROM goals g LEFT JOIN goal_focus f ON f.slug = g.slug ORDER BY g.slug""")
+                FROM goals g LEFT JOIN goal_focus f ON f.slug = g.slug ORDER BY g.slug"""))
       .frag
       .query[GoalRow]
       .run()
@@ -144,7 +144,7 @@ object FocusRepo:
     sql"""SELECT m.goal_slug, count(*)::int FROM manager_items i JOIN agent_managers m ON m.id = i.manager_id
           WHERE m.kind = 'seed' AND m.goal_slug IS NOT NULL AND i.kind = 'article-compile'
             AND i.status IN ('pending', 'held', 'active')
-          GROUP BY m.goal_slug""".query[(String, Int)].run().toMap
+          GROUP BY m.goal_slug""".query[(String, Int)].run().map((goal, n) => com.histmersion.domain.automation.Goal.Slug(goal) -> com.histmersion.RowCount(n)).toMap
 
   /** Per goal: the outcome of its LAST settled model-using item when that one stopped or failed (a goal whose newest
     * settled item is done has no stop to report).
@@ -156,12 +156,14 @@ object FocusRepo:
             WHERE m.goal_slug IS NOT NULL AND i.kind NOT IN ('oa-ingest', 'currency-check')
               AND i.status IN ('done', 'stopped', 'failed')
             ORDER BY m.goal_slug, i.updated_at DESC, i.id DESC) t
-          WHERE status IN ('stopped', 'failed')""".query[(String, String)].run().toMap
+          WHERE status IN ('stopped', 'failed')""".query[(String, String)].run().map((goal, why) => com.histmersion.domain.automation.Goal.Slug(goal) -> GoalRow.LeftWhy(why)).toMap
 
   /** Open goal-plan approvals (what a person has to decide). */
   def openGoalPlans(using DbCon): com.histmersion.RowCount =
     (
-      sql"SELECT count(*)::int FROM approvals WHERE kind = 'goal-plan' AND state = 'open'".query[Int].run().head
+      com.histmersion.RowCount(
+        sql"SELECT count(*)::int FROM approvals WHERE kind = 'goal-plan' AND state = 'open'".query[Int].run().head
+      )
     )
 
   /** Per goal: its sources (goal links of kind source). */
@@ -169,22 +171,24 @@ object FocusRepo:
     sql"""SELECT goal_slug, count(*)::int FROM goal_links WHERE kind = 'source' GROUP BY goal_slug"""
       .query[(String, Int)]
       .run()
+      .map((goal, n) => com.histmersion.domain.automation.Goal.Slug(goal) -> com.histmersion.RowCount(n))
       .toMap
 
   /** The goals linked to each of `refs` by a link of `kind` (source: a citekey, article: a slug). */
   def goalsOf(kind: com.histmersion.domain.automation.Goal.LinkKind.Wire, refs: List[com.histmersion.domain.automation.goals.GoalLinkRepo.LinkRow.Ref])(using DbCon): Map[com.histmersion.domain.automation.goals.GoalLinkRepo.LinkRow.Ref, List[com.histmersion.domain.automation.Goal.Slug]] =
     if refs.isEmpty then Map.empty
     else
-      sql"""SELECT ref, goal_slug FROM goal_links WHERE kind = $kind AND ref = ANY($refs::text[]) ORDER BY ref, goal_slug"""
+      val texts: List[String] = refs.map(_.value)
+      sql"""SELECT ref, goal_slug FROM goal_links WHERE kind = $kind AND ref = ANY($texts::text[]) ORDER BY ref, goal_slug"""
         .query[(String, String)]
         .run()
         .toList
-        .groupMap(_._1)(_._2)
+        .groupMap(row => com.histmersion.domain.automation.goals.GoalLinkRepo.LinkRow.Ref(row._1))(row => com.histmersion.domain.automation.Goal.Slug(row._2))
 
   /** The targets of a manager's newest runs, newest first (what the fair order counts on from). */
   def recentTargets(managerId: com.histmersion.domain.automation.goals.FocusRepo.WorkRow.ManagerId, n: com.histmersion.PageSize)(using DbCon): List[com.histmersion.domain.automation.goals.FocusRepo.WorkRow.Target] =
     sql"""SELECT target_id FROM jobs WHERE kind = 'agent' AND manager_id = $managerId AND target_id IS NOT NULL
-          ORDER BY created_at DESC, id DESC LIMIT ${math.max(0, n)}""".query[String].run().toList
+          ORDER BY created_at DESC, id DESC LIMIT ${math.max(0, n.value)}""".query[String].run().toList.map(WorkRow.Target(_))
 
   // ── writes ─────────────────────────────────────────────────────────────────────────────────────
 
@@ -216,12 +220,17 @@ object FocusRepo:
   /** Every goal leaves the active set (the focus is not in force any more): how many did. */
   def clearActive(why: com.histmersion.domain.automation.goals.FocusRepo.GoalRow.LeftWhy, now: java.time.Instant)(using DbCon): com.histmersion.RowCount =
     val t = now.toString
-    sql"""UPDATE goal_focus SET active = false, left_at = $t::timestamptz, left_why = $why, updated_at = now()
-          WHERE active""".update.run()
+    com.histmersion.RowCount(sql"""UPDATE goal_focus SET active = false, left_at = $t::timestamptz, left_why = $why, updated_at = now()
+          WHERE active""".update.run())
 
   /** A person's cap (None = the config's). */
   def maxOverride(using DbCon): Option[com.histmersion.domain.GoalFocus.Settings.Max] =
-    (sql"SELECT max_active_goals FROM agent_autopilot WHERE id".query[Option[Int]].run().headOption.flatten)
+    sql"SELECT max_active_goals FROM agent_autopilot WHERE id"
+      .query[Option[Int]]
+      .run()
+      .headOption
+      .flatten
+      .map(com.histmersion.domain.GoalFocus.Settings.Max(_))
 
   def setMaxOverride(n: Option[com.histmersion.domain.GoalFocus.Settings.Max])(using DbCon): Unit =
     val _ =

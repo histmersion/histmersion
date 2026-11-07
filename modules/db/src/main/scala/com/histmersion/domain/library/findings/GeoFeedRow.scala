@@ -27,19 +27,31 @@ final private[findings] case class GeoFeedRow(
     hasCover: GeoFeedRow.HasCover
 ) derives DbCodec:
   def toHit: GeoHit =
+    val apiDoi = doi.map(d => com.histmersion.api.library.Doi(d.value))
     GeoHit(
-      citekey,
-      title,
-      claim,
-      regionName,
-      lon,
-      lat,
-      periodStart,
-      periodEnd,
+      com.histmersion.api.library.Citekey(citekey.value),
+      GeoHit.Title(title.value),
+      GeoHit.Claim(claim.value),
+      regionName.map(r => com.histmersion.api.catalogue.Place.Region(r.value)),
+      lon.map(l => com.histmersion.api.catalogue.Longitude(l.value)),
+      lat.map(l => com.histmersion.api.catalogue.Latitude(l.value)),
+      periodStart.map(y => com.histmersion.api.catalogue.Year(y.value.toLong)),
+      periodEnd.map(y => com.histmersion.api.catalogue.Year(y.value.toLong)),
       confidence,
-      significance,
-      doi,
-      Some(Source.Kinds.of(doi, venue, provenance, tags, topics, hasCover))
+      significance.map(s => GeoHit.Significance(s.value)),
+      apiDoi,
+      Some(
+        GeoHit.SourceKind(
+          Source.Kinds.of(
+            apiDoi,
+            venue.map(v => Source.Venue(v.value)),
+            provenance.map(p => Source.Provenance(p.value)),
+            tags.map(t => Source.Tags(t.value)),
+            topics.map(t => Source.Topics(t.value)),
+            hasCover.value
+          ).value
+        )
+      )
     )
 
 object GeoFeedRow:

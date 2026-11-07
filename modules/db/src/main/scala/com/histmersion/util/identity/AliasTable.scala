@@ -18,20 +18,23 @@ final case class AliasTable(kind: AliasKind, table: AliasTable.Table, idColumn: 
   def renamedToIn(id: com.histmersion.util.identity.AliasTable.Id)(using DbCon): Option[com.histmersion.util.identity.AliasTable.Id] =
     Sql
       .of(
-        s"SELECT x.$targetColumn FROM $aliasTable x WHERE x.alias = ? AND NOT EXISTS " +
-          s"(SELECT 1 FROM $table r WHERE r.$idColumn = ?)",
-        Param.S(id),
-        Param.S(id)
+        Sql.Text(
+          s"SELECT x.${targetColumn.value} FROM ${aliasTable.value} x WHERE x.alias = ? AND NOT EXISTS " +
+            s"(SELECT 1 FROM ${table.value} r WHERE r.${idColumn.value} = ?)"
+        ),
+        Param.S(Param.S.V(id.value)),
+        Param.S(Param.S.V(id.value))
       )
       .frag
       .query[String]
       .run()
       .headOption
+      .map(AliasTable.Id(_))
 
   /** The identifier a record answers to NOW: the one an old `id` was renamed to, else `id` itself. */
   def current(ds: DataSource, id: com.histmersion.util.identity.AliasTable.Id): com.histmersion.util.identity.AliasTable.Id =
-    val t = id.trim
-    if t.isEmpty then t else renamedTo(ds, t).getOrElse(t)
+    val t = AliasTable.Id(id.value.trim)
+    if t.value.isEmpty then t else renamedTo(ds, t).getOrElse(t)
 
 object AliasTable:
   type Id = Id.T

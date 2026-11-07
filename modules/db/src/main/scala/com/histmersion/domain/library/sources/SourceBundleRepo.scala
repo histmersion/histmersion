@@ -32,7 +32,7 @@ private[sources] object SourceBundleRepo:
 
   def sources(scope: BundleScope)(using DbCon): Vector[BSourceRow] =
     (Sql.raw(
-      s"""SELECT s.uid, s.origin, s.citekey, s.title, s.authors, s.doi, s.year, s.venue, s.status,
+      Sql.RawText(s"""SELECT s.uid, s.origin, s.citekey, s.title, s.authors, s.doi, s.year, s.venue, s.status,
                        s.topics, s.regions, s.tags, ${rangeCols("s.period")}, s.summary, s.notes, s.source,
                        s.cited_by_count, s.influential_citations, to_char(s.added_date, 'YYYY-MM-DD'),
                        encode(sha256(convert_to(s.ocr_markdown, 'UTF8')), 'hex'),
@@ -40,14 +40,14 @@ private[sources] object SourceBundleRepo:
                        nullif(lower(btrim(s.sha256)), ''), ${ts("s.updated_at")},
                        coalesce((SELECT array_agg(i.value ORDER BY i.value COLLATE "C") FROM source_identifiers i
                                  WHERE i.source_uid = s.uid AND i.scheme = 'isbn'), '{}'::text[])
-                FROM sources s WHERE """
+                FROM sources s WHERE """)
     ) ++ where(scope, "s.uid", "s.updated_at") ++ " ORDER BY s.uid").frag.query[BSourceRow].run()
 
   def findings(scope: BundleScope)(using DbCon): Vector[Bundle.Finding] =
-    (Sql.raw(s"""SELECT f.uid, f.origin, s.uid, f.id, f.claim, f.region_name, ST_X(f.geom), ST_Y(f.geom),
+    (Sql.raw(Sql.RawText(s"""SELECT f.uid, f.origin, s.uid, f.id, f.claim, f.region_name, ST_X(f.geom), ST_Y(f.geom),
                        ${rangeCols("f.period")}, f.period_name, f.tags, f.confidence, f.significance,
                        ${ts("f.updated_at")}
-                FROM findings f JOIN sources s ON s.citekey = f.citekey WHERE """) ++
+                FROM findings f JOIN sources s ON s.citekey = f.citekey WHERE """)) ++
       where(scope, "f.uid", "f.updated_at") ++ " ORDER BY f.uid").frag.query[BFindingRow].run().map { r =>
       Bundle.Finding(
         r.uid,
@@ -69,25 +69,25 @@ private[sources] object SourceBundleRepo:
 
   /** The out-edges of the sources in scope — a source carries its whole set. */
   def edges(scope: BundleScope)(using DbCon): Vector[Bundle.Edge] =
-    (Sql.raw("""SELECT a.uid, b.uid, e.kind FROM edges e
-                JOIN sources a ON a.citekey = e.src JOIN sources b ON b.citekey = e.dst WHERE """) ++
+    (Sql.raw(Sql.RawText("""SELECT a.uid, b.uid, e.kind FROM edges e
+                JOIN sources a ON a.citekey = e.src JOIN sources b ON b.citekey = e.dst WHERE """)) ++
       where(scope, "a.uid", "a.updated_at") ++ """ ORDER BY a.uid, b.uid, e.kind COLLATE "C"""").frag
-      .query[(UUID, UUID, String)]
+      .query[(UUID, UUID, Bundle.Edge.Kind)]
       .run()
       .map(Bundle.Edge.apply)
 
   def unresolvedEdges(scope: BundleScope)(using DbCon): Vector[Bundle.UnresolvedEdge] =
-    (Sql.raw("""SELECT a.uid, u.dst, u.kind FROM unresolved_edges u
-                JOIN sources a ON a.citekey = u.src WHERE """) ++
+    (Sql.raw(Sql.RawText("""SELECT a.uid, u.dst, u.kind FROM unresolved_edges u
+                JOIN sources a ON a.citekey = u.src WHERE """)) ++
       where(scope, "a.uid", "a.updated_at") ++ """ ORDER BY a.uid, u.dst COLLATE "C", u.kind COLLATE "C"""").frag
-      .query[(UUID, String, String)]
+      .query[(UUID, Bundle.UnresolvedEdge.Dst, Bundle.UnresolvedEdge.Kind)]
       .run()
       .map(Bundle.UnresolvedEdge.apply)
 
   def assessments(scope: BundleScope)(using DbCon): Vector[Bundle.Assessment] =
-    (Sql.raw(s"""SELECT s.uid, ${ts("a.checked_at")}, a.retracted, a.notices::text, a.cited_by,
+    (Sql.raw(Sql.RawText(s"""SELECT s.uid, ${ts("a.checked_at")}, a.retracted, a.notices::text, a.cited_by,
                        a.influential, a.verdict
-                FROM assessments a JOIN sources s ON s.citekey = a.citekey WHERE """) ++
+                FROM assessments a JOIN sources s ON s.citekey = a.citekey WHERE """)) ++
       where(scope, "s.uid", "a.checked_at") ++ " ORDER BY s.uid").frag.query[BAssessmentRow].run().map { r =>
       Bundle.Assessment(
         r.sourceUid,
@@ -101,10 +101,10 @@ private[sources] object SourceBundleRepo:
     }
 
   def aliases(scope: BundleScope)(using DbCon): Vector[Bundle.Alias] =
-    (Sql.raw(s"""SELECT a.alias, s.uid, ${ts("a.created_at")}
-                FROM source_aliases a JOIN sources s ON s.citekey = a.citekey WHERE """) ++
+    (Sql.raw(Sql.RawText(s"""SELECT a.alias, s.uid, ${ts("a.created_at")}
+                FROM source_aliases a JOIN sources s ON s.citekey = a.citekey WHERE """)) ++
       where(scope, "s.uid", "a.created_at") ++ """ ORDER BY a.alias COLLATE "C"""").frag
-      .query[(String, UUID, String)]
+      .query[(Bundle.Alias.Value, UUID, Bundle.Alias.CreatedAt)]
       .run()
       .map(Bundle.Alias.apply)
 
@@ -113,28 +113,32 @@ private[sources] object SourceBundleRepo:
     Bundle.Source(
       r.uid,
       r.origin,
-      r.citekey,
-      r.title,
-      r.authors,
-      r.doi,
-      r.year,
-      r.venue,
+      com.histmersion.api.library.Citekey(r.citekey.value),
+      com.histmersion.api.library.Title(r.title.value),
+      r.authors.map(a => com.histmersion.api.library.AuthorName(a.value)),
+      r.doi.map(d => com.histmersion.api.library.Doi(d.value)),
+      r.year.map(y => com.histmersion.api.catalogue.Year(y.value.toLong)),
+      r.venue.map(v => com.histmersion.api.library.Source.Venue(v.value)),
       r.status.transformInto[com.histmersion.api.library.Source.Status],
-      r.topics,
-      r.regions,
-      r.tags,
-      range(r.pNull, r.pLo, r.pHi),
-      r.summary,
-      r.notes,
-      r.provenance,
-      r.citedBy,
-      r.influential,
-      r.addedDate,
-      r.bodySha,
-      r.originalSha,
-      r.originalSha.flatMap(originals.find).map(_._2),
-      r.updatedAt,
-      isbns = Option.when(r.isbns.nonEmpty)(r.isbns)
+      r.topics.map(t => Bundle.Source.Topics(t.value)),
+      r.regions.map(t => Bundle.Source.Regions(t.value)),
+      r.tags.map(t => Bundle.Source.Tags(t.value)),
+      range(
+        com.histmersion.util.data.exchange.Bundle.RangeIsNull(r.pNull.value),
+        r.pLo.map(x => com.histmersion.util.data.exchange.Bundle.RangeLower(x.value)),
+        r.pHi.map(x => com.histmersion.util.data.exchange.Bundle.RangeUpper(x.value))
+      ),
+      r.summary.map(x => Bundle.Source.Summary(x.value)),
+      r.notes.map(x => Bundle.Source.Notes(x.value)),
+      r.provenance.map(x => Bundle.Source.Provenance(x.value)),
+      r.citedBy.map(x => Bundle.Source.CitedByCount(x.value)),
+      r.influential.map(x => Bundle.Source.InfluentialCitations(x.value)),
+      Bundle.Source.AddedDate(r.addedDate.value),
+      r.bodySha.map(x => Bundle.Source.BodySha256(x.value)),
+      r.originalSha.map(x => Bundle.Source.OriginalSha256(x.value)),
+      r.originalSha.flatMap(originals.find).map(e => Bundle.Source.OriginalExt(e._2.value)),
+      Bundle.Source.UpdatedAt(r.updatedAt.value),
+      isbns = Option.when(r.isbns.nonEmpty)(r.isbns.map(i => Bundle.Source.Isbns(i.value)))
     )
 
   // ── in ───────────────────────────────────────────────────────────────────────────────────────
@@ -151,7 +155,7 @@ private[sources] object SourceBundleRepo:
     w.merged.renames.foreach { (_, from, to) =>
       w.asLocal {
         SourceRepo
-          .renameIn(from, to, referrers)
+          .renameIn(com.histmersion.domain.library.Citekey.assume(from.value), com.histmersion.domain.library.Citekey.assume(to.value), referrers)
           .left
           .foreach(e => throw ImportAbort(List(s"source $from → $to: ${e.message}")))
         sql"DELETE FROM source_aliases WHERE alias = $from".update.run(): Unit
@@ -159,12 +163,12 @@ private[sources] object SourceBundleRepo:
     }
     val localCk = w.local.sources.map(s => s.uid -> s.citekey).toMap ++
       w.merged.renames.map((u, _, to) => u -> to)
-    w.es.sources.filter(s => w.writes(s.uid)).foreach { s =>
+    w.es.sources.filter(s => w.writes(s.uid).value).foreach { s =>
       // renamed over there: the whole rename here first (findings, links, aliases follow)
       localCk.get(s.uid).filter(_ != s.citekey).foreach { old =>
         w.asLocal {
           SourceRepo
-            .renameIn(old, s.citekey, referrers)
+            .renameIn(com.histmersion.domain.library.Citekey.assume(old.value), com.histmersion.domain.library.Citekey.assume(s.citekey.value), referrers)
             .left
             .foreach(e => throw ImportAbort(List(s"source $old → ${s.citekey}: ${e.message}")))
         }
@@ -209,12 +213,12 @@ private[sources] object SourceBundleRepo:
   /** A source's whole edge set travels with it: both sets are emptied for every source written, then its edges. */
   def edgesIn(w: BundleImport.Writer): Unit =
     given DbCon = w.transaction
-    w.es.sources.filter(s => w.writes(s.uid)).foreach { s =>
+    w.es.sources.filter(s => w.writes(s.uid).value).foreach { s =>
       val ck = s.citekey
       sql"DELETE FROM edges WHERE src = $ck".update.run()
       sql"DELETE FROM unresolved_edges WHERE src = $ck".update.run()
     }
-    w.es.edges.filter(e => w.writes(e.srcUid)).foreach { e =>
+    w.es.edges.filter(e => w.writes(e.srcUid).value).foreach { e =>
       // a target deleted here: the edge is left out (reported by the reference check)
       w.citekeyHere(e.dstUid).foreach { dst =>
         val src = w.citekeyOf(e.srcUid)
@@ -224,13 +228,15 @@ private[sources] object SourceBundleRepo:
 
   def unresolvedEdgesIn(w: BundleImport.Writer): Unit =
     given DbCon = w.transaction
-    w.es.unresolvedEdges.filter(e => w.writes(e.srcUid)).foreach { e =>
-      val _ = SourceRepo.insertEdges(List(Edge(com.histmersion.api.library.Citekey(w.citekeyOf(e.srcUid)), com.histmersion.api.library.Citekey(e.dst), e.kind)))
+    w.es.unresolvedEdges.filter(e => w.writes(e.srcUid).value).foreach { e =>
+      Edge.Kind.fromWire(e.kind).foreach { k =>
+        val _ = SourceRepo.insertEdges(List(Edge(com.histmersion.api.library.Citekey(w.citekeyOf(e.srcUid).value), com.histmersion.api.library.Citekey(e.dst.value), k)))
+      }
     }
 
   def aliasesIn(w: BundleImport.Writer): Unit =
     given DbCon = w.transaction
-    w.es.aliases.filterNot(a => w.skipsAlias(a.alias)).foreach { a =>
+    w.es.aliases.filterNot(a => w.skipsAlias(com.histmersion.domain.library.Citekey.assume(a.alias.value))).foreach { a =>
       // never an alias equal to the source's own citekey (a key renamed back here, #827)
       val n = sql"""INSERT INTO source_aliases (alias, citekey, created_at)
             SELECT ${a.alias}, citekey, ${a.createdAt}::timestamptz FROM sources
@@ -241,7 +247,7 @@ private[sources] object SourceBundleRepo:
 
   def findingsIn(w: BundleImport.Writer): Unit =
     given DbCon = w.transaction
-    w.es.findings.filter(f => w.writes(f.uid)).foreach { f =>
+    w.es.findings.filter(f => w.writes(f.uid).value).foreach { f =>
       w.touchSource(f.sourceUid)
       val ck = w.citekeyOf(f.sourceUid)
       sql"""INSERT INTO findings (uid, origin, id, citekey, claim, region_name, geom, period, period_name,
@@ -290,8 +296,8 @@ private[sources] object SourceBundleRepo:
     given DbCon = w.transaction
     bodiesChanged(w).foreach { u =>
       val (ck, md) =
-        sql"SELECT citekey, ocr_markdown FROM sources WHERE uid = $u".query[(String, Option[String])].run().head
-      val _ = SourceRepo.replaceChunks(ck, md, w.opts.chunkChars)
+        sql"SELECT citekey, ocr_markdown FROM sources WHERE uid = $u".query[(com.histmersion.domain.library.Citekey, Option[FullSourceRow.OcrMarkdown])].run().head
+      val _ = SourceRepo.replaceChunks(ck, md, com.histmersion.util.ocr.Chunker.ChunkMaxChars(w.opts.chunkChars.value))
     }
     w.touchedSources.foreach { u =>
       val _ = SourceRepo.placeFindingsIn(w.citekeyOf(u), w.opts.toleranceKm)
@@ -309,5 +315,5 @@ private[sources] object SourceBundleRepo:
           )
         )
       case BlobUse.Original(_, ext) =>
-        Some(BlobSink.Streamed(in => files.store(sha, ext, in).left.toOption.map(m => s"original $sha: $m")))
+        Some(BlobSink.Streamed(in => files.store(sha, ContentStore.Ext(ext.value), in).left.toOption.map(m => s"original $sha: $m")))
       case _ => None

@@ -29,7 +29,7 @@ object EventMergeRules extends MergeRules:
       in: MergePlanner.Input,
       settings: MergeSettings
   )(using DbCon): MergePlanner.Input =
-    val named = bundle.events.map(_.id) ++ bundle.eventAliases.map(_.alias)
+    val named = (bundle.events.map(_.id) ++ bundle.eventAliases.map(_.alias)).map(id => BEventRow.Id(id.value))
     in.modify(_.labels.events)
       .setTo(EventBundleRepo.eventsNamed(named))
       .modify(_.labels.eventAliases)

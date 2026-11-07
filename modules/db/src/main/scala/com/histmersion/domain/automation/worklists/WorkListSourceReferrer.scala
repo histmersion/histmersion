@@ -11,7 +11,7 @@ import com.augustnagro.magnum.*
 final class WorkListSourceReferrer extends SourceReferrer:
 
   override def report(source: SourceKeys)(using DbCon): DeleteReport =
-    val needles = source.keys.map(_.toLowerCase)
+    val needles = source.keys.map(_.value.toLowerCase)
     DeleteReport(mentions =
       sql"""SELECT id, text, coalesce(reason, '') FROM queue_items
             WHERE status <> 'note'
@@ -21,8 +21,8 @@ final class WorkListSourceReferrer extends SourceReferrer:
         .query[(Int, String, String)]
         .run()
         .toList
-        .collect { case (id, text, reason) if source.linkedIn(text + "\n" + reason) => id }
+        .collect { case (id, text, reason) if source.linkedIn(SourceKeys.Text(text + "\n" + reason)) => DeleteReport.Mentions(id) }
     )
 
-  override def recorded(source: SourceKeys, line: String, day: String)(using DbCon): Option[Int] =
-    Some(QueueRepo.insert(Queue.Kind.Log, Queue.QueueAdd(line, topic = Some(day))).id)
+  override def recorded(source: SourceKeys, line: SourceReferrers.Line, day: SourceReferrers.Day)(using DbCon): Option[com.histmersion.RowCount] =
+    Some(com.histmersion.RowCount(QueueRepo.insert(Queue.Kind.Log, Queue.QueueAdd(Queue.QueueItem.Text(line.value), topic = Some(Queue.QueueItem.Topic(day.value)))).id.value))

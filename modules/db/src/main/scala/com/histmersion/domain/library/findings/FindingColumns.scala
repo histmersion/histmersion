@@ -8,6 +8,6 @@ private[library] object FindingColumns:
     * `DbCodec[Confidence]` — a column read as a bare confidence would need a default, and every default claims something.
     */
   given DbCodec[Option[Confidence]] = DbCodec[Option[String]].biMap(
-    _.flatMap(s => Confidence.fromString(s.trim)),
-    _.map(_.wire)
+    _.flatMap(s => Confidence.fromString(Confidence.Wire(s.trim))),
+    _.map(_.wire.value)
   )

@@ -20,9 +20,11 @@ trait OaFetcher:
     * (a test's fixture) has no copy of anything else.
     */
   def fetchWork(work: WorkKey, legalOnly: com.histmersion.pluginhost.FetchChain.LegalOnly): Either[com.histmersion.pluginhost.OaFetcher.Problem, FetchedFile] =
-    if work.doi.isEmpty && work.arxiv.isEmpty then Left(FetchChain.NoCopy)
-    else if legalOnly then fetchLegal(work.doi.map(_.value), work.arxiv)
-    else fetch(work.doi.map(_.value), work.arxiv)
+    val doi = work.doi.map(d => com.histmersion.domain.library.Doi(d.value))
+    val arxiv = work.arxiv.map(a => com.histmersion.domain.library.ArxivId(a.value))
+    if work.doi.isEmpty && work.arxiv.isEmpty then Left(OaFetcher.Problem(FetchChain.NoCopy))
+    else if legalOnly.value then fetchLegal(doi, arxiv)
+    else fetch(doi, arxiv)
 
   /** [[fetchWork]], with what each fetcher that ran answered when none had a copy (the ingest report shows it). An
     * implementation that is no chain (a test's fixture) has no answers to give.

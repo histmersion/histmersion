@@ -26,20 +26,20 @@ private[articles] object CoverageRepo:
 
   /** How many sources `f` selects, and the first `cap` of them in citekey order. */
   def sourceSet(f: Filter, scope: PlaceScope, cap: com.histmersion.domain.research.articles.ArticleRepo.Limit)(using DbCon): (com.histmersion.RowCount, List[Coverage.Source]) =
-    val total = FilterSql.countQuery(f, scope).frag.query[Int].run().headOption.getOrElse(0)
+    val total = com.histmersion.RowCount(FilterSql.countQuery(f, scope).frag.query[Int].run().headOption.getOrElse(0))
     val rows = (Sql.raw(com.histmersion.util.database.Sql.RawText("SELECT s.citekey, s.title, s.year, s.status, s.authors FROM sources s WHERE ")) ++
       FilterSql.where(f, scope) ++ Sql
-        .of(" ORDER BY s.citekey LIMIT ?", I(math.max(0, cap)))).frag.query[Coverage.Source].run().toList
+        .of(Sql.OfText(" ORDER BY s.citekey LIMIT ?"), I(Param.I.V(math.max(0, cap.value))))).frag.query[Coverage.Source].run().toList
     (total, rows)
 
   /** How many sources `f` selects, and which of `citekeys` are among them (exact, whatever their number). */
   def members(f: Filter, scope: PlaceScope, citekeys: List[com.histmersion.domain.library.Citekey])(using DbCon): (com.histmersion.RowCount, Set[com.histmersion.domain.library.Citekey]) =
-    val total = FilterSql.countQuery(f, scope).frag.query[Int].run().headOption.getOrElse(0)
+    val total = com.histmersion.RowCount(FilterSql.countQuery(f, scope).frag.query[Int].run().headOption.getOrElse(0))
     val in =
-      if citekeys.isEmpty then Set.empty[String]
+      if citekeys.isEmpty then Set.empty[com.histmersion.domain.library.Citekey]
       else
         (Sql.raw(com.histmersion.util.database.Sql.RawText("SELECT s.citekey FROM sources s WHERE ")) ++ FilterSql.where(f, scope) ++
-          Sql.of(" AND s.citekey = ANY(?)", A(citekeys.distinct))).frag.query[String].run().toSet
+          Sql.of(Sql.OfText(" AND s.citekey = ANY(?)"), A(citekeys.distinct.map(c => Param.A.V(c.value))))).frag.query[com.histmersion.domain.library.Citekey].run().toSet
     (total, in)
 
   /** The edges of `kinds` with either end in `citekeys` (source to source only, V026). */

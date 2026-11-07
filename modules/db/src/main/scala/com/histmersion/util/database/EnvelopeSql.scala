@@ -7,26 +7,16 @@ import com.histmersion.util.database.{Param, Sql}
   * and becomes two envelopes OR'ed together (`minLon…180` and `-180…maxLon`).
   */
 object EnvelopeSql:
-  type EnvelopesEnvMinLon = EnvelopesEnvMinLon.T
-  object EnvelopesEnvMinLon extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type EnvelopesEnvMinLat = EnvelopesEnvMinLat.T
-  object EnvelopesEnvMinLat extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type EnvelopesEnvMaxLon = EnvelopesEnvMaxLon.T
-  object EnvelopesEnvMaxLon extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type EnvelopesEnvMaxLat = EnvelopesEnvMaxLat.T
-  object EnvelopesEnvMaxLat extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
-
-
   def envelopes(geom: String, b: BBox): Sql =
-    def env(minLon: com.histmersion.util.database.EnvelopeSql.EnvelopesEnvMinLon, minLat: com.histmersion.util.database.EnvelopeSql.EnvelopesEnvMinLat, maxLon: com.histmersion.util.database.EnvelopeSql.EnvelopesEnvMaxLon, maxLat: com.histmersion.util.database.EnvelopeSql.EnvelopesEnvMaxLat) =
+    def env(minLon: Double, minLat: Double, maxLon: Double, maxLat: Double) =
       Sql.of(
-        s"$geom && ST_MakeEnvelope(?, ?, ?, ?, 4326)",
-        Param.D(minLon),
-        Param.D(minLat),
-        Param.D(maxLon),
-        Param.D(maxLat)
+        Sql.OfText(s"$geom && ST_MakeEnvelope(?, ?, ?, ?, 4326)"),
+        Param.D(Param.D.V(minLon)),
+        Param.D(Param.D.V(minLat)),
+        Param.D(Param.D.V(maxLon)),
+        Param.D(Param.D.V(maxLat))
       )
     if b.crossesAntimeridian then
-      val both = List(env(b.minLon, b.minLat, 180.0, b.maxLat), env(-180.0, b.minLat, b.maxLon, b.maxLat))
-      Sql(both.map(_.text).mkString(" OR "), both.flatMap(_.params)).wrap("(", ")")
-    else env(b.minLon, b.minLat, b.maxLon, b.maxLat)
+      val both = List(env(b.minLon.value, b.minLat.value, 180.0, b.maxLat.value), env(-180.0, b.minLat.value, b.maxLon.value, b.maxLat.value))
+      Sql(Sql.Text(both.map(_.text.value).mkString(" OR ")), both.flatMap(_.params)).wrap("(", ")")
+    else env(b.minLon.value, b.minLat.value, b.maxLon.value, b.maxLat.value)

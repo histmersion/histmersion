@@ -26,10 +26,6 @@ import com.augustnagro.magnum.DbCon
   * time, so there is no `DbCodec` to derive — the `ResultSetMetaData` is the schema.
   */
 private[search] object QueryRepo:
-  type Cell = Cell.T
-  object Cell extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type ElapsedMs = ElapsedMs.T
-  object ElapsedMs extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type MaxCellChars = MaxCellChars.T
   object MaxCellChars extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type MaxRows = MaxRows.T
@@ -42,57 +38,61 @@ private[search] object QueryRepo:
   /** Run one statement. A rejected or failing statement is a VALUE (`Left(message)`), not an exception: a bad query is
     * an expected outcome of handing SQL to a model.
     */
-  type ReadMaxCellChars = _root_.com.histmersion.domain.library.search.QueryRepo.MaxCellChars
-  val ReadMaxCellChars: _root_.com.histmersion.domain.library.search.QueryRepo.MaxCellChars.type = _root_.com.histmersion.domain.library.search.QueryRepo.MaxCellChars
+  def run(statement: com.histmersion.domain.library.search.QueryRepo.Statement, maxRows: com.histmersion.domain.library.search.QueryRepo.MaxRows, maxCellChars: com.histmersion.domain.library.search.QueryRepo.MaxCellChars)(using con: DbCon, timer: com.histmersion.util.time.Timer): Either[Problem, QueryResult] =
+    com.histmersion.api.library.Query
+      .check(com.histmersion.api.library.Query.Statement(statement.value))
+      .left
+      .map(p => Problem(p.value))
+      .flatMap(text => exec(Statement(text.value), maxRows, maxCellChars))
 
-  def run(statement: com.histmersion.domain.library.search.QueryRepo.Statement, maxRows: com.histmersion.domain.library.search.QueryRepo.MaxRows, maxCellChars: com.histmersion.domain.library.search.QueryRepo.MaxCellChars)(using con: DbCon, timer: com.histmersion.util.time.Timer): Either[String, QueryResult] =
-    com.histmersion.api.library.Query.check(statement).flatMap(text => exec(text, maxRows, maxCellChars))
-
-  private def exec(text: com.histmersion.domain.library.search.QueryRepo.Statement, maxRows: com.histmersion.domain.library.search.QueryRepo.MaxRows, maxCellChars: com.histmersion.domain.library.search.QueryRepo.MaxCellChars)(using con: DbCon, timer: com.histmersion.util.time.Timer): Either[String, QueryResult] =
+  private def exec(text: com.histmersion.domain.library.search.QueryRepo.Statement, maxRows: com.histmersion.domain.library.search.QueryRepo.MaxRows, maxCellChars: com.histmersion.domain.library.search.QueryRepo.MaxCellChars)(using con: DbCon, timer: com.histmersion.util.time.Timer): Either[Problem, QueryResult] =
     val c: Connection = con.connection
     try
       val st = c.createStatement()
       try
-        st.setMaxRows(math.max(1, maxRows) + 1)
+        st.setMaxRows(math.max(1, maxRows.value) + 1)
         val started = timer.start()
-        val hasRs = st.execute(text)
+        val hasRs = st.execute(text.value)
         val elapsed = started.elapsed.toMillis
         if !hasRs then
           // unreachable in a READ ONLY transaction (nothing that updates rows can run), but an
           // honest answer beats a NullPointerException if Postgres ever allows one.
-          Right(QueryResult(Nil, Nil, com.histmersion.api.library.Query.QueryResult.RowCount(0), com.histmersion.api.library.Query.QueryResult.Truncated(false), elapsed))
-        else Right(read(st.getResultSet, maxRows, maxCellChars, elapsed))
+          Right(QueryResult(Nil, Nil, com.histmersion.api.library.Query.QueryResult.RowCount(0), com.histmersion.api.library.Query.QueryResult.Truncated(false), QueryResult.ElapsedMs(elapsed)))
+        else Right(read(st.getResultSet, maxRows, maxCellChars, QueryResult.ElapsedMs(elapsed)))
       finally st.close()
     catch case e: SQLException => Left(message(e))
 
   /** Postgres's own words, with the driver's stack noise stripped. */
   def message(e: SQLException): com.histmersion.domain.library.search.QueryRepo.Problem =
-    Option(e.getMessage)
-      .map(_.linesIterator.take(3).mkString(" ").trim)
-      .filter(_.nonEmpty)
-      .getOrElse(e.getClass.getSimpleName)
+    Problem(
+      Option(e.getMessage)
+        .map(_.linesIterator.take(3).mkString(" ").trim)
+        .filter(_.nonEmpty)
+        .getOrElse(e.getClass.getSimpleName)
+    )
 
-  private def read(rs: ResultSet, maxRows: com.histmersion.domain.library.search.QueryRepo.MaxRows, maxCellChars: com.histmersion.domain.library.search.QueryRepo.ReadMaxCellChars, elapsedMs: com.histmersion.domain.library.search.QueryRepo.ElapsedMs): QueryResult =
+  private def read(rs: ResultSet, maxRows: com.histmersion.domain.library.search.QueryRepo.MaxRows, maxCellChars: com.histmersion.domain.library.search.QueryRepo.MaxCellChars, elapsedMs: QueryResult.ElapsedMs): QueryResult =
     val md = rs.getMetaData
     val columns = (1 to md.getColumnCount).map(md.getColumnLabel).toList
-    val rows = List.newBuilder[List[Option[String]]]
+    val rows = List.newBuilder[List[Option[QueryResult.Rows]]]
     var n = 0
     var more = false
     while rs.next() do
-      if n >= maxRows then more = true
+      if n >= maxRows.value then more = true
       else
         rows += columns.indices.map(i => cell(rs, i + 1, maxCellChars)).toList
         n += 1
-    QueryResult(columns, rows.result(), n, more, elapsedMs)
+    QueryResult(columns.map(QueryResult.Columns(_)), rows.result(), QueryResult.RowCount(n), QueryResult.Truncated(more), elapsedMs)
 
   /** Every value is stringified — the only shape one static JSON schema can carry for an arbitrary projection. Long
     * values (an OCR body) are cut with an explicit marker rather than silently.
     */
-  private def cell(rs: ResultSet, i: Int, maxCellChars: com.histmersion.domain.library.search.QueryRepo.MaxCellChars): Option[com.histmersion.domain.library.search.QueryRepo.Cell] =
+  private def cell(rs: ResultSet, i: Int, maxCellChars: com.histmersion.domain.library.search.QueryRepo.MaxCellChars): Option[QueryResult.Rows] =
     val v = rs.getString(i)
     if v == null || rs.wasNull() then None
-    else if v.length > maxCellChars then Some(v.take(maxCellChars) + s"… (+${v.length - maxCellChars} chars)")
-    else Some(v)
+    else if v.length > maxCellChars.value then
+      Some(QueryResult.Rows(v.take(maxCellChars.value) + s"… (+${v.length - maxCellChars.value} chars)"))
+    else Some(QueryResult.Rows(v))
 
   // ── the live schema ──────────────────────────────────────────────────────────────────────────
 
@@ -123,9 +123,9 @@ private[search] object QueryRepo:
           .sortBy((k, _) => k._1)
           .map { case ((name, kind), cols) =>
             SchemaTable(
-              name,
+              SchemaTable.Name(name),
               if kind == "VIEW" then com.histmersion.api.library.Query.SchemaTable.Kind("view") else com.histmersion.api.library.Query.SchemaTable.Kind("table"),
-              cols.map((_, _, col, tpe, nullable) => SchemaColumn(col, tpe, nullable == "YES"))
+              cols.map((_, _, col, tpe, nullable) => SchemaColumn(SchemaColumn.Name(col), SchemaColumn.DataType(tpe), SchemaColumn.Nullable(nullable == "YES")))
             )
           }
       finally st.close()

@@ -3,6 +3,7 @@ package com.histmersion.domain.catalogue.evidence
 import com.histmersion.api.catalogue.Attestation
 
 import com.augustnagro.magnum.*
+import com.histmersion.util.database.NewtypeColumns.given
 
 /** The attestations (`attestations`): which passage of a source attests a finding, an event, a dating, a place or an
   * edge. Every method runs on the connection it is given.
@@ -22,9 +23,9 @@ private[evidence] object AttestationRepo:
   def list(citekey: Option[com.histmersion.domain.library.Citekey], targetType: Option[com.histmersion.domain.catalogue.evidence.BAttestationFullRow.TargetType], targetId: Option[com.histmersion.domain.catalogue.evidence.BAttestationFullRow.TargetId], limit: com.histmersion.PageSize, offset: com.histmersion.Offset)(using
       DbCon
   ): Attestation.List =
-    val ck = citekey.map(_.trim).filter(_.nonEmpty)
-    val tt = targetType.map(_.trim).filter(_.nonEmpty)
-    val ti = targetId.map(_.trim).filter(_.nonEmpty)
+    val ck = citekey.map(_.value.trim).filter(_.nonEmpty)
+    val tt = targetType.map(_.value.trim).filter(_.nonEmpty)
+    val ti = targetId.map(_.value.trim).filter(_.nonEmpty)
     val total = sql"""SELECT count(*)::int FROM attestations a
           WHERE ($ck::text IS NULL OR a.citekey = $ck)
             AND ($tt::text IS NULL OR a.target_type = $tt)
@@ -35,9 +36,13 @@ private[evidence] object AttestationRepo:
             AND ($tt::text IS NULL OR a.target_type = $tt)
             AND ($ti::text IS NULL OR a.target_id = $ti)
           ORDER BY a.id
-          LIMIT ${limit.max(1)} OFFSET ${offset.max(0)}
+          LIMIT ${limit.value.max(1)} OFFSET ${offset.value.max(0)}
           """.query[Attestation].run().toList
-    Attestation.List.of(total, rows, offset.max(0))
+    Attestation.List.of(
+      com.histmersion.api.RowCount(total),
+      rows,
+      com.histmersion.api.personal.UnreadPage.Offset(offset.value.max(0))
+    )
 
   def get(id: com.histmersion.domain.catalogue.evidence.AttestationRepo.AttestationId)(using DbCon): Option[Attestation] =
     sql"""SELECT ${SqlLiteral(cols)} FROM attestations a WHERE a.id = $id""".query[Attestation].run().headOption
@@ -52,7 +57,7 @@ private[evidence] object AttestationRepo:
                            ${in.page}, ${in.canvas}, ${in.xywh},
                            ${in.ctsUrn}, ${in.note})
                    RETURNING id""".query[Long].run().head
-    get(id).get
+    get(AttestationId(id)).get
 
   def exists(id: com.histmersion.domain.catalogue.evidence.AttestationRepo.AttestationId)(using DbCon): Boolean = sql"SELECT 1 FROM attestations WHERE id = $id".query[Int].run().nonEmpty
 

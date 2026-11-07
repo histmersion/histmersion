@@ -50,13 +50,13 @@ object Search:
   type SnippetsQueryQ = _root_.com.histmersion.domain.library.search.Search.Query
   val SnippetsQueryQ: _root_.com.histmersion.domain.library.search.Search.Query.type = _root_.com.histmersion.domain.library.search.Search.Query
 
-  def tsQuery(q: com.histmersion.domain.library.search.Search.Query): Sql = Sql.of("websearch_to_tsquery('english', ?)", Param.S(q))
+  def tsQuery(q: com.histmersion.domain.library.search.Search.Query): Sql = Sql.of(Sql.OfText("websearch_to_tsquery('english', ?)"), Param.S(Param.S.V(q.value)))
 
   /** True when the source matches: its weighted title(A)/summary(B) vector, or ANY of its body chunks. Use in a
     * `WHERE`.
     */
   def ftsPredicate(q: com.histmersion.domain.library.search.Search.FtsPredicateQ, alias: String = "s"): Sql =
-    Sql.raw(s"($alias.tsv @@ ") ++ tsQuery(q) ++
+    Sql.raw(Sql.RawText(s"($alias.tsv @@ ")) ++ tsQuery(q) ++
       s" OR EXISTS (SELECT 1 FROM source_chunks fts_p WHERE fts_p.citekey = $alias.citekey AND fts_p.tsv @@ " ++
       tsQuery(q) ++ "))"
 
@@ -65,7 +65,7 @@ object Search:
     * multiplier. Use in an `ORDER BY … DESC`.
     */
   def rankExpr(q: com.histmersion.domain.library.search.Search.RankExprQ, alias: String = "s"): Sql =
-    Sql.raw(s"(ts_rank_cd($alias.tsv, ") ++ tsQuery(q) ++
+    Sql.raw(Sql.RawText(s"(ts_rank_cd($alias.tsv, ")) ++ tsQuery(q) ++
       ") + coalesce((SELECT max(ts_rank_cd(fts_r.tsv, " ++ tsQuery(q) ++
       s")) FROM source_chunks fts_r WHERE fts_r.citekey = $alias.citekey AND fts_r.tsv @@ " ++
       tsQuery(q) ++ "), 0))"
@@ -88,11 +88,11 @@ object Search:
     * callers should use the CTE path.
     */
   def bestChunkJoin(q: com.histmersion.domain.library.search.Search.BestChunkJoinQ, maxWords: com.histmersion.domain.library.search.Search.SnippetWords, alias: String = "s"): Sql =
-    val maxW = math.max(2, maxWords)
+    val maxW = math.max(2, maxWords.value)
     val minW = math.max(1, math.min(8, maxW - 1))
     val opts = s"MaxFragments=1, MaxWords=$maxW, MinWords=$minW, StartSel=**, StopSel=**, HighlightAll=false"
-    Sql.raw("LEFT JOIN LATERAL (SELECT fts_b.heading AS heading, ts_headline('english', fts_b.body, ") ++
-      tsQuery(q) ++ Sql.of(", ?) AS snippet", Param.S(opts)) ++
+    Sql.raw(Sql.RawText("LEFT JOIN LATERAL (SELECT fts_b.heading AS heading, ts_headline('english', fts_b.body, ")) ++
+      tsQuery(q) ++ Sql.of(Sql.OfText(", ?) AS snippet"), Param.S(Param.S.V(opts))) ++
       s" FROM source_chunks fts_b WHERE fts_b.citekey = $alias.citekey AND fts_b.tsv @@ " ++
       tsQuery(q) ++ " ORDER BY CASE WHEN fts_b.heading ~* '" ++ BoilerplateHeading ++
       "' THEN ts_rank_cd(fts_b.tsv, " ++ tsQuery(q) ++ ") * 0.001 ELSE ts_rank_cd(fts_b.tsv, " ++
@@ -123,7 +123,7 @@ object Search:
     * source matched only on title/summary.
     */
   def rankExprCte(q: com.histmersion.domain.library.search.Search.RankExprCteQ, alias: String = "s"): Sql =
-    Sql.raw(s"(ts_rank_cd($alias.tsv, ") ++ tsQuery(q) ++ ") + coalesce(bc.rank, 0))"
+    Sql.raw(Sql.RawText(s"(ts_rank_cd($alias.tsv, ")) ++ tsQuery(q) ++ ") + coalesce(bc.rank, 0))"
 
   /** Compute the snippet and heading for a specific set of citekeys. Uses a two-level query:
     *
@@ -143,18 +143,18 @@ object Search:
     */
   def snippetsQuery(q: com.histmersion.domain.library.search.Search.SnippetsQueryQ, maxWords: com.histmersion.domain.library.search.Search.SnippetWords, citekeys: List[com.histmersion.domain.library.Citekey]): Sql =
     if citekeys.isEmpty then return Sql.raw(com.histmersion.util.database.Sql.RawText("SELECT NULL::text, NULL::text, NULL::text WHERE FALSE"))
-    val maxW = math.max(2, maxWords)
+    val maxW = math.max(2, maxWords.value)
     val minW = math.max(1, math.min(8, maxW - 1))
     val opts = s"MaxFragments=1, MaxWords=$maxW, MinWords=$minW, StartSel=**, StopSel=**, HighlightAll=false"
     val qmarks = List.fill(citekeys.size)("?").mkString(", ")
     // inner: find the best chunk (citekey, ord) per source — no ts_headline
     val inner = Sql.raw(com.histmersion.util.database.Sql.RawText("SELECT DISTINCT ON (citekey) citekey, ord")) ++
-      Sql(" FROM source_chunks WHERE citekey IN (" + qmarks + ") AND tsv @@ ", citekeys.map(Param.S(_))) ++
+      Sql(Sql.Text(" FROM source_chunks WHERE citekey IN (" + qmarks + ") AND tsv @@ "), citekeys.map(c => Param.S(Param.S.V(c.value)))) ++
       tsQuery(q) ++ " ORDER BY citekey, CASE WHEN heading ~* '" ++ BoilerplateHeading ++
       "' THEN ts_rank_cd(tsv, " ++ tsQuery(q) ++ ") * 0.001 ELSE ts_rank_cd(tsv, " ++
       tsQuery(q) ++ ") END DESC, ord"
     // outer: ts_headline only for those N rows
-    Sql.raw("SELECT sc.citekey, sc.heading, ts_headline('english', sc.body, ") ++
-      tsQuery(q) ++ Sql.of(", ?) AS snippet", Param.S(opts)) ++
+    Sql.raw(Sql.RawText("SELECT sc.citekey, sc.heading, ts_headline('english', sc.body, ")) ++
+      tsQuery(q) ++ Sql.of(Sql.OfText(", ?) AS snippet"), Param.S(Param.S.V(opts))) ++
       " FROM source_chunks sc INNER JOIN (" ++ inner ++
       ") best ON best.citekey = sc.citekey AND best.ord = sc.ord"

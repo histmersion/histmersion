@@ -8,6 +8,7 @@ import com.histmersion.util.data.exchange.BundleSql.*
 
 import com.histmersion.util.database.given
 import com.augustnagro.magnum.*
+import com.histmersion.util.database.NewtypeColumns.given
 import java.nio.charset.StandardCharsets.UTF_8
 import java.util.UUID
 import com.histmersion.api.exchange.Bundle
@@ -23,9 +24,9 @@ private[articles] object ArticleBundleRepo:
 
 
   def articles(scope: BundleScope)(using DbCon): Vector[Bundle.Article] =
-    (Sql.raw(s"""SELECT a.uid, a.origin, a.slug, a.title, a.kind, a.body, a.summary, a.tags, a.regions,
+    (Sql.raw(Sql.RawText(s"""SELECT a.uid, a.origin, a.slug, a.title, a.kind, a.body, a.summary, a.tags, a.regions,
                        ${rangeCols("a.period")}, ${ts("a.updated_at")}
-                FROM articles a WHERE """) ++ where(scope, "a.uid", "a.updated_at") ++ " ORDER BY a.uid").frag
+                FROM articles a WHERE """)) ++ where(scope, "a.uid", "a.updated_at") ++ " ORDER BY a.uid").frag
       .query[BArticleRow]
       .run()
       .map { r =>
@@ -45,30 +46,38 @@ private[articles] object ArticleBundleRepo:
       }
 
   def versions(scope: BundleScope)(using DbCon): Vector[BVersionRow] =
-    (Sql.raw(s"""SELECT v.uid, v.origin, a.uid, encode(sha256(convert_to(v.body, 'UTF8')), 'hex'),
+    (Sql.raw(Sql.RawText(s"""SELECT v.uid, v.origin, a.uid, encode(sha256(convert_to(v.body, 'UTF8')), 'hex'),
                        octet_length(convert_to(v.body, 'UTF8'))::bigint, v.summary,
                        ${ts("v.updated_at")}, ${ts("v.created_at")}
-                FROM article_versions v JOIN articles a ON a.slug = v.slug WHERE """) ++
+                FROM article_versions v JOIN articles a ON a.slug = v.slug WHERE """)) ++
       where(scope, "v.uid", "v.created_at") ++ " ORDER BY v.uid").frag.query[BVersionRow].run()
 
   /** Old article slugs (V042) of the articles in scope. */
   def articleAliases(scope: BundleScope)(using DbCon): Vector[Bundle.ArticleAlias] =
-    (Sql.raw(s"""SELECT x.alias, a.uid, ${ts("x.created_at")}
-                FROM article_aliases x JOIN articles a ON a.slug = x.slug WHERE """) ++
+    (Sql.raw(Sql.RawText(s"""SELECT x.alias, a.uid, ${ts("x.created_at")}
+                FROM article_aliases x JOIN articles a ON a.slug = x.slug WHERE """)) ++
       where(scope, "a.uid", "x.created_at") ++ """ ORDER BY x.alias COLLATE "C"""").frag
       .query[(String, UUID, String)]
       .run()
       .map(Bundle.ArticleAlias.apply)
 
   def versionLine(r: BVersionRow): Bundle.ArticleVersion =
-    Bundle.ArticleVersion(r.uid, r.origin, r.articleUid, r.bodySha, r.summary, r.versionOf, r.createdAt)
+    Bundle.ArticleVersion(
+      r.uid,
+      r.origin,
+      r.articleUid,
+      Bundle.ArticleVersion.BodySha256(r.bodySha.value),
+      r.summary.map(s => Bundle.ArticleVersion.Summary(s.value)),
+      Bundle.ArticleVersion.VersionOf(r.versionOf.value),
+      Bundle.ArticleVersion.UpdatedAt(r.createdAt.value)
+    )
 
   /** The bytes of a version's body, written as a blob. */
   def versionBody(uid: UUID)(using DbCon): java.io.OutputStream => Unit =
     out =>
       out.write(
         Sql
-          .of("SELECT convert_to(body, 'UTF8') FROM article_versions WHERE uid = ?::uuid", Param.S(uid.toString))
+          .of(Sql.OfText("SELECT convert_to(body, 'UTF8') FROM article_versions WHERE uid = ?::uuid"), Param.S(Param.S.V(uid.toString)))
           .frag
           .query[Array[Byte]]
           .run()
@@ -84,7 +93,7 @@ private[articles] object ArticleBundleRepo:
   private val versionsByUid = BundleImport.Once(w => w.es.versions.map(v => v.uid -> v).toMap)
 
   private def slugOf(u: UUID)(using DbCon): com.histmersion.domain.research.Slug =
-    sql"SELECT slug FROM articles WHERE uid = $u".query[String].run().head
+    sql"SELECT slug FROM articles WHERE uid = $u".query[com.histmersion.domain.research.Slug].run().head
 
   /** Rename what the other side renamed (the same uid, a new slug), through the ordinary rename path. */
   def articleRenamesIn(w: BundleImport.Writer): Unit =
@@ -166,9 +175,15 @@ private[articles] object ArticleBundleRepo:
     given DbCon = w.transaction
     val relink =
       if w.insertedSources.nonEmpty || w.merged.renames.nonEmpty then
-        sql"SELECT slug, body FROM articles ORDER BY slug".query[(String, String)].run().toList
+        sql"SELECT slug, body FROM articles ORDER BY slug"
+          .query[(com.histmersion.domain.research.Slug, BArticleRow.Body)]
+          .run()
+          .toList
       else
         (w.es.articles.filter(a => w.writes(a.uid)).map(_.uid) ++ w.once(copiedArticles)).flatMap(u =>
-          sql"SELECT slug, body FROM articles WHERE uid = $u".query[(String, String)].run().headOption
+          sql"SELECT slug, body FROM articles WHERE uid = $u"
+            .query[(com.histmersion.domain.research.Slug, BArticleRow.Body)]
+            .run()
+            .headOption
         )
     relink.foreach((slug, body) => ArticleRepo.writeLinks(slug, body))

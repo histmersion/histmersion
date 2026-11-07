@@ -28,34 +28,29 @@ final class SttpTransport(timeoutSeconds: SttpTransport.TimeoutSeconds, tls: Opt
     )
   }
 
-  def get(url: com.histmersion.pluginhost.HttpTransport.Url, headers: Map[com.histmersion.domain.CoreQuota.HeaderName, com.histmersion.pluginhost.SttpTransport.GetHeadersPart2]): Either[com.histmersion.pluginhost.SttpTransport.Problem, HttpAnswer] =
+  def get(url: HttpTransport.Url, headers: Map[com.histmersion.domain.CoreQuota.HeaderName, HttpTransport.GetHeadersPart2]): Either[HttpTransport.Problem, HttpAnswer] =
     val req = basicRequest
-      .get(Uri.unsafeParse(url))
-      .headers(headers)
-      .readTimeout(timeoutSeconds.seconds)
+      .get(Uri.unsafeParse(url.value))
+      .headers(headers.map((k, v) => k.value -> v.value))
+      .readTimeout(timeoutSeconds.value.seconds)
       .response(asByteArrayAlways)
     scala.util
       .Try(req.send(backend))
       .toEither
       .left
-      .map(e => s"$url unreachable: ${e.getClass.getSimpleName}: ${e.getMessage}")
+      .map(e => HttpTransport.Problem(s"${url.value} unreachable: ${e.getClass.getSimpleName}: ${e.getMessage}"))
       .map(resp =>
         HttpAnswer(
-          resp.code.code,
-          resp.headers.reverse.map(h => h.name.toLowerCase(Locale.ROOT) -> h.value).toMap,
-          resp.body
+          HttpAnswer.Code(resp.code.code),
+          resp.headers.reverse.map(h => com.histmersion.domain.CoreQuota.HeaderName(h.name.toLowerCase(Locale.ROOT)) -> com.histmersion.domain.CoreQuota.HeaderValue(h.value)).toMap,
+          HttpAnswer.Body(resp.body)
         )
       )
 
 object SttpTransport:
-  type Problem = Problem.T
-  object Problem extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   /** The same request, pinned to HTTP/1.1 (see the backend above). */
   type TimeoutSeconds = TimeoutSeconds.T
   object TimeoutSeconds extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
-
-  type GetHeadersPart2 = GetHeadersPart2.T
-  object GetHeadersPart2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
   val http11: java.net.http.HttpRequest => java.net.http.HttpRequest = r =>
     java.net.http.HttpRequest.newBuilder(r, (_, _) => true).version(java.net.http.HttpClient.Version.HTTP_1_1).build()

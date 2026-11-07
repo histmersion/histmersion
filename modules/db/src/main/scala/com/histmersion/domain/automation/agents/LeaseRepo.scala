@@ -37,10 +37,11 @@ object LeaseRepo:
   def holder(name: com.histmersion.domain.automation.agents.LeaseRepo.LeaseName)(using DbCon): Option[(com.histmersion.domain.automation.agents.LeaseRepo.LeaseOwner, com.histmersion.domain.automation.agents.LeaseRepo.LeaseExpiry, Boolean)] =
     Sql
       .of(
-        s"SELECT owner, to_char(until AT TIME ZONE 'UTC', $ts), until < now() FROM agent_leases WHERE name = ?",
-        Param.S(name)
+        Sql.Text(s"SELECT owner, to_char(until AT TIME ZONE 'UTC', $ts), until < now() FROM agent_leases WHERE name = ?"),
+        Param.S(Param.S.V(name.value))
       )
       .frag
       .query[(String, String, Boolean)]
       .run()
       .headOption
+      .map((owner, until, expired) => (LeaseOwner(owner), LeaseExpiry(until), expired))

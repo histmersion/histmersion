@@ -10,11 +10,8 @@ import java.sql.{PreparedStatement, ResultSet, SQLException}
   * through, for `Option`'s codec to read as `None`.
   */
 object NewtypeColumns:
-  type ColumnCount = ColumnCount.T
-  object ColumnCount extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
-
   given column: [T] => (m: RefinedType.Mirror[T]) => (base: DbCodec[m.BaseType]) => DbCodec[T] = new DbCodec[T]:
-    val cols: IArray[com.histmersion.util.database.NewtypeColumns.ColumnCount] = base.cols
+    val cols: IArray[Int] = base.cols
     def queryRepr: String = base.queryRepr
     def readSingle(rs: ResultSet, pos: Int): T =
       val raw = base.readSingle(rs, pos)
@@ -30,7 +27,7 @@ object NewtypeColumns:
       base.writeSingle(entity.asInstanceOf[m.BaseType], ps, pos)
 
   given listColumn: [T] => (m: RefinedType.Mirror[T]) => (base: DbCodec[List[m.BaseType]]) => DbCodec[List[T]] = new DbCodec[List[T]]:
-    val cols: IArray[com.histmersion.util.database.NewtypeColumns.ColumnCount] = base.cols
+    val cols: IArray[Int] = base.cols
     def queryRepr: String = base.queryRepr
     def readSingle(rs: ResultSet, pos: Int): List[T] =
       base.readSingle(rs, pos).map { raw =>

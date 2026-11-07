@@ -12,8 +12,10 @@ object BackupRepo:
     */
 
   def rows(table: com.histmersion.util.data.TableName)(using DbCon): com.histmersion.RowCount =
-    scala.util
-      .Try(Sql.raw(s"SELECT count(*) FROM ${quoted(table)}").frag.query[Int].run().headOption.getOrElse(0))
-      .getOrElse(0)
+    com.histmersion.RowCount(
+      scala.util
+        .Try(Sql.raw(Sql.RawText(s"SELECT count(*) FROM ${quoted(table)}")).frag.query[Int].run().headOption.getOrElse(0))
+        .getOrElse(0)
+    )
 
-  private def quoted(table: com.histmersion.util.data.TableName): String = "\"" + table.replace("\"", "\"\"") + "\""
+  private def quoted(table: com.histmersion.util.data.TableName): String = "\"" + table.value.replace("\"", "\"\"") + "\""

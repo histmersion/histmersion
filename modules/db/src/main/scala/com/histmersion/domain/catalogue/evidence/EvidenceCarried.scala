@@ -27,7 +27,7 @@ object EvidenceCarried:
     TableName("attestations"),
     List(afterBlobs(101)(EvidenceBundleRepo.attestationFixes), afterBlobs(103)(EvidenceBundleRepo.attestationsIn))
   )(scope => EvidenceBundleRepo.attestations(scope).toList)(
-    _.updatedAt,
+    a => CarriedKind.RecordsClock(a.updatedAt.value),
     (es, ls) => es.modify(_.attestations).setTo(ls)
   )
 
@@ -36,7 +36,7 @@ object EvidenceCarried:
     BundleEntry(com.histmersion.api.exchange.Bundle.Files.EventCandidates),
     List(rows(61)(EvidenceBundleRepo.candidatesIn))
   )(scope => EvidenceBundleRepo.eventCandidates(scope).toList)(
-    c => Some(c.computedAt),
+    c => Some(CarriedKind.OwnedClock(c.computedAt.value)),
     (es, ls) => es.modify(_.eventCandidates).setTo(ls)
   )
 
@@ -45,7 +45,7 @@ object EvidenceCarried:
     BundleEntry(com.histmersion.api.exchange.Bundle.Files.EventChecks),
     List(rows(62)(EvidenceBundleRepo.checksIn))
   )(scope => EvidenceBundleRepo.eventChecks(scope).toList)(
-    c => Some(c.checkedAt),
+    c => Some(CarriedKind.OwnedClock(c.checkedAt.value)),
     (es, ls) => es.modify(_.eventChecks).setTo(ls)
   )
 

@@ -20,7 +20,7 @@ private[workflows] object ReviewLedgerRepo:
     sql"SELECT ledger::text FROM review_ledgers WHERE slug = $slug".query[String].run().headOption match
       case None       => Right(None)
       case Some(json) =>
-        Jsonb.decode[Ledger](json).left.map(e => s"the review ledger of '$slug' does not decode: $e").map(Some(_))
+        Jsonb.decode[Ledger](Jsonb.JsonText(json)).left.map(e => s"the review ledger of '$slug' does not decode: $e").map(Some(_))
 
   /** Write the ledger (insert or replace). The article must exist. */
   def put(l: Ledger)(using DbCon): Unit =
@@ -36,4 +36,4 @@ private[workflows] object ReviewLedgerRepo:
           WHERE NOT EXISTS (SELECT 1 FROM jsonb_array_elements(coalesce(l.ledger->'entries', '[]'::jsonb)) e
                             WHERE coalesce(e->>'status', 'open') = 'open' AND e->'finding'->>'severity' = 'major')
             AND NOT EXISTS (SELECT 1 FROM manager_items i WHERE i.manager_id = $reviewId AND i.target = l.slug
-                            AND i.status IN ('pending', 'held', 'active'))""".query[String].run().toSet
+                            AND i.status IN ('pending', 'held', 'active'))""".query[com.histmersion.domain.research.Slug].run().toSet

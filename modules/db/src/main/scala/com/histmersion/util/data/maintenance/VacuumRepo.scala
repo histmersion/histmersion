@@ -30,11 +30,11 @@ object VacuumRepo:
     sql"""SELECT coalesce((SELECT n_dead_tup FROM pg_stat_user_tables
                            WHERE schemaname = 'public' AND relname = $table), 0)::int8,
                  pg_total_relation_size(format('public.%I', $table::text)::regclass)::int8"""
-      .query[(Long, Long)]
+      .query[(TableState.DeadRows, TableState.Bytes)]
       .run()
       .headOption
       .map(TableState.apply)
-      .getOrElse(TableState(0, 0))
+      .getOrElse(TableState(TableState.DeadRows(0), TableState.Bytes(0)))
 
   /** Run `VACUUM [(ANALYZE)]` on one table, on a connection outside any transaction. The name must have passed
     * [[Vacuum.plan]] (shape and existence).
@@ -42,5 +42,5 @@ object VacuumRepo:
   def vacuum(table: String, analyze: com.histmersion.util.data.maintenance.VacuumRepo.Analyze)(using con: DbCon): Unit =
     val c = con.connection
     val st = c.createStatement()
-    try { val _ = st.execute(Vacuum.statement(table, analyze)) }
+    try { val _ = st.execute(Vacuum.statement(Vacuum.Table(table), Vacuum.Request.Analyze(analyze.value))) }
     finally st.close()

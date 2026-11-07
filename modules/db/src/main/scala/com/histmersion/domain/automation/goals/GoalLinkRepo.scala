@@ -18,27 +18,13 @@ object GoalLinkRepo:
   private val ts = """'YYYY-MM-DD"T"HH24:MI:SS"Z"'"""
 
   final private case class LinkRow(
-      kind: LinkRow.Kind,
-      ref: LinkRow.Ref,
-      note: Option[LinkRow.Note],
-      title: Option[LinkRow.Title],
-      createdAt: LinkRow.CreatedAt,
-      queue: Option[LinkRow.Queue]
+      kind: com.histmersion.api.automation.Goal.LinkKind.Wire,
+      ref: GoalLink.Ref,
+      note: Option[GoalLink.Note],
+      title: Option[GoalLink.Title],
+      createdAt: GoalLink.CreatedAt,
+      queue: Option[GoalLink.Queue]
   ) derives DbCodec
-
-  object LinkRow:
-    type Kind = Kind.T
-    object Kind extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-    type Ref = Ref.T
-    object Ref extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-    type Note = Note.T
-    object Note extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-    type Title = Title.T
-    object Title extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-    type CreatedAt = CreatedAt.T
-    object CreatedAt extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-    type Queue = Queue.T
-    object Queue extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
   /** A goal's links, each with the title of what it points at (`None` = it no longer exists; a query has no title).
     * Sources, then articles, queries, queue items; oldest first within a kind.
@@ -58,29 +44,29 @@ object GoalLinkRepo:
     }
 
   /** [[goalsOfItems]] on the caller's connection. */
-  def goalsOfItemsIn(items: List[com.histmersion.domain.automation.goals.GoalLinkRepo.ItemId])(using DbCon): List[(com.histmersion.domain.automation.goals.GoalLinkRepo.ItemId, com.histmersion.domain.automation.Goal.Slug, com.histmersion.domain.automation.Goal.LinkKind.Wire)] =
+  def goalsOfItemsIn(items: List[com.histmersion.domain.automation.goals.GoalLinkRepo.ItemId])(using DbCon): List[(ItemId, com.histmersion.domain.automation.Goal.Slug, BGoalRow.Title)] =
     if items.isEmpty then Nil
     else
       locally:
-        val refs = items.map(_.toString)
+        val refs = items.map(_.value.toString)
         sql"""SELECT l.ref, g.slug, g.title FROM goal_links l JOIN goals g ON g.slug = l.goal_slug
             WHERE l.kind = ${LinkKind.QueueItem.wire} AND l.ref = ANY($refs::text[])
             ORDER BY g.title, g.slug"""
-          .query[(String, String, String)]
+          .query[(String, com.histmersion.domain.automation.Goal.Slug, BGoalRow.Title)]
           .run()
           .toList
-          .flatMap((ref, slug, title) => ref.toIntOption.map((_, slug, title)))
+          .flatMap((ref, slug, title) => ref.toIntOption.map(i => (ItemId(i), slug, title)))
 
   /** [[refs]] on the caller's connection. */
-  def refsIn(goal: com.histmersion.domain.automation.Goal.Slug, kind: LinkKind)(using DbCon): List[com.histmersion.domain.automation.goals.GoalLinkRepo.LinkRow.Ref] =
+  def refsIn(goal: com.histmersion.domain.automation.Goal.Slug, kind: LinkKind)(using DbCon): List[GoalLink.Ref] =
     sql"SELECT ref FROM goal_links WHERE goal_slug = $goal AND kind = ${kind.wire} ORDER BY created_at, ref"
-      .query[String]
+      .query[GoalLink.Ref]
       .run()
       .toList
 
   /** Link (idempotent: an existing link keeps its note unless a new one is given). `false` = the goal does not exist.
     */
-  def link(goal: com.histmersion.domain.automation.Goal.Slug, kind: LinkKind, ref: com.histmersion.domain.automation.goals.GoalLinkRepo.LinkRow.Ref, note: Option[com.histmersion.domain.automation.goals.GoalLinkRepo.LinkRow.Note])(using DbCon): Boolean =
+  def link(goal: com.histmersion.domain.automation.Goal.Slug, kind: LinkKind, ref: GoalLink.Ref, note: Option[GoalLink.Note])(using DbCon): Boolean =
     val exists = sql"SELECT 1 FROM goals WHERE slug = $goal".query[Int].run().nonEmpty
     if exists then
       sql"""INSERT INTO goal_links (goal_slug, kind, ref, note) VALUES ($goal, ${kind.wire}, $ref, $note)
@@ -88,27 +74,27 @@ object GoalLinkRepo:
         .run()
     exists
 
-  def unlink(goal: com.histmersion.domain.automation.Goal.Slug, kind: LinkKind, ref: com.histmersion.domain.automation.goals.GoalLinkRepo.LinkRow.Ref)(using DbCon): Boolean =
+  def unlink(goal: com.histmersion.domain.automation.Goal.Slug, kind: LinkKind, ref: GoalLink.Ref)(using DbCon): Boolean =
 
     sql"DELETE FROM goal_links WHERE goal_slug = $goal AND kind = ${kind.wire} AND ref = $ref".update.run() > 0
 
   /** Every goal's links counted by kind: (goal, kind) → n. Article links count only articles that exist.
     */
-  def linkCounts()(using DbCon): Map[(com.histmersion.domain.automation.Goal.LinkKind.Wire, com.histmersion.domain.automation.goals.GoalLinkRepo.LinkRow.Queue), com.histmersion.RowCount] =
+  def linkCounts()(using DbCon): Map[(com.histmersion.domain.automation.Goal.Slug, com.histmersion.domain.automation.Goal.LinkKind.Wire), com.histmersion.RowCount] =
     sql"""SELECT l.goal_slug, l.kind, count(*)::int FROM goal_links l
           WHERE l.kind <> 'article' OR EXISTS (SELECT 1 FROM articles a WHERE a.slug = l.ref)
-          GROUP BY l.goal_slug, l.kind""".query[(String, String, Int)].run().map((g, k, n) => (g, k) -> n).toMap
+          GROUP BY l.goal_slug, l.kind""".query[(com.histmersion.domain.automation.Goal.Slug, com.histmersion.domain.automation.Goal.LinkKind.Wire, com.histmersion.RowCount)].run().map((g, k, n) => (g, k) -> n).toMap
 
   /** The goals that record an approved plan. */
   def planned()(using DbCon): Set[com.histmersion.domain.automation.Goal.Slug] =
-    sql"SELECT slug FROM goals WHERE plan IS NOT NULL".query[String].run().toSet
+    sql"SELECT slug FROM goals WHERE plan IS NOT NULL".query[com.histmersion.domain.automation.Goal.Slug].run().toSet
 
   // ── plan and run cap ───────────────────────────────────────────────────────────────────────────
 
   /** The approved plan (its JSON) and the goal's run cap. `None` = no such goal. */
   def planAndBudget(goal: com.histmersion.domain.automation.Goal.Slug)(using DbCon): Option[(Option[com.histmersion.domain.automation.goals.BGoalRow.Plan], Option[BigDecimal])] =
     sql"SELECT plan::text, budget_usd FROM goals WHERE slug = $goal"
-      .query[(Option[String], Option[BigDecimal])]
+      .query[(Option[BGoalRow.Plan], Option[BigDecimal])]
       .run()
       .headOption
 
@@ -125,39 +111,21 @@ object GoalLinkRepo:
   // ── schedules ──────────────────────────────────────────────────────────────────────────────────
 
   final private case class ScheduleRow(
-      goal: ScheduleRow.Goal,
-      kind: ScheduleRow.Kind,
-      cron: ScheduleRow.Cron,
-      enabled: ScheduleRow.Enabled,
+      goal: com.histmersion.api.automation.Goal.Slug,
+      kind: ScheduleKind.Wire,
+      cron: GoalSchedule.Cron,
+      enabled: GoalSchedule.Enabled,
       budgetUsd: Option[BigDecimal],
-      nextRunAt: Option[ScheduleRow.NextRunAt],
-      lastRunAt: Option[ScheduleRow.LastRunAt],
-      lastJob: Option[ScheduleRow.LastJob],
-      lastNote: Option[ScheduleRow.LastNote]
+      nextRunAt: Option[GoalSchedule.NextRunAt],
+      lastRunAt: Option[GoalSchedule.LastRunAt],
+      lastJob: Option[GoalSchedule.LastRun],
+      lastNote: Option[GoalSchedule.LastNote]
   ) derives DbCodec
 
-  object ScheduleRow:
-    type Goal = Goal.T
-    object Goal extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-    type Kind = Kind.T
-    object Kind extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-    type Cron = Cron.T
-    object Cron extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-    type Enabled = Enabled.T
-    object Enabled extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
-    type NextRunAt = NextRunAt.T
-    object NextRunAt extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-    type LastRunAt = LastRunAt.T
-    object LastRunAt extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-    type LastJob = LastJob.T
-    object LastJob extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-    type LastNote = LastNote.T
-    object LastNote extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-
-  private val scheduleSelect = Sql.raw(s"""SELECT goal_slug, kind, cron, enabled, budget_usd,
+  private val scheduleSelect = Sql.raw(Sql.RawText(s"""SELECT goal_slug, kind, cron, enabled, budget_usd,
               to_char(next_run_at AT TIME ZONE 'UTC', $ts), to_char(last_run_at AT TIME ZONE 'UTC', $ts),
               last_job, last_note
-       FROM goal_schedules""")
+       FROM goal_schedules"""))
 
   private def toSchedule(r: ScheduleRow): Option[GoalSchedule] =
     ScheduleKind
@@ -168,7 +136,7 @@ object GoalLinkRepo:
           k,
           r.cron,
           r.enabled,
-          r.budgetUsd.map(_.toDouble),
+          r.budgetUsd.map(b => GoalSchedule.BudgetUsd(b.toDouble)),
           r.nextRunAt,
           r.lastRunAt,
           r.lastJob,
@@ -178,7 +146,7 @@ object GoalLinkRepo:
 
   /** Every schedule (or one goal's), the next due first. */
   def schedules(goal: Option[com.histmersion.domain.automation.Goal.Slug] = None)(using DbCon): List[GoalSchedule] =
-    val where = goal.fold(Sql.empty)(g => Sql.of(com.histmersion.util.database.Sql.OfText(" WHERE goal_slug = ?"), Param.S(g)))
+    val where = goal.fold(Sql.empty)(g => Sql.of(Sql.OfText(" WHERE goal_slug = ?"), Param.S(Param.S.V(g.value))))
     (scheduleSelect ++ where ++ " ORDER BY next_run_at NULLS LAST, goal_slug, kind").frag
       .query[ScheduleRow]
       .run()
@@ -187,7 +155,7 @@ object GoalLinkRepo:
 
   /** One row here (a bundle's import, before the managers move it into its goal's watcher). */
   def schedule(goal: com.histmersion.domain.automation.Goal.Slug, kind: ScheduleKind)(using DbCon): Option[GoalSchedule] =
-    (scheduleSelect ++ Sql.of(" WHERE goal_slug = ? AND kind = ?", Param.S(goal), Param.S(kind.wire))).frag
+    (scheduleSelect ++ Sql.of(Sql.OfText(" WHERE goal_slug = ? AND kind = ?"), Param.S(Param.S.V(goal.value)), Param.S(Param.S.V(kind.wire.value)))).frag
       .query[ScheduleRow]
       .run()
       .headOption
@@ -197,8 +165,8 @@ object GoalLinkRepo:
   def setSchedule(
       goal: com.histmersion.domain.automation.Goal.Slug,
       kind: ScheduleKind,
-      cron: com.histmersion.domain.automation.goals.GoalLinkRepo.ScheduleRow.Cron,
-      enabled: com.histmersion.domain.automation.goals.GoalLinkRepo.ScheduleRow.Enabled,
+      cron: GoalSchedule.Cron,
+      enabled: GoalSchedule.Enabled,
       budgetUsd: Option[BigDecimal],
       next: Option[java.time.Instant]
   )(using DbCon): Unit =
@@ -217,7 +185,7 @@ object GoalLinkRepo:
     * tick moves them).
     */
   def scheduleGoals()(using DbCon): List[com.histmersion.domain.automation.Goal.Slug] =
-    sql"SELECT DISTINCT goal_slug FROM goal_schedules ORDER BY goal_slug".query[String].run().toList
+    sql"SELECT DISTINCT goal_slug FROM goal_schedules ORDER BY goal_slug".query[com.histmersion.domain.automation.Goal.Slug].run().toList
 
   /** Take a goal's schedules OUT of the table, in the caller's transaction (the migration into its watcher): two
     * servers migrating at once cannot both get them.
@@ -225,10 +193,10 @@ object GoalLinkRepo:
   def takeSchedulesIn(goal: com.histmersion.domain.automation.Goal.Slug)(using DbCon): List[GoalSchedule] =
     Sql
       .of(
-        s"""DELETE FROM goal_schedules WHERE goal_slug = ? RETURNING goal_slug, kind, cron, enabled, budget_usd,
+        Sql.OfText(s"""DELETE FROM goal_schedules WHERE goal_slug = ? RETURNING goal_slug, kind, cron, enabled, budget_usd,
               to_char(next_run_at AT TIME ZONE 'UTC', $ts), to_char(last_run_at AT TIME ZONE 'UTC', $ts),
-              last_job, last_note""",
-        Param.S(goal)
+              last_job, last_note"""),
+        Param.S(Param.S.V(goal.value))
       )
       .frag
       .query[ScheduleRow]

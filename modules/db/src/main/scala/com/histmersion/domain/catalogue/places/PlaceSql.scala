@@ -40,7 +40,8 @@ object PlaceSql:
   /** `('wikidata', 'geonames', 'tgn')` — [[Gazetteer.ImportedSources]] as an SQL list. The partial indexes of
     * V075/V076/V080 (rebuilt by V093 when TGN joined) spell it word for word.
     */
-  val ImportedList: com.histmersion.domain.catalogue.places.PlaceSql.ImportedList = Gazetteer.ImportedSources.map(s => s"'$s'").mkString("(", ", ", ")")
+  val ImportedList: com.histmersion.domain.catalogue.places.PlaceSql.ImportedList =
+    ImportedListValue(Gazetteer.ImportedSources.map(s => s"'$s'").mkString("(", ", ", ")"))
 
   /** A place whose source states NO date (GeoNames, Wikidata — [[PlaceDating.Unknown]]): the open range there means
     * "unknown", not "always". Findable and placeable by name; never on a time-sliced map. Over a `places` row aliased
@@ -99,7 +100,7 @@ object PlaceSql:
   /** The configured `places.modern-from` for callers that hold no config (the tests). It MUST equal `reference.conf`;
     * `PlaceTimeSuite` asserts it. Every production read passes the configured value.
     */
-  val DefaultModernFrom: com.histmersion.domain.catalogue.places.PlaceSql.DefaultModernFrom = com.histmersion.domain.catalogue.places.PlaceSql.DefaultModernFrom(1500L)
+  val DefaultModernFrom: com.histmersion.domain.catalogue.places.PlaceSql.DefaultModernFrom = DefaultModernFromValue(1500L)
 
   /** A stored period open on both sides: the source states no date. An unknown start (V074) is not — it stores a
     * window.
@@ -130,11 +131,11 @@ object PlaceSql:
     import Param.*
     window.fold(Sql.raw(com.histmersion.util.database.Sql.RawText("tw AS (SELECT NULL::int8range AS w, false AS modern_on)")))((lo, hi) =>
       Sql.of(
-        "tw AS (SELECT int8range(?::bigint, ?::bigint, '[]') AS w, ?::bigint >= ?::bigint AS modern_on)",
-        L(lo),
-        L(hi),
-        L(hi),
-        L(modernFrom)
+        Sql.OfText("tw AS (SELECT int8range(?::bigint, ?::bigint, '[]') AS w, ?::bigint >= ?::bigint AS modern_on)"),
+        L(L.V(lo.value)),
+        L(L.V(hi.value)),
+        L(L.V(hi.value)),
+        L(L.V(modernFrom.value))
       )
     )
 

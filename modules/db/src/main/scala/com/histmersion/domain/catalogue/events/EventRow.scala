@@ -30,23 +30,35 @@ final private[events] case class EventRow(
     uncertainty: Option[EventRow.Uncertainty]
 ) derives DbCodec:
   def toSummary: EventSummary =
+    def year(y: Option[Long]) = y.map(com.histmersion.api.catalogue.Year(_))
     EventSummary(
-      id,
-      label,
-      kind,
-      TimeSpan(notBefore, beginBy, endFrom, notAfter),
-      historicity,
-      placeId,
-      parentId,
-      description,
-      citekey,
-      EventScale.effective(scale, kind, parentId.isDefined, placeKind, geometryType),
-      scale.isDefined,
-      tier,
-      EventPrecision.of(uncertainty),
-      central,
-      plusMinus,
-      datingMethod
+      com.histmersion.api.catalogue.Event.Id(id.value),
+      EventSummary.Label(label.value),
+      EventSummary.Kind(kind.value),
+      TimeSpan(
+        year(notBefore.map(_.value)),
+        year(beginBy.map(_.value)),
+        year(endFrom.map(_.value)),
+        year(notAfter.map(_.value))
+      ),
+      EventSummary.Historicity(historicity.value),
+      placeId.map(p => com.histmersion.api.catalogue.Place.Id(p.value)),
+      parentId.map(p => com.histmersion.api.catalogue.Event.Id(p.value)),
+      description.map(d => EventSummary.Description(d.value)),
+      citekey.map(c => com.histmersion.api.library.Citekey(c.value)),
+      EventScale.effective(
+        scale.map(s => EventSummary.Scale(s.value)),
+        EventScale.EffectiveKind(kind.value),
+        parentId.isDefined,
+        placeKind.map(k => com.histmersion.api.catalogue.Place.Kind.Wire(k.value)),
+        geometryType.map(g => EventScale.GeometryType(g.value))
+      ),
+      EventSummary.ScaleStated(scale.isDefined),
+      EventSummary.Tier(tier.value),
+      EventPrecision.of(uncertainty.map(u => EventPrecision.Uncertainty(u.value))),
+      central.map(c => EventSummary.Central(c.value)),
+      plusMinus.map(p => EventSummary.PlusMinus(p.value)),
+      datingMethod.map(d => EventSummary.DatingMethod(d.value))
     )
 
 object EventRow:

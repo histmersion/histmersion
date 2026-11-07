@@ -16,11 +16,15 @@ object PluginAi:
 
   /** Whether the provider can serve `model` now, by its own check; an exception is a "no". */
 
-  def check(provider: AiProvider, model: com.histmersion.pluginhost.PluginAi.ModelName): Either[com.histmersion.pluginhost.PluginAi.Problem, Unit] =
-    try Option(provider.check(model)).getOrElse(Left("its check answered null"))
+  def check(provider: AiProvider, model: ModelName): Either[Problem, Unit] =
+    try
+      Option(provider.check(AiProvider.CheckModel(model.value)))
+        .getOrElse(Left(AiProvider.CheckResultPart1("its check answered null")))
+        .left
+        .map(e => Problem(e.value))
     catch
       case e: InterruptedException => throw e
-      case NonFatal(e)             => Left(s"its check threw ${e.getClass.getSimpleName}")
+      case NonFatal(e)             => Left(Problem(s"its check threw ${e.getClass.getSimpleName}"))
 
   /** One model call: the provider's answer, or its failure — an exception or a `null` being an error. */
   def turn(provider: AiProvider, request: AiTurn.Request, http: AiHttp): Either[AiFailure, AiTurn] =
@@ -28,5 +32,6 @@ object PluginAi:
       try Option(provider.turn(request, http)).getOrElse(Left(AiFailure.Error(com.histmersion.plugin.AiFailure.Error.Message("the provider answered null"))))
       catch
         case e: InterruptedException => throw e
-        case NonFatal(e) => Left(AiFailure.Error(s"${e.getClass.getSimpleName}: ${Option(e.getMessage).getOrElse("")}"))
-    answer.flatMap(t => Option(t).toRight(AiFailure.Error("the provider answered null")))
+        case NonFatal(e) =>
+          Left(AiFailure.Error(AiFailure.Error.Message(s"${e.getClass.getSimpleName}: ${Option(e.getMessage).getOrElse("")}")))
+    answer.flatMap(t => Option(t).toRight(AiFailure.Error(AiFailure.Error.Message("the provider answered null"))))

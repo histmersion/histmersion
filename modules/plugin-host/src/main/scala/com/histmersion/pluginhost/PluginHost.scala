@@ -1,7 +1,8 @@
 package com.histmersion.pluginhost
 
 import com.histmersion.config.EnvOverrides
-import com.histmersion.api.plugins.{PluginSetting, PluginsReport, PluginState, PluginStatus}
+import com.histmersion.api.Sha256
+import com.histmersion.api.plugins.{PluginJar, PluginSet, PluginSetting, PluginsReport, PluginState, PluginStatus}
 import com.histmersion.plugin.*
 import hearth.kindlings.sconfigderivation.ConfigDecodingError
 import org.ekrich.config.{
@@ -30,68 +31,23 @@ import scala.util.control.NonFatal
   * succeeded.
   */
 object PluginHost:
-  type Built = Built.T
-  object Built extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type ClassName = ClassName.T
   object ClassName extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type ConfigPath = ConfigPath.T
   object ConfigPath extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type Description = Description.T
-  object Description extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type Digest = Digest.T
-  object Digest extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type Enabled = Enabled.T
-  object Enabled extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type EnvName = EnvName.T
-  object EnvName extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type FirstParty = FirstParty.T
-  object FirstParty extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type LogMessage = LogMessage.T
-  object LogMessage extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type PassProgress = PassProgress.T
-  object PassProgress extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type Problem = Problem.T
   object Problem extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type Provider = Provider.T
   object Provider extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type Provides = Provides.T
-  object Provides extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type Summary = Summary.T
-  object Summary extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type VaultId = VaultId.T
-  object VaultId extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type SecretValue = SecretValue.T
+  object SecretValue extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type Warning = Warning.T
   object Warning extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-
-  type ResolveAllOneR = ResolveAllOneR.T
-  object ResolveAllOneR extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type RegisterResolvedResultPart2 = RegisterResolvedResultPart2.T
-  object RegisterResolvedResultPart2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-
-  type SpiGeneration = SpiGenerationValue
-  type SpiGenerationValue = SpiGenerationValue.T
-  object SpiGenerationValue extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type ForeignSpiResult = ForeignSpiResult.T
-  object ForeignSpiResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type CheckSpi = CheckSpi.T
-  object CheckSpi extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type UnknownBlocksIds = UnknownBlocksIds.T
-  object UnknownBlocksIds extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type BlockId = BlockId.T
-  object BlockId extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type ResolveResultPart2 = ResolveResultPart2.T
-  object ResolveResultPart2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type ResolveAllResultPart1 = ResolveAllResultPart1.T
-  object ResolveAllResultPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type ResolveAllResultPart2Part2 = ResolveAllResultPart2Part2.T
-  object ResolveAllResultPart2Part2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type ResolveAllRefs = ResolveAllRefs.T
-  object ResolveAllRefs extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
   val Root = "histmersion.plugins"
 
   /** The SPI generation this host speaks: what a plugin the host supplies itself is built against. */
-  val SpiGeneration: com.histmersion.pluginhost.PluginHost.SpiGeneration = Spi.Version
+  val SpiGeneration: Plugin.Info.SpiVersion = Plugin.Info.SpiVersion(Spi.Version)
 
   /** Keys of `histmersion.plugins` that are the host's, not a plugin's block. */
   val OrderKey = "order"
@@ -103,33 +59,33 @@ object PluginHost:
   /** Every `Plugin` provider on the class path. A provider that cannot be instantiated is reported, not fatal (the
     * others still load).
     */
-  def discover(loader: ClassLoader): (List[Plugin], List[com.histmersion.pluginhost.PluginHost.Problem]) =
+  def discover(loader: ClassLoader): (List[Plugin], List[Problem]) =
     val it = ServiceLoader.load(classOf[Plugin], loader).iterator
     // ServiceLoader's iterator is lazy and may throw per provider: walk it by hand, keeping going
     @annotation.tailrec
-    def loop(acc: List[Plugin], errs: List[com.histmersion.pluginhost.PluginHost.Problem]): (List[Plugin], List[com.histmersion.pluginhost.PluginHost.Problem]) =
+    def loop(acc: List[Plugin], errs: List[Problem]): (List[Plugin], List[Problem]) =
       val step =
         try Right(if it.hasNext then Some(it.next()) else None)
         catch
           case e: LinkageError => Left(e)
           case NonFatal(e)     => Left(e)
-      val loaded: Either[(Option[com.histmersion.pluginhost.PluginHost.Provider], Throwable), Option[Plugin]] = step.left.map(e => providerOf(e) -> e).flatMap {
-        case Some(p) => described(p).left.map(e => Some(p.getClass.getName) -> e).map(Some(_))
+      val loaded: Either[(Option[Provider], Throwable), Option[Plugin]] = step.left.map(e => providerOf(e) -> e).flatMap {
+        case Some(p) => described(p).left.map(e => Some(Provider(p.getClass.getName)) -> e).map(Some(_))
         case None    => Right(None)
       }
       loaded match
         case Right(Some(p))      => loop(p :: acc, errs)
         case Right(None)         => (acc.reverse, errs.reverse)
         case Left((provider, e)) =>
-          loop(acc, s"a plugin provider${provider.fold("")(c => s" ($c)")} could not be loaded: ${failure(e)}" :: errs)
+          loop(acc, Problem(s"a plugin provider${provider.fold("")(c => s" ($c)")} could not be loaded: ${failure(e)}") :: errs)
     loop(Nil, Nil)
 
   private val ProviderClass = "Provider ([\\w.$]+)".r.unanchored
 
   /** The provider class ServiceLoader names in the error it threw for one it could not instantiate. */
-  def providerOf(e: Throwable): Option[com.histmersion.pluginhost.PluginHost.Provider] = e match
+  def providerOf(e: Throwable): Option[Provider] = e match
     case e: java.util.ServiceConfigurationError =>
-      Option(e.getMessage).collect { case ProviderClass(c) => c }
+      Option(e.getMessage).collect { case ProviderClass(c) => Provider(c) }
     case _ => None
 
   /** The plugin, once its [[Plugin.info]] could be read: a plugin built against an older SPI fails on it (SPI 1's
@@ -148,35 +104,39 @@ object PluginHost:
     * `Spi.Version`, which SPI 2 compiles into the plugin); `None` for another SPI type when the generation cannot be
     * told.
     */
-  def foreignSpi(e: Throwable): Option[Option[com.histmersion.pluginhost.PluginHost.ForeignSpiResult]] = e match
+  def foreignSpi(e: Throwable): Option[Option[Plugin.Info.SpiVersion]] = e match
     case e: (NoSuchMethodError | NoSuchFieldError | AbstractMethodError | IncompatibleClassChangeError) =>
       val message = Option(e.getMessage).getOrElse("").replace('/', '.')
-      if message.contains("com.histmersion.plugin.Spi$.Version()") then Some(Some(com.histmersion.pluginhost.PluginHost.ForeignSpiResult(1)))
+      if message.contains("com.histmersion.plugin.Spi$.Version()") then Some(Some(Plugin.Info.SpiVersion(1)))
       else if message.contains("com.histmersion.plugin.") then Some(None)
       else None
     case e => Option(e.getCause).filter(_ ne e).flatMap(foreignSpi)
 
   /** What to do about a plugin built against another SPI generation. */
-  def rebuild(built: Option[com.histmersion.pluginhost.PluginHost.Built]): com.histmersion.pluginhost.PluginHost.Summary =
-    s"it was built against ${built.fold("another plugin SPI")(v => s"plugin SPI $v")}; this Histmersion speaks " +
-      s"SPI ${Spi.Version} — rebuild the plugin against SPI ${Spi.Version} (`histmersion plugin repo` has its API)"
+  def rebuild(built: Option[Plugin.Info.SpiVersion]): Problem =
+    Problem(
+      s"it was built against ${built.fold("another plugin SPI")(v => s"plugin SPI $v")}; this Histmersion speaks " +
+        s"SPI ${Spi.Version} — rebuild the plugin against SPI ${Spi.Version} (`histmersion plugin repo` has its API)"
+    )
 
   /** The class a plugin needs that no jar on the class path has, when that is why `e` was thrown: the library it
     * belongs to was neither shipped with Histmersion nor installed with the plugin.
     */
-  def missingClass(e: Throwable): Option[com.histmersion.pluginhost.PluginHost.ClassName] = e match
-    case e: NoClassDefFoundError   => Some(Option(e.getMessage).getOrElse("?").replace('/', '.'))
-    case e: ClassNotFoundException => Some(Option(e.getMessage).getOrElse("?"))
+  def missingClass(e: Throwable): Option[ClassName] = e match
+    case e: NoClassDefFoundError   => Some(ClassName(Option(e.getMessage).getOrElse("?").replace('/', '.')))
+    case e: ClassNotFoundException => Some(ClassName(Option(e.getMessage).getOrElse("?")))
     case e                         => Option(e.getCause).filter(_ ne e).flatMap(missingClass)
 
   /** Why plugin code threw, in words that say what to do when a class is missing. */
-  def failure(e: Throwable): com.histmersion.pluginhost.PluginHost.Problem =
+  def failure(e: Throwable): Problem =
     foreignSpi(e)
       .map(rebuild)
       .getOrElse(
-        missingClass(e).fold(s"${e.getClass.getSimpleName}: ${e.getMessage}")(name =>
-          s"class $name is missing: the plugin uses a library that is neither part of Histmersion nor installed with it — " +
-            "install the plugin with `histmersion plugin add` from a jar published with its POM, which lists its dependencies"
+        missingClass(e).fold(Problem(s"${e.getClass.getSimpleName}: ${e.getMessage}"))(name =>
+          Problem(
+            s"class $name is missing: the plugin uses a library that is neither part of Histmersion nor installed with it — " +
+              "install the plugin with `histmersion plugin add` from a jar published with its POM, which lists its dependencies"
+          )
         )
       )
 
@@ -186,16 +146,17 @@ object PluginHost:
     * is refused: which one the user meant cannot be known), an id that is no config key, or a key the host keeps for
     * itself.
     */
-  def check(infos: List[Plugin.Info], spi: com.histmersion.pluginhost.PluginHost.CheckSpi): Map[com.histmersion.util.plugins.Plugin.Id, String] =
+  def check(infos: List[Plugin.Info], spi: Plugin.Info.SpiVersion): Map[Plugin.Info.Id, Problem] =
     val dup = infos.groupBy(_.id).collect {
       case (id, is) if is.size > 1 =>
-        id -> s"plugin id '$id' is claimed by ${is.size} plugins"
+        id -> Problem(s"plugin id '$id' is claimed by ${is.size} plugins")
     }
     val bad = infos.flatMap { i =>
       if i.spiVersion != spi then
-        Some(i.id -> s"${i.id}: built for SPI ${i.spiVersion}, this host speaks $spi — rebuild it against SPI $spi")
-      else if !i.id.matches(IdPattern) then Some(i.id -> s"'${i.id}': a plugin id is kebab-case $IdPattern")
-      else if Reserved(i.id) then Some(i.id -> s"'${i.id}' is a key of $Root, not a plugin id")
+        Some(i.id -> Problem(s"${i.id}: built for SPI ${i.spiVersion}, this host speaks $spi — rebuild it against SPI $spi"))
+      else if !i.id.value.matches(IdPattern) then
+        Some(i.id -> Problem(s"'${i.id}': a plugin id is kebab-case $IdPattern"))
+      else if Reserved(i.id.value) then Some(i.id -> Problem(s"'${i.id}' is a key of $Root, not a plugin id"))
       else None
     }.toMap
     bad ++ dup
@@ -203,37 +164,38 @@ object PluginHost:
   /** Pure: registration order — the ids named in `histmersion.plugins.order` first, as listed, then the rest by id;
     * with a warning per listed id that is no plugin here.
     */
-  def order(ids: List[com.histmersion.util.plugins.Plugin.Id], configured: List[com.histmersion.util.plugins.Plugin.Id]): (List[com.histmersion.util.plugins.Plugin.Id], List[com.histmersion.pluginhost.PluginHost.Problem]) =
+  def order(ids: List[Plugin.Info.Id], configured: List[Plugin.Info.Id]): (List[Plugin.Info.Id], List[Problem]) =
     val listed = configured.distinct
     val unknown =
-      listed.filterNot(ids.contains).map(id => s"$Root.$OrderKey names '$id', which is no plugin in this binary")
-    (listed.filter(ids.contains) ++ ids.filterNot(listed.contains).sorted, unknown)
+      listed.filterNot(ids.contains).map(id => Problem(s"$Root.$OrderKey names '$id', which is no plugin in this binary"))
+    (listed.filter(ids.contains) ++ ids.filterNot(listed.contains).sortBy(_.value), unknown)
 
   /** Pure: one digest of a plugin set — `(jar file name, its SHA-256)` pairs, order-independent. What a relink records
     * in the image and `histmersion plugin status` recomputes over the plugins directory (docs/research-plugins.md §7.3;
     * the one implementation is files' `PluginKit.digest`).
     */
-  def digest(entries: List[(com.histmersion.util.plugins.Plugin.Id, com.histmersion.pluginhost.PluginHost.Digest)]): com.histmersion.pluginhost.PluginHost.Digest = com.histmersion.util.plugins.PluginKit.digest(entries)
+  def digest(entries: List[(PluginJar.File, Sha256)]): PluginSet.Digest = com.histmersion.util.plugins.PluginKit.digest(entries)
 
   /** Pure: `histmersion.plugins.order` of the user's file, or why it cannot be read. */
-  def configuredOrder(user: Config, env: Config): Either[com.histmersion.pluginhost.PluginHost.Problem, List[com.histmersion.util.plugins.Plugin.Id]] =
+  def configuredOrder(user: Config, env: Config): Either[Problem, List[Plugin.Info.Id]] =
     val path = s"$Root.$OrderKey"
-    Try(user.withFallback(env).resolve()).toEither.left.map(e => s"$path: ${e.getMessage}").flatMap { c =>
+    Try(user.withFallback(env).resolve()).toEither.left.map(e => Problem(s"$path: ${e.getMessage}")).flatMap { c =>
       if !c.hasPath(path) then Right(Nil)
       else
-        Try(c.getStringList(path).asScala.toList.map(_.trim).filter(_.nonEmpty)).toEither.left
-          .map(_ => s"$path must be a list of plugin ids [ … ]")
+        Try(c.getStringList(path).asScala.toList.map(_.trim).filter(_.nonEmpty).map(Plugin.Info.Id(_))).toEither.left
+          .map(_ => Problem(s"$path must be a list of plugin ids [ … ]"))
     }
 
   /** Pure: blocks under `histmersion.plugins` no plugin here claims — a typo, or a plugin left out of this binary. A
     * warning, never an error: removing a plugin must not break startup.
     */
-  def unknownBlocks(user: Config, ids: Set[com.histmersion.pluginhost.PluginHost.UnknownBlocksIds]): List[com.histmersion.pluginhost.PluginHost.Problem] =
+  def unknownBlocks(user: Config, ids: Set[Plugin.Info.Id]): List[Plugin.Info.Id] =
     if !Try(user.hasPath(Root)).getOrElse(false) then Nil
     else
       Try(user.getConfig(Root).root.keySet.asScala.toList.sorted)
         .getOrElse(Nil)
-        .filterNot(k => ids(k) || Reserved(k))
+        .filterNot(k => ids(Plugin.Info.Id(k)) || Reserved(k))
+        .map(Plugin.Info.Id(_))
 
   /** Pure: the plugin's effective block — env overrides its defaults declare (`${?VAR}`) > the user's
     * `histmersion.plugins.<id>` > `host`, the settings the host supplies a first-party plugin from its own keys (keys
@@ -245,9 +207,9 @@ object PluginHost:
       user: Config,
       defaults: Config,
       env: Config,
-      id: com.histmersion.pluginhost.PluginHost.BlockId,
+      id: Plugin.Info.Id,
       host: Config = ConfigFactory.empty
-  ): Either[com.histmersion.pluginhost.PluginHost.Problem, Config] =
+  ): Either[Problem, Config] =
     val path = s"$Root.$id"
     try
       val own = if user.hasPath(path) then user.getConfig(path) else ConfigFactory.empty
@@ -262,17 +224,17 @@ object PluginHost:
           .resolve()
       val trimmed = resolved.root.keySet.asScala.toList.filterNot(keep).foldLeft(resolved.root)(_.withoutKey(_))
       Right(trimmed.toConfig)
-    catch case e: ConfigException => Left(s"$path: ${e.getMessage}")
+    catch case e: ConfigException => Left(Problem(s"$path: ${e.getMessage}"))
 
   /** Pure: `enabled` of an effective block — a boolean or a boolean string (env); absent = disabled. */
-  def enabled(block: Config, id: com.histmersion.util.plugins.Plugin.Id): Either[com.histmersion.pluginhost.PluginHost.Problem, Boolean] =
+  def enabled(block: Config, id: Plugin.Info.Id): Either[Problem, Boolean] =
     if !block.hasPath("enabled") then Right(false)
     else
       val v = block.getValue("enabled")
       Option(v.unwrapped)
         .map(_.toString.trim.toLowerCase(java.util.Locale.ROOT))
         .flatMap(_.toBooleanOption)
-        .toRight(s"$Root.$id.enabled must be true or false")
+        .toRight(Problem(s"$Root.$id.enabled must be true or false"))
 
   /** Pure: each key the USER's block sets against the kind of value the plugin's defaults have there — the derived
     * readers report a wrong type without its key ("Expected NUMBER but got STRING"), so the key is found here first, as
@@ -280,20 +242,20 @@ object PluginHost:
     * arrive as strings); a key whose default is `null` (an optional value) takes any value and is left to the reader.
     * Keys the defaults do not have are reported as unknown.
     */
-  def typeCheck(id: com.histmersion.util.plugins.Plugin.Id, user: Config, defaults: Config): List[com.histmersion.pluginhost.PluginHost.Problem] =
+  def typeCheck(id: Plugin.Info.Id, user: Config, defaults: Config): List[Problem] =
     import ConfigValueType.*
     val path = s"$Root.$id"
     if !Try(user.hasPath(path)).getOrElse(false) then Nil
     else
       leaves(user.getConfig(path).root, Nil).flatMap { (keys, v) =>
-        val k = ConfigUtil.joinPath(keys.asJava)
+        val k = ConfigUtil.joinPath(keys.map(_.value).asJava)
         def text = Option(v.unwrapped).map(_.toString.trim).getOrElse("")
         if k == "enabled" then
           Option.unless(v.valueType == BOOLEAN || text.toBooleanOption.isDefined)(
-            s"$path.enabled must be true or false"
+            Problem(s"$path.enabled must be true or false")
           )
         else if !Try(defaults.hasPathOrNull(k)).getOrElse(false) then
-          Some(s"$path.$k: unknown setting (not in the plugin's defaults)")
+          Some(Problem(s"$path.$k: unknown setting (not in the plugin's defaults)"))
         else if defaults.getIsNull(k) then None
         else
           val (ok, want) = defaults.getValue(k).valueType match
@@ -303,30 +265,30 @@ object PluginHost:
             case LIST   => (v.valueType == LIST, "a list [ … ]")
             case STRING => (v.valueType != LIST && v.valueType != OBJECT, "a string")
             case _      => (true, "")
-          Option.unless(ok)(s"$path.$k must be $want, not ${v.render(ConfigRenderOptions.concise)}")
+          Option.unless(ok)(Problem(s"$path.$k must be $want, not ${v.render(ConfigRenderOptions.concise)}"))
       }
 
   /** Every leaf of a HOCON object (lists and nulls are leaves), with its path. */
-  private def leaves(obj: ConfigObject, prefix: List[com.histmersion.pluginhost.PluginHost.ConfigPath]): List[(List[com.histmersion.pluginhost.PluginHost.ConfigPath], ConfigValue)] =
+  private def leaves(obj: ConfigObject, prefix: List[ConfigPath]): List[(List[ConfigPath], ConfigValue)] =
     obj.keySet.asScala.toList.sorted.flatMap { k =>
       obj.get(k) match
-        case o: ConfigObject if !o.isEmpty => leaves(o, prefix :+ k)
-        case v                             => List((prefix :+ k) -> v)
+        case o: ConfigObject if !o.isEmpty => leaves(o, prefix :+ ConfigPath(k))
+        case v                             => List((prefix :+ ConfigPath(k)) -> v)
     }
 
   /** Pure: a decoding error as `histmersion.plugins.<id>[.<key>]: what`. */
-  def describe(id: com.histmersion.util.plugins.Plugin.Id, err: ConfigDecodingError): com.histmersion.pluginhost.PluginHost.Description = err match
-    case ConfigDecodingError.Multiple(errs) => errs.toList.map(describe(id, _)).mkString("; ")
-    case e                                  => (s"$Root.$id" :: e.path).mkString(".") + s": ${e.message}"
+  def describe(id: Plugin.Info.Id, err: ConfigDecodingError): Problem = err match
+    case ConfigDecodingError.Multiple(errs) => Problem(errs.toList.map(describe(id, _)).mkString("; "))
+    case e                                  => Problem((s"$Root.$id" :: e.path).mkString(".") + s": ${e.message}")
 
   /** Decode a plugin's block with the plugin's own reader — the path-dependent type keeps the decoded value tied to the
     * plugin that will receive it, with no cast.
     */
-  def decode(p: Plugin, conf: Config): Either[com.histmersion.pluginhost.PluginHost.Problem, p.Config] =
+  def decode(p: Plugin, conf: Config): Either[Problem, p.Config] =
     try p.configReader.from(conf.withoutPath("enabled").root).left.map(describe(p.info.id, _))
     catch
-      case e: LinkageError => Left(s"$Root.${p.info.id}: ${failure(e)}")
-      case NonFatal(e)     => Left(s"$Root.${p.info.id}: ${e.getMessage}")
+      case e: LinkageError => Left(Problem(s"$Root.${p.info.id}: ${failure(e)}"))
+      case NonFatal(e)     => Left(Problem(s"$Root.${p.info.id}: ${e.getMessage}"))
 
   /** Pure: every [[Secret]] inside a decoded config — case classes, options, collections and maps are walked through
     * `productIterator` (generated code, no reflection), in order, without repeats.
@@ -351,7 +313,7 @@ object PluginHost:
         case ConfigValueType.NULL   => "null"
         case ConfigValueType.STRING => Option(mask(v.unwrapped.toString)).filter(_.nonEmpty).getOrElse("\"\"")
         case _                      => masked(v).render(ConfigRenderOptions.concise)
-      PluginSetting(ConfigUtil.joinPath(keys.asJava), shown)
+      PluginSetting(PluginSetting.Key(ConfigUtil.joinPath(keys.map(_.value).asJava)), PluginSetting.Value(shown))
     }
 
   private def mask(s: String): String =
@@ -365,66 +327,72 @@ object PluginHost:
     case other                                      => other
 
   /** The plugin's defaults resource, read through ITS class loader; absent = no defaults. */
-  def defaults(p: Plugin): Either[com.histmersion.pluginhost.PluginHost.Problem, Config] =
+  def defaults(p: Plugin): Either[Problem, Config] =
     try
       Right(
         ConfigFactory.parseResources(
           p.getClass.getClassLoader,
-          p.defaultsResource,
+          p.defaultsResource.value,
           ConfigParseOptions.defaults.setAllowMissing(true)
         )
       )
-    catch case e: ConfigException => Left(s"${p.info.id}: its defaults ${p.defaultsResource}: ${e.getMessage}")
+    catch case e: ConfigException => Left(Problem(s"${p.info.id}: its defaults ${p.defaultsResource}: ${e.getMessage}"))
 
   // ── secrets ─────────────────────────────────────────────────────────────────────────────────
 
   /** Resolve one reference: `value:` is the literal, `env:` the variable of `env`, `<vault>:` asks the vault registered
     * under that name. Errors name the reference (never a value).
     */
-  def resolve(ref: Secret.Ref, env: Config, vaults: Map[com.histmersion.pluginhost.PluginHost.VaultId, Secret.Vault]): Either[com.histmersion.pluginhost.PluginHost.Problem, com.histmersion.pluginhost.PluginHost.ResolveResultPart2] =
+  def resolve(ref: Secret.Ref, env: Config, vaults: Map[Secret.Ref.Vault.Value, Secret.Vault]): Either[Problem, SecretValue] =
     ref match
-      case Secret.Ref.Value(v) => Right(v)
+      case Secret.Ref.Value(v) => Right(SecretValue(v.value))
       case Secret.Ref.Env(n)   =>
-        Option(env.root.get(n))
+        Option(env.root.get(n.value))
           .flatMap(v => Option(v.unwrapped))
-          .map(_.toString)
-          .toRight(s"secret ${ref.shown}: environment variable $n is not set")
+          .map(v => SecretValue(v.toString))
+          .toRight(Problem(s"secret ${ref.shown}: environment variable $n is not set"))
       case Secret.Ref.Vault(name, r) =>
         vaults.get(name) match
           case None =>
-            Left(s"secret ${ref.shown}: no secret vault '$name' is registered (enable the plugin that provides it)")
+            Left(Problem(s"secret ${ref.shown}: no secret vault '$name' is registered (enable the plugin that provides it)"))
           case Some(v) =>
-            try v.resolve(r).left.map(e => s"secret ${ref.shown}: $e")
-            catch case NonFatal(e) => Left(s"secret ${ref.shown}: vault '$name' failed: ${e.getClass.getSimpleName}")
+            try
+              v.resolve(Secret.Vault.ResolveRef(r.value)).left
+                .map(e => Problem(s"secret ${ref.shown}: $e"))
+                .map(x => SecretValue(x.value))
+            catch case NonFatal(e) => Left(Problem(s"secret ${ref.shown}: vault '$name' failed: ${e.getClass.getSimpleName}"))
 
   /** Resolve several references of ONE vault in one call ([[Secret.Vault.resolveAll]]): each answer as [[resolve]]
     * words it; a reference the vault did not answer is an error, an answer to one not asked is dropped. A `resolveAll`
     * that throws (the SPI's default throws whatever one `resolve` throws) is answered one reference at a time instead,
     * so a throw fails only its own reference.
     */
-  def resolveAll(name: com.histmersion.pluginhost.PluginHost.VaultId, refs: List[com.histmersion.pluginhost.PluginHost.ResolveAllRefs], vault: Secret.Vault): Map[com.histmersion.pluginhost.PluginHost.ResolveAllResultPart1, Either[com.histmersion.pluginhost.PluginHost.Problem, com.histmersion.pluginhost.PluginHost.ResolveAllResultPart2Part2]] =
+  def resolveAll(name: Secret.Ref.Vault.Value, refs: List[Secret.Ref.Vault.Ref], vault: Secret.Vault): Map[Secret.Ref.Vault.Ref, Either[Problem, SecretValue]] =
     val asked = refs.distinct
-    def one(r: com.histmersion.pluginhost.PluginHost.ResolveAllOneR) = resolve(Secret.Ref.Vault(name, r), ConfigFactory.empty, Map(name -> vault))
+    def one(r: Secret.Ref.Vault.Ref) = resolve(Secret.Ref.Vault(name, r), ConfigFactory.empty, Map(name -> vault))
     try
-      val answers = Option(vault.resolveAll(asked)).getOrElse(Map.empty)
+      val answers = Option(vault.resolveAll(asked.map(r => Secret.Vault.ResolveRef(r.value)))).getOrElse(Map.empty)
       asked.map { r =>
-        r -> answers
-          .get(r)
-          .flatMap(Option(_))
-          .getOrElse(Left(s"vault '$name' gave no answer for it"))
-          .left
-          .map(e => s"secret ${Secret.Ref.Vault(name, r).shown}: $e")
+        val answer: Either[String, SecretValue] = answers.get(Secret.Vault.ResolveRef(r.value)).flatMap(Option(_)) match
+          case Some(Right(v)) => Right(SecretValue(v.value))
+          case Some(Left(e))  => Left(e.value)
+          case None           => Left(s"vault '$name' gave no answer for it")
+        r -> answer.left.map(e => Problem(s"secret ${Secret.Ref.Vault(name, r).shown}: $e"))
       }.toMap
     catch case NonFatal(_) => asked.map(r => r -> one(r)).toMap
+
+  /** The vaults of a generation's registries, by the name a reference gives them. */
+  private def vaultsOf(regs: Registries): Map[Secret.Ref.Vault.Value, Secret.Vault] =
+    regs.secretVaults.iterator.map((k, v) => Secret.Ref.Vault.Value(k.value) -> v).toMap
 
   /** The secrets of one generation: each vault is asked ONCE for all its references that `wanted` lists — on the first
     * reference of it any plugin needs, so a vault registered earlier in the same build is asked then too — and every
     * answer, value or error, is kept for this generation only (a reload resolves again; nothing outlives the build's
     * registrations).
     */
-  final private class GenerationSecrets(env: Config, wanted: Map[GenerationSecrets.WantedKey, List[GenerationSecrets.WantedValue]]):
-    private val known = scala.collection.concurrent.TrieMap.empty[Secret.Ref, Either[String, String]]
-    def apply(ref: Secret.Ref, vaults: Map[com.histmersion.pluginhost.PluginHost.VaultId, Secret.Vault]): Either[com.histmersion.pluginhost.PluginHost.Problem, com.histmersion.pluginhost.PluginHost.GenerationSecrets.ApplyResultPart2] =
+  final private class GenerationSecrets(env: Config, wanted: Map[Secret.Ref.Vault.Value, List[Secret.Ref.Vault.Ref]]):
+    private val known = scala.collection.concurrent.TrieMap.empty[Secret.Ref, Either[Problem, SecretValue]]
+    def apply(ref: Secret.Ref, vaults: Map[Secret.Ref.Vault.Value, Secret.Vault]): Either[Problem, SecretValue] =
       known.getOrElse(
         ref, {
           ref match
@@ -437,15 +405,6 @@ object PluginHost:
         }
       )
 
-  object GenerationSecrets:
-    type WantedKey = WantedKey.T
-    object WantedKey extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-    type WantedValue = WantedValue.T
-    object WantedValue extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-
-    type ApplyResultPart2 = ApplyResultPart2.T
-    object ApplyResultPart2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-
   // ── a generation ────────────────────────────────────────────────────────────────────────────
 
   /** One enabled plugin after its config was decoded, waiting to register: `call` is `p.register` applied to the value
@@ -455,57 +414,37 @@ object PluginHost:
       p: Plugin,
       block: Config,
       secrets: List[Secret],
-      call: Plugin.Context => Either[Prepared.CallResultPart1, Unit],
+      call: Plugin.Context => Either[Problem, Unit],
       carried: Option[(PluginStatus, Registries)] = None
   )
-
-  object Prepared:
-    type CallResultPart1 = CallResultPart1.T
-    object CallResultPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
   /** A registry whose additions are kept apart until the plugin's `register` returned. Mutable, but owned by ONE
     * register call: `close` ends it, after which any add (a plugin that kept the context) is refused.
     */
-  final private class Staged[A](kind: Staged.Kind, committed: Map[Staged.CommittedKey, A], valid: (Staged.ValidArg1, A) => Option[Staged.ValidResult])
+  final private class Staged[A](kind: String, committed: Map[Registry.AddId, A], valid: (Registry.AddId, A) => Option[Problem])
       extends Registry[A]:
     // the plugin's additions, in order; a var because the plugin calls `add` from inside `register`
-    private var added: ListMap[com.histmersion.pluginhost.PluginHost.Staged.AddedPart1, A] = ListMap.empty
+    private var added: ListMap[Registry.AddId, A] = ListMap.empty
     private var open = true
-    def add(id: com.histmersion.pluginhost.PluginHost.Staged.AddId, a: A): Either[com.histmersion.pluginhost.PluginHost.Problem, Unit] =
-      if !open then Left(s"$kind '$id': registration is over (add from inside register)")
-      else if committed.contains(id) || added.contains(id) then Left(s"$kind '$id' is already registered")
+    def add(id: Registry.AddId, a: A): Either[Registry.AddResultPart1, Unit] =
+      if !open then Left(Registry.AddResultPart1(s"$kind '$id': registration is over (add from inside register)"))
+      else if committed.contains(id) || added.contains(id) then
+        Left(Registry.AddResultPart1(s"$kind '$id' is already registered"))
       else
         valid(id, a) match
-          case Some(err) => Left(err)
+          case Some(err) => Left(Registry.AddResultPart1(err.value))
           case None      => added = added.updated(id, a); Right(())
-    def close(): ListMap[com.histmersion.pluginhost.PluginHost.Staged.CloseResultPart1, A] =
+    def close(): ListMap[Registry.AddId, A] =
       open = false
       added
-
-  object Staged:
-    type Kind = Kind.T
-    object Kind extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-    type CommittedKey = CommittedKey.T
-    object CommittedKey extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-    type ValidArg1 = ValidArg1.T
-    object ValidArg1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-    type ValidResult = ValidResult.T
-    object ValidResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-
-    type AddedPart1 = AddedPart1.T
-    object AddedPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-    type AddId = AddId.T
-    object AddId extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-    type CloseResultPart1 = CloseResultPart1.T
-    object CloseResultPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
   /** The context one plugin's `register` is called with: the host's services, its secrets, and the staged registries.
     * The HTTP client is built on the first request.
     */
   final private class RegistrationContext(
-      id: RegistrationContext.Id,
+      id: Plugin.Info.Id,
       services: HostServices,
-      resolved: Secret => Either[RegistrationContext.ResolvedResultPart1, RegistrationContext.ResolvedResultPart2],
+      resolved: Secret => Either[Problem, SecretValue],
       vaults: Staged[Secret.Vault],
       fetchers: Staged[SourceFetcher],
       media: Staged[MediaCollection],
@@ -518,12 +457,18 @@ object PluginHost:
     override def processes: Processes = services.processes
     lazy val http: Plugin.Http = services.http()
     val log: Plugin.Log = new Plugin.Log:
-      def info(message: com.histmersion.pluginhost.PluginHost.LogMessage) = services.log(id, com.histmersion.pluginhost.HostServices.LogArg2(false), message)
-      def warn(message: com.histmersion.pluginhost.PluginHost.LogMessage) = services.log(id, com.histmersion.pluginhost.HostServices.LogArg2(true), message)
-    def env(name: com.histmersion.pluginhost.PluginHost.EnvName) = Option(services.env.root.get(name)).flatMap(v => Option(v.unwrapped)).map(_.toString)
-    def secret(s: Secret) = resolved(s)
+      def info(message: Plugin.Log.InfoMessage) =
+        services.log(HostServices.LogArg1(id.value), HostServices.LogArg2(false), HostServices.LogArg3(message.value))
+      def warn(message: Plugin.Log.WarnMessage) =
+        services.log(HostServices.LogArg1(id.value), HostServices.LogArg2(true), HostServices.LogArg3(message.value))
+    def env(name: Plugin.Context.EnvName) =
+      Option(services.env.root.get(name.value))
+        .flatMap(v => Option(v.unwrapped))
+        .map(v => Plugin.Context.EnvResult(v.toString))
+    def secret(s: Secret) =
+      resolved(s).left.map(e => Plugin.Context.SecretResultPart1(e.value)).map(v => Plugin.Context.SecretResultPart2(v.value))
     def secretVaults = vaults
-    override def quota(upstream: String) = services.quota(upstream)
+    override def quota(upstream: Plugin.Context.QuotaUpstream) = services.quota(HostServices.QuotaArg1(upstream.value))
     override def licences = HostLicences
     override def sourceFetchers = fetchers
     override def mediaCollections = media
@@ -532,84 +477,101 @@ object PluginHost:
     override def gazetteerSources = gazetteers
     override def sourceCollections = collections
 
-  object RegistrationContext:
-    type Id = Id.T
-    object Id extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-    type ResolvedResultPart1 = ResolvedResultPart1.T
-    object ResolvedResultPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-    type ResolvedResultPart2 = ResolvedResultPart2.T
-    object ResolvedResultPart2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-
-
-  private def validFetcher(id: com.histmersion.util.plugins.Plugin.Id, f: SourceFetcher): Option[com.histmersion.pluginhost.PluginHost.Problem] =
-    if !id.matches(IdPattern) then Some(s"'$id': a source fetcher id is $IdPattern")
-    else if f == null then Some(s"source fetcher '$id' is null")
+  private def validFetcher(id: Registry.AddId, f: SourceFetcher): Option[Problem] =
+    if !id.value.matches(IdPattern) then Some(Problem(s"'$id': a source fetcher id is $IdPattern"))
+    else if f == null then Some(Problem(s"source fetcher '$id' is null"))
     else None
 
   /** A media collection: a kebab-case id; a plugin's may not take a name of the host's own providers (an import's name
     * or an alias of one, or a provider pictures are stored under — its pictures would be mistaken for theirs); its role
     * is one a collection's pictures may play. A first-party plugin's is the one the name is reserved for.
     */
-  private def validCollection(firstParty: com.histmersion.pluginhost.PluginHost.FirstParty)(id: com.histmersion.util.plugins.Plugin.Id, c: MediaCollection): Option[com.histmersion.pluginhost.PluginHost.Problem] =
-    if !id.matches(IdPattern) then Some(s"'$id': a media collection id is $IdPattern")
-    else if c == null then Some(s"media collection '$id' is null")
+  private def validCollection(firstParty: Boolean)(id: Registry.AddId, c: MediaCollection): Option[Problem] =
+    if !id.value.matches(IdPattern) then Some(Problem(s"'$id': a media collection id is $IdPattern"))
+    else if c == null then Some(Problem(s"media collection '$id' is null"))
     else if firstParty then None
-    else if ReservedNames.mediaCollections(id) then
-      Some(s"'$id' is the name of one of Histmersion's own media providers")
+    else if ReservedNames.mediaCollections(ReservedNames.Name(id.value)) then
+      Some(Problem(s"'$id' is the name of one of Histmersion's own media providers"))
     else
       (c.role :: c.roles.toList.sorted).find(r => !MediaCollection.Roles(r)).map { r =>
-        s"media collection '$id': role '$r' is not one of ${MediaCollection.Roles.toList.sorted.mkString(", ")}"
+        Problem(s"media collection '$id': role '$r' is not one of ${MediaCollection.Roles.toList.sorted.mkString(", ")}")
       }
 
   /** An event catalogue: a kebab-case id; a plugin's may not take a name of the host's own catalogues, unless it is the
     * first-party plugin the name is reserved for.
     */
-  private def validCatalogue(firstParty: com.histmersion.pluginhost.PluginHost.FirstParty)(id: com.histmersion.util.plugins.Plugin.Id, c: EventCatalogue): Option[com.histmersion.pluginhost.PluginHost.Problem] =
-    if !id.matches(IdPattern) then Some(s"'$id': an event catalogue id is $IdPattern")
-    else if c == null then Some(s"event catalogue '$id' is null")
+  private def validCatalogue(firstParty: Boolean)(id: Registry.AddId, c: EventCatalogue): Option[Problem] =
+    if !id.value.matches(IdPattern) then Some(Problem(s"'$id': an event catalogue id is $IdPattern"))
+    else if c == null then Some(Problem(s"event catalogue '$id' is null"))
     else if firstParty || c.isInstanceOf[HostOwned] then None
-    else if ReservedNames.eventCatalogues(id) then
-      Some(s"'$id' is the name of one of Histmersion's own event catalogues")
+    else if ReservedNames.eventCatalogues(ReservedNames.Name(id.value)) then
+      Some(Problem(s"'$id' is the name of one of Histmersion's own event catalogues"))
     else None
 
   /** An AI provider: its name is the provider half of `provider:model`, so kebab-case; a plugin's may not take the name
     * of one of the host's own providers (its models would be mistaken for theirs).
     */
-  private def validAiProvider(firstParty: com.histmersion.pluginhost.PluginHost.FirstParty)(id: com.histmersion.util.plugins.Plugin.Id, a: AiProvider): Option[com.histmersion.pluginhost.PluginHost.Problem] =
-    if !id.matches(IdPattern) then Some(s"'$id': an AI provider name is $IdPattern")
-    else if a == null then Some(s"AI provider '$id' is null")
+  private def validAiProvider(firstParty: Boolean)(id: Registry.AddId, a: AiProvider): Option[Problem] =
+    if !id.value.matches(IdPattern) then Some(Problem(s"'$id': an AI provider name is $IdPattern"))
+    else if a == null then Some(Problem(s"AI provider '$id' is null"))
     else if firstParty || a.isInstanceOf[HostOwned] then None
-    else if ReservedNames.aiProviders(id) then Some(s"'$id' is the name of one of Histmersion's own AI providers")
+    else if ReservedNames.aiProviders(ReservedNames.Name(id.value)) then
+      Some(Problem(s"'$id' is the name of one of Histmersion's own AI providers"))
     else None
 
   /** A gazetteer source: a kebab-case id; a plugin's may not take the name of one of the host's own sources (the
     * datasets `places fetch` and `init.fetch-sources` name), unless it is the first-party plugin the name is reserved
     * for.
     */
-  private def validGazetteer(firstParty: com.histmersion.pluginhost.PluginHost.FirstParty)(id: com.histmersion.util.plugins.Plugin.Id, g: GazetteerSource): Option[com.histmersion.pluginhost.PluginHost.Problem] =
-    if !id.matches(IdPattern) then Some(s"'$id': a gazetteer source id is $IdPattern")
-    else if g == null then Some(s"gazetteer source '$id' is null")
+  private def validGazetteer(firstParty: Boolean)(id: Registry.AddId, g: GazetteerSource): Option[Problem] =
+    if !id.value.matches(IdPattern) then Some(Problem(s"'$id': a gazetteer source id is $IdPattern"))
+    else if g == null then Some(Problem(s"gazetteer source '$id' is null"))
     else if firstParty then None
-    else if ReservedNames.gazetteerSources(id) then Some(s"'$id' is the name of one of Histmersion's own gazetteers")
+    else if ReservedNames.gazetteerSources(ReservedNames.Name(id.value)) then
+      Some(Problem(s"'$id' is the name of one of Histmersion's own gazetteers"))
     else None
 
   /** A source collection: a kebab-case id; a plugin's may not take the name of one of Histmersion's own collections
     * (its items would be taken for theirs), unless it is the first-party plugin the name is reserved for.
     */
-  private def validSourceCollection(firstParty: com.histmersion.pluginhost.PluginHost.FirstParty)(id: com.histmersion.util.plugins.Plugin.Id, c: SourceCollection): Option[com.histmersion.pluginhost.PluginHost.Problem] =
-    if !id.matches(IdPattern) then Some(s"'$id': a source collection id is $IdPattern")
-    else if c == null then Some(s"source collection '$id' is null")
+  private def validSourceCollection(firstParty: Boolean)(id: Registry.AddId, c: SourceCollection): Option[Problem] =
+    if !id.value.matches(IdPattern) then Some(Problem(s"'$id': a source collection id is $IdPattern"))
+    else if c == null then Some(Problem(s"source collection '$id' is null"))
     else if firstParty then None
-    else if ReservedNames.sourceCollections(id) then
-      Some(s"'$id' is the name of one of Histmersion's own source collections")
+    else if ReservedNames.sourceCollections(ReservedNames.Name(id.value)) then
+      Some(Problem(s"'$id' is the name of one of Histmersion's own source collections"))
     else None
 
-  private def validVault(id: com.histmersion.pluginhost.PluginHost.VaultId, v: Secret.Vault): Option[com.histmersion.pluginhost.PluginHost.Problem] =
-    if Set(Secret.Ref.ValueScheme, Secret.Ref.EnvScheme)(id) then
-      Some(s"'$id' is a reserved secret scheme, not a vault name")
-    else if !id.matches(IdPattern) then Some(s"'$id': a vault name is $IdPattern")
-    else if v.name != id then Some(s"vault '${v.name}' registered under another name, '$id'")
+  private def validVault(id: Registry.AddId, v: Secret.Vault): Option[Problem] =
+    if Set(Secret.Ref.ValueScheme, Secret.Ref.EnvScheme)(id.value) then
+      Some(Problem(s"'$id' is a reserved secret scheme, not a vault name"))
+    else if !id.value.matches(IdPattern) then Some(Problem(s"'$id': a vault name is $IdPattern"))
+    else if v.name.value != id.value then Some(Problem(s"vault '${v.name}' registered under another name, '$id'"))
     else None
+
+  /** A plugin's status in the report. */
+  private def status(
+      p: Plugin,
+      enabled: Boolean,
+      state: PluginState,
+      block: Option[Config] = None,
+      error: Option[Problem] = None,
+      provides: List[PluginStatus.Provides] = Nil,
+      warns: List[Warning] = Nil
+  ): PluginStatus =
+    PluginStatus(
+      PluginStatus.Id(p.info.id.value),
+      PluginStatus.Version(p.info.version.value),
+      PluginStatus.SpiVersion(p.info.spiVersion.value),
+      PluginStatus.Enabled(enabled),
+      PluginStatus.State(state.wire.value),
+      provides,
+      block.map(settings).getOrElse(Nil),
+      warns.map(w => PluginStatus.Warnings(w.value)),
+      error.map(e => PluginStatus.Error(e.value))
+    )
+
+  private def hasState(st: PluginStatus, state: PluginState): Boolean = st.state.value == state.wire.value
 
   /** Build one generation: check, order, layer, type-check, decode, resolve secrets, register.
     *
@@ -622,64 +584,44 @@ object PluginHost:
       user: Config,
       env: Config,
       services: HostServices,
-      discoveryErrors: List[com.histmersion.pluginhost.PluginHost.Problem] = Nil,
+      discoveryErrors: List[Problem] = Nil,
       /** Plugins whose block did not change since the previous generation (a config reload): their status and
         * contributions are taken over as they are — not decoded, resolved or registered again. A registered one goes
         * into the registries in its place in the order.
         */
-      carried: Map[String, (PluginStatus, Registries)] = Map.empty,
+      carried: Map[Plugin.Info.Id, (PluginStatus, Registries)] = Map.empty,
       /** The settings the host supplies a first-party plugin, by id: its fallback block from the host's own keys (keys
         * relative to the plugin's block), between the user's block and the plugin's defaults ([[block]]).
         */
-      fallback: String => Config = _ => ConfigFactory.empty,
+      fallback: Plugin.Info.Id => Config = _ => ConfigFactory.empty,
       /** The first-party plugins: the ones a reserved name of the host's (a catalogue's, a media provider's, an AI
         * provider's) is kept for.
         */
-      firstParty: com.histmersion.util.plugins.Plugin.Id => com.histmersion.pluginhost.PluginHost.FirstParty = _ => com.histmersion.pluginhost.PluginHost.FirstParty(false)
+      firstParty: Plugin.Info.Id => Boolean = _ => false
   ): Generation =
     val infos = plugins.map(_.info)
-    val refused = check(infos, Spi.Version)
+    val refused = check(infos, SpiGeneration)
     val accepted = plugins.filterNot(p => refused.contains(p.info.id))
     val (configured, orderErr) = configuredOrder(user, env) match
       case Right(o) => (o, Nil)
       case Left(e)  => (Nil, List(e))
     val (ordered, orderWarn) = order(accepted.map(_.info.id), configured)
     val unknown = unknownBlocks(user, infos.map(_.id).toSet)
-      .map(id => s"$Root.$id configures no plugin in this binary — ignored")
+      .map(id => Problem(s"$Root.$id configures no plugin in this binary — ignored"))
     val warnings = discoveryErrors ++ orderErr ++ orderWarn ++ unknown
-    warnings.foreach(w => services.log(com.histmersion.pluginhost.HostServices.LogArg1(""), com.histmersion.pluginhost.HostServices.LogArg2(true), w))
+    warnings.foreach(w => services.log(HostServices.LogArg1(""), HostServices.LogArg2(true), HostServices.LogArg3(w.value)))
 
     val byId = accepted.map(p => p.info.id -> p).toMap
-    def status(
-        p: Plugin,
-        enabled: com.histmersion.pluginhost.PluginHost.Enabled,
-        state: PluginState,
-        block: Option[Config] = None,
-        error: Option[com.histmersion.pluginhost.PluginHost.Problem] = None,
-        provides: List[com.histmersion.pluginhost.PluginHost.Provides] = Nil,
-        warns: List[com.histmersion.pluginhost.PluginHost.Warning] = Nil
-    ) =
-      PluginStatus(
-        p.info.id,
-        p.info.version,
-        p.info.spiVersion,
-        enabled,
-        state.wire,
-        provides,
-        block.map(settings).getOrElse(Nil),
-        warns,
-        error
-      )
 
     // the config of every accepted plugin, in order
-    val prepared: List[(com.histmersion.util.plugins.Plugin.Id, Either[PluginStatus, Prepared])] = ordered.map { id =>
+    val prepared: List[(Plugin.Info.Id, Either[PluginStatus, Prepared])] = ordered.map { id =>
       val p = byId(id)
       val r = carried.get(id) match
-        case Some((st, _)) if st.state != PluginState.Registered.wire => Left(st)
+        case Some((st, _)) if !hasState(st, PluginState.Registered) => Left(st)
         case Some(c) => Right(Prepared(p, ConfigFactory.empty, Nil, _ => Right(()), Some(c)))
         case None    =>
           for
-            defs <- defaults(p).left.map(e => status(p, com.histmersion.pluginhost.PluginHost.Enabled(false), PluginState.Failed, error = Some(e)))
+            defs <- defaults(p).left.map(e => status(p, false, PluginState.Failed, error = Some(e)))
             // the defaults resolved on their own: `${?ENV}` lines leave the default standing
             known = Try(defs.resolve()).getOrElse(defs)
             _ <- typeCheck(id, user, known) match
@@ -690,7 +632,7 @@ object PluginHost:
                     p,
                     Try(user.getBoolean(s"$Root.$id.enabled")).getOrElse(false),
                     PluginState.Failed,
-                    error = Some(errs.mkString("; "))
+                    error = Some(Problem(errs.mkString("; ")))
                   )
                 )
             conf <- block(user, defs, env, id).left.map(e => status(p, false, PluginState.Failed, error = Some(e)))
@@ -699,7 +641,12 @@ object PluginHost:
             supplied <- block(user, defs, env, id, fallback(id)).left
               .map(e => status(p, true, PluginState.Failed, Some(conf), Some(e)))
             typed <- decode(p, supplied).left.map(e => status(p, true, PluginState.Failed, Some(conf), Some(e)))
-          yield Prepared(p, conf, secretsIn(typed), ctx => p.register(typed, ctx))
+          yield Prepared(
+            p,
+            conf,
+            secretsIn(typed),
+            ctx => p.register(typed, ctx).left.map(e => Problem(e.value))
+          )
       id -> r
     }
 
@@ -716,30 +663,30 @@ object PluginHost:
     def passes(
         waiting: List[Prepared],
         regs: Registries,
-        done: Map[com.histmersion.util.plugins.Plugin.Id, (PluginStatus, Registries)]
-    ): (Registries, Map[com.histmersion.util.plugins.Plugin.Id, (PluginStatus, Registries)]) =
+        done: Map[Plugin.Info.Id, (PluginStatus, Registries)]
+    ): (Registries, Map[Plugin.Info.Id, (PluginStatus, Registries)]) =
       @annotation.tailrec
       def pass(
           rest: List[Prepared],
           rs: Registries,
-          ds: Map[String, (PluginStatus, Registries)],
+          ds: Map[Plugin.Info.Id, (PluginStatus, Registries)],
           left: List[Prepared],
-          prog: com.histmersion.pluginhost.PluginHost.PassProgress
-      ): (Registries, Map[String, (PluginStatus, Registries)], List[Prepared], Boolean) =
+          prog: Boolean
+      ): (Registries, Map[Plugin.Info.Id, (PluginStatus, Registries)], List[Prepared], Boolean) =
         rest match
           case Nil        => (rs, ds, left, prog)
           case pr :: tail =>
             val missing =
-              pr.secrets.map(_.ref).collect { case Secret.Ref.Vault(v, _) if !rs.secretVaults.contains(v) => v }
+              pr.secrets.map(_.ref).collect { case Secret.Ref.Vault(v, _) if !vaultsOf(rs).contains(v) => v }
             if missing.nonEmpty then pass(tail, rs, ds, left :+ pr, prog)
             else
               val (st, added) = pr.carried.getOrElse(register(pr, rs, services, secrets, firstParty(pr.p.info.id)))
-              pass(tail, rs ++ added, ds.updated(pr.p.info.id, (st, added)), left, com.histmersion.pluginhost.PluginHost.PassProgress(true))
-      val (rs, ds, left, progressed) = pass(waiting, regs, done, Nil, com.histmersion.pluginhost.PluginHost.PassProgress(false))
+              pass(tail, rs ++ added, ds.updated(pr.p.info.id, (st, added)), left, true)
+      val (rs, ds, left, progressed) = pass(waiting, regs, done, Nil, false)
       if left.isEmpty || !progressed then
         val stuck = left.map { pr =>
           val names =
-            pr.secrets.map(_.ref).collect { case Secret.Ref.Vault(v, _) if !rs.secretVaults.contains(v) => v }.distinct
+            pr.secrets.map(_.ref).collect { case Secret.Ref.Vault(v, _) if !vaultsOf(rs).contains(v) => v }.distinct
           pr.p.info.id -> (
             status(
               pr.p,
@@ -747,8 +694,10 @@ object PluginHost:
               PluginState.Failed,
               Some(pr.block),
               Some(
-                s"$Root.${pr.p.info.id}: no secret vault ${names.map(n => s"'$n'").mkString(", ")} is registered " +
-                  "(enable the plugin that provides it)"
+                Problem(
+                  s"$Root.${pr.p.info.id}: no secret vault ${names.map(n => s"'$n'").mkString(", ")} is registered " +
+                    "(enable the plugin that provides it)"
+                )
               )
             ),
             Registries.empty
@@ -763,15 +712,25 @@ object PluginHost:
       case (id, Right(_)) => registered(id)._1
     } ++ plugins
       .filter(p => refused.contains(p.info.id))
-      .map(p => status(p, com.histmersion.pluginhost.PluginHost.Enabled(false), PluginState.Refused, error = refused.get(p.info.id)))
+      .map(p => status(p, false, PluginState.Refused, error = refused.get(p.info.id)))
     statuses
-      .filter(_.state == PluginState.Failed.wire)
-      .foreach(s => services.log(s.id, com.histmersion.pluginhost.HostServices.LogArg2(true), s.error.getOrElse("failed")))
-    val live = registered.collect { case (id, (st, regs)) if st.state == PluginState.Registered.wire => id -> regs }
+      .filter(hasState(_, PluginState.Failed))
+      .foreach(s =>
+        services.log(
+          HostServices.LogArg1(s.id.value),
+          HostServices.LogArg2(true),
+          HostServices.LogArg3(s.error.fold("failed")(_.value))
+        )
+      )
+    val live = registered.collect { case (id, (st, regs)) if hasState(st, PluginState.Registered) => id -> regs }
     val fresh = ready.filter(pr => pr.carried.isEmpty && live.contains(pr.p.info.id))
     Generation(
       registries,
-      PluginsReport(Spi.Version, statuses, warnings),
+      PluginsReport(
+        PluginsReport.SpiVersion(Spi.Version),
+        statuses,
+        warnings.map(w => PluginsReport.Warnings(w.value))
+      ),
       live,
       plugins.map(_.info.id).filterNot(carried.contains),
       ready.filter(_.secrets.nonEmpty).map(_.p.info.id).toSet,
@@ -780,7 +739,7 @@ object PluginHost:
         .filter(_.secrets.nonEmpty)
         .map(pr =>
           pr.p.info.id -> pr.secrets
-            .flatMap(sec => secrets(sec.ref, registries.secretVaults).toOption.map(sec.ref -> _))
+            .flatMap(sec => secrets(sec.ref, vaultsOf(registries)).toOption.map(sec.ref -> _))
             .toMap
         )
         .toMap
@@ -792,49 +751,52 @@ object PluginHost:
       regs: Registries,
       services: HostServices,
       secrets: GenerationSecrets,
-      firstParty: com.histmersion.pluginhost.PluginHost.FirstParty
+      firstParty: Boolean
   ): (PluginStatus, Registries) =
     val p = pr.p
     val id = p.info.id
-    def resolved(s: Secret): Either[com.histmersion.pluginhost.PluginHost.Problem, com.histmersion.pluginhost.PluginHost.RegisterResolvedResultPart2] = secrets(s.ref, regs.secretVaults)
+    def resolved(s: Secret): Either[Problem, SecretValue] = secrets(s.ref, vaultsOf(regs))
     val literal = pr.secrets.exists(_.ref.isInstanceOf[Secret.Ref.Value])
     val warns = if !literal then Nil
     else
       List(
-        s"$Root.$id: a secret is written into the config (value:${Secret.Ref.Mask}) — " +
-          "use env:<NAME> or a vault reference"
+        Warning(
+          s"$Root.$id: a secret is written into the config (value:${Secret.Ref.Mask}) — " +
+            "use env:<NAME> or a vault reference"
+        )
       )
-    warns.foreach(w => services.log(id, com.histmersion.pluginhost.HostServices.LogArg2(true), w))
-    def fail(e: com.histmersion.pluginhost.PluginHost.Problem) =
+    warns.foreach(w => services.log(HostServices.LogArg1(id.value), HostServices.LogArg2(true), HostServices.LogArg3(w.value)))
+    def fail(e: Problem) =
       (
-        PluginStatus(
-          id,
-          p.info.version,
-          p.info.spiVersion,
-          com.histmersion.api.plugins.PluginStatus.Enabled(true),
-          PluginState.Failed.wire,
-          Nil,
-          settings(pr.block),
-          warns,
-          Some(s"$Root.$id: $e")
-        ),
+        status(p, true, PluginState.Failed, Some(pr.block), Some(Problem(s"$Root.$id: $e")), Nil, warns),
         Registries.empty
       )
     pr.secrets.iterator.map(resolved).collectFirst { case Left(e) => e } match
       case Some(e) => fail(e)
       case None    =>
-        val staged = Staged[Secret.Vault](Registries.SecretVault, regs.secretVaults, validVault)
-        val fetchers = Staged[SourceFetcher](Registries.SourceFetcher, regs.sourceFetchers, validFetcher)
+        def held[K, A](m: ListMap[K, A])(key: K => String): Map[Registry.AddId, A] =
+          m.iterator.map((k, a) => Registry.AddId(key(k)) -> a).toMap
+        val staged = Staged[Secret.Vault](Registries.SecretVault, held(regs.secretVaults)(_.value), validVault)
+        val fetchers = Staged[SourceFetcher](Registries.SourceFetcher, held(regs.sourceFetchers)(_.value), validFetcher)
         val media =
-          Staged[MediaCollection](Registries.MediaCollection, regs.mediaCollections, validCollection(firstParty))
-        val events = Staged[EventCatalogue](Registries.EventCatalogue, regs.eventCatalogues, validCatalogue(firstParty))
-        val ai = Staged[AiProvider](Registries.AiProvider, regs.aiProviders, validAiProvider(firstParty))
+          Staged[MediaCollection](
+            Registries.MediaCollection,
+            held(regs.mediaCollections)(_.value),
+            validCollection(firstParty)
+          )
+        val events =
+          Staged[EventCatalogue](Registries.EventCatalogue, held(regs.eventCatalogues)(_.value), validCatalogue(firstParty))
+        val ai = Staged[AiProvider](Registries.AiProvider, held(regs.aiProviders)(_.value), validAiProvider(firstParty))
         val gazetteers =
-          Staged[GazetteerSource](Registries.GazetteerSource, regs.gazetteerSources, validGazetteer(firstParty))
+          Staged[GazetteerSource](
+            Registries.GazetteerSource,
+            held(regs.gazetteerSources)(_.value),
+            validGazetteer(firstParty)
+          )
         val collections =
           Staged[SourceCollection](
             Registries.SourceCollection,
-            regs.sourceCollections,
+            held(regs.sourceCollections)(_.value),
             validSourceCollection(firstParty)
           )
         val ctx =
@@ -842,29 +804,28 @@ object PluginHost:
         val outcome =
           try pr.call(ctx)
           catch
-            case e: LinkageError => Left(s"register threw ${failure(e)}")
-            case NonFatal(e)     => Left(s"register threw ${failure(e)}")
+            case e: LinkageError => Left(Problem(s"register threw ${failure(e)}"))
+            case NonFatal(e)     => Left(Problem(s"register threw ${failure(e)}"))
         val added = Registries(
-          staged.close(),
-          fetchers.close(),
-          media.close(),
-          events.close(),
-          ai.close(),
-          gazetteerSources = gazetteers.close(),
-          sourceCollections = collections.close()
+          staged.close().map((k, v) => Registries.SecretVaultsKey(k.value) -> v),
+          fetchers.close().map((k, v) => Registries.SourceFetchersKey(k.value) -> v),
+          media.close().map((k, v) => Registries.MediaCollectionsKey(k.value) -> v),
+          events.close().map((k, v) => Registries.EventCataloguesKey(k.value) -> v),
+          ai.close().map((k, v) => Registries.AiProvidersKey(k.value) -> v),
+          gazetteerSources = gazetteers.close().map((k, v) => Registries.GazetteerSourcesKey(k.value) -> v),
+          sourceCollections = collections.close().map((k, v) => Registries.SourceCollectionsKey(k.value) -> v)
         )
         outcome match
           case Left(e)  => fail(e)
           case Right(_) =>
             (
-              PluginStatus(
-                id,
-                p.info.version,
-                p.info.spiVersion,
-                com.histmersion.api.plugins.PluginStatus.Enabled(true),
-                PluginState.Registered.wire,
-                added.provides,
-                settings(pr.block),
+              status(
+                p,
+                true,
+                PluginState.Registered,
+                Some(pr.block),
+                None,
+                added.provides.map(k => PluginStatus.Provides(k.value)),
                 warns
               ),
               added

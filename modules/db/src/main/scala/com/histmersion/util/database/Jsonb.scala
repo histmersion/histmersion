@@ -17,20 +17,20 @@ object Jsonb:
   type Problem = Problem.T
   object Problem extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
-  def codec[A: {Encoder, Decoder}](fallback: A, dropNulls: com.histmersion.util.database.Jsonb.DropNulls = com.histmersion.util.database.Jsonb.DropNulls(false)): DbCodec[A] =
-    DbCodec[Option[String]].biMap(_.flatMap(read[A]).getOrElse(fallback), a => Some(write(a, dropNulls)))
+  def codec[A: {Encoder, Decoder}](fallback: A, dropNulls: DropNulls = DropNulls(false)): DbCodec[A] =
+    DbCodec[Option[String]].biMap(_.flatMap(t => read[A](JsonText(t))).getOrElse(fallback), a => Some(write(a, dropNulls).value))
 
-  def optional[A: {Encoder, Decoder}](dropNulls: com.histmersion.util.database.Jsonb.DropNulls = com.histmersion.util.database.Jsonb.DropNulls(false)): DbCodec[Option[A]] =
-    DbCodec[Option[String]].biMap(_.flatMap(read[A]), _.map(write(_, dropNulls)))
+  def optional[A: {Encoder, Decoder}](dropNulls: DropNulls = DropNulls(false)): DbCodec[Option[A]] =
+    DbCodec[Option[String]].biMap(_.flatMap(t => read[A](JsonText(t))), _.map(a => write(a, dropNulls).value))
 
   /** The stored text as an `A`; `None` when it does not decode. */
-  def read[A: Decoder](text: com.histmersion.util.database.Jsonb.JsonText): Option[A] = decode[A](text).toOption
+  def read[A: Decoder](text: JsonText): Option[A] = decode[A](text).toOption
 
   /** The stored text as an `A`, or why it does not decode. */
-  def decode[A: Decoder](text: com.histmersion.util.database.Jsonb.JsonText): Either[com.histmersion.util.database.Jsonb.Problem, A] =
-    io.circe.parser.decode[A](text).left.map(_.getMessage)
+  def decode[A: Decoder](text: JsonText): Either[Problem, A] =
+    io.circe.parser.decode[A](text.value).left.map(e => Problem(e.getMessage))
 
   /** What is bound into the column: compact JSON, without null fields when `dropNulls`. */
-  def write[A: Encoder](a: A, dropNulls: com.histmersion.util.database.Jsonb.DropNulls = com.histmersion.util.database.Jsonb.DropNulls(false)): com.histmersion.util.database.Jsonb.JsonText =
+  def write[A: Encoder](a: A, dropNulls: DropNulls = DropNulls(false)): JsonText =
     val j = a.asJson
-    (if dropNulls then j.dropNullValues else j).noSpaces
+    JsonText((if dropNulls.value then j.dropNullValues else j).noSpaces)

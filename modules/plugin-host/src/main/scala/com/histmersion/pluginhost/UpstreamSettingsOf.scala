@@ -10,34 +10,34 @@ extension (c: AcquireConfig)
     */
   def upstreamSettings: UpstreamSettings =
     UpstreamSettings(
-      c.contactEmail,
-      Endpoint(c.openalex.url),
-      Endpoint(c.crossref.url),
-      Endpoint(c.unpaywall.url),
-      CoreEndpoint(c.core.url.value, c.core.apiKey.value),
-      Endpoint(c.europepmc.url),
-      Endpoint(c.pmcDataset.url),
-      c.publicUserAgent,
-      Endpoint(c.zenodo.url),
-      Endpoint(c.datacite.url),
-      Endpoint(c.doiHandles.url),
+      UpstreamSettings.ContactEmail(c.contactEmail.value),
+      Endpoint(Endpoint.Url(c.openalex.url.value)),
+      Endpoint(Endpoint.Url(c.crossref.url.value)),
+      Endpoint(Endpoint.Url(c.unpaywall.url.value)),
+      CoreEndpoint(CoreEndpoint.Url(c.core.url.value), CoreEndpoint.ApiKey(c.core.apiKey.value)),
+      Endpoint(Endpoint.Url(c.europepmc.url.value)),
+      Endpoint(Endpoint.Url(c.pmcDataset.url.value)),
+      UpstreamSettings.PublicUserAgent(c.publicUserAgent.value),
+      Endpoint(Endpoint.Url(c.zenodo.url.value)),
+      Endpoint(Endpoint.Url(c.datacite.url.value)),
+      Endpoint(Endpoint.Url(c.doiHandles.url.value)),
       c.landing.upstreamSettings,
-      Endpoint(c.arxiv.url),
-      Endpoint(c.archiveOrg.url),
-      SearchDefaults(c.defaults.minYear.value)
+      Endpoint(Endpoint.Url(c.arxiv.url.value)),
+      Endpoint(Endpoint.Url(c.archiveOrg.url.value)),
+      SearchDefaults(SearchDefaults.MinYear(c.defaults.minYear.value))
     )
 
 extension (l: LandingConfig)
   def upstreamSettings: LandingSettings =
     LandingSettings(
-      l.enabled,
-      l.maxPages.value,
-      l.allowHosts.value,
-      l.denyHosts.value,
-      l.denyHostsExtra.value,
-      l.academicHostWords.value,
-      l.generators.value,
-      l.denyGenerators.value,
-      l.denyHostWords.value,
-      l.oaPublisherHosts.value
+      LandingSettings.Enabled(l.enabled.value),
+      LandingSettings.MaxPages(l.maxPages.value),
+      LandingSettings.AllowHosts(l.allowHosts.value),
+      LandingSettings.DenyHosts(l.denyHosts.value),
+      LandingSettings.DenyHostsExtra(l.denyHostsExtra.value),
+      LandingSettings.AcademicHostWords(l.academicHostWords.value),
+      LandingSettings.Generators(l.generators.value),
+      LandingSettings.DenyGenerators(l.denyGenerators.value),
+      LandingSettings.DenyHostWords(l.denyHostWords.value),
+      LandingSettings.OaPublisherHosts(l.oaPublisherHosts.value)
     )
