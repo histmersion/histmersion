@@ -325,7 +325,7 @@ final class EventLinksControllers(
     val selected = q.placeId.map(_.value.trim).filter(_.nonEmpty) match
       case None    => Some(selection(None))
       case Some(p) => Place.Id.option(p).map(id => selection(Some(id)))
-    selected.fold(EventLead.List(0, Nil)) { sel =>
+    selected.fold(EventLead.List(com.histmersion.api.catalogue.EventLead.List.Total(0), Nil)) { sel =>
       val (total, rows) =
         leadFacts.leads(
           sel,

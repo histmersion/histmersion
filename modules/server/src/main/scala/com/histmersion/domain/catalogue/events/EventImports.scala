@@ -61,7 +61,7 @@ final class EventImports(
 
   /** The catalogue an import names among the registered ones, or why none. */
   def resolve(asked: CatalogRecord.Provider): Either[EventImports.Problem, CatalogRecord.Provider] =
-    BuiltinCatalogues.resolve(asked, registered()).left.map(why => EventImports.Problem(why.value))
+    BuiltinCatalogues.resolve(asked, registered()).left.map(why => EventImports.Problem(why))
 
   /** The catalogue a re-derivation names: a built-in one even while it is switched off (its records are still there),
     * else a registered one.

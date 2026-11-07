@@ -154,7 +154,7 @@ object LeadService:
       val listed = events.list(selection, com.histmersion.PageSize(Int.MaxValue), com.histmersion.Offset.Start)
       val rows = listed.events.flatMap(e => Event.Id.option(e.id.value).flatMap(factsOf(s, _))).sortBy { r =>
         val size = r.vei.fold(0.0)(_.value.toDouble) + r.magnitude.fold(0.0)(_.value)
-        (r.tier.value != EventTier.Catalogue, -size, r.notBefore.orElse(r.beginBy).fold((1, 0L))(y => (0, y.value)), r.id.value)
+        (r.tier.value != EventTier.Catalogue, -size, r.notBefore.orElse(r.beginBy).fold((1, 0L))(y => (0, y)), r.id.value)
       }
       (
         com.histmersion.RowCount(listed.total.value),
