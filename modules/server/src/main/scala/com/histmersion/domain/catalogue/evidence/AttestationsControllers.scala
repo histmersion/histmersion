@@ -44,7 +44,7 @@ final class AttestationsControllers(
       targetType,
       target.orElse(targetId),
       page(limit),
-      offset.getOrElse(0)
+      offset.getOrElse(com.histmersion.Offset(0))
     )
 
   def get(id: com.histmersion.domain.catalogue.evidence.AttestationsTools.AttestationsInput.Id): Either[Api.Error, Attestation] =
@@ -54,7 +54,7 @@ final class AttestationsControllers(
     * both with a 500.
     */
   def create(caller: Caller, in: Attestation.Put): Either[Api.Error, Attestation] =
-    maintenance.guard("create_attestation"):
+    maintenance.guard(com.histmersion.util.data.maintenance.WriteGate.OperationName("create_attestation")):
       val ck = current(AliasKinds.SourceRecords, in.citekey)
       for
         t <- AttestationTarget.check(in.targetType).left.map(Api.Error(_, Some(Write.CodeInvalid)))
@@ -62,11 +62,11 @@ final class AttestationsControllers(
       yield attestations.create(in.modify(_.citekey).setTo(ck).modify(_.targetType).setTo(t).modify(_.targetId).setTo(refId(t, in.targetId)))
 
   def patch(caller: Caller, id: com.histmersion.domain.catalogue.evidence.AttestationsTools.AttestationsInput.Id, p: Attestation.Patch): Either[Api.Error, Attestation] =
-    maintenance.guard("patch_attestation")(attestations.patch(id, p))
+    maintenance.guard(com.histmersion.util.data.maintenance.WriteGate.OperationName("patch_attestation"))(attestations.patch(id, p))
 
   def delete(caller: Caller, id: com.histmersion.domain.catalogue.evidence.AttestationsTools.AttestationsInput.Id): Either[Api.Error, Attestation.Deleted] =
-    maintenance.guard("delete_attestation"):
-      if attestations.delete(id) then Right(Attestation.Deleted(id, true))
+    maintenance.guard(com.histmersion.util.data.maintenance.WriteGate.OperationName("delete_attestation")):
+      if attestations.delete(id) then Right(Attestation.Deleted(id, com.histmersion.api.catalogue.Attestation.Deleted.Value(true)))
       else Left(Api.Error(s"No attestation $id", Some(Write.CodeNotFound)))
 
 object AttestationsControllers:

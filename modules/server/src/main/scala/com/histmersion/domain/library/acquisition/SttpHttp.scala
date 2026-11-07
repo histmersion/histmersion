@@ -50,8 +50,8 @@ object SttpHttp:
 
   def apply(
       cfg: AcquireConfig,
-      tries: com.histmersion.domain.library.acquisition.SttpHttp.Tries = 4,
-      maxRetryAfterSeconds: com.histmersion.domain.library.acquisition.SttpHttp.MaxRetryAfterSeconds = 60,
+      tries: com.histmersion.domain.library.acquisition.SttpHttp.Tries = com.histmersion.domain.library.acquisition.SttpHttp.Tries(4),
+      maxRetryAfterSeconds: com.histmersion.domain.library.acquisition.SttpHttp.MaxRetryAfterSeconds = com.histmersion.domain.library.acquisition.SttpHttp.MaxRetryAfterSeconds(60),
       sleep: com.histmersion.domain.library.acquisition.SttpHttp.SleepMillis => Unit = ms => Thread.sleep(ms),
       clock: () => java.time.Instant,
       tls: Option[javax.net.ssl.SSLContext] = None

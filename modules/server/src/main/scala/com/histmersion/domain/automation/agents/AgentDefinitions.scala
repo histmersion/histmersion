@@ -93,7 +93,7 @@ object AgentDefinitions:
           case "*" =>
             style match
               case ToolStyle.Bare => "the histmersion tools"
-              case s              => s.tool("*")
+              case s              => s.tool(com.histmersion.domain.automation.agents.ToolUse.Tool("*"))
           case t => style.tool(t))
     )
 
@@ -104,17 +104,17 @@ object AgentDefinitions:
   /** `---\n<yaml>\n---\n<body>` → (yaml, body); the body keeps its leading newline, as written. */
   def split(md: com.histmersion.domain.automation.agents.AgentDefinitions.Markdown): Either[com.histmersion.domain.automation.agents.AgentDefinitions.Problem, (com.histmersion.domain.automation.agents.AgentDefinitions.Problem, com.histmersion.domain.automation.agents.AgentDef.Body)] =
     val t = md.replace("\r\n", "\n")
-    if !t.startsWith("---\n") then Left("no YAML header (--- … ---)")
+    if !t.startsWith("---\n") then Left(com.histmersion.domain.automation.agents.AgentDefinitions.Problem("no YAML header (--- … ---)"))
     else
       t.indexOf("\n---\n", 3) match
-        case -1 => Left("the YAML header is not closed")
+        case -1 => Left(com.histmersion.domain.automation.agents.AgentDefinitions.Problem("the YAML header is not closed"))
         case i  => Right((t.substring(4, i), t.substring(i + 5)))
 
   private def yaml(text: String): Either[com.histmersion.domain.automation.agents.AgentDefinitions.Problem, Map[com.histmersion.domain.automation.agents.AgentDefinitions.Problem, Any]] =
     try
       Option(Yaml(SafeConstructor(LoaderOptions())).load[Any](text)).map(_.asMatchable) match
         case Some(m: java.util.Map[?, ?]) => Right(m.asScala.toMap.map((k, v) => k.toString -> v))
-        case _                            => Left("the YAML header is not a mapping")
+        case _                            => Left(com.histmersion.domain.automation.agents.AgentDefinitions.Problem("the YAML header is not a mapping"))
     catch
       case e: Exception =>
         Left(s"the YAML header does not parse: ${e.getMessage.linesIterator.nextOption().getOrElse("")}")
@@ -243,7 +243,7 @@ final class AgentDefinitions(prompts: Prompts, val roster: AgentRoster):
 
   /** Every bundled file, relative to `agents/`. */
   def index: List[com.histmersion.domain.automation.agents.AgentDefinitions.ResourcePath] =
-    prompts.bundledText("index.txt").toOption.toList.flatMap(_.linesIterator.map(_.trim).filter(_.nonEmpty))
+    prompts.bundledText(com.histmersion.util.storage.SafePath.Candidate("index.txt")).toOption.toList.flatMap(_.linesIterator.map(_.trim).filter(_.nonEmpty))
 
   def agentNames: List[com.histmersion.domain.automation.agents.AgentDef.Name] = index.filter(r => !r.contains('/') && r.endsWith(".md")).map(_.stripSuffix(".md"))
   def skillNames: List[com.histmersion.domain.automation.agents.AgentDefinitions.SkillNamesResult] = index.collect { case r if r.startsWith("skills/") => r.split('/')(1) }.distinct

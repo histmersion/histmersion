@@ -198,7 +198,7 @@ object AcquisitionTools:
       since: Option[DiscoverInput.Since] = None,
       sort: Option[DiscoverInput.Sort] = None,
       limit: Option[DiscoverInput.Limit] = None,
-      notInDb: DiscoverInput.NotInDb = false
+      notInDb: DiscoverInput.NotInDb = com.histmersion.domain.library.acquisition.AcquisitionTools.DiscoverInput.(false)
   ) derives KindlingsCodecAsObject,
         KindlingsSchema, com.histmersion.api.json.Schema
 
@@ -224,8 +224,8 @@ object AcquisitionTools:
       offset: Option[CandidatesInput.Offset] = None,
       mark: List[CandidatesInput.Mark] = Nil,
       as: Option[CandidatesInput.As] = None,
-      sweep: CandidatesInput.Sweep = false,
-      dryRun: CandidatesInput.DryRun = false
+      sweep: CandidatesInput.Sweep = com.histmersion.domain.library.acquisition.AcquisitionTools.CandidatesInput.(false),
+      dryRun: CandidatesInput.DryRun = com.histmersion.domain.library.acquisition.AcquisitionTools.CandidatesInput.(false)
   ) derives KindlingsCodecAsObject,
         KindlingsSchema, com.histmersion.api.json.Schema
 
@@ -248,7 +248,7 @@ object AcquisitionTools:
     object DryRun extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
 
-  final case class RefsInput(id: RefsInput.Id, apply: RefsInput.Apply = false) derives KindlingsCodecAsObject, KindlingsSchema, com.histmersion.api.json.Schema
+  final case class RefsInput(id: RefsInput.Id, apply: RefsInput.Apply = com.histmersion.domain.library.acquisition.AcquisitionTools.RefsInput.Apply(false)) derives KindlingsCodecAsObject, KindlingsSchema, com.histmersion.api.json.Schema
 
   object RefsInput:
     type Id = Id.T
@@ -259,10 +259,10 @@ object AcquisitionTools:
 
   final case class AssessInput(
       id: Option[AssessInput.Id] = None,
-      apply: AssessInput.Apply = false,
-      forceStatus: AssessInput.ForceStatus = false,
-      updateRetractions: AssessInput.UpdateRetractions = false,
-      retractionsStatus: AssessInput.RetractionsStatus = false
+      apply: AssessInput.Apply = com.histmersion.domain.library.acquisition.AcquisitionTools.AssessInput.Apply(false),
+      forceStatus: AssessInput.ForceStatus = com.histmersion.domain.library.acquisition.AcquisitionTools.AssessInput.(false),
+      updateRetractions: AssessInput.UpdateRetractions = com.histmersion.domain.library.acquisition.AcquisitionTools.AssessInput.(false),
+      retractionsStatus: AssessInput.RetractionsStatus = com.histmersion.domain.library.acquisition.AcquisitionTools.AssessInput.(false)
   ) derives KindlingsCodecAsObject,
         KindlingsSchema, com.histmersion.api.json.Schema
 
@@ -283,7 +283,7 @@ object AcquisitionTools:
       id: FollowupsInput.Id,
       since: Option[FollowupsInput.Since] = None,
       limit: Option[FollowupsInput.Limit] = None,
-      apply: FollowupsInput.Apply = false
+      apply: FollowupsInput.Apply = com.histmersion.domain.library.acquisition.AcquisitionTools.FollowupsInput.Apply(false)
   ) derives KindlingsCodecAsObject,
         KindlingsSchema, com.histmersion.api.json.Schema
 
@@ -302,8 +302,8 @@ object AcquisitionTools:
       id: IngestInput.Id,
       citekey: Option[com.histmersion.domain.library.Citekey] = None,
       arxiv: Option[IngestInput.Arxiv] = None,
-      refetch: IngestInput.Refetch = false,
-      legalOnly: IngestInput.LegalOnly = false
+      refetch: IngestInput.Refetch = com.histmersion.domain.library.acquisition.AcquisitionTools.IngestInput.Refetch(false),
+      legalOnly: IngestInput.LegalOnly = com.histmersion.domain.library.acquisition.AcquisitionTools.IngestInput.(false)
   ) derives KindlingsCodecAsObject
   object IngestInput:
     type Id = Id.T
@@ -325,7 +325,7 @@ object AcquisitionTools:
   final case class ArchiveInput(
       query: Option[ArchiveInput.Query] = None,
       id: Option[ArchiveInput.Id] = None,
-      `import`: ArchiveInput.Import = false,
+      `import`: ArchiveInput.Import = com.histmersion.domain.library.acquisition.AcquisitionTools.ArchiveInput.Import(false),
       citekey: Option[com.histmersion.domain.library.Citekey] = None,
       format: Option[ArchiveInput.Format] = None,
       rows: Option[ArchiveInput.Rows] = None

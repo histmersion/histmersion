@@ -17,12 +17,12 @@ object CatalogueReferable:
   val Events: RecordTable =
     RecordTable(
       EventKind,
-      "events",
-      "t.id",
-      "t.label",
-      Some("t.uid"),
-      Some(AliasColumns("event_aliases", "alias", "event_id"))
+      com.histmersion.util.identity.RecordTable.Table("events"),
+      com.histmersion.util.identity.RecordTable.Key("t.id"),
+      com.histmersion.util.identity.RecordTable.Title("t.label"),
+      Some(com.histmersion.util.identity.RecordTable.Uid("t.uid")),
+      Some(AliasColumns(com.histmersion.util.identity.AliasColumns.Table("event_aliases"), com.histmersion.util.identity.AliasColumns.Alias("alias"), com.histmersion.util.identity.AliasColumns.Target("event_id")))
     )
 
   val Places: RecordTable =
-    RecordTable(PlaceKind, "places", "t.id", "t.label", None, Some(AliasColumns("place_aliases", "alias", "place_id")))
+    RecordTable(PlaceKind, com.histmersion.util.identity.RecordTable.Table("places"), com.histmersion.util.identity.RecordTable.Key("t.id"), com.histmersion.util.identity.RecordTable.Title("t.label"), None, Some(AliasColumns(com.histmersion.util.identity.AliasColumns.Table("place_aliases"), com.histmersion.util.identity.AliasColumns.Alias("alias"), com.histmersion.util.identity.AliasColumns.Target("place_id"))))

@@ -98,7 +98,7 @@ object LibraryTools:
               val depth = in.depth.orElse(Some(1))
               val samp = in.samples.orElse(Some(0))
               search.aggregate(Api.AggregateQuery.tree(by, in.toFilter, None, depth, in.asOf, samp)) match
-                case Right(t) => ToolResult.text(SearchMarkdown.tree(t, "sources"))
+                case Right(t) => ToolResult.text(SearchMarkdown.tree(t, com.histmersion.api.library.SearchMarkdown.TreeUnit("sources")))
                 case Left(e)  => McpOut.error(e)
         }
 
@@ -366,7 +366,7 @@ object LibraryTools:
       depth: Option[SearchInput.Depth] = None,
       asOf: Option[SearchInput.AsOf] = None,
       samples: Option[SearchInput.Samples] = None,
-      verbose: SearchInput.Verbose = true
+      verbose: SearchInput.Verbose = com.histmersion.domain.library.LibraryTools.SearchInput.Verbose(true)
   ) derives KindlingsCodecAsObject:
     def toFilter: Filter = Filter.of(
       query,
@@ -531,7 +531,7 @@ object LibraryTools:
 
   final case class GetSourceInput(
       citekey: com.histmersion.domain.library.Citekey,
-      fullText: GetSourceInput.FullText = false,
+      fullText: GetSourceInput.FullText = com.histmersion.domain.library.LibraryTools.GetSourceInput.FullText(false),
       section: Option[GetSourceInput.Section] = None,
       heading: Option[GetSourceInput.Heading] = None,
       offset: Option[GetSourceInput.Offset] = None,
@@ -587,7 +587,7 @@ object LibraryTools:
   final case class PassagesInput(
       citekey: com.histmersion.domain.library.Citekey,
       query: PassagesInput.Query,
-      regex: PassagesInput.Regex = false,
+      regex: PassagesInput.Regex = com.histmersion.domain.library.LibraryTools.PassagesInput.Regex(false),
       limit: Option[PassagesInput.Limit] = None,
       context: Option[PassagesInput.Context] = None
   ) derives KindlingsCodecAsObject
@@ -754,7 +754,7 @@ object LibraryTools:
   final case class PutSourceInput(
       citekey: com.histmersion.domain.library.Citekey,
       source: com.histmersion.api.library.Source.Put,
-      strict: PutSourceInput.Strict = false
+      strict: PutSourceInput.Strict = com.histmersion.domain.library.LibraryTools.PutSourceInput.Strict(false)
   )
   object PutSourceInput:
     type Strict = Strict.T
@@ -769,7 +769,7 @@ object LibraryTools:
   final case class PatchSourceInput(
       citekey: com.histmersion.domain.library.Citekey,
       patch: com.histmersion.api.library.Source.Patch,
-      strict: PatchSourceInput.Strict = false
+      strict: PatchSourceInput.Strict = com.histmersion.domain.library.LibraryTools.PatchSourceInput.Strict(false)
   )
   object PatchSourceInput:
     type Strict = Strict.T

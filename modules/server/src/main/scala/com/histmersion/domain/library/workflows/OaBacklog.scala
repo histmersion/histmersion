@@ -110,7 +110,7 @@ final class OaBacklog(
       case Placement.New                  =>
         val st = ItemState(oa = Some(w.modify(_.goals).setTo((w.goals :+ goal).distinct)))
         val (id, isNew) =
-          agents.managerStore.upsert(managerId, OaIngest, doi, ItemOrigin.Selection, 0, reopen = false, st)
+          agents.managerStore.upsert(managerId, OaIngest, doi, ItemOrigin.Selection, com.histmersion.domain.automation.managers.ManagerContext.Priority(0), reopen = com.histmersion.domain.automation.managers.ManagerService.UpsertReopen(false), st)
         if isNew then
           agents.managerStore.event(
             managerId,
@@ -156,7 +156,7 @@ final class OaBacklog(
     val counts = (stored.keySet ++ extra.keySet)
       .map(id => id -> stored.get(id).fold((extra.getOrElse(id, 0), 0))((p, hd) => (p + extra.getOrElse(id, 0), hd)))
       .toMap
-    if counts.isEmpty then Snapshot(Map.empty, 0, None)
+    if counts.isEmpty then Snapshot(Map.empty, com.histmersion.domain.library.workflows.OaBacklog.Snapshot.Total(0), None)
     else
       val left = ownLeft(now)
       val light = agents.managerStore.light().map(m => m.id -> m).toMap
@@ -222,7 +222,7 @@ final class OaBacklog(
              else "") +
             (if known > 0 then s", $known in the corpus already" else "") +
             (if retried > 0 then s", $retried to try again later" else "") + s"; $waiting waiting"
-        val _ = site.workLists.add("log", QueueAdd(line.take(1000)))
+        val _ = site.workLists.add(com.histmersion.domain.automation.worklists.WorkListControllers.ListName("log"), QueueAdd(line.take(1000)))
         List(line)
 
   private enum Drained:
@@ -338,7 +338,7 @@ final class OaBacklog(
             w.year.map(com.histmersion.api.catalogue.Year.apply),
             w.authors.map(com.histmersion.api.library.AuthorName.apply),
             w.venue.map(com.histmersion.api.library.Source.Venue.apply),
-            isOa = true, "", None
+            isOa = com.histmersion.api.library.WorkRef.IsOa(true), com.histmersion.domain.library.workflows.AcquisitionSweepRules.Candidate.Query(""), None
           ),
           goal,
           w.why
@@ -462,7 +462,7 @@ final class OaBacklog(
     )
     if !in.dryRun && (result.moved > 0 || result.removed > 0) then
       val _ = site.workLists.add(
-        "log",
+        com.histmersion.domain.automation.worklists.WorkListControllers.ListName("log"),
         QueueAdd(
           (s"repair-acquire ($by): ${result.moved} legal open-access work(s) moved from the " +
             s"acquisition list into the watchers' ingest backlogs, ${result.removed} in the corpus already removed, ${result.kept} kept; " +

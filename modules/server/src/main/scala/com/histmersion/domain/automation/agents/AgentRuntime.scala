@@ -12,11 +12,11 @@ import scala.jdk.CollectionConverters.*
   * (the plugin the research workspace installs).
   */
 enum AgentRuntime(val wire: AgentRuntime.Wire):
-  case ClaudeCode extends AgentRuntime("claude-code")
-  case Codex extends AgentRuntime("codex")
-  case Opencode extends AgentRuntime("opencode")
-  case Api extends AgentRuntime("api")
-  case Interactive extends AgentRuntime("interactive")
+  case ClaudeCode extends AgentRuntime(com.histmersion.domain.automation.agents.AgentRuntime.Wire("claude-code"))
+  case Codex extends AgentRuntime(com.histmersion.domain.automation.agents.AgentRuntime.Wire("codex"))
+  case Opencode extends AgentRuntime(com.histmersion.domain.automation.agents.AgentRuntime.Wire("opencode"))
+  case Api extends AgentRuntime(com.histmersion.domain.automation.agents.AgentRuntime.Wire("api"))
+  case Interactive extends AgentRuntime(com.histmersion.domain.automation.agents.AgentRuntime.Wire("interactive"))
 
   /** How a `{{tool:x}}` placeholder reads in this runtime. */
   def style: ToolStyle = this match

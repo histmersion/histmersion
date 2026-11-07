@@ -175,7 +175,7 @@ object EventService:
           sum.timeSpan,
           com.histmersion.api.catalogue.Latitude(lat),
           com.histmersion.api.catalogue.Longitude(lon),
-          "event",
+          com.histmersion.api.catalogue.EventGeo.Anchor("event"),
           (sum.placeId).map(com.histmersion.api.catalogue.Place.Id.apply),
           None,
           sum.parentId,
@@ -261,7 +261,7 @@ object EventService:
         case Right(j) =>
           val c = j.hcursor
           c.get[String]("type").toOption match
-            case None => Some("unknown GeoJSON type")
+            case None => Some(com.histmersion.domain.catalogue.events.EventService.Problem("unknown GeoJSON type"))
             case Some(t) if c.downField("coordinates").succeeded || t == "GeometryCollection" => None
             case Some(_) => Some("Unable to find 'coordinates' in GeoJSON string")
 

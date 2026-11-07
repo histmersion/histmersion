@@ -13,4 +13,4 @@ object SystemContext:
   /** A server started by a test: the system clock, and no environment, so nothing of the machine running it leaks in.
     */
   def jvmHome(): com.histmersion.util.system.JvmHome = com.histmersion.util.system.JvmHome(java.nio.file.Path.of(System.getProperty("user.home")))
-  val isolated: SystemContext = SystemContext(Clock.systemUTC(), Environment.empty, UserPaths(Environment.empty, ""))
+  val isolated: SystemContext = SystemContext(Clock.systemUTC(), Environment.empty, UserPaths(Environment.empty, com.histmersion.config.UserPaths.OsName("")))

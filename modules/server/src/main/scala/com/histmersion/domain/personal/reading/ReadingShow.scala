@@ -2,9 +2,9 @@ package com.histmersion.domain.personal.reading
 
 /** Which read marks a list holds: the items marked read, those opened, or every one kept. */
 enum ReadingShow(val wire: ReadingShow.Wire):
-  case Read extends ReadingShow("read")
-  case Opened extends ReadingShow("opened")
-  case All extends ReadingShow("all")
+  case Read extends ReadingShow(com.histmersion.domain.personal.reading.ReadingShow.Wire("read"))
+  case Opened extends ReadingShow(com.histmersion.domain.personal.reading.ReadingShow.Wire("opened"))
+  case All extends ReadingShow(com.histmersion.domain.personal.reading.ReadingShow.Wire("all"))
 
 object ReadingShow:
   type Wire = Wire.T

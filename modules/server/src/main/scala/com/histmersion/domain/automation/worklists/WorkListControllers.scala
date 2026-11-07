@@ -20,7 +20,7 @@ final class WorkListControllers(queues: QueueService, maintenance: WriteGate, cl
     Kind.parse(list).toRight(Api.Error(s"unknown queue list '$list' — one of: ${Kind.all.mkString(", ")}"))
 
   def add(list: com.histmersion.domain.automation.worklists.WorkListControllers.ListName, in: QueueAdd): Either[Api.Error, QueueItem] =
-    maintenance.guard("queue/add"):
+    maintenance.guard(com.histmersion.util.data.maintenance.WriteGate.OperationName("queue/add")):
       kindOf(list).flatMap { k =>
         if in.text.trim.isEmpty then Left(Api.Error("queue item text is empty"))
         else
@@ -37,7 +37,7 @@ final class WorkListControllers(queues: QueueService, maintenance: WriteGate, cl
       }
 
   def patch(id: com.histmersion.domain.automation.worklists.QueueItemId, p: QueuePatch): Either[Api.Error, QueueItem] =
-    maintenance.guard("queue/patch"):
+    maintenance.guard(com.histmersion.util.data.maintenance.WriteGate.OperationName("queue/patch")):
       val checked =
         for
           status <- Queue.statusOf(p.status)
@@ -46,14 +46,14 @@ final class WorkListControllers(queues: QueueService, maintenance: WriteGate, cl
       checked.left.map(Api.Error(_)).flatMap(c => queues.patch(QueueItemId(id), c).left.map(WorkListControllers.error))
 
   def delete(id: com.histmersion.domain.automation.worklists.QueueItemId): Either[Api.Error, QueueItem] =
-    maintenance.guard("queue/delete")(queues.delete(QueueItemId(id)).left.map(WorkListControllers.error))
+    maintenance.guard(com.histmersion.util.data.maintenance.WriteGate.OperationName("queue/delete"))(queues.delete(QueueItemId(id)).left.map(WorkListControllers.error))
 
   /** The list rendered as its `meta/<FILE>.md`. Notes are included — they ARE the file's prose. */
   def exportText(list: com.histmersion.domain.automation.worklists.WorkListControllers.ListName): Either[Api.Error, com.histmersion.domain.automation.worklists.WorkListControllers.ExportTextResultPart2] =
     kindOf(list).map(k => Queue.render(k, queues.list(k, QueueScope.All)))
 
   def importText(list: com.histmersion.domain.automation.worklists.WorkListControllers.ListName, req: QueueImport): Either[Api.Error, QueueImported] =
-    maintenance.guard("queue/import"):
+    maintenance.guard(com.histmersion.util.data.maintenance.WriteGate.OperationName("queue/import")):
       kindOf(list).map { k =>
         val rows = Queue.parse(k, req.text)
         val counts = queues.replace(k, rows, ImportMode.of(req.replace))

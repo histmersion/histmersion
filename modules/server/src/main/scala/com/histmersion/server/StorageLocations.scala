@@ -81,7 +81,7 @@ object StorageLocations:
     * bundle's layout when `HISTMERSION_RUNTIME` is not set).
     */
   def measured(cfg: AppConfig, env: com.histmersion.server.GazetteerPaths.EnvName => Option[com.histmersion.server.GazetteerPaths.EnvText], osName: com.histmersion.server.GazetteerPaths.OsName, exe: Option[Path]): Storage =
-    val bundled = cfg.runtime.enabled || (env("HISTMERSION_RUNTIME").forall(_.trim.isEmpty) && Supervisor.bundled(exe))
+    val bundled = cfg.runtime.enabled || (env(com.histmersion.server.GazetteerPaths.EnvName("HISTMERSION_RUNTIME")).forall(_.trim.isEmpty) && Supervisor.bundled(exe))
     val home = Option.when(bundled)(Supervisor.layout(cfg.runtime, exe, env, osName).toOption.map(_.home)).flatten
     val data = UserPaths.dataDir(cfg.runtime.dataDir, env, osName).map(_.toAbsolutePath.normalize)
     val gazetteer = GazetteerPaths.of(cfg, env, osName)

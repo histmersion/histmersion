@@ -112,16 +112,16 @@ object Supervisor:
   private[server] def pgStart(l: Layout, port: com.histmersion.server.Supervisor.PgStartPort, settings: List[(com.histmersion.server.Supervisor.PgStartSettingsPart1, com.histmersion.server.Supervisor.PgStartSettingsPart2)] = Nil): List[com.histmersion.server.Supervisor.Command] =
     List(
       l.pgBin.resolve("pg_ctl").toString,
-      "-D",
+      com.histmersion.server.Supervisor.Command("-D"),
       l.cluster.toString,
-      "-l",
+      com.histmersion.server.Supervisor.Command("-l"),
       l.logs.resolve("postgres.log").toString,
-      "-w",
-      "-t",
-      "300",
-      "-o",
+      com.histmersion.server.Supervisor.Command("-w"),
+      com.histmersion.server.Supervisor.Command("-t"),
+      com.histmersion.server.Supervisor.Command("300"),
+      com.histmersion.server.Supervisor.Command("-o"),
       pgOptions(port, settings),
-      "start"
+      com.histmersion.server.Supervisor.Command("start")
     )
 
   private val MB = 1024L * 1024L
@@ -162,7 +162,7 @@ object Supervisor:
       .Try {
         if osName.toLowerCase.contains("mac") then
           processes
-            .run(ProcessLaunch(List("/usr/sbin/sysctl", "-n", "hw.memsize")))
+            .run(ProcessLaunch(List(com.histmersion.util.process.ProcessLaunch.Command("/usr/sbin/sysctl"), com.histmersion.util.process.ProcessLaunch.Command("-n"), com.histmersion.util.process.ProcessLaunch.Command("hw.memsize"))))
             .toOption
             .flatMap(_.lines.mkString("\n").trim.toLongOption)
         else
@@ -175,24 +175,24 @@ object Supervisor:
       .flatten
 
   private[server] def pgStop(l: Layout): List[com.histmersion.server.Supervisor.Command] =
-    List(l.pgBin.resolve("pg_ctl").toString, "-D", l.cluster.toString, "-m", "fast", "-w", "stop")
+    List(l.pgBin.resolve("pg_ctl").toString, com.histmersion.server.Supervisor.Command("-D"), l.cluster.toString, com.histmersion.server.Supervisor.Command("-m"), com.histmersion.server.Supervisor.Command("fast"), com.histmersion.server.Supervisor.Command("-w"), com.histmersion.server.Supervisor.Command("stop"))
 
   private[server] def initdb(l: Layout, user: com.histmersion.server.Supervisor.InitdbUser, pwFile: Path): List[com.histmersion.server.Supervisor.Command] =
     List(
       l.pgBin.resolve("initdb").toString,
-      "-D",
+      com.histmersion.server.Supervisor.Command("-D"),
       l.cluster.toString,
-      "-U",
+      com.histmersion.server.Supervisor.Command("-U"),
       user,
-      "--auth=scram-sha-256",
+      com.histmersion.server.Supervisor.Command("--auth=scram-sha-256"),
       s"--pwfile=$pwFile",
-      "-E",
-      "UTF8",
-      "--locale=C"
+      com.histmersion.server.Supervisor.Command("-E"),
+      com.histmersion.server.Supervisor.Command("UTF8"),
+      com.histmersion.server.Supervisor.Command("--locale=C")
     )
 
   private[server] def converterCmd(l: Layout, port: com.histmersion.server.Composition.Port): List[com.histmersion.server.Supervisor.Command] =
-    List(l.python.toString, "-m", "uvicorn", "app:app", "--host", "127.0.0.1", "--port", port.toString)
+    List(l.python.toString, com.histmersion.server.Supervisor.Command("-m"), com.histmersion.server.Supervisor.Command("uvicorn"), com.histmersion.server.Supervisor.Command("app:app"), com.histmersion.server.Supervisor.Command("--host"), com.histmersion.server.Supervisor.Command("127.0.0.1"), com.histmersion.server.Supervisor.Command("--port"), port.toString)
 
   /** The configuration with every endpoint and directory pointed at the bundle. Settings the user changed explicitly (a
     * backups dir other than the default, a pg-bin-dir) are kept.
@@ -270,7 +270,7 @@ object Supervisor:
 
     val fresh = !Files.exists(l.cluster.resolve("PG_VERSION"))
     if fresh then initCluster(l, cfg.db.user, cfg.db.password)
-    if run(List(l.pgBin.resolve("pg_ctl").toString, "-D", l.cluster.toString, "status"), l)._1 == 0 then
+    if run(List(l.pgBin.resolve("pg_ctl").toString, com.histmersion.server.Supervisor.Command("-D"), l.cluster.toString, com.histmersion.server.Supervisor.Command("status")), l)._1 == 0 then
       scribe.info("runtime: postgres already running on this cluster — adopting it")
     else
       val settings = pgSettings(cfg.runtime.postgres, physicalMemory(paths.osName))
@@ -281,7 +281,7 @@ object Supervisor:
           s"postgres did not start (exit $rc): ${out.takeRight(5).mkString("; ")} — see ${l.logs.resolve("postgres.log")}"
         )
       scribe.info(s"runtime: postgres up on 127.0.0.1:${cfg.runtime.pgPort}")
-    val configured = configure(cfg, l, paths.environment.get("HISTMERSION_BIND"))
+    val configured = configure(cfg, l, paths.environment.get(com.histmersion.config.Environment.VariablesKey("HISTMERSION_BIND")))
     ensureDatabase(configured)
 
     if Files.isExecutable(l.python) then superviseConverter(l, cfg.runtime.converterPort)
@@ -298,7 +298,7 @@ object Supervisor:
   def reloadSource(started: AppConfig, read: () => Either[com.histmersion.server.Supervisor.Problem, LoadedConfig], paths: UserPaths): ConfigSource =
     val l = layout(started.runtime, currentExecutable, paths.environment.lookup, paths.osName)
       .fold(e => throw IllegalStateException(e), identity)
-    val bind = paths.environment.get("HISTMERSION_BIND")
+    val bind = paths.environment.get(com.histmersion.config.Environment.VariablesKey("HISTMERSION_BIND"))
     ConfigSource(
       read,
       c => configure(c, l, bind),
@@ -366,7 +366,7 @@ object Supervisor:
     stopping.set(true)
     converter.get().foreach { p =>
       p.destroy()
-      if !p.waitFor(10, TimeUnit.SECONDS) then { val _ = p.destroyForcibly() }
+      if !p.waitFor(com.histmersion.util.process.Processes.WaitTimeout(10), TimeUnit.SECONDS) then { val _ = p.destroyForcibly() }
     }
     val (rc, out) = run(pgStop(l), l)
     if rc != 0 then scribe.error(s"Histmersion: postgres stop failed (exit $rc): ${out.mkString("; ")}")

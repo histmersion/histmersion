@@ -30,7 +30,7 @@ final class CatalogueJobs(
         kind,
         Some(com.histmersion.api.catalogue.EventsJobKinds.Catalogue(Some(describe))),
         slot,
-        "an events run",
+        com.histmersion.util.jobs.BackgroundJob.Work("an events run"),
         pins = pins,
         stops = Option.when(stoppable(kind))(stops)
       )((job, progress) => BackgroundJob.Outcome.of(body(job, progress)))

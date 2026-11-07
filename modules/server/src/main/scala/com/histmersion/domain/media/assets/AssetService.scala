@@ -520,7 +520,7 @@ object AssetService:
         val updated =
           if others.exists(m => mine(m) && m.assetUid == uid) then
             others.map(m => if mine(m) && m.assetUid == uid then m.modify(_.property).setTo(property) else m)
-          else others :+ HeldMediaLink(uid, PictureTarget.Source.wire, citekey, role, property, None, 0, None)
+          else others :+ HeldMediaLink(uid, PictureTarget.Source.wire, citekey, role, property, None, com.histmersion.domain.media.assets.HeldMediaLink.Rank(0), None)
         s.modify(_.mediaLinks).setTo(updated)
       }
 

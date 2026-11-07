@@ -9,10 +9,10 @@ import scala.jdk.CollectionConverters.*
   * Wikipedia references — still MCP only), or the runtime's web search / fetch.
   */
 enum WebAccess(val wire: WebAccess.Wire):
-  case None extends WebAccess("none")
-  case Discover extends WebAccess("discover")
-  case WebSearch extends WebAccess("search")
-  case Fetch extends WebAccess("fetch")
+  case None extends WebAccess(com.histmersion.domain.automation.agents.WebAccess.Wire("none"))
+  case Discover extends WebAccess(com.histmersion.domain.automation.agents.WebAccess.Wire("discover"))
+  case WebSearch extends WebAccess(com.histmersion.domain.automation.agents.WebAccess.Wire("search"))
+  case Fetch extends WebAccess(com.histmersion.domain.automation.agents.WebAccess.Wire("fetch"))
 
 object WebAccess:
   type Wire = Wire.T

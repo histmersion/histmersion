@@ -129,7 +129,7 @@ final class AutoApprovals(
             mgr.foreach(m =>
               agents.managerStore.event(m.id, run.flatMap(_.managerItem), a.runId, Feed.Approval, text.take(2000))
             )
-            val _ = agents.workLists.add("log", QueueAdd(s"autopilot: $text".take(1000)))
+            val _ = agents.workLists.add(com.histmersion.domain.automation.worklists.WorkListControllers.ListName("log"), QueueAdd(s"autopilot: $text".take(1000)))
             scribe.info(s"autopilot: $text")
             List(s"$what: ${decision.wire}")
 
@@ -170,7 +170,7 @@ final class AutoApprovals(
       case Some(ApprovalKind.GoalPlan) =>
         (a.plan, agents.focus.goalPlansWait()) match
           case (_, Some(wait)) => Verdict.Leave(wait)
-          case (None, _)       => Verdict.Leave("the approval carries no readable plan")
+          case (None, _)       => Verdict.Leave(com.histmersion.domain.AutopilotPolicy.Verdict.Leave.Why("the approval carries no readable plan"))
           case (Some(p), _)    =>
             val goal = a.subject.getOrElse(p.goal)
             val depth = AutopilotPolicy.depth(goal, s => agents.goals.get(s).flatMap(_.parentSlug))
@@ -183,11 +183,11 @@ final class AutoApprovals(
               // decided by code whatever the focus: only the sub-goals it would open are bounded
               case v @ Verdict.Approve(_) => agents.focus.goalPlanBlock(goal, p.subGoals.size).fold(v)(Verdict.Leave(_))
               case v                      => v
-      case _ => Verdict.Leave("not a kind the autopilot decides")
+      case _ => Verdict.Leave(com.histmersion.domain.AutopilotPolicy.Verdict.Leave.Why("not a kind the autopilot decides"))
 
   def checkpoint(run: com.histmersion.domain.automation.Run.Id, step: com.histmersion.domain.automation.agents.AgentRepo.StepRecord.Name): Option[String] =
     agents.runs
-      .steps(run, 100000)
+      .steps(run, com.histmersion.domain.automation.agents.AgentRepo.OutputChars(100000))
       .filter(s => s.name == step && s.status == StepStatus.Done.wire)
       .lastOption
       .flatMap(_.output)

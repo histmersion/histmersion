@@ -30,23 +30,23 @@ final class GoalsControllers(
 
   /** A put replaces the goal. */
   def put(slug: com.histmersion.domain.automation.Goal.Slug, in: Goal.Put): Either[Api.Error, Goal] =
-    maintenance.guard("put_goal"):
+    maintenance.guard(com.histmersion.util.data.maintenance.WriteGate.OperationName("put_goal")):
       val now = current(slug)
       goals.put(now, in).flatMap(_ => get(now))
 
   def patch(slug: com.histmersion.domain.automation.Goal.Slug, p: Goal.Patch): Either[Api.Error, Goal] =
-    maintenance.guard("patch_goal"):
+    maintenance.guard(com.histmersion.util.data.maintenance.WriteGate.OperationName("patch_goal")):
       val now = current(slug)
       goals.patch(now, p).flatMap(_ => get(now))
 
   def delete(slug: com.histmersion.domain.automation.Goal.Slug): Either[Api.Error, Goal.Deleted] =
-    maintenance.guard("delete_goal"):
+    maintenance.guard(com.histmersion.util.data.maintenance.WriteGate.OperationName("delete_goal")):
       val now = current(slug)
-      if goals.delete(now) then Right(Goal.Deleted(now, true)) else Left(notFound(slug))
+      if goals.delete(now) then Right(Goal.Deleted(now, com.histmersion.api.automation.Goal.Deleted.Value(true))) else Left(notFound(slug))
 
   /** `POST /api/goals/{slug}/rename` — a new slug; the old one keeps resolving (V053). */
   def rename(slug: com.histmersion.domain.automation.Goal.Slug, req: LabelRename): Either[Api.Error, LabelRenamed] =
-    maintenance.guard("rename_goal"):
+    maintenance.guard(com.histmersion.util.data.maintenance.WriteGate.OperationName("rename_goal")):
       val from = current(slug)
       for
         to <- LabelRenames.validate(Bundle.Kind.Goal, from, req.to)

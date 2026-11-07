@@ -212,7 +212,7 @@ object GazetteerLoad:
   final private class Batcher(size: Batcher.Size, sink: List[GazRecord] => Gazetteer.LoadCounts):
     private val buf = List.newBuilder[GazRecord] // the batch being filled
     private var n = 0 // its size
-    var total: Gazetteer.LoadCounts = Gazetteer.LoadCounts("", "") // the running sum
+    var total: Gazetteer.LoadCounts = Gazetteer.LoadCounts(com.histmersion.api.catalogue.Gazetteer.LoadCounts.Source(""), com.histmersion.api.catalogue.Gazetteer.LoadCounts.Version("")) // the running sum
     var span: Span = Span.always // the widest known years of the records, for an LPF dataset that states none
 
     def add(r: Either[com.histmersion.domain.catalogue.places.GazetteerLoad.Problem, GazRecord]): Unit = r match
@@ -245,7 +245,7 @@ object GazetteerLoad:
       maxLpfBytes: Settings.MaxLpfBytes,
       downloadTimeoutSeconds: Settings.DownloadTimeoutSeconds,
       toleranceKm: Settings.ToleranceKm,
-      rebuild: Settings.Rebuild = true,
+      rebuild: Settings.Rebuild = com.histmersion.domain.catalogue.places.GazetteerLoad.Settings.Rebuild(true),
       openStartWindowYears: Settings.OpenStartWindowYears = Gazetteer.DefaultOpenStartWindowYears,
       pointAreaKinds: Set[Settings.PointAreaKinds] = Gazetteer.DefaultPointAreaKinds.toSet
   )
@@ -314,7 +314,7 @@ object GazetteerLoad:
           List(c)
     result.map { cs =>
       if apply && s.rebuild && cs.exists(!_.unchanged) then
-        note("matching findings to places")
+        note(com.histmersion.domain.library.sources.SourceNote.Text("matching findings to places"))
         val _ = db.transact(FindingPlaceRepo.rebuildFindingPlaces(s.toleranceKm))
       cs
     }
@@ -512,7 +512,7 @@ object GazetteerLoad:
     }
     val lpf = lpfFiles(s.stores.lpf).map { f =>
       val key = Gazetteer.sourceKey(Gazetteer.Kind.Lpf, Some(Gazetteer.datasetSlug(f.key.name)))
-      Gazetteer.SourceInfo(key, Gazetteer.Kind.Lpf, f.key.name, Some(f.where), present = true, None)
+      Gazetteer.SourceInfo(key, Gazetteer.Kind.Lpf, f.key.name, Some(f.where), present = com.histmersion.api.catalogue.Gazetteer.SourceInfo.Present(true), None)
     }
     val onDisk = (pinned ++ lpf).map(_.key).toSet
     val gone = stored.values.filterNot(r => onDisk.contains(r.key)).toList.sortBy(_.key).flatMap { r =>

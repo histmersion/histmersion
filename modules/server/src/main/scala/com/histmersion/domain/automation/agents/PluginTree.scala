@@ -11,14 +11,14 @@ object PluginTree:
   object OwnedValue extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
   def tree(roster: AgentRoster)(using Stores, Resources): Either[com.histmersion.domain.automation.agents.PluginTree.Problem, Map[com.histmersion.domain.automation.agents.PluginTree.Problem, String]] =
-    val defs = AgentDefinitions(Prompts(""), roster)
+    val defs = AgentDefinitions(Prompts(com.histmersion.domain.automation.agents.Prompts.OverrideDir("")), roster)
     for
       as <- defs.agents
       fs <- defs.fragments
       ss <- defs.skills
     yield AgentGenerator.repoPlugin(AgentGenerator.Defs(as, fs, ss))
 
-  val Owned: List[com.histmersion.domain.automation.agents.PluginTree.Owned] = List("plugin/agents", "plugin/skills")
+  val Owned: List[com.histmersion.domain.automation.agents.PluginTree.Owned] = List(com.histmersion.domain.automation.agents.PluginTree.OwnedValue("plugin/agents"), com.histmersion.domain.automation.agents.PluginTree.OwnedValue("plugin/skills"))
 
   def write(store: Store, roster: AgentRoster)(using Stores, Resources): Either[com.histmersion.domain.automation.agents.PluginTree.Problem, Unit] =
     tree(roster).flatMap(t => writeTree(store, t))

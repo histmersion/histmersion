@@ -56,7 +56,7 @@ final class ReviewManagerKind(site: ResearchSite, ledgers: => ReviewLedgerServic
   /** When each review manager last looked for articles to extend (epoch ms); in memory. */
   private val lastExtend = java.util.concurrent.ConcurrentHashMap[String, java.lang.Long]()
 
-  def fire(c: ManagerContext, m: ManagerInfo, now: Instant): List[com.histmersion.domain.research.workflows.ReviewManagerKind.Event] = List("selection refilled")
+  def fire(c: ManagerContext, m: ManagerInfo, now: Instant): List[com.histmersion.domain.research.workflows.ReviewManagerKind.Event] = List(com.histmersion.domain.research.workflows.ReviewManagerKind.Event("selection refilled"))
 
   // ── evaluate ───────────────────────────────────────────────────────────────────────────────────
 
@@ -144,7 +144,7 @@ final class ReviewManagerKind(site: ResearchSite, ledgers: => ReviewLedgerServic
     open match
       case Some(item) => site.workLists.patch(item.id, QueuePatch(text = Some(text))).toOption.map(_.id)
       case None       =>
-        site.workLists.add(Queue.Kind.Tasks.label, QueueAdd(text, topic = Some("agent review"))).toOption.map(_.id)
+        site.workLists.add(Queue.Kind.Tasks.label, QueueAdd(text, topic = Some(com.histmersion.api.automation.Queue.QueueItem.Topic("agent review")))).toOption.map(_.id)
 
   def facts(c: ManagerContext, item: ManagerItem, run: com.histmersion.domain.automation.Run.Id): StepFacts =
     lazy val progress = c.progress(run)
@@ -160,7 +160,7 @@ final class ReviewManagerKind(site: ResearchSite, ledgers: => ReviewLedgerServic
           case Some(w) if w.written => StepFacts.Finished(s"extended (${w.why})")
           case Some(w)              => StepFacts.Finished(s"nothing appended: ${w.why}")
           case None                 => StepFacts.Finished(s"nothing to extend — $progress")
-      case _ => StepFacts.Finished("enriched")
+      case _ => StepFacts.Finished(com.histmersion.domain.ManagerPolicy.ItemOutcome("enriched"))
 
   /** An extended article is reviewed again. */
   override def afterDone(
@@ -225,7 +225,7 @@ final class ReviewManagerKind(site: ResearchSite, ledgers: => ReviewLedgerServic
           None,
           None,
           Feed.Evaluated,
-          s"selected ${Plural.count(added.size, "item")}: ${added.mkString(", ")}".take(2000)
+          s"selected ${Plural.count(added.size, com.histmersion.api.Plural.CountSingular("item"))}: ${added.mkString(", ")}".take(2000)
         )
         out += s"${m.id}: selected ${added.size}"
     extensions(c, m, now, out)
@@ -322,7 +322,7 @@ final class ReviewManagerKind(site: ResearchSite, ledgers: => ReviewLedgerServic
       val on = m.config.inferFilter.getOrElse(cfg.managers.review.inferFilter)
       val has = site.articles.recordedFilter(slug).isDefined
       if on && !has && !c.hasItem(m.id, InferFilter, slug) then
-        val (fid, _) = c.upsert(m.id, InferFilter, slug, ItemOrigin.Chain, priority, reopen = false)
+        val (fid, _) = c.upsert(m.id, InferFilter, slug, ItemOrigin.Chain, priority, reopen = com.histmersion.domain.automation.managers.ManagerContext.UpsertReopen(false))
         c.event(
           m.id,
           Some(fid),
@@ -346,7 +346,7 @@ final class ReviewManagerKind(site: ResearchSite, ledgers: => ReviewLedgerServic
         if ManagerPolicy.waitsFor(item.kind, item.target, c.openKeys(m.id)) then None
         else
           site.articles.get(item.target) match
-            case Left(_)  => c.settleNow(m, item, ItemStatus.Cancelled, "the article no longer exists")
+            case Left(_)  => c.settleNow(m, item, ItemStatus.Cancelled, com.histmersion.domain.automation.managers.ManagerContext.SettleNowWhy("the article no longer exists"))
             case Right(_) =>
               val before = ledgers.get(item.target).toOption.flatten.map(_.openMajors.size).getOrElse(0)
               val pairs = site.articles.openCritiques(item.target)
@@ -369,9 +369,9 @@ final class ReviewManagerKind(site: ResearchSite, ledgers: => ReviewLedgerServic
               )
       case InferFilter =>
         site.articles.get(item.target) match
-          case Left(_) => c.settleNow(m, item, ItemStatus.Cancelled, "the article no longer exists")
+          case Left(_) => c.settleNow(m, item, ItemStatus.Cancelled, com.histmersion.domain.automation.managers.ManagerContext.SettleNowWhy("the article no longer exists"))
           case Right(v) if site.articles.recordedFilter(v.article.slug).isDefined =>
-            c.settleNow(m, item, ItemStatus.Done, "the article records a filter already")
+            c.settleNow(m, item, ItemStatus.Done, com.histmersion.domain.automation.managers.ManagerContext.SettleNowWhy("the article records a filter already"))
           case Right(_) =>
             c.start(
               m,
@@ -379,12 +379,12 @@ final class ReviewManagerKind(site: ResearchSite, ledgers: => ReviewLedgerServic
               RunRequest(Pipeline.InferFilter.wire, item.target, budgetUsd = m.config.budgetUsd),
               identity,
               item.state,
-              "infer-filter",
+              com.histmersion.domain.automation.managers.ManagerContext.StartWhat("infer-filter"),
               out
             )
       case ArticleExtend =>
         site.articles.get(item.target) match
-          case Left(_)  => c.settleNow(m, item, ItemStatus.Cancelled, "the article no longer exists")
+          case Left(_)  => c.settleNow(m, item, ItemStatus.Cancelled, com.histmersion.domain.automation.managers.ManagerContext.SettleNowWhy("the article no longer exists"))
           case Right(_) =>
             c.start(
               m,
@@ -392,7 +392,7 @@ final class ReviewManagerKind(site: ResearchSite, ledgers: => ReviewLedgerServic
               RunRequest(Pipeline.CompileArticle.wire, item.target, budgetUsd = m.config.budgetUsd),
               _.modify(_.chainReview).setTo(Some(false)),
               item.state,
-              "compile-article (extend; its review follows as an item)",
+              com.histmersion.domain.automation.managers.ManagerContext.StartWhat("compile-article (extend; its review follows as an item)"),
               out
             )
       case other =>

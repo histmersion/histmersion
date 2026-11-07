@@ -65,10 +65,10 @@ final class Engine(
   /** Delete traced messages older than `agents.trace.keep-messages-days`, at most once every `prune-every-minutes` (or
     * now with `force`). Returns how many went. Never fails a run: a failed prune is logged and tried again next time.
     */
-  def pruneTrace(force: com.histmersion.domain.automation.agents.Engine.PruneTraceForce = false, now: com.histmersion.domain.automation.agents.PlanQuotaRepo.EpochMillis = agents.clock.millis()): com.histmersion.domain.automation.agents.Engine.Count =
+  def pruneTrace(force: com.histmersion.domain.automation.agents.Engine.PruneTraceForce = com.histmersion.domain.automation.agents.Engine.PruneTraceForce(false), now: com.histmersion.domain.automation.agents.PlanQuotaRepo.EpochMillis = agents.clock.millis()): com.histmersion.domain.automation.agents.Engine.Count =
     val every = math.max(1, cfg.trace.pruneEveryMinutes).toLong * 60000L
     val last = lastPrune.get()
-    if cfg.trace.keepMessagesDays <= 0 || (!force && now - last < every) || !lastPrune.compareAndSet(last, now) then 0
+    if cfg.trace.keepMessagesDays <= 0 || (!force && now - last < every) || !lastPrune.compareAndSet(last, now) then com.histmersion.domain.automation.agents.Engine.Count(0)
     else
       try
         val n = agents.runs.pruneMessages(cfg.trace.keepMessagesDays)
@@ -77,7 +77,7 @@ final class Engine(
       catch
         case e: Exception =>
           scribe.warn(s"agent trace pruning failed: ${e.getMessage}")
-          0
+          com.histmersion.domain.automation.agents.Engine.Count(0)
 
   /** What a person asked of a RUNNING run, read by the run between steps — and what the stall watchdog watches: the
     * last sign of life, the step it was in, and the CLI processes it has alive.
@@ -88,7 +88,7 @@ final class Engine(
     @volatile var lastBeat: com.histmersion.domain.automation.agents.PlanQuotaRepo.EpochMillis = agents.clock.millis()
 
     /** When `lastBeat` was last written to `jobs.heartbeat_at` (at most every heartbeat-seconds). */
-    @volatile var persisted: com.histmersion.domain.automation.agents.PlanQuotaRepo.EpochMillis = 0L
+    @volatile var persisted: com.histmersion.domain.automation.agents.PlanQuotaRepo.EpochMillis = com.histmersion.domain.automation.agents.PlanQuotaRepo.EpochMillis(0L)
     @volatile var seq: Int = 0
 
     /** Set by the watchdog before it interrupts the run: how the run settles. */
@@ -174,7 +174,7 @@ final class Engine(
     */
   def start(): Int =
     val (paused, queued) = reconcile()
-    val _ = pruneTrace(force = true)
+    val _ = pruneTrace(force = com.histmersion.domain.automation.agents.Engine.PruneTraceForce(true))
     queued.foreach(submit)
     if scope.isEmpty then
       stopping = false
@@ -370,7 +370,7 @@ final class Engine(
                 val at = Option.when(run.origin.flatMap(Origin.parse).exists(_.unattended))(
                   java.time.Instant.now(agents.clock).plusSeconds(math.max(0, cfg.watchdog.interruptedResumeMinutes).toLong * 60L)
                 )
-                Left(Halt.Pause(PauseReason.Interrupted, "interrupted", at))
+                Left(Halt.Pause(PauseReason.Interrupted, com.histmersion.domain.automation.agents.Halt.Pause.Detail("interrupted"), at))
               case e: Exception =>
                 scribe.error(s"agent run $id failed unexpectedly: ${e.getMessage}", e)
                 Left(Halt.Fail(s"${e.getClass.getSimpleName}: ${e.getMessage}"))
@@ -383,7 +383,7 @@ final class Engine(
             case Right(summary) =>
               transition(id, RunState.Running, RunState.Done, progress = Some(summary.take(500)))
             case Left(Halt.Cancel) =>
-              transition(id, RunState.Running, RunState.Cancelled, error = Some("cancelled"))
+              transition(id, RunState.Running, RunState.Cancelled, error = Some(com.histmersion.domain.automation.agents.Engine.Problem("cancelled")))
             case Left(Halt.Fail(m)) =>
               transition(id, RunState.Running, RunState.Failed, error = Some(m.take(2000)))
             case Left(Halt.Pause(reason, why, at)) =>
@@ -451,13 +451,13 @@ final class Engine(
   private[histmersion] def checkControl(id: com.histmersion.domain.automation.Run.Id): Either[Halt, Unit] =
     Option(running.get(id)) match
       case Some(c) if c.cancel => Left(Halt.Cancel)
-      case Some(c) if c.pause  => Left(Halt.Pause(PauseReason.Requested, "paused on request"))
+      case Some(c) if c.pause  => Left(Halt.Pause(PauseReason.Requested, com.histmersion.domain.automation.agents.Halt.Pause.Detail("paused on request")))
       case _                   => Right(())
 
   /** Before an LLM call: the run's own budget, and the global daily and monthly caps. */
   private[histmersion] def checkBudget(id: com.histmersion.domain.automation.Run.Id): Either[Halt, Unit] =
     agents.runs.get(id) match
-      case None    => Left(Halt.Fail("the run disappeared"))
+      case None    => Left(Halt.Fail(com.histmersion.domain.automation.agents.Halt.Fail.Message("the run disappeared")))
       case Some(r) =>
         val (day, month) = agents.runs.spendDayMonth()
         if r.costUsd >= r.budgetUsd then
@@ -543,7 +543,7 @@ final class Engine(
           Option(running.get(id)).foreach { c => c.cancel = true; c.thread.interrupt() }
           Right(r)
         case Some(s @ (RunState.Queued | RunState.Paused | RunState.WaitingApproval)) =>
-          transition(id, s, RunState.Cancelled, error = Some("cancelled"))
+          transition(id, s, RunState.Cancelled, error = Some(com.histmersion.domain.automation.agents.Engine.Problem("cancelled")))
             .toRight(conflict(s"run $id moved on; look again"))
             .flatMap { _ =>
               val _ = agents.approvalStore.closeForRun(id, "rejected: the run was cancelled")
@@ -603,7 +603,7 @@ object Engine:
     */
   def capKey(overridden: com.histmersion.domain.automation.agents.Engine.CapKeyOverridden): com.histmersion.domain.automation.agents.Engine.CapKey =
     if overridden then "the step's own cap (agents.review.fixer-max-tokens or agents.compile.draft-max-tokens)"
-    else "agents.step.max-tokens (HISTMERSION_AGENTS_MAX_TOKENS)"
+    else com.histmersion.domain.automation.agents.Engine.CapKey("agents.step.max-tokens (HISTMERSION_AGENTS_MAX_TOKENS)")
 
   private val OutputCap = "exceeded the (\\d+) output token maximum".r
 

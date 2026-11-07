@@ -21,7 +21,7 @@ object SourcesData:
 
   def figures(using DbCon): List[DataCount] =
     val (sources, findings) = SourceRepo.counts()
-    List(DataCount("sources", sources), DataCount("findings", findings))
+    List(DataCount(com.histmersion.util.data.diagnostics.DataCount.Noun("sources"), sources), DataCount(com.histmersion.util.data.diagnostics.DataCount.Noun("findings"), findings))
 
   /** The rebuild of every source's full-text chunks from its OCR'd body: at most `limit` sources after `after` (and at
     * most `limits.reindex-chars` characters) per slice.
@@ -65,7 +65,7 @@ object SourcesData:
   def checks(owner: DataOwner): List[CheckRule] =
     listed(owner, DanglingEdges) ++
       List(
-        fixed(owner, UnresolvedShortCitekeys, FixWhen.EveryFix, 10)(c =>
+        fixed(owner, UnresolvedShortCitekeys, FixWhen.EveryFix, com.histmersion.domain.library.sources.SourcesData.Rank(10))(c =>
           SourceRepairs(Transactor(c.dataSource)).resolveEdgesFix()
         )
       ) ++

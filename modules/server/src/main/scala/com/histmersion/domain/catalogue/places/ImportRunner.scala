@@ -39,7 +39,7 @@ object ImportRunner:
     for
       (all, refused) <- ImportRunner.places(source, http)
       result <-
-        if dryRun then Right(Place.ImportResult(all.size, 0, 0, ("dry run" :: refused).take(20)))
+        if dryRun then Right(Place.ImportResult(all.size, com.histmersion.api.catalogue.Place.ImportResult.Names(0), com.histmersion.api.catalogue.Place.ImportResult.Relations(0), ("dry run" :: refused).take(20)))
         else
           batchUpsert(all, places, geometry, toleranceKm)
             .map(r => r.modify(_.failed).setTo((refused ++ r.failed).take(20)))
@@ -53,7 +53,7 @@ object ImportRunner:
   ): Either[com.histmersion.domain.catalogue.places.ImportRunner.Problem, Place.ImportResult] =
     try
       val batches = items.grouped(BatchSize).toList
-      val total = batches.zipWithIndex.foldLeft(Place.ImportResult(0, 0, 0, Nil)) { case (acc, (batch, i)) =>
+      val total = batches.zipWithIndex.foldLeft(Place.ImportResult(com.histmersion.api.catalogue.Place.ImportResult.Places(0), com.histmersion.api.catalogue.Place.ImportResult.Names(0), com.histmersion.api.catalogue.Place.ImportResult.Relations(0), Nil)) { case (acc, (batch, i)) =>
         scribe.info(s"[import] upserting batch ${i + 1}/${batches.size} (${batch.size} places)…")
         val r = places.importPlaces(batch, Dataset.Seed)
         Place.ImportResult(

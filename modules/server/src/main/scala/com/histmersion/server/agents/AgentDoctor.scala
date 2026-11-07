@@ -67,7 +67,7 @@ final class AgentDoctor(
       val off = registry
         .filterNot(_.contains(k.wire))
         .map(_ => BuiltinAi.lookup(k, scala.collection.immutable.ListMap.empty).left.toOption.getOrElse("switched off"))
-        .map(why => (if models.nonEmpty then fail else warn) ("plugin", why))
+        .map(why => (if models.nonEmpty then fail else warn) (com.histmersion.server.agents.AgentDoctor.CheckName("plugin"), why))
         .toList
       ProviderDoctor(k.wire, models.nonEmpty, models.map(_.wire), off ++ checks ++ priced, upstream)
     } ++ plugins(chained, online)
@@ -100,21 +100,21 @@ final class AgentDoctor(
           try a
           catch case scala.util.control.NonFatal(e) => orElse(s"$what threw ${e.getClass.getSimpleName}")
         val own = safe(
-          "its doctor",
+          com.histmersion.server.agents.AgentDoctor.CheckName("its doctor"),
           p.doctor(online, aiHttp),
-          why => List(com.histmersion.plugin.AiCheck("doctor", "fail", why))
+          why => List(com.histmersion.plugin.AiCheck(com.histmersion.plugin.AiCheck.Name("doctor"), com.histmersion.plugin.AiCheck.Level("fail"), why))
         )
           .map(c => DoctorCheck(c.name, CheckLevel.parse(c.level).getOrElse(CheckLevel.Warn), c.detail))
         val (listing, upstream) =
-          if !online then (List(ok("models listing", "offline: not asked")), Nil)
+          if !online then (List(ok(com.histmersion.server.agents.AgentDoctor.CheckName("models listing"), com.histmersion.server.agents.AgentDoctor.Detail("offline: not asked"))), Nil)
           else
-            safe("its model listing", p.models(aiHttp), why => Left(why)) match
-              case Left(why)  => (List((if models.nonEmpty then fail else warn) ("models listing", why)), Nil)
-              case Right(Nil) => (List(ok("models listing", "the provider has none")), Nil)
+            safe(com.histmersion.server.agents.AgentDoctor.CheckName("its model listing"), p.models(aiHttp), why => Left(why)) match
+              case Left(why)  => (List((if models.nonEmpty then fail else warn) (com.histmersion.server.agents.AgentDoctor.CheckName("models listing"), why)), Nil)
+              case Right(Nil) => (List(ok(com.histmersion.server.agents.AgentDoctor.CheckName("models listing"), com.histmersion.server.agents.AgentDoctor.Detail("the provider has none"))), Nil)
               case Right(ids) =>
                 (
-                  ok("models listing", s"${ids.size} model(s), free call") :: models.map { m =>
-                    if ids.contains(m.model) then ok(s"upstream ${m.wire}", "listed by the provider")
+                  ok(com.histmersion.server.agents.AgentDoctor.CheckName("models listing"), s"${ids.size} model(s), free call") :: models.map { m =>
+                    if ids.contains(m.model) then ok(s"upstream ${m.wire}", com.histmersion.server.agents.AgentDoctor.Detail("listed by the provider"))
                     else
                       warn(
                         s"upstream ${m.wire}",
@@ -153,10 +153,10 @@ final class AgentDoctor(
       case _                      => "HISTMERSION_AGENTS_LOCAL_API_KEY"
     val needsKey = k != ProviderKind.Local
     val key =
-      if p.apiKey.nonEmpty then ok("key", s"$keyName is set")
-      else if !needsKey then ok("key", "none (a local server needs none)")
-      else if used then fail("key", s"$keyName is not set in the server's environment")
-      else ok("key", s"$keyName is not set (no role uses ${k.wire})")
+      if p.apiKey.nonEmpty then ok(com.histmersion.server.agents.AgentDoctor.CheckName("key"), s"$keyName is set")
+      else if !needsKey then ok(com.histmersion.server.agents.AgentDoctor.CheckName("key"), com.histmersion.server.agents.AgentDoctor.Detail("none (a local server needs none)"))
+      else if used then fail(com.histmersion.server.agents.AgentDoctor.CheckName("key"), s"$keyName is not set in the server's environment")
+      else ok(com.histmersion.server.agents.AgentDoctor.CheckName("key"), s"$keyName is not set (no role uses ${k.wire})")
     val url =
       scala.util.Try(URI.create(p.baseUrl)).toOption.filter(u => u.getScheme == "http" || u.getScheme == "https")
     val urlCheck = url.fold(fail("base URL", s"'${p.baseUrl}' is not an http(s) URL"))(u => ok("base URL", u.toString))
@@ -166,7 +166,7 @@ final class AgentDoctor(
       .orElse(Option.when(url.isEmpty)("no URL: not asked"))
       .orElse(Option.when(!used && k == ProviderKind.Local)("no role uses it: not asked"))
     skip match
-      case Some(why) => (List(key, urlCheck, ok("models listing", why)), Nil)
+      case Some(why) => (List(key, urlCheck, ok(com.histmersion.server.agents.AgentDoctor.CheckName("models listing"), why)), Nil)
       case None      =>
         val (endpoint, headers) = k match
           case ProviderKind.Anthropic =>
@@ -181,17 +181,17 @@ final class AgentDoctor(
             )
         listModels(endpoint, headers, cfg.doctorTimeoutSeconds) match
           case Left(why) =>
-            (List(key, urlCheck, (if used then fail else warn) ("models listing", s"GET $endpoint: $why")), Nil)
+            (List(key, urlCheck, (if used then fail else warn) (com.histmersion.server.agents.AgentDoctor.CheckName("models listing"), s"GET $endpoint: $why")), Nil)
           case Right(ids) =>
             val present = models.map { m =>
-              if ids.contains(m.model) then ok(s"upstream ${m.wire}", "listed by the provider")
+              if ids.contains(m.model) then ok(s"upstream ${m.wire}", com.histmersion.server.agents.AgentDoctor.Detail("listed by the provider"))
               else
                 warn(
                   s"upstream ${m.wire}",
                   s"not in the provider's list of ${ids.size} model(s) — an alias, or a typo?"
                 )
             }
-            (List(key, urlCheck, ok("models listing", s"${ids.size} model(s), free call")) ++ present, ids)
+            (List(key, urlCheck, ok(com.histmersion.server.agents.AgentDoctor.CheckName("models listing"), s"${ids.size} model(s), free call")) ++ present, ids)
 
   // ── claude-code ────────────────────────────────────────────────────────────────────────────────
 
@@ -201,15 +201,15 @@ final class AgentDoctor(
     val used = models.nonEmpty
     val level = if used then fail else warn
     val bind =
-      if loopback then ok("bind", s"the server listens on loopback (${app.server.host}); only you can start a run")
+      if loopback then ok(com.histmersion.server.agents.AgentDoctor.CheckName("bind"), s"the server listens on loopback (${app.server.host}); only you can start a run")
       else if cc.allowNonLoopback then
         warn(
-          "bind",
+          com.histmersion.server.agents.AgentDoctor.CheckName("bind"),
           s"the server listens on ${app.server.host} and allow-non-loopback is on: every client of this server must be you"
         )
       else
         level(
-          "bind",
+          com.histmersion.server.agents.AgentDoctor.CheckName("bind"),
           s"refused: the server listens on ${app.server.host}, beyond loopback — another client could spend your " +
             "Claude plan. Bind to 127.0.0.1 or set allow-non-loopback when every client is you"
         )
@@ -219,7 +219,7 @@ final class AgentDoctor(
           .filter(_.nonEmpty)
           .map(d => "CLAUDE_CONFIG_DIR" -> Some(AgentTrees.expandIn(d, paths)))
           .toMap
-    val version = runCommand(List(cc.command, "--version"), childEnv, cfg.doctorTimeoutSeconds).flatMap {
+    val version = runCommand(List(cc.command, com.histmersion.server.Supervisor.Command("--version")), childEnv, cfg.doctorTimeoutSeconds).flatMap {
       case (0, out)    => Right(out)
       case (code, out) => Left(s"exit $code: ${out.take(300)}")
     }
@@ -248,7 +248,7 @@ final class AgentDoctor(
           .isDefined || paths.environment.get("ANTHROPIC_AUTH_TOKEN").isDefined)
       )(
         ok(
-          "API key",
+          com.histmersion.server.agents.AgentDoctor.CheckName("API key"),
           "the server's environment has an Anthropic key; it is removed from claude's (use-api-key = false), " +
             "so runs spend the plan, not the API"
         )
@@ -267,29 +267,29 @@ final class AgentDoctor(
       else
         List(
           warn(
-            "plan",
+            com.histmersion.server.agents.AgentDoctor.CheckName("plan"),
             "claude-code spends YOUR Claude plan's usage, shared with your own Claude and Claude Code use; " +
               "the Claude plan pool pauses runs below its floors (histmersion agent quota). Personal use on " +
               "your own machine only (docs/research-model-providers.md)"
           ),
           if covered then
-            ok("allowance", "an allowance also covers the claude-code models (a token cap on top of the plan floors)")
-          else ok("allowance", "no metered allowance: the plan floors are the cap")
+            ok(com.histmersion.server.agents.AgentDoctor.CheckName("allowance"), "an allowance also covers the claude-code models (a token cap on top of the plan floors)")
+          else ok(com.histmersion.server.agents.AgentDoctor.CheckName("allowance"), com.histmersion.server.agents.AgentDoctor.Detail("no metered allowance: the plan floors are the cap"))
         )
-    List(bind, versionCheck) ++ auth ++ keyInEnv ++ plan ++ List(agentTools, generated("claude-code"))
+    List(bind, versionCheck) ++ auth ++ keyInEnv ++ plan ++ List(agentTools, generated(com.histmersion.server.agents.AgentDoctor.GeneratedRuntime("claude-code")))
 
   private def agentTools =
     ok(
-      "tools",
+      com.histmersion.server.agents.AgentDoctor.CheckName("tools"),
       s"steps reach ${app.server.publicUrl.stripSuffix("/")}/mcp/agent with a run token bound to their role's tools"
     )
 
   /** Whether the generated tree a CLI runtime launches exists. */
   private def generated(runtime: com.histmersion.server.agents.AgentDoctor.GeneratedRuntime): DoctorCheck =
     AgentTrees.root(app, paths).map(_.resolve(runtime)) match
-      case Some(d) if java.nio.file.Files.isDirectory(d) => ok("generated", s"$d")
-      case Some(d) => warn("generated", s"$d does not exist yet — run `histmersion agent generate`")
-      case None    => warn("generated", "no runtimes directory — set agents.runtimes.dir")
+      case Some(d) if java.nio.file.Files.isDirectory(d) => ok(com.histmersion.server.agents.AgentDoctor.CheckName("generated"), s"$d")
+      case Some(d) => warn(com.histmersion.server.agents.AgentDoctor.CheckName("generated"), s"$d does not exist yet — run `histmersion agent generate`")
+      case None    => warn(com.histmersion.server.agents.AgentDoctor.CheckName("generated"), com.histmersion.server.agents.AgentDoctor.Detail("no runtimes directory — set agents.runtimes.dir"))
 
   /** A CLI provider without a login check of its own: the executable answers `--version`. */
   private def version(
@@ -298,10 +298,10 @@ final class AgentDoctor(
       level: (com.histmersion.server.agents.AgentDoctor.VersionLevelArg1, com.histmersion.server.agents.AgentDoctor.VersionLevelArg2) => DoctorCheck,
       hint: com.histmersion.server.agents.AgentDoctor.VersionHint
   ): DoctorCheck =
-    runCommand(List(command, "--version"), env, cfg.doctorTimeoutSeconds) match
-      case Right((0, out)) => ok("executable", s"$command: ${out.trim.linesIterator.nextOption().getOrElse("")}")
-      case Right((c, out)) => level("executable", s"'$command --version' exit $c: ${out.take(200)} — $hint")
-      case Left(why)       => level("executable", s"'$command --version' failed: $why — $hint")
+    runCommand(List(command, com.histmersion.server.Supervisor.Command("--version")), env, cfg.doctorTimeoutSeconds) match
+      case Right((0, out)) => ok(com.histmersion.server.agents.AgentDoctor.CheckName("executable"), s"$command: ${out.trim.linesIterator.nextOption().getOrElse("")}")
+      case Right((c, out)) => level(com.histmersion.server.agents.AgentDoctor.VersionLevelArg1("executable"), s"'$command --version' exit $c: ${out.take(200)} — $hint")
+      case Left(why)       => level(com.histmersion.server.agents.AgentDoctor.VersionLevelArg1("executable"), s"'$command --version' failed: $why — $hint")
 
   // ── codex, opencode ────────────────────────────────────────────────────────────────────────────
 
@@ -310,15 +310,15 @@ final class AgentDoctor(
     val level = if models.nonEmpty then fail else warn
     val home = AgentTrees.codexHome(app, paths)
     val login = home.map { h =>
-      if java.nio.file.Files.isRegularFile(h.resolve("auth.json")) then ok("login", s"$h has a login (never read here)")
-      else level("login", s"no login in $h — run `CODEX_HOME=\"$h\" ${cc.command} login` once")
+      if java.nio.file.Files.isRegularFile(h.resolve("auth.json")) then ok(com.histmersion.server.agents.AgentDoctor.CheckName("login"), s"$h has a login (never read here)")
+      else level(com.histmersion.server.agents.AgentDoctor.CheckName("login"), s"no login in $h — run `CODEX_HOME=\"$h\" ${cc.command} login` once")
     }.toList
     List(
       version(
         cc.command,
         Map("OPENAI_API_KEY" -> None, "CODEX_API_KEY" -> None),
         level,
-        "install the Codex CLI or set agents.providers.codex.command"
+        com.histmersion.server.agents.AgentDoctor.VersionHint("install the Codex CLI or set agents.providers.codex.command")
       )
     ) ++ login ++
       List(
@@ -333,11 +333,11 @@ final class AgentDoctor(
     val oc = cfg.providers.opencode
     val level = if models.nonEmpty then fail else warn
     List(
-      version(oc.command, Map.empty, level, "install opencode or set agents.providers.opencode.command"),
+      version(oc.command, Map.empty, level, com.histmersion.server.agents.AgentDoctor.VersionHint("install opencode or set agents.providers.opencode.command")),
       agentTools,
-      generated("opencode"),
-      if oc.chatgptLogin then ok("plan pool", "its openai/… models draw on the ChatGPT plan pool")
-      else ok("plan pool", "metered: allowances and prices apply (no plan login)")
+      generated(com.histmersion.server.agents.AgentDoctor.GeneratedRuntime("opencode")),
+      if oc.chatgptLogin then ok(com.histmersion.server.agents.AgentDoctor.CheckName("plan pool"), com.histmersion.server.agents.AgentDoctor.Detail("its openai/… models draw on the ChatGPT plan pool"))
+      else ok(com.histmersion.server.agents.AgentDoctor.CheckName("plan pool"), com.histmersion.server.agents.AgentDoctor.Detail("metered: allowances and prices apply (no plan login)"))
     )
 
 object AgentDoctor:

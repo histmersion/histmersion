@@ -63,11 +63,11 @@ final class SourcePictures(
     */
   def illustrate(citekey: com.histmersion.domain.library.Citekey, dryRun: com.histmersion.domain.media.covers.SourcePictures.DryRun): Either[com.histmersion.domain.media.covers.SourcePictures.IllustrateText, MediaSourceLine] =
     val figs = assets.sourceFigures(citekey)
-    if figs.isEmpty then Left("no figures")
+    if figs.isEmpty then Left(com.histmersion.domain.media.covers.SourcePictures.IllustrateText("no figures"))
     else
       val weighed = FigurePick.withRefs(figs.map(SourcePictures.toFigure), sources.markdown(citekey))
       FigurePick.choose(weighed, rules) match
-        case None       => Left("no figure fit to illustrate it")
+        case None       => Left(com.histmersion.domain.media.covers.SourcePictures.IllustrateText("no figure fit to illustrate it"))
         case Some(pick) =>
           val row = figs.find(_.name == pick.name).get
           val line = MediaSourceLine(citekey, MediaRole.Illustration, MediaProvider.Source, pick.name)
@@ -94,14 +94,14 @@ final class SourcePictures(
       fetch: Polite
   ): Either[com.histmersion.domain.media.covers.SourcePictures.OpenLibraryText, MediaSourceLine] =
     OpenLibrary.key(keys.isbn, keys.oclc) match
-      case None             => Left("no usable ISBN or OCLC number")
+      case None             => Left(com.histmersion.domain.media.covers.SourcePictures.OpenLibraryText("no usable ISBN or OCLC number"))
       case Some((kind, id)) =>
         val line = MediaSourceLine(keys.citekey, MediaRole.Cover, MediaProvider.OpenLibrary, s"$kind:$id")
         if dryRun then Right(line)
         else
           val c = cfg.covers
           val url = OpenLibrary.coverUrl(c.openLibraryUrl, kind, id, c.size)
-          val got = fetch.file(url, "image/jpeg") match
+          val got = fetch.file(url, com.histmersion.pluginhost.Polite.Mime("image/jpeg")) match
             case Left(why) if why.contains("HTTP 404")            => Left("Open Library has no cover")
             case Left(why)                                        => Left(s"Open Library: $why")
             case Right((bytes, _)) if bytes.length > cfg.maxBytes =>
@@ -127,10 +127,10 @@ final class SourcePictures(
                 thumb.map(_._2),
                 tsize.map(_._1),
                 tsize.map(_._2),
-                license = "",
+                license = com.histmersion.domain.media.assets.ProviderAsset.License(""),
                 licenseUrl = None,
                 author = None,
-                credit = "Cover: Open Library",
+                credit = com.histmersion.domain.media.assets.ProviderAsset.Credit("Cover: Open Library"),
                 sourceUrl = OpenLibrary.pageUrl(c.openLibraryPage, kind, id),
                 originalUrl = Some(url.stripSuffix("?default=false")),
                 kind = Some(AssetKind.Photo)
@@ -142,7 +142,7 @@ final class SourcePictures(
             MediaProvider.OpenLibrary,
             PictureTarget.Source.wire,
             keys.citekey,
-            if got.isRight then 1 else 0,
+            if got.isRight then com.histmersion.domain.media.imports.ImportService.FoundCount(1) else com.histmersion.domain.media.imports.ImportService.FoundCount(0),
             None
           )
           got
@@ -155,10 +155,10 @@ final class SourcePictures(
   /** Pure: an image's type from its first bytes (`None` unless JPEG, PNG, GIF or WebP). */
   private[covers] def sniff(b: com.histmersion.domain.media.assets.AssetService.Bytes): Option[com.histmersion.domain.media.assets.AssetService.Mime] =
     def at(i: com.histmersion.domain.media.covers.SourcePictures.SniffOffset) = if b.length > i then b(i) & 0xff else -1
-    if at(0) == 0xff && at(1) == 0xd8 then Some("image/jpeg")
-    else if at(0) == 0x89 && at(1) == 'P' && at(2) == 'N' && at(3) == 'G' then Some("image/png")
-    else if at(0) == 'G' && at(1) == 'I' && at(2) == 'F' then Some("image/gif")
-    else if b.length >= 12 && new String(b.slice(8, 12), "US-ASCII") == "WEBP" then Some("image/webp")
+    if at(com.histmersion.domain.media.covers.SourcePictures.SniffOffset(0)) == 0xff && at(1) == 0xd8 then Some(com.histmersion.domain.media.assets.AssetService.Mime("image/jpeg"))
+    else if at(com.histmersion.domain.media.covers.SourcePictures.SniffOffset(0)) == 0x89 && at(1) == 'P' && at(2) == 'N' && at(3) == 'G' then Some(com.histmersion.domain.media.assets.AssetService.Mime("image/png"))
+    else if at(com.histmersion.domain.media.covers.SourcePictures.SniffOffset(0)) == 'G' && at(1) == 'I' && at(2) == 'F' then Some(com.histmersion.domain.media.assets.AssetService.Mime("image/gif"))
+    else if b.length >= 12 && new String(b.slice(8, 12), "US-ASCII") == "WEBP" then Some(com.histmersion.domain.media.assets.AssetService.Mime("image/webp"))
     else None
 
   /** Store `bytes` (read from the local Calibre library by the CLI) as the source's cover. */
@@ -191,10 +191,10 @@ final class SourcePictures(
                 thumb.map(_.mime),
                 thumb.map(_.width).filter(_ > 0),
                 thumb.map(_.height).filter(_ > 0),
-                license = "",
+                license = com.histmersion.domain.media.assets.ProviderAsset.License(""),
                 licenseUrl = None,
                 author = None,
-                credit = "Cover: the local Calibre library",
+                credit = com.histmersion.domain.media.assets.ProviderAsset.Credit("Cover: the local Calibre library"),
                 sourceUrl = s"calibre:book/$key",
                 originalUrl = None,
                 kind = Some(AssetKind.Photo)
@@ -264,9 +264,9 @@ final class SourcePictures(
     */
   def afterIngest(citekey: com.histmersion.domain.library.Citekey): Option[com.histmersion.domain.media.covers.SourcePictures.AfterIngestText] =
     try
-      val ill = illustrate(citekey, dryRun = false).toOption.map(l => s"illustration ${l.detail}")
+      val ill = illustrate(citekey, dryRun = com.histmersion.domain.media.covers.SourcePictures.DryRun(false)).toOption.map(l => s"illustration ${l.detail}")
       val cover = covers
-        .coverCandidates(Some(citekey), refresh = false, 1)
+        .coverCandidates(Some(citekey), refresh = com.histmersion.domain.media.covers.CoverService.CandidatesRefresh(false), com.histmersion.domain.media.covers.CoverService.CandidatesLimit(1))
         .headOption
         .flatMap(k => openLibrary(k, dryRun = false, openLibraryClient).toOption)
         .map(l => s"cover ${l.detail}")

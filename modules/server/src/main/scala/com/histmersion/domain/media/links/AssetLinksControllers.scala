@@ -33,7 +33,7 @@ final class AssetLinksControllers(
     links.list(citekey.map(current(AliasKinds.SourceRecords, _)), asset, targetType, target.orElse(targetId))
 
   def create(in: AssetLink.Put): Either[Api.Error, AssetLink] =
-    maintenance.guard("create_asset_link")(
+    maintenance.guard(com.histmersion.util.data.maintenance.WriteGate.OperationName("create_asset_link"))(
       links.create(
         in.modify(_.citekey)
           .setTo(current(AliasKinds.SourceRecords, in.citekey))
@@ -43,8 +43,8 @@ final class AssetLinksControllers(
     )
 
   def delete(id: com.histmersion.domain.media.links.AssetLinkService.LinkId): Either[Api.Error, AssetLink.Deleted] =
-    maintenance.guard("delete_asset_link"):
-      if links.delete(id) then Right(AssetLink.Deleted(id, true))
+    maintenance.guard(com.histmersion.util.data.maintenance.WriteGate.OperationName("delete_asset_link")):
+      if links.delete(id) then Right(AssetLink.Deleted(id, com.histmersion.api.media.AssetLink.Deleted.Value(true)))
       else Left(Api.Error(s"No asset link #$id", Some(Write.CodeNotFound)))
 
 object AssetLinksControllers:

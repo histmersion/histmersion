@@ -36,18 +36,18 @@ final class EnrichManagerKind(site: LibrarySite, a: AgentsControllers) extends M
 
   def fire(c: ManagerContext, m: ManagerInfo, now: Instant): List[com.histmersion.domain.library.workflows.EnrichManagerKind.FireResult] = Nil
 
-  def facts(c: ManagerContext, item: ManagerItem, run: com.histmersion.domain.automation.Run.Id): StepFacts = StepFacts.Finished("enriched")
+  def facts(c: ManagerContext, item: ManagerItem, run: com.histmersion.domain.automation.Run.Id): StepFacts = StepFacts.Finished(com.histmersion.domain.ManagerPolicy.ItemOutcome("enriched"))
 
   def target(m: ManagerInfo, itemKind: com.histmersion.domain.library.workflows.EnrichManagerKind.ItemKind, raw: com.histmersion.domain.library.workflows.EnrichManagerKind.TargetRaw): Either[Api.Error, com.histmersion.domain.library.workflows.EnrichManagerKind.TargetResultPart2] =
     itemKind match
-      case SourceEnrich => site.sources.get(raw.trim, body = false).map(_.source.citekey)
+      case SourceEnrich => site.sources.get(raw.trim, body = com.histmersion.domain.library.sources.SourcesControllers.GetBody(false)).map(_.source.citekey)
       case other        => Left(Api.Error(s"unknown item kind '$other'"))
 
   /** What an Enrich button names: a source itself (enriched again even if it was), or the sources an article cites / a
     * goal links that are NOT enriched yet ([[AutoEnrich.enrichedBy]]; the others are reported as skipped, with why).
     */
   override def expand(c: ManagerContext, raw: String): Either[Api.Error, (List[String], List[String])] =
-    site.sources.get(raw, body = false).map(s => (List(s.source.citekey), Nil)).orElse {
+    site.sources.get(raw, body = com.histmersion.domain.library.sources.SourcesControllers.GetBody(false)).map(s => (List(s.source.citekey), Nil)).orElse {
       val cited = site
         .articleSources(raw)
         .orElse(a.host.goal(raw).map(g => c.goalLinks(g.slug, Goal.Plans.LinkKind.Source)))
@@ -59,8 +59,8 @@ final class EnrichManagerKind(site: LibrarySite, a: AgentsControllers) extends M
 
   /** Why a source counts as enriched already (findings, notes, a live enrich run), if it does. */
   private def enrichedWhy(c: ManagerContext, ck: com.histmersion.domain.library.Citekey): Option[com.histmersion.domain.library.workflows.EnrichManagerKind.EnrichedWhyResult] =
-    site.sources.get(ck, body = false).toOption match
-      case None      => Some("no such source")
+    site.sources.get(ck, body = com.histmersion.domain.library.sources.SourcesControllers.GetBody(false)).toOption match
+      case None      => Some(com.histmersion.domain.library.workflows.EnrichManagerKind.EnrichedWhyResult("no such source"))
       case Some(src) =>
         val runs = c
           .runsFor(Pipeline.EnrichSource, src.source.citekey)
@@ -79,7 +79,7 @@ final class EnrichManagerKind(site: LibrarySite, a: AgentsControllers) extends M
     def cfg = a.config
     try
       autoEnrichLock.synchronized {
-        site.sources.get(citekey, body = false) match
+        site.sources.get(citekey, body = com.histmersion.domain.library.sources.SourcesControllers.GetBody(false)) match
           case Left(e)    => Some(AutoEnrich.notQueued(e.message))
           case Right(src) =>
             val ck = src.source.citekey
@@ -112,7 +112,7 @@ final class EnrichManagerKind(site: LibrarySite, a: AgentsControllers) extends M
   private def ingested(c: ManagerContext, citekey: com.histmersion.domain.library.Citekey): com.histmersion.domain.library.workflows.EnrichManagerKind.IngestedResult =
     val _ = c.ensure(Kind.Review, ReviewId, None)
     val _ = c.ensure(Kind.Enrich, EnrichId, None)
-    val (itemId, isNew) = c.upsert(EnrichId, SourceEnrich, citekey, ItemOrigin.FromIngest, 0, reopen = true)
+    val (itemId, isNew) = c.upsert(EnrichId, SourceEnrich, citekey, ItemOrigin.FromIngest, com.histmersion.domain.automation.managers.ManagerContext.Priority(0), reopen = com.histmersion.domain.automation.managers.ManagerContext.UpsertReopen(true))
     c.event(
       EnrichId,
       Some(itemId),
@@ -133,8 +133,8 @@ final class EnrichManagerKind(site: LibrarySite, a: AgentsControllers) extends M
   ): Option[com.histmersion.domain.library.workflows.EnrichManagerKind.DispatchResult] =
     item.kind match
       case SourceEnrich =>
-        site.sources.get(item.target, body = false) match
-          case Left(_)    => c.settleNow(m, item, ItemStatus.Cancelled, "the source no longer exists")
+        site.sources.get(item.target, body = com.histmersion.domain.library.sources.SourcesControllers.GetBody(false)) match
+          case Left(_)    => c.settleNow(m, item, ItemStatus.Cancelled, com.histmersion.domain.automation.managers.ManagerContext.SettleNowWhy("the source no longer exists"))
           case Right(src) =>
             val runs = c
               .runsFor(Pipeline.EnrichSource, src.source.citekey)
@@ -156,7 +156,7 @@ final class EnrichManagerKind(site: LibrarySite, a: AgentsControllers) extends M
                   RunRequest(Pipeline.EnrichSource.wire, src.source.citekey, budgetUsd = m.config.budgetUsd),
                   identity,
                   item.state,
-                  "enrich-source",
+                  com.histmersion.domain.automation.managers.ManagerContext.StartWhat("enrich-source"),
                   out
                 )
       case other =>

@@ -26,7 +26,7 @@ final class Approvals(
     store: ApprovalService,
     cfg: => AgentsConfig,
     effects: => ApprovalEffects,
-    applyHint: Managers.HintProposal => Either[Approvals.ApplyHintResultPart1, Approvals.ApplyHintResultPart2] = _ => Left("no managers to apply it")
+    applyHint: Managers.HintProposal => Either[Approvals.ApplyHintResultPart1, Approvals.ApplyHintResultPart2] = _ => Left(com.histmersion.domain.automation.approvals.Approvals.ApplyHintResultPart1("no managers to apply it"))
 ):
 
 

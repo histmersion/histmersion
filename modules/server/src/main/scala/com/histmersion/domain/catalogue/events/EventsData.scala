@@ -12,7 +12,7 @@ import com.augustnagro.magnum.DbCon
   */
 object EventsData:
 
-  def figures(using DbCon): List[DataCount] = List(DataCount("events", EventRepo.count()))
+  def figures(using DbCon): List[DataCount] = List(DataCount(com.histmersion.util.data.diagnostics.DataCount.Noun("events"), EventRepo.count()))
 
   def checks(owner: DataOwner): List[CheckRule] = List(Conflicts(owner))
 

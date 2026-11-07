@@ -12,7 +12,7 @@ object BackupWiring:
       () => deps.cfg,
       deps.storage,
       Processes(),
-      () => StorageLocations.searchPath(deps.environment.get("PATH")),
+      () => StorageLocations.searchPath(deps.environment.get(com.histmersion.config.Environment.VariablesKey("PATH"))),
       deps.transactor,
       Deps.data
     )

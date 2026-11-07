@@ -39,7 +39,7 @@ final class IngestControllers(
     * as soon as the request completes, and the job runs long after that.
     */
   def ingest(p: Ingest.Params, upload: Upload): Either[Api.Error, Ingest.Accepted] =
-    maintenance.guard("ingest")(ingestNow(p, upload))
+    maintenance.guard(com.histmersion.util.data.maintenance.WriteGate.OperationName("ingest"))(ingestNow(p, upload))
 
   private def ingestNow(p: Ingest.Params, upload: Upload): Either[Api.Error, Ingest.Accepted] =
     // VALIDATED, not merely non-empty: the citekey becomes part of a stored file's report below.
@@ -121,7 +121,7 @@ final class IngestControllers(
     * under docling with `quality`).
     */
   def reocr(citekey: com.histmersion.domain.library.Citekey, quality: com.histmersion.domain.library.ingest.IngestControllers.ReocrQuality): Either[Api.Error, Ingest.Accepted] =
-    maintenance.guard("reocr")(
+    maintenance.guard(com.histmersion.util.data.maintenance.WriteGate.OperationName("reocr"))(
       Citekey.parse(citekey).left.map(Write.invalid).flatMap(_ => reocrValid(citekey, quality))
     )
 

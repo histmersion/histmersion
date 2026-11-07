@@ -65,7 +65,7 @@ object PluginAiClient:
   /** Pure: the conversation sttp-ai keeps → the provider's messages; the loop's iteration notes kept as user messages
     * (`[Iteration 2 of 6]`, as sttp-ai's own providers send them) when `markers`, else dropped.
     */
-  def messages(h: ConversationHistory, markers: com.histmersion.domain.automation.agents.PluginAiClient.MessagesMarkers = false): List[AiMessage] =
+  def messages(h: ConversationHistory, markers: com.histmersion.domain.automation.agents.PluginAiClient.MessagesMarkers = com.histmersion.domain.automation.agents.PluginAiClient.MessagesMarkers(false)): List[AiMessage] =
     h.entries.toList.collect {
       case ConversationEntry.IterationMarker(n, of) if markers => AiMessage.User(s"[Iteration $n of $of]")
       case ConversationEntry.UserPrompt(t)                     => AiMessage.User(t)

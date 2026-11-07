@@ -202,7 +202,7 @@ object SourceService:
     def doiIndex: Map[com.histmersion.domain.library.Doi, com.histmersion.domain.library.Citekey] = db.read(SourceRepo.doiIndex())
     def citekeyOfDoi(doi: com.histmersion.domain.library.Doi): Option[com.histmersion.domain.library.Citekey] = db.read(SourceRepo.citekeyOfDoi(doi))
     def addEdges(edges: List[Edge], caller: Caller): com.histmersion.RowCount =
-      if edges.isEmpty then 0 else db.transact(SourceRepo.insertEdges(edges))
+      if edges.isEmpty then com.histmersion.RowCount(0) else db.transact(SourceRepo.insertEdges(edges))
     def original(citekey: com.histmersion.domain.library.Citekey): Option[com.histmersion.domain.library.sources.SourceService.Implementation.OriginalResult] = db.read(SourceRepo.sha256Of(citekey))
     def holderOf(sha256: com.histmersion.Sha256): Option[com.histmersion.domain.library.Citekey] = db.read(SourceRepo.citekeyOfSha256(sha256))
     def originals(citekeys: List[com.histmersion.domain.library.Citekey]): Map[com.histmersion.domain.library.Citekey, com.histmersion.domain.library.sources.SourceService.Implementation.OriginalsResultPart2] =
@@ -366,7 +366,7 @@ object SourceService:
 
     def bodyChunks(citekey: com.histmersion.domain.library.Citekey): List[Chunk] =
       chunksOf(citekey) match
-        case Nil => Option(markdown(citekey)).filter(_.nonEmpty).map(Chunk(0, None, _)).toList
+        case Nil => Option(markdown(citekey)).filter(_.nonEmpty).map(Chunk(com.histmersion.util.ocr.Chunk.Ord(0), None, _)).toList
         case cs  => cs.sortBy(_.ord)
 
     def markdown(citekey: com.histmersion.domain.library.Citekey): com.histmersion.domain.library.sources.SourceService.Markdown = state.get.sources.get(citekey).flatMap(_.source.ocrMarkdown).getOrElse("")
@@ -586,13 +586,13 @@ object SourceService:
           val d = Source.Deletion(
             citekey = ck,
             title = x.source.title,
-            applied = false,
+            applied = com.histmersion.api.library.Source.Deletion.Applied(false),
             counts = counts,
             aliases = aliases,
             edgesIn = edgesIn,
             calibreId = x.source.calibreId.map(_.trim).filter(_.nonEmpty)
           )
-          Right(SourceDeletePlan(d, None, false, ck :: aliases, DeleteReport(counts = counts)))
+          Right(SourceDeletePlan(d, None, com.histmersion.domain.library.sources.SourceDeletePlan.ShaShared(false), ck :: aliases, DeleteReport(counts = counts)))
 
     def deletion(citekey: com.histmersion.domain.library.Citekey): Either[Api.Error, SourceDeletePlan] = planIn(state.get, citekey)
 
@@ -653,7 +653,7 @@ object SourceService:
 
     def addEdges(edges: List[Edge], caller: Caller): com.histmersion.RowCount =
       val es = edges.distinct
-      if es.isEmpty then 0
+      if es.isEmpty then com.histmersion.RowCount(0)
       else
         var added = 0
         val _ = state.updateAndGet { st =>

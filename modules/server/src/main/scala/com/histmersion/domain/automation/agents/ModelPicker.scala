@@ -334,7 +334,7 @@ final class ModelPicker(
                     exhausted :+ Exhaust(m, s"${m.wire}: ${st.why.getOrElse("not usable")}", st.freesAt, st.held),
                     planHit || st.planBlocked
                   )
-      go(chain, Nil, Nil, planHit = false)
+      go(chain, Nil, Nil, planHit = com.histmersion.domain.automation.agents.ModelPicker.PlanHit(false))
     }
 
   /** One model of a chain passed over for want of headroom: why, when it frees by itself (None = not by itself), and
@@ -360,12 +360,12 @@ final class ModelPicker(
         case Right((ms, src)) =>
           val entries = ms.map { m =>
             resolve(m) match
-              case Left(why)           => ChainEntry(m.wire, ready = false, usable = false, Some(why))
+              case Left(why)           => ChainEntry(m.wire, ready = com.histmersion.api.automation.ModelChains.ChainEntry.Ready(false), usable = com.histmersion.api.automation.ModelChains.ChainEntry.Usable(false), Some(why))
               case Right((_, billing)) =>
                 val st = state(m, effective, now)
                 ChainEntry(
                   m.wire,
-                  ready = true,
+                  ready = com.histmersion.api.automation.ModelChains.ChainEntry.Ready(true),
                   st.usable,
                   st.why,
                   st.freesAt.map(iso),
@@ -390,9 +390,9 @@ final class ModelPicker(
         AllowanceStatus(
           t,
           src.wire,
-          0,
+          com.histmersion.api.automation.ModelChains.AllowanceStatus.ReservePct(0),
           Nil,
-          usable = false,
+          usable = com.histmersion.api.automation.ModelChains.AllowanceStatus.Usable(false),
           None,
           Some(s"cannot be read, so it blocks what it covers: $why")
         )

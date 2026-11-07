@@ -213,7 +213,7 @@ final class ServerWiring(deps: Deps, converter: ConverterClient):
   lazy val resolveView = com.histmersion.server.views.ResolveView(
     id =>
       library.sources
-        .get(id, body = false)
+        .get(id, body = com.histmersion.domain.library.sources.SourcesControllers.GetBody(false))
         .toOption
         .map(s =>
           ResolvedSource(

@@ -40,33 +40,33 @@ object StrictJsonSchema:
   type ConvertObjectDefsPart1 = String
 
   val Keywords: Set[com.histmersion.domain.automation.agents.StrictJsonSchema.Keywords] = Set(
-    "type",
-    "description",
-    "title",
-    "properties",
-    "required",
-    "additionalProperties",
-    "items",
-    "anyOf",
-    "enum",
-    "const",
-    "$ref",
-    "$defs",
-    "definitions",
-    "pattern",
-    "format", // strings
-    "multipleOf",
-    "minimum",
-    "maximum",
-    "exclusiveMinimum",
-    "exclusiveMaximum", // numbers
-    "minItems",
-    "maxItems"
+    com.histmersion.domain.automation.agents.StrictJsonSchema.KeywordsValue("type"),
+    com.histmersion.domain.automation.agents.StrictJsonSchema.KeywordsValue("description"),
+    com.histmersion.domain.automation.agents.StrictJsonSchema.KeywordsValue("title"),
+    com.histmersion.domain.automation.agents.StrictJsonSchema.KeywordsValue("properties"),
+    com.histmersion.domain.automation.agents.StrictJsonSchema.KeywordsValue("required"),
+    com.histmersion.domain.automation.agents.StrictJsonSchema.KeywordsValue("additionalProperties"),
+    com.histmersion.domain.automation.agents.StrictJsonSchema.KeywordsValue("items"),
+    com.histmersion.domain.automation.agents.StrictJsonSchema.KeywordsValue("anyOf"),
+    com.histmersion.domain.automation.agents.StrictJsonSchema.KeywordsValue("enum"),
+    com.histmersion.domain.automation.agents.StrictJsonSchema.KeywordsValue("const"),
+    com.histmersion.domain.automation.agents.StrictJsonSchema.KeywordsValue("$ref"),
+    com.histmersion.domain.automation.agents.StrictJsonSchema.KeywordsValue("$defs"),
+    com.histmersion.domain.automation.agents.StrictJsonSchema.KeywordsValue("definitions"),
+    com.histmersion.domain.automation.agents.StrictJsonSchema.KeywordsValue("pattern"),
+    com.histmersion.domain.automation.agents.StrictJsonSchema.KeywordsValue("format"), // strings
+    com.histmersion.domain.automation.agents.StrictJsonSchema.KeywordsValue("multipleOf"),
+    com.histmersion.domain.automation.agents.StrictJsonSchema.KeywordsValue("minimum"),
+    com.histmersion.domain.automation.agents.StrictJsonSchema.KeywordsValue("maximum"),
+    com.histmersion.domain.automation.agents.StrictJsonSchema.KeywordsValue("exclusiveMinimum"),
+    com.histmersion.domain.automation.agents.StrictJsonSchema.KeywordsValue("exclusiveMaximum"), // numbers
+    com.histmersion.domain.automation.agents.StrictJsonSchema.KeywordsValue("minItems"),
+    com.histmersion.domain.automation.agents.StrictJsonSchema.KeywordsValue("maxItems")
   ) // arrays
 
   /** The string `format`s strict mode supports. */
   val StringFormats: Set[com.histmersion.domain.automation.agents.StrictJsonSchema.StringFormats] =
-    Set("date-time", "time", "date", "duration", "email", "hostname", "ipv4", "ipv6", "uuid")
+    Set(com.histmersion.domain.automation.agents.StrictJsonSchema.StringFormatsValue("date-time"), com.histmersion.domain.automation.agents.StrictJsonSchema.StringFormatsValue("time"), com.histmersion.domain.automation.agents.StrictJsonSchema.StringFormatsValue("date"), com.histmersion.domain.automation.agents.StrictJsonSchema.StringFormatsValue("duration"), com.histmersion.domain.automation.agents.StrictJsonSchema.StringFormatsValue("email"), com.histmersion.domain.automation.agents.StrictJsonSchema.StringFormatsValue("hostname"), com.histmersion.domain.automation.agents.StrictJsonSchema.StringFormatsValue("ipv4"), com.histmersion.domain.automation.agents.StrictJsonSchema.StringFormatsValue("ipv6"), com.histmersion.domain.automation.agents.StrictJsonSchema.StringFormatsValue("uuid"))
 
   /** `schema` (a root object schema) in strict form. */
   def apply(schema: Json): Json =

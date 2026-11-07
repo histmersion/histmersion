@@ -70,7 +70,7 @@ object HeldPlace:
     type Manual = Manual.T
     object Manual extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
-    def of(n: Place.Name): Name = Name(n.name, n.lang, n.period, manual = false)
+    def of(n: Place.Name): Name = Name(n.name, n.lang, n.period, manual = com.histmersion.domain.catalogue.places.HeldPlace.Name.Manual(false))
 
   /** Does `period` (none: always) contain the year `asOf` (none: any time)? */
   def covers(period: Option[com.histmersion.api.catalogue.Period], asOf: Option[com.histmersion.domain.catalogue.places.HeldPlace.AsOf]): Boolean =

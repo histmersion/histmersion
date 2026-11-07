@@ -40,7 +40,7 @@ final class CalibreGapControllers(
       .flatMap(_ => sources.calibrePushMeta(citekey).toRight(Write.notFound(citekey)))
 
   def pushed(req: CalibrePushRequest): Either[Api.Error, CalibrePushResult] =
-    maintenance.guard("calibre/pushed"):
+    maintenance.guard(com.histmersion.util.data.maintenance.WriteGate.OperationName("calibre/pushed")):
       Citekey.parse(req.citekey).left.map(Api.Error(_)).flatMap(_ => sources.setCalibreId(req.citekey, req.calibreId, Caller.Local).map(_ => CalibrePushResult(req.citekey, req.calibreId, ok = true)))
 
 object CalibreGapControllers:

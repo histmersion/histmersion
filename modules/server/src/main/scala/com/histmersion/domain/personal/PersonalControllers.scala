@@ -77,10 +77,10 @@ final class PersonalControllers(
     yield bookmarks.list(user, k, SearchWords.of(q), size(max)).map(_.wire)
 
   def addBookmark(caller: Caller, in: com.histmersion.api.personal.Bookmark.New): Either[Api.Error, WireBookmark] =
-    maintenance.guard("add_bookmark"):
+    maintenance.guard(com.histmersion.util.data.maintenance.WriteGate.OperationName("add_bookmark")):
       for
         user <- person(caller)
-        t <- target(in.target, MarkKind.Bookmarkable, "bookmark")
+        t <- target(in.target, MarkKind.Bookmarkable, com.histmersion.domain.personal.PersonalControllers.TargetText("bookmark"))
         label <- com.histmersion.api.personal.Bookmark.Label.tidy(in.label).left.map(bad)
       yield bookmarks.add(user, t, label, TargetLabel.tidy(in.title), now()).wire
 
@@ -89,7 +89,7 @@ final class PersonalControllers(
       id: com.histmersion.domain.personal.bookmarks.Bookmark.Id,
       in: com.histmersion.api.personal.Bookmark.Edit
   ): Either[Api.Error, WireBookmark] =
-    maintenance.guard("edit_bookmark"):
+    maintenance.guard(com.histmersion.util.data.maintenance.WriteGate.OperationName("edit_bookmark")):
       for
         user <- person(caller)
         bid <- com.histmersion.domain.personal.bookmarks.Bookmark.idOf(id).left.map(bad)
@@ -98,7 +98,7 @@ final class PersonalControllers(
       yield b.wire
 
   def removeBookmark(caller: Caller, id: com.histmersion.domain.personal.bookmarks.Bookmark.Id): Either[Api.Error, WireBookmark] =
-    maintenance.guard("remove_bookmark"):
+    maintenance.guard(com.histmersion.util.data.maintenance.WriteGate.OperationName("remove_bookmark")):
       for
         user <- person(caller)
         bid <- com.histmersion.domain.personal.bookmarks.Bookmark.idOf(id).left.map(bad)
@@ -129,15 +129,15 @@ final class PersonalControllers(
     yield n.wire
 
   def addNote(caller: Caller, in: com.histmersion.api.personal.Note.New): Either[Api.Error, WireNote] =
-    maintenance.guard("add_note"):
+    maintenance.guard(com.histmersion.util.data.maintenance.WriteGate.OperationName("add_note")):
       for
         user <- person(caller)
-        t <- target(in.target, MarkKind.Notable, "note")
+        t <- target(in.target, MarkKind.Notable, com.histmersion.domain.personal.PersonalControllers.TargetText("note"))
         text <- com.histmersion.api.personal.Note.Text.tidy(in.text).left.map(bad)
       yield notes.add(user, t, text, TargetLabel.tidy(in.title), now()).wire
 
   def editNote(caller: Caller, id: com.histmersion.domain.personal.PersonalControllers.EditNoteId, in: com.histmersion.api.personal.Note.Edit): Either[Api.Error, WireNote] =
-    maintenance.guard("edit_note"):
+    maintenance.guard(com.histmersion.util.data.maintenance.WriteGate.OperationName("edit_note")):
       for
         user <- person(caller)
         nid <- com.histmersion.domain.personal.notes.Note.idOf(id).left.map(bad)
@@ -168,7 +168,7 @@ final class PersonalControllers(
       case asked => notes.edit(user, id, text, asked.flatten, now())
 
   def removeNote(caller: Caller, id: com.histmersion.domain.personal.PersonalControllers.RemoveNoteId): Either[Api.Error, WireNote] =
-    maintenance.guard("remove_note"):
+    maintenance.guard(com.histmersion.util.data.maintenance.WriteGate.OperationName("remove_note")):
       for
         user <- person(caller)
         nid <- com.histmersion.domain.personal.notes.Note.idOf(id).left.map(bad)
@@ -192,17 +192,17 @@ final class PersonalControllers(
   private def readable(kind: MarkKind, key: WireKey): Either[Api.Error, ItemKey] =
     if !MarkKind.Readable.contains(kind) then
       Left(bad(s"only sources and articles are marked read, not a ${kind.label.toLowerCase}"))
-    else Option(key.value.trim).filter(_.nonEmpty).map(ItemKey(_)).toRight(bad("which one? (its id)"))
+    else Option(key.value.trim).filter(_.nonEmpty).map(ItemKey(_)).toRight(bad(com.histmersion.domain.personal.PersonalControllers.Problem("which one? (its id)")))
 
   def setRead(caller: Caller, in: com.histmersion.api.personal.ReadMark.Set): Either[Api.Error, WireReadMark] =
-    maintenance.guard("set_read"):
+    maintenance.guard(com.histmersion.util.data.maintenance.WriteGate.OperationName("set_read")):
       for
         user <- person(caller)
         key <- readable(in.kind, in.id)
       yield reading.setRead(user, MarkTarget.itemKind(in.kind), key, in.read, TargetLabel.tidy(in.title), now()).wire
 
   def opened(caller: Caller, in: ReadOpened): Either[Api.Error, WireReadMark] =
-    maintenance.guard("opened"):
+    maintenance.guard(com.histmersion.util.data.maintenance.WriteGate.OperationName("opened")):
       for
         user <- person(caller)
         key <- readable(in.kind, in.id)

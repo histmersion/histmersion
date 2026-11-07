@@ -20,8 +20,8 @@ final class CoversControllers(pictures: SourcePictures, jobs: MediaJobs):
   def covers(req: MediaCoversRequest): Either[Api.Error, MediaCoversReport] =
     if req.dryRun then Right(pictures.run(req))
     else if req.citekey.forall(_.trim.isEmpty) then
-      Left(Api.Error("a run over every source is a job: POST /api/media/covers/job", Some(Write.CodeInvalid)))
-    else jobs.guarded("media_covers")(jobs.exclusive("media covers")(Right(pictures.run(req))))
+      Left(Api.Error(com.histmersion.api.Api.Error.Message("a run over every source is a job: POST /api/media/covers/job"), Some(Write.CodeInvalid)))
+    else jobs.guarded(com.histmersion.domain.media.MediaJobs.JobWhat("media_covers"))(jobs.exclusive(com.histmersion.domain.media.MediaJobs.JobWhat("media covers"))(Right(pictures.run(req))))
 
   def coversJob(req: MediaCoversRequest): Either[Api.Error, JobInfo] =
     val what =
@@ -38,7 +38,7 @@ final class CoversControllers(pictures: SourcePictures, jobs: MediaJobs):
 
   /** A cover the CLI read from the local Calibre library. */
   def putCover(p: SourceCoverParams, bytes: com.histmersion.domain.media.assets.AssetService.Bytes): Either[Api.Error, MediaItem] =
-    jobs.guarded("media_cover")(pictures.storeCover(p, bytes))
+    jobs.guarded(com.histmersion.domain.media.MediaJobs.JobWhat("media_cover"))(pictures.storeCover(p, bytes))
 
   /** After a conversion stored a source's figures (the OCR job's hook). */
   def afterIngest(citekey: com.histmersion.domain.library.Citekey): Option[com.histmersion.domain.media.covers.CoversControllers.AfterIngestText] = pictures.afterIngest(citekey)

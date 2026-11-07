@@ -18,7 +18,7 @@ object PlacesData:
   object RuleName extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
 
-  def figures(using DbCon): List[DataCount] = List(DataCount("places", PlaceRepo.count().toLong))
+  def figures(using DbCon): List[DataCount] = List(DataCount(com.histmersion.util.data.diagnostics.DataCount.Noun("places"), PlaceRepo.count().toLong))
 
   def checks(owner: DataOwner): List[CheckRule] = List(Kind(owner), GridPoint(owner), PointArea(owner))
 
@@ -49,10 +49,10 @@ object PlacesData:
           val (reclassified, merged) = geometry(c).reclassify(c.config.places.pointToleranceKm)
           LintFixResult(
             List(s"$PlaceKindRule: $reclassified place(s) reclassified, $merged merged into their replacement"),
-            0,
-            0,
-            0,
-            0,
+            com.histmersion.api.checks.Lint.LintFixResult.EdgesResolved(0),
+            com.histmersion.api.checks.Lint.LintFixResult.SourcesReindexed(0),
+            com.histmersion.api.checks.Lint.LintFixResult.ChunksWritten(0),
+            com.histmersion.api.checks.Lint.LintFixResult.Remaining(0),
             placesReclassified = reclassified,
             placesMerged = merged
           )
@@ -75,10 +75,10 @@ object PlacesData:
             List(
               s"$PlaceGridPoint: $relocated place(s) moved from a grid square's centre to their linked record's point"
             ),
-            0,
-            0,
-            0,
-            0,
+            com.histmersion.api.checks.Lint.LintFixResult.EdgesResolved(0),
+            com.histmersion.api.checks.Lint.LintFixResult.SourcesReindexed(0),
+            com.histmersion.api.checks.Lint.LintFixResult.ChunksWritten(0),
+            com.histmersion.api.checks.Lint.LintFixResult.Remaining(0),
             placesRelocated = relocated
           )
       )
@@ -96,7 +96,7 @@ object PlacesData:
         FixRank(70),
         c =>
           val r = geometry(c).removePointAreas(pointAreaOf(c.config))
-          LintFixResult(List(r.line), 0, 0, 0, 0, pointAreasRemoved = r.removed, pointAreasRemaining = r.remaining)
+          LintFixResult(List(r.line), com.histmersion.api.checks.Lint.LintFixResult.EdgesResolved(0), com.histmersion.api.checks.Lint.LintFixResult.SourcesReindexed(0), com.histmersion.api.checks.Lint.LintFixResult.ChunksWritten(0), com.histmersion.api.checks.Lint.LintFixResult.Remaining(0), pointAreasRemoved = r.removed, pointAreasRemaining = r.remaining)
       )
     )
 

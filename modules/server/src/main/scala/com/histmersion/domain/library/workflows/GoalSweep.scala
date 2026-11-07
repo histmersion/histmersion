@@ -56,7 +56,7 @@ private[workflows] trait GoalSweep:
       case None =>
         val item = QueueAdd(text, topic = Some(s"goal $goal"), goal = Some(goal), job = Some(ctx.run.id))
         ctx.write(s"acquire item for $doi, linked to goal $goal", item.asJson)(
-          site.workLists.add("acquire", item).left.map(_.message).map { added =>
+          site.workLists.add(com.histmersion.domain.automation.worklists.WorkListControllers.ListName("acquire"), item).left.map(_.message).map { added =>
             val _ = goals.link(goal, io.scalaland.chimney.Transformer.derive[com.histmersion.api.automation.Goal.LinkKind, com.histmersion.domain.automation.Goal.LinkKind].transform(LinkKind.QueueItem), added.id.toString, Some(doi))
             true
           }

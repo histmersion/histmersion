@@ -13,9 +13,9 @@ object GoalReferable:
   val Table: RecordTable =
     RecordTable(
       Kind,
-      "goals",
-      "t.slug",
-      "t.title",
-      Some("t.uid"),
-      Some(AliasColumns("goal_aliases", "alias", "goal_slug"))
+      com.histmersion.util.identity.RecordTable.Table("goals"),
+      com.histmersion.util.identity.RecordTable.Key("t.slug"),
+      com.histmersion.util.identity.RecordTable.Title("t.title"),
+      Some(com.histmersion.util.identity.RecordTable.Uid("t.uid")),
+      Some(AliasColumns(com.histmersion.util.identity.AliasColumns.Table("goal_aliases"), com.histmersion.util.identity.AliasColumns.Alias("alias"), com.histmersion.util.identity.AliasColumns.Target("goal_slug")))
     )

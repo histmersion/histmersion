@@ -131,11 +131,11 @@ final class AcquisitionControllers(
 
   /** Read a goal's watches from their watermarks and store what is new (no model). */
   def sweepCandidates(r: CandidateSweep.Request): Either[Api.Error, CandidateSweep] =
-    if r.dryRun then search.sweep(r.goal.trim, dryRun = true)
-    else maintenance.guard("candidates/sweep")(search.sweep(r.goal.trim, dryRun = false))
+    if r.dryRun then search.sweep(r.goal.trim, dryRun = com.histmersion.domain.library.acquisition.CandidateSearch.SweepDryRun(true))
+    else maintenance.guard(com.histmersion.util.data.maintenance.WriteGate.OperationName("candidates/sweep"))(search.sweep(r.goal.trim, dryRun = com.histmersion.domain.library.acquisition.CandidateSearch.SweepDryRun(false)))
 
   def markCandidates(m: CandidateMark): Either[Api.Error, CandidateMarked] =
-    maintenance.guard("candidates/mark"):
+    maintenance.guard(com.histmersion.util.data.maintenance.WriteGate.OperationName("candidates/mark")):
       Candidates.State
         .parse(m.state)
         .toRight(
@@ -157,7 +157,7 @@ final class AcquisitionControllers(
       notInDb: com.histmersion.domain.library.acquisition.AcquisitionControllers.DiscoverNotInDb
   ): Either[Api.Error, DiscoverResult] =
     val query = q.trim
-    if query.isEmpty then Left(err("give a search query"))
+    if query.isEmpty then Left(err(com.histmersion.domain.library.acquisition.AcquisitionControllers.Problem("give a search query")))
     else
       discovery
         .search(query, since, sort, cfg().limits.page(limit, acq.defaults.searchLimit.value))
@@ -262,7 +262,7 @@ final class AcquisitionControllers(
   // ── assess ──────────────────────────────────────────────────────────────────────────────────
 
   /** `store = false` (an agent's dry run, #992): the verdict is computed but not recorded. */
-  private def assessNow(req: AssessRequest, store: com.histmersion.domain.library.acquisition.AcquisitionControllers.AssessNowStore = true): Either[Api.Error, Assessment] =
+  private def assessNow(req: AssessRequest, store: com.histmersion.domain.library.acquisition.AcquisitionControllers.AssessNowStore = com.histmersion.domain.library.acquisition.AcquisitionControllers.AssessNowStore(true)): Either[Api.Error, Assessment] =
     target(req.id).flatMap { t =>
       t.doi.toRight(err(s"no DOI for '${req.id}' — an assessment needs one")).map { doi =>
         val rw = assessments.retractionsFor(doi)
@@ -500,24 +500,24 @@ final class AcquisitionControllers(
       case None => oa.fetchWorkExplained(key, path.legalChain)
     if skip.isEmpty && path == IngestPath.PersonLegal && acq.allowUnauthorised then
       steps += Ingest.Step(
-        "legal-only",
-        true,
+        com.histmersion.api.library.Ingest.Step.Value("legal-only"),
+        com.histmersion.api.library.Ingest.Step.Ok(true),
         "the legal chain only: the fetchers the config marks unauthorised were not asked"
       )
     val fetched = chain.file
     fetched match
       case Right(f) =>
         steps += Ingest.Step(
-          "fetch",
-          true,
+          com.histmersion.api.library.Ingest.Step.Value("fetch"),
+          com.histmersion.api.library.Ingest.Step.Ok(true),
           s"${f.source}: ${f.bytes.length} bytes" +
             AcquisitionControllers.hostOf(f.url).fold("")(h => s" from $h") +
             (if f.extension == "xml" then " (JATS full text — no PDF is published)" else "") +
             f.licence.map(_.value.trim).filter(_.nonEmpty).fold("")(l => s", licence $l") +
             original.fold("")(h => s" (replacing $h: --refetch)")
         )
-      case Left(e) => steps += Ingest.Step("fetch", skip.isDefined, e)
-    if chain.answers.nonEmpty then steps += Ingest.Step("chain", false, chain.answers.map(_.line).mkString("; "))
+      case Left(e) => steps += Ingest.Step(com.histmersion.api.library.Ingest.Step.Value("fetch"), skip.isDefined, e)
+    if chain.answers.nonEmpty then steps += Ingest.Step(com.histmersion.api.library.Ingest.Step.Value("chain"), com.histmersion.api.library.Ingest.Step.Ok(false), chain.answers.map(_.line).mkString("; "))
 
     // a gold open-access work from a publisher that refuses scripts: a download in the browser, on every path
     val browserOnly = Option
@@ -560,9 +560,9 @@ final class AcquisitionControllers(
         .flatMap(_.citekey)
         .distinct
         .filter(_ != citekey)
-        .map(Edge(com.histmersion.api.library.Citekey(citekey), com.histmersion.api.library.Citekey(_), "references"))
+        .map(Edge(com.histmersion.api.library.Citekey(citekey), com.histmersion.api.library.Citekey(_), com.histmersion.api.library.Edge.Kind("references")))
       steps += Ingest.Step(
-        "references",
+        com.histmersion.api.library.Ingest.Step.Value("references"),
         refRows.nonEmpty,
         s"${refRows.size} reference(s), ${edges.size} resolve to stored sources"
       )
@@ -748,7 +748,7 @@ final class AcquisitionControllers(
     val sp = spool()
     sp.write(citekey, f.extension, f.bytes) match
       case Right(key) => Some(FetchedCopy(key, sp.where(key)))
-      case Left(e)    => steps += Ingest.Step("spool", false, e); None
+      case Left(e)    => steps += Ingest.Step(com.histmersion.api.library.Ingest.Step.Value("spool"), com.histmersion.api.library.Ingest.Step.Ok(false), e); None
 
   /** Patch just the `status` of a source (what `assess --apply` does), without disturbing anything else. */
   private def setStatus(
@@ -766,18 +766,18 @@ final class AcquisitionControllers(
   // ── the maintenance lock: every acquisition WRITE goes through it ───────────────────────────
 
   def assess(req: AssessRequest): Either[Api.Error, Assessment] =
-    maintenance.guard("assess")(assessNow(req))
+    maintenance.guard(com.histmersion.util.data.maintenance.WriteGate.OperationName("assess"))(assessNow(req))
 
   /** The verdict alone: nothing applied, nothing recorded (what an agent's dry run reads). */
   def assessReadOnly(id: com.histmersion.domain.library.acquisition.AcquisitionControllers.AssessReadOnlyId): Either[Api.Error, Assessment] =
-    maintenance.guard("assess")(assessNow(AssessRequest(id), store = false))
+    maintenance.guard(com.histmersion.util.data.maintenance.WriteGate.OperationName("assess"))(assessNow(AssessRequest(id), store = com.histmersion.domain.library.acquisition.AcquisitionControllers.AssessNowStore(false)))
 
   def followups(req: FollowupsRequest): Either[Api.Error, FollowupsResult] =
-    maintenance.guard("followups")(followupsNow(req))
+    maintenance.guard(com.histmersion.util.data.maintenance.WriteGate.OperationName("followups"))(followupsNow(req))
 
   /** A person's ingest; `legalOnly` asks the legal chain alone, and is otherwise the same. */
   def ingest(req: Ingest.Request): Either[Api.Error, Ingest.Report] =
-    maintenance.guard("acquire/ingest")(
+    maintenance.guard(com.histmersion.util.data.maintenance.WriteGate.OperationName("acquire/ingest"))(
       ingestNow(
         req,
         if req.legalOnly then IngestPath.PersonLegal else IngestPath.Person
@@ -791,7 +791,7 @@ final class AcquisitionControllers(
     * fetched again; a metadata-only one named by `req.citekey` is fetched and converted into, keeping its enrichment.
     */
   def ingestLegal(req: Ingest.Request): Either[Api.Error, Ingest.Report] =
-    maintenance.guard("acquire/ingest")(ingestNow(req.modify(_.refetch).setTo(false), IngestPath.Watcher))
+    maintenance.guard(com.histmersion.util.data.maintenance.WriteGate.OperationName("acquire/ingest"))(ingestNow(req.modify(_.refetch).setTo(false), IngestPath.Watcher))
 
   /** The legal chain's generation now ([[FetcherGeneration]]): it changes when a legal fetcher or a fetcher plugin's
     * settings or key change, which makes the acquisition list's items due for a re-check again.
@@ -799,10 +799,10 @@ final class AcquisitionControllers(
   def fetcherGeneration: com.histmersion.domain.library.acquisition.AcquireClients.Generation = generation
 
   def archiveImport(item: ArchiveItem, file: ArchiveFile, req: ArchiveImportRequest): Either[Api.Error, Ingest.Report] =
-    maintenance.guard("archive/import")(archiveImportNow(item, file, req))
+    maintenance.guard(com.histmersion.util.data.maintenance.WriteGate.OperationName("archive/import"))(archiveImportNow(item, file, req))
 
   def updateRetractions(): Either[Api.Error, RetractionsUpdate] =
-    maintenance.guard("retractions/update")(updateRetractionsNow())
+    maintenance.guard(com.histmersion.util.data.maintenance.WriteGate.OperationName("retractions/update"))(updateRetractionsNow())
 
   // ── shared: what does the user's identifier point at? ───────────────────────────────────────
 
@@ -893,6 +893,6 @@ object AcquisitionControllers:
     */
   def originalOf(body: Option[Option[com.histmersion.domain.library.acquisition.AcquisitionControllers.OriginalOfBody]], sha256: Option[com.histmersion.Sha256]): Option[com.histmersion.domain.library.acquisition.AcquisitionControllers.OriginalOfResult] =
     body.flatMap { b =>
-      if b.exists(_.trim.nonEmpty) then Some("a converted body")
+      if b.exists(_.trim.nonEmpty) then Some(com.histmersion.domain.library.acquisition.AcquisitionControllers.("a converted body"))
       else sha256.map(sha => s"a stored original (sha256 ${sha.take(12)}…)")
     }

@@ -19,7 +19,7 @@ final case class AgentGetSourceInput(
     section
       .map(_.trim)
       .filter(_.nonEmpty)
-      .orElse(Option.when(offset.isDefined || chars.isDefined || heading.isDefined)("body"))
+      .orElse(Option.when(offset.isDefined || chars.isDefined || heading.isDefined)(com.histmersion.domain.library.sources.SourceService.BodyText("body")))
 object AgentGetSourceInput:
 
   type Section = Section.T

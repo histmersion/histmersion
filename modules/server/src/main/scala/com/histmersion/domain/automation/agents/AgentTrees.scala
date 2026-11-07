@@ -86,7 +86,7 @@ object AgentTrees:
   type SettingsVersion = _root_.com.histmersion.domain.automation.agents.GenSettings.Version
   val SettingsVersion: _root_.com.histmersion.domain.automation.agents.GenSettings.Version.type = _root_.com.histmersion.domain.automation.agents.GenSettings.Version
 
-  val NoEnvironment: UserPaths = UserPaths(com.histmersion.config.Environment.empty, "")
+  val NoEnvironment: UserPaths = UserPaths(com.histmersion.config.Environment.empty, com.histmersion.config.UserPaths.OsName(""))
 
   /** The directory a request names for the trees (`~` expanded), absolute; none for a blank one. */
   def out(raw: Option[String], paths: UserPaths): Option[Path] =

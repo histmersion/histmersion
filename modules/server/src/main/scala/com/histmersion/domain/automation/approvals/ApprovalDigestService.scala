@@ -61,7 +61,7 @@ final class ApprovalDigestService(
     else
       val line = ApprovalDigest.line(digest(now))
       agents.autopilotRow.digested(now)
-      val _ = agents.workLists.add("log", QueueAdd(line.take(1000)))
+      val _ = agents.workLists.add(com.histmersion.domain.automation.worklists.WorkListControllers.ListName("log"), QueueAdd(line.take(1000)))
       scribe.info(line)
       List("approval digest written")
 

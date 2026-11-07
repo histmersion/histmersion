@@ -42,7 +42,7 @@ private[places] object GazetteerImport:
       counts.modify(_.skipped).setTo((duplicates ++ counts.skipped).take(20))
 
     def prune(batch: com.histmersion.PageSize): com.histmersion.domain.catalogue.places.GazetteerImport.Session.Pruned =
-      if !apply then 0L
+      if !apply then com.histmersion.domain.catalogue.places.GazetteerImport.Session.Pruned(0L)
       else
         val ids = transactions.autocommit(repo.pruneCandidates)
         ids.grouped(math.max(1, batch)).foldLeft(0L) { (count, chunk) =>

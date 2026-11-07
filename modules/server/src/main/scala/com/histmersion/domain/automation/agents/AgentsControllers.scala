@@ -295,7 +295,7 @@ final class AgentsControllers(
       .getOrElse(Right(PlanQuota.PoolId.values.toList))
       .map { ps =>
         val cooled = picker.cooldowns().map(_._1)
-        val done = ps.map(p => p -> pools.refreshPool(p, PlanQuota.RefreshTrigger.Command, force = true))
+        val done = ps.map(p => p -> pools.refreshPool(p, PlanQuota.RefreshTrigger.Command, force = com.histmersion.server.agents.PlanPools.Force(true)))
         val after = pools.statuses(covers).map(st => st.pool -> st).toMap
         // a model parked after its plan's limit comes back as soon as a reading taken now says so (#1827)
         val still = picker.cooldowns().map(_._1).toSet
@@ -306,7 +306,7 @@ final class AgentsControllers(
               .map(st =>
                 r match
                   case Right(x)  => PlanQuota.PoolRefreshed(p.wire, x.ok, x.text, st)
-                  case Left(why) => PlanQuota.PoolRefreshed(p.wire, refreshed = false, s"not read: $why", st)
+                  case Left(why) => PlanQuota.PoolRefreshed(p.wire, refreshed = com.histmersion.api.automation.PlanQuota.PoolRefreshed.Refreshed(false), s"not read: $why", st)
               )
           },
           cooled.filterNot(still)
@@ -492,17 +492,17 @@ final class AgentsControllers(
       )
         .report(online = !offline)
     val held = lease.status match
-      case Some((o, u, false, true))  => DoctorCheck("agent lease", CheckLevel.Ok, s"held by this server ($o) until $u")
+      case Some((o, u, false, true))  => DoctorCheck(com.histmersion.api.automation.Agents.DoctorCheck.Name("agent lease"), CheckLevel.Ok, s"held by this server ($o) until $u")
       case Some((o, u, false, false)) =>
         DoctorCheck(
-          "agent lease",
+          com.histmersion.api.automation.Agents.DoctorCheck.Name("agent lease"),
           CheckLevel.Warn,
           s"held by another server ($o) until $u: this one runs no agents, schedules or managers on this database"
         )
       case Some((o, u, true, _)) =>
-        DoctorCheck("agent lease", CheckLevel.Warn, s"expired ($o until $u): the next server to start takes it")
-      case None if cfg.enabled => DoctorCheck("agent lease", CheckLevel.Warn, "not held: the agents have not started")
-      case None                => DoctorCheck("agent lease", CheckLevel.Ok, "not held (agents off)")
+        DoctorCheck(com.histmersion.api.automation.Agents.DoctorCheck.Name("agent lease"), CheckLevel.Warn, s"expired ($o until $u): the next server to start takes it")
+      case None if cfg.enabled => DoctorCheck(com.histmersion.api.automation.Agents.DoctorCheck.Name("agent lease"), CheckLevel.Warn, com.histmersion.api.automation.Agents.DoctorCheck.Detail("not held: the agents have not started"))
+      case None                => DoctorCheck(com.histmersion.api.automation.Agents.DoctorCheck.Name("agent lease"), CheckLevel.Ok, com.histmersion.api.automation.Agents.DoctorCheck.Detail("not held (agents off)"))
     r.modify(_.checks).using(_ :+ held)
 
   // ── runs ───────────────────────────────────────────────────────────────────────────────────────

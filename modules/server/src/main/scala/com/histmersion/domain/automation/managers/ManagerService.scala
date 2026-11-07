@@ -72,7 +72,7 @@ trait ManagerService:
   /** How many of a manager's items of these kinds are in these states (`focusHeld`: one the focus holds counts as
     * held).
     */
-  def openOf(managerId: com.histmersion.domain.automation.managers.ManagerLight.Id, kinds: List[com.histmersion.domain.automation.managers.ManagerContext.ItemKind], statuses: List[com.histmersion.domain.automation.ItemStatus.Wire], focusHeld: com.histmersion.domain.automation.managers.ManagerService.OpenOfFocusHeld = true): com.histmersion.domain.automation.managers.ManagerService.OpenOfResult
+  def openOf(managerId: com.histmersion.domain.automation.managers.ManagerLight.Id, kinds: List[com.histmersion.domain.automation.managers.ManagerContext.ItemKind], statuses: List[com.histmersion.domain.automation.ItemStatus.Wire], focusHeld: com.histmersion.domain.automation.managers.ManagerService.OpenOfFocusHeld = com.histmersion.domain.automation.managers.ManagerService.OpenOfFocusHeld(true)): com.histmersion.domain.automation.managers.ManagerService.OpenOfResult
   def event(managerId: com.histmersion.domain.automation.managers.ManagerLight.Id, itemId: Option[com.histmersion.domain.automation.managers.ManagerContext.ItemId], runId: Option[com.histmersion.domain.automation.Run.Id], kind: com.histmersion.domain.automation.managers.ManagerService.EventKind, text: com.histmersion.domain.automation.managers.ManagerService.EventText): Unit
 
   /** A manager's newest event of `kind`. */
@@ -250,7 +250,7 @@ object ManagerService:
     def list(): List[ManagerInfo] = db.read(ManagerRepo.list())
     def pending(managerId: com.histmersion.domain.automation.managers.ManagerLight.Id): List[ManagerItem] = db.read(ManagerRepo.pending(managerId))
     def items(managerId: com.histmersion.domain.automation.managers.ManagerLight.Id, limit: com.histmersion.domain.automation.managers.ManagerContext.Limit): List[ManagerItem] =
-      db.read(ManagerRepo.itemPage(managerId, None, 0, limit))._1
+      db.read(ManagerRepo.itemPage(managerId, None, com.histmersion.Offset(0), limit))._1
     def light(): List[ManagerLight] = db.read(ManagerRepo.light())
     def create(
         id: com.histmersion.domain.automation.managers.ManagerLight.Id,
@@ -482,10 +482,10 @@ object ManagerService:
         .toList
         .map(view)
     private def urgency(status: com.histmersion.domain.automation.ItemStatus.Wire): com.histmersion.domain.automation.managers.ManagerService.InMemory.UrgencyResult = status match
-      case "active"  => 0
-      case "pending" => 1
-      case "held"    => 2
-      case _         => 3
+      case "active"  => com.histmersion.domain.automation.managers.ManagerService.InMemory.UrgencyResult(0)
+      case "pending" => com.histmersion.domain.automation.managers.ManagerService.InMemory.UrgencyResult(1)
+      case "held"    => com.histmersion.domain.automation.managers.ManagerService.InMemory.UrgencyResult(2)
+      case _         => com.histmersion.domain.automation.managers.ManagerService.InMemory.UrgencyResult(3)
     def items(managerId: com.histmersion.domain.automation.managers.ManagerLight.Id, limit: com.histmersion.domain.automation.managers.ManagerContext.Limit): List[ManagerItem] =
       items
         .filter(_.managerId == managerId)
@@ -532,7 +532,7 @@ object ManagerService:
           if s.managers.exists(_.id == id) then s
           else
             s.modify(_.managers)
-              .using(_ :+ ManagerRecord(id, kind.wire, goal, state.wire, false, config, None, cron, nextTick, at, at))
+              .using(_ :+ ManagerRecord(id, kind.wire, goal, state.wire, com.histmersion.domain.automation.managers.ManagerRecord.PauseRuns(false), config, None, cron, nextTick, at, at))
         )
         .managers
         .exists(_.id == id)
@@ -581,8 +581,8 @@ object ManagerService:
               target,
               ItemStatus.Pending.wire,
               priority,
-              0,
-              0,
+              com.histmersion.domain.automation.managers.ManagerItemRecord.Attempts(0),
+              com.histmersion.domain.automation.managers.ManagerItemRecord.Failures(0),
               None,
               None,
               None,
@@ -603,9 +603,9 @@ object ManagerService:
                 .modify(_.status)
                 .using(st => if back then ItemStatus.Pending.wire else st)
                 .modify(_.attempts)
-                .using(n => if back then 0 else n)
+                .using(n => if back then com.histmersion.domain.automation.managers.ManagerItemRecord.Attempts(0) else n)
                 .modify(_.failures)
-                .using(n => if back then 0 else n)
+                .using(n => if back then com.histmersion.domain.automation.managers.ManagerItemRecord.Failures(0) else n)
                 .modify(_.notBefore)
                 .using(nb => if back then None else nb)
                 .modify(_.outcome)
@@ -738,7 +738,7 @@ object ManagerService:
         _.modify(_.status).setTo(ItemStatus.Held.wire).modify(_.hold).setTo(Some(h)).modify(_.updatedAt).setTo(at)
       ) > 0
     def focusRelease(ids: List[com.histmersion.domain.automation.managers.ManagerContext.ItemId]): com.histmersion.domain.automation.managers.ManagerService.InMemory.FocusReleaseResult =
-      if ids.isEmpty then 0 else changeItems(i => ids.contains(i.id) && focusHeld(i))(released(now))
+      if ids.isEmpty then com.histmersion.domain.automation.managers.ManagerService.InMemory.(0) else changeItems(i => ids.contains(i.id) && focusHeld(i))(released(now))
     def focusReleaseAll(): com.histmersion.domain.automation.managers.ManagerService.InMemory.FocusReleaseAllResult = changeItems(focusHeld)(released(now))
     def focusHeldCount(): com.histmersion.domain.automation.managers.ManagerService.InMemory.FocusHeldCountResult = items.count(focusHeld)
     def forPerson(): com.histmersion.domain.automation.managers.ManagerService.InMemory.ForPersonResult =

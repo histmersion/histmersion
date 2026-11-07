@@ -10,7 +10,7 @@ final case class IngestMeta(
     year: Option[com.histmersion.Year] = None,
     venue: Option[IngestMeta.Venue] = None,
     summary: Option[IngestMeta.Summary] = None,
-    provenance: IngestMeta.Provenance = "oa",
+    provenance: IngestMeta.Provenance = com.histmersion.domain.library.ingest.IngestMeta.Provenance("oa"),
     /** `references` (and other typed) edges discovered while acquiring. */
     edges: List[Edge] = Nil,
     citedByCount: Option[IngestMeta.CitedByCount] = None,

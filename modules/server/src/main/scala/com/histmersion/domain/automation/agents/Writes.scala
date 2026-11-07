@@ -9,9 +9,9 @@ import scala.jdk.CollectionConverters.*
   * interactive role).
   */
 enum Writes(val wire: Writes.Wire):
-  case None extends Writes("none")
-  case Propose extends Writes("propose")
-  case Direct extends Writes("direct")
+  case None extends Writes(com.histmersion.domain.automation.agents.Writes.Wire("none"))
+  case Propose extends Writes(com.histmersion.domain.automation.agents.Writes.Wire("propose"))
+  case Direct extends Writes(com.histmersion.domain.automation.agents.Writes.Wire("direct"))
 
 object Writes:
   type Wire = Wire.T

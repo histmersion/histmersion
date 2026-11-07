@@ -33,7 +33,7 @@ object ArticleHtml:
   def esc(s: com.histmersion.server.HtmlRender.Text): com.histmersion.server.HtmlRender.Html = HtmlRender.esc(s)
 
   private def link(ck: com.histmersion.domain.library.Citekey, full: com.histmersion.server.ArticleHtml.LinkFull, q: Option[com.histmersion.server.HtmlRender.Query]): com.histmersion.server.HtmlRender.Html =
-    esc(sourceUrl(ck, full, fragment = false, q))
+    esc(sourceUrl(ck, full, fragment = com.histmersion.server.ArticleHtml.SourceUrlFragment(false), q))
 
   /** `/source/{ck}` with the page's own query parameters (unescaped — for a header or `esc`). */
   def sourceUrl(ck: com.histmersion.domain.library.Citekey, full: com.histmersion.server.ArticleHtml.SourceUrlFull, fragment: com.histmersion.server.ArticleHtml.SourceUrlFragment, q: Option[com.histmersion.server.HtmlRender.Query]): com.histmersion.server.ArticleHtml.Url =
@@ -46,17 +46,17 @@ object ArticleHtml:
                                                              else params.mkString("?", "&", ""))
 
   def toggle(ck: com.histmersion.server.ArticleHtml.ToggleCk, full: com.histmersion.server.ArticleHtml.ToggleFull, q: Option[com.histmersion.server.ArticleHtml.ToggleQ] = None): com.histmersion.server.HtmlRender.Html =
-    if full then s"""<p class="toggle"><a href="${link(ck, false, q)}">▲ hide full text</a></p>"""
-    else s"""<p class="toggle"><a href="${link(ck, true, q)}">▼ show full text (whole paper)</a></p>"""
+    if full then s"""<p class="toggle"><a href="${link(ck, com.histmersion.server.ArticleHtml.LinkFull(false), q)}">▲ hide full text</a></p>"""
+    else s"""<p class="toggle"><a href="${link(ck, com.histmersion.server.ArticleHtml.LinkFull(true), q)}">▼ show full text (whole paper)</a></p>"""
 
   /** The match counter + jump control for `?q=`; empty when nothing matched (or no query). the web bundle's page entry
     * point wires the link and the `n` shortcut to the `<mark id="hl…">` elements — and the control NAMES that shortcut,
     * because a keyboard shortcut nobody is told about is a shortcut nobody uses (item 14).
     */
   def matchNav(matches: com.histmersion.server.ArticleHtml.MatchNavMatches): com.histmersion.server.HtmlRender.Html =
-    if matches <= 0 then ""
+    if matches <= 0 then com.histmersion.server.HtmlRender.Html("")
     else
-      s"""<p class="toggle match-nav" data-matches="$matches">${Plural.count(matches, "match", "matches")} · """ +
+      s"""<p class="toggle match-nav" data-matches="$matches">${Plural.count(matches, com.histmersion.api.Plural.CountSingular("match"), com.histmersion.api.Plural.CountPlural("matches"))} · """ +
         """<a href="#hl1" class="next-match">next ▼</a> <span class="kbd-hint">(n)</span></p>"""
 
   /** `title` is DATA — a source's or an article's stored title, which an agent wrote — so it is escaped here rather

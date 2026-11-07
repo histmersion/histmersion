@@ -81,8 +81,8 @@ final class EventImportsControllers(
             Correction.Target.Event,
             event.map(id => events.renamedTo(id).getOrElse(id)),
             st,
-            page(limit, 50),
-            offset.getOrElse(0)
+            page(limit, com.histmersion.domain.catalogue.events.EventImportsControllers.PageArg2(50)),
+            offset.getOrElse(com.histmersion.Offset(0))
           )
         )
 

@@ -38,7 +38,7 @@ final class SiteTypesControllers(
 
   def runSiteTypes(req: SiteTypes.Request, progress: String => Unit): SiteTypes.Report =
     val started = clock.millis()
-    if req.dryRun then SiteTypes.Report(dryRun = true, pending = sites.countSitesToType(req.refresh, None))
+    if req.dryRun then SiteTypes.Report(dryRun = com.histmersion.api.catalogue.SiteTypes.Report.DryRun(true), pending = sites.countSitesToType(req.refresh, None))
     else
       val c = polite(ec.wikidata.apiIntervalMs)
       val cap = req.limit.filter(_ > 0).getOrElse(Int.MaxValue)
@@ -64,16 +64,16 @@ final class SiteTypesControllers(
           else
             val ask = frontier.filterNot(superCache.contains).distinct
             if ask.nonEmpty then
-              val got = claims(ask, "P279")
+              val got = claims(ask, com.histmersion.domain.catalogue.events.EventProviders.WikidataProperty("P279"))
               superCache ++= ask.map(q => q -> got.getOrElse(q, Nil))
             val next = frontier.flatMap(q => superCache.getOrElse(q, Nil)).distinct.filterNot(acc.contains)
             walk(steps - 1, next.filterNot(SiteTypes.wikidataClasses.contains), acc ++ next)
         walk(ec.siteTypes.superclassDepth.max(0), unknown, Nil)
       // `var`s: the walk
-      var report = SiteTypes.Report(dryRun = false)
+      var report = SiteTypes.Report(dryRun = com.histmersion.api.catalogue.SiteTypes.Report.DryRun(false))
       var batch = sites.sitesToType(ec.siteTypes.batch.min(cap), req.refresh, Some(started))
       while batch.nonEmpty && report.asked < cap && !jobs.held do
-        val p31 = claims(batch.map(_._2), "P31")
+        val p31 = claims(batch.map(_._2), com.histmersion.domain.catalogue.events.EventProviders.WikidataProperty("P31"))
         val answered = batch.filter((_, q, _) => p31.contains(q))
         val types = answered.map { (pid, q, cls) =>
           val own = p31.getOrElse(q, Nil)

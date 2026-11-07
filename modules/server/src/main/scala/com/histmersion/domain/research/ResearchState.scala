@@ -33,7 +33,7 @@ object ResearchState:
   type LedgersKey = LedgersKey.T
   object LedgersKey extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
-  val empty: ResearchState = ResearchState(Map.empty, Map.empty, Vector.empty, 1L, Map.empty)
+  val empty: ResearchState = ResearchState(Map.empty, Map.empty, Vector.empty, com.histmersion.domain.research.ResearchState.NextVersion(1L), Map.empty)
 
   /** One stored article: the record without its update time (the state's `updatedAt`), its uid and the article targets
     * its body links, in the order they were written.

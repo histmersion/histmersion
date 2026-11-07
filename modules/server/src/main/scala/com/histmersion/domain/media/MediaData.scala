@@ -24,7 +24,7 @@ object MediaData extends DataContribution:
   override val mergeRules: List[MergeRules] = MediaExchange.mergeRules
 
   override val caches: List[CacheSpec] = List(
-    CacheSpec(owner, CacheName("thumbnails"), "picture thumbnails", CacheHolding.InTables(List(TableName("assets"))))
+    CacheSpec(owner, CacheName("thumbnails"), com.histmersion.util.data.maintenance.CacheSpec.Label("picture thumbnails"), CacheHolding.InTables(List(TableName("assets"))))
   )
 
   override val checks: List[CheckRule] = AssetsData.checks(owner)

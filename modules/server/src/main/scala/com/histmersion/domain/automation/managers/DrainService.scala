@@ -41,7 +41,7 @@ final class DrainService(
       .drain()
       .map((since, by, _) =>
         SchedulerPolicy.Block(
-          "drain",
+          com.histmersion.domain.SchedulerPolicy.Block.Code("drain"),
           s"draining since $since${if by.nonEmpty then s" (by $by)" else ""}: nothing new starts until it is lifted " +
             "(histmersion agent autopilot undrain)"
         )
@@ -64,10 +64,10 @@ final class DrainService(
           log(
             s"autopilot: drained (draining since $since): no agent run is queued or running — safe to stop the server"
           )
-          List("drained")
+          List(com.histmersion.domain.automation.managers.DrainService.TickResult("drained"))
         else if active > 0 && at.isDefined then
           agents.autopilotRow.drained(None)
-          List(s"draining again: ${Plural.count(active, "run")} in flight")
+          List(s"draining again: ${Plural.count(active, com.histmersion.api.Plural.CountSingular("run"))} in flight")
         else Nil
 
   /** Start or lift the drain; answers the autopilot's status with what it did. */
@@ -86,7 +86,7 @@ final class DrainService(
     agents.autopilot.status(now).copy(changes = List(line))
 
   private def log(line: com.histmersion.domain.automation.managers.DrainService.LogLine): Unit =
-    val _ = agents.workLists.add("log", QueueAdd(line.take(1000)))
+    val _ = agents.workLists.add(com.histmersion.domain.automation.worklists.WorkListControllers.ListName("log"), QueueAdd(line.take(1000)))
     scribe.info(line)
 
 object DrainService:

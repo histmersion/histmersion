@@ -49,7 +49,7 @@ trait RunService:
   def forTarget(p: Pipeline, target: com.histmersion.domain.automation.agents.AgentsControllers.Target): Vector[RunInfo]
 
   /** The runs a manager dispatched, newest first (`active`: those not settled yet). */
-  def forManager(managerId: com.histmersion.domain.automation.managers.ManagerLight.Id, active: com.histmersion.domain.automation.agents.RunService.Active = false, limit: com.histmersion.domain.automation.agents.RunQuery.Limit = 200): Vector[RunInfo]
+  def forManager(managerId: com.histmersion.domain.automation.managers.ManagerLight.Id, active: com.histmersion.domain.automation.agents.RunService.Active = com.histmersion.domain.automation.agents.RunService.Active(false), limit: com.histmersion.domain.automation.agents.RunQuery.Limit = com.histmersion.domain.automation.agents.RunQuery.Limit(200)): Vector[RunInfo]
 
   /** Every run on `target` that has not settled. */
   def unsettledOn(target: com.histmersion.domain.automation.agents.AgentsControllers.Target): Vector[RunInfo]
@@ -122,7 +122,7 @@ object RunService:
       model,
       budgetUsd,
       budgetTokens,
-      Jsonb.write(params, dropNulls = true),
+      Jsonb.write(params, dropNulls = com.histmersion.util.database.Jsonb.DropNulls(true)),
       acquireItem,
       goal,
       parent,
@@ -397,7 +397,7 @@ object RunService:
         ss.filter(s => !s.finishedAt.isBefore(month)).map(_.step.costUsd).sum
       )
     def pruneMessages(days: com.histmersion.domain.automation.agents.RunService.RetentionDays): com.histmersion.domain.automation.agents.RunService.Count =
-      if days <= 0 then 0
+      if days <= 0 then com.histmersion.domain.automation.agents.RunService.Count(0)
       else
         val cut = now.minusSeconds(days.toLong * 86400L)
         state

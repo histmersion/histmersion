@@ -46,7 +46,7 @@ final class Deps(
     /** The time, the environment and the per-user paths: read once by the entry point, never globally. */
     val clock: Clock = Clock.systemUTC(),
     val environment: Environment = Environment.empty,
-    val userPaths: UserPaths = UserPaths(Environment.empty, ""), val timer: com.histmersion.util.time.Timer = new com.histmersion.util.time.SystemTimer, val pause: com.histmersion.util.time.Pause = new com.histmersion.util.time.ThreadPause
+    val userPaths: UserPaths = UserPaths(Environment.empty, com.histmersion.config.UserPaths.OsName("")), val timer: com.histmersion.util.time.Timer = new com.histmersion.util.time.SystemTimer, val pause: com.histmersion.util.time.Pause = new com.histmersion.util.time.ThreadPause
 ):
 
   /** Transactions on the application role ([[ds]]). */
@@ -172,7 +172,7 @@ object Deps:
   /** The reload of a server that was started without a config file to read again. */
   val NoReload: () => ReloadReport = () =>
     ReloadReport(
-      published = false,
-      generation = 0,
+      published = com.histmersion.api.settings.ReloadReport.Published(false),
+      generation = com.histmersion.api.settings.ReloadReport.Generation(0),
       errors = List("this server was started without a config file to reload")
     )

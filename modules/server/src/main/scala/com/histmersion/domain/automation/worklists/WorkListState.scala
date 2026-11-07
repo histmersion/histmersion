@@ -73,7 +73,7 @@ object WorkListState:
   type LastId = LastId.T
   object LastId extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
-  val empty: WorkListState = WorkListState(Vector.empty, 0)
+  val empty: WorkListState = WorkListState(Vector.empty, com.histmersion.domain.automation.worklists.WorkListState.LastId(0))
 
   private val Stamp = DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ss.SSSSSS'Z'").withZone(ZoneOffset.UTC)
 

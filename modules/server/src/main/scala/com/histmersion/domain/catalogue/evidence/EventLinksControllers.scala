@@ -81,10 +81,10 @@ final class EventLinksControllers(
         text
           .find(
             rx,
-            regex = true,
-            limit = 5,
-            context = 160,
-            maxMatches = 50,
+            regex = com.histmersion.domain.catalogue.evidence.passages.PassageReader.Regex(true),
+            limit = com.histmersion.PageSize(5),
+            context = com.histmersion.domain.catalogue.evidence.passages.PassageReader.Context(160),
+            maxMatches = com.histmersion.domain.catalogue.evidence.passages.PassageReader.MaxMatches(50),
             settings().limits.passages.regexTimeoutMs.toLong
           )
           .toOption
@@ -103,7 +103,7 @@ final class EventLinksControllers(
     val w = ec.links.weights
     val names = namesOf(d)
     val near = leadFacts
-      .nearFindings(d.event.id, w.km, w.years, 500)
+      .nearFindings(d.event.id, w.km, w.years, com.histmersion.PageSize(500))
       .map(f => EventMatcher.NearFinding(f.id, f.citekey, f.km, f.yearGap))
     val named = names
       .flatMap(n => sources.naming(n, ec.links.sourcesPerName))
@@ -127,12 +127,12 @@ final class EventLinksControllers(
     * refused, with why.
     */
   def applyLinks(caller: Caller, id: com.histmersion.domain.catalogue.Event.Id, req: EventLinksRequest): Either[Api.Error, EventLinksResult] =
-    maintenance.guard("event_links") {
+    maintenance.guard(com.histmersion.util.data.maintenance.WriteGate.OperationName("event_links")) {
       eventOrFail(id).map { d =>
         val eid = d.event.id
         if req.recompute then compute(d)
         val names = namesOf(d)
-        val existing = attestations.list(None, Some(AttestationTarget.Event), Some(eid), 1000, 0).attestations
+        val existing = attestations.list(None, Some(AttestationTarget.Event), Some(eid), com.histmersion.PageSize(1000), com.histmersion.Offset(0)).attestations
         @tailrec def confirm(
             rest: List[com.histmersion.domain.catalogue.evidence.EventLinksTools.EventLinksInput.Confirm],
             ok: List[Attestation],
@@ -194,7 +194,7 @@ final class EventLinksControllers(
     req.event.map(_.trim).filter(_.nonEmpty) match
       case Some(one) =>
         eventOrFail(one).flatMap(_ =>
-          jobs.start(EventLinksControllers.CandidatesJobKind, s"candidates of $one", write = true) { (_, _) =>
+          jobs.start(EventLinksControllers.CandidatesJobKind, s"candidates of $one", write = com.histmersion.domain.catalogue.CatalogueJobs.StartWrite(true)) { (_, _) =>
             eventOrFail(one)
               .map(d => s"${compute(d).candidates.size} candidate(s) for ${d.event.id}")
               .left
@@ -205,7 +205,7 @@ final class EventLinksControllers(
         jobs.start(
           EventLinksControllers.CandidatesJobKind,
           s"candidate links of ${if req.all then "every event" else "the events not checked yet"}",
-          write = true
+          write = com.histmersion.domain.catalogue.CatalogueJobs.StartWrite(true)
         ) { (_, progress) =>
           val ids = links.eventsToCheck(req.all, req.limit.filter(_ > 0).getOrElse(Int.MaxValue))
           // `var`s: the counts of the walk
@@ -255,7 +255,7 @@ final class EventLinksControllers(
       )
     )
     val (total, rows) =
-      leadFacts.leads(selection, ec.leads.km, ec.leads.years, settings().limits.page(Some(f.limit), 50), f.offset)
+      leadFacts.leads(selection, ec.leads.km, ec.leads.years, settings().limits.page(Some(f.limit), com.histmersion.PageSize(50)), f.offset)
     EventLead.List(total.value, rows.flatMap(leadOf))
 
   // ── an event's card ─────────────────────────────────────────────────────────────────────────

@@ -31,7 +31,7 @@ final class SourceReadable(db: Transactor) extends Readable:
           .query[(String, String, List[String], Option[Int], Option[String], Option[Long], Option[Long])]
           .run()
           .toList
-      val total = (Sql.raw("SELECT count(*)") ++ notRead(read)).frag.query[Long].run().head.toInt
+      val total = (Sql.raw(com.histmersion.util.database.Sql.Text("SELECT count(*)")) ++ notRead(read)).frag.query[Long].run().head.toInt
       UnreadItems(
         rows.map((ck, title, authors, year, status, start, end) =>
           SourceReadable.row(ck, title, authors, year, status, start, end)

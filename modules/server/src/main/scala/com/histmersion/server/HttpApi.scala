@@ -190,7 +190,7 @@ final class HttpApi(
               (
                 sttp.model.StatusCode.NotFound,
                 None,
-                if fragment then body else ArticleHtml.page("Not found", body, PageKind.Source)
+                if fragment then body else ArticleHtml.page(com.histmersion.domain.Title("Not found"), body, PageKind.Source)
               )
       }
 
@@ -219,7 +219,7 @@ final class HttpApi(
       .out(header(Header.contentType(MediaType.TextHtml)))
       .serverLogic[Identity] { segments =>
         val path = segments.filter(_.nonEmpty)
-        if WebPaths.isApp(path) then Right(Static.read("web/index.html"))
+        if WebPaths.isApp(path) then Right(Static.read(com.histmersion.server.Static.ReadPath("web/index.html")))
         else Left(s"not found: /${segments.mkString("/")}")
       }
 

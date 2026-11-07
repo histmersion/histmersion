@@ -182,7 +182,7 @@ object ArticleService:
         )
         val backlinks = st.articles.values.toList
           .filter(o => o.article.slug != slug && o.links.contains(slug))
-          .map(o => Backlink("article", o.article.slug, Some(o.article.title)))
+          .map(o => Backlink(com.histmersion.api.research.Backlink.Kind("article"), o.article.slug, Some(o.article.title)))
           .sortBy(_.id)
         Article.View(row, backlinks, Nil)
       }

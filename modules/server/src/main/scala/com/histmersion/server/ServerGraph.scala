@@ -85,12 +85,12 @@ final class ServerGraph private (
       case Some(src) =>
         val report = (try src.read()
         catch case NonFatal(e) => Left(s"reading the config failed: ${e.getMessage}")) match
-          case Left(e)     => ReloadReport(published = false, gen, errors = List(e), file = file)
+          case Left(e)     => ReloadReport(published = com.histmersion.api.settings.ReloadReport.Published(false), gen, errors = List(e), file = file)
           case Right(next) =>
             val changed = ConfigReload.changed(running.loaded.merged, next.merged)
             val (applied, restart) = ConfigReload.split(changed)
             val warnings = next.file.warnings
-            val base = ReloadReport(published = false, gen, restartOnly = restart, warnings = warnings, file = file)
+            val base = ReloadReport(published = com.histmersion.api.settings.ReloadReport.Published(false), gen, restartOnly = restart, warnings = warnings, file = file)
             if applied.isEmpty then base
             else
               val eff = ConfigReload.effective(running.loaded.merged, next.merged, changed)

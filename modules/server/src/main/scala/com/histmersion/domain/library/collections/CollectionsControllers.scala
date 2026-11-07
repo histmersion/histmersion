@@ -48,27 +48,27 @@ final class CollectionsControllers(service: CollectionsService, maintenance: Wri
   ): Either[Api.Error, CollectionSearch] = service.search(name, q, limit, unlinked)
 
   def importItem(caller: Caller, name: com.histmersion.domain.library.collections.CollectionsControllers.ImportItemName, req: CollectionImportRequest): Either[Api.Error, CollectionImported] =
-    maintenance.guard("collections/import")(service.importItem(caller, name, req))
+    maintenance.guard(com.histmersion.util.data.maintenance.WriteGate.OperationName("collections/import"))(service.importItem(caller, name, req))
 
   def link(caller: Caller, name: com.histmersion.domain.library.collections.CollectionsControllers.LinkName, req: CollectionLinkRequest): Either[Api.Error, CollectionLinked] =
-    maintenance.guard("collections/link")(service.link(caller, name, req))
+    maintenance.guard(com.histmersion.util.data.maintenance.WriteGate.OperationName("collections/link"))(service.link(caller, name, req))
 
   def push(caller: Caller, name: com.histmersion.domain.library.collections.CollectionsControllers.PushName, req: CollectionPushRequest): Either[Api.Error, CollectionPushed] =
-    maintenance.guard("collections/push")(citekey(req.citekey).flatMap(_ => service.push(caller, name, req)))
+    maintenance.guard(com.histmersion.util.data.maintenance.WriteGate.OperationName("collections/push"))(citekey(req.citekey).flatMap(_ => service.push(caller, name, req)))
 
   def updateOne(caller: Caller, name: com.histmersion.domain.library.collections.CollectionsControllers.UpdateOneName, req: CollectionUpdateOne): Either[Api.Error, CollectionUpdatedOne] =
-    maintenance.guard("collections/update")(citekey(req.citekey).flatMap(service.updateOne(caller, name, _)))
+    maintenance.guard(com.histmersion.util.data.maintenance.WriteGate.OperationName("collections/update"))(citekey(req.citekey).flatMap(service.updateOne(caller, name, _)))
 
   def updateAll(
       caller: Caller,
       name: com.histmersion.domain.library.collections.CollectionsControllers.UpdateAllName,
       req: CollectionUpdateAll.Request
   ): Either[Api.Error, CollectionUpdateAll] =
-    if req.apply then maintenance.guard("collections/update")(service.updateAll(caller, name, apply = true))
-    else service.updateAll(caller, name, apply = false)
+    if req.apply then maintenance.guard(com.histmersion.util.data.maintenance.WriteGate.OperationName("collections/update"))(service.updateAll(caller, name, apply = com.histmersion.domain.library.collections.CollectionsService.UpdateAllApply(true)))
+    else service.updateAll(caller, name, apply = com.histmersion.domain.library.collections.CollectionsService.UpdateAllApply(false))
 
   def set(caller: Caller, name: com.histmersion.domain.library.collections.CollectionsControllers.SetName, req: CollectionSetRequest): Either[Api.Error, CollectionSetDone] =
-    maintenance.guard("collections/set")(service.set(caller, name, req))
+    maintenance.guard(com.histmersion.util.data.maintenance.WriteGate.OperationName("collections/set"))(service.set(caller, name, req))
 
   def audit(caller: Caller, name: com.histmersion.domain.library.collections.CollectionsControllers.AuditName): Either[Api.Error, CollectionAudit] = service.audit(name)
 
@@ -76,7 +76,7 @@ final class CollectionsControllers(service: CollectionsService, maintenance: Wri
     service.gaps(name, limit)
 
   def sync(caller: Caller, name: com.histmersion.domain.library.collections.CollectionsControllers.SyncName, req: CollectionSync.Request): Either[Api.Error, CollectionSync] =
-    if req.apply then maintenance.guard("collections/sync")(service.sync(caller, name, req))
+    if req.apply then maintenance.guard(com.histmersion.util.data.maintenance.WriteGate.OperationName("collections/sync"))(service.sync(caller, name, req))
     else service.sync(caller, name, req)
 
   def archiveSearch(caller: Caller, q: com.histmersion.domain.library.search.Search.Query, rows: Option[com.histmersion.domain.library.collections.CollectionsControllers.Limit]): Either[Api.Error, ArchiveSearchResult] =

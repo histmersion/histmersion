@@ -156,10 +156,10 @@ final class ManagerSupervisor(
       out ++= migrateSchedules(now)
       // the autopilot first (its new managers are dispatched in this tick), then the approvals its checks
       // decide (a decided plan settles its held item below)
-      out ++= guarded("autopilot", out)(agents.autopilot.tick(now))
+      out ++= guarded(com.histmersion.domain.automation.managers.ManagerLight.Id("autopilot"), out)(agents.autopilot.tick(now))
       // draining: no approval decided by code (a decision wakes a waiting run: new work)
-      if !agents.drain.draining then out ++= guarded("auto-approvals", out)(agents.autoApprovals.sweep(now))
-      out ++= guarded("digest", out)(agents.digest.tick(now))
+      if !agents.drain.draining then out ++= guarded(com.histmersion.domain.automation.managers.ManagerLight.Id("auto-approvals"), out)(agents.autoApprovals.sweep(now))
+      out ++= guarded(com.histmersion.domain.automation.managers.ManagerLight.Id("digest"), out)(agents.digest.tick(now))
       val managers = agents.managerStore.list().filter(m => State.parse(m.state).exists(_ != State.Stopped))
       managers.foreach { m =>
         guarded(m.id, out)(evaluate(m, now, out))
@@ -181,10 +181,10 @@ final class ManagerSupervisor(
       }
       // the autopilot's focus: which goals are active; the others' model-using items are held (after the
       // refill and the crons, so what they just queued waits too)
-      out ++= guarded("focus", out)(agents.focus.tick(now))
+      out ++= guarded(com.histmersion.domain.automation.managers.ManagerLight.Id("focus"), out)(agents.focus.tick(now))
       dispatchAll(live, now, out)
-      out ++= guarded("plan-refresh", out)(agents.scheduler.refreshPlans(now))
-      out ++= guarded("drain", out)(agents.drain.tick(now))
+      out ++= guarded(com.histmersion.domain.automation.managers.ManagerLight.Id("plan-refresh"), out)(agents.scheduler.refreshPlans(now))
+      out ++= guarded(com.histmersion.domain.automation.managers.ManagerLight.Id("drain"), out)(agents.drain.tick(now))
       if now.toEpochMilli - lastPrune.get() > 3600000L then
         lastPrune.set(now.toEpochMilli)
         val _ = Transactor(ds).transact(ManagerRepo.pruneEvents(mcfg.keepEventsDays))
@@ -220,7 +220,7 @@ final class ManagerSupervisor(
     Transactor(ds).read(ManagerRepo.toEvaluate(m.id)).foreach {
       case (item, None) =>
         // its run row is gone (deleted by hand): the item goes back to the queue
-        if Transactor(ds).transact(ManagerRepo.requeue(item.id, "its run disappeared; queued again")) then
+        if Transactor(ds).transact(ManagerRepo.requeue(item.id, com.histmersion.domain.automation.managers.ManagerRepo.ItemRow.Outcome("its run disappeared; queued again"))) then
           agents.managerStore.event(
             m.id,
             Some(item.id),
@@ -378,7 +378,7 @@ final class ManagerSupervisor(
         slug,
         ItemOrigin.Chain,
         ManagerSupervisor.ChainPriority,
-        reopen = true
+        reopen = com.histmersion.domain.automation.managers.ManagerService.UpsertReopen(true)
       )
     agents.managerStore.event(
       id,
@@ -401,7 +401,7 @@ final class ManagerSupervisor(
         val added = plan.articles.count { p =>
           val spec = ArticleSpec(p.title, p.kind, p.filter, p.why)
           agents.managerStore
-            .upsert(id, ArticleCompile, p.slug, ItemOrigin.Chain, 0, reopen = false, ItemState(spec = Some(spec)))
+            .upsert(id, ArticleCompile, p.slug, ItemOrigin.Chain, com.histmersion.domain.automation.managers.ManagerContext.Priority(0), reopen = com.histmersion.domain.automation.managers.ManagerService.UpsertReopen(false), ItemState(spec = Some(spec)))
             ._2
         }
         if added > 0 then
@@ -410,13 +410,13 @@ final class ManagerSupervisor(
             None,
             None,
             Feed.Evaluated,
-            s"plan #${a.id} approved: ${Plural.count(added, "article")} to compile (${plan.articles.map(_.slug).mkString(", ")})"
+            s"plan #${a.id} approved: ${Plural.count(added, com.histmersion.api.Plural.CountSingular("article"))} to compile (${plan.articles.map(_.slug).mkString(", ")})"
               .take(2000)
           )
           out += s"$id: $added to compile"
           nudge()
         added
-      case _ => 0
+      case _ => com.histmersion.domain.automation.managers.ManagerSupervisor.ApplyPlanResult(0)
 
   // ── 2. holds ───────────────────────────────────────────────────────────────────────────────────
 
@@ -504,7 +504,7 @@ final class ManagerSupervisor(
             existing match
               case None    => ManagerRepo.createIn(id, Kind.Watch, Some(g), State.Paused, plan.config, plan.cron, next)
               case Some(_) => ManagerRepo.setConfigIn(id, plan.config, plan.cron, next)
-            val text = s"${Plural.count(rows.size, "goal schedule")} moved into this watcher" +
+            val text = s"${Plural.count(rows.size, com.histmersion.api.Plural.CountSingular("goal schedule"))} moved into this watcher" +
               (if existing.isEmpty then " (created paused: resume it for them to fire)" else "") +
               (if plan.notes.isEmpty then "" else s": ${plan.notes.mkString("; ")}")
             ManagerRepo.eventIn(id, None, None, Feed.Migrated, text)
@@ -512,7 +512,7 @@ final class ManagerSupervisor(
           }
         }
         moved.toList.map { text =>
-          val _ = workLists.add("log", QueueAdd(s"goal $g: $text (watcher $id)".take(1000), goal = Some(g)))
+          val _ = workLists.add(com.histmersion.domain.automation.worklists.WorkListControllers.ListName("log"), QueueAdd(s"goal $g: $text (watcher $id)".take(1000), goal = Some(g)))
           scribe.info(s"goal $g: $text")
           s"$id: migrated"
         }
@@ -570,14 +570,14 @@ final class ManagerSupervisor(
   ): Unit =
     val byId = ms.map(m => m.id -> m).toMap
     val decision = agents.scheduler.pass(ms, now, agents.drain.block) { (m, item) =>
-      if blocks(item.kind, agents.runs.unsettledOn(item.target)) then Left("another run is writing its target")
+      if blocks(item.kind, agents.runs.unsettledOn(item.target)) then Left(com.histmersion.domain.automation.scheduler.SchedulerService.("another run is writing its target"))
       else
         guardedOpt(m.id, out)(dispatch(m, settings(m), item, now, out)) match
           case Some(_) => Right(())
           case None    =>
             if agents.managerStore.item(item.id).exists(_.status == ItemStatus.Pending.wire) then
               Left("it could not start now (its manager's events say why)")
-            else Left("settled without a run")
+            else Left(com.histmersion.domain.automation.scheduler.SchedulerService.("settled without a run"))
     }
     ms.foreach { m =>
       val waits =
@@ -596,7 +596,7 @@ final class ManagerSupervisor(
       val base = ManagerPolicy.statusNote(
         com.histmersion.domain.automation.Manager.State.Active,
         starved,
-        if full then 0 else 1,
+        if full then com.histmersion.domain.ManagerPolicy.Capacity(0) else com.histmersion.domain.ManagerPolicy.Capacity(1),
         pending,
         waits.size,
         agents.managerStore.running(m.id),
@@ -624,9 +624,9 @@ final class ManagerSupervisor(
                 ManagerPolicy.statusNote(
                   st.transformInto[com.histmersion.domain.automation.Manager.State],
                   None,
-                  0,
+                  com.histmersion.domain.ManagerPolicy.Capacity(0),
                   m.counts.pending,
-                  0,
+                  com.histmersion.domain.ManagerPolicy.DueCount(0),
                   m.inFlight,
                   None
                 )
@@ -769,7 +769,7 @@ final class ManagerSupervisor(
     val kind: Kind = Kind.Review
     override def items: List[String] = Nil
     def fire(c: ManagerContext, m: ManagerInfo, now: Instant): List[com.histmersion.domain.automation.managers.ManagerSupervisor.FireResult] = Nil
-    def facts(c: ManagerContext, item: ManagerItem, run: com.histmersion.domain.automation.Run.Id): StepFacts = StepFacts.Finished("enriched")
+    def facts(c: ManagerContext, item: ManagerItem, run: com.histmersion.domain.automation.Run.Id): StepFacts = StepFacts.Finished(com.histmersion.domain.ManagerPolicy.ItemOutcome("enriched"))
     def dispatch(
         c: ManagerContext,
         m: ManagerInfo,
@@ -840,7 +840,7 @@ final class ManagerSupervisor(
   def progress(run: com.histmersion.domain.automation.Run.Id): com.histmersion.domain.automation.managers.ManagerSupervisor.ProgressResult = agents.runs.get(run).flatMap(_.progress).filter(_.nonEmpty).getOrElse("")
   def stepOutput(run: com.histmersion.domain.automation.Run.Id, step: com.histmersion.domain.automation.managers.ManagerSupervisor.StepOutputStep): Option[com.histmersion.domain.automation.managers.ManagerSupervisor.StepOutputResult] =
     agents.runs
-      .steps(run, 100000)
+      .steps(run, com.histmersion.domain.automation.agents.AgentRepo.OutputChars(100000))
       .filter(s => s.name == step && s.status == StepStatus.Done.wire)
       .lastOption
       .flatMap(_.output)
@@ -1029,7 +1029,7 @@ object ManagerSupervisor:
 
   /** What a manager of kind `k` does, for its created-paused event. */
   def purpose(k: Kind): com.histmersion.domain.automation.managers.ManagerSupervisor.PurposeResult = k match
-    case Kind.Review => "reviewing"
-    case Kind.Enrich => "enriching"
-    case Kind.Seed   => "planning and compiling articles"
-    case Kind.Watch  => "watching"
+    case Kind.Review => com.histmersion.domain.automation.managers.ManagerSupervisor.PurposeResult("reviewing")
+    case Kind.Enrich => com.histmersion.domain.automation.managers.ManagerSupervisor.PurposeResult("enriching")
+    case Kind.Seed   => com.histmersion.domain.automation.managers.ManagerSupervisor.PurposeResult("planning and compiling articles")
+    case Kind.Watch  => com.histmersion.domain.automation.managers.ManagerSupervisor.PurposeResult("watching")

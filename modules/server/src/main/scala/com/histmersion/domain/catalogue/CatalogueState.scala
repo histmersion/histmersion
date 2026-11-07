@@ -20,7 +20,7 @@ final case class CatalogueState(
     events: Vector[HeldEvent] = Vector.empty,
     eventAliases: Map[CatalogueState.EventAliasesKey, CatalogueState.EventAliasesValue] = Map.empty,
     corrections: Vector[Correction] = Vector.empty,
-    lastCorrectionId: CatalogueState.LastCorrectionId = 0L,
+    lastCorrectionId: CatalogueState.LastCorrectionId = com.histmersion.domain.catalogue.CatalogueState.LastCorrectionId(0L),
     catalogueRecords: Vector[(CatalogueState.CatalogueRecordsPart1, CatalogRecord)] = Vector.empty,
     importParts: Map[CatalogueState.ImportPartsKey, Map[CatalogueState.ImportPartsValueKey, CatalogueState.ImportPartsValueValue]] = Map.empty,
     candidates: Vector[EventLinkCandidate] = Vector.empty,
@@ -62,4 +62,4 @@ object CatalogueState:
   type PlaceRemovals = PlaceRemovals.T
   object PlaceRemovals extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
-  val empty: CatalogueState = CatalogueState(Vector.empty, Map.empty, Vector.empty, 0L)
+  val empty: CatalogueState = CatalogueState(Vector.empty, Map.empty, Vector.empty, com.histmersion.domain.catalogue.CatalogueState.LastAttestationId(0L))

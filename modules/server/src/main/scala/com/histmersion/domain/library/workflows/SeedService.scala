@@ -78,17 +78,17 @@ final class SeedService(
         seed(g)
       }
       if lines.nonEmpty then
-        val _ = site.workLists.add("log", QueueAdd(s"seed before the plan: ${lines.mkString("; ")}".take(1000)))
+        val _ = site.workLists.add(com.histmersion.domain.automation.worklists.WorkListControllers.ListName("log"), QueueAdd(s"seed before the plan: ${lines.mkString("; ")}".take(1000)))
       lines
 
   /** Sweep one goal's candidates and queue its legal open-access ones for ingest. */
   def seed(goal: com.histmersion.domain.automation.Goal.Slug): Option[com.histmersion.domain.library.workflows.SeedService.Seeded] =
-    acquisition().sweepCandidates(goal, dryRun = false) match
+    acquisition().sweepCandidates(goal, dryRun = com.histmersion.domain.library.workflows.AgentUpstream.SweepCandidatesDryRun(false)) match
       case Left(why) =>
         scribe.info(s"seed before the plan: goal $goal not swept: $why")
         None
       case Right(sw) =>
-        val fresh = acquisition().candidates(goal, Candidates.State.New.wire, 200).getOrElse(Nil)
+        val fresh = acquisition().candidates(goal, Candidates.State.New.wire, com.histmersion.domain.library.workflows.AgentUpstream.Limit(200)).getOrElse(Nil)
         val oa = fresh.filter(_.isOa).take(math.max(0, cfg.scheduler.seedIngestPerGoal))
         val placed = oa.map { c =>
           c -> backlog.add(
@@ -108,7 +108,7 @@ final class SeedService(
         val queued = placed.count(_._2 == IngestBacklog.Placement.New)
         val _ = acquisition().markCandidates(oa.map(_.id), Candidates.State.Queued.wire)
         val line = s"$goal: ${sw.found} found, ${sw.added} new candidate(s), " +
-          s"${Plural.count(queued, "legal open-access work")} queued for ingest (the plan is not needed for this)"
+          s"${Plural.count(queued, com.histmersion.api.Plural.CountSingular("legal open-access work"))} queued for ingest (the plan is not needed for this)"
         agents.managerStore.event(watchId(goal), None, None, Feed.Swept, s"seed before the plan — $line".take(2000))
         Some(line)
 

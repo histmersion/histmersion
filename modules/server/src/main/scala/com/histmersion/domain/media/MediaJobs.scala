@@ -51,7 +51,7 @@ final class MediaJobs(ds: DataSource, maintenance: WriteGate, pins: WorkCarrier,
         kind,
         Some(com.histmersion.api.media.ImportJobKinds.Media(Some(describe))),
         jobSlot,
-        "a media run",
+        com.histmersion.util.jobs.BackgroundJob.Work("a media run"),
         pins = pins,
         stops = Some(stops)
       )((_, progress) => BackgroundJob.Outcome.of(body(progress)))

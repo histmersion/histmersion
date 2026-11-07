@@ -176,10 +176,10 @@ object ClaudeCode:
       val _ = env.remove("ANTHROPIC_API_KEY")
       val _ = env.remove("ANTHROPIC_AUTH_TOKEN")
     if cfg.configDir.trim.nonEmpty then
-      val _ = env.put("CLAUDE_CONFIG_DIR", AgentTrees.expand(cfg.configDir.trim))
-    val _ = env.put("CLAUDE_CODE_MAX_OUTPUT_TOKENS", math.max(1, maxTokens).toString)
-    val _ = env.put("DISABLE_AUTOUPDATER", "1")
-    val _ = env.put("ENABLE_CLAUDEAI_MCP_SERVERS", "false")
+      val _ = env.put(com.histmersion.server.GazetteerPaths.EnvName("CLAUDE_CONFIG_DIR"), AgentTrees.expand(cfg.configDir.trim))
+    val _ = env.put(com.histmersion.server.GazetteerPaths.EnvName("CLAUDE_CODE_MAX_OUTPUT_TOKENS"), math.max(1, maxTokens).toString)
+    val _ = env.put(com.histmersion.server.GazetteerPaths.EnvName("DISABLE_AUTOUPDATER"), com.histmersion.server.GazetteerPaths.EnvText("1"))
+    val _ = env.put(com.histmersion.server.GazetteerPaths.EnvName("ENABLE_CLAUDEAI_MCP_SERVERS"), com.histmersion.server.GazetteerPaths.EnvText("false"))
     val _ = env.put(AgentGenerator.QuotaUrlEnv, quotaUrl)
     token.foreach(t => env.put(AgentGenerator.TokenEnv, t))
 
@@ -222,7 +222,7 @@ object ClaudeCode:
     * dir), with the output capped at `maxTokens` and no run token or quota URL.
     */
   def probeEnvironment(cfg: ClaudeCodeConfig, maxTokens: com.histmersion.server.agents.ClaudeCode.ProbeEnvironmentMaxTokens, env: java.util.Map[com.histmersion.server.GazetteerPaths.EnvName, com.histmersion.server.GazetteerPaths.EnvText])(using com.histmersion.util.system.JvmHome): Unit =
-    environment(cfg, maxTokens, None, "", env)
+    environment(cfg, maxTokens, None, com.histmersion.server.HttpDownload.Url(""), env)
     val _ = env.remove(AgentGenerator.QuotaUrlEnv)
     val _ = env.remove(AgentGenerator.TokenEnv)
 

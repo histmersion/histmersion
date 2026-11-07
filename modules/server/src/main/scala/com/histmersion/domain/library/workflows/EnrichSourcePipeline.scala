@@ -47,7 +47,7 @@ final class EnrichSourcePipeline(
   def run(ctx: RunCtx): Either[Halt, com.histmersion.domain.library.workflows.EnrichSourcePipeline.RunResultPart2] =
     val ck = ctx.run.target
     for
-      loaded <- ctx.code[Loaded]("load")(load(ck))
+      loaded <- ctx.code[Loaded](com.histmersion.domain.automation.agents.AgentRepo.StepRecord.Name("load"))(load(ck))
       _ <- ctx.code[MetaChecked]("metadata")(Right(metadata(ctx, loaded)))
       classified <- ctx.llm[Classification, Classified](
         "classify",
@@ -73,7 +73,7 @@ final class EnrichSourcePipeline(
   // ── steps ──────────────────────────────────────────────────────────────────────────────────────
 
   private def load(ck: com.histmersion.domain.library.Citekey): Either[com.histmersion.domain.library.workflows.EnrichSourcePipeline.Problem, Loaded] =
-    site.sources.get(ck, body = true).left.map(_.message).flatMap { sw =>
+    site.sources.get(ck, body = com.histmersion.domain.library.sources.SourcesControllers.GetBody(true)).left.map(_.message).flatMap { sw =>
       val s = sw.source
       val body = s.ocrMarkdown.map(_.trim).getOrElse("")
       if body.isEmpty then Left(s"$ck has no text — ingest or OCR it first")
@@ -187,7 +187,7 @@ final class EnrichSourcePipeline(
     s"Write the notes for [[${l.citekey}]].\n\n${meta(l)}\n\nsummary: ${c.summary}\n\nverified findings:\n" +
       fs.map(f => s"- ${f.claim} (quote: \"${f.quote}\")").mkString("\n")
 
-  private def isCitekey(s: com.histmersion.domain.library.workflows.EnrichSourcePipeline.IsCitekeyS): Boolean = site.sources.get(s, body = false).isRight
+  private def isCitekey(s: com.histmersion.domain.library.workflows.EnrichSourcePipeline.IsCitekeyS): Boolean = site.sources.get(s, body = com.histmersion.domain.library.sources.SourcesControllers.GetBody(false)).isRight
 
   /** The single write. On a 412 (someone wrote the source since `load`) the source is re-read and the patch rebuilt
     * from the CHECKPOINTED answers — no LLM call — and sent once more.
@@ -228,8 +228,8 @@ final class EnrichSourcePipeline(
 
   /** Why an upstream step cannot run, if it cannot: switched off, or no DOI to ask about. */
   private def upstreamBlocked(l: Loaded): Option[com.histmersion.domain.library.workflows.EnrichSourcePipeline.UpstreamBlockedResult] =
-    if !lib.enrich.upstream then Some("upstream checks are off (agents.enrich.upstream)")
-    else if l.doi.forall(_.trim.isEmpty) then Some("the source has no DOI")
+    if !lib.enrich.upstream then Some(com.histmersion.domain.library.workflows.EnrichSourcePipeline.("upstream checks are off (agents.enrich.upstream)"))
+    else if l.doi.forall(_.trim.isEmpty) then Some(com.histmersion.domain.library.workflows.EnrichSourcePipeline.("the source has no DOI"))
     else None
 
   /** The record against OpenAlex/Crossref. Differences are WARNINGS for a person (a wrong year can mean a wrong
@@ -237,28 +237,28 @@ final class EnrichSourcePipeline(
     */
   private def metadata(ctx: RunCtx, l: Loaded): MetaChecked =
     upstreamBlocked(l) match
-      case Some(why) => MetaChecked(checked = false, Nil, why)
+      case Some(why) => MetaChecked(checked = com.histmersion.domain.EnrichSource.MetaChecked.Checked(false), Nil, why)
       case None      =>
         upstream().meta(l.doi.get) match
           case Left(m) =>
             ctx.warn(s"metadata: not checked — $m")
-            MetaChecked(checked = false, Nil, m)
+            MetaChecked(checked = com.histmersion.domain.EnrichSource.MetaChecked.Checked(false), Nil, m)
           case Right(w) =>
             val diffs = compareMetadata(l.citekey, l.title, l.authors, l.year, w)
             diffs.foreach(d => ctx.warn(s"metadata: $d"))
-            MetaChecked(checked = true, diffs)
+            MetaChecked(checked = com.histmersion.domain.EnrichSource.MetaChecked.Checked(true), diffs)
 
   /** `refs --apply`: the deposited reference list becomes `references` edges (a network failure is a warning, never a
     * failed run — the enrichment is already written).
     */
   private def refs(ctx: RunCtx, l: Loaded): Upstreamed =
     upstreamBlocked(l) match
-      case Some(why) => Upstreamed(ran = false, why)
+      case Some(why) => Upstreamed(ran = com.histmersion.domain.EnrichSource.Upstreamed.Ran(false), why)
       case None      =>
         upstream().refs(l.citekey, apply = !ctx.dryRun) match
           case Left(m) =>
             ctx.warn(s"refs: $m")
-            Upstreamed(ran = false, m)
+            Upstreamed(ran = com.histmersion.domain.EnrichSource.Upstreamed.Ran(false), m)
           case Right(r) =>
             if ctx.dryRun then
               ctx.write(
@@ -266,24 +266,24 @@ final class EnrichSourcePipeline(
                 r.asJson
               )(())(())
             Upstreamed(
-              ran = true,
+              ran = com.histmersion.domain.EnrichSource.Upstreamed.Ran(true),
               s"${r.count} reference(s), ${r.resolved} in the corpus, ${r.edgesAdded} edge(s) added"
             )
 
   /** `assess --apply`: a retraction overwrites the status (the assess rule) and flags the run. */
   private def assess(ctx: RunCtx, l: Loaded): Upstreamed =
     upstreamBlocked(l) match
-      case Some(why) => Upstreamed(ran = false, why)
+      case Some(why) => Upstreamed(ran = com.histmersion.domain.EnrichSource.Upstreamed.Ran(false), why)
       case None      =>
         upstream().assess(l.citekey, apply = !ctx.dryRun) match
           case Left(m) =>
             ctx.warn(s"assess: $m")
-            Upstreamed(ran = false, m)
+            Upstreamed(ran = com.histmersion.domain.EnrichSource.Upstreamed.Ran(false), m)
           case Right(a) =>
             if a.isRetracted then ctx.warn(s"assess: RETRACTED — ${a.recommendation}")
             if ctx.dryRun then ctx.write(s"assess [[${l.citekey}]] applied: verdict ${a.verdict}", a.asJson)(())(())
             Upstreamed(
-              ran = true,
+              ran = com.histmersion.domain.EnrichSource.Upstreamed.Ran(true),
               s"verdict ${a.verdict}${a.applied.fold("")(st => s", status set to $st")}",
               a.isRetracted
             )
@@ -292,8 +292,8 @@ final class EnrichSourcePipeline(
     * `assess` outranks any proposal.
     */
   private def status(ctx: RunCtx, ck: com.histmersion.domain.library.Citekey, c: Classified, p: Patched, a: Upstreamed): StatusRouted =
-    if p.fieldsSet.contains("status") then StatusRouted(Some(c.status.wire), None, "filled by the patch")
-    else if c.status == Source.Status.Unassessed then StatusRouted(None, None, "no status proposed")
+    if p.fieldsSet.contains("status") then StatusRouted(Some(c.status.wire), None, com.histmersion.domain.EnrichSource.StatusRouted.Note("filled by the patch"))
+    else if c.status == Source.Status.Unassessed then StatusRouted(None, None, com.histmersion.domain.EnrichSource.StatusRouted.Note("no status proposed"))
     else if a.retracted then StatusRouted(None, None, s"${c.status.wire} not proposed: the source is retracted")
     else
       val proposal = AgentProposals.Proposal(
@@ -322,7 +322,7 @@ final class EnrichSourcePipeline(
     // a dry run patched nothing: the lint would only describe the source as it was before
     val lint = if ctx.dryRun then Nil
     else
-      site.sources.get(ck, body = false).toOption.toList.flatMap { s =>
+      site.sources.get(ck, body = com.histmersion.domain.library.sources.SourcesControllers.GetBody(false)).toOption.toList.flatMap { s =>
         closeLint(s.findings.size, s.source.periodStart.isDefined, s.source.status)
       }
     lint.foreach(l => ctx.warn(s"lint: $l"))

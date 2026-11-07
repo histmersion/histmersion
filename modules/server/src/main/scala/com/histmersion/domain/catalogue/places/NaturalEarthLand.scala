@@ -56,10 +56,10 @@ object NaturalEarthLand:
       )
       _ <- if geoms.isEmpty then Left("no land polygons in the download") else Right(())
     yield
-      if dryRun then Place.ImportResult(0, 0, 0, List(s"dry run: ${geoms.size} land polygons"))
+      if dryRun then Place.ImportResult(com.histmersion.api.catalogue.Place.ImportResult.Places(0), com.histmersion.api.catalogue.Place.ImportResult.Names(0), com.histmersion.api.catalogue.Place.ImportResult.Relations(0), List(s"dry run: ${geoms.size} land polygons"))
       else
         scribe.info(s"[import] land: storing ${geoms.size} polygons…")
         val pieces = geometry.replaceLand(geoms)
         scribe.info(s"[import] land: $pieces pieces; clipping polities…")
         val clipped = geometry.reclip()
-        Place.ImportResult(clipped, 0, 0, List(s"$pieces land pieces from ${geoms.size} polygons"))
+        Place.ImportResult(clipped, com.histmersion.api.catalogue.Place.ImportResult.Names(0), com.histmersion.api.catalogue.Place.ImportResult.Relations(0), List(s"$pieces land pieces from ${geoms.size} polygons"))

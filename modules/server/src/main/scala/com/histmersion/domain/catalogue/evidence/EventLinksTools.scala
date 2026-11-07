@@ -18,7 +18,7 @@ object EventLinksTools:
 
   final case class EventLinksInput(
       id: Option[EventLinksInput.Id] = None,
-      recompute: EventLinksInput.Recompute = false,
+      recompute: EventLinksInput.Recompute = com.histmersion.domain.catalogue.evidence.EventLinksTools.EventLinksInput.(false),
       confirm: List[EventLinksInput.Confirm] = Nil,
       reject: List[EventLinksInput.Reject] = Nil,
       from: Option[EventLinksInput.From] = None,

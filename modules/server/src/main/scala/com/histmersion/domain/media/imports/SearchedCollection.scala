@@ -97,4 +97,4 @@ object SearchedCollection:
     2 * r * math.asin(math.sqrt(a.min(1.0)))
 
   /** Pure: a record's licence key for the counts — its SPDX id, or why it has none. */
-  def licenceKey(rec: MediaRecord): com.histmersion.domain.media.imports.SearchedCollection.LicenceKey = rec.rights.fold(_ => "not open access", _.licence.id.value)
+  def licenceKey(rec: MediaRecord): com.histmersion.domain.media.imports.SearchedCollection.LicenceKey = rec.rights.fold(_ => com.histmersion.domain.media.imports.SearchedCollection.LicenceKey("not open access"), _.licence.id.value)

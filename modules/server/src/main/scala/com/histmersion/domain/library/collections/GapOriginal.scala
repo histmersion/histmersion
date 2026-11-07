@@ -6,16 +6,16 @@ import com.histmersion.api.library.CollectionGapRow
 /** Where the file a push would add comes from, as the gaps and the sync report it. */
 enum GapOriginal(val label: GapOriginal.Label):
   /** A host-side copy (`cli.calibre.originals-dir`): the CLI's own classification, never the server's. */
-  case Local extends GapOriginal("local")
+  case Local extends GapOriginal(com.histmersion.domain.library.collections.GapOriginal.Label("local"))
 
   /** The original the server stores. */
-  case Stored extends GapOriginal("stored")
+  case Stored extends GapOriginal(com.histmersion.domain.library.collections.GapOriginal.Label("stored"))
 
   /** The server did not say: counted, and the push tries. */
-  case Unknown extends GapOriginal("unknown")
+  case Unknown extends GapOriginal(com.histmersion.domain.library.collections.GapOriginal.Label("unknown"))
 
   /** No file anywhere — a metadata-only record: nothing to push, so not a gap. */
-  case Missing extends GapOriginal("none")
+  case Missing extends GapOriginal(com.histmersion.domain.library.collections.GapOriginal.Label("none"))
 
 object GapOriginal:
   /** A gap counts when there is an original to push and the source is not already in Calibre (provenance `calibre`, or

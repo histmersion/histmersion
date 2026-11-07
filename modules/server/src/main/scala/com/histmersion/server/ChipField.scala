@@ -8,10 +8,10 @@ import com.histmersion.api.catalogue.Place
   * works in the modal, on a standalone page and pasted anywhere.
   */
 enum ChipField(val hashKey: ChipField.HashKey):
-  case Topic extends ChipField("topic")
-  case Place extends ChipField("place")
-  case Tag extends ChipField("tag")
-  case Author extends ChipField("author")
+  case Topic extends ChipField(com.histmersion.server.ChipField.HashKey("topic"))
+  case Place extends ChipField(com.histmersion.server.ChipField.HashKey("place"))
+  case Tag extends ChipField(com.histmersion.server.ChipField.HashKey("tag"))
+  case Author extends ChipField(com.histmersion.server.ChipField.HashKey("author"))
 
 object ChipField:
   type HashKey = HashKey.T

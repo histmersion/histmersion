@@ -106,8 +106,8 @@ object UndatedSites:
             n.max(site.lat),
             if one.isEmpty || site.id < one then site.id else one
           )
-        case Nil => GridCell(gx, gy, in.size, 0, sx, sy, 0, 0, None, None, w, s, e, n, one)
-      loop(in, 0, 0, Double.MaxValue, Double.MaxValue, -Double.MaxValue, -Double.MaxValue, "")
+        case Nil => GridCell(gx, gy, in.size, com.histmersion.domain.catalogue.maptiles.GridCell.Dup(0), sx, sy, com.histmersion.domain.catalogue.maptiles.GridCell.DupX(0), com.histmersion.domain.catalogue.maptiles.GridCell.DupY(0), None, None, w, s, e, n, one)
+      loop(in, com.histmersion.domain.catalogue.maptiles.GridCell.SumX(0), com.histmersion.domain.catalogue.maptiles.GridCell.SumY(0), Double.MaxValue, Double.MaxValue, -Double.MaxValue, -Double.MaxValue, com.histmersion.domain.catalogue.maptiles.GridCell.One(""))
 
     def items(c: TileCoord, siteType: Option[com.histmersion.domain.catalogue.maptiles.UndatedSite.SiteType], except: List[com.histmersion.domain.catalogue.maptiles.UndatedSite.Id]): List[TileCell] =
       inTile(c, siteType).filterNot((s, _, _) => except.contains(s.id)).map { (s, px, py) =>
@@ -115,14 +115,14 @@ object UndatedSites:
           s.id,
           math.floor(px).toInt,
           math.floor(py).toInt,
-          1,
+          com.histmersion.domain.catalogue.maptiles.TileCell.N(1),
           None,
           None,
           s.lon,
           s.lat,
           s.lon,
           s.lat,
-          undated = 1
+          undated = com.histmersion.domain.catalogue.maptiles.TileCell.Undated(1)
         )
       }
 

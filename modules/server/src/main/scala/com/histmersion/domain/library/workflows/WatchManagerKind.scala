@@ -53,7 +53,7 @@ final class WatchManagerKind(site: LibrarySite, val work: AcquisitionWork, lib: 
           .exists(i => !ItemStatus.parse(i.status).exists(_.isFinal))
         if open then s"${sw.itemKind} still open"
         else
-          val _ = c.upsert(m.id, sw.itemKind, g, ItemOrigin.Cron, 0, reopen = true)
+          val _ = c.upsert(m.id, sw.itemKind, g, ItemOrigin.Cron, com.histmersion.domain.automation.managers.ManagerContext.Priority(0), reopen = com.histmersion.domain.automation.managers.ManagerContext.UpsertReopen(true))
           s"${sw.itemKind} due"
       }
     }
@@ -72,7 +72,7 @@ final class WatchManagerKind(site: LibrarySite, val work: AcquisitionWork, lib: 
     item.kind match
       case AcquisitionSweep | CurrencyCheck =>
         StepFacts.Finished(closeLine(c, run).getOrElse(s"${item.kind} done — ${c.progress(run)}").take(1000))
-      case _ => StepFacts.Finished("enriched")
+      case _ => StepFacts.Finished(com.histmersion.domain.ManagerPolicy.ItemOutcome("enriched"))
 
   /** What the sweep found, as the watcher's own event (the run's worklog line, and the works it picked). */
   override def afterDone(
@@ -105,7 +105,7 @@ final class WatchManagerKind(site: LibrarySite, val work: AcquisitionWork, lib: 
 
   /** The worklog line a sweep's `close` step wrote (what it found, queued, ingested). */
   private def closeLine(c: ManagerContext, run: com.histmersion.domain.automation.Run.Id): Option[com.histmersion.domain.library.workflows.WatchManagerKind.CloseLine] =
-    c.stepOutput(run, "close").flatMap(o => io.circe.parser.decode[String](o).toOption)
+    c.stepOutput(run, com.histmersion.domain.automation.managers.ManagerContext.StepOutputStep("close")).flatMap(o => io.circe.parser.decode[String](o).toOption)
 
   def target(m: ManagerInfo, itemKind: com.histmersion.domain.library.workflows.WatchManagerKind.ItemKind, raw: com.histmersion.domain.library.workflows.WatchManagerKind.Target): Either[Api.Error, com.histmersion.domain.library.workflows.WatchManagerKind.TargetText] =
     itemKind match
@@ -153,19 +153,19 @@ final class WatchManagerKind(site: LibrarySite, val work: AcquisitionWork, lib: 
     item.kind match
       case AcquisitionSweep | CurrencyCheck =>
         work.agents.host.goal(item.target) match
-          case Left(_)  => c.settleNow(m, item, ItemStatus.Cancelled, "the goal no longer exists")
+          case Left(_)  => c.settleNow(m, item, ItemStatus.Cancelled, com.histmersion.domain.automation.managers.ManagerContext.SettleNowWhy("the goal no longer exists"))
           case Right(g) =>
             // the deterministic search first (#3761, no model): no new candidate, no agent run — the schedule
             // stops spending model quota on sweeps that change nothing
             val swept =
-              Option.when(item.kind == AcquisitionSweep)(work.acquisition.sweepCandidates(g.slug, dryRun = false))
+              Option.when(item.kind == AcquisitionSweep)(work.acquisition.sweepCandidates(g.slug, dryRun = com.histmersion.domain.library.workflows.AgentUpstream.SweepCandidatesDryRun(false)))
             swept.filter(WatchManagerKind.nothingNew).flatMap(_.toOption) match
               case Some(s) =>
                 c.settleNow(
                   m,
                   item,
                   ItemStatus.Done,
-                  s"no new candidates from the goal's watches (${Plural.count(s.watches.size, "watch", "watches")} " +
+                  s"no new candidates from the goal's watches (${Plural.count(s.watches.size, com.histmersion.api.Plural.CountSingular("watch"), com.histmersion.api.Plural.CountPlural("watches"))} " +
                     s"read, ${s.found} found, all known) — no agent run"
                 )
               case None =>
@@ -184,7 +184,7 @@ final class WatchManagerKind(site: LibrarySite, val work: AcquisitionWork, lib: 
                 val allowed = if autoOn then IngestBacklog.sweepAllowance(own, shared, mine, all) else 0
                 val auto = if !sweep then ""
                 else if autoOn then
-                  s"; auto-ingest of legal open access: ${Plural.count(allowed, "work")} left today" +
+                  s"; auto-ingest of legal open access: ${Plural.count(allowed, com.histmersion.api.Plural.CountSingular("work"))} left today" +
                     shared.fold("")(n => s" (all watchers: $n left)") +
                     (if all > 0 then
                        s"; ${Plural.count(all, "work")} wait in the ingest backlog first" +

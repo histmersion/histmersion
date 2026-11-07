@@ -119,19 +119,19 @@ object OpsTools:
             h.workLists.add(list, QueueAdd(text, in.topic, reason = in.reason)) match
               case Right(i) => s"added **#${i.id}** to ${i.list}${i.topic.map(t => s" · $t").getOrElse("")}: ${i.text}"
               case Left(e)  => McpOut.refusal(e)
-          case _ => "_add needs both `list` and `text`_"
+          case _ => com.histmersion.server.FullText.Shown.Markdown("_add needs both `list` and `text`_")
       case "done" =>
         in.id match
           case Some(id) =>
             h.workLists.patch(id, QueuePatch(status = Some(Queue.Done))) match
               case Right(i) => s"done **#${i.id}**: ${i.text}"
               case Left(e)  => McpOut.refusal(e)
-          case None => "_done needs an `id` (run action=list to see them)_"
+          case None => com.histmersion.server.FullText.Shown.Markdown("_done needs an `id` (run action=list to see them)_")
       case "recheck" =>
         com.histmersion.server.agents.EngineContributions
           .work(h.agents)
           .acquireRecheck
-          .run(Acquire.Checks.RecheckRequest(in.dryRun, in.limit, in.id, Some("mcp"), in.all))
+          .run(Acquire.Checks.RecheckRequest(in.dryRun, in.limit, in.id, Some(com.histmersion.api.library.Acquire.Checks.RecheckRequest.By("mcp")), in.all))
           .fold(McpOut.refusal, AcquireChecksMarkdown.result)
       case other =>
         s"_unknown action '$other' — use list, add, done or recheck_"
@@ -139,7 +139,7 @@ object OpsTools:
   // Inputs last, per the file convention: circe Codec + tapir Schema both derived by Kindlings.
   final case class LintInput(
       rules: List[LintInput.Rules] = Nil,
-      fix: LintInput.Fix = false,
+      fix: LintInput.Fix = com.histmersion.server.OpsTools.LintInput.Fix(false),
       article: Option[LintInput.Article] = None,
       source: Option[LintInput.Source] = None,
       text: Option[LintInput.Text] = None,
@@ -178,8 +178,8 @@ object OpsTools:
       topic: Option[QueueInput.Topic] = None,
       reason: Option[QueueInput.Reason] = None,
       id: Option[QueueInput.Id] = None,
-      all: QueueInput.All = false,
-      dryRun: QueueInput.DryRun = false,
+      all: QueueInput.All = com.histmersion.server.OpsTools.QueueInput.All(false),
+      dryRun: QueueInput.DryRun = com.histmersion.server.OpsTools.QueueInput.DryRun(false),
       limit: Option[QueueInput.Limit] = None
   ) derives KindlingsCodecAsObject
   object QueueInput:

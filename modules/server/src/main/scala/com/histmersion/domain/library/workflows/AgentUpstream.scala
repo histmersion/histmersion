@@ -30,12 +30,12 @@ trait AgentUpstream:
   /** `refs --apply`: the deposited reference list, written as `references` edges (`apply = false`, a dry run: read,
     * nothing written).
     */
-  def refs(citekey: com.histmersion.domain.library.Citekey, apply: com.histmersion.domain.library.workflows.AgentUpstream.RefsApply = true): Either[com.histmersion.domain.library.workflows.AgentUpstream.Problem, RefsResult]
+  def refs(citekey: com.histmersion.domain.library.Citekey, apply: com.histmersion.domain.library.workflows.AgentUpstream.RefsApply = com.histmersion.domain.library.workflows.AgentUpstream.RefsApply(true)): Either[com.histmersion.domain.library.workflows.AgentUpstream.Problem, RefsResult]
 
   /** `assess --apply`: the retraction/impact verdict; a retraction overwrites the status (`apply = false`, a dry run:
     * the verdict only — neither applied nor recorded).
     */
-  def assess(citekey: com.histmersion.domain.library.Citekey, apply: com.histmersion.domain.library.workflows.AgentUpstream.AssessApply = true): Either[com.histmersion.domain.library.workflows.AgentUpstream.Problem, Assessment]
+  def assess(citekey: com.histmersion.domain.library.Citekey, apply: com.histmersion.domain.library.workflows.AgentUpstream.AssessApply = com.histmersion.domain.library.workflows.AgentUpstream.AssessApply(true)): Either[com.histmersion.domain.library.workflows.AgentUpstream.Problem, Assessment]
 
   /** The papers citing a source, read only (never `apply`). */
   def followups(id: com.histmersion.domain.library.workflows.AgentUpstream.FollowupsId, since: Option[com.histmersion.Year], limit: Option[com.histmersion.domain.library.workflows.FollowupsInput.Limit]): Either[com.histmersion.domain.library.workflows.AgentUpstream.Problem, FollowupsResult]
@@ -47,7 +47,7 @@ trait AgentUpstream:
     * `acquire.allow-unauthorised` says), refused when no legal file exists (nothing is stored then). Not connected by
     * default: a fixture that does not answer it ingests nothing.
     */
-  def ingestLegal(doi: com.histmersion.domain.library.Doi): Either[com.histmersion.domain.library.workflows.AgentUpstream.Problem, Ingest.Report] = Left("the acquisition toolset is not connected")
+  def ingestLegal(doi: com.histmersion.domain.library.Doi): Either[com.histmersion.domain.library.workflows.AgentUpstream.Problem, Ingest.Report] = Left(com.histmersion.domain.library.workflows.AgentUpstream.Problem("the acquisition toolset is not connected"))
 
   /** The acquisition list's re-check of one DOI: [[ingestLegal]], fetched and converted into the metadata-only source
     * `into` when there is one (its enrichment stays).
@@ -55,7 +55,7 @@ trait AgentUpstream:
   def ingestLegalInto(doi: com.histmersion.domain.library.Doi, into: Option[com.histmersion.domain.library.workflows.AgentUpstream.Into]): Either[com.histmersion.domain.library.workflows.AgentUpstream.Problem, Ingest.Report] = ingestLegal(doi)
 
   /** The legal chain's generation (a digest that changes with a fetcher or a key); "" when not connected. */
-  def fetcherGeneration: com.histmersion.domain.library.acquisition.AcquireClients.Generation = ""
+  def fetcherGeneration: com.histmersion.domain.library.acquisition.AcquireClients.Generation = com.histmersion.domain.library.acquisition.AcquireClients.Generation("")
 
   /** Whether the acquisition toolset is attached (Offline is not). */
   def connected: Boolean = true
@@ -65,17 +65,17 @@ trait AgentUpstream:
     * live search.
     */
   def sweepCandidates(goal: com.histmersion.domain.automation.Goal.Slug, dryRun: com.histmersion.domain.library.workflows.AgentUpstream.SweepCandidatesDryRun): Either[com.histmersion.domain.library.workflows.AgentUpstream.Problem, CandidateSweep] = Left(
-    "the candidate search is not connected"
+    com.histmersion.domain.library.workflows.AgentUpstream.Problem("the candidate search is not connected")
   )
 
   /** A goal's candidates in one state (`new`: the unseen), oldest first. */
   def candidates(goal: com.histmersion.domain.automation.Goal.Slug, state: com.histmersion.domain.library.acquisition.CandidateService.State, limit: com.histmersion.domain.library.workflows.AgentUpstream.Limit): Either[com.histmersion.domain.library.workflows.AgentUpstream.Problem, List[Source.Candidate]] = Left(
-    "the candidate search is not connected"
+    com.histmersion.domain.library.workflows.AgentUpstream.Problem("the candidate search is not connected")
   )
 
   /** Record a decision on candidates by id. */
   def markCandidates(ids: List[com.histmersion.domain.library.workflows.AgentUpstream.MarkCandidatesIds], state: com.histmersion.domain.library.acquisition.CandidateService.State): Either[com.histmersion.domain.library.workflows.AgentUpstream.Problem, com.histmersion.RowCount] = Left(
-    "the candidate search is not connected"
+    com.histmersion.domain.library.workflows.AgentUpstream.Problem("the candidate search is not connected")
   )
 
 object AgentUpstream:
@@ -128,11 +128,11 @@ object AgentUpstream:
     def meta(doi: com.histmersion.domain.library.Doi) = a.meta(doi).left.map(_.message)
     def refs(citekey: com.histmersion.domain.library.Citekey, apply: com.histmersion.domain.library.workflows.AgentUpstream.OfRefsApply) = a.refs(RefsRequest(citekey, apply = apply)).left.map(_.message)
     def assess(citekey: com.histmersion.domain.library.Citekey, apply: com.histmersion.domain.library.workflows.AgentUpstream.OfAssessApply) =
-      (if apply then a.assess(AssessRequest(citekey, apply = true)) else a.assessReadOnly(citekey)).left.map(_.message)
+      (if apply then a.assess(AssessRequest(citekey, apply = com.histmersion.api.library.AssessRequest.Apply(true))) else a.assessReadOnly(citekey)).left.map(_.message)
     def followups(id: com.histmersion.domain.library.workflows.AgentUpstream.OfFollowupsId, since: Option[com.histmersion.Year], limit: Option[com.histmersion.domain.library.workflows.FollowupsInput.Limit]) =
-      a.followups(FollowupsRequest(id, since, limit, apply = false)).left.map(_.message)
+      a.followups(FollowupsRequest(id, since, limit, apply = com.histmersion.api.library.FollowupsRequest.Apply(false))).left.map(_.message)
     def discover(query: com.histmersion.domain.library.search.Search.Query, limit: com.histmersion.domain.library.workflows.AgentUpstream.Limit) =
-      a.discover(query, None, None, Some(limit), notInDb = false).left.map(_.message)
+      a.discover(query, None, None, Some(limit), notInDb = com.histmersion.domain.library.acquisition.AcquisitionControllers.(false)).left.map(_.message)
     override def ingestLegal(doi: String) = a.ingestLegal(Ingest.Request(doi)).left.map(_.message)
     override def ingestLegalInto(doi: String, into: Option[String]) =
       a.ingestLegal(Ingest.Request(doi, citekey = into)).left.map(_.message)

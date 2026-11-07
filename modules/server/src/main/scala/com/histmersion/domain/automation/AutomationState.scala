@@ -74,14 +74,14 @@ object AutomationState:
       Vector.empty,
       Map.empty,
       Vector.empty,
-      0L,
+      com.histmersion.domain.automation.AutomationState.LastApprovalId(0L),
       Vector.empty,
       Vector.empty,
       Vector.empty,
       Vector.empty,
-      0L,
+      com.histmersion.domain.automation.AutomationState.LastItemId(0L),
       Vector.empty,
-      0L
+      com.histmersion.domain.automation.AutomationState.LastEventId(0L)
     )
 
   /** An instant as the repositories read one back (`to_char` to the second, UTC). */

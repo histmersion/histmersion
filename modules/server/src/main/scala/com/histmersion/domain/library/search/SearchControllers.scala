@@ -48,7 +48,7 @@ final class SearchControllers(
     */
   def aggregate(q: Api.AggregateQuery): Either[Api.Error, TimeHistogram] =
     def norm(o: Option[com.histmersion.domain.library.search.SearchControllers.Unit], dflt: com.histmersion.domain.library.search.SearchControllers.Unit) = o.map(_.trim.toLowerCase).filter(_.nonEmpty).getOrElse(dflt)
-    val unit = norm(q.unit, "sources")
+    val unit = norm(q.unit, com.histmersion.domain.library.search.SearchControllers.Unit("sources"))
     Tree
       .parseBy(norm(q.by, Tree.KindTime))
       .toRight(

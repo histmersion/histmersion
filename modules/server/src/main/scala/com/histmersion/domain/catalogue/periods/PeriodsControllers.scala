@@ -22,7 +22,7 @@ final class PeriodsControllers(periods: PeriodService, imports: PeriodImports, m
 
   /** `POST /api/periods/seed?replace=` — the presets bundled with this server. */
   def seed(caller: Caller, replace: com.histmersion.domain.catalogue.periods.PeriodImports.Replace): Either[Api.Error, Period.ImportResult] =
-    maintenance.guard("periods/seed")(imports.applySeed(replace).left.map(Api.Error(_)))
+    maintenance.guard(com.histmersion.util.data.maintenance.WriteGate.OperationName("periods/seed"))(imports.applySeed(replace).left.map(Api.Error(_)))
 
   /** `POST /api/periods/import` — a PeriodO dataset sent by the client (a dump, or a subset of one). */
   def importDataset(
@@ -31,7 +31,7 @@ final class PeriodsControllers(periods: PeriodService, imports: PeriodImports, m
       dataset: Option[com.histmersion.domain.catalogue.periods.PeriodImports.Dataset],
       body: com.histmersion.domain.catalogue.periods.PeriodImports.DatasetBody
   ): Either[Api.Error, Period.ImportResult] =
-    maintenance.guard("periods/import"):
+    maintenance.guard(com.histmersion.util.data.maintenance.WriteGate.OperationName("periods/import")):
       for
         set <- Dataset.ofParam(dataset)
         d <- PeriodO.parse(body).left.map(Api.Error(_))
@@ -39,7 +39,7 @@ final class PeriodsControllers(periods: PeriodService, imports: PeriodImports, m
 
   /** `POST /api/periods/fetch?source=periodo` — the live PeriodO dump, the named collections only. */
   def fetch(caller: Caller, source: com.histmersion.domain.catalogue.periods.PeriodSources.PeriodoUrl, collections: List[com.histmersion.domain.catalogue.periods.PeriodSources.Collections]): Either[Api.Error, Period.ImportResult] =
-    maintenance.guard("periods/fetch"):
+    maintenance.guard(com.histmersion.util.data.maintenance.WriteGate.OperationName("periods/fetch")):
       if source.trim.toLowerCase != PeriodImports.PeriodOSource then
         Left(Api.Error(s"unknown period source '$source' (available: ${PeriodImports.PeriodOSource})"))
       else imports.fetch(collections).left.map(Api.Error(_))

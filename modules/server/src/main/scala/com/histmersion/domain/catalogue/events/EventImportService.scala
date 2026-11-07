@@ -286,7 +286,7 @@ object EventImportService:
         .sortBy(_._2.key)
         .toList
         .flatMap((id, r) => s.events.find(_.id == id).map(e => (id, e.kind, r)))
-      (rows, 0)
+      (rows, com.histmersion.domain.catalogue.events.EventImportService.InMemory.(0))
 
     def storedKinds(provider: com.histmersion.domain.catalogue.events.CatalogueRefRow.Provider): Map[(com.histmersion.domain.catalogue.events.EventImportService.InMemory.StoredKindsResultPart1Part1, com.histmersion.domain.catalogue.events.EventImportService.InMemory.StoredKindsResultPart1Part2), com.histmersion.domain.catalogue.events.EventImportService.InMemory.StoredKindsResultPart2] =
       state.get.catalogueRecords.collect {

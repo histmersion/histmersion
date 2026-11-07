@@ -72,9 +72,9 @@ object MediaImporter:
 
   /** What a collection that asks about `asks` is said to ask about: "places", "events", "places and events". */
   def over(asks: Set[MediaTarget]): com.histmersion.domain.media.imports.MediaImporter.OverText =
-    if asks(MediaTarget.Places) && asks(MediaTarget.Events) then "places and events"
-    else if asks(MediaTarget.Events) then "events"
-    else "places"
+    if asks(MediaTarget.Places) && asks(MediaTarget.Events) then com.histmersion.domain.media.imports.MediaImporter.OverText("places and events")
+    else if asks(MediaTarget.Events) then com.histmersion.domain.media.imports.MediaImporter.OverText("events")
+    else com.histmersion.domain.media.imports.MediaImporter.OverText("places")
 
   /** The import of the collection registered as `name`, over media's services (`imports` chooses the targets, `store`
     * is where a run writes) and this server's settings (`cfg`, read at each use): the targets it asks about — the

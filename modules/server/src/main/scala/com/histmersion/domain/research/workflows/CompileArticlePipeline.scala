@@ -63,7 +63,7 @@ final class CompileArticlePipeline(
   def run(ctx: RunCtx): Either[Halt, com.histmersion.domain.research.workflows.CompileArticlePipeline.Outcome] =
     val slug = ctx.run.target
     for
-      snap <- ctx.code[Snap]("snapshot")(snapshot(ctx, slug))
+      snap <- ctx.code[Snap](com.histmersion.domain.automation.agents.AgentRepo.StepRecord.Name("snapshot"))(snapshot(ctx, slug))
       found <- ctx.code[Found]("filter")(filter(ctx, snap))
       line <-
         if found.toExtract.isEmpty then
@@ -80,7 +80,7 @@ final class CompileArticlePipeline(
   private def compile(ctx: RunCtx, snap: Snap, found: Found): Either[Halt, com.histmersion.domain.research.workflows.CompileArticlePipeline.Outcome] =
     for
       extracted <- extractAll(ctx, snap, found)
-      ev <- ctx.code[Evidence]("evidence")(Right(evidenceOf(found, extracted)))
+      ev <- ctx.code[Evidence](com.histmersion.domain.automation.agents.AgentRepo.StepRecord.Name("evidence"))(Right(evidenceOf(found, extracted)))
       line <-
         if ev.used.isEmpty then
           ctx.code[String]("close")(
@@ -147,7 +147,7 @@ final class CompileArticlePipeline(
             DraftMode.Create,
             p.title.getOrElse(slug),
             p.kind.getOrElse(DefaultKind),
-            "",
+            com.histmersion.domain.research.workflows.CompileArticlePipeline.Snap.Body(""),
             None,
             p.query,
             p.topics.getOrElse(Nil),
@@ -157,7 +157,7 @@ final class CompileArticlePipeline(
         )
       case Left(e) => Left(e.message)
 
-  private def isCitekey(ck: com.histmersion.domain.library.Citekey): Boolean = site.sources.get(ck, body = false).isRight
+  private def isCitekey(ck: com.histmersion.domain.library.Citekey): Boolean = site.sources.get(ck, body = com.histmersion.domain.library.sources.SourcesControllers.GetBody(false)).isRight
 
   private def filter(ctx: RunCtx, s: Snap): Either[com.histmersion.domain.research.workflows.CompileArticlePipeline.Problem, Found] =
     val af = s.filter.getOrElse(Article.Filter(query = s.query, topics = s.topics, tags = s.tags))
@@ -175,7 +175,7 @@ final class CompileArticlePipeline(
     * `agents.compile.record-chars`.
     */
   private def record(ck: com.histmersion.domain.library.Citekey): Option[com.histmersion.domain.library.Citekey] =
-    site.sources.get(ck, body = true).toOption.map { s =>
+    site.sources.get(ck, body = com.histmersion.domain.library.sources.SourcesControllers.GetBody(true)).toOption.map { s =>
       val parts = List(
         s.source.summary.map(x => s"Summary:\n$x"),
         Option.when(s.findings.nonEmpty)("Findings:\n" + s.findings.map(f => s"- ${f.claim}").mkString("\n")),
@@ -242,7 +242,7 @@ final class CompileArticlePipeline(
         "generates its Not used list and Method note from it; give a reason for each source of the claim table you do " +
         "not cite in `reasons`." + ctx.notes
       ctx.llm[DraftAnswer, ArticleDraft](
-        "draft",
+        com.histmersion.domain.automation.agents.AgentRepo.StepRecord.Name("draft"),
         StepAgent.CompileWriter,
         user,
         ResearchAnswers.draft,
@@ -270,21 +270,21 @@ final class CompileArticlePipeline(
       val item = Pipelines.entry(
         ctx,
         s"compile-article [[${s.slug}]]: $why (agent run ${ctx.run.id.take(8)})",
-        Some("agent compile")
+        Some(com.histmersion.domain.automation.workflows.Pipelines.EntryTopic("agent compile"))
       )
-      val _ = ctx.write("tasks item", item.asJson)(site.workLists.add("tasks", item).map(_ => ()))(Right(()))
-    if !decided.approved then Right(Written(written = false, "the draft was rejected", None))
+      val _ = ctx.write("tasks item", item.asJson)(site.workLists.add(com.histmersion.domain.automation.worklists.WorkListControllers.ListName("tasks"), item).map(_ => ()))(Right(()))
+    if !decided.approved then Right(Written(written = com.histmersion.domain.research.workflows.CompileArticlePipeline.Written.Value(false), com.histmersion.domain.research.workflows.CompileArticlePipeline.Written.Why("the draft was rejected"), None))
     else
       d.mode match
         case DraftMode.Create =>
           if site.articleStore.exists(s.slug) then
             task("an article with this slug was created while the draft waited; it was NOT overwritten")
-            Right(Written(written = false, "the slug was taken meanwhile", None))
+            Right(Written(written = com.histmersion.domain.research.workflows.CompileArticlePipeline.Written.Value(false), com.histmersion.domain.research.workflows.CompileArticlePipeline.Written.Why("the slug was taken meanwhile"), None))
           else
             val put = Article.Put(d.title, d.kind, d.text, d.summary, s.tags, filter = s.filter, reasons = d.reasons)
             ctx.write(s"create article [[${s.slug}]]", put.asJson)(
-              site.articles.put(s.slug, put).left.map(_.message).map(_ => Written(written = true, "created", None))
-            )(Right(Written(written = false, AgentsMarkdown.DryRunNote, None)))
+              site.articles.put(s.slug, put).left.map(_.message).map(_ => Written(written = com.histmersion.domain.research.workflows.CompileArticlePipeline.Written.Value(true), com.histmersion.domain.research.workflows.CompileArticlePipeline.Written.Why("created"), None))
+            )(Right(Written(written = com.histmersion.domain.research.workflows.CompileArticlePipeline.Written.Value(false), AgentsMarkdown.DryRunNote, None)))
         case DraftMode.Extend =>
           // a stored reason for a source the new text now cites is dropped (an empty reason removes it)
           val stale = s.reasons.filter(r => d.cited.contains(r.citekey)).map(_.modify(_.reason).setTo(""))
@@ -298,14 +298,14 @@ final class CompileArticlePipeline(
           ctx.write(s"append to article [[${s.slug}]]${d.section.fold("")(x => s" under '$x'")}", patch.asJson)(
             site.articles.patch(s.slug, patch).map(_ => true)
           )(Right(false)) match
-            case Right(false) => Right(Written(written = false, AgentsMarkdown.DryRunNote, None))
+            case Right(false) => Right(Written(written = com.histmersion.domain.research.workflows.CompileArticlePipeline.Written.Value(false), AgentsMarkdown.DryRunNote, None))
             case Right(_)     =>
-              Right(Written(written = true, "appended", site.articleStore.latestVersion(s.slug)))
+              Right(Written(written = com.histmersion.domain.research.workflows.CompileArticlePipeline.Written.Value(true), com.histmersion.domain.research.workflows.CompileArticlePipeline.Written.Why("appended"), site.articleStore.latestVersion(s.slug)))
             case Left(e) if e.code.contains(Write.CodePrecondition) =>
               task(
                 "the article changed while the draft waited for approval; the section was NOT appended — compile again"
               )
-              Right(Written(written = false, "the article changed meanwhile", None))
+              Right(Written(written = com.histmersion.domain.research.workflows.CompileArticlePipeline.Written.Value(false), com.histmersion.domain.research.workflows.CompileArticlePipeline.Written.Why("the article changed meanwhile"), None))
             case Left(e) => Left(e.message)
 
   /** The independent review (phase 5): a review-article run with fix, started by this one. A refusal (no reviewer model
@@ -342,7 +342,7 @@ final class CompileArticlePipeline(
             .derive[com.histmersion.api.automation.Goal.LinkKind, com.histmersion.domain.automation.Goal.LinkKind]
             .transform(LinkKind.Article),
           d.slug,
-          Some("compiled by an agent run")
+          Some(com.histmersion.domain.automation.goals.BGoalLinkRow.Note("compiled by an agent run"))
         )
       )
     log(ctx, CompileArticle.logLine(d, w.written, w.why, review, ctx.run.id))
@@ -367,7 +367,7 @@ object CompileArticlePipeline:
   object LogLine extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
   def written(c: com.histmersion.domain.automation.managers.ManagerContext, run: com.histmersion.domain.automation.Run.Id): Option[Written] =
-    c.stepOutput(run, "write").flatMap(o => io.circe.parser.decode[Written](o).toOption)
+    c.stepOutput(run, com.histmersion.domain.automation.managers.ManagerContext.StepOutputStep("write")).flatMap(o => io.circe.parser.decode[Written](o).toOption)
 
   /** The kind of a new article when the run names none. */
   val DefaultKind = "concept"

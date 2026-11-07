@@ -92,7 +92,7 @@ final class EventsControllers(
 
   /** A put to an old id replaces the event it was renamed to, never creates a second one under the old id. */
   def put(caller: Caller, id: com.histmersion.domain.catalogue.Event.Id, in: EventPut): Either[Api.Error, EventEntry] =
-    maintenance.guard("put_event"):
+    maintenance.guard(com.histmersion.util.data.maintenance.WriteGate.OperationName("put_event")):
       val to = now(id)
       validScale(in.scale).flatMap(_ => validGeometry(in.geometry)).flatMap { _ =>
         events.put(to, in)
@@ -100,7 +100,7 @@ final class EventsControllers(
       }
 
   def patch(caller: Caller, id: com.histmersion.domain.catalogue.Event.Id, p: EventPatch): Either[Api.Error, EventEntry] =
-    maintenance.guard("patch_event"):
+    maintenance.guard(com.histmersion.util.data.maintenance.WriteGate.OperationName("patch_event")):
       val to = now(id)
       validScale(p.scale)
         .flatMap(_ => validWikidata(p.wikidata))
@@ -108,9 +108,9 @@ final class EventsControllers(
         .flatMap(_ => events.patch(to, p).flatMap(_ => get(to)))
 
   def delete(caller: Caller, id: com.histmersion.domain.catalogue.Event.Id): Either[Api.Error, EventDeleted] =
-    maintenance.guard("delete_event"):
+    maintenance.guard(com.histmersion.util.data.maintenance.WriteGate.OperationName("delete_event")):
       val to = now(id)
-      if events.delete(to) then Right(EventDeleted(to, true))
+      if events.delete(to) then Right(EventDeleted(to, com.histmersion.api.catalogue.EventDeleted.Deleted(true)))
       else Left(Api.Error(s"No event '$id'", Some(Write.CodeNotFound)))
 
   /** `POST /api/events/{id}/rename` — a new id (`to` checks the one asked for against the current one); the old one
@@ -122,7 +122,7 @@ final class EventsControllers(
       .map((from, to) => LabelRenamed(Bundle.Kind.Event, from, to))
 
   def rename(caller: Caller, id: com.histmersion.domain.catalogue.Event.Id, to: com.histmersion.domain.catalogue.Event.Id => Either[Api.Error, com.histmersion.domain.catalogue.Event.Id]): Either[Api.Error, (com.histmersion.domain.catalogue.Event.Id, com.histmersion.domain.catalogue.Event.Id)] =
-    maintenance.guard("rename_event"):
+    maintenance.guard(com.histmersion.util.data.maintenance.WriteGate.OperationName("rename_event")):
       val from = now(id)
       for
         newId <- to(from)
