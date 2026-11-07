@@ -3,10 +3,6 @@ package com.histmersion.domain.library
 import com.histmersion.WireEnumValues
 
 object Edge:
-  type KindText = KindText.T
-  object KindText extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type Spec = Spec.T
-  object Spec extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
   /** The typed relationships between sources. Wire representation is the lowercase/underscore string (e.g.
     * `superseded_by`). The enum replaces the `EdgeKind` string constants.

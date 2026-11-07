@@ -30,9 +30,6 @@ import java.util.regex.{Matcher, Pattern, PatternSyntaxException}
   * into it.
   */
 object PassageFinder:
-  object Query:
-    type Statement = Statement.T
-    object Statement extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type ContextChars = ContextChars.T
   object ContextChars extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type Limit = Limit.T

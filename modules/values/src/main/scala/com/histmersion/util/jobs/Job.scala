@@ -4,10 +4,6 @@ import io.github.iltotore.iron.*
 import io.github.iltotore.iron.constraint.string.Match
 
 object Job:
-  type Error = Error.T
-  object Error extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type Label = Label.T
-  object Label extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
   /** A background job's id: a UUID in its lower-case text form, as the `jobs` table keeps it. */
   type Id = Id.T

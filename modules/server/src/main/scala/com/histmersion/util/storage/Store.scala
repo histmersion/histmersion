@@ -278,7 +278,5 @@ object Store:
   final case class Volume(id: Volume.Id, total: ByteCount, usable: ByteCount)
 
   object Volume:
-    type Number = Number.T
-    object Number extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
     type Id = Id.T
     object Id extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
