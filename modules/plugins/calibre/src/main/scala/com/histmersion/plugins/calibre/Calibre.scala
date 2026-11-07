@@ -114,7 +114,7 @@ final class Calibre(cfg: com.histmersion.plugins.calibre.Calibre.Library, shell:
     */
   def updateAll(linked: List[LinkedRecord], apply: com.histmersion.plugins.calibre.Calibre.UpdateAllApply): Either[com.histmersion.plugins.calibre.Calibre.Problem, List[UpdateEntry]] =
     for
-      _ <- Either.cond(!(apply).value || !(guiRunning).value, (), GuiRunning)
+      _ <- Either.cond(!(apply).value || !(guiRunning), (), GuiRunning)
       books <- all()
     yield Calibre.planAll(linked, books.map(b => b.id -> b).toMap).map { e =>
       e.outcome match
@@ -153,7 +153,7 @@ final class Calibre(cfg: com.histmersion.plugins.calibre.Calibre.Library, shell:
     for
       fmt <- Calibre.formatOf(file)
       _ <- Either.cond(
-        !(guiRunning).value,
+        !(guiRunning),
         (),
         "the Calibre GUI is running — quit it first (calibredb needs exclusive access to the library)"
       )
@@ -279,7 +279,7 @@ object Calibre:
   def guard(title: com.histmersion.plugins.calibre.Calibre.GuardTitle, authors: List[com.histmersion.plugins.calibre.Calibre.Push.Authors]): Either[com.histmersion.plugins.calibre.Calibre.Problem, Unit] =
     val missing = List(
       Option.when(isBlank(title))("title"),
-      Option.when(authors.forall(_root_.com.histmersion.plugins.calibre.Calibre.Text((isBlank).value)))("author")
+      Option.when(authors.forall(_root_.com.histmersion.plugins.calibre.Calibre.Text((isBlank))))("author")
     ).flatten
     Either.cond(
       missing.isEmpty,
@@ -635,8 +635,8 @@ object Calibre:
     def issues(r: AuditRecord, b: Book): List[AuditIssue] =
       List(
         Option.when(((junk(b)) == (true)))(AuditIssue.Junk),
-        Option.when(!(junk(b)).value && !titleMatches(r.title, b.title))(AuditIssue.Title),
-        Option.when(!(junk(b)).value && !authorsMatch(r.authors, b.authors))(AuditIssue.Authors),
+        Option.when(!(junk(b)) && !titleMatches(r.title, b.title))(AuditIssue.Title),
+        Option.when(!(junk(b)) && !authorsMatch(r.authors, b.authors))(AuditIssue.Authors),
         Option.when(r.year.isDefined && year(b).isDefined && r.year != year(b))(AuditIssue.Year)
       ).flatten
 
@@ -826,7 +826,7 @@ object Calibre:
         case "~"                                       => home.getOrElse("~")
         case p if p.startsWith("~/") && home.isDefined => home.getOrElse("") + p.drop(1)
         case p                                         => p
-      Library(path, Settings.locate(_root_.com.histmersion.plugins.calibre.Calibre.Settings.ExecutableName((calibredb).value), (home).map(refactorValue26 => _root_.com.histmersion.plugins.calibre.Calibre.Settings.Home((refactorValue26).value)), (searchPath).map(refactorValue27 => _root_.com.histmersion.plugins.calibre.Calibre.Settings.SearchPath((refactorValue27).value)), { val refactorFunction3 = executable; (refactorValue28) => ((refactorFunction3(refactorValue28)).value) }), sqlite, guiProcess)
+      Library(path, Settings.locate(_root_.com.histmersion.plugins.calibre.Calibre.Settings.ExecutableName((calibredb).value), (home).map(refactorValue26 => _root_.com.histmersion.plugins.calibre.Calibre.Settings.Home((refactorValue26).value)), (searchPath).map(refactorValue27 => _root_.com.histmersion.plugins.calibre.Calibre.Settings.SearchPath((refactorValue27).value)), { val refactorFunction3 = executable; (refactorValue28) => ((refactorFunction3(refactorValue28))) }), sqlite, guiProcess)
 
   object Settings:
     type ExecutableName = ExecutableName.T

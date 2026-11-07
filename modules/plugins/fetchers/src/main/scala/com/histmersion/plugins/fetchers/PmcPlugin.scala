@@ -9,7 +9,7 @@ final class PmcPlugin extends FetcherPlugin("pmc"):
   type Config = HostAcquire
   def register(c: HostAcquire, ctx: Plugin.Context): Either[com.histmersion.plugins.fetchers.PmcPlugin.Problem, Unit] =
     val pmc = Pmc(c.acquire, () => ctx.http)
-    ctx.sourceFetchers.add("pmc", pmc.pdfStep).flatMap(_ => ctx.sourceFetchers.add("pmc-text", pmc.textStep))
+    ctx.sourceFetchers.add(com.histmersion.plugin.Registry.AddId("pmc"), pmc.pdfStep).flatMap(_ => ctx.sourceFetchers.add("pmc-text", pmc.textStep))
 
 object PmcPlugin:
   type Problem = Problem.T

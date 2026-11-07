@@ -63,21 +63,21 @@ object Smithsonian:
 
   /** The labels of `freetext.date` that name when the object was made. */
   val DateLabels: Set[com.histmersion.plugins.media.Smithsonian.DateLabels] =
-    Set("date", "date made", "date created", "creation date", "production date", "object date")
+    Set(com.histmersion.plugins.media.Smithsonian.DateLabelsValue("date"), com.histmersion.plugins.media.Smithsonian.DateLabelsValue("date made"), com.histmersion.plugins.media.Smithsonian.DateLabelsValue("date created"), com.histmersion.plugins.media.Smithsonian.DateLabelsValue("creation date"), com.histmersion.plugins.media.Smithsonian.DateLabelsValue("production date"), com.histmersion.plugins.media.Smithsonian.DateLabelsValue("object date"))
 
   /** The labels of `freetext.name` that name who made it. */
   val MakerLabels: Set[com.histmersion.plugins.media.Smithsonian.MakerLabels] = Set(
-    "artist",
-    "maker",
-    "creator",
-    "author",
-    "manufacturer",
-    "photographer",
-    "designer",
-    "sculptor",
-    "potter",
-    "illustrator",
-    "engraver"
+    com.histmersion.plugins.media.Smithsonian.MakerLabelsValue("artist"),
+    com.histmersion.plugins.media.Smithsonian.MakerLabelsValue("maker"),
+    com.histmersion.plugins.media.Smithsonian.MakerLabelsValue("creator"),
+    com.histmersion.plugins.media.Smithsonian.MakerLabelsValue("author"),
+    com.histmersion.plugins.media.Smithsonian.MakerLabelsValue("manufacturer"),
+    com.histmersion.plugins.media.Smithsonian.MakerLabelsValue("photographer"),
+    com.histmersion.plugins.media.Smithsonian.MakerLabelsValue("designer"),
+    com.histmersion.plugins.media.Smithsonian.MakerLabelsValue("sculptor"),
+    com.histmersion.plugins.media.Smithsonian.MakerLabelsValue("potter"),
+    com.histmersion.plugins.media.Smithsonian.MakerLabelsValue("illustrator"),
+    com.histmersion.plugins.media.Smithsonian.MakerLabelsValue("engraver")
   )
 
   /** Pure: the rows of a search answer; an error answer (api.data.gov's `{error: {code, message}}`, or EDAN's
@@ -122,8 +122,8 @@ object Smithsonian:
           .orElse(dnr.str("guid"))
           .getOrElse(s"https://collections.si.edu/search/detail/${c.str("url").getOrElse(s"edanmdm:$key")}")
         val unit = dnr.str("data_source")
-        val maker = labelled(free, "name").find((l, _) => MakerLabels(l)).map(_._2)
-        val creditLine = labelled(free, "creditLine").headOption.map(_._2)
+        val maker = labelled(free, com.histmersion.plugins.media.Smithsonian.Label("name")).find((l, _) => MakerLabels(l)).map(_._2)
+        val creditLine = labelled(free, com.histmersion.plugins.media.Smithsonian.Label("creditLine")).headOption.map(_._2)
         val credit =
           (List(Some(title), maker, unit).flatten ++ List("Smithsonian Institution") ++ creditLine.toList :+ "CC0")
             .mkString(", ")
@@ -139,7 +139,7 @@ object Smithsonian:
         val cc0 = media.find(m => m.downField("usage").str("access").exists(_.equalsIgnoreCase("CC0")))
         val rights: Either[com.histmersion.plugins.media.Smithsonian.Problem, MediaRights] = cc0 match
           case Some(_)               => Right(MediaRights.cc0(maker, credit))
-          case None if media.isEmpty => Left("no image on the record")
+          case None if media.isEmpty => Left(com.histmersion.plugins.media.Smithsonian.Problem("no image on the record"))
           case None                  =>
             val stated = media.flatMap(m => m.downField("usage").str("access")).distinct
             Left(s"no CC0 image (usage.access ${if stated.isEmpty then "missing" else stated.mkString(", ")})")
@@ -152,12 +152,12 @@ object Smithsonian:
             .map(_.hcursor)
             .find(r => r.str("label").exists(_.equalsIgnoreCase(label)))
             .flatMap(_.str("url"))
-        val image = cc0.flatMap(m => resource(m, "Screen Image").orElse(m.str("content")))
-        val thumb = cc0.flatMap(m => resource(m, "Thumbnail Image").orElse(m.str("thumbnail")))
-        val original = cc0.flatMap(m => resource(m, "High-resolution JPEG").orElse(m.str("content")))
+        val image = cc0.flatMap(m => resource(m, com.histmersion.plugins.media.Smithsonian.Label("Screen Image")).orElse(m.str("content")))
+        val thumb = cc0.flatMap(m => resource(m, com.histmersion.plugins.media.Smithsonian.Label("Thumbnail Image")).orElse(m.str("thumbnail")))
+        val original = cc0.flatMap(m => resource(m, com.histmersion.plugins.media.Smithsonian.Label("High-resolution JPEG")).orElse(m.str("content")))
         // the free-text places first (each value's comma parts, most specific first), then the
         // structured location from its finest level down
-        val places = labelled(free, "place").flatMap((l, v) =>
+        val places = labelled(free, com.histmersion.plugins.media.Smithsonian.Label("place")).flatMap((l, v) =>
           v.split(",").toList.map(_.trim).filter(_.nonEmpty).map((if l.isEmpty then "place" else l) -> _)
         )
         val levels = idx.downField("geoLocation").focus.flatMap(_.asArray).toList.flatten.flatMap { g =>
@@ -168,7 +168,7 @@ object Smithsonian:
           }
         }
         val geo = (places ++ levels).distinctBy((_, v) => v.toLowerCase(Locale.ROOT))
-        val period = labelled(free, "date")
+        val period = labelled(free, com.histmersion.plugins.media.Smithsonian.Label("date"))
           .filter((l, _) => DateLabels(l))
           .iterator
           .flatMap((_, v) => FreeTextDates.parse(v))

@@ -37,7 +37,7 @@ final class Pmc(cfg: UpstreamSettings, client: () => Plugin.Http):
       http.json(
         Url(
           cfg.europepmc.url,
-          "/search",
+          com.histmersion.upstreams.http.Url.UrlPath("/search"),
           "query" -> s"""DOI:"$doi"""",
           "resultType" -> "core",
           "format" -> "json",
@@ -53,7 +53,7 @@ final class Pmc(cfg: UpstreamSettings, client: () => Plugin.Http):
     lazy val record: Option[PmcRecord] =
       hit.flatMap(_.pmcid).flatMap { id =>
         http
-          .text(Url(cfg.pmcDataset.url, "/", "list-type" -> "2", "prefix" -> s"metadata/$id."), pmcHeaders)
+          .text(Url(cfg.pmcDataset.url, com.histmersion.upstreams.http.Url.UrlPath("/"), "list-type" -> "2", "prefix" -> s"metadata/$id."), pmcHeaders)
           .left
           .map(e => ctx.log.info(s"pmc dataset listing failed ($e)"))
           .toOption
@@ -72,12 +72,12 @@ final class Pmc(cfg: UpstreamSettings, client: () => Plugin.Http):
       hit.toList
         .flatMap(_.pdfUrls)
         .iterator
-        .map(u => Downloads(http).pdf(ctx.log, "europepmc", u, pmcHeaders))
+        .map(u => Downloads(http).pdf(ctx.log, com.histmersion.plugin.FetchedFile.Source("europepmc"), u, pmcHeaders))
         .collectFirst { case Some(f) => f }
-        .orElse(record.flatMap(_.pdf).flatMap(o => dataset(o, "pdf")(Downloads.looksLikePdf)))
+        .orElse(record.flatMap(_.pdf).flatMap(o => dataset(o, com.histmersion.plugin.CollectionFile.Format("pdf"))(Downloads.looksLikePdf)))
 
     def fullText: Option[FetchedFile] =
-      record.flatMap(_.xml).flatMap(o => dataset(o, "xml")(b => Jats.isJats(String(b, "UTF-8"))))
+      record.flatMap(_.xml).flatMap(o => dataset(o, com.histmersion.plugin.CollectionFile.Format("xml"))(b => Jats.isJats(String(b, "UTF-8"))))
 
     private def dataset(o: PmcObject, ext: com.histmersion.plugin.CollectionFile.Format)(ok: com.histmersion.plugin.FetchedFile.Bytes => Boolean): Option[FetchedFile] =
       val url = s"${cfg.pmcDataset.url}/${o.key}"
@@ -88,7 +88,7 @@ final class Pmc(cfg: UpstreamSettings, client: () => Plugin.Http):
           ctx.log.info(s"pmc: $url returned ${b.length} bytes that are not a $ext — skipping"); None
         case Right(b) if o.md5.exists(m => Downloads.md5(b).exists(_ != m)) =>
           ctx.log.warn(s"pmc: $url does not match the MD5 its record gives — skipping"); None
-        case Right(b) => Some(FetchedFile("pmc", Some(url), b, ext))
+        case Right(b) => Some(FetchedFile(com.histmersion.plugin.FetchedFile.Source("pmc"), Some(url), b, ext))
 
   object PmcLookup:
 
@@ -99,6 +99,6 @@ final class Pmc(cfg: UpstreamSettings, client: () => Plugin.Http):
   private def lookup(ctx: Fetch.Context, doi: com.histmersion.plugins.fetchers.Pmc.PmcLookup.Doi): PmcLookup =
     ctx.memo(s"pmc:lookup:$doi")(PmcLookup(doi, ctx))
 
-  val pdfStep: SourceFetcher = ByDoi("pmc", (ctx, d) => lookup(ctx, d).pdf)
-  val textStep: SourceFetcher = ByDoi("pmc-text", (ctx, d) => lookup(ctx, d).fullText)
+  val pdfStep: SourceFetcher = ByDoi(com.histmersion.plugins.fetchers.ByDoi.Step("pmc"), (ctx, d) => lookup(ctx, d).pdf)
+  val textStep: SourceFetcher = ByDoi(com.histmersion.plugins.fetchers.ByDoi.Step("pmc-text"), (ctx, d) => lookup(ctx, d).fullText)
 

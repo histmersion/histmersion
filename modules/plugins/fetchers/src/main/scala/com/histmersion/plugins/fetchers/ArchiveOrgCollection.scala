@@ -8,7 +8,7 @@ import com.histmersion.upstreams.archiveorg.{ArchiveFile, ArchiveItem, ArchiveOr
   * file. A lending-only item is described (`restricted`), never downloaded: it is borrowed on archive.org.
   */
 final class ArchiveOrgCollection(client: () => ArchiveOrg) extends SourceCollection:
-  val title: com.histmersion.plugins.fetchers.ArchiveOrgCollection.Title = "archive.org"
+  val title: com.histmersion.plugins.fetchers.ArchiveOrgCollection.Title = com.histmersion.plugins.fetchers.ArchiveOrgCollection.Title("archive.org")
   override val description: com.histmersion.plugins.fetchers.ArchiveOrgCollection.Description = "archive.org's public texts (lending-only items are refused)"
 
   def search(query: CollectionQuery): Either[com.histmersion.plugins.fetchers.ArchiveOrgCollection.Problem, List[CollectionItem]] =
@@ -41,7 +41,7 @@ object ArchiveOrgCollection:
   type RowsValue = RowsValue.T
   object RowsValue extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
-  val Rows: com.histmersion.plugins.fetchers.ArchiveOrgCollection.Rows = 8
+  val Rows: com.histmersion.plugins.fetchers.ArchiveOrgCollection.Rows = com.histmersion.plugins.fetchers.ArchiveOrgCollection.Rows(8)
 
   def item(i: ArchiveItem): CollectionItem =
     CollectionItem(

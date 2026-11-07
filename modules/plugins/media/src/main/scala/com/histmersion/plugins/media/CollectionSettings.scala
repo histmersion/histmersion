@@ -15,10 +15,10 @@ final case class CollectionSettings(
     requestIntervalMs: CollectionSettings.RequestIntervalMs,
     displayPx: CollectionSettings.DisplayPx,
     maxYear: CollectionSettings.MaxYear,
-    refusalBackoffSeconds: CollectionSettings.RefusalBackoffSeconds = "",
-    excludeProviders: CollectionSettings.ExcludeProviders = "",
-    excludeDataProviders: CollectionSettings.ExcludeDataProviders = "",
-    excludeTypes: CollectionSettings.ExcludeTypes = ""
+    refusalBackoffSeconds: CollectionSettings.RefusalBackoffSeconds = com.histmersion.plugins.media.CollectionSettings.RefusalBackoffSeconds(""),
+    excludeProviders: CollectionSettings.ExcludeProviders = com.histmersion.plugins.media.CollectionSettings.ExcludeProviders(""),
+    excludeDataProviders: CollectionSettings.ExcludeDataProviders = com.histmersion.plugins.media.CollectionSettings.ExcludeDataProviders(""),
+    excludeTypes: CollectionSettings.ExcludeTypes = com.histmersion.plugins.media.CollectionSettings.ExcludeTypes("")
 ) derives ConfigReader:
 
   /** `refusal-backoff-seconds` as milliseconds, the blank and non-positive steps dropped. */

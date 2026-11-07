@@ -9,8 +9,8 @@ import io.circe.Json
   * place field is `place_of_origin`; years are signed already.
   */
 final class ArtInstituteCollection(conf: CollectionSettings, thumbPx: ArtInstituteCollection.ThumbPx)
-    extends MuseumCollection(conf, "The Art Institute of Chicago", "media.aic"):
-  val title = "Art Institute of Chicago objects"
+    extends MuseumCollection(conf, com.histmersion.plugins.media.MuseumCollection.Provider("The Art Institute of Chicago"), com.histmersion.plugins.media.MuseumCollection.Key("media.aic")):
+  val title = com.histmersion.plugin.MediaCollection.TitleResult("Art Institute of Chicago objects")
   override val description = "The Art Institute of Chicago (CC0, is_public_domain; IIIF images)" + MetCollection.Museum
   val role = MediaCollection.Object
 

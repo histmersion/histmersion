@@ -22,18 +22,18 @@ object Commons:
   object ImageInfoUrlMeta extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
   val MetaFields: List[com.histmersion.plugins.media.Commons.MetaFields] = List(
-    "LicenseShortName",
-    "License",
-    "LicenseUrl",
-    "Artist",
-    "Credit",
-    "Attribution",
-    "AttributionRequired",
-    "Copyrighted",
-    "NonFree",
-    "UsageTerms",
-    "Restrictions",
-    "ObjectName"
+    com.histmersion.plugins.media.Commons.MetaFieldsValue("LicenseShortName"),
+    com.histmersion.plugins.media.Commons.MetaFieldsValue("License"),
+    com.histmersion.plugins.media.Commons.MetaFieldsValue("LicenseUrl"),
+    com.histmersion.plugins.media.Commons.MetaFieldsValue("Artist"),
+    com.histmersion.plugins.media.Commons.MetaFieldsValue("Credit"),
+    com.histmersion.plugins.media.Commons.MetaFieldsValue("Attribution"),
+    com.histmersion.plugins.media.Commons.MetaFieldsValue("AttributionRequired"),
+    com.histmersion.plugins.media.Commons.MetaFieldsValue("Copyrighted"),
+    com.histmersion.plugins.media.Commons.MetaFieldsValue("NonFree"),
+    com.histmersion.plugins.media.Commons.MetaFieldsValue("UsageTerms"),
+    com.histmersion.plugins.media.Commons.MetaFieldsValue("Restrictions"),
+    com.histmersion.plugins.media.Commons.MetaFieldsValue("ObjectName")
   )
 
   /** Pure: the canonical title of a file name as Wikidata gives it (`Lions-Gate-Mycenae.jpg` →
@@ -41,7 +41,7 @@ object Commons:
     */
   def fileTitle(name: com.histmersion.plugins.media.Commons.File.Title): com.histmersion.plugins.media.Commons.File.Title =
     val n = name.trim.stripPrefix("File:").stripPrefix("file:").replace('_', ' ').replaceAll("\\s+", " ").trim
-    if n.isEmpty then "" else "File:" + n.head.toUpper + n.tail
+    if n.isEmpty then com.histmersion.plugins.media.Commons.File.Title("") else "File:" + n.head.toUpper + n.tail
 
   /** Pure: the `imageinfo` URL for a batch of titles, with the rendition `width`; `meta` adds the licence fields (the
     * thumbnail call needs only the URL). `maxlag` 0 = not sent.
@@ -82,7 +82,7 @@ object Commons:
           val info = h.downField("imageinfo").downArray
           val entry: Either[com.histmersion.plugins.media.Commons.Problem, com.histmersion.plugins.media.Commons.File] =
             if h.downField("missing").focus.isDefined || h.downField("invalid").focus.isDefined || info.focus.isEmpty
-            then Left("missing on Commons")
+            then Left(com.histmersion.plugins.media.Commons.Problem("missing on Commons"))
             else
               val i = info
               val meta = i
@@ -119,7 +119,7 @@ object Commons:
                 i.get[Long]("size").toOption,
                 meta
               ))
-                .toRight("no file URL in the answer")
+                .toRight(com.histmersion.plugins.media.Commons.Problem("no file URL in the answer"))
           (title :: normalized.getOrElse(title, Nil)).map(_ -> entry)
         }
         Right(pages.toMap)
@@ -132,7 +132,7 @@ object Commons:
     * Commons picture ([[CommonsFiles]]); the host judges them against `media.depicts.licences`.
     */
   final class Depictions(media: MediaSettings, licences: LicenceReader) extends MediaCollection:
-    val title = "Commons depictions"
+    val title = com.histmersion.plugin.MediaCollection.TitleResult("Commons depictions")
     override val description =
       "Pictures that depict events: Wikimedia Commons files whose structured data says P180 'depicts' the event's " +
         "Wikidata item, and the images of the works its item lists as P1299 'depicted by'; licence read from Commons"
@@ -141,7 +141,7 @@ object Commons:
     override def asks = Set(MediaTarget.Events)
     override def requestIntervalMs = media.requestIntervalMs
 
-    def search(place: MediaPlace, http: Plugin.Http) = Left("the depictions are about events")
+    def search(place: MediaPlace, http: Plugin.Http) = Left(com.histmersion.plugin.MediaCollection.SearchResultPart1("the depictions are about events"))
 
     override def searchTargets(places: List[MediaPlace], events: List[MediaEvent], http: Plugin.Http): MediaFound =
       val asked = events.flatMap(e => e.wikidata.map(q => (e, q.value)))
@@ -363,35 +363,35 @@ object Commons:
       * it does not name, is withheld with that reason.
       */
     def items(titles: List[com.histmersion.plugins.media.Commons.File.Title]): (Map[com.histmersion.plugins.media.Commons.File.Title, MediaItem], List[com.histmersion.plugins.media.Commons.Files.Problem]) =
-      val (infos, failed) = imageInfo(titles, media.displayPx, meta = true)
+      val (infos, failed) = imageInfo(titles, media.displayPx, meta = com.histmersion.plugins.media.Commons.Files.ImageInfoMeta(true))
       (titles.map(t => t -> item(t, infos.get(t))).toMap, failed)
 
     private def item(title: com.histmersion.plugins.media.Commons.File.Title, answer: Option[Either[com.histmersion.plugins.media.Commons.Files.Problem, File]]): MediaItem =
-      val bare = MediaItem(title, title.stripPrefix("File:"), "", None, Left("no answer from Commons"))
+      val bare = MediaItem(title, title.stripPrefix("File:"), com.histmersion.plugin.MediaItem.PageUrl(""), None, Left(com.histmersion.plugin.MediaItem.RightsPart1("no answer from Commons")))
       answer match
         case None              => bare
         case Some(Left(why))   => bare.copy(rights = Left(why))
         case Some(Right(info)) =>
           def field(k: com.histmersion.plugins.media.Commons.Files.Key) = info.meta.get(k).map(MediaText.plain(_)).filter(_.nonEmpty)
-          val licence = licences.readFirst(info.meta.get("License").toList ++ field("LicenseShortName").toList)
-          val required = info.meta.get("AttributionRequired").exists(_.trim.equalsIgnoreCase("true")) ||
+          val licence = licences.readFirst(info.meta.get(com.histmersion.plugins.media.Commons.File.MetaKey("License")).toList ++ field("LicenseShortName").toList)
+          val required = info.meta.get(com.histmersion.plugins.media.Commons.File.MetaKey("AttributionRequired")).exists(_.trim.equalsIgnoreCase("true")) ||
             licence.needsAttribution
-          val author = field("Attribution").orElse(field("Artist"))
+          val author = field(com.histmersion.plugins.media.Commons.Files.Key("Attribution")).orElse(field("Artist"))
           val refused =
-            if info.meta.get("NonFree").exists(_.trim.equalsIgnoreCase("true")) then Some("marked non-free on Commons")
+            if info.meta.get(com.histmersion.plugins.media.Commons.File.MetaKey("NonFree")).exists(_.trim.equalsIgnoreCase("true")) then Some("marked non-free on Commons")
             else if licence.family == Licence.Read.Unknown then
               Some(if licence.id.isEmpty then "no licence stated" else s"licence not recognised (${licence.id})")
             else if licence.family == Licence.Read.AllRights then Some("all rights reserved")
             else if required && author.isEmpty then Some("no author to credit")
             else None
-          val name = field("LicenseShortName").getOrElse(licence.id)
+          val name = field(com.histmersion.plugins.media.Commons.Files.Key("LicenseShortName")).getOrElse(licence.id)
           val rights =
             if refused.isDefined then MediaRights(Licence(licence.id))
             else
               MediaRights(
                 Licence(licence.id),
                 info.meta
-                  .get("LicenseUrl")
+                  .get(com.histmersion.plugins.media.Commons.File.MetaKey("LicenseUrl"))
                   .map(_.trim)
                   .filter(_.nonEmpty)
                   .map(u => if u.startsWith("//") then "https:" + u else u),
@@ -416,7 +416,7 @@ object Commons:
 
     /** The items to store with their thumbnails — Commons' own `thumb-px` renditions, asked in batches. */
     def thumbnails(items: List[MediaItem]): MediaCompleted =
-      val (infos, failed) = imageInfo(items.map(_.key), media.thumbPx, meta = false)
+      val (infos, failed) = imageInfo(items.map(_.key), media.thumbPx, meta = com.histmersion.plugins.media.Commons.Files.ImageInfoMeta(false))
       MediaCompleted(
         items.flatMap { it =>
           infos.get(it.key).flatMap(_.toOption).map { i =>

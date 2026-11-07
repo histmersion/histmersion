@@ -5,7 +5,7 @@ import com.histmersion.plugin.Plugin
 final class WikidataPlugin extends MediaPlugin("media-wikidata"):
   type Config = MediaPlugin.Config
   def register(c: MediaPlugin.Config, ctx: Plugin.Context): Either[com.histmersion.plugins.media.WikidataPlugin.Problem, Unit] =
-    ctx.mediaCollections.add("wikidata", WikidataPictures(c.media, ctx.licences))
+    ctx.mediaCollections.add(com.histmersion.plugin.Registry.AddId("wikidata"), WikidataPictures(c.media, ctx.licences))
 
 object WikidataPlugin:
   type Problem = Problem.T

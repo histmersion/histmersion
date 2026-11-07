@@ -5,7 +5,7 @@ import com.histmersion.plugin.Plugin
 final class OpenContextPlugin extends MediaPlugin("media-opencontext"):
   type Config = MediaPlugin.Config
   def register(c: MediaPlugin.Config, ctx: Plugin.Context): Either[com.histmersion.plugins.media.OpenContextPlugin.Problem, Unit] =
-    ctx.mediaCollections.add("opencontext", OpenContextCollection(c.media.openContext, ctx.licences))
+    ctx.mediaCollections.add(com.histmersion.plugin.Registry.AddId("opencontext"), OpenContextCollection(c.media.openContext, ctx.licences))
 
 object OpenContextPlugin:
   type Problem = Problem.T

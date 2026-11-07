@@ -21,14 +21,14 @@ object Awmc extends DownloadedGazetteer:
   type ReadFeatureOrdinal = ReadFeatureOrdinal.T
   object ReadFeatureOrdinal extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
-  val title = "AWMC classical-world regional names and features"
-  override val description = "AWMC classical-world regional names and features (ODbL, ~2600 features)"
+  val title = com.histmersion.plugin.GazetteerSource.TitleResult("AWMC classical-world regional names and features")
+  override val description = com.histmersion.plugin.GazetteerSource.DescriptionResult("AWMC classical-world regional names and features (ODbL, ~2600 features)")
   val url =
     "https://raw.githubusercontent.com/AWMC/geodata/master/Cultural-Data/regional_name_linework/regional_names_linework.geojson"
   val rights: GazetteerRights = GazetteerRights(
     Licence("ODbL"),
-    "Ancient World Mapping Center (UNC), ODbL",
-    Some("https://opendatacommons.org/licenses/odbl/1-0/")
+    com.histmersion.plugin.GazetteerRights.Credit("Ancient World Mapping Center (UNC), ODbL"),
+    Some(com.histmersion.plugin.GazetteerRights.LicenceUrl("https://opendatacommons.org/licenses/odbl/1-0/"))
   )
 
   def read(text: com.histmersion.plugins.gazetteers.Awmc.Text): Either[com.histmersion.plugins.gazetteers.Awmc.Problem, List[GazetteerPlace]] =
@@ -76,8 +76,8 @@ object Awmc extends DownloadedGazetteer:
     * `region`.
     */
   def kindOf(pType: com.histmersion.plugin.GazetteerPlace.Kind): com.histmersion.plugin.GazetteerPlace.Kind = pType.toLowerCase match
-    case "region"                        => "region"
-    case "people, tribe" | "people"      => "region"
-    case "mountain" | "plain" | "island" => "feature"
-    case "labeled feature"               => "feature"
-    case _                               => "region"
+    case "region"                        => com.histmersion.plugin.GazetteerPlace.Kind("region")
+    case "people, tribe" | "people"      => com.histmersion.plugin.GazetteerPlace.Kind("region")
+    case "mountain" | "plain" | "island" => com.histmersion.plugin.GazetteerPlace.Kind("feature")
+    case "labeled feature"               => com.histmersion.plugin.GazetteerPlace.Kind("feature")
+    case _                               => com.histmersion.plugin.GazetteerPlace.Kind("region")

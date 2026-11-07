@@ -12,7 +12,7 @@ import com.histmersion.upstreams.wikidata.{WikidataEntities, WikidataStatement}
   * `media.commons.licences`, stores Commons' own renditions and links each picture to its target in its role.
   */
 final class WikidataPictures(media: MediaSettings, licences: LicenceReader) extends MediaCollection:
-  val title = "Wikidata pictures"
+  val title = com.histmersion.plugin.MediaCollection.TitleResult("Wikidata pictures")
   override val description =
     "Pictures of places and events from their Wikidata items (image, locator map, plan, aerial view, route map), " +
       "licensed on Wikimedia Commons; a job asks about every place on the map not asked yet (one per Wikidata item, " +
@@ -24,7 +24,7 @@ final class WikidataPictures(media: MediaSettings, licences: LicenceReader) exte
   override def requestIntervalMs = media.requestIntervalMs
 
   def search(place: MediaPlace, http: Plugin.Http) =
-    Left("the Wikidata pictures are found for a batch of targets at once")
+    Left(com.histmersion.plugin.MediaCollection.SearchResultPart1("the Wikidata pictures are found for a batch of targets at once"))
 
   /** One target as the import asks it: what it is, its id and its Wikidata item. */
   final private case class Asked(target: MediaTarget.Id, qid: Asked.Qid, roles: List[(Asked.RolesPart1, Asked.RolesPart2)])

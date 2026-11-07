@@ -7,8 +7,8 @@ import com.histmersion.plugin.*
   * ([[OpenContext]]). A record is tied by a shared gazetteer id first, else by its context path's names.
   */
 final class OpenContextCollection(conf: CollectionSettings, licences: LicenceReader)
-    extends MuseumCollection(conf, "Open Context", "media.open-context"):
-  val title = "Open Context media"
+    extends MuseumCollection(conf, com.histmersion.plugins.media.MuseumCollection.Provider("Open Context"), com.histmersion.plugins.media.MuseumCollection.Key("media.open-context")):
+  val title = com.histmersion.plugin.MediaCollection.TitleResult("Open Context media")
   override val description =
     "Open Context's excavation media (photographs, drawings), each record under its own Creative Commons licence " +
       "(read from the search record and again from the media item); tied to a place on the map by a shared " +

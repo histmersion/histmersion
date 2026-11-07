@@ -5,7 +5,7 @@ import com.histmersion.plugin.Plugin
 final class AicPlugin extends MediaPlugin("media-aic"):
   type Config = MediaPlugin.Config
   def register(c: MediaPlugin.Config, ctx: Plugin.Context): Either[com.histmersion.plugins.media.AicPlugin.Problem, Unit] =
-    ctx.mediaCollections.add("aic", ArtInstituteCollection(c.media.aic, c.media.thumbPx))
+    ctx.mediaCollections.add(com.histmersion.plugin.Registry.AddId("aic"), ArtInstituteCollection(c.media.aic, c.media.thumbPx))
 
 object AicPlugin:
   type Problem = Problem.T

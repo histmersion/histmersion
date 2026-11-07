@@ -5,7 +5,7 @@ import com.histmersion.plugin.Plugin
 final class ClevelandPlugin extends MediaPlugin("media-cleveland"):
   type Config = MediaPlugin.Config
   def register(c: MediaPlugin.Config, ctx: Plugin.Context): Either[com.histmersion.plugins.media.ClevelandPlugin.Problem, Unit] =
-    ctx.mediaCollections.add("cleveland", ClevelandCollection(c.media.cleveland))
+    ctx.mediaCollections.add(com.histmersion.plugin.Registry.AddId("cleveland"), ClevelandCollection(c.media.cleveland))
 
 object ClevelandPlugin:
   type Problem = Problem.T

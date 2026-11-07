@@ -12,7 +12,7 @@ final class ArchiveOrgFetcher(client: () => ArchiveOrg) extends SourceFetcher:
   val access: Access = Access.Open
   def fetch(work: WorkKey, ctx: Fetch.Context): Fetch =
     work.archive match
-      case None     => Fetch.Miss("archive-org needs an archive.org identifier")
+      case None     => Fetch.Miss(com.histmersion.plugin.Fetch.Miss.Why("archive-org needs an archive.org identifier"))
       case Some(id) =>
         val archive = client()
         archive.info(id) match

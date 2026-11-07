@@ -12,10 +12,10 @@ import java.nio.charset.StandardCharsets.UTF_8
   * per class. A part is a class, `class:<qid>`.
   */
 final class WikidataCatalogue(cfg: WikidataSettings) extends EventCatalogue:
-  def title = "Wikidata"
+  def title = com.histmersion.plugin.EventCatalogue.TitleResult("Wikidata")
   def licence = Licence("CC0-1.0")
-  def citation = "Wikidata (CC0), https://www.wikidata.org"
-  def home = "https://www.wikidata.org"
+  def citation = com.histmersion.plugin.EventCatalogue.CitationResult("Wikidata (CC0), https://www.wikidata.org")
+  def home = com.histmersion.plugin.EventCatalogue.HomeResult("https://www.wikidata.org")
   override def requestIntervalMs: Int = cfg.requestIntervalMs
 
   private def classes: List[(com.histmersion.plugin.WikidataId, com.histmersion.plugins.events.WikidataCatalogue.ClassLabel)] = WikidataClasses.parse(cfg.classes)
@@ -69,7 +69,7 @@ object WikidataCatalogue:
   object BindingResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
   val Mythical = "Q24336466"
-  val Legendary: Set[com.histmersion.plugins.events.WikidataCatalogue.Legendary] = Set("Q26913948", "Q122397289")
+  val Legendary: Set[com.histmersion.plugins.events.WikidataCatalogue.Legendary] = Set(com.histmersion.plugins.events.WikidataCatalogue.LegendaryValue("Q26913948"), com.histmersion.plugins.events.WikidataCatalogue.LegendaryValue("Q122397289"))
 
   /** Pure: the SPARQL of one class — its instances (and its subclasses'), dated (point in time, else start/end) before
     * `to`, with their precision, their own coordinates or their location's, whether they are legendary or mythical, and
@@ -113,10 +113,10 @@ object WikidataCatalogue:
     */
   def parse(json: Json, kind: com.histmersion.plugin.CatalogueEvent.Kind): Either[com.histmersion.plugins.events.WikidataCatalogue.Problem, List[CatalogueEvent]] =
     json.hcursor.downField("results").downField("bindings").focus.flatMap(_.asArray) match
-      case None       => Left("no results in the answer")
+      case None       => Left(com.histmersion.plugins.events.WikidataCatalogue.Problem("no results in the answer"))
       case Some(rows) =>
         val bs = rows.toList.map(_.hcursor)
-        Right(bs.groupBy(b => binding(b, "item").getOrElse("")).toList.filter(_._1.nonEmpty).sortBy(_._1).flatMap {
+        Right(bs.groupBy(b => binding(b, com.histmersion.plugins.events.WikidataCatalogue.Key("item")).getOrElse("")).toList.filter(_._1.nonEmpty).sortBy(_._1).flatMap {
           (uri, rs) =>
             val qid = uri.reverse.takeWhile(_ != '/').reverse
             def first(k: com.histmersion.plugins.events.WikidataCatalogue.Key) = rs.flatMap(binding(_, k)).headOption
