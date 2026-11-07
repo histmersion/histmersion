@@ -41,12 +41,12 @@ object PlaceMergeRules extends MergeRules:
     val rows = PlaceBundleRepo.places(BundleScope.All, (idsHere ++ matches.values).toList).toList
     val pointedAt = (bundle.events.flatMap(_.placeId).map(id => BPlaceRow.Id(id.value)) ++ matches.values).distinct
     in.modify(_.labels.places)
-      .setTo(PlaceBundleRepo.placesNamed(bundle.placeAliases.map(a => BPlaceRow.Id(a.alias.value))))
+      .setTo(PlaceBundleRepo.placesNamed(bundle.placeAliases.map(a => BPlaceRow.Id(a.alias.value))).map((id, uid) => com.histmersion.api.exchange.Bundle.Place.Id(id.value) -> uid))
       .modify(_.labels.placeAliases)
-      .setTo(PlaceBundleRepo.oldIdsNamed((bundle.places.map(_.id.value) ++ bundle.placeAliases.map(_.alias.value)).map(BPlaceRow.Id(_))))
+      .setTo(PlaceBundleRepo.oldIdsNamed((bundle.places.map(_.id.value) ++ bundle.placeAliases.map(_.alias.value)).map(BPlaceRow.Id(_))).map((id, uid) => com.histmersion.api.exchange.Bundle.PlaceAlias.Alias(id.value) -> uid))
       .modify(_.local.places)
       .setTo(rows)
       .modify(_.placeMatches)
-      .setTo(matches)
+      .setTo(matches.map((uid, id) => uid -> com.histmersion.api.exchange.Bundle.Place.Id(id.value)))
       .modify(_.places)
-      .setTo(PlaceBundleRepo.present(pointedAt))
+      .setTo(PlaceBundleRepo.present(pointedAt).map(id => MergePlanner.Input.Places(id.value)))

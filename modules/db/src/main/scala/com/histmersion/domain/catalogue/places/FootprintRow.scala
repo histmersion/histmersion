@@ -4,6 +4,7 @@ import com.histmersion.util.database.given
 import com.augustnagro.magnum.*
 import com.histmersion.api.catalogue.Period
 import com.histmersion.api.catalogue.Place
+import com.histmersion.util.database.NewtypeColumns.given
 
 final private[places] case class FootprintRow(
     id: FootprintRow.Id,

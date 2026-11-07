@@ -12,12 +12,10 @@ final case class MediaReport(
     verdicts: List[MediaVerdict],
     failure: Option[MediaReport.Failure],
     log: List[LogLine],
-    requests: List[MediaReport.Requests]
+    requests: List[PluginHarness.Request]
 ):
   def kept: List[MediaVerdict] = verdicts.filter(_.refused.isEmpty)
 
 object MediaReport:
   type Failure = Failure.T
   object Failure extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type Requests = Requests.T
-  object Requests extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]

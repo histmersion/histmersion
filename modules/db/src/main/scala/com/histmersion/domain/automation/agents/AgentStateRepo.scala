@@ -3,6 +3,7 @@ package com.histmersion.domain.automation.agents
 import com.histmersion.api.automation.AgentStateEntry
 
 import com.augustnagro.magnum.*
+import com.histmersion.util.database.NewtypeColumns.given
 
 /** The agents' scratch state (`agent_state`): a JSON value under a key, with when it was last set. */
 private[agents] object AgentStateRepo:

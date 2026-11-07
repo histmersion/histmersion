@@ -3,6 +3,7 @@ package com.histmersion.domain.catalogue.places
 import com.histmersion.util.database.given
 import com.augustnagro.magnum.DbCodec
 import java.util.UUID
+import com.histmersion.util.database.NewtypeColumns.given
 
 /** A place of this collection's own, as its bundle line reads it. */
 final private[places] case class BPlaceRow(

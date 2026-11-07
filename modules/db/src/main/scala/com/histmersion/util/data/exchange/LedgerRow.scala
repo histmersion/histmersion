@@ -23,6 +23,7 @@ import com.augustnagro.magnum.*
 import java.util.UUID
 import com.histmersion.util.data.exchange.Bundle
 import com.histmersion.api.Api
+import com.histmersion.util.database.NewtypeColumns.given
 
 final private[exchange] case class LedgerRow(
     foreignUid: UUID,

@@ -4,6 +4,7 @@ import com.histmersion.util.database.given
 
 import com.augustnagro.magnum.*
 import com.histmersion.api.library.Finding
+import com.histmersion.util.database.NewtypeColumns.given
 
 /** One row of `FilterSql.findingsQuery`. */
 final private[search] case class FindingHitRow(

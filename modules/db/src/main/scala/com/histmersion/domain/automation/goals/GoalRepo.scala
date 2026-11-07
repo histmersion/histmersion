@@ -135,7 +135,7 @@ object GoalRepo:
       .query[String]
       .run()
       .headOption
-      .map(com.histmersion.domain.automation.Goal.Slug(_))
+      .map(com.histmersion.domain.automation.Goal.Slug.assume(_))
     if !exists(oldSlug) then Left(Api.Error(Api.Error.Message(s"No goal '${oldSlug.value}'"), Some(Api.Error.Code(Write.CodeNotFound))))
     else if exists(newSlug) then
       Left(
@@ -162,7 +162,7 @@ object GoalRepo:
   def renamedTo(slug: com.histmersion.domain.automation.Goal.Slug)(using DbCon): Option[com.histmersion.domain.automation.Goal.Slug] =
     com.histmersion.domain.automation.goals.GoalAliasTable.table
       .renamedToIn(com.histmersion.util.identity.AliasTable.Id(slug.value))
-      .map(id => com.histmersion.domain.automation.Goal.Slug(id.value))
+      .map(id => com.histmersion.domain.automation.Goal.Slug.assume(id.value))
 
   /** A goal removed in the caller's transaction; false when there was none. */
   def deleteIn(slug: com.histmersion.domain.automation.Goal.Slug)(using DbCon): Boolean =

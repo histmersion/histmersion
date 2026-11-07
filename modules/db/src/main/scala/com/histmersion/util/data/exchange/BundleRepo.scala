@@ -13,6 +13,7 @@ import com.histmersion.util.database.Sql
 import com.histmersion.util.database.given
 import com.histmersion.api.aliases.InstanceInfo
 import com.histmersion.util.data.exchange.Bundle
+import com.histmersion.util.database.NewtypeColumns.given
 
 given DbCodec[InstanceInfo] = DbCodec.derived
 

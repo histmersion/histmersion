@@ -6,6 +6,7 @@ import com.histmersion.util.database.given
 import com.augustnagro.magnum.*
 import java.util.UUID
 import com.histmersion.domain.library.Source
+import com.histmersion.util.database.NewtypeColumns.given
 
 /** A source as the bundle reads it: its columns, its body's and its original's digests and its ISBNs. */
 final private[sources] case class BSourceRow(

@@ -2,6 +2,7 @@ package com.histmersion.domain.catalogue.evidence
 
 import com.augustnagro.magnum.DbCodec
 import com.histmersion.util.database.given_DbCodec_List
+import com.histmersion.util.database.NewtypeColumns.given
 
 /** A stored candidate link of an event to a source, its passages as JSON. */
 final private[evidence] case class CandidateRow(

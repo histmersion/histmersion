@@ -2,6 +2,7 @@ package com.histmersion.domain.catalogue.events
 
 import com.histmersion.api.catalogue.{EventGeo, EventLeads}
 import com.augustnagro.magnum.DbCodec
+import com.histmersion.util.database.NewtypeColumns.given
 
 /** One event on the map before its outline is read (the map's events). */
 final private[events] case class EventGeoRow(
@@ -10,7 +11,7 @@ final private[events] case class EventGeoRow(
     lon: com.histmersion.Longitude,
     anchor: EventGeoRow.Anchor,
     placeLabel: Option[EventGeoRow.PlaceLabel],
-    hasArea: EventGeoRow.HasArea,
+    hasArea: Boolean,
     vei: Option[EventGeoRow.Vei],
     magnitude: Option[EventGeoRow.Magnitude]
 ) derives DbCodec:
@@ -47,8 +48,6 @@ object EventGeoRow:
   object Anchor extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type PlaceLabel = PlaceLabel.T
   object PlaceLabel extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type HasArea = HasArea.T
-  object HasArea extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type Vei = Vei.T
   object Vei extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type Magnitude = Magnitude.T

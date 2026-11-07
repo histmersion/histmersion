@@ -6,6 +6,7 @@ import com.histmersion.api.library.Confidence
 import com.augustnagro.magnum.*
 import com.histmersion.api.library.GeoHit
 import com.histmersion.api.library.Source
+import com.histmersion.util.database.NewtypeColumns.given
 
 /** One map-feed row: a [[GeoHit]] and what [[SourceKinds.of]] reads to say what its source is. */
 final private[findings] case class GeoFeedRow(

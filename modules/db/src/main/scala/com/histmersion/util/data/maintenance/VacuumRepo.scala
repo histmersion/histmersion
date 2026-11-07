@@ -3,6 +3,7 @@ package com.histmersion.util.data.maintenance
 import com.histmersion.api.maintenance.Vacuum
 
 import com.augustnagro.magnum.*
+import com.histmersion.util.database.NewtypeColumns.given
 
 /** `VACUUM` for `histmersion maintenance vacuum`. VACUUM cannot run inside a transaction block, so it runs on a
   * connection in autocommit mode — never in a transaction.

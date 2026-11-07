@@ -66,7 +66,7 @@ private[events] object EventRepo:
     val total = (Sql.raw(Sql.Text(s"SELECT count(*)::int FROM $fromEvents WHERE ")) ++ where).frag.query[Int].run().head
     val rows = (Sql.raw(Sql.Text(s"SELECT $summaryCols FROM $fromEvents WHERE ")) ++ where ++
       Sql.raw(com.histmersion.util.database.Sql.Text(" ORDER BY coalesce(e.not_before, e.begin_by), e.label")) ++
-      Sql.of(" LIMIT ? OFFSET ?", Param.I(Param.I.V(limit.value.max(1))), Param.I(Param.I.V(offset.value.max(0))))).frag
+      Sql.of(Sql.Text(" LIMIT ? OFFSET ?"), Param.I(Param.I.V(limit.value.max(1))), Param.I(Param.I.V(offset.value.max(0))))).frag
       .query[EventRow]
       .run()
       .toList
@@ -85,7 +85,7 @@ private[events] object EventRepo:
     val where = listed ++ Sql.of(com.histmersion.util.database.Sql.OfText(" AND e.uncertainty <= ?"), Param.L(Param.L.V(EventPrecision.ApproximateUpTo.value)))
     val rows = (geoSelect ++ where ++
       Sql.raw(com.histmersion.util.database.Sql.Text(" ORDER BY coalesce(e.not_before, e.begin_by), e.label")) ++
-      Sql.of(" LIMIT ?", Param.I(Param.I.V(limit.value.max(1))))).frag.query[EventGeoRow].run().toList
+      Sql.of(Sql.Text(" LIMIT ?"), Param.I(Param.I.V(limit.value.max(1))))).frag.query[EventGeoRow].run().toList
     val unplaced = (Sql.raw(
       Sql.Text(s"SELECT count(*)::int FROM $fromEvents WHERE e.geom IS NULL AND ep.geom IS NULL AND ")
     ) ++ where).frag.query[Int].run().head
@@ -94,7 +94,7 @@ private[events] object EventRepo:
     ) ++
       listed ++ Sql.of(com.histmersion.util.database.Sql.Text(" AND e.uncertainty > ?"), Param.L(Param.L.V(EventPrecision.ApproximateUpTo.value)))).frag.query[Int].run().head
     val items = rows.map(r => (r, r.toGeo))
-    val wanted = items.collect { case (r, g) if r.hasArea && g.scale == EventScale.Regional => r.row.id }
+    val wanted = items.collect { case (r, g) if r.hasArea && g.scale.value == EventScale.Regional => r.row.id }
     val outlines: Map[com.histmersion.domain.catalogue.events.BEventRow.Id, com.histmersion.domain.catalogue.events.BEventRow.Geom] =
       if wanted.isEmpty then Map.empty
       else
@@ -204,7 +204,7 @@ private[events] object EventRepo:
     */
   private def recordCorrections(id: com.histmersion.domain.catalogue.events.BEventRow.Id, fields: Map[String, io.circe.Json])(using DbCon): Unit =
     if fields.nonEmpty then
-      EventImportRepo.upstreamOf(id).foreach { (provider, rec) =>
+      EventImportRepo.upstreamOf(com.histmersion.domain.catalogue.Event.Id.assume(id.value)).foreach { (provider, rec) =>
         val up = EventFields.upstream(rec)
         fields.foreach((f, v) =>
           up.get(f).foreach(u => CorrectionRepo.record(Correction.TargetKind(Correction.Target.Event), Correction.TargetId(id.value), Correction.Field(f), v, u, Some(com.histmersion.domain.catalogue.events.BCatalogueRow.Provider(provider.value))))

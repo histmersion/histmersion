@@ -7,6 +7,7 @@ import com.histmersion.config.*
 import com.histmersion.domain.*
 
 import com.augustnagro.magnum.*
+import com.histmersion.util.database.NewtypeColumns.given
 
 /** One row of `gazetteer_sources` (V071). */
 final case class GazetteerSourceRow(

@@ -8,9 +8,4 @@ enum BlobSink:
   case Held(write: Array[Byte] => Unit)
 
   /** Into a file store, streamed; it checks the digest itself. The answer is what went wrong, when anything did. */
-  case Streamed(store: InputStream => Option[BlobSink.Streamed.StoreResult])
-
-object BlobSink:
-  object Streamed:
-    type StoreResult = com.histmersion.Sha256
-    val StoreResult: _root_.com.histmersion.Sha256.type = _root_.com.histmersion.Sha256
+  case Streamed(store: InputStream => Option[ImportAbort.Problem])

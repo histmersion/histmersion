@@ -1,6 +1,7 @@
 package com.histmersion.plugin.testkit
 
 import com.histmersion.plugin.testkit.internal.ProjectPaths
+import com.histmersion.pluginhost.HttpTransport
 
 import java.nio.file.Path
 
@@ -34,7 +35,7 @@ enum HttpMode:
   case Replay(dir: Path)
 
   /** No network: canned answers by exact URL, for unit tests; any other URL answers HTTP 404. */
-  case Stub(answers: Map[HttpMode.Stub.AnswersKey, StubAnswer])
+  case Stub(answers: Map[HttpTransport.Url, StubAnswer])
 
   /** Whether requests reach the real network. */
   def live: Boolean = this match
@@ -44,13 +45,6 @@ enum HttpMode:
 object HttpMode:
   type Problem = Problem.T
   object Problem extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  /** `live`, `record` or `replay`: the mode [[fromEnv]] picks. */
-  object Stub:
-    type AnswersKey = AnswersKey.T
-    object AnswersKey extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-
-  type FromEnvEnvPart1 = String
-  type FromEnvEnvPart2 = String
 
   val ModeVariable = "HISTMERSION_PLUGIN_HTTP"
 
@@ -77,21 +71,23 @@ object HttpMode:
     *   - otherwise `Left`, the reason to skip the test: there is nothing to replay, and going to the network was not
     *     asked for.
     */
-  def fromEnv(dir: Path, env: Map[com.histmersion.plugin.testkit.HttpMode.FromEnvEnvPart1, com.histmersion.plugin.testkit.HttpMode.FromEnvEnvPart2] = sys.env): Either[com.histmersion.plugin.testkit.HttpMode.Problem, HttpMode] =
-    choose(ProjectPaths.resolve(dir, sys.props.get(ProjectProperty)), env)
+  def fromEnv(dir: Path, env: Map[String, String] = sys.env): Either[com.histmersion.plugin.testkit.HttpMode.Problem, HttpMode] =
+    choose(ProjectPaths.resolve(dir, sys.props.get(ProjectProperty).map(ProjectPaths.ProjectDir(_))), env)
 
   private def choose(dir: Path, env: Map[String, String]): Either[com.histmersion.plugin.testkit.HttpMode.Problem, HttpMode] =
     env.get(ModeVariable).map(_.trim.toLowerCase(java.util.Locale.ROOT)).filter(_.nonEmpty) match
       case Some("live")                  => Right(Live)
       case Some("record")                => Right(Record(dir))
       case Some("replay")                => Right(Replay(dir))
-      case Some(other)                   => Left(s"$ModeVariable=$other: one of live, record, replay")
+      case Some(other)                   => Left(Problem(s"$ModeVariable=$other: one of live, record, replay"))
       case None if Recordings.exist(dir) => Right(Replay(dir))
       case None
           if env.get(LiveVariable).exists(v => Set("1", "true", "yes")(v.trim.toLowerCase(java.util.Locale.ROOT))) =>
         Right(Live)
       case None =>
         Left(
-          s"no recordings in $dir: set $LiveVariable=1 to run against the real site " +
-            s"($ModeVariable=record to keep its answers for an offline replay)"
+          Problem(
+            s"no recordings in $dir: set $LiveVariable=1 to run against the real site " +
+              s"($ModeVariable=record to keep its answers for an offline replay)"
+          )
         )

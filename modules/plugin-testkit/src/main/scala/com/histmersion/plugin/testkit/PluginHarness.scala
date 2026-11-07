@@ -2,7 +2,10 @@ package com.histmersion.plugin.testkit
 
 import hearth.kindlings.optics.syntax.*
 import com.histmersion.config.{AppConfig, LoadedConfig}
-import com.histmersion.api.plugins.PluginState
+import com.histmersion.api.plugins.{PluginState, PluginStatus}
+import com.histmersion.domain.DeepTime
+import com.histmersion.api.catalogue.CatalogRecord
+import com.histmersion.domain.media.imports.MediaRecord
 import com.histmersion.domain.media.imports.LicencePolicy
 import com.histmersion.pluginhost.allowed
 import com.histmersion.plugin.*
@@ -12,6 +15,7 @@ import com.histmersion.pluginhost.{
   FirstPartySettings,
   HostLog,
   HostServices,
+  HttpTransport,
   JavaHttpTransport,
   Kept,
   PluginAi,
@@ -60,7 +64,7 @@ import scala.jdk.CollectionConverters.*
   * }}}
   */
 final class PluginHarness private (
-    val id: PluginHarness.Id,
+    val id: Plugin.Info.Id,
     /** The plugin as loaded. */
     val plugin: Plugin,
     registries: Registries,
@@ -71,11 +75,11 @@ final class PluginHarness private (
     lines: Lines,
     acquisition: PolicyHttp,
     /** What the server would have warned about while loading the plugin (a secret written into the config). */
-    val warnings: List[PluginHarness.Warnings]
+    val warnings: List[PluginStatus.Warnings]
 ):
 
   private val hostLog: HostLog = lines.host
-  private def sleep: com.histmersion.plugin.testkit.PluginHarness.SleepMs => Unit = if mode.live then ms => Thread.sleep(ms) else _ => ()
+  private def nap(ms: Long): Unit = if mode.live then Thread.sleep(ms)
 
   /** What the plugin registered. */
   val contributions: Contributions =
@@ -90,19 +94,19 @@ final class PluginHarness private (
   /** The gazetteer sources the plugin registered, each under the name `places fetch` takes (`gazetteer-source:<name>`
     * in the server's list).
     */
-  def gazetteerSources: List[com.histmersion.plugin.testkit.PluginHarness.GazetteerName] = registries.gazetteerSources.keys.toList
+  def gazetteerSources: List[Registries.GazetteerSourcesKey] = registries.gazetteerSources.keys.toList
 
   /** Every line logged since the plugin was loaded. */
   def log: List[LogLine] = lines.all
 
   /** Every request made since the plugin was loaded, `GET <url>`, with secrets shown as `{secret}`. */
-  def requests: List[com.histmersion.plugin.testkit.PluginHarness.Request] = wire.requests
+  def requests: List[PluginHarness.Request] = wire.requests
 
   /** The plugin's `HttpMode`. */
   def http: HttpMode = mode
 
   /** Runs `body`, then fails the test if it asked a replay for something not recorded. */
-  private def run[A](body: => A): (A, List[LogLine], List[com.histmersion.plugin.testkit.PluginHarness.Problem]) =
+  private def run[A](body: => A): (A, List[LogLine], List[PluginHarness.Request]) =
     val (logFrom, askedFrom) = (lines.all.size, wire.requests.size)
     val result = body
     wire.check()
@@ -113,17 +117,24 @@ final class PluginHarness private (
     * recorded and replayed with the rest. The contact e-mail of the user's config is never sent from a test (nor
     * recorded): the lookups are anonymous.
     */
-  def workFromDoi(doi: com.histmersion.domain.library.Doi): Either[com.histmersion.plugin.testkit.PluginHarness.Problem, WorkKey] =
-    val clean = doi.trim.toLowerCase(java.util.Locale.ROOT).replaceFirst("^(https?://)?(dx\\.)?doi\\.org/", "")
-    def json(url: com.histmersion.plugin.testkit.PluginHarness.Url) = acquisition
-      .bytes(url)
+  def workFromDoi(doi: com.histmersion.domain.library.Doi): Either[PluginHarness.Problem, WorkKey] =
+    val clean = doi.value.trim.toLowerCase(java.util.Locale.ROOT).replaceFirst("^(https?://)?(dx\\.)?doi\\.org/", "")
+    def json(url: com.histmersion.upstreams.landing.RepositoryLanding.Candidate.Url) = acquisition
+      .bytes(HttpTransport.Url(url.value))
+      .left
+      .map(e => WorkLookup.Problem(e.value))
       .flatMap(b =>
-        io.circe.parser.parse(new String(b, UTF_8)).left.map(e => s"$url returned unparseable JSON: ${e.getMessage}")
+        io.circe.parser
+          .parse(new String(b.value, UTF_8))
+          .left
+          .map(e => WorkLookup.Problem(s"${url.value} returned unparseable JSON: ${e.getMessage}"))
       )
     run(
       WorkLookup
-        .meta(host.acquire.upstreamSettings, json, hostLog.plugin)(clean)
-        .map(w => WorkLookup.key(Some(clean), None, Some(w)))
+        .meta(host.acquire.upstreamSettings, json, hostLog.plugin)(Doi(clean))
+        .map(w => WorkLookup.key(Some(Doi(clean)), None, Some(w)))
+        .left
+        .map(e => PluginHarness.Problem(e.value))
     )._1
 
   /** One fetch of `work` through the plugin's source fetchers, as the server's acquisition chain runs it. With
@@ -138,26 +149,36 @@ final class PluginHarness private (
   def fetch(
       work: WorkKey,
       saveTo: Option[Path] = None,
-      legalOnly: com.histmersion.plugin.testkit.PluginHarness.LegalOnly = false,
-      allowUnauthorised: com.histmersion.plugin.testkit.PluginHarness.AllowUnauthorised = false
+      legalOnly: FetchChain.LegalOnly = FetchChain.LegalOnly(false),
+      allowUnauthorised: FetchChain.AllowUnauthorised = FetchChain.AllowUnauthorised(false)
   ): FetchReport =
     val (outcome, logged, asked) = run {
-      val (chain, notes) = FetchChain.of(registries.sourceFetchers, Nil, allowUnauthorised, hostLog, Set(id))
-      notes.foreach(hostLog.info)
+      val (chain, notes) = FetchChain.of(
+        registries.sourceFetchers.map((k, v) => com.histmersion.util.plugins.Plugin.Id.assume(k.value) -> v),
+        Nil,
+        allowUnauthorised,
+        hostLog,
+        Set(com.histmersion.util.plugins.Plugin.Id.assume(id.value))
+      )
+      notes.foreach(n => hostLog.info(HostLog.Line(n.value)))
       chain.fetchWorkExplained(work, legalOnly)
     }
     val answers = outcome.answers.map(a => FetcherAnswer(a.fetcher, a.kind == FetchChain.Answer.Kind.Refused, a.why))
     val result = outcome.file match
       case Right(file) =>
-        val fetcher = outcome.foundBy.getOrElse("?")
+        val fetcher = outcome.foundBy.getOrElse(FetchChain.Outcome.FoundBy("?"))
         FetchOutcome.Found(fetcher, file, saveTo.map(dir => PluginHarness.save(dir, fetcher, work, file)))
       case Left(noCopy) =>
         val refused = answers.filter(_.refused)
-        if refused.nonEmpty then FetchOutcome.Refused(refused.map(a => s"${a.fetcher}: ${a.why}").mkString("; "))
-        else if answers.nonEmpty then FetchOutcome.Miss(answers.map(a => s"${a.fetcher}: ${a.why}").mkString("; "))
+        if refused.nonEmpty then FetchOutcome.Refused(FetchOutcome.Refused.Why(refused.map(a => s"${a.fetcher}: ${a.why}").mkString("; ")))
+        else if answers.nonEmpty then FetchOutcome.Miss(FetchOutcome.Miss.Why(answers.map(a => s"${a.fetcher}: ${a.why}").mkString("; ")))
         else
-          FetchOutcome.Miss(if registries.sourceFetchers.isEmpty then "the plugin registered no source fetcher"
-          else noCopy)
+          FetchOutcome.Miss(
+            FetchOutcome.Miss.Why(
+              if registries.sourceFetchers.isEmpty then "the plugin registered no source fetcher"
+              else noCopy.value
+            )
+          )
     FetchReport(result, answers, logged, asked)
 
   /** One search of the plugin's media collection `collection` for `place`, through the collection's polite client (its
@@ -166,51 +187,51 @@ final class PluginHarness private (
     * would keep completed (`complete`) and judged again. Tying a record to a place on the map is the server's and needs
     * the map: not run here.
     */
-  def searchMedia(collection: com.histmersion.plugin.testkit.PluginHarness.CollectionName, place: MediaPlace): MediaReport =
+  def searchMedia(collection: Registries.MediaCollectionsKey, place: MediaPlace): MediaReport =
     registries.mediaCollections.get(collection) match
-      case None      => MediaReport(Nil, Some(s"the plugin registered no media collection '$collection'"), Nil, Nil)
+      case None      => MediaReport(Nil, Some(MediaReport.Failure(s"the plugin registered no media collection '$collection'")), Nil, Nil)
       case Some(col) =>
         val ((verdicts, failure), logged, asked) = run {
           val polite = PluginMedia.polite(
-            wire.transport(JavaHttpTransport(host.media.timeoutSeconds)),
+            wire.transport(JavaHttpTransport(HttpTransport.TimeoutSeconds(host.media.timeoutSeconds.value))),
             host.media,
             col,
-            sleep,
+            ms => nap(ms.value),
             hostLog
           )
           val http = PluginMedia.http(polite)
-          val allow = host.media.collections.allowed(collection)
+          val allow = host.media.collections.allowed(com.histmersion.config.MediaPluginCollectionsConfig.PerCollectionKey(collection.value))
           PluginMedia.guard(col.search(place, http)) match
-            case Left(why)    => (Nil, Some(why))
-            case Right(items) => (items.map(judge(collection, col, http, allow)), None)
+            case Left(why)    => (Nil, Some(MediaReport.Failure(why.value)))
+            case Right(items) => (items.map(judge(PluginMedia.Provider(collection.value), col, http, allow)), None)
         }
         MediaReport(verdicts, failure, logged, asked)
 
-  private def judge(name: com.histmersion.plugin.testkit.PluginHarness.JudgeName, col: MediaCollection, http: Plugin.Http, allow: LicencePolicy)(
-      answered: Either[String, MediaItem]
+  private def judge(name: PluginMedia.Provider, col: MediaCollection, http: Plugin.Http, allow: LicencePolicy)(
+      answered: Either[?, MediaItem]
   ): MediaVerdict =
     answered match
-      case Left(why)   => MediaVerdict(why, None, None, Some(why))
+      case Left(why)   => MediaVerdict(MediaRecord.Key(s"$why"), None, None, Some(PluginMedia.Refusal(s"$why")))
       case Right(item) =>
         val rec = PluginMedia.record(item)
         PluginMedia.refusal(rec, allow, name) match
-          case Some(why) => MediaVerdict(rec.key, Some(item), rec.rights.toOption.map(_.licence.id.value), Some(why))
+          case Some(why) => MediaVerdict(rec.key, Some(item), rec.rights.toOption.map(_.licence.id), Some(why))
           case None      =>
             PluginMedia.guard(col.complete(item, http)) match
               case Left(why) =>
-                MediaVerdict(rec.key, Some(item), rec.rights.toOption.map(_.licence.id.value), Some(why))
+                MediaVerdict(rec.key, Some(item), rec.rights.toOption.map(_.licence.id), Some(PluginMedia.Refusal(why.value)))
               case Right(full) =>
                 val completed = PluginMedia.record(full)
                 val again = PluginMedia
                   .refusal(completed, allow, name)
-                  .map(why => if why.startsWith("licence") then "licence not allowed on the full record" else why)
-                MediaVerdict(completed.key, Some(full), completed.rights.toOption.map(_.licence.id.value), again)
+                  .map(why => if why.value.startsWith("licence") then PluginMedia.Refusal("licence not allowed on the full record") else why)
+                MediaVerdict(completed.key, Some(full), completed.rights.toOption.map(_.licence.id), again)
 
   /** One import of the plugin's event catalogue `catalogue`: its parts for `query`, each read page by page through the
     * catalogue's polite client, each record checked and dated as the server stores it (a part is read once per run; the
     * server also skips parts an earlier import read).
     */
-  def readCatalogue(catalogue: com.histmersion.plugin.testkit.PluginHarness.CatalogueName, query: CatalogueQuery): CatalogueReport =
+  def readCatalogue(catalogue: Registries.EventCataloguesKey, query: CatalogueQuery): CatalogueReport =
     registries.eventCatalogues.get(catalogue) match
       case None =>
         CatalogueReport(
@@ -219,51 +240,53 @@ final class PluginHarness private (
           Nil,
           Nil,
           Nil,
-          Some(s"the plugin registered no event catalogue '$catalogue'"),
+          Some(CatalogueReport.Failure(s"the plugin registered no event catalogue '$catalogue'")),
           Nil,
           Nil
         )
       case Some(cat) =>
-        val pages = List.newBuilder[(String, Either[String, Int])]
+        val pages = List.newBuilder[(PluginEvents.PartName, Either[PluginEvents.Problem, CatalogueReport.Events])]
         val accepted = List.newBuilder[AcceptedEvent]
-        val refused = List.newBuilder[String]
-        val leftOut = List.newBuilder[String]
+        val refused = List.newBuilder[CatalogueReport.Refused]
+        val leftOut = List.newBuilder[CatalogueReport.LeftOut]
         val ((parts, failure), logged, asked) = run {
-          val interval = PluginEvents.safe(cat.requestIntervalMs).getOrElse(1000)
+          val interval = PluginEvents.safe(cat.requestIntervalMs).map(i => PluginEvents.IntervalMs(i.value)).getOrElse(PluginEvents.IntervalMs(1000))
           val polite = PluginEvents.polite(
-            wire.transport(JavaHttpTransport(host.events.timeoutSeconds)),
+            wire.transport(JavaHttpTransport(HttpTransport.TimeoutSeconds(host.events.timeoutSeconds.value))),
             host.media,
             interval,
-            sleep,
+            ms => nap(ms.value),
             hostLog
           )
           val http = PluginEvents.http(polite)
-          val limits = PluginEvents.limits(Some(cat), java.time.Year.now.getValue.toLong)
+          val limits = PluginEvents.limits(Some(cat), DeepTime.SignedYear(java.time.Year.now.getValue.toLong))
           // the parts read in this run: a page naming one again is not followed
-          val read = scala.collection.mutable.Set.empty[String]
-          PluginEvents.guard(Right(cat.parts(query))) match
-            case Left(why)    => (Nil, Some(why))
+          val read = scala.collection.mutable.Set.empty[PluginEvents.PartName]
+          PluginEvents.guard(Right(cat.parts(query).map(p => PluginEvents.PartName(p.value)))) match
+            case Left(why)    => (Nil, Some(CatalogueReport.Failure(why.value)))
             case Right(parts) =>
               parts.distinct.foreach { first =>
                 PluginEvents.readPart(cat, first, query, http, read.contains, false) { (part, got) =>
                   read += part
-                  pages += part -> got.map(_.events.size)
+                  pages += part -> got.map(p => CatalogueReport.Events(p.events.size))
                   got.toOption.toList
                     .flatMap(_.events)
                     .foreach(e =>
-                      PluginEvents.record(catalogue, e) match
-                        case Left(why)                => refused += s"$part: $why"
+                      PluginEvents.record(CatalogRecord.Provider(catalogue.value), e) match
+                        case Left(why)                => refused += CatalogueReport.Refused(s"$part: $why")
                         case Right(Kept(r, warnings)) =>
-                          leftOut ++= warnings.map(w => s"$part: $w")
+                          leftOut ++= warnings.map(w => CatalogueReport.LeftOut(s"$part: $w"))
                           val d = PluginEvents.derive(r, limits)
                           val ts = d.timeSpan
+                          def year(y: Option[com.histmersion.api.catalogue.Year]) =
+                            y.flatMap(v => SpiValues.year(DeepTime.SignedYear(v.value)))
                           accepted += AcceptedEvent(
                             e,
                             d.kind,
-                            ts.notBefore.flatMap(SpiValues.year),
-                            ts.beginBy.flatMap(SpiValues.year),
-                            ts.endFrom.flatMap(SpiValues.year),
-                            ts.notAfter.flatMap(SpiValues.year)
+                            year(ts.notBefore),
+                            year(ts.beginBy),
+                            year(ts.endFrom),
+                            year(ts.notAfter)
                           )
                     )
                 }
@@ -285,23 +308,23 @@ final class PluginHarness private (
     * gazetteer client (its User-Agent and `places.fetch-*` timeouts), each place checked and converted as the server
     * stores it — without the store.
     */
-  def readGazetteer(name: com.histmersion.plugin.testkit.PluginHarness.GazetteerName): GazetteerReport =
+  def readGazetteer(name: Registries.GazetteerSourcesKey): GazetteerReport =
     registries.gazetteerSources.get(name) match
-      case None      => GazetteerReport(Nil, Nil, Some(s"the plugin registered no gazetteer source '$name'"), Nil, Nil)
+      case None      => GazetteerReport(Nil, Nil, Some(GazetteerReport.Failure(s"the plugin registered no gazetteer source '$name'")), Nil, Nil)
       case Some(src) =>
         val (got, logged, asked) = run {
           val http = PluginGazetteers.http(wire.transport(PluginGazetteers.transport(host.places)), hostLog)
           PluginGazetteers.guard(src.fetch(http)).map { places =>
-            val credit = PluginGazetteers.guard(Right(src.rights.credit)).getOrElse("")
+            val credit = PluginGazetteers.guard(Right(com.histmersion.domain.Attribution.Credit(src.rights.credit.value))).getOrElse(com.histmersion.domain.Attribution.Credit(""))
             places.map(p => PluginGazetteers.input(p, credit).map(in => AcceptedPlace(p, in.place.source)))
           }
         }
         got match
-          case Left(why)   => GazetteerReport(Nil, Nil, Some(why), logged, asked)
+          case Left(why)   => GazetteerReport(Nil, Nil, Some(GazetteerReport.Failure(why.value)), logged, asked)
           case Right(read) =>
             GazetteerReport(
               read.collect { case Right(a) => a },
-              read.collect { case Left(w) => w },
+              read.collect { case Left(w) => GazetteerReport.Refused(w.value) },
               None,
               logged,
               asked
@@ -312,12 +335,12 @@ final class PluginHarness private (
     * [[PluginHarness.liveAiHttp]] (the server's own client) to reach the real provider. (The server also refuses a
     * provider that spends the person's own plan while it listens beyond loopback; a test is on loopback.)
     */
-  def aiTurn(provider: com.histmersion.plugin.testkit.PluginHarness.Provider, request: AiTurn.Request, http: AiHttp = ScriptedAiHttp()): AiReport =
+  def aiTurn(provider: Registries.AiProvidersKey, request: AiTurn.Request, http: AiHttp = ScriptedAiHttp()): AiReport =
     registries.aiProviders.get(provider) match
-      case None    => AiReport(Left(s"the plugin registered no AI provider '$provider'"), None, Nil)
+      case None    => AiReport(Left(PluginAi.Problem(s"the plugin registered no AI provider '$provider'")), None, Nil)
       case Some(p) =>
         val ((check, turn), logged, _) = run {
-          val check = PluginAi.check(p, request.model)
+          val check = PluginAi.check(p, PluginAi.ModelName(request.model.value))
           (check, check.toOption.map(_ => PluginAi.turn(p, request, http)))
         }
         AiReport(check, turn, logged)
@@ -325,68 +348,24 @@ final class PluginHarness private (
   /** `<vault>:<ref>` resolved by the plugin's secret vault `vault`, as the server resolves a secret reference in any
     * plugin's config.
     */
-  def resolveSecret(vault: com.histmersion.plugin.testkit.PluginHarness.VaultId, ref: com.histmersion.plugin.testkit.PluginHarness.SecretKey): Either[com.histmersion.plugin.testkit.PluginHarness.Problem, com.histmersion.plugin.testkit.PluginHarness.ResolveSecretResultPart2] =
-    PluginHost.resolve(Secret.Ref.Vault(vault, ref), env, registries.secretVaults)
+  def resolveSecret(vault: Secret.Ref.Vault.Value, ref: Secret.Ref.Vault.Ref): Either[PluginHost.Problem, PluginHost.SecretValue] =
+    PluginHost.resolve(
+      Secret.Ref.Vault(vault, ref),
+      env,
+      registries.secretVaults.iterator.map((k, v) => Secret.Ref.Vault.Value(k.value) -> v).toMap
+    )
 
 object PluginHarness:
-  type AllowUnauthorised = AllowUnauthorised.T
-  object AllowUnauthorised extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type CatalogueName = CatalogueName.T
-  object CatalogueName extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type CollectionName = CollectionName.T
-  object CollectionName extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type ConfigText = ConfigText.T
-  object ConfigText extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type Defaults = Defaults.T
-  object Defaults extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type FetcherName = FetcherName.T
-  object FetcherName extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type GazetteerName = GazetteerName.T
-  object GazetteerName extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type LegalOnly = LegalOnly.T
-  object LegalOnly extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  /** Why a harness could not be built or a lookup could not be made. */
   type Problem = Problem.T
   object Problem extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type Provider = Provider.T
-  object Provider extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
+  /** One request made through the harness: `GET <url>`, with secrets shown as `{secret}`. */
   type Request = Request.T
   object Request extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type SecretKey = SecretKey.T
-  object SecretKey extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type SleepMs = SleepMs.T
-  object SleepMs extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type Url = Url.T
-  object Url extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type VaultId = VaultId.T
-  object VaultId extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type WithVaults = WithVaults.T
-  object WithVaults extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
   /** The id of the stand-in vault plugin that serves a test's `secrets` (never one of the plugin's). */
-
-  type Id = Id.T
-  object Id extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type Warnings = Warnings.T
-  object Warnings extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-
-  type JudgeName = JudgeName.T
-  object JudgeName extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type ResolveSecretResultPart2 = ResolveSecretResultPart2.T
-  object ResolveSecretResultPart2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type LoadId = _root_.com.histmersion.util.plugins.Plugin.Id
-  val LoadId: _root_.com.histmersion.util.plugins.Plugin.Id.type = _root_.com.histmersion.util.plugins.Plugin.Id
-  type LoadSecretsPart1 = _root_.com.histmersion.plugin.testkit.PluginHarness.SecretKey
-  val LoadSecretsPart1: _root_.com.histmersion.plugin.testkit.PluginHarness.SecretKey.type = _root_.com.histmersion.plugin.testkit.PluginHarness.SecretKey
-  type LoadSecretsPart2 = _root_.com.histmersion.plugin.testkit.PluginHarness.TestVaultsSecretsPart2
-  val LoadSecretsPart2: _root_.com.histmersion.plugin.testkit.PluginHarness.TestVaultsSecretsPart2.type = _root_.com.histmersion.plugin.testkit.PluginHarness.TestVaultsSecretsPart2
-  type TestVaultsSecretsPart2 = TestVaultsSecretsPart2.T
-  object TestVaultsSecretsPart2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type UserConfigId = _root_.com.histmersion.util.plugins.Plugin.Id
-  val UserConfigId: _root_.com.histmersion.util.plugins.Plugin.Id.type = _root_.com.histmersion.util.plugins.Plugin.Id
-  type RegisterId = _root_.com.histmersion.util.plugins.Plugin.Id
-  val RegisterId: _root_.com.histmersion.util.plugins.Plugin.Id.type = _root_.com.histmersion.util.plugins.Plugin.Id
-
-  val TestVaultsId = "testkit-vaults"
+  val TestVaultsId: Plugin.Info.Id = Plugin.Info.Id("testkit-vaults")
 
   /** The server's client for model calls, to run an AI provider against the real service. */
   def liveAiHttp: AiHttp = com.histmersion.pluginhost.HostAiHttp()
@@ -414,15 +393,15 @@ object PluginHarness:
     *   the harness, or the server's own reason for not registering the plugin
     */
   def load(
-      id: com.histmersion.plugin.testkit.PluginHarness.LoadId,
+      id: Plugin.Info.Id,
       config: String | Path = "",
       http: HttpMode = HttpMode.Offline,
-      secrets: Map[com.histmersion.plugin.testkit.PluginHarness.LoadSecretsPart1, com.histmersion.plugin.testkit.PluginHarness.LoadSecretsPart2] = Map.empty,
+      secrets: Map[Secret.Ref.ParseText, Secret.Vault.ResolveResultPart2] = Map.empty,
       env: Map[String, String] = sys.env,
       histmersionConf: Option[Path] = None
-  ): Either[com.histmersion.plugin.testkit.PluginHarness.Problem, PluginHarness] =
+  ): Either[PluginHarness.Problem, PluginHarness] =
     val loader = Option(Thread.currentThread.getContextClassLoader).getOrElse(getClass.getClassLoader)
-    val envSecrets = secrets.collect { case (k, v) if k.startsWith(s"${Secret.Ref.EnvScheme}:") => k.drop(4).trim -> v }
+    val envSecrets = secrets.collect { case (k, v) if k.value.startsWith(s"${Secret.Ref.EnvScheme}:") => k.value.drop(4).trim -> v.value }
     val environment = env ++ envSecrets
     val envConfig = ConfigValueFactory.fromMap(environment.asJava).toConfig
     for
@@ -440,21 +419,23 @@ object PluginHarness:
         envConfig,
         host,
         http,
-        Scrubber(secrets.values.toSet ++ referencedValues(text + "\n" + defaults, environment))
+        Scrubber(secrets.values.map(_.value).toSet ++ referencedValues(text + "\n" + defaults, environment))
       )
     yield harness
 
-  private def configText(config: String | Path): Either[com.histmersion.plugin.testkit.PluginHarness.Problem, com.histmersion.plugin.testkit.PluginHarness.ConfigText] = config match
+  private def configText(config: String | Path): Either[PluginHarness.Problem, String] = config match
     case p: Path =>
-      if Files.isRegularFile(p) then Right(Files.readString(p, UTF_8)) else Left(s"no config file $p")
+      if Files.isRegularFile(p) then Right(Files.readString(p, UTF_8)) else Left(PluginHarness.Problem(s"no config file $p"))
     case s: String => Right(s)
 
   /** The plugin with this id among the providers ServiceLoader finds, or what is missing. */
-  private def discover(loader: ClassLoader, id: com.histmersion.util.plugins.Plugin.Id): Either[com.histmersion.plugin.testkit.PluginHarness.Problem, Plugin] =
+  private def discover(loader: ClassLoader, id: Plugin.Info.Id): Either[PluginHarness.Problem, Plugin] =
     val services = s"META-INF/services/${classOf[Plugin].getName}"
     if !loader.getResources(services).hasMoreElements then
       Left(
-        s"no $services on the test class path: the server would find no plugin (the file names the plugin class, one per line)"
+        PluginHarness.Problem(
+          s"no $services on the test class path: the server would find no plugin (the file names the plugin class, one per line)"
+        )
       )
     else
       val (found, errors) = PluginHost.discover(loader)
@@ -462,39 +443,49 @@ object PluginHarness:
         case List(p) => Right(p)
         case Nil     =>
           Left(
-            s"no plugin with the id '$id' on the test class path (found: ${found.map(_.info.id).mkString(", ")})" +
-              errors.map("; " + _).mkString
+            PluginHarness.Problem(
+              s"no plugin with the id '$id' on the test class path (found: ${found.map(_.info.id).mkString(", ")})" +
+                errors.map("; " + _.value).mkString
+            )
           )
         case many =>
-          Left(s"plugin id '$id' is claimed by ${many.size} plugins: ${many.map(_.getClass.getName).mkString(", ")}")
+          Left(
+            PluginHarness.Problem(
+              s"plugin id '$id' is claimed by ${many.size} plugins: ${many.map(_.getClass.getName).mkString(", ")}"
+            )
+          )
 
   /** The plugin's defaults, which must exist: without them the server knows none of its settings. */
-  private def defaultsOf(p: Plugin): Either[com.histmersion.plugin.testkit.PluginHarness.Problem, com.histmersion.plugin.testkit.PluginHarness.Defaults] =
+  private def defaultsOf(p: Plugin): Either[PluginHarness.Problem, String] =
     val loader = Option(p.getClass.getClassLoader).getOrElse(getClass.getClassLoader)
-    Option(loader.getResource(p.defaultsResource)) match
+    Option(loader.getResource(p.defaultsResource.value)) match
       case None =>
         Left(
-          s"${p.info.id}: no ${p.defaultsResource} beside the plugin class — the server would know none of " +
-            "its settings and leave it disabled"
+          PluginHarness.Problem(
+            s"${p.info.id}: no ${p.defaultsResource} beside the plugin class — the server would know none of " +
+              "its settings and leave it disabled"
+          )
         )
       case Some(url) =>
         PluginHost
           .defaults(p)
+          .left
+          .map(e => PluginHarness.Problem(e.value))
           .flatMap(_ =>
             scala.util
               .Using(url.openStream)(in => new String(in.readAllBytes, UTF_8))
               .toEither
               .left
-              .map(e => s"${p.defaultsResource}: ${e.getMessage}")
+              .map(e => PluginHarness.Problem(s"${p.defaultsResource}: ${e.getMessage}"))
           )
 
   /** The stand-in vaults that serve the test's `<vault>:<ref>` secrets, if it has any. */
-  private def testVaults(secrets: Map[com.histmersion.plugin.testkit.PluginHarness.SecretKey, com.histmersion.plugin.testkit.PluginHarness.TestVaultsSecretsPart2]): Either[com.histmersion.plugin.testkit.PluginHarness.Problem, Option[Plugin]] =
+  private def testVaults(secrets: Map[Secret.Ref.ParseText, Secret.Vault.ResolveResultPart2]): Either[PluginHarness.Problem, Option[Plugin]] =
     val refs = secrets.toList
-      .filterNot(_._1.startsWith(s"${Secret.Ref.EnvScheme}:"))
+      .filterNot(_._1.value.startsWith(s"${Secret.Ref.EnvScheme}:"))
       .map((k, v) => Secret.Ref.parse(k).map(_ -> v))
     refs.collectFirst { case Left(e) => e } match
-      case Some(e) => Left(s"secrets: $e")
+      case Some(e) => Left(PluginHarness.Problem(s"secrets: ${e.value}"))
       case None    =>
         val byVault = refs
           .collect { case Right((Secret.Ref.Vault(vault, ref), v)) => (vault, ref, v) }
@@ -504,13 +495,13 @@ object PluginHarness:
           .toMap
         Right(Option.when(byVault.nonEmpty)(TestVaults(TestVaultsId, byVault)))
 
-  private def userConfig(id: com.histmersion.plugin.testkit.PluginHarness.UserConfigId, text: com.histmersion.plugin.testkit.PluginHarness.ConfigText, withVaults: com.histmersion.plugin.testkit.PluginHarness.WithVaults): Either[com.histmersion.plugin.testkit.PluginHarness.Problem, Config] =
+  private def userConfig(id: Plugin.Info.Id, text: String, withVaults: Boolean): Either[PluginHarness.Problem, Config] =
     val path = s"${PluginHost.Root}.$id"
     scala.util
       .Try(ConfigFactory.parseString(text))
       .toEither
       .left
-      .map(e => s"the config does not parse: ${e.getMessage}")
+      .map(e => PluginHarness.Problem(s"the config does not parse: ${e.getMessage}"))
       .map { parsed =>
         val block = if parsed.hasPath(path) then parsed.getConfig(path) else parsed
         val on = if block.hasPath("enabled") then block
@@ -525,19 +516,21 @@ object PluginHarness:
             )
             .withValue(
               s"${PluginHost.Root}.${PluginHost.OrderKey}",
-              ConfigValueFactory.fromIterable(List(id, TestVaultsId).asJava)
+              ConfigValueFactory.fromIterable(List(id.value, TestVaultsId.value).asJava)
             )
       }
 
   /** The server's settings: its defaults and the environment's overrides (or a `histmersion.conf`), with the contact
     * e-mail left out so that no request of a test carries it — the settings a first-party plugin is supplied from too.
     */
-  private def hostConfig(env: Config, file: Option[Path]): Either[com.histmersion.plugin.testkit.PluginHarness.Problem, LoadedConfig] =
+  private def hostConfig(env: Config, file: Option[Path]): Either[PluginHarness.Problem, LoadedConfig] =
     AppConfig
       .loadWithUserFile(env, file)
+      .left
+      .map(e => PluginHarness.Problem(e.value))
       .map(l =>
         l.copy(
-          config = l.config.modify(_.acquire.contactEmail).setTo(""),
+          config = l.config.modify(_.acquire.contactEmail).setTo(com.histmersion.config.AcquireConfig.ContactEmail("")),
           merged = l.merged.withValue(ContactPath, ConfigValueFactory.fromAnyRef(""))
         )
       )
@@ -551,7 +544,7 @@ object PluginHarness:
     named ++ literal
 
   private def register(
-      id: com.histmersion.plugin.testkit.PluginHarness.RegisterId,
+      id: Plugin.Info.Id,
       plugin: Plugin,
       vaults: Option[Plugin],
       user: Config,
@@ -559,13 +552,12 @@ object PluginHarness:
       loaded: LoadedConfig,
       mode: HttpMode,
       scrub: Scrubber
-  ): Either[com.histmersion.plugin.testkit.PluginHarness.Problem, PluginHarness] =
+  ): Either[PluginHarness.Problem, PluginHarness] =
     val host = loaded.config
     val lines = Lines()
     val wire = Wire(mode, scrub)
-    val sleep: com.histmersion.plugin.testkit.PluginHarness.SleepMs => Unit = if mode.live then ms => Thread.sleep(ms) else _ => ()
     val acquisition =
-      PolicyHttp.acquisition(host, wire.transport(PolicyHttp.acquisitionTransport(host)), sleep, lines.host)
+      PolicyHttp.acquisition(host, wire.transport(PolicyHttp.acquisitionTransport(host)), ms => if mode.live then Thread.sleep(ms.value), lines.host)
     val services = HostServices(() => acquisition.plugin, env, lines.plugin, files = new com.histmersion.pluginhost.DiskLocalFiles, processes = new com.histmersion.pluginhost.SystemProcesses)
     // a first-party plugin is supplied the server's own settings it reads, as the server supplies them
     val supplied = FirstPartySettings.hostView(loaded.merged, user, env, List(plugin))
@@ -575,12 +567,12 @@ object PluginHarness:
       env,
       services,
       fallback = FirstPartySettings.fallback(_, supplied),
-      firstParty = ReservedNames.firstPartyPlugins
+      firstParty = id => ReservedNames.firstPartyPlugins.contains(ReservedNames.Name(id.value))
     )
     val statuses = generation.report.plugins
-    val failedVaults = statuses.find(s => s.id == TestVaultsId && s.state != PluginState.Registered.wire)
-    statuses.find(_.id == id) match
-      case None                                                => Left(s"$id: the server did not consider the plugin")
+    val failedVaults = statuses.find(s => s.id.value == TestVaultsId.value && s.state != PluginState.Registered.wire)
+    statuses.find(_.id.value == id.value) match
+      case None                                                => Left(PluginHarness.Problem(s"$id: the server did not consider the plugin"))
       case Some(st) if st.state == PluginState.Registered.wire =>
         Right(
           PluginHarness(
@@ -597,16 +589,16 @@ object PluginHarness:
           )
         )
       case Some(st) if st.state == PluginState.Disabled.wire =>
-        Left(s"$id is disabled: its config sets ${PluginHost.Root}.$id.enabled = false")
+        Left(PluginHarness.Problem(s"$id is disabled: its config sets ${PluginHost.Root}.$id.enabled = false"))
       case Some(st) =>
-        Left(st.error.getOrElse(st.state) + failedVaults.flatMap(_.error).fold("")(e => s" (the test's secrets: $e)"))
+        Left(PluginHarness.Problem(st.error.map(_.value).getOrElse(st.state.value) + failedVaults.flatMap(_.error).fold("")(e => s" (the test's secrets: $e)")))
 
   /** Where a found copy is written: `<dir>/<fetcher>-<identifier>.<extension>`. */
-  private def save(dir: Path, fetcher: com.histmersion.plugin.testkit.PluginHarness.FetcherName, work: WorkKey, file: FetchedFile): Path =
+  private def save(dir: Path, fetcher: FetchChain.Outcome.FoundBy, work: WorkKey, file: FetchedFile): Path =
     val ident =
-      List(work.doi.map(_.value), work.isbn, work.arxiv, work.pmcid, work.pmid, work.archive).flatten.headOption
+      List(work.doi.map(_.value), work.isbn.map(_.value), work.arxiv.map(_.value), work.pmcid.map(_.value), work.pmid.map(_.value), work.archive.map(_.value)).flatten.headOption
         .getOrElse("work")
-    val ext = Option(file.extension).map(_.replaceAll("[^A-Za-z0-9]", "")).filter(_.nonEmpty).getOrElse("bin")
+    val ext = Option(file.extension.value).map(_.replaceAll("[^A-Za-z0-9]", "")).filter(_.nonEmpty).getOrElse("bin")
     Files.createDirectories(dir)
     val out = dir.resolve(s"$fetcher-${ident.replaceAll("[^A-Za-z0-9._-]", "_")}.$ext")
-    Files.write(out, file.bytes)
+    Files.write(out, file.bytes.value)

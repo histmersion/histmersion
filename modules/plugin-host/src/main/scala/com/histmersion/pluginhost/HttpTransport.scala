@@ -7,7 +7,7 @@ import scala.jdk.CollectionConverters.*
   * any HTTP answer, a 429 included, is a `Right` — the policy decides what it means.
   */
 trait HttpTransport:
-  def get(url: com.histmersion.pluginhost.HttpTransport.Url, headers: Map[com.histmersion.domain.CoreQuota.HeaderName, com.histmersion.pluginhost.HttpTransport.GetHeadersPart2]): Either[com.histmersion.pluginhost.HttpTransport.Problem, HttpAnswer]
+  def get(url: com.histmersion.pluginhost.HttpTransport.Url, headers: Map[com.histmersion.domain.CoreQuota.HeaderName, com.histmersion.domain.CoreQuota.HeaderValue]): Either[com.histmersion.pluginhost.HttpTransport.Problem, HttpAnswer]
 
 object HttpTransport:
   type Problem = Problem.T
@@ -16,5 +16,3 @@ object HttpTransport:
   object TimeoutSeconds extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type Url = Url.T
   object Url extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type GetHeadersPart2 = GetHeadersPart2.T
-  object GetHeadersPart2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]

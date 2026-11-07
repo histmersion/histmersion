@@ -20,7 +20,7 @@ trait OaFetcher:
     * (a test's fixture) has no copy of anything else.
     */
   def fetchWork(work: WorkKey, legalOnly: com.histmersion.pluginhost.FetchChain.LegalOnly): Either[com.histmersion.pluginhost.OaFetcher.Problem, FetchedFile] =
-    val doi = work.doi.map(d => com.histmersion.domain.library.Doi(d.value))
+    val doi = work.doi.map(d => com.histmersion.domain.library.Doi.assume(d.value))
     val arxiv = work.arxiv.map(a => com.histmersion.domain.library.ArxivId(a.value))
     if work.doi.isEmpty && work.arxiv.isEmpty then Left(OaFetcher.Problem(FetchChain.NoCopy))
     else if legalOnly.value then fetchLegal(doi, arxiv)

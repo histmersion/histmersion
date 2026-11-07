@@ -156,7 +156,7 @@ object BundleImport:
       lines.filter(a => writes(uid(a))).foreach { a =>
         localLabel.get(uid(a)).filter(old => !old.equals(label(a))).foreach { old =>
           importing(MergeRepo.Importing(false))
-          rename(old, label(a)).left.foreach(e => throw ImportAbort(List(s"$what $old → ${label(a)}: ${e.message}")))
+          rename(old, label(a)).left.foreach(e => throw ImportAbort(List(ImportAbort.Problem(s"$what $old → ${label(a)}: ${e.message}"))))
           importing(MergeRepo.Importing(true))
         }
       }

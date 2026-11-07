@@ -3,6 +3,7 @@ package com.histmersion.domain.research.articles
 import com.histmersion.util.database.given
 import com.augustnagro.magnum.DbCodec
 import java.util.UUID
+import com.histmersion.util.database.NewtypeColumns.given
 
 /** An article as a bundle reads it, its period in its three columns (Magnum maps a SELECT's columns positionally). */
 final private[articles] case class BArticleRow(

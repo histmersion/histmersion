@@ -3,6 +3,7 @@ package com.histmersion.domain.catalogue.evidence
 import com.histmersion.util.database.given
 import com.augustnagro.magnum.DbCodec
 import java.util.UUID
+import com.histmersion.util.database.NewtypeColumns.given
 
 /** A source that possibly discusses an event, as its bundle line reads it. */
 final private[evidence] case class BCandidateRow(

@@ -6,6 +6,7 @@ import com.histmersion.util.database.given
 
 import com.augustnagro.magnum.*
 import com.histmersion.domain.library.Source
+import com.histmersion.util.database.NewtypeColumns.given
 
 /** A source's row as a write path reads it back (Magnum maps a SELECT's columns positionally). */
 final private[sources] case class FullSourceRow(

@@ -16,7 +16,7 @@ final case class FetchReport(
     outcome: FetchOutcome,
     answers: List[FetcherAnswer],
     log: List[LogLine],
-    requests: List[FetchReport.Requests]
+    requests: List[PluginHarness.Request]
 ):
   /** The file found, if any. */
   def file: Option[FetchedFile] = outcome match
@@ -29,13 +29,8 @@ final case class FetchReport(
   def licence: Option[com.histmersion.domain.Licence.Id] =
     file
       .flatMap(_.licence)
-      .map(_.value)
+      .map(l => com.histmersion.domain.Licence.Id(l.value))
       .orElse(log.collectFirst {
-        case l if !l.source.startsWith("acquire") && l.message.toLowerCase(java.util.Locale.ROOT).contains("licen") =>
-          l.message
+        case l if !l.source.value.startsWith("acquire") && l.message.value.toLowerCase(java.util.Locale.ROOT).contains("licen") =>
+          com.histmersion.domain.Licence.Id(l.message.value)
       })
-
-object FetchReport:
-
-  type Requests = Requests.T
-  object Requests extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]

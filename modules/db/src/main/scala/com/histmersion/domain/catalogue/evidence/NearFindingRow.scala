@@ -1,6 +1,7 @@
 package com.histmersion.domain.catalogue.evidence
 
 import com.augustnagro.magnum.DbCodec
+import com.histmersion.util.database.NewtypeColumns.given
 
 /** A dated, placed finding near an event: how far, and the years between. */
 final private[evidence] case class NearFindingRow(

@@ -7,6 +7,7 @@ import com.augustnagro.magnum.*
 import io.circe.Json
 import com.histmersion.util.database.given_DbCodec_List
 import com.histmersion.api.catalogue.Correction
+import com.histmersion.util.database.NewtypeColumns.given
 
 /** CORRECTIONS BY HAND ([[Corrections]]): a person's value for one field of a target an importer writes, with what
   * upstream said then and at the last refresh. Generic over the target kind; the events are the first target

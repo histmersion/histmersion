@@ -15,4 +15,4 @@ object ProjectPaths:
 
   def resolve(dir: Path, projectDir: Option[com.histmersion.plugin.testkit.internal.ProjectPaths.ProjectDir]): Path =
     if dir.isAbsolute then dir
-    else projectDir.map(_.trim).filter(_.nonEmpty).fold(dir.toAbsolutePath)(p => Path.of(p).resolve(dir)).normalize
+    else projectDir.map(_.value.trim).filter(_.nonEmpty).fold(dir.toAbsolutePath)(p => Path.of(p).resolve(dir)).normalize

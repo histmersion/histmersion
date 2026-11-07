@@ -4,33 +4,22 @@ import com.histmersion.plugin.*
 import hearth.kindlings.sconfigderivation.ConfigReader
 
 /** The stand-in vaults of a test's `secrets`: `vault → (ref → value)`. */
-final private[testkit] class TestVaults(id: TestVaults.Id, values: Map[TestVaults.ValuesKey, Map[TestVaults.ValuesValueKey, TestVaults.ValuesValueValue]]) extends Plugin:
+final private[testkit] class TestVaults(id: Plugin.Info.Id, values: Map[Secret.Ref.Vault.Value, Map[Secret.Ref.Vault.Ref, Secret.Vault.ResolveResultPart2]]) extends Plugin:
   type Config = Unit
-  val info = Plugin.Info(id, "0", Spi.Version)
+  val info = Plugin.Info(id, Plugin.Info.Version("0"), Plugin.Info.SpiVersion(Spi.Version))
   override given configReader: ConfigReader[Unit] = new ConfigReader[Unit]:
     def from(v: org.ekrich.config.ConfigValue) = Right(())
-  def register(config: Unit, ctx: Plugin.Context): Either[com.histmersion.plugin.testkit.internal.TestVaults.Problem, Unit] =
-    values.toList.foldLeft[Either[String, Unit]](Right(())) { case (acc, (vault, refs)) =>
+  def register(config: Unit, ctx: Plugin.Context): Either[Plugin.RegisterResultPart1, Unit] =
+    values.toList.foldLeft[Either[Registry.AddResultPart1, Unit]](Right(())) { case (acc, (vault, refs)) =>
       acc.flatMap(_ =>
         ctx.secretVaults.add(
-          vault,
+          Registry.AddId(vault.value),
           new Secret.Vault:
-            val name = vault
-            def resolve(ref: com.histmersion.plugin.testkit.PluginHarness.SecretKey) = refs.get(ref).toRight(s"the test gives no secret $vault:$ref")
+            val name = Secret.Vault.NameResult(vault.value)
+            def resolve(ref: Secret.Vault.ResolveRef) =
+              refs
+                .get(Secret.Ref.Vault.Ref(ref.value))
+                .toRight(Secret.Vault.ResolveResultPart1(s"the test gives no secret ${vault.value}:${ref.value}"))
         )
       )
-    }
-
-object TestVaults:
-  type Problem = Problem.T
-  object Problem extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-
-  type Id = Id.T
-  object Id extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type ValuesKey = ValuesKey.T
-  object ValuesKey extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type ValuesValueKey = ValuesValueKey.T
-  object ValuesValueKey extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type ValuesValueValue = ValuesValueValue.T
-  object ValuesValueValue extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-
+    }.left.map(e => Plugin.RegisterResultPart1(e.value))

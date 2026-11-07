@@ -19,7 +19,7 @@ final class JavaHttpTransport(timeoutSeconds: => HttpTransport.TimeoutSeconds, c
     .version(HttpClient.Version.HTTP_1_1)
     .build()
 
-  def get(url: HttpTransport.Url, headers: Map[com.histmersion.domain.CoreQuota.HeaderName, HttpTransport.GetHeadersPart2]): Either[HttpTransport.Problem, HttpAnswer] =
+  def get(url: HttpTransport.Url, headers: Map[com.histmersion.domain.CoreQuota.HeaderName, com.histmersion.domain.CoreQuota.HeaderValue]): Either[HttpTransport.Problem, HttpAnswer] =
     scala.util
       .Try {
         val b = HttpRequest.newBuilder(URI.create(url.value)).GET().timeout(Duration.ofSeconds(timeoutSeconds.value.toLong.max(1)))

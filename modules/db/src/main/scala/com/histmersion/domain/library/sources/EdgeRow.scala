@@ -1,6 +1,7 @@
 package com.histmersion.domain.library.sources
 
 import com.augustnagro.magnum.*
+import com.histmersion.util.database.NewtypeColumns.given
 
 /** An edge's row: the source that makes it, its target, its kind. */
 final private[library] case class EdgeRow(src: EdgeRow.Src, dst: EdgeRow.Dst, kind: EdgeRow.Kind) derives DbCodec

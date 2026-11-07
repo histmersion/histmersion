@@ -4,6 +4,7 @@ import com.histmersion.api.automation.Managers.ManagerConfig
 import com.histmersion.util.database.Jsonb
 
 import com.augustnagro.magnum.DbCodec
+import com.histmersion.util.database.NewtypeColumns.given
 
 /** A manager without its counts: what the autopilot's ensure and status read for every manager. `planItem` = it has a
   * plan-goal item (any status).

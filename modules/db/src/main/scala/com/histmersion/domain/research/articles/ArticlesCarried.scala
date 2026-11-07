@@ -69,7 +69,7 @@ object ArticlesCarried:
 
     override def blobIn(
         use: BlobUse,
-        sha256: String,
+        sha256: com.histmersion.Sha256,
         writer: BundleImport.Writer,
         files: ContentStore
     ): Option[BlobSink] = ArticleBundleRepo.blobIn(use, writer)

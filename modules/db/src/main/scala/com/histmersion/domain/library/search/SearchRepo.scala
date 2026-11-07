@@ -78,7 +78,7 @@ private[search] object SearchRepo:
       val hits = rows.map { r =>
         // merge the snippet into the row before building the hit
         val withSnippet = snippets.get(r.citekey) match
-          case Some(sr) => r.modify(_.snippet).setTo(Some(sr.snippet)).modify(_.matchedHeading).setTo(sr.heading)
+          case Some(sr) => r.modify(_.snippet).setTo(Some(com.histmersion.api.library.SearchHit.Snippet(sr.snippet.value))).modify(_.matchedHeading).setTo(sr.heading.map(h => com.histmersion.api.library.SearchHit.MatchedHeading(h.value)))
           case None     => r
         val matched =
           if !filter.hasFindingCriteria then Nil

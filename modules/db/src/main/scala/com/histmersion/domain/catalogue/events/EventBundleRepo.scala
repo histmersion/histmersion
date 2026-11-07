@@ -209,10 +209,10 @@ private[events] object EventBundleRepo:
     w.followRenames(
       w.es.events,
       _.uid,
-      e => BundleImport.Writer.Label(e.id.value),
-      w.local.events.map(e => e.uid -> BundleImport.Writer.Label(e.id.value)).toMap,
+      _.id,
+      w.local.events.map(e => e.uid -> e.id).toMap,
       com.histmersion.util.data.exchange.PlanQuestions.LabelTakenWhat("event")
-    )((from, to) => EventRepo.rename(BEventRow.Id(from), BEventRow.Id(to)))
+    )((from, to) => EventRepo.rename(BEventRow.Id(from.value), BEventRow.Id(to.value)))
 
   /** Events: the rows, then their parents (a parent may come later in uid order), then the sets. */
   def eventsIn(w: BundleImport.Writer): Unit =

@@ -19,12 +19,10 @@ trait MergeFollowUps:
       ap: MergePlanner.Apply,
       counts: List[com.histmersion.api.exchange.Bundle.KindCounts],
       dump: com.histmersion.util.data.exchange.MergeFollowUps.DumpRecordRef
-  )(using DbCon): (List[com.histmersion.util.data.exchange.MergeFollowUps.Problem], com.histmersion.RowCount)
+  )(using DbCon): (List[com.histmersion.api.exchange.Bundle.Article.Slug], com.histmersion.api.automation.Queue.QueueItem.Id)
 
 object MergeFollowUps:
   type DumpRecordRef = DumpRecordRef.T
   object DumpRecordRef extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type FromRecordRef = FromRecordRef.T
   object FromRecordRef extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type Problem = Problem.T
-  object Problem extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]

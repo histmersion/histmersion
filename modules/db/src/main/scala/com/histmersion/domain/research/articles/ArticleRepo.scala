@@ -81,7 +81,7 @@ private[articles] object ArticleRepo:
     import io.circe.syntax.*
     a.filter.map(_.asJson.deepDropNullValues.noSpaces)
   private def reasonsJson(a: Article): String =
-    io.circe.Json.obj(a.reasons.toList.sortBy(_._1.value).map((k, v) => k -> io.circe.Json.fromString(v.value))*).noSpaces
+    io.circe.Json.obj(a.reasons.toList.sortBy(_._1.value).map((k, v) => k.value -> io.circe.Json.fromString(v.value))*).noSpaces
 
   /** The stored JSON back; a value that no longer decodes (an older shape) reads as none, never fails the read. */
   private[articles] def filterOf(json: Option[String]): Option[Article.Filter] =

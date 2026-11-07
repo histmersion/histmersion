@@ -28,7 +28,7 @@ final class SttpTransport(timeoutSeconds: SttpTransport.TimeoutSeconds, tls: Opt
     )
   }
 
-  def get(url: HttpTransport.Url, headers: Map[com.histmersion.domain.CoreQuota.HeaderName, HttpTransport.GetHeadersPart2]): Either[HttpTransport.Problem, HttpAnswer] =
+  def get(url: HttpTransport.Url, headers: Map[com.histmersion.domain.CoreQuota.HeaderName, com.histmersion.domain.CoreQuota.HeaderValue]): Either[HttpTransport.Problem, HttpAnswer] =
     val req = basicRequest
       .get(Uri.unsafeParse(url.value))
       .headers(headers.map((k, v) => k.value -> v.value))

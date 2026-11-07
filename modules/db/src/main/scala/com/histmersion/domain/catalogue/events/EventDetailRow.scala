@@ -2,6 +2,7 @@ package com.histmersion.domain.catalogue.events
 
 import com.histmersion.api.catalogue.EventSummary
 import com.augustnagro.magnum.DbCodec
+import com.histmersion.util.database.NewtypeColumns.given
 
 /** An event's row with its own geometry as GeoJSON. */
 final private[events] case class EventDetailRow(row: EventRow, geometry: Option[EventDetailRow.Geometry]) derives DbCodec:

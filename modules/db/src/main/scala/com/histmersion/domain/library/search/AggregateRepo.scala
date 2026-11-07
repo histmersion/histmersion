@@ -67,8 +67,8 @@ private[search] object AggregateRepo:
         FilterSql.findingPeriodWhere(filter) ++
         Sql.raw(com.histmersion.util.database.Sql.Text(") AS in_window FROM findings f WHERE f.citekey = s.citekey AND ")) ++
         FilterSql.findingPlaceWhere(filter, scope = scope) ++
-        Sql.raw(") fp ON true WHERE ") ++ FilterSql.sourceWhere(filter) ++ gate ++
-        Sql.raw(" AND (") ++ ownPeriod ++ Sql.raw(" OR fp.in_window > 0)")
+        Sql.raw(Sql.Text(") fp ON true WHERE ")) ++ FilterSql.sourceWhere(filter) ++ gate ++
+        Sql.raw(Sql.Text(" AND (")) ++ ownPeriod ++ Sql.raw(Sql.Text(" OR fp.in_window > 0)"))
 
   /** Run [[periodsQuery]]. `unit` is `sources` (default) or `findings`. */
   def periods(unit: com.histmersion.domain.library.search.AggregateRepo.Unit, filter: Filter, scope: PlaceScope = PlaceScope.empty)(using DbCon): Vector[Period.Row] =
@@ -128,7 +128,7 @@ private[search] object AggregateRepo:
         )
       ) ++
         FilterSql.sourceWhere(filter) ++ Sql.raw(com.histmersion.util.database.Sql.Text(" AND ")) ++ FilterSql.findingWhere(filter, scope = scope) ++
-        Sql.raw(" ") ++ FilterSql.orderBySql(filter)
+        Sql.raw(Sql.Text(" ")) ++ FilterSql.orderBySql(filter)
     else
       val gate =
         if FilterSql.hasFindingPlaceCriteria(filter) then Sql.raw(com.histmersion.util.database.Sql.RawText(" AND fp.matched > 0")) else Sql.empty
@@ -145,14 +145,14 @@ private[search] object AggregateRepo:
         )
       ) ++
         FilterSql.findingPeriodWhere(filter) ++
-        Sql.raw(
+        Sql.raw(Sql.Text(
           ") AS in_window, array_agg(DISTINCT l.place_id) FILTER (WHERE l.place_id IS NOT NULL) AS place_ids" +
             " FROM findings f LEFT JOIN finding_places l ON l.finding_id = f.id" +
             " WHERE f.citekey = s.citekey AND "
-        ) ++
+        )) ++
         FilterSql.findingPlaceWhere(filter, scope = scope) ++
-        Sql.raw(") fp ON true WHERE ") ++ FilterSql.sourceWhere(filter) ++ gate ++
-        Sql.raw(" AND (") ++ ownPeriod ++ Sql.raw(" OR fp.in_window > 0) ") ++
+        Sql.raw(Sql.Text(") fp ON true WHERE ")) ++ FilterSql.sourceWhere(filter) ++ gate ++
+        Sql.raw(Sql.Text(" AND (")) ++ ownPeriod ++ Sql.raw(Sql.Text(" OR fp.in_window > 0) ")) ++
         FilterSql.orderBySql(filter)
 
   /** Run [[treeRowsQuery]]: the rows the tree buckets and nests ([[com.histmersion.api.library.Tree]], pure), hung off
