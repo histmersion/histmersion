@@ -14,53 +14,33 @@ import com.histmersion.api.library.{Filter, GeoHit}
 
 object TimelinePlayback:
 
-  type FrameId = FrameId.T
-  object FrameId extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type LastTs = LastTs.T
-  object LastTs extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type SpanFrom = SpanFrom.T
-  object SpanFrom extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type SpanTo = SpanTo.T
-  object SpanTo extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type Speeds = SpeedsValue
   type SpeedsValue = SpeedsValue.T
   object SpeedsValue extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type SpeedWordsResult = SpeedWordsResult.T
-  object SpeedWordsResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type SpeedWordsS = _root_.com.histmersion.web.TimelinePlayback.SpeedLabelS
   val SpeedWordsS: _root_.com.histmersion.web.TimelinePlayback.SpeedLabelS.type = _root_.com.histmersion.web.TimelinePlayback.SpeedLabelS
-  type SpeedLabelResult = SpeedLabelResult.T
-  object SpeedLabelResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type SpeedLabelS = SpeedLabelS.T
   object SpeedLabelS extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type ParseSpeedResult = ParseSpeedResult.T
   object ParseSpeedResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type ParseSpeedLabel = ParseSpeedLabel.T
-  object ParseSpeedLabel extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type PlayheadSignalResult = PlayheadSignalResult.T
-  object PlayheadSignalResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type PlayheadNowResult = PlayheadNowResult.T
-  object PlayheadNowResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type OverlayWasOn = OverlayWasOn.T
   object OverlayWasOn extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type TickTs = TickTs.T
-  object TickTs extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
   private val playing = Var(false)
   private val playhead = Var(0L)
   private val speed = Var(1.0)
   private val windowHalf = Var(Layout.playbackWindowHalf)
 
-  private var frameId: com.histmersion.web.TimelinePlayback.FrameId = 0
-  private var lastTs: com.histmersion.web.TimelinePlayback.LastTs = 0.0
-  private var spanFrom: com.histmersion.web.TimelinePlayback.SpanFrom = 0
-  private var spanTo: com.histmersion.web.TimelinePlayback.SpanTo = 0
+  private var frameId: Int = 0
+  private var lastTs: com.histmersion.web.ResearchOverview.EpochMillis = 0.0
+  private var spanFrom: com.histmersion.api.Years.Astronomical = 0
+  private var spanTo: com.histmersion.api.Years.Astronomical = 0
 
   /** The playback speeds offered, slowest first; 1× plays the shown span in `Layout.playbackDuration`. */
   private[web] val Speeds: List[com.histmersion.web.TimelinePlayback.Speeds] = List(0.25, 0.5, 1.0, 2.0, 4.0)
 
   /** How a speed reads in the menu: in plain words. Pure. */
-  private[web] def speedWords(s: com.histmersion.web.TimelinePlayback.SpeedWordsS): com.histmersion.web.TimelinePlayback.SpeedWordsResult = s match
+  private[web] def speedWords(s: com.histmersion.web.TimelinePlayback.SpeedWordsS): com.histmersion.api.UiLabels.Text = s match
     case 0.25 => "Very slow"
     case 0.5  => "Slow"
     case 1.0  => "Normal speed"
@@ -69,17 +49,17 @@ object TimelinePlayback:
     case _    => speedLabel(s)
 
   /** `0.25×`, `1×`: a speed's option value. Pure. */
-  private[web] def speedLabel(s: com.histmersion.web.TimelinePlayback.SpeedLabelS): com.histmersion.web.TimelinePlayback.SpeedLabelResult =
+  private[web] def speedLabel(s: com.histmersion.web.TimelinePlayback.SpeedLabelS): com.histmersion.api.UiLabels.Text =
     val n = if s == math.rint(s) then s.toLong.toString else BigDecimal(s).bigDecimal.stripTrailingZeros.toPlainString
     s"$n×"
 
   /** The speed an option stands for; one that is not offered is refused. Pure. */
-  private[web] def parseSpeed(label: com.histmersion.web.TimelinePlayback.ParseSpeedLabel): Option[com.histmersion.web.TimelinePlayback.ParseSpeedResult] = Speeds.find(speedLabel(_) == label.trim)
+  private[web] def parseSpeed(label: com.histmersion.api.UiLabels.Text): Option[com.histmersion.web.TimelinePlayback.ParseSpeedResult] = Speeds.find(speedLabel(_) == label.trim)
 
   private val playheadPos = Var(Option.empty[Long])
 
-  def playheadSignal: Signal[Option[com.histmersion.web.TimelinePlayback.PlayheadSignalResult]] = playheadPos.signal
-  def playheadNow: Option[com.histmersion.web.TimelinePlayback.PlayheadNowResult] = playheadPos.now()
+  def playheadSignal: Signal[Option[com.histmersion.api.Years.Astronomical]] = playheadPos.signal
+  def playheadNow: Option[com.histmersion.api.Years.Astronomical] = playheadPos.now()
 
   private val paused = Var(false)
 
@@ -181,7 +161,7 @@ object TimelinePlayback:
     val (sf, st) = TimelineView.currentSpan
     App.restoreSpan(sf, st)
 
-  private def tick(ts: com.histmersion.web.TimelinePlayback.TickTs): Unit =
+  private def tick(ts: com.histmersion.web.ResearchOverview.EpochMillis): Unit =
     if playing.now() then
       if lastTs == 0.0 then lastTs = ts
       val dt = (ts - lastTs) / 1000.0
@@ -210,23 +190,13 @@ object TimelinePlayback:
     * not kept.
     */
   private object feed:
-    type CoveredTo = CoveredTo.T
-    object CoveredTo extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
-    type FramePh = FramePh.T
-    object FramePh extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
-    type FrameYearsPerSecond = FrameYearsPerSecond.T
-    object FrameYearsPerSecond extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
-    type AskPeriodPart1 = AskPeriodPart1.T
-    object AskPeriodPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
-    type AskPeriodPart2 = AskPeriodPart2.T
-    object AskPeriodPart2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
     import scala.scalajs.concurrent.JSExecutionContext.Implicits.queue
     // `var`s: what is held and up to which year it covers; whether a request is out (and, after a
     // failure, not before when); the filter it was asked with; the generation (a stopped playback's
     // answers are dropped)
     private var held = Vector.empty[GeoHit]
-    private var coveredTo: Option[com.histmersion.web.TimelinePlayback.feed.CoveredTo] = None
+    private var coveredTo: Option[com.histmersion.api.Years.Astronomical] = None
     private var asking = false
     private var retryAt = 0.0
     private var filter: Option[Filter] = None
@@ -239,7 +209,7 @@ object TimelinePlayback:
       asking = false
       filter = None
 
-    def frame(ph: com.histmersion.web.TimelinePlayback.feed.FramePh, yearsPerSecond: com.histmersion.web.TimelinePlayback.feed.FrameYearsPerSecond): Unit =
+    def frame(ph: com.histmersion.api.Years.Astronomical, yearsPerSecond: com.histmersion.web.PlaybackBuckets.YearsPerSecond): Unit =
       val wh = windowHalf.now()
       val f = UiState.toFilter()
       // the filter changed while it played: what is held was asked with the old one
@@ -250,7 +220,7 @@ object TimelinePlayback:
       if coveredTo.exists(_ >= ph + wh) then
         MapView.playFrame(PlaybackFeed.inWindow(held, ph - wh, ph + wh), (ph - wh, ph + wh), ph, yearsPerSecond)
 
-    private def ask(f: Filter, period: (com.histmersion.web.TimelinePlayback.feed.AskPeriodPart1, com.histmersion.web.TimelinePlayback.feed.AskPeriodPart2)): Unit =
+    private def ask(f: Filter, period: (com.histmersion.api.Years.Astronomical, com.histmersion.api.Years.Astronomical)): Unit =
       asking = true
       val mine = generation
       val q =

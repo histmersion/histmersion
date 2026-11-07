@@ -22,25 +22,9 @@ final case class ShelfRow(
 )
 
 object ShelfRow:
+  type Ago = Ago.T
+  object Ago extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
-  type ReadableResult = ReadableResult.T
-  object ReadableResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type ReadableIsReadArg1 = ReadableIsReadArg1.T
-  object ReadableIsReadArg1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type ReadableIsReadResult = ReadableIsReadResult.T
-  object ReadableIsReadResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type OfIsReadArg1 = OfIsReadArg1.T
-  object OfIsReadArg1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type OfIsReadResult = OfIsReadResult.T
-  object OfIsReadResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type OfAgoArg1 = OfAgoArg1.T
-  object OfAgoArg1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type OfAgoResult = OfAgoResult.T
-  object OfAgoResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type DefaultAgoResult = DefaultAgoResult.T
-  object DefaultAgoResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type DefaultAgoIso = DefaultAgoIso.T
-  object DefaultAgoIso extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
   type Key = Key.T
   object Key extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
@@ -55,10 +39,10 @@ object ShelfRow:
   type Unread = Unread.T
   object Unread extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
-  private def readable(t: Target, isRead: com.histmersion.web.library.ShelfRow.ReadableIsReadArg1 => com.histmersion.web.library.ShelfRow.ReadableIsReadResult): com.histmersion.web.library.ShelfRow.ReadableResult =
+  private def readable(t: Target, isRead: com.histmersion.web.library.ShelfRow.Key => Boolean): Boolean =
     ItemKind.Readable.contains(t.kind) && t.identity.exists(i => !isRead(i))
 
-  def of(b: Bookmark, isRead: com.histmersion.web.library.ShelfRow.OfIsReadArg1 => com.histmersion.web.library.ShelfRow.OfIsReadResult, ago: com.histmersion.web.library.ShelfRow.OfAgoArg1 => com.histmersion.web.library.ShelfRow.OfAgoResult): ShelfRow =
+  def of(b: Bookmark, isRead: com.histmersion.web.library.ShelfRow.Key => Boolean, ago: com.histmersion.web.library.ShelfRow.When => com.histmersion.web.library.ShelfRow.Ago): ShelfRow =
     val where = Target.where(b.target)
     val line = List(
       Option.when(b.label.exists(_.value != b.title) && b.target.kind.isItem)(b.title),
@@ -75,7 +59,7 @@ object ShelfRow:
       bookmark = Some(b)
     )
 
-  def of(n: Note, isRead: com.histmersion.web.library.ShelfRow.OfIsReadArg1 => com.histmersion.web.library.ShelfRow.OfIsReadResult, ago: com.histmersion.web.library.ShelfRow.OfAgoArg1 => com.histmersion.web.library.ShelfRow.OfAgoResult): ShelfRow =
+  def of(n: Note, isRead: com.histmersion.web.library.ShelfRow.Key => Boolean, ago: com.histmersion.web.library.ShelfRow.When => com.histmersion.web.library.ShelfRow.Ago): ShelfRow =
     val where = Target.where(n.target)
     ShelfRow(
       s"note:${n.id.value}",
@@ -88,7 +72,7 @@ object ShelfRow:
       note = Some(n)
     )
 
-  def of(m: ReadMark, ago: com.histmersion.web.library.ShelfRow.OfAgoArg1 => com.histmersion.web.library.ShelfRow.OfAgoResult): ShelfRow =
+  def of(m: ReadMark, ago: com.histmersion.web.library.ShelfRow.When => com.histmersion.web.library.ShelfRow.Ago): ShelfRow =
     ShelfRow(
       s"opened:${m.kind.wire}:${m.id.value}",
       Target.item(m.kind, m.id.value),
@@ -116,4 +100,4 @@ object ShelfRow:
   def recent(marks: Iterable[ReadMark]): List[ReadMark] =
     marks.filter(_.openedAt.isDefined).toList.sortBy(_.openedAt.getOrElse("")).reverse
 
-  def defaultAgo(iso: com.histmersion.web.library.ShelfRow.DefaultAgoIso): com.histmersion.web.library.ShelfRow.DefaultAgoResult = Ago.of(iso)
+  def defaultAgo(iso: com.histmersion.web.library.ShelfRow.When): com.histmersion.web.library.ShelfRow.Ago = Ago.of(iso)

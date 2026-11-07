@@ -17,40 +17,26 @@ import com.histmersion.api.views.AutopilotStatus
   * The agent managers stay one disclosure away.
   */
 object ResearchOverview:
+  type EpochMillis = EpochMillis.T
+  object EpochMillis extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type Percent = Percent.T
+  object Percent extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
   // ── pure parts ──────────────────────────────────────────────────────────────────────────────────
 
   /** A goal's progress: its managers' work items done, of all of them (done and still open). */
-  type ProgressOfGoal = ProgressOfGoal.T
-  object ProgressOfGoal extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type BlockerResult = BlockerResult.T
-  object BlockerResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type EvidenceResultPart1 = EvidenceResultPart1.T
-  object EvidenceResultPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type EvidenceResultPart2 = EvidenceResultPart2.T
-  object EvidenceResultPart2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type WaitedResult = WaitedResult.T
-  object WaitedResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type WaitedCreatedMs = WaitedCreatedMs.T
-  object WaitedCreatedMs extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type WaitedNowMs = WaitedNowMs.T
-  object WaitedNowMs extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type WeeklyResult = WeeklyResult.T
-  object WeeklyResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
   final case class Progress(done: Progress.Done, total: Progress.Total):
-    def pct: com.histmersion.web.ResearchOverview.Progress.PctResult = if total <= 0 then 0 else (done * 100 / total).max(0).min(100)
+    def pct: com.histmersion.web.ResearchOverview.Percent = if total <= 0 then 0 else (done * 100 / total).max(0).min(100)
 
   object Progress:
-    type PctResult = PctResult.T
-    object PctResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
     type Done = Done.T
     object Done extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
     type Total = Total.T
     object Total extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
-  def progressOf(goal: com.histmersion.web.ResearchOverview.ProgressOfGoal, managers: List[Managers.ManagerInfo]): Progress =
+  def progressOf(goal: com.histmersion.api.automation.Goal.Ref, managers: List[Managers.ManagerInfo]): Progress =
     val mine = managers.filter(_.goal.contains(goal))
     Progress(mine.map(_.counts.done).sum, mine.map(m => m.counts.done + m.counts.open).sum)
 
@@ -61,7 +47,7 @@ object ResearchOverview:
       g: Autopilot.GoalProgress,
       focus: Option[Autopilot.FocusInfo],
       managers: List[Managers.ManagerInfo]
-  ): Option[com.histmersion.web.ResearchOverview.BlockerResult] =
+  ): Option[com.histmersion.api.UiLabels.Text] =
     focus
       .flatMap(_.waiting.find(_.slug == g.slug))
       .map(w => Option(w.why).filter(_.nonEmpty).getOrElse(Wording.humanize(w.code)))
@@ -81,7 +67,7 @@ object ResearchOverview:
   /** What to read before deciding, and where it is: the source a status or edge is about (and the work it points at),
     * the article draft, the goal's plan, the manager a hint is for.
     */
-  def evidence(a: ApprovalInfo): List[(com.histmersion.web.ResearchOverview.EvidenceResultPart1, com.histmersion.web.ResearchOverview.EvidenceResultPart2)] =
+  def evidence(a: ApprovalInfo): List[(com.histmersion.api.UiLabels.Text, com.histmersion.api.UiLabels.Text)] =
     val own = ApprovalKind.parse(a.kind) match
       case Some(ApprovalKind.StatusChange) =>
         List("See the evidence" -> SourceLink.href(a.citekey))
@@ -99,14 +85,14 @@ object ResearchOverview:
     if own.nonEmpty then own else List("Read the whole proposal" -> Route.Research(ResearchSection.Decisions).path)
 
   /** `5 hours`, `2 days`: how long the oldest decision has waited. */
-  def waited(createdMs: com.histmersion.web.ResearchOverview.WaitedCreatedMs, nowMs: com.histmersion.web.ResearchOverview.WaitedNowMs): com.histmersion.web.ResearchOverview.WaitedResult =
+  def waited(createdMs: com.histmersion.web.ResearchOverview.EpochMillis, nowMs: com.histmersion.web.ResearchOverview.EpochMillis): com.histmersion.api.UiLabels.Text =
     val h = math.max(0L, ((nowMs - createdMs) / 3600000).toLong)
     if h < 1 then "less than an hour"
     else if h < 48 then (if h == 1 then "1 hour" else s"$h hours")
     else s"${h / 24} days"
 
   /** The weekly limit left, per plan pool that reports one: `Claude plan: 61% of this week's limit left`. */
-  def weekly(q: PlanQuota.QuotaInfo): List[com.histmersion.web.ResearchOverview.WeeklyResult] =
+  def weekly(q: PlanQuota.QuotaInfo): List[com.histmersion.api.UiLabels.Text] =
     q.plans.flatMap { p =>
       p.windows
         .find(w => w.kind.startsWith("seven_day") || w.limit.startsWith("seven_day"))

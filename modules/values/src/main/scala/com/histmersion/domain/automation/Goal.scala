@@ -6,6 +6,10 @@ import io.github.iltotore.iron.constraint.any.Pure
 import io.github.iltotore.iron.constraint.string.Match
 
 object Goal:
+  type Export = Export.T
+  object Export extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type SlugText = SlugText.T
+  object SlugText extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
   /** A goal's slug: the article slug's rule, but its own type, so a goal never passes for an article. */
   type Slug = Slug.T

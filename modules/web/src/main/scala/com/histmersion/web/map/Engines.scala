@@ -2,10 +2,10 @@ package com.histmersion.web.map
 
 /** The engine the app runs on: the one place outside the adapter that names it. */
 object Engines:
-  type SurfaceMaxZoom = SurfaceMaxZoom.T
-  object SurfaceMaxZoom extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type SurfacePixelRatioResult = SurfacePixelRatioResult.T
-  object SurfacePixelRatioResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type MaxZoom = MaxZoom.T
+  object MaxZoom extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type PixelRatio = PixelRatio.T
+  object PixelRatio extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
   def default: MapEngine = maplibre.MapLibreEngine
 
@@ -14,8 +14,8 @@ object Engines:
     */
   def surface(
       el: org.scalajs.dom.HTMLElement,
-      maxZoom: com.histmersion.web.map.Engines.SurfaceMaxZoom,
-      pixelRatio: Capabilities => Option[com.histmersion.web.map.Engines.SurfacePixelRatioResult],
+      maxZoom: com.histmersion.web.map.Engines.MaxZoom,
+      pixelRatio: Capabilities => Option[com.histmersion.web.map.Engines.PixelRatio],
       engine: MapEngine = default
   ): MapSurface =
     val caps = engine.probe()

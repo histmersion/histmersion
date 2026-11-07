@@ -47,81 +47,55 @@ import com.histmersion.api.library.Source
   * Left is always THIS collection ("here"), right the bundle — the plan's own vocabulary.
   */
 object MergeView:
+  type ActionLabel = ActionLabel.T
+  object ActionLabel extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type BundleText = BundleText.T
+  object BundleText extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type Description = Description.T
+  object Description extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type EditedText = EditedText.T
+  object EditedText extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type FieldName = FieldName.T
+  object FieldName extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type FileName = FileName.T
+  object FileName extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type IssueId = IssueId.T
+  object IssueId extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type KindLabel = KindLabel.T
+  object KindLabel extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type Label = Label.T
+  object Label extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type Left = Left.T
+  object Left extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type Line = Line.T
+  object Line extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type MarkedText = MarkedText.T
+  object MarkedText extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type ResolvedCount = ResolvedCount.T
+  object ResolvedCount extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type ResultText = ResultText.T
+  object ResultText extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type Side = Side.T
+  object Side extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type Text = Text.T
+  object Text extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type TileCount = TileCount.T
+  object TileCount extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type TotalCount = TotalCount.T
+  object TotalCount extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type Who = Who.T
+  object Who extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type Width = Width.T
+  object Width extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
   // ── pure parts ──────────────────────────────────────────────────────────────────────────────────
 
   /** How the issue list is grouped, in the order it is shown. */
-  type ArticleViewLinesLs = ArticleViewLinesLs.T
-  object ArticleViewLinesLs extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
-  type CounterResultPart1 = CounterResultPart1.T
-  object CounterResultPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type CounterResultPart2 = CounterResultPart2.T
-  object CounterResultPart2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type FilteredText = FilteredText.T
-  object FilteredText extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type DecideIssue = DecideIssue.T
-  object DecideIssue extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type DecideText = DecideText.T
-  object DecideText extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type ChosenIssue = ChosenIssue.T
-  object ChosenIssue extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type DescribeResult = DescribeResult.T
-  object DescribeResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type KindTextResult = KindTextResult.T
-  object KindTextResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type FieldOfResult = FieldOfResult.T
-  object FieldOfResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type ResultOfResultPart1 = ResultOfResultPart1.T
-  object ResultOfResultPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type ResultOfResultPart2 = ResultOfResultPart2.T
-  object ResultOfResultPart2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type RowsResultPart2 = RowsResultPart2.T
-  object RowsResultPart2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type MarkedTextResult = MarkedTextResult.T
-  object MarkedTextResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type HasMarkersResult = HasMarkersResult.T
-  object HasMarkersResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type HasMarkersText = HasMarkersText.T
-  object HasMarkersText extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type FileNameResult = FileNameResult.T
-  object FileNameResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type ApplicableResult = ApplicableResult.T
-  object ApplicableResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type BarResultPart1 = BarResultPart1.T
-  object BarResultPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type BarResultPart2 = BarResultPart2.T
-  object BarResultPart2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type BarLo = BarLo.T
-  object BarLo extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type BarHi = BarHi.T
-  object BarHi extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type AxisResultPart1 = AxisResultPart1.T
-  object AxisResultPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type AxisResultPart2 = AxisResultPart2.T
-  object AxisResultPart2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type TilesPart1 = TilesPart1.T
-  object TilesPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type TilesPart2 = TilesPart2.T
-  object TilesPart2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type BundleResult = BundleResult.T
-  object BundleResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type FailWhat = FailWhat.T
-  object FailWhat extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type LoadSha = LoadSha.T
-  object LoadSha extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type SetIssue = _root_.com.histmersion.web.MergeView.DecideIssue
-  val SetIssue: _root_.com.histmersion.web.MergeView.DecideIssue.type = _root_.com.histmersion.web.MergeView.DecideIssue
-  type SetText = _root_.com.histmersion.web.MergeView.DecideText
-  val SetText: _root_.com.histmersion.web.MergeView.DecideText.type = _root_.com.histmersion.web.MergeView.DecideText
-  type SideWho = SideWho.T
-  object SideWho extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type ArticleViewEdited = ArticleViewEdited.T
-  object ArticleViewEdited extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type MiniMapLeft = MiniMapLeft.T
-  object MiniMapLeft extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type MiniMapRight = MiniMapRight.T
-  object MiniMapRight extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type SetIssue = _root_.com.histmersion.web.MergeView.IssueId
+  val SetIssue: _root_.com.histmersion.web.MergeView.IssueId.type = _root_.com.histmersion.web.MergeView.IssueId
+  type SetText = _root_.com.histmersion.web.MergeView.Text
+  val SetText: _root_.com.histmersion.web.MergeView.Text.type = _root_.com.histmersion.web.MergeView.Text
 
   enum Group(val title: Group.Title):
     case Open extends Group("to decide")
@@ -150,12 +124,12 @@ object MergeView:
   /** How each of the bundle's sources was matched. */
   def matched(p: MergePlan): List[Source.Match] = RegisteredPlanMatches.kind.all(p.sources)
 
-  def counter(p: MergePlan): (com.histmersion.web.MergeView.CounterResultPart1, com.histmersion.web.MergeView.CounterResultPart2) =
+  def counter(p: MergePlan): (com.histmersion.web.MergeView.ResolvedCount, com.histmersion.web.MergeView.TotalCount) =
     val blocking = p.issues.filter(i => i.severity == MergeIssue.Severity.Blocking && i.condition.isEmpty)
     (blocking.count(_.decision.isEmpty), blocking.size)
 
   /** The issues a filter text keeps: it matches the id, the kind, the title or either side's label. */
-  def filtered(issues: List[MergeIssue], text: com.histmersion.web.MergeView.FilteredText): List[MergeIssue] =
+  def filtered(issues: List[MergeIssue], text: com.histmersion.web.MergeView.Text): List[MergeIssue] =
     val t = text.trim.toLowerCase
     if t.isEmpty then issues
     else
@@ -169,9 +143,9 @@ object MergeView:
     */
   def decide(
       r: MergeResolutions,
-      issue: com.histmersion.web.MergeView.DecideIssue,
+      issue: com.histmersion.web.MergeView.IssueId,
       decision: Option[MergeDecision],
-      text: Option[com.histmersion.web.MergeView.DecideText] = None
+      text: Option[com.histmersion.web.MergeView.Text] = None
   ): MergeResolutions =
     val rest = r.resolve.filterNot(_.issue == issue)
     r.modify(_.resolve)
@@ -181,11 +155,11 @@ object MergeView:
       )
 
   /** The decision a person made for an issue (not a default, a policy or a remembered one). */
-  def chosen(r: MergeResolutions, issue: com.histmersion.web.MergeView.ChosenIssue): Option[MergeDecision] =
+  def chosen(r: MergeResolutions, issue: com.histmersion.web.MergeView.IssueId): Option[MergeDecision] =
     r.resolve.find(_.issue == issue).flatMap(x => MergeDecision.parse(x.decision).toOption)
 
   /** What a decision kind means, in words. */
-  def describe(k: MergeDecision.Kind): com.histmersion.web.MergeView.DescribeResult = k match
+  def describe(k: MergeDecision.Kind): com.histmersion.web.MergeView.Description = k match
     case MergeDecision.Kind.KeepLeft       => "keep this collection's"
     case MergeDecision.Kind.KeepRight      => "take the bundle's"
     case MergeDecision.Kind.Both           => "keep both"
@@ -200,12 +174,12 @@ object MergeView:
     case MergeDecision.Kind.KeepUnanchored => "keep it without a place in the text"
 
   /** An issue kind in words (`changed-both-sides` → `changed both sides`). */
-  def kindText(k: MergeIssue.Kind): com.histmersion.web.MergeView.KindTextResult = MergeIssue.Kind.wireOf(k).replace('-', ' ')
+  def kindText(k: MergeIssue.Kind): com.histmersion.web.MergeView.KindLabel = MergeIssue.Kind.wireOf(k).replace('-', ' ')
 
   /** The row of a field table an issue is about (`status` for a status question, `citekey` for the same-work and
     * collision questions), if it is about one.
     */
-  def fieldOf(k: MergeIssue.Kind): Option[com.histmersion.web.MergeView.FieldOfResult] = k match
+  def fieldOf(k: MergeIssue.Kind): Option[com.histmersion.web.MergeView.FieldName] = k match
     case MergeIssue.Kind.StatusDiffers                               => Some("status")
     case MergeIssue.Kind.TitleDiffers                                => Some("title")
     case MergeIssue.Kind.AuthorsDiffers                              => Some("authors")
@@ -224,7 +198,7 @@ object MergeView:
     * still to decide); for the other rows nothing — the merge's own rules fold them (the richer title, tags unioned…),
     * the server's business.
     */
-  def resultOf(i: MergeIssue, f: IssueField, d: Option[MergeDecision]): Option[Either[com.histmersion.web.MergeView.ResultOfResultPart1, com.histmersion.web.MergeView.ResultOfResultPart2]] =
+  def resultOf(i: MergeIssue, f: IssueField, d: Option[MergeDecision]): Option[Either[com.histmersion.web.MergeView.Text, com.histmersion.web.MergeView.ResultText]] =
     if !fieldOf(i.kind).contains(f.field) then None
     else
       Some(d.map(_.kind) match
@@ -242,14 +216,14 @@ object MergeView:
         case None        => Left("to decide"))
 
   /** The rows of a field table worth a person's eye: the ones that differ come first. */
-  def rows(fs: List[IssueField]): List[(IssueField, com.histmersion.web.MergeView.RowsResultPart2)] =
+  def rows(fs: List[IssueField]): List[(IssueField, Boolean)] =
     val (diff, same) = fs.filter(f => f.left.isDefined || f.right.isDefined).partition(f => f.left != f.right)
     diff.map(_ -> true) ++ same.map(_ -> false)
 
   /** The text the article editor starts from: the agreed regions as they are, each conflict with git-style markers
     * around this collection's and the bundle's lines (and the common version's).
     */
-  def markedText(t: IssueText): com.histmersion.web.MergeView.MarkedTextResult =
+  def markedText(t: IssueText): com.histmersion.web.MergeView.MarkedText =
     t.hunks
       .flatMap { h =>
         if !h.conflict then h.left
@@ -261,28 +235,28 @@ object MergeView:
       .mkString("\n")
 
   /** Conflict markers still in an edited text: it is not merged yet. */
-  def hasMarkers(text: com.histmersion.web.MergeView.HasMarkersText): com.histmersion.web.MergeView.HasMarkersResult =
+  def hasMarkers(text: com.histmersion.web.MergeView.Text): Boolean =
     text.linesIterator.exists(l => l.startsWith("<<<<<<< ") || l == "=======" || l.startsWith(">>>>>>> "))
 
   /** The argument a `file:` decision made on this screen names (no file exists: the text travels in the decision, and
     * in the resolution file's `texts:`).
     */
-  def fileName(i: MergeIssue): com.histmersion.web.MergeView.FileNameResult =
+  def fileName(i: MergeIssue): com.histmersion.web.MergeView.FileName =
     s"merged/${i.left.orElse(i.right).map(_.label).getOrElse(i.id)}.md"
 
   /** May the plan be applied now? Nothing open, nothing wrong, something to do. */
-  def applicable(p: MergePlan): com.histmersion.web.MergeView.ApplicableResult =
+  def applicable(p: MergePlan): Boolean =
     p.open.isEmpty && p.problems.isEmpty && p.resolutionErrors.isEmpty && p.changes > 0
 
   /** A span as a bar on a common axis: left offset and width in per cent of `[lo, hi]`. */
-  def bar(s: IssueSpan, lo: com.histmersion.web.MergeView.BarLo, hi: com.histmersion.web.MergeView.BarHi): (com.histmersion.web.MergeView.BarResultPart1, com.histmersion.web.MergeView.BarResultPart2) =
+  def bar(s: IssueSpan, lo: com.histmersion.api.Years.Astronomical, hi: com.histmersion.api.Years.Astronomical): (com.histmersion.web.MergeView.Left, com.histmersion.web.MergeView.Width) =
     val w = math.max(1L, hi - lo).toDouble
     val a = s.start.getOrElse(lo)
     val b = s.end.getOrElse(hi)
     (100.0 * (a - lo) / w, math.max(1.0, 100.0 * (b - a) / w))
 
   /** The axis of two spans: their hull, open ends given a margin of a tenth. */
-  def axis(spans: List[IssueSpan]): Option[(com.histmersion.web.MergeView.AxisResultPart1, com.histmersion.web.MergeView.AxisResultPart2)] =
+  def axis(spans: List[IssueSpan]): Option[(com.histmersion.api.Years.Astronomical, com.histmersion.api.Years.Astronomical)] =
     val ends = spans.flatMap(s => s.start.toList ++ s.end.toList)
     Option.when(ends.nonEmpty) {
       val (lo, hi) = (ends.min, ends.max)
@@ -306,7 +280,7 @@ object MergeView:
   private val confirm = Var(false)
 
   /** The base map's tiles, from `/api/config` ([[configure]]). */
-  private var tiles: Option[(com.histmersion.web.MergeView.TilesPart1, com.histmersion.web.MergeView.TilesPart2)] = None
+  private var tiles: Option[(com.histmersion.web.MergeView.Label, com.histmersion.web.MergeView.TileCount)] = None
 
   /** The latest plan request: an answer to an older one is dropped (a `var`: it counts requests). */
   private var planReq = 0
@@ -318,12 +292,12 @@ object MergeView:
   /** Where a map with nothing to show opens (`ui.map-start`); set from `/api/config` like `tiles`. */
   private var startView = MapStartConfig()
 
-  private def bundle: Option[com.histmersion.web.MergeView.BundleResult] = UiState.mergeBundle.now()
+  private def bundle: Option[com.histmersion.web.MergeView.BundleText] = UiState.mergeBundle.now()
 
-  private def fail(what: com.histmersion.web.MergeView.FailWhat)(e: Throwable): Unit = failure.set(Some(s"$what: ${e.getMessage}"))
+  private def fail(what: com.histmersion.web.MergeView.ActionLabel)(e: Throwable): Unit = failure.set(Some(s"$what: ${e.getMessage}"))
 
   /** Open a bundle that is on the server: its draft, then its plan. */
-  private def load(sha: com.histmersion.web.MergeView.LoadSha): Unit =
+  private def load(sha: com.histmersion.api.Sha256): Unit =
     failure.set(None)
     ApiClient.mergeSession(sha).onComplete(_.fold(fail("the review draft"), s => { res.set(s.resolutions); replan() }))
 
@@ -682,7 +656,7 @@ object MergeView:
       decisions(i)
     )
 
-  private def side(who: com.histmersion.web.MergeView.SideWho, s: Option[IssueSide], entity: Bundle.Kind): HtmlElement =
+  private def side(who: com.histmersion.web.MergeView.Who, s: Option[IssueSide], entity: Bundle.Kind): HtmlElement =
     div(
       cls := s"merge-side merge-$who",
       h5(who),
@@ -715,9 +689,9 @@ object MergeView:
   /** The diff3 view: the agreed regions folded, each conflict as here | common | bundle; and the editor the merged text
     * is written in (`file:`).
     */
-  private def articleView(i: MergeIssue, t: IssueText, edited: Option[com.histmersion.web.MergeView.ArticleViewEdited]): HtmlElement =
+  private def articleView(i: MergeIssue, t: IssueText, edited: Option[com.histmersion.web.MergeView.EditedText]): HtmlElement =
     val draft = Var(edited.getOrElse(markedText(t)))
-    def lines(ls: List[com.histmersion.web.MergeView.ArticleViewLinesLs]) = pre(cls := "merge-lines", ls.mkString("\n"))
+    def lines(ls: List[com.histmersion.web.MergeView.Line]) = pre(cls := "merge-lines", ls.mkString("\n"))
     div(
       cls := "merge-diff",
       h5(if t.base.isDefined then "the two versions against their common version"
@@ -804,7 +778,7 @@ object MergeView:
       }
     )
 
-  private def miniMap(left: Option[com.histmersion.web.MergeView.MiniMapLeft], right: Option[com.histmersion.web.MergeView.MiniMapRight]): HtmlElement =
+  private def miniMap(left: Option[com.histmersion.web.MergeView.Side], right: Option[com.histmersion.web.MergeView.Side]): HtmlElement =
     // a `var`: the map lives as long as the element; created on mount, removed on unmount
     var map: Option[MapSurface] = None
     div(

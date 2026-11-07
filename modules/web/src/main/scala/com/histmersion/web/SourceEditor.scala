@@ -17,49 +17,13 @@ import com.histmersion.api.library.Facet
   * and the form reloads.
   */
 object SourceEditor:
+  type FieldName = FieldName.T
+  object FieldName extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type Problem = Problem.T
+  object Problem extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
   /** The form as typed. Years are text so `1300 BCE` can be typed and shown as such. */
-  type ToPatchTextResult = ToPatchTextResult.T
-  object ToPatchTextResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type ToPatchTextV = ToPatchTextV.T
-  object ToPatchTextV extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type ToPatchTextWas = ToPatchTextWas.T
-  object ToPatchTextWas extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type ToPatchTextWhat = ToPatchTextWhat.T
-  object ToPatchTextWhat extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type ApplyLoadThen0 = ApplyLoadThen0.T
-  object ApplyLoadThen0 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type ApplyTextInGetResult = ApplyTextInGetResult.T
-  object ApplyTextInGetResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type ApplyTextInSetArg2 = ApplyTextInSetArg2.T
-  object ApplyTextInSetArg2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type ApplyTextInHint = ApplyTextInHint.T
-  object ApplyTextInHint extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type ApplyFieldName = ApplyFieldName.T
-  object ApplyFieldName extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type ApplyChipsGetResult = ApplyChipsGetResult.T
-  object ApplyChipsGetResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type ApplyChipsSetArg2 = ApplyChipsSetArg2.T
-  object ApplyChipsSetArg2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type ApplyChipsHint = ApplyChipsHint.T
-  object ApplyChipsHint extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type ApplyYearEchoGetResult = ApplyYearEchoGetResult.T
-  object ApplyYearEchoGetResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
-  type CannotClearWhat = CannotClearWhat.T
-  object CannotClearWhat extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type YearResultPart1 = YearResultPart1.T
-  object YearResultPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type YearResultPart2 = YearResultPart2.T
-  object YearResultPart2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type YearRaw = YearRaw.T
-  object YearRaw extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type ToPatchResultPart1Part2 = ToPatchResultPart1Part2.T
-  object ToPatchResultPart1Part2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type FieldOfMessage = FieldOfMessage.T
-  object FieldOfMessage extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type ApplyCk = ApplyCk.T
-  object ApplyCk extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
   final case class Draft(
       title: Draft.Title,
@@ -121,11 +85,11 @@ object SourceEditor:
 
   // ── pure parts ──────────────────────────────────────────────────────────────────────────────────
 
-  private def cannotClear(what: com.histmersion.web.SourceEditor.CannotClearWhat) =
+  private def cannotClear(what: com.histmersion.api.UiLabels.Text) =
     s"$what cannot be removed here, only changed — the patch leaves an omitted value alone"
 
   /** A signed year from what was typed (`1300 BCE`, `-1300`, `530 CE`, `530`), `None` for blank. */
-  def year(raw: com.histmersion.web.SourceEditor.YearRaw): Either[com.histmersion.web.SourceEditor.YearResultPart1, Option[com.histmersion.web.SourceEditor.YearResultPart2]] =
+  def year(raw: com.histmersion.api.Years.Text): Either[com.histmersion.web.SourceEditor.Problem, Option[com.histmersion.api.Years.Astronomical]] =
     if raw.trim.isEmpty then Right(None)
     else Years.parse(raw).map(Some(_))
 
@@ -135,9 +99,9 @@ object SourceEditor:
   def toPatch(
       orig: com.histmersion.api.library.Source.Detail,
       d: Draft
-  ): Either[List[(Field, com.histmersion.web.SourceEditor.ToPatchResultPart1Part2)], Option[com.histmersion.api.library.Source.Patch]] =
+  ): Either[List[(Field, com.histmersion.api.UiLabels.Text)], Option[com.histmersion.api.library.Source.Patch]] =
     val errs = List.newBuilder[(Field, String)]
-    def text(v: com.histmersion.web.SourceEditor.ToPatchTextV, was: Option[com.histmersion.web.SourceEditor.ToPatchTextWas], field: Field, what: com.histmersion.web.SourceEditor.ToPatchTextWhat): Option[com.histmersion.web.SourceEditor.ToPatchTextResult] =
+    def text(v: com.histmersion.api.UiLabels.Text, was: Option[com.histmersion.api.UiLabels.Text], field: Field, what: com.histmersion.api.UiLabels.Text): Option[com.histmersion.api.UiLabels.Text] =
       val t = v.trim
       if t.isEmpty then
         if was.exists(_.trim.nonEmpty) then errs += field -> cannotClear(what)
@@ -196,7 +160,7 @@ object SourceEditor:
   /** Which field a server refusal is about, from its message (`period_start …`, `status=superseded requires …`); a
     * message about none of them is shown above the buttons.
     */
-  def fieldOf(message: com.histmersion.web.SourceEditor.FieldOfMessage): Field =
+  def fieldOf(message: com.histmersion.web.SourceEditor.Problem): Field =
     val m = message.toLowerCase
     List(
       "period" -> Field.Period,
@@ -218,7 +182,7 @@ object SourceEditor:
 
   // ── the component (one per open editor window) ──────────────────────────────────────────────────
 
-  def apply(ck: com.histmersion.web.SourceEditor.ApplyCk): HtmlElement =
+  def apply(ck: com.histmersion.web.Preview.Target.Source.Citekey): HtmlElement =
     val orig = Var(Option.empty[com.histmersion.api.library.Source.Detail])
     // the form's own model until it is saved; it shadows nothing in UiState
     val draft = Var(Option.empty[Draft])
@@ -226,7 +190,7 @@ object SourceEditor:
     val notice = Var(Option.empty[String])
     val saving = Var(false)
 
-    def load(then0: Option[com.histmersion.web.SourceEditor.ApplyLoadThen0] = None): Unit =
+    def load(then0: Option[String] = None): Unit =
       ApiClient.getSource(ck, body = false).onComplete { r =>
         r.fold(
           e => errors.set(List(Field.Form -> s"Could not load $ck: ${e.getMessage}")),
@@ -275,7 +239,7 @@ object SourceEditor:
       })
 
     def edit(f: Draft => Draft): Unit = draft.update(_.map(f))
-    def textIn(get: Draft => com.histmersion.web.SourceEditor.ApplyTextInGetResult, set: (Draft, com.histmersion.web.SourceEditor.ApplyTextInSetArg2) => Draft, hint: com.histmersion.web.SourceEditor.ApplyTextInHint = "") =
+    def textIn(get: Draft => com.histmersion.api.UiLabels.Text, set: (Draft, com.histmersion.api.UiLabels.Text) => Draft, hint: com.histmersion.api.UiLabels.Text = "") =
       input(
         typ := "text",
         cls := "field",
@@ -283,14 +247,14 @@ object SourceEditor:
         controlled(value <-- draft.signal.map(_.fold("")(get)), onInput.mapToValue --> (v => edit(set(_, v))))
       )
 
-    def field(name: com.histmersion.web.SourceEditor.ApplyFieldName, f: Field, control: HtmlElement, extra: Modifier[HtmlElement]*): HtmlElement =
+    def field(name: com.histmersion.web.SourceEditor.FieldName, f: Field, control: HtmlElement, extra: Modifier[HtmlElement]*): HtmlElement =
       div(cls := "form-field", label(name, control), extra, errorFor(f))
 
     def chips(
         facet: Facet.Field,
-        get: Draft => List[com.histmersion.web.SourceEditor.ApplyChipsGetResult],
-        set: (Draft, List[com.histmersion.web.SourceEditor.ApplyChipsSetArg2]) => Draft,
-        hint: com.histmersion.web.SourceEditor.ApplyChipsHint
+        get: Draft => List[com.histmersion.api.UiLabels.Text],
+        set: (Draft, List[com.histmersion.api.UiLabels.Text]) => Draft,
+        hint: com.histmersion.api.UiLabels.Text
     ): HtmlElement =
       val zoomed = draft.zoomLazy(_.fold(Nil)(get))((od, v) => od.map(set(_, v)))
       ChipInput(
@@ -306,7 +270,7 @@ object SourceEditor:
       )
 
     /** What a typed year reads as, next to its box: `= 1300 BCE`, or why it is not a year. */
-    def yearEcho(get: Draft => com.histmersion.web.SourceEditor.ApplyYearEchoGetResult): HtmlElement =
+    def yearEcho(get: Draft => com.histmersion.api.Years.Text): HtmlElement =
       span(
         cls := "year-echo muted",
         child.text <-- draft.signal.map(

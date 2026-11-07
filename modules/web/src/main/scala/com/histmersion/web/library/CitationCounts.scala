@@ -13,8 +13,6 @@ object CitationCounts:
   /** A disagreement is stored on the critic (`challenges`, `refutes`, `updates` point at this source) and a superseding
     * on the older source (`superseded_by` points from this one to the newer).
     */
-  type AnsweringResult = AnsweringResult.T
-  object AnsweringResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type OfCitingArticles = OfCitingArticles.T
   object OfCitingArticles extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
@@ -25,7 +23,7 @@ object CitationCounts:
   type Articles = Articles.T
   object Articles extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
-  def answering(r: NeighborRow): com.histmersion.web.library.CitationCounts.AnsweringResult =
+  def answering(r: NeighborRow): Boolean =
     (r.direction == "in" && Article.Coverage.DisagreementKinds.contains(r.kind) && r.kind != "superseded_by") ||
       (r.direction == "in" && r.kind == "supersedes") ||
       (r.direction == "out" && r.kind == "superseded_by")

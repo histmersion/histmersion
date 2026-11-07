@@ -15,7 +15,5 @@ object VectorStyle:
   type Label = Label.T
   object Label extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
-  type ParseS = ParseS.T
-  object ParseS extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
-  def parse(s: com.histmersion.web.map.VectorStyle.ParseS): Option[VectorStyle] = values.find(_.id == s.trim.toLowerCase)
+  def parse(s: com.histmersion.web.map.VectorStyle.Id): Option[VectorStyle] = values.find(_.id == s.trim.toLowerCase)

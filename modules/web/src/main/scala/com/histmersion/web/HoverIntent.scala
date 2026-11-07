@@ -14,9 +14,9 @@ final class HoverIntent[K](
     cancel: HoverIntent.CancelArg1 => Unit = id => dom.window.clearTimeout(id)
 ):
   // `var`: the one pending hover and its timer
-  private var pending: Option[(K, com.histmersion.web.HoverIntent.PendingPart2)] = None
+  private var pending: Option[(K, Int)] = None
 
-  def isPending(k: K): com.histmersion.web.HoverIntent.IsPendingResult = pending.exists(_._1 == k)
+  def isPending(k: K): Boolean = pending.exists(_._1 == k)
 
   def enter(k: K): Unit =
     if !isPending(k) then
@@ -41,7 +41,3 @@ object HoverIntent:
   type CancelArg1 = CancelArg1.T
   object CancelArg1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
-  type PendingPart2 = PendingPart2.T
-  object PendingPart2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type IsPendingResult = IsPendingResult.T
-  object IsPendingResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]

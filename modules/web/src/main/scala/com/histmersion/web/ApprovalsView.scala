@@ -17,72 +17,18 @@ import com.histmersion.api.automation.Goal
   * over.
   */
 object ApprovalsView:
+  type ApprovalId = ApprovalId.T
+  object ApprovalId extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type KindFilter = KindFilter.T
+  object KindFilter extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type Picked = Picked.T
+  object Picked extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
   /** How many a page lists. */
-  type StateButtonsCountS = StateButtonsCountS.T
-  object StateButtonsCountS extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
-  type KindMeaningResult = KindMeaningResult.T
-  object KindMeaningResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type KindMeaningKind = KindMeaningKind.T
-  object KindMeaningKind extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type StateMeaningResult = StateMeaningResult.T
-  object StateMeaningResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type StateMeaningState = StateMeaningState.T
-  object StateMeaningState extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type DecidedByMeaningResult = DecidedByMeaningResult.T
-  object DecidedByMeaningResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type DecidedByMeaningBy = DecidedByMeaningBy.T
-  object DecidedByMeaningBy extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type DescribeResult = DescribeResult.T
-  object DescribeResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type IsOpenResult = IsOpenResult.T
-  object IsOpenResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type EvidenceLineResult = EvidenceLineResult.T
-  object EvidenceLineResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type States = StatesValue
   type StatesValue = StatesValue.T
   object StatesValue extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type StateValueResult = StateValueResult.T
-  object StateValueResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type StateValueButton = StateValueButton.T
-  object StateValueButton extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type ShownStateResult = ShownStateResult.T
-  object ShownStateResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type ShownStateField = ShownStateField.T
-  object ShownStateField extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type FilterOfState = FilterOfState.T
-  object FilterOfState extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type FilterOfKinds = FilterOfKinds.T
-  object FilterOfKinds extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type FilterOfBy = FilterOfBy.T
-  object FilterOfBy extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type FilterOfSubject = FilterOfSubject.T
-  object FilterOfSubject extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type QualifierResult = QualifierResult.T
-  object QualifierResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type BulkTargetsSelected = BulkTargetsSelected.T
-  object BulkTargetsSelected extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type ConfirmTextResult = ConfirmTextResult.T
-  object ConfirmTextResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type DecidedLineResult = DecidedLineResult.T
-  object DecidedLineResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type SelfCheckResult = SelfCheckResult.T
-  object SelfCheckResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type KeyResult = KeyResult.T
-  object KeyResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type DecideNote = DecideNote.T
-  object DecideNote extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type StateLabelResult = StateLabelResult.T
-  object StateLabelResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type StateLabelS = StateLabelS.T
-  object StateLabelS extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type KindLabelResult = KindLabelResult.T
-  object KindLabelResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type KindLabelKind = KindLabelKind.T
-  object KindLabelKind extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type DigestLineResult = DigestLineResult.T
-  object DigestLineResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
   val Limit = 100
 
@@ -94,7 +40,7 @@ object ApprovalsView:
   /** What approving each kind does, and where it sits in a goal's life (goal-plan → article-plan → compile-article's
     * article-publish → review); a tooltip on the kind wherever it is shown.
     */
-  def kindMeaning(kind: com.histmersion.web.ApprovalsView.KindMeaningKind): Option[com.histmersion.web.ApprovalsView.KindMeaningResult] = ApprovalKind.parse(kind).map {
+  def kindMeaning(kind: com.histmersion.api.automation.Approval.Kind.Wire): Option[String] = ApprovalKind.parse(kind).map {
     case ApprovalKind.GoalPlan =>
       "A research goal's plan: its sub-goals, search queries and works to read. " +
         "Approving creates them; that unblocks proposing the goal's articles."
@@ -116,7 +62,7 @@ object ApprovalsView:
   }
 
   /** What each state the filter buttons offer means; a tooltip on the button. */
-  def stateMeaning(state: com.histmersion.web.ApprovalsView.StateMeaningState): Option[com.histmersion.web.ApprovalsView.StateMeaningResult] =
+  def stateMeaning(state: com.histmersion.api.automation.Approval.State.Wire): Option[String] =
     if state == "all" then Some("Every approval, whatever its state.")
     else
       ApprovalState.parse(state).map {
@@ -128,7 +74,7 @@ object ApprovalsView:
       }
 
   /** Who decided an approval, in a sentence; a tooltip on the "decided by" chips. */
-  def decidedByMeaning(by: com.histmersion.web.ApprovalsView.DecidedByMeaningBy): Option[com.histmersion.web.ApprovalsView.DecidedByMeaningResult] = ListFilters.DecidedBy.parse(by).map {
+  def decidedByMeaning(by: com.histmersion.api.automation.Activity.Actor): Option[String] = ListFilters.DecidedBy.parse(by).map {
     case ListFilters.DecidedBy.Person =>
       "Decided by a person: every decision that is not the autopilot's or an automatic one."
     case ListFilters.DecidedBy.Autopilot =>
@@ -138,7 +84,7 @@ object ApprovalsView:
   }
 
   /** What an approval would change, in words. */
-  def describe(a: ApprovalInfo): com.histmersion.web.ApprovalsView.DescribeResult =
+  def describe(a: ApprovalInfo): String =
     ApprovalKind.parse(a.kind) match
       case Some(ApprovalKind.StatusChange) =>
         s"status of ${a.citekey}: ${a.current.getOrElse("?")} → ${a.status.getOrElse("?")}"
@@ -161,29 +107,29 @@ object ApprovalsView:
         s"manager ${a.subject.getOrElse("?")}: ${a.hintEffect.fold("an action")(p => ManagersMarkdown.effect(p.effect))}"
       case None => s"${a.kind} on ${a.subject.getOrElse(a.citekey)}"
 
-  def isOpen(a: ApprovalInfo): com.histmersion.web.ApprovalsView.IsOpenResult = a.state == ApprovalState.Open.wire
+  def isOpen(a: ApprovalInfo): Boolean = a.state == ApprovalState.Open.wire
 
   /** The evidence line under the change — unless the plan block shows it: a plan's evidence IS its rationale, which
     * [[planBlock]] prints at its top (#882: it used to appear twice).
     */
-  def evidenceLine(a: ApprovalInfo): Option[com.histmersion.web.ApprovalsView.EvidenceLineResult] =
+  def evidenceLine(a: ApprovalInfo): Option[String] =
     Option(a.evidence).filter(_.nonEmpty).filterNot(e => a.plan.exists(_.rationale == e))
 
   /** The states the filter buttons offer, in order; `all` = every state. */
   val States: List[com.histmersion.web.ApprovalsView.States] = ApprovalState.values.toList.map(_.wire) :+ "all"
 
   /** The state a button stands for as the URL keeps it: the open ones are the default (`None`). */
-  def stateValue(button: com.histmersion.web.ApprovalsView.StateValueButton): Option[com.histmersion.web.ApprovalsView.StateValueResult] = Option.when(button != ApprovalState.Open.wire)(button)
+  def stateValue(button: com.histmersion.api.automation.Approval.State.Wire): Option[String] = Option.when(button != ApprovalState.Open.wire)(button)
 
   /** The state the list shows: the open ones unless another was picked. */
-  def shownState(field: Option[com.histmersion.web.ApprovalsView.ShownStateField]): com.histmersion.web.ApprovalsView.ShownStateResult = field.getOrElse(ApprovalState.Open.wire)
+  def shownState(field: Option[com.histmersion.api.automation.Approval.State.Wire]): String = field.getOrElse(ApprovalState.Open.wire)
 
   /** The query the window sends, from its filter fields. Pure. */
   def filterOf(
-      state: Option[com.histmersion.web.ApprovalsView.FilterOfState],
-      kinds: List[com.histmersion.web.ApprovalsView.FilterOfKinds],
-      by: List[com.histmersion.web.ApprovalsView.FilterOfBy],
-      subject: Option[com.histmersion.web.ApprovalsView.FilterOfSubject]
+      state: Option[com.histmersion.api.automation.Approval.State.Wire],
+      kinds: List[com.histmersion.web.ApprovalsView.KindFilter],
+      by: List[com.histmersion.api.automation.Activity.Actor],
+      subject: Option[com.histmersion.api.automation.ListFilters.ApprovalFilter.Subject]
   ): ListFilters.ApprovalFilter =
     ListFilters.ApprovalFilter(state = state, kind = kinds, subject = subject, decidedBy = by)
 
@@ -205,14 +151,14 @@ object ApprovalsView:
     as.filter(a => (state == "all" || a.state == state) && (n.kind.isEmpty || n.kind.contains(a.kind)))
 
   /** The heading's words before the noun: `open` (or the state picked) and the kinds picked. */
-  def qualifier(f: ListFilters.ApprovalFilter): Option[com.histmersion.web.ApprovalsView.QualifierResult] = f.qualifier
+  def qualifier(f: ListFilters.ApprovalFilter): Option[com.histmersion.api.automation.ListFilters.Qualifier] = f.qualifier
 
   /** The approvals a bulk decision would apply to: those selected that are still shown and open. */
-  def bulkTargets(selected: Set[com.histmersion.web.ApprovalsView.BulkTargetsSelected], shown: List[ApprovalInfo]): List[ApprovalInfo] =
+  def bulkTargets(selected: Set[com.histmersion.web.ApprovalsView.ApprovalId], shown: List[ApprovalInfo]): List[ApprovalInfo] =
     shown.filter(a => selected(a.id) && isOpen(a))
 
   /** What the confirmation of a bulk decision asks. */
-  def confirmText(d: Decision, as: List[ApprovalInfo]): com.histmersion.web.ApprovalsView.ConfirmTextResult =
+  def confirmText(d: Decision, as: List[ApprovalInfo]): String =
     val kinds = as
       .groupMapReduce(_.kind)(_ => 1)(_ + _)
       .toList
@@ -223,10 +169,10 @@ object ApprovalsView:
       "Each is decided as if its own button were pressed, one after another, with the same checks."
 
   /** Who decided an approval, as its row says it (nothing while it is open). */
-  def decidedLine(a: ApprovalInfo): Option[com.histmersion.web.ApprovalsView.DecidedLineResult] = ListFilters.DecidedBy.of(a.state, a.note, a.result).map(_.describe)
+  def decidedLine(a: ApprovalInfo): Option[String] = ListFilters.DecidedBy.of(a.state, a.note, a.result).map(_.describe)
 
   /** The self-check line of a draft. */
-  def selfCheck(d: Goal.Plans.ArticleDraft): com.histmersion.web.ApprovalsView.SelfCheckResult =
+  def selfCheck(d: Goal.Plans.ArticleDraft): String =
     if d.problems.isEmpty then "The code self-check found nothing."
     else s"The code self-check still found ${Plural.count(d.problems.size, "problem")} after the writer's last attempt:"
 
@@ -315,12 +261,12 @@ object ApprovalsView:
   private val selected = Var(Set.empty[Long])
   private val bulkBusy = Var(false)
 
-  private def key(a: ApprovalInfo): com.histmersion.web.ApprovalsView.KeyResult = a.id.toString
+  private def key(a: ApprovalInfo): String = a.id.toString
 
   /** Reload what is shown, keeping the pages loaded ([[ListPaging]]). */
   private def refresh(): Unit = list.refresh()
 
-  private def decide(a: ApprovalInfo, d: Decision, note: com.histmersion.web.ApprovalsView.DecideNote): Unit =
+  private def decide(a: ApprovalInfo, d: Decision, note: com.histmersion.web.ApiClient.Note): Unit =
     busy.update(_ + a.id)
     ApiClient.decide(a.id, d, Some(note).map(_.trim).filter(_.nonEmpty)).onComplete { r =>
       busy.update(_ - a.id)
@@ -362,14 +308,14 @@ object ApprovalsView:
     list.listing.signal.combineWith(filterSignal).map((l, f) => (l.copy(rows = visible(l.rows, f)), f))
 
   /** An approval's state (or "all") as its button and badge read it. */
-  def stateLabel(s: com.histmersion.web.ApprovalsView.StateLabelS): com.histmersion.web.ApprovalsView.StateLabelResult =
+  def stateLabel(s: String): String =
     if s == "all" then "All" else ApprovalState.parse(s).fold(Wording.humanize(s))(Wording.approvalState)
 
   /** An approval's kind as a person reads it ([[Wording.approvalKind]]). */
-  def kindLabel(kind: com.histmersion.web.ApprovalsView.KindLabelKind): com.histmersion.web.ApprovalsView.KindLabelResult = ApprovalKind.parse(kind).fold(Wording.humanize(kind))(Wording.approvalKind)
+  def kindLabel(kind: com.histmersion.api.automation.Approval.Kind.Wire): String = ApprovalKind.parse(kind).fold(Wording.humanize(kind))(Wording.approvalKind)
 
   private def stateButtons: HtmlElement =
-    def count(l: ListPaging.Listing[ApprovalInfo], s: com.histmersion.web.ApprovalsView.StateButtonsCountS) =
+    def count(l: ListPaging.Listing[ApprovalInfo], s: String) =
       ListPaging.count(l, Option.when(s != "all")(s), _.state)
     div(
       cls := "btn-group jobs-filter approvals-state",
@@ -424,7 +370,7 @@ object ApprovalsView:
     )
 
   /** One kind of the digest, in a line: how many, the oldest, who decides them now. */
-  def digestLine(g: com.histmersion.api.automation.ApprovalDigest.KindGroup): com.histmersion.web.ApprovalsView.DigestLineResult =
+  def digestLine(g: com.histmersion.api.automation.ApprovalDigest.KindGroup): String =
     s"${kindLabel(g.kind)} ${Paging.grouped(g.count)}" + g.oldest.fold("")(o => s" (oldest $o)") +
       (g.decidedBy match
         case "checked" => " · the autopilot's checks decide them within the day's cap"
@@ -560,8 +506,8 @@ object ApprovalsView:
   final private[web] case class Pick(on: Signal[Pick.On], set: Pick.SetArg1 => Unit)
 
   object Pick:
-    type SetArg1 = SetArg1.T
-    object SetArg1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type SetArg1 = com.histmersion.web.ApprovalsView.Picked
+    val SetArg1: _root_.com.histmersion.web.ApprovalsView.Picked.type = _root_.com.histmersion.web.ApprovalsView.Picked
 
     type On = On.T
     object On extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]

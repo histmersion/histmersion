@@ -59,7 +59,7 @@ enum ActivityTab(
   case Worklog extends ActivityTab("worklog", "The worklog, by day", agents = false, None)
 
   /** One of the merged list's filter chips (not a detailed list). */
-  def isChip: com.histmersion.web.ActivityTab.IsChipResult = show.isDefined
+  def isChip: Boolean = show.isDefined
 
 object ActivityTab:
   type Slug = Slug.T
@@ -69,5 +69,3 @@ object ActivityTab:
   type Agents = Agents.T
   object Agents extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
-  type IsChipResult = IsChipResult.T
-  object IsChipResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]

@@ -13,23 +13,21 @@ import com.histmersion.api.catalogue.{EventTaxonomy, EventTier, SiteTypes}
   * lists.
   */
 object LayerFilters:
+  type Badge = Badge.T
+  object Badge extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type Glyph = Glyph.T
+  object Glyph extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type Icon = Icon.T
+  object Icon extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type TierMeaning = TierMeaning.T
+  object TierMeaning extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   /** Pure: a badge of `shape` with `glyph`, as an option's icon (in the accent colour: no date). */
-  type BadgeResult = BadgeResult.T
-  object BadgeResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type BadgeGlyph = BadgeGlyph.T
-  object BadgeGlyph extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type LayerIconResult = LayerIconResult.T
-  object LayerIconResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type TierMeaningResult = TierMeaningResult.T
-  object TierMeaningResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type TierMeaningTier = TierMeaningTier.T
-  object TierMeaningTier extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
-  def badge(shape: Shape, glyph: com.histmersion.web.LayerFilters.BadgeGlyph): com.histmersion.web.LayerFilters.BadgeResult =
+  def badge(shape: Shape, glyph: com.histmersion.web.LayerFilters.Glyph): com.histmersion.web.LayerFilters.Badge =
     s"""<span class="hd-badge hd-badge--${shape.cls} opt-badge">${Glyphs.badge(glyph)}</span>"""
 
   /** Pure: a layer's own switch icon, the "all" option's. */
-  def layerIcon(k: PointKind[?]): com.histmersion.web.LayerFilters.LayerIconResult = Icon.html(k.icon)
+  def layerIcon(k: PointKind[?]): com.histmersion.web.LayerFilters.Icon = Icon.html(k.icon)
 
   val eventKinds: List[IconSelect.Opt] =
     IconSelect.Opt("", "all", layerIcon(PointKinds.Events)) :: EventTaxonomy.groups.flatMap { g =>
@@ -41,7 +39,7 @@ object LayerFilters:
     }
 
   /** What each event tier means; the tier menu's tooltips. */
-  def tierMeaning(tier: com.histmersion.web.LayerFilters.TierMeaningTier): Option[com.histmersion.web.LayerFilters.TierMeaningResult] = tier match
+  def tierMeaning(tier: com.histmersion.api.Api.EventQuery.Tier): Option[com.histmersion.web.LayerFilters.TierMeaning] = tier match
     case EventTier.Attested =>
       Some("Events a source in the corpus attests: its own record, or an attestation linked to it.")
     case EventTier.Catalogue =>

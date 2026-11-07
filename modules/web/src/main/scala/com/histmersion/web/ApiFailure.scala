@@ -13,18 +13,12 @@ import com.histmersion.api.Api
   * write refused by the API-key gate; `conflict` a stale `ifUpdatedAt`.
   */
 final case class ApiFailure(status: ApiFailure.Status, error: Api.Error) extends Exception(error.message):
-  def unauthorized: com.histmersion.web.ApiFailure.UnauthorizedResult = status == 401 || status == 403
-  def conflict: com.histmersion.web.ApiFailure.ConflictResult = status == 412
-  def duplicate: com.histmersion.web.ApiFailure.DuplicateResult = status == 409
+  def unauthorized: Boolean = status == 401 || status == 403
+  def conflict: Boolean = status == 412
+  def duplicate: Boolean = status == 409
 
 object ApiFailure:
   /** Pure: what a failed response means, from its status and whatever body could be decoded. */
-  type UnauthorizedResult = UnauthorizedResult.T
-  object UnauthorizedResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type ConflictResult = ConflictResult.T
-  object ConflictResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type DuplicateResult = DuplicateResult.T
-  object DuplicateResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type OfStatus = _root_.com.histmersion.web.ApiFailure.Status
   val OfStatus: _root_.com.histmersion.web.ApiFailure.Status.type = _root_.com.histmersion.web.ApiFailure.Status
 

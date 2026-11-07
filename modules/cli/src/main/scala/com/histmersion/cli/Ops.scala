@@ -22,43 +22,13 @@ import com.histmersion.util.console.Console
   * dispatched by [[QueueArgs.parse]], a pure function with its own tests, rather than by a nest of subcommands.
   */
 object Ops:
+  type MetaFile = MetaFile.T
+  object MetaFile extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
   // ── queue argument grammar (pure) ────────────────────────────────────────────────────────────
 
   /** What `histmersion queue …` was asked to do. */
-  type WriteMetaFilesPart1 = WriteMetaFilesPart1.T
-  object WriteMetaFilesPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type WriteMetaFilesPart2ResultPart2 = WriteMetaFilesPart2ResultPart2.T
-  object WriteMetaFilesPart2ResultPart2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
-  type WriteMetaResultPart2 = WriteMetaResultPart2.T
-  object WriteMetaResultPart2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type ReadMetaResultPart2 = ReadMetaResultPart2.T
-  object ReadMetaResultPart2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type ReadMetaReplace = ReadMetaReplace.T
-  object ReadMetaReplace extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type FixLoopResultPart2 = FixLoopResultPart2.T
-  object FixLoopResultPart2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type FixLoopRules = FixLoopRules.T
-  object FixLoopRules extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type FixLoopSources = FixLoopSources.T
-  object FixLoopSources extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type FixLoopChunks = FixLoopChunks.T
-  object FixLoopChunks extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type FixLoopEdges = FixLoopEdges.T
-  object FixLoopEdges extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type FixLoopMoved = FixLoopMoved.T
-  object FixLoopMoved extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type FixLoopPlaced = FixLoopPlaced.T
-  object FixLoopPlaced extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type FixLoopPlaces = FixLoopPlaces.T
-  object FixLoopPlaces extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type FixLoopAreas = FixLoopAreas.T
-  object FixLoopAreas extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type LintFileFix = LintFileFix.T
-  object LintFileFix extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type RunJson = RunJson.T
-  object RunJson extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
   enum QueueCmd:
     case Show(list: QueueCmd.Show.List, all: QueueCmd.Show.All)
@@ -76,78 +46,58 @@ object Ops:
 
   object QueueCmd:
     object Show:
-      type List = List.T
-      object List extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-      type All = All.T
-      object All extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
+      type List = com.histmersion.cli.Queue.Name
+      val List: _root_.com.histmersion.cli.Queue.Name.type = _root_.com.histmersion.cli.Queue.Name
+      type All = com.histmersion.cli.Queue.All
+      val All: _root_.com.histmersion.cli.Queue.All.type = _root_.com.histmersion.cli.Queue.All
     object Add:
-      type List = List.T
-      object List extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-      type Text = Text.T
-      object Text extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-      type Topic = Topic.T
-      object Topic extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-      type Reason = Reason.T
-      object Reason extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+      type List = com.histmersion.cli.Queue.Name
+      val List: _root_.com.histmersion.cli.Queue.Name.type = _root_.com.histmersion.cli.Queue.Name
+      type Text = com.histmersion.cli.Queue.Text
+      val Text: _root_.com.histmersion.cli.Queue.Text.type = _root_.com.histmersion.cli.Queue.Text
+      type Topic = com.histmersion.cli.Queue.Topic
+      val Topic: _root_.com.histmersion.cli.Queue.Topic.type = _root_.com.histmersion.cli.Queue.Topic
+      type Reason = com.histmersion.cli.Queue.Reason
+      val Reason: _root_.com.histmersion.cli.Queue.Reason.type = _root_.com.histmersion.cli.Queue.Reason
     object Done:
-      type Id = Id.T
-      object Id extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+      type Id = com.histmersion.cli.Queue.ItemId
+      val Id: _root_.com.histmersion.cli.Queue.ItemId.type = _root_.com.histmersion.cli.Queue.ItemId
     object Edit:
-      type Id = Id.T
-      object Id extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
-      type Text = Text.T
-      object Text extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+      type Id = com.histmersion.cli.Queue.ItemId
+      val Id: _root_.com.histmersion.cli.Queue.ItemId.type = _root_.com.histmersion.cli.Queue.ItemId
+      type Text = com.histmersion.cli.Queue.Text
+      val Text: _root_.com.histmersion.cli.Queue.Text.type = _root_.com.histmersion.cli.Queue.Text
     object Rm:
-      type Id = Id.T
-      object Id extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+      type Id = com.histmersion.cli.Queue.ItemId
+      val Id: _root_.com.histmersion.cli.Queue.ItemId.type = _root_.com.histmersion.cli.Queue.ItemId
     object Export:
-      type Dir = Dir.T
-      object Dir extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+      type Dir = com.histmersion.cli.Queue.Dir
+      val Dir: _root_.com.histmersion.cli.Queue.Dir.type = _root_.com.histmersion.cli.Queue.Dir
     object Import:
-      type Dir = Dir.T
-      object Dir extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-    object Recheck:
-      type DryRun = DryRun.T
-      object DryRun extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
-      type Limit = Limit.T
-      object Limit extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
-      type Id = Id.T
-      object Id extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
-      type All = All.T
-      object All extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
+      type NoConvert = NoConvert.T
+      object NoConvert extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
       type NoWait = NoWait.T
       object NoWait extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
+      type Dir = com.histmersion.cli.Queue.Dir
+      val Dir: _root_.com.histmersion.cli.Queue.Dir.type = _root_.com.histmersion.cli.Queue.Dir
+    object Recheck:
+      type DryRun = com.histmersion.cli.Cli.DryRun
+      val DryRun: _root_.com.histmersion.cli.Cli.DryRun.type = _root_.com.histmersion.cli.Cli.DryRun
+      type Limit = com.histmersion.api.Paging.Limit
+      val Limit: _root_.com.histmersion.api.Paging.Limit.type = _root_.com.histmersion.api.Paging.Limit
+      type Id = com.histmersion.cli.Queue.ItemId
+      val Id: _root_.com.histmersion.cli.Queue.ItemId.type = _root_.com.histmersion.cli.Queue.ItemId
+      type All = com.histmersion.cli.Queue.All
+      val All: _root_.com.histmersion.cli.Queue.All.type = _root_.com.histmersion.cli.Queue.All
+      type NoWait = com.histmersion.cli.Cli.NoWait
+      val NoWait: _root_.com.histmersion.cli.Cli.NoWait.type = _root_.com.histmersion.cli.Cli.NoWait
 
   object QueueArgs:
-    type ParseIdResultPart1 = ParseIdResultPart1.T
-    object ParseIdResultPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-    type ParseIdResultPart2 = ParseIdResultPart2.T
-    object ParseIdResultPart2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
-    type ParseIdS = ParseIdS.T
-    object ParseIdS extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Problem = Problem.T
+    object Problem extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
-    type Usage = Usage.T
-    object Usage extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-    type ParseResultPart1 = ParseResultPart1.T
-    object ParseResultPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-    type ParseArgs = ParseArgs.T
-    object ParseArgs extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-    type ParseTopic = ParseTopic.T
-    object ParseTopic extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-    type ParseReason = ParseReason.T
-    object ParseReason extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-    type ParseAll = ParseAll.T
-    object ParseAll extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
-    type ParseDryRun = ParseDryRun.T
-    object ParseDryRun extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
-    type ParseLimit = ParseLimit.T
-    object ParseLimit extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
-    type ParseItem = ParseItem.T
-    object ParseItem extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
-    type ParseNoWait = ParseNoWait.T
-    object ParseNoWait extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
-    val usage: com.histmersion.cli.Ops.QueueArgs.Usage =
+    val usage: com.histmersion.cli.Ops.QueueArgs.Problem =
       "usage: histmersion queue <acquire|tasks|log> [--all] | queue <list> add \"<text>\" [--topic t] | " +
         "queue done <id> | queue edit <id> \"<text>\" | queue rm <id> | queue export <dir> | queue import <dir> | " +
         "queue acquire recheck [--all] [--dry-run] [--limit n] [--id <item>] [--no-wait]"
@@ -156,16 +106,16 @@ object Ops:
       * belong to `acquire recheck` alone; `--all` there means every open item.
       */
     def parse(
-        args: List[com.histmersion.cli.Ops.QueueArgs.ParseArgs],
-        topic: Option[com.histmersion.cli.Ops.QueueArgs.ParseTopic],
-        reason: Option[com.histmersion.cli.Ops.QueueArgs.ParseReason],
-        all: com.histmersion.cli.Ops.QueueArgs.ParseAll,
-        dryRun: com.histmersion.cli.Ops.QueueArgs.ParseDryRun = false,
-        limit: Option[com.histmersion.cli.Ops.QueueArgs.ParseLimit] = None,
-        item: Option[com.histmersion.cli.Ops.QueueArgs.ParseItem] = None,
-        noWait: com.histmersion.cli.Ops.QueueArgs.ParseNoWait = false
-    ): Either[com.histmersion.cli.Ops.QueueArgs.ParseResultPart1, QueueCmd] =
-      def id(s: com.histmersion.cli.Ops.QueueArgs.ParseIdS): Either[com.histmersion.cli.Ops.QueueArgs.ParseIdResultPart1, com.histmersion.cli.Ops.QueueArgs.ParseIdResultPart2] =
+        args: List[String],
+        topic: Option[com.histmersion.cli.Queue.Topic],
+        reason: Option[com.histmersion.cli.Queue.Reason],
+        all: com.histmersion.cli.Queue.All,
+        dryRun: com.histmersion.cli.Cli.DryRun = false,
+        limit: Option[com.histmersion.api.Paging.Limit] = None,
+        item: Option[com.histmersion.cli.Queue.ItemId] = None,
+        noWait: com.histmersion.cli.Cli.NoWait = false
+    ): Either[com.histmersion.cli.Ops.QueueArgs.Problem, QueueCmd] =
+      def id(s: String): Either[com.histmersion.cli.Ops.QueueArgs.Problem, com.histmersion.cli.Queue.ItemId] =
         s.toIntOption.toRight(s"'$s' is not an item id — $usage")
       val recheckFlags = dryRun || limit.isDefined || item.isDefined || noWait
       args match
@@ -199,9 +149,9 @@ object Ops:
   /** Write `ACQUIRE.md` / `TASKS.md` / `LOG.md` and `GOALS.md` into `dir`, rendered by the server from the rows. Used
     * by `queue export` and by `histmersion export`, so both produce identical files.
     */
-  def writeMeta(c: Client, dir: Path): Either[Cli.Error, List[com.histmersion.cli.Ops.WriteMetaResultPart2]] =
+  def writeMeta(c: Client, dir: Path): Either[Cli.Error, List[com.histmersion.cli.Ops.MetaFile]] =
     val _ = Files.createDirectories(dir)
-    val files: List[(com.histmersion.cli.Ops.WriteMetaFilesPart1, () => Either[Cli.Error, com.histmersion.cli.Ops.WriteMetaFilesPart2ResultPart2])] =
+    val files: List[(com.histmersion.cli.Ops.MetaFile, () => Either[Cli.Error, com.histmersion.cli.Ops.MetaFile])] =
       Queue.Kind.values.toList.map(k => k.file -> (() => c.queueExport(k.label))) :+
         (GoalsExport.File -> (() => c.goalsExport))
     files.foldLeft[Either[Cli.Error, List[String]]](Right(Nil)) { case (acc, (file, fetch)) =>
@@ -216,7 +166,7 @@ object Ops:
   /** Read the three queue files back. A missing file is skipped, not an error: a workspace may only keep some of them.
     * `GOALS.md` is never read: it is an export only (see [[GoalsExport]]).
     */
-  def readMeta(c: Client, dir: Path, replace: com.histmersion.cli.Ops.ReadMetaReplace): Either[Cli.Error, List[com.histmersion.cli.Ops.ReadMetaResultPart2]] =
+  def readMeta(c: Client, dir: Path, replace: com.histmersion.api.Api.Overwrite): Either[Cli.Error, List[com.histmersion.cli.Ops.MetaFile]] =
     if !Files.isDirectory(dir) then Left(Cli.Error(s"not a directory: $dir", exitCode = ExitCode.Usage))
     else
       Queue.Kind.values.toList.foldLeft[Either[Cli.Error, List[String]]](Right(Nil)) { (acc, kind) =>
@@ -239,15 +189,15 @@ object Ops:
       console: Console
   )(
       c: Client,
-      rules: List[com.histmersion.cli.Ops.FixLoopRules],
-      sources: com.histmersion.cli.Ops.FixLoopSources,
-      chunks: com.histmersion.cli.Ops.FixLoopChunks,
-      edges: com.histmersion.cli.Ops.FixLoopEdges,
-      moved: Option[com.histmersion.cli.Ops.FixLoopMoved] = None,
-      placed: Option[com.histmersion.cli.Ops.FixLoopPlaced] = None,
-      places: Option[List[com.histmersion.cli.Ops.FixLoopPlaces]] = None,
-      areas: com.histmersion.cli.Ops.FixLoopAreas = 0
-  ): Either[Cli.Error, List[com.histmersion.cli.Ops.FixLoopResultPart2]] =
+      rules: List[String],
+      sources: Int,
+      chunks: Int,
+      edges: Int,
+      moved: Option[Int] = None,
+      placed: Option[Int] = None,
+      places: Option[List[String]] = None,
+      areas: Int = 0
+  ): Either[Cli.Error, List[String]] =
     c.lintFix(rules) match
       case Left(e)  => Left(e)
       case Right(r) =>
@@ -292,7 +242,7 @@ object Ops:
   /** `lint --file x.md`: the server checks the text (it has the renderer); with `--fix` the repaired text is written
     * back over the file. A note file's frontmatter is the note's own and is not sent.
     */
-  private def lintFile(c: Client, p: java.nio.file.Path, fix: com.histmersion.cli.Ops.LintFileFix): Either[Cli.Error, FormatReport] =
+  private def lintFile(c: Client, p: java.nio.file.Path, fix: com.histmersion.domain.EnrichSource.Closed.Lint.Fix): Either[Cli.Error, FormatReport] =
     if !java.nio.file.Files.isRegularFile(p) then Left(Cli.Error(s"no such file: $p", exitCode = ExitCode.Usage))
     else
       val raw = java.nio.file.Files.readString(p)
@@ -386,7 +336,7 @@ object Ops:
       }
     }
 
-  private def run(c: Client, cmd: QueueCmd, json: com.histmersion.cli.Ops.RunJson)(using console: Console): Either[Cli.Error, Unit] = cmd match
+  private def run(c: Client, cmd: QueueCmd, json: com.histmersion.cli.Cli.JsonOutput)(using console: Console): Either[Cli.Error, Unit] = cmd match
     case QueueCmd.Show(list, all) =>
       c.queueList(list, all)
         .map(l => Output.emit(json, l)(l => l.markdown.getOrElse("")))

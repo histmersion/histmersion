@@ -12,12 +12,12 @@ import com.histmersion.api.catalogue.{Latitude, Longitude, Year}
   * view or a period.
   */
 object TargetFlags:
+  type Problem = Problem.T
+  object Problem extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type Views = Views.T
+  object Views extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
-  type TargetUsageWhy = TargetUsageWhy.T
-  object TargetUsageWhy extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
-  type OptsViews = OptsViews.T
-  object OptsViews extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
   final case class Raw(
       kind: Raw.Kind,
@@ -49,7 +49,7 @@ object TargetFlags:
     object View extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
   /** `views`: the flags of a saved view (`--zoom`, `--view`) too. */
-  def opts(kinds: Set[ItemKind], views: com.histmersion.cli.TargetFlags.OptsViews): Opts[Raw] =
+  def opts(kinds: Set[ItemKind], views: com.histmersion.cli.TargetFlags.Views): Opts[Raw] =
     (
       Opts.argument[String](s"kind (${ItemKind.values.filter(kinds).map(_.wire).mkString(" | ")})"),
       Opts.argument[String]("id").orNone,
@@ -66,7 +66,7 @@ object TargetFlags:
 
   /** The target the flags name, or why they name none. Pure. */
   def target(r: Raw): Either[Cli.Error, Target] =
-    def usage(why: com.histmersion.cli.TargetFlags.TargetUsageWhy) = Cli.Error(why, exitCode = ExitCode.Usage)
+    def usage(why: com.histmersion.cli.TargetFlags.Problem) = Cli.Error(why, exitCode = ExitCode.Usage)
     for
       kind <- ItemKind
         .parse(r.kind)

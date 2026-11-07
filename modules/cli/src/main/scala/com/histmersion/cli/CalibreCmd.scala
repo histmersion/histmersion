@@ -42,127 +42,11 @@ import com.histmersion.util.console.Console
   */
 object CalibreCmd:
 
-  type UpdateHostUpdateCk = UpdateHostUpdateCk.T
-  object UpdateHostUpdateCk extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type UpdateHostUpdateJson = UpdateHostUpdateJson.T
-  object UpdateHostUpdateJson extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type UpdateHostUpdateAllApply = UpdateHostUpdateAllApply.T
-  object UpdateHostUpdateAllApply extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type UpdateHostUpdateAllJson = UpdateHostUpdateAllJson.T
-  object UpdateHostUpdateAllJson extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
-  type FailMsg = FailMsg.T
-  object FailMsg extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type HostSearchQ = HostSearchQ.T
-  object HostSearchQ extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type HostSearchUnlinked = HostSearchUnlinked.T
-  object HostSearchUnlinked extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type HostSearchMax = HostSearchMax.T
-  object HostSearchMax extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type HostSearchJson = HostSearchJson.T
-  object HostSearchJson extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type LinkedIdsResultPart2 = LinkedIdsResultPart2.T
-  object LinkedIdsResultPart2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type ServerImportId = ServerImportId.T
-  object ServerImportId extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type ServerImportCitekey = ServerImportCitekey.T
-  object ServerImportCitekey extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type ServerImportFormat = ServerImportFormat.T
-  object ServerImportFormat extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type ServerImportNoConvert = ServerImportNoConvert.T
-  object ServerImportNoConvert extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type ServerImportNoWait = ServerImportNoWait.T
-  object ServerImportNoWait extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type ServerImportItem = ServerImportItem.T
-  object ServerImportItem extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type ServerImportJson = ServerImportJson.T
-  object ServerImportJson extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type HostImportId = HostImportId.T
-  object HostImportId extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type HostImportCitekey = HostImportCitekey.T
-  object HostImportCitekey extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type HostImportFormat = HostImportFormat.T
-  object HostImportFormat extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type HostImportNoConvert = HostImportNoConvert.T
-  object HostImportNoConvert extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type HostImportNoWait = HostImportNoWait.T
-  object HostImportNoWait extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type HostImportItem = HostImportItem.T
-  object HostImportItem extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type HostImportJson = HostImportJson.T
-  object HostImportJson extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type ImportCoverCk = ImportCoverCk.T
-  object ImportCoverCk extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type UpsertCk = UpsertCk.T
-  object UpsertCk extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type StripHtmlResult = StripHtmlResult.T
-  object StripHtmlResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type StripHtmlS = StripHtmlS.T
-  object StripHtmlS extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type HostPushCk = HostPushCk.T
-  object HostPushCk extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type HostPushFile = HostPushFile.T
-  object HostPushFile extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type HostPushReplace = HostPushReplace.T
-  object HostPushReplace extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type HostPushJson = HostPushJson.T
-  object HostPushJson extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type ReplaceOneResultPart2Part1 = ReplaceOneResultPart2Part1.T
-  object ReplaceOneResultPart2Part1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type ReplaceOneResultPart2Part2 = ReplaceOneResultPart2Part2.T
-  object ReplaceOneResultPart2Part2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type ReplaceOneCk = ReplaceOneCk.T
-  object ReplaceOneCk extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type WithOriginalCk = WithOriginalCk.T
-  object WithOriginalCk extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type WithOriginalHint = WithOriginalHint.T
-  object WithOriginalHint extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type PushOneResultPart2Part1 = PushOneResultPart2Part1.T
-  object PushOneResultPart2Part1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type PushOneResultPart2Part2 = PushOneResultPart2Part2.T
-  object PushOneResultPart2Part2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type PushOneCk = PushOneCk.T
-  object PushOneCk extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type PushOneOriginals = PushOneOriginals.T
-  object PushOneOriginals extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type HostAuditJson = HostAuditJson.T
-  object HostAuditJson extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type ClassifiedGapsLimit = ClassifiedGapsLimit.T
-  object ClassifiedGapsLimit extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type ClassifiedGapsOriginals = ClassifiedGapsOriginals.T
-  object ClassifiedGapsOriginals extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type SyncGapsApply = SyncGapsApply.T
-  object SyncGapsApply extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type SyncGapsLimit = SyncGapsLimit.T
-  object SyncGapsLimit extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type SyncGapsJson = SyncGapsJson.T
-  object SyncGapsJson extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type SyncGapsOriginals = SyncGapsOriginals.T
-  object SyncGapsOriginals extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type ServerSyncApply = ServerSyncApply.T
-  object ServerSyncApply extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type ServerSyncLimit = ServerSyncLimit.T
-  object ServerSyncLimit extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type ServerSyncJson = ServerSyncJson.T
-  object ServerSyncJson extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type ServerGapsQuiet = ServerGapsQuiet.T
-  object ServerGapsQuiet extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type ServerGapsLimit = ServerGapsLimit.T
-  object ServerGapsLimit extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type ServerGapsJson = ServerGapsJson.T
-  object ServerGapsJson extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type ListGapsQuiet = ListGapsQuiet.T
-  object ListGapsQuiet extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type ListGapsLimit = ListGapsLimit.T
-  object ListGapsLimit extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type ListGapsJson = ListGapsJson.T
-  object ListGapsJson extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type ListGapsOriginals = ListGapsOriginals.T
-  object ListGapsOriginals extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
   private def calibre(c: Client)(using console: Console): Calibre = Calibre(Settings.app.cli.calibre)
 
-  private def fail(msg: com.histmersion.cli.CalibreCmd.FailMsg) = Cli.Error(msg, exitCode = ExitCode.Refused)
+  private def fail(msg: com.histmersion.cli.Cli.Problem) = Cli.Error(msg, exitCode = ExitCode.Refused)
 
   /** The server's `calibre` collection, when the server runs it (see the object's description). */
   private def server(c: Client): Option[CollectionsClient] =
@@ -201,10 +85,10 @@ object CalibreCmd:
 
   private def hostSearch(
       c: Client,
-      q: Option[com.histmersion.cli.CalibreCmd.HostSearchQ],
-      unlinked: com.histmersion.cli.CalibreCmd.HostSearchUnlinked,
-      max: com.histmersion.cli.CalibreCmd.HostSearchMax,
-      json: com.histmersion.cli.CalibreCmd.HostSearchJson
+      q: Option[com.histmersion.api.Api.Search.Text],
+      unlinked: com.histmersion.config.Limits.Search.Unlinked,
+      max: com.histmersion.api.Paging.Limit,
+      json: com.histmersion.cli.Cli.JsonOutput
   )(using console: Console): Either[Cli.Error, Unit] =
     if !unlinked then
       calibre(c).search(q.getOrElse(""), max).left.map(fail).map { books =>
@@ -227,7 +111,7 @@ object CalibreCmd:
         )
 
   /** The Calibre ids the corpus links, read through the server's read-only query. */
-  private def linkedIds(c: Client): Either[Cli.Error, Set[com.histmersion.cli.CalibreCmd.LinkedIdsResultPart2]] =
+  private def linkedIds(c: Client): Either[Cli.Error, Set[com.histmersion.cli.Calibre.Book.Id]] =
     c.query("SELECT DISTINCT calibre_id FROM sources WHERE calibre_id ~ '^[0-9]+$'").flatMap { q =>
       Either.cond(
         !q.truncated,
@@ -276,13 +160,13 @@ object CalibreCmd:
   private def serverImport(
       c: Client,
       s: CollectionsClient,
-      id: com.histmersion.cli.CalibreCmd.ServerImportId,
-      citekey: Option[com.histmersion.cli.CalibreCmd.ServerImportCitekey],
-      format: Option[com.histmersion.cli.CalibreCmd.ServerImportFormat],
-      noConvert: com.histmersion.cli.CalibreCmd.ServerImportNoConvert,
-      noWait: com.histmersion.cli.CalibreCmd.ServerImportNoWait,
-      item: Option[com.histmersion.cli.CalibreCmd.ServerImportItem],
-      json: com.histmersion.cli.CalibreCmd.ServerImportJson
+      id: com.histmersion.cli.Calibre.Book.Id,
+      citekey: Option[com.histmersion.plugin.FetchedFile.Source.Citekey],
+      format: Option[com.histmersion.cli.Calibre.Book.Format],
+      noConvert: com.histmersion.cli.Ops.QueueCmd.Import.NoConvert,
+      noWait: com.histmersion.cli.Ops.QueueCmd.Import.NoWait,
+      item: Option[com.histmersion.domain.EnrichSource.Closed.Acquire.ItemNumber],
+      json: com.histmersion.cli.Cli.JsonOutput
   )(using console: Console): Either[Cli.Error, Unit] =
     s.importItem(CollectionImportRequest(id.toString, citekey, format, !noConvert, !json, item)).flatMap { res =>
       if json then Cli.out.println(Output.json(res.source))
@@ -311,13 +195,13 @@ object CalibreCmd:
 
   private def hostImport(
       c: Client,
-      id: com.histmersion.cli.CalibreCmd.HostImportId,
-      citekey: Option[com.histmersion.cli.CalibreCmd.HostImportCitekey],
-      format: Option[com.histmersion.cli.CalibreCmd.HostImportFormat],
-      noConvert: com.histmersion.cli.CalibreCmd.HostImportNoConvert,
-      noWait: com.histmersion.cli.CalibreCmd.HostImportNoWait,
-      item: Option[com.histmersion.cli.CalibreCmd.HostImportItem],
-      json: com.histmersion.cli.CalibreCmd.HostImportJson
+      id: com.histmersion.cli.Calibre.Book.Id,
+      citekey: Option[com.histmersion.plugin.FetchedFile.Source.Citekey],
+      format: Option[com.histmersion.cli.Calibre.Book.Format],
+      noConvert: com.histmersion.cli.Ops.QueueCmd.Import.NoConvert,
+      noWait: com.histmersion.cli.Ops.QueueCmd.Import.NoWait,
+      item: Option[com.histmersion.domain.EnrichSource.Closed.Acquire.ItemNumber],
+      json: com.histmersion.cli.Cli.JsonOutput
   )(using console: Console): Either[Cli.Error, Unit] =
     for
       // checked BEFORE the record is written: a typo'd item must not leave a half-done import behind
@@ -387,7 +271,7 @@ object CalibreCmd:
     yield ()
 
   /** The imported book's cover, best-effort: a line saying what happened, never a failure. */
-  private def importCover(c: Client, ck: com.histmersion.cli.CalibreCmd.ImportCoverCk, book: com.histmersion.cli.Calibre.Book)(using console: Console): Unit =
+  private def importCover(c: Client, ck: com.histmersion.plugin.FetchedFile.Source.Citekey, book: com.histmersion.cli.Calibre.Book)(using console: Console): Unit =
     MediaCovers.one(c, ck, book, dryRun = false) match
       case MediaCovers.Outcome.Uploaded(_)             => Cli.out.println(s"Cover: from the Calibre library")
       case MediaCovers.Outcome.AskOpenLibrary(_, isbn) =>
@@ -405,7 +289,7 @@ object CalibreCmd:
     */
   private def upsert(
       c: Client,
-      ck: com.histmersion.cli.CalibreCmd.UpsertCk,
+      ck: com.histmersion.plugin.FetchedFile.Source.Citekey,
       b: com.histmersion.cli.Calibre.Book,
       target: ImportTarget
   ): Either[Cli.Error, Source.WithFindings] =
@@ -474,7 +358,7 @@ object CalibreCmd:
     }
   }
 
-  private def stripHtml(s: com.histmersion.cli.CalibreCmd.StripHtmlS): com.histmersion.cli.CalibreCmd.StripHtmlResult = s.replaceAll("<[^>]+>", " ").replaceAll("\\s+", " ").trim
+  private def stripHtml(s: String): String = s.replaceAll("<[^>]+>", " ").replaceAll("\\s+", " ").trim
 
   // ── push / sync (corpus → Calibre) ──────────────────────────────────────────────────────────
 
@@ -513,7 +397,7 @@ object CalibreCmd:
     }
   }
 
-  private def hostPush(c: Client, ck: com.histmersion.cli.CalibreCmd.HostPushCk, file: Option[com.histmersion.cli.CalibreCmd.HostPushFile], replace: com.histmersion.cli.CalibreCmd.HostPushReplace, json: com.histmersion.cli.CalibreCmd.HostPushJson)(using
+  private def hostPush(c: Client, ck: com.histmersion.plugin.FetchedFile.Source.Citekey, file: Option[com.histmersion.cli.Calibre.File], replace: com.histmersion.cli.Calibre.Push.Replace, json: com.histmersion.cli.Cli.JsonOutput)(using
       console: Console
   ) =
     if replace then
@@ -533,9 +417,9 @@ object CalibreCmd:
     * no duplicate entry appears. The file is `--file`, else the original the server stored at ingest, downloaded to a
     * temporary directory and removed afterwards.
     */
-  private def replaceOne(c: Client, ck: com.histmersion.cli.CalibreCmd.ReplaceOneCk, file: Option[Path])(using
+  private def replaceOne(c: Client, ck: com.histmersion.plugin.FetchedFile.Source.Citekey, file: Option[Path])(using
       console: Console
-  ): Either[Cli.Error, (com.histmersion.cli.CalibreCmd.ReplaceOneResultPart2Part1, com.histmersion.cli.CalibreCmd.ReplaceOneResultPart2Part2)] =
+  ): Either[Cli.Error, (com.histmersion.cli.Calibre.Book.Id, com.histmersion.cli.Cli.Message)] =
     for
       s <- AcquireClient(c).calibreMeta(ck)
       id <- s.calibreId
@@ -554,7 +438,7 @@ object CalibreCmd:
   /** Download the server's stored original of `ck` as `<tmp>/<ck>.<ext>` (the extension is what tells Calibre the
     * format), run `f` on it, and delete it whatever happens.
     */
-  private def withOriginal[A](c: Client, ck: com.histmersion.cli.CalibreCmd.WithOriginalCk, hint: com.histmersion.cli.CalibreCmd.WithOriginalHint = "")(
+  private def withOriginal[A](c: Client, ck: com.histmersion.plugin.FetchedFile.Source.Citekey, hint: String = "")(
       f: Path => Either[Cli.Error, A]
   ): Either[Cli.Error, A] =
     val dir = java.nio.file.Files.createTempDirectory("histmersion-original-")
@@ -583,11 +467,11 @@ object CalibreCmd:
       console: Console
   )(
       c: Client,
-      ck: com.histmersion.cli.CalibreCmd.PushOneCk,
+      ck: com.histmersion.plugin.FetchedFile.Source.Citekey,
       file: Option[Path],
       calibre: Calibre = Calibre(Settings.app.cli.calibre),
-      originals: Option[com.histmersion.cli.CalibreCmd.PushOneOriginals] = Settings.app.cli.calibre.originals
-  ): Either[Cli.Error, (com.histmersion.cli.CalibreCmd.PushOneResultPart2Part1, com.histmersion.cli.CalibreCmd.PushOneResultPart2Part2)] =
+      originals: Option[com.histmersion.cli.Calibre.OriginalsDir] = Settings.app.cli.calibre.originals
+  ): Either[Cli.Error, (com.histmersion.cli.Calibre.Book.Id, com.histmersion.cli.Cli.Message)] =
     for
       // the authors must come back as a LIST: "Stocker, Sharon R." is ONE author, so the
       // comma-joined `SourceDetail.authors` cannot be split apart again
@@ -610,7 +494,7 @@ object CalibreCmd:
     "update",
     "Rewrite a source's Calibre entry from the corpus: title, authors, year, identifiers, tags (and publisher/comments where empty); --all for every linked entry (Calibre GUI must be closed)"
   ) {
-    def hostUpdate(c: Client, ck: com.histmersion.cli.CalibreCmd.UpdateHostUpdateCk, json: com.histmersion.cli.CalibreCmd.UpdateHostUpdateJson)(using console: Console) =
+    def hostUpdate(c: Client, ck: com.histmersion.plugin.FetchedFile.Source.Citekey, json: com.histmersion.cli.Cli.JsonOutput)(using console: Console) =
       for
         s <- AcquireClient(c).calibreMeta(ck)
         id <- s.calibreId
@@ -621,7 +505,7 @@ object CalibreCmd:
         if u.changed.isEmpty then s"Calibre id $id already agrees with `$ck` — nothing written"
         else s"updated Calibre id $id from `$ck` (${u.changed.mkString(", ")}) — ${s.title}"
       )
-    def hostUpdateAll(c: Client, apply: com.histmersion.cli.CalibreCmd.UpdateHostUpdateAllApply, json: com.histmersion.cli.CalibreCmd.UpdateHostUpdateAllJson)(using console: Console) =
+    def hostUpdateAll(c: Client, apply: com.histmersion.api.Api.Apply, json: com.histmersion.cli.Cli.JsonOutput)(using console: Console) =
       for
         linked <- linkedRecords(c)
         entries <- calibre(c).updateAll(linked, apply).left.map(fail)
@@ -727,7 +611,7 @@ object CalibreCmd:
     }
   }
 
-  private def hostAudit(c: Client, json: com.histmersion.cli.CalibreCmd.HostAuditJson)(using console: Console): Either[Cli.Error, Unit] =
+  private def hostAudit(c: Client, json: com.histmersion.cli.Cli.JsonOutput)(using console: Console): Either[Cli.Error, Unit] =
     for
       q <- c.query(
         "SELECT citekey, calibre_id, title, array_to_string(authors, '|') AS authors, year " +
@@ -759,8 +643,8 @@ object CalibreCmd:
     */
   private def classifiedGaps(
       c: Client,
-      limit: Option[com.histmersion.cli.CalibreCmd.ClassifiedGapsLimit],
-      originals: Option[com.histmersion.cli.CalibreCmd.ClassifiedGapsOriginals]
+      limit: Option[com.histmersion.api.Paging.Limit],
+      originals: Option[com.histmersion.cli.Calibre.OriginalsDir]
   ): Either[Cli.Error, List[Calibre.GapEntry]] =
     AcquireClient(c).calibreGaps(limit).map(g => Calibre.classify(g.gaps, Calibre.originalFor(originals, _)))
 
@@ -785,11 +669,11 @@ object CalibreCmd:
       console: Console
   )(
       c: Client,
-      apply: com.histmersion.cli.CalibreCmd.SyncGapsApply,
-      limit: Option[com.histmersion.cli.CalibreCmd.SyncGapsLimit],
-      json: com.histmersion.cli.CalibreCmd.SyncGapsJson,
+      apply: com.histmersion.api.Api.Apply,
+      limit: Option[com.histmersion.api.Paging.Limit],
+      json: com.histmersion.cli.Cli.JsonOutput,
       calibre: Calibre = Calibre(Settings.app.cli.calibre),
-      originals: Option[com.histmersion.cli.CalibreCmd.SyncGapsOriginals] = Settings.app.cli.calibre.originals
+      originals: Option[com.histmersion.cli.Calibre.OriginalsDir] = Settings.app.cli.calibre.originals
   ): Either[Cli.Error, Unit] =
     classifiedGaps(c, limit, originals).flatMap { entries =>
       if json && !apply then
@@ -826,9 +710,9 @@ object CalibreCmd:
   /** `calibre sync` on the server: the same lines as [[syncGaps]], the pushes made there. */
   private def serverSync(
       s: CollectionsClient,
-      apply: com.histmersion.cli.CalibreCmd.ServerSyncApply,
-      limit: Option[com.histmersion.cli.CalibreCmd.ServerSyncLimit],
-      json: com.histmersion.cli.CalibreCmd.ServerSyncJson
+      apply: com.histmersion.api.Api.Apply,
+      limit: Option[com.histmersion.api.Paging.Limit],
+      json: com.histmersion.cli.Cli.JsonOutput
   )(using console: Console): Either[Cli.Error, Unit] =
     s.sync(CollectionSync.Request(apply, limit)).flatMap { r =>
       if json && !apply then
@@ -863,9 +747,9 @@ object CalibreCmd:
   /** `calibre gaps` on the server: the same table, `--quiet` line and exit codes as [[listGaps]]. */
   private def serverGaps(
       s: CollectionsClient,
-      quiet: com.histmersion.cli.CalibreCmd.ServerGapsQuiet,
-      limit: Option[com.histmersion.cli.CalibreCmd.ServerGapsLimit],
-      json: com.histmersion.cli.CalibreCmd.ServerGapsJson
+      quiet: com.histmersion.cli.Cli.QuietOutput,
+      limit: Option[com.histmersion.api.Paging.Limit],
+      json: com.histmersion.cli.Cli.JsonOutput
   )(using console: Console): Either[Cli.Error, Unit] =
     s.gaps(limit).flatMap { g =>
       val counted = g.gaps.filter(_.counted)
@@ -905,10 +789,10 @@ object CalibreCmd:
       console: Console
   )(
       c: Client,
-      quiet: com.histmersion.cli.CalibreCmd.ListGapsQuiet,
-      limit: Option[com.histmersion.cli.CalibreCmd.ListGapsLimit],
-      json: com.histmersion.cli.CalibreCmd.ListGapsJson,
-      originals: Option[com.histmersion.cli.CalibreCmd.ListGapsOriginals] = Settings.app.cli.calibre.originals
+      quiet: com.histmersion.cli.Cli.QuietOutput,
+      limit: Option[com.histmersion.api.Paging.Limit],
+      json: com.histmersion.cli.Cli.JsonOutput,
+      originals: Option[com.histmersion.cli.Calibre.OriginalsDir] = Settings.app.cli.calibre.originals
   ): Either[Cli.Error, Unit] =
     classifiedGaps(c, limit, originals).flatMap { entries =>
       val counted = entries.filter(_.counted)

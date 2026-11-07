@@ -14,20 +14,18 @@ import scala.scalajs.concurrent.JSExecutionContext.Implicits.queue
   */
 object NoteEditor:
 
-  type IsOpenResult = IsOpenResult.T
-  object IsOpenResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type WriteTitle = _root_.com.histmersion.web.marks.NoteEditor.Session.Title
-  val WriteTitle: _root_.com.histmersion.web.marks.NoteEditor.Session.Title.type = _root_.com.histmersion.web.marks.NoteEditor.Session.Title
+  type WriteTitle = _root_.com.histmersion.api.library.Title
+  val WriteTitle: _root_.com.histmersion.api.library.Title.type = _root_.com.histmersion.api.library.Title
 
   final private case class Session(target: Target, title: Session.Title, note: Option[Note], back: Option[dom.HTMLElement])
 
   object Session:
-    type Title = Title.T
-    object Title extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Title = com.histmersion.api.library.Title
+    val Title: _root_.com.histmersion.api.library.Title.type = _root_.com.histmersion.api.library.Title
 
   private val session = Var(Option.empty[Session])
 
-  def isOpen: com.histmersion.web.marks.NoteEditor.IsOpenResult = session.now().isDefined
+  def isOpen: Boolean = session.now().isDefined
 
   /** A new note on `target`. */
   def write(target: Target, title: com.histmersion.web.marks.NoteEditor.WriteTitle): Unit = open(Session(target, title, None, focused))

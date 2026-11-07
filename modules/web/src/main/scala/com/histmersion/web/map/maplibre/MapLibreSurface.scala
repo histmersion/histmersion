@@ -53,27 +53,27 @@ final class MapLibreSurface(el: dom.HTMLElement, maxZoom0: MapLibreSurface.MaxZo
 
   // ── the view ─────────────────────────────────────────────────────────────────────────────────
 
-  def zoom: com.histmersion.web.map.maplibre.MapLibreSurface.ZoomResult = gl.getZoom() + ZoomShift
-  def maxZoom: com.histmersion.web.map.maplibre.MapLibreSurface.MaxZoomResult = gl.getMaxZoom() + ZoomShift
-  def setMaxZoom(z: com.histmersion.web.map.maplibre.MapLibreSurface.SetMaxZoomZ): Unit = { val _ = gl.setMaxZoom(z - ZoomShift) }
+  def zoom: com.histmersion.web.map.MapSurface.Zoom = gl.getZoom() + ZoomShift
+  def maxZoom: com.histmersion.web.map.MapSurface.MaxZoom = gl.getMaxZoom() + ZoomShift
+  def setMaxZoom(z: com.histmersion.web.map.MapSurface.MaxZoom): Unit = { val _ = gl.setMaxZoom(z - ZoomShift) }
   def center: LatLon = { val c = gl.getCenter(); LatLon(c.lat, c.lng) }
   def bounds: GeoBounds =
     val b = gl.getBounds()
     GeoBounds(b.getSouth(), b.getWest(), b.getNorth(), b.getEast())
   // the container's size, read when it changes (a layout read per marker per frame forced a layout each)
-  private var sizeV: (com.histmersion.web.map.maplibre.MapLibreSurface.SizeVPart1, com.histmersion.web.map.maplibre.MapLibreSurface.SizeVPart2) = (el.clientWidth.toDouble, el.clientHeight.toDouble)
+  private var sizeV: (com.histmersion.web.map.MapSurface.Dimension, com.histmersion.web.map.MapSurface.Dimension) = (el.clientWidth.toDouble, el.clientHeight.toDouble)
   gl.on("resize", (_: GlEvent) => sizeV = (el.clientWidth.toDouble, el.clientHeight.toDouble))
-  def size: (com.histmersion.web.map.maplibre.MapLibreSurface.SizeResultPart1, com.histmersion.web.map.maplibre.MapLibreSurface.SizeResultPart2) = sizeV
+  def size: (com.histmersion.web.map.MapSurface.Dimension, com.histmersion.web.map.MapSurface.Dimension) = sizeV
 
   // Every camera move the app asks for: animated only when the map animates now ([[MotionPref]]), and then
   // `essential` — MapLibre otherwise drops the ease itself when the system asks for reduced motion, and "always
   // animate" would not. A move that does not animate is a jump.
-  def setView(at: LatLon, z: com.histmersion.web.map.maplibre.MapLibreSurface.SetViewZ, animate: com.histmersion.web.map.maplibre.MapLibreSurface.SetViewAnimate): Unit =
+  def setView(at: LatLon, z: com.histmersion.web.map.MapSurface.Zoom, animate: com.histmersion.web.map.maplibre.MapLibreSurface.SetViewAnimate): Unit =
     val o = js.Dynamic.literal(center = js.Array(at.lon, at.lat), zoom = z - ZoomShift)
     if MapLibreSurface.eases(animate) then { o.essential = true; val _ = gl.easeTo(o.asInstanceOf[js.Object]) }
     else { val _ = gl.jumpTo(o.asInstanceOf[js.Object]) }
 
-  def fitBounds(b: GeoBounds, padding: com.histmersion.web.map.maplibre.MapLibreSurface.FitBoundsPadding, maxZoom: com.histmersion.web.map.maplibre.MapLibreSurface.FitBoundsMaxZoom, animate: com.histmersion.web.map.maplibre.MapLibreSurface.FitBoundsAnimate): Unit =
+  def fitBounds(b: GeoBounds, padding: com.histmersion.web.map.maplibre.MapLibreSurface.FitBoundsPadding, maxZoom: com.histmersion.web.map.MapSurface.MaxZoom, animate: com.histmersion.web.map.maplibre.MapLibreSurface.FitBoundsAnimate): Unit =
     val _ = gl.fitBounds(
       js.Array(js.Array(b.west, b.south), js.Array(b.east, b.north)),
       MapLibreSurface.motion(animate, js.Dynamic.literal(padding = padding, maxZoom = maxZoom - ZoomShift))
@@ -100,14 +100,14 @@ final class MapLibreSurface(el: dom.HTMLElement, maxZoom0: MapLibreSurface.MaxZo
   // `var`: how many times the container's size was taken (diagnostics: a chrome change resizes, nothing more)
   private var resizes = 0
   override def resizeCount: Int = resizes
-  def isMoving: com.histmersion.web.map.maplibre.MapLibreSurface.IsMovingResult = gl.isMoving()
-  def isDrawn: com.histmersion.web.map.maplibre.MapLibreSurface.IsDrawnResult = !gl.isMoving() && gl.loaded() && gl.areTilesLoaded()
+  def isMoving: Boolean = gl.isMoving()
+  def isDrawn: Boolean = !gl.isMoving() && gl.loaded() && gl.areTilesLoaded()
   def capabilities: Capabilities = caps
 
   // the names' language of the base map drawn now
   private var lang = "en"
 
-  def drawnNames: Seq[com.histmersion.web.map.maplibre.MapLibreSurface.DrawnNamesResult] =
+  def drawnNames: Seq[com.histmersion.web.map.MapSurface.LabelText] =
     val style = gl.getStyle()
     if style == null || js.isUndefined(style) then Nil
     else
@@ -129,7 +129,7 @@ final class MapLibreSurface(el: dom.HTMLElement, maxZoom0: MapLibreSurface.MaxZo
             f.properties.get(key).orElse(f.properties.get("name:en")).orElse(f.properties.get("name")).map(_.toString)
           )
           .distinct
-  def baseMapLabels: Seq[(com.histmersion.web.map.maplibre.MapLibreSurface.BaseMapLabelsResultPart1, com.histmersion.web.map.maplibre.MapLibreSurface.BaseMapLabelsResultPart2, ScreenPt)] =
+  def baseMapLabels: Seq[(com.histmersion.web.map.MapSurface.LabelText, com.histmersion.web.map.MapSurface.LabelText, ScreenPt)] =
     val style = gl.getStyle()
     if style == null || js.isUndefined(style) then Nil
     else
@@ -163,7 +163,7 @@ final class MapLibreSurface(el: dom.HTMLElement, maxZoom0: MapLibreSurface.MaxZo
             for t <- text; a <- at yield (f.layer.id.toString, t, project(a))
           }
           .distinctBy((l, t, _) => (l, t))
-  def baseMapAreasAt(p: ScreenPt): Seq[com.histmersion.web.map.maplibre.MapLibreSurface.BaseMapAreasAtResult] =
+  def baseMapAreasAt(p: ScreenPt): Seq[com.histmersion.web.map.MapSurface.LayerId] =
     val style = gl.getStyle()
     if style == null || js.isUndefined(style) then Nil
     else
@@ -180,11 +180,11 @@ final class MapLibreSurface(el: dom.HTMLElement, maxZoom0: MapLibreSurface.MaxZo
           .toSeq
           .map(f => s"${f.layer.id}:${f.properties.get("kind").fold("")(_.toString)}")
           .distinct
-  def baseMapLayer(id: com.histmersion.web.map.maplibre.MapLibreSurface.BaseMapLayerId): Option[com.histmersion.web.map.maplibre.MapLibreSurface.BaseMapLayerResult] =
+  def baseMapLayer(id: com.histmersion.web.map.MapSurface.LayerId): Option[com.histmersion.web.map.MapSurface.LayerId] =
     gl.getLayer(id)
       .toOption
       .map(_ => Option(gl.getLayoutProperty(id, "visibility")).filterNot(js.isUndefined).fold("visible")(_.toString))
-  def baseMapDrawn(id: com.histmersion.web.map.maplibre.MapLibreSurface.BaseMapDrawnId): com.histmersion.web.map.maplibre.MapLibreSurface.BaseMapDrawnResult =
+  def baseMapDrawn(id: com.histmersion.web.map.MapSurface.LayerId): com.histmersion.web.map.MapSurface.DrawnCount =
     if gl.getLayer(id).isEmpty then 0
     else
       gl.queryRenderedFeatures(
@@ -195,7 +195,7 @@ final class MapLibreSurface(el: dom.HTMLElement, maxZoom0: MapLibreSurface.MaxZo
 
   // ── events ───────────────────────────────────────────────────────────────────────────────────
 
-  private def name(k: MapEventKind): com.histmersion.web.map.maplibre.MapLibreSurface.NameResult = k match
+  private def name(k: MapEventKind): com.histmersion.web.map.maplibre.MapLibreSurface.EventName = k match
     case MapEventKind.MoveStart    => "movestart"
     case MapEventKind.Move         => "move"
     case MapEventKind.MoveEnd      => "moveend"
@@ -253,7 +253,7 @@ final class MapLibreSurface(el: dom.HTMLElement, maxZoom0: MapLibreSurface.MaxZo
   dom.window.addEventListener("pageshow", (_: dom.Event) => leaving = false)
 
   // `var`: the credits of the style set last
-  private var creditsV: Seq[com.histmersion.web.map.maplibre.MapLibreSurface.CreditsV] = Nil
+  private var creditsV: Seq[com.histmersion.web.map.BaseMapSpec.Raster.Attribution] = Nil
   override def credits: Seq[String] = creditsV
 
   def setBaseMap(b: BaseMapSpec): Unit =
@@ -317,7 +317,7 @@ final class MapLibreSurface(el: dom.HTMLElement, maxZoom0: MapLibreSurface.MaxZo
 
   private val pointSets = mutable.LinkedHashMap.empty[String, GlPointTiles]
 
-  def pointTiles(id: com.histmersion.web.map.maplibre.MapLibreSurface.PointTilesId, layer: com.histmersion.web.map.maplibre.MapLibreSurface.PointTilesLayer, maxZoom: com.histmersion.web.map.maplibre.MapLibreSurface.PointTilesMaxZoom): PointTiles =
+  def pointTiles(id: com.histmersion.web.map.MapSurface.LayerId, layer: com.histmersion.web.map.MapSurface.LayerId, maxZoom: com.histmersion.web.map.maplibre.MapLibreSurface.PointTilesMaxZoom): PointTiles =
     pointSets.getOrElseUpdate(id, GlPointTiles(gl, id, layer, maxZoom))
 
   // ── popups ───────────────────────────────────────────────────────────────────────────────────
@@ -362,45 +362,27 @@ final class MapLibreSurface(el: dom.HTMLElement, maxZoom0: MapLibreSurface.MaxZo
     p.on("close", _ => { val _ = popups -= p })
     new Popup:
       def close(): Unit = { val _ = p.remove() }
-      def isOpen: com.histmersion.web.map.maplibre.MapLibreSurface.PopupIsOpenResult = p.isOpen()
+      def isOpen: Boolean = p.isOpen()
       def element: Option[dom.HTMLElement] = Option(p.getElement()).filterNot(js.isUndefined)
 
   def closePopups(): Unit = popups.toList.foreach(_.remove())
 
 object MapLibreSurface:
+  type EventName = EventName.T
+  object EventName extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   /** Does a camera move the caller wants `animated` ease — only while the map animates ([[MotionPref]]). */
   type SetBaseMapMakeRetry = SetBaseMapMakeRetry.T
   object SetBaseMapMakeRetry extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type PopupIsOpenResult = PopupIsOpenResult.T
-  object PopupIsOpenResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
-  type MaxZoom0 = MaxZoom0.T
-  object MaxZoom0 extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type MaxZoom0 = com.histmersion.web.map.MapSurface.MaxZoom
+  val MaxZoom0: _root_.com.histmersion.web.map.MapSurface.MaxZoom.type = _root_.com.histmersion.web.map.MapSurface.MaxZoom
   type PixelRatio = PixelRatio.T
   object PixelRatio extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
-  type ZoomResult = ZoomResult.T
-  object ZoomResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type MaxZoomResult = MaxZoomResult.T
-  object MaxZoomResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type SetMaxZoomZ = SetMaxZoomZ.T
-  object SetMaxZoomZ extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type SizeVPart1 = SizeVPart1.T
-  object SizeVPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type SizeVPart2 = SizeVPart2.T
-  object SizeVPart2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type SizeResultPart1 = SizeResultPart1.T
-  object SizeResultPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type SizeResultPart2 = SizeResultPart2.T
-  object SizeResultPart2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type SetViewZ = SetViewZ.T
-  object SetViewZ extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type SetViewAnimate = SetViewAnimate.T
   object SetViewAnimate extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type FitBoundsPadding = FitBoundsPadding.T
   object FitBoundsPadding extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type FitBoundsMaxZoom = FitBoundsMaxZoom.T
-  object FitBoundsMaxZoom extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type FitBoundsAnimate = FitBoundsAnimate.T
   object FitBoundsAnimate extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type PanByDx = PanByDx.T
@@ -409,52 +391,22 @@ object MapLibreSurface:
   object PanByDy extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type PanByAnimate = PanByAnimate.T
   object PanByAnimate extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type IsMovingResult = IsMovingResult.T
-  object IsMovingResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type IsDrawnResult = IsDrawnResult.T
-  object IsDrawnResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type DrawnNamesResult = DrawnNamesResult.T
-  object DrawnNamesResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type BaseMapLabelsResultPart1 = BaseMapLabelsResultPart1.T
-  object BaseMapLabelsResultPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type BaseMapLabelsResultPart2 = BaseMapLabelsResultPart2.T
-  object BaseMapLabelsResultPart2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type BaseMapAreasAtResult = BaseMapAreasAtResult.T
-  object BaseMapAreasAtResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type BaseMapLayerResult = BaseMapLayerResult.T
-  object BaseMapLayerResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type BaseMapLayerId = BaseMapLayerId.T
-  object BaseMapLayerId extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type BaseMapDrawnResult = BaseMapDrawnResult.T
-  object BaseMapDrawnResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type BaseMapDrawnId = BaseMapDrawnId.T
-  object BaseMapDrawnId extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type NameResult = NameResult.T
-  object NameResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type CreditsV = CreditsV.T
-  object CreditsV extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type ShapesId = ShapesId.T
   object ShapesId extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type ShapeSetId = ShapeSetId.T
   object ShapeSetId extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type PointTilesId = PointTilesId.T
-  object PointTilesId extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type PointTilesLayer = PointTilesLayer.T
-  object PointTilesLayer extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type PointTilesMaxZoom = PointTilesMaxZoom.T
   object PointTilesMaxZoom extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type PopupHtml = PopupHtml.T
   object PopupHtml extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type PopupCls = PopupCls.T
   object PopupCls extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type EasesResult = EasesResult.T
-  object EasesResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type EasesAnimated = EasesAnimated.T
   object EasesAnimated extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type MotionAnimated = _root_.com.histmersion.web.map.maplibre.MapLibreSurface.EasesAnimated
   val MotionAnimated: _root_.com.histmersion.web.map.maplibre.MapLibreSurface.EasesAnimated.type = _root_.com.histmersion.web.map.maplibre.MapLibreSurface.EasesAnimated
 
-  def eases(animated: com.histmersion.web.map.maplibre.MapLibreSurface.EasesAnimated): com.histmersion.web.map.maplibre.MapLibreSurface.EasesResult = animated && MotionPref.animate()
+  def eases(animated: com.histmersion.web.map.maplibre.MapLibreSurface.EasesAnimated): Boolean = animated && MotionPref.animate()
 
   /** `o` with the motion of a camera move: `animate`, and `essential` when it eases (see `setView`). */
   def motion(animated: com.histmersion.web.map.maplibre.MapLibreSurface.MotionAnimated, o: js.Dynamic): js.Object =

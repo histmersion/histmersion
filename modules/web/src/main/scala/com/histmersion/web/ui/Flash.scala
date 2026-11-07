@@ -7,15 +7,15 @@ import org.scalajs.dom
   * seconds. Mounted once by the page.
   */
 object Flash:
+  type Text = Text.T
+  object Text extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
-  type SayText = SayText.T
-  object SayText extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
   private val line = Var(Option.empty[String])
   // `var`: the timer that clears the line
   private var timer = 0
 
-  def say(text: com.histmersion.web.ui.Flash.SayText): Unit =
+  def say(text: com.histmersion.web.ui.Flash.Text): Unit =
     line.set(Some(text))
     dom.window.clearTimeout(timer)
     timer = dom.window.setTimeout(() => line.set(None), 3000)

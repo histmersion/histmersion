@@ -11,39 +11,23 @@ import scala.scalajs.js
   * a modifier key, as any link).
   */
 object SourceLink:
+  type Doi = Doi.T
+  object Doi extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
   /** The identifier label: the DOI when there is one, else our citekey (the owner's rule). */
-  type IdLabelResult = IdLabelResult.T
-  object IdLabelResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type IdLabelCitekey = _root_.com.histmersion.web.SourceLink.HrefCitekey
-  val IdLabelCitekey: _root_.com.histmersion.web.SourceLink.HrefCitekey.type = _root_.com.histmersion.web.SourceLink.HrefCitekey
-  type IdLabelDoi = IdLabelDoi.T
-  object IdLabelDoi extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type HrefResult = HrefResult.T
-  object HrefResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type HrefCitekey = HrefCitekey.T
-  object HrefCitekey extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type ApplyCitekey = _root_.com.histmersion.web.SourceLink.HrefCitekey
-  val ApplyCitekey: _root_.com.histmersion.web.SourceLink.HrefCitekey.type = _root_.com.histmersion.web.SourceLink.HrefCitekey
-  type ApplyDoi = _root_.com.histmersion.web.SourceLink.IdLabelDoi
-  val ApplyDoi: _root_.com.histmersion.web.SourceLink.IdLabelDoi.type = _root_.com.histmersion.web.SourceLink.IdLabelDoi
-  type ApplyLabel = ApplyLabel.T
-  object ApplyLabel extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type HtmlResult = HtmlResult.T
-  object HtmlResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type HtmlCitekey = HtmlCitekey.T
-  object HtmlCitekey extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type HtmlDoi = HtmlDoi.T
-  object HtmlDoi extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type HtmlLabel = HtmlLabel.T
-  object HtmlLabel extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type IdLabelCitekey = _root_.com.histmersion.web.Preview.Target.Source.Citekey
+  val IdLabelCitekey: _root_.com.histmersion.web.Preview.Target.Source.Citekey.type = _root_.com.histmersion.web.Preview.Target.Source.Citekey
+  type ApplyCitekey = _root_.com.histmersion.web.Preview.Target.Source.Citekey
+  val ApplyCitekey: _root_.com.histmersion.web.Preview.Target.Source.Citekey.type = _root_.com.histmersion.web.Preview.Target.Source.Citekey
+  type ApplyDoi = _root_.com.histmersion.web.SourceLink.Doi
+  val ApplyDoi: _root_.com.histmersion.web.SourceLink.Doi.type = _root_.com.histmersion.web.SourceLink.Doi
 
-  def idLabel(citekey: com.histmersion.web.SourceLink.IdLabelCitekey, doi: Option[com.histmersion.web.SourceLink.IdLabelDoi]): com.histmersion.web.SourceLink.IdLabelResult =
+  def idLabel(citekey: com.histmersion.web.SourceLink.IdLabelCitekey, doi: Option[com.histmersion.web.SourceLink.Doi]): com.histmersion.api.UiLabels.Text =
     doi.map(_.trim).filter(_.nonEmpty).getOrElse(citekey)
 
-  def href(citekey: com.histmersion.web.SourceLink.HrefCitekey): com.histmersion.web.SourceLink.HrefResult = s"/source/${HtmlAtoms.segment(citekey)}"
+  def href(citekey: com.histmersion.web.Preview.Target.Source.Citekey): String = s"/source/${HtmlAtoms.segment(citekey)}"
 
-  def apply(citekey: com.histmersion.web.SourceLink.ApplyCitekey, doi: Option[com.histmersion.web.SourceLink.ApplyDoi] = None, label: Option[com.histmersion.web.SourceLink.ApplyLabel] = None): HtmlElement =
+  def apply(citekey: com.histmersion.web.SourceLink.ApplyCitekey, doi: Option[com.histmersion.web.SourceLink.ApplyDoi] = None, label: Option[com.histmersion.api.UiLabels.Text] = None): HtmlElement =
     a(
       cls := "src-ref",
       dataAttr("ck") := citekey,
@@ -59,5 +43,5 @@ object SourceLink:
     )
 
   /** The same anchor as an HTML string, for map popups (which take markup, not elements). */
-  def html(citekey: com.histmersion.web.SourceLink.HtmlCitekey, doi: Option[com.histmersion.web.SourceLink.HtmlDoi], label: com.histmersion.web.SourceLink.HtmlLabel): com.histmersion.web.SourceLink.HtmlResult =
+  def html(citekey: com.histmersion.web.Preview.Target.Source.Citekey, doi: Option[com.histmersion.web.SourceLink.Doi], label: com.histmersion.api.UiLabels.Text): String =
     HtmlAtoms.sourceLink(citekey, doi, label)

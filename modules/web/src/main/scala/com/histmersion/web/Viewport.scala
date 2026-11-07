@@ -14,6 +14,8 @@ import scala.util.Try
   * never gets `narrow`, so no rule written for a phone or a tablet can reach it.
   */
 object Viewport:
+  type MediaQuery = MediaQuery.T
+  object MediaQuery extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
   type ModeWidth = ModeWidth.T
   object ModeWidth extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
@@ -27,22 +29,14 @@ object Viewport:
   object ModeMaxHeight extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type ModeTabletMaxWidth = ModeTabletMaxWidth.T
   object ModeTabletMaxWidth extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type QueryResult = QueryResult.T
-  object QueryResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type QueryMaxWidth = QueryMaxWidth.T
   object QueryMaxWidth extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type QueryMaxHeight = QueryMaxHeight.T
   object QueryMaxHeight extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type TabletQueryResult = TabletQueryResult.T
-  object TabletQueryResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type TabletQueryTabletMaxWidth = TabletQueryTabletMaxWidth.T
   object TabletQueryTabletMaxWidth extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type Narrow = Narrow.T
   object Narrow extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type NarrowNowResult = NarrowNowResult.T
-  object NarrowNowResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type TabletNowResult = TabletNowResult.T
-  object TabletNowResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
   enum Mode(val wire: Mode.Wire):
     case Narrow extends Mode("narrow")
@@ -69,18 +63,18 @@ object Viewport:
     else Mode.Wide
 
   /** The phone's rule as a media query, so the browser tells us when it flips. */
-  def query(maxWidth: com.histmersion.web.Viewport.QueryMaxWidth, maxHeight: com.histmersion.web.Viewport.QueryMaxHeight): com.histmersion.web.Viewport.QueryResult =
+  def query(maxWidth: com.histmersion.web.Viewport.QueryMaxWidth, maxHeight: com.histmersion.web.Viewport.QueryMaxHeight): com.histmersion.web.Viewport.MediaQuery =
     s"(max-width: ${maxWidth}px), (max-height: ${maxHeight}px) and (pointer: coarse)"
 
   /** The tablet's: every width up to its own limit (the phone's query is asked first). */
-  def tabletQuery(tabletMaxWidth: com.histmersion.web.Viewport.TabletQueryTabletMaxWidth): com.histmersion.web.Viewport.TabletQueryResult = s"(max-width: ${tabletMaxWidth}px)"
+  def tabletQuery(tabletMaxWidth: com.histmersion.web.Viewport.TabletQueryTabletMaxWidth): com.histmersion.web.Viewport.MediaQuery = s"(max-width: ${tabletMaxWidth}px)"
 
   private val current = Var(Mode.Wide)
 
   val modeSignal: Signal[Mode] = current.signal.distinct
   val narrow: Signal[com.histmersion.web.Viewport.Narrow] = current.signal.map(_ != Mode.Wide)
-  def narrowNow: com.histmersion.web.Viewport.NarrowNowResult = current.now() != Mode.Wide
-  def tabletNow: com.histmersion.web.Viewport.TabletNowResult = current.now() == Mode.Tablet
+  def narrowNow: Boolean = current.now() != Mode.Wide
+  def tabletNow: Boolean = current.now() == Mode.Tablet
 
   /** Follow the viewport from now on. Called once by the composition root, with the config. */
   def init(ui: UiConfig): Unit =

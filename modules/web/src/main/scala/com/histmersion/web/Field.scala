@@ -34,17 +34,19 @@ final class Field[A](
   def :=(a: A): UiState.Assign = UiState.Assign(() => v.set(a))
 
   private[web] def withDefault(a: A): Unit = { dflt = a; v.set(a) }
-  private[web] def encoded: List[com.histmersion.web.Field.EncodedResult] = codec.encode(now())
-  private[web] def load(vs: List[com.histmersion.web.Field.LoadVs]): Unit = v.set(codec.decode(vs).getOrElse(dflt))
+  private[web] def encoded: List[com.histmersion.web.Field.Token] = codec.encode(now())
+  private[web] def load(vs: List[com.histmersion.web.Field.Token]): Unit = v.set(codec.decode(vs).getOrElse(dflt))
 
   /** Add hash values: merged into a list field, replacing a scalar one. */
-  private[web] def add(vs: List[com.histmersion.web.Field.AddVs]): Unit =
+  private[web] def add(vs: List[com.histmersion.web.Field.Token]): Unit =
     if codec.multi then load((encoded ++ vs).distinct) else load(vs)
 
   /** Remove ONE chip value (a list keeps the others; a scalar goes back to its default). */
-  private[web] def remove(value: com.histmersion.web.Field.RemoveValue): Unit = load(encoded.filterNot(_ == value))
+  private[web] def remove(value: com.histmersion.web.Field.Token): Unit = load(encoded.filterNot(_ == value))
 
 object Field:
+  type Token = Token.T
+  object Token extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type Key = Key.T
   object Key extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type HashKey = HashKey.T
@@ -54,11 +56,3 @@ object Field:
   type Chip = Chip.T
   object Chip extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
-  type EncodedResult = EncodedResult.T
-  object EncodedResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type LoadVs = LoadVs.T
-  object LoadVs extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type AddVs = AddVs.T
-  object AddVs extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type RemoveValue = RemoveValue.T
-  object RemoveValue extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]

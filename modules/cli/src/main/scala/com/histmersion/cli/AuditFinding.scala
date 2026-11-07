@@ -13,11 +13,9 @@ final case class AuditFinding(
   /** What `calibre update` fixes: everything but a missing entry. The year included — Calibre shows the record's year,
     * not the printing on the shelf (the user's decision of 2026-10-03, #831).
     */
-  def fixable: com.histmersion.cli.AuditFinding.FixableResult = !issues.contains(AuditIssue.Missing)
+  def fixable: Boolean = !issues.contains(AuditIssue.Missing)
 
 object AuditFinding:
-  type FixableResult = FixableResult.T
-  object FixableResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
   type CalibreId = CalibreId.T
   object CalibreId extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]

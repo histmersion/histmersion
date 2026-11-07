@@ -24,7 +24,7 @@ object AddOptions:
   object Unsigned extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type Verify = Verify.T
   object Verify extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type Sha256 = Sha256.T
-  object Sha256 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type Sha256 = com.histmersion.api.Sha256
+  val Sha256: _root_.com.histmersion.api.Sha256.type = _root_.com.histmersion.api.Sha256
   type Repos = Repos.T
   object Repos extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]

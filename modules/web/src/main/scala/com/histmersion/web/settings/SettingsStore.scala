@@ -11,26 +11,22 @@ import scala.scalajs.concurrent.JSExecutionContext.Implicits.queue
   * after each change; and the change itself — written into the file by the server, then applied.
   */
 object SettingsStore:
+  type Problem = Problem.T
+  object Problem extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
-  type CurrentResultPart1 = CurrentResultPart1.T
-  object CurrentResultPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type LastResultResultPart1 = LastResultResultPart1.T
-  object LastResultResultPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type SaveLiteralConsent = SaveLiteralConsent.T
   object SaveLiteralConsent extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type MessageResult = MessageResult.T
-  object MessageResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type FieldKey = FieldKey.T
   object FieldKey extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
   private val page = Var(Option.empty[Either[String, ConfigEdit.Page]])
   private val result = Var(Option.empty[Either[String, ConfigEdit.Written]])
 
-  def current: Signal[Option[Either[com.histmersion.web.settings.SettingsStore.CurrentResultPart1, ConfigEdit.Page]]] = page.signal
+  def current: Signal[Option[Either[com.histmersion.web.settings.SettingsStore.Problem, ConfigEdit.Page]]] = page.signal
   def now: Option[ConfigEdit.Page] = page.now().flatMap(_.toOption)
 
   /** What the last change did, or why it was refused. */
-  def lastResult: Signal[Option[Either[com.histmersion.web.settings.SettingsStore.LastResultResultPart1, ConfigEdit.Written]]] = result.signal
+  def lastResult: Signal[Option[Either[com.histmersion.web.settings.SettingsStore.Problem, ConfigEdit.Written]]] = result.signal
 
   def load(): Unit =
     ApiClient.settings().onComplete(r => page.set(Some(r.toEither.left.map(message))))
@@ -47,7 +43,7 @@ object SettingsStore:
 
   def clearResult(): Unit = result.set(None)
 
-  def message(e: Throwable): com.histmersion.web.settings.SettingsStore.MessageResult = e match
+  def message(e: Throwable): com.histmersion.web.settings.SettingsStore.Problem = e match
     case f: ApiFailure => f.getMessage
     case other         => Option(other.getMessage).getOrElse("the server could not be reached")
 

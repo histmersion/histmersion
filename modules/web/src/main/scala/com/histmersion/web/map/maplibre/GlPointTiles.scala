@@ -15,7 +15,7 @@ import scala.scalajs.js.JSConverters.*
   */
 final private[maplibre] class GlPointTiles(gl: GlMap, id: GlPointTiles.Id, layer: GlPointTiles.Layer, maxZoom: GlPointTiles.MaxZoom) extends PointTiles:
   // `var`s: the template asked for, and the listeners
-  private var template: Option[com.histmersion.web.map.maplibre.GlPointTiles.Template] = None
+  private var template: Option[com.histmersion.api.basemap.BasemapApi.TileTemplate] = None
   private val listeners = mutable.ListBuffer.empty[() => Unit]
   private var queued = false
   private val hitLayer = s"$id-points"
@@ -59,7 +59,7 @@ final private[maplibre] class GlPointTiles(gl: GlMap, id: GlPointTiles.Id, layer
         }
     }
 
-  def setTiles(t: Option[com.histmersion.web.map.maplibre.GlPointTiles.SetTilesT]): Unit =
+  def setTiles(t: Option[com.histmersion.api.basemap.BasemapApi.TileTemplate]): Unit =
     if t != template then
       template = t
       t match
@@ -73,7 +73,7 @@ final private[maplibre] class GlPointTiles(gl: GlMap, id: GlPointTiles.Id, layer
             case Some(src) => scala.util.Try(src.setTiles(js.Array(url)))
             case None      => restore()
 
-  def loaded: com.histmersion.web.map.maplibre.GlPointTiles.LoadedResult =
+  def loaded: Boolean =
     template.isEmpty || scala.util.Try(gl.getSource(id).isDefined && gl.isSourceLoaded(id)).getOrElse(false)
 
   def onChange(f: () => Unit): Subscription =
@@ -106,9 +106,3 @@ object GlPointTiles:
   type MaxZoom = MaxZoom.T
   object MaxZoom extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
-  type Template = Template.T
-  object Template extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type SetTilesT = SetTilesT.T
-  object SetTilesT extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type LoadedResult = LoadedResult.T
-  object LoadedResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]

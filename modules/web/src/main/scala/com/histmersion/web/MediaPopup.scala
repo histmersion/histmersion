@@ -16,16 +16,16 @@ import com.histmersion.api.media.{MediaGeoHit, MediaProvider}
   * with its kind's ([[CardIcons]]). Pure.
   */
 object MediaPopup:
+  type Caption = Caption.T
+  object Caption extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type Html = Html.T
+  object Html extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type PeriodText = PeriodText.T
+  object PeriodText extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type TitleHtml = TitleHtml.T
+  object TitleHtml extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   /** Pure: what the picture's full-size view shows. */
-  type HtmlTitleInner = HtmlTitleInner.T
-  object HtmlTitleInner extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
-  type HtmlResult = HtmlResult.T
-  object HtmlResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type HtmlPeriod = HtmlPeriod.T
-  object HtmlPeriod extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type HtmlCaption = HtmlCaption.T
-  object HtmlCaption extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
   def full(h: MediaGeoHit): Option[Lightbox.Item] =
     h.fileUrl.map(u =>
@@ -42,9 +42,9 @@ object MediaPopup:
       )
     )
 
-  def html(h: MediaGeoHit, period: com.histmersion.web.MediaPopup.HtmlPeriod, caption: com.histmersion.web.MediaPopup.HtmlCaption): com.histmersion.web.MediaPopup.HtmlResult =
+  def html(h: MediaGeoHit, period: com.histmersion.web.MediaPopup.PeriodText, caption: com.histmersion.web.MediaPopup.Caption): com.histmersion.web.MediaPopup.Html =
     val kind = Fmt.display(h.kind.getOrElse("media"))
-    def title(inner: com.histmersion.web.MediaPopup.HtmlTitleInner) =
+    def title(inner: com.histmersion.web.MediaPopup.TitleHtml) =
       s"""<div class="cite-tip-title media-popup-title">${CardIcons.html(CardIcons.Media)}$inner</div>"""
     h.citekey match
       case Some(ck) =>

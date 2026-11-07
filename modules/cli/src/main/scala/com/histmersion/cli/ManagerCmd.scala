@@ -24,30 +24,10 @@ import com.histmersion.util.console.Console
   * (docs/research-process-managers.md). The server runs them; this reads and steers them over HTTP.
   */
 object ManagerCmd:
+  type Problem = Problem.T
+  object Problem extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
-  type SchedulerUsageM = SchedulerUsageM.T
-  object SchedulerUsageM extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type FocusRequestUsageM = FocusRequestUsageM.T
-  object FocusRequestUsageM extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type FocusRequestNumS = FocusRequestNumS.T
-  object FocusRequestNumS extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
-  type ConfigKvs = ConfigKvs.T
-  object ConfigKvs extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type FocusRequestArgs = FocusRequestArgs.T
-  object FocusRequestArgs extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type VerbName = VerbName.T
-  object VerbName extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type VerbHelp = VerbHelp.T
-  object VerbHelp extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type VerbRestArg2 = VerbRestArg2.T
-  object VerbRestArg2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type ItemPatchId = ItemPatchId.T
-  object ItemPatchId extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type ItemPatchT = ItemPatchT.T
-  object ItemPatchT extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type VerbsResultArg2 = VerbsResultArg2.T
-  object VerbsResultArg2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
   def managers(using console: Console) : Opts[Client => Either[Cli.Error, Unit]] = Opts.subcommand(
     "managers",
@@ -58,7 +38,7 @@ object ManagerCmd:
     )
   }
 
-  private def config(kvs: List[com.histmersion.cli.ManagerCmd.ConfigKvs]): Either[Cli.Error, ManagerConfig] =
+  private def config(kvs: List[com.histmersion.domain.automation.Manager.ConfigEntry]): Either[Cli.Error, ManagerConfig] =
     ManagerConfig.parse(kvs).left.map(m => Cli.Error(m, exitCode = ExitCode.Usage))
 
   /** The settings `--config` and `config` take. */
@@ -188,7 +168,7 @@ object ManagerCmd:
       Opts.option[Int]("limit", "How many waiting items to show (status: 50, queue: 200)").orNone,
       Output.jsonFlag
     ).mapN { (verb, rest, limit, json) => (c: Client) =>
-      def usage(m: com.histmersion.cli.ManagerCmd.SchedulerUsageM) = Left(Cli.Error(m, exitCode = ExitCode.Usage))
+      def usage(m: com.histmersion.cli.ManagerCmd.Problem) = Left(Cli.Error(m, exitCode = ExitCode.Usage))
       (verb.trim.toLowerCase, rest.map(_.trim).filter(_.nonEmpty)) match
         case ("status", Nil) =>
           c.call(ManagersApi.scheduler)(limit).map(s => Output.emit(json, s)(AgentSchedulerMarkdown.status))
@@ -263,9 +243,9 @@ object ManagerCmd:
   /** `focus` [list | pin <goal> | unpin <goal> | priority <goal> <n> | max <n|default>] → the request (None: just show
     * it); a malformed one is a usage error before anything is sent.
     */
-  def focusRequest(args: List[com.histmersion.cli.ManagerCmd.FocusRequestArgs]): Either[Cli.Error, Option[Autopilot.FocusSet]] =
-    def usage(m: com.histmersion.cli.ManagerCmd.FocusRequestUsageM) = Left(Cli.Error(m, exitCode = ExitCode.Usage))
-    def num(s: com.histmersion.cli.ManagerCmd.FocusRequestNumS) = s.trim.toIntOption.toRight(Cli.Error(s"'$s' is not a whole number", exitCode = ExitCode.Usage))
+  def focusRequest(args: List[com.histmersion.domain.automation.Manager.FocusArg]): Either[Cli.Error, Option[Autopilot.FocusSet]] =
+    def usage(m: com.histmersion.cli.ManagerCmd.Problem) = Left(Cli.Error(m, exitCode = ExitCode.Usage))
+    def num(s: String) = s.trim.toIntOption.toRight(Cli.Error(s"'$s' is not a whole number", exitCode = ExitCode.Usage))
     args.map(_.trim) match
       case Nil | List("list")             => Right(None)
       case List(v @ ("pin" | "unpin"), g) => Right(Some(Autopilot.FocusSet(v, Some(g), by = Some("cli"))))
@@ -283,15 +263,15 @@ object ManagerCmd:
         )
 
   /** The verbs of one manager; each takes the manager's id first. */
-  private def verb(name: com.histmersion.cli.ManagerCmd.VerbName, help: com.histmersion.cli.ManagerCmd.VerbHelp)(rest: Opts[(Client, com.histmersion.cli.ManagerCmd.VerbRestArg2) => Either[Cli.Error, Unit]]) =
+  private def verb(name: String, help: String)(rest: Opts[(Client, String) => Either[Cli.Error, Unit]]) =
     Opts.subcommand(name, help)(rest)
 
   private val target = Opts.argument[String]("target")
 
-  private def itemPatch(c: Client, id: com.histmersion.cli.ManagerCmd.ItemPatchId, t: com.histmersion.cli.ManagerCmd.ItemPatchT, p: ItemPatch) (using console: Console) =
+  private def itemPatch(c: Client, id: com.histmersion.domain.automation.Manager.ItemId, t: com.histmersion.api.automation.Managers.ItemPatch.Action, p: ItemPatch) (using console: Console) =
     c.call(ManagersApi.patchItem)((id, t, p)).map(i => Cli.out.println(ManagersMarkdown.item(i)))
 
-  private def verbs(using console: Console) : Opts[(Client, com.histmersion.cli.ManagerCmd.VerbsResultArg2) => Either[Cli.Error, Unit]] =
+  private def verbs(using console: Console) : Opts[(Client, String) => Either[Cli.Error, Unit]] =
     verb("status", "The manager: items in flight with their runs, hints, newest events")(
       Output.jsonFlag.map(json =>
         (c, id) => c.call(ManagersApi.get)(id).map(d => Output.emit(json, d)(ManagersMarkdown.detail))

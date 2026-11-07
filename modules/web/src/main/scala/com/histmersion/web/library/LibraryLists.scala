@@ -19,21 +19,17 @@ import com.histmersion.api.research.Article
   * filter, order and page is not read again.
   */
 object LibraryLists:
+  type ListKey = ListKey.T
+  object ListKey extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
   type ReadFor = ReadFor.T
   object ReadFor extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type Timer = Timer.T
   object Timer extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type KeyResult = KeyResult.T
-  object KeyResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type KeysResult = KeysResult.T
-  object KeysResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type TurnToOffset = _root_.com.histmersion.web.library.LibraryLists.ReadArticlesOffset
-  val TurnToOffset: _root_.com.histmersion.web.library.LibraryLists.ReadArticlesOffset.type = _root_.com.histmersion.web.library.LibraryLists.ReadArticlesOffset
-  type ReadSourcesOffset = _root_.com.histmersion.web.library.LibraryLists.ReadArticlesOffset
-  val ReadSourcesOffset: _root_.com.histmersion.web.library.LibraryLists.ReadArticlesOffset.type = _root_.com.histmersion.web.library.LibraryLists.ReadArticlesOffset
-  type ReadArticlesOffset = ReadArticlesOffset.T
-  object ReadArticlesOffset extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type TurnToOffset = _root_.com.histmersion.api.Offset
+  val TurnToOffset: _root_.com.histmersion.api.Offset.type = _root_.com.histmersion.api.Offset
+  type ReadSourcesOffset = _root_.com.histmersion.api.Offset
+  val ReadSourcesOffset: _root_.com.histmersion.api.Offset.type = _root_.com.histmersion.api.Offset
 
   val sources: Var[ListPage[Hit]] = Var(ListPage())
   val articles: Var[ListPage[Article.Summary]] = Var(ListPage())
@@ -49,10 +45,10 @@ object LibraryLists:
   /** The filter the lists follow: the panel's, everywhere. */
   def filter(): Filter = UiState.toFilter(except = Set("bbox"))
 
-  private def key(f: Filter): com.histmersion.web.library.LibraryLists.KeyResult = s"$f|${sort.wire}"
+  private def key(f: Filter): com.histmersion.web.library.LibraryLists.ListKey = s"$f|${sort.wire}"
 
   /** The table's rows of `section`, as keys. */
-  def keys(section: LibrarySection): List[com.histmersion.web.library.LibraryLists.KeysResult] =
+  def keys(section: LibrarySection): List[com.histmersion.web.library.LibraryLists.ListKey] =
     if section == LibrarySection.Articles then articles.now().rows.map(_.slug)
     else sources.now().rows.map(_.source.citekey.value)
 
@@ -81,7 +77,7 @@ object LibraryLists:
       m => sources.update(_.copy(loading = false, loaded = true, error = Some(m)))
     )
 
-  private def readArticles(f: Filter, offset: com.histmersion.web.library.LibraryLists.ReadArticlesOffset): Unit =
+  private def readArticles(f: Filter, offset: com.histmersion.api.Offset): Unit =
     articles.update(_.copy(loading = true, error = None))
     val page = f.modify(_.limit).setTo(Layout.libraryPage).modify(_.offset).setTo(offset)
     latestArticles(ApiClient.articles(Api.ArticleQuery(page)))(

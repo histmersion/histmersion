@@ -22,8 +22,6 @@ object AboutView:
     */
   type CheckLabel = _root_.com.histmersion.web.AboutView.Row.Label
   val CheckLabel: _root_.com.histmersion.web.AboutView.Row.Label.type = _root_.com.histmersion.web.AboutView.Row.Label
-  type CheckText = CheckText.T
-  object CheckText extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
   final case class Row(
       label: Row.Label,
@@ -52,7 +50,7 @@ object AboutView:
     object Title extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
   /** A health text as a row: its state, and the text itself as the detail unless it only says "ok". */
-  private[web] def check(label: com.histmersion.web.AboutView.CheckLabel, text: Option[com.histmersion.web.AboutView.CheckText]): Row =
+  private[web] def check(label: com.histmersion.web.AboutView.CheckLabel, text: Option[com.histmersion.web.AboutView.Row.Detail]): Row =
     val st = ServiceState.of(text)
     Row(label, st.label, Some(st), text.map(_.trim).filter(t => t.nonEmpty && !t.equalsIgnoreCase(st.label)))
 

@@ -13,16 +13,12 @@ import scala.scalajs.concurrent.JSExecutionContext.Implicits.queue
   * to come back to, under a name. Listed here (Explore's filter panel) and in My library › Bookmarks.
   */
 object SavedViews:
+  type Name = Name.T
+  object Name extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
   /** The view on screen, as a bookmark's target. */
-  type SuggestedNameResult = SuggestedNameResult.T
-  object SuggestedNameResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type SuggestedNameWords = SuggestedNameWords.T
   object SuggestedNameWords extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type SuggestedNameFrom = SuggestedNameFrom.T
-  object SuggestedNameFrom extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type SuggestedNameTo = SuggestedNameTo.T
-  object SuggestedNameTo extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type OnExplore = OnExplore.T
   object OnExplore extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type SaveName = SaveName.T
@@ -41,7 +37,7 @@ object SavedViews:
     )
 
   /** A name to offer for the view: its span, and the words or the first filter. Pure. */
-  def suggestedName(words: Option[com.histmersion.web.marks.SavedViews.SuggestedNameWords], from: Option[com.histmersion.web.marks.SavedViews.SuggestedNameFrom], to: Option[com.histmersion.web.marks.SavedViews.SuggestedNameTo]): com.histmersion.web.marks.SavedViews.SuggestedNameResult =
+  def suggestedName(words: Option[com.histmersion.web.marks.SavedViews.SuggestedNameWords], from: Option[com.histmersion.api.Years.Astronomical], to: Option[com.histmersion.api.Years.Astronomical]): com.histmersion.web.marks.SavedViews.Name =
     val span = Fmt.periodStr(from, to)
     List(words.map(_.trim).filter(_.nonEmpty).map(w => s"“$w”"), Option(span).filter(_.nonEmpty)).flatten
       .mkString(", ") match

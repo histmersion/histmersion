@@ -12,22 +12,10 @@ import com.histmersion.api.automation.Agents.{ApprovalKind, ApprovalState, Origi
   */
 object ListOpts:
 
-  type ManyResult = ManyResult.T
-  object ManyResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type ManyName = ManyName.T
-  object ManyName extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type ManyHelp = ManyHelp.T
-  object ManyHelp extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type OneResult = OneResult.T
-  object OneResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type OneName = OneName.T
-  object OneName extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type OneHelp = OneHelp.T
-  object OneHelp extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
-  private def many(name: com.histmersion.cli.ListOpts.ManyName, help: com.histmersion.cli.ListOpts.ManyHelp): Opts[List[com.histmersion.cli.ListOpts.ManyResult]] =
+  private def many(name: String, help: String): Opts[List[String]] =
     Opts.options[String](name, s"$help (repeatable, or comma-separated)").orEmpty
-  private def one(name: com.histmersion.cli.ListOpts.OneName, help: com.histmersion.cli.ListOpts.OneHelp): Opts[Option[com.histmersion.cli.ListOpts.OneResult]] = Opts.option[String](name, help).orNone
+  private def one(name: String, help: String): Opts[Option[String]] = Opts.option[String](name, help).orNone
 
   private val since = one("since", "Only those started at or after: 2026-10-01, an ISO instant, or 7d / 12h / 30m ago")
   private val until = one("until", "Only those started before the end of: 2026-10-01, or an ISO instant")

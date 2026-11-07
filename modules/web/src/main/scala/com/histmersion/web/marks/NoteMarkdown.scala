@@ -5,22 +5,16 @@ package com.histmersion.web.marks
   * `[[citekey]]`. Anything else is plain text. Pure: the page builds the elements from this, never HTML from the text.
   */
 object NoteMarkdown:
+  type Href = Href.T
+  object Href extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type Line = Line.T
+  object Line extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type Markdown = Markdown.T
+  object Markdown extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type Text = Text.T
+  object Text extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
-  type BlocksLoopLines = BlocksLoopLines.T
-  object BlocksLoopLines extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
-  type SafeHrefResult = SafeHrefResult.T
-  object SafeHrefResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type SafeHrefH = SafeHrefH.T
-  object SafeHrefH extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type BlocksText = BlocksText.T
-  object BlocksText extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type StartsResult = StartsResult.T
-  object StartsResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type StartsL = StartsL.T
-  object StartsL extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type InlinesS = InlinesS.T
-  object InlinesS extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
   enum Inline:
     case Text(s: Inline.Text.S)
@@ -32,25 +26,25 @@ object NoteMarkdown:
 
   object Inline:
     object Text:
-      type S = S.T
-      object S extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+      type S = com.histmersion.web.marks.NoteMarkdown.Text
+      val S: _root_.com.histmersion.web.marks.NoteMarkdown.Text.type = _root_.com.histmersion.web.marks.NoteMarkdown.Text
     object Strong:
-      type S = S.T
-      object S extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+      type S = com.histmersion.web.marks.NoteMarkdown.Text
+      val S: _root_.com.histmersion.web.marks.NoteMarkdown.Text.type = _root_.com.histmersion.web.marks.NoteMarkdown.Text
     object Em:
-      type S = S.T
-      object S extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+      type S = com.histmersion.web.marks.NoteMarkdown.Text
+      val S: _root_.com.histmersion.web.marks.NoteMarkdown.Text.type = _root_.com.histmersion.web.marks.NoteMarkdown.Text
     object Code:
-      type S = S.T
-      object S extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+      type S = com.histmersion.web.marks.NoteMarkdown.Text
+      val S: _root_.com.histmersion.web.marks.NoteMarkdown.Text.type = _root_.com.histmersion.web.marks.NoteMarkdown.Text
     object Link:
-      type Text = Text.T
-      object Text extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-      type Href = Href.T
-      object Href extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+      type Text = com.histmersion.web.marks.NoteMarkdown.Text
+      val Text: _root_.com.histmersion.web.marks.NoteMarkdown.Text.type = _root_.com.histmersion.web.marks.NoteMarkdown.Text
+      type Href = com.histmersion.web.marks.NoteMarkdown.Href
+      val Href: _root_.com.histmersion.web.marks.NoteMarkdown.Href.type = _root_.com.histmersion.web.marks.NoteMarkdown.Href
     object Cite:
-      type Citekey = Citekey.T
-      object Citekey extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+      type Citekey = com.histmersion.web.WindowKey.Source.Citekey
+      val Citekey: _root_.com.histmersion.web.WindowKey.Source.Citekey.type = _root_.com.histmersion.web.WindowKey.Source.Citekey
 
   enum Block:
     case Heading(level: Block.Heading.Level, text: List[Inline])
@@ -67,8 +61,8 @@ object NoteMarkdown:
       type Ordered = Ordered.T
       object Ordered extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
     object CodeBlock:
-      type Text = Text.T
-      object Text extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+      type Text = com.histmersion.web.marks.NoteMarkdown.Text
+      val Text: _root_.com.histmersion.web.marks.NoteMarkdown.Text.type = _root_.com.histmersion.web.marks.NoteMarkdown.Text
 
   private val Heading = """^(#{1,6})\s+(.*)$""".r
   private val Bullet = """^\s*[-*+]\s+(.*)$""".r
@@ -76,16 +70,16 @@ object NoteMarkdown:
   private val QuoteL = """^\s*>\s?(.*)$""".r
 
   /** Only addresses a person can follow safely: the web, mail, or a page of this server. */
-  def safeHref(h: com.histmersion.web.marks.NoteMarkdown.SafeHrefH): Option[com.histmersion.web.marks.NoteMarkdown.SafeHrefResult] =
+  def safeHref(h: com.histmersion.web.marks.NoteMarkdown.Href): Option[com.histmersion.web.marks.NoteMarkdown.Href] =
     val t = h.trim
     Option.when(
       t.startsWith("https://") || t.startsWith("http://") || t.startsWith("mailto:") ||
         (t.startsWith("/") && !t.startsWith("//"))
     )(t)
 
-  def blocks(text: com.histmersion.web.marks.NoteMarkdown.BlocksText): List[Block] =
+  def blocks(text: com.histmersion.web.marks.NoteMarkdown.Markdown): List[Block] =
     @annotation.tailrec
-    def loop(lines: List[com.histmersion.web.marks.NoteMarkdown.BlocksLoopLines], out: List[Block]): List[Block] = lines match
+    def loop(lines: List[com.histmersion.web.marks.NoteMarkdown.Markdown], out: List[Block]): List[Block] = lines match
       case Nil                                   => out.reverse
       case l :: rest if l.trim.isEmpty           => loop(rest, out)
       case l :: rest if l.trim.startsWith("```") =>
@@ -107,14 +101,14 @@ object NoteMarkdown:
         loop(if para.isEmpty then lines0.tail else after, Block.Para(inlines(taken.map(_.trim).mkString(" "))) :: out)
     loop(text.replace("\r\n", "\n").split("\n", -1).toList, Nil)
 
-  private def starts(l: com.histmersion.web.marks.NoteMarkdown.StartsL): com.histmersion.web.marks.NoteMarkdown.StartsResult = l match
+  private def starts(l: com.histmersion.web.marks.NoteMarkdown.Line): Boolean = l match
     case Heading(_, _) | Bullet(_) | Number(_) | QuoteL(_) => true
     case _                                                 => l.trim.startsWith("```")
 
   private val Token =
     """\[\[([a-z][a-z0-9_.-]{1,120})\]\]|\[([^\]]+)\]\(([^)\s]+)\)|`([^`]+)`|\*\*([^*]+)\*\*|\*([^*]+)\*|_([^_]+)_""".r
 
-  def inlines(s: com.histmersion.web.marks.NoteMarkdown.InlinesS): List[Inline] =
+  def inlines(s: com.histmersion.web.marks.NoteMarkdown.Markdown): List[Inline] =
     val out = List.newBuilder[Inline]
     // `var`: where the text not yet taken by a token starts
     var at = 0

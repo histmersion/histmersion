@@ -7,14 +7,12 @@ import org.scalajs.dom
   * nothing changes, and none once nothing is live. Pure.
   */
 object Poll:
-  type NextResult = NextResult.T
-  object NextResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type NextPrevious = NextPrevious.T
-  object NextPrevious extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type NextLive = NextLive.T
-  object NextLive extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type NextChanged = NextChanged.T
-  object NextChanged extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type DataChanged = DataChanged.T
+  object DataChanged extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type LiveMode = LiveMode.T
+  object LiveMode extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type Revision = Revision.T
+  object Revision extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
   val FirstMs = 1000
   val MaxMs = 15000
@@ -23,7 +21,7 @@ object Poll:
   /** The delay before the next poll, or `None` to stop: nothing left to wait for. A change (a row moved on, or one was
     * started from this page) goes back to the quick delay.
     */
-  def next(previous: Option[com.histmersion.web.Poll.NextPrevious], live: com.histmersion.web.Poll.NextLive, changed: com.histmersion.web.Poll.NextChanged): Option[com.histmersion.web.Poll.NextResult] =
+  def next(previous: Option[com.histmersion.web.Poll.Revision], live: com.histmersion.web.Poll.LiveMode, changed: com.histmersion.web.Poll.DataChanged): Option[com.histmersion.web.Poll.Revision] =
     if !live then None
     else if changed then Some(FirstMs)
     else Some(previous.fold(FirstMs)(p => math.min(MaxMs, math.round(p * Factor).toInt)))

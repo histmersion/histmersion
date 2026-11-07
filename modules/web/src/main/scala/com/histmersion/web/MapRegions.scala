@@ -11,20 +11,16 @@ import com.histmersion.api.basemap.Basemap
   * asks for, and the dry run's sizes zoom by zoom.
   */
 object MapRegions:
+  type DryRun = DryRun.T
+  object DryRun extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type Name = Name.T
+  object Name extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type SizesText = SizesText.T
+  object SizesText extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type ZoomText = ZoomText.T
+  object ZoomText extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
   /** What a region's download holds. */
-  type RequestResultPart1 = RequestResultPart1.T
-  object RequestResultPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type RequestBox = RequestBox.T
-  object RequestBox extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type RequestNamed = RequestNamed.T
-  object RequestNamed extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type RequestMaxZoom = RequestMaxZoom.T
-  object RequestMaxZoom extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type RequestDryRun = RequestDryRun.T
-  object RequestDryRun extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type SizesAnswer = SizesAnswer.T
-  object SizesAnswer extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
   enum Content(val label: Content.Label):
     /** Every layer of the map for the box: it takes the place of the region downloaded now. */
@@ -34,13 +30,13 @@ object MapRegions:
     case Relief extends Content("the detailed relief, kept beside the map")
 
   object Content:
+    type Name = Name.T
+    object Name extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
     type Label = Label.T
     object Label extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
-    type ParseS = ParseS.T
-    object ParseS extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
-    def parse(s: com.histmersion.web.MapRegions.Content.ParseS): Content = values.find(_.toString == s).getOrElse(Map)
+    def parse(s: com.histmersion.web.MapRegions.Content.Name): Content = values.find(_.toString == s).getOrElse(Map)
 
   /** One entry of the region list: what it is called and its box (`None`: the box typed in). */
   final case class RegionChoice(id: RegionChoice.Id, label: RegionChoice.Label, bbox: Option[RegionChoice.Bbox])
@@ -69,12 +65,12 @@ object MapRegions:
     * configured one). A relief download is a focus region: the named one, or one named after its box.
     */
   def request(
-      box: com.histmersion.web.MapRegions.RequestBox,
+      box: com.histmersion.api.catalogue.MapArea.Bbox,
       content: Content,
-      named: Option[com.histmersion.web.MapRegions.RequestNamed],
-      maxZoom: com.histmersion.web.MapRegions.RequestMaxZoom,
-      dryRun: com.histmersion.web.MapRegions.RequestDryRun
-  ): Either[com.histmersion.web.MapRegions.RequestResultPart1, Basemap.FetchQuery] =
+      named: Option[com.histmersion.web.MapRegions.Name],
+      maxZoom: com.histmersion.web.MapRegions.ZoomText,
+      dryRun: com.histmersion.web.MapRegions.DryRun
+  ): Either[com.histmersion.web.MapRegions.Name, Basemap.FetchQuery] =
     for
       b <- Basemap.validBBox(box.trim)
       z <- maxZoom.trim match
@@ -107,7 +103,7 @@ object MapRegions:
   /** A fetch's answer, layer by layer (`; ` between them; a layer's sizes by zoom follow it as
     * `by zoom — zoom 0: … · zoom 1: …`).
     */
-  def sizes(answer: com.histmersion.web.MapRegions.SizesAnswer): List[LayerSizes] =
+  def sizes(answer: com.histmersion.web.MapRegions.SizesText): List[LayerSizes] =
     answer.split("; ").toList.map(_.trim).filter(_.nonEmpty).foldLeft(List.empty[LayerSizes]) { (acc, part) =>
       if part.startsWith("by zoom — ") && acc.nonEmpty then
         acc.init :+ acc.last.copy(zooms = part.stripPrefix("by zoom — ").split(" · ").toList.map(_.trim))

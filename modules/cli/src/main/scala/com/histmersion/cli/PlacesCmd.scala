@@ -28,40 +28,16 @@ object PlacesCmd:
   /** Config-driven defaults (no literals in code, plan §1.9); read on demand so `--help` never needs a config file to
     * exist.
     */
-  type SeedPassResultPart2Part2 = SeedPassResultPart2Part2.T
-  object SeedPassResultPart2Part2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type SeedPassFsPart2 = SeedPassFsPart2.T
-  object SeedPassFsPart2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type SeedPassLabel = SeedPassLabel.T
-  object SeedPassLabel extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
-  type DefaultBatchResult = DefaultBatchResult.T
-  object DefaultBatchResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type SeedDirResult = SeedDirResult.T
-  object SeedDirResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type ShowAsOf = ShowAsOf.T
-  object ShowAsOf extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type ImportFileKind = ImportFileKind.T
-  object ImportFileKind extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type ImportFileBatch = ImportFileBatch.T
-  object ImportFileBatch extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type SeedFilesResultPart2 = SeedFilesResultPart2.T
-  object SeedFilesResultPart2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type ResolveSeedDirDir = ResolveSeedDirDir.T
-  object ResolveSeedDirDir extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type StartedId = StartedId.T
-  object StartedId extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type StartedNoWait = StartedNoWait.T
-  object StartedNoWait extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
   private def cfg (using console: Console) = Settings.app.places
-  private def defaultBatch(using console: Console) : com.histmersion.cli.PlacesCmd.DefaultBatchResult = cfg.importBatch
-  private def seedDir(using console: Console) : com.histmersion.cli.PlacesCmd.SeedDirResult = cfg.seedDir
+  private def defaultBatch(using console: Console) : com.histmersion.api.Paging.Limit = cfg.importBatch
+  private def seedDir(using console: Console) : com.histmersion.web.PlaceHover.Places.SeedDir = cfg.seedDir
 
   private val asOfOpt =
     Opts.option[Long]("as-of", "Signed year the gazetteer is read at (BCE negative, e.g. -1400)").orNone
 
-  private def show(rows: List[com.histmersion.api.catalogue.Place.Hit], asOf: Option[com.histmersion.cli.PlacesCmd.ShowAsOf])(using console: Console) : Unit =
+  private def show(rows: List[com.histmersion.api.catalogue.Place.Hit], asOf: Option[com.histmersion.api.Api.AggregateQuery.AsOf])(using console: Console) : Unit =
     Cli.out.println(PlacesMarkdown.places(rows.toVector, asOf))
 
   private def search (using console: Console) = Opts.subcommand("search", "Find places by name; the `id` it prints is what `--place` wants") {
@@ -99,8 +75,8 @@ object PlacesCmd:
   private[cli] def importFile(using console: Console)(
       c: Client,
       file: Path,
-      kind: Option[com.histmersion.cli.PlacesCmd.ImportFileKind],
-      batch: com.histmersion.cli.PlacesCmd.ImportFileBatch,
+      kind: Option[com.histmersion.web.PlaceHover.Places.ImportKind],
+      batch: com.histmersion.api.Paging.Limit,
       dataset: Dataset = Dataset.Local
   ) : Either[Cli.Error, com.histmersion.api.catalogue.Place.ImportResult] =
     if !Files.isRegularFile(file) then Left(Cli.Error(s"no such file: $file", exitCode = ExitCode.Usage))
@@ -159,7 +135,7 @@ object PlacesCmd:
   }
 
   /** The seed set in import order — [[PlaceSeed.files]], shared with the server's first-run import. */
-  private[cli] def seedFiles(dir: Path): List[(Path, Option[com.histmersion.cli.PlacesCmd.SeedFilesResultPart2])] = PlaceSeed.files(entries(dir), entries)
+  private[cli] def seedFiles(dir: Path): List[(Path, Option[com.histmersion.web.PlaceHover.Places.SeedFile])] = PlaceSeed.files(entries(dir), entries)
 
   /** What a directory on the host holds, as [[PlaceSeed]] orders it. */
   private def entries(dir: Path): List[PlaceSeed.Entry[Path]] =
@@ -176,7 +152,7 @@ object PlacesCmd:
     * through the `~/bin` symlink), whose bundle ships `db/places`. Returns the directory picked and every candidate
     * tried, for the error message.
     */
-  def resolveSeedDir(dir: com.histmersion.cli.PlacesCmd.ResolveSeedDirDir, cwd: Path, exe: Option[Path]): (Path, List[Path]) =
+  def resolveSeedDir(dir: com.histmersion.web.PlaceHover.Places.SeedDir, cwd: Path, exe: Option[Path]): (Path, List[Path]) =
     val p = Path.of(dir)
     if p.isAbsolute then (p, List(p))
     else
@@ -222,9 +198,9 @@ object PlacesCmd:
               Left(Cli.Error(s"no JSON files under $d — run db/places/fetch.sh first", exitCode = ExitCode.Usage))
             else
               def pass(
-                  fs: List[(Path, Option[com.histmersion.cli.PlacesCmd.SeedPassFsPart2])],
-                  label: com.histmersion.cli.PlacesCmd.SeedPassLabel
-              )(using console: Console) : Either[Cli.Error, List[(Path, Option[com.histmersion.cli.PlacesCmd.SeedPassResultPart2Part2])]] =
+                  fs: List[(Path, Option[String])],
+                  label: String
+              )(using console: Console) : Either[Cli.Error, List[(Path, Option[String])]] =
                 fs.foldLeft[Either[Cli.Error, List[(Path, Option[String])]]](Right(Nil)) { case (acc, (f, kind)) =>
                   acc.flatMap { retry =>
                     importFile(c, f, kind, n, Dataset.Seed).map { r =>
@@ -252,7 +228,7 @@ object PlacesCmd:
   private val noWait = Opts.flag("no-wait", "Print the job id and return instead of following it").orFalse
 
   /** A places job started on the server (#1946): say so, and follow it unless `noWait`. */
-  private def started(c: Client, id: com.histmersion.cli.PlacesCmd.StartedId, noWait: com.histmersion.cli.PlacesCmd.StartedNoWait)(using console: Console) : Either[Cli.Error, Unit] =
+  private def started(c: Client, id: com.histmersion.api.SpatialHierarchyResult.Job.Id, noWait: com.histmersion.cli.Cli.NoWait)(using console: Console) : Either[Cli.Error, Unit] =
     Cli.out.println(s"job `$id` started (`histmersion jobs $id` follows it)")
     if noWait then Right(()) else IngestCmd.pollJob(c, com.histmersion.api.SpatialHierarchyResult.Job.Id(id), 0)
 

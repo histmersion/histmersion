@@ -11,29 +11,17 @@ import com.histmersion.api.media.{MediaGeoHit, MediaThumb}
 
 /** The pure half of the tiled layers: a tile feature as the app's own point records. */
 object TileDecode:
-  type StrResult = StrResult.T
-  object StrResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type StrK = StrK.T
-  object StrK extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type NumResult = NumResult.T
-  object NumResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type NumK = NumK.T
-  object NumK extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type LongResult = LongResult.T
-  object LongResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type LongK = _root_.com.histmersion.web.TileDecode.NumK
-  val LongK: _root_.com.histmersion.web.TileDecode.NumK.type = _root_.com.histmersion.web.TileDecode.NumK
-  type IsCellResult = IsCellResult.T
-  object IsCellResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type LongK = String
+  val LongK: String.type = String
 
-  private def str(p: js.Dictionary[js.Any], k: com.histmersion.web.TileDecode.StrK): Option[com.histmersion.web.TileDecode.StrResult] =
+  private def str(p: js.Dictionary[js.Any], k: String): Option[String] =
     p.get(k).filter(v => v != null && !js.isUndefined(v)).map(_.toString)
-  private def num(p: js.Dictionary[js.Any], k: com.histmersion.web.TileDecode.NumK): Option[com.histmersion.web.TileDecode.NumResult] =
+  private def num(p: js.Dictionary[js.Any], k: String): Option[Double] =
     p.get(k).filter(v => js.typeOf(v) == "number").map(_.asInstanceOf[Double])
-  private def long(p: js.Dictionary[js.Any], k: com.histmersion.web.TileDecode.LongK): Option[com.histmersion.web.TileDecode.LongResult] = num(p, k).map(_.toLong)
+  private def long(p: js.Dictionary[js.Any], k: com.histmersion.web.TileDecode.LongK): Option[Long] = num(p, k).map(_.toLong)
 
   /** Is it a cell of several items (it carries their count)? */
-  def isCell(f: TilePointFeature): com.histmersion.web.TileDecode.IsCellResult = num(f.props, P.Count).exists(_ > 1)
+  def isCell(f: TilePointFeature): Boolean = num(f.props, P.Count).exists(_ > 1)
 
   /** A cell of `kind`: its count, dates' range and box (none of them missing: its own point). */
   def cell(f: TilePointFeature, kind: DotKind): TileCellPoint =

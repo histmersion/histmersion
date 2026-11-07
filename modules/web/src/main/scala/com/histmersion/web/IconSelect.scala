@@ -13,39 +13,29 @@ import org.scalajs.dom
   * so the menu, the URL and the map cannot disagree.
   */
 object IconSelect:
+  type Disabled = Disabled.T
+  object Disabled extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type Field = Field.T
+  object Field extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type Index = Index.T
+  object Index extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type Key = Key.T
+  object Key extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type Name = Name.T
+  object Name extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type Prefix = Prefix.T
+  object Prefix extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type Reason = Reason.T
+  object Reason extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type Refocus = Refocus.T
+  object Refocus extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type Step = Step.T
+  object Step extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
   /** One option: its value ("" = no filter), its label, its icon's markup, the group it is listed under, and what it
     * means (its tooltip), when the label alone does not say.
     */
-  type ApplyChosenIndexResult = ApplyChosenIndexResult.T
-  object ApplyChosenIndexResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type ApplyCloseRefocus = ApplyCloseRefocus.T
-  object ApplyCloseRefocus extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type ApplyChooseI = ApplyChooseI.T
-  object ApplyChooseI extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
-  type TypeAheadResult = TypeAheadResult.T
-  object TypeAheadResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type TypeAheadFrom = TypeAheadFrom.T
-  object TypeAheadFrom extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type TypeAheadPrefix = TypeAheadPrefix.T
-  object TypeAheadPrefix extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type StepResult = StepResult.T
-  object StepResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type StepKey = StepKey.T
-  object StepKey extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type StepAt = StepAt.T
-  object StepAt extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type StepN = StepN.T
-  object StepN extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type ApplyName = ApplyName.T
-  object ApplyName extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type ApplyField = ApplyField.T
-  object ApplyField extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type ApplyDisabled = ApplyDisabled.T
-  object ApplyDisabled extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type ApplyWhy = ApplyWhy.T
-  object ApplyWhy extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
   final case class Opt(
       value: Opt.Value,
@@ -68,7 +58,7 @@ object IconSelect:
     object Hint extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
   /** Pure: the option a typed prefix names — the first after `from` (wrapping) whose label starts with it. */
-  def typeAhead(opts: List[Opt], from: com.histmersion.web.IconSelect.TypeAheadFrom, prefix: com.histmersion.web.IconSelect.TypeAheadPrefix): Option[com.histmersion.web.IconSelect.TypeAheadResult] =
+  def typeAhead(opts: List[Opt], from: com.histmersion.web.IconSelect.Index, prefix: com.histmersion.web.IconSelect.Prefix): Option[com.histmersion.web.IconSelect.Index] =
     val p = prefix.toLowerCase
     if p.isEmpty || opts.isEmpty then None
     else
@@ -80,7 +70,7 @@ object IconSelect:
 
   /** Pure: the active index after a key — ↑/↓ by one (clamped), Home/End to the ends; `None` for any other key.
     */
-  def step(key: com.histmersion.web.IconSelect.StepKey, at: com.histmersion.web.IconSelect.StepAt, n: com.histmersion.web.IconSelect.StepN): Option[com.histmersion.web.IconSelect.StepResult] =
+  def step(key: com.histmersion.web.IconSelect.Key, at: com.histmersion.web.IconSelect.Index, n: com.histmersion.web.IconSelect.Step): Option[com.histmersion.web.IconSelect.Index] =
     if n == 0 then None
     else
       key match
@@ -97,11 +87,11 @@ object IconSelect:
     * control that comes and goes moves everything after it.
     */
   def apply(
-      name: com.histmersion.web.IconSelect.ApplyName,
-      field: Field[Option[com.histmersion.web.IconSelect.ApplyField]],
+      name: com.histmersion.web.IconSelect.Name,
+      field: Field[Option[com.histmersion.web.IconSelect.Field]],
       options: Signal[List[Opt]],
-      disabled: Signal[com.histmersion.web.IconSelect.ApplyDisabled] = Val(false),
-      why: com.histmersion.web.IconSelect.ApplyWhy = ""
+      disabled: Signal[com.histmersion.web.IconSelect.Disabled] = Val(false),
+      why: com.histmersion.web.IconSelect.Reason = ""
   ): HtmlElement =
     seq += 1
     val id = s"isel-$seq"
@@ -116,7 +106,7 @@ object IconSelect:
     var listEl: dom.html.Element = null
     var outside: Option[scala.scalajs.js.Function1[dom.Event, Unit]] = None
 
-    def chosenIndex(): com.histmersion.web.IconSelect.ApplyChosenIndexResult = opts.now().indexWhere(_.value == field.now().getOrElse("")).max(0)
+    def chosenIndex(): com.histmersion.web.IconSelect.Index = opts.now().indexWhere(_.value == field.now().getOrElse("")).max(0)
 
     def place(): Unit =
       if buttonEl != null && listEl != null then
@@ -150,14 +140,14 @@ object IconSelect:
       outside = Some(f)
       dom.document.addEventListener("pointerdown", f, useCapture = true)
 
-    def close(refocus: com.histmersion.web.IconSelect.ApplyCloseRefocus): Unit =
+    def close(refocus: com.histmersion.web.IconSelect.Refocus): Unit =
       if isOpen.now() then
         isOpen.set(false)
         outside.foreach(f => dom.document.removeEventListener("pointerdown", f, useCapture = true))
         outside = None
         if refocus && buttonEl != null then buttonEl.focus()
 
-    def choose(i: com.histmersion.web.IconSelect.ApplyChooseI): Unit =
+    def choose(i: com.histmersion.web.IconSelect.Index): Unit =
       opts.now().lift(i).foreach(o => UiState.set(field := Option(o.value).filter(_.nonEmpty))())
       close(refocus = true)
 

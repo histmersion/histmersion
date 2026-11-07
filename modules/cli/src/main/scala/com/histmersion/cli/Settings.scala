@@ -9,10 +9,22 @@ import com.histmersion.config.*
   * `histmersion config path` must still run to show what is wrong.
   */
 object Settings:
-  type LoadedPart1 = LoadedPart1.T
-  object LoadedPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type Consent = Consent.T
+  object Consent extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type Key = Key.T
+  object Key extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type OnlyLocal = OnlyLocal.T
+  object OnlyLocal extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type Prefix = Prefix.T
+  object Prefix extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type Problem = Problem.T
+  object Problem extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type Reload = Reload.T
+  object Reload extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type Setting = Setting.T
+  object Setting extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
-  lazy val loaded: Either[com.histmersion.cli.Settings.LoadedPart1, LoadedConfig] = AppConfig.loadWithUserFile()
+  lazy val loaded: Either[com.histmersion.cli.Settings.Problem, LoadedConfig] = AppConfig.loadWithUserFile()
 
    lazy val app: AppConfig = loaded match
     case Right(l)  => l.config

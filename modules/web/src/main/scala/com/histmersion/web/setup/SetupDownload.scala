@@ -10,8 +10,8 @@ enum SetupDownload(val label: SetupDownload.Label):
 
 object SetupDownload:
   object Map:
-    type Area = Area.T
-    object Area extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Area = com.histmersion.web.setup.SetupChoices.Area
+    val Area: _root_.com.histmersion.web.setup.SetupChoices.Area.type = _root_.com.histmersion.web.setup.SetupChoices.Area
 
   type Label = Label.T
   object Label extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]

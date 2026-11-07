@@ -16,8 +16,6 @@ object DownloadJobs:
   /** The job kinds Data and downloads follows. */
   type ConfigureMs = ConfigureMs.T
   object ConfigureMs extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type BusyResult = BusyResult.T
-  object BusyResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
   val Kinds: List[JobInfo.Kind] =
     List(
@@ -45,7 +43,7 @@ object DownloadJobs:
       }
 
   /** Is a job of `kind` going now? */
-  def busy(kind: JobInfo.Kind): Signal[com.histmersion.web.settings.DownloadJobs.BusyResult] = jobs.signal.map(_.exists(_.kind == kind))
+  def busy(kind: JobInfo.Kind): Signal[Boolean] = jobs.signal.map(_.exists(_.kind == kind))
 
   def panel: HtmlElement =
     div(

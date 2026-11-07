@@ -29,32 +29,24 @@ import com.histmersion.util.console.Console
   * endpoint and prints the shared Markdown rendering, so CLI and MCP output agree.
   */
 object Cli:
+  type DryRun = DryRun.T
+  object DryRun extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type JsonOutput = JsonOutput.T
+  object JsonOutput extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type Message = Message.T
+  object Message extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type NoWait = NoWait.T
+  object NoWait extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type Problem = Problem.T
+  object Problem extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type Question = Question.T
+  object Question extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type QuietOutput = QuietOutput.T
+  object QuietOutput extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type Strict = Strict.T
+  object Strict extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
-  type HostSeedLoopNumber = HostSeedLoopNumber.T
-  object HostSeedLoopNumber extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type HostSeedLoopImported = HostSeedLoopImported.T
-  object HostSeedLoopImported extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type HostSeedLoopFailed = HostSeedLoopFailed.T
-  object HostSeedLoopFailed extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type HostSeedLoopSkipped = HostSeedLoopSkipped.T
-  object HostSeedLoopSkipped extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
-  type HostSeedForce = HostSeedForce.T
-  object HostSeedForce extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type ReindexLoopAfter = ReindexLoopAfter.T
-  object ReindexLoopAfter extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type ReindexLoopSources = ReindexLoopSources.T
-  object ReindexLoopSources extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type ReindexLoopChunks = ReindexLoopChunks.T
-  object ReindexLoopChunks extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type ConfirmResult = ConfirmResult.T
-  object ConfirmResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type ConfirmQuestion = ConfirmQuestion.T
-  object ConfirmQuestion extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type CommandResultPart1 = CommandResultPart1.T
-  object CommandResultPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type CommandResultPart2 = CommandResultPart2.T
-  object CommandResultPart2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
   def out(using console: Console): Console.Output = console.out
   def err(using console: Console): Console.Output = console.err
@@ -139,7 +131,7 @@ object Cli:
     * article directories) — see [[ArticleCli.WikiLayout]]. Whenever the layout has a root, the compiled articles beside
     * `sources/` are imported too (plan §5.2 stream 2.7).
     */
-  private def hostSeed(c: Client, dir: Path, force: com.histmersion.cli.Cli.HostSeedForce)(using
+  private def hostSeed(c: Client, dir: Path, force: com.histmersion.api.Api.Overwrite)(using
       console: Console
   ): Either[com.histmersion.cli.Cli.Error, Unit] =
     val layout = ArticleCli.WikiLayout.of(dir)
@@ -148,10 +140,10 @@ object Cli:
     Cli.out.println(s"seeding $total note(s) from ${layout.sources}")
     @tailrec def loop(
         rest: List[Path],
-        number: com.histmersion.cli.Cli.HostSeedLoopNumber,
-        imported: com.histmersion.cli.Cli.HostSeedLoopImported,
-        failed: List[com.histmersion.cli.Cli.HostSeedLoopFailed],
-        skipped: List[com.histmersion.cli.Cli.HostSeedLoopSkipped]
+        number: Int,
+        imported: Int,
+        failed: List[String],
+        skipped: List[String]
     )(using console: Console): SeedResult =
       rest match
         case Nil       => SeedResult(imported, failed, 0, skipped)
@@ -421,9 +413,9 @@ object Cli:
   @annotation.tailrec
   private def reindexLoop(
       c: Client,
-      after: Option[com.histmersion.cli.Cli.ReindexLoopAfter],
-      sources: com.histmersion.cli.Cli.ReindexLoopSources,
-      chunks: com.histmersion.cli.Cli.ReindexLoopChunks
+      after: Option[String],
+      sources: Int,
+      chunks: Int
   )(using console: Console): Either[com.histmersion.cli.Cli.Error, Unit] =
     c.reindex(after, None) match
       case Left(e)  => Left(e)
@@ -589,7 +581,7 @@ object Cli:
   /** Ask on the terminal. A closed/piped stdin reads as null → treated as "no", so a scripted `histmersion restore` can
     * never destroy a database by accident; use `--yes` for that.
     */
-  private[cli] def confirm(question: com.histmersion.cli.Cli.ConfirmQuestion)(using console: Console): com.histmersion.cli.Cli.ConfirmResult =
+  private[cli] def confirm(question: com.histmersion.cli.Cli.Question)(using console: Console): Boolean =
     Cli.err.print(s"$question [y/N] ")
     Cli.err.flush()
     Option(console.readLine()).map(_.trim.toLowerCase).exists(a => a == "y" || a == "yes")
@@ -659,7 +651,7 @@ object Cli:
 
   private[cli] def command(using
       console: Console
-  ): Command[(Option[com.histmersion.cli.Cli.CommandResultPart1], Option[com.histmersion.cli.Cli.CommandResultPart2], Client => Either[com.histmersion.cli.Cli.Error, Unit])] =
+  ): Command[(Option[com.histmersion.cli.Cli.Problem], Option[com.histmersion.cli.Cli.Message], Client => Either[com.histmersion.cli.Cli.Error, Unit])] =
     Command(name = "histmersion", header = "Histmersion — CLI over the Histmersion server (MCP twin)") {
       (
         serverOpt,

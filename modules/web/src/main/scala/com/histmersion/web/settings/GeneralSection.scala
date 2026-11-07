@@ -12,24 +12,18 @@ import scala.scalajs.concurrent.JSExecutionContext.Implicits.queue
   * file's `ui.map-start`, for every browser).
   */
 object GeneralSection:
+  type ChoiceKey = ChoiceKey.T
+  object ChoiceKey extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type ChoiceLabel = ChoiceLabel.T
+  object ChoiceLabel extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type ThemeName = ThemeName.T
+  object ThemeName extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
   type StartCardFromPageTextK = StartCardFromPageTextK.T
   object StartCardFromPageTextK extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
-  type ThemeNameResult = ThemeNameResult.T
-  object ThemeNameResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type ChoiceRowTitle = ChoiceRowTitle.T
   object ChoiceRowTitle extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type ChoiceRowName = ChoiceRowName.T
-  object ChoiceRowName extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type ChoiceRowOptionsPart1 = ChoiceRowOptionsPart1.T
-  object ChoiceRowOptionsPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type ChoiceRowOptionsPart2 = ChoiceRowOptionsPart2.T
-  object ChoiceRowOptionsPart2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type ChoiceRowCurrent = ChoiceRowCurrent.T
-  object ChoiceRowCurrent extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type ChoiceRowChooseArg1 = ChoiceRowChooseArg1.T
-  object ChoiceRowChooseArg1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
   def pane(ui: UiConfig): HtmlElement =
     div(
@@ -62,17 +56,17 @@ object GeneralSection:
       startCard(ui)
     )
 
-  private def themeName(c: ThemeChoice): com.histmersion.web.settings.GeneralSection.ThemeNameResult = c match
+  private def themeName(c: ThemeChoice): com.histmersion.web.settings.GeneralSection.ThemeName = c match
     case ThemeChoice.System => "Follow the system"
     case ThemeChoice.Light  => "Light"
     case ThemeChoice.Dark   => "Dark"
 
   private def choiceRow(
       title: com.histmersion.web.settings.GeneralSection.ChoiceRowTitle,
-      name: com.histmersion.web.settings.GeneralSection.ChoiceRowName,
-      options: List[(com.histmersion.web.settings.GeneralSection.ChoiceRowOptionsPart1, com.histmersion.web.settings.GeneralSection.ChoiceRowOptionsPart2)],
-      current: Signal[com.histmersion.web.settings.GeneralSection.ChoiceRowCurrent],
-      choose: com.histmersion.web.settings.GeneralSection.ChoiceRowChooseArg1 => Unit
+      name: com.histmersion.web.settings.SettingsForm.Item.Name,
+      options: List[(com.histmersion.web.settings.GeneralSection.ChoiceKey, com.histmersion.web.settings.GeneralSection.ChoiceLabel)],
+      current: Signal[com.histmersion.web.settings.GeneralSection.ChoiceKey],
+      choose: com.histmersion.web.settings.GeneralSection.ChoiceKey => Unit
   ): HtmlElement =
     fieldSet(
       cls := "setting-row setting-choice",

@@ -12,7 +12,7 @@ import java.nio.file.{AtomicMoveNotSupportedException, Files, LinkOption, Path, 
 /** The settings file at `path` on this machine's disk, as `histmersion config` changes it without a server. */
 final class LocalSettingsFile(val path: Path) extends SettingsFile:
 
-  def shown: com.histmersion.cli.LocalSettingsFile.ShownResult = path.toString
+  def shown: com.histmersion.cli.LocalSettingsFile.Path = path.toString
 
   /** The file a symbolic link at `path` points to (the new text is written beside it), else `path`. */
   private def target: Path = if Files.isSymbolicLink(path) then path.toRealPath() else path
@@ -27,9 +27,9 @@ final class LocalSettingsFile(val path: Path) extends SettingsFile:
         parse(path).map(c => ConfigFileState(Some(text), FileVersion.of(Some(text)), c, AppConfig.writtenIn(path)))
     catch case e: IOException => Left(SettingError.Io(e.getMessage))
 
-  def replace(text: com.histmersion.cli.LocalSettingsFile.ReplaceText, existed: com.histmersion.cli.LocalSettingsFile.ReplaceExisted)(
+  def replace(text: com.histmersion.cli.LocalSettingsFile.Text, existed: Boolean)(
       check: SettingsFile.Staged => Either[SettingError, Unit]
-  ): Either[SettingError, Option[com.histmersion.cli.LocalSettingsFile.ReplaceResultPart2]] =
+  ): Either[SettingError, Option[String]] =
     val dir = target.toAbsolutePath.getParent
     try
       Files.createDirectories(dir)
@@ -50,7 +50,7 @@ final class LocalSettingsFile(val path: Path) extends SettingsFile:
         val _ = Files.deleteIfExists(temp)
     catch case e: IOException => Left(SettingError.Io(e.getMessage))
 
-  private def backup(existed: com.histmersion.cli.LocalSettingsFile.BackupExisted): Either[SettingError, Option[com.histmersion.cli.LocalSettingsFile.BackupResultPart2]] =
+  private def backup(existed: Boolean): Either[SettingError, Option[com.histmersion.cli.LocalSettingsFile.Path]] =
     if !existed then Right(None)
     else
       val bak = path.resolveSibling(s"${path.getFileName}.bak")
@@ -60,7 +60,7 @@ final class LocalSettingsFile(val path: Path) extends SettingsFile:
   /** The new file in place in one step, with the old one's permissions (a file holding a reference to a password may be
     * readable by its owner alone).
     */
-  private def move(temp: Path, existed: com.histmersion.cli.LocalSettingsFile.MoveExisted): Either[SettingError, Unit] =
+  private def move(temp: Path, existed: Boolean): Either[SettingError, Unit] =
     if existed then
       Option(Files.getFileAttributeView(path, classOf[PosixFileAttributeView], LinkOption.NOFOLLOW_LINKS)).foreach { v =>
         Files.setPosixFilePermissions(temp, v.readAttributes.permissions)
@@ -77,17 +77,7 @@ final class LocalSettingsFile(val path: Path) extends SettingsFile:
       .flatMap(_.toRight(SettingError.Unreadable(s"$path: no such file")))
 
 object LocalSettingsFile:
-  type ShownResult = ShownResult.T
-  object ShownResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type ReplaceResultPart2 = ReplaceResultPart2.T
-  object ReplaceResultPart2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type ReplaceText = ReplaceText.T
-  object ReplaceText extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type ReplaceExisted = ReplaceExisted.T
-  object ReplaceExisted extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type BackupResultPart2 = BackupResultPart2.T
-  object BackupResultPart2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type BackupExisted = BackupExisted.T
-  object BackupExisted extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type MoveExisted = MoveExisted.T
-  object MoveExisted extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type Path = Path.T
+  object Path extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type Text = Text.T
+  object Text extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]

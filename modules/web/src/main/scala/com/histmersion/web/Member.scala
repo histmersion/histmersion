@@ -22,11 +22,9 @@ final case class Member(
   /** A CELL of a server tile ([[TileCellPoint]]): `n` items counted there, none of them to list — their box (`cell`) is
     * where a click zooms.
     */
-  def aggregate: com.histmersion.web.Member.AggregateResult = cell.isDefined
+  def aggregate: Boolean = cell.isDefined
 
 object Member:
-  type AggregateResult = AggregateResult.T
-  object AggregateResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
   type N = N.T
   object N extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]

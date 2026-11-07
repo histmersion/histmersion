@@ -19,63 +19,37 @@ import com.histmersion.api.library.Label
   * map. On a phone it is the filters drawer.
   */
 object FilterBar:
+  type DragTarget = DragTarget.T
+  object DragTarget extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type FieldName = FieldName.T
+  object FieldName extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type HandleAtStart = HandleAtStart.T
+  object HandleAtStart extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type MoreFiltersSet = MoreFiltersSet.T
+  object MoreFiltersSet extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type NarrowScreen = NarrowScreen.T
+  object NarrowScreen extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type PointerX = PointerX.T
+  object PointerX extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type SliderPercent = SliderPercent.T
+  object SliderPercent extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type SliderWidth = SliderWidth.T
+  object SliderWidth extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type StorageKey = StorageKey.T
+  object StorageKey extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type StoredOn = StoredOn.T
+  object StoredOn extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type StoredText = StoredText.T
+  object StoredText extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
   /** One chip filter: the UiState field it edits (no fallback — an unknown key is not a field) and the facet dimension
     * its suggestions come from.
     */
-  type PeriodFieldEndName = PeriodFieldEndName.T
-  object PeriodFieldEndName extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type PeriodFieldEndField = PeriodFieldEndField.T
-  object PeriodFieldEndField extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type PeriodFieldEndDflt = PeriodFieldEndDflt.T
-  object PeriodFieldEndDflt extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type PeriodFieldEndOtherResult = PeriodFieldEndOtherResult.T
-  object PeriodFieldEndOtherResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type PeriodFieldEndValidArg1 = PeriodFieldEndValidArg1.T
-  object PeriodFieldEndValidArg1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type PeriodFieldEndValidArg2 = PeriodFieldEndValidArg2.T
-  object PeriodFieldEndValidArg2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type PeriodFieldEndValidResult = PeriodFieldEndValidResult.T
-  object PeriodFieldEndValidResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type YearRangeSliderDragTarget = YearRangeSliderDragTarget.T
-  object YearRangeSliderDragTarget extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type YearRangeSliderPxToYearResult = YearRangeSliderPxToYearResult.T
-  object YearRangeSliderPxToYearResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type YearRangeSliderPxToYearX = YearRangeSliderPxToYearX.T
-  object YearRangeSliderPxToYearX extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type YearRangeSliderPxToYearW = YearRangeSliderPxToYearW.T
-  object YearRangeSliderPxToYearW extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type YearRangeSliderYearToPctResult = YearRangeSliderYearToPctResult.T
-  object YearRangeSliderYearToPctResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type YearRangeSliderYearToPctY = YearRangeSliderYearToPctY.T
-  object YearRangeSliderYearToPctY extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type YearRangeSliderHandlePointerStart = YearRangeSliderHandlePointerStart.T
-  object YearRangeSliderHandlePointerStart extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
   type Folded = Folded.T
   object Folded extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type MoreOpenInitiallyResult = MoreOpenInitiallyResult.T
-  object MoreOpenInitiallyResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type MoreOpenInitiallyStored = MoreOpenInitiallyStored.T
-  object MoreOpenInitiallyStored extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type MoreOpenInitiallySomeMoreSet = MoreOpenInitiallySomeMoreSet.T
-  object MoreOpenInitiallySomeMoreSet extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type MoreOpenInitiallyNarrow = MoreOpenInitiallyNarrow.T
-  object MoreOpenInitiallyNarrow extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type FoldedInitiallyResult = FoldedInitiallyResult.T
-  object FoldedInitiallyResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type FoldedInitiallyStored = FoldedInitiallyStored.T
-  object FoldedInitiallyStored extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type StoredResult = StoredResult.T
-  object StoredResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type StoredKey = StoredKey.T
-  object StoredKey extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type KeepKey = KeepKey.T
-  object KeepKey extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type KeepOn = KeepOn.T
-  object KeepOn extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type SetFoldedOn = _root_.com.histmersion.web.FilterBar.KeepOn
-  val SetFoldedOn: _root_.com.histmersion.web.FilterBar.KeepOn.type = _root_.com.histmersion.web.FilterBar.KeepOn
+  type SetFoldedOn = _root_.com.histmersion.web.FilterBar.StoredOn
+  val SetFoldedOn: _root_.com.histmersion.web.FilterBar.StoredOn.type = _root_.com.histmersion.web.FilterBar.StoredOn
 
   final private case class ChipField(state: Field[List[ChipField.State]], facet: ChipField.Facet, label: ChipField.Label, placeholder: ChipField.Placeholder)
 
@@ -111,17 +85,17 @@ object FilterBar:
   /** Pure: is "More filters" open at start-up? Closed unless it was left open — or a filter in it is set (from a shared
     * link, say), so nothing that filters is hidden.
     */
-  def moreOpenInitially(stored: Option[com.histmersion.web.FilterBar.MoreOpenInitiallyStored], someMoreSet: com.histmersion.web.FilterBar.MoreOpenInitiallySomeMoreSet, narrow: com.histmersion.web.FilterBar.MoreOpenInitiallyNarrow = false): com.histmersion.web.FilterBar.MoreOpenInitiallyResult =
+  def moreOpenInitially(stored: Option[com.histmersion.web.FilterBar.StoredText], someMoreSet: com.histmersion.web.FilterBar.MoreFiltersSet, narrow: com.histmersion.web.FilterBar.NarrowScreen = false): Boolean =
     stored.contains("1") || someMoreSet
 
   /** Pure: is the panel folded at start-up? Only when this browser left it folded. */
-  def foldedInitially(stored: Option[com.histmersion.web.FilterBar.FoldedInitiallyStored]): com.histmersion.web.FilterBar.FoldedInitiallyResult = stored.contains("1")
+  def foldedInitially(stored: Option[com.histmersion.web.FilterBar.StoredText]): Boolean = stored.contains("1")
 
-  private def stored(key: com.histmersion.web.FilterBar.StoredKey): Option[com.histmersion.web.FilterBar.StoredResult] =
+  private def stored(key: com.histmersion.web.FilterBar.StorageKey): Option[com.histmersion.web.FilterBar.StoredText] =
     try Option(dom.window.localStorage.getItem(key))
     catch case _: Exception => None
 
-  private def keep(key: com.histmersion.web.FilterBar.KeepKey, on: com.histmersion.web.FilterBar.KeepOn): Unit =
+  private def keep(key: com.histmersion.web.FilterBar.StorageKey, on: com.histmersion.web.FilterBar.StoredOn): Unit =
     try dom.window.localStorage.setItem(key, if on then "1" else "0")
     catch case _: Exception => ()
 
@@ -149,7 +123,7 @@ object FilterBar:
 
   /** The period's two ends: the timeline's span, written as years (`500 BCE`, `-500`, `1200`). */
   private def periodField(config: UiConfig): HtmlElement =
-    def end(name: com.histmersion.web.FilterBar.PeriodFieldEndName, field: Field[Option[com.histmersion.web.FilterBar.PeriodFieldEndField]], dflt: com.histmersion.web.FilterBar.PeriodFieldEndDflt, other: () => com.histmersion.web.FilterBar.PeriodFieldEndOtherResult, valid: (com.histmersion.web.FilterBar.PeriodFieldEndValidArg1, com.histmersion.web.FilterBar.PeriodFieldEndValidArg2) => com.histmersion.web.FilterBar.PeriodFieldEndValidResult) =
+    def end(name: com.histmersion.web.FilterBar.FieldName, field: Field[Option[com.histmersion.api.Years.Astronomical]], dflt: com.histmersion.api.Years.Astronomical, other: () => com.histmersion.api.Years.Astronomical, valid: (com.histmersion.api.Years.Astronomical, com.histmersion.api.Years.Astronomical) => Boolean) =
       val bad = Var(false)
       input(
         typ := "text",
@@ -312,17 +286,17 @@ object FilterBar:
     // the handles show UiState.yearFrom/yearTo directly; a drag commits every step
     val sliderFrom = UiState.yearFrom.signal
     val sliderTo = UiState.yearTo.signal
-    var dragTarget: com.histmersion.web.FilterBar.YearRangeSliderDragTarget = ""
+    var dragTarget: com.histmersion.web.FilterBar.DragTarget = ""
     var trackEl: dom.Element = null
 
-    def pxToYear(x: com.histmersion.web.FilterBar.YearRangeSliderPxToYearX, w: com.histmersion.web.FilterBar.YearRangeSliderPxToYearW): com.histmersion.web.FilterBar.YearRangeSliderPxToYearResult =
+    def pxToYear(x: com.histmersion.web.FilterBar.PointerX, w: com.histmersion.web.FilterBar.SliderWidth): com.histmersion.api.Years.Astronomical =
       val t = (x / w).max(0).min(1)
       Math.round(YEAR_MIN + t * (YEAR_MAX - YEAR_MIN))
 
-    def yearToPct(y: com.histmersion.web.FilterBar.YearRangeSliderYearToPctY): com.histmersion.web.FilterBar.YearRangeSliderYearToPctResult =
+    def yearToPct(y: com.histmersion.api.Years.Astronomical): com.histmersion.web.FilterBar.SliderPercent =
       ((y - YEAR_MIN).toDouble / (YEAR_MAX - YEAR_MIN).toDouble * 100).max(0).min(100)
 
-    def handlePointer(ev: dom.PointerEvent, start: com.histmersion.web.FilterBar.YearRangeSliderHandlePointerStart): Unit =
+    def handlePointer(ev: dom.PointerEvent, start: com.histmersion.web.FilterBar.HandleAtStart): Unit =
       if trackEl == null then ()
       else
         val rect = trackEl.getBoundingClientRect()

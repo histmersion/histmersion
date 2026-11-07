@@ -16,97 +16,89 @@ import com.histmersion.api.automation.{Agents, AgentsMarkdown, PlanQuota}
   * (nothing is spent).
   */
 object ModelsView:
+  type AgeText = AgeText.T
+  object AgeText extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type Amount = Amount.T
+  object Amount extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type AmountText = AmountText.T
+  object AmountText extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type BarLeft = BarLeft.T
+  object BarLeft extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type BarWidth = BarWidth.T
+  object BarWidth extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type Busy = Busy.T
+  object Busy extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type ChainEntry = ChainEntry.T
+  object ChainEntry extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type ChainText = ChainText.T
+  object ChainText extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type EntryState = EntryState.T
+  object EntryState extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type FloorsText = FloorsText.T
+  object FloorsText extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type LimitsText = LimitsText.T
+  object LimitsText extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type Offline = Offline.T
+  object Offline extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type Problem = Problem.T
+  object Problem extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type ReserveText = ReserveText.T
+  object ReserveText extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type ReservedCount = ReservedCount.T
+  object ReservedCount extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type Seconds = Seconds.T
+  object Seconds extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type UsedPercent = UsedPercent.T
+  object UsedPercent extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
   // ── pure parts ──────────────────────────────────────────────────────────────────────────────────
 
   /** A chain as typed: `a > b > c` (commas also separate). */
-  type PaneCheckOffline = PaneCheckOffline.T
-  object PaneCheckOffline extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
-  type ChainInputResult = ChainInputResult.T
-  object ChainInputResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type ChainInputS = ChainInputS.T
-  object ChainInputS extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type LimitsInputResultPart1 = LimitsInputResultPart1.T
-  object LimitsInputResultPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type LimitsInputS = LimitsInputS.T
-  object LimitsInputS extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type ReserveInputResultPart1 = ReserveInputResultPart1.T
-  object ReserveInputResultPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type ReserveInputResultPart2 = ReserveInputResultPart2.T
-  object ReserveInputResultPart2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type ReserveInputS = ReserveInputS.T
-  object ReserveInputS extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type UsedPctResult = UsedPctResult.T
-  object UsedPctResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type EntryStateResult = EntryStateResult.T
-  object EntryStateResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type WindowBarResultPart1 = WindowBarResultPart1.T
-  object WindowBarResultPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type WindowBarResultPart2 = WindowBarResultPart2.T
-  object WindowBarResultPart2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type AgeTextResult = AgeTextResult.T
-  object AgeTextResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type AgeTextSeconds = AgeTextSeconds.T
-  object AgeTextSeconds extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type LimitsTextResult = LimitsTextResult.T
-  object LimitsTextResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type BodyBusy = _root_.com.histmersion.web.ModelsView.AllowanceFormBusy
-  val BodyBusy: _root_.com.histmersion.web.ModelsView.AllowanceFormBusy.type = _root_.com.histmersion.web.ModelsView.AllowanceFormBusy
-  type FloorsTextResult = FloorsTextResult.T
-  object FloorsTextResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type FloorsTextFloors = FloorsTextFloors.T
-  object FloorsTextFloors extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type PlansBlockBusy = PlansBlockBusy.T
-  object PlansBlockBusy extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type ChainRowBusy = _root_.com.histmersion.web.ModelsView.AllowanceFormBusy
-  val ChainRowBusy: _root_.com.histmersion.web.ModelsView.AllowanceFormBusy.type = _root_.com.histmersion.web.ModelsView.AllowanceFormBusy
-  type AmountResult = AmountResult.T
-  object AmountResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type AmountV = AmountV.T
-  object AmountV extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type AllowanceRowBusy = _root_.com.histmersion.web.ModelsView.AllowanceFormBusy
-  val AllowanceRowBusy: _root_.com.histmersion.web.ModelsView.AllowanceFormBusy.type = _root_.com.histmersion.web.ModelsView.AllowanceFormBusy
-  type AllowanceFormBusy = AllowanceFormBusy.T
-  object AllowanceFormBusy extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type BodyBusy = _root_.com.histmersion.web.ModelsView.Busy
+  val BodyBusy: _root_.com.histmersion.web.ModelsView.Busy.type = _root_.com.histmersion.web.ModelsView.Busy
+  type ChainRowBusy = _root_.com.histmersion.web.ModelsView.Busy
+  val ChainRowBusy: _root_.com.histmersion.web.ModelsView.Busy.type = _root_.com.histmersion.web.ModelsView.Busy
+  type AllowanceRowBusy = _root_.com.histmersion.web.ModelsView.Busy
+  val AllowanceRowBusy: _root_.com.histmersion.web.ModelsView.Busy.type = _root_.com.histmersion.web.ModelsView.Busy
 
-  def chainInput(s: com.histmersion.web.ModelsView.ChainInputS): List[com.histmersion.web.ModelsView.ChainInputResult] = s.split("[>,]").toList.map(_.trim).filter(_.nonEmpty)
+  def chainInput(s: com.histmersion.web.ModelsView.ChainText): List[com.histmersion.web.ModelsView.ChainEntry] = s.split("[>,]").toList.map(_.trim).filter(_.nonEmpty)
 
   /** Limits as typed: `2M tokens/5h, 5 usd/day` → their wire form, or the first problem. */
-  def limitsInput(s: com.histmersion.web.ModelsView.LimitsInputS): Either[com.histmersion.web.ModelsView.LimitsInputResultPart1, List[LimitSpec]] =
+  def limitsInput(s: com.histmersion.web.ModelsView.LimitsText): Either[com.histmersion.web.ModelsView.Problem, List[LimitSpec]] =
     s.split(',').toList.map(_.trim).filter(_.nonEmpty).map(Limit.parse).partitionMap(identity) match
       case (Nil, ls) => Right(ls.map(_.spec))
       case (errs, _) => Left(errs.mkString("; "))
 
   /** A reserve as typed: 0..99, blank = 0. */
-  def reserveInput(s: com.histmersion.web.ModelsView.ReserveInputS): Either[com.histmersion.web.ModelsView.ReserveInputResultPart1, com.histmersion.web.ModelsView.ReserveInputResultPart2] =
+  def reserveInput(s: com.histmersion.web.ModelsView.ReserveText): Either[com.histmersion.web.ModelsView.Problem, com.histmersion.web.ModelsView.ReservedCount] =
     val t = s.trim.stripSuffix("%").trim
     if t.isEmpty then Right(0)
     else t.toIntOption.filter(r => r >= 0 && r <= 99).toRight(s"'$s' is not a reserve of 0 to 99 %")
 
   /** How much of a limit is used, 0..100 (a bar's width). */
-  def usedPct(l: LimitStatus): com.histmersion.web.ModelsView.UsedPctResult =
+  def usedPct(l: LimitStatus): com.histmersion.web.ModelsView.UsedPercent =
     if l.amount <= 0 then 100 else math.max(0, math.min(100, math.round(l.used / l.amount * 100).toInt))
 
   /** The state class of one chained model. */
-  def entryState(e: ChainEntry): com.histmersion.web.ModelsView.EntryStateResult =
+  def entryState(e: ChainEntry): com.histmersion.web.ModelsView.EntryState =
     if e.usable then "is-usable" else if !e.ready then "is-unready" else "is-paused"
 
   /** A plan window's bar: how much is used (0..100) and where its floor sits, as the share USED at which the floor is
     * reached (a floor of 25 % left sits at 75 %).
     */
-  def windowBar(w: PlanQuota.WindowStatus): (com.histmersion.web.ModelsView.WindowBarResultPart1, com.histmersion.web.ModelsView.WindowBarResultPart2) =
+  def windowBar(w: PlanQuota.WindowStatus): (com.histmersion.web.ModelsView.BarLeft, com.histmersion.web.ModelsView.BarWidth) =
     (math.max(0, math.min(100, math.round(w.usedPct).toInt)), math.max(0, math.min(100, 100 - w.floor)))
 
   /** How old a reading is, in words. */
-  def ageText(seconds: com.histmersion.web.ModelsView.AgeTextSeconds): com.histmersion.web.ModelsView.AgeTextResult =
+  def ageText(seconds: com.histmersion.web.ModelsView.Seconds): com.histmersion.web.ModelsView.AgeText =
     if seconds < 120 then s"$seconds s ago"
     else if seconds < 7200 then s"${seconds / 60} min ago"
     else if seconds < 172800 then s"${seconds / 3600} h ago"
     else s"${seconds / 86400} d ago"
 
   /** The allowance's limits as one editable line (what [[limitsInput]] reads back). */
-  def limitsText(a: AllowanceStatus): com.histmersion.web.ModelsView.LimitsTextResult = a.limits.map(_.limit).mkString(", ")
+  def limitsText(a: AllowanceStatus): com.histmersion.web.ModelsView.LimitsText = a.limits.map(_.limit).mkString(", ")
 
   // ── the window ──────────────────────────────────────────────────────────────────────────────────
 
@@ -132,7 +124,7 @@ object ModelsView:
         load()
       }
 
-    def check(offline: com.histmersion.web.ModelsView.PaneCheckOffline): Unit =
+    def check(offline: com.histmersion.web.ModelsView.Offline): Unit =
       busy.set(true)
       ApiClient.agentDoctor(offline).onComplete { r =>
         busy.set(false)
@@ -200,7 +192,7 @@ object ModelsView:
     * came from, and the hold switch (behind the write gate).
     */
   /** `five_hour=25, seven_day=40` → `5-hour limit 25 %, this week's limit 40 %`: the floors as limits. */
-  def floorsText(floors: com.histmersion.web.ModelsView.FloorsTextFloors): com.histmersion.web.ModelsView.FloorsTextResult =
+  def floorsText(floors: com.histmersion.web.ModelsView.FloorsText): com.histmersion.web.ModelsView.FloorsText =
     floors
       .split(",")
       .toList
@@ -213,7 +205,7 @@ object ModelsView:
       }
       .mkString(", ")
 
-  private def plansBlock(q: PlanQuota.QuotaInfo, busy: Signal[com.histmersion.web.ModelsView.PlansBlockBusy], write: (=> Future[Any]) => Unit): HtmlElement =
+  private def plansBlock(q: PlanQuota.QuotaInfo, busy: Signal[com.histmersion.web.ModelsView.Busy], write: (=> Future[Any]) => Unit): HtmlElement =
     div(
       cls := "plan-pools",
       h4("Subscription plans"),
@@ -383,7 +375,7 @@ object ModelsView:
       td(cls := "muted", c.source)
     )
 
-  private def amount(v: com.histmersion.web.ModelsView.AmountV, m: Measure): com.histmersion.web.ModelsView.AmountResult = m match
+  private def amount(v: com.histmersion.web.ModelsView.Amount, m: Measure): com.histmersion.web.ModelsView.AmountText = m match
     case Measure.Tokens => Limit.compact(BigDecimal(math.round(v)))
     case Measure.Usd    => s"${AgentsMarkdown.usd(v)} USD"
 
@@ -443,7 +435,7 @@ object ModelsView:
   /** Set an allowance: a new one (`None`), or change an existing one (prefilled). */
   private def allowanceForm(
       of: Option[AllowanceStatus],
-      busy: Signal[com.histmersion.web.ModelsView.AllowanceFormBusy],
+      busy: Signal[com.histmersion.web.ModelsView.Busy],
       write: (=> Future[Any]) => Unit
   ): HtmlElement =
     val target = Var(of.map(_.target).getOrElse(""))

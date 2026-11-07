@@ -22,17 +22,15 @@ final case class TableRow(
 )
 
 object TableRow:
+  type Authors = Authors.T
+  object Authors extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
   /** The authors as the table shows them: the first three, then "et al.". */
-  type AuthorsResult = AuthorsResult.T
-  object AuthorsResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type AuthorsNames = AuthorsNames.T
-  object AuthorsNames extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
   type Key = Key.T
   object Key extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type Title = Title.T
-  object Title extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type Title = com.histmersion.api.library.Title
+  val Title: _root_.com.histmersion.api.library.Title.type = _root_.com.histmersion.api.library.Title
   type Byline = Byline.T
   object Byline extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type Year = Year.T
@@ -44,7 +42,7 @@ object TableRow:
   type Page = Page.T
   object Page extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
-  def authors(names: List[com.histmersion.web.library.TableRow.AuthorsNames]): com.histmersion.web.library.TableRow.AuthorsResult =
+  def authors(names: List[com.histmersion.api.library.AuthorName]): com.histmersion.web.library.TableRow.Authors =
     val named = names.map(_.trim).filter(_.nonEmpty)
     if named.size <= 3 then named.mkString(", ") else named.take(3).mkString(", ") + " et al."
 

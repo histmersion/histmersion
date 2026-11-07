@@ -20,6 +20,8 @@ final case class WorkRef(
 )
 
 object WorkRef:
+  type Id = Id.T
+  object Id extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type OpenalexId = OpenalexId.T
   object OpenalexId extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type ArxivId = com.histmersion.upstreams.ArxivId

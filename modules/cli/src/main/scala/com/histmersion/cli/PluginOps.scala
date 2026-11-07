@@ -27,7 +27,7 @@ final class PluginOps(using console: Console)(
     confirm: PluginOps.ConfirmArg1 => PluginOps.ConfirmResult = PluginOps.ask
 ):
 
-  private def err(msg: com.histmersion.cli.PluginOps.ErrMsg, code: com.histmersion.cli.PluginOps.ErrCode = ExitCode.Refused) = Cli.Error(msg, exitCode = code)
+  private def err(msg: com.histmersion.cli.PluginOps.Problem, code: com.histmersion.cli.Cli.Error.ExitCode = ExitCode.Refused) = Cli.Error(msg, exitCode = code)
 
   // ── the directory ─────────────────────────────────────────────────────────────────────────────
 
@@ -53,7 +53,7 @@ final class PluginOps(using console: Console)(
     Files.writeString(tmp, PluginKit.renderIndex(i) + "\n")
     val _ = Files.move(tmp, install.index, StandardCopyOption.REPLACE_EXISTING, StandardCopyOption.ATOMIC_MOVE)
 
-  private def digestOf(p: Path, algorithm: com.histmersion.cli.PluginOps.DigestOfAlgorithm): com.histmersion.cli.PluginOps.DigestOfResult =
+  private def digestOf(p: Path, algorithm: com.histmersion.cli.PluginOps.DigestAlgorithm): com.histmersion.cli.PluginOps.Digest =
     val md = MessageDigest.getInstance(algorithm)
     val in = Files.newInputStream(p)
     try
@@ -62,14 +62,14 @@ final class PluginOps(using console: Console)(
     finally in.close()
     md.digest().map(b => f"$b%02x").mkString
 
-  def sha256(p: Path): com.histmersion.cli.PluginOps.Sha256Result = digestOf(p, "SHA-256")
+  def sha256(p: Path): com.histmersion.api.Sha256 = digestOf(p, "SHA-256")
 
-  def dirEntries: List[(com.histmersion.cli.PluginOps.DirEntriesResultPart1, com.histmersion.cli.PluginOps.DirEntriesResultPart2)] = jars.map(j => j.getFileName.toString -> sha256(j))
+  def dirEntries: List[(com.histmersion.cli.PluginOps.EntryName, com.histmersion.cli.PluginOps.EntryContent)] = jars.map(j => j.getFileName.toString -> sha256(j))
 
   /** The POMs beside the jars and the dependency jars `lib/classpath` lists (as `lib/<name>`), with their SHA-256: what
     * a relink links besides the jars.
     */
-  def dependencyEntries: List[(com.histmersion.cli.PluginOps.DependencyEntriesResultPart1, com.histmersion.cli.PluginOps.DependencyEntriesResultPart2)] =
+  def dependencyEntries: List[(com.histmersion.cli.PluginOps.EntryName, com.histmersion.cli.PluginOps.EntryContent)] =
     val poms = jars.map(pomOf).filter(Files.isRegularFile(_)).map(p => p.getFileName.toString -> sha256(p))
     val listed = scala.util
       .Try(Files.readAllLines(install.lib.resolve("classpath")).asScala.toList)
@@ -83,7 +83,7 @@ final class PluginOps(using console: Console)(
   def installedSet: Option[PluginSet] =
     if Files.isRegularFile(install.record) then PluginKit.parseSet(Files.readString(install.record)).toOption else None
 
-  def spiVersion: Either[Cli.Error, com.histmersion.cli.PluginOps.SpiVersionResultPart2] =
+  def spiVersion: Either[Cli.Error, com.histmersion.cli.PluginOps.SpiVersion] =
     if !Files.isRegularFile(install.kitJson) then Left(err(s"no kit manifest at ${install.kitJson}"))
     else PluginKit.parseKit(Files.readString(install.kitJson)).map(_.spiVersion).left.map(err(_))
 
@@ -103,7 +103,7 @@ final class PluginOps(using console: Console)(
 
   // ── fetching ──────────────────────────────────────────────────────────────────────────────────
 
-  private def curl(url: com.histmersion.cli.PluginOps.CurlUrl, to: Path): Either[com.histmersion.cli.PluginOps.CurlResultPart1, Unit] =
+  private def curl(url: com.histmersion.cli.PluginOps.Url, to: Path): Either[com.histmersion.cli.PluginOps.Problem, Unit] =
     run.capture(List(cfg.curl, "-fsSL", "--retry", "2", "-o", to.toString, url)) match
       case Right(_)      => Right(())
       case Left((22, _)) => Left(s"$url: not found (HTTP error)")
@@ -115,7 +115,7 @@ final class PluginOps(using console: Console)(
   /** The jar at `to`, its signature beside it when there is one (`<to>.asc`), and the POM published with it (`<to minus
     * .jar>.pom`, which lists the plugin's dependencies) when there is one.
     */
-  private def fetch(origin: Origin, to: Path, wantAsc: com.histmersion.cli.PluginOps.FetchWantAsc, repos: List[com.histmersion.cli.PluginOps.FetchRepos]): Either[Cli.Error, com.histmersion.cli.PluginOps.FetchResultPart2] =
+  private def fetch(origin: Origin, to: Path, wantAsc: com.histmersion.cli.PluginOps.Signature, repos: List[com.histmersion.cli.PluginOps.Repo]): Either[Cli.Error, com.histmersion.cli.PluginOps.Path] =
     origin match
       case Origin.File(path) =>
         val p = Path.of(path)
@@ -139,8 +139,8 @@ final class PluginOps(using console: Console)(
     * the checksum the repository publishes beside it (SHA-256 when there is one, else SHA-1, which Maven Central always
     * has). The dependencies the POM lists are the resolver's (`histmersion-relink --resolve`).
     */
-  private def maven(c: Coordinates, to: Path, wantAsc: com.histmersion.cli.PluginOps.MavenWantAsc, repos: List[com.histmersion.cli.PluginOps.MavenRepos]): Either[Cli.Error, com.histmersion.cli.PluginOps.MavenResultPart2] =
-    def one(repo: com.histmersion.cli.PluginOps.MavenOneRepo): Either[com.histmersion.cli.PluginOps.MavenOneResultPart1, com.histmersion.cli.PluginOps.MavenOneResultPart2] =
+  private def maven(c: Coordinates, to: Path, wantAsc: com.histmersion.cli.PluginOps.Signature, repos: List[com.histmersion.cli.PluginOps.Repo]): Either[Cli.Error, com.histmersion.cli.PluginOps.Path] =
+    def one(repo: com.histmersion.cli.PluginOps.Repo): Either[com.histmersion.cli.PluginOps.Problem, com.histmersion.cli.PluginOps.Path] =
       val url = c.jarUrl(repo)
       for
         _ <- curl(url, to)
@@ -158,7 +158,7 @@ final class PluginOps(using console: Console)(
       .left
       .map(errs => err(s"$c: not resolved from ${repos.mkString(", ")}: ${errs.mkString("; ")}"))
 
-  private def checksum(url: com.histmersion.cli.PluginOps.ChecksumUrl, jar: Path): Either[com.histmersion.cli.PluginOps.ChecksumResultPart1, Unit] =
+  private def checksum(url: com.histmersion.cli.PluginOps.Url, jar: Path): Either[com.histmersion.cli.PluginOps.Problem, Unit] =
     val sum = Path.of(jar.toString + ".sum")
     try
       curl(url + ".sha256", sum)
@@ -176,15 +176,15 @@ final class PluginOps(using console: Console)(
   // ── commands ──────────────────────────────────────────────────────────────────────────────────
 
   /** The repositories an `add` looks in: the ones named for it first, then the configured ones. */
-  private def repositories(o: AddOptions): List[com.histmersion.cli.PluginOps.RepositoriesResult] = (o.repos ++ cfg.repos).distinct
+  private def repositories(o: AddOptions): List[com.histmersion.cli.PluginOps.Repo] = (o.repos ++ cfg.repos).distinct
 
-  private def repoArgs(repos: List[com.histmersion.cli.PluginOps.RepoArgsRepos]): List[com.histmersion.cli.PluginOps.RepoArgsResult] = repos.flatMap(r => List("--repo", r))
+  private def repoArgs(repos: List[com.histmersion.cli.PluginOps.Repo]): List[com.histmersion.cli.PluginOps.Arg] = repos.flatMap(r => List("--repo", r))
 
   /** The dependencies `jar`'s POM lists, resolved against what the server ships into `lib`: the lines the resolver
     * reports, or why the plugin is refused (a library the server ships at an older version than the plugin needs) or
     * could not be resolved.
     */
-  private def dependencies(jar: Path, lib: Path, repos: List[com.histmersion.cli.PluginOps.DependenciesRepos]): Either[Cli.Error, List[com.histmersion.cli.PluginOps.DependenciesResultPart2]] =
+  private def dependencies(jar: Path, lib: Path, repos: List[com.histmersion.cli.PluginOps.Repo]): Either[Cli.Error, List[com.histmersion.cli.PluginOps.Dependency]] =
     run.capture(
       install.relink.toString :: "--resolve" :: "--lib" :: lib.toString :: repoArgs(repos) ::: List(jar.toString),
       install.env
@@ -200,7 +200,7 @@ final class PluginOps(using console: Console)(
   /** Resolve the dependencies of every installed plugin into `lib/` again, after the set changed. The relink does it
     * too, so a failure here (no network) only warns.
     */
-  private def resolveInstalled(repos: List[com.histmersion.cli.PluginOps.ResolveInstalledRepos]): Unit =
+  private def resolveInstalled(repos: List[com.histmersion.cli.PluginOps.Repo]): Unit =
     run.capture(install.relink.toString :: "--resolve" :: repoArgs(repos), install.env) match
       case Right(_)     => ()
       case Left((_, e)) =>
@@ -212,12 +212,12 @@ final class PluginOps(using console: Console)(
     * refuse what cannot be linked, show what it is and needs, install it under `<id>-<version>.jar` (replacing an older
     * version of the same plugin), its POM beside it and its dependencies in `lib/`.
     */
-  def add(arg: com.histmersion.cli.PluginOps.AddArg, o: AddOptions): Either[Cli.Error, PluginJar] =
+  def add(arg: com.histmersion.cli.PluginOps.Arg, o: AddOptions): Either[Cli.Error, PluginJar] =
     PluginKit.origin(arg, a => Files.isRegularFile(Path.of(a))).left.map(err(_, ExitCode.Usage)).flatMap(addFrom(_, o))
 
   /** The name the plugin is staged under: the one it is published with, which the resolver's report and refusals name.
     */
-  private def stagedName(origin: Origin): com.histmersion.cli.PluginOps.StagedNameResult =
+  private def stagedName(origin: Origin): com.histmersion.cli.PluginOps.FileName =
     val raw = origin match
       case Origin.File(path) => Option(Path.of(path).getFileName).map(_.toString).getOrElse("plugin.jar")
       case Origin.Url(url)   => url.split('/').lastOption.filter(_.endsWith(".jar")).getOrElse("plugin.jar")
@@ -296,9 +296,9 @@ final class PluginOps(using console: Console)(
   private def signature(
       jar: Path,
       asc: Path,
-      verifying: com.histmersion.cli.PluginOps.SignatureVerifying,
-      unsigned: com.histmersion.cli.PluginOps.SignatureUnsigned
-  ): Either[Cli.Error, Option[com.histmersion.cli.PluginOps.SignatureResultPart2]] =
+      verifying: com.histmersion.cli.PluginOps.Verify,
+      unsigned: com.histmersion.cli.PluginOps.Unsigned
+  ): Either[Cli.Error, Option[com.histmersion.cli.PluginOps.Message]] =
     if !verifying then Right(None)
     else if !Files.isRegularFile(asc) then
       if unsigned then {
@@ -319,11 +319,11 @@ final class PluginOps(using console: Console)(
 
   private def show(
       jar: PluginJar,
-      sha: com.histmersion.cli.PluginOps.ShowSha,
-      source: com.histmersion.cli.PluginOps.ShowSource,
-      signer: Option[com.histmersion.cli.PluginOps.ShowSigner],
-      replaced: List[com.histmersion.cli.PluginOps.ShowReplaced],
-      dependencies: List[com.histmersion.cli.PluginOps.ShowDependencies]
+      sha: String,
+      source: String,
+      signer: Option[String],
+      replaced: List[String],
+      dependencies: List[String]
   ): Unit =
     jar.plugins.foreach { p =>
       Cli.out.println(
@@ -373,7 +373,7 @@ final class PluginOps(using console: Console)(
       Right(hits)
 
   /** `plugin list`: every jar of the directory, what it holds, whether the installed binary has it. */
-  def list(running: Option[PluginsReport]): List[com.histmersion.cli.PluginOps.ListResult] =
+  def list(running: Option[PluginsReport]): List[com.histmersion.cli.PluginOps.Listing] =
     val idx = index
     val linked = installedSet.map(_.jars.map(j => j.file -> j.sha256).toMap).getOrElse(Map.empty)
     val rows = jars.map { j =>
@@ -412,7 +412,7 @@ final class PluginOps(using console: Console)(
       (if firstParty.isEmpty then Nil else "" :: "## Built into every binary" :: "" :: firstParty)
 
   /** `plugin status`: the directory, the installed binary and the running server compared. */
-  def status(running: Option[PluginsReport], serverAnswered: com.histmersion.cli.PluginOps.StatusServerAnswered): (PluginKit.SetStatus, List[com.histmersion.cli.PluginOps.StatusResultPart2]) =
+  def status(running: Option[PluginsReport], serverAnswered: com.histmersion.cli.PluginOps.ServerAnswered): (PluginKit.SetStatus, List[com.histmersion.cli.PluginOps.Message]) =
     val st = PluginKit.status(dirEntries, installedSet, running.flatMap(_.set), serverAnswered, dependencyEntries)
     val kit = PluginKit.parseKit(scala.util.Try(Files.readString(install.kitJson)).getOrElse("")).toOption
     val signing = run
@@ -427,7 +427,7 @@ final class PluginOps(using console: Console)(
         PluginKit.statusLines(st, serverAnswered)) ++ signing
     )
 
-  def rebuild(args: List[com.histmersion.cli.PluginOps.RebuildArgs]): Either[Cli.Error, Unit] =
+  def rebuild(args: List[com.histmersion.cli.PluginOps.Arg]): Either[Cli.Error, Unit] =
     run.interactive(install.relink.toString :: args, install.env) match
       case 0  => Right(())
       case rc =>
@@ -439,107 +439,53 @@ final class PluginOps(using console: Console)(
         )
 
 object PluginOps:
+  type Arg = Arg.T
+  object Arg extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type Dependency = Dependency.T
+  object Dependency extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type Digest = Digest.T
+  object Digest extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type DigestAlgorithm = DigestAlgorithm.T
+  object DigestAlgorithm extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type EntryContent = EntryContent.T
+  object EntryContent extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type EntryName = EntryName.T
+  object EntryName extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type FileName = FileName.T
+  object FileName extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type Listing = Listing.T
+  object Listing extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type Message = Message.T
+  object Message extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type Path = Path.T
+  object Path extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type Problem = Problem.T
+  object Problem extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type Repo = Repo.T
+  object Repo extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type ServerAnswered = ServerAnswered.T
+  object ServerAnswered extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type Signature = Signature.T
+  object Signature extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type SpiVersion = SpiVersion.T
+  object SpiVersion extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type Unsigned = Unsigned.T
+  object Unsigned extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type Url = Url.T
+  object Url extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type Verify = Verify.T
+  object Verify extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
   /** Ask on the terminal; no terminal = no. */
-  type MavenOneResultPart1 = MavenOneResultPart1.T
-  object MavenOneResultPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type MavenOneResultPart2 = MavenOneResultPart2.T
-  object MavenOneResultPart2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type MavenOneRepo = MavenOneRepo.T
-  object MavenOneRepo extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
-  type ConfirmArg1 = ConfirmArg1.T
-  object ConfirmArg1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type ConfirmArg1 = com.histmersion.cli.Cli.Question
+  val ConfirmArg1: _root_.com.histmersion.cli.Cli.Question.type = _root_.com.histmersion.cli.Cli.Question
   type ConfirmResult = ConfirmResult.T
   object ConfirmResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
-  type ErrMsg = ErrMsg.T
-  object ErrMsg extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type ErrCode = ErrCode.T
-  object ErrCode extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type DigestOfResult = DigestOfResult.T
-  object DigestOfResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type DigestOfAlgorithm = DigestOfAlgorithm.T
-  object DigestOfAlgorithm extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type Sha256Result = Sha256Result.T
-  object Sha256Result extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type DirEntriesResultPart1 = DirEntriesResultPart1.T
-  object DirEntriesResultPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type DirEntriesResultPart2 = DirEntriesResultPart2.T
-  object DirEntriesResultPart2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type DependencyEntriesResultPart1 = DependencyEntriesResultPart1.T
-  object DependencyEntriesResultPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type DependencyEntriesResultPart2 = DependencyEntriesResultPart2.T
-  object DependencyEntriesResultPart2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type SpiVersionResultPart2 = SpiVersionResultPart2.T
-  object SpiVersionResultPart2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type CurlResultPart1 = CurlResultPart1.T
-  object CurlResultPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type CurlUrl = CurlUrl.T
-  object CurlUrl extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type FetchResultPart2 = FetchResultPart2.T
-  object FetchResultPart2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type FetchWantAsc = FetchWantAsc.T
-  object FetchWantAsc extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type FetchRepos = FetchRepos.T
-  object FetchRepos extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type MavenResultPart2 = MavenResultPart2.T
-  object MavenResultPart2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type MavenWantAsc = MavenWantAsc.T
-  object MavenWantAsc extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type MavenRepos = MavenRepos.T
-  object MavenRepos extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type ChecksumResultPart1 = ChecksumResultPart1.T
-  object ChecksumResultPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type ChecksumUrl = ChecksumUrl.T
-  object ChecksumUrl extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type RepositoriesResult = RepositoriesResult.T
-  object RepositoriesResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type RepoArgsResult = RepoArgsResult.T
-  object RepoArgsResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type RepoArgsRepos = RepoArgsRepos.T
-  object RepoArgsRepos extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type DependenciesResultPart2 = DependenciesResultPart2.T
-  object DependenciesResultPart2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type DependenciesRepos = DependenciesRepos.T
-  object DependenciesRepos extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type ResolveInstalledRepos = ResolveInstalledRepos.T
-  object ResolveInstalledRepos extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type AddArg = AddArg.T
-  object AddArg extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type StagedNameResult = StagedNameResult.T
-  object StagedNameResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type SignatureResultPart2 = SignatureResultPart2.T
-  object SignatureResultPart2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type SignatureVerifying = SignatureVerifying.T
-  object SignatureVerifying extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type SignatureUnsigned = SignatureUnsigned.T
-  object SignatureUnsigned extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type ShowSha = ShowSha.T
-  object ShowSha extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type ShowSource = ShowSource.T
-  object ShowSource extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type ShowSigner = ShowSigner.T
-  object ShowSigner extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type ShowReplaced = ShowReplaced.T
-  object ShowReplaced extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type ShowDependencies = ShowDependencies.T
-  object ShowDependencies extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type RmResultPart2 = RmResultPart2.T
   object RmResultPart2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type RmWhat = RmWhat.T
   object RmWhat extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type ListResult = ListResult.T
-  object ListResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type StatusResultPart2 = StatusResultPart2.T
-  object StatusResultPart2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type StatusServerAnswered = StatusServerAnswered.T
-  object StatusServerAnswered extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type RebuildArgs = RebuildArgs.T
-  object RebuildArgs extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type AskResult = AskResult.T
-  object AskResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type AskQuestion = AskQuestion.T
-  object AskQuestion extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
-  def ask(question: com.histmersion.cli.PluginOps.AskQuestion)(using console: Console): com.histmersion.cli.PluginOps.AskResult =
+  def ask(question: com.histmersion.cli.Cli.Question)(using console: Console): Boolean =
     console.readTerminalLine(s"$question [y/N] ").map(_.trim.toLowerCase).exists(a => a == "y" || a == "yes")

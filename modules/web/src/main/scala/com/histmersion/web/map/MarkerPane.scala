@@ -75,16 +75,14 @@ final class MarkerPane(val el: dom.HTMLElement, surface: MapSurface):
       m.removed()
       dom.window.setTimeout(() => if m.el.parentNode == el then { val _ = el.removeChild(m.el) }, ms)
 
-  def has(m: DomMarker): com.histmersion.web.map.MarkerPane.HasResult = markers.contains(m)
+  def has(m: DomMarker): Boolean = markers.contains(m)
 
-  def size: com.histmersion.web.map.MarkerPane.SizeResult = markers.size
+  def size: com.histmersion.web.map.MarkerPane.MarkerCount = markers.size
 
   def reposition(v: View): Unit = markers.foreach(_.place(v))
 
 object MarkerPane:
+  type MarkerCount = MarkerCount.T
+  object MarkerCount extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type RetireMs = RetireMs.T
   object RetireMs extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type HasResult = HasResult.T
-  object HasResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type SizeResult = SizeResult.T
-  object SizeResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]

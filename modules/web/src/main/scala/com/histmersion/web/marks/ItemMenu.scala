@@ -8,33 +8,31 @@ import org.scalajs.dom
   * bookmark it; open it in a new tab. Each is also a button where the item is shown.
   */
 object ItemMenu:
+  type Href = Href.T
+  object Href extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type Markdown = Markdown.T
+  object Markdown extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type Origin = Origin.T
+  object Origin extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type Text = Text.T
+  object Text extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
   /** The item's link, whole (copied, it works elsewhere). Pure. */
-  type LinkResult = LinkResult.T
-  object LinkResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type LinkOrigin = LinkOrigin.T
-  object LinkOrigin extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type TextResult = TextResult.T
-  object TextResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type TextByline = _root_.com.histmersion.web.marks.ItemMenu.MarkdownByline
-  val TextByline: _root_.com.histmersion.web.marks.ItemMenu.MarkdownByline.type = _root_.com.histmersion.web.marks.ItemMenu.MarkdownByline
-  type MarkdownResult = MarkdownResult.T
-  object MarkdownResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type MarkdownOrigin = _root_.com.histmersion.web.marks.ItemMenu.LinkOrigin
-  val MarkdownOrigin: _root_.com.histmersion.web.marks.ItemMenu.LinkOrigin.type = _root_.com.histmersion.web.marks.ItemMenu.LinkOrigin
-  type MarkdownByline = MarkdownByline.T
-  object MarkdownByline extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type EntriesByline = _root_.com.histmersion.web.marks.ItemMenu.MarkdownByline
-  val EntriesByline: _root_.com.histmersion.web.marks.ItemMenu.MarkdownByline.type = _root_.com.histmersion.web.marks.ItemMenu.MarkdownByline
+  type TextByline = _root_.com.histmersion.web.library.TableRow.Byline
+  val TextByline: _root_.com.histmersion.web.library.TableRow.Byline.type = _root_.com.histmersion.web.library.TableRow.Byline
+  type MarkdownOrigin = _root_.com.histmersion.web.marks.ItemMenu.Origin
+  val MarkdownOrigin: _root_.com.histmersion.web.marks.ItemMenu.Origin.type = _root_.com.histmersion.web.marks.ItemMenu.Origin
+  type EntriesByline = _root_.com.histmersion.web.library.TableRow.Byline
+  val EntriesByline: _root_.com.histmersion.web.library.TableRow.Byline.type = _root_.com.histmersion.web.library.TableRow.Byline
 
-  def link(origin: com.histmersion.web.marks.ItemMenu.LinkOrigin, ref: ItemRef): com.histmersion.web.marks.ItemMenu.LinkResult = origin.stripSuffix("/") + ItemRef.page(ref.target)
+  def link(origin: com.histmersion.web.marks.ItemMenu.Origin, ref: ItemRef): com.histmersion.web.marks.ItemMenu.Href = origin.stripSuffix("/") + ItemRef.page(ref.target)
 
   /** The item as a line of plain text: its title and what the page says under it (authors, year). Pure. */
-  def text(ref: ItemRef, byline: com.histmersion.web.marks.ItemMenu.TextByline): com.histmersion.web.marks.ItemMenu.TextResult =
+  def text(ref: ItemRef, byline: com.histmersion.web.marks.ItemMenu.TextByline): com.histmersion.web.marks.ItemMenu.Text =
     List(ref.title, byline).map(_.trim).filter(_.nonEmpty).mkString(" — ")
 
   /** The item as Markdown: a link with its title, and a source's `[[citekey]]` for the wiki. Pure. */
-  def markdown(origin: com.histmersion.web.marks.ItemMenu.MarkdownOrigin, ref: ItemRef, byline: com.histmersion.web.marks.ItemMenu.MarkdownByline): com.histmersion.web.marks.ItemMenu.MarkdownResult =
+  def markdown(origin: com.histmersion.web.marks.ItemMenu.MarkdownOrigin, ref: ItemRef, byline: com.histmersion.web.library.TableRow.Byline): com.histmersion.web.marks.ItemMenu.Markdown =
     val title = ref.title.replace("[", "\\[").replace("]", "\\]")
     val cite = ref.target.itemKey.filter(_ => ref.kind == ItemKind.Source).fold("")(ck => s" [[$ck]]")
     s"[$title](${link(origin, ref)})" + Option(byline.trim).filter(_.nonEmpty).fold("")(b => s" — $b") + cite

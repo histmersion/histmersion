@@ -18,9 +18,9 @@ enum SettingsSection(val slug: SettingsSection.Slug, val label: SettingsSection.
   case About extends SettingsSection("about", "About Histmersion", rare = true)
 
 object SettingsSection:
-  type Slug = Slug.T
-  object Slug extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type Label = Label.T
-  object Label extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type Slug = com.histmersion.web.Preview.Item.Slug
+  val Slug: _root_.com.histmersion.web.Preview.Item.Slug.type = _root_.com.histmersion.web.Preview.Item.Slug
+  type Label = com.histmersion.api.UiLabels.Text
+  val Label: _root_.com.histmersion.api.UiLabels.Text.type = _root_.com.histmersion.api.UiLabels.Text
   type Rare = Rare.T
   object Rare extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]

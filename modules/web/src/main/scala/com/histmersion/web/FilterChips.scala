@@ -8,42 +8,30 @@ import com.raquo.laminar.api.L.*
   * one list the filter panel, its folded rail's count and an empty result list show.
   */
 object FilterChips:
+  type ChipCount = ChipCount.T
+  object ChipCount extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type Label = Label.T
+  object Label extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type PeriodCounted = PeriodCounted.T
+  object PeriodCounted extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
   /** Pure: is the span `from`–`to` other than the default one? */
-  type PeriodSetResult = PeriodSetResult.T
-  object PeriodSetResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type PeriodSetFrom = PeriodSetFrom.T
-  object PeriodSetFrom extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type PeriodSetTo = PeriodSetTo.T
-  object PeriodSetTo extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type PeriodSetDefaultFrom = PeriodSetDefaultFrom.T
-  object PeriodSetDefaultFrom extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type PeriodSetDefaultTo = PeriodSetDefaultTo.T
-  object PeriodSetDefaultTo extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type CountResult = CountResult.T
-  object CountResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type CountPeriod = CountPeriod.T
-  object CountPeriod extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type CountNowResult = CountNowResult.T
-  object CountNowResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type LabelOfResult = LabelOfResult.T
-  object LabelOfResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
-  def periodSet(from: Option[com.histmersion.web.FilterChips.PeriodSetFrom], to: Option[com.histmersion.web.FilterChips.PeriodSetTo], defaultFrom: com.histmersion.web.FilterChips.PeriodSetDefaultFrom, defaultTo: com.histmersion.web.FilterChips.PeriodSetDefaultTo): com.histmersion.web.FilterChips.PeriodSetResult =
+  def periodSet(from: Option[com.histmersion.api.Years.Astronomical], to: Option[com.histmersion.api.Years.Astronomical], defaultFrom: com.histmersion.api.Years.Astronomical, defaultTo: com.histmersion.api.Years.Astronomical): Boolean =
     from.getOrElse(defaultFrom) != defaultFrom || to.getOrElse(defaultTo) != defaultTo
 
   /** Pure: how many filters are active — the chips and, when set, the period. */
-  def count(chips: List[UiState.ActiveChip], period: com.histmersion.web.FilterChips.CountPeriod): com.histmersion.web.FilterChips.CountResult = chips.size + (if period then 1 else 0)
+  def count(chips: List[UiState.ActiveChip], period: com.histmersion.web.FilterChips.PeriodCounted): com.histmersion.web.FilterChips.ChipCount = chips.size + (if period then 1 else 0)
 
   /** How many filters are active now. */
-  def countNow(config: UiConfig): com.histmersion.web.FilterChips.CountNowResult =
+  def countNow(config: UiConfig): com.histmersion.web.FilterChips.ChipCount =
     count(
       UiState.activeChips(),
       periodSet(UiState.from.now(), UiState.to.now(), config.time.defaultFrom, config.time.defaultTo)
     )
 
   /** The label a chip's field reads as. */
-  private def labelOf(c: UiState.ActiveChip): com.histmersion.web.FilterChips.LabelOfResult = c.key match
+  private def labelOf(c: UiState.ActiveChip): com.histmersion.web.FilterChips.Label = c.key match
     case k if k == UiState.q.key => "Words"
     case _                       => Wording.capitalize(c.label)
 

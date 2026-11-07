@@ -9,37 +9,19 @@ import org.scalajs.dom.window
   * the server's own pages (a source, an article) load.
   */
 object Router:
+  type AltKey = AltKey.T
+  object AltKey extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type CtrlKey = CtrlKey.T
+  object CtrlKey extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type MetaKey = MetaKey.T
+  object MetaKey extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type MouseButton = MouseButton.T
+  object MouseButton extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type Push = Push.T
+  object Push extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type ShiftKey = ShiftKey.T
+  object ShiftKey extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
-  type MissingSignalResult = MissingSignalResult.T
-  object MissingSignalResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type SearchResult = SearchResult.T
-  object SearchResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type PlainClickResult = PlainClickResult.T
-  object PlainClickResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type PlainClickButton = PlainClickButton.T
-  object PlainClickButton extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type PlainClickMeta = PlainClickMeta.T
-  object PlainClickMeta extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type PlainClickCtrl = PlainClickCtrl.T
-  object PlainClickCtrl extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type PlainClickShift = PlainClickShift.T
-  object PlainClickShift extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type PlainClickAlt = PlainClickAlt.T
-  object PlainClickAlt extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type PlainResult = PlainResult.T
-  object PlainResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type GoPush = GoPush.T
-  object GoPush extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type GoSearch = GoSearch.T
-  object GoSearch extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type GoHrefHref = GoHrefHref.T
-  object GoHrefHref extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type TitlesResultPart2 = TitlesResultPart2.T
-  object TitlesResultPart2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type RetitleT = RetitleT.T
-  object RetitleT extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type TitleResult = TitleResult.T
-  object TitleResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
   private val current = Var[Route](Route.Explore)
 
@@ -51,16 +33,16 @@ object Router:
 
   def route: StrictSignal[Route] = current.signal
   def now(): Route = current.now()
-  def missingSignal: Signal[com.histmersion.web.Router.MissingSignalResult] = missing.signal
-  def search: StrictSignal[com.histmersion.web.Router.SearchResult] = query.signal
+  def missingSignal: Signal[Boolean] = missing.signal
+  def search: StrictSignal[com.histmersion.web.Pages.UrlQuery] = query.signal
 
   /** A click a link should handle itself: the primary button with no modifier. ⌘/Ctrl/Shift/Alt and the middle button
     * are the browser's (a new tab or window), so the handler leaves them alone. Pure.
     */
-  def plainClick(button: com.histmersion.web.Router.PlainClickButton, meta: com.histmersion.web.Router.PlainClickMeta, ctrl: com.histmersion.web.Router.PlainClickCtrl, shift: com.histmersion.web.Router.PlainClickShift, alt: com.histmersion.web.Router.PlainClickAlt): com.histmersion.web.Router.PlainClickResult =
+  def plainClick(button: com.histmersion.web.Router.MouseButton, meta: com.histmersion.web.Router.MetaKey, ctrl: com.histmersion.web.Router.CtrlKey, shift: com.histmersion.web.Router.ShiftKey, alt: com.histmersion.web.Router.AltKey): Boolean =
     button == 0 && !meta && !ctrl && !shift && !alt
 
-  def plain(ev: dom.MouseEvent): com.histmersion.web.Router.PlainResult = plainClick(ev.button, ev.metaKey, ev.ctrlKey, ev.shiftKey, ev.altKey)
+  def plain(ev: dom.MouseEvent): Boolean = plainClick(ev.button, ev.metaKey, ev.ctrlKey, ev.shiftKey, ev.altKey)
 
   /** Once, after [[UiState.init]] read the hash: an old address goes to its new page, the address becomes the page's,
     * and back/forward follow.
@@ -95,7 +77,7 @@ object Router:
     dom.document.title = s"${title(r)} · Histmersion"
 
   /** Go to page `r`: a step in the history, unless `push` is false. */
-  def go(r: Route, push: com.histmersion.web.Router.GoPush = true, search: com.histmersion.web.Router.GoSearch = ""): Unit =
+  def go(r: Route, push: com.histmersion.web.Router.Push = true, search: com.histmersion.web.Pages.UrlQuery = ""): Unit =
     if r.serverPage then window.location.assign(r.path)
     else
       UiState.navigate(r.path + search, push)
@@ -103,7 +85,7 @@ object Router:
       show(r)
 
   /** Go to a page given as an address of its own (`/research/backlog?item=3`). */
-  def goHref(href: com.histmersion.web.Router.GoHrefHref): Unit =
+  def goHref(href: String): Unit =
     val (path, search) = href.indexOf('?') match
       case -1 => (href, "")
       case i  => (href.take(i), href.drop(i))
@@ -114,15 +96,15 @@ object Router:
   private val titleBus = EventBus[(Route, String)]()
 
   /** An item's own title, once its page or window has read it: the page's heading follows it. */
-  def titles: EventStream[(Route, com.histmersion.web.Router.TitlesResultPart2)] = titleBus.events
+  def titles: EventStream[(Route, com.histmersion.api.UiLabels.Text)] = titleBus.events
 
   /** The page's title in the browser's tab: the page's name; an item's own title once it is known. */
-  def retitle(r: Route, t: com.histmersion.web.Router.RetitleT): Unit =
+  def retitle(r: Route, t: com.histmersion.api.UiLabels.Text): Unit =
     if current.now() == r then dom.document.title = s"$t · Histmersion"
     titleBus.emit(r -> t)
 
   /** A page's name, before its content has said a better one. */
-  def title(r: Route): com.histmersion.web.Router.TitleResult = r match
+  def title(r: Route): com.histmersion.api.UiLabels.Text = r match
     case Route.Explore     => "Explore"
     case Route.Library(s)  => if s == LibrarySection.Sources then "Library" else s.label
     case Route.Research(s) => if s == ResearchSection.Overview then "Research" else s.label

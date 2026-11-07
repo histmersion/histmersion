@@ -8,56 +8,16 @@ import com.histmersion.api.library.TimeBucket
   * smooth through each point. One bucket a pixel drawn with an S-curve per step was a staircase of 1-px risers.
   */
 object TimelineCurve:
+  type ElementSize = ElementSize.T
+  object ElementSize extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type ScreenPixels = ScreenPixels.T
+  object ScreenPixels extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
   /** How wide one bucket is drawn, px: coarse enough for a smooth line, fine enough for a peak. */
-  type TangentsSignResult = TangentsSignResult.T
-  object TangentsSignResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type TangentsSignV = TangentsSignV.T
-  object TangentsSignV extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type TangentsSecantResult = TangentsSecantResult.T
-  object TangentsSecantResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type TangentsSecantI = TangentsSecantI.T
-  object TangentsSecantI extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type TangentsEndResult = TangentsEndResult.T
-  object TangentsEndResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type TangentsEndA = TangentsEndA.T
-  object TangentsEndA extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type TangentsEndB = TangentsEndB.T
-  object TangentsEndB extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type TangentsEndInner = TangentsEndInner.T
-  object TangentsEndInner extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
   type PxPerBucket = PxPerBucketValue
   type PxPerBucketValue = PxPerBucketValue.T
   object PxPerBucketValue extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type PointsFrom = PointsFrom.T
-  object PointsFrom extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type PointsTo = PointsTo.T
-  object PointsTo extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type PointsW = PointsW.T
-  object PointsW extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type PointsBaseY = PointsBaseY.T
-  object PointsBaseY extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type PointsTop = PointsTop.T
-  object PointsTop extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type TangentsXs = TangentsXs.T
-  object TangentsXs extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type TangentsYs = TangentsYs.T
-  object TangentsYs extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type NumResult = NumResult.T
-  object NumResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type NumV = NumV.T
-  object NumV extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type CurveResult = CurveResult.T
-  object CurveResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type LinePathResult = LinePathResult.T
-  object LinePathResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type AreaPathResult = AreaPathResult.T
-  object AreaPathResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type AreaPathBaseY = AreaPathBaseY.T
-  object AreaPathBaseY extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type NearestX = NearestX.T
-  object NearestX extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
   val PxPerBucket: com.histmersion.web.TimelineCurve.PxPerBucket = 5.0
 
@@ -73,7 +33,7 @@ object TimelineCurve:
   /** Pure: each bucket's point over `[from, to]` drawn `w` px wide — at its middle year, its height its share of the
     * largest count between `baseY` (none) and `top` (the largest).
     */
-  def points(bs: Seq[TimeBucket], from: com.histmersion.web.TimelineCurve.PointsFrom, to: com.histmersion.web.TimelineCurve.PointsTo, w: com.histmersion.web.TimelineCurve.PointsW, baseY: com.histmersion.web.TimelineCurve.PointsBaseY, top: com.histmersion.web.TimelineCurve.PointsTop): Vector[Pt] =
+  def points(bs: Seq[TimeBucket], from: com.histmersion.api.Years.Astronomical, to: com.histmersion.api.Years.Astronomical, w: com.histmersion.web.TimelineCurve.ElementSize, baseY: com.histmersion.web.TimelineCurve.ScreenPixels, top: com.histmersion.web.TimelineCurve.ScreenPixels): Vector[Pt] =
     val maxCount = bs.iterator.map(_.count).maxOption.getOrElse(0)
     if maxCount <= 0 then Vector.empty
     else
@@ -87,12 +47,12 @@ object TimelineCurve:
   /** Pure: the tangent (dy/dx) at each point of a monotone cubic through them (`xs` increasing). Where the neighbouring
     * slopes differ in sign (a peak or a valley) or one is flat, it is flat.
     */
-  def tangents(xs: IndexedSeq[com.histmersion.web.TimelineCurve.TangentsXs], ys: IndexedSeq[com.histmersion.web.TimelineCurve.TangentsYs]): Array[Double] =
+  def tangents(xs: IndexedSeq[com.histmersion.web.TimelineCurve.Pt.X], ys: IndexedSeq[com.histmersion.web.TimelineCurve.Pt.Y]): Array[Double] =
     val n = xs.length
     val t = new Array[Double](n)
     if n >= 2 then
-      def sign(v: com.histmersion.web.TimelineCurve.TangentsSignV): com.histmersion.web.TimelineCurve.TangentsSignResult = if v > 0 then 1.0 else if v < 0 then -1.0 else 0.0
-      def secant(i: com.histmersion.web.TimelineCurve.TangentsSecantI): com.histmersion.web.TimelineCurve.TangentsSecantResult =
+      def sign(v: Double): Double = if v > 0 then 1.0 else if v < 0 then -1.0 else 0.0
+      def secant(i: Int): Double =
         val h = xs(i + 1) - xs(i)
         if h == 0 then 0.0 else (ys(i + 1) - ys(i)) / h
       var i = 1
@@ -105,7 +65,7 @@ object TimelineCurve:
         t(i) = (sign(s0) + sign(s1)) * math.min(math.min(math.abs(s0), math.abs(s1)), 0.5 * math.abs(p))
         i += 1
       // the ends: the one-sided three-point estimate, as d3's
-      def end(a: com.histmersion.web.TimelineCurve.TangentsEndA, b: com.histmersion.web.TimelineCurve.TangentsEndB, inner: com.histmersion.web.TimelineCurve.TangentsEndInner): com.histmersion.web.TimelineCurve.TangentsEndResult =
+      def end(a: Int, b: Int, inner: Double): Double =
         val h = xs(b) - xs(a)
         if h == 0 then inner else (3 * (ys(b) - ys(a)) / h - inner) / 2
       if n == 2 then
@@ -145,12 +105,12 @@ object TimelineCurve:
         Segment(xs(i) + dx, ys(i) + dx * t(i), xs(i + 1) - dx, ys(i + 1) - dx * t(i + 1), xs(i + 1), ys(i + 1))
       }
 
-  private def num(v: com.histmersion.web.TimelineCurve.NumV): com.histmersion.web.TimelineCurve.NumResult =
+  private def num(v: Double): String =
     val r = math.round(v * 100) / 100.0
     if r == r.toLong.toDouble then r.toLong.toString else r.toString
 
   /** Pure: the path's commands after its first point (` C …` per segment). */
-  def curve(pts: IndexedSeq[Pt]): com.histmersion.web.TimelineCurve.CurveResult =
+  def curve(pts: IndexedSeq[Pt]): String =
     val sb = new StringBuilder
     segments(pts).foreach { s =>
       sb.append(" C ")
@@ -169,12 +129,12 @@ object TimelineCurve:
     sb.toString
 
   /** Pure: the line through the points. */
-  def linePath(pts: IndexedSeq[Pt]): com.histmersion.web.TimelineCurve.LinePathResult =
+  def linePath(pts: IndexedSeq[Pt]): String =
     if pts.isEmpty then ""
     else s"M ${num(pts.head.x)} ${num(pts.head.y)}" + curve(pts)
 
   /** Pure: the area under the line, closed along `baseY` (one point: a sliver a pixel wide). */
-  def areaPath(pts: IndexedSeq[Pt], baseY: com.histmersion.web.TimelineCurve.AreaPathBaseY): com.histmersion.web.TimelineCurve.AreaPathResult =
+  def areaPath(pts: IndexedSeq[Pt], baseY: com.histmersion.web.TimelineCurve.ScreenPixels): String =
     if pts.isEmpty then ""
     else
       val h = pts.head
@@ -183,7 +143,7 @@ object TimelineCurve:
       else s"$start${curve(pts)} L ${num(pts.last.x)} ${num(baseY)} Z"
 
   /** Pure: the point nearest screen x `x` (points in increasing x), by binary search — the hover's. */
-  def nearest(pts: IndexedSeq[Pt], x: com.histmersion.web.TimelineCurve.NearestX): Option[Pt] =
+  def nearest(pts: IndexedSeq[Pt], x: com.histmersion.web.TimelineCurve.ScreenPixels): Option[Pt] =
     if pts.isEmpty then None
     else
       var lo = 0

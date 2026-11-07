@@ -9,20 +9,16 @@ import com.raquo.laminar.api.L.*
   * Save writes every change made here.
   */
 object AdvancedSection:
+  type Query = Query.T
+  object Query extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type SectionName = SectionName.T
+  object SectionName extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
   /** Does a setting match what was typed in the filter (its key or its words)? Pure. */
-  type MatchesResult = MatchesResult.T
-  object MatchesResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type MatchesQ = MatchesQ.T
-  object MatchesQ extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type SectionNameResult = SectionNameResult.T
-  object SectionNameResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type SectionNameId = SectionNameId.T
   object SectionNameId extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type BlockQuery = BlockQuery.T
-  object BlockQuery extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
-  def matches(f: ConfigEdit.Field, q: com.histmersion.web.settings.AdvancedSection.MatchesQ): com.histmersion.web.settings.AdvancedSection.MatchesResult =
+  def matches(f: ConfigEdit.Field, q: com.histmersion.web.settings.AdvancedSection.Query): Boolean =
     val t = q.trim.toLowerCase
     t.isEmpty || f.relative.toLowerCase.contains(t) || f.doc.toLowerCase.contains(t)
 
@@ -80,10 +76,10 @@ object AdvancedSection:
   )
 
   /** A block's name for a person. Pure. */
-  def sectionName(id: com.histmersion.web.settings.AdvancedSection.SectionNameId): com.histmersion.web.settings.AdvancedSection.SectionNameResult = Names.getOrElse(id, Wording.humanize(id))
+  def sectionName(id: com.histmersion.web.settings.AdvancedSection.SectionNameId): com.histmersion.web.settings.AdvancedSection.SectionName = Names.getOrElse(id, Wording.humanize(id))
 
   /** One block, folded until opened (or while the filter finds something in it). */
-  private def block(s: ConfigEdit.Section, draft: Draft, query: Signal[com.histmersion.web.settings.AdvancedSection.BlockQuery]): HtmlElement =
+  private def block(s: ConfigEdit.Section, draft: Draft, query: Signal[com.histmersion.web.settings.AdvancedSection.Query]): HtmlElement =
     val open = Var(false)
     val shown = s.fields.filter(_.credential.isEmpty)
     detailsTag(

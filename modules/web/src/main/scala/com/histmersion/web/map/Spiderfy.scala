@@ -9,21 +9,15 @@ import scala.scalajs.js
   * for more, each point on a thin leg back to the spot. Pure but for the legs' markup.
   */
 object Spiderfy:
+  type OffsetCoordinate = OffsetCoordinate.T
+  object OffsetCoordinate extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type Svg = Svg.T
+  object Svg extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   /** A fanned-out point's marker; the bubble it came out of; the legs' element. */
-  type OffsetsResultPart1 = OffsetsResultPart1.T
-  object OffsetsResultPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type OffsetsResultPart2 = OffsetsResultPart2.T
-  object OffsetsResultPart2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type OffsetsN = OffsetsN.T
   object OffsetsN extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type OffsetsSeparation = OffsetsSeparation.T
   object OffsetsSeparation extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type LegsSvgResult = LegsSvgResult.T
-  object LegsSvgResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type LegsSvgOffsetsPart1 = LegsSvgOffsetsPart1.T
-  object LegsSvgOffsetsPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type LegsSvgOffsetsPart2 = LegsSvgOffsetsPart2.T
-  object LegsSvgOffsetsPart2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type LegsSvgSide = LegsSvgSide.T
   object LegsSvgSide extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
@@ -40,7 +34,7 @@ object Spiderfy:
   /** Pure: each point's offset from the spot (px, y down) for `n` points `separation` px apart: on a ring (the first a
     * little past twelve o'clock) or an outward spiral, never on the spot itself.
     */
-  def offsets(n: com.histmersion.web.map.Spiderfy.OffsetsN, separation: com.histmersion.web.map.Spiderfy.OffsetsSeparation): Vector[(com.histmersion.web.map.Spiderfy.OffsetsResultPart1, com.histmersion.web.map.Spiderfy.OffsetsResultPart2)] =
+  def offsets(n: com.histmersion.web.map.Spiderfy.OffsetsN, separation: com.histmersion.web.map.Spiderfy.OffsetsSeparation): Vector[(com.histmersion.web.map.Spiderfy.OffsetCoordinate, com.histmersion.web.map.Spiderfy.OffsetCoordinate)] =
     if n <= 0 then Vector.empty
     else if n == 1 then Vector((0.0, -separation))
     else if n <= RingMax then
@@ -62,7 +56,7 @@ object Spiderfy:
       }
 
   /** The legs: an SVG `side` px square, centred on the spot, a line to each offset. */
-  def legsSvg(offsets: Seq[(com.histmersion.web.map.Spiderfy.LegsSvgOffsetsPart1, com.histmersion.web.map.Spiderfy.LegsSvgOffsetsPart2)], side: com.histmersion.web.map.Spiderfy.LegsSvgSide): com.histmersion.web.map.Spiderfy.LegsSvgResult =
+  def legsSvg(offsets: Seq[(com.histmersion.web.map.Spiderfy.OffsetCoordinate, com.histmersion.web.map.Spiderfy.OffsetCoordinate)], side: com.histmersion.web.map.Spiderfy.LegsSvgSide): com.histmersion.web.map.Spiderfy.Svg =
     val c = side / 2.0
     val lines = offsets.map((x, y) => s"""<line x1="$c" y1="$c" x2="${c + x}" y2="${c + y}"/>""").mkString
     s"""<svg width="$side" height="$side" viewBox="0 0 $side $side" aria-hidden="true">$lines</svg>"""
