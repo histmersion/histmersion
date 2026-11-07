@@ -1,0 +1,23 @@
+## modules/db/src/main/scala/com/histmersion/domain/catalogue/events/EventBundleRepo.scala
+212:31 [E008] 212 |      e => BundleImport.Writer.Label(e.id.value), / |value Label is not a member of object com.histmersion.util.data.exchange.BundleImport.Writer, but could be made available as an extension method. / |The following import might make progress towards fixing the problem:
+213:59 [E008] 213 |      w.local.events.map(e => e.uid -> BundleImport.Writer.Label(e.id.value)).toMap, / |value Label is not a member of object com.histmersion.util.data.exchange.BundleImport.Writer, but could be made available as an extension method. / |The following import might make progress towards fixing the problem:
+215:55 [E008] 215 |    )((from, to) => EventRepo.rename(BEventRow.Id(from.value), BEventRow.Id(to.value))) / |value value is not a member of Any, but could be made available as an extension method. / |The following import might make progress towards fixing the problem:
+215:79 [E008] 215 |    )((from, to) => EventRepo.rename(BEventRow.Id(from.value), BEventRow.Id(to.value))) / |value value is not a member of Any, but could be made available as an extension method. / |The following import might make progress towards fixing the problem:
+221:57 [E008] 221 |    val events = w.es.events.filter(e => w.writes(e.uid).value) / |value value is not a member of Boolean, but could be made available as an extension method. / |The following import might make progress towards fixing the problem:
+
+## modules/db/src/main/scala/com/histmersion/domain/catalogue/events/EventRepo.scala
+68:14 [E007] 68 |      Sql.raw(" ORDER BY coalesce(e.not_before, e.begin_by), e.label") ++ / |Found:    (" ORDER BY coalesce(e.not_before, e.begin_by), e.label" : String) / |Required: com.histmersion.util.database.Sql.Text
+87:14 [E007] 87 |      Sql.raw(" ORDER BY coalesce(e.not_before, e.begin_by), e.label") ++ / |Found:    (" ORDER BY coalesce(e.not_before, e.begin_by), e.label" : String) / |Required: com.histmersion.util.database.Sql.Text
+95:23 [E007] 95 |      listed ++ Sql.of(" AND e.uncertainty > ?", Param.L(Param.L.V(EventPrecision.ApproximateUpTo.value)))).frag.query[Int].run().head / |                       Found:    (" AND e.uncertainty > ?" : String) / |                       Required: com.histmersion.util.database.Sql.Text
+124:74 [E172] 124 |      )).frag.query[EventGeoRow].run().map(r => r.row.id -> r.toGeo).toMap / |Cannot prove that (com.histmersion.domain.catalogue.events.EventRow.Id, / |  com.histmersion.api.catalogue².EventGeo) <:< (com.histmersion.domain.catalogue.events.BEventRow.Id.T, V). / |where:    V          is a type variable with constraint <: com.histmersion.api.catalogue².EventGeo / |          catalogue  is a package in package com.histmersion.domain / |          catalogue² is a package in package com.histmersion.api
+207:33 [E007] 207 |      EventImportRepo.upstreamOf(id).foreach { (provider, rec) => / | Found:    (id : com.histmersion.domain.catalogue.events.BEventRow.Id) / | Required: com.histmersion.domain.catalogue.Event.Id
+
+## modules/db/src/main/scala/com/histmersion/domain/automation/worklists/QueueBundleRepo.scala
+40:43 [E008] 40 |    w.es.queue.filter(q => w.writes(q.uid).value).foreach { q => / |value value is not a member of Boolean, but could be made available as an extension method. / |The following import might make progress towards fixing the problem:
+
+## modules/db/src/main/scala/com/histmersion/domain/media/assets/AssetBundleRepo.scala
+67:44 [E008] 67 |    w.es.assets.filter(a => w.writes(a.uid).value && localSha.get(a.uid).contains(a.sha256)).foreach(write(w, _, None)) / |                            value value is not a member of Boolean
+
+## modules/db/src/main/scala/com/histmersion/util/data/exchange/BundleImport.scala
+159:73 [E007] 159 |          rename(old, label(a)).left.foreach(e => throw ImportAbort(List(s"$what $old → ${label(a)}: ${e.message}"))) / |    Found:    String / |    Required: com.histmersion.util.data.exchange.ImportAbort.Problem.T
+
