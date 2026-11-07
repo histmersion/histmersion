@@ -7,9 +7,6 @@ import com.histmersion.config.*
 import com.histmersion.domain.*
 
 object Static:
-  object Asset:
-    type Name = Name.T
-    object Name extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type Asset = Asset.T
   object Asset extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type ReadPath = ReadPath.T
