@@ -5,6 +5,7 @@ import io.circe.Json
 import com.histmersion.plugin.*
 import com.histmersion.upstreams.landing.RepositoryLanding
 import com.histmersion.upstreams.wikidata.{WikidataEntities, WikidataItem, WikidataStatement}
+import com.histmersion.plugin.Plugin.Config.given
 import hearth.kindlings.sconfigderivation.ConfigReader
 
 /** Wikimedia Commons, read through the action API's `prop=imageinfo` with `extmetadata`: URL building and parsing.

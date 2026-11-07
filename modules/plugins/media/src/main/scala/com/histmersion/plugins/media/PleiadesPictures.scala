@@ -43,7 +43,7 @@ final class PleiadesPictures(media: MediaSettings, licences: LicenceReader) exte
         p,
         pids,
         pids.map(pid =>
-          pid -> http.askJson(PleiadesLinks.placeUrl(Plugin.Http.GetUrl(conf.apiUrl.value), pid)).flatMap(PleiadesLinks.links)
+          pid -> http.askJson(PleiadesLinks.placeUrl(conf.apiUrl, pid)).flatMap(PleiadesLinks.links)
         )
       )
     }
@@ -51,7 +51,7 @@ final class PleiadesPictures(media: MediaSettings, licences: LicenceReader) exte
     val found = read.flatMap { (p, _, answers) =>
       answers
         .flatMap((pid, a) =>
-          a.toOption.toList.flatten.flatMap(l => l.file.toOption.map(f => (pid, l, Commons.File.Title(f.value))))
+          a.toOption.toList.flatten.flatMap(l => l.file.toOption.map(f => (pid, l, f)))
         )
         .distinctBy(_._3)
         .take(conf.perPlace.value.max(0))

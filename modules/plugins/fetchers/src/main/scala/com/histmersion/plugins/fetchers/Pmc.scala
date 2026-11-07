@@ -81,7 +81,7 @@ final class Pmc(cfg: UpstreamSettings, client: () => Plugin.Http):
         .orElse(record.flatMap(_.pdf).flatMap(o => dataset(o, com.histmersion.plugin.FetchedFile.Extension("pdf"))(Downloads.looksLikePdf)))
 
     def fullText: Option[FetchedFile] =
-      record.flatMap(_.xml).flatMap(o => dataset(o, com.histmersion.plugin.FetchedFile.Extension("xml"))(b => Jats.isJats(String(b.value, "UTF-8"))))
+      record.flatMap(_.xml).flatMap(o => dataset(o, com.histmersion.plugin.FetchedFile.Extension("xml"))(b => Jats.isJats(Jats.Xml(String(b.value, "UTF-8")))))
 
     private def dataset(o: PmcObject, ext: com.histmersion.plugin.FetchedFile.Extension)(ok: com.histmersion.plugin.FetchedFile.Bytes => Boolean): Option[FetchedFile] =
       val url = s"${cfg.pmcDataset.url}/${o.key}"

@@ -90,7 +90,7 @@ object AnthropicAnswer:
       write <- optionalInt(c.downField("cache_creation_input_tokens"))
     yield
       val (r, w) = (read.getOrElse(0), write.getOrElse(0))
-      AiUsage((in + r + w).toLong, out.toLong, r.toLong, w.toLong)
+      AiUsage(AiUsage.Input((in + r + w).toLong), AiUsage.Output(out.toLong), AiUsage.CacheRead(r.toLong), AiUsage.CacheWrite(w.toLong))
   }
 
   /** A message answer as the turn it says. */

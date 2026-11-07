@@ -1,5 +1,6 @@
 package com.histmersion.plugins.media
 
+import com.histmersion.plugin.Plugin.Config.given
 import hearth.kindlings.sconfigderivation.ConfigReader
 
 import scala.annotation.targetName

@@ -194,7 +194,7 @@ final class KeePassXcVault(
       Left(Secret.Vault.ResolveResultPart1(s"$name: could not $what with a YubiKey — $parts$tail"))
     if planned.isEmpty then
       val seen = found.fold("")(s =>
-        if s.isEmpty then " (ykman sees no YubiKey)" else s" (ykman sees ${s.toList.sortBy(_.value).mkString(", ")})"
+        if s.isEmpty then " (ykman sees no YubiKey)" else s" (ykman sees ${s.toList.sortBy(x => x.value: Long).mkString(", ")})"
       )
       Left(
         Secret.Vault.ResolveResultPart1(s"$name: none of the configured YubiKeys is connected$seen — ${yubikeys.map(_.shown).mkString(", ")}; plug one in")

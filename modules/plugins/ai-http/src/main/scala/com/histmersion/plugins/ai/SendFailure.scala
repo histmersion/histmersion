@@ -13,7 +13,7 @@ final case class SendFailure(reported: SendFailure.Reported):
   def describe(method: com.histmersion.plugins.ai.SendFailure.Method, url: com.histmersion.plugin.AiHttp.GetUrl): com.histmersion.plugins.ai.SendFailure.Problem =
     SendFailure
       .kind(exception)
-      .fold(Problem(reported.value))(k => Problem(s"${k.value}: Exception when sending request: ${method.value} ${url.value}"))
+      .fold(SendFailure.Problem(reported.value))(k => SendFailure.Problem(s"${k.value}: Exception when sending request: ${method.value} ${url.value}"))
 
 object SendFailure:
   type Kind = Kind.T

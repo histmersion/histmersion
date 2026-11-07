@@ -22,8 +22,6 @@ object Smithsonian:
   object Problem extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type Unit = Unit.T
   object Unit extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type Rows = Rows.T
-  object Rows extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
   /** The header the key travels in (api.data.gov's documented alternative to the `api_key` parameter). */
   val KeyHeader = "X-Api-Key"
@@ -31,14 +29,14 @@ object Smithsonian:
   /** Pure: the query — the place's name as a phrase, objects with images only, none of the excluded units (`unit_code`,
     * a fielded term the API's `terms` endpoint lists).
     */
-  def query(name: com.histmersion.plugin.CollectionQuery.Text, excludedUnits: List[com.histmersion.plugins.media.Smithsonian.Unit] = Nil): com.histmersion.plugin.CollectionQuery.Text =
+  def query(name: com.histmersion.plugin.MediaPlace.Label, excludedUnits: List[com.histmersion.plugins.media.Smithsonian.Unit] = Nil): com.histmersion.plugin.CollectionQuery.Text =
     val units = excludedUnits.map(_.value.replaceAll("[^A-Za-z0-9_]", "")).filter(_.nonEmpty)
     com.histmersion.plugin.CollectionQuery.Text(
       s"\"${name.value.replace("\"", " ").trim}\" AND online_media_type:Images" +
         (if units.isEmpty then "" else units.mkString(" AND NOT unit_code:(", " OR ", ")"))
     )
 
-  def searchUrl(api: com.histmersion.plugin.Plugin.Http.GetUrl, name: com.histmersion.plugin.CollectionQuery.Text, rows: com.histmersion.plugins.media.Smithsonian.Rows, excludedUnits: List[com.histmersion.plugins.media.Smithsonian.Unit] = Nil): com.histmersion.plugin.Plugin.Http.GetUrl =
+  def searchUrl(api: com.histmersion.plugins.media.CollectionSettings.ApiUrl, name: com.histmersion.plugin.MediaPlace.Label, rows: com.histmersion.plugins.media.CollectionSettings.Candidates, excludedUnits: List[com.histmersion.plugins.media.Smithsonian.Unit] = Nil): com.histmersion.plugin.Plugin.Http.GetUrl =
     com.histmersion.plugin.Plugin.Http.GetUrl(
       s"${api.value.stripSuffix("/")}/search?q=${query(name, excludedUnits).value.enc}&rows=${rows.value.max(1).min(1000)}" +
         "&type=edanmdm&row_group=objects"
@@ -126,7 +124,7 @@ object Smithsonian:
           .filter(m => m.str("type").forall(_.equalsIgnoreCase("Images")))
         val cc0 = media.find(m => m.downField("usage").str("access").exists(_.equalsIgnoreCase("CC0")))
         val rights: Either[com.histmersion.plugins.media.Smithsonian.Problem, MediaRights] = cc0 match
-          case Some(_)               => Right(MediaRights.cc0(maker, credit))
+          case Some(_)               => Right(MediaRights.cc0(maker.map(MediaRights.Author(_)), MediaRights.Credit(credit)))
           case None if media.isEmpty => Left(Problem("no image on the record"))
           case None                  =>
             val stated = media.flatMap(m => m.downField("usage").str("access")).distinct
