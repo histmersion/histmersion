@@ -1,5 +1,7 @@
 package com.histmersion.values
 
+import com.histmersion.values.testsupport.ComparedByValue.given
+
 import com.histmersion.{Latitude, LatLon, Longitude, Period, Year}
 import com.histmersion.domain.library.Doi
 import com.histmersion.domain.catalogue.places.Wikidata

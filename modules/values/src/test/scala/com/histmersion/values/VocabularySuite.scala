@@ -1,5 +1,7 @@
 package com.histmersion.values
 
+import com.histmersion.values.testsupport.ComparedByValue.given
+
 import com.histmersion.{Ascii, WireEnumValues}
 import com.histmersion.domain.automation.{Pipeline, ProviderKind, ScheduleKind}
 import com.histmersion.domain.catalogue.Historicity
@@ -23,7 +25,7 @@ class VocabularySuite extends munit.FunSuite:
     val wires = w.all.toList.map(w.wire)
     assertEquals(wires.distinct, wires, "two values share a wire spelling")
     w.all.foreach(e => assertEquals(w.fromWire(w.wire(e)), Some(e), s"${w.wire(e)} does not read back"))
-    assertEquals(w.fromWire("no-such-value"), None)
+    assertEquals(w.fromWire(com.histmersion.WireEnumValues.Wire("no-such-value")), None)
 
   test("every enum vocabulary reads back what it writes, and no two values share a spelling"):
     roundTrips[Source.Status]
@@ -44,22 +46,22 @@ class VocabularySuite extends munit.FunSuite:
     roundTrips[ScheduleKind]
 
   test("the agent and manager vocabularies parse what they spell"):
-    for r <- Run.State.values do assertEquals(Run.State.parse(r.wire.toUpperCase), Some(r))
+    for r <- Run.State.values do assertEquals(Run.State.parse(Run.State.Wire(r.wire.value.toUpperCase)), Some(r))
     for p <- Pipeline.values do assertEquals(Pipeline.parse(p.wire), Some(p))
     for k <- Manager.Kind.values do assertEquals(Manager.Kind.parse(k.wire), Some(k))
-    assertEquals(ProviderKind.parse("claude-code"), Some(ProviderKind.ClaudeCode))
-    assertEquals(ProviderKind.parse("acme", known = Set("acme")), Some(ProviderKind.Plugin("acme")))
-    assertEquals(ProviderKind.parse("acme"), None)
+    assertEquals(ProviderKind.parse(com.histmersion.domain.automation.ProviderKind.Wire("claude-code")), Some(ProviderKind.ClaudeCode))
+    assertEquals(ProviderKind.parse(com.histmersion.domain.automation.ProviderKind.Wire("acme"), known = Set(com.histmersion.domain.automation.ProviderKind.Wire("acme"))), Some(ProviderKind.Plugin(com.histmersion.domain.automation.ProviderKind.Wire("acme"))))
+    assertEquals(ProviderKind.parse(com.histmersion.domain.automation.ProviderKind.Wire("acme")), None)
     assertEquals(ScheduleKind.Acquisition.pipeline, Pipeline.AcquisitionSweep)
     assertEquals(Run.State.next(Run.State.Paused, Run.State.Queued), Some(Run.State.Queued))
     assertEquals(Run.State.next(Run.State.Done, Run.State.Queued), None)
-    assertEquals(Approval.DecidedBy.of("open", None, None), None)
-    assertEquals(Approval.DecidedBy.of("approved", Some("autopilot: ok"), None), Some(Approval.DecidedBy.Autopilot))
+    assertEquals(Approval.DecidedBy.of(com.histmersion.domain.automation.Approval.State.Wire("open"), None, None), None)
+    assertEquals(Approval.DecidedBy.of(com.histmersion.domain.automation.Approval.State.Wire("approved"), Some(com.histmersion.domain.automation.Approval.Note("autopilot: ok")), None), Some(Approval.DecidedBy.Autopilot))
 
   test("the wire spellings the store and the clients rely on"):
     assertEquals(Edge.Kind.wireOf(Edge.Kind.SupersededBy), "superseded_by")
-    assertEquals(Edge.Kind.fromWire("SUPERSEDED_BY"), Some(Edge.Kind.SupersededBy))
-    assertEquals(Source.Status.fromString("nonsense"), Source.Status.Unassessed)
+    assertEquals(Edge.Kind.fromWire(com.histmersion.domain.library.Edge.Kind.Wire("SUPERSEDED_BY")), Some(Edge.Kind.SupersededBy))
+    assertEquals(Source.Status.fromString(com.histmersion.domain.library.Source.Status.Wire("nonsense")), Source.Status.Unassessed)
     assertEquals(Source.Status.Current.wire, "current")
     assertEquals(Place.Precision.GridCell.wire, "grid-cell")
     assertEquals(Issue.Kind.wireOf(Issue.Kind.DeletedThereChangedHere), "deleted-there-changed-here")
@@ -80,18 +82,18 @@ class VocabularySuite extends munit.FunSuite:
     assertEquals(Event.EdgeKind.allen ++ Event.EdgeKind.causal, Event.EdgeKind.all.toSet)
 
   test("a foreign type label maps onto a place kind"):
-    assertEquals(Place.Kind.parse("Kingdom"), Some(Place.Kind.Polity))
-    assertEquals(Place.Kind.parse("tribe"), Some(Place.Kind.People))
-    assertEquals(Place.Kind.parse("  "), None)
+    assertEquals(Place.Kind.parse(com.histmersion.domain.catalogue.Place.Kind.Wire("Kingdom")), Some(Place.Kind.Polity))
+    assertEquals(Place.Kind.parse(com.histmersion.domain.catalogue.Place.Kind.Wire("tribe")), Some(Place.Kind.People))
+    assertEquals(Place.Kind.parse(com.histmersion.domain.catalogue.Place.Kind.Wire("  ")), None)
 
   test("a Pleiades point on an atlas grid centre is a grid cell; anything else is stated"):
-    assertEquals(Place.Precision.of("pleiades_1", 22.5, 37.5), Place.Precision.GridCell)
-    assertEquals(Place.Precision.of("wikidata_q1", 22.5, 37.5), Place.Precision.Stated)
-    assertEquals(Place.Precision.of("pleiades_1", 22.51, 37.5), Place.Precision.Stated)
+    assertEquals(Place.Precision.of(com.histmersion.domain.catalogue.Place.Id("pleiades_1"), com.histmersion.Longitude(22.5), com.histmersion.Latitude(37.5)), Place.Precision.GridCell)
+    assertEquals(Place.Precision.of(com.histmersion.domain.catalogue.Place.Id("wikidata_q1"), com.histmersion.Longitude(22.5), com.histmersion.Latitude(37.5)), Place.Precision.Stated)
+    assertEquals(Place.Precision.of(com.histmersion.domain.catalogue.Place.Id("pleiades_1"), com.histmersion.Longitude(22.51), com.histmersion.Latitude(37.5)), Place.Precision.Stated)
 
   test("a picture's role ranks on a card; an unknown role last"):
-    assertEquals(MediaRole.order(MediaRole.Image), 0)
-    assertEquals(MediaRole.order("nope"), MediaRole.all.size)
+    assertEquals(MediaRole.order(MediaRole.Wire(MediaRole.Image)), 0)
+    assertEquals(MediaRole.order(com.histmersion.domain.media.MediaRole.Wire("nope")), MediaRole.all.size)
 
   test("the spellings lower-case A-Z only, as Locale.ROOT does for them"):
     assertEquals(Ascii.lower("SupersededBy_X-1"), "supersededby_x-1")
