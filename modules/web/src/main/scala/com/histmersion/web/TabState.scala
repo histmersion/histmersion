@@ -51,7 +51,7 @@ object TabState:
 
   /** The first page of a query's answer. */
   def first[Row](p: TabPage[Row], page: com.histmersion.web.ResultsPaging.PageNumber): TabState[Row] =
-    TabState(p.rows, p.total, com.histmersion.api.RowCount(math.min(page.value, p.rows.size)), loaded = true, extras = p.extras)
+    TabState(p.rows, p.total, com.histmersion.api.RowCount(math.min(page.value, p.rows.size)), loaded = com.histmersion.web.TabState.Loaded(true), extras = p.extras)
 
   /** A further page from the server, appended (what "show more" asked for once the loaded rows ran out). */
   def appended[Row](s: TabState[Row], p: TabPage[Row], page: com.histmersion.web.ResultsPaging.PageNumber): TabState[Row] =
