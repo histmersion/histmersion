@@ -218,7 +218,7 @@ private[places] object PlaceBundleRepo:
     val ours = w.local.places.map(p => p.uid -> p.id.value).toMap
     val kept =
       w.es.places
-        .filterNot(p => w.writes(p.uid).value)
+        .filterNot(p => w.writes(p.uid))
         .flatMap(p => ours.get(p.uid).filter(_ != p.id.value).map(p.id.value -> _))
         .toMap
     id => kept.get(id.value).fold(id)(BPlaceRow.Id(_))
@@ -236,8 +236,8 @@ private[places] object PlaceBundleRepo:
       com.histmersion.util.data.exchange.PlanQuestions.LabelTakenWhat("place")
     )((from, to) =>
       PlaceRepo.renameIn(
-        com.histmersion.domain.catalogue.Place.Id.assume(from.value),
-        com.histmersion.domain.catalogue.Place.Id.assume(to.value)
+        com.histmersion.domain.catalogue.Place.Id.assume(from),
+        com.histmersion.domain.catalogue.Place.Id.assume(to)
       )
     )
 
@@ -247,7 +247,7 @@ private[places] object PlaceBundleRepo:
   def placesIn(w: BundleImport.Writer): Unit =
     given DbCon = w.transaction
     val placeHere = this.placeHere(w)
-    val places = w.es.places.filter(p => w.writes(p.uid).value)
+    val places = w.es.places.filter(p => w.writes(p.uid))
     places.foreach { p =>
       val range = rangeOrAll(p.period)
       val props = p.properties.map(BundleFormat.printer.print)
