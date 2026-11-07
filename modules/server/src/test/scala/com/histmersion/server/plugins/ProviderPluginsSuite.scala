@@ -500,13 +500,13 @@ class ProviderPluginsSuite extends munit.FunSuite:
     assertEquals(d.timeSpan, TimeSpan(Some(com.histmersion.api.catalogue.Year(-1050L)), None, None, Some(com.histmersion.api.catalogue.Year(-950L))))
     assertEquals((d.central, d.plusMinus), (Some(-1000L), Some(50L)))
     // a span the record gives is the record's; only the limits touch it
-    val spanned = base.modify(_.timeSpan).setTo(TimeSpan(Some(-1200L), None, None, Some(-1100L)))
+    val spanned = base.modify(_.timeSpan).setTo(TimeSpan(Some(com.histmersion.api.catalogue.Year(-1200L)), None, None, Some(com.histmersion.api.catalogue.Year(-1100L))))
     assertEquals(PluginEvents.derive(spanned, now).timeSpan, spanned.timeSpan)
     // the present and the catalogue's floor hold every point, the central year stays as stated
     val future = base.modify(_.central).setTo((Some(2020L): _root_.scala.Option[_root_.scala.Long])).modify(_.plusMinus).setTo((Some(10L): _root_.scala.Option[_root_.scala.Long]))
     assertEquals(PluginEvents.derive(future, now).timeSpan, TimeSpan(Some(com.histmersion.api.catalogue.Year(2010L)), None, None, Some(com.histmersion.api.catalogue.Year(2026L))))
     assertEquals(PluginEvents.derive(future, now).central, Some(2020L))
-    val early = spanned.modify(_.timeSpan).setTo(TimeSpan(Some(-3500L), Some(-3100L), Some(-2950L), Some(-2900L)))
+    val early = spanned.modify(_.timeSpan).setTo(TimeSpan(Some(com.histmersion.api.catalogue.Year(-3500L)), Some(com.histmersion.api.catalogue.Year(-3100L)), Some(com.histmersion.api.catalogue.Year(-2950L)), Some(com.histmersion.api.catalogue.Year(-2900L))))
     assertEquals(
       PluginEvents.derive(early, CatalogDating.Limits(com.histmersion.upstreams.dating.CatalogDating.HistoricalYear(2026), Some(com.histmersion.upstreams.dating.CatalogDating.HistoricalYear(-3000L)))).timeSpan,
       TimeSpan(Some(com.histmersion.api.catalogue.Year(-3000L)), Some(com.histmersion.api.catalogue.Year(-3000L)), Some(com.histmersion.api.catalogue.Year(-2950L)), Some(com.histmersion.api.catalogue.Year(-2900L)))

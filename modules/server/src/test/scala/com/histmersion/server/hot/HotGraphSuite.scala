@@ -35,7 +35,7 @@ class HotGraphSuite extends munit.FunSuite:
       .node[Res](com.histmersion.server.hot.Hot.Graph.Def.Name("pool"), keys = List(com.histmersion.config.HotNode.Keys("db"))) { ctx =>
         builds.incrementAndGet()
         ctx.config("db") match
-          case "broken" => Left("cannot connect")
+          case "broken" => Left(com.histmersion.server.hot.Hot.Graph.Problem("cannot connect"))
           case db       => Right(useInScope(Res(s"pool-$db", log))(_.close()))
       }
       .fold(fail(_), identity)
@@ -239,7 +239,7 @@ class HotGraphSuite extends munit.FunSuite:
       .node[Res](com.histmersion.server.hot.Hot.Graph.Def.Name("pool"), keys = List(com.histmersion.config.HotNode.Keys("db"))) { ctx =>
         val r = useInScope(Res(s"pool-${ctx.config("db")}", log))(_.close())
         releaseAfterScope(log.add(s"released ${r.name}"))
-        if ctx.config("db") == "half" then Left("the second half failed") else Right(r)
+        if ctx.config("db") == "half" then Left(com.histmersion.server.hot.Hot.Graph.Problem("the second half failed")) else Right(r)
       }
       .fold(fail(_), identity)
     assert(graph.reload(Map("db" -> "half"), List(com.histmersion.config.HotNode.Name("db"))).isLeft)

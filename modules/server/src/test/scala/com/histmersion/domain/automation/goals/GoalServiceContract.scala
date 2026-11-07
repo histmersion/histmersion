@@ -159,7 +159,7 @@ abstract class GoalServiceContract extends EngineStoreSuite:
       g(s)
         .patch(
           com.histmersion.domain.automation.Goal.Slug("zz-p"),
-          com.histmersion.api.automation.Goal.Patch(title = Some(com.histmersion.api.automation.Goal.Title("P2")), tags = Some(List(com.histmersion.api.automation.Goal.Tags("t"))), periodEnd = Some(-1500))
+          com.histmersion.api.automation.Goal.Patch(title = Some(com.histmersion.api.automation.Goal.Title("P2")), tags = Some(List(com.histmersion.api.automation.Goal.Tags("t"))), periodEnd = Some(com.histmersion.api.catalogue.Year(-1500)))
         )
         .isRight
     )

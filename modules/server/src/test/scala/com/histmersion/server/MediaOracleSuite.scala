@@ -988,7 +988,7 @@ class MediaOracleSuite extends DbSuite:
     run("zq-own an event", MediaImportRequest(com.histmersion.api.media.MediaItem.Provider("zq-own"), dryRun = com.histmersion.api.media.MediaImportRequest.DryRun(false), event = Some(com.histmersion.api.catalogue.Event.Id("fall_of_x"))))
     run(
       "zq-own again, refresh",
-      MediaImportRequest(com.histmersion.api.media.MediaItem.Provider("zq-own"), dryRun = com.histmersion.api.media.MediaImportRequest.DryRun(false), place = Some(com.histmersion.api.catalogue.Place.Id("pleiades_697725")), refresh = true)
+      MediaImportRequest(com.histmersion.api.media.MediaItem.Provider("zq-own"), dryRun = com.histmersion.api.media.MediaImportRequest.DryRun(false), place = Some(com.histmersion.api.catalogue.Place.Id("pleiades_697725")), refresh = com.histmersion.api.media.MediaImportRequest.Refresh(true))
     )
     run("zq-search dry run", MediaImportRequest(com.histmersion.api.media.MediaItem.Provider("zq-search"), dryRun = com.histmersion.api.media.MediaImportRequest.DryRun(true), limit = Some(com.histmersion.api.media.MediaImportRequest.Limit(3))))
     run("zq-search a place", MediaImportRequest(com.histmersion.api.media.MediaItem.Provider("zq-search"), dryRun = com.histmersion.api.media.MediaImportRequest.DryRun(false), place = Some(com.histmersion.api.catalogue.Place.Id("pleiades_570491"))))
@@ -1006,15 +1006,15 @@ class MediaOracleSuite extends DbSuite:
       sb ++= s"## covers: $name\n" + wire.take() +
         r.fold(e => s"refused: ${e.message}\n", r => s"report: ${r.asJson.spaces2SortKeys}\n")
     covers("dry run", MediaCoversRequest(dryRun = com.histmersion.api.library.RepairAcquire.RepairRequest.DryRun(true), illustrations = com.histmersion.api.media.MediaCoversRequest.Illustrations(false)))
-    covers("one with a cover", MediaCoversRequest(dryRun = com.histmersion.api.library.RepairAcquire.RepairRequest.DryRun(false), citekey = Some(com.histmersion.api.library.Citekey("zqol2000_a")), illustrations = false))
-    covers("one without", MediaCoversRequest(dryRun = com.histmersion.api.library.RepairAcquire.RepairRequest.DryRun(false), citekey = Some(com.histmersion.api.library.Citekey("zqol2000_b")), illustrations = false))
+    covers("one with a cover", MediaCoversRequest(dryRun = com.histmersion.api.library.RepairAcquire.RepairRequest.DryRun(false), citekey = Some(com.histmersion.api.library.Citekey("zqol2000_a")), illustrations = com.histmersion.api.media.MediaCoversRequest.Illustrations(false)))
+    covers("one without", MediaCoversRequest(dryRun = com.histmersion.api.library.RepairAcquire.RepairRequest.DryRun(false), citekey = Some(com.histmersion.api.library.Citekey("zqol2000_b")), illustrations = com.histmersion.api.media.MediaCoversRequest.Illustrations(false)))
     covers(
       "an ISBN the request names",
       MediaCoversRequest(
         dryRun = com.histmersion.api.library.RepairAcquire.RepairRequest.DryRun(false),
         citekey = Some(com.histmersion.api.library.Citekey("zqmt2020_x")),
-        illustrations = false,
-        isbn = Some("9780000000003")
+        illustrations = com.histmersion.api.media.MediaCoversRequest.Illustrations(false),
+        isbn = Some(com.histmersion.api.media.MediaCoversRequest.Isbn("9780000000003"))
       )
     )
     sb ++= "## stored\n" + MediaWire.stored(ds)

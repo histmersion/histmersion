@@ -152,8 +152,8 @@ class BasemapLabelsSuite extends munit.FunSuite:
     assert(
       !BasemapLabels.inTile(olympus, com.histmersion.util.basemap.PmTiles.Zoom(5), com.histmersion.util.basemap.PmTiles.Zoom(8)) && BasemapLabels.inTile(olympus, com.histmersion.util.basemap.PmTiles.Zoom(6), com.histmersion.util.basemap.PmTiles.Zoom(8)) && BasemapLabels.inTile(
         olympus.modify(_.minZoom).setTo(12),
-        8,
-        8
+        com.histmersion.util.basemap.PmTiles.Zoom(8),
+        com.histmersion.util.basemap.PmTiles.Zoom(8)
       )
     )
     assert(BasemapLabels.inTile(world, com.histmersion.util.basemap.PmTiles.Zoom(2), com.histmersion.util.basemap.PmTiles.Zoom(8)) && !BasemapLabels.inTile(world, com.histmersion.util.basemap.PmTiles.Zoom(3), com.histmersion.util.basemap.PmTiles.Zoom(8)))

@@ -89,13 +89,13 @@ class RepositoryLandingSuite extends munit.FunSuite:
 
   test("host words are whole labels (or a prefix ending in '-'), never part of a longer word"):
     val r = Rules(Nil, Nil, List(com.histmersion.upstreams.landing.RepositoryLanding.HostWord("uni-"), com.histmersion.upstreams.landing.RepositoryLanding.HostWord("pure"), com.histmersion.upstreams.landing.RepositoryLanding.HostWord("eprints"), com.histmersion.upstreams.landing.RepositoryLanding.HostWord("opus")), Nil, denyHostWords = List(com.histmersion.upstreams.landing.RepositoryLanding.HostWord("press")))
-    assert(r.academic("publications.uni-tuebingen.de"))
-    assert(r.academic("pure.mpg.de") && r.academic("opus4.kobv.de") && r.academic("pure-portal.example.dk"))
-    assert(!r.academic("purepharma.com") && !r.academic("eprintsandmore.com"))
-    assert(!r.academic("x.example.com"))
-    assert(r.denied("press.example.edu") && !r.denied("pressreader.com"))
+    assert(r.academic(com.histmersion.upstreams.landing.RepositoryLanding.Host("publications.uni-tuebingen.de")))
+    assert(r.academic(com.histmersion.upstreams.landing.RepositoryLanding.Host("pure.mpg.de")) && r.academic(com.histmersion.upstreams.landing.RepositoryLanding.Host("opus4.kobv.de")) && r.academic("pure-portal.example.dk"))
+    assert(!r.academic(com.histmersion.upstreams.landing.RepositoryLanding.Host("purepharma.com")) && !r.academic(com.histmersion.upstreams.landing.RepositoryLanding.Host("eprintsandmore.com")))
+    assert(!r.academic(com.histmersion.upstreams.landing.RepositoryLanding.Host("x.example.com")))
+    assert(r.denied(com.histmersion.upstreams.landing.RepositoryLanding.Host("press.example.edu")) && !r.denied(com.histmersion.upstreams.landing.RepositoryLanding.Host("pressreader.com")))
     assert(wordLabel(com.histmersion.upstreams.landing.RepositoryLanding.HostLabel("uni-koeln"), com.histmersion.upstreams.landing.RepositoryLanding.HostWord("uni-")) && !wordLabel(com.histmersion.upstreams.landing.RepositoryLanding.HostLabel("unicorn"), com.histmersion.upstreams.landing.RepositoryLanding.HostWord("uni-")))
-    assert(r.academic("x.ac.at") && r.academic("x.edu") && r.academic("x.edu.au"))
+    assert(r.academic(com.histmersion.upstreams.landing.RepositoryLanding.Host("x.ac.at")) && r.academic(com.histmersion.upstreams.landing.RepositoryLanding.Host("x.edu")) && r.academic("x.edu.au"))
 
   test("candidates: OpenAlex's landing pages and record-page pdf_urls, repositories marked, distinct, best first"):
     val j = parse(
@@ -145,7 +145,7 @@ class RepositoryLandingSuite extends munit.FunSuite:
     )
 
   test("an OA publisher's page: read only when open and on the list; its own PDFs only"):
-    assert(rules.oaPublisher(com.histmersion.upstreams.landing.RepositoryLanding.Host("ejournals.eu")) && rules.oaPublisher(com.histmersion.upstreams.landing.RepositoryLanding.Host("www.ejournals.eu")) && rules.oaPublisher("ore.eu"))
+    assert(rules.oaPublisher(com.histmersion.upstreams.landing.RepositoryLanding.Host("ejournals.eu")) && rules.oaPublisher(com.histmersion.upstreams.landing.RepositoryLanding.Host("www.ejournals.eu")) && rules.oaPublisher(com.histmersion.upstreams.landing.RepositoryLanding.Host("ore.eu")))
     assert(
       !rules.oaPublisher(com.histmersion.upstreams.landing.RepositoryLanding.Host("brill.com")) && !rules.oaPublisher(com.histmersion.upstreams.landing.RepositoryLanding.Host("mdpi.com")) && !rules.oaPublisher(com.histmersion.upstreams.landing.RepositoryLanding.Host("ore.eu.example.com"))
     )

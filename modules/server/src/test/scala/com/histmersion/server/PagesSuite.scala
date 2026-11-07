@@ -287,41 +287,41 @@ class PagesSuite extends munit.FunSuite:
     ),
     rounds = List(
       ReviewRound(
-        "run-a",
-        1,
-        1,
-        Some("2026-10-01T10:00:00Z"),
+        com.histmersion.api.research.ReviewRound.Run("run-a"),
+        com.histmersion.api.research.ReviewRound.RunNumber(1),
+        com.histmersion.api.research.ReviewRound.Round(1),
+        Some(com.histmersion.api.research.ReviewRound.StartedAt("2026-10-01T10:00:00Z")),
         List(
           ReviewFinding(
-            "R1",
-            "rules",
-            "major",
-            "decorative-citation",
-            "Background ¶2",
-            "a <cited> claim",
-            "",
-            "",
-            "rejected",
-            note = "the record supports it",
-            closedBy = Some("fixer"),
-            closedRound = Some(1),
-            closedRunNumber = Some(1)
+            com.histmersion.api.research.ReviewFinding.Id("R1"),
+            com.histmersion.api.research.ReviewFinding.Reviewer("rules"),
+            com.histmersion.api.research.ReviewFinding.Severity("major"),
+            com.histmersion.api.research.ReviewFinding.Kind("decorative-citation"),
+            com.histmersion.api.research.ReviewFinding.Where("Background ¶2"),
+            com.histmersion.api.research.ReviewFinding.Problem("a <cited> claim"),
+            com.histmersion.api.research.ReviewFinding.Fix(""),
+            com.histmersion.api.research.ReviewFinding.Quote(""),
+            com.histmersion.api.research.ReviewFinding.Outcome("rejected"),
+            note = com.histmersion.api.research.ReviewFinding.Note("the record supports it"),
+            closedBy = Some(com.histmersion.api.automation.Activity.Actor("fixer")),
+            closedRound = Some(com.histmersion.api.research.ReviewRound.Round(1)),
+            closedRunNumber = Some(com.histmersion.api.research.ReviewRound.RunNumber(1))
           ),
           ReviewFinding(
-            "S1",
-            "skeptic",
-            "major",
-            "omitted-critique",
-            "",
-            "the 2019 critique is missing",
-            "",
-            "",
-            "open"
+            com.histmersion.api.research.ReviewFinding.Id("S1"),
+            com.histmersion.api.research.ReviewFinding.Reviewer("skeptic"),
+            com.histmersion.api.research.ReviewFinding.Severity("major"),
+            com.histmersion.api.research.ReviewFinding.Kind("omitted-critique"),
+            com.histmersion.api.research.ReviewFinding.Where(""),
+            com.histmersion.api.research.ReviewFinding.Problem("the 2019 critique is missing"),
+            com.histmersion.api.research.ReviewFinding.Fix(""),
+            com.histmersion.api.research.ReviewFinding.Quote(""),
+            com.histmersion.api.research.ReviewFinding.Outcome("open")
           )
         )
       )
     ),
-    goals = List(ReviewGoal("sea-peoples-goal", "The Sea Peoples & the collapse", "compiled"))
+    goals = List(ReviewGoal(com.histmersion.api.research.ReviewGoal.Slug("sea-peoples-goal"), com.histmersion.api.research.ReviewGoal.Title("The Sea Peoples & the collapse"), com.histmersion.api.research.ReviewGoal.Status("compiled")))
   )
 
   test("the article page shows the review badge with its meaning, and the goals that link it, under the title"):

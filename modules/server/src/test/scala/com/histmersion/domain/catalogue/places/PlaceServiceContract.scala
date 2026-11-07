@@ -141,7 +141,7 @@ abstract class PlaceServiceContract extends CatalogueStoreSuite:
     assertEquals(p.get(com.histmersion.domain.catalogue.Place.Id("zzp_march")), None)
     assertEquals(p.get(com.histmersion.domain.catalogue.Place.Id("zzp_hill")).map(_.parents.map(_.id)), Some(List("zzp_marches")))
     assertEquals(p.get(com.histmersion.domain.catalogue.Place.Id("zzp_marches")).map(_.children.map(_.id)), Some(List("zzp_hill", "zzp_well")))
-    assertEquals(p.scopeFor(List(com.histmersion.domain.catalogue.places.PlaceService.ScopeForValues("zzp_march")), None).idsFor(com.histmersion.domain.catalogue.places.PlaceScope.Value("zzp_march")).map(_.toSet).map(_("zzp_hill")), Some(true))
+    assertEquals(p.scopeFor(List(com.histmersion.domain.catalogue.places.PlaceService.ScopeForValues("zzp_march")), None).idsFor(com.histmersion.domain.catalogue.places.PlaceScope.Value("zzp_march")).map(_.toSet).map(_(com.histmersion.domain.catalogue.Place.Id("zzp_hill"))), Some(true))
     assertEquals(p.rename(com.histmersion.domain.catalogue.Place.Id("zzp_hill"), com.histmersion.domain.catalogue.Place.Id("zzp_well")).left.map(_.code), Left(Some(Write.CodeInvalid)))
     assertEquals(p.rename(com.histmersion.domain.catalogue.Place.Id("zzp_gone"), com.histmersion.domain.catalogue.Place.Id("zzp_new")).left.map(_.code), Left(Some(Write.CodeNotFound)))
   }

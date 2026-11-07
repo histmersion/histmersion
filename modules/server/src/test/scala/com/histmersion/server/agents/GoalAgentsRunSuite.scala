@@ -531,7 +531,7 @@ class GoalAgentsRunSuite extends com.histmersion.db.DbSuite with com.histmersion
     val (a, h, _) = handlers(c); seed(h)
     assert(a.startRun(RunRequest(com.histmersion.api.automation.Agents.RunRequest.Pipeline("compile-article"), Slug, title = Some("x"))).left.exists(_.message.contains("filter")))
     assert(a.startRun(RunRequest(com.histmersion.api.automation.Agents.RunRequest.Pipeline("compile-article"), Slug, topics = List("t"))).left.exists(_.message.contains("title")))
-    assert(a.startRun(RunRequest(com.histmersion.api.automation.Agents.RunRequest.Pipeline("compile-article"), com.histmersion.api.automation.Agents.RunRequest.Target("Not A Slug"), title = Some(com.histmersion.api.automation.Agents.RunRequest.Title("x")), topics = List("t"))).isLeft)
+    assert(a.startRun(RunRequest(com.histmersion.api.automation.Agents.RunRequest.Pipeline("compile-article"), com.histmersion.api.automation.Agents.RunRequest.Target("Not A Slug"), title = Some(com.histmersion.api.automation.Agents.RunRequest.Title("x")), topics = List(com.histmersion.api.automation.Agents.RunRequest.Topics("t")))).isLeft)
     assert(
       a.startRun(RunRequest(com.histmersion.api.automation.Agents.RunRequest.Pipeline("compile-article"), Slug, title = Some("x"), topics = List("t"), kind = Some("BAD KIND")))
         .isLeft
