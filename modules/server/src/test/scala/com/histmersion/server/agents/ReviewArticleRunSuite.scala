@@ -375,7 +375,7 @@ class ReviewArticleRunSuite extends com.histmersion.db.DbSuite with RunTranscrip
     )
     c.add("fixer", Seq(text(fixer)))
     val (a, h) = handlers(c); seed(h)
-    val run = start(a, RunRequest(com.histmersion.api.automation.Agents.RunRequest.Pipeline("review-article"), SlugTarget, fix = Some(true), rounds = Some(2)))
+    val run = start(a, RunRequest(com.histmersion.api.automation.Agents.RunRequest.Pipeline("review-article"), SlugTarget, fix = Some(com.histmersion.api.automation.Agents.RunRequest.Fix(true)), rounds = Some(com.histmersion.api.automation.Agents.RunRequest.Rounds(2))))
     assertEquals(run.status, "done", run.error)
     assertEquals(run.params, RunParams(fix = Some(com.histmersion.api.automation.Agents.RunRequest.Fix(true)), rounds = Some(com.histmersion.api.automation.Agents.RunRequest.Rounds(2))))
 
@@ -479,7 +479,7 @@ class ReviewArticleRunSuite extends com.histmersion.db.DbSuite with RunTranscrip
     val addUncited = edit("insertAfter", s"Where the tin was mined is open [[$Ck]].", "\n\n" + uncited)
     c.add("fixer", Seq(text(fixerAnswer(List(gloss, addUncited)))), Seq(text(fixerAnswer(List(gloss)))))
     val (a, h) = handlers(c); seed(h)
-    val run = start(a, RunRequest(com.histmersion.api.automation.Agents.RunRequest.Pipeline("review-article"), SlugTarget, fix = Some(true), rounds = Some(2)))
+    val run = start(a, RunRequest(com.histmersion.api.automation.Agents.RunRequest.Pipeline("review-article"), SlugTarget, fix = Some(com.histmersion.api.automation.Agents.RunRequest.Fix(true)), rounds = Some(com.histmersion.api.automation.Agents.RunRequest.Rounds(2))))
     assertEquals(run.status, "done", run.error)
     assertEquals(c.served("fixer"), 2)
     assertEquals(h.research.articles.get(Slug).toOption.get.article.body.value.trim, Revised.value.trim)
@@ -517,7 +517,7 @@ class ReviewArticleRunSuite extends com.histmersion.db.DbSuite with RunTranscrip
       edit("replace", "Tin came to the Aegean by sea", "Tin, the scarce half of bronze, came to the Aegean by sea")
     c.add("fixer", Seq(text(fixerAnswer(List(bad)))), Seq(text(fixerAnswer(List(gloss)))))
     val (a, h) = handlers(c); seed(h)
-    val run = start(a, RunRequest(com.histmersion.api.automation.Agents.RunRequest.Pipeline("review-article"), SlugTarget, fix = Some(true), rounds = Some(2)))
+    val run = start(a, RunRequest(com.histmersion.api.automation.Agents.RunRequest.Pipeline("review-article"), SlugTarget, fix = Some(com.histmersion.api.automation.Agents.RunRequest.Fix(true)), rounds = Some(com.histmersion.api.automation.Agents.RunRequest.Rounds(2))))
     assertEquals(run.status, "done", run.error)
     assertEquals(c.served("fixer"), 2)
     assertEquals(h.research.articles.get(Slug).toOption.get.article.body.value.trim, Revised.value.trim)
@@ -558,7 +558,7 @@ class ReviewArticleRunSuite extends com.histmersion.db.DbSuite with RunTranscrip
     val dated = edit("replace", "The date of the wreck is argued", "The cargo dates to about 1320 BCE")
     c.add("fixer", Seq(text(fixerAnswer(List(dated), applied = List("S1")))))
     val (a, h) = handlers(c); seed(h)
-    val run = start(a, RunRequest(com.histmersion.api.automation.Agents.RunRequest.Pipeline("review-article"), SlugTarget, fix = Some(true), rounds = Some(2)))
+    val run = start(a, RunRequest(com.histmersion.api.automation.Agents.RunRequest.Pipeline("review-article"), SlugTarget, fix = Some(com.histmersion.api.automation.Agents.RunRequest.Fix(true)), rounds = Some(com.histmersion.api.automation.Agents.RunRequest.Rounds(2))))
     assertEquals(run.status, "done", run.error)
     val prompt = userPrompt(c.requests.get("fixer").peek().head)
     assert(prompt.contains(s"""S1 [skeptic, major, date]"""), prompt)
@@ -599,7 +599,7 @@ class ReviewArticleRunSuite extends com.histmersion.db.DbSuite with RunTranscrip
         .check(Slug, io.circe.parser.decode[Article.Edits.ArticleCheckRequest](args).toOption.get)
         .toOption
         .get
-    val run = start(a, RunRequest(com.histmersion.api.automation.Agents.RunRequest.Pipeline("review-article"), SlugTarget, fix = Some(true), rounds = Some(2)))
+    val run = start(a, RunRequest(com.histmersion.api.automation.Agents.RunRequest.Pipeline("review-article"), SlugTarget, fix = Some(com.histmersion.api.automation.Agents.RunRequest.Fix(true)), rounds = Some(com.histmersion.api.automation.Agents.RunRequest.Rounds(2))))
     assertEquals(run.status, "done", run.error)
     assertEquals(h.research.articles.get(Slug).toOption.get.article.body.value.trim, Revised.value.trim)
     val first = c.requests.get("fixer").asScala.toList.head
@@ -678,7 +678,7 @@ class ReviewArticleRunSuite extends com.histmersion.db.DbSuite with RunTranscrip
         .patch(Slug, Article.Patch(filter = Some(Article.Filter(topics = List(com.histmersion.api.library.Filter.Topics("zzagent_review_tin"))))))
         .isRight
     )
-    val run = start(a, RunRequest(com.histmersion.api.automation.Agents.RunRequest.Pipeline("review-article"), SlugTarget, fix = Some(true), rounds = Some(2)))
+    val run = start(a, RunRequest(com.histmersion.api.automation.Agents.RunRequest.Pipeline("review-article"), SlugTarget, fix = Some(com.histmersion.api.automation.Agents.RunRequest.Fix(true)), rounds = Some(com.histmersion.api.automation.Agents.RunRequest.Rounds(2))))
     assertEquals(run.status, "done", run.error)
 
     val steps = connect(ds)(AgentRepo.steps(ApiIds.job(run.id),com.histmersion.domain.automation.agents.AgentRepo.OutputChars(40000)))
@@ -746,7 +746,7 @@ class ReviewArticleRunSuite extends com.histmersion.db.DbSuite with RunTranscrip
     val theirs = Article.Body(Body.value.replace("by sea", "by sea and by land"))
     c.before =
       w => if w == "fixer" then assert(h.research.articles.patch(Slug, Article.Patch(body = Some(theirs))).isRight)
-    val run = start(a, RunRequest(com.histmersion.api.automation.Agents.RunRequest.Pipeline("review-article"), SlugTarget, fix = Some(true), rounds = Some(2)))
+    val run = start(a, RunRequest(com.histmersion.api.automation.Agents.RunRequest.Pipeline("review-article"), SlugTarget, fix = Some(com.histmersion.api.automation.Agents.RunRequest.Fix(true)), rounds = Some(com.histmersion.api.automation.Agents.RunRequest.Rounds(2))))
     assertEquals(run.status, "done", run.error)
     assertEquals(
       h.research.articles.get(Slug).toOption.get.article.body.value.trim,
@@ -793,7 +793,7 @@ class ReviewArticleRunSuite extends com.histmersion.db.DbSuite with RunTranscrip
     val c = PanelClient(Model)
     val (a, h) = handlers(c); seed(h)
     assert(a.startRun(RunRequest(com.histmersion.api.automation.Agents.RunRequest.Pipeline("review-article"), com.histmersion.api.automation.Agents.RunRequest.Target("zzagent_nope"))).isLeft)
-    assert(a.startRun(RunRequest(com.histmersion.api.automation.Agents.RunRequest.Pipeline("review-article"), SlugTarget, rounds = Some(99))).left.exists(_.message.value.contains("rounds")))
+    assert(a.startRun(RunRequest(com.histmersion.api.automation.Agents.RunRequest.Pipeline("review-article"), SlugTarget, rounds = Some(com.histmersion.api.automation.Agents.RunRequest.Rounds(99)))).left.exists(_.message.value.contains("rounds")))
     val noSkeptic = baseCfg.modify(_.agents).setTo(baseCfg.agents.modify(_.roles).setTo(baseCfg.agents.roles.modify(_.skeptic).setTo("")))
     val (b, _) = handlers(c, noSkeptic)
     assert(b.startRun(RunRequest(com.histmersion.api.automation.Agents.RunRequest.Pipeline("review-article"), SlugTarget)).left.exists(_.message.value.contains("skeptic")))
@@ -844,7 +844,7 @@ class ReviewArticleRunSuite extends com.histmersion.db.DbSuite with RunTranscrip
       )
     )
     val (a, h) = handlers(c); seed(h)
-    val run = start(a, RunRequest(com.histmersion.api.automation.Agents.RunRequest.Pipeline("review-article"), SlugTarget, fix = Some(true), rounds = Some(3)))
+    val run = start(a, RunRequest(com.histmersion.api.automation.Agents.RunRequest.Pipeline("review-article"), SlugTarget, fix = Some(com.histmersion.api.automation.Agents.RunRequest.Fix(true)), rounds = Some(com.histmersion.api.automation.Agents.RunRequest.Rounds(3))))
     assertEquals(run.status, "done", run.error)
 
     val steps = connect(ds)(AgentRepo.steps(ApiIds.job(run.id),com.histmersion.domain.automation.agents.AgentRepo.OutputChars(100000)))
@@ -980,7 +980,7 @@ class ReviewArticleRunSuite extends com.histmersion.db.DbSuite with RunTranscrip
       val cfg = baseCfg.modify(_.researchAgents).setTo(baseCfg.researchAgents.modify(_.review).setTo(baseCfg.researchAgents.review.modify(_.finalPanel).setTo(mode))
       )
       val (a, h) = handlers(c, cfg); seed(h)
-      (start(a, RunRequest(com.histmersion.api.automation.Agents.RunRequest.Pipeline("review-article"), SlugTarget, fix = Some(true), rounds = Some(2))), c)
+      (start(a, RunRequest(com.histmersion.api.automation.Agents.RunRequest.Pipeline("review-article"), SlugTarget, fix = Some(com.histmersion.api.automation.Agents.RunRequest.Fix(true)), rounds = Some(com.histmersion.api.automation.Agents.RunRequest.Rounds(2)))), c)
     val (clear, c1) = go("clear")
     assertEquals(clear.status, "done", clear.error)
     assertEquals((c1.served("rules"), c1.served("cold"), c1.served("skeptic")), (2, 1, 1))
@@ -1252,7 +1252,7 @@ class ReviewArticleRunSuite extends com.histmersion.db.DbSuite with RunTranscrip
     c.add("fixer", Seq(text(fixerAnswer(List(gloss)))))
     val (a, h) = handlers(c); seed(h)
     val before = CorpusSnapshot.of(ds)
-    val run = start(a, RunRequest(com.histmersion.api.automation.Agents.RunRequest.Pipeline("review-article"), SlugTarget, fix = Some(true), rounds = Some(3), dryRun = Some(true)))
+    val run = start(a, RunRequest(com.histmersion.api.automation.Agents.RunRequest.Pipeline("review-article"), SlugTarget, fix = Some(com.histmersion.api.automation.Agents.RunRequest.Fix(true)), rounds = Some(com.histmersion.api.automation.Agents.RunRequest.Rounds(3)), dryRun = Some(true)))
     assertEquals(run.status, "done", run.error)
     assert(run.dryRun)
     assertEquals(CorpusSnapshot.of(ds), before, "no patch, no approval, no log or tasks line")
@@ -1388,10 +1388,10 @@ class ReviewArticleRunSuite extends com.histmersion.db.DbSuite with RunTranscrip
       Seq(text(skeptic("MINOR", List(finding("minor", "Open questions", "a source is missing")))))
     )
     val (a, h) = handlersWith((_, ref) => Right(c.as(ref))); seed(h)
-    val r1 = start(a, RunRequest(com.histmersion.api.automation.Agents.RunRequest.Pipeline("review-article"), SlugTarget, dryRun = Some(true)))
+    val r1 = start(a, RunRequest(com.histmersion.api.automation.Agents.RunRequest.Pipeline("review-article"), SlugTarget, dryRun = Some(com.histmersion.api.automation.Agents.RunRequest.DryRun(true))))
     val r2 = start(
       a,
-      RunRequest(com.histmersion.api.automation.Agents.RunRequest.Pipeline("review-article"), SlugTarget, dryRun = Some(true), modelFor = List(ModelOverride(com.histmersion.api.automation.Agents.ModelOverride.Role("reviewer"), HaikuOverride)))
+      RunRequest(com.histmersion.api.automation.Agents.RunRequest.Pipeline("review-article"), SlugTarget, dryRun = Some(com.histmersion.api.automation.Agents.RunRequest.DryRun(true)), modelFor = List(ModelOverride(com.histmersion.api.automation.Agents.ModelOverride.Role("reviewer"), HaikuOverride)))
     )
     assertEquals((r1.status, r2.status), ("done", "done"))
     val cmp = a.compare(List(ApiIds.run(r1.id), ApiIds.run(r2.id))).fold(e => fail(e.message.value), identity)
@@ -1580,7 +1580,7 @@ class ReviewArticleRunSuite extends com.histmersion.db.DbSuite with RunTranscrip
     c.add("fixer", Seq(text(fixerAnswer(List(citing), applied = List("S1")))))
     val (a, h) = handlers(c, oneSpot); seed(h); critics(h)
     assertEquals(states(h), List(s"$Ck3>$Ck" -> "open", s"$Ck2>$Ck" -> "open"))
-    val run = start(a, RunRequest(com.histmersion.api.automation.Agents.RunRequest.Pipeline("review-article"), SlugTarget, fix = Some(true), rounds = Some(2)))
+    val run = start(a, RunRequest(com.histmersion.api.automation.Agents.RunRequest.Pipeline("review-article"), SlugTarget, fix = Some(com.histmersion.api.automation.Agents.RunRequest.Fix(true)), rounds = Some(com.histmersion.api.automation.Agents.RunRequest.Rounds(2))))
     assertEquals(run.status, "done", run.error)
 
     // the skeptic's brief carries the checklist; the fixer reads the finding's pair
@@ -1656,7 +1656,7 @@ class ReviewArticleRunSuite extends com.histmersion.db.DbSuite with RunTranscrip
     )
     val (a, h) = handlers(c); seed(h); critics(h)
     val token = h.research.articles.get(Slug).toOption.get.article.updatedAt
-    val run = start(a, RunRequest(com.histmersion.api.automation.Agents.RunRequest.Pipeline("review-article"), SlugTarget, fix = Some(true), rounds = Some(2)))
+    val run = start(a, RunRequest(com.histmersion.api.automation.Agents.RunRequest.Pipeline("review-article"), SlugTarget, fix = Some(com.histmersion.api.automation.Agents.RunRequest.Fix(true)), rounds = Some(com.histmersion.api.automation.Agents.RunRequest.Rounds(2))))
     assertEquals(run.status, "done", run.error)
     val retry = retryPoints(userPrompt(c.requests.get("skeptic").asScala.toList(1).head))
     assert(
@@ -1695,7 +1695,7 @@ class ReviewArticleRunSuite extends com.histmersion.db.DbSuite with RunTranscrip
     c.add("cold", Seq(text(coldPass)))
     c.add("skeptic", Seq(text(skeptic("MAJOR", List(critique("major", Some(s"$Ck2>$Ck"))), List(proposal)))))
     val (a, h) = handlers(c, oneSpot); seed(h)
-    val run = start(a, RunRequest(com.histmersion.api.automation.Agents.RunRequest.Pipeline("review-article"), SlugTarget, fix = Some(true), rounds = Some(2)))
+    val run = start(a, RunRequest(com.histmersion.api.automation.Agents.RunRequest.Pipeline("review-article"), SlugTarget, fix = Some(com.histmersion.api.automation.Agents.RunRequest.Fix(true)), rounds = Some(com.histmersion.api.automation.Agents.RunRequest.Rounds(2))))
     assertEquals(run.status, "done", run.error)
     // recorded minor: no MAJOR is open, so the fixer never runs
     assertEquals(c.served("fixer"), 0)
@@ -1766,7 +1766,7 @@ class ReviewArticleRunSuite extends com.histmersion.db.DbSuite with RunTranscrip
     )
     c.add("fixer", Seq(text(fixerAnswer(List(coCite), applied = List("S1")))))
     val (a, h) = handlers(c, oneSpot); seed(h); refuted(h)
-    val run = start(a, RunRequest(com.histmersion.api.automation.Agents.RunRequest.Pipeline("review-article"), SlugTarget, fix = Some(true), rounds = Some(2)))
+    val run = start(a, RunRequest(com.histmersion.api.automation.Agents.RunRequest.Pipeline("review-article"), SlugTarget, fix = Some(com.histmersion.api.automation.Agents.RunRequest.Fix(true)), rounds = Some(com.histmersion.api.automation.Agents.RunRequest.Rounds(2))))
     assertEquals(run.status, "done", run.error)
     // the final pass was told it verifies
     assert(userPrompt(c.requests.get("skeptic").asScala.toList(2).head).contains("This is the run's FINAL pass"))
@@ -1816,7 +1816,7 @@ class ReviewArticleRunSuite extends com.histmersion.db.DbSuite with RunTranscrip
     )
     c2.add("fixer", Seq(text(fixerAnswer(List(dated), applied = List("S2")))))
     val (a2, _) = handlers(c2, oneSpot)
-    val run2 = start(a2, RunRequest(com.histmersion.api.automation.Agents.RunRequest.Pipeline("review-article"), SlugTarget, fix = Some(true), rounds = Some(2)))
+    val run2 = start(a2, RunRequest(com.histmersion.api.automation.Agents.RunRequest.Pipeline("review-article"), SlugTarget, fix = Some(com.histmersion.api.automation.Agents.RunRequest.Fix(true)), rounds = Some(com.histmersion.api.automation.Agents.RunRequest.Rounds(2))))
     assertEquals(run2.status, "done", run2.error)
     assert(userPrompt(c2.requests.get("fixer").peek().head).contains("- S2 [skeptic, major, date]"))
     assertEquals(ledgerOf(h).get.openMajors, Nil)
@@ -1850,7 +1850,7 @@ class ReviewArticleRunSuite extends com.histmersion.db.DbSuite with RunTranscrip
         s"Tin reached the Aegean by sea [[$Ck]].\n\nAn isotope study answers Tinley's sea route [[$Ck2]]."
       ))
     assert(h.research.articles.patch(Slug, Article.Patch(body = Some(body))).isRight)
-    val run = start(a, RunRequest(com.histmersion.api.automation.Agents.RunRequest.Pipeline("review-article"), SlugTarget, fix = Some(true), rounds = Some(2)))
+    val run = start(a, RunRequest(com.histmersion.api.automation.Agents.RunRequest.Pipeline("review-article"), SlugTarget, fix = Some(com.histmersion.api.automation.Agents.RunRequest.Fix(true)), rounds = Some(com.histmersion.api.automation.Agents.RunRequest.Rounds(2))))
     assertEquals(run.status, "done", run.error)
     assert(
       h.research.articles
@@ -1890,7 +1890,7 @@ class ReviewArticleRunSuite extends com.histmersion.db.DbSuite with RunTranscrip
     c.add("fixer", (1 to 3).map(_ => Seq(text(fixerAnswer(List(apart), applied = List("S1")))))*)
     c.add("fixer", Seq(text(fixerAnswer(List(coCite), applied = List("S1")))))
     val (a, h) = handlers(c, oneSpot); seed(h); refuted(h)
-    val run = start(a, RunRequest(com.histmersion.api.automation.Agents.RunRequest.Pipeline("review-article"), SlugTarget, fix = Some(true), rounds = Some(3)))
+    val run = start(a, RunRequest(com.histmersion.api.automation.Agents.RunRequest.Pipeline("review-article"), SlugTarget, fix = Some(com.histmersion.api.automation.Agents.RunRequest.Fix(true)), rounds = Some(com.histmersion.api.automation.Agents.RunRequest.Rounds(3))))
     assertEquals(run.status, "done", run.error)
     val fixerCalls = c.requests.get("fixer").asScala.toList
     val retry = retryPoints(userPrompt(fixerCalls(1).head))
@@ -1950,7 +1950,7 @@ class ReviewArticleRunSuite extends com.histmersion.db.DbSuite with RunTranscrip
       Seq(text(fixerAnswer(List(gloss2), applied = List("R1"))))
     )
     val (a, h) = handlers(c, oneSpot); seed(h); refuted(h)
-    val run = start(a, RunRequest(com.histmersion.api.automation.Agents.RunRequest.Pipeline("review-article"), SlugTarget, fix = Some(true), rounds = Some(3)))
+    val run = start(a, RunRequest(com.histmersion.api.automation.Agents.RunRequest.Pipeline("review-article"), SlugTarget, fix = Some(com.histmersion.api.automation.Agents.RunRequest.Fix(true)), rounds = Some(com.histmersion.api.automation.Agents.RunRequest.Rounds(3))))
     assertEquals(run.status, "done", run.error)
     val retry = retryPoints(userPrompt(c.requests.get("fixer").asScala.toList(2).head))
     assert(

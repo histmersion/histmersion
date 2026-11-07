@@ -601,7 +601,7 @@ class ManagerRunSuite extends com.histmersion.db.DbSuite with RunTranscripts:
       ReviewLight,
       HintAdd(
         com.histmersion.api.automation.Managers.HintAdd.Text("e3 first"),
-        effect = Some(HintEffect(HintEffect.Action(HintEffect.Prioritise), targets = List(com.histmersion.api.automation.Managers.HintEffect.Targets("zzagent_e3")), priority = Some(7)))
+        effect = Some(HintEffect(HintEffect.Action(HintEffect.Prioritise), targets = List(com.histmersion.api.automation.Managers.HintEffect.Targets("zzagent_e3")), priority = Some(com.histmersion.api.automation.Managers.HintEffect.Priority(7))))
       )
     )
     assertEquals(item(ManagerItem.Target("zzagent_e3")).priority, 7)
