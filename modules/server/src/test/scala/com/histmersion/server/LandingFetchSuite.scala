@@ -1,5 +1,7 @@
 package com.histmersion.server
 
+import com.histmersion.testsupport.ComparedByValue.given
+
 import com.histmersion.pluginhost.{Challenge, HttpAnswer, OaFetcher}
 
 import com.histmersion.config.*

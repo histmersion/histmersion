@@ -1,5 +1,7 @@
 package com.histmersion.server.agents
 
+import com.histmersion.testsupport.ComparedByValue.given
+
 import java.nio.file.{Files, Path}
 import java.util.concurrent.TimeoutException
 
